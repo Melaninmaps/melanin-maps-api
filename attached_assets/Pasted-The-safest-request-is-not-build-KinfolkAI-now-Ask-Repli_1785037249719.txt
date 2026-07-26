@@ -1,0 +1,1241 @@
+The safest request is **not “build KinfolkAI now.”** Ask Replit to first create the complete product and architecture specification for KinfolkAI as the platform’s **community operating system**, then show you how it behaves from every role before any code changes.
+
+That matters because the audits already found that valuable personalization, trust, identity preferences, and progression data exist but are largely invisible to members.  They also found an existing city-voice system that uses regional slang without a documented founder-approved control model, which shows why cultural intelligence, consent, and personalization must be intentionally designed before implementation. 
+
+Use this prompt:
+
+```text
+MAPPING WITH MELANIN™ — KINFOLKAI COMMUNITY OPERATING SYSTEM
+PHASE 1 CAPABILITY AUDIT + PHASE 2 PRODUCT AND ARCHITECTURE SPECIFICATION
+
+IMPORTANT OPERATING RULE
+
+This is not authorization to implement KinfolkAI changes.
+
+Perform:
+
+PHASE 1 — Read-only capability audit
+PHASE 2 — Product, experience, privacy, and architecture specification
+
+Do not change code, prompts, database schemas, APIs, onboarding, screens,
+feature flags, recommendation logic, or production data.
+
+“Please implement” remains the only phrase that authorizes implementation.
+
+══════════════════════════════════════════════════════════════
+1. FOUNDER VISION
+══════════════════════════════════════════════════════════════
+
+KinfolkAI is not intended to be only an AI chatbot or isolated feature.
+
+KinfolkAI should become the underlying intelligence and connection layer
+of Mapping With Melanin™ — a culturally informed community operating
+system that helps people:
+
+- Feel that they belong
+- Discover culturally relevant places and experiences
+- Support minority-owned businesses
+- Find safety information without creating fear
+- Build relationships and trusted networks
+- Find resources, events, mentors, opportunities, and community
+- Grow a hustle into a dream, business, legacy, or empire
+- Preserve culture, history, and community knowledge
+- Help families and children navigate communities more safely
+- Contribute local knowledge
+- Connect businesses, members, organizations, and Cultural Ambassadors
+- Practice culturally driven consumerism
+- Turn individual activity into collective community benefit
+
+KinfolkAI should feel conversational and capable like ChatGPT, but its
+purpose is different.
+
+It should feel:
+
+- Warm
+- Intelligent
+- Culturally aware
+- Contextual
+- Intuitive
+- Protective
+- Community-minded
+- Nonjudgmental
+- Useful
+- Specific
+- Honest about uncertainty
+- Respectful of individual differences
+
+It should not feel:
+
+- Performative
+- Stereotypical
+- Intrusive
+- Surveillance-based
+- Overly familiar without permission
+- Like it assumes every member from one community thinks alike
+- Like it is selling attention
+- Like it favors paid businesses by pretending they are organically best
+- Like it knows private information the member did not knowingly provide
+
+The core principle is:
+
+KINDFOLKAI USES CULTURAL CONTEXT TO IMPROVE RELEVANCE,
+NOT TO REDUCE PEOPLE TO CULTURAL ASSUMPTIONS.
+
+══════════════════════════════════════════════════════════════
+2. DEFINE “COMMUNITY OPERATING SYSTEM”
+══════════════════════════════════════════════════════════════
+
+Create a precise product definition for KinfolkAI as the community
+operating system of Mapping With Melanin™.
+
+Explain how KinfolkAI should connect and coordinate:
+
+- Discovery
+- Maps
+- Heritage Places
+- Businesses
+- Safety
+- Resources
+- Events
+- Community posts
+- Kinfolk Circles
+- Living Legacy Stories
+- Cultural Ambassadors
+- Community Organizations
+- Mentorship
+- Opportunities
+- Saved places
+- Member interests
+- Recommendations
+- Notifications
+- Travel
+- Relocation
+- Family needs
+- Accessibility
+- Membership
+- Trust and reputation
+
+Distinguish clearly between:
+
+1. KinfolkAI conversational assistant
+2. KinfolkAI recommendation engine
+3. KinfolkAI personalization layer
+4. KinfolkAI community intelligence layer
+5. KinfolkAI safety and trust layer
+6. KinfolkAI proactive opportunity layer
+7. KinfolkAI administrative or moderation support
+
+These may share infrastructure, but they must not be treated as one
+uncontrolled system.
+
+══════════════════════════════════════════════════════════════
+3. READ-ONLY AUDIT OF WHAT EXISTS
+══════════════════════════════════════════════════════════════
+
+Search the complete codebase, database schemas, APIs, system prompts,
+onboarding flows, recommendation systems, saved preferences, user
+profiles, trust systems, notification systems, admin tools, and prior
+documentation.
+
+Report what exists for:
+
+- KinfolkAI chat
+- System prompts
+- Prompt templates
+- Smart pathways
+- Suggested questions
+- Business recommendations
+- Heritage recommendations
+- Resource recommendations
+- Event recommendations
+- Travel planning
+- Relocation support
+- Safety responses
+- Cultural or identity preferences
+- City or regional voice
+- Conversation history
+- User memory
+- Saved preferences
+- Location context
+- Profile context
+- Membership-based limits
+- Trust and reputation
+- Community contribution signals
+- Kinfolk Circles
+- Cultural Ambassador signals
+- Business-owner context
+- Organization context
+- Child or family context
+- Accessibility context
+- Feedback controls
+- Recommendation explanations
+- Privacy controls
+- Data deletion
+- Admin prompt controls
+- Model provider and model configuration
+- Logging and retention
+- Moderation and crisis safeguards
+
+For each capability classify it as:
+
+- LIVE AND USER-VISIBLE
+- LIVE BUT INVISIBLE
+- PARTIALLY BUILT
+- MOCKED
+- HARDCODED
+- DOCUMENTED BUT NOT BUILT
+- MISSING
+- DUPLICATED
+- UNSAFE OR UNCLEAR
+- REQUIRES FOUNDER DECISION
+
+Do not assume a capability works merely because a field, table, prompt,
+or route exists.
+
+══════════════════════════════════════════════════════════════
+4. RESTORE PERSONALIZATION TO ONBOARDING
+══════════════════════════════════════════════════════════════
+
+A prior onboarding experience asked members questions that helped shape
+KinfolkAI and recommendations. Those questions are no longer meaningfully
+present or their effects are no longer visible.
+
+Audit:
+
+- What personalization questions previously existed
+- Whether they still exist in code
+- Whether they were removed, skipped, bypassed, or disconnected
+- Which answers are currently stored
+- Which answers currently affect KinfolkAI
+- Which answers affect recommendations
+- Which answers are collected but unused
+- Whether existing members can edit them later
+- Whether the member is told how their choices improve their experience
+
+Design a concise, progressive onboarding model that does not overwhelm
+people.
+
+Use three levels:
+
+LEVEL 1 — REQUIRED AT SIGNUP
+Only what is necessary to create the correct account and basic experience.
+
+LEVEL 2 — QUICK PERSONALIZATION
+Approximately 4–7 questions that provide immediate value.
+
+LEVEL 3 — OPTIONAL OVER TIME
+KinfolkAI may ask one helpful question at a natural moment rather than
+forcing a long survey.
+
+Members must always be able to:
+
+- Skip optional questions
+- Select multiple answers
+- Choose “Prefer not to say”
+- Edit answers later
+- Understand why a question is being asked
+- Control whether an answer affects personalization
+- Delete or reset personalization data
+
+Do not use dark patterns or make optional identity disclosures feel
+required.
+
+══════════════════════════════════════════════════════════════
+5. ROLE-BASED EXPERIENCE DESIGN
+══════════════════════════════════════════════════════════════
+
+Create a complete KinfolkAI experience for each role.
+
+Roles currently under consideration:
+
+A. Community Member
+B. Business Owner
+C. Cultural Ambassador
+D. Community Organization
+E. Guest
+F. Administrator or Moderator
+
+A person may eventually hold more than one role. Design for multiple
+roles without forcing duplicate accounts.
+
+For each role provide:
+
+- Why they join
+- What KinfolkAI should understand
+- What KinfolkAI may ask
+- What KinfolkAI must not assume
+- What information is required
+- What is optional
+- What the first session feels like
+- What the home experience shows
+- What recommendations they receive
+- What contributions they can make
+- What notifications they may receive
+- What progression looks like
+- How they connect with other roles
+- What privacy controls they need
+- What safety controls they need
+- What future capabilities belong in the register
+
+══════════════════════════════════════════════════════════════
+6. COMMUNITY MEMBER QUESTIONS
+══════════════════════════════════════════════════════════════
+
+Design a minimal first-time question set for Community Members.
+
+The questions should help KinfolkAI understand:
+
+1. What brings the member here
+2. What they want to discover
+3. What communities or business identities they want to support
+4. What matters most to them
+5. How they would like to contribute
+6. What goals or life transitions they are navigating
+7. Their safety, family, or accessibility needs
+8. Their preferred level of personalization
+9. Their notification interests
+10. Whether they want their location used and at what precision
+
+Potential question themes include:
+
+“What brings you to Mapping With Melanin™?”
+
+- Find community near me
+- Support minority-owned businesses
+- Explore my hometown
+- Plan a trip
+- Prepare for relocation
+- Discover heritage and culture
+- Find events
+- Find resources and opportunities
+- Meet people with shared interests
+- Grow a business or idea
+- Give back
+- I’m just exploring
+
+“What matters most to you right now?”
+
+- Belonging
+- Safety
+- Family
+- Culture
+- Business
+- Travel
+- Food
+- Heritage
+- Education
+- Career
+- Wellness
+- Faith
+- Accessibility
+- Nightlife
+- Arts
+- Mentorship
+- Volunteering
+- Entrepreneurship
+- Community resources
+
+“Which businesses or communities would you especially like to support?”
+
+This must be a multi-select preference and not an assumption.
+
+Potential designations:
+
+- Black-owned
+- Minority-owned
+- Women-owned
+- Hispanic or Latino-owned
+- Indigenous-owned
+- Asian American or Pacific Islander-owned
+- Middle Eastern or North African-owned, subject to approved taxonomy
+- LGBTQ+-owned
+- Veteran-owned
+- Disability-owned
+- Immigrant-owned
+- D9-affiliated
+- Melanated Diaspora-owned
+- Community-serving businesses
+- No specific preference
+
+“How would you like to contribute?”
+
+- Recommend businesses
+- Share local events
+- Write reviews
+- Share resources
+- Welcome newcomers
+- Share cultural knowledge
+- Preserve local history
+- Share accessibility information
+- Volunteer
+- Mentor
+- Learn from a mentor
+- Highlight Hidden Gems
+- Help confirm local information
+- Become a Cultural Ambassador someday
+- I prefer to explore for now
+
+“What are you building or working toward?”
+
+- Finding my people
+- Traveling more
+- Relocating
+- Starting over
+- Finding work
+- Advancing my career
+- Starting a hustle
+- Growing a business
+- Building an organization
+- Buying a home
+- Supporting my family
+- Finding mentorship
+- Becoming a mentor
+- Building generational wealth
+- Creating community impact
+- Preserving a legacy
+- Something else
+- Prefer not to answer
+
+Recommend final wording, number of questions, answer options, and which
+questions should be asked now versus later.
+
+══════════════════════════════════════════════════════════════
+7. BUSINESS OWNER QUESTIONS
+══════════════════════════════════════════════════════════════
+
+Design questions that allow KinfolkAI to understand the business as part
+of an ecosystem, not merely as a listing.
+
+Separate:
+
+A. Information needed to create the account
+B. Information needed to verify the business
+C. Information needed to personalize recommendations
+D. Information needed to connect the business to the community
+E. Optional storytelling information
+
+Potential question areas:
+
+- What does the business provide?
+- Who does the business serve?
+- Which ownership designations are claimed?
+- Which designations are verified?
+- What makes the business culturally meaningful?
+- What values guide the business?
+- What languages are served?
+- Is the location family-friendly?
+- Is it accessible?
+- Does it offer virtual or mobile services?
+- Does it hire locally?
+- Does it offer internships?
+- Does it mentor?
+- Does it want a mentor?
+- Does it host events?
+- Does it support community organizations?
+- Does it offer scholarships or sponsorships?
+- Does it need volunteers?
+- Does it want Cultural Ambassador partnerships?
+- What stage is the business in?
+
+Suggested business stages:
+
+- Idea
+- Side hustle
+- New business
+- Growing business
+- Established business
+- Multi-location business
+- Franchise
+- Enterprise
+- Community institution
+- Legacy business
+
+KinfolkAI should support the journey:
+
+HUSTLE → DREAM → BUSINESS → EMPLOYER → INSTITUTION → EMPIRE → LEGACY
+
+This language should be inspiring but not used to rank or shame smaller
+businesses.
+
+Explain how business answers should improve:
+
+- Customer discovery
+- Business-to-business connections
+- Resource recommendations
+- Grant and opportunity recommendations
+- Mentorship
+- Hiring
+- Events
+- Promotions
+- Partnerships
+- Cultural Ambassador matching
+- Community organization matching
+- KinfolkAI business guidance
+
+══════════════════════════════════════════════════════════════
+8. CULTURAL AMBASSADOR QUESTIONS
+══════════════════════════════════════════════════════════════
+
+Design questions for Cultural Ambassadors that explore:
+
+- Communities represented
+- Cities or regions known
+- Cultural knowledge
+- Heritage knowledge
+- Languages
+- Areas of lived experience
+- Storytelling interests
+- Business discovery interests
+- Event coverage interests
+- Travel knowledge
+- Relocation knowledge
+- Mentorship interests
+- Availability
+- Comfort with video
+- Comfort with public attribution
+- Verification
+- Safety responsibilities
+- Conflicts of interest
+- Sponsored relationship disclosure
+
+Cultural Ambassadors should not be treated as representatives of every
+person from a community.
+
+They should be able to state:
+
+- “This is my lived experience.”
+- “This is community-sourced.”
+- “This is historically verified.”
+- “This is my personal recommendation.”
+- “This is sponsored.”
+- “This information may have changed.”
+
+Design trust, disclosure, and attribution standards.
+
+══════════════════════════════════════════════════════════════
+9. COMMUNITY ORGANIZATION QUESTIONS
+══════════════════════════════════════════════════════════════
+
+Design questions for nonprofit, mutual-aid, faith, alumni, civic,
+cultural, educational, and neighborhood organizations.
+
+Ask only what creates value:
+
+- Who do you serve?
+- Where do you serve?
+- What resources do you provide?
+- What eligibility rules apply?
+- How can members participate?
+- Do you need volunteers?
+- Do you accept donations?
+- Do you offer mentorship?
+- Do you serve youth?
+- Do you provide emergency support?
+- Do you host recurring events?
+- Can businesses partner with you?
+- Are services accessible?
+- What languages are supported?
+- How is the organization verified?
+- How often must information be reconfirmed?
+
+KinfolkAI should help organizations reach the right people without
+exposing sensitive client information.
+
+══════════════════════════════════════════════════════════════
+10. KINFOLKAI INTUITIVENESS MODEL
+══════════════════════════════════════════════════════════════
+
+Define how KinfolkAI becomes intuitive without becoming invasive.
+
+KinfolkAI may use, when authorized:
+
+- Answers intentionally provided by the member
+- Saved preferences
+- Saved places
+- Search history within Mapping With Melanin™
+- Voluntary location context
+- City or region
+- Role
+- Membership level
+- Accessibility preferences
+- Family preferences
+- Followed businesses, places, topics, and organizations
+- Events attended or saved
+- Reviews and recommendations contributed
+- Kinfolk Circle context when explicitly shared with the circle
+- Current conversation context
+- Community-wide aggregated trends
+- Verified public business and organization information
+
+KinfolkAI must not infer or use without appropriate consent:
+
+- Race or ethnicity from photographs, names, voice, location, or behavior
+- Sexual orientation
+- Religion
+- Disability or health condition
+- Immigration status
+- Political beliefs
+- Financial hardship
+- Precise location when approximate location is sufficient
+- A child’s sensitive information
+- Private Circle conversations outside that Circle
+- Private messages
+- Contact lists
+- Unpublished business information
+- Safety reports tied to an identifiable reporter
+- Information from one role or account context in another context without
+  clear permission
+
+For every data source, document:
+
+- Why it is used
+- Whether it is required or optional
+- Whether it is individual, shared, aggregated, or public
+- How long it is retained
+- Who can access it
+- Whether it affects recommendations
+- How the user can view, correct, disable, or delete it
+
+══════════════════════════════════════════════════════════════
+11. COLLECTIVE INTELLIGENCE WITHOUT PRIVACY VIOLATIONS
+══════════════════════════════════════════════════════════════
+
+Define what “collective” means.
+
+KinfolkAI should become better through community knowledge, but it must
+not expose one person’s private information to another.
+
+Create a data classification model:
+
+CLASS 1 — Public and verified
+Examples: business hours, official events, public resources.
+
+CLASS 2 — Public community contribution
+Examples: approved reviews, public recommendations, submitted events.
+
+CLASS 3 — Aggregated community signal
+Examples: “Members frequently save this business for family dining.”
+Only show when a minimum anonymity threshold is met.
+
+CLASS 4 — Private personal context
+Examples: saved interests, personal goals, private conversation memory.
+Used only for that member unless they explicitly share it.
+
+CLASS 5 — Circle-shared context
+Used only inside the specific Kinfolk Circle with clear participant
+controls.
+
+CLASS 6 — Highly sensitive or protected
+Examples: precise safety-report identity, child information, verification
+documents, legal or health disclosures.
+Never used for general recommendations or community training.
+
+Recommend minimum thresholds for aggregated claims so KinfolkAI does not
+say “the community recommends this” based on one or two people.
+
+Every collective statement should distinguish among:
+
+- Verified fact
+- Public community contribution
+- Aggregated member pattern
+- Cultural Ambassador recommendation
+- Sponsored placement
+- KinfolkAI inference
+- Unconfirmed or changing information
+
+══════════════════════════════════════════════════════════════
+12. CULTURAL INTELLIGENCE MODEL
+══════════════════════════════════════════════════════════════
+
+Design cultural intelligence as a layered system.
+
+LAYER 1 — Member-stated preferences
+What the individual explicitly asks KinfolkAI to prioritize.
+
+LAYER 2 — Place-based cultural context
+Local history, institutions, neighborhoods, traditions, and terminology.
+
+LAYER 3 — Verified community knowledge
+Approved cultural sites, trusted sources, verified organizations, and
+moderated contributions.
+
+LAYER 4 — Lived-experience perspectives
+Clearly attributed Community Member and Cultural Ambassador insights.
+
+LAYER 5 — Individual conversational style
+The tone a member chooses, such as:
+
+- Warm and conversational
+- Direct and practical
+- Professional
+- Encouraging
+- Local flavor
+- Standard language
+- Voice from home
+
+Do not automatically apply slang based only on a city.
+
+Regional or culturally specific language should be:
+
+- Optional
+- User-controlled
+- Adjustable
+- Never used in emergencies, legal explanations, safety reports, or other
+  contexts where clarity is more important than style
+- Tested for authenticity and avoidance of caricature
+
+KinfolkAI should know cultural context without performing culture.
+
+══════════════════════════════════════════════════════════════
+13. RECOMMENDATION ARCHITECTURE
+══════════════════════════════════════════════════════════════
+
+Create a recommendation model that can explain why something is shown.
+
+Potential inputs:
+
+- User-stated interests
+- User-stated ownership preferences
+- Distance
+- Safety information
+- Accessibility
+- Family suitability
+- Quality and recency of reviews
+- Verified ownership designation
+- Cultural relevance
+- Open hours
+- Current availability
+- Community trust
+- Cultural Ambassador recommendation
+- Saved or followed topics
+- Current goal
+- Travel or relocation context
+- Community organization relevance
+- Event timing
+- Business membership or sponsorship
+
+Paid placement must never silently override safety, relevance, or trust.
+
+Sponsored recommendations must be labeled.
+
+A business may receive greater visibility through a paid promotion, but
+KinfolkAI must not falsely state that it is the “best,” “most trusted,” or
+“community favorite” unless independent signals support that claim.
+
+For every recommendation, KinfolkAI should be able to provide a brief
+reason, such as:
+
+- “You asked to prioritize women-owned businesses.”
+- “This is near your saved destination.”
+- “Members frequently mention its family-friendly atmosphere.”
+- “This event matches your interest in local history.”
+- “This organization serves your selected neighborhood.”
+- “This business offers mentorship, which you said matters to you.”
+- “Sponsored placement — shown because it matches your search.”
+
+Design:
+
+- Ranking principles
+- Safety exclusions
+- Stale-data handling
+- Diversity and discovery balancing
+- Hidden Gem rotation
+- New-business visibility
+- Sponsored-placement boundaries
+- Community signal thresholds
+- Appeals and correction process
+- Member feedback controls
+- “Show me less like this”
+- “Why am I seeing this?”
+- “Reset my recommendations”
+
+══════════════════════════════════════════════════════════════
+14. PROACTIVE BUT NOT ANNOYING
+══════════════════════════════════════════════════════════════
+
+KinfolkAI should notice useful connections, but not overwhelm members.
+
+Potential proactive moments:
+
+- A saved business is hosting an event
+- A relevant grant deadline is approaching
+- A trusted resource has updated its eligibility
+- A Cultural Ambassador added a guide for a saved city
+- An alumni event matches a member’s affiliation
+- A local organization needs volunteers
+- A followed heritage place added a new Living Legacy Story
+- A member’s saved business changed hours
+- A family-friendly event is happening nearby
+- A mentorship opportunity matches a stated goal
+
+Design notification controls for:
+
+- Immediate
+- Daily digest
+- Weekly digest
+- Only when I ask
+- Quiet hours
+- Topic-level controls
+- Location-level controls
+- Sensitive-topic controls
+
+KinfolkAI must not create a feeling of surveillance by saying things like
+“I noticed you went...” unless the member knowingly enabled that type of
+location or activity personalization.
+
+══════════════════════════════════════════════════════════════
+15. SAFETY AND CHILDREN
+══════════════════════════════════════════════════════════════
+
+Define a special safety architecture for:
+
+- Families
+- Parents
+- Children and teens
+- Meetups
+- Travel
+- Relocation
+- Neighborhood information
+- Emergency resources
+- Discrimination reports
+- Community alerts
+- Mentorship
+- Kinfolk Circles
+- Cultural Ambassador contact
+- Business events involving children
+
+KinfolkAI must:
+
+- Avoid presenting community reports as verified fact
+- Distinguish emergency assistance from general guidance
+- Never expose a reporter’s identity
+- Avoid diagnosing danger from race, neighborhood demographics, or rumor
+- Encourage emergency services when appropriate
+- Provide age-appropriate experiences
+- Use stronger restrictions for child accounts
+- Prevent adults from privately contacting minors outside approved,
+  parent-controlled structures
+- Avoid giving legal or medical advice
+- Clearly identify when information may be outdated
+
+Design parental controls, consent boundaries, and escalation rules.
+
+══════════════════════════════════════════════════════════════
+16. WHAT KINFOLKAI LOOKS LIKE IN PRACTICE
+══════════════════════════════════════════════════════════════
+
+Provide detailed example journeys for:
+
+1. A new Community Member looking for belonging in their hometown
+2. A member relocating to a new city
+3. A parent seeking safer family activities
+4. A student seeking an HBCU, scholarship, and mentor
+5. A person growing a side hustle
+6. A new minority-owned business seeking customers and support
+7. An established business seeking partnerships and employees
+8. A Cultural Ambassador sharing a neighborhood guide
+9. A community organization promoting services and events
+10. A traveler seeking culture beyond tourist attractions
+11. An elder preserving a Living Legacy Story
+12. A member joining a Kinfolk Circle
+13. A member reporting inaccurate or harmful information
+14. A member who chooses minimal personalization
+15. A member who changes roles over time
+
+For each journey show:
+
+- Questions asked
+- Data used
+- Data not used
+- Recommendations produced
+- Explanations shown
+- Contributions invited
+- Safety controls
+- Privacy controls
+- Connections to other platform features
+- What KinfolkAI remembers
+- What requires explicit consent
+- What future-state capability is needed
+
+══════════════════════════════════════════════════════════════
+17. CONVERSATIONAL EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+KinfolkAI should feel as natural and capable as a strong general-purpose
+assistant while remaining grounded in Mapping With Melanin™.
+
+Design conversation behaviors for:
+
+- Asking open-ended questions
+- Understanding follow-up context
+- Remembering approved preferences
+- Clarifying ambiguity
+- Admitting uncertainty
+- Explaining recommendations
+- Comparing options
+- Creating plans
+- Converting conversations into saved lists
+- Connecting members to businesses, events, resources, heritage places,
+  organizations, mentors, and Circles
+- Asking permission before saving personal information
+- Separating facts from community opinion
+- Citing verified sources when available
+- Refusing unsafe or inappropriate requests
+- Escalating crisis situations
+- Avoiding stereotypes
+- Avoiding excessive slang
+- Avoiding overpromising
+
+Create examples of good and unacceptable responses.
+
+══════════════════════════════════════════════════════════════
+18. MEMBER MEMORY
+══════════════════════════════════════════════════════════════
+
+Design a visible, controllable KinfolkAI memory system.
+
+Potential memory categories:
+
+- Places and cities
+- Business-support preferences
+- Interests
+- Accessibility needs
+- Family preferences
+- Travel style
+- Goals
+- Organizations followed
+- Cultural or heritage interests
+- Communication style
+- Notification preferences
+- Saved plans
+- Mentorship interests
+
+Members should be able to:
+
+- See what KinfolkAI remembers
+- See why it was remembered
+- Edit it
+- Delete one item
+- Clear all memory
+- Pause memory
+- Use a temporary conversation
+- Prevent sensitive topics from being stored
+- Export their personalization settings
+
+Do not store full conversations indefinitely merely because memory is
+enabled.
+
+Distinguish between conversation history and lasting memory.
+
+══════════════════════════════════════════════════════════════
+19. ADMINISTRATION, QUALITY, AND GOVERNANCE
+══════════════════════════════════════════════════════════════
+
+Define how authorized administrators manage KinfolkAI without reading
+private member conversations unnecessarily.
+
+Include:
+
+- Versioned system prompts
+- Founder-approved voice rules
+- Model configuration
+- Prompt-change history
+- Recommendation rule history
+- Cultural terminology governance
+- Community corrections
+- Safety escalation
+- Hallucination reporting
+- Bias testing
+- Stereotype testing
+- Privacy testing
+- Child-safety testing
+- Role-based access
+- Audit logs
+- Feature flags
+- Rollback
+- Limited pilot groups
+- A/B testing boundaries
+- Metrics that do not reward addiction or excessive screen time
+
+Recommended success measures should include:
+
+- Helpful outcomes
+- Successful connections
+- Resources accessed
+- Businesses supported
+- Events discovered
+- Mentorship connections
+- Community contributions
+- Corrected stale information
+- Member trust
+- Recommendation relevance
+- Safety-report clarity
+- Privacy-control usage
+- Reduction in failed searches
+
+Do not optimize only for conversation length, clicks, or time spent.
+
+══════════════════════════════════════════════════════════════
+20. SOURCE-OF-TRUTH DOCUMENTATION
+══════════════════════════════════════════════════════════════
+
+Create a proposed KinfolkAI documentation structure under:
+
+docs/product/kinfolk-ai/
+
+Recommend documents such as:
+
+KINDFOLK_AI_CONSTITUTION.md
+KINFOLK_AI_EXPERIENCE_MODEL.md
+KINFOLK_AI_PRIVACY_MODEL.md
+KINFOLK_AI_CULTURAL_INTELLIGENCE.md
+KINFOLK_AI_RECOMMENDATION_STANDARD.md
+KINFOLK_AI_ROLE_JOURNEYS.md
+KINFOLK_AI_MEMORY_STANDARD.md
+KINFOLK_AI_SAFETY_STANDARD.md
+KINFOLK_AI_PROMPT_GOVERNANCE.md
+KINFOLK_AI_ACCEPTANCE_TESTS.md
+
+Note: Use the approved canonical spelling “KinfolkAI” unless the
+Platform Vocabulary Guide specifies otherwise.
+
+Do not create these files until first reporting whether equivalent
+documents already exist and whether creating new files would duplicate
+existing documentation.
+
+All newly identified future ideas must be added to the permanent
+Future-State Register. Do not discard an idea because it is not selected
+for immediate implementation.
+
+══════════════════════════════════════════════════════════════
+21. GAP ANALYSIS — EXCEED THE REQUEST
+══════════════════════════════════════════════════════════════
+
+Do not only repeat the capabilities listed in this request.
+
+After understanding the founder’s intent and auditing the platform,
+identify meaningful gaps, contradictions, risks, and opportunities that
+have not yet been explicitly requested.
+
+Evaluate KinfolkAI against these outcomes:
+
+- Does it create belonging?
+- Does it increase safety?
+- Does it strengthen minority-owned businesses?
+- Does it help members contribute?
+- Does it help children and families navigate more safely?
+- Does it connect people to opportunity?
+- Does it support hustles, dreams, businesses, empires, and legacies?
+- Does it preserve culture?
+- Does it strengthen local ecosystems?
+- Does it help members understand why they received a recommendation?
+- Does it respect privacy and autonomy?
+- Does it avoid cultural stereotyping?
+- Does it work for people who never travel?
+- Does it work for travelers and people relocating?
+- Does it work for different ethnicities and communities?
+- Does it connect online activity to real-world community benefit?
+
+For every identified gap, provide:
+
+- The unmet need
+- Who is affected
+- Current state
+- Recommended future state
+- Risk if ignored
+- Dependencies
+- Suggested phase
+- Whether it belongs in KinfolkAI or an existing feature
+- Whether “Promote, Don’t Duplicate” applies
+- Founder decision required
+
+══════════════════════════════════════════════════════════════
+22. REQUIRED DELIVERABLE
+══════════════════════════════════════════════════════════════
+
+Return the report in this exact structure:
+
+1. Executive Summary
+2. Definition of KinfolkAI as a Community Operating System
+3. Current Architecture
+4. Current Prompts and Models
+5. Current Personalization and Onboarding
+6. Current Memory and Conversation History
+7. Current Recommendation Logic
+8. Current Cultural Intelligence
+9. Current Privacy and Data Use
+10. Current Safety and Child Protections
+11. Current Capabilities by Role
+12. Community Member Future Experience
+13. Business Owner Future Experience
+14. Cultural Ambassador Future Experience
+15. Community Organization Future Experience
+16. Guest Future Experience
+17. Administrator Future Experience
+18. Kinfolk Circles Integration
+19. Maps and Heritage Integration
+20. Resources and Events Integration
+21. Business and Promotion Integration
+22. Safety Integration
+23. Living Legacy Stories Integration
+24. Onboarding Question Recommendation
+25. Progressive Personalization Model
+26. Collective Intelligence Data Classification
+27. Recommendation Ranking and Explanation Standard
+28. KinfolkAI Memory Standard
+29. Cultural Intelligence and Voice Standard
+30. Privacy and Consent Standard
+31. Safety and Children Standard
+32. Example User Journeys
+33. Gaps Replit Identified Beyond the Founder Request
+34. Risks and Contradictions
+35. Capabilities That Should Be Reused
+36. Capabilities That Should Not Be Built
+37. Founder Decisions Required
+38. Proposed Implementation Waves
+39. Acceptance-Test Framework
+40. Future-State Register Update
+41. Exact Files, Tables, Routes, Prompts, and Components Reviewed
+42. Confirmation That No Code or Schema Changes Were Made
+
+Do not respond merely with a feature inventory.
+
+The report must explain what the system should feel like, how each role
+benefits, how the roles strengthen one another, how the cultural
+intelligence works, how privacy is protected, and how KinfolkAI creates
+real-world community value.
+
+The objective is not to make KinfolkAI do everything.
+
+The objective is to identify the smallest coherent foundation that can
+eventually support the complete vision without losing or duplicating it.
+```
+
+## What this should look like from each perspective
+
+### Community Member
+
+KinfolkAI understands what they are trying to do—not merely demographic information.
+
+A member might say:
+
+> “I’m moving to Charlotte with two children, and I want to find community before we arrive.”
+
+KinfolkAI should connect:
+
+* Family-friendly businesses
+* Cultural organizations
+* School and neighborhood resources
+* Heritage places
+* Upcoming family events
+* Parent-friendly Kinfolk Circles
+* Safety information with appropriate qualifications
+* Community Members or Cultural Ambassadors who have opted into welcoming newcomers
+
+It should explain why each recommendation was selected and ask permission before remembering the relocation.
+
+### Business Owner
+
+A business owner might say:
+
+> “I’m running a catering business from home and want to grow.”
+
+KinfolkAI should recognize the journey from **hustle to business**, then connect the owner with:
+
+* Appropriate business resources
+* Community organizations
+* Local events
+* Mentorship
+* Cultural Ambassadors
+* Other complementary businesses
+* Customers whose stated interests match
+* Verification and profile-completion steps
+* Promotion options clearly separated from organic recommendations
+
+It should never imply that paying guarantees a better rating or community endorsement.
+
+### Cultural Ambassador
+
+A Cultural Ambassador might say:
+
+> “I want to create a guide to Black-owned bookstores and important literary spaces in Philadelphia.”
+
+KinfolkAI should help them:
+
+* Build the guide
+* Connect each recommendation to verified places
+* Mark personal opinion versus verified history
+* Add videos or stories
+* Disclose sponsorships
+* Invite community corrections
+* Connect related events and organizations
+* Preserve the guide as community knowledge
+
+The Ambassador provides lived perspective; KinfolkAI provides organization, verification prompts, and safeguards.
+
+### Community Organization
+
+An organization might say:
+
+> “We provide free weekend meals, but people keep missing our distribution hours.”
+
+KinfolkAI should help it:
+
+* Verify the organization
+* Structure the resource listing
+* Set eligibility and expiration information
+* Reach members in the service area
+* Request periodic reconfirmation
+* Connect with volunteers and businesses
+* Add recurring events
+* Avoid exposing recipient identities
+
+### Guest
+
+A guest should receive useful public information but clearly understand what becoming a Community Member adds:
+
+* Saving
+* Personalization
+* KinfolkAI conversations
+* Recommendations
+* Contributions
+* Circles
+* Following
+* Community progression
+
+### The platform collectively
+
+The collective layer should not mean KinfolkAI reads everyone’s private conversations.
+
+It should mean:
+
+> Individual consent + verified public information + moderated contributions + privacy-safe aggregated patterns.
+
+For example:
+
+Acceptable:
+
+> “Members often describe this location as welcoming for solo diners.”
+
+Only when enough qualifying, recent contributions support that statement.
+
+Not acceptable:
+
+> “A woman who visited last Tuesday said she felt unsafe.”
+
+That reveals too much and improperly converts an individual report into a public AI claim.
+
+## The foundation I would prioritize
+
+When implementation eventually begins, KinfolkAI should not start with its largest possible feature set. The first coherent foundation should be:
+
+1. Restored role-aware onboarding and progressive personalization.
+2. A transparent “What KinfolkAI knows about me” control.
+3. Explainable recommendations.
+4. Clear separation between verified facts, community perspectives, sponsored results, and AI inference.
+5. A shared connection layer across businesses, events, resources, heritage, safety, and community.
+6. User-selected cultural voice rather than automatic cultural performance.
+7. Privacy-safe community signals.
+8. Complete future-state documentation for everything deferred.
+
+That foundation would allow KinfolkAI to feel intelligent and culturally grounded now while giving it room to become the larger community operating system you envision.

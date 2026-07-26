@@ -58,6 +58,21 @@
 | FSR-024 | KinfolkAI Stewardship — Proactive Opportunity Notices | KinfolkAI / Notifications | NEEDS FOUNDER CLARIFICATION | [FSR-024](features/FSR-024-kinfolk-stewardship-proactive.md) |
 | FSR-025 | Member Goals and Dreams — Where Are You Trying to Go? | Member Experience / KinfolkAI | NEEDS FOUNDER CLARIFICATION | [FSR-025](features/FSR-025-member-goals-dreams.md) |
 | FSR-026 | Cultural Ambassador Activation Questions | Cultural Ambassador / KinfolkAI | NEEDS FOUNDER CLARIFICATION | [FSR-026](features/FSR-026-cultural-ambassador-activation.md) |
+| FSR-027 | KinfolkAI Transparency Panel ("What KinfolkAI Knows About Me") | KinfolkAI / Privacy | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-028 | KinfolkAI Session Deletion (Individual + Full History Wipe) | KinfolkAI / Privacy | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-029 | Crisis Intervention Block in KinfolkAI Chat | KinfolkAI / Safety | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-030 | AAVE Voice Level UI Path (Member-Controlled) | KinfolkAI / Cultural Intelligence | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-031 | voiceMode as Persistent Member Preference | KinfolkAI / Personalization | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-032 | Cultural Heritage Sites → KinfolkAI Context Injection | KinfolkAI / Heritage | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-033 | Safety Survey Data → KinfolkAI Context Injection | KinfolkAI / Safety | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-034 | Events System → KinfolkAI Context Injection | KinfolkAI / Events | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-035 | Cultural Ambassador KinfolkAI Mode (Guide Creation + Signal Injection) | KinfolkAI / Ambassador | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-036 | Community Organization KinfolkAI Advisor Mode | KinfolkAI / Organizations | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-037 | Prompt Governance, Versioning, and Admin Console | KinfolkAI / Admin | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-038 | Guest-to-Member Conversion Experience in KinfolkAI | KinfolkAI / Onboarding | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-039 | Recommendation Source Attribution in KinfolkAI Responses | KinfolkAI / Trust | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-040 | KinfolkAI Query Count Display (Free Tier Transparency) | KinfolkAI / UX | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
+| FSR-041 | Smart Promotion Engine Language Correction (Platform Language Rule) | KinfolkAI / Language | NEEDS FOUNDER CLARIFICATION | inline — see AUDIT-005 |
 
 ---
 
