@@ -53,7 +53,8 @@ function heritageInstitutionType(heritageCategory: string | null | undefined): s
     heritageCategory === "LGBTQ+ History" ||
     heritageCategory === "Women's History" ||
     heritageCategory === "Immigrant Heritage" ||
-    heritageCategory === "Freedom Trail"
+    heritageCategory === "Freedom Trail" ||
+    heritageCategory === "Historical Sundown Town"
   ) return "heritage_site";
   return "museum";
 }
@@ -103,6 +104,9 @@ const HERITAGE_CATEGORIES: HeritageCategoryMeta[] = [
   { label: "Cultural Districts", value: "Cultural Neighborhood", color: "#059669", icon: "map-pin" },
   { label: "Religious Heritage", value: "Religious Heritage", color: "#6B21A8", icon: "home" },
   { label: "Freedom Trails", value: "Freedom Trail", color: "#B45309", icon: "navigation" },
+  // Historical Sundown Towns — archival color (warm stone), no danger/warning hue.
+  // Exact value must match the heritageCategory string returned by the API.
+  { label: "Sundown Towns", value: "Historical Sundown Town", color: "#44403C", icon: "book-open" },
 ];
 
 function getHeritageMeta(value: string | null | undefined): HeritageCategoryMeta {

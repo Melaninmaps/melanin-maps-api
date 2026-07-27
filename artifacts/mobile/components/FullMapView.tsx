@@ -31,12 +31,23 @@ const GOLD = "#CA922B";
 const KINFOLK_CLEAR = 90;
 
 // ─── FEATURE FLAG: Heritage Sites ────────────────────────────────────────────
-// false = completely hidden for the release candidate.
-// Real-device testing confirmed map crashes when Heritage Site markers render.
-// All data, routes, API endpoints, and DB records are preserved — this is a
-// display-only gate. Flip to true and rebuild to restore the feature once the
-// Fabric/react-native-maps crash root cause is confirmed fixed.
-const HERITAGE_SITES_ENABLED = false;
+// Build 97: disabled after Android Fabric crash during real-device testing.
+// Root cause (documented in code comment at Android marker block below):
+//   Rendering a View with a Text/Feather node inside a react-native-maps
+//   Marker triggered view.draw(canvas) in an unattached-Window context on
+//   Android Fabric, corrupting the Marker's native touch descriptor → crash
+//   on first tap interaction.
+// Fix applied in VC71 isolation step: Android markers use plain colored
+//   circle only — no Text/Feather children inside the Marker on Android.
+//   iOS retains Feather icons (was never crashing).
+// Build 98: re-enabled. Android isolation fix is in place. Additional
+//   safeguards: MAX_HERITAGE_MARKERS cap, coordiante validation, stable
+//   UUID keys, isFetchingCulturalSites guard against fetch/render loops.
+const HERITAGE_SITES_ENABLED = true;
+
+// Hard cap: prevents memory pressure if the API grows unexpectedly.
+// Current production total is 170 — this allows 47% headroom.
+const MAX_HERITAGE_MARKERS = 250;
 
 const DEFAULT_REGION: Region = {
   latitude: 39.9526,
@@ -93,6 +104,8 @@ const CATEGORY_STYLES: Record<string, CategoryStyle> = {
   "Freedom Trail":            { color: "#92400E", icon: "compass",     label: "Freedom Trail" },
   "Religious Heritage":       { color: "#4B5563", icon: "sun",         label: "Religious" },
   "Immigrant Heritage":       { color: "#0F766E", icon: "anchor",      label: "Immigrant" },
+  // Archival color (warm stone) — no red/orange danger hue. Historical record only.
+  "Historical Sundown Town":  { color: "#44403C", icon: "book-open",   label: "Sundown Towns" },
 };
 
 const DEFAULT_CATEGORY_STYLE: CategoryStyle = { color: "#6B7280", icon: "map-pin", label: "Site" };
@@ -360,8 +373,10 @@ export function FullMapView() {
           );
         })}
 
-        {/* Cultural heritage pins — consistent shape, category color */}
-        {HERITAGE_SITES_ENABLED && showCulturalSites && filteredCulturalSites.map((site) => {
+        {/* Cultural heritage pins — consistent shape, category color.
+            Capped at MAX_HERITAGE_MARKERS to bound memory on low-end devices.
+            filteredCulturalSites already coordinate-validated below. */}
+        {HERITAGE_SITES_ENABLED && showCulturalSites && filteredCulturalSites.slice(0, MAX_HERITAGE_MARKERS).map((site) => {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
           if (isNaN(lat) || isNaN(lng)) return null;
@@ -535,7 +550,16 @@ export function FullMapView() {
             <Feather name="thermometer" size={12} color={showHeatmap ? "#fff" : GOLD} />
             <Text style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}>Safety Heat</Text>
           </TouchableOpacity>
-          {/* Heritage Sites layer button — hidden until crash root cause is fixed (HERITAGE_SITES_ENABLED) */}
+          {HERITAGE_SITES_ENABLED && (
+            <TouchableOpacity
+              style={[s.layerBtn, showCulturalSites && { backgroundColor: "#44403C", borderColor: "transparent" }]}
+              onPress={() => { setShowCulturalSites((v) => !v); setSelectedCulturalSite(null); }}
+              activeOpacity={0.85}
+            >
+              <Feather name="book-open" size={12} color={showCulturalSites ? "#fff" : GOLD} />
+              <Text style={[s.layerBtnTxt, { color: showCulturalSites ? "#fff" : GOLD }]}>Heritage</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Heritage category filter chips — hidden until HERITAGE_SITES_ENABLED */}
