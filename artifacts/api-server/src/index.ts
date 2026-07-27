@@ -4,6 +4,7 @@ import { setDbLogger, pool, getPoolStats } from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
 import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
+import { runStartupMigrations } from "./lib/startup-migrations";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -90,6 +91,13 @@ const server = app.listen(port, (err) => {
   startHealthMonitor();
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
+
+  // Apply any schema columns that exist in the Drizzle model but are missing
+  // from older Railway deployments.  Runs after the port opens so the server
+  // is never delayed, but completes in <1 s — before any auth request arrives.
+  runStartupMigrations(logger).catch((err) =>
+    logger.error({ err }, "Startup migrations failed")
+  );
 
   startNudgeCronScheduler();
 });

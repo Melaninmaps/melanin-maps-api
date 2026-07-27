@@ -453835,6 +453835,71 @@ var app_default = app;
 
 // src/index.ts
 init_src();
+
+// src/lib/startup-migrations.ts
+init_src();
+var MIGRATIONS = [
+  {
+    name: "users_trial_reminder_cols",
+    sql: `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS trial_reminder_3day_sent_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS trial_reminder_1day_sent_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS trial_expired_email_sent_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS win_back_email_sent_at TIMESTAMPTZ`
+  },
+  {
+    name: "users_auth_cols",
+    sql: `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS apple_refresh_token TEXT,
+      ADD COLUMN IF NOT EXISTS marketing_opt_out BOOLEAN NOT NULL DEFAULT FALSE`
+  },
+  {
+    name: "users_notif_cols",
+    sql: `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS is_influencer BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS notif_events BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS notif_business BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS notif_messages BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS notif_reviews BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS notif_community BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS notif_promotions BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS notif_digest BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS notif_tips BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS notif_post_nudges BOOLEAN NOT NULL DEFAULT TRUE`
+  },
+  {
+    name: "users_quiet_hours_cols",
+    sql: `ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS quiet_hours_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+      ADD COLUMN IF NOT EXISTS quiet_hours_from VARCHAR(10) NOT NULL DEFAULT '10:00 PM',
+      ADD COLUMN IF NOT EXISTS quiet_hours_until VARCHAR(10) NOT NULL DEFAULT '8:00 AM'`
+  }
+];
+async function runStartupMigrations(logger3) {
+  const log2 = (msg) => logger3 ? logger3.info(msg) : console.log(`[startup-migrations] ${msg}`);
+  const warn = (msg) => logger3 ? logger3.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
+  log2("Running startup schema migrations...");
+  let applied = 0;
+  let skipped = 0;
+  for (const m2 of MIGRATIONS) {
+    try {
+      await pool.query(m2.sql);
+      log2(`  \u2713 ${m2.name}`);
+      applied++;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      warn(`  \u2717 ${m2.name}: ${msg}`);
+      skipped++;
+    }
+  }
+  log2(
+    `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`
+  );
+}
+
+// src/index.ts
 setDbLogger(logger);
 var rawPort = process.env["PORT"] ?? "8080";
 var port = Number(rawPort);
@@ -453897,6 +453962,9 @@ var server = app_default.listen(port, (err) => {
   setMonitorLogger(logger);
   startHealthMonitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));
+  runStartupMigrations(logger).catch(
+    (err2) => logger.error({ err: err2 }, "Startup migrations failed")
+  );
   startNudgeCronScheduler();
 });
 var isShuttingDown = false;
