@@ -1,0 +1,148 @@
+This is the first report that gives me enough evidence to say **you are close**. 
+
+But I'm going to separate **what is proven** from **what is still assumed** because that distinction matters.
+
+# What I now believe
+
+### ✅ I believe the Stripe pool leak has been fixed.
+
+Replit found a specific code path creating multiple PostgreSQL pools and changed it to a singleton with a bounded pool. That is a concrete engineering fix, not speculation. 
+
+### ✅ Increasing the application pool from 5 → 8 is reasonable.
+
+Unlike earlier discussions, this recommendation is now based on measured behavior during their load tests rather than guesswork. 
+
+I support that change.
+
+---
+
+# The good news
+
+Their local testing showed:
+
+* 30 concurrent users
+* 90/90 successful requests
+* 0 crashes
+* 0 HTTP 500s
+* 0 timeouts
+* 0 restarts
+* p95 latency under 500 ms 
+
+Those are encouraging results.
+
+---
+
+# But this is NOT the same as proving production
+
+Their own report says the remaining unknowns are:
+
+* Production Railway behavior
+* Apple Sign-In on production
+* Auth routes under production conditions
+* Maps
+* Kinfolk
+* Community feed
+* Saved places 
+
+That is why they still marked production **NO-GO**. 
+
+---
+
+# Here's what I would change
+
+I would stop thinking in terms of "30 users."
+
+Instead, define success as:
+
+> **Apple reviewer + 30 Android testers + you actively using the platform at the same time.**
+
+That is your real workload.
+
+---
+
+# This is the message I would send Replit
+
+---
+
+## BUILD 97 FINAL RELEASE OBJECTIVE
+
+The objective is no longer "fix Apple."
+
+The objective is:
+
+**Support Apple review and approximately 30 simultaneous real testers without service degradation.**
+
+Before Build 97 is submitted:
+
+### Production verification
+
+After Railway is healthy:
+
+Run real production testing with:
+
+* Apple review account
+* 30 Android testers
+* Founder
+* Multiple IP addresses
+
+Measure:
+
+* Peak database connections
+* Waiting connections
+* CPU
+* Memory
+* Railway metrics
+* Authentication success
+* Business loading
+* Maps
+* Kinfolk
+* Community feed
+* Saved places
+* Session renewal
+
+### Success criteria
+
+GO only if:
+
+* 0 HTTP 500
+* 0 crashes
+* 0 pool exhaustion
+* 0 Railway restart
+* Authentication success >99%
+* Business routes 100%
+* Apple Sign-In works
+* Review account works
+
+If all pass:
+
+Immediately submit Build 97.
+
+Immediately invite Android testers.
+
+Monitor continuously.
+
+---
+
+# My biggest recommendation
+
+**Do not wait for Apple before increasing Android testing.**
+
+Apple's review and Android closed testing are independent processes.
+
+If production is healthy after the Railway deployment, there is no reason to hold back Android testers solely because Apple has not yet approved iOS.
+
+---
+
+# One last thing
+
+I know you've said repeatedly that you have six days until your tour and that this has cost you two weeks of promotion.
+
+Based on everything you've shared, I think your focus for the next 24 hours should be:
+
+1. Get the production deployment stable.
+2. Complete the production verification.
+3. Submit Build 97 to Apple.
+4. Expand Android testing immediately.
+5. Begin preparing your launch content while Apple is reviewing, so you don't lose additional marketing time.
+
+At this stage, the engineering work is finally converging on a specific, measurable fix. The remaining risk isn't the product vision—it's making sure the production environment behaves the same way the successful local tests did.
