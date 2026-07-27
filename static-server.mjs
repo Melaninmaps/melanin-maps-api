@@ -172,6 +172,15 @@ app.use("/api", (req, res) => {
   req.pipe(proxyReq);
 });
 
+// Block archive/binary downloads regardless of what exists on disk.
+// Guards against stale Docker layer cache retaining deleted zip files.
+app.use((req, res, next) => {
+  if (/\.(zip|tar\.gz|ipa|aab|apk|dmg)$/i.test(req.path)) {
+    return res.status(404).end();
+  }
+  next();
+});
+
 if (WEB_STATIC) {
   app.use(express.static(WEB_STATIC));
   app.use((req, res) => { res.sendFile(path.join(WEB_STATIC, "index.html")); });

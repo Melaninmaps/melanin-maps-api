@@ -221,6 +221,11 @@ for (const p of SPA_EXPLICIT) {
   app.get(`${p}/*path`, serveSpa);
 }
 
+// JSON 404 for unknown /api/* routes — must come before the SPA catch-all
+app.use("/api/*path", (_req: Request, res: Response) => {
+  res.status(404).json({ error: "Not found" });
+});
+
 // Catch-all: any remaining non-API route serves the SPA
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) return next();
