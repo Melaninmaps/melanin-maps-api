@@ -1,0 +1,168 @@
+MAPPING WITH MELANIN™
+MANUS RECONCILIATION REVIEW
+READ-ONLY (unless explicitly authorized)
+
+After Manus completes its independent engineering review, I want you to
+perform a formal reconciliation.
+
+Your job is NOT to defend previous work.
+
+Your job is to determine whether the repository, documentation, release
+plan, and Build 97 reflect Manus's recommendations.
+
+Review every recommendation Manus makes.
+
+For EACH recommendation, return exactly one of these statuses:
+
+✅ IMPLEMENTED
+The repository already satisfies the recommendation.
+
+🟨 PARTIALLY IMPLEMENTED
+Part exists, but additional work is required.
+
+🟥 NOT IMPLEMENTED
+The recommendation has not been addressed.
+
+⚪ NOT APPLICABLE
+The recommendation does not apply to this project.
+
+🔒 CANNOT BE IMPLEMENTED BY REPLIT
+Explain why (Apple limitation, third-party limitation, platform
+restriction, legal requirement, founder decision, etc.).
+
+For EVERY item include:
+
+1. Recommendation number/title from Manus
+2. Current repository status
+3. Evidence
+   - file(s)
+   - route(s)
+   - documentation
+   - configuration
+4. Risk if left unchanged
+5. Suggested implementation
+6. Estimated effort
+7. Whether it affects:
+   - Apple approval
+   - Android testing
+   - Web
+   - iPhone
+   - iPad
+   - Android phone
+   - Android tablet
+8. Whether Build 97 should include it
+9. Whether it belongs in a later phase
+10. Whether founder approval is required
+
+══════════════════════════════════════
+
+I also want you to identify any recommendation Manus makes that you
+DISAGREE with.
+
+Do not silently ignore it.
+
+Instead explain:
+
+• why you disagree
+• your technical reasoning
+• risks of Manus's approach
+• risks of your approach
+• your recommended alternative
+
+══════════════════════════════════════
+
+If Manus identifies something you missed during previous audits,
+acknowledge it directly.
+
+Do not minimize it.
+
+Explain:
+
+• why it was missed
+• how future audits prevent recurrence
+• whether similar issues may exist elsewhere
+
+══════════════════════════════════════
+
+12-HOUR RELEASE MONITORING
+
+If technically possible within Replit's capabilities, I want you to
+perform continuous monitoring for the first 12 hours surrounding the
+Build 97 deployment and Apple submission.
+
+If you CAN do this:
+
+Tell me exactly:
+
+• what will be monitored
+• monitoring frequency
+• how alerts are generated
+• where logs are stored
+• what evidence will be collected
+• how regressions are detected
+• how you will determine whether Build 97 remains stable
+
+Monitor at minimum:
+
+• Railway availability
+• /api/healthz
+• /api/readyz
+• authentication
+• Apple Sign-In
+• email login
+• registration
+• database connections
+• PostgreSQL pool usage
+• API latency
+• HTTP 500 errors
+• HTTP 404 errors
+• HTTP 429 errors
+• service restarts
+• Stripe webhook failures
+• KinfolkAI failures
+• Maps
+• Heritage
+• Historical Sundown Town layer
+• Community
+• Events
+• memory usage
+• CPU
+• tablet-specific failures if observable
+
+If you CANNOT provide autonomous monitoring after I leave the session,
+say so explicitly.
+
+Do not imply monitoring is occurring if it is not.
+
+Instead provide:
+
+• exactly what prevents it
+• what automation is possible
+• what external service would be required
+• what the closest equivalent is
+
+══════════════════════════════════════
+
+Finally, answer these questions directly.
+
+1. Based on Manus's report, would YOU submit Build 97?
+
+YES
+CONDITIONAL YES
+NO
+
+2. If conditional, list the remaining blockers.
+
+3. What is the single greatest technical risk remaining?
+
+4. What is the single greatest Apple review risk remaining?
+
+5. What is the single greatest tester experience risk remaining?
+
+6. What would make you stop the release?
+
+7. What gives you confidence that this build is ready?
+
+Do not answer generally.
+
+Support every conclusion with evidence.

@@ -1,0 +1,86 @@
+Release Readiness Review: Mapping With Melanin™ Build 97
+Executive Summary
+This review evaluates Build 97 as a complete product, focusing on its ability to communicate the platform’s vision, provide a meaningful experience for 30 pilot testers, and obtain Apple approval before your tour begins in six days.
+
+Overall Recommendation: CONDITIONAL GO
+The core product is compelling and the primary technical blocker (database exhaustion) has been addressed. However, the release is currently a NO-GO until three critical “Product Integrity” fixes are applied to ensure Apple approval and a professional tester experience.
+
+
+1. The Apple Reviewer’s Perspective
+If I were the Apple reviewer, here is what I would flag for rejection in the current state of Build 97:
+
+A. Performance & Completeness (Guideline 2.1) - ACTIVE BLOCKER
+	•	Rejection Risk: The previous rejection was due to a database outage. While the fix is implemented, it has not been deployed to Railway production. If Apple reviews the app before the deployment and a manual Railway restart, they will hit the same 500 errors.
+	•	Correction: Deploy the Build 97 backend to Railway and perform a manual restart to clear the leaked connection pool immediately.
+
+B. Metadata & Config (Guideline 5.1.1) - ACTIVE BLOCKER
+	•	Rejection Risk: Your `Info.plist` contains generic template strings for Face ID and Motion detection. Apple frequently rejects apps that request permissions without a specific, user-facing explanation.
+	•	Correction: Remove `NSFaceIDUsageDescription` and `NSMotionUsageDescription` from `Info.plist` if these features are not used.
+
+C. Build Number Conflict - ACTIVE BLOCKER
+	•	Rejection Risk: App Store Connect will reject the binary upload if the `buildNumber` is not incremented from 96 to 97.
+	•	Correction: Ensure `app.json` is updated to `"buildNumber": "97"`.
+
+
+2. The Tester’s Perspective (30-Minute Experience)
+If I were one of your 30 pilot testers, here is how I would experience Build 97:
+
+
+￼
+The “Tell Someone Afterward” Factor:
+Testers will tell people: “I found an app that actually understands our community. The AI speaks my language, and the map shows heritage sites I never knew existed.”
+
+
+3. Product Vision & Feature Audit
+A. Heritage Places - SHIP NOW
+	•	Status: Fully implemented with a dedicated database schema and map integration.
+	•	Value: This is the “soul” of the app. It distinguishes Mapping With Melanin™ from a standard business directory.
+	•	Recommendation: Ensure the “View Details” deep-links work perfectly, as this is where the storytelling happens.
+
+B. Historical Sundown Towns - SHIP AS “HISTORICAL REFERENCE”
+	•	Status: Partially planned; data import not confirmed.
+	•	Risk: If shipped as a “Safety Warning,” it could trigger legal or Apple “objectionable content” flags.
+	•	Recommendation: Ship this as a read-only historical layer within the Heritage feature.
+	◦	Minimum Viable Presentation: Use the `cultural_sites` model.
+	◦	Mandatory: Include the Tougaloo College attribution and a clear disclaimer: “Historical record only. Does not reflect current safety or demographics.”
+	◦	Do NOT include any “danger scores.”
+
+C. KinfolkAI - SHIP NOW
+	•	Status: GPT-4o backed with live weather and user preference integration.
+	•	Value: This is your primary “wow” feature.
+	•	Recommendation: Monitor OpenAI costs closely during the first 48 hours of testing.
+
+D. Community Feed - SHIP NOW
+	•	Status: Functional with reporting and moderation.
+	•	Value: Provides the “social proof” that the app is alive.
+	•	Recommendation: Seed the feed with 5-10 high-quality posts before the testers arrive so they don’t see an empty screen.
+
+
+4. Prioritized Action Plan (The 6-Day Countdown)
+Day 1: Product Integrity (Immediate)
+	1.	Increment Build Number: Update `app.json` to 97.
+	2.	Clean Permissions: Remove generic strings from `Info.plist`.
+	3.	Deduplicate Android Permissions: Clean up the 9 duplicate entries in `app.json`.
+	4.	Deploy Backend: Push Build 97 fixes to Railway and Restart the Service.
+
+Day 2: Stability Window
+	1.	2-Hour Stress Test: Manually trigger Stripe webhooks and monitor DB connections.
+	2.	Readyz Check: Verify `https://www.mappingwithmelanin.com/api/readyz` returns `status: ok`.
+
+Day 3: Binary Generation & Testing
+	1.	Run EAS Build: Generate the iOS and Android binaries.
+	2.	Physical Device Test: Confirm Apple Sign-In works on a real iPhone/iPad against the production DB.
+	3.	iPad Layout Audit: Ensure the map and KinfolkAI don’t clip on the iPad Air M3 (Apple’s review device).
+
+Day 4: Submission
+	1.	Submit to Apple: Include clear review notes explaining the Heritage and KinfolkAI features.
+	2.	Submit to Android: Upload to the Google Play internal testing track.
+
+Day 5-6: Tester Onboarding
+	1.	Invite 30 Testers: Send TestFlight and Google Play Internal invites.
+	2.	Seed Content: Post the first “Welcome” messages in the Community Feed.
+
+
+Final Decision
+Is Build 97 the right release? YES.
+It communicates the vision, provides a rich experience, and solves the technical failures of Build 96. Follow the “Product Integrity” fixes above, and you are ready for a successful tour launch.
