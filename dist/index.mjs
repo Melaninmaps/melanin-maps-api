@@ -442807,11 +442807,12 @@ async function runCycle() {
   } catch {
   }
   try {
-    const st3 = await _get("/api/cultural-sites?heritageCategory=Historical+Sundown+Town&limit=1");
+    const st3 = await _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1");
     if (st3.status === 200) {
       try {
         const d2 = JSON.parse(st3.body);
-        sundownTowns = d2.length > 0 ? 200 : 0;
+        const arr = Array.isArray(d2) ? d2 : d2?.sites ?? [];
+        sundownTowns = arr.length > 0 ? 200 : 0;
       } catch {
         sundownTowns = st3.status;
       }

@@ -151,11 +151,13 @@ async function runCycle(): Promise<void> {
   try { businesses = (await _get("/api/businesses?limit=1")).status; } catch { /* err */ }
   try { culturalSites = (await _get("/api/cultural-sites?limit=1")).status; } catch { /* err */ }
   try {
-    const st = await _get("/api/cultural-sites?heritageCategory=Historical+Sundown+Town&limit=1");
+    const st = await _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1");
     if (st.status === 200) {
       try {
         const d = JSON.parse(st.body);
-        sundownTowns = d.length > 0 ? 200 : 0;
+        // Endpoint returns { sites: [...] } wrapper
+        const arr = Array.isArray(d) ? d : (d?.sites ?? []);
+        sundownTowns = arr.length > 0 ? 200 : 0;
       } catch { sundownTowns = st.status; }
     } else {
       sundownTowns = st.status;
