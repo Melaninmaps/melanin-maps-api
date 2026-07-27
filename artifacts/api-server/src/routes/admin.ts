@@ -141,10 +141,11 @@ router.get("/admin/members", async (req: Request, res: Response) => {
 
 router.patch("/admin/members/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { memberType, trialEndsAt, foundingMemberNumber } = req.body as {
+  const { memberType, trialEndsAt, foundingMemberNumber, emailVerified } = req.body as {
     memberType?: string;
     trialEndsAt?: string | null;
     foundingMemberNumber?: number | null;
+    emailVerified?: boolean;
   };
   const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral", "navigator", "trailblazer"];
   if (memberType && !VALID_TYPES.includes(memberType)) {
@@ -156,6 +157,7 @@ router.patch("/admin/members/:id", async (req: Request, res: Response) => {
     if (memberType !== undefined) setPayload.memberType = memberType;
     if (trialEndsAt !== undefined) setPayload.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
     if (foundingMemberNumber !== undefined) setPayload.foundingMemberNumber = foundingMemberNumber;
+    if (emailVerified !== undefined) setPayload.emailVerified = emailVerified;
     const [updated] = await db
       .update(usersTable)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import router from "./routes";
 import webSsrRouter from "./routes/web-ssr";
@@ -16,6 +17,14 @@ import { getHealthHistory } from "./lib/healthMonitor";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
+
+// Read SPA html once at startup — avoids sendFile path-resolution issues at runtime.
+let spaHtml: string | null = null;
+try {
+  spaHtml = readFileSync(path.join(webPublicDir, "index.html"), "utf8");
+} catch {
+  // Web app not built — web routes will 404 gracefully
+}
 
 const app: Express = express();
 
@@ -165,17 +174,18 @@ app.use(privacyRouter);
 
 // Serve the web app static files (built by build.mjs and copied to dist/public/)
 app.use(express.static(webPublicDir));
-// SPA fallback — any non-API, non-static route serves index.html so React
-// Router handles client-side navigation. Uses app.use() (no path argument)
-// to avoid Express 5 / path-to-regexp v8 wildcard matching edge cases.
+// SPA fallback — serve the cached index.html for any non-API, non-static
+// route so React Router handles client-side navigation. Reading from memory
+// avoids all sendFile / path-resolution issues at Railway runtime.
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) return next();
-  res.sendFile("index.html", { root: webPublicDir }, (err) => {
-    if (err) {
-      logger.error({ err, path: req.path, webPublicDir }, "SPA sendFile failed");
-      next(err);
-    }
-  });
+  if (spaHtml) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(spaHtml);
+  } else {
+    logger.warn({ path: req.path, webPublicDir }, "SPA index.html not loaded — web routes unavailable");
+    next();
+  }
 });
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {

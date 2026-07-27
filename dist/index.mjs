@@ -390301,6 +390301,7 @@ var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 import path6 from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
 // src/routes/index.ts
@@ -418793,7 +418794,7 @@ router24.patch("/admin/members/:id", async (req, res) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  const { memberType, trialEndsAt, foundingMemberNumber } = req.body;
+  const { memberType, trialEndsAt, foundingMemberNumber, emailVerified } = req.body;
   const VALID_TYPES3 = ["individual", "business", "founding", "beta", "business_referral", "navigator", "trailblazer"];
   if (memberType && !VALID_TYPES3.includes(memberType)) {
     res.status(400).json({ error: "Invalid memberType" });
@@ -418804,6 +418805,7 @@ router24.patch("/admin/members/:id", async (req, res) => {
     if (memberType !== void 0) setPayload.memberType = memberType;
     if (trialEndsAt !== void 0) setPayload.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
     if (foundingMemberNumber !== void 0) setPayload.foundingMemberNumber = foundingMemberNumber;
+    if (emailVerified !== void 0) setPayload.emailVerified = emailVerified;
     const [updated] = await db.update(usersTable).set(setPayload).where(sql`${usersTable.id} = ${req.params.id}`).returning();
     if (!updated) {
       res.status(404).json({ error: "User not found" });
@@ -453752,6 +453754,11 @@ function stopHealthMonitor() {
 // src/app.ts
 var _dirname = path6.dirname(fileURLToPath4(import.meta.url));
 var webPublicDir = path6.join(_dirname, "public");
+var spaHtml = null;
+try {
+  spaHtml = readFileSync(path6.join(webPublicDir, "index.html"), "utf8");
+} catch {
+}
 var app = (0, import_express144.default)();
 app.set("trust proxy", 1);
 app.get("/api/healthz", (_req, res) => {
@@ -453865,12 +453872,13 @@ app.use(privacy_default);
 app.use(import_express144.default.static(webPublicDir));
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) return next();
-  res.sendFile("index.html", { root: webPublicDir }, (err) => {
-    if (err) {
-      logger.error({ err, path: req.path, webPublicDir }, "SPA sendFile failed");
-      next(err);
-    }
-  });
+  if (spaHtml) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.send(spaHtml);
+  } else {
+    logger.warn({ path: req.path, webPublicDir }, "SPA index.html not loaded \u2014 web routes unavailable");
+    next();
+  }
 });
 app.use((err, req, res, _next) => {
   const message = err?.message ?? "Internal server error";
