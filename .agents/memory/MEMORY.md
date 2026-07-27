@@ -80,3 +80,4 @@
 - [Post-Build-95 Founder Priorities & Roadmap](post-build95-roadmap.md) — Release lock active; phase order: Android regression → language → HBCU → Android 67; HBCU map as flagship with horizontal strip + school colors/alumni/homecoming; full design pass intent; language rule is contextual not blanket.
 - [Android VC67 Build Content](android-vc67-build-content.md) — Authoritative VC67 inventory: auth fix, map fix, all post-VC66 changes, build gate checklist, pre-existing TS errors list.
 - [Launch Backlog](launch-backlog.md) — Prioritized deferred work: LC (launch-critical), PL (first post-launch), GR (growth roadmap). Status, dependencies, platform impact per item.
+- [Replit UI — no file tree + file delivery](replit-ui-no-file-tree.md) — User has NO file tree sidebar ever. Never suggest it. Only working delivery: GitHub REST API Contents PUT → share github.com blob URLs.

@@ -82,12 +82,15 @@ app.get("/api/dl", (_req: Request, res: Response) => {
   res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
 });
 app.get("/api/dl/review-package", (_req: Request, res: Response) => {
-  const filePath = path.resolve(_dirname, "../../../docs/product/releases/MWM_Build97_ReviewPackage.zip");
-  res.download(filePath, "MWM_Build97_ReviewPackage.zip", (err) => {
-    if (err && !res.headersSent) {
-      res.status(404).json({ error: "File not found" });
+  res.download(
+    "/home/runner/workspace/docs/product/releases/MWM_Build97_ReviewPackage.zip",
+    "MWM_Build97_ReviewPackage.zip",
+    (err) => {
+      if (err && !res.headersSent) {
+        res.status(500).json({ error: String(err) });
+      }
     }
-  });
+  );
 });
 
 app.use(
