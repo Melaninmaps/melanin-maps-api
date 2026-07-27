@@ -453956,15 +453956,38 @@ app.use("/api", routes_default);
 app.use(web_ssr_default);
 app.use(privacy_default);
 app.use(import_express144.default.static(spaServeDir));
-app.use((req, res, next) => {
-  if (req.path.startsWith("/api/")) return next();
-  if (spaHtml) {
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(spaHtml);
+var serveSpa = (_req, res, next) => {
+  const html = spaHtml && spaHtml.length > 100 ? spaHtml : SPA_HTML;
+  if (html && html.length > 100) {
+    res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(html);
   } else {
-    logger.warn({ path: req.path, webPublicDir, webStaticDir }, "SPA index.html not loaded \u2014 web routes unavailable");
     next();
   }
+};
+var SPA_EXPLICIT = [
+  "/login",
+  "/signup",
+  "/admin",
+  "/forgot-password",
+  "/reset-password",
+  "/membership",
+  "/map",
+  "/discover",
+  "/community",
+  "/profile",
+  "/settings",
+  "/onboarding",
+  "/business",
+  "/privacy-policy",
+  "/about"
+];
+for (const p of SPA_EXPLICIT) {
+  app.get(p, serveSpa);
+  app.get(`${p}/*path`, serveSpa);
+}
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) return next();
+  serveSpa(req, res, next);
 });
 app.use((err, req, res, _next) => {
   const message = err?.message ?? "Internal server error";

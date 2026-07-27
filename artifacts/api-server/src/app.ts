@@ -196,18 +196,35 @@ app.use(privacyRouter);
 
 // Serve the web app static files from whichever dir has index.html
 app.use(express.static(spaServeDir));
-// SPA fallback — serve the cached index.html for any non-API, non-static
-// route so React Router handles client-side navigation. Reading from memory
-// avoids all sendFile / path-resolution issues at Railway runtime.
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path.startsWith("/api/")) return next();
-  if (spaHtml) {
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(spaHtml);
+
+// SPA fallback handler — reused for explicit routes and catch-all.
+// spaHtml is always a non-empty string: either a file-system read or the
+// HTML embedded in the bundle by build.mjs. Guard against empty string.
+const serveSpa = (_req: Request, res: Response, next: NextFunction): void => {
+  const html = spaHtml && spaHtml.length > 100 ? spaHtml : BUNDLED_SPA_HTML;
+  if (html && html.length > 100) {
+    res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(html);
   } else {
-    logger.warn({ path: req.path, webPublicDir, webStaticDir }, "SPA index.html not loaded — web routes unavailable");
     next();
   }
+};
+
+// Explicit routes for common SPA paths registered BEFORE the catch-all —
+// belt-and-suspenders in case the wildcard doesn't fire in this Express 5 build.
+const SPA_EXPLICIT = [
+  "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
+  "/membership", "/map", "/discover", "/community", "/profile",
+  "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
+];
+for (const p of SPA_EXPLICIT) {
+  app.get(p, serveSpa);
+  app.get(`${p}/*path`, serveSpa);
+}
+
+// Catch-all: any remaining non-API route serves the SPA
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith("/api/")) return next();
+  serveSpa(req, res, next);
 });
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
