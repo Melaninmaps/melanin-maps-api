@@ -58,6 +58,14 @@ async function initStripe() {
     warnings.push("WMATA_API_KEY — DC Metro transit data will be unavailable.");
   }
 
+  // Apple Sign-In requires four env vars for new-user authorization-code exchange.
+  // If any is missing, new Apple registrations return HTTP 500 — an instant App Store rejection.
+  const appleVars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const missingApple = appleVars.filter((v) => !process.env[v]);
+  if (missingApple.length > 0) {
+    warnings.push(`Apple Sign-In INCOMPLETE — missing Railway vars: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
+  }
+
   if (warnings.length > 0) {
     logger.warn("⚠️  Missing environment configuration:");
     for (const w of warnings) {
@@ -117,7 +125,7 @@ function gracefulShutdown(signal: string) {
     logger.info("HTTP server closed. Draining DB pools…");
     stopHealthMonitor();
     try {
-      // Drain the app's own pool (max:5) first.
+      // Drain the app's own pool (max:8) first.
       await pool.end();
       logger.info({ pool: getPoolStats() }, "App DB pool drained.");
       // Drain the StripeSync internal pool (max:2) — previously leaked on every

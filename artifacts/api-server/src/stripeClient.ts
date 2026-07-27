@@ -77,7 +77,7 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
 // racing through this function all receive the same promise — no double-init.
 //
 // Pool size is reduced from the stripe-replit-sync default of 10 to 2.
-// Combined live connections: app pool (5) + stripe pool (2) = 7 max.
+// Combined live connections: app pool (8) + stripe pool (2) = 10 max.
 // ──────────────────────────────────────────────────────────────────────────────
 
 let _stripeSyncPromise: Promise<StripeSync> | null = null;
@@ -107,7 +107,13 @@ async function _createStripeSync(): Promise<StripeSync> {
  */
 export function getStripeSync(): Promise<StripeSync> {
   if (!_stripeSyncPromise) {
-    _stripeSyncPromise = _createStripeSync();
+    // Assign synchronously before any await so concurrent callers share the same promise.
+    // On failure: clear the cached promise so the next call can retry (prevents a permanently
+    // broken singleton if initial credential fetch or pool creation fails transiently).
+    _stripeSyncPromise = _createStripeSync().catch((err) => {
+      _stripeSyncPromise = null;
+      throw err;
+    });
   }
   return _stripeSyncPromise;
 }

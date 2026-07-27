@@ -145,7 +145,7 @@ router.patch("/admin/members/:id", async (req: Request, res: Response) => {
     trialEndsAt?: string | null;
     foundingMemberNumber?: number | null;
   };
-  const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral"];
+  const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral", "navigator", "trailblazer"];
   if (memberType && !VALID_TYPES.includes(memberType)) {
     res.status(400).json({ error: "Invalid memberType" }); return;
   }
@@ -996,7 +996,7 @@ router.get("/admin/health", async (req: Request, res: Response) => {
     checks: { rawSql, drizzle, rawSqlMs, drizzleMs },
     uptimeSeconds: Math.floor(process.uptime()),
     checkedAt,
-    poolConfig: { max: 5, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
+    poolConfig: { max: 8, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
     loadTestBaseline: {
       concurrentRequests: 50,
       successRate: "50/50",

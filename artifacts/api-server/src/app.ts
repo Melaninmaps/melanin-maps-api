@@ -11,7 +11,8 @@ import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
 import { generalLimiter } from "./middleware/rateLimiter";
-import { pool, getPoolStats } from "@workspace/db";
+import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
+import { getHealthHistory } from "./lib/healthMonitor";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -49,12 +50,12 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   // by concurrent queries while new connections can still be created (total<max).
   // Requiring waiting>0 as a third condition means we only fast-fail when
   // callers are genuinely being delayed, not just when connections are busy.
-  if (preStats.idle === 0 && preStats.total >= 8 && preStats.waiting > 0) {
+  if (preStats.idle === 0 && preStats.total >= POOL_MAX && preStats.waiting > 0) {
     res.status(503).json({
       status: "degraded",
       db: "pool_exhausted",
       pool: preStats,
-      detail: `Pool at capacity (total=${preStats.total}/8, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
+      detail: `Pool at capacity (total=${preStats.total}/${POOL_MAX}, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
     });
     return;
   }
@@ -72,25 +73,21 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   }
 });
 
-// 12-hour health history — evidence for Part 5 (Apple rejection-prevention review).
-// Returns the in-memory ring buffer of all health check results since last startup.
+// 12-hour health history — evidence ring buffer for operational review.
+// Returns results since last process startup.
 app.get("/api/readyz/history", (_req: Request, res: Response) => {
-  const { getHealthHistory } = require("./lib/healthMonitor") as typeof import("./lib/healthMonitor");
   res.json(getHealthHistory());
 });
-app.get("/api/dl", (_req: Request, res: Response) => {
-  res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
-});
-app.get("/api/dl/review-package", (_req: Request, res: Response) => {
-  res.download(
-    "/home/runner/workspace/docs/product/releases/MWM_Build97_ReviewPackage.zip",
-    "MWM_Build97_ReviewPackage.zip",
-    (err) => {
-      if (err && !res.headersSent) {
-        res.status(500).json({ error: String(err) });
-      }
-    }
-  );
+
+// Version / build identity — used to confirm Railway is running the expected artifact.
+// Returns only public build metadata; never exposes secrets, paths, or config.
+app.get("/api/version", (_req: Request, res: Response) => {
+  res.json({
+    sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
+    deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
+    release: "Build-97",
+    env: process.env.NODE_ENV ?? "unknown",
+  });
 });
 
 app.use(

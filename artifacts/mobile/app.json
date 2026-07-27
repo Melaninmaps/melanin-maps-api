@@ -1,0 +1,174 @@
+{
+  "expo": {
+    "name": "Mapping With Melanin",
+    "slug": "mobile",
+    "version": "1.1.5",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "mappingwithmelanin",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.melaninmaps.app",
+      "buildNumber": "97",
+      "associatedDomains": [
+        "applinks:mappingwithmelanin.com"
+      ],
+      "entitlements": {
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIRequiresFullScreen": true,
+        "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
+        "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
+        "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves photos to your library.",
+        "NSUserNotificationsUsageDescription": "Mapping With Melanin sends notifications about nearby businesses, community safety alerts, and activity in your circles.",
+        "NSPrivacyAccessedAPICategoryUserDefaults": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "package": "com.melaninmaps.app",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "mappingwithmelanin.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "monochromeImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#C4622D"
+      },
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.INTERNET",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
+      "versionCode": 71
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "./plugins/withRnMapsPodfileFix",
+      "./plugins/withAndroidCrashLogger",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#C4622D",
+          "image": "./assets/images/splash.png",
+          "resizeMode": "contain",
+          "android": {
+            "backgroundColor": "#C4622D",
+            "resizeMode": "contain"
+          }
+        }
+      ],
+      [
+        "expo-router",
+        {
+          "origin": "https://mappingwithmelanin.com/"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#CA922B",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Mapping With Melanin would like to find friends who are already on the platform."
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Mapping With Melanin uses your microphone so you can send voice messages to Kinfolk AI."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
+          "cameraPermission": "Mapping With Melanin uses your camera so you can update your profile photo."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          },
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      "./plugins/withChromebookSupport",
+      "./plugins/withAudioFrameworks"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0f873107-7787-46ab-9a04-685c2a6756b1"
+      }
+    },
+    "owner": "tlindsay428",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0f873107-7787-46ab-9a04-685c2a6756b1"
+    }
+  }
+}

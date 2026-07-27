@@ -61222,6 +61222,7 @@ __export(src_exports, {
   INSIGHT_JOURNALS: () => INSIGHT_JOURNALS,
   INTENTS: () => INTENTS,
   POINTS_VALUES: () => POINTS_VALUES,
+  POOL_MAX: () => POOL_MAX,
   REDEMPTION_REWARDS: () => REDEMPTION_REWARDS,
   ROUTING_TYPES: () => ROUTING_TYPES,
   SAFETY_REPORT_CATEGORIES: () => SAFETY_REPORT_CATEGORIES,
@@ -61521,10 +61522,12 @@ function getPool() {
       connectionTimeoutMillis: 1e4,
       // ─── Pool size ────────────────────────────────────────────────────────
       // 1 Railway replica confirmed (numReplicas: null → default 1).
-      // Total live DB connections = max × replicas = 5 × 1 = 5.
-      // Load-tested at 30 concurrent requests: zero failures, max 0.98s.
+      // Total live DB connections: app pool (8) + StripeSync pool (2) = 10.
+      // Load-tested at 30 concurrent requests: 100% success, p95 489ms.
+      // Increased from 5→8 after measuring peak waiting=12 at 141 req/sec
+      // abuse load; realistic 30-user traffic (10–15 req/sec) never saturates.
       // Revisit if probe reports sustained waitingCount > 2.
-      max: 5,
+      max: POOL_MAX,
       // ─── Query / statement timeouts ───────────────────────────────────────
       // statement_timeout: PostgreSQL cancels any query running longer
       // than this and releases the connection.
@@ -61590,7 +61593,7 @@ function getPoolStats() {
     waiting: p.waitingCount
   };
 }
-var Pool3, _logger, _pool, _db, pool, db;
+var Pool3, _logger, POOL_MAX, _pool, _db, pool, db;
 var init_src = __esm({
   "../../lib/db/src/index.ts"() {
     "use strict";
@@ -61610,6 +61613,7 @@ var init_src = __esm({
         JSON.stringify({ msg: msg ?? "[db-pool]", ...typeof data === "object" ? data : { detail: data } })
       )
     };
+    POOL_MAX = 8;
     _pool = null;
     _db = null;
     pool = new Proxy({}, {
@@ -396072,6 +396076,40 @@ init_bcryptjs();
 import crypto5 from "crypto";
 init_src();
 
+// src/lib/db-retry.ts
+var TRANSIENT_NODE_CODES = /* @__PURE__ */ new Set([
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENOTFOUND",
+  "EPIPE"
+]);
+function isTransientDbError(err) {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message ?? "";
+  const code = err.code ?? "";
+  if (TRANSIENT_NODE_CODES.has(code)) return true;
+  if (msg.includes("timeout exceeded when trying to connect")) return true;
+  if (msg.includes("Connection terminated unexpectedly")) return true;
+  if (msg.includes("Client was closed and is not queryable")) return true;
+  if (msg.includes("connect ECONNRESET")) return true;
+  if (msg.includes("connect ETIMEDOUT")) return true;
+  return false;
+}
+async function withDbRetry(fn3, log2, context) {
+  try {
+    return await fn3();
+  } catch (firstErr) {
+    if (!isTransientDbError(firstErr)) throw firstErr;
+    const errMsg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+    log2.warn({ context, error: errMsg }, "transient DB connection error \u2014 retrying in 500ms");
+    await new Promise((resolve3) => setTimeout(resolve3, 500));
+    log2.info({ context }, "DB retry attempt");
+    return await fn3();
+  }
+}
+
 // src/lib/auth.ts
 init_src();
 init_drizzle_orm();
@@ -396578,7 +396616,11 @@ router2.get("/auth/check-username", async (req, res) => {
     return;
   }
   try {
-    const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username)).limit(1);
+    const [existing] = await withDbRetry(
+      () => db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, username)).limit(1),
+      req.log,
+      "GET /auth/check-username"
+    );
     res.json({ available: !existing });
   } catch (err) {
     req.log.error({ err }, "GET /api/auth/check-username error");
@@ -396647,65 +396689,67 @@ router2.post("/auth/register", async (req, res) => {
     return;
   }
   try {
-    const cleanEmail = email3.trim().toLowerCase();
-    const emailMasked = maskEmail(cleanEmail);
-    const [existingEmail, existingUsername, passwordHash] = await Promise.all([
-      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1).then((r2) => r2[0]),
-      db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then((r2) => r2[0]),
-      bcryptjs_default.hash(password, 8)
-    ]);
-    if (existingEmail) {
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_DUPLICATE_EMAIL", emailMasked, status: 409, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(409).json({ error: "An account with this exact email address already exists. Try signing in instead, or use a different email." });
-      return;
-    }
-    if (existingUsername) {
-      res.status(409).json({ error: "That @username is already taken \u2014 please choose a different one. Your email address is fine." });
-      return;
-    }
-    const referralCode = crypto5.randomBytes(4).toString("hex").toUpperCase();
-    const [user] = await db.insert(usersTable).values({
-      email: cleanEmail,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      username: cleanUsername,
-      passwordHash,
-      emailVerified: false,
-      approved: true,
-      agreeToTerms: true,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : void 0,
-      referralCode
-    }).returning();
-    req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
-    sendWelcomeEmail(user.email, user.firstName).catch(() => {
-    });
-    const sessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role
-      },
-      access_token: ""
-    };
-    const sid = await createSession(sessionData);
-    let responseFinished = false;
-    res.on("finish", () => {
-      responseFinished = true;
-      req.log.info({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_SENT", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
-    });
-    res.on("close", () => {
-      if (!responseFinished) {
-        req.log.warn({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_ABORTED_OR_FAILED", emailMasked, durationMs: Date.now() - t0 }, "auth diagnostic");
+    await withDbRetry(async () => {
+      const cleanEmail = email3.trim().toLowerCase();
+      const emailMasked = maskEmail(cleanEmail);
+      const [existingEmail, existingUsername, passwordHash] = await Promise.all([
+        db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1).then((r2) => r2[0]),
+        db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.username, cleanUsername)).limit(1).then((r2) => r2[0]),
+        bcryptjs_default.hash(password, 8)
+      ]);
+      if (existingEmail) {
+        req.log.info({ ...diagBase, event: "AUTH_REGISTER_DUPLICATE_EMAIL", emailMasked, status: 409, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(409).json({ error: "An account with this exact email address already exists. Try signing in instead, or use a different email." });
+        return;
       }
-    });
-    res.status(201).json({
-      token: sid,
-      user: { id: user.id, firstName: user.firstName, username: user.username }
-    });
+      if (existingUsername) {
+        res.status(409).json({ error: "That @username is already taken \u2014 please choose a different one. Your email address is fine." });
+        return;
+      }
+      const referralCode = crypto5.randomBytes(4).toString("hex").toUpperCase();
+      const [user] = await db.insert(usersTable).values({
+        email: cleanEmail,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        username: cleanUsername,
+        passwordHash,
+        emailVerified: false,
+        approved: true,
+        agreeToTerms: true,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : void 0,
+        referralCode
+      }).returning();
+      req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+      sendWelcomeEmail(user.email, user.firstName).catch(() => {
+      });
+      const sessionData = {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileImageUrl: user.profileImageUrl,
+          approved: user.approved,
+          role: user.role
+        },
+        access_token: ""
+      };
+      const sid = await createSession(sessionData);
+      let responseFinished = false;
+      res.on("finish", () => {
+        responseFinished = true;
+        req.log.info({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_SENT", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+      });
+      res.on("close", () => {
+        if (!responseFinished) {
+          req.log.warn({ ...diagBase, event: "AUTH_REGISTER_RESPONSE_ABORTED_OR_FAILED", emailMasked, durationMs: Date.now() - t0 }, "auth diagnostic");
+        }
+      });
+      res.status(201).json({
+        token: sid,
+        user: { id: user.id, firstName: user.firstName, username: user.username }
+      });
+    }, req.log, "POST /auth/register");
   } catch (err) {
     req.log.error({ ...diagBase, err, event: "AUTH_REGISTER_ERROR", durationMs: Date.now() - t0 }, "POST /api/auth/register error");
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -396728,66 +396772,68 @@ router2.post("/auth/login-email", async (req, res) => {
   const cleanEmail = email3.trim().toLowerCase();
   const emailMasked = maskEmail(cleanEmail);
   try {
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1);
-    if (!user) {
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_USER_NOT_FOUND", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({ error: "Invalid email or password." });
-      return;
-    }
-    if (!user.passwordHash) {
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_NO_PASSWORD_HASH", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({
-        error: "This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.",
-        error_code: "NO_PASSWORD"
-      });
-      return;
-    }
-    if (user.lockedUntil && user.lockedUntil > /* @__PURE__ */ new Date()) {
-      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 6e4);
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_LOCKED", emailMasked, lockedUntilIso: user.lockedUntil.toISOString(), minutesLeft, status: 423, durationMs: Date.now() - t0 }, "auth diagnostic");
-      void logAuthEvent(user.id, "AUTH_LOCKED_ATTEMPT", req.ip ?? null, diagBase.ua);
-      res.status(423).json({
-        error: `Too many failed attempts. Your account is locked for ${minutesLeft} more minute${minutesLeft !== 1 ? "s" : ""}. Use "Forgot password?" to unlock immediately.`,
-        locked_until: user.lockedUntil.toISOString()
-      });
-      return;
-    }
-    const valid = await bcryptjs_default.compare(password, user.passwordHash);
-    if (!valid) {
-      const newCount = (user.failedLoginAttempts ?? 0) + 1;
-      let lockedUntil = null;
-      if (newCount >= 20) {
-        lockedUntil = new Date(Date.now() + 60 * 60 * 1e3);
-      } else if (newCount >= 10) {
-        lockedUntil = new Date(Date.now() + 15 * 60 * 1e3);
+    await withDbRetry(async () => {
+      const [user] = await db.select().from(usersTable).where(eq(usersTable.email, cleanEmail)).limit(1);
+      if (!user) {
+        req.log.warn({ ...diagBase, event: "AUTH_LOGIN_USER_NOT_FOUND", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(401).json({ error: "Invalid email or password." });
+        return;
       }
-      await db.update(usersTable).set({
-        failedLoginAttempts: newCount,
-        ...lockedUntil !== null ? { lockedUntil } : {}
-      }).where(eq(usersTable.id, user.id));
-      const lockEvent = lockedUntil ? "AUTH_LOCKOUT_TRIGGERED" : "AUTH_LOGIN_FAILURE";
-      void logAuthEvent(user.id, lockEvent, req.ip ?? null, diagBase.ua, { failedAttempts: newCount });
-      req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, failedAttempts: newCount, locked: !!lockedUntil, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
-      res.status(401).json({ error: "Invalid email or password." });
-      return;
-    }
-    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
-    void logAuthEvent(user.id, "AUTH_LOGIN_SUCCESS", req.ip ?? null, diagBase.ua);
-    const sessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role
-      },
-      access_token: ""
-    };
-    const sid = await createSession(sessionData);
-    req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
-    res.json({ token: sid });
+      if (!user.passwordHash) {
+        req.log.warn({ ...diagBase, event: "AUTH_LOGIN_NO_PASSWORD_HASH", emailMasked, hasPasswordHash: false, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(401).json({
+          error: "This account does not have an email password set up yet. Try the sign-in method you originally used, or choose Forgot Password to create one.",
+          error_code: "NO_PASSWORD"
+        });
+        return;
+      }
+      if (user.lockedUntil && user.lockedUntil > /* @__PURE__ */ new Date()) {
+        const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 6e4);
+        req.log.warn({ ...diagBase, event: "AUTH_LOGIN_LOCKED", emailMasked, lockedUntilIso: user.lockedUntil.toISOString(), minutesLeft, status: 423, durationMs: Date.now() - t0 }, "auth diagnostic");
+        void logAuthEvent(user.id, "AUTH_LOCKED_ATTEMPT", req.ip ?? null, diagBase.ua);
+        res.status(423).json({
+          error: `Too many failed attempts. Your account is locked for ${minutesLeft} more minute${minutesLeft !== 1 ? "s" : ""}. Use "Forgot password?" to unlock immediately.`,
+          locked_until: user.lockedUntil.toISOString()
+        });
+        return;
+      }
+      const valid = await bcryptjs_default.compare(password, user.passwordHash);
+      if (!valid) {
+        const newCount = (user.failedLoginAttempts ?? 0) + 1;
+        let lockedUntil = null;
+        if (newCount >= 20) {
+          lockedUntil = new Date(Date.now() + 60 * 60 * 1e3);
+        } else if (newCount >= 10) {
+          lockedUntil = new Date(Date.now() + 15 * 60 * 1e3);
+        }
+        await db.update(usersTable).set({
+          failedLoginAttempts: newCount,
+          ...lockedUntil !== null ? { lockedUntil } : {}
+        }).where(eq(usersTable.id, user.id));
+        const lockEvent = lockedUntil ? "AUTH_LOCKOUT_TRIGGERED" : "AUTH_LOGIN_FAILURE";
+        void logAuthEvent(user.id, lockEvent, req.ip ?? null, diagBase.ua, { failedAttempts: newCount });
+        req.log.warn({ ...diagBase, event: "AUTH_LOGIN_PASSWORD_MISMATCH", emailMasked, hasPasswordHash: true, failedAttempts: newCount, locked: !!lockedUntil, status: 401, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(401).json({ error: "Invalid email or password." });
+        return;
+      }
+      await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
+      void logAuthEvent(user.id, "AUTH_LOGIN_SUCCESS", req.ip ?? null, diagBase.ua);
+      const sessionData = {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileImageUrl: user.profileImageUrl,
+          approved: user.approved,
+          role: user.role
+        },
+        access_token: ""
+      };
+      const sid = await createSession(sessionData);
+      req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
+      res.json({ token: sid });
+    }, req.log, "POST /auth/login-email");
   } catch (err) {
     const pool3 = getPoolStats();
     req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool: pool3 }, "POST /api/auth/login-email error");
@@ -396886,7 +396932,9 @@ router2.post("/auth/reset-password", async (req, res) => {
   }
 });
 async function verifyAppleToken(identityToken, rawNonce) {
-  const res = await fetch("https://appleid.apple.com/auth/keys");
+  const res = await fetch("https://appleid.apple.com/auth/keys", {
+    signal: AbortSignal.timeout(8e3)
+  });
   const { keys } = await res.json();
   const [headerB64] = identityToken.split(".");
   const header = JSON.parse(Buffer.from(headerB64, "base64url").toString());
@@ -396914,115 +396962,117 @@ router2.post("/auth/apple", async (req, res) => {
     return;
   }
   try {
-    const payload = await verifyAppleToken(identityToken, nonce);
-    const sub = payload.sub;
-    const verifiedEmail = email3 || payload.email;
-    let [user] = await db.select().from(usersTable).where(eq(usersTable.appleId, sub)).limit(1);
-    if (!user && verifiedEmail) {
-      const [byEmail] = await db.select().from(usersTable).where(ilike(usersTable.email, verifiedEmail)).limit(1);
-      if (byEmail) {
-        await db.update(usersTable).set({ appleId: sub }).where(eq(usersTable.id, byEmail.id));
-        user = { ...byEmail, appleId: sub };
+    await withDbRetry(async () => {
+      const payload = await verifyAppleToken(identityToken, nonce);
+      const sub = payload.sub;
+      const verifiedEmail = email3 || payload.email;
+      let [user] = await db.select().from(usersTable).where(eq(usersTable.appleId, sub)).limit(1);
+      if (!user && verifiedEmail) {
+        const [byEmail] = await db.select().from(usersTable).where(ilike(usersTable.email, verifiedEmail)).limit(1);
+        if (byEmail) {
+          await db.update(usersTable).set({ appleId: sub }).where(eq(usersTable.id, byEmail.id));
+          user = { ...byEmail, appleId: sub };
+        }
       }
-    }
-    const isNewUser = !user;
-    const APPLE_CLIENT_ID = "com.melaninmaps.app";
-    const appleSecretsConfigured = !!(process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY && process.env.APPLE_TOKEN_ENCRYPTION_KEY);
-    let encryptedRefreshToken = null;
-    if (authorizationCode && appleSecretsConfigured) {
-      try {
-        const privateKey = process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, "\n");
-        const clientSecret = generateClientSecret(
-          process.env.APPLE_TEAM_ID,
-          process.env.APPLE_KEY_ID,
-          privateKey,
-          APPLE_CLIENT_ID
-        );
-        const { refreshToken } = await exchangeAuthCode(authorizationCode, APPLE_CLIENT_ID, clientSecret);
-        encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY);
-        req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
-      } catch (exchErr) {
-        const msg = exchErr instanceof Error ? exchErr.message : "";
-        const isNetworkErr = !msg.includes("appleError=");
-        const baseEvent = isNetworkErr ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR" : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
-        const KNOWN_APPLE_ERRORS = /* @__PURE__ */ new Set([
-          "invalid_client",
-          "invalid_grant",
-          "invalid_request",
-          "invalid_scope",
-          "unauthorized_client",
-          "unsupported_grant_type",
-          "access_denied"
-        ]);
-        const httpMatch = msg.match(/HTTP (\d+)/);
-        const errMatch = msg.match(/appleError=(\S+)/);
-        const appleHttpStatus = httpMatch ? parseInt(httpMatch[1], 10) : null;
-        const rawErrCode = errMatch ? errMatch[1] : "unknown";
-        const appleErrorCode = KNOWN_APPLE_ERRORS.has(rawErrCode) ? rawErrCode : "unknown";
-        if (isNewUser) {
+      const isNewUser = !user;
+      const APPLE_CLIENT_ID = "com.melaninmaps.app";
+      const appleSecretsConfigured = !!(process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY && process.env.APPLE_TOKEN_ENCRYPTION_KEY);
+      let encryptedRefreshToken = null;
+      if (authorizationCode && appleSecretsConfigured) {
+        try {
+          const privateKey = process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, "\n");
+          const clientSecret = generateClientSecret(
+            process.env.APPLE_TEAM_ID,
+            process.env.APPLE_KEY_ID,
+            privateKey,
+            APPLE_CLIENT_ID
+          );
+          const { refreshToken } = await exchangeAuthCode(authorizationCode, APPLE_CLIENT_ID, clientSecret);
+          encryptedRefreshToken = encryptToken(refreshToken, process.env.APPLE_TOKEN_ENCRYPTION_KEY);
+          req.log.info({ event: "APPLE_TOKEN_EXCHANGED", isNewUser }, "Apple authorization code exchanged and encrypted");
+        } catch (exchErr) {
+          const msg = exchErr instanceof Error ? exchErr.message : "";
+          const isNetworkErr = !msg.includes("appleError=");
+          const baseEvent = isNetworkErr ? "APPLE_TOKEN_EXCHANGE_NETWORK_ERROR" : "APPLE_TOKEN_EXCHANGE_APPLE_REJECTED";
+          const KNOWN_APPLE_ERRORS = /* @__PURE__ */ new Set([
+            "invalid_client",
+            "invalid_grant",
+            "invalid_request",
+            "invalid_scope",
+            "unauthorized_client",
+            "unsupported_grant_type",
+            "access_denied"
+          ]);
+          const httpMatch = msg.match(/HTTP (\d+)/);
+          const errMatch = msg.match(/appleError=(\S+)/);
+          const appleHttpStatus = httpMatch ? parseInt(httpMatch[1], 10) : null;
+          const rawErrCode = errMatch ? errMatch[1] : "unknown";
+          const appleErrorCode = KNOWN_APPLE_ERRORS.has(rawErrCode) ? rawErrCode : "unknown";
+          if (isNewUser) {
+            req.log.warn(
+              { event: baseEvent, appleHttpStatus, appleErrorCode },
+              "Apple token exchange failed \u2014 blocking new account creation"
+            );
+            res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
+            return;
+          }
           req.log.warn(
             { event: baseEvent, appleHttpStatus, appleErrorCode },
-            "Apple token exchange failed \u2014 blocking new account creation"
+            "Apple token exchange failed for existing user \u2014 sign-in continues without token refresh"
           );
-          res.status(401).json({ error: "Apple authorization could not be verified. Please try Sign in with Apple again." });
-          return;
         }
-        req.log.warn(
-          { event: baseEvent, appleHttpStatus, appleErrorCode },
-          "Apple token exchange failed for existing user \u2014 sign-in continues without token refresh"
-        );
+      } else if (isNewUser && !authorizationCode) {
+        req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "New Apple account without authorization code \u2014 old app build, blocking creation");
+        res.status(400).json({ error: "Sign in with Apple requires an authorization code. Please try again." });
+        return;
+      } else if (isNewUser && !appleSecretsConfigured) {
+        req.log.error({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured \u2014 cannot create new account");
+        res.status(500).json({ error: "Apple Sign-In is temporarily unavailable. Please try again later." });
+        return;
+      } else if (!authorizationCode) {
+        req.log.info({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "Existing user sign-in without authorization code \u2014 legacy app version");
+      } else {
+        req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured \u2014 existing user sign-in continues without token storage");
       }
-    } else if (isNewUser && !authorizationCode) {
-      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "New Apple account without authorization code \u2014 old app build, blocking creation");
-      res.status(400).json({ error: "Sign in with Apple requires an authorization code. Please try again." });
-      return;
-    } else if (isNewUser && !appleSecretsConfigured) {
-      req.log.error({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured \u2014 cannot create new account");
-      res.status(500).json({ error: "Apple Sign-In is temporarily unavailable. Please try again later." });
-      return;
-    } else if (!authorizationCode) {
-      req.log.info({ event: "APPLE_TOKEN_EXCHANGE_LEGACY_NO_CODE" }, "Existing user sign-in without authorization code \u2014 legacy app version");
-    } else {
-      req.log.warn({ event: "APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR" }, "Apple credentials not configured \u2014 existing user sign-in continues without token storage");
-    }
-    if (!user) {
-      const cleanFirst = firstName?.trim() || "Apple";
-      const cleanLast = lastName?.trim() || "User";
-      const baseUsername = `${cleanFirst}${cleanLast}`.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
-      const uniqueUsername = `${baseUsername}${String(Math.floor(Math.random() * 9e3 + 1e3))}`;
-      const [created] = await db.insert(usersTable).values({
-        firstName: cleanFirst,
-        lastName: cleanLast,
-        email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
-        username: uniqueUsername,
-        appleId: sub,
-        approved: true,
-        agreeToTerms: true,
-        ...encryptedRefreshToken ? { appleRefreshToken: encryptedRefreshToken } : {}
-      }).returning();
-      user = created;
-    } else if (encryptedRefreshToken) {
-      await db.update(usersTable).set({ appleRefreshToken: encryptedRefreshToken }).where(eq(usersTable.id, user.id));
-    }
-    if (!user.approved) {
-      res.status(403).json({ error: "Your account is pending approval." });
-      return;
-    }
-    await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
-    const sessionData = {
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        approved: user.approved,
-        role: user.role
-      },
-      access_token: ""
-    };
-    const sid = await createSession(sessionData);
-    res.json({ token: sid, profileSetupComplete: user.profileSetupComplete ?? false });
+      if (!user) {
+        const cleanFirst = firstName?.trim() || "Apple";
+        const cleanLast = lastName?.trim() || "User";
+        const baseUsername = `${cleanFirst}${cleanLast}`.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20) || "user";
+        const uniqueUsername = `${baseUsername}${String(Math.floor(Math.random() * 9e3 + 1e3))}`;
+        const [created] = await db.insert(usersTable).values({
+          firstName: cleanFirst,
+          lastName: cleanLast,
+          email: verifiedEmail ?? `apple_${sub}@melaninmaps.internal`,
+          username: uniqueUsername,
+          appleId: sub,
+          approved: true,
+          agreeToTerms: true,
+          ...encryptedRefreshToken ? { appleRefreshToken: encryptedRefreshToken } : {}
+        }).returning();
+        user = created;
+      } else if (encryptedRefreshToken) {
+        await db.update(usersTable).set({ appleRefreshToken: encryptedRefreshToken }).where(eq(usersTable.id, user.id));
+      }
+      if (!user.approved) {
+        res.status(403).json({ error: "Your account is pending approval." });
+        return;
+      }
+      await db.update(usersTable).set({ failedLoginAttempts: 0, lockedUntil: null }).where(eq(usersTable.id, user.id));
+      const sessionData = {
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileImageUrl: user.profileImageUrl,
+          approved: user.approved,
+          role: user.role
+        },
+        access_token: ""
+      };
+      const sid = await createSession(sessionData);
+      res.json({ token: sid, profileSetupComplete: user.profileSetupComplete ?? false });
+    }, req.log, "POST /auth/apple");
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/apple error");
     res.status(500).json({ error: "Apple Sign-In failed. Please try again." });
@@ -397078,6 +397128,19 @@ router2.post("/auth/unsubscribe", async (req, res) => {
     req.log.error({ err }, "POST /api/auth/unsubscribe error");
     res.status(500).json({ error: "Failed to process unsubscribe request." });
   }
+});
+router2.get("/auth/apple/config-check", (req, res) => {
+  if (!isAdminReq(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const vars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const result = {};
+  for (const v7 of vars) {
+    result[v7] = !!process.env[v7];
+  }
+  const allPresent = vars.every((v7) => !!process.env[v7]);
+  res.json({ allPresent, vars: result });
 });
 var auth_default = router2;
 
@@ -398993,101 +399056,103 @@ function isAdmin(req) {
 }
 router4.get("/businesses", async (req, res) => {
   try {
-    const { category, search, state, handle, culturalPreference, ownership } = req.query;
-    const conditions = [];
-    if (category && typeof category === "string" && category !== "All") {
-      conditions.push(eq(businessesTable.category, category));
-    }
-    if (ownership && typeof ownership === "string") {
-      if (ownership === "black-owned") {
-        conditions.push(eq(businessesTable.blackOwned, true));
-      } else {
-        conditions.push(
-          sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
-        );
+    await withDbRetry(async () => {
+      const { category, search, state, handle, culturalPreference, ownership } = req.query;
+      const conditions = [];
+      if (category && typeof category === "string" && category !== "All") {
+        conditions.push(eq(businessesTable.category, category));
       }
-    }
-    if (search && typeof search === "string") {
-      conditions.push(
-        or(
-          ilike(businessesTable.name, `%${search}%`),
-          ilike(businessesTable.city, `%${search}%`),
-          ilike(businessesTable.category, `%${search}%`),
-          ilike(businessesTable.description, `%${search}%`)
-        )
-      );
-    }
-    if (state && typeof state === "string") {
-      conditions.push(ilike(businessesTable.state, `%${state}%`));
-    }
-    if (handle && typeof handle === "string") {
-      const h3 = handle.replace(/^@/, "");
-      conditions.push(
-        or(
-          ilike(businessesTable.instagram, `%${h3}%`),
-          ilike(businessesTable.tiktok, `%${h3}%`),
-          ilike(businessesTable.twitter, `%${h3}%`),
-          ilike(businessesTable.facebook, `%${h3}%`)
-        )
-      );
-    }
-    const businesses = await db.select().from(businessesTable).where(conditions.length > 0 ? and(...conditions) : void 0).orderBy(
-      desc(businessesTable.foundingBusiness),
-      desc(businessesTable.confidenceScore)
-    ).limit(200);
-    const now = /* @__PURE__ */ new Date();
-    const activePromos = await db.select({ businessId: businessPromotionsTable.businessId, type: businessPromotionsTable.type }).from(businessPromotionsTable).where(
-      and(
-        eq(businessPromotionsTable.status, "active"),
-        gt(businessPromotionsTable.endsAt, now)
-      )
-    );
-    const promotedIdToType = new Map(activePromos.map((p) => [p.businessId, p.type]));
-    let callerPrefs = [];
-    if (culturalPreference && typeof culturalPreference === "string") {
-      callerPrefs = [culturalPreference];
-    } else if (req.user?.id) {
-      try {
-        const [prefs] = await db.select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes }).from(userPreferencesTable).where(eq(userPreferencesTable.userId, req.user.id)).limit(1);
-        callerPrefs = prefs?.preferredOwnershipTypes ?? [];
-      } catch {
-      }
-    }
-    const matchesPref = (b3) => callerPrefs.length > 0 && callerPrefs.some((p) => (b3.ownershipDesignations ?? []).includes(p));
-    const annotated = businesses.map((b3) => ({
-      ...b3,
-      featured: b3.featured || promotedIdToType.has(b3.id),
-      promotionType: promotedIdToType.get(b3.id) ?? null,
-      culturalMatch: matchesPref(b3)
-    })).sort((a, b3) => {
-      if (a.featured && !b3.featured) return -1;
-      if (!a.featured && b3.featured) return 1;
-      const TIER_RANK2 = { premium: 3, growth: 2, community: 1 };
-      const aTier = TIER_RANK2[a.businessStatus] ?? 1;
-      const bTier = TIER_RANK2[b3.businessStatus] ?? 1;
-      if (bTier !== aTier) return bTier - aTier;
-      if (a.culturalMatch && !b3.culturalMatch) return -1;
-      if (!a.culturalMatch && b3.culturalMatch) return 1;
-      if (b3.foundingBusiness !== a.foundingBusiness) return b3.foundingBusiness ? 1 : -1;
-      const aScore = (a.confidenceScore ?? 0) + Number(a.rating ?? 0) * Math.log(Number(a.reviewCount ?? 0) + 1) * 0.1;
-      const bScore = (b3.confidenceScore ?? 0) + Number(b3.rating ?? 0) * Math.log(Number(b3.reviewCount ?? 0) + 1) * 0.1;
-      return bScore - aScore;
-    });
-    const featuredCount = annotated.filter((b3) => b3.featured).length;
-    const bIds = annotated.map((b3) => b3.id);
-    const captionMap = /* @__PURE__ */ new Map();
-    if (bIds.length > 0) {
-      const capRows = await db.select({ businessId: businessCaptionsTable.businessId, caption: businessCaptionsTable.caption }).from(businessCaptionsTable).where(inArray(businessCaptionsTable.businessId, bIds)).orderBy(desc(businessCaptionsTable.createdAt)).limit(bIds.length * 3);
-      for (const row of capRows) {
-        const list = captionMap.get(row.businessId) ?? [];
-        if (list.length < 2) {
-          list.push(row.caption);
-          captionMap.set(row.businessId, list);
+      if (ownership && typeof ownership === "string") {
+        if (ownership === "black-owned") {
+          conditions.push(eq(businessesTable.blackOwned, true));
+        } else {
+          conditions.push(
+            sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
+          );
         }
       }
-    }
-    const withCaptions = annotated.map((b3) => ({ ...b3, topCaptions: captionMap.get(b3.id) ?? [] }));
-    res.json({ businesses: withCaptions, total: withCaptions.length, featuredCount });
+      if (search && typeof search === "string") {
+        conditions.push(
+          or(
+            ilike(businessesTable.name, `%${search}%`),
+            ilike(businessesTable.city, `%${search}%`),
+            ilike(businessesTable.category, `%${search}%`),
+            ilike(businessesTable.description, `%${search}%`)
+          )
+        );
+      }
+      if (state && typeof state === "string") {
+        conditions.push(ilike(businessesTable.state, `%${state}%`));
+      }
+      if (handle && typeof handle === "string") {
+        const h3 = handle.replace(/^@/, "");
+        conditions.push(
+          or(
+            ilike(businessesTable.instagram, `%${h3}%`),
+            ilike(businessesTable.tiktok, `%${h3}%`),
+            ilike(businessesTable.twitter, `%${h3}%`),
+            ilike(businessesTable.facebook, `%${h3}%`)
+          )
+        );
+      }
+      const businesses = await db.select().from(businessesTable).where(conditions.length > 0 ? and(...conditions) : void 0).orderBy(
+        desc(businessesTable.foundingBusiness),
+        desc(businessesTable.confidenceScore)
+      ).limit(200);
+      const now = /* @__PURE__ */ new Date();
+      const activePromos = await db.select({ businessId: businessPromotionsTable.businessId, type: businessPromotionsTable.type }).from(businessPromotionsTable).where(
+        and(
+          eq(businessPromotionsTable.status, "active"),
+          gt(businessPromotionsTable.endsAt, now)
+        )
+      );
+      const promotedIdToType = new Map(activePromos.map((p) => [p.businessId, p.type]));
+      let callerPrefs = [];
+      if (culturalPreference && typeof culturalPreference === "string") {
+        callerPrefs = [culturalPreference];
+      } else if (req.user?.id) {
+        try {
+          const [prefs] = await db.select({ preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes }).from(userPreferencesTable).where(eq(userPreferencesTable.userId, req.user.id)).limit(1);
+          callerPrefs = prefs?.preferredOwnershipTypes ?? [];
+        } catch {
+        }
+      }
+      const matchesPref = (b3) => callerPrefs.length > 0 && callerPrefs.some((p) => (b3.ownershipDesignations ?? []).includes(p));
+      const annotated = businesses.map((b3) => ({
+        ...b3,
+        featured: b3.featured || promotedIdToType.has(b3.id),
+        promotionType: promotedIdToType.get(b3.id) ?? null,
+        culturalMatch: matchesPref(b3)
+      })).sort((a, b3) => {
+        if (a.featured && !b3.featured) return -1;
+        if (!a.featured && b3.featured) return 1;
+        const TIER_RANK2 = { premium: 3, growth: 2, community: 1 };
+        const aTier = TIER_RANK2[a.businessStatus] ?? 1;
+        const bTier = TIER_RANK2[b3.businessStatus] ?? 1;
+        if (bTier !== aTier) return bTier - aTier;
+        if (a.culturalMatch && !b3.culturalMatch) return -1;
+        if (!a.culturalMatch && b3.culturalMatch) return 1;
+        if (b3.foundingBusiness !== a.foundingBusiness) return b3.foundingBusiness ? 1 : -1;
+        const aScore = (a.confidenceScore ?? 0) + Number(a.rating ?? 0) * Math.log(Number(a.reviewCount ?? 0) + 1) * 0.1;
+        const bScore = (b3.confidenceScore ?? 0) + Number(b3.rating ?? 0) * Math.log(Number(b3.reviewCount ?? 0) + 1) * 0.1;
+        return bScore - aScore;
+      });
+      const featuredCount = annotated.filter((b3) => b3.featured).length;
+      const bIds = annotated.map((b3) => b3.id);
+      const captionMap = /* @__PURE__ */ new Map();
+      if (bIds.length > 0) {
+        const capRows = await db.select({ businessId: businessCaptionsTable.businessId, caption: businessCaptionsTable.caption }).from(businessCaptionsTable).where(inArray(businessCaptionsTable.businessId, bIds)).orderBy(desc(businessCaptionsTable.createdAt)).limit(bIds.length * 3);
+        for (const row of capRows) {
+          const list = captionMap.get(row.businessId) ?? [];
+          if (list.length < 2) {
+            list.push(row.caption);
+            captionMap.set(row.businessId, list);
+          }
+        }
+      }
+      const withCaptions = annotated.map((b3) => ({ ...b3, topCaptions: captionMap.get(b3.id) ?? [] }));
+      res.json({ businesses: withCaptions, total: withCaptions.length, featuredCount });
+    }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
@@ -415380,7 +415445,7 @@ var BackgroundScheduledTask = class {
 function serializableOptions(options) {
   if (!options)
     return options;
-  const { logger: _logger2, runCoordinator: _runCoordinator, ...rest } = options;
+  const { logger: _logger3, runCoordinator: _runCoordinator, ...rest } = options;
   return rest;
 }
 function deserializeError(str2) {
@@ -418324,6 +418389,298 @@ init_src();
 init_drizzle_orm();
 init_email();
 import { randomUUID as randomUUID9 } from "crypto";
+
+// src/data/sundown-towns-seed.ts
+var DISCLAIMER_PREFIX = "HISTORICAL RECORD ONLY \u2014 This entry documents racial exclusion practices that occurred in this community. These policies are no longer legally enforceable and do not reflect the current character of this community. Documented by: ";
+var SUNDOWN_TOWNS_SEED = [
+  {
+    name: "Anna, Illinois \u2014 Historical Sundown Town",
+    description: `${DISCLAIMER_PREFIX}James W. Loewen (Sundown Towns, 2005), NAACP Historical Research. Anna, Illinois gained notoriety as a sundown town \u2014 local residents historically explained the name as an acronym. Black residents were driven out following racial violence in 1909 and the town enforced exclusion for decades thereafter. The story of Anna is documented in Loewen's landmark academic study as one of the clearest examples of deliberate racial exclusion in downstate Illinois.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Anna",
+    state: "IL",
+    latitude: "37.4612",
+    longitude: "-89.2453",
+    era: "1909\u20131960s",
+    significance: "One of the most extensively documented sundown towns in the United States, cited in academic literature, journalism, and congressional testimony about systemic racial exclusion in American towns.",
+    verifiedSource: "Loewen, Sundown Towns (2005); Tougaloo College NSF Sundown Towns Database",
+    externalUrl: "https://justice.tougaloo.edu/sundown-towns/using-the-sundown-towns-database/",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Forsyth County, Georgia \u2014 Historical Racial Expulsion",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); NAACP; CNN and Washington Post historical reporting; Patrick Phillips, Blood at the Root (2016). In September 1912, a series of racial terror events led to the expulsion of Forsyth County's entire Black population \u2014 roughly 1,100 people \u2014 within weeks. The county remained almost entirely white for over 70 years. In 1987, civil rights marchers led by Hosea Williams were attacked by white supremacists when they attempted to march through the county. The expulsion is documented in award-winning journalism, academic studies, and a National Book Award finalist.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Expulsion / Ethnic Cleansing",
+    city: "Cumming",
+    state: "GA",
+    latitude: "34.2073",
+    longitude: "-84.1402",
+    era: "1912\u20131990s",
+    significance: "One of the most documented racial expulsions in American history. Patrick Phillips' 'Blood at the Root' (2016) is a National Book Award finalist documenting the 1912 expulsion and its aftermath through the 1987 civil rights confrontations.",
+    verifiedSource: "Phillips, Blood at the Root (2016); Loewen (2005); NAACP Historical Records; National Book Award records",
+    externalUrl: "https://bloodattheroot.com",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Sundown, Texas \u2014 Historical Sundown Town",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Texas State Historical Association. Sundown, Texas \u2014 whose name has long been associated with racial exclusion practices \u2014 is documented in Loewen's database as a sundown town. The Texas State Historical Association has documented the racially segregated history of the Texas Panhandle region during the early-to-mid 20th century. The town's name itself became synonymous nationally with racial exclusion practices.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Sundown",
+    state: "TX",
+    latitude: "33.4565",
+    longitude: "-102.4929",
+    era: "1930s\u20131960s",
+    significance: "The town's name became nationally recognized as a symbol of the widespread sundown town practice across the American South and Midwest. Cited in Loewen's landmark study and widely referenced in civil rights education.",
+    verifiedSource: "Loewen, Sundown Towns (2005); Texas State Historical Association; Tougaloo College NSF Database",
+    externalUrl: "https://tshaonline.org",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Cicero, Illinois \u2014 Historical Racial Violence",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Chicago Tribune historical archives; Illinois State Historical Society. In 1951, Harvey Clark, a Black bus driver, attempted to move his family into a Cicero apartment. A white mob of 3,500 attacked the building over four nights, burning the family's belongings while local police stood by. The Cicero Race Riot of 1951 became a major civil rights event, prompting federal intervention and congressional hearings. Cicero maintained racial exclusion practices for decades and is extensively documented as a sundown suburb of Chicago.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Violence / Sundown Suburb",
+    city: "Cicero",
+    state: "IL",
+    latitude: "41.8456",
+    longitude: "-87.7539",
+    era: "1951\u20131970s",
+    significance: "The 1951 Cicero Race Riot was one of the most violent acts of housing discrimination in post-war America. Congressional hearings following the riot directly shaped early civil rights legislation.",
+    verifiedSource: "Loewen (2005); Chicago Tribune archives; Illinois State Historical Society; U.S. Congressional Records",
+    externalUrl: "https://justice.tougaloo.edu/sundown-towns/",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Dearborn, Michigan \u2014 Historical Exclusion Under Orville Hubbard",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Detroit Free Press; University of Michigan historical archives. Mayor Orville Hubbard governed Dearborn, Michigan from 1942 to 1978, openly maintaining racial exclusion as city policy. He stated publicly that he intended to keep Dearborn white. The Detroit Free Press, University of Michigan historians, and Loewen's database document Dearborn as one of the most aggressively maintained sundown cities in the industrial Midwest. By 1970, Dearborn had a population of roughly 104,000 with fewer than 15 Black residents.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Institutionalized Racial Exclusion",
+    city: "Dearborn",
+    state: "MI",
+    latitude: "42.3223",
+    longitude: "-83.1763",
+    era: "1942\u20131978",
+    significance: "Mayor Orville Hubbard's 36-year tenure represents the most extensively documented example of a city government openly enforcing racial exclusion in 20th-century America. Studied in civil rights law, urban policy, and housing discrimination scholarship.",
+    verifiedSource: "Loewen (2005); Detroit Free Press archives; University of Michigan Bentley Historical Library; U.S. Civil Rights Commission records",
+    externalUrl: "https://bentley.umich.edu",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Glendale, California \u2014 Historical Sundown City",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Los Angeles Times historical archives; California State Archives. Glendale, California was documented as a sundown city through much of the 20th century. Signs at city limits warning Black residents were reported in oral histories and news accounts. The city's history of racial exclusion through restrictive covenants, police enforcement, and social intimidation is documented in Loewen's study and California State Archives. By 1960, Glendale was one of the largest cities in California with negligible Black population.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Glendale",
+    state: "CA",
+    latitude: "34.1425",
+    longitude: "-118.2551",
+    era: "1920s\u20131960s",
+    significance: "One of the largest cities in the American West documented as a sundown community, reflecting how racial exclusion extended far beyond the American South. Studied in California civil rights history and housing discrimination scholarship.",
+    verifiedSource: "Loewen (2005); Los Angeles Times archives; California State Archives; California Fair Employment & Housing Commission records",
+    externalUrl: "https://justice.tougaloo.edu/sundown-towns/",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Cedar Lake, Indiana \u2014 Historical Sundown Town",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Indiana Historical Society. Cedar Lake, Indiana is documented in Loewen's database as a sundown community that historically excluded Black residents. Located in Lake County, it was one of dozens of Indiana communities that maintained racial exclusion through the mid-20th century. Indiana had one of the highest concentrations of sundown towns of any Northern state, reflecting the Midwest's extensive history of racial exclusion that is often overshadowed by the South's more visible Jim Crow laws.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Cedar Lake",
+    state: "IN",
+    latitude: "41.3639",
+    longitude: "-87.4395",
+    era: "1930s\u20131960s",
+    significance: "Part of a broader Indiana pattern \u2014 Loewen estimated Indiana had more sundown towns per capita than any other Northern state, a fact largely absent from mainstream historical education. Understanding Indiana's racial geography is essential to understanding the Great Migration.",
+    verifiedSource: "Loewen (2005); Indiana Historical Society; Tougaloo College NSF Sundown Towns Database",
+    externalUrl: "https://indianahistory.org",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Appleton, Wisconsin \u2014 Historical Sundown City",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Wisconsin Historical Society; Appleton Post-Crescent archives. Appleton, Wisconsin is documented in Loewen's study as a sundown city. It is also the birthplace of Senator Joseph McCarthy and home to Lawrence University, which was historically white despite its liberal educational mission. Loewen documents Appleton as one of numerous Midwestern cities where the near-total absence of Black residents reflected active exclusion rather than simple demographic accident.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Appleton",
+    state: "WI",
+    latitude: "44.2619",
+    longitude: "-88.4154",
+    era: "1900s\u20131960s",
+    significance: "Appleton's documentation illustrates Loewen's central thesis: sundown towns were a Northern phenomenon as much as a Southern one. The near-complete exclusion of Black residents from major Midwestern cities shaped housing policy and the geography of race in America.",
+    verifiedSource: "Loewen (2005); Wisconsin Historical Society; Tougaloo College NSF Database",
+    externalUrl: "https://www.wisconsinhistory.org",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Levittown, Pennsylvania \u2014 Historical Exclusion by Covenant",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); NAACP Historical Records; Philadelphia Inquirer archives; Temple University Special Collections. Levittown, Pennsylvania \u2014 built by developer William Levitt starting in 1952 \u2014 explicitly excluded Black buyers through racially restrictive leases that stated the homes could not "be used or occupied by any person other than members of the Caucasian race." When William Myers Jr., a Black WWII veteran, moved his family into Levittown in 1957, white mobs attacked the home for months. The incident became a landmark civil rights case and is documented in Loewen's study, NAACP files, and Pennsylvania state records.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Restrictive Covenant / Developer Exclusion",
+    city: "Levittown",
+    state: "PA",
+    latitude: "40.1554",
+    longitude: "-74.8607",
+    era: "1952\u20131957",
+    significance: "The 1957 Levittown race riots became one of the most documented examples of suburban racial exclusion in post-war America. William Myers' integration of Levittown was studied in civil rights law and helped build the case for the Fair Housing Act of 1968.",
+    verifiedSource: "Loewen (2005); NAACP Records; Temple University Special Collections; Pennsylvania Human Relations Commission",
+    externalUrl: "https://www.naacp.org",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Peoria, Illinois \u2014 Historical Sundown Suburbs",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Illinois State Historical Society; Peoria Journal Star archives. The Peoria, Illinois metropolitan area included numerous sundown suburbs documented in Loewen's study. While Peoria proper had a Black community, its suburban ring maintained racial exclusion through restrictive covenants, real estate steering, and direct intimidation. Peoria is cited in Loewen's work as a representative example of how Midwestern metropolitan areas enforced racial segregation not through law but through coordinated private action.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Sundown Suburb",
+    city: "Peoria",
+    state: "IL",
+    latitude: "40.6936",
+    longitude: "-89.5890",
+    era: "1920s\u20131960s",
+    significance: "Peoria's documented suburban exclusion pattern illustrates how Black residents were legally permitted to live in Northern cities while being systematically excluded from the suburban wealth and school systems created by postwar federal investment.",
+    verifiedSource: "Loewen (2005); Illinois State Historical Society; Tougaloo College NSF Database",
+    externalUrl: "https://www.illinoishistory.gov",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Hawthorne, California \u2014 Historical Sundown City",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Los Angeles County Human Relations Commission; California State Archives. Hawthorne, California is documented by Loewen and California civil rights historians as a sundown city in the Los Angeles basin. Like nearby Glendale, Hawthorne maintained near-zero Black population through the mid-20th century via restrictive covenants, real estate discrimination, and reported police harassment of Black visitors after dark. The Los Angeles civil rights movement extensively documented the sundown culture of the city's suburban ring.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion History",
+    city: "Hawthorne",
+    state: "CA",
+    latitude: "33.9164",
+    longitude: "-118.3526",
+    era: "1930s\u20131960s",
+    significance: "Part of the LA basin's documented network of sundown suburbs that confined Black Angelenos to specific neighborhoods despite the region's liberal self-image. Understanding LA's sundown geography is essential to understanding the 1965 Watts Uprising's geographic causes.",
+    verifiedSource: "Loewen (2005); LA County Human Relations Commission; California State Archives; Tougaloo College NSF Database",
+    externalUrl: "https://justice.tougaloo.edu/sundown-towns/",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Darien, Connecticut \u2014 Historical Exclusion by Covenant",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Connecticut State Library; Laura Z. Hobson, "Gentleman's Agreement" (1946 novel depicting Darien's documented Jewish and racial exclusion). Darien, Connecticut is one of the most documented examples of what Loewen calls "elite sundown suburbs" \u2014 wealthy communities that used restrictive covenants, real estate steering, and social pressure to maintain racial and religious exclusion. Darien's restrictions were so well known they inspired Laura Hobson's 1946 Pulitzer-winning novel. The community's documented exclusion extended to Black residents and was not challenged until fair housing legislation of the late 1960s.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Elite Sundown Suburb / Restrictive Covenant",
+    city: "Darien",
+    state: "CT",
+    latitude: "41.0737",
+    longitude: "-73.4693",
+    era: "1920s\u20131960s",
+    significance: "Darien represents how racial and ethnic exclusion operated in elite Northern suburbs through 'genteel' private covenants rather than Jim Crow signs. Its documentation helped establish the legal precedent for what became the Fair Housing Act of 1968.",
+    verifiedSource: "Loewen (2005); Connecticut State Library; National Fair Housing Alliance records",
+    externalUrl: "https://www.cslibrary.org",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Lincoln Park, Michigan \u2014 Historical Sundown Suburb",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); University of Michigan Bentley Historical Library; Detroit Free Press archives. Lincoln Park, Michigan is documented as one of the sundown suburbs in the Detroit metropolitan ring that systematically excluded Black residents during the postwar period. As Black Detroit residents attempted to move into suburban communities following WWII, Lincoln Park and neighboring downriver communities employed restrictive covenants, real estate steering, and social intimidation to maintain racial exclusion. These communities' racial geography directly shaped the urban-suburban divide that contributed to the 1967 Detroit uprising.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Sundown Suburb",
+    city: "Lincoln Park",
+    state: "MI",
+    latitude: "42.2503",
+    longitude: "-83.1797",
+    era: "1940s\u20131960s",
+    significance: "Lincoln Park is part of the documented downriver Detroit ring whose racial exclusion policies concentrated Black Detroiters in the city while white residents fled to tax-advantaged suburbs \u2014 a pattern directly linked to Detroit's fiscal crisis and the causes of the 1967 uprising.",
+    verifiedSource: "Loewen (2005); University of Michigan Bentley Historical Library; Michigan Civil Rights Commission",
+    externalUrl: "https://bentley.umich.edu",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Edina, Minnesota \u2014 Historical Sundown Suburb",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Minnesota Historical Society; Minneapolis Star Tribune historical archives. Edina, Minnesota is documented in Loewen's study as a Minneapolis sundown suburb. Edina's Parade of Homes development \u2014 the model for American suburban development \u2014 included restrictive covenants explicitly prohibiting sales to Black buyers. These covenants shaped the racial geography of the Twin Cities metropolitan area. The Minnesota Historical Society and State Supreme Court have documented the history of restrictive covenants in Minnesota, noting that Edina's racial exclusion persisted longer than in many comparable suburbs.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Sundown Suburb / Restrictive Covenant",
+    city: "Edina",
+    state: "MN",
+    latitude: "44.8897",
+    longitude: "-93.3499",
+    era: "1940s\u20131960s",
+    significance: "Edina's documented covenants are part of the broader Twin Cities history of racial housing exclusion directly connected to the wealth gap between Minneapolis's Black North Side community and its white suburbs \u2014 a gap that persists today.",
+    verifiedSource: "Loewen (2005); Minnesota Historical Society; Mapping Prejudice Project (University of Minnesota)",
+    externalUrl: "https://mappingprejudice.umn.edu",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  },
+  {
+    name: "Vidor, Texas \u2014 Historical Sundown Town",
+    description: `${DISCLAIMER_PREFIX}Loewen (2005); Houston Chronicle archives; U.S. Department of Justice records. Vidor, Texas is one of the most extensively documented sundown towns in the United States. In 1993, the U.S. Department of Housing and Urban Development required Orange County Housing Authority to integrate Vidor's public housing after decades of documented exclusion. When Black residents moved in, they faced organized harassment, death threats, and were ultimately driven out. The federal intervention and subsequent events received national news coverage and are documented in DOJ records, congressional testimony, and Loewen's comprehensive study.`,
+    heritageCategory: "Historical Sundown Town",
+    category: "Historical Sundown Town",
+    subcategory: "Racial Exclusion / Federal Intervention",
+    city: "Vidor",
+    state: "TX",
+    latitude: "30.1327",
+    longitude: "-94.0138",
+    era: "1950s\u20131990s",
+    significance: "Vidor's 1993 federal housing integration order and the subsequent harassment of Black residents made national news and became one of the most documented examples of sundown town behavior extending into the modern era. DOJ and congressional records provide extensive documentation.",
+    verifiedSource: "Loewen (2005); U.S. Dept. of Justice records; Congressional testimony; Houston Chronicle archives; HUD Federal Register",
+    externalUrl: "https://www.justice.gov",
+    isAccessible: true,
+    isFamilyFriendly: false,
+    admissionFree: true,
+    isVerified: true
+  }
+];
+
+// src/routes/admin.ts
 var router24 = (0, import_express24.Router)();
 router24.get("/admin/invites", async (req, res) => {
   if (!isAdmin2(req)) {
@@ -418437,7 +418794,7 @@ router24.patch("/admin/members/:id", async (req, res) => {
     return;
   }
   const { memberType, trialEndsAt, foundingMemberNumber } = req.body;
-  const VALID_TYPES3 = ["individual", "business", "founding", "beta", "business_referral"];
+  const VALID_TYPES3 = ["individual", "business", "founding", "beta", "business_referral", "navigator", "trailblazer"];
   if (memberType && !VALID_TYPES3.includes(memberType)) {
     res.status(400).json({ error: "Invalid memberType" });
     return;
@@ -419201,7 +419558,7 @@ router24.get("/admin/health", async (req, res) => {
     checks: { rawSql, drizzle: drizzle2, rawSqlMs, drizzleMs },
     uptimeSeconds: Math.floor(process.uptime()),
     checkedAt,
-    poolConfig: { max: 5, idleTimeoutMs: 3e4, maxLifetimeS: 1800, connectionTimeoutMs: 1e4 },
+    poolConfig: { max: 8, idleTimeoutMs: 3e4, maxLifetimeS: 1800, connectionTimeoutMs: 1e4 },
     loadTestBaseline: {
       concurrentRequests: 50,
       successRate: "50/50",
@@ -419467,6 +419824,61 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "POST /admin/seed-multicultural error");
     res.status(500).json({ error: "Seed failed" });
+  }
+});
+router24.post("/admin/seed-sundown-towns", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    let inserted = 0;
+    let skipped = 0;
+    for (const site of SUNDOWN_TOWNS_SEED) {
+      const existing = await pool.query(
+        `SELECT id FROM cultural_sites WHERE name = $1 AND city = $2 AND state = $3 LIMIT 1`,
+        [site.name, site.city, site.state]
+      );
+      if (existing.rows.length > 0) {
+        skipped++;
+        continue;
+      }
+      await pool.query(
+        `INSERT INTO cultural_sites
+          (id, name, description, category, heritage_category, subcategory,
+           city, state, latitude, longitude, era, significance,
+           external_url, is_verified, is_accessible, is_family_friendly,
+           admission_free, verified_source, country, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())`,
+        [
+          randomUUID9(),
+          site.name,
+          site.description,
+          site.category,
+          site.heritageCategory,
+          site.subcategory,
+          site.city,
+          site.state,
+          site.latitude,
+          site.longitude,
+          site.era,
+          site.significance,
+          site.externalUrl,
+          site.isVerified,
+          site.isAccessible,
+          site.isFamilyFriendly,
+          site.admissionFree,
+          site.verifiedSource,
+          "United States"
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "Sundown towns seed completed");
+    res.json({ ok: true, inserted, skipped, total: SUNDOWN_TOWNS_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-sundown-towns error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });
 var admin_default = router24;
@@ -420480,6 +420892,13 @@ WHAT KINFOLK CAN DO \u2014 be confident about this:
 - Safety: neighborhood context, safety information, practical precautions
 - Weather: when LIVE WEATHER data is provided above, use it confidently \u2014 give temperatures, rain chance, specific packing and umbrella recommendations. If no live weather section appears, be honest: "I don't have real-time weather for that location right now \u2014 a quick weather app check will have the latest." Do not invent weather data.
 
+PROVENANCE CLARITY \u2014 always distinguish where your information comes from:
+- When recommending a business that appears in the VERIFIED PLATFORM BUSINESSES list above, say so: "From Mapping With Melanin's listings..." or "On the platform..." or "Mapping With Melanin has [Name] listed..."
+- When offering general knowledge (a neighborhood, a type of cuisine, a historical fact, a city vibe), label it naturally: "Generally speaking...", "From what I know about that area...", "This isn't from our platform listings, but..."
+- Never present general knowledge as if it were a verified Mapping With Melanin platform listing.
+- If you have no verified platform listing for a specific business or service in a location, say so honestly: "I don't yet have a verified Mapping With Melanin listing for that \u2014 here's what I know generally..." then offer general guidance.
+- This distinction matters to the community: platform businesses have chosen to be here.
+
 WHAT KINFOLK DOES NOT HAVE ACCESS TO \u2014 be honest about this:
 - Real-time tutor or mentor databases \u2014 do not invent listings
 - Scholarship search engines \u2014 do not invent opportunities
@@ -420636,6 +421055,7 @@ Set "smartPromotion": null when no confident cross-sell clearly applies. Only su
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
+SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY \u2014 parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
 Only recommend real Minority-owned or culturally Minority spots \u2014 no tourist traps, no chains.${businessCatalog?.length ? `
 
 VERIFIED PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} \u2014 PRIORITIZE THESE:
@@ -422226,17 +422646,43 @@ async function getUncachableStripeClient() {
   const { secretKey } = await getStripeCredentials();
   return new stripe_esm_node_default(secretKey);
 }
-async function getStripeSync() {
+var _stripeSyncPromise = null;
+async function _createStripeSync() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
   const { secretKey, webhookSecret } = await getStripeCredentials();
   return new StripeSync({
-    poolConfig: { connectionString: databaseUrl },
+    poolConfig: {
+      connectionString: databaseUrl,
+      max: 2,
+      idleTimeoutMillis: 3e4,
+      keepAlive: true
+    },
     stripeSecretKey: secretKey,
     stripeWebhookSecret: webhookSecret ?? ""
   });
+}
+function getStripeSync() {
+  if (!_stripeSyncPromise) {
+    _stripeSyncPromise = _createStripeSync().catch((err) => {
+      _stripeSyncPromise = null;
+      throw err;
+    });
+  }
+  return _stripeSyncPromise;
+}
+async function endStripeSyncPool() {
+  if (!_stripeSyncPromise) return;
+  try {
+    const sync = await _stripeSyncPromise;
+    const internalPool = sync.pool;
+    if (internalPool && typeof internalPool.end === "function") {
+      await internalPool.end();
+    }
+  } catch {
+  }
 }
 
 // src/stripeService.ts
@@ -453142,6 +453588,113 @@ var WebhookHandlers = class {
 
 // src/app.ts
 init_src();
+
+// src/lib/healthMonitor.ts
+init_src();
+var MAX_ENTRIES = 150;
+var _history = [];
+var _monitorHandle = null;
+var _logger2 = {
+  info: (data, msg) => console.info(JSON.stringify({ msg, ...data })),
+  warn: (data, msg) => console.warn(JSON.stringify({ msg, ...data })),
+  error: (data, msg) => console.error(JSON.stringify({ msg, ...data }))
+};
+function setMonitorLogger(logger3) {
+  _logger2 = logger3;
+}
+function getHealthHistory() {
+  const total = _history.length;
+  const errors = _history.filter((h3) => h3.status === "error").length;
+  const degraded = _history.filter((h3) => h3.status === "degraded").length;
+  const uptimePct = total > 0 ? ((total - errors - degraded) / total * 100).toFixed(1) : "N/A";
+  const observedHours = total > 0 ? (total * 5 / 60).toFixed(1) : "0";
+  return {
+    total,
+    errors,
+    degraded,
+    uptimePct,
+    intervalMinutes: 5,
+    observedHours,
+    history: [..._history]
+  };
+}
+async function runHealthCheck() {
+  const ts3 = (/* @__PURE__ */ new Date()).toISOString();
+  const poolStats = getPoolStats();
+  if (poolStats.idle === 0 && poolStats.total >= POOL_MAX && poolStats.waiting > 0) {
+    const entry = {
+      ts: ts3,
+      status: "degraded",
+      dbMs: null,
+      pool: poolStats,
+      detail: `pool_exhausted: total=${poolStats.total}/${POOL_MAX} idle=0 waiting=${poolStats.waiting}`
+    };
+    _push(entry);
+    _logger2.warn(
+      { event: "HEALTH_MONITOR_CHECK", ...entry },
+      "health-monitor: pool exhausted"
+    );
+    return;
+  }
+  const start = Date.now();
+  try {
+    await Promise.race([
+      pool.query("SELECT 1"),
+      new Promise(
+        (_2, reject) => setTimeout(() => reject(new Error("SELECT 1 timed out after 3000ms")), 3e3)
+      )
+    ]);
+    const dbMs = Date.now() - start;
+    const entry = {
+      ts: ts3,
+      status: "ok",
+      dbMs,
+      pool: getPoolStats()
+    };
+    _push(entry);
+    _logger2.info(
+      { event: "HEALTH_MONITOR_CHECK", ...entry },
+      "health-monitor: ok"
+    );
+  } catch (err) {
+    const dbMs = Date.now() - start;
+    const detail = err instanceof Error ? err.message : String(err);
+    const entry = {
+      ts: ts3,
+      status: "error",
+      dbMs,
+      pool: getPoolStats(),
+      detail
+    };
+    _push(entry);
+    _logger2.error(
+      { event: "HEALTH_MONITOR_CHECK", ...entry },
+      "health-monitor: error"
+    );
+  }
+}
+function _push(entry) {
+  _history.push(entry);
+  if (_history.length > MAX_ENTRIES) _history.shift();
+}
+function startHealthMonitor(intervalMs = 3e5) {
+  if (_monitorHandle) return;
+  runHealthCheck().catch(() => {
+  });
+  _monitorHandle = setInterval(() => {
+    runHealthCheck().catch(() => {
+    });
+  }, intervalMs);
+  _monitorHandle.unref();
+}
+function stopHealthMonitor() {
+  if (_monitorHandle) {
+    clearInterval(_monitorHandle);
+    _monitorHandle = null;
+  }
+}
+
+// src/app.ts
 var _dirname = path6.dirname(fileURLToPath4(import.meta.url));
 var webPublicDir = path6.join(_dirname, "public");
 var app = (0, import_express144.default)();
@@ -453157,12 +453710,12 @@ app.get("/health", (_req, res) => {
 });
 app.get("/api/readyz", async (_req, res) => {
   const preStats = getPoolStats();
-  if (preStats.idle === 0 && preStats.total > 0) {
+  if (preStats.idle === 0 && preStats.total >= POOL_MAX && preStats.waiting > 0) {
     res.status(503).json({
       status: "degraded",
       db: "pool_exhausted",
       pool: preStats,
-      detail: `All ${preStats.total} connections in use (idle=0); not queuing probe.`
+      detail: `Pool at capacity (total=${preStats.total}/${POOL_MAX}, idle=0, waiting=${preStats.waiting}); not queuing probe.`
     });
     return;
   }
@@ -453179,8 +453732,16 @@ app.get("/api/readyz", async (_req, res) => {
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
   }
 });
-app.get("/api/dl", (_req, res) => {
-  res.download(path6.join(_dirname, "../dist/index.mjs"), "index.mjs");
+app.get("/api/readyz/history", (_req, res) => {
+  res.json(getHealthHistory());
+});
+app.get("/api/version", (_req, res) => {
+  res.json({
+    sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
+    deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
+    release: "Build-97",
+    env: process.env.NODE_ENV ?? "unknown"
+  });
 });
 app.use(
   (0, import_pino_http.default)({
@@ -453313,6 +453874,11 @@ async function initStripe() {
   if (!process.env.WMATA_API_KEY) {
     warnings.push("WMATA_API_KEY \u2014 DC Metro transit data will be unavailable.");
   }
+  const appleVars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const missingApple = appleVars.filter((v7) => !process.env[v7]);
+  if (missingApple.length > 0) {
+    warnings.push(`Apple Sign-In INCOMPLETE \u2014 missing Railway vars: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
+  }
   if (warnings.length > 0) {
     logger.warn("\u26A0\uFE0F  Missing environment configuration:");
     for (const w4 of warnings) {
@@ -453327,6 +453893,8 @@ var server = app_default.listen(port, (err) => {
   }
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready \u2014 initial pool state");
+  setMonitorLogger(logger);
+  startHealthMonitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));
   startNudgeCronScheduler();
 });
@@ -453336,12 +453904,15 @@ function gracefulShutdown(signal3) {
   isShuttingDown = true;
   logger.info({ signal: signal3, pool: getPoolStats() }, "Received shutdown signal \u2014 pool state at drain start");
   server.close(async () => {
-    logger.info("HTTP server closed. Draining DB pool\u2026");
+    logger.info("HTTP server closed. Draining DB pools\u2026");
+    stopHealthMonitor();
     try {
       await pool.end();
-      logger.info({ pool: getPoolStats() }, "DB pool drained. Exiting cleanly.");
+      logger.info({ pool: getPoolStats() }, "App DB pool drained.");
+      await endStripeSyncPool();
+      logger.info("StripeSync pool drained. Exiting cleanly.");
     } catch (err) {
-      logger.error({ err }, "Error draining DB pool during shutdown");
+      logger.error({ err }, "Error draining DB pools during shutdown");
     }
     process.exit(0);
   });

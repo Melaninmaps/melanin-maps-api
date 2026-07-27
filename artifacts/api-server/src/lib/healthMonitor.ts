@@ -9,7 +9,7 @@
  * Accessed via GET /api/readyz/history for evidence file generation.
  */
 
-import { pool, getPoolStats } from "@workspace/db";
+import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 
 export interface HealthCheckEntry {
   ts: string;
@@ -71,13 +71,13 @@ async function runHealthCheck(): Promise<void> {
   // are queued. idle===0 alone means connections are transiently busy — new
   // connections can still be created if total < max. waiting>0 is the
   // accurate signal that real requests are being delayed.
-  if (poolStats.idle === 0 && poolStats.total >= 8 && poolStats.waiting > 0) {
+  if (poolStats.idle === 0 && poolStats.total >= POOL_MAX && poolStats.waiting > 0) {
     const entry: HealthCheckEntry = {
       ts,
       status: "degraded",
       dbMs: null,
       pool: poolStats,
-      detail: `pool_exhausted: total=${poolStats.total}/8 idle=0 waiting=${poolStats.waiting}`,
+      detail: `pool_exhausted: total=${poolStats.total}/${POOL_MAX} idle=0 waiting=${poolStats.waiting}`,
     };
     _push(entry);
     _logger.warn(
