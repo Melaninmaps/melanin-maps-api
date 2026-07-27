@@ -17,19 +17,34 @@ import { getHealthHistory } from "./lib/healthMonitor";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
-// web-static/ is committed to git — reliable fallback if dist/public/ is absent
-const webStaticDir = path.join(_dirname, "..", "web-static");
 
 // Read SPA html once at startup — avoids sendFile path-resolution issues.
-// Try dist/public/ first (populated by build.mjs), then committed web-static/.
+// Try every plausible path in order; the first one with index.html wins.
+// Covers: freshly-built dist/public/, committed web-static/, and all
+// cwd-relative equivalents for any Railway working-directory scenario.
+const cwd = process.cwd();
+const SPA_SEARCH_DIRS = [
+  path.join(_dirname, "public"),                                        // <apiServerDir>/dist/public
+  path.join(_dirname, "..", "web-static"),                              // <apiServerDir>/web-static
+  path.join(_dirname, "..", "dist", "public"),                          // edge case
+  path.join(cwd, "dist", "public"),                                     // cwd/dist/public
+  path.join(cwd, "web-static"),                                         // cwd/web-static (legacy root)
+  path.join(cwd, "artifacts", "api-server", "dist", "public"),         // cwd/artifacts/…/dist/public
+  path.join(cwd, "artifacts", "api-server", "web-static"),             // cwd/artifacts/…/web-static
+];
+
 let spaHtml: string | null = null;
 let spaServeDir = webPublicDir;
-for (const dir of [webPublicDir, webStaticDir]) {
+for (const dir of SPA_SEARCH_DIRS) {
   try {
     spaHtml = readFileSync(path.join(dir, "index.html"), "utf8");
     spaServeDir = dir;
+    logger.info({ spaServeDir }, "SPA index.html loaded");
     break;
   } catch { /* try next */ }
+}
+if (!spaHtml) {
+  logger.warn({ tried: SPA_SEARCH_DIRS }, "SPA index.html not found in any search path");
 }
 
 const app: Express = express();

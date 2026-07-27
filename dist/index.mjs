@@ -453754,16 +453754,36 @@ function stopHealthMonitor() {
 // src/app.ts
 var _dirname = path6.dirname(fileURLToPath4(import.meta.url));
 var webPublicDir = path6.join(_dirname, "public");
-var webStaticDir = path6.join(_dirname, "..", "web-static");
+var cwd = process.cwd();
+var SPA_SEARCH_DIRS = [
+  path6.join(_dirname, "public"),
+  // <apiServerDir>/dist/public
+  path6.join(_dirname, "..", "web-static"),
+  // <apiServerDir>/web-static
+  path6.join(_dirname, "..", "dist", "public"),
+  // edge case
+  path6.join(cwd, "dist", "public"),
+  // cwd/dist/public
+  path6.join(cwd, "web-static"),
+  // cwd/web-static (legacy root)
+  path6.join(cwd, "artifacts", "api-server", "dist", "public"),
+  // cwd/artifacts/…/dist/public
+  path6.join(cwd, "artifacts", "api-server", "web-static")
+  // cwd/artifacts/…/web-static
+];
 var spaHtml = null;
 var spaServeDir = webPublicDir;
-for (const dir of [webPublicDir, webStaticDir]) {
+for (const dir of SPA_SEARCH_DIRS) {
   try {
     spaHtml = readFileSync(path6.join(dir, "index.html"), "utf8");
     spaServeDir = dir;
+    logger.info({ spaServeDir }, "SPA index.html loaded");
     break;
   } catch {
   }
+}
+if (!spaHtml) {
+  logger.warn({ tried: SPA_SEARCH_DIRS }, "SPA index.html not found in any search path");
 }
 var app = (0, import_express144.default)();
 app.set("trust proxy", 1);
