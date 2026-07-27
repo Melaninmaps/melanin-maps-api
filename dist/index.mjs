@@ -453811,9 +453811,11 @@ app.use(privacy_default);
 app.use(import_express144.default.static(webPublicDir));
 app.get("/{*path}", (req, res, next) => {
   if (req.path.startsWith("/api/")) return next();
-  const indexPath = path6.join(webPublicDir, "index.html");
-  res.sendFile(indexPath, (err) => {
-    if (err) next();
+  res.sendFile("index.html", { root: webPublicDir }, (err) => {
+    if (err) {
+      logger.error({ err, path: req.path, webPublicDir }, "SPA sendFile failed");
+      next(err);
+    }
   });
 });
 app.use((err, req, res, _next) => {

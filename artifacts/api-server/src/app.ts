@@ -165,12 +165,16 @@ app.use(privacyRouter);
 
 // Serve the web app static files (built by build.mjs and copied to dist/public/)
 app.use(express.static(webPublicDir));
-// SPA fallback — any non-API route serves index.html so React Router works
+// SPA fallback — any non-API route serves index.html so React Router works.
+// Use { root } form of sendFile so path resolution is relative to webPublicDir
+// regardless of what the process working directory is at runtime.
 app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) return next();
-  const indexPath = path.join(webPublicDir, "index.html");
-  res.sendFile(indexPath, (err) => {
-    if (err) next();
+  res.sendFile("index.html", { root: webPublicDir }, (err) => {
+    if (err) {
+      logger.error({ err, path: req.path, webPublicDir }, "SPA sendFile failed");
+      next(err);
+    }
   });
 });
 
