@@ -58,16 +58,73 @@ export async function getUncachableStripeClient(): Promise<Stripe> {
   return new Stripe(secretKey);
 }
 
-export async function getStripeSync(): Promise<StripeSync> {
+// ── StripeSync singleton ──────────────────────────────────────────────────────
+//
+// ROOT CAUSE FIX (Build 97 — July 27 2026)
+// ─────────────────────────────────────────
+// stripe-replit-sync creates a new pg.Pool(max:10) in its constructor:
+//   this.pool = new pg.Pool(config.poolConfig)   [package/dist/index.js:37]
+//
+// The prior implementation called `new StripeSync({ poolConfig })` on every
+// Stripe webhook event (webhookHandlers.ts:133 called `getStripeSync()`).
+// Each call created a new pg.Pool(max:10) against Railway's Postgres that was
+// NEVER closed. After 2–3 webhook events the Railway Postgres connection limit
+// was exceeded, causing the app's own pool (max:5) to fail on every new
+// connection request with a 10-second timeout.
+//
+// Fix: The StripeSync instance (and its pool) is created once per process.
+// The promise is assigned synchronously before any await so concurrent callers
+// racing through this function all receive the same promise — no double-init.
+//
+// Pool size is reduced from the stripe-replit-sync default of 10 to 2.
+// Combined live connections: app pool (5) + stripe pool (2) = 7 max.
+// ──────────────────────────────────────────────────────────────────────────────
+
+let _stripeSyncPromise: Promise<StripeSync> | null = null;
+
+async function _createStripeSync(): Promise<StripeSync> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL environment variable is required");
   }
-
   const { secretKey, webhookSecret } = await getStripeCredentials();
   return new StripeSync({
-    poolConfig: { connectionString: databaseUrl },
+    poolConfig: {
+      connectionString: databaseUrl,
+      max: 2,
+      idleTimeoutMillis: 30_000,
+      keepAlive: true,
+    },
     stripeSecretKey: secretKey,
     stripeWebhookSecret: webhookSecret ?? "",
   });
+}
+
+/**
+ * Returns the shared StripeSync instance, creating it on first call.
+ * Subsequent calls (including concurrent webhook handlers) return the same
+ * promise, so only one pg.Pool is ever created per API process.
+ */
+export function getStripeSync(): Promise<StripeSync> {
+  if (!_stripeSyncPromise) {
+    _stripeSyncPromise = _createStripeSync();
+  }
+  return _stripeSyncPromise;
+}
+
+/**
+ * Drain the StripeSync internal pg pool on graceful shutdown.
+ * Safe to call if StripeSync was never initialized — returns immediately.
+ */
+export async function endStripeSyncPool(): Promise<void> {
+  if (!_stripeSyncPromise) return;
+  try {
+    const sync = await _stripeSyncPromise;
+    const internalPool = (sync as any).pool as import("pg").Pool | undefined;
+    if (internalPool && typeof internalPool.end === "function") {
+      await internalPool.end();
+    }
+  } catch {
+    // If the sync never initialized cleanly, nothing to drain.
+  }
 }

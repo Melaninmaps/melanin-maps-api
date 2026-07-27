@@ -68,6 +68,13 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
   }
 });
+
+// 12-hour health history — evidence for Part 5 (Apple rejection-prevention review).
+// Returns the in-memory ring buffer of all health check results since last startup.
+app.get("/api/readyz/history", (_req: Request, res: Response) => {
+  const { getHealthHistory } = require("./lib/healthMonitor") as typeof import("./lib/healthMonitor");
+  res.json(getHealthHistory());
+});
 app.get("/api/dl", (_req: Request, res: Response) => {
   res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
 });

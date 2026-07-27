@@ -1,0 +1,367 @@
+PLEASE IMPLEMENT — P0 PRODUCTION STABILITY AND COMPLETE APPLE
+REJECTION-PREVENTION REVIEW
+
+This supersedes any instruction to merely restart Railway and resubmit.
+
+A manual restart is emergency recovery only. It is not an acceptable
+production solution.
+
+Do not create an EAS build and do not resubmit to Apple until every
+release gate below is supported by actual evidence.
+
+══════════════════════════════════════════════════════════════
+PART 1 — RESTORE SERVICE, THEN IDENTIFY THE ROOT CAUSE
+══════════════════════════════════════════════════════════════
+
+You may restart the Railway API service once to restore production access
+for diagnosis and testing.
+
+Immediately afterward, perform a root-cause investigation of the recurring
+database failures and connection-pool exhaustion.
+
+Determine, with evidence:
+
+1. Railway PostgreSQL plan and maximum permitted connections
+2. Current active, idle, and waiting database connections
+3. Number of running API replicas/processes
+4. Whether each API process creates its own pool
+5. Maximum possible combined pool size across all processes
+6. Whether any code creates pools repeatedly instead of once at startup
+7. Whether database clients are checked out and not released
+8. Whether transactions remain open
+9. Long-running or blocked queries
+10. Idle-in-transaction sessions
+11. Connection age and recycling behavior
+12. Railway API or Postgres restarts and maintenance events
+13. Memory or CPU pressure
+14. Deployment events correlated with outages
+15. Whether the database itself restarted
+16. Whether DNS/internal-network interruptions occurred
+17. Whether the application continues using stale connections
+18. Whether healthz incorrectly returns OK when database access is broken
+
+Inspect PostgreSQL activity and Railway metrics using safe read-only
+queries. Do not expose credentials or user data.
+
+A retry helper is resilience protection. It is not the root-cause fix.
+
+Return a confirmed cause or clearly state which causes remain unproven.
+
+══════════════════════════════════════════════════════════════
+PART 2 — IMPLEMENT THE SUSTAINABLE DATABASE CORRECTION
+══════════════════════════════════════════════════════════════
+
+Based on evidence, implement the smallest sustainable correction.
+
+Potential corrections may include, only when supported:
+
+- Fixing a connection leak
+- Ensuring one shared pool per API process
+- Correctly releasing checked-out clients
+- Closing abandoned transactions
+- Reducing per-process pool size
+- Coordinating total connections across replicas
+- Adding pool error handling
+- Replacing stale connections
+- Adding database-aware health and readiness checks
+- Preventing traffic before DB readiness
+- Adding bounded retry with jitter for transient connection failures
+- Correcting Railway service configuration
+- Increasing database capacity only if usage proves it necessary
+
+Do not guess.
+Do not simply increase pool limits.
+Do not hide persistent failure behind repeated retries.
+Do not broadly refactor unrelated database code.
+
+The health endpoint must distinguish:
+
+- API process alive
+- Database reachable
+- Application ready to serve authenticated requests
+
+A database outage must not return a misleading overall “ok.”
+
+══════════════════════════════════════════════════════════════
+PART 3 — COMPLETE KNOWN APPLE REJECTION REVIEW
+══════════════════════════════════════════════════════════════
+
+Review every current Apple App Review requirement applicable to the exact
+Build 97 scope.
+
+At minimum verify:
+
+A. APP COMPLETENESS AND STABILITY
+
+- No launch crash
+- No blank screens
+- No repeatable crash
+- No broken loading state
+- No infinite spinner
+- All visible buttons work
+- No placeholder or unfinished content
+- All external URLs work
+- Backend remains accessible
+- Graceful behavior for 401, 403, 404, 409, 429, 500, timeout, and offline
+- Production data contains no malformed records that crash the client
+
+B. ACCOUNT ACCESS
+
+- Valid production review account
+- Email already verified
+- No waitlist or approval block
+- No expiring password
+- No MFA or code Apple cannot access
+- Credentials entered in App Review Information
+- Exact instructions for reaching all visible account types
+- If multiple account types are visible, credentials or instructions for
+  each must be included
+
+C. AUTHENTICATION
+
+- Fresh Apple Sign-In registration
+- Returning Apple Sign-In login
+- Email registration
+- Email login
+- Password reset
+- Logout
+- Session renewal
+- Cold start/session restoration
+- Account already exists handling
+- Apple credential revoked handling
+- Apple Sign-In cancellation
+- Network interruption
+- No duplicate account creation
+- No raw technical errors
+
+D. ACCOUNT DELETION
+
+Because the app supports account creation:
+
+- Account deletion can be initiated inside the app
+- It is easy to find
+- It deletes the account rather than only deactivating it
+- Associated personal data is handled according to policy
+- Apple tokens are revoked when applicable
+- Confirmation and reauthentication work
+- Reviewer account is excluded from accidental deletion during testing
+
+E. IPAD AND DEVICE SUPPORT
+
+Test the actual release candidate on:
+
+- iPad Air 11-inch class device
+- Standard iPhone
+- At least one additional supported iPhone size
+
+Verify:
+
+- Apple login screen
+- Registration
+- Keyboard behavior
+- Forms and buttons visible
+- Navigation
+- Modals
+- Safe areas
+- Rotation behavior if supported
+- No phone-only layout assumptions
+- No clipped or unreachable content
+
+If reliable iPad support cannot be achieved immediately, report whether
+the app can legitimately remove iPad availability for this release and
+what App Store/build configuration change would be required. Do not
+change supported devices without founder approval.
+
+F. USER-GENERATED CONTENT
+
+For every visible post, review, comment, report, or community feature:
+
+- Reporting mechanism
+- Blocking mechanism where applicable
+- Moderation process
+- Contact information
+- Terms acceptance
+- Community Guidelines access
+- No objectionable seeded content
+- Reviewer can understand how moderation works
+
+G. SUBSCRIPTIONS AND PAYMENTS
+
+For any subscription or purchase visible in Build 97:
+
+- Products are available to Apple’s sandbox reviewer
+- Prices match App Store Connect
+- Restore Purchases works
+- Subscription terms and renewal disclosures are visible
+- Privacy Policy and Terms links work
+- No external payment path violates Apple rules
+- No inaccessible or unfinished purchase option is displayed
+
+If purchases are not intended for review yet, ensure they are not
+presented as working features.
+
+H. PERMISSIONS AND PRIVACY
+
+Verify every permission shown in the binary:
+
+- Location
+- Camera
+- Photos
+- Notifications
+- Tracking, if any
+
+For each:
+
+- Purpose string is accurate
+- Permission is requested only when needed
+- Denial has a usable alternative
+- App does not crash when denied
+- Privacy Policy matches actual behavior
+- App Privacy disclosures match the binary and backend
+
+I. METADATA AND REVIEW NOTES
+
+Verify:
+
+- Screenshots reflect Build 97
+- Description does not promise unavailable features
+- Support URL works
+- Privacy Policy URL works
+- Terms URL works
+- Contact details are current
+- Review notes explain the exact limited Build 97 experience
+- Demo credentials are current
+- Any special steps are explicit
+- No old demo-mode instruction conflicts with the review account
+- Export compliance and encryption answers are complete
+- Age rating matches available content
+
+J. LINKS, ROUTES, AND ASSETS
+
+Automatically inventory and test:
+
+- API routes called by Build 97
+- Deep links
+- Notification links
+- Web URLs
+- Images and icons
+- Business records
+- Events
+- Policy links
+- Password-reset links
+- Email-verification links
+
+No route required by the submitted binary may return an unexplained 404.
+
+══════════════════════════════════════════════════════════════
+PART 4 — TEST THE ACTUAL RELEASE BINARY
+══════════════════════════════════════════════════════════════
+
+Do not rely only on local development, Expo Go, or API tests.
+
+After the root cause is fixed and production remains stable:
+
+1. Create the Build 97 release candidate.
+2. Install the actual TestFlight/internal-distribution binary.
+3. Uninstall any prior version first for the new-user path.
+4. Test the update path separately where relevant.
+5. Execute the entire Apple reviewer journey.
+6. Capture sanitized screenshots or video evidence.
+7. Confirm corresponding Railway logs.
+8. Confirm no P0/P1 errors.
+
+Apple recommends testing a release build on actual supported devices;
+simulator-only evidence is not sufficient.
+
+══════════════════════════════════════════════════════════════
+PART 5 — STABILITY OBSERVATION
+══════════════════════════════════════════════════════════════
+
+A 30-minute window is not enough given failures previously appeared every
+2–3 hours.
+
+Before submission require:
+
+- Minimum 12-hour continuous production observation after the final
+  database correction and deployment
+- Synthetic login and business-list checks at least every 5 minutes
+- Database-aware readiness check
+- Zero unexplained database outages
+- Zero recurring connection-pool exhaustion
+- Zero P0/P1 authentication failures
+- Railway restart count recorded
+- DB connection utilization recorded
+- Error-rate and latency summary
+
+If a failure occurs, the observation window restarts after correction.
+
+This does not require the founder to remain awake or manually test.
+Automate the checks and provide the evidence.
+
+══════════════════════════════════════════════════════════════
+PART 6 — RELEASE EVIDENCE AND ACCOUNTABILITY
+══════════════════════════════════════════════════════════════
+
+Update:
+
+docs/product/releases/BUILD_97_RELEASE_GATE_EVIDENCE.md
+
+It must contain:
+
+- Exact release commit
+- Exact API deployment
+- Exact mobile binary/build
+- Files changed
+- Root cause of DB exhaustion
+- Sustainable correction
+- DB connection evidence
+- 12-hour stability evidence
+- Actual-device matrix
+- Authentication results
+- Account-deletion result
+- Review-account result
+- All applicable Apple-guideline checks
+- Links/404 inventory
+- UGC/moderation result
+- Permissions result
+- Subscription result
+- Metadata/review-notes result
+- Open defects by severity
+- Rollback procedure
+- GO/NO-GO decision
+
+No credential values or secrets in the evidence file.
+
+══════════════════════════════════════════════════════════════
+PART 7 — HARD RELEASE RULE
+══════════════════════════════════════════════════════════════
+
+Do not submit Build 97 if:
+
+- Root cause of recurring DB failure is unresolved
+- A restart is still required to restore normal operation
+- Any DB route intermittently returns 500
+- Apple Sign-In registration is not proven on the actual binary
+- Review credentials are not proven
+- Account deletion is missing or broken
+- iPad reviewer journey is not proven
+- Any visible subscription is incomplete
+- Any visible user-generated-content safeguard is missing
+- Any P0 or P1 defect remains open
+- Metadata promises unavailable functionality
+- Required routes or links return unexplained errors
+
+Return:
+
+1. Confirmed DB root cause
+2. Sustainable fix
+3. Complete Apple-risk matrix
+4. Actual-device results
+5. Release-binary results
+6. 12-hour stability results
+7. Remaining rejection risks
+8. GO or NO-GO
+
+Do not add unrelated Build 97 features.
+Do not create more vision documentation.
+Do not submit until the gate passes.

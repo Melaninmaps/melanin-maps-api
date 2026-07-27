@@ -1,7 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { setDbLogger, pool, getPoolStats } from "@workspace/db";
-import { getStripeSync } from "./stripeClient";
+import { getStripeSync, endStripeSyncPool } from "./stripeClient";
+import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 
 // Route pool events through the structured pino logger so they appear in
@@ -74,6 +75,12 @@ const server = app.listen(port, (err) => {
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready — initial pool state");
 
+  // Route monitor log events through pino so they appear in Railway's log stream.
+  setMonitorLogger(logger);
+  // 5-minute synthetic DB health checks — maintains 12-hour evidence ring buffer.
+  // Results visible at GET /api/readyz/history.
+  startHealthMonitor();
+
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
   startNudgeCronScheduler();
@@ -107,12 +114,18 @@ function gracefulShutdown(signal: string) {
 
   // 1. Stop accepting new connections and wait for in-flight requests to finish.
   server.close(async () => {
-    logger.info("HTTP server closed. Draining DB pool…");
+    logger.info("HTTP server closed. Draining DB pools…");
+    stopHealthMonitor();
     try {
+      // Drain the app's own pool (max:5) first.
       await pool.end();
-      logger.info({ pool: getPoolStats() }, "DB pool drained. Exiting cleanly.");
+      logger.info({ pool: getPoolStats() }, "App DB pool drained.");
+      // Drain the StripeSync internal pool (max:2) — previously leaked on every
+      // webhook call before the singleton fix.
+      await endStripeSyncPool();
+      logger.info("StripeSync pool drained. Exiting cleanly.");
     } catch (err) {
-      logger.error({ err }, "Error draining DB pool during shutdown");
+      logger.error({ err }, "Error draining DB pools during shutdown");
     }
     process.exit(0);
   });
