@@ -791,3 +791,9 @@ id = "wfZOYIIlgJ5LZXTNXzLRK"
 uri = "file://docs/confidential/MWM-Trade-Secrets-Audit-CONFIDENTIAL.pdf"
 type = "pdf"
 title = "MWM Invisible Architecture™ — Trade Secret Audit (CONFIDENTIAL)"
+
+[[outputs]]
+id = "20OydhEPrYBKioP9QtOpQ"
+uri = "file://docs/product/releases/MWM_Build97_ReviewPackage.zip"
+type = "unspecified"
+title = "MWM Build 97 — Engineering Review Package"
