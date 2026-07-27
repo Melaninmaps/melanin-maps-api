@@ -1,0 +1,172 @@
+This is finally actionable. **Authorize the surgical fix now**, but tighten the scope before sending it.
+
+One correction: Replit’s proposed three routes omit `GET /api/auth/check-username`, which also failed during Apple’s review. Apple also encountered business-loading errors. Fixing only three authentication routes could let the reviewer log in but still make the app appear broken if the same transient database problem recurs.
+
+Send Replit this exact authorization:
+
+```text
+PLEASE IMPLEMENT — BUILD 97 APPLE APPROVAL SCOPE ONLY
+
+You are authorized to implement only the following work.
+
+1. TRANSIENT DATABASE RESILIENCE
+
+Create one narrowly scoped, reusable database retry helper that:
+
+- Retries only confirmed transient connection-class errors
+- Performs one retry after approximately 500 ms
+- Does not retry validation, authentication, authorization, duplicate,
+  or ordinary application errors
+- Logs the first failure, retry attempt, and final outcome
+- Does not expose database details to the member
+- Does not create duplicate database writes
+- Preserves the existing Apple Sign-In, nonce, token, and session logic
+
+Apply it to the critical Apple reviewer journey that failed:
+
+- POST /api/auth/apple
+- POST /api/auth/login-email
+- POST /api/auth/register
+- GET /api/auth/check-username
+- The initial business-list request used immediately after launch/login
+
+Before applying it to the business-list route, confirm the exact route
+Apple’s Build 96 client calls. Do not guess.
+
+Do not broadly wrap every database query in the platform.
+Do not rewrite the database layer.
+Do not increase the connection pool without evidence.
+Do not change Apple authentication logic.
+
+2. APPLE REVIEW ACCOUNT
+
+Create one production email/password review account with:
+
+- Email already verified
+- Account already approved
+- No waitlist restriction
+- No expired onboarding state
+- Access to every feature visible in Build 97
+- A strong password reserved only for Apple review
+- No personal or real-user information
+
+Return the credentials privately for entry into:
+
+App Store Connect → App Review Information
+
+Do not place the password in source control, documentation, logs,
+screenshots, or the Future-State Register.
+
+3. REQUIRED VERIFICATION BEFORE BUILDING
+
+Run the following against the production Railway backend:
+
+- Fresh Apple Sign-In registration
+- Returning Apple Sign-In login
+- Fresh email registration
+- Review-account email login
+- Username availability check
+- Initial business-list load
+- Logout and login again
+- Cold launch and session restoration
+
+Test the Apple flow on an iPad Air 11-inch layout or simulator matching
+Apple’s review environment as closely as possible.
+
+The prior request for 20 separate new Apple registrations may be
+impractical without multiple Apple identities. Instead, provide:
+
+- At least 3 clean Apple registration cycles, resetting/revoking the test
+  authorization correctly between cycles
+- At least 10 consecutive review-account email logins
+- At least 10 initial business-list loads
+- A minimum 30-minute production stability observation after deployment
+- Railway log evidence showing no connection-class failures in the tested
+  journey
+- Confirmation that the submitted client receives controlled error
+  messages rather than raw 500 responses if a retry ultimately fails
+
+If any test fails, stop, diagnose it, correct only the confirmed issue,
+and restart the affected test count.
+
+4. BUILD 97 BOUNDARY
+
+Build 97 is an APPLE APPROVAL BUILD only.
+
+Include only:
+
+- The database-resilience correction
+- Any client change strictly necessary for the confirmed rejection
+- Build/version metadata required for submission
+
+Do not include:
+
+- Maps or Heritage work
+- Community Member redesign
+- Personalization
+- Platform vocabulary changes
+- KinfolkAI changes
+- Sundown-town data
+- Verification changes
+- Business or Ambassador features
+- Any unrelated cleanup or refactor
+
+5. RELEASE EVIDENCE
+
+Before starting the EAS build, create:
+
+docs/product/releases/BUILD_97_RELEASE_GATE_EVIDENCE.md
+
+Include actual sanitized evidence for:
+
+- Files changed
+- Exact transient errors eligible for retry
+- Tests executed
+- Pass/fail counts
+- iPad result
+- Production API result
+- Review-account result
+- Railway log review
+- Remaining known risks
+- Rollback procedure
+- Confirmation that no unrelated changes entered the build
+
+Do not include credentials or secret values.
+
+6. RETURN TO ME
+
+Return only:
+
+1. Confirmed implementation completed
+2. Exact files changed
+3. Exact retry conditions
+4. Deployment result
+5. Test results
+6. iPad result
+7. Review-account readiness
+8. Railway log result
+9. Remaining blockers
+10. GO or NO-GO recommendation for the EAS Build 97 command
+
+Do not submit to Apple until I separately approve submission.
+```
+
+## Your one manual task
+
+In Apple Developer, confirm key `Z2NB4XAZY7` is **Active**:
+
+**Certificates, Identifiers & Profiles → Keys → Z2NB4XAZY7**
+
+Then message Replit either:
+
+> Apple key Z2NB4XAZY7 is Active.
+
+or:
+
+> Apple key Z2NB4XAZY7 is Revoked.
+
+## Why this is the fastest responsible route
+
+Apple encountered a database failure affecting Apple Sign-In, email login, registration, username checking, and business loading during the same three-minute period. The evidence indicates a shared infrastructure failure rather than an Apple-specific code defect. Limiting the correction to transient database resilience and a verified review account is the quickest path without risking another authentication rewrite.
+
+The new release-gate documents are useful, but **no more planning documents should be created today**. Replit’s work now needs to be code, testing evidence, the review account, and Build 97.

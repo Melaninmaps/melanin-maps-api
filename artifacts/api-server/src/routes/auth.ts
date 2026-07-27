@@ -9,6 +9,7 @@ import {
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
 import { db, usersTable, getPoolStats } from "@workspace/db";
+import { withDbRetry } from "../lib/db-retry";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdminReq(req: Request): boolean {
@@ -443,11 +444,16 @@ router.get("/auth/check-username", async (req: Request, res: Response) => {
   }
 
   try {
-    const [existing] = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.username, username))
-      .limit(1);
+    const [existing] = await withDbRetry(
+      () =>
+        db
+          .select({ id: usersTable.id })
+          .from(usersTable)
+          .where(eq(usersTable.username, username))
+          .limit(1),
+      req.log,
+      "GET /auth/check-username",
+    );
     res.json({ available: !existing });
   } catch (err) {
     req.log.error({ err }, "GET /api/auth/check-username error");
@@ -533,6 +539,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
   }
 
   try {
+    await withDbRetry(async () => {
     const cleanEmail = email.trim().toLowerCase();
     const emailMasked = maskEmail(cleanEmail);
 
@@ -604,6 +611,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       token: sid,
       user: { id: user.id, firstName: user.firstName, username: user.username },
     });
+    }, req.log, "POST /auth/register");
   } catch (err) {
     req.log.error({ ...diagBase, err, event: "AUTH_REGISTER_ERROR", durationMs: Date.now() - t0 }, "POST /api/auth/register error");
     res.status(500).json({ error: "Registration failed. Please try again." });
@@ -632,6 +640,7 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
   const emailMasked = maskEmail(cleanEmail);
 
   try {
+    await withDbRetry(async () => {
     const [user] = await db
       .select()
       .from(usersTable)
@@ -703,6 +712,7 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     const sid = await createSession(sessionData);
     req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
     res.json({ token: sid });
+    }, req.log, "POST /auth/login-email");
   } catch (err) {
     const pool = getPoolStats();
     req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool }, "POST /api/auth/login-email error");
@@ -878,6 +888,7 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
   if (!identityToken) { res.status(400).json({ error: "identityToken is required." }); return; }
 
   try {
+    await withDbRetry(async () => {
     const payload = await verifyAppleToken(identityToken, nonce);
     const sub = payload.sub;
     const verifiedEmail = email || payload.email;
@@ -1023,6 +1034,7 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
     };
     const sid = await createSession(sessionData);
     res.json({ token: sid, profileSetupComplete: user.profileSetupComplete ?? false });
+    }, req.log, "POST /auth/apple");
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/apple error");
     res.status(500).json({ error: "Apple Sign-In failed. Please try again." });

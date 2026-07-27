@@ -3,6 +3,7 @@ import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
+import { withDbRetry } from "../lib/db-retry";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
 import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
@@ -41,6 +42,7 @@ function isAdmin(req: Request): boolean {
 
 router.get("/businesses", async (req: Request, res: Response) => {
   try {
+    await withDbRetry(async () => {
     const { category, search, state, handle, culturalPreference, ownership } = req.query;
 
     const conditions = [];
@@ -179,6 +181,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
     const withCaptions = annotated.map((b) => ({ ...b, topCaptions: captionMap.get(b.id) ?? [] }));
 
     res.json({ businesses: withCaptions, total: withCaptions.length, featuredCount });
+    }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
