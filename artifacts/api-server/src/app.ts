@@ -5,6 +5,8 @@ import pinoHttp from "pino-http";
 import path from "node:path";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+// SPA html bundled at build time — guaranteed present regardless of Railway filesystem layout
+import { SPA_HTML as BUNDLED_SPA_HTML } from "./generated/spaHtml";
 import router from "./routes";
 import webSsrRouter from "./routes/web-ssr";
 import privacyRouter from "./routes/privacy";
@@ -33,19 +35,18 @@ const SPA_SEARCH_DIRS = [
   path.join(cwd, "artifacts", "api-server", "web-static"),             // cwd/artifacts/…/web-static
 ];
 
-let spaHtml: string | null = null;
+// Use bundled HTML (embedded at build time) as primary; file-system read as a
+// refresh mechanism (picks up hot-reloaded assets in dev without a rebuild).
+let spaHtml: string = BUNDLED_SPA_HTML;
 let spaServeDir = webPublicDir;
 for (const dir of SPA_SEARCH_DIRS) {
   try {
     spaHtml = readFileSync(path.join(dir, "index.html"), "utf8");
     spaServeDir = dir;
-    logger.info({ spaServeDir }, "SPA index.html loaded");
     break;
   } catch { /* try next */ }
 }
-if (!spaHtml) {
-  logger.warn({ tried: SPA_SEARCH_DIRS }, "SPA index.html not found in any search path");
-}
+// spaHtml is always set — worst case it's the bundled build-time snapshot
 
 const app: Express = express();
 

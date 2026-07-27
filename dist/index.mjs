@@ -390304,6 +390304,70 @@ import path6 from "node:path";
 import { readFileSync } from "node:fs";
 import { fileURLToPath as fileURLToPath4 } from "node:url";
 
+// src/generated/spaHtml.ts
+var SPA_HTML = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+    <!-- Primary SEO -->
+    <title>Mapping With Melanin\u2122 \u2014 Find Minority-Owned Businesses &amp; Community</title>
+    <meta name="description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Mapping with Melanin\u2122 connects you to trusted businesses, events, and community across the country." />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#2B1507" />
+    <link rel="canonical" href="https://mappingwithmelanin.com/" />
+
+    <!-- Open Graph (Facebook, LinkedIn, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mappingwithmelanin.com/" />
+    <meta property="og:site_name" content="Mapping With Melanin\u2122" />
+    <meta property="og:title" content="Mapping With Melanin\u2122 \u2014 Find Minority-Owned Businesses &amp; Community" />
+    <meta property="og:description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Join the waitlist for early access." />
+    <meta property="og:image" content="https://mappingwithmelanin.com/images/og-share.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mapping With Melanin \u2014 Community discovery platform" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@melaninmaps" />
+    <meta name="twitter:title" content="Mapping With Melanin\u2122 \u2014 Find Minority-Owned Businesses &amp; Community" />
+    <meta name="twitter:description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Join the waitlist for early access." />
+    <meta name="twitter:image" content="https://mappingwithmelanin.com/images/og-share.jpg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/brand/apple-touch-icon.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Error capture: report any JS crash to /__client-error so we can see it in Railway logs -->
+    <script>
+      function _reportErr(msg, src, line, col, err) {
+        var payload = JSON.stringify({ msg: String(msg), src: String(src), line: line, col: col, stack: err && err.stack ? err.stack : '' });
+        try { navigator.sendBeacon('/__client-error', payload); } catch(e) {}
+      }
+      window.onerror = function(msg, src, line, col, err) { _reportErr(msg, src, line, col, err); };
+      window.addEventListener('unhandledrejection', function(e) {
+        var err = e.reason;
+        _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-CfK5dDjp.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BxvtoaAa.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+`;
+
 // src/routes/index.ts
 var import_express141 = __toESM(require_express2(), 1);
 
@@ -453771,19 +453835,15 @@ var SPA_SEARCH_DIRS = [
   path6.join(cwd, "artifacts", "api-server", "web-static")
   // cwd/artifacts/…/web-static
 ];
-var spaHtml = null;
+var spaHtml = SPA_HTML;
 var spaServeDir = webPublicDir;
 for (const dir of SPA_SEARCH_DIRS) {
   try {
     spaHtml = readFileSync(path6.join(dir, "index.html"), "utf8");
     spaServeDir = dir;
-    logger.info({ spaServeDir }, "SPA index.html loaded");
     break;
   } catch {
   }
-}
-if (!spaHtml) {
-  logger.warn({ tried: SPA_SEARCH_DIRS }, "SPA index.html not found in any search path");
 }
 var app = (0, import_express144.default)();
 app.set("trust proxy", 1);
