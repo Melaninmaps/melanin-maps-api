@@ -413518,6 +413518,40 @@ router17.get("/community/thread/:threadId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch thread" });
   }
 });
+router17.get("/community/guidelines", (_req, res) => {
+  res.json({
+    version: "1.0",
+    lastUpdated: "2026-07-27",
+    guidelines: [
+      {
+        title: "Be Authentic",
+        body: "Share real experiences. Only review businesses you have personally visited or used."
+      },
+      {
+        title: "Be Respectful",
+        body: "Critique the experience, not the person. Harassment, hate speech, and discriminatory language are not permitted."
+      },
+      {
+        title: "Protect Privacy",
+        body: "Do not share other people's personal information without their consent."
+      },
+      {
+        title: "Report Accurately",
+        body: "Submit safety reports only for things you witnessed or can confirm. False reports violate these guidelines and may result in account suspension."
+      },
+      {
+        title: "Support the Community",
+        body: "Mapping with Melanin\u2122 exists to strengthen our communities. Content that undermines that mission \u2014 spam, misinformation, or coordinated manipulation \u2014 will be removed."
+      },
+      {
+        title: "Follow the Law",
+        body: "Do not post content that violates applicable law, including copyright, defamation, or privacy statutes."
+      }
+    ],
+    reportUrl: "https://www.mappingwithmelanin.com/report",
+    fullPolicyUrl: "https://www.mappingwithmelanin.com/terms"
+  });
+});
 var community_default = router17;
 
 // src/routes/conversations.ts
@@ -418944,60 +418978,6 @@ router24.post("/admin/bootstrap", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Admin bootstrap failed");
     res.status(500).json({ error: "Bootstrap failed" });
-  }
-});
-router24.post("/admin/emergency-token", async (req, res) => {
-  const { secret } = req.body;
-  const sessionSecret = process.env.SESSION_SECRET ?? "";
-  if (!secret || !sessionSecret || secret !== sessionSecret) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  try {
-    const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim().toLowerCase()).filter(Boolean);
-    const allUsers = await db.select({
-      id: usersTable.id,
-      email: usersTable.email,
-      firstName: usersTable.firstName,
-      lastName: usersTable.lastName,
-      profileImageUrl: usersTable.profileImageUrl,
-      approved: usersTable.approved,
-      role: usersTable.role
-    }).from(usersTable).where(eq(usersTable.role, "admin")).limit(1);
-    let adminUser = allUsers[0];
-    if (!adminUser && adminEmails.length > 0) {
-      const byEmail = await db.select({
-        id: usersTable.id,
-        email: usersTable.email,
-        firstName: usersTable.firstName,
-        lastName: usersTable.lastName,
-        profileImageUrl: usersTable.profileImageUrl,
-        approved: usersTable.approved,
-        role: usersTable.role
-      }).from(usersTable).where(eq(usersTable.email, adminEmails[0])).limit(1);
-      adminUser = byEmail[0];
-    }
-    if (!adminUser) {
-      res.status(404).json({ error: "No admin user found" });
-      return;
-    }
-    const sid = await createSession({
-      user: {
-        id: adminUser.id,
-        email: adminUser.email,
-        firstName: adminUser.firstName,
-        lastName: adminUser.lastName,
-        profileImageUrl: adminUser.profileImageUrl,
-        approved: adminUser.approved ?? false,
-        role: adminUser.role ?? "admin"
-      },
-      access_token: ""
-    });
-    req.log.info({ userId: adminUser.id, email: adminUser.email }, "Emergency admin token issued");
-    res.json({ token: sid, userId: adminUser.id, email: adminUser.email });
-  } catch (err) {
-    req.log.error({ err }, "Emergency admin token failed");
-    res.status(500).json({ error: "Failed to create admin token" });
   }
 });
 var SEED_TOPICS = [

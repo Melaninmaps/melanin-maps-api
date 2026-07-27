@@ -1,8 +1,10 @@
 [phases.build]
 cmds = [
   "pnpm --filter @workspace/api-server run build",
+  "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
+  "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
   "mkdir -p dist/public && cp -r artifacts/api-server/dist/public/. dist/public/"
 ]
 
 [start]
-cmd = "pnpm --filter @workspace/api-server run start"
+cmd = "node static-server.mjs"
