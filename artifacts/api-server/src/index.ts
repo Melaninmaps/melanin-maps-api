@@ -4,6 +4,7 @@ import { setDbLogger, pool, getPoolStats } from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
 import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
+import { runStartupMigrations } from "./lib/startup-migrations";
 
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
@@ -58,6 +59,14 @@ async function initStripe() {
     warnings.push("WMATA_API_KEY — DC Metro transit data will be unavailable.");
   }
 
+  // Apple Sign-In requires four env vars for new-user authorization-code exchange.
+  // If any is missing, new Apple registrations return HTTP 500 — an instant App Store rejection.
+  const appleVars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const missingApple = appleVars.filter((v) => !process.env[v]);
+  if (missingApple.length > 0) {
+    warnings.push(`Apple Sign-In INCOMPLETE — missing Railway vars: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
+  }
+
   if (warnings.length > 0) {
     logger.warn("⚠️  Missing environment configuration:");
     for (const w of warnings) {
@@ -82,6 +91,13 @@ const server = app.listen(port, (err) => {
   startHealthMonitor();
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
+
+  // Apply any schema columns that exist in the Drizzle model but are missing
+  // from older Railway deployments.  Runs after the port opens so the server
+  // is never delayed, but completes in <1 s — before any auth request arrives.
+  runStartupMigrations(logger).catch((err) =>
+    logger.error({ err }, "Startup migrations failed")
+  );
 
   startNudgeCronScheduler();
 });
@@ -117,7 +133,7 @@ function gracefulShutdown(signal: string) {
     logger.info("HTTP server closed. Draining DB pools…");
     stopHealthMonitor();
     try {
-      // Drain the app's own pool (max:5) first.
+      // Drain the app's own pool (max:8) first.
       await pool.end();
       logger.info({ pool: getPoolStats() }, "App DB pool drained.");
       // Drain the StripeSync internal pool (max:2) — previously leaked on every

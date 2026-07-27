@@ -30,6 +30,13 @@ export function setDbLogger(logger: DbLogger): void {
   _logger = logger;
 }
 
+/**
+ * Maximum connections in the application pg.Pool.
+ * Total live DB connections: POOL_MAX (app) + 2 (StripeSync) = POOL_MAX + 2.
+ * Exported so readyz and healthMonitor use the same value rather than hardcoding it.
+ */
+export const POOL_MAX = 8;
+
 let _pool: pg.Pool | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
 
@@ -59,7 +66,7 @@ function getPool(): pg.Pool {
       // Increased from 5→8 after measuring peak waiting=12 at 141 req/sec
       // abuse load; realistic 30-user traffic (10–15 req/sec) never saturates.
       // Revisit if probe reports sustained waitingCount > 2.
-      max: 8,
+      max: POOL_MAX,
       // ─── Query / statement timeouts ───────────────────────────────────────
       // statement_timeout: PostgreSQL cancels any query running longer
       // than this and releases the connection.

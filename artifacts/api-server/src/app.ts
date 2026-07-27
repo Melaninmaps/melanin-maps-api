@@ -3,7 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import path from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+// SPA html bundled at build time — guaranteed present regardless of Railway filesystem layout
+import { SPA_HTML as BUNDLED_SPA_HTML } from "./generated/spaHtml";
 import router from "./routes";
 import webSsrRouter from "./routes/web-ssr";
 import privacyRouter from "./routes/privacy";
@@ -11,10 +14,39 @@ import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
 import { generalLimiter } from "./middleware/rateLimiter";
-import { pool, getPoolStats } from "@workspace/db";
+import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
+import { getHealthHistory } from "./lib/healthMonitor";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
+
+// Read SPA html once at startup — avoids sendFile path-resolution issues.
+// Try every plausible path in order; the first one with index.html wins.
+// Covers: freshly-built dist/public/, committed web-static/, and all
+// cwd-relative equivalents for any Railway working-directory scenario.
+const cwd = process.cwd();
+const SPA_SEARCH_DIRS = [
+  path.join(_dirname, "public"),                                        // <apiServerDir>/dist/public
+  path.join(_dirname, "..", "web-static"),                              // <apiServerDir>/web-static
+  path.join(_dirname, "..", "dist", "public"),                          // edge case
+  path.join(cwd, "dist", "public"),                                     // cwd/dist/public
+  path.join(cwd, "web-static"),                                         // cwd/web-static (legacy root)
+  path.join(cwd, "artifacts", "api-server", "dist", "public"),         // cwd/artifacts/…/dist/public
+  path.join(cwd, "artifacts", "api-server", "web-static"),             // cwd/artifacts/…/web-static
+];
+
+// Use bundled HTML (embedded at build time) as primary; file-system read as a
+// refresh mechanism (picks up hot-reloaded assets in dev without a rebuild).
+let spaHtml: string = BUNDLED_SPA_HTML;
+let spaServeDir = webPublicDir;
+for (const dir of SPA_SEARCH_DIRS) {
+  try {
+    spaHtml = readFileSync(path.join(dir, "index.html"), "utf8");
+    spaServeDir = dir;
+    break;
+  } catch { /* try next */ }
+}
+// spaHtml is always set — worst case it's the bundled build-time snapshot
 
 const app: Express = express();
 
@@ -49,12 +81,12 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   // by concurrent queries while new connections can still be created (total<max).
   // Requiring waiting>0 as a third condition means we only fast-fail when
   // callers are genuinely being delayed, not just when connections are busy.
-  if (preStats.idle === 0 && preStats.total >= 8 && preStats.waiting > 0) {
+  if (preStats.idle === 0 && preStats.total >= POOL_MAX && preStats.waiting > 0) {
     res.status(503).json({
       status: "degraded",
       db: "pool_exhausted",
       pool: preStats,
-      detail: `Pool at capacity (total=${preStats.total}/8, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
+      detail: `Pool at capacity (total=${preStats.total}/${POOL_MAX}, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
     });
     return;
   }
@@ -72,25 +104,21 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   }
 });
 
-// 12-hour health history — evidence for Part 5 (Apple rejection-prevention review).
-// Returns the in-memory ring buffer of all health check results since last startup.
+// 12-hour health history — evidence ring buffer for operational review.
+// Returns results since last process startup.
 app.get("/api/readyz/history", (_req: Request, res: Response) => {
-  const { getHealthHistory } = require("./lib/healthMonitor") as typeof import("./lib/healthMonitor");
   res.json(getHealthHistory());
 });
-app.get("/api/dl", (_req: Request, res: Response) => {
-  res.download(path.join(_dirname, "../dist/index.mjs"), "index.mjs");
-});
-app.get("/api/dl/review-package", (_req: Request, res: Response) => {
-  res.download(
-    "/home/runner/workspace/docs/product/releases/MWM_Build97_ReviewPackage.zip",
-    "MWM_Build97_ReviewPackage.zip",
-    (err) => {
-      if (err && !res.headersSent) {
-        res.status(500).json({ error: String(err) });
-      }
-    }
-  );
+
+// Version / build identity — used to confirm Railway is running the expected artifact.
+// Returns only public build metadata; never exposes secrets, paths, or config.
+app.get("/api/version", (_req: Request, res: Response) => {
+  res.json({
+    sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
+    deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
+    release: "Build-97",
+    env: process.env.NODE_ENV ?? "unknown",
+  });
 });
 
 app.use(
@@ -166,15 +194,37 @@ app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);
 
-// Serve the web app static files (built by build.mjs and copied to dist/public/)
-app.use(express.static(webPublicDir));
-// SPA fallback — any non-API route serves index.html so React Router works
-app.get("/{*path}", (req: Request, res: Response, next: NextFunction) => {
+// Serve the web app static files from whichever dir has index.html
+app.use(express.static(spaServeDir));
+
+// SPA fallback handler — reused for explicit routes and catch-all.
+// spaHtml is always a non-empty string: either a file-system read or the
+// HTML embedded in the bundle by build.mjs. Guard against empty string.
+const serveSpa = (_req: Request, res: Response, next: NextFunction): void => {
+  const html = spaHtml && spaHtml.length > 100 ? spaHtml : BUNDLED_SPA_HTML;
+  if (html && html.length > 100) {
+    res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(html);
+  } else {
+    next();
+  }
+};
+
+// Explicit routes for common SPA paths registered BEFORE the catch-all —
+// belt-and-suspenders in case the wildcard doesn't fire in this Express 5 build.
+const SPA_EXPLICIT = [
+  "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
+  "/membership", "/map", "/discover", "/community", "/profile",
+  "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
+];
+for (const p of SPA_EXPLICIT) {
+  app.get(p, serveSpa);
+  app.get(`${p}/*path`, serveSpa);
+}
+
+// Catch-all: any remaining non-API route serves the SPA
+app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.path.startsWith("/api/")) return next();
-  const indexPath = path.join(webPublicDir, "index.html");
-  res.sendFile(indexPath, (err) => {
-    if (err) next();
-  });
+  serveSpa(req, res, next);
 });
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {

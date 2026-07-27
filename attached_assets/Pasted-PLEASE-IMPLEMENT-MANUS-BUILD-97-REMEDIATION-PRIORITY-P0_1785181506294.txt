@@ -1,0 +1,612 @@
+PLEASE IMPLEMENT — MANUS BUILD 97 REMEDIATION
+
+PRIORITY: P0
+FOUNDER AUTHORIZATION: IMPLEMENT THE REQUIRED BUILD 97 CORRECTIONS NOW
+
+Manus completed an independent source and deployable-artifact review.
+
+This instruction supersedes prior GO/NO-GO reports where they conflict
+with Manus’s verified findings.
+
+The immediate objective remains:
+
+1. Produce iOS Build 97.
+2. Produce Android version 71.
+3. Pass Apple review.
+4. Give approximately 30 testers across web, iPhone, iPad, Android phone,
+   and Android tablet a meaningful experience containing:
+   - Maps
+   - Existing businesses
+   - Inclusive diaspora language
+   - Heritage places
+   - Historical Sundown Towns
+   - KinfolkAI basic chatbot functionality
+   - Community Feed
+   - Events and current core features
+
+Do not remove founder-approved features.
+Do not submit or distribute until the post-build gates pass.
+
+══════════════════════════════════════════════════════════════
+1. REBUILD THE ACTUAL RAILWAY ARTIFACT — P0
+══════════════════════════════════════════════════════════════
+
+Manus verified that Railway runs:
+
+dist/index.mjs
+
+through:
+
+railway.toml → npm start → static-server.mjs → dist/index.mjs
+
+The current dist/index.mjs was built July 24 and still contains:
+
+- Per-webhook StripeSync pool creation
+- Application pool max 5
+- Old readiness logic
+- No /api/readyz/history
+- No Sundown Town seed endpoint
+- None of the July 27 Build 97 source fixes
+
+The TypeScript files under artifacts/ and lib/ are not what Railway
+currently executes.
+
+Required actions:
+
+1. Work from the complete source tree in the Replit workspace.
+2. Apply all approved remediation changes below.
+3. Run the actual workspace bundling process that generates
+   dist/index.mjs.
+4. Rebuild all required source maps/artifacts.
+5. Verify the new compiled bundle—not only the TypeScript source.
+6. Commit and push the fresh dist/index.mjs and associated artifacts.
+7. Record the true pushed Git commit hash.
+8. Trigger Railway Deploy Latest only after the new artifact is committed.
+9. Prove the deployed runtime is new.
+
+Required compiled-bundle gates:
+
+- _stripeSyncPromise exists
+- Application pool max 8 exists
+- Stripe pool max 2 exists
+- seed-sundown-towns route exists
+- Correct readyz logic exists
+- /api/readyz/history exists
+- Debug download routes are absent
+
+Add a safe:
+
+GET /api/version
+
+that returns only:
+
+- Git SHA
+- Build timestamp
+- Release identifier
+
+Do not expose secrets, paths, or internal configuration.
+
+Do not tell me the source is deployed until the compiled bundle and
+runtime prove it.
+
+══════════════════════════════════════════════════════════════
+2. STRIPE AND DATABASE CORRECTIONS
+══════════════════════════════════════════════════════════════
+
+Implement and include in the rebuilt bundle:
+
+- Promise-based StripeSync singleton
+- Stripe pool max 2
+- Application pool max 8
+- Shared exported POOL_MAX constant
+- Correct use of POOL_MAX in readyz and monitoring
+- Graceful shutdown for all owned pools
+- One retry after approximately 500 ms for confirmed transient
+  connection errors only
+- No retry of validation, authentication, authorization, PostgreSQL
+  server-response codes, or duplicate-key errors
+- Correct /admin/health metadata showing max 8
+- Convert readyz/history dynamic require() to a static ESM-safe import
+- Gate production test-row seeding behind SEED_TEST_ROWS
+- SEED_TEST_ROWS must be off/unset in Railway production
+
+Fix the Stripe singleton rejected-promise problem:
+
+If initial StripeSync creation fails, clear the cached promise so a later
+request can try again without requiring a service restart.
+
+Correct stale source comments that still reference app pool max 5.
+
+Document all startup-created pools, including:
+
+- Application pool
+- Stripe pool
+- static-server migration pool
+- stripe-replit-sync runMigrations pool
+
+Do not increase the pool above 8 + 2 without measured evidence.
+
+══════════════════════════════════════════════════════════════
+3. REMOVE PRODUCTION DEBUG DOWNLOAD ROUTES
+══════════════════════════════════════════════════════════════
+
+Remove or disable:
+
+- GET /api/dl
+- GET /api/dl/review-package
+
+These endpoints must return 404 after deployment.
+
+The deployable backend bundle, internal routes, KinfolkAI system prompt,
+and review package must not be publicly downloadable.
+
+Search for any equivalent debug/export endpoint and report it.
+
+══════════════════════════════════════════════════════════════
+4. IPAD CONFIGURATION — MUST HAPPEN BEFORE IOS BUILD
+══════════════════════════════════════════════════════════════
+
+The current configuration has:
+
+- supportsTablet: true
+- orientation: portrait
+- no UIRequiresFullScreen declaration
+
+For Build 97, implement Manus’s lowest-risk recommendation:
+
+Add:
+
+UIRequiresFullScreen: true
+
+to the effective iOS Info.plist through the real mobile app configuration
+used by EAS.
+
+Keep portrait orientation for this release.
+
+Apply the correction to:
+
+- The actual artifacts/mobile/app.json or app.config source used by EAS
+- Any review/export copy so documentation matches reality
+
+Before running the iOS EAS build, confirm the generated native
+configuration will contain:
+
+- UIRequiresFullScreen = true
+- Portrait-only supported orientations
+- supportsTablet = true
+
+Do not start or continue an iOS build created before this correction.
+
+Landscape/multitasking support may be reviewed after Build 97; it is not
+authorized for this emergency release.
+
+══════════════════════════════════════════════════════════════
+5. HISTORICAL SUNDOWN TOWNS — REQUIRED
+══════════════════════════════════════════════════════════════
+
+Historical Sundown Towns remain non-negotiable for Build 97.
+
+The current source contains:
+
+- sundown-towns-seed.ts
+- 15 proposed entries
+- POST /admin/seed-sundown-towns
+- cultural_sites reuse
+- Historical Sundown Town category
+
+Before seeding:
+
+1. Remove Wikipedia from the general source header unless a specific
+   row genuinely relies on it and no primary source exists.
+2. Verify each proposed entry against:
+   - Tougaloo College/History and Social Justice
+   - The entry’s stated primary or scholarly source
+   - The entry’s external URL
+3. Produce a 15-entry verification table:
+   - Keep
+   - Correct
+   - Drop
+   - Source
+   - Evidence/confidence
+4. Drop any entry that cannot be responsibly confirmed.
+5. Change or remove isFamilyFriendly for this category.
+6. Preserve disclaimer-first descriptions.
+7. Do not describe any place as presently dangerous solely from the
+   historical designation.
+8. Do not add a danger score.
+
+After the source verification:
+
+- Include the corrected endpoint and data file in the rebuilt bundle
+- Deploy the bundle
+- Seed the verified records into production
+- Make the seed action idempotent
+- Return inserted/skipped counts
+- Verify using the correct query:
+
+GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town
+
+Do not use ?category=sundown because that is not the correct filter.
+
+Post-seed requirements:
+
+- Category count is nonzero
+- Search returns relevant records
+- Every description contains the historical disclaimer
+- Attribution/source link is present
+- Map chip and pins render
+- Detail tile opens
+- No empty category
+- No crash
+- KinfolkAI uses historical framing
+
+If fewer than 15 entries pass verification, ship the verified subset with
+a transparent “growing historical archive” statement.
+
+Do not defer the complete feature merely because some entries are removed.
+
+══════════════════════════════════════════════════════════════
+6. BUSINESS OWNERSHIP AND DIASPORA LANGUAGE
+══════════════════════════════════════════════════════════════
+
+Correct the conflict between:
+
+- legacy blackOwned boolean
+- modern ownershipDesignations array
+
+The app must not label every seeded business Black-owned merely because
+a bulk/default value set blackOwned=true.
+
+Required:
+
+1. Produce a dry-run list of all production businesses where:
+   - blackOwned = true
+   - ownershipDesignations is empty
+2. Identify which records have reliable, verified, or founder-approved
+   ownership information.
+3. Do not overwrite or publicly label unverified records.
+4. For verified Black-owned businesses:
+   - populate ownershipDesignations with the approved value
+5. For unknown/unverified businesses:
+   - remove the unsupported public Black-owned signal
+   - display neutral language
+6. Correct the write path that currently creates:
+   - empty designations for Black-owned records
+   - “non-minority-owned” as a designation for other records
+
+An absence of a minority designation should remain empty/neutral; do not
+label businesses “non-minority-owned.”
+
+Verify across:
+
+- Business cards
+- Map tiles
+- Search results
+- Detail screens
+- Filters
+- KinfolkAI context
+- Web copy where data-driven
+- Admin/business submission paths
+
+Do not run the production update until the founder receives and approves
+the affected-record dry run.
+
+The code-path correction must be included in the Build 97 bundle.
+
+══════════════════════════════════════════════════════════════
+7. KINFOLKAI BASIC CHATBOT CORRECTIONS
+══════════════════════════════════════════════════════════════
+
+Retain the existing useful KinfolkAI experience.
+
+Implement the minimal prompt corrections recommended by Manus:
+
+- Clearly distinguish Mapping With Melanin platform results from general
+  knowledge
+- Use phrasing such as:
+  - “From Mapping With Melanin’s listings...”
+  - “Generally speaking...”
+  - “I don’t yet have a verified platform listing for that...”
+- Never present general knowledge as verified MWM platform data
+- Do not invent businesses, events, heritage sites, weather, or current
+  safety conditions
+- Constrain safetyTips and safetyNote to practical, sourced logistics
+  rather than unsupported danger assessments
+- Preserve current weather fallback when live data is unavailable
+- Preserve current preferences, tone, city voices, and follow-up context
+
+Keep the verified current free-tier behavior:
+
+- 3 KinfolkAI queries per month before the limit response
+
+Correct all review notes and documentation that say free users receive
+zero queries.
+
+Re-run the existing 10-prompt acceptance battery and require:
+
+- 10/10 provenance clarity
+- Zero fabricated businesses
+- Honest weather fallback
+- Historical framing for Sundown Town questions
+- Controlled fourth-query limit response for a free account
+
+══════════════════════════════════════════════════════════════
+8. APPLE SIGN-IN OPERATIONAL VERIFICATION
+══════════════════════════════════════════════════════════════
+
+The server protocol appears correct, but route-liveness testing is not
+enough.
+
+Confirm in Railway Variables that all four exist:
+
+- APPLE_TEAM_ID
+- APPLE_KEY_ID
+- APPLE_PRIVATE_KEY
+- APPLE_TOKEN_ENCRYPTION_KEY
+
+Return only present/missing booleans; never values.
+
+Add a boot-time warning or admin-only configuration check that reports
+presence only.
+
+Add a timeout to Apple JWKS fetching.
+
+Do not weaken nonce verification.
+
+After the iOS build completes, perform:
+
+- Fresh Apple account registration
+- Returning Apple login
+- Logout/login
+- Session restoration
+- Revoked Apple credential flow
+- Invalid token path
+- Network timeout path
+
+Use the production backend.
+
+Do not submit until fresh Apple registration succeeds end-to-end on the
+actual Build 97 binary.
+
+══════════════════════════════════════════════════════════════
+9. APPLE REVIEW ACCOUNT
+══════════════════════════════════════════════════════════════
+
+Create a regular Mapping With Melanin production account.
+
+Do not create an App Store Connect Users and Access user.
+
+Requirements:
+
+- appstorereview@mappingwithmelanin.com or approved review email
+- Email verified
+- No waitlist
+- No MFA
+- No inaccessible verification step
+- Approved account
+- Founding tier or another working full-access tier
+- Maps visible
+- Heritage visible
+- Historical Sundown Towns visible
+- KinfolkAI fully usable
+- Community visible
+- Account deletion visible
+- Membership page does not block review
+
+Correct the valid member-type list if required so intended paid tiers can
+be assigned, but Founding tier is acceptable for this review account.
+
+Run 10 consecutive successful review-account logins.
+
+Place credentials only in App Store Connect review information.
+
+Never print or commit the password.
+
+Correct the review notes to say:
+
+- The review account has full KinfolkAI access
+- Free accounts receive 3 KinfolkAI queries per month
+- How to reach Maps, Heritage, Historical Sundown Towns, Community, and
+  KinfolkAI
+
+══════════════════════════════════════════════════════════════
+10. COMMUNITY FEED
+══════════════════════════════════════════════════════════════
+
+Before tester distribution and Apple submission:
+
+- Verify the empty state is intentional and does not display a blank
+  screen or infinite spinner
+- Seed 8–12 genuine founder-approved posts
+- At least 3 should contain appropriate images
+- Include:
+  - Welcome/mission
+  - Heritage spotlight
+  - HBCU spotlight
+  - Business spotlight
+  - Introduce-yourself prompt
+  - Local recommendation prompt
+  - Tester-feedback prompt
+  - Historical/safety-context discussion prompt
+- Tag seeded beta content in a way that permits later cleanup
+- Confirm reporting and moderation work
+- Confirm the Guidelines link works
+- Confirm deletion/removal works
+
+Do not fabricate multiple community personas.
+
+Founder-authored posts are acceptable and preferred.
+
+══════════════════════════════════════════════════════════════
+11. ANDROID AND IPAD/TABLET QA
+══════════════════════════════════════════════════════════════
+
+After both builds complete, test actual binaries on:
+
+- iPhone
+- iPad Air 11-inch M3 profile
+- Android phone
+- Pixel Tablet or representative Android tablet
+
+Required tablet screens:
+
+- Login/registration
+- Map
+- Heritage/Sundown layer
+- KinfolkAI
+- Community Feed
+- Business detail
+- Membership
+- Profile/settings
+
+Verify:
+
+- No clipping
+- No hidden controls
+- Keyboard does not block input
+- Cards are not improperly stretched
+- Pin/detail selection works
+- Location denial works
+- Cold map load works
+- Offline behavior is controlled
+- No crashes
+
+For iPad Build 97, verify portrait full-screen behavior and inspect the
+effective IPA Info.plist.
+
+For Android tablet, test portrait and landscape behavior as supported by
+the effective Android configuration and report any forced orientation or
+letterboxing.
+
+══════════════════════════════════════════════════════════════
+12. STRIPE STRESS TEST AND PRODUCTION VERIFICATION
+══════════════════════════════════════════════════════════════
+
+After the corrected bundle is deployed:
+
+Run 10–15 concurrent safe Stripe test-mode events.
+
+Preferred method:
+
+Stripe CLI with test-mode credentials.
+
+Fallback:
+
+Stripe Dashboard test-webhook controls.
+
+During the test:
+
+- Poll /api/readyz every second
+- Track active, idle, and waiting connections
+- Confirm application pool ≤ 8
+- Confirm Stripe pool ≤ 2
+- Confirm total application-owned connections ≤ 10
+- Confirm no monotonic growth
+- Confirm waiting returns to zero
+- Confirm businesses endpoint remains 200
+- Confirm events are processed once
+- Confirm no real charge or subscription is created
+
+Observe active testing for 30 minutes.
+
+Then activate the separate autonomous 12-hour monitoring process already
+required.
+
+Do not represent a Replit chat session as autonomous monitoring.
+
+══════════════════════════════════════════════════════════════
+13. SECURITY AND CONFIGURATION HYGIENE
+══════════════════════════════════════════════════════════════
+
+- Remove debug bundle-download routes
+- Confirm Google Maps API key restrictions:
+  - iOS bundle ID
+  - Android package and production SHA-1
+  - Approved web referrers
+- Do not expose or rotate RevenueCat public SDK keys merely because they
+  appear in client configuration
+- Record the true pushed Git HEAD
+- Confirm the repository visibility and that no private server secret was
+  committed
+- Change public website wording from “safety scores” if the current app
+  does not provide a defensible current safety score
+- Use the approved wording:
+  - Community Safety Insights
+  - Historical Context
+  - Community-reported experiences
+  as appropriate
+
+Do not imply a guaranteed safe/unsafe determination.
+
+══════════════════════════════════════════════════════════════
+14. BUILD ORDER
+══════════════════════════════════════════════════════════════
+
+Execute in this order:
+
+1. Apply all source fixes.
+2. Add UIRequiresFullScreen before the iOS build.
+3. Verify sundown-town source records.
+4. Rebuild dist/index.mjs from the full Replit source tree.
+5. Verify compiled bundle gates.
+6. Commit and push the real artifact and true HEAD.
+7. Deploy the corrected artifact to Railway.
+8. Prove the new runtime with /api/version and new endpoints.
+9. Seed verified Historical Sundown Town records.
+10. Complete approved business-designation data correction.
+11. Run endpoint battery.
+12. Run Stripe stress test.
+13. Start/build iOS Build 97 and Android version 71 as soon as their
+    required configuration is corrected; backend work may proceed in
+    parallel where safe.
+14. Install actual binaries.
+15. Test iPhone, iPad, Android phone, and Android tablet.
+16. Create/verify Apple review account.
+17. Seed Community Feed.
+18. Run full reviewer journey.
+19. Activate 12-hour monitoring.
+20. Return final submission/distribution GO or NO-GO.
+
+No Apple submission or tester distribution before the applicable gates
+pass.
+
+══════════════════════════════════════════════════════════════
+15. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return only evidence and execution status:
+
+1. Exact source files changed
+2. Mobile configuration changed
+3. New compiled-artifact timestamp
+4. New compiled-artifact checksum
+5. True Git commit hash pushed
+6. Railway deployed commit
+7. /api/version response
+8. Database/Stripe pool runtime values
+9. Debug endpoints removed
+10. Apple variables present/missing
+11. Historical Sundown entries verified/kept/dropped
+12. Production Sundown record count
+13. Business designation dry-run result
+14. Business designation approved update result
+15. KinfolkAI acceptance results
+16. Community Feed result
+17. Review-account result
+18. Stripe stress results
+19. Web result
+20. iPhone result
+21. iPad result
+22. Android phone result
+23. Android tablet result
+24. Open P0/P1 issues
+25. GO/NO-GO to submit to Apple
+26. GO/NO-GO for iOS testers
+27. GO/NO-GO for Android testers
+28. GO/NO-GO for web testers
+
+Do not provide another broad plan.
+Do not claim source changes are deployed until the compiled runtime proves
+it.
+Do not silently defer Historical Sundown Towns.
+Do not submit without separate founder authorization.

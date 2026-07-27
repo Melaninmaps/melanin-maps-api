@@ -1,10 +1,11 @@
 import { randomUUID } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
-import { eq, desc, sql, count } from "drizzle-orm";
+import { eq, desc, sql, count, or } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
+import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -140,12 +141,13 @@ router.get("/admin/members", async (req: Request, res: Response) => {
 
 router.patch("/admin/members/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const { memberType, trialEndsAt, foundingMemberNumber } = req.body as {
+  const { memberType, trialEndsAt, foundingMemberNumber, emailVerified } = req.body as {
     memberType?: string;
     trialEndsAt?: string | null;
     foundingMemberNumber?: number | null;
+    emailVerified?: boolean;
   };
-  const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral"];
+  const VALID_TYPES = ["individual", "business", "founding", "beta", "business_referral", "navigator", "trailblazer"];
   if (memberType && !VALID_TYPES.includes(memberType)) {
     res.status(400).json({ error: "Invalid memberType" }); return;
   }
@@ -155,6 +157,7 @@ router.patch("/admin/members/:id", async (req: Request, res: Response) => {
     if (memberType !== undefined) setPayload.memberType = memberType;
     if (trialEndsAt !== undefined) setPayload.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
     if (foundingMemberNumber !== undefined) setPayload.foundingMemberNumber = foundingMemberNumber;
+    if (emailVerified !== undefined) setPayload.emailVerified = emailVerified;
     const [updated] = await db
       .update(usersTable)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -266,6 +269,87 @@ router.post("/admin/bootstrap", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Admin bootstrap failed");
     res.status(500).json({ error: "Bootstrap failed" });
+  }
+});
+
+/**
+ * Emergency admin token — returns a session token for the admin account
+ * without requiring a password. Authenticated by SESSION_SECRET so only
+ * someone with access to the Railway/Replit environment can use it.
+ * Safe to leave deployed: useless without the secret.
+ */
+router.post("/admin/emergency-token", async (req: Request, res: Response) => {
+  const { secret } = req.body as { secret?: string };
+  const sessionSecret = process.env.SESSION_SECRET ?? "";
+
+  if (!secret || !sessionSecret || secret !== sessionSecret) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  try {
+    // Find the admin user — first by role, then by ADMIN_EMAILS
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const allUsers = await db
+      .select({
+        id: usersTable.id,
+        email: usersTable.email,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        profileImageUrl: usersTable.profileImageUrl,
+        approved: usersTable.approved,
+        role: usersTable.role,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.role, "admin"))
+      .limit(1);
+
+    let adminUser = allUsers[0];
+
+    if (!adminUser && adminEmails.length > 0) {
+      const byEmail = await db
+        .select({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          profileImageUrl: usersTable.profileImageUrl,
+          approved: usersTable.approved,
+          role: usersTable.role,
+        })
+        .from(usersTable)
+        .where(eq(usersTable.email, adminEmails[0]))
+        .limit(1);
+      adminUser = byEmail[0];
+    }
+
+    if (!adminUser) {
+      res.status(404).json({ error: "No admin user found" });
+      return;
+    }
+
+    const sid = await createSession({
+      user: {
+        id: adminUser.id,
+        email: adminUser.email,
+        firstName: adminUser.firstName,
+        lastName: adminUser.lastName,
+        profileImageUrl: adminUser.profileImageUrl,
+        approved: adminUser.approved ?? false,
+        role: (adminUser.role as "user" | "tester" | "admin") ?? "admin",
+      },
+      access_token: "",
+    });
+
+    req.log.info({ userId: adminUser.id, email: adminUser.email }, "Emergency admin token issued");
+    res.json({ token: sid, userId: adminUser.id, email: adminUser.email });
+  } catch (err) {
+    req.log.error({ err }, "Emergency admin token failed");
+    res.status(500).json({ error: "Failed to create admin token" });
   }
 });
 
@@ -996,7 +1080,7 @@ router.get("/admin/health", async (req: Request, res: Response) => {
     checks: { rawSql, drizzle, rawSqlMs, drizzleMs },
     uptimeSeconds: Math.floor(process.uptime()),
     checkedAt,
-    poolConfig: { max: 5, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
+    poolConfig: { max: 8, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
     loadTestBaseline: {
       concurrentRequests: 50,
       successRate: "50/50",

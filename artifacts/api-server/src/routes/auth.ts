@@ -847,7 +847,9 @@ async function verifyAppleToken(
   identityToken: string,
   rawNonce?: string,
 ): Promise<{ sub: string; email?: string }> {
-  const res = await fetch("https://appleid.apple.com/auth/keys");
+  const res = await fetch("https://appleid.apple.com/auth/keys", {
+    signal: AbortSignal.timeout(8_000),
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { keys } = await res.json() as { keys: any[] };
 
@@ -1100,6 +1102,23 @@ router.post("/auth/unsubscribe", async (req: Request, res: Response) => {
     req.log.error({ err }, "POST /api/auth/unsubscribe error");
     res.status(500).json({ error: "Failed to process unsubscribe request." });
   }
+});
+
+// ─── GET /auth/apple/config-check ─────────────────────────────────────────────
+// Admin-only endpoint: returns presence/absence of Apple Sign-In env vars.
+// Never returns values — boolean flags only — safe for incident logs.
+router.get("/auth/apple/config-check", (req: Request, res: Response) => {
+  if (!isAdminReq(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const vars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
+  const result: Record<string, boolean> = {};
+  for (const v of vars) {
+    result[v] = !!process.env[v];
+  }
+  const allPresent = vars.every((v) => !!process.env[v]);
+  res.json({ allPresent, vars: result });
 });
 
 export default router;

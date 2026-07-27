@@ -1,0 +1,228 @@
+STOP PATCHING WITHOUT AN AUDIT TRAIL — LOGIN INCIDENT REPORT
+
+mappingwithmelanin.com/login is not working after the iOS and Android
+builds completed.
+
+I need an exact technical accounting before any additional patch,
+deployment, rebuild, submission, or tester distribution.
+
+Do not give me a general explanation such as “the login was fixed” or
+“a patch was applied.”
+
+Answer every section below with evidence.
+
+══════════════════════════════════════════════════════════════
+1. EXACT FAILURE
+══════════════════════════════════════════════════════════════
+
+State exactly what happens at:
+
+https://www.mappingwithmelanin.com/login
+
+Include:
+
+- HTTP status
+- Browser console error
+- Network-request failure
+- Server/API error
+- Redirect behavior
+- Whether the page is blank, loading indefinitely, returning 404, or
+  displaying an authentication error
+- First known time of failure
+- Whether it began before or after the Build 97 backend deployment
+- Whether the failure is reproducible in a clean/private browser window
+
+Identify the confirmed root cause—not the current hypothesis.
+
+══════════════════════════════════════════════════════════════
+2. EVERY PATCH ALREADY APPLIED
+══════════════════════════════════════════════════════════════
+
+List every change made in response to this login failure.
+
+For each change provide:
+
+- Exact file path
+- Exact function, component, route, or configuration changed
+- Before behavior
+- After behavior
+- Commit hash
+- Time committed
+- Whether pushed to GitHub
+- Whether compiled into dist/index.mjs or the web bundle
+- Whether deployed to Railway
+- Deployment ID
+- Whether it changed:
+  - Backend
+  - Production web
+  - Mobile shared code
+  - iOS source
+  - Android source
+  - Expo configuration
+  - Database/schema
+  - Environment variables
+
+Do not omit unsuccessful or reverted patches.
+
+══════════════════════════════════════════════════════════════
+3. COMPLETED BUILD IMPACT
+══════════════════════════════════════════════════════════════
+
+Identify the exact source commit and configuration used to create:
+
+- iOS Build 97
+- Android versionCode 71
+
+Compare those binaries to every patch made after the builds completed.
+
+Return a table:
+
+Change | Included in iOS 97? | Included in Android 71? |
+Server-side only? | Requires rebuild? | Reason
+
+Answer directly:
+
+A. Does iOS Build 97 contain the login defect?
+B. Does Android versionCode 71 contain the login defect?
+C. Can both completed binaries use the corrected backend without rebuild?
+D. Did any patch modify mobile code after the binaries were generated?
+E. Did any patch modify app.json, app.config, eas.json, native
+   entitlements, API base URL, mobile auth screens, token storage, or
+   shared mobile packages?
+
+If any answer is uncertain, state exactly what evidence is missing.
+
+══════════════════════════════════════════════════════════════
+4. WEB VERSUS MOBILE AUTHENTICATION PATH
+══════════════════════════════════════════════════════════════
+
+Trace the exact login journey separately for:
+
+- Production web
+- iPhone
+- iPad
+- Android phone
+- Android tablet
+
+For each show:
+
+1. Client screen/route
+2. API endpoint called
+3. Cookie or bearer-token behavior
+4. Session-storage behavior
+5. Redirect after login
+6. Production domain/API URL
+7. Whether the broken web /login route is used by the mobile app
+
+Explicitly answer:
+
+Does either mobile binary rely on
+https://www.mappingwithmelanin.com/login
+as part of authentication?
+
+Do not assume. Verify from the compiled client configuration.
+
+══════════════════════════════════════════════════════════════
+5. CURRENT PRODUCTION VERIFICATION
+══════════════════════════════════════════════════════════════
+
+After the final approved patch, test:
+
+WEB
+
+- Open /login in a clean browser
+- Register a new account
+- Log in with existing account
+- Log out
+- Log back in
+- Refresh authenticated page
+- Close/reopen browser
+- Password reset
+- Invalid credentials
+- Session expiration
+- Redirect after authentication
+
+API
+
+- GET /api/healthz
+- GET /api/readyz
+- GET /api/version
+- GET /api/auth/user
+- POST /api/auth/login-email
+- POST /api/auth/register
+- Apple configuration check
+- Business and cultural-site routes after login
+
+MOBILE BINARIES
+
+Using the already completed builds:
+
+- Email login on iPhone
+- Apple Sign-In registration on iPhone/iPad
+- Email login on Android
+- Session restoration on both
+- Maps after login
+- Heritage after login
+- Historical Sundown Towns after login
+- KinfolkAI after login
+- Community after login
+
+Return actual pass/fail results.
+
+══════════════════════════════════════════════════════════════
+6. REBUILD DECISION
+══════════════════════════════════════════════════════════════
+
+Finish with exactly one of these conclusions:
+
+NO REBUILD REQUIRED
+
+Use this only if:
+
+- All changes were server-side or web-only
+- The completed iOS and Android binaries call the corrected API
+- No mobile source/configuration changed
+- Authentication succeeds on both completed binaries
+
+IOS REBUILD REQUIRED
+
+Explain the exact iOS file/configuration change requiring it.
+
+ANDROID REBUILD REQUIRED
+
+Explain the exact Android file/configuration change requiring it.
+
+BOTH BUILDS MUST BE RECREATED
+
+Explain every post-build mobile change and the new required build numbers.
+
+Do not recommend a rebuild “to be safe.”
+Base the decision on the actual diff between the completed binaries and
+the current source.
+
+══════════════════════════════════════════════════════════════
+7. FINAL RESPONSE FORMAT
+══════════════════════════════════════════════════════════════
+
+Return only:
+
+1. Confirmed root cause
+2. Exact patches applied
+3. Files changed
+4. Commit and deployment evidence
+5. Current web-login result
+6. Current API-authentication result
+7. iOS Build 97 impact
+8. Android Build 71 impact
+9. Mobile-binary test results
+10. Whether a new iOS build is required
+11. Whether a new Android build is required
+12. Remaining P0/P1 blockers
+13. GO/NO-GO for Apple submission
+14. GO/NO-GO for iOS testers
+15. GO/NO-GO for Android testers
+
+Do not apply another speculative patch before identifying the confirmed
+root cause.
+
+Do not submit or distribute builds until this incident report is complete.
