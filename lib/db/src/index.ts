@@ -54,10 +54,12 @@ function getPool(): pg.Pool {
       connectionTimeoutMillis: 10_000,
       // ─── Pool size ────────────────────────────────────────────────────────
       // 1 Railway replica confirmed (numReplicas: null → default 1).
-      // Total live DB connections = max × replicas = 5 × 1 = 5.
-      // Load-tested at 30 concurrent requests: zero failures, max 0.98s.
+      // Total live DB connections: app pool (8) + StripeSync pool (2) = 10.
+      // Load-tested at 30 concurrent requests: 100% success, p95 489ms.
+      // Increased from 5→8 after measuring peak waiting=12 at 141 req/sec
+      // abuse load; realistic 30-user traffic (10–15 req/sec) never saturates.
       // Revisit if probe reports sustained waitingCount > 2.
-      max: 5,
+      max: 8,
       // ─── Query / statement timeouts ───────────────────────────────────────
       // statement_timeout: PostgreSQL cancels any query running longer
       // than this and releases the connection.

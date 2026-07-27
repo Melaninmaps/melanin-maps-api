@@ -1,0 +1,225 @@
+I'm going to answer this like I would if I were your CTO.
+
+## 1. Will increasing the pool automatically solve this?
+
+**No.**
+
+If there is still a connection leak, increasing the pool simply delays the failure. A leak that exhausts 20 connections will eventually exhaust 40 or 80 connections too.
+
+**Only increase the pool if the leak is fixed first.**
+
+---
+
+## 2. Can 30 testers + Apple realistically use the app at the same time?
+
+**Yes, if Replit's root-cause analysis is correct and the leak has actually been fixed.**
+
+Thirty concurrent testers is **not** a large workload for a properly configured PostgreSQL-backed application. If normal user actions are using short-lived queries and connections are returned to the pool, this level of traffic should be manageable.
+
+---
+
+## 3. Should the pool be increased after the leak is fixed?
+
+**Probably yes—but based on evidence, not guesswork.**
+
+I would not leave the application pool at 5 indefinitely if you are about to invite testers. I would have Replit measure actual connection usage under load and then size the pool appropriately.
+
+---
+
+## 4. What should happen TODAY?
+
+This is what I would tell Replit.
+
+---
+
+# BUILD 97 RELEASE BLOCKER
+
+Apple approval and external testing are now the only priorities.
+
+The goal is:
+
+**Apple reviewing the app while approximately 30 testers use it simultaneously without crashes, authentication failures, or database exhaustion.**
+
+Do not optimize for theory.
+
+Optimize for demonstrated production stability.
+
+---
+
+## REQUIRED TODAY
+
+### 1. Confirm the leak is fixed.
+
+Do not assume.
+
+Demonstrate it.
+
+---
+
+### 2. Load test production.
+
+Simulate:
+
+* 30 concurrent users
+
+Perform realistic actions simultaneously:
+
+* Login
+* Apple Sign-In
+* Email registration
+* Business search
+* Map loading
+* Community feed
+* Kinfolk
+* Saved places
+* Profile
+* Logout
+* Session renewal
+
+Measure:
+
+* Response time
+* CPU
+* Memory
+* Database connections
+* Waiting clients
+* Error rate
+* Railway metrics
+
+---
+
+### 3. Determine the correct pool size.
+
+Do not guess.
+
+Use the load test.
+
+Return:
+
+* Peak active connections
+* Peak idle connections
+* Peak waiting clients
+
+Then recommend:
+
+* current size
+* recommended size
+* why
+
+If increasing from 5 to 10 improves stability without creating contention, implement it.
+
+If another value is better, explain why.
+
+---
+
+### 4. Stress test.
+
+Run:
+
+* 30 concurrent users
+
+for at least
+
+30 continuous minutes
+
+without:
+
+* HTTP 500
+* timeout
+* pool exhaustion
+* authentication failures
+* crashes
+* Railway restart
+
+---
+
+### 5. If it survives...
+
+Declare
+
+GO FOR TESTERS
+
+---
+
+### 6. If it does not survive...
+
+Do not build.
+
+Return:
+
+* bottleneck
+* evidence
+* correction
+
+Repeat.
+
+---
+
+## What I need back
+
+I do not want opinions.
+
+I want numbers.
+
+Return:
+
+Maximum concurrent users successfully handled
+
+Peak DB connections
+
+Peak waiting connections
+
+Average response time
+
+95th percentile response time
+
+Maximum CPU
+
+Maximum memory
+
+Authentication success rate
+
+Business route success rate
+
+Map success rate
+
+Community success rate
+
+Kinfolk success rate
+
+Crash count
+
+Restart count
+
+Recommended application pool
+
+Recommended PostgreSQL pool
+
+Whether 30 simultaneous testers plus Apple review is supported
+
+GO / NO-GO
+
+---
+
+## One additional requirement
+
+I would also tell Replit this:
+
+> **If the application successfully handles 30 concurrent simulated users, immediately increase the real tester group and continue monitoring production.**
+
+You do **not** need to wait for Apple to finish reviewing before your Android closed testers continue testing. In fact, those Android testers can help uncover issues while Apple is reviewing the iOS build.
+
+## My recommendation
+
+At this point, stop making decisions based on intuition. Replit has now identified what appears to be a specific infrastructure defect. The next step is to **prove capacity under load**.
+
+The decision to increase the pool should come **after** the load test, not before it. If the load test shows that the application pool is legitimately saturated under normal traffic *without* any leak, then increasing it is reasonable. If it shows low utilization and stable response times, increasing the pool won't provide meaningful benefit.
+
+The fastest path to getting 30 testers active is:
+
+1. Deploy the leak fix.
+2. Run a production load test that mirrors your expected usage.
+3. Size the pool based on measured demand.
+4. If the system remains stable, invite your testers immediately while Apple completes its review.
+
+That gives you evidence that the platform is ready instead of hoping it is.

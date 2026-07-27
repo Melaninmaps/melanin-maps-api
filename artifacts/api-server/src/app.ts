@@ -43,15 +43,18 @@ app.get("/health", (_req: Request, res: Response) => {
 // Returns HTTP 503 if the pool is exhausted or the DB is unreachable.
 app.get("/api/readyz", async (_req: Request, res: Response) => {
   const preStats = getPoolStats();
-  // Fast-fail: if all connections are checked out, return 503 immediately without
-  // queuing another pool.query. Probing under exhaustion worsens the waiting-queue
-  // depth and delays recovery for all other routes (including login).
-  if (preStats.idle === 0 && preStats.total > 0) {
+  // Fast-fail only when the pool is TRULY exhausted: all slots in use AND
+  // requests are already queued waiting for a connection.
+  // idle===0 alone is not sufficient — connections may be transiently in use
+  // by concurrent queries while new connections can still be created (total<max).
+  // Requiring waiting>0 as a third condition means we only fast-fail when
+  // callers are genuinely being delayed, not just when connections are busy.
+  if (preStats.idle === 0 && preStats.total >= 8 && preStats.waiting > 0) {
     res.status(503).json({
       status: "degraded",
       db: "pool_exhausted",
       pool: preStats,
-      detail: `All ${preStats.total} connections in use (idle=0); not queuing probe.`,
+      detail: `Pool at capacity (total=${preStats.total}/8, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
     });
     return;
   }

@@ -67,15 +67,17 @@ async function runHealthCheck(): Promise<void> {
   const ts = new Date().toISOString();
   const poolStats = getPoolStats();
 
-  // Fast-fail when pool is fully exhausted — probing under exhaustion adds to
-  // the waiting queue and delays recovery for real requests.
-  if (poolStats.idle === 0 && poolStats.total > 0) {
+  // Fast-fail only when the pool is truly exhausted: at capacity AND requests
+  // are queued. idle===0 alone means connections are transiently busy — new
+  // connections can still be created if total < max. waiting>0 is the
+  // accurate signal that real requests are being delayed.
+  if (poolStats.idle === 0 && poolStats.total >= 8 && poolStats.waiting > 0) {
     const entry: HealthCheckEntry = {
       ts,
       status: "degraded",
       dbMs: null,
       pool: poolStats,
-      detail: `pool_exhausted: idle=0 total=${poolStats.total} waiting=${poolStats.waiting}`,
+      detail: `pool_exhausted: total=${poolStats.total}/8 idle=0 waiting=${poolStats.waiting}`,
     };
     _push(entry);
     _logger.warn(
