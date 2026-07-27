@@ -1237,7 +1237,13 @@ router.post("/admin/seed-multicultural", async (req: Request, res: Response) => 
 //         NAACP; state historical societies; DOJ records.
 // All entries are historical record only — no current safety claims.
 router.post("/admin/seed-sundown-towns", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) {
+  // Accept either an authenticated admin session OR a valid CRON_SECRET header.
+  // CRON_SECRET path exists so this endpoint can be called from the deployment
+  // pipeline without requiring an interactive admin login.
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeader = req.headers["x-cron-secret"];
+  const hasCronAuth = cronSecret && cronHeader === cronSecret;
+  if (!isAdmin(req) && !hasCronAuth) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

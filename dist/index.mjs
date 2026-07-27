@@ -419927,7 +419927,10 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
   }
 });
 router24.post("/admin/seed-sundown-towns", async (req, res) => {
-  if (!isAdmin2(req)) {
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeader = req.headers["x-cron-secret"];
+  const hasCronAuth = cronSecret && cronHeader === cronSecret;
+  if (!isAdmin2(req) && !hasCronAuth) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
