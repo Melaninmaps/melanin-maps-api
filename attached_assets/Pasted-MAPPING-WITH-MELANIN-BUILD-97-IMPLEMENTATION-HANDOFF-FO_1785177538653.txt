@@ -1,0 +1,346 @@
+MAPPING WITH MELANIN™
+BUILD 97 IMPLEMENTATION HANDOFF FOR MANUS
+PRIORITY: CRITICAL
+Founder Objective:
+Produce a complete engineering package for Manus after Build 97 implementation so Manus can independently verify the release before Apple submission and tester distribution.
+
+This is NOT another summary.
+
+This is a complete implementation evidence package.
+
+Do not omit anything because you believe it is unimportant.
+
+══════════════════════════════════════════════════════════════
+SECTION 1 — EXECUTIVE SUMMARY
+══════════════════════════════════════════════════════════════
+
+Summarize exactly what changed since Build 96.
+
+Include:
+
+• Production issues fixed
+• Apple rejection issues fixed
+• Founder requested changes implemented
+• Features added
+• Features modified
+• Features intentionally deferred
+• Any remaining known limitations
+
+══════════════════════════════════════════════════════════════
+SECTION 2 — SOURCE CODE CHANGES
+══════════════════════════════════════════════════════════════
+
+For EVERY modified file provide:
+
+• file path
+• purpose
+• exact functionality changed
+• reason for change
+• impact
+• associated founder requirement
+
+Include ALL:
+
+Backend
+
+Frontend
+
+Expo
+
+Authentication
+
+Maps
+
+KinfolkAI
+
+Community
+
+Business
+
+Heritage
+
+Historical Sundown Towns
+
+Configuration
+
+Deployment
+
+Monitoring
+
+══════════════════════════════════════════════════════════════
+SECTION 3 — BUILD 97 FEATURE MATRIX
+══════════════════════════════════════════════════════════════
+
+For EVERY founder-approved Build 97 feature list:
+
+IMPLEMENTED
+
+PARTIALLY IMPLEMENTED
+
+NOT IMPLEMENTED
+
+BLOCKED
+
+For every item include evidence.
+
+Required sections include:
+
+Authentication
+
+Maps
+
+Heritage
+
+Historical Sundown Towns
+
+Business previews
+
+Diaspora language
+
+Community
+
+Community feed
+
+Events
+
+KinfolkAI
+
+Profile
+
+Settings
+
+Membership
+
+Policies
+
+Restore Purchases
+
+Account deletion
+
+Search
+
+Tablet support
+
+══════════════════════════════════════════════════════════════
+SECTION 4 — HISTORICAL SUNDOWN TOWNS
+══════════════════════════════════════════════════════════════
+
+This section must be detailed.
+
+State:
+
+• data source
+• licensing
+• attribution
+• disclaimer
+• implementation
+• search
+• filters
+• map rendering
+• performance
+• legal considerations
+
+If anything is missing explain why.
+
+══════════════════════════════════════════════════════════════
+SECTION 5 — KINFOLKAI
+══════════════════════════════════════════════════════════════
+
+Describe the CURRENT implementation.
+
+Do NOT describe future vision.
+
+State exactly:
+
+• what works
+• what preferences exist
+• what memory exists
+• tone options
+• personalization
+• travel help
+• heritage help
+• business recommendations
+• weather
+• safety responses
+• graceful failures
+• known limitations
+
+══════════════════════════════════════════════════════════════
+SECTION 6 — APPLE REVIEW PACKAGE
+══════════════════════════════════════════════════════════════
+
+Provide:
+
+• review account status
+• login verification
+• production verification
+• App Store Connect review notes
+• build number
+• version code
+• permissions
+• Info.plist review
+• Android Manifest review
+
+══════════════════════════════════════════════════════════════
+SECTION 7 — STABILITY TESTING
+══════════════════════════════════════════════════════════════
+
+Include actual results.
+
+Database
+
+Railway
+
+Stripe
+
+Stress testing
+
+Concurrent users
+
+Health endpoints
+
+Ready endpoints
+
+Webhook testing
+
+Memory
+
+CPU
+
+API latency
+
+Connection counts
+
+Error rates
+
+404
+
+429
+
+500
+
+Retries
+
+══════════════════════════════════════════════════════════════
+SECTION 8 — CROSS PLATFORM TESTING
+══════════════════════════════════════════════════════════════
+
+Report results for:
+
+Web
+
+iPhone
+
+iPad
+
+Android phone
+
+Android tablet
+
+For every platform list:
+
+PASS
+
+FAIL
+
+NOT TESTED
+
+Include screenshots where possible.
+
+══════════════════════════════════════════════════════════════
+SECTION 9 — OPEN ISSUES
+══════════════════════════════════════════════════════════════
+
+List every remaining issue.
+
+Rank:
+
+P0
+
+P1
+
+P2
+
+P3
+
+State:
+
+• risk
+• workaround
+• founder impact
+• Apple impact
+• tester impact
+
+══════════════════════════════════════════════════════════════
+SECTION 10 — PACKAGE FOR MANUS
+══════════════════════════════════════════════════════════════
+
+Prepare the package so Manus can independently verify.
+
+Include:
+
+• Repository commit hash
+• Build numbers
+• Configuration files
+• EAS configuration
+• app.json
+• eas.json
+• package.json
+• API documentation
+• architecture overview
+• release notes
+• implementation evidence
+• testing evidence
+• production evidence
+• monitoring evidence
+
+══════════════════════════════════════════════════════════════
+SECTION 11 — QUESTIONS FOR MANUS
+══════════════════════════════════════════════════════════════
+
+Do NOT defend your implementation.
+
+Instead identify any areas where you want Manus to independently challenge or verify your work.
+
+Examples:
+
+• concurrency
+• production stability
+• Apple compliance
+• tablet layouts
+• authentication
+• performance
+• data integrity
+• security
+• scalability
+• UX
+
+══════════════════════════════════════════════════════════════
+SECTION 12 — FINAL DECLARATION
+══════════════════════════════════════════════════════════════
+
+Answer honestly.
+
+If you were NOT the implementation engineer:
+
+Would you recommend Apple submission?
+
+YES
+
+CONDITIONAL YES
+
+NO
+
+Would you recommend distributing to 30 testers?
+
+YES
+
+CONDITIONAL YES
+
+NO
+
+Support every answer with evidence.
+
+Do not omit any known issue.
+
+This report will be independently audited by Manus before founder approval.

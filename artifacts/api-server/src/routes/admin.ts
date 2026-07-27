@@ -4,6 +4,7 @@ import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTab
 import { eq, desc, sql, count } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
+import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 
 const router: IRouter = Router();
 
@@ -1222,6 +1223,69 @@ router.post("/admin/seed-multicultural", async (req: Request, res: Response) => 
   } catch (err) {
     req.log.error({ err }, "POST /admin/seed-multicultural error");
     res.status(500).json({ error: "Seed failed" });
+  }
+});
+
+// ── POST /admin/seed-sundown-towns ────────────────────────────────────────────
+// Seeds Historical Sundown Towns into cultural_sites table.
+// Source: Loewen, "Sundown Towns" (2005); Tougaloo College NSF Database;
+//         NAACP; state historical societies; DOJ records.
+// All entries are historical record only — no current safety claims.
+router.post("/admin/seed-sundown-towns", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const site of SUNDOWN_TOWNS_SEED) {
+      const existing = await pool.query(
+        `SELECT id FROM cultural_sites WHERE name = $1 AND city = $2 AND state = $3 LIMIT 1`,
+        [site.name, site.city, site.state]
+      );
+      if (existing.rows.length > 0) {
+        skipped++;
+        continue;
+      }
+      await pool.query(
+        `INSERT INTO cultural_sites
+          (id, name, description, category, heritage_category, subcategory,
+           city, state, latitude, longitude, era, significance,
+           external_url, is_verified, is_accessible, is_family_friendly,
+           admission_free, verified_source, country, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())`,
+        [
+          randomUUID(),
+          site.name,
+          site.description,
+          site.category,
+          site.heritageCategory,
+          site.subcategory,
+          site.city,
+          site.state,
+          site.latitude,
+          site.longitude,
+          site.era,
+          site.significance,
+          site.externalUrl,
+          site.isVerified,
+          site.isAccessible,
+          site.isFamilyFriendly,
+          site.admissionFree,
+          site.verifiedSource,
+          "United States",
+        ]
+      );
+      inserted++;
+    }
+
+    req.log.info({ inserted, skipped }, "Sundown towns seed completed");
+    res.json({ ok: true, inserted, skipped, total: SUNDOWN_TOWNS_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-sundown-towns error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });
 
