@@ -453754,10 +453754,16 @@ function stopHealthMonitor() {
 // src/app.ts
 var _dirname = path6.dirname(fileURLToPath4(import.meta.url));
 var webPublicDir = path6.join(_dirname, "public");
+var webStaticDir = path6.join(_dirname, "..", "web-static");
 var spaHtml = null;
-try {
-  spaHtml = readFileSync(path6.join(webPublicDir, "index.html"), "utf8");
-} catch {
+var spaServeDir = webPublicDir;
+for (const dir of [webPublicDir, webStaticDir]) {
+  try {
+    spaHtml = readFileSync(path6.join(dir, "index.html"), "utf8");
+    spaServeDir = dir;
+    break;
+  } catch {
+  }
 }
 var app = (0, import_express144.default)();
 app.set("trust proxy", 1);
@@ -453869,14 +453875,14 @@ app.use("/api", generalLimiter);
 app.use("/api", routes_default);
 app.use(web_ssr_default);
 app.use(privacy_default);
-app.use(import_express144.default.static(webPublicDir));
+app.use(import_express144.default.static(spaServeDir));
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) return next();
   if (spaHtml) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(spaHtml);
   } else {
-    logger.warn({ path: req.path, webPublicDir }, "SPA index.html not loaded \u2014 web routes unavailable");
+    logger.warn({ path: req.path, webPublicDir, webStaticDir }, "SPA index.html not loaded \u2014 web routes unavailable");
     next();
   }
 });

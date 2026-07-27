@@ -17,13 +17,19 @@ import { getHealthHistory } from "./lib/healthMonitor";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
+// web-static/ is committed to git — reliable fallback if dist/public/ is absent
+const webStaticDir = path.join(_dirname, "..", "web-static");
 
-// Read SPA html once at startup — avoids sendFile path-resolution issues at runtime.
+// Read SPA html once at startup — avoids sendFile path-resolution issues.
+// Try dist/public/ first (populated by build.mjs), then committed web-static/.
 let spaHtml: string | null = null;
-try {
-  spaHtml = readFileSync(path.join(webPublicDir, "index.html"), "utf8");
-} catch {
-  // Web app not built — web routes will 404 gracefully
+let spaServeDir = webPublicDir;
+for (const dir of [webPublicDir, webStaticDir]) {
+  try {
+    spaHtml = readFileSync(path.join(dir, "index.html"), "utf8");
+    spaServeDir = dir;
+    break;
+  } catch { /* try next */ }
 }
 
 const app: Express = express();
@@ -172,8 +178,8 @@ app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);
 
-// Serve the web app static files (built by build.mjs and copied to dist/public/)
-app.use(express.static(webPublicDir));
+// Serve the web app static files from whichever dir has index.html
+app.use(express.static(spaServeDir));
 // SPA fallback — serve the cached index.html for any non-API, non-static
 // route so React Router handles client-side navigation. Reading from memory
 // avoids all sendFile / path-resolution issues at Railway runtime.
@@ -183,7 +189,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(spaHtml);
   } else {
-    logger.warn({ path: req.path, webPublicDir }, "SPA index.html not loaded — web routes unavailable");
+    logger.warn({ path: req.path, webPublicDir, webStaticDir }, "SPA index.html not loaded — web routes unavailable");
     next();
   }
 });
