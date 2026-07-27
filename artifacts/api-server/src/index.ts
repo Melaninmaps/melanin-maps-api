@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { setDbLogger, pool, getPoolStats } from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
 import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
+import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { runStartupMigrations } from "./lib/startup-migrations";
 
@@ -89,6 +90,7 @@ const server = app.listen(port, (err) => {
   // 5-minute synthetic DB health checks — maintains 12-hour evidence ring buffer.
   // Results visible at GET /api/readyz/history.
   startHealthMonitor();
+  startBuild97Monitor();
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 
@@ -132,6 +134,7 @@ function gracefulShutdown(signal: string) {
   server.close(async () => {
     logger.info("HTTP server closed. Draining DB pools…");
     stopHealthMonitor();
+    stopBuild97Monitor();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

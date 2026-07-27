@@ -1,4 +1,8 @@
 {
-  "lastIosSubmitted": 92,
-  "lastAndroidSubmitted": 66
+  "lastIosSubmitted": 97,
+  "lastAndroidSubmitted": 72,
+  "iosEasSubmissionId": "961e5c46",
+  "androidEasBuildId": "7a1964ed",
+  "androidSubmissionStatus": "FAILED_CREDENTIAL",
+  "notes": "iOS Build 97: IPA artifact available at Expo CDN (KNLKNeLS). Android VC72: built 7a1964ed, Play Store submission failed due to expired Google Service Account key — see docs/product/releases/ANDROID_VC72_CREDENTIAL_FIX.md"
 }

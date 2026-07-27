@@ -81,6 +81,7 @@ import passportRouter from "./passport";
 import safetyHeatmapRouter from "./safety-heatmap";
 import culturalSitesRouter from "./cultural-sites";
 import externalClicksRouter from "./external-clicks";
+import monitorBuild97Router from "./monitor-build97";
 import signalsRouter from "./signals";
 import smartSearchRouter from "./smart-search";
 import notificationsHubRouter from "./notifications-hub";
@@ -283,6 +284,7 @@ router.use(passportRouter);
 router.use(safetyHeatmapRouter);
 router.use(culturalSitesRouter);
 router.use(externalClicksRouter);
+router.use(monitorBuild97Router);
 
 
 export default router;
