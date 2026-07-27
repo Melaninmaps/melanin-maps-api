@@ -1,0 +1,151 @@
+I understand why you're upset.
+
+You've invested a significant amount of money, you've built a substantial platform, you've delayed launch, and you've spent weeks trying to eliminate this exact class of issue. From your perspective, it feels like you've paid for certainty and instead you're still discovering problems during Apple's review.
+
+I don't want to give you false reassurance, so here's my assessment.
+
+## I think there are two underlying problems.
+
+### 1. You're solving problems after Apple finds them instead of before.
+
+Looking back over the last few weeks, the pattern has been:
+
+* Apple reports a problem.
+* We investigate.
+* Replit traces code.
+* A fix is implemented.
+* Apple finds the next problem.
+
+That is a **reactive** workflow.
+
+It's not because no one is working hard. It's because the testing process hasn't matched Apple's review process closely enough.
+
+For example, this review revealed:
+
+* Apple tested **a brand-new Apple Sign-In registration**.
+* They tested on **an iPad Air M3**.
+* They expected **review credentials**.
+
+Those should have been part of a release checklist before submission.
+
+---
+
+### 2. The audits have become stronger than the release process.
+
+Ironically, the documentation you've been asking for is excellent.
+
+You've now built:
+
+* Founder Decisions
+* Future State Register
+* Audit Log
+* Feature Constitution
+* Vision documents
+* Trade secret framework
+* Build roadmap
+
+Those are valuable.
+
+But documentation alone doesn't prevent an Apple rejection.
+
+What prevents a rejection is a disciplined **release gate**.
+
+---
+
+# Where I think Replit needs to improve
+
+The forensic report they produced after the rejection is thorough.
+
+The question is:
+
+> **Why wasn't that same forensic analysis run before Build 96 was submitted?**
+
+That's the conversation I would have with them.
+
+Specifically:
+
+* Why wasn't a new Apple account created on production?
+* Why wasn't Apple Sign-In exercised on an iPad-sized device?
+* Why wasn't the review-account requirement confirmed before submission?
+* Why weren't the `APPLE_TOKEN_EXCHANGE_*` logs validated proactively?
+
+Those are fair questions.
+
+---
+
+# Where I think I could have helped differently
+
+I should have pushed harder for a formal **release gate** earlier.
+
+Over the past week we've talked about Build 97 testing, chaos testing, release blockers, and audits, but those ideas came after several submission cycles.
+
+If I were redesigning the process now, **no future build** would be submitted until it passes a written checklist with evidence, not assumptions.
+
+---
+
+# Going forward, I would change the process completely
+
+Instead of:
+
+> Build → Submit → Wait → Apple finds bug
+
+I would require:
+
+1. **Code complete**
+2. **Read-only audit**
+3. **Release candidate**
+4. **End-to-end testing on production backend**
+5. **Platform-specific testing (iPhone + iPad)**
+6. **Review account verification**
+7. **Evidence package**
+8. **Founder sign-off**
+9. **Submit**
+
+No exceptions.
+
+---
+
+# On the investor concern
+
+You mentioned something important:
+
+> "I risk investors."
+
+This is one reason I would **not** rush Build 97 beyond the Apple fix.
+
+Investors are generally more forgiving of a launch delay than of a launch that immediately demonstrates instability or broken authentication. A clean approval and a stable first impression are worth protecting.
+
+---
+
+# My recommendation to Replit
+
+I would ask them one direct question:
+
+> **Why did our internal testing not reproduce the exact Apple review path before submission, and what permanent process change will prevent this from happening again?**
+
+Not just "fix the bug."
+
+I want a process answer.
+
+---
+
+# What I would insist on before the next submission
+
+Before Build 97 is uploaded, I would require evidence—not just a statement—that the following have been completed:
+
+* A brand-new Apple Sign-In registration succeeds on the production backend.
+* A returning Apple Sign-In user succeeds.
+* Email/password registration succeeds.
+* Email/password login succeeds.
+* The review account credentials work.
+* The app is exercised on an iPhone and an iPad layout.
+* The Railway logs show no authentication failures for those tests.
+* The exact binary being submitted is the one that passed testing.
+
+---
+
+You've often said that you don't want people simply doing what you ask—you want them to think ahead. I think that's the right expectation here.
+
+The next conversation with Replit shouldn't just be about fixing the Apple Sign-In bug. It should be about **changing the release discipline** so that the next issue is found by your team before Apple finds it.
+
+If you want, I'll help you write a firm but professional message that holds Replit accountable for that process without losing momentum on getting Build 97 approved.
