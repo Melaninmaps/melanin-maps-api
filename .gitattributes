@@ -6,3 +6,4 @@ MappingWithMelanin-v1.0.3-final.tar.gz filter=lfs diff=lfs merge=lfs -text
 MappingWithMelanin-v1.0.3-vc29.aab filter=lfs diff=lfs merge=lfs -text
 MappingWithMelanin-v1.0.3-vc29.tar.gz filter=lfs diff=lfs merge=lfs -text
 attached_assets/Screen_Recording_2026-07-16_at_12.54.49_AM_1784177775491.mov filter=lfs diff=lfs merge=lfs -text
+manus-build97-review-package/zilSfHoD filter=lfs diff=lfs merge=lfs -text

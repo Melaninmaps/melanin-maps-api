@@ -1,0 +1,1189 @@
+MAPPING WITH MELANIN™ — MANUS SENIOR ENGINEERING REVIEW PACKAGE
+BUILD 97 PRE-IMPLEMENTATION / PRE-BUILD HANDOFF
+
+PRIORITY: P0
+READ-ONLY COLLECTION AND EXPORT
+DO NOT IMPLEMENT, BUILD, DEPLOY, OR SUBMIT
+
+Manus will perform an independent senior-level engineering review before
+we authorize the final Build 97 and corresponding Android testing build.
+
+Prepare one complete, organized, sanitized review package that allows
+Manus to evaluate:
+
+1. The root causes of all Apple App Review rejections
+2. Whether the proposed Build 97 corrections are technically sound
+3. Whether the app can support approximately 30 testers across platforms
+4. Whether the planned Maps, Heritage, Historical Sundown Towns,
+   business-preview, Community, and basic KinfolkAI experiences can ship
+   safely
+5. Whether any known Apple, Android, privacy, stability, database,
+   authentication, subscription, or tablet issue remains
+
+Do not make additional code changes while preparing this package.
+
+Do not run an EAS build.
+
+Do not submit to Apple or Google.
+
+Do not expose secrets, private keys, passwords, access tokens, production
+user data, private messages, verification images, or sensitive safety
+reports.
+
+══════════════════════════════════════════════════════════════
+1. EXECUTIVE COVER MEMO
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/MANUS_BUILD_97_REVIEW_COVER_MEMO.md
+
+It must explain in plain language:
+
+- What Mapping With Melanin™ is
+- Current launch and tour urgency
+- Current platforms:
+  - Production web
+  - Expo/React Native iOS
+  - Expo/React Native Android
+  - Railway API
+  - Railway PostgreSQL
+- Current build numbers:
+  - iOS Build 96 rejected
+  - Proposed iOS Build 97
+  - Proposed next Android version/build number
+- Approximately 30 testers expected across:
+  - iPhone
+  - iPad
+  - Android phone
+  - Android tablet
+  - Web
+- Apple’s exact latest rejection
+- Confirmed database-pool root cause
+- Changes already implemented but not yet fully released
+- Proposed Build 97 tester-demonstration scope
+- Known unresolved risks
+- Exact questions Manus should answer
+
+State clearly:
+
+The founder does not want a login-only build.
+
+The intended tester experience includes:
+
+- Login and registration
+- Existing business previews
+- Inclusive diaspora-based business language
+- Maps
+- Heritage places
+- Historical Sundown Towns
+- Community
+- Events and visible current tabs
+- Basic KinfolkAI chatbot functionality
+- User preferences and current tone/voice settings
+- Cross-platform phone and tablet usability
+
+══════════════════════════════════════════════════════════════
+2. COMPLETE APPLE REJECTION HISTORY
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/apple/APPLE_REJECTION_HISTORY.md
+
+Include every available Apple rejection and review communication,
+organized chronologically.
+
+For each submission include:
+
+- App version
+- Build number
+- Submission ID
+- Submission date
+- Review date
+- Review device
+- Review operating-system version
+- Guideline cited
+- Exact Apple message
+- Apple screenshots, videos, or attachments, if available
+- Founder or developer response
+- Fix attempted
+- Evidence used before resubmission
+- Whether the issue reappeared
+- Final outcome
+- What internal testing failed to catch
+
+At minimum include the latest rejection:
+
+Guideline 2.1(a) — Performance — App Completeness
+
+Apple reported:
+
+“Error message appeared when tapped on Apple login and tried to register
+a new account.”
+
+Review device:
+
+- iPad Air 11-inch (M3)
+- iPadOS 26.5.2
+- Active internet connection
+- Version 1.0, Build 96
+
+Also include Apple’s separate request for:
+
+- A username and password
+- Access to all visible features and account types
+
+Include the exact Apple message without paraphrasing.
+
+Include all prior rejection messages available in the project,
+documentation, screenshots, exported emails, or App Store review notes.
+
+Do not invent missing rejection details.
+
+══════════════════════════════════════════════════════════════
+3. FORENSIC INCIDENT REPORTS
+══════════════════════════════════════════════════════════════
+
+Include the complete existing reports:
+
+- Build 96 Apple Sign-In forensic investigation
+- Confirmed Railway/PostgreSQL outage report
+- StripeSync pool-leak root-cause report
+- Build 97 load-test report
+- Submission release-gate document
+- Build 97 evidence file
+
+At minimum include or export:
+
+docs/product/SUBMISSION_RELEASE_GATE.md
+docs/product/releases/BUILD_97_RELEASE_GATE_EVIDENCE.md
+
+and any existing Apple forensic documents.
+
+Create an index:
+
+docs/reviews/MANUS_INCIDENT_REPORT_INDEX.md
+
+For every report identify:
+
+- Date created
+- Author or agent
+- Status
+- Confirmed evidence
+- Assumptions
+- Unresolved questions
+- Code changes resulting from it
+
+Manus must be able to distinguish confirmed findings from hypotheses.
+
+══════════════════════════════════════════════════════════════
+4. CONFIRMED DATABASE ROOT CAUSE
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/database/DATABASE_POOL_ROOT_CAUSE.md
+
+Include exact evidence showing:
+
+A. APPLICATION POOL
+
+File:
+
+lib/db/src/index.ts
+
+Explain:
+
+- Singleton implementation
+- Previous max connection count
+- New max connection count
+- Idle timeout
+- Connection timeout
+- Maximum lifetime
+- Keepalive configuration
+- Graceful shutdown behavior
+
+B. STRIPE POOL LEAK
+
+Files:
+
+- artifacts/api-server/src/stripeClient.ts
+- Stripe webhook handler file
+- Relevant stripe-replit-sync package source
+
+Show:
+
+- Previous getStripeSync() behavior
+- New singleton behavior
+- How each prior webhook created a new StripeSync instance
+- How each instance created its own pg.Pool
+- Default pool maximum
+- Why pools accumulated
+- Why they were not closed
+- How this caused Railway PostgreSQL exhaustion
+- The exact Build 96 reviewer timeline showing:
+  - business-list failures
+  - Apple login failure
+  - email login failure
+  - registration failure
+  - username-check failure
+
+C. CURRENT CONNECTION MODEL
+
+Document:
+
+- Application pool maximum: 8
+- Stripe pool maximum: 2
+- Intended combined maximum per API process: 10
+- Number of API replicas/processes
+- Railway PostgreSQL connection limit, if confirmed
+- Any remaining startup migration pool
+- Whether that startup pool is drained
+- Whether it should be changed before release
+
+D. STARTUP MIGRATION EXCEPTION
+
+Explicitly document:
+
+runMigrations({ databaseUrl })
+
+Include:
+
+- Package and source location
+- Whether it creates a separate pool
+- Default maximum
+- Whether pool.end() is called
+- Whether connections remain idle
+- Whether Manus should consider this acceptable
+- Whether a safer migration architecture is recommended
+
+E. RETRY LOGIC
+
+Include:
+
+artifacts/api-server/src/lib/db-retry.ts
+
+Document:
+
+- Errors retried
+- Errors never retried
+- Delay
+- Number of attempts
+- Routes using it
+- Idempotency concerns
+- Logging
+- Final user-facing behavior
+
+Ask Manus to determine whether:
+
+- The leak fix is complete
+- Pool 8 + 2 is appropriate
+- The migration pool is a release risk
+- Retry logic is safe
+- Any other connection path remains
+- Railway architecture can support Apple plus 30 testers
+
+══════════════════════════════════════════════════════════════
+5. SOURCE CODE EXPORT
+══════════════════════════════════════════════════════════════
+
+Prepare a clean ZIP archive of the complete repository at the exact
+proposed Build 97 review commit.
+
+Name:
+
+mapping-with-melanin-build97-manus-review.zip
+
+Include:
+
+- Mobile application
+- API server
+- Shared libraries
+- Database schema
+- Migrations
+- Scripts
+- Tests
+- Documentation
+- Configuration templates
+- Package lockfile
+- Git commit identifier
+
+Exclude:
+
+- node_modules
+- build outputs
+- caches
+- temporary files
+- logs containing user data
+- local databases
+- secret values
+- .env files containing credentials
+- private keys
+- App Store review password
+- service-account JSON
+- Apple .p8 private key
+- production dumps
+
+Include a manifest:
+
+docs/reviews/SOURCE_EXPORT_MANIFEST.md
+
+List:
+
+- Commit hash
+- Branch
+- Files excluded
+- Any uncommitted changes
+- Any code existing only in Replit and not in Git
+- Whether the ZIP can install and typecheck in a clean environment
+
+══════════════════════════════════════════════════════════════
+6. REQUIRED CONFIGURATION FILES
+══════════════════════════════════════════════════════════════
+
+Include exact current copies of:
+
+- app.json
+- app.config.js / app.config.ts, if used
+- eas.json
+- Root package.json
+- Mobile package.json
+- API-server package.json
+- pnpm-workspace.yaml
+- lockfile
+- tsconfig files
+- babel.config files
+- metro.config files
+- Expo router configuration
+- Railway configuration
+- Dockerfile or Nix configuration where applicable
+- deployment start commands
+- health-check configuration
+- RevenueCat configuration references
+- Google Maps configuration references
+
+Provide sanitized environment templates:
+
+- .env.example
+- mobile.env.example
+- api.env.example
+- railway.env.example
+- eas.env.example
+
+Each variable must show:
+
+- Variable name
+- Purpose
+- Required platform
+- Development/staging/production use
+- Server-only or public
+- Whether currently configured
+- Files referencing it
+
+Never include values.
+
+Explicitly include names related to:
+
+- DATABASE_URL
+- BETTER_AUTH_SECRET
+- Apple Sign-In
+- Google authentication
+- Google Maps
+- Expo public API URL
+- RevenueCat
+- Stripe
+- Email
+- Storage
+- KinfolkAI/provider
+- Push notifications
+- Session configuration
+
+══════════════════════════════════════════════════════════════
+7. NATIVE IOS AND ANDROID CONFIGURATION
+══════════════════════════════════════════════════════════════
+
+Export the effective generated native configuration used for the release,
+not merely assumptions from app.json.
+
+Include:
+
+IOS
+
+- Effective Info.plist
+- Bundle identifier
+- Supported device families
+- iPad support configuration
+- Deployment target
+- Sign in with Apple entitlement
+- Associated domains
+- URL schemes
+- Camera purpose string
+- Photo-library purpose string
+- Location purpose string
+- Notification configuration
+- Encryption declaration
+- Background modes
+- Any tracking declarations
+- Account deletion path
+- In-app-purchase capability
+- Push entitlement
+- Apple key/client identifiers, names only
+
+ANDROID
+
+- Effective AndroidManifest.xml
+- Package/application ID
+- Minimum and target SDK
+- Phone and tablet support
+- Required and optional permissions
+- Intent filters
+- Deep links
+- Google Maps configuration
+- Notification configuration
+- Network-security configuration
+- Orientation behavior
+- Large-screen support
+- Android version code/name
+- Google Play testing-track configuration
+
+Ask Manus specifically to review:
+
+- iPhone and iPad completeness
+- Android phone and tablet compatibility
+- Any unsupported or incorrectly declared tablet configuration
+- Permission and privacy mismatches
+- Native configuration likely to trigger Apple rejection
+
+══════════════════════════════════════════════════════════════
+8. BUILD LOGS AND RELEASE ARTIFACTS
+══════════════════════════════════════════════════════════════
+
+Include:
+
+- Complete EAS Build 96 logs
+- Any Build 95 logs relevant to Apple Sign-In
+- Current Build 97 local/build preparation logs
+- Latest Android production/testing build logs
+- EAS project/account identifiers
+- Expo project slug
+- iOS bundle ID
+- Android package ID
+- Build profiles
+- Submitted commit hashes
+- Build URLs or identifiers
+- Any failed EAS build logs
+
+Sanitize:
+
+- Tokens
+- Credentials
+- Private URLs
+- Secret values
+
+Create:
+
+docs/reviews/builds/BUILD_HISTORY.md
+
+Show:
+
+- Build number
+- Platform
+- Date
+- Commit
+- Status
+- Store/test-track status
+- Failure reason
+- Whether users tested it
+- Known defects
+
+══════════════════════════════════════════════════════════════
+9. CRASHES, ERRORS, AND OBSERVABILITY
+══════════════════════════════════════════════════════════════
+
+Export available diagnostics for the last 30 days:
+
+- Railway API logs
+- Railway deployment/restart history
+- Railway CPU and memory metrics
+- Railway PostgreSQL metrics
+- Active/idle/waiting connection history
+- App Store Connect crash reports
+- TestFlight crash reports
+- Google Play Android vitals
+- Sentry/Bugsnag/other crash data if configured
+- Authentication error counts
+- HTTP 401, 404, 429, and 500 counts
+- API latency
+- KinfolkAI failures
+- Maps failures
+- Session renewal failures
+- Database connection failures
+- Stripe webhook errors
+
+Do not export private request bodies or user data.
+
+Create:
+
+docs/reviews/observability/KNOWN_ERROR_INVENTORY.md
+
+For each issue include:
+
+- Timestamp
+- Platform
+- Build
+- Screen or route
+- Error
+- User impact
+- Frequency
+- Root cause
+- Fix status
+- Regression test
+- Severity
+
+If no mobile crash-reporting system exists, say so prominently.
+
+Ask Manus whether the current observability is sufficient for:
+
+- 30 testers
+- Apple review
+- Tour-period usage
+- Rapid incident response
+
+══════════════════════════════════════════════════════════════
+10. TEST ACCOUNTS AND REVIEW ACCESS
+══════════════════════════════════════════════════════════════
+
+Do not place credentials in the ZIP.
+
+Create:
+
+docs/reviews/TEST_ACCOUNT_INSTRUCTIONS_TEMPLATE.md
+
+Include fields for:
+
+- Apple review account email
+- Apple review account password
+- Android test account
+- Business-owner test account
+- Cultural Ambassador test account, if visible
+- Admin test account, only if Manus requires it and access is safely
+  limited
+- What each account can access
+- Whether email is verified
+- Whether waitlist/approval applies
+- Special login instructions
+
+Provide the actual credentials to Manus separately through a secure,
+temporary channel approved by the founder.
+
+Confirm whether the current build exposes:
+
+- Community Member
+- Business Owner
+- Cultural Ambassador
+- Community Organization
+- Admin
+
+If an account type is not implemented or not visible, state that instead
+of creating misleading demo access.
+
+══════════════════════════════════════════════════════════════
+11. API DOCUMENTATION
+══════════════════════════════════════════════════════════════
+
+Provide:
+
+- Existing Swagger/OpenAPI document, if present
+- Generated route inventory if none exists
+
+Create:
+
+docs/reviews/API_ROUTE_INVENTORY.md
+
+For every relevant route include:
+
+- Method
+- Path
+- Authentication requirement
+- Role requirement
+- Request shape
+- Response shape
+- Database use
+- Rate limit
+- Mobile/web callers
+- Error responses
+- Retry behavior
+- Whether covered by tests
+- Whether visible in Build 97
+
+At minimum cover:
+
+- Health and readiness
+- Apple Sign-In
+- Email login
+- Registration
+- Username check
+- Password reset
+- Session check/renewal
+- Businesses
+- Business details
+- Maps
+- Heritage
+- Historical Sundown Towns
+- Community feed
+- Posts
+- Reports/moderation
+- Events
+- Resources
+- Saved places
+- KinfolkAI
+- Membership/subscription state
+- Account deletion
+- Stripe webhooks
+
+Clearly identify any Build 97 client route that is missing, unstable,
+mocked, disabled, or undocumented.
+
+══════════════════════════════════════════════════════════════
+12. DATABASE SCHEMA AND DATA MODEL
+══════════════════════════════════════════════════════════════
+
+Provide:
+
+- Complete schema files
+- Migration files
+- High-level ER diagram
+- Table inventory
+- Index inventory
+- Foreign-key inventory
+- Connection-pool architecture
+- Data-retention notes
+
+Create:
+
+docs/reviews/DATABASE_MODEL_OVERVIEW.md
+
+At minimum explain tables for:
+
+- Users
+- Sessions
+- User preferences
+- Trust levels
+- Businesses
+- Business identity
+- Ownership designations
+- Vibes
+- Heritage places
+- Historical Sundown Towns
+- Safety/discrimination reports
+- Community posts
+- Events
+- Resources
+- Saves
+- KinfolkAI conversations
+- Membership/subscriptions
+- Stripe sync
+- Moderation
+- Audit logs
+
+State clearly which tables:
+
+- Exist
+- Are populated in production
+- Are seeded
+- Are mock-only
+- Are future state
+- Have no usable API/UI path
+
+Do not export production user records.
+
+Provide only schema and aggregate counts where safe.
+
+══════════════════════════════════════════════════════════════
+13. ARCHITECTURE DOCUMENTATION
+══════════════════════════════════════════════════════════════
+
+Create or include:
+
+docs/reviews/ARCHITECTURE_OVERVIEW.md
+
+Include diagrams showing:
+
+A. CLIENTS
+
+- Web
+- iPhone
+- iPad
+- Android phone
+- Android tablet
+
+B. SERVICES
+
+- Expo/EAS
+- Railway API
+- Railway PostgreSQL
+- Replit development environment
+- Object storage
+- Stripe
+- RevenueCat
+- Apple Sign-In
+- Google Sign-In
+- Google Maps
+- KinfolkAI provider
+- Email service
+- Push notifications
+
+C. REQUEST FLOWS
+
+- Apple Sign-In registration
+- Email registration/login
+- Session restoration
+- Business discovery
+- Map loading
+- Heritage loading
+- Historical Sundown Town loading
+- Community feed
+- KinfolkAI request
+- Subscription entitlement
+- Stripe webhook processing
+- Account deletion
+
+D. RELEASE FLOW
+
+- Replit/GitHub
+- Railway deployment
+- EAS build
+- App Store Connect
+- Google Play
+- TestFlight
+- Google testing track
+
+Identify single points of failure.
+
+Identify which components Manus should consider unacceptable release risks.
+
+══════════════════════════════════════════════════════════════
+14. BUILD 97 PROPOSED SCOPE
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/BUILD_97_PROPOSED_SCOPE.md
+
+State exactly what the founder expects in both builds.
+
+IOS BUILD 97 AND NEXT ANDROID BUILD MUST INCLUDE:
+
+- Reliable registration and login
+- Existing business previews
+- Business categories
+- Inclusive diaspora-based business language
+- Maps
+- Heritage places
+- Historical Sundown Towns
+- Community feed
+- Permitted test posts/contributions
+- Events and currently visible tabs
+- Basic KinfolkAI chatbot functionality
+- Current user preferences
+- Current tone/voice preferences
+- Profile
+- Saved places where currently implemented
+- Membership and Restore Purchases
+- Settings
+- Policies
+- Account deletion
+- Cross-platform phone/tablet compatibility
+
+HISTORICAL SUNDOWN TOWNS MINIMUM:
+
+- Historical source
+- State browsing
+- Place search
+- Historical-status label
+- Map marker
+- Brief sourced description
+- Attribution
+- Historical/current distinction
+- Clear disclaimer
+- No unsupported present-day danger score
+
+KINFOLKAI MINIMUM:
+
+- General questions
+- Follow-up context
+- Travel and local-planning questions
+- Basic heritage/business discovery
+- Current saved preference use
+- Current tone/voice setting use
+- Controlled error handling
+- No invented live weather if no live provider exists
+- No invented businesses or current safety claims
+
+BUSINESS LANGUAGE:
+
+- No universal Black-owned wording
+- Diaspora and approved minority designations supported
+- Objective ownership identity separated from community/cultural meaning
+  and vibes
+- No fabricated designations
+
+COMMUNITY:
+
+- Current feed works
+- Tester posts work where enabled
+- Reporting/moderation works
+- Test content can later be removed
+
+Ask Manus to determine:
+
+- Whether this scope is too large for one approval build
+- Which items can safely ship now
+- Which visible features would cause rejection if left incomplete
+- Whether any item should be hidden temporarily
+- Whether Maps, Historical Sundown Towns, or KinfolkAI introduce unsafe
+  release risk
+- Whether iOS and Android scope should remain identical
+
+══════════════════════════════════════════════════════════════
+15. MAPS, HERITAGE, AND SUNDOWN-TOWN REVIEW
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/features/MAPS_HERITAGE_SUNDOWN_REVIEW.md
+
+Include:
+
+- Current map components
+- Current business map routes
+- Current heritage routes/tables
+- Current Historical Sundown Town implementation status
+- Data source
+- Licensing/reuse status
+- Record count
+- Geocoding method
+- Marker clustering
+- Viewport loading
+- Search
+- State filtering
+- Result tiles
+- Source links
+- Error states
+- Tablet layouts
+- Performance risks
+
+Clearly state whether Historical Sundown Towns is:
+
+- Fully built
+- Partially built
+- Documented only
+- Data imported
+- Data not imported
+- Disabled
+- Unverified
+
+Do not imply it is ready if it is not.
+
+Ask Manus whether the source, disclaimers, status labels, and presentation
+are sufficient for Apple review and user safety.
+
+══════════════════════════════════════════════════════════════
+16. KINFOLKAI REVIEW
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/features/KINFOLKAI_BUILD_97_REVIEW.md
+
+Include:
+
+- Current screens
+- Current routes
+- Prompt architecture
+- Model/provider
+- API keys required, names only
+- Conversation memory
+- User preferences
+- Tone/voice
+- City voices
+- AAVE settings
+- Query limits
+- Error handling
+- Timeout handling
+- Source attribution
+- Safety protections
+- Weather capability
+- Business/heritage recommendations
+- Production cost risks
+- Tablet behavior
+- Known crashes
+
+State clearly:
+
+- What is actually functional now
+- What is future state
+- What is inaccessible in UI
+- What is unsafe or incomplete
+- What a tester can realistically ask
+
+Ask Manus whether the basic chatbot experience is complete enough for
+Apple review and meaningful testing.
+
+══════════════════════════════════════════════════════════════
+17. PRIVACY AND COMPLIANCE
+══════════════════════════════════════════════════════════════
+
+Provide:
+
+- Privacy Policy URL
+- Terms URL
+- Community Standards URL
+- Support URL
+- Account deletion instructions
+- Current App Store Privacy answers
+- Current Google Play Data Safety answers, if available
+
+Create:
+
+docs/reviews/PRIVACY_DATA_COLLECTION_SUMMARY.md
+
+For every data type include:
+
+- Data collected
+- Purpose
+- Required or optional
+- Public/private
+- Retention
+- Deletion
+- Third party receiving it
+- Whether used by KinfolkAI
+- Whether used in aggregate
+- Whether used for personalization
+- Whether disclosed in policies
+
+At minimum cover:
+
+- Name
+- Email
+- Username
+- Profile image
+- Location
+- Search history
+- Saves
+- Event activity
+- Community posts
+- Reviews
+- Safety/employer reports
+- KinfolkAI conversations
+- Device identifiers
+- Subscription data
+- Apple/Google authentication identifiers
+- Business information
+- Verification-related data, if any
+
+Identify any mismatch between:
+
+- Code behavior
+- Privacy Policy
+- App Store Privacy labels
+- Google Play Data Safety
+- Permission prompts
+
+══════════════════════════════════════════════════════════════
+18. SUBSCRIPTIONS AND APPLE COMMERCE
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/SUBSCRIPTION_REVIEW.md
+
+Include:
+
+- RevenueCat integration
+- Product identifiers
+- Membership screen
+- Purchase flow
+- Restore Purchases
+- Entitlement checks
+- Prices shown
+- App Store Connect product status
+- Google Play product status
+- Privacy/Terms links
+- External payment paths
+- Test/sandbox status
+- Known failures
+
+Ask Manus to identify any Apple Guideline 3.1 risk.
+
+Do not include secret API keys.
+
+══════════════════════════════════════════════════════════════
+19. CROSS-PLATFORM TEST EVIDENCE
+══════════════════════════════════════════════════════════════
+
+Provide current evidence for:
+
+- Web
+- iPhone
+- iPad
+- Android phone
+- Android tablet
+
+Include:
+
+- Device/emulator
+- OS
+- Build/version
+- Tested flows
+- Pass/fail
+- Screenshots
+- Known defects
+
+Explicitly identify untested items.
+
+Do not mark simulator evidence as physical-device evidence.
+
+Include the latest 30-concurrent-user load-test results, but label that
+they were run locally against Replit/Postgres, not Railway production.
+
+Ask Manus to evaluate whether production testing is still required before
+building.
+
+══════════════════════════════════════════════════════════════
+20. EXACT QUESTIONS FOR MANUS
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/reviews/MANUS_REVIEW_QUESTIONS.md
+
+Ask Manus to answer directly:
+
+1. What were the actual root causes of the Apple rejections?
+2. Is the StripeSync pool-leak correction technically complete?
+3. Is the application pool increase from 5 to 8 justified?
+4. Is the Stripe pool maximum of 2 appropriate?
+5. Is the undrained startup migration pool a release blocker?
+6. Are the retry conditions safe and sufficient?
+7. Can Railway production support Apple review plus approximately 30
+   mixed-platform testers?
+8. What production load/stability evidence is still required?
+9. Are iPhone and iPad configurations review-ready?
+10. Are Android phone and tablet configurations testing-ready?
+11. Is the proposed Build 97 scope too broad?
+12. Can Maps safely ship?
+13. Can Heritage safely ship?
+14. Can Historical Sundown Towns safely ship?
+15. Are the data source, attribution, confidence labels, disclaimers, and
+    presentation sufficient?
+16. Can basic KinfolkAI safely ship?
+17. Does KinfolkAI correctly handle weather and current information?
+18. Does business language accurately support the diaspora and multiple
+    minority communities?
+19. Are there any remaining App Store Guideline 2.1 risks?
+20. Are there any remaining privacy or account-deletion risks?
+21. Are there any subscription/RevenueCat risks?
+22. Are there any UGC moderation risks?
+23. Are there any visible incomplete features that Apple could reject?
+24. What exact items should be included in iOS Build 97?
+25. What exact items should be included in the Android build?
+26. What should be deferred?
+27. What must be fixed before building?
+28. What must be tested after building but before submission?
+29. Would Manus declare:
+    - GO
+    - CONDITIONAL GO
+    - NO-GO
+    for web, iOS, iPad, Android phone, and Android tablet?
+30. What is the fastest responsible path to testers and Apple approval?
+
+══════════════════════════════════════════════════════════════
+21. FINAL PACKAGE STRUCTURE
+══════════════════════════════════════════════════════════════
+
+Create:
+
+manus-build97-review-package/
+
+with organized folders:
+
+01-cover/
+02-apple-rejections/
+03-forensic-reports/
+04-source-code/
+05-config/
+06-native-config/
+07-build-logs/
+08-observability/
+09-api/
+10-database/
+11-architecture/
+12-build97-scope/
+13-maps-heritage-sundown/
+14-kinfolkai/
+15-privacy/
+16-subscriptions/
+17-testing/
+18-review-questions/
+
+Include a root README:
+
+manus-build97-review-package/README.md
+
+The README must explain:
+
+- Where to begin
+- What is confirmed
+- What is proposed
+- What remains untested
+- Which files contain sensitive placeholders
+- How actual credentials will be shared separately
+- Exact Git commit reviewed
+
+Compress as:
+
+manus-build97-review-package.zip
+
+══════════════════════════════════════════════════════════════
+22. REQUIRED RESPONSE TO FOUNDER
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Package completed or incomplete
+2. ZIP filename and location
+3. Git commit included
+4. Source-code export status
+5. Apple rejection history status
+6. Build-log status
+7. Crash/observability status
+8. Native config status
+9. API documentation status
+10. Database documentation status
+11. Architecture documentation status
+12. Privacy/compliance status
+13. Maps/Heritage/Sundown status
+14. KinfolkAI status
+15. Subscription status
+16. Test-account instructions status
+17. Items unavailable to Replit
+18. Credentials that must be supplied separately
+19. Known gaps Manus must be told about
+20. Confirmation that no implementation, build, deployment, or submission
+    occurred
+
+Do not include secret values.
+
+Do not create or use a new review-account password during this collection.
+
+Do not restart Railway.
+
+Do not run destructive or chargeable tests.
+
+Do not change code.
+
+Do not create Build 97.
+
+Do not submit to Apple or Google.
