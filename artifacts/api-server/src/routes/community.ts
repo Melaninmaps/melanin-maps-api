@@ -1032,4 +1032,41 @@ router.get("/community/thread/:threadId", async (req: Request, res: Response) =>
   }
 });
 
+// ─── Community Guidelines ─────────────────────────────────────────────────────
+
+router.get("/community/guidelines", (_req: Request, res: Response) => {
+  res.json({
+    version: "1.0",
+    lastUpdated: "2026-07-27",
+    guidelines: [
+      {
+        title: "Be Authentic",
+        body: "Share real experiences. Only review businesses you have personally visited or used.",
+      },
+      {
+        title: "Be Respectful",
+        body: "Critique the experience, not the person. Harassment, hate speech, and discriminatory language are not permitted.",
+      },
+      {
+        title: "Protect Privacy",
+        body: "Do not share other people's personal information without their consent.",
+      },
+      {
+        title: "Report Accurately",
+        body: "Submit safety reports only for things you witnessed or can confirm. False reports violate these guidelines and may result in account suspension.",
+      },
+      {
+        title: "Support the Community",
+        body: "Mapping with Melanin™ exists to strengthen our communities. Content that undermines that mission — spam, misinformation, or coordinated manipulation — will be removed.",
+      },
+      {
+        title: "Follow the Law",
+        body: "Do not post content that violates applicable law, including copyright, defamation, or privacy statutes.",
+      },
+    ],
+    reportUrl: "https://www.mappingwithmelanin.com/report",
+    fullPolicyUrl: "https://www.mappingwithmelanin.com/terms",
+  });
+});
+
 export default router;
