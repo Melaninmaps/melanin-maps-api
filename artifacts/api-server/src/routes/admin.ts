@@ -1,10 +1,11 @@
 import { randomUUID } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTable, knowledgeTopicsTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable } from "@workspace/db";
-import { eq, desc, sql, count } from "drizzle-orm";
+import { eq, desc, sql, count, or } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
+import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -266,6 +267,87 @@ router.post("/admin/bootstrap", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Admin bootstrap failed");
     res.status(500).json({ error: "Bootstrap failed" });
+  }
+});
+
+/**
+ * Emergency admin token — returns a session token for the admin account
+ * without requiring a password. Authenticated by SESSION_SECRET so only
+ * someone with access to the Railway/Replit environment can use it.
+ * Safe to leave deployed: useless without the secret.
+ */
+router.post("/admin/emergency-token", async (req: Request, res: Response) => {
+  const { secret } = req.body as { secret?: string };
+  const sessionSecret = process.env.SESSION_SECRET ?? "";
+
+  if (!secret || !sessionSecret || secret !== sessionSecret) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  try {
+    // Find the admin user — first by role, then by ADMIN_EMAILS
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    const allUsers = await db
+      .select({
+        id: usersTable.id,
+        email: usersTable.email,
+        firstName: usersTable.firstName,
+        lastName: usersTable.lastName,
+        profileImageUrl: usersTable.profileImageUrl,
+        approved: usersTable.approved,
+        role: usersTable.role,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.role, "admin"))
+      .limit(1);
+
+    let adminUser = allUsers[0];
+
+    if (!adminUser && adminEmails.length > 0) {
+      const byEmail = await db
+        .select({
+          id: usersTable.id,
+          email: usersTable.email,
+          firstName: usersTable.firstName,
+          lastName: usersTable.lastName,
+          profileImageUrl: usersTable.profileImageUrl,
+          approved: usersTable.approved,
+          role: usersTable.role,
+        })
+        .from(usersTable)
+        .where(eq(usersTable.email, adminEmails[0]))
+        .limit(1);
+      adminUser = byEmail[0];
+    }
+
+    if (!adminUser) {
+      res.status(404).json({ error: "No admin user found" });
+      return;
+    }
+
+    const sid = await createSession({
+      user: {
+        id: adminUser.id,
+        email: adminUser.email,
+        firstName: adminUser.firstName,
+        lastName: adminUser.lastName,
+        profileImageUrl: adminUser.profileImageUrl,
+        approved: adminUser.approved ?? false,
+        role: (adminUser.role as "user" | "tester" | "admin") ?? "admin",
+      },
+      access_token: "",
+    });
+
+    req.log.info({ userId: adminUser.id, email: adminUser.email }, "Emergency admin token issued");
+    res.json({ token: sid, userId: adminUser.id, email: adminUser.email });
+  } catch (err) {
+    req.log.error({ err }, "Emergency admin token failed");
+    res.status(500).json({ error: "Failed to create admin token" });
   }
 });
 
