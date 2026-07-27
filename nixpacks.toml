@@ -1,2 +1,8 @@
+[phases.build]
+cmds = [
+  "pnpm --filter @workspace/api-server run build",
+  "mkdir -p dist/public && cp -r artifacts/api-server/dist/public/. dist/public/"
+]
+
 [start]
-cmd = "npm start"
+cmd = "pnpm --filter @workspace/api-server run start"
