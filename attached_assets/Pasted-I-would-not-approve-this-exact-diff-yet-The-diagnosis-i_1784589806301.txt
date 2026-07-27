@@ -1,0 +1,80 @@
+I would **not approve this exact diff yet**. The diagnosis is right, but the proposed ordering still leaves a smaller version of the same race.
+
+Their current proposed sequence would be:
+
+1. `setUser(null)` — login screen mounts.
+2. `await SecureStore.getItemAsync(AUTH_TOKEN_KEY)` — asynchronous pause.
+3. Delete the token.
+
+During step 2, the login screen’s auto-restore effect could also read the token before deletion. It may be a short window, but the exact bug we are fixing is a timing race, so the fix should remove the window entirely—not merely shorten it.
+
+## Safer ordering
+
+Replit should:
+
+1. Read the token while the current authenticated screen is still active.
+2. Delete the authentication token and fresh-login flag locally.
+3. Reset in-memory authentication state.
+4. Attempt server-side revocation with the token already held in memory.
+5. Finish cleanly even if the server request times out.
+
+Conceptually:
+
+```ts
+const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+
+await Promise.all([
+  SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
+  SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {}),
+]);
+
+setUser(null);
+setSessionExpired(false);
+setIsLoading(false);
+
+// The token string is still available in memory for server revocation.
+if (token) {
+  // bounded logout fetch
+}
+```
+
+This means the login screen should not render until the local token is already gone.
+
+## Send Replit this correction
+
+> **LB-008 PRE-IMPLEMENTATION REVIEW — ORDERING REVISION REQUIRED**
+>
+> The root-cause diagnosis is approved, but the proposed two-line change is not yet approved because it retains a smaller race window.
+>
+> In the proposed flow:
+>
+> 1. `setUser(null)` renders the login screen.
+> 2. `SecureStore.getItemAsync(AUTH_TOKEN_KEY)` is awaited.
+> 3. The token is deleted afterward.
+>
+> During the asynchronous read in step 2, the login screen’s auto-restore effect may still read the existing token before deletion.
+>
+> Revise the smallest safe fix so the ordering is:
+>
+> 1. Read the current token while the authenticated UI is still active.
+> 2. Delete `AUTH_TOKEN_KEY`.
+> 3. Delete `@melanin_maps_fresh_login`.
+> 4. Only after both local keys are cleared, set:
+>
+>    * `setUser(null)`
+>    * `setSessionExpired(false)`
+>    * `setIsLoading(false)`
+> 5. Use the token retained in memory to make the bounded server-side logout request.
+> 6. Guarantee final clean state whether the server responds, errors, or times out.
+>
+> The login screen must not be able to mount while the old token still exists in SecureStore.
+>
+> Also confirm whether `settings.tsx` still awaits `logout()` before explicitly navigating. Preserve that behavior.
+>
+> Show the revised exact diff before implementation.
+>
+> Do not refactor other authentication logic or change any other files unless the existing awaited navigation line in `settings.tsx` must remain part of the verified solution.
+
+One subtle design choice remains: whether to wait up to eight seconds for server revocation before showing the login screen. I would prefer that local logout happen immediately and the server revocation proceed without blocking the user for the full timeout—but Replit must ensure the old asynchronous request cannot interfere with a new login. The revised plan should explain that clearly.
+
+The current proposal is close, but with authentication, “close” is not enough. The token must be gone **before** the login screen can restore it.

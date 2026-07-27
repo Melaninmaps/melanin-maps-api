@@ -1,0 +1,26 @@
+{
+  "name": "@workspace/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "hello": "tsx ./src/hello.ts",
+    "seed-businesses": "tsx ./src/seed-businesses.ts",
+    "seed-products": "tsx ./src/seed-products.ts",
+    "archive-old-products": "tsx ./src/archive-old-products.ts",
+    "seed-events": "tsx ./src/seed-events.ts",
+    "seed-revenuecat": "tsx ./src/seedRevenueCat.ts",
+    "send-welcome-blast": "tsx ./src/send-welcome-blast.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@replit/revenuecat-sdk": "^4.2.0",
+    "@workspace/db": "workspace:*",
+    "resend": "^4.8.0",
+    "stripe": "^22.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0"
+  }
+}

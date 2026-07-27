@@ -1,0 +1,106 @@
+[
+  {
+    "id": "slide-01-welcome-home",
+    "position": 1,
+    "filepath": "src/pages/slides/CB01Cover.tsx",
+    "title": "Welcome Home.",
+    "description": "Opening cover — A Belonging Platform",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-02-more-than-directions",
+    "position": 2,
+    "filepath": "src/pages/slides/SlideMoreThanDirections.tsx",
+    "title": "More Than Directions",
+    "description": "Most maps tell you how to get somewhere. We help you understand what it feels like.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-03-one-platform",
+    "position": 3,
+    "filepath": "src/pages/slides/CB02WhatIsIt.tsx",
+    "title": "One Platform. Every Part of Belonging.",
+    "description": "People → Connection → Community → Belonging cascade",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-04-every-journey-counts",
+    "position": 4,
+    "filepath": "src/pages/slides/SlideEveryJourneyCounts.tsx",
+    "title": "Every Journey Counts",
+    "description": "Not only for vacations — the full range of belonging moments",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-05-changed-language",
+    "position": 5,
+    "filepath": "src/pages/slides/CB05WhatMakesItDifferent.tsx",
+    "title": "We Changed the Language.",
+    "description": "Instead of / Say contrast — six feature reframes",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-06-before-you-arrive",
+    "position": 6,
+    "filepath": "src/pages/slides/SlideBeforeYouArrive.tsx",
+    "title": "Before You Even Arrive",
+    "description": "KinfolkAI pre-arrival travel intelligence with app screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-07-meet-kinfolk",
+    "position": 7,
+    "filepath": "src/pages/slides/CB08MeetKinfolkAI.tsx",
+    "title": "Meet Kinfolk.",
+    "description": "Most AI tells you what exists. Kinfolk helps you understand what belongs.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-08-confidence-layer",
+    "position": 8,
+    "filepath": "src/pages/slides/SlideConfidenceLayer.tsx",
+    "title": "Know Before You Go",
+    "description": "The Confidence Layer — community safety intelligence with map screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-09-see-a-city",
+    "position": 9,
+    "filepath": "src/pages/slides/SlideSeeACity.tsx",
+    "title": "See a City Through Your Community",
+    "description": "Three-layer map — business pins, confidence layer, heritage sites",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-10-living-history",
+    "position": 10,
+    "filepath": "src/pages/slides/SlideLivingHistory.tsx",
+    "title": "Walk Through Living History",
+    "description": "Cultural heritage sites — not landmarks, but stories and movements",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-11-businesses-have-stories",
+    "position": 11,
+    "filepath": "src/pages/slides/SlideBusinessesHaveStories.tsx",
+    "title": "Businesses Have Stories",
+    "description": "Every business has a reason it exists — owner story, confidence score, verification",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-12-find-your-people",
+    "position": 12,
+    "filepath": "src/pages/slides/SlideFindYourPeople.tsx",
+    "title": "Find Your People",
+    "description": "Community isn't something you stumble into — Circles, feed, Safe Spaces, events",
+    "speakerNotes": ""
+  },
+  {
+    "id": "slide-13-closing",
+    "position": 13,
+    "filepath": "src/pages/slides/CB11Closing.tsx",
+    "title": "Welcome Home.",
+    "description": "Home isn't always where you were born. Sometimes it's where you finally feel understood.",
+    "speakerNotes": ""
+  }
+]

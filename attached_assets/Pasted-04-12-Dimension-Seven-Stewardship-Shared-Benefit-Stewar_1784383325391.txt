@@ -1,0 +1,68 @@
+04.12 Dimension Seven — Stewardship & Shared Benefit
+Stewardship & Shared Benefit measures whether community assets, trust, stories, opportunities, and resources are handled responsibly.
+It evaluates whether benefits are durable, distributed, and protected for future participants.
+04.12.1 Stewardship Score
+Stewardship & Shared Benefit Score =
+  Responsible Resource Use
++ Community Benefit Distribution
++ Cultural Respect
++ Long-Term Accountability
++ Future Capacity Building
+- Stewardship Violations
+04.12.2 Positive indicators
+community stories are used with consent;
+creators and contributors receive recognition;
+economic benefit reaches community members;
+institutions invest in future capacity;
+local knowledge is preserved;
+leadership succession exists;
+data use is transparent;
+partnerships include community protections;
+short-term success strengthens long-term access;
+youth and future generations are considered.
+04.12.3 Stewardship violations
+unauthorized use of community stories;
+displacement caused by promotion without safeguards;
+cultural exploitation;
+undisclosed commercial influence;
+misuse of community data;
+removal of community control;
+short-term profit that weakens long-term access;
+failure to preserve important records;
+exclusion of future stewards;
+abandonment after visibility or funding is obtained.
+04.13 Standard Community Score Formula
+The baseline Community Score is:
+Community Score =
+  (Welcoming Access × 0.15)
++ (Meaningful Connection × 0.17)
++ (Reciprocity × 0.17)
++ (Community Support × 0.16)
++ (Voice & Influence × 0.13)
++ (Continuity & Return × 0.12)
++ (Stewardship & Shared Benefit × 0.10)
+Example:
+Welcoming Access:              82 × 0.15 = 12.30
+Meaningful Connection:         76 × 0.17 = 12.92
+Reciprocity:                   71 × 0.17 = 12.07
+Community Support:             79 × 0.16 = 12.64
+Voice & Influence:             68 × 0.13 =  8.84
+Continuity & Return:           74 × 0.12 =  8.88
+Stewardship & Shared Benefit:  81 × 0.10 =  8.10
+
+Raw Community Score = 75.75
+Rounded Community Score = 76
+The raw score must then be confidence-adjusted under the BIF.
+04.14 Community Confidence
+The Community Engine™ returns both:
+a Community Score;
+a Community Confidence level.
+04.14.1 Community Confidence Formula
+Community Confidence =
+  Evidence Quality
+× Evidence Volume
+× Evidence Diversity
+× Community Representation
+× Recency
+× Independence
+The result is normalized to the BIF confidence scale.

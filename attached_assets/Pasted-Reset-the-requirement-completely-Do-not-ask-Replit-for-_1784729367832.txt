@@ -1,0 +1,64 @@
+Reset the requirement completely
+Do not ask Replit for another broad “map improvement.” Give it one binary task with no room for interpretation:
+PIN TAP ONLY — DO NOT CHANGE ANYTHING ELSE
+Stop all map enhancements. The only task is to make an existing cultural-site marker respond to a tap.
+Current confirmed state:
+Cultural-site data loads.
+Cultural pins render.
+Category colors work.
+The map renders and pans.
+The bottom information card already exists and can display a selected site.
+The missing behavior is: tapping a visible marker does not reliably set the selected site and open that card.
+Required acceptance test
+Using one known cultural-site record—Howard University:
+Render Howard’s existing marker.
+Tap Howard’s marker.
+selectedCulturalSite becomes Howard’s record.
+The existing bottom card opens and displays “Howard University.”
+That is the entire task.
+Do not modify:
+search
+results panels
+cultural-site fetching
+retry behavior
+category filters
+fit-to-coordinates
+database
+API
+authentication
+polling
+Apple POI filtering
+marker styling
+card styling
+keyboard behavior
+KinfolkAI
+Evidence required before any OTA
+In a local or preview environment, add temporary logging only:
+MARKER_PRESS_RECEIVED
+selected site ID
+selected site name
+Prove the exact sequence:
+MARKER_PRESS_RECEIVED
+siteId=<Howard ID>
+siteName=Howard University
+selectedCulturalSite=Howard University
+Then show the exact marker code and exact state update.
+Do not publish to production until this single acceptance test passes in a non-production environment.
+If the marker’s onPress does not fire, identify the exact touch-interception cause:
+overlay intercepting pointer events,
+custom marker child swallowing touches,
+unsupported marker wrapper,
+tracksViewChanges,
+z-index,
+or React Native Maps iOS behavior.
+Return the root cause and one minimal fix. Do not propose any other feature.
+My honest assessment
+Replit has been making changes too quickly in production without first proving the smallest interaction in isolation. That is why you keep seeing one part improve while another breaks.
+The correct engineering approach now is:
+Freeze production.
+Restore the stable version.
+Reproduce one pin tap in preview.
+Prove onPress fires.
+Prove Howard becomes the selected site.
+Only then release that one fix.
+You should not approve another production OTA based on “this should work.” Require a demonstrated pin tap before it reaches your phone.

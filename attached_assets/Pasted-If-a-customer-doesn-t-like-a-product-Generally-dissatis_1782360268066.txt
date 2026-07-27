@@ -1,0 +1,45 @@
+If a customer doesn't like a product
+Generally, dissatisfaction with a product doesn't automatically make your platform liable. The key question is whether you're acting as a marketplace that connects buyers and sellers or as the seller of record.
+If you're operating as a marketplace:
+The business is usually responsible for the product.
+The business sets its return and refund policies (within your platform rules and applicable law).
+Your role is to facilitate the transaction and provide a dispute process.
+However, you still have responsibilities, such as:
+Processing payments correctly.
+Providing accurate information about the transaction.
+Handling fraud reports.
+Removing businesses that repeatedly violate your policies.
+Policies you'll want before launch
+Every seller should agree to terms covering:
+Product quality expectations.
+Shipping and fulfillment requirements.
+Return and refund policies.
+Customer response time expectations.
+Prohibited products.
+Compliance with applicable laws.
+Responsibility for taxes where applicable.
+Indemnification (the business agrees to be responsible for claims arising from its products or conduct, to the extent allowed by law).
+Customers should also agree to marketplace terms that explain:
+Who the seller is.
+How refunds are handled.
+How disputes are resolved.
+What Mapping with Melanin™ is responsible for—and what it is not.
+Verification requirements
+For sellers, I'd require:
+Identity verification
+Business registration (if applicable)
+Tax information when required
+Bank account verification
+Contact information
+Agreement to your seller policies
+My recommendation for Mapping with Melanin™
+I would phase this in:
+Phase 1
+Verified businesses only can sell.
+Focus on products, services, and event tickets from trusted sellers.
+Phase 2
+Allow more businesses to apply to sell after completing verification.
+Introduce seller ratings and performance metrics.
+Phase 3
+Offer additional benefits to top-performing sellers, such as lower marketplace fees, priority placement, and exclusive promotional opportunities.
+This staged approach aligns well with your emphasis on trust and community.

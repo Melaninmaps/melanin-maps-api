@@ -1,0 +1,55 @@
+I reviewed PR #2 and the actual file diff. It is a narrow change: **29 additions to `dist/index.mjs`**, plus the updated source map. The added code creates `cultural_sites` with `CREATE TABLE IF NOT EXISTS` immediately before the cultural-site insertion loop. ([GitHub][1])
+
+## Decision: approved to merge
+
+The PR is appropriate as an immediate production-recovery fix because:
+
+* It only adds the missing table creation.
+* `IF NOT EXISTS` prevents it from recreating or deleting an existing table.
+* There are no `DROP`, `ALTER`, or destructive statements in the visible change.
+* The table is created before the insert loop that previously failed.
+* The PR still uses the existing protected seed endpoint.
+* GitHub confirms the PR contains one commit and two changed files. ([GitHub][2])
+
+The table definition includes the expected identification, location, accessibility, verification, and timestamp fields. ([GitHub][1])
+
+One correction to the earlier uncertainty: the PR description now confirms that the **12 businesses successfully inserted before the cultural-site failure**, so the expected second run is:
+
+```json
+{
+  "ok": true,
+  "businesses": {
+    "inserted": 0,
+    "skipped": 12
+  },
+  "culturalSites": {
+    "inserted": 5,
+    "skipped": 0
+  }
+}
+```
+
+([GitHub][2])
+
+### After merging
+
+Have Replit complete and report these exact checks:
+
+1. Railway deployment succeeds and production remains HTTP 200.
+2. Run the protected seed endpoint **once**.
+3. Confirm:
+
+   * `ok: true`
+   * businesses: `inserted: 0`, `skipped: 12`
+   * cultural sites: `inserted: 5`, `skipped: 0`
+4. Run it a second time and confirm:
+
+   * businesses: `inserted: 0`, `skipped: 12`
+   * cultural sites: `inserted: 0`, `skipped: 5`
+5. Confirm Railway logs contain no SQL, authorization, pool-exhaustion, or crash-loop errors.
+6. Confirm the five cultural sites can be retrieved through the intended production API or admin database view.
+
+You may click **Merge pull request** and then **Confirm merge**. This resolves the immediate P0 issue. After launch stabilization, the `cultural_sites` table should also be formally synchronized through the normal Drizzle production-schema process so the production schema is not permanently dependent on an administrative seed endpoint.
+
+[1]: https://github.com/Melaninmaps/melanin-maps-api/pull/2/files "fix(seed): CREATE TABLE IF NOT EXISTS cultural_sites before insert by Melaninmaps · Pull Request #2 · Melaninmaps/melanin-maps-api · GitHub"
+[2]: https://github.com/Melaninmaps/melanin-maps-api/pull/2 "fix(seed): CREATE TABLE IF NOT EXISTS cultural_sites before insert by Melaninmaps · Pull Request #2 · Melaninmaps/melanin-maps-api · GitHub"

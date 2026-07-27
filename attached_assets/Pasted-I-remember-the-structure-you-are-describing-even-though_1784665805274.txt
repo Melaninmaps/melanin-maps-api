@@ -1,0 +1,219 @@
+I remember the structure you are describing, even though I cannot retrieve the exact prior list word-for-word.
+
+The important distinction was that **not every descriptor is a “vibe.”** We separated business language into categories so the app would not assign inappropriate tags. A law office, medical provider, accountant, daycare, or funeral home should never be labeled “Date Night,” “Romantic,” “Late Night,” or similar just because those tags exist globally.
+
+The framework was essentially:
+
+## 1. Experience or vibe tags
+
+These describe how a place feels and should mainly apply to restaurants, nightlife, entertainment, travel, wellness, retail and gathering spaces.
+
+Examples:
+
+* Date Night
+* Group Hangout
+* Solo Vibes
+* Bougie Treat
+* Hood Classic
+* Late Night
+* Family Time
+* Creative Scene
+* Grown Folks Vibe
+* Celebration Spot
+* Block Party Energy
+* Quiet Luxury
+* First-Date Friendly
+* Music & Movement
+
+These should be filtered by business category.
+
+## 2. Community and cultural identity tags
+
+These describe the business’s relationship to the community, not whether it is romantic or entertaining.
+
+Examples:
+
+* Community Staple
+* For the Culture
+* Feels Like Family
+* Home Away From Home
+* Heritage Rich
+* Diaspora Vibes
+* Locally Loved
+* Hidden Gem
+* Neighborhood Favorite
+* Generational Business
+* Community Recommended
+* Cultural Landmark
+* Rooted in the Community
+* Gives Back
+* Family-Owned
+
+These can apply more broadly, including to professional services.
+
+## 3. Service-quality and trust descriptors
+
+These are appropriate for lawyers, doctors, accountants, real estate professionals, contractors and other service providers.
+
+Examples:
+
+* Professional and Responsive
+* Knowledgeable
+* Patient and Thorough
+* Clear Communication
+* Trusted Advisor
+* Community Trusted
+* Welcoming Environment
+* Respectful Service
+* Culturally Aware
+* Inclusive Service
+* Reliable
+* Transparent Pricing
+* Family Friendly
+* First-Time Client Friendly
+* Accessible
+* Bilingual Service
+* Discreet and Confidential
+
+For a law office, this is the category that should appear instead of “Date Night” or “Romantic.”
+
+## 4. Practical-use tags
+
+These explain when or why someone would use a business.
+
+Examples:
+
+* Good for Families
+* Good for Groups
+* Solo Friendly
+* Budget Friendly
+* Appointment Required
+* Walk-Ins Welcome
+* Quick Service
+* Open Late
+* Weekend Availability
+* Remote Services
+* Delivery Available
+* Accessible Entrance
+* Kid Friendly
+* Work and Study
+* Event Friendly
+* Traveler Friendly
+
+## 5. Food-specific descriptors
+
+These should only appear for restaurants, cafés, bakeries and food businesses.
+
+Examples:
+
+* Soul Food
+* Comfort Food
+* Authentic Flavors
+* Generous Portions
+* Sunday Dinner Energy
+* Auntie Approved
+* Family Recipe
+* Vegan Friendly
+* Halal Options
+* Caribbean Flavors
+* African Cuisine
+* Latino Flavors
+* Southern Classic
+* Brunch Favorite
+* Sweet Treats
+
+## 6. Safety and belonging indicators
+
+These were distinct from vibe tags because they carry more serious meaning.
+
+Examples:
+
+* Welcoming Environment
+* Community Trusted
+* Solo Traveler Approved
+* Family Safe
+* LGBTQ+ Welcoming
+* Disability Accessible
+* Women Feel Safe Here
+* Respectful Staff
+* Culturally Respectful
+* Verified Ownership
+* Community Reviewed
+
+These should be based on verified information or community feedback, not automatically assigned.
+
+## The rule Replit should follow
+
+Each business category should have an **allowed tag set**.
+
+For example:
+
+**Law firm**
+
+* Community Trusted
+* Clear Communication
+* Knowledgeable
+* Culturally Aware
+* Welcoming Environment
+* First-Time Client Friendly
+* Bilingual Service
+
+**Restaurant**
+
+* Date Night
+* Group Hangout
+* Soul Food
+* Family Time
+* Late Night
+* Hood Classic
+* Bougie Treat
+* Auntie Approved
+
+**Hair salon or spa**
+
+* Self-Care
+* Beauty and Wellness
+* Girls’ Day
+* Relaxing
+* Luxury Experience
+* Community Staple
+
+**Accountant or financial professional**
+
+* Trusted Advisor
+* Clear Communication
+* Small-Business Friendly
+* First-Time Client Friendly
+* Transparent Pricing
+* Community Trusted
+
+Send Replit this:
+
+> **BUSINESS DESCRIPTOR FRAMEWORK — RECONSTRUCT AND AUDIT**
+>
+> The earlier discussion did not treat every descriptor as a universal “Vibe” tag. We separated business descriptors into categories so inappropriate options would not appear for certain business types. For example, a lawyer, accountant, doctor or professional-services business must not display or be eligible for “Date Night,” “Romantic,” “Late Night” or similar experience tags.
+>
+> Please audit the current implementation and reconstruct the tag system using these distinct groups:
+>
+> 1. Experience/Vibe
+> 2. Community and Cultural Identity
+> 3. Service Quality and Trust
+> 4. Practical Use
+> 5. Food-Specific
+> 6. Safety and Belonging
+>
+> For every business category, return:
+>
+> * allowed descriptor groups
+> * disallowed descriptor groups
+> * current tags being shown
+> * tags that are hard-coded globally
+> * the file or database source controlling them
+>
+> Do not implement changes yet.
+>
+> Specifically confirm why a law office is currently being shown the general “What’s the vibe?” selector and propose the smallest fix so professional services receive appropriate service, trust and community descriptors instead of restaurant, nightlife or romantic tags.
+>
+> Return the proposed category-to-tag eligibility matrix for review before changing the app.
+
+That is the structure I believe you were trying to recover. It is much stronger than one universal Vibe list because it makes each business profile feel relevant rather than random.

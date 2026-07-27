@@ -1,0 +1,49 @@
+The latest audit still does **not** prove the Apple Developer association is missing. Your screenshot already showed the key configured for:
+
+`Y46Y4A5MMZ.com.melaninmaps.app`
+
+Also, Apple says `invalid_client` at `/auth/token` means the client secret is invalid, expired, improperly signed, malformed, or has mismatched claims—not necessarily that the key lacks an App ID association. ([Apple Developer][1])
+
+Since the Team ID, Key ID, App ID, key capability, and audience all appear correct, the safest next diagnostic is to compare the **cryptographic public-key fingerprint** of:
+
+1. Your original `.p8` file; and
+2. The private key Railway is actually loading.
+
+This confirms whether Railway truly has the same key without exposing either private key.
+
+Send Replit this:
+
+> **READ-ONLY DESIGN — PRIVATE-KEY FINGERPRINT COMPARISON**
+>
+> We have verified:
+>
+> * Team ID: `Y46Y4A5MMZ`
+> * Key ID: `2ZNB4XAZY7`
+> * App ID: `com.melaninmaps.app`
+> * Sign in with Apple enabled
+> * key associated with the primary App ID
+> * JWT audience is correct
+>
+> Do not assume the portal association is missing.
+>
+> Design a safe, temporary diagnostic that derives the public key from `APPLE_PRIVATE_KEY` in Railway and reports only a SHA-256 fingerprint of its public SPKI DER representation.
+>
+> Separately provide the exact local Terminal command I can run against:
+>
+> `AuthKey_2ZNB4XAZY7.p8`
+>
+> to derive the same SHA-256 public-key fingerprint.
+>
+> Requirements:
+>
+> * Never print or log the private key.
+> * Never print the client secret.
+> * Never expose tokens or user data.
+> * Do not implement or deploy anything yet.
+> * Return only the proposed comparison method and commands.
+>
+> If the fingerprints match, investigate JWT signature encoding and claims. If they differ, Railway contains the wrong private key.
+
+Do not create another Apple key and do not retry Sign in with Apple yet. The fingerprint comparison will definitively settle whether Railway is signing with the exact key Apple issued.
+
+[1]: https://developer.apple.com/documentation/technotes/tn3107-resolving-sign-in-with-apple-response-errors?changes=_4&utm_source=chatgpt.com "TN3107: Resolving Sign in with Apple response errors | Apple Developer Documentation"

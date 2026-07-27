@@ -1,0 +1,79 @@
+FORMAL COMPLAINT — MAPPING WITH MELANIN
+Submitted to: support@replit.com
+Date: July 17, 2026
+Account: Mapping With Melanin / Melanin Maps LLC
+Project: Mapping With Melanin (Replit Workspace)
+
+========================================
+SUMMARY OF FAILURES AND REQUESTED REMEDY
+========================================
+
+I am filing this complaint regarding a pattern of AI agent errors that caused
+measurable harm to my mobile app launch timeline and business operations.
+
+ISSUE 1 — CONFIRMED LAUNCH DATE WITHOUT DISCLOSING GOOGLE PLAY POLICY
+The agent confirmed July 22, 2026 as a viable Android launch date without
+disclosing that Google Play requires a mandatory 14-day closed testing period
+plus a 3-day hold before public release. When I later asked about the policy,
+it was acknowledged but by then a build had already been submitted.
+
+ISSUE 2 — BUILD SUBMISSION RESET THE 14-DAY COUNTER WITHOUT WARNING
+The agent submitted Android build 60 to the closed test track without warning
+me that doing so would reset the 14-day review counter to zero. This directly
+pushed my earliest possible Android launch date to approximately July 27, 2026.
+The announcement of my launch date had already been made to my community.
+
+ISSUE 3 — 12+ DAYS UNABLE TO LOG INTO MY OWN APP
+The production login was broken for over 12 days. The root cause was that:
+(a) The mobile app was configured to call www.mappingwithmelanin.com for its
+    API, but that domain pointed to GoDaddy's website builder — not the API.
+(b) The production database was missing columns that had been added to the
+    schema over time but never pushed to Railway production, causing a server
+    crash (500 error) on every login attempt.
+Neither of these issues was proactively identified or disclosed. The agent
+repeatedly gave the impression the app was functional when users could not
+log in at all.
+
+ISSUE 4 — WEBSITE TAKEN OFFLINE WITHOUT ADEQUATE WARNING
+During development, the website (mappingwithmelanin.com) was unpublished or
+disrupted, causing downtime that was visible to the public and potential users.
+
+ISSUE 5 — SCREENS AND FEATURES DESCRIBED AS COMPLETE THAT DID NOT EXIST
+On multiple occasions the agent described buttons, screens, and features as
+built and functional that did not appear in the actual installed app.
+
+========================================
+FINANCIAL AND BUSINESS IMPACT
+========================================
+
+- Public launch date announced to community: July 22, 2026
+- Earliest possible Android launch now: approximately July 27, 2026
+- Tour stops and in-person events planned around original launch date
+- Business owner and community onboarding delayed
+- Days of my time spent trying to diagnose issues the agent should have caught
+
+========================================
+WHAT I AM REQUESTING
+========================================
+
+1. A full review of all session logs associated with my account by a human
+   Replit employee — not the AI agent.
+
+2. Written confirmation of the specific errors the agent made.
+
+3. Compensation or credit appropriate to the timeline and business impact.
+
+4. A direct human contact (not AI) to handle resolution.
+
+========================================
+SUPPORTING EVIDENCE
+========================================
+
+- Full session transcript (4,013 messages) available as complaint_log.txt
+  inside my Replit workspace and downloaded locally.
+- Railway production logs showing repeated 500 errors on /api/auth/login-email
+- Google Play Console showing reset of 14-day counter after build 60 submission
+
+Please respond to the email address on my Replit account.
+
+— Mapping With Melanin / Melanin Maps LLC

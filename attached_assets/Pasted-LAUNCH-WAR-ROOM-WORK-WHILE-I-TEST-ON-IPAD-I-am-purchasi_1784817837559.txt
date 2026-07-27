@@ -1,0 +1,78 @@
+LAUNCH WAR ROOM — WORK WHILE I TEST ON IPAD
+I am purchasing an iPad to reproduce Apple’s review environment. Maintain a strict release lock:
+Do not modify mobile code
+Do not create Build 96
+Do not merge unrelated branches
+Do not deploy layout, language, HBCU, or feature changes
+Do not change Apple credentials
+Do not alter production data
+Complete these tasks in order:
+1. Restore and verify production health
+Restart the Railway api-server service only if current auth probes show the known 10-second/HTTP 500 failure pattern.
+Do not redeploy code merely to clear the pool.
+Verify:
+/api/healthz → HTTP 200
+/api/businesses?limit=1 → HTTP 200
+bad email/password login → HTTP 401 in under 1 second
+valid email/password login → HTTP 200 in under 2 seconds
+2. Freeze the exact server state
+Record the current production Git SHA.
+Confirm no pending Railway deployment exists.
+Confirm no staged environment-variable changes exist.
+Do not push, merge, or deploy anything after the server is healthy.
+3. Audit all database pool users
+The auth routes themselves were found clean. Now inspect the entire production server for:
+every pool.connect()
+every client.release()
+every transaction
+background jobs
+Stripe initialization/backfill
+cron jobs
+startup migrations
+any long-running query
+any code path that could retain a connection
+Return a table with:
+file/function
+connection acquisition method
+release mechanism
+timeout
+leak risk
+launch severity
+4. Add no code yet—propose only
+If a likely connection-leak or pool-starvation risk is found, propose the smallest production-safe correction, but do not implement it until I return.
+5. Prepare live monitoring for my iPad test
+Create a read-only test worksheet showing the exact Railway log filters and timestamps to capture:
+/api/auth/login-email
+/api/auth/apple
+HTTP status
+request duration
+pool stats
+sanitized error category
+During my test, we need to distinguish:
+healthy success
+invalid credentials
+Apple credential issue
+rate limiting
+10-second pool timeout
+generic 5xx
+6. Prepare the iPad test sequence
+Return a concise checklist for:
+fresh installation
+portrait and landscape
+new email registration
+existing email login
+Sign in with Apple
+logout
+app close/reopen
+account deletion
+Sign in with Apple after deletion
+7. Return one release-status page
+Include:
+production health: PASS/FAIL
+current server SHA
+pending deployment: YES/NO
+pool-risk findings
+exact tests ready for iPad
+whether Build 95 can be resubmitted without a new binary
+whether a Build 96 is actually required
+Do not implement changes while I am gone. Return findings and readiness only.

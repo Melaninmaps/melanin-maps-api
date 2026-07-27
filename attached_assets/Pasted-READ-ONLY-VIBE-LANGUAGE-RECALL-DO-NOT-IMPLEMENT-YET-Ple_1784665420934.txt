@@ -1,0 +1,37 @@
+READ-ONLY VIBE LANGUAGE RECALL — DO NOT IMPLEMENT YET
+Please search the Replit workspace, project notes, prior checkpoints, source history and existing Vibe-related files for every previously approved or discussed Vibe phrase.
+Return:
+The complete current Vibe list in the app
+Any earlier Vibe list stored in project notes, checkpoints, comments or git history
+Which phrases were previously approved versus merely suggested
+Which phrases are currently implemented
+Any phrases that were removed, renamed or never implemented
+The file paths and data source controlling the Vibe options
+Do not modify the app yet. Present the old list, current list and newly proposed list in three separate sections so we can review and approve a final launch-safe set.
+Regarding the map: do not request another build yet
+We have not completed enough testing to conclude that the map requires a new native build.
+First, verify what happened after the Railway restart:
+Confirm /api/businesses, /api/cultural-sites and related database endpoints now return HTTP 200 quickly.
+Force-close the current app and reopen it.
+Open the Map and wait no more than 10 seconds.
+Try both Wi-Fi and cellular.
+Confirm location permission is enabled for the app.
+Verify which TestFlight build is installed—93 or 94.
+Capture the app and Railway logs while the Map is open.
+When another build would be required
+A new build is needed if the correction involves native iOS configuration, such as:
+adding or changing a native Maps SDK key
+changing app.json map configuration
+installing or changing the map library
+modifying iOS permissions or native plugins
+When an OTA update may be enough
+An OTA update may be enough if the problem is only:
+incorrect API endpoint
+JavaScript rendering logic
+loading-state behavior
+business or cultural-site data handling
+timeout and retry logic
+copy, spacing or Vibe wording
+So the correct sequence is:
+Restart verification → identify exact map implementation and error → decide OTA versus Build 95.
+Do not generate another build simply because the Map is still black. First determine whether it is a data/API problem or native map configuration problem. Build 94 should also be installed and tested before deciding that its map configuration failed.

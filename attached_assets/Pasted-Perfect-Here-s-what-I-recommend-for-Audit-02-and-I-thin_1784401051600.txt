@@ -1,0 +1,456 @@
+Perfect. Here's what I recommend for **Audit 02**, and I think it's arguably even more important than authentication.
+
+# AUDIT 02 — Onboarding, Profiles, Identity & Member Journey
+
+If Authentication answers:
+
+> **"Can I get in?"**
+
+Then Audit 02 answers:
+
+> **"Do I immediately understand who this platform is for, what it can do, and how to become part of the community?"**
+
+This is where first impressions are made.
+
+---
+
+# My expectation for this audit
+
+I don't want Replit to tell us:
+
+> "There are 17 onboarding screens."
+
+I want them to tell us:
+
+> "A new member goes from account creation to becoming an active community member through this exact journey..."
+
+If they can't tell that story, then the onboarding experience isn't fully designed yet.
+
+---
+
+# What we'll review
+
+## A. Account Creation Experience
+
+Questions we'll answer:
+
+* What is the first screen?
+* Is it welcoming?
+* Does it explain Mapping With Melanin™?
+* Does it explain why information is collected?
+* Can users skip steps?
+* Should they?
+
+---
+
+## B. Profile Creation
+
+I want to inspect every field.
+
+For each one we'll ask:
+
+### Why does this exist?
+
+If we don't have a good answer...
+
+it shouldn't be there.
+
+---
+
+Example:
+
+Birthday
+
+Why?
+
+Age verification?
+
+Recommendations?
+
+Birthday celebrations?
+
+Legal requirement?
+
+Children's safety?
+
+If we don't need the full birthday...
+
+Should we collect only month/year?
+
+Or age bracket?
+
+Less data = less risk.
+
+---
+
+Example:
+
+Race / Ethnicity
+
+Very important.
+
+How is it asked?
+
+Is it optional?
+
+Can multiple identities be selected?
+
+Can users decline?
+
+How does it affect recommendations?
+
+Does it affect anything?
+
+How is it stored?
+
+How is it protected?
+
+Should it ever be shown publicly?
+
+---
+
+## C. Profile Visibility
+
+Can members choose:
+
+Public
+
+Friends
+
+Community only
+
+Private
+
+Hidden from search
+
+Invisible while traveling
+
+Vacation mode
+
+---
+
+## D. Profile Completion
+
+Does the app encourage completion?
+
+Or force it?
+
+I generally prefer:
+
+Encourage.
+
+Not force.
+
+---
+
+## E. Interests
+
+This is huge.
+
+We'll inspect:
+
+How they're stored.
+
+How many.
+
+How AI uses them.
+
+How recommendations change.
+
+Whether users understand why they're selecting them.
+
+---
+
+## F. Location
+
+This deserves its own review.
+
+Questions:
+
+Always on?
+
+Approximate?
+
+Only while searching?
+
+Never?
+
+Background?
+
+Travel mode?
+
+Home city?
+
+Temporary city?
+
+Can users hide where they are?
+
+Should businesses see this?
+
+---
+
+## G. Safety Preferences
+
+This is one of your differentiators.
+
+We'll inspect:
+
+Neighborhood alerts
+
+Emergency contacts
+
+SOS
+
+Safety ratings
+
+Accessibility
+
+Travel style
+
+Comfort preferences
+
+Late-night recommendations
+
+Family travel
+
+Solo travel
+
+Wheelchair needs
+
+Language preferences
+
+Gender preferences (if applicable)
+
+---
+
+## H. Identity Verification
+
+We'll ask:
+
+What is verified?
+
+Email?
+
+Phone?
+
+Business?
+
+Identity?
+
+Community Ambassador?
+
+Influencer?
+
+Verified Traveler?
+
+Verified Reviewer?
+
+---
+
+## I. Welcome Experience
+
+After onboarding...
+
+What happens?
+
+I don't want:
+
+Blank feed.
+
+I want:
+
+Welcome.
+
+Suggested businesses.
+
+Suggested communities.
+
+Suggested topics.
+
+Suggested events.
+
+Kinfolk introduction.
+
+Tutorial.
+
+"Here's what to do next."
+
+---
+
+## J. Empty States
+
+One of my biggest pet peeves.
+
+If there are no businesses...
+
+What happens?
+
+If there are no events...
+
+What happens?
+
+If nobody has posted...
+
+What happens?
+
+There should never be:
+
+Nothing.
+
+---
+
+## K. Notifications
+
+Does onboarding ask?
+
+When?
+
+Why?
+
+Can users change later?
+
+---
+
+## L. Permissions
+
+Location
+
+Camera
+
+Photos
+
+Microphone
+
+Notifications
+
+Contacts
+
+When are these requested?
+
+I recommend:
+
+Only when needed.
+
+Never immediately.
+
+---
+
+# Then we move into design questions
+
+I also want Replit to tell us:
+
+Are there places where onboarding feels:
+
+Confusing
+
+Long
+
+Repetitive
+
+Incomplete
+
+Abrupt
+
+Technical
+
+Developer-focused
+
+Missing explanations
+
+---
+
+# Then my favorite section
+
+## Unanswered Product Questions
+
+For example:
+
+Should users choose:
+
+Traveler?
+
+Resident?
+
+Business Owner?
+
+Creator?
+
+Community Leader?
+
+Student?
+
+Or...
+
+Does AI determine this later?
+
+---
+
+Should users upload a profile photo immediately?
+
+Or later?
+
+---
+
+Should there be:
+
+Welcome badges?
+
+Referral code?
+
+Waitlist position?
+
+Welcome video?
+
+Mission statement?
+
+---
+
+# Then Constitutional Review
+
+We'll ask:
+
+Does onboarding communicate:
+
+Belonging?
+
+Opportunity?
+
+Trust?
+
+Stewardship?
+
+Community?
+
+Or...
+
+Does it feel like another social app?
+
+Those are different experiences.
+
+---
+
+# Finally...
+
+The first thing I want every member to feel isn't:
+
+"I'm using another app."
+
+I want them to feel:
+
+> **"I just joined a community."**
+
+That's a completely different emotional experience.
+
+---
+
+## One improvement I'd like to make to our audit process
+
+I want every audit to end with this question:
+
+> **If someone downloaded Mapping With Melanin™ today and this was the ONLY feature they experienced, would they understand why this platform exists?**
+
+If the answer is "no," then even if the code is flawless, the feature isn't finished.
+
+That question will keep us anchored to your mission throughout this entire review.
+
+When you're ready, I'll draft the same detailed read-only audit prompt for **Audit 02** that we created for Authentication, so Replit receives the same level of specificity. I think maintaining that consistency across all audits will give us the clearest possible picture of the platform.

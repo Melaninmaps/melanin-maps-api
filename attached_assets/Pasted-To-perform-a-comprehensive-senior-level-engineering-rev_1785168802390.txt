@@ -1,0 +1,30 @@
+To perform a comprehensive senior-level engineering review and identify the root causes of your Apple App Review rejections, I need to analyze the following artifacts and information. 
+
+Please provide as many of these as possible:
+
+### 1. Apple App Review Rejection Details
+*   **Exact Rejection Messages**: The full text of the rejection notices from App Store Connect.
+*   **Guidelines Cited**: Which specific App Store Review Guidelines were mentioned (e.g., 2.1 Performance, 4.0 Design, 5.1 Privacy)?
+*   **Apple's Attachments**: Any screenshots, videos, or crash logs provided by the Apple review team.
+*   **Your Responses**: Any communication you've already had with the reviewers regarding these rejections.
+
+### 2. Source Code & Configuration
+*   **Complete Source Code**: A ZIP archive or access to the repository (if possible) for both the mobile application (React Native/Expo) and the backend/API.
+*   **Key Config Files**: Specifically `app.json`, `app.config.js`, `eas.json`, `package.json`, and any environment variable templates (e.g., `.env.example`).
+*   **Native Configs**: Content of `Info.plist` (iOS) and `AndroidManifest.xml` (Android).
+
+### 3. Build & Diagnostics
+*   **EAS Build Logs**: Logs from your most recent production build attempts.
+*   **Crash Logs**: Any logs from Sentry, Bugsnag, or App Store Connect's "Crashes" section.
+*   **Test Credentials**: A set of demo credentials that the Apple reviewers are using (to verify if the login flow itself is the issue).
+
+### 4. Architecture & Data
+*   **API Documentation**: Swagger/OpenAPI specs or a list of endpoints.
+*   **Database Schema**: A high-level overview of your data model.
+*   **Architecture Diagrams**: Any existing documentation on how the components interact.
+
+### 5. Privacy & Compliance
+*   **Privacy Policy**: The URL or text of your privacy policy.
+*   **Data Collection**: A brief description of what user data is collected and why.
+
+Once you provide these, I will begin the read-only engineering review as requested.

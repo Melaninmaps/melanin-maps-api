@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: var(--slide-primary);
+  --color-accent: var(--slide-accent);
+  --color-bg: var(--slide-bg);
+  --color-text: var(--slide-text);
+  --color-muted: var(--slide-muted);
+  --font-display: var(--font-display-family);
+  --font-body: var(--font-body-family);
+  --font-quote: var(--font-quote-family);
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: 1;
+  --text-7xl: 4.5rem;
+  --text-7xl--line-height: 1;
+  --text-8xl: 6rem;
+  --text-8xl--line-height: 1;
+  --text-9xl: 8rem;
+  --text-9xl--line-height: 1;
+}
+
+/* ─── MWM™ Legacy Collection — Canonical Design Tokens ─── */
+:root {
+  /* THE brown — one brown, forever. */
+  --mwm-brown:        #1C0E06;
+  --mwm-brown-warm:   #2C1510;
+  --mwm-brown-deep:   #120A04;
+  /* Directional gradient — subtle warmth, brown unmistakable */
+  --mwm-bg-gradient:  linear-gradient(135deg, #2E1609 0%, #1C0E06 48%, #120A04 100%);
+  /* THE gold — one gold, dimensional through shadow only */
+  --mwm-gold:         #CA922B;
+  --mwm-gold-muted:   #A07840;
+  --mwm-gold-bright:  #E8B86D;
+  /* THE cream — Antique Manuscript */
+  --mwm-cream:        #E4D0AD;
+  --mwm-cream-text:   #2C1510;
+  --mwm-cream-muted:  #7B5B30;
+  /* Text */
+  --mwm-text:         #FAF6EF;
+  --mwm-text-dim:     #7B5B30;
+  --mwm-text-dark:    #5A3A18;
+  /* Dimensional gold shadow — subtle, not metallic */
+  --mwm-gold-shadow:  0 2px 8px rgba(202,146,43,0.22), 0 1px 3px rgba(0,0,0,0.35);
+  --mwm-text-shadow:  0 2px 8px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.3);
+
+  /* Tailwind token pass-through */
+  --slide-primary: var(--mwm-gold);
+  --slide-accent:  var(--mwm-cream);
+  --slide-bg:      var(--mwm-brown);
+  --slide-text:    var(--mwm-text);
+  --slide-muted:   var(--mwm-gold-muted);
+  --slide-gold-bright: var(--mwm-gold-bright);
+  --slide-dark2:   var(--mwm-brown-warm);
+
+  --font-display-family: "DM Sans", system-ui, sans-serif;
+  --font-body-family:    "Inter", system-ui, sans-serif;
+  --font-quote-family:   "Cormorant Garamond", Georgia, serif;
+  color-scheme: dark;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--mwm-brown);
+  color: var(--mwm-text);
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slide-viewer {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ─── Shared rule utilities ─── */
+.feat-rule {
+  height: 3px;
+  background: var(--mwm-gold);
+}
+
+.feat-rule-thin {
+  height: 1px;
+  background: rgba(202,146,43,0.35);
+}
+
+/* ─── Top accent bar (canonical) ─── */
+.mwm-top-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--mwm-gold), transparent);
+}
+
+/* ─── Gold outline bullet circle ◌ ─── */
+.mwm-bullet {
+  display: inline-block;
+  width: 0.55vw;
+  height: 0.55vw;
+  border-radius: 50%;
+  border: 1.5px solid var(--mwm-gold);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* ─── Cream page base ─── */
+.mwm-cream-page {
+  background: var(--mwm-cream);
+  color: var(--mwm-cream-text);
+}

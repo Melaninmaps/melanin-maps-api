@@ -1,0 +1,88 @@
+06.36 Override Activation Matrix
+Concern	Confidence	Typical treatment
+90–100	Any	Immediate review; emergency rules if current
+75–89	80+	Critical or High-Risk override candidate
+75–89	45–79	Temporary hold and urgent review
+75–89	Below 45	Precautionary review; no broad public claim
+60–74	80+	High-Risk or context-specific restriction
+60–74	45–79	Concern qualifier and monitoring
+40–59	65+	Informational/contextual caution
+Below 40	Any	Ordinarily no override unless mandatory rule applies
+This matrix is guidance.
+Mandatory official alerts and emergency requests may bypass score thresholds.
+06.37 Alert Eligibility
+Not every concern should create an alert.
+An alert may be issued only when:
+the information is time-sensitive;
+the affected audience can be reasonably identified;
+the information is actionable;
+the evidence meets the applicable threshold;
+disclosure will not create greater harm;
+the language is approved;
+privacy can be protected;
+the alert has an expiration condition.
+06.38 Alert Types
+Alert type	Purpose
+Emergency Alert	Immediate danger or official emergency
+Local Safety Alert	Current geographic concern
+Route Alert	Travel-path concern
+Event Alert	Active event condition
+Business Safety Notice	Current business-specific concern
+Resource Alert	Resource closure or unsafe condition
+Digital Fraud Alert	Scam or impersonation pattern
+Informational Advisory	Lower-immediacy, actionable information
+Update or Resolution	Condition improved, expired, or resolved
+06.39 Alert Audience Rules
+Alerts may be targeted by:
+current location with permission;
+saved business;
+saved neighborhood;
+active route;
+event RSVP;
+current trip;
+followed topic;
+affected marketplace interaction;
+verified role;
+selected safety preference.
+Alerts must not expose the identity of a reporter unless explicit permission and lawful authorization exist.
+06.40 Alert Language Rules
+Approved alert language must distinguish:
+confirmed fact;
+credible report;
+emerging information;
+official notice;
+unresolved concern;
+precautionary guidance.
+Approved examples:
+“An official weather warning is active for this area.”
+“Multiple recent reports describe similar concerns. Review details before visiting.”
+“A safety report is under review. This notice is precautionary.”
+“The event organizer has confirmed an entrance closure.”
+“This listing has been temporarily held while identity concerns are reviewed.”
+Prohibited examples:
+“This place is dangerous.”
+“Crime is high here” without defined evidence and context.
+“People like you should not go.”
+“The community says this business is racist” when the evidence does not support that categorical statement.
+“You are safe here.”
+“Nothing bad has happened.”
+“Our algorithm predicts an attack.”
+06.41 Alert Expiration
+Every alert must include:
+activation time;
+expiration time or condition;
+evidence source;
+review owner;
+update status;
+resolution pathway.
+Alerts must not remain active indefinitely because no one remembered to close them.
+06.42 Recommendation Treatment
+Safety outputs may produce one of six recommendation states.
+State	Meaning
+NORMAL	No special safety restriction
+INFORMED	Relevant information should be shown
+CAUTION	Recommendation permitted with context
+RESTRICTED	Recommendation limited to defined contexts
+HOLD	Recommendation paused pending review
+BLOCKED	Recommendation not permitted
+Search visibility is determined separately.

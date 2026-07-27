@@ -1,0 +1,41 @@
+P0 ANDROID AUTH FALSE-FAILURE — SIGNUP AND LOGIN — READ-ONLY AUDIT
+Confirmed behavior on Android Version Code 66:
+New account
+User submits a never-used email and password.
+App displays: “Could not connect to the internet.”
+After closing and reopening, the app is authenticated as that newly created account.
+Existing account
+User logs out.
+User submits the same email and password.
+App again displays: “Could not connect to the internet.”
+Authentication nevertheless succeeds and the account remains usable after reopening.
+This proves both signup and login receive and store a valid session before a later step fails.
+Perform a read-only trace of both mobile flows and report:
+Exact sequence after successful /api/auth/signup-email and /api/auth/login-email responses.
+Where auth_session_token is written to SecureStore.
+Every operation executed after the token write:
+response parsing;
+fetchUser() or /api/auth/me;
+profile-setup state;
+push-token registration;
+notification permission;
+router navigation;
+analytics or other initialization.
+Identify the exact operation throwing after authentication succeeds.
+Identify the catch block that incorrectly converts that post-authentication failure into “Could not connect to the internet.”
+Determine whether Build 66’s client expects a response shape that the current production backend no longer returns.
+Confirm whether the same bug exists in current HEAD and iOS Build 95.
+Propose the smallest Android-safe fix:
+treat successful auth as successful once a valid token is received and stored;
+isolate post-login initialization errors so they do not display an authentication/network failure;
+navigate successfully or show a specific recoverable message;
+preserve real 401/validation/network errors accurately.
+Do not modify code, build Version Code 67, or deploy. Return root cause and proposed exact diff first.
+For the Android test record:
+Test	Result
+Existing login reaches backend	Pass
+Credentials accepted	Pass
+Session token stored	Pass
+New account created	Pass
+Correct post-auth navigation	Fail
+Error message accuracy	Fail

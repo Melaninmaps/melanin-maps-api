@@ -1,0 +1,116 @@
+07.48 Required Database Structures
+The production Cultural Influence Engine™ requires, at minimum:
+cultural_influence_assessments
+cultural_influence_dimension_scores
+cultural_evidence_items
+cultural_relationship_records
+cultural_outcome_records
+cultural_attribution_records
+cultural_grounding_records
+cultural_authenticity_records
+cultural_community_connection_records
+cultural_resonance_records
+cultural_action_records
+cultural_reciprocity_records
+cultural_stewardship_records
+cultural_continuity_records
+cultural_reach_records
+cultural_commercial_disclosures
+cultural_partnership_records
+cultural_ambassador_tier_records
+cultural_nomination_records
+cultural_penalty_records
+cultural_score_cap_records
+cultural_manipulation_records
+cultural_corrective_action_records
+cultural_recognition_candidates
+cultural_human_review_records
+cultural_public_explanations
+cultural_engine_versions
+cultural_audit_records
+07.49 Audit Record Requirements
+Every consequential Cultural Influence Engine™ decision must record:
+assessment ID;
+request ID;
+entity type and ID;
+timestamp;
+engine version;
+context profile;
+evaluation period;
+evidence considered;
+evidence excluded;
+exclusion reasons;
+source relationships;
+commercial relationships;
+disclosure status;
+Evidence Quality Scores;
+attribution levels;
+decay applied;
+dimension scores;
+dimension confidences;
+raw score;
+confidence-adjusted score;
+follower-count contribution;
+reach contribution;
+outcome records;
+community-benefit records;
+reciprocity evidence;
+attribution evidence;
+stewardship evidence;
+penalties;
+score caps;
+manipulation signals;
+corrective actions;
+tier candidacy;
+partnership eligibility;
+promotion eligibility;
+recognition candidacy;
+human-review status;
+public explanation code;
+BIF decision reference;
+appeal status;
+final outcome.
+07.50 Human Review Requirements
+Human review is required when:
+cultural authenticity is materially disputed;
+false identity or ownership claims are alleged;
+cultural exploitation is alleged;
+consent or attribution is disputed;
+undisclosed commercial relationships are found;
+a Cultural Ambassador partnership may create reputational risk;
+a score changes by more than 20 points in 30 days;
+manipulation is suspected;
+community evidence is sharply divided;
+sensitive cultural knowledge is involved;
+a person is nominated for Legacy Ambassador status;
+a high-profile entity receives a low integrity score;
+an emerging creator alleges structural suppression;
+sponsorship may be influencing visibility improperly;
+a partnership involves minors;
+a safety hold exists;
+an appeal is filed;
+a new evidence type is used;
+public explanation could imply identity judgment;
+Institution or Generational Test concerns arise.
+07.51 Failure Conditions
+If the Cultural Influence Engine™ is unavailable:
+no Cultural Influence Score may be fabricated;
+follower count may not be used as a substitute;
+Cultural Ambassador partnership eligibility must be held;
+cultural promotion boosts must stop;
+recognition decisions must be held;
+ordinary search may continue where otherwise eligible;
+Trust, Safety, Community, and Discovery rules remain active;
+the failure must be logged;
+public language must not imply cultural validation.
+Fallback output:
+{
+  "cultural_influence_engine_status": "UNAVAILABLE",
+  "cultural_influence_score": null,
+  "confidence_label": "Unknown",
+  "partnership_eligible": false,
+  "promotion_eligible_from_cultural_engine": false,
+  "recognition_allowed": false,
+  "follower_count_substitution_allowed": false,
+  "human_review_required": true
+}

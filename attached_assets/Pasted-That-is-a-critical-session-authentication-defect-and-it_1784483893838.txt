@@ -1,0 +1,83 @@
+That is a **critical session/authentication defect** and it means the current build is still **NO GO**.
+
+What likely happened:
+
+* The app initially recognized the stored session.
+* The “add to favorites” request hit an authenticated endpoint.
+* That request returned **401/unauthorized** or another auth-related error.
+* The mobile client interpreted that response as “session invalid,” erased the token from SecureStore, and redirected you to login.
+
+That also means the rolling-session proof may have exposed a deeper issue: the app can load some cached/public content while the saved-places endpoint rejects the session.
+
+Send Replit this immediately:
+
+> **New critical founder-test defect — session lost when saving a business**
+>
+> Observed production behavior:
+>
+> 1. The installed mobile app recognized me as logged in.
+> 2. I opened a business.
+> 3. I tapped the control to add the business to favorites/saved places.
+> 4. The app immediately redirected me to the login screen.
+>
+> Mark this:
+>
+> **P0 — AUTHENTICATED ACTION INVALIDATES SESSION**
+>
+> Do not treat the rolling-session issue as resolved yet.
+>
+> Please trace this exact production request:
+>
+> * mobile build number;
+> * business ID;
+> * saved/favorite endpoint called;
+> * full HTTP status;
+> * sanitized response body;
+> * whether the Authorization header was present;
+> * token/sid prefix received by the server;
+> * authMiddleware outcome;
+> * session lookup result;
+> * whether `SESSION_RENEWED` or `SESSION_RENEWAL_FAILED` was logged;
+> * whether the client erased SecureStore;
+> * exact code path that redirected to `/login`.
+>
+> Specifically inspect:
+>
+> 1. The saved-places/favorites client request and whether it uses the shared authenticated fetch client.
+> 2. Whether this endpoint is calling the correct production domain.
+> 3. Whether the token is omitted, stale, malformed, or overwritten.
+> 4. Whether the server responds with 401 because the session row cannot be found.
+> 5. Whether the rolling `updateSession()` call changes the session payload or SID incorrectly.
+> 6. Whether any non-auth server error is incorrectly handled as an authentication failure.
+> 7. Whether the global API interceptor deletes the token on every 401, including endpoint-specific authorization failures.
+>
+> Add a client-side safeguard:
+>
+> * Do not erase the stored session or redirect to login for a generic failed request.
+> * Only clear authentication after `/api/auth/user` or an explicit session-validation endpoint confirms the session is invalid.
+> * Display an actionable error for a failed favorite operation and preserve the user’s current screen.
+>
+> Required regression tests:
+>
+> * Logged-in user can save a business.
+> * Saved state persists after refresh and app restart.
+> * Duplicate save is handled safely.
+> * Failed save does not log the user out.
+> * 400, 403, 404, 409, 429, and 500 responses do not erase the session.
+> * A genuine expired/revoked session does redirect to login.
+> * Authorization header is attached to every saved-places request on iOS and Android.
+>
+> Correlate the founder attempt with Railway logs from the exact timestamp and return:
+>
+> * proven root cause;
+> * endpoint and HTTP result;
+> * files changed;
+> * server/client fix;
+> * whether a new mobile build is required;
+> * `READY FOR FOUNDER RETEST` or `NO GO`.
+>
+> Keep store submission blocked.
+
+Also tell Replit approximately **what time you tapped favorite** and which business you used. That will help them locate the exact request in Railway logs.
+
+This likely requires a **new mobile build** if the token is missing from the request or the client clears authentication too aggressively. If the server itself is incorrectly rejecting the valid session, it may be server-only—but we should not assume until the trace is complete.

@@ -1,0 +1,67 @@
+I would approve this **as the smallest launch gate**, with two cautions.
+
+First, requiring DOB and rejecting registrations under 13 is technically straightforward and consistent with your current launch position that the app is **not intended for children under 13**. COPPA generally requires verifiable parental consent when a service directed to children—or one with actual knowledge—collects personal information from a child under 13. ([Federal Trade Commission][1])
+
+Second, this does **not** complete your broader child/teen compliance work. Apple expects apps capable of collecting or sharing minors’ personal information—such as names, email, location, photos, videos, or chat—to have an appropriate privacy policy and comply with applicable children’s privacy laws. ([Apple Developer][2]) Google also requires accurate target-audience declarations and imposes additional Families requirements when children are included in the target audience. ([Google Help][3])
+
+## One technical improvement before approval
+
+The current age formula:
+
+```ts
+(Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25)
+```
+
+is usually close, but birthdays should be calculated by calendar date—not an approximate year length. Near a user’s 13th birthday, timezone and leap-year effects could produce an incorrect result.
+
+Ask Replit to use a calendar comparison instead:
+
+* reject future dates;
+* reject implausible ages over 120;
+* compare year, month, and day to determine whether the person has reached age 13;
+* normalize the date consistently to avoid timezone shifts.
+
+## Send Replit this
+
+> **Approved — implement the Under-13 gate with calendar-safe DOB validation.**
+>
+> Preserve the approved narrow scope:
+>
+> * require `dateOfBirth` for new email registrations;
+> * reject invalid dates;
+> * reject future dates;
+> * reject implausible ages over 120;
+> * reject users who have not yet reached their 13th birthday;
+> * leave existing accounts unchanged;
+> * do not implement parental consent, family linking, or graduated teen controls in this batch;
+> * do not modify phone login, Apple Sign-In, sessions, tokens, or any other authentication architecture.
+>
+> Use calendar-based age determination rather than dividing elapsed milliseconds by `365.25`. The result must be correct on the user’s birthday and must not shift because of time zones.
+>
+> Before deployment, test:
+>
+> 1. missing DOB → 400;
+> 2. malformed DOB → 400;
+> 3. future DOB → 400;
+> 4. age over 120 → 400;
+> 5. child one day before turning 13 → rejected;
+> 6. user turning 13 today → accepted;
+> 7. user older than 13 → accepted;
+> 8. valid registration stores DOB correctly;
+> 9. existing users remain unaffected.
+>
+> Return:
+>
+> * exact diff;
+> * TypeScript result;
+> * endpoint-test results;
+> * Railway deployment status;
+> * confirmation that no other auth path or file changed.
+>
+> After this passes, declare the RC2 source frozen and begin the consolidated source-verification report. Do not start EAS builds until I approve that report.
+
+That should be the final code change for RC2. Afterward, stop adding features and move directly into regression verification, production deployment confirmation, and then iOS/Android device builds.
+
+[1]: https://www.ftc.gov/news-events/news/press-releases/2026/02/ftc-issues-coppa-policy-statement-incentivize-use-age-verification-technologies-protect-children?utm_source=chatgpt.com "FTC Issues COPPA Policy Statement to Incentivize the Use of Age Verification Technologies to Protect Children Online | Federal Trade Commission"
+[2]: https://developer.apple.com/app-store/review/guidelines/?utm_source=chatgpt.com "App Review Guidelines - Apple Developer"
+[3]: https://support.google.com/googleplay/android-developer/answer/9893335?hl=en&utm_source=chatgpt.com "Google Play Families Policies - Play Console Help"

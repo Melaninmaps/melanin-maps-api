@@ -1,0 +1,134 @@
+08.25 Community Protection Rules
+The Model must never reward:
+exploitation;
+performative activism;
+temporary publicity without community return;
+exclusionary opportunity;
+harmful dependency;
+cultural extraction.
+08.26 Public Explanation Rules
+Approved examples:
+"Recognized for creating meaningful opportunities."
+"Community members consistently benefit from this initiative."
+"Demonstrated sustained positive community impact."
+Prohibited examples:
+"This person saves the community."
+"This organization is more important than others."
+"The algorithm guarantees this initiative will succeed."
+08.27 Internal Output Contract
+The Engine returns:
+Catalyst Score;
+Catalyst Confidence;
+Catalyst Category;
+Opportunity Score;
+Participation Score;
+Momentum Score;
+Collaboration Score;
+Sustainability Score;
+Recommendation Eligibility;
+Recognition Eligibility;
+Human Review Flag.
+08.28 Required Database Structures
+Minimum production tables include:
+catalyst_assessments
+catalyst_dimension_scores
+catalyst_evidence
+catalyst_relationships
+catalyst_outcomes
+catalyst_momentum
+catalyst_categories
+catalyst_partnerships
+catalyst_recognition
+catalyst_versions
+catalyst_audit
+08.29 Human Review Requirements
+Review is required when:
+major recognition is recommended;
+significant disputes arise;
+manipulation is suspected;
+evidence conflicts;
+institutional partnerships are involved;
+large score changes occur;
+safety or governance concerns exist.
+08.30 Constitutional Rules
+The Community Catalyst Model™ must:
+reward opportunity over popularity;
+reward participation over publicity;
+reward collaboration over individual recognition;
+recognize local leadership;
+preserve fairness;
+avoid cultural bias;
+encourage measurable benefit;
+protect community dignity;
+remain fully auditable.
+08.31 Institution Test
+Every catalyst rule must answer:
+Would we still believe this action strengthens communities twenty-five years from now?
+08.32 Generational Test
+Every catalyst rule must answer:
+Will future generations inherit stronger communities because this catalyst existed?
+08.33 Launch Readiness
+Launch requires:
+all dimensions implemented;
+confidence validated;
+evidence scoring operational;
+recognition workflow complete;
+audit logging complete;
+manipulation detection operational;
+governance approval.
+08.34 Validation Scenarios
+Example scenarios include:
+Mentor creates five successful businesses.
+Small nonprofit launches scholarship program.
+Local restaurant becomes neighborhood gathering place.
+Volunteer creates recurring food drive.
+Kinfolk Circle develops into city-wide support network.
+Viral campaign fades after one week.
+Business falsely claims community impact.
+Cultural Ambassador launches successful mentorship initiative.
+Community initiative expands into multiple cities.
+Organization receives coordinated false nominations.
+08.35 Version Control
+Every rule change requires:
+versioning;
+validation;
+governance approval;
+rollback plan;
+Decision Ledger update.
+08.36 Future Expansion
+Future versions may include:
+predictive intervention recommendations;
+city catalyst heatmaps;
+institutional catalyst pathways;
+philanthropy intelligence;
+neighborhood revitalization indicators;
+disaster-response catalysts;
+cross-city collaboration scoring.
+08.37 Final Governing Rule
+The Community Catalyst Model™ exists to recognize those who create opportunity rather than simply receive attention.
+It values people who quietly connect neighbors, businesses that invest in their communities, organizations that remove barriers, and initiatives that create lasting momentum.
+
+Its purpose is not to celebrate visibility.
+
+Its purpose is to identify the people, ideas, institutions, and actions that help communities become stronger than they were before.
+
+Its final governing rule is:
+
+Recognize and amplify those who create opportunities for others, strengthen relationships, and leave communities more connected, more resilient, and more capable than they found them.
+═══════════════════════════════════════════════════════════════════════
+END OF SECTION 08
+COMMUNITY CATALYST MODEL™ — FUTURE-STATE PRODUCTION SPECIFICATION v1.0
+CONFIDENTIAL — TRADE SECRET — NOT FOR DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════
+COMPLETE
+01. Trust Engine™
+02. Belonging Intelligence Framework™
+03. Context Engine™
+04. Community Engine™
+05. Discovery Engine™
+06. Safety Intelligence Engine™
+07. Cultural Influence Engine™
+08. Community Catalyst Model™
+
+NEXT
+09. Community Health Index™

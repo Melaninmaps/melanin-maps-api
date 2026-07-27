@@ -1,0 +1,799 @@
+uploads = []
+
+[[generated]]
+id = "YDHP1veiKU51dbaq2Dj7u"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "omrgHWskKGvSJ1-VkTJ_R"
+uri = "file://artifacts/mobile/assets/images/splash.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "H4FK7VTX2fb7VY5Uuqi46"
+uri = "file://artifacts/mobile/assets/images/biz_restaurant.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nYnWz8AczSn3y0bw4fwYn"
+uri = "file://artifacts/mobile/assets/images/biz_boutique.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "KDDvFDVbtLVokQWsQpctj"
+uri = "file://artifacts/mobile/assets/images/event_festival.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "JLHOUYeNCoQMJor8n3kkd"
+uri = "file://attached_assets/app-icon.png"
+type = "image"
+title = "mapping-with-melanin-app-icon"
+
+[[generated]]
+id = "2zJ-oXa60adkCvPhSO6LJ"
+uri = "file://artifacts/web/public/hero-cobblestone.png"
+type = "image"
+title = "macro cobblestone sharp puddle blurred brownstone bokeh background"
+
+[[generated]]
+id = "THErXEiLwd2Z4sNQ7gl9b"
+uri = "file://artifacts/community-deck/public/hero-welcome.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "gmtVdxrHF0wUAUemc3aRW"
+uri = "file://artifacts/community-deck/public/hero-journey.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "AwEpxjGBmCjJcn7y-ti2O"
+uri = "file://artifacts/community-deck/public/hero-business.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "OW2JezHUk6uqMt7YHDlu7"
+uri = "file://artifacts/community-deck/public/bg-texture.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "aL7Wy7LswYBvRSLPOiYym"
+uri = "file://artifacts/biz-deck/public/hero-growth.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "bDsvMQw-Fixyt7pJIZex1"
+uri = "file://artifacts/biz-deck/public/hero-owner.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "YOMyjmyyBMVWizgNImMPi"
+uri = "file://artifacts/biz-deck/public/bg-gold-bar.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jlLS-1BH8yfZgfK5a4wpL"
+uri = "file://attached_assets/ipad_screenshot_1_discover.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "FZTLR4vg9EoRSCTvUx8wr"
+uri = "file://attached_assets/ipad_screenshot_2_map.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Pu5XSFe2CJiteqz0_dsxp"
+uri = "file://attached_assets/ipad_screenshot_3_business.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "BUOjMtCryBGHh-SilVZYt"
+uri = "file://attached_assets/ipad_screenshot_4_safety.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ueYJBvizt9x2Bv_wMlp-E"
+uri = "file://attached_assets/ipad_screenshot_5_membership.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "qpAgew_Iy7bpiBZWDiMOM"
+uri = "file://attached_assets/generated_images/feed-woman-shop.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "99sAiIIeZss2JYTXKL_Zf"
+uri = "file://attached_assets/generated_images/feed-friends-rooftop.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ZjoiIktybSb-3_MGVBoiS"
+uri = "file://attached_assets/generated_images/feed-woman-movein.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "CxE678ATMaAH73cD_JRUU"
+uri = "file://artifacts/investor-deck/public/photos/entrepreneur-restaurant-owner.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "slvfl5d6RiA0PcyljgMAq"
+uri = "file://artifacts/investor-deck/public/photos/marcus-restaurant-cover.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "kU1-MXMYrBRo-HYqMfRHN"
+uri = "file://.local/outputs/Melanin-Discovery-Hub.pptx"
+type = "slides"
+title = "Melanin Discovery Hub.pptx"
+
+[[outputs]]
+id = "5dJ5nD-pBFzwwKpiSjudT"
+uri = "file://attached_assets/app-icon.png"
+type = "image"
+title = "Mapping With Melanin — App Icon"
+
+[[outputs]]
+id = "gnqp1YS8-XKHffcy24Z1d"
+uri = "file://artifacts/mobile/assets/images/logo.png"
+type = "image"
+title = "logo.png"
+
+[[outputs]]
+id = "5j0PyXvybd7PNB-yP6BBV"
+uri = "file://artifacts/mobile/assets/images/logo-transparent.png"
+type = "image"
+title = "logo-transparent.png"
+
+[[outputs]]
+id = "6p6bzyQVI2tH9dbC962e5"
+uri = "file://artifacts/mobile/assets/images/icon.png"
+type = "image"
+title = "App Icon (1024x1024) — upload this to Google Play"
+
+[[outputs]]
+id = "pFmFKtYD3FdD06fMP9qm3"
+uri = "file://screenshots/chromebook-discover.jpg"
+type = "image"
+title = "Screenshot 1 — Discover"
+
+[[outputs]]
+id = "zC2zb1lPe-9pmRpcOzTk3"
+uri = "file://screenshots/chromebook-map.jpg"
+type = "image"
+title = "Screenshot 2 — Map"
+
+[[outputs]]
+id = "yWNK9cpYWvW3teI-V-9Lj"
+uri = "file://screenshots/chromebook-safety.jpg"
+type = "image"
+title = "Screenshot 3 — Safety"
+
+[[outputs]]
+id = "IRTpv5KGJkKPl42q2opiv"
+uri = "file://screenshots/chromebook-community.jpg"
+type = "image"
+title = "Screenshot 4 — Community"
+
+[[outputs]]
+id = "9wEdUjrYNEbFaGpHsMBZ9"
+uri = "file://screenshots/chromebook-discover-hd.jpg"
+type = "image"
+title = "Screenshot 1 — Discover (1920x1080)"
+
+[[outputs]]
+id = "D-hEE3I1RdFZyONw2e3zS"
+uri = "file://screenshots/chromebook-map-hd.jpg"
+type = "image"
+title = "Screenshot 2 — Map (1920x1080)"
+
+[[outputs]]
+id = "6V1EAjdPfhL07_Ack9A6p"
+uri = "file://screenshots/chromebook-safety-hd.jpg"
+type = "image"
+title = "Screenshot 3 — Safety (1920x1080)"
+
+[[outputs]]
+id = "s39ffcsfcaoS1jZe44Cg-"
+uri = "file://screenshots/chromebook-community-hd.jpg"
+type = "image"
+title = "Screenshot 4 — Community (1920x1080)"
+
+[[outputs]]
+id = "mK64nS3qQnRGW3JmvilWM"
+uri = "file://expo-qr.png"
+type = "image"
+title = "Scan with Expo Go"
+
+[[outputs]]
+id = "TR4n8CtRUmWy4iGg2n73F"
+uri = "file://MappingWithMelanin-v1.0.3.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin v1.0.3 — click Open, then extract the .aab file inside"
+
+[[outputs]]
+id = "LdKAqV4wXBPOontdMYp3j"
+uri = "file://MappingWithMelanin-v1.0.3-final.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin v1.0.3 — extract the .aab file inside, then upload to Play Store"
+
+[[outputs]]
+id = "XXXSEY300zG0cf48Y5HSM"
+uri = "file://MappingWithMelanin-v1.0.3-vc29.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin v1.0.3 (versionCode 29) — extract and upload the .aab to closed testing"
+
+[[outputs]]
+id = "rgWmu9i93EN9SSvdLhG9R"
+uri = "file://MappingWithMelanin-iOS-v1.0.3-fixed.tar.gz"
+type = "unspecified"
+title = "Mapping With Melanin iOS v1.0.3 (fixed) — extract the .ipa and upload to App Store Connect"
+
+[[outputs]]
+id = "ty9S1s0ODAGMjeACMTOb8"
+uri = "file://.local/outputs/Mapping-With-Melanin---Founding-Member-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Founding Member Deck (PDF)"
+
+[[outputs]]
+id = "zR6KqqQGHtkOGJ5kSahXR"
+uri = "file://.local/outputs/Mapping-With-Melanin---Founding-Member-Deck--Minority-Owned-.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Founding Member Deck (Minority-Owned) (PDF)"
+
+[[outputs]]
+id = "KLV3e9hYa8sjLjcQNUxOg"
+uri = "file://.local/outputs/Melanin-Discovery-Hub.pdf"
+type = "pdf"
+title = "Melanin Discovery Hub.pdf"
+
+[[outputs]]
+id = "GG_NftcbR8xazQh-kIviO"
+uri = "file://attached_assets/ipad_screenshot_1_discover.png"
+type = "image"
+title = "1 — Discover Screen (2064×2752)"
+
+[[outputs]]
+id = "-65BgSWSHa6CpfJiiNwaO"
+uri = "file://attached_assets/ipad_screenshot_2_map.png"
+type = "image"
+title = "2 — Map Screen (2064×2752)"
+
+[[outputs]]
+id = "VZfOfQxtJ5_BI68i4tzAy"
+uri = "file://attached_assets/ipad_screenshot_3_business.png"
+type = "image"
+title = "3 — Business Profile (2064×2752)"
+
+[[outputs]]
+id = "Et5rsQRmv7hsVlajNdDL8"
+uri = "file://attached_assets/ipad_screenshot_4_safety.png"
+type = "image"
+title = "4 — Safety Hub (2064×2752)"
+
+[[outputs]]
+id = "mXnlzYrqi8vO-gk9KudC0"
+uri = "file://attached_assets/ipad_screenshot_5_membership.png"
+type = "image"
+title = "5 — Membership / Profile (2064×2752)"
+
+[[outputs]]
+id = "K_H471-5pTBIe7opvq-mX"
+uri = "file://subscription-images/subscription-review.png"
+type = "image"
+title = "Subscription Review Image (1024x1024)"
+
+[[outputs]]
+id = "HrmVSAN_4Olt97QtJJry3"
+uri = "file://attached_assets/cropped/IMG_7061_1783633730331_crop.png"
+type = "image"
+title = "Explorer tier (Personal)"
+
+[[outputs]]
+id = "5f_iqYt-Cgd6AwkvzMpKJ"
+uri = "file://attached_assets/cropped/IMG_7062_1783633733610_crop.png"
+type = "image"
+title = "Navigator tier (Personal)"
+
+[[outputs]]
+id = "9ELHPH5ZfnQtDCFkp8py7"
+uri = "file://attached_assets/cropped/IMG_7063_1783633749679_crop.png"
+type = "image"
+title = "Trailblazer tier (Personal)"
+
+[[outputs]]
+id = "I3jKZOI3djYA2lwIz7LAh"
+uri = "file://attached_assets/cropped/IMG_7064_1783633716268_crop.png"
+type = "image"
+title = "Community Builder tier (Personal)"
+
+[[outputs]]
+id = "_JIICSbOhMG744O3O8FOm"
+uri = "file://attached_assets/cropped/IMG_7065_1783633700276_crop.png"
+type = "image"
+title = "Legacy Member tier (Personal)"
+
+[[outputs]]
+id = "hYS1Ef2d4mosSStkbRW8h"
+uri = "file://attached_assets/cropped/IMG_7066_1783633677490_crop.png"
+type = "image"
+title = "Growth Business tier"
+
+[[outputs]]
+id = "oN4t5eYMS8WgVT0jFZ0Vl"
+uri = "file://attached_assets/cropped/IMG_7067_1783633666574_crop.png"
+type = "image"
+title = "Community Business tier"
+
+[[outputs]]
+id = "8n197juYN2O9pmQFLXpWP"
+uri = "file://attached_assets/cropped/IMG_7068_1783633613375_crop.png"
+type = "image"
+title = "Premium Business tier"
+
+[[outputs]]
+id = "qvHoBdzJRmLqlbG471vuo"
+uri = "file://attached_assets/cropped/IMG_7069_1783633590082_crop.png"
+type = "image"
+title = "Founding Business tier"
+
+[[outputs]]
+id = "OPoIae-_TWWo3xR196jz5"
+uri = "file://attached_assets/cropped2/discover_iphone_real.png"
+type = "image"
+title = "Discover screen"
+
+[[outputs]]
+id = "u06mGf5027CkBKeoL8qZR"
+uri = "file://attached_assets/cropped2/essence_kitchen_iphone_real.png"
+type = "image"
+title = "Business profile (Jefferson Street BBQ)"
+
+[[outputs]]
+id = "EQiFCuOVAePD-vJJX_FU4"
+uri = "file://attached_assets/cropped2/kinfolkai_iphone_real.png"
+type = "image"
+title = "KinfolkAI chat"
+
+[[outputs]]
+id = "pP0_EXOWvnyhsng9J_igT"
+uri = "file://attached_assets/cropped2/membership_business_ipad_crop.png"
+type = "image"
+title = "Membership Business (iPad)"
+
+[[outputs]]
+id = "MSBRk4whtotNlzSzkPDH0"
+uri = "file://attached_assets/cropped2/membership_personal_ipad_crop.png"
+type = "image"
+title = "Membership Personal (iPad)"
+
+[[outputs]]
+id = "mHOQMN4JLl4hfnDfn8FGW"
+uri = "file://attached_assets/cropped2/profile_ipad_signedout.png"
+type = "image"
+title = "Profile signed-out (iPad)"
+
+[[outputs]]
+id = "-yXrfIN0aTUxcgYRQCCGe"
+uri = "file://attached_assets/cropped2/safety_hub_iphone_real.png"
+type = "image"
+title = "Safety Hub"
+
+[[outputs]]
+id = "wqSeA6ycJVHtjyPwl3yVo"
+uri = "file://attached_assets/cropped2/settings_crop.png"
+type = "image"
+title = "Settings list"
+
+[[outputs]]
+id = "U7SjqUF4GrMRx-HSkqoxr"
+uri = "file://attached_assets/appstore_final/IMG_7061_1783633730331_crop.png"
+type = "image"
+title = "Explorer tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "j00Dj51ue4T2nSihdLUmB"
+uri = "file://attached_assets/appstore_final/IMG_7062_1783633733610_crop.png"
+type = "image"
+title = "Navigator tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "d0uYTetUIorpv1dpZ9rMO"
+uri = "file://attached_assets/appstore_final/IMG_7063_1783633749679_crop.png"
+type = "image"
+title = "Trailblazer tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "9lfkpXXzO1-wH9bdByTNb"
+uri = "file://attached_assets/appstore_final/IMG_7064_1783633716268_crop.png"
+type = "image"
+title = "Community Builder tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "XsS19cQxHgMscV5LdqzIV"
+uri = "file://attached_assets/appstore_final/IMG_7065_1783633700276_crop.png"
+type = "image"
+title = "Legacy Member tier (Personal) — 1284x2778"
+
+[[outputs]]
+id = "RL_kX-ifWiGDBauKx-eKF"
+uri = "file://attached_assets/appstore_final/IMG_7066_1783633677490_crop.png"
+type = "image"
+title = "Growth Business tier — 1284x2778"
+
+[[outputs]]
+id = "O4J2a_dPnnARZ5PpG8ukd"
+uri = "file://attached_assets/appstore_final/IMG_7067_1783633666574_crop.png"
+type = "image"
+title = "Community Business tier — 1284x2778"
+
+[[outputs]]
+id = "OHajDQ-EDIxwkKY2orfLd"
+uri = "file://attached_assets/appstore_final/IMG_7068_1783633613375_crop.png"
+type = "image"
+title = "Premium Business tier — 1284x2778"
+
+[[outputs]]
+id = "Harxx3FW_ES09uEh8B7h2"
+uri = "file://attached_assets/appstore_final/IMG_7069_1783633590082_crop.png"
+type = "image"
+title = "Founding Business tier — 1284x2778"
+
+[[outputs]]
+id = "Wn2clC-TSSUT7BloFeNSf"
+uri = "file://attached_assets/appstore_final/discover_iphone_real.png"
+type = "image"
+title = "Discover screen — 1284x2778"
+
+[[outputs]]
+id = "OSUB_fClPzG03jfDHTTi3"
+uri = "file://attached_assets/appstore_final/essence_kitchen_iphone_real.png"
+type = "image"
+title = "Business profile — 1284x2778"
+
+[[outputs]]
+id = "oMUuA-KBHizkEKa2qq505"
+uri = "file://attached_assets/appstore_final/kinfolkai_iphone_real.png"
+type = "image"
+title = "KinfolkAI chat — 1284x2778"
+
+[[outputs]]
+id = "1vWDpTPNxHE8FKBSFkytL"
+uri = "file://attached_assets/appstore_final/safety_hub_iphone_real.png"
+type = "image"
+title = "Safety Hub — 1284x2778"
+
+[[outputs]]
+id = "m02tjIn2JIpa9zXXSYfMG"
+uri = "file://attached_assets/appstore_final/membership_business_ipad_crop.png"
+type = "image"
+title = "Membership Business (iPad) — 1668x2388"
+
+[[outputs]]
+id = "I7adJwFMlrSrj_cbGJNc4"
+uri = "file://attached_assets/appstore_final/membership_personal_ipad_crop.png"
+type = "image"
+title = "Membership Personal (iPad) — 1668x2388"
+
+[[outputs]]
+id = "0_PhIPxTZcaP-QLODm5gL"
+uri = "file://attached_assets/appstore_final/profile_ipad_signedout.png"
+type = "image"
+title = "Profile signed-out (iPad) — 1668x2388"
+
+[[outputs]]
+id = "8FQQ_UP5RMCDXBlIioEgb"
+uri = "file://attached_assets/appstore_final/settings_crop.png"
+type = "image"
+title = "Settings list (iPad) — 1668x2388"
+
+[[outputs]]
+id = "MUkdGT24E1JtJ0kg1wLJC"
+uri = "file://upload_certificate.txt"
+type = "text"
+title = "New Upload Key Certificate (PEM) — upload this file to Play Console"
+
+[[outputs]]
+id = "egF1_gQh6fAX6nWWVfOtv"
+uri = "file://attached_assets/stock_images/feed-post-1.jpg"
+type = "image"
+title = "candid smiling woman using smartphone outdoors in city street, warm golden hour light, diverse"
+
+[[outputs]]
+id = "XKDKzJREejm_Pwl6Y6XsY"
+uri = "file://attached_assets/stock_images/feed-post-3.jpg"
+type = "image"
+title = "candid woman unpacking boxes smiling in new apartment, warm natural light, moving in"
+
+[[outputs]]
+id = "RH5M3oEme9k_kqZZDA-54"
+uri = "file://attached_assets/stock_images/feed-post-2b_1.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "7isOhYnzaacGYIIwCwRAg"
+uri = "file://attached_assets/stock_images/feed-post-2b_2.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "uqAbXoitTJQv1pVtZK5-q"
+uri = "file://attached_assets/stock_images/feed-post-2b_3.jpg"
+type = "image"
+title = "friends celebrating together at a party, smiling, diverse group"
+
+[[outputs]]
+id = "Gl4mTW8WvSu2J1HGKoM1x"
+uri = "file://attached_assets/stock_images/feed-a_1.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "tYrz7L7NVlHHcEtYZ2rIQ"
+uri = "file://attached_assets/stock_images/feed-a_2.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "18LGzy-d020Nf3FkjCrR3"
+uri = "file://attached_assets/stock_images/feed-a_3.jpg"
+type = "image"
+title = "black woman entrepreneur smiling in her small business shop, warm lighting, candid portrait"
+
+[[outputs]]
+id = "9pXoovHFzsGORFVvELJu5"
+uri = "file://attached_assets/stock_images/feed-b_1.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "ZGJrQ7_O36nI-EQL-QKY5"
+uri = "file://attached_assets/stock_images/feed-b_2.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "fF1Q1BMXAiXsb-PFJ6UhN"
+uri = "file://attached_assets/stock_images/feed-b_3.jpg"
+type = "image"
+title = "black friends group hugging and laughing outdoors city rooftop sunset"
+
+[[outputs]]
+id = "dE-limVPAdHdxhzJX0BT3"
+uri = "file://attached_assets/stock_images/feed-c_1.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "48H0xO8NuD1B5ejtx06oX"
+uri = "file://attached_assets/stock_images/feed-c_2.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "_0kjkYJJnxldwSg5qM19t"
+uri = "file://attached_assets/stock_images/feed-c_3.jpg"
+type = "image"
+title = "black woman moving into new apartment carrying box smiling candid"
+
+[[outputs]]
+id = "e9S9brbJYwvLIXRoY2fhz"
+uri = "file://attached_assets/stock_images/feedx-a_1.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "upwiWeUJBl3fZR9sC8I6I"
+uri = "file://attached_assets/stock_images/feedx-a_2.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "kcqc4NlSRphPzVX-r9PWs"
+uri = "file://attached_assets/stock_images/feedx-a_3.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "XOPQDU7VUmGjPl3IniQ7D"
+uri = "file://attached_assets/stock_images/feedx-a_4.jpg"
+type = "image"
+title = "African American woman smiling using phone in cafe candid"
+
+[[outputs]]
+id = "xbNJvZ9yWPFtPxvuHHaGS"
+uri = "file://attached_assets/stock_images/feedx-b_1.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "vh8hu40A8pJAL8hd5nriE"
+uri = "file://attached_assets/stock_images/feedx-b_2.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "rGH036MAbQ4ZrSXqGoFAu"
+uri = "file://attached_assets/stock_images/feedx-b_3.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "Bu5OJ0JgIh4fssYF-4NkW"
+uri = "file://attached_assets/stock_images/feedx-b_4.jpg"
+type = "image"
+title = "African American friends group hanging out outdoors laughing"
+
+[[outputs]]
+id = "BIiW17ydKbzUVJYLlYivA"
+uri = "file://attached_assets/stock_images/feedx-c_1.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "fnKEcL2iCuvt8S-njCqtc"
+uri = "file://attached_assets/stock_images/feedx-c_2.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "XZNJ5bA0LcXhbmMtoKUVY"
+uri = "file://attached_assets/stock_images/feedx-c_3.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "vBwxocpZNXaCXDmqY9RYZ"
+uri = "file://attached_assets/stock_images/feedx-c_4.jpg"
+type = "image"
+title = "African American woman carrying moving box smiling new home"
+
+[[outputs]]
+id = "5ZLAiuBfibzi2csIjfuEa"
+uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Investor Deck (Updated, 55 slides)"
+
+[[outputs]]
+id = "FuOHO2NS7EEka5naQnvC6"
+uri = "file://.local/outputs/Mapping-With-Melanin---Investor-Deck.pptx"
+type = "slides"
+title = "Mapping With Melanin — Investor Deck (PPTX)"
+
+[[outputs]]
+id = "4El7EB9qgEEBA4nI1YEEW"
+uri = "file://attached_assets/resized/IMG_7079_1783742110743.png"
+type = "image"
+title = "Screenshot 1 — Discover"
+
+[[outputs]]
+id = "67KHAmBkUYTNybaIV0KKQ"
+uri = "file://attached_assets/resized/IMG_7080_1783742102876.png"
+type = "image"
+title = "Screenshot 2 — Map"
+
+[[outputs]]
+id = "raJSHW7Io8yIj1G6PdKBf"
+uri = "file://attached_assets/resized/IMG_7081_1783742096794.PNG"
+type = "image"
+title = "Screenshot 3 — Business Profile"
+
+[[outputs]]
+id = "HAE3WJFktN1qp4sOyeMC1"
+uri = "file://attached_assets/resized/IMG_7082_1783742086413.PNG"
+type = "image"
+title = "Screenshot 4 — Report Intel"
+
+[[outputs]]
+id = "bRKmphBGGPqxuO3PaebhK"
+uri = "file://.local/outputs/Mapping-With-Melanin---App-Demo-Deck.pdf"
+type = "pdf"
+title = "App Demo Deck — 74 slides (distortion-fixed)"
+
+[[outputs]]
+id = "47t_7VK1bIKX9pbwkkRlf"
+uri = "file://.local/outputs/Mapping-With-Melanin---Community-Builder-Deck.pdf"
+type = "pdf"
+title = "Community Builder Deck — 11 slides"
+
+[[outputs]]
+id = "VZUUmkI9mffhJWzh6rJad"
+uri = "file://.local/outputs/Mapping-With-Melanin---Foundation-Book.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Foundation Book (PDF)"
+
+[[outputs]]
+id = "Rwbw8Z2rAJe9_XXNmToFE"
+uri = "file://.local/outputs/Mapping-With-Melanin---Business-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Business Deck (PDF)"
+
+[[outputs]]
+id = "O-7_iCCScVQzcFZJxrxa4"
+uri = "file://complaint_log.txt"
+type = "text"
+title = "Full Session Log — 4,013 messages (attach to complaint)"
+
+[[outputs]]
+id = "fjMZ9mH4OI8OJkX-mhPkv"
+uri = "file://complaint_summary.txt"
+type = "text"
+title = "Complaint Summary — Email-ready (1 page)"
+
+[[outputs]]
+id = "hcUgG80sgTSMK67kVGoMw"
+uri = "file://mapping_melanin_complaint.zip"
+type = "unspecified"
+title = "Complaint Files — Click to Download"
+
+[[outputs]]
+id = "Xns5bkp5VlrRdHItisGIX"
+uri = "file://mapping_melanin_ip_inventory.zip"
+type = "unspecified"
+title = "Mapping With Melanin — IP Inventory — Click to Download ZIP"
+
+[[outputs]]
+id = "tWPQ2aoqg6PyZrxTYioTy"
+uri = "file://.local/outputs/Mapping-With-Melanin---Community-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Community Deck (PDF)"
+
+[[outputs]]
+id = "asgb3q6qGR48SyBpnWOOg"
+uri = "file://.local/outputs/Mapping-With-Melanin---Experience-Deck.pdf"
+type = "pdf"
+title = "Mapping With Melanin — Experience Deck (PDF)"
+
+[[outputs]]
+id = "KFdQ6ibjc8TegYVAbdmyl"
+uri = "file://.local/outputs/MWM-Legacy-Collection.pdf"
+type = "pdf"
+title = "Mapping With Melanin™ — Legacy Collection (PDF)"
+
+[[outputs]]
+id = "FIKBydcUKSS2hHXn0QtXp"
+uri = "file://mapping-with-melanin-auth-web-static.zip"
+type = "unspecified"
+title = "mapping-with-melanin-auth-web-static.zip"
+
+[[outputs]]
+id = "psRZzPIXi6qWmf5eB8XxK"
+uri = "file://docs/confidential/TRADE-SECRETS-AUDIT.md"
+type = "text"
+title = "Mapping With Melanin™ — Invisible Architecture™ Trade Secret Audit"
+
+[[outputs]]
+id = "wfZOYIIlgJ5LZXTNXzLRK"
+uri = "file://docs/confidential/MWM-Trade-Secrets-Audit-CONFIDENTIAL.pdf"
+type = "pdf"
+title = "MWM Invisible Architecture™ — Trade Secret Audit (CONFIDENTIAL)"
+
+[[outputs]]
+id = "20OydhEPrYBKioP9QtOpQ"
+uri = "file://docs/product/releases/MWM_Build97_ReviewPackage.zip"
+type = "unspecified"
+title = "MWM Build 97 — Engineering Review Package (9 files)"

@@ -1,0 +1,591 @@
+MAPPING WITH MELANIN™ — BUILD 97 HISTORICAL SUNDOWN TOWNS MAP LAYER
+
+TARGETED READ-ONLY AUDIT + IMPLEMENTATION PLAN
+NO IMPLEMENTATION UNTIL APPLE APPROVES BUILD 96
+AUTHORIZATION PHRASE REMAINS: “Please implement.”
+
+FOUNDER REQUIREMENT
+
+Build 97 and the corresponding next Android testing build should include
+historical sundown-town information on the Map.
+
+This is being added because cultural discovery must not be separated from
+historical and present-day safety context.
+
+However, the platform must not:
+
+- Suggest that minority communities are inherently violent
+- Treat a historical designation as proof of present-day danger
+- Label every resident of a community
+- Present allegations as verified facts
+- Use demographics as a proxy for safety
+- Convert one report into a community-wide conclusion
+- Tell members a location is guaranteed safe or unsafe
+
+This request has two stages:
+
+PHASE 1 — Read-only source, architecture, legal, content, and performance audit
+PHASE 2 — Build 97 implementation proposal
+
+Do not change code, database schemas, map settings, feature flags,
+production data, build numbers, or Apple/Android submissions.
+
+══════════════════════════════════════════════════════════════
+1. REQUIRED MEMBER-FACING NAME
+══════════════════════════════════════════════════════════════
+
+Use:
+
+HISTORICAL SUNDOWN TOWNS
+
+Do not use:
+
+- Unsafe Towns
+- Dangerous Towns
+- Current Sundown Towns
+- Avoid These Towns
+- Safety Score
+- Minority Violence
+- High-Risk Minority Community
+
+This is a historical-context layer with carefully separated recent
+community information.
+
+It is not a community rating.
+
+══════════════════════════════════════════════════════════════
+2. SOURCE AUDIT
+══════════════════════════════════════════════════════════════
+
+Investigate authoritative and research-supported sources, including:
+
+A. Tougaloo College / History and Social Justice
+   Sundown Towns Database
+
+B. Historical Sundown Towns Linked to US Census Geographies
+   national dataset published in Scientific Data in 2025
+
+C. Original supporting records linked by those datasets
+
+D. National Park Service civil-rights and Green Book historical
+   materials where relevant
+
+Determine:
+
+1. Whether the source offers a downloadable dataset, API, CSV, spreadsheet,
+   geospatial file, or state-by-state data.
+
+2. Licensing or reuse terms.
+
+3. Attribution requirements.
+
+4. Whether automated import or scraping is permitted.
+
+5. Available fields, including:
+   - Place name
+   - State
+   - County
+   - Coordinates or Census geography
+   - Historical time period
+   - Historically excluded population
+   - Supporting evidence
+   - Confidence or confirmation status
+   - Source URL
+   - Research comments
+   - Current or recovering status, when sourced
+
+6. Whether locations can be reliably geocoded.
+
+7. Whether any source record lacks sufficient evidence for public display.
+
+8. Whether records include:
+   - Confirmed
+   - Probable
+   - Possible
+   - Unconfirmed
+   - Disputed
+   - Recovering or transformed
+
+Do not import data until licensing, attribution, completeness, and
+technical compatibility are confirmed.
+
+Do not describe a crowdsourced or probable record as confirmed.
+
+══════════════════════════════════════════════════════════════
+3. CURRENT MAPPING WITH MELANIN™ DATA AUDIT
+══════════════════════════════════════════════════════════════
+
+Search the codebase, database, documentation, seed data, map components,
+safety features, and Future-State Register for:
+
+- Sundown town
+- Sundown towns
+- Historical racial exclusion
+- Green Book
+- Racial discrimination
+- Community discrimination
+- Community reports
+- Neighborhood safety
+- Safety score
+- Community Insights
+- Community Health
+- Civil Rights
+- Travel warning
+- Route warning
+- Safety overlay
+- Historical warning
+- Community alert
+
+Report:
+
+- Anything already built
+- Anything partially built
+- Anything previously discussed
+- Existing database fields that can be reused
+- Existing marker or category architecture
+- Existing reporting and moderation systems
+- Existing verified-source fields
+- Existing disclaimer language
+- Existing state-filter functionality
+- Existing route-proximity functionality
+- Existing safety or discrimination-report aggregation
+
+Do not duplicate current capabilities.
+
+══════════════════════════════════════════════════════════════
+4. REQUIRED BUILD 97 EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+Prepare the smallest stable implementation for:
+
+A. MAP LAYER
+
+A user-selectable toggle:
+
+“Historical Sundown Towns”
+
+Default behavior:
+
+- Off by default unless founder later approves otherwise
+- User deliberately enables it
+- Visible legend explains that the markers reflect historical research
+- Layer can be hidden independently of businesses and heritage places
+
+B. STATE BROWSING
+
+Members should be able to:
+
+- Select a state
+- Search a place by name
+- View records within the current map area
+- Return to the complete national map where technically appropriate
+
+C. MAP MARKERS
+
+Markers must visually distinguish confidence/status where source data
+supports it.
+
+Potential statuses:
+
+- Historically confirmed
+- Probable or strongly documented
+- Possible or under research
+- Disputed or incomplete
+- Historical record with documented reconciliation work
+
+Do not use identical warning treatment for records with different levels
+of evidence.
+
+D. DETAIL TILE
+
+Each record should show, when available:
+
+- Place name
+- State and county
+- Historical designation
+- Historical period
+- Community or group historically excluded
+- Evidence/confidence status
+- Short historical summary
+- Source organization
+- Source link
+- Last source review date
+- Disclaimer
+- Present-day community information in a separate section
+
+E. REQUIRED DISCLAIMER
+
+Use founder-approved language based on:
+
+“Historical context:
+This location appears in historical research concerning sundown towns—
+communities that intentionally excluded Black people or other racial,
+ethnic, or religious groups through law, intimidation, custom, or
+violence. This designation describes documented history and is not, by
+itself, a statement about every current resident or a definitive
+assessment of present-day conditions.”
+
+“Current community information:
+Recent reports reflect submitted or publicly documented experiences and
+may be incomplete. Use this information as one source when planning—not
+as a guarantee of safety or danger.”
+
+Provide refined copy for founder approval before implementation.
+
+══════════════════════════════════════════════════════════════
+5. RECENTLY REPORTED INFORMATION
+══════════════════════════════════════════════════════════════
+
+Historical records and recent reports must remain technically and
+visually separate.
+
+Create a proposed model for:
+
+A. VERIFIED PUBLIC RECORD
+
+Examples:
+
+- Government civil-rights findings
+- Court decisions
+- Public agency investigations
+- Credible published investigations
+- Official policy or reconciliation statements
+
+Required fields:
+
+- Source
+- Publication date
+- Event date
+- Location
+- Summary
+- Verification status
+- Review date
+- Expiration from “recent” presentation
+- Permanent historical retention decision
+
+B. MWM COMMUNITY-REPORTED EXPERIENCE
+
+Examples:
+
+- Approved discrimination report
+- Discriminatory treatment
+- Reported racial harassment
+- Reported discriminatory policing
+- Lodging, business, or travel experience
+- Positive intervention or community support
+
+Required controls:
+
+- Anonymous or attributed submission
+- Reporter identity never publicly exposed
+- Moderation
+- Duplicate detection
+- Corroboration status
+- Date range
+- Aggregate display
+- Minimum threshold before showing trends
+- Ability to report urgent concerns privately
+- Correction or appeal
+- Expiration and re-evaluation
+- No single report creating a community-wide label
+
+C. PRESENTATION
+
+Display separately:
+
+HISTORICAL CONTEXT
+
+and
+
+RECENT COMMUNITY-REPORTED EXPERIENCES
+
+Never combine them into one undifferentiated score.
+
+For Build 97, determine whether current MWM report volume is sufficient
+to display recent trends responsibly.
+
+If not, include only the historical layer and preserve recent trend
+integration as future state.
+
+══════════════════════════════════════════════════════════════
+6. KINFOLKAI TREATMENT
+══════════════════════════════════════════════════════════════
+
+For Build 97, KinfolkAI may explain sourced historical information.
+
+It must not:
+
+- Invent present-day safety conclusions
+- Tell a member that a town is currently a sundown town without reliable,
+  current evidence
+- Infer danger from racial demographics
+- State that a route is safe
+- State that every resident holds discriminatory views
+- Use inflammatory or sensational wording
+- Recommend route avoidance by default
+- Convert one member report into a universal claim
+
+Potential response pattern:
+
+“This town appears in historical sundown-town research. That designation
+describes documented historical exclusion. Current conditions can differ,
+and Mapping With Melanin™ does not yet have enough recent verified
+community information to characterize the town today.”
+
+KinfolkAI must distinguish:
+
+- Historical research
+- Verified current public information
+- Aggregated MWM community reports
+- Individual experience
+- AI inference
+- Unknown or insufficient evidence
+
+══════════════════════════════════════════════════════════════
+7. PERFORMANCE AND CRASH PROTECTION
+══════════════════════════════════════════════════════════════
+
+Because Map stability is a Build 97 priority, audit:
+
+- Number of historical records
+- Marker count at national zoom
+- Marker clustering
+- Pagination or viewport loading
+- State-based lazy loading
+- Coordinate accuracy
+- Duplicate markers
+- Memory usage
+- Rerender frequency
+- Interaction with business markers
+- Interaction with heritage markers
+- Small-phone behavior
+- Android performance
+- Tablet performance
+- Map fit-to-coordinate behavior
+- Offline and slow-network behavior
+
+Do not load thousands of individual markers simultaneously.
+
+Recommend:
+
+- Server-side bounding-box queries
+- State-based loading
+- Marker clustering
+- Maximum visible markers
+- Progressive loading
+- Cached source data
+- Feature isolation
+
+Build 97 may include this layer only if it passes the established Map
+stability gates.
+
+A successful compile is not sufficient evidence.
+
+══════════════════════════════════════════════════════════════
+8. CONTENT, LEGAL, AND REPUTATIONAL SAFEGUARDS
+══════════════════════════════════════════════════════════════
+
+Identify risks involving:
+
+- Defamation
+- False light
+- Outdated information
+- Source errors
+- Ambiguous place boundaries
+- Historical versus current status
+- Community stigma
+- Business impact
+- Route warnings
+- User-generated allegations
+- Corrections and appeals
+- Source licensing
+- Data reuse
+- Minors
+- Emergency reliance
+- Accessibility
+
+Design:
+
+- Source attribution
+- Evidence-status labels
+- Correction request
+- Community response or reconciliation information
+- Review dates
+- Expiration rules
+- Moderation standards
+- Founder/admin approval before publication
+- Clear disclaimer that MWM does not guarantee safety
+
+Do not provide legal conclusions. Identify areas requiring legal review.
+
+══════════════════════════════════════════════════════════════
+9. COMMUNITY CHANGE AND RECONCILIATION
+══════════════════════════════════════════════════════════════
+
+Historical truth must be preserved, but the platform should also be able
+to recognize documented present-day work.
+
+Design optional fields for:
+
+- Public acknowledgment of history
+- Official apology
+- Historical marker or museum
+- Reconciliation commission
+- Civil-rights programming
+- Community-led restorative work
+- Increased cultural organizations
+- Verified inclusion initiatives
+- Public documentation of change
+
+These fields do not erase history.
+
+They provide fuller context and allow communities doing meaningful,
+documented work to have that work visible.
+
+Do not accept promotional claims as proof without evidence.
+
+══════════════════════════════════════════════════════════════
+10. BUILD 97 SCOPE DECISION
+══════════════════════════════════════════════════════════════
+
+Classify each item:
+
+REQUIRED FOR BUILD 97
+
+- Historical Sundown Towns map layer
+- State browsing
+- Source attribution
+- Confidence/evidence labels
+- Historical detail tile
+- Clear historical/current distinction
+- Disclaimer
+- Map performance protection
+- Correction pathway or clearly documented contact process
+
+CONDITIONAL FOR BUILD 97
+
+- Recent approved MWM reports
+- Verified current public records
+- Route-proximity notification
+- Reconciliation information
+- KinfolkAI context response
+
+FUTURE STATE
+
+- Automated current trend detection
+- Community Health weighting
+- Route avoidance
+- Predictive warnings
+- Live external monitoring
+- Opportunity and need connections
+- Community-wide intervention suggestions
+- Proactive safety notifications
+- Full Community Health Profile
+
+If any required item cannot be completed safely without destabilizing
+Build 97, report the blocker immediately and propose the smallest safe
+alternative.
+
+Do not silently remove the founder requirement.
+
+══════════════════════════════════════════════════════════════
+11. FUTURE-STATE AND TRADE-SECRET TREATMENT
+══════════════════════════════════════════════════════════════
+
+The public historical dataset and source facts are not trade secrets.
+
+Potential trade-secret material includes:
+
+- How historical context is combined with recent reports
+- Confidence calculations
+- Community trend thresholds
+- Bias-reduction methods
+- Weighting and recency formulas
+- Route-context logic
+- KinfolkAI interpretation rules
+- Community change and reconciliation model
+- Community Health transformation logic
+- Opportunity-detection connections
+
+Search existing confidential architecture documentation before creating
+new files.
+
+Propose updates to:
+
+- Future-State Register
+- Community Intelligence Constitution
+- Community Health charter or specification
+- Confidential trade-secret register
+- Build 97 scope document
+- Acceptance-test register
+
+Do not expose internal formulas in public-facing documentation.
+
+══════════════════════════════════════════════════════════════
+12. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Existing Sundown-Town Work Found
+3. Source Options
+4. Source Licensing and Attribution
+5. Dataset Fields and Confidence Levels
+6. Estimated Record Count
+7. Current Map Compatibility
+8. Proposed Database Model
+9. Proposed API Model
+10. Proposed Map-Layer Experience
+11. Proposed State-Browsing Experience
+12. Proposed Detail Tile
+13. Historical Disclaimer
+14. Recent-Reports Disclaimer
+15. Historical Versus Current Separation
+16. Community-Report Integration
+17. Public-Source Integration
+18. Correction and Appeal Process
+19. Reconciliation and Community-Change Context
+20. KinfolkAI Response Standard
+21. Map Performance Plan
+22. iOS Performance Risks
+23. Android Performance Risks
+24. Legal and Reputational Risks
+25. Privacy and Moderation Risks
+26. Required Build 97 Scope
+27. Conditional Build 97 Scope
+28. Future-State Scope
+29. Acceptance Tests
+30. Exact Files, Tables, Routes, and Components Reviewed
+31. Documentation Updates Required
+32. Trade-Secret Classification
+33. Founder Decisions Required
+34. Confirmation That No Changes Were Made
+
+Answer directly:
+
+A. Can Replit obtain a usable state-by-state historical sundown-town
+dataset from a reputable source?
+
+B. Can the data legally and technically be used in Mapping With Melanin™?
+
+C. Can it be added to Build 97 without destabilizing the Map?
+
+D. How will confirmed, probable, possible, and disputed records be
+distinguished?
+
+E. How will historical designation remain separate from current safety
+information?
+
+F. Does MWM currently have enough recent reports to show meaningful
+current trends?
+
+G. What exact portion can safely ship in Build 97?
+
+Do not implement.
+Do not import data.
+Do not scrape a website.
+Do not change the Map.
+Do not submit a build.
+Do not change HERITAGE_SITES_ENABLED.
+Do not make legal claims.

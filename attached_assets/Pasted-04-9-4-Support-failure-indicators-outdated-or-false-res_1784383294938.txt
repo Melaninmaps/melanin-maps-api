@@ -1,0 +1,82 @@
+04.9.4 Support failure indicators
+outdated or false resources;
+repeated unanswered requests;
+performative offers;
+referral loops with no actual assistance;
+assistance available only to insiders;
+public promises without operational capacity;
+exploitative support conditions;
+excessive data collection before aid;
+emergency needs treated as promotional opportunities.
+04.10 Dimension Five — Voice & Influence
+Voice & Influence measures whether people can meaningfully shape what affects them.
+It evaluates:
+ability to speak;
+likelihood of being heard;
+responsiveness to feedback;
+participation in decisions;
+correction pathways;
+representation;
+transparency;
+recognition of lived experience;
+protection from retaliation;
+influence over community priorities.
+04.10.1 Voice & Influence Score
+Voice & Influence Score =
+  Expression Access
++ Decision Participation
++ Responsiveness
++ Correction Power
++ Representation Quality
+- Silencing Penalties
+04.10.2 Positive indicators
+community feedback leads to visible action;
+users can dispute inaccurate information;
+businesses respond respectfully to concerns;
+local members influence recommendations;
+decisions are explained;
+community members participate in governance;
+historically overlooked voices are included;
+anonymity is available when necessary;
+disagreement does not automatically produce exclusion;
+appeals are reviewed.
+04.10.3 Silencing indicators
+retaliation for criticism;
+deleting legitimate concerns without review;
+requiring public identity for sensitive reports;
+allowing popularity to override evidence;
+treating business-owner preference as more important than community safety;
+excluding affected people from decision-making;
+presenting consultation without actual influence;
+suppressing negative evidence for payment or partnership reasons.
+04.11 Dimension Six — Continuity & Return
+Continuity & Return measures whether people remain connected over time and whether community value survives beyond a single transaction, event, post, visit, or campaign.
+04.11.1 Continuity & Return Score
+Continuity & Return Score =
+  Return Participation
++ Relationship Persistence
++ Institutional Continuity
++ Knowledge Retention
++ Multi-Stage Engagement
+- Abandonment Penalty
+04.11.2 Positive indicators
+people return voluntarily;
+relationships continue;
+businesses retain community trust;
+events become recurring institutions;
+knowledge is preserved;
+community members advance from participant to contributor;
+resources remain available;
+alumni or former residents stay connected;
+users return to help others;
+community history is recorded;
+partnerships survive leadership transitions.
+04.11.3 Abandonment indicators
+one-time extraction;
+temporary campaigns with no follow-through;
+community spaces disappearing without notice;
+organizations leaving after funding ends;
+users repeatedly required to restart relationships;
+unresolved commitments;
+disappearing resources;
+platform recognition based only on temporary activity.

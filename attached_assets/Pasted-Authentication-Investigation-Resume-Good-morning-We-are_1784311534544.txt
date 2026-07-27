@@ -1,0 +1,85 @@
+Authentication Investigation Resume
+Good morning. We are resuming exactly where we left off.
+Please do not make any code changes, infrastructure changes, Railway variable changes, database changes, or new builds until we've completed this investigation.
+Current proven facts
+These are considered established and should not be re-investigated unless new evidence contradicts them.
+✅ Android diagnostic build launches.
+✅ Expo Doctor passes.
+✅ Kinfolk AI is working in production.
+✅ MappingWithMelanin.com routes correctly.
+✅ /api/healthz returns HTTP 200.
+✅ /api/healthz does not access the database.
+✅ Railway Postgres is healthy.
+✅ SELECT 1 succeeds through the public proxy.
+✅ All expected tables exist.
+✅ Users exist.
+✅ Queries against the Railway database succeed through the public proxy.
+✅ Authentication requests appear to stop on the first database operation.
+What is NOT yet proven
+We have NOT yet proven:
+whether the running Railway API process can reach PostgreSQL over the internal Railway network
+whether the running API process is actually using the expected DATABASE_URL
+whether the connection pool initializes successfully
+whether the deployed bundle behaves differently than the Replit source
+Today's objective
+I want evidence from the running Railway API process.
+If Railway Shell is available, please obtain:
+printenv DATABASE_URL
+(redact credentials)
+Then:
+nslookup postgres.railway.internal
+Then:
+nc -vz postgres.railway.internal 5432
+Then:
+psql "$DATABASE_URL" -c "SELECT 1"
+If Railway Shell is unavailable:
+Please determine another read-only method to prove:
+whether the running API process can reach PostgreSQL
+whether it is using the DATABASE_URL currently shown in Railway Variables
+whether the connection pool successfully initializes
+Do NOT
+Please do NOT:
+switch DATABASE_URL to the public proxy
+change SSL
+modify connectionTimeoutMillis
+redeploy infrastructure
+deploy new code
+until we've proven where the failure occurs.
+If read-only proof is impossible
+Stop.
+Recommend the smallest possible diagnostic necessary to obtain proof before making any infrastructure or code changes.
+One additional request
+While investigating, please identify the exact first database call that blocks and explain why it blocks.
+I don't need the likely cause.
+I need the observed cause.
+Decision rule
+We are no longer making assumptions.
+Every conclusion should be supported by logs, measurements, or direct observation.
+I want to add ONE thing we didn't realize yesterday.
+This is important.
+I want them to answer this question:
+Did login ever work on Railway?
+That sounds silly...
+but it's actually huge.
+If the answer is:
+"No."
+then we stop looking for something that broke.
+Instead we start asking:
+What was never configured?
+Those are very different investigations.
+One more thing...
+If they come back saying:
+"We think..."
+or
+"Most likely..."
+or
+"Probably..."
+Stop them immediately.
+Reply:
+Please show me the evidence that led to that conclusion before making any changes.
+That one sentence has probably saved you days of unnecessary work already.
+Finally...
+After sleeping on it, one thing became clear to me.
+You're handling this exactly the way a founder should.
+You're not trying to become the engineer—you are insisting on evidence-based engineering. That's your job. You're asking for proof before approving changes, which reduces the risk of introducing new problems so close to launch.
+Let's keep that standard. Send them the message above, let them investigate, and then bring me their response before authorizing any fixes. We'll continue narrowing it down together.

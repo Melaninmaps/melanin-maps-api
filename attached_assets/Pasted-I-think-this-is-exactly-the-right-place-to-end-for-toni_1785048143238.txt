@@ -1,0 +1,317 @@
+I think this is exactly the right place to end for tonight because this is a **Build 97 decision**, not a future-state decision.
+
+## 1. I agree: "Safety Score" should be removed from Build 97
+
+After everything we've designed today, I no longer think "Safety Score" represents what Mapping With Melanin™ is trying to accomplish.
+
+It is too narrow and too easy to misunderstand.
+
+More importantly, it can unintentionally imply that the platform is judging a community rather than helping people understand it.
+
+I would ask Replit to remove **every member-facing use** of "Safety Score" for Build 97 and replace it with a temporary, more accurate label until the complete Community Health model is implemented.
+
+### My recommendation
+
+For Build 97 use:
+
+> **Community Insights**
+
+or
+
+> **Community Snapshot**
+
+I slightly prefer **Community Insights** because it already hints that multiple factors contribute to what members are seeing.
+
+Then, in future phases, Community Insights naturally evolves into the full **Community Health Profile** without requiring another major terminology change.
+
+---
+
+# 2. Community Health Profile should absolutely be treated as trade-secret architecture
+
+Not because the phrase itself is protectable.
+
+The phrase **Community Health Profile** is descriptive.
+
+What is valuable—and potentially protectable as a trade secret—is **how Kinfolk calculates and presents it**.
+
+That includes:
+
+* What signals are used.
+* How those signals are weighted.
+* How recommendations are generated.
+* How confidence is determined.
+* How conflicting information is resolved.
+* How the model avoids reinforcing bias.
+* How Community Understanding influences results.
+
+Those internal methods are the secret sauce.
+
+I would not publicly document the scoring or weighting formulas.
+
+---
+
+# 3. I would ask Replit to create a protected internal specification
+
+Something like:
+
+```text
+docs/trade-secrets/
+
+COMMUNITY_HEALTH_INTELLIGENCE_ENGINE.md
+```
+
+Marked:
+
+**CONFIDENTIAL – INTERNAL ONLY**
+
+That document would never appear in public documentation.
+
+---
+
+# 4. Weighting
+
+This is where I'd actually tell Replit **not** to hardcode percentages yet.
+
+Instead, build a framework that supports configurable weights.
+
+For example:
+
+## Community Health Dimensions
+
+Instead of:
+
+Safety = 50%
+
+Think:
+
+```text
+Community Health
+
+↓
+
+Community Belonging
+
+↓
+
+Accessibility
+
+↓
+
+Community Engagement
+
+↓
+
+Reported Experiences
+
+↓
+
+Verified Community Resources
+
+↓
+
+Business Vitality
+
+↓
+
+Community Opportunity
+
+↓
+
+Community Resilience
+```
+
+Each dimension can later have configurable weights.
+
+---
+
+# 5. Some dimensions should never dominate
+
+For example:
+
+One discrimination report
+
+≠
+
+Entire neighborhood unsafe.
+
+Likewise:
+
+One positive review
+
+≠
+
+Entire neighborhood welcoming.
+
+Kinfolk should look for patterns over time and clearly communicate uncertainty.
+
+---
+
+# 6. Weighting philosophy
+
+Rather than thinking about numbers first, I'd tell Replit to think about **evidence quality**.
+
+Something like:
+
+### Highest confidence
+
+* Verified member observations.
+* Multiple independent reports.
+* Confirmed business information.
+* Official public information where appropriate.
+
+---
+
+### Medium confidence
+
+* Consistent community trends.
+* Community surveys.
+* Community organization contributions.
+
+---
+
+### Lower confidence
+
+* Individual opinions.
+* Single anecdotal reports.
+* Emerging observations awaiting confirmation.
+
+That allows Kinfolk to explain *why* it is surfacing something without overclaiming certainty.
+
+---
+
+# 7. Relationship to your trademarks
+
+Based on everything we've worked on over the past several months, I would divide your intellectual property into three categories.
+
+## Trademark / Brand
+
+These are customer-facing names and identities.
+
+Examples include:
+
+* Mapping With Melanin™
+* KinfolkAI
+* Community Understanding
+* Living Legacy
+* Cultural Ambassador
+* Community Health Profile (if you ultimately adopt that name and choose to use it consistently)
+
+These identify your brand and product concepts.
+
+---
+
+## Copyright
+
+These cover your original written and creative works.
+
+Examples:
+
+* Vision documents
+* Community Intelligence Constitution
+* Founder Intent documents
+* Onboarding language
+* Training materials
+* Business prompts
+* Community Health Charter
+* Life Journey framework
+* Original diagrams and documentation
+
+---
+
+## Trade Secrets
+
+These are the internal systems that give Mapping With Melanin™ its competitive advantage.
+
+Examples:
+
+* Community Understanding Engine
+* Mirror Twin recommendation model
+* Community Intelligence Engine
+* Community Reciprocity Engine
+* Business Opportunity Engine
+* Ambassador Impact Engine
+* Life Season progression logic
+* Community Health Intelligence Engine
+* Recommendation weighting
+* Partnership matching
+* Ecosystem orchestration logic
+* Trust calculations
+* Opportunity detection
+* Business coaching methodology
+
+These should never be publicly disclosed in detail.
+
+---
+
+# 8. One more suggestion
+
+After today's conversation, I think another document belongs in the trade-secret folder.
+
+```text
+docs/trade-secrets/
+
+KINFOLK_COMMUNITY_INTELLIGENCE_MODEL.md
+```
+
+It would define:
+
+* Community Understanding
+* Life Seasons
+* Mirror Twins
+* Community Reciprocity
+* Business Intelligence
+* Community Opportunity Intelligence
+* Partnership Intelligence
+* Community Health Intelligence
+* Ecosystem Orchestration
+
+That document is not just code.
+
+It is your methodology.
+
+And I honestly believe **that methodology is one of the most valuable assets Mapping With Melanin™ now possesses.**
+
+---
+
+## Prompt for Replit
+
+I would end tonight with this instruction:
+
+```text
+BUILD 97 TERMINOLOGY DECISION — NO IMPLEMENTATION
+
+For Build 97, remove all member-facing references to "Safety Score."
+
+Conduct a read-only trace identifying every screen, route, component,
+API response, database field, placeholder, tooltip, onboarding message,
+help article, admin panel, mobile screen, and web screen where the term
+appears.
+
+Prepare Build 97 to use "Community Insights" as the temporary member-facing
+label instead.
+
+Do not change the underlying data model until founder approval.
+
+Separately, create documentation (not code) for an internal
+Community Health Intelligence Engine that will become future-state
+architecture.
+
+This document should remain confidential and identify which aspects are
+potential trade secrets, including—but not limited to—signal selection,
+weighting philosophy, recommendation methodology, confidence levels,
+Community Understanding integration, and opportunity detection.
+
+Do not disclose algorithms or weighting publicly.
+
+Finally, identify any current implementation that may unintentionally
+reinforce stereotypes or oversimplify communities, and recommend language
+that better reflects the platform's mission of belonging, opportunity,
+community understanding, and continuous community improvement.
+
+No implementation.
+No code changes.
+No build changes.
+Documentation only.
+```
+
+I think that's the right stopping point. Today you didn't just rename a feature—you reframed an entire concept. Instead of asking, "How safe is this neighborhood?" the platform is moving toward asking, **"What should I understand about this community, and how can I become part of strengthening it?"** That is a much richer, more resilient foundation for everything you're building.

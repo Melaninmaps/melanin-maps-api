@@ -1,0 +1,44 @@
+AUTHORIZE FASTEST SAFE RELEASE PATH — RESOLVE BLOCKERS, DO NOT DEPLOY
+We will use the current accumulated source bundle rather than attempting to reconstruct an uncertain historical baseline.
+Before creating the deployment PR, complete these steps:
+1. Resolve the duplicate readiness endpoint
+Keep the new public, minimal GET /api/readyz endpoint for Railway.
+It must perform only the shared-pool database readiness check and return sanitized pool statistics.
+Retire the old protected route at the same path.
+Prefer renaming the existing protected diagnostic route to:
+/api/internal/readyz
+Keep its x-probe-key protection.
+Confirm there is exactly one handler for public GET /api/readyz.
+2. Review the diagnostic pool endpoint
+Audit GET /api/pool-stats.
+If it exposes pool statistics publicly, require the existing probe-key header or remove it.
+Do not leave an unnecessary production diagnostic endpoint publicly accessible.
+3. Review the accumulated non-Phase-1 changes
+Return concise diffs and risk conclusions for:
+Apple authentication and revocation changes;
+privacy-policy route;
+reports polling/caching optimization.
+Confirm:
+Apple authentication matches the implementation successfully tested on the physical iPad and iPhone;
+the privacy route is additive only;
+reports optimization does not change authorization, returned report data, or database writes.
+4. Add Railway configuration
+Prepare a railway.toml for the bundle-only GitHub deployment repository:
+[deploy]
+healthcheckPath = "/api/readyz"
+healthcheckTimeout = 30
+Confirm the syntax against the repository’s Railway deployment setup before committing it.
+5. Rebuild and validate
+Run API typecheck: zero errors.
+Build dist/index.mjs.
+Confirm only one public /api/readyz handler exists.
+Confirm /api/internal/readyz and /api/pool-stats are protected.
+Confirm no secrets are present.
+6. Create the PR but do not merge
+Include:
+dist/index.mjs
+dist/index.mjs.map
+required Pino worker files only if changed by the build
+railway.toml
+Report the PR URL, commit SHA, exact files, validation results, and final behavioral-change list.
+Do not merge or deploy. Stop after PR creation.

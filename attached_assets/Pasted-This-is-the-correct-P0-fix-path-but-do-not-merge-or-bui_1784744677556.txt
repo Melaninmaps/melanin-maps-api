@@ -1,0 +1,77 @@
+This is the correct P0 fix path, but **do not merge or build quite yet**. Two details need correction first.
+
+## 1. The new iOS build must be Build 95
+
+Replit says:
+
+> “New EAS build … This is iOS Build 94.”
+
+You cannot submit another binary using the same iOS build number already uploaded. The account-deletion fix must be baked into a **new Build 95**:
+
+* App version: `1.1.5`
+* iOS build number: `95`
+* Runtime can remain `1.1.5` if there are no native-code changes.
+
+The mobile correction is JavaScript-only and could technically be delivered by OTA, but given Apple review and the problems with stacked OTAs, baking it directly into Build 95 is safer. Expo recommends new production builds use distinct build/runtime planning, while OTA compatibility is controlled by channel and runtime. ([Expo Documentation][1])
+
+## 2. Verify PR #10 before merging
+
+It reportedly contains only `dist/index.mjs`. Your deployment PRs have generally kept the compiled bundle and source map synchronized.
+
+Ask Replit to either:
+
+* add the matching `dist/index.mjs.map`, or
+* give a verified reason why the map did not change.
+
+Also, session revocation alone is not proof of account deletion. The final test must establish that the user record **and the password/auth identity** are deleted or appropriately anonymized. Apple requires deletion of the entire account and associated personal data, not merely logout or deactivation. ([Apple Developer][2])
+
+Send Replit this:
+
+> **DELETE-ACCOUNT RELEASE CORRECTIONS — HOLD MERGE/BUILD**
+>
+> The fix direction is approved, but complete these checks first:
+>
+> 1. Update the iOS build number from 94 to **95**. Keep app version `1.1.5`.
+> 2. Confirm Build 95 includes the mobile `res.ok` deletion fix directly in its bundled source.
+> 3. Confirm PR #10 includes both synchronized compiled artifacts:
+>
+>    * `dist/index.mjs`
+>    * `dist/index.mjs.map`
+>      If the source map genuinely did not change, return evidence explaining why.
+> 4. Confirm the server deletion transaction removes or anonymizes:
+>
+>    * user record;
+>    * email/password credential or auth-account record;
+>    * all sessions;
+>    * personal profile data;
+>    * associated personal data according to the published policy.
+> 5. Confirm database foreign keys and cascading behavior cannot leave a login-capable credential behind.
+> 6. If the account uses Sign in with Apple, confirm Apple authorization tokens are revoked as part of deletion. Apple specifically expects token revocation for Sign in with Apple accounts. ([Apple Developer][2])
+>
+> Return:
+>
+> * corrected PR #10 file list;
+> * exact server deletion order;
+> * app.json showing build number 95;
+> * exact EAS production-build command;
+> * confirmation no unrelated files are included.
+
+## Then follow this order
+
+1. Merge corrected PR #10.
+2. Wait for Railway deployment to become Active.
+3. Confirm normal login still works.
+4. Build **iOS Build 95**.
+5. Install Build 95 from TestFlight.
+6. Create a fresh disposable account.
+7. Delete it in-app.
+8. Confirm automatic logout.
+9. Confirm the same email/password can no longer log in.
+10. Confirm a completely new account can be registered with that same email, if email reuse is your intended policy.
+11. Run the remainder of the Apple reviewer walkthrough.
+12. Submit Build 95.
+
+This is a genuine Apple blocker, but it is now narrow and understood. Once the server and Build 95 pass that deletion test, you should be positioned to submit without reopening map or vibes work.
+
+[1]: https://docs.expo.dev/eas-update/deployment/?utm_source=chatgpt.com "Deploy updates - Expo Documentation"
+[2]: https://developer.apple.com/support/offering-account-deletion-in-your-app/?utm_source=chatgpt.com "Offering account deletion in your app - Support - Apple Developer"

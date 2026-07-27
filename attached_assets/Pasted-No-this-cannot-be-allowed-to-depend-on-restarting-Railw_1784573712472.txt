@@ -1,0 +1,253 @@
+No—this cannot be allowed to depend on restarting Railway whenever several users retry. Before you grow to 50 or 500 users, the database layer needs **bounded concurrency, bounded query time, and monitoring**.
+
+One important caution first: the newest diagnosis says **Neon is production**, while the reconciliation report earlier said **Railway PostgreSQL is production**. Replit must establish the true live `DATABASE_URL` before changing pool architecture. The wrong database diagnosis has already caused confusion more than once.
+
+## What needs to change
+
+### 1. Every database operation must end
+
+A connection timeout only limits how long it takes to establish a new database connection. It does not stop a query that obtained a connection and then hangs.
+
+You need separate limits for:
+
+* acquiring a connection;
+* executing a query;
+* completing the full HTTP request.
+
+`node-postgres` supports pool connection limits such as `connectionTimeoutMillis`, `idleTimeoutMillis`, and `max`, but these must be sized intentionally. Its pool defaults to a maximum of 10 clients unless configured otherwise. ([Node Postgres][1])
+
+I would require:
+
+* connection-acquisition timeout;
+* query/statement timeout;
+* request-level AbortController or deadline;
+* automatic release or destruction of a client after timeout;
+* no route able to wait indefinitely.
+
+### 2. Limit how many requests may consume database connections
+
+The API should not allow every repeated login attempt to occupy another connection indefinitely.
+
+A good production design uses:
+
+* one process-level pool;
+* an explicit conservative `max`;
+* a short waiting queue;
+* fast rejection with `503 Service temporarily unavailable` when the database is saturated;
+* rate limits on login and other expensive endpoints;
+* client-side protection against duplicate submissions.
+
+Do not simply raise the pool maximum. That may postpone failure while increasing pressure on PostgreSQL.
+
+### 3. Use the correct database connection type
+
+If production truly uses Neon, confirm whether the hostname contains `-pooler`. Neon recommends a pooled connection string for application traffic; its PgBouncer pool allows many client connections to share fewer direct PostgreSQL connections. Direct connections remain appropriate for migrations. ([Neon][2])
+
+The application should generally use:
+
+* **pooled URL** for normal API requests;
+* **direct URL** for schema migrations and certain administrative work.
+
+If production is Railway PostgreSQL instead, Neon-specific recommendations do not apply. This is why the canonical database must be proven first.
+
+### 4. Login must be protected at both ends
+
+On the mobile side:
+
+* disable the Sign In button after the first tap;
+* prevent duplicate in-flight login requests;
+* use a clear timeout;
+* allow one deliberate retry;
+* do not automatically issue repeated requests;
+* never erase valid credentials because of a 5xx or timeout.
+
+On the API side:
+
+* per-IP and per-account login rate limits;
+* one active login attempt per account/request key where practical;
+* short database operations;
+* no email, RevenueCat, Twilio, or other nonessential work blocking the login response;
+* return `503` for temporary database trouble instead of a misleading credentials error.
+
+### 5. Add saturation monitoring
+
+You need visibility before users report the outage.
+
+At minimum, monitor:
+
+* total pool clients;
+* idle clients;
+* checked-out clients;
+* requests waiting for a client;
+* connection-acquisition time;
+* query duration;
+* API response duration;
+* timeout count;
+* login failures by category;
+* database connection errors;
+* Railway restarts.
+
+If Neon is in use, its monitoring now includes pooled client and server connection graphs, which can help distinguish application demand from actual Postgres connection use. ([Neon][3])
+
+### 6. Add graceful degradation
+
+When the database is saturated:
+
+* health checks should distinguish basic process health from database readiness;
+* `/api/healthz` may remain a lightweight liveness test;
+* add a protected or internal readiness check that performs a very short DB query;
+* the app should show:
+
+  > “We’re having trouble connecting right now. Your account is safe. Please try again shortly.”
+* do not leave users spinning for a minute;
+* do not tell them their password is wrong unless authentication actually failed.
+
+## Send Replit this
+
+> **LB-009 — PRODUCTION DATABASE RESILIENCE AND POOL-EXHAUSTION AUDIT**
+>
+> A real-device incident caused multiple login requests to occupy database connections until the API pool was exhausted. Railway had to be restarted to recover.
+>
+> This must be corrected before broader testing or launch.
+>
+> First perform a read-only audit. Do not change configuration or code until the report is approved.
+>
+> ### 1. Establish the canonical production database
+>
+> Prove, from the live Railway service’s current `DATABASE_URL`, whether production uses:
+>
+> * Railway PostgreSQL, or
+> * Neon PostgreSQL.
+>
+> Show only the redacted hostname and provider. Do not rely on Replit’s development environment or prior reports.
+>
+> If Neon is production, confirm whether the live application URL is pooled (`-pooler`) or direct. Identify any separate direct migration URL.
+>
+> ### 2. Reproduce and explain the exhaustion
+>
+> Determine:
+>
+> * exact pool configuration currently deployed;
+> * installed `pg` version;
+> * pool `max`, idle timeout, connection timeout, keep-alive settings;
+> * whether `query_timeout` or PostgreSQL `statement_timeout` exists;
+> * whether login acquires one or multiple clients;
+> * which exact operation held each connection;
+> * whether timed-out or aborted HTTP requests left DB work running;
+> * whether clients were released, destroyed, or leaked;
+> * how many requests were required to exhaust the pool;
+> * whether the issue affects all DB routes or only authentication.
+>
+> Do not describe a request as a “hung query” without identifying the SQL or awaited operation.
+>
+> ### 3. Propose a bounded-resilience design
+>
+> The proposed repair must include:
+>
+> * finite connection-acquisition timeout;
+> * finite query/statement timeout;
+> * finite overall request timeout;
+> * explicit pool maximum sized for the production database and number of Railway instances;
+> * guaranteed client release or destruction after errors/timeouts;
+> * protection from duplicate concurrent login submissions;
+> * rate limiting by account and IP;
+> * temporary `503` responses when the DB is unavailable or saturated;
+> * no indefinite queues or spinners;
+> * no valid session deletion on timeout or 5xx.
+>
+> Do not merely increase the pool size.
+>
+> ### 4. Authentication path review
+>
+> Map every awaited action during:
+>
+> * email login;
+> * session creation;
+> * logout;
+> * session restoration.
+>
+> Identify any nonessential external call occurring before the login response, including RevenueCat, email, Twilio, analytics, or profile enrichment. Recommend moving nonessential work after the response or into a background job.
+>
+> ### 5. Client protection
+>
+> Confirm that iOS and Android:
+>
+> * disable Sign In while one request is active;
+> * cannot fire duplicate login requests;
+> * use a bounded timeout;
+> * show a retry state rather than spinning indefinitely;
+> * distinguish invalid credentials, offline device, timeout, 503, and expired session;
+> * do not aggressively retry automatically.
+>
+> ### 6. Monitoring and health
+>
+> Propose metrics and alerts for:
+>
+> * pool total, idle, active, and waiting counts;
+> * connection acquisition duration;
+> * query duration;
+> * request duration;
+> * timeout and 503 counts;
+> * DB connection errors;
+> * login endpoint latency;
+> * service restarts.
+>
+> Keep `/api/healthz` as liveness and propose a separate internal DB-readiness check with a strict timeout.
+>
+> ### 7. Load tests
+>
+> Provide a safe staging/load-test plan for:
+>
+> * 10 concurrent logins;
+> * 50 concurrent logins;
+> * 100 concurrent logins;
+> * repeated taps from the same account;
+> * temporary DB unavailability;
+> * slow DB responses;
+> * one Railway instance and multiple instances.
+>
+> Tests must not use or alter real member accounts.
+>
+> Acceptance criteria:
+>
+> * no pool exhaustion;
+> * no request hangs indefinitely;
+> * no Railway restart required;
+> * duplicate taps create only one login request;
+> * invalid credentials return promptly;
+> * database trouble returns a clear 503 within the approved deadline;
+> * the service recovers automatically after DB availability returns;
+> * normal authenticated traffic remains responsive during login bursts.
+>
+> ### 8. Deliverable
+>
+> Return:
+>
+> 1. Canonical production DB and connection type.
+> 2. Confirmed root cause with the actual SQL or awaited operation.
+> 3. Exact files/configuration involved.
+> 4. Smallest safe immediate fix.
+> 5. Production-grade fix for 50–500 users.
+> 6. Monitoring plan.
+> 7. Load-test results or test plan.
+> 8. Whether server redeploy and new mobile builds are required.
+>
+> End with:
+>
+> * **🔴 UNSAFE TO SCALE**
+> * **🟡 SAFE AFTER LISTED REPAIRS**
+> * **🟢 VERIFIED FOR BETA LOAD**
+>
+> Do not implement until I explicitly approve LB-009.
+
+## Immediate status
+
+You may try logging in once now that the service has recovered. Do not repeatedly retry.
+
+LB-008 still belongs in the next mobile build because it prevents the logout/login collision. LB-009 is the server resilience fix that prevents several users—or one repeatedly retrying user—from exhausting the backend.
+
+A restart restored service, but **a restart is recovery, not prevention**. The acceptable standard is that temporary database trouble causes a few controlled errors, then the system recovers automatically without losing sessions, blocking everyone else, or requiring manual intervention.
+
+[1]: https://node-postgres.com/apis/pool?utm_source=chatgpt.com "node-postgres"
+[2]: https://neon.com/docs/connect/connection-pooling?a=ed8b82d5-b8a1-4d19-b424-004272ac70d4&utm_source=chatgpt.com "Connection pooling - Neon Docs"
+[3]: https://neon.com/docs/changelog/2026-01-09?utm_source=chatgpt.com "Changelog Jan 09, 2026 - Neon"

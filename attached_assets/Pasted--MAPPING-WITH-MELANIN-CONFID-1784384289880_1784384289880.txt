@@ -1,0 +1,113 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+05. DISCOVERY ENGINE™
+Future-State Production Specification v1.0
+Classification: Core Discovery, Relevance, and Opportunity-Surfacing Engine
+Status: Review Mode — designed as the launch-state model
+Confidentiality: Highest restriction; candidate generation, relevance scoring, ranking formulas, exploration logic, eligibility thresholds, visibility controls, anti-bias protections, and promotion separation rules are confidential trade secrets and are not publicly disclosed
+05.1 Purpose
+The Discovery Engine™ determines which people, businesses, events, resources, neighborhoods, institutions, opportunities, Cultural Ambassadors, stories, and experiences are eligible to be found in response to a user or system request.
+It governs:
+candidate identification;
+basic eligibility;
+contextual relevance;
+geographic relevance;
+temporal relevance;
+community relevance;
+cultural relevance;
+opportunity relevance;
+novelty and exploration;
+Hidden Gem potential;
+ranking among eligible candidates;
+result diversity;
+evidence sufficiency;
+search visibility;
+recommendation candidacy;
+promotion candidacy;
+explanation of why an item was surfaced.
+The Discovery Engine™ does not independently determine that a result is safe, trustworthy, culturally authentic, suitable for promotion, or appropriate for every user.
+Those determinations require coordination through the Belonging Intelligence Framework™.
+The Engine’s governing question is:
+Which eligible options are most relevant to this person’s stated purpose and context, while preserving community value, meaningful exploration, fairness, safety, and the possibility of discovering what popularity alone would overlook?
+05.2 Foundational Principle
+Discovery is not the same as recommendation.
+Recommendation is not the same as promotion.
+Promotion is not the same as recognition.
+The Discovery Engine™ must preserve all four as separate decisions.
+SEARCH VISIBILITY
+Can the item appear in relevant results?
+
+RECOMMENDATION ELIGIBILITY
+Is there enough evidence to suggest it for this context?
+
+PROMOTION ELIGIBILITY
+May the platform actively elevate or feature it?
+
+RECOGNITION ELIGIBILITY
+Has it earned a durable distinction, milestone, or status?
+A result may be:
+searchable but not recommendable;
+recommendable but not promotable;
+promotable for one context but not another;
+recognizable for community impact but not appropriate for a specific user request;
+culturally relevant but safety-restricted;
+trustworthy but geographically irrelevant;
+popular but low in community value;
+emerging but highly relevant;
+unknown without being negative.
+05.3 Definition of Discovery
+For Mapping With Melanin™, discovery is the process of identifying, evaluating, ordering, and explaining eligible options that may help a user connect, act, travel, learn, support, relocate, participate, or belong.
+Discovery includes both:
+direct retrieval — finding what the user explicitly requested; and
+meaningful exploration — surfacing relevant possibilities the user may not have known to request.
+Discovery must not become:
+a popularity contest;
+an advertising inventory;
+a follower-count ranking;
+a pay-to-be-seen system;
+a replication of existing visibility inequalities;
+an opaque suppression mechanism;
+a replacement for user choice;
+a claim that the highest-ranked result is objectively best.
+05.4 Discovery Objects
+The Engine may evaluate the following object types:
+Object type	Examples
+Business	Restaurant, retailer, professional service
+Event	Festival, workshop, community gathering
+Resource	Food bank, scholarship, legal clinic
+Opportunity	Job, grant, mentorship, contract
+Neighborhood	Area for visiting, living, or exploring
+City	Destination or relocation market
+Cultural Ambassador	Community storyteller, guide, creator
+Organization	Nonprofit, association, local group
+Institution	HBCU, museum, cultural center
+Historical site	Landmark, archive, memorial
+Community member	Mentor, collaborator, group participant
+Kinfolk Circle	Small-group connection opportunity
+Community post	Local update, hiring notice, housing lead
+Experience	Tour, class, cultural activity
+Marketplace listing	Product, service, rental, local offering
+Topic	Saved interest or verified information category
+Route-adjacent place	Relevant stop along a planned route
+Each object type must use an approved object-specific profile.
+05.5 Discovery Modes
+The Engine supports the following discovery modes.
+Code	Mode	Purpose
+DISC-EXACT	Exact Match	Locate a named entity or precise query
+DISC-CATEGORY	Category Discovery	Find items within a requested category
+DISC-NEARBY	Nearby Discovery	Surface geographically relevant options
+DISC-CONTEXT	Contextual Discovery	Match options to user circumstances
+DISC-EXPLORE	Exploratory Discovery	Introduce relevant unfamiliar options
+DISC-HIDDEN-GEM	Hidden Gem Discovery	Surface strong emerging or overlooked entities
+DISC-RESOURCE	Resource Discovery	Find practical support
+DISC-OPPORTUNITY	Opportunity Discovery	Find jobs, grants, contracts, programs
+DISC-HERITAGE	Cultural Heritage Discovery	Find culturally or historically significant entities
+DISC-COMMUNITY	Community Connection	Find people, groups, institutions, or spaces
+DISC-RELOCATION	Relocation Discovery	Find long-term community, resource, safety, and opportunity information
+DISC-ROUTE	Route Discovery	Find relevant options along a journey
+DISC-TREND	Emerging Activity	Surface verified growth or current relevance
+DISC-RECOGNITION	Recognition Candidate Discovery	Identify entities for milestone or status review
+The Context Engine™ selects the applicable mode.

@@ -1,0 +1,152 @@
+Send Replit this exact request:
+
+> **KINFOLKAI ROLE-, PROFILE-, AND TIER-AWARE AUDIT — READ ONLY**
+>
+> Before implementing the launch-safe KinfolkAI package, perform a focused read-only audit of the current source and report whether role-aware and tier-aware behavior can be added safely tonight without affecting authentication or delaying tomorrow’s iOS and Android builds.
+>
+> Do not modify code, database schema, authentication, sessions, roles, user IDs, or deployment yet.
+>
+> ## Audit questions
+>
+> ### 1. Current identity and role model
+>
+> Confirm:
+>
+> * How one canonical user is represented across web, iOS, and Android.
+> * Which roles currently exist, such as community member, business owner, admin, tester, or staff.
+> * Whether business ownership is stored as a user role, a business relationship, a profile type, or some combination.
+> * Whether one user can currently be both a community member and a business owner without creating a separate user record.
+> * Whether any current logic assumes a user can have only one role.
+>
+> ### 2. Active context
+>
+> Identify whether KinfolkAI currently receives:
+>
+> * the user’s role;
+> * business-owner status;
+> * active business ID;
+> * membership tier;
+> * personal preferences;
+> * business information;
+> * personal events;
+> * business events;
+> * Life Journey context;
+> * saved places;
+> * weather context.
+>
+> For each item, state:
+>
+> * where it comes from;
+> * whether it is currently passed into KinfolkAI;
+> * whether it is available on both iOS and Android;
+> * whether it is reliable enough to use tonight.
+>
+> ### 3. Personal versus business experience
+>
+> Determine whether the current system can safely support:
+>
+> * personal/community responses;
+> * business/professional responses;
+> * clarification when intent is ambiguous;
+> * limited cross-context awareness without mixing private personal and business data.
+>
+> Example behaviors to evaluate:
+>
+> * Personal: “You have an outdoor community event saved Saturday, and rain is expected.”
+> * Business: “Your business block party is Saturday, and rain is expected. Would you like help with a backup plan or attendee message?”
+> * Ambiguous: “Are you asking about this for yourself or for your business?”
+> * Schedule conflict: “Your personal event overlaps with a business meeting. Would you like to compare them?”
+>
+> Confirm which of these can be implemented tonight using existing data and which require future schema, calendar, permission, or UI work.
+>
+> ### 4. Tier behavior
+>
+> Confirm how KinfolkAI currently adapts by membership tier.
+>
+> Verify that:
+>
+> * role determines the relevant context;
+> * tier determines response depth, breadth, and proactive enrichment;
+> * business ownership does not automatically grant premium AI behavior;
+> * a premium community member is not treated as a business owner;
+> * current tier rules work consistently on iOS, Android, and web.
+>
+> Identify any contradictions or unsafe assumptions in the current system prompt.
+>
+> ### 5. Privacy and separation
+>
+> Confirm whether adding role-aware prompt behavior could expose or improperly combine:
+>
+> * personal and business finances;
+> * personal and business schedules;
+> * private Life Journey notes;
+> * business-owner data;
+> * another user’s information;
+> * admin-only information.
+>
+> State what safeguards already exist and what must remain out of scope tonight.
+>
+> ### 6. Exact implementation impact
+>
+> Report:
+>
+> * exact files that would change;
+> * exact prompt sections or UI components affected;
+> * whether any auth file would change;
+> * whether any database migration is required;
+> * whether any new API, environment variable, or paid service is required;
+> * whether Android and iOS share the same implementation;
+> * expected regression surface;
+> * rollback method.
+>
+> ### 7. Launch-safe scope recommendation
+>
+> Categorize each proposed capability as:
+>
+> * **Safe to implement tonight**
+> * **Needs clarification**
+> * **Post-launch only**
+> * **Do not implement**
+>
+> Specifically evaluate:
+>
+> 1. Role-aware system prompt behavior.
+> 2. Personal-versus-business clarification.
+> 3. Business-specific budgeting examples.
+> 4. Personal-specific budgeting examples.
+> 5. Weather responses tailored to personal versus business events.
+> 6. Cross-context schedule conflict reminders.
+> 7. Personal | Business context selector.
+> 8. Long-term separate personal and professional memory.
+>
+> ### 8. Required test plan
+>
+> If you recommend implementation tonight, provide tests for:
+>
+> * community member on free tier;
+> * community member on premium tier;
+> * business owner on free/lower tier;
+> * business owner on premium tier;
+> * user with both community and business context;
+> * ambiguous question requiring clarification;
+> * weather context available;
+> * weather context unavailable;
+> * budgeting question in personal context;
+> * budgeting question in business context;
+> * login, logout, session restoration, and profile loading after the change.
+>
+> ## Final recommendation
+>
+> End the report with exactly one:
+>
+> * **🟢 SAFE TO IMPLEMENT TONIGHT**
+> * **🟡 SAFE ONLY WITH THE LISTED LIMITATIONS**
+> * **🔴 DO NOT IMPLEMENT BEFORE THE BUILDS**
+>
+> Include the reason and the smallest approved scope.
+>
+> Do not implement until I explicitly say:
+>
+> **“Please implement the approved KinfolkAI role-, profile-, and tier-aware launch-safe package.”**
+
+This will force Replit to separate what is truly available now from the longer-term vision. The likely safe scope tonight is prompt-level role awareness and clarification; a real Personal | Business switch, cross-calendar conflict detection, and separate long-term memories will probably require additional product and data work.

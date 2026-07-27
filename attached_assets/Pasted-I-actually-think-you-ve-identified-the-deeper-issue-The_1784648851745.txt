@@ -1,0 +1,144 @@
+I actually think you've identified the deeper issue.
+
+The problem is **not** that Replit can't understand English. The problem is that it is optimizing for **literal compliance** instead of **product intent**.
+
+When you said:
+
+> "The platform should not default to Black-owned."
+
+You meant:
+
+> "Change the user experience so it reflects our mission."
+
+Replit interpreted it as:
+
+> "Replace the exact words 'Black-owned' wherever they appear."
+
+Those are completely different tasks.
+
+The example you pointed out is the perfect illustration.
+
+> **"Nominate any business — Black-owned or not."**
+
+Replit marked that as acceptable because, literally, it is inclusive. 
+
+But that's **not the question I would ask.**
+
+I would ask:
+
+> **"Does this sentence best represent the brand?"**
+
+My answer is **no**.
+
+Not because it's offensive.
+Not because it's technically wrong.
+
+Because it still frames **Black-owned** as the default reference point.
+
+That's the disconnect.
+
+---
+
+## I think we need to change how we give Replit work.
+
+Instead of saying:
+
+> Change the wording.
+
+We need to say:
+
+> **Evaluate every screen as a Product Owner.**
+
+For example:
+
+### Old instruction
+
+> Replace Black-owned defaults.
+
+### Better instruction
+
+> For every piece of user-facing text, ask:
+>
+> **"If this were the first sentence a new user ever read, would it accurately communicate the mission of Mapping With Melanin™?"**
+>
+> If not, rewrite it.
+
+That changes the mindset completely.
+
+---
+
+## Here's another example.
+
+Current:
+
+> Nominate any business — Black-owned or not.
+
+Literal compliance:
+
+> ✔ Inclusive.
+
+Brand compliance:
+
+> ✘ Still centered around one comparison.
+
+Instead I'd write:
+
+> **Nominate a business that strengthens your community.**
+
+or
+
+> **Know a business making a positive impact? Nominate them.**
+
+or
+
+> **Help your community discover businesses worth supporting.**
+
+Notice none of those require comparing one ownership group to another.
+
+---
+
+## I think we need a permanent engineering rule.
+
+I'd add this to `replit.md`:
+
+---
+
+### PRODUCT INTENT RULE (Permanent)
+
+When implementing user-facing changes, do **not** optimize for literal wording changes.
+
+Instead, optimize for the underlying product intent.
+
+Before approving any copy, UI, seed data, ranking, placeholder, prompt, notification, or onboarding text, ask:
+
+1. Does this represent the mission?
+2. Does this create the intended emotional experience?
+3. Would a first-time user understand what Mapping With Melanin™ stands for?
+4. Am I merely changing words, or am I improving the experience?
+5. Is this still unintentionally centering one community when the product is intended to welcome many?
+6. Would the founder likely say, "Yes—that's exactly what I meant," even if those weren't her exact words?
+
+If the answer is uncertain, stop and explain the tradeoffs instead of making the most literal interpretation.
+
+The implementation should satisfy the **intent**, not merely the **sentence**.
+
+---
+
+## This actually changes everything.
+
+I think Replit has been acting like an excellent software engineer.
+
+What Mapping With Melanin™ now needs is an engineer who also thinks like:
+
+* a product manager,
+* a UX designer,
+* a community builder,
+* and a founder.
+
+Those are different disciplines.
+
+Going forward, I would actually tell Replit:
+
+> **"When I give direction, assume I am describing the desired user experience, not dictating the exact implementation. If there is a better implementation that achieves the same mission, explain it and recommend it instead of following my words literally."**
+
+I think that one instruction will dramatically improve the quality of the collaboration because it changes the role from **code executor** to **product engineering partner**. That's exactly what you've been asking for throughout this project.

@@ -1,0 +1,470 @@
+MAPPING WITH MELANIN™ — MANUS CODE REMEDIATION REVIEW
+Build 97 — Independent Senior Engineering Review with Implementation-Ready Fixes
+
+￼
+
+0. EXECUTIVE SUMMARY
+0.1 The one finding that changes everything
+Every plan in Replit’s GO/NO-GO report and implementation handoff rests on a single assumption:
+
+“Railway dashboard → API Server service → Deployments → Deploy Latest (will pull the GitHub push from 18:22 UTC)” — `GO_NOGO_REPORT.txt`, Section 3
+
+That assumption is false, and I verified it directly against the repository. The GitHub repository is not a buildable source tree — it is a documentation-and-artifact export. What Railway actually runs is the pre-compiled bundle `dist/index.mjs`, launched by `static-server.mjs` (`package.json` → `"start": "node static-server.mjs"`, `Dockerfile` → `COPY dist/ ./dist/`, `railway.toml` → `cmd = "npm start"`). That bundle was last built and committed on July 24, 2026 (commit `3c9ad6a`), three days before the Build 97 fix files were pushed on July 27 (commits `81b7b65` … `560ea85`).
+
+I inspected the deployed bundle line by line. It still contains all of the pre-fix code:
+
+
+￼
+The nine Build 97 TypeScript files (`artifacts/api-server/src/*`, `lib/db/src/index.ts`) are reference copies that nothing builds. They cannot even compile from this repository: `artifacts/api-server/src/routes/index.ts` imports roughly fifty routers (`auth`, `kinfolk`, `businesses`, `community`, …) that do not exist in the repo, and `lib/db/src/index.ts` imports `./schema`, which is also absent. There is no build script anywhere in the repository (`package.json` contains only `"start"`).
+
+I confirmed the consequence in production during this review: `GET /api/readyz` returned a 503 with the old detail string `"All 1 connections in use (idle=0); not queuing probe."` on first hit (cold pool), then 200s once warmed. The old probe logic, the `max: 5` pool, and the per-webhook StripeSync leak are all still live.
+
+Bottom line: pressing “Deploy Latest” in Railway will redeploy the same stale bundle and change nothing. The Build 96 rejection root cause is still in production, and it will remain in production after the exact founder action Replit prescribed. The correct remediation — rebuild the bundle from the real source tree in the Replit workspace, commit the fresh `dist/index.mjs`, then redeploy — is defined precisely in Issue #1 below. This reclassifies P0-1 from “founder clicks a button” to “Replit must rebuild and push the deployable artifact first.”
+
+0.2 Secondary integrity findings on the review package itself
+Three additional discrepancies affect how much weight the founder should place on Replit’s self-reporting. First, the handoff’s stated HEAD commit `84deeb16a2a4edd6c366bedb77969bc8e8fb4f67` does not exist in the repository (`git cat-file -t` → `fatal: could not get object info`; full 152-commit history fetched). The likely explanation is that it is a hash from the Replit workspace’s local git, never pushed — consistent with the KinfolkAI test log’s admission that “the git push failed because the GitHub remote isn’t configured in this Replit workspace.” Second, the handoff claims free-tier users see KinfolkAI fully locked (“Free: 0 — KinfolkAI locked”), but the deployed code grants `FREE_MONTHLY_LIMIT = 3` queries per month before a 429 `KINFOLK_LIMIT_REACHED` — which materially changes the Apple-reviewer experience and makes the drafted App Store review notes inaccurate. Third, the handoff claims “All four [iPad] orientations declared ✅,” but `app.json` sets a global `"orientation": "portrait"` with no `UIRequiresFullScreen` key — a genuine Apple rejection vector for an app that declares `supportsTablet: true` (§ Issue #12).
+
+0.3 Verdict snapshot
+
+￼
+The report below provides, for every issue: root cause, exact files, correctness of Replit’s approach, ranked alternatives, recommended solution, exact code changes with diffs, schema/env/deployment changes, regression tests, risk, effort, required-by stage, the true category of any “cannot be done” claim (A–G), and whether Manus can implement it directly in a separate branch after founder authorization.
+
+
+1. EVIDENCE BASE AND SOURCE-ACCESS STATEMENT
+The founder’s instructions require an explicit statement of what could and could not be verified. The repository contains the complete backend deployable artifact (`dist/index.mjs`, ~453k lines bundled, including the full compiled route set: auth, kinfolk, community, businesses, cultural-sites, billing, admin) plus nine Build 97 TypeScript reference files, the mobile `app.json`/`eas.json` copies under `docs/review/`, the compiled web bundle under `web-static/`, and the deployment configuration (`Dockerfile`, `railway.toml`, `nixpacks.toml`, `static-server.mjs`, `package.json`).
+
+The repository does not contain: the mobile app source (`artifacts/mobile/` does not exist in the repo — no `FullMapView.tsx`, no `membership.tsx`, no screens), the uncompiled backend source for most routes (`kinfolk.ts`, `auth.ts`, `webhookHandlers.ts` exist only inside the compiled bundle), or `lib/db/src/schema.ts`. Where the handoff cites mobile files, I verified behavior against the compiled backend bundle and the `app.json` configuration instead, and I mark any conclusion that rests on unverifiable mobile source as such. KinfolkAI behavior was verified from the deployed compiled bundle, which is authoritative for what production actually does.
+
+Live production checks performed (all read-only GETs): `/api/readyz` (reproduced old 503 detail string on cold pool, then 200), `/api/readyz/history` (404), `/api/cultural-sites?heritageCategory=Historical+Sundown+Town` (`{"sites":[],"total":0}`), `/api/cultural-sites` category summary (155 sites: HBCU 44, African American Heritage 31, Native American Heritage 20, Hispanic & Latino 12, Cultural Neighborhood 10, Women’s History 9, LGBTQ+ History 9, Civil Rights 8, Immigrant Heritage 5, Religious Heritage 4, Freedom Trail 3).
+
+One correction to Replit’s verification method: the GO/NO-GO report queried `GET /api/cultural-sites?category=sundown&limit=5`. The deployed route filters `category` by exact match and the correct parameter is `heritageCategory` with the exact value `Historical Sundown Town` (`dist/index.mjs` ≈ line 441669). The conclusion (zero rows) happened to be right, but the query itself would return zero rows even after seeding. All post-seed verification must use `?heritageCategory=Historical+Sundown+Town`.
+
+
+2. ISSUE-BY-ISSUE REMEDIATION
+Each issue follows the mandated 13-point structure. The “cannot be done” classification uses the founder’s taxonomy: A technically impossible · B unsupported by Replit’s tools · C requires third-party credentials/dashboard · D requires founder approval · E requires legal/licensing review · F possible but Replit does not know how · G possible but unsafe within today’s deadline.
+
+
+ISSUE #1 — StripeSync pool fix is not in the deployable artifact; Railway redeploy will not ship it
+Severity: P0 — the direct root cause of the Build 96 Apple rejection is still live in production.
+
+1. Confirmed root cause. The repository’s deployment chain is `railway.toml` → `npm start` → `static-server.mjs` → `spawn(node, ["dist/index.mjs"])`. The committed `dist/index.mjs` predates every Build 97 fix (bundle committed July 24 15:27 EDT in `3c9ad6a`; fix files committed July 27 14:21–14:44 EDT). There is no build step in the repository — `package.json` scripts contain only `"start": "node static-server.mjs"`, and the Dockerfile copies `dist/` verbatim. The Build 97 TypeScript under `artifacts/` and `lib/` is dead weight from the deployment pipeline’s perspective; it also cannot compile standalone because ~50 imported routers and the DB schema module are absent from the repo. Replit’s statement that “Railway is not auto-deploying from GitHub; a manual redeploy must be triggered” misdiagnoses the situation: even a successful redeploy pulls the same stale bundle.
+
+2. Exact files and code sections.
+
+	•	`dist/index.mjs` ≈ 422229–422241 — old `getStripeSync()` creating a new `StripeSync` (and its internal `pg.Pool`, defaulted to `max: 10` by `stripe-replit-sync` at ≈ 377047–377048) on every invocation.
+	•	`dist/index.mjs` ≈ 453110–453117 — `WebhookHandlers.processWebhook()` calls `await getStripeSync()` per webhook event.
+	•	`dist/index.mjs` ≈ 61508–61525 — old app pool `max: 5`.
+	•	`dist/index.mjs` ≈ 453157–453166 — old readyz fast-fail (`idle === 0 && total > 0`).
+	•	`artifacts/api-server/src/stripeClient.ts` lines 83–130 — the correct new singleton (reference copy).
+	•	`lib/db/src/index.ts` lines 47–83 — the correct new pool config (reference copy).
+	•	`package.json`, `Dockerfile`, `railway.toml`, `static-server.mjs` — the deployment chain proving `dist/` is what ships.
+
+3. Is Replit’s current approach correct? The code of the fix is correct and well-engineered. `_stripeSyncPromise` is assigned synchronously before any `await`, so concurrent webhook handlers share one promise — the standard async-singleton pattern that eliminates the per-webhook pool. The `max: 2` StripeSync pool, `max: 8` app pool, 30 s idle timeout, and SIGTERM drain are all sound. The deployment plan is wrong: it never rebuilds the artifact Railway runs. There is also one latent defect in the new singleton itself: if `_createStripeSync()` rejects (for example, a transient failure fetching Stripe credentials), the rejected promise is cached forever, and every subsequent webhook fails until the process restarts.
+
+4. Better technical alternatives, ranked.
+
+	1.	Rebuild the bundle in the Replit workspace (where the full source lives), commit the fresh `dist/index.mjs`, redeploy Railway. Zero infrastructure change; matches the existing (unusual but functional) “commit the compiled artifact” pipeline. Recommended for today.
+	2.	Commit the full source tree and add a real build step to the Railway deploy (`nixpacks`/Dockerfile running `esbuild`), eliminating stale-artifact risk permanently. Correct long-term fix; too much churn for today’s deadline.
+	3.	Have Railway pull the deployment from the Replit workspace deployment mechanism directly, bypassing GitHub. Opaque and unauditable; not recommended.
+
+5. Recommended solution. Alternative 1 today, with the failed-init cache defect fixed in the same pass, plus a one-line “bundle fingerprint” so deployed-code verification is never guesswork again. Then Alternative 2 as post-submission hardening (tracked, not blocking).
+
+6. Exact code changes required. (a) In the Replit workspace: apply the `stripeClient.ts` retry-on-failed-init patch below, run the workspace’s existing esbuild bundling (the same process that produced `dist/index.mjs` on July 24), verify the new bundle contains the singleton, commit `dist/index.mjs` (and `dist/*.map`) to `main`, trigger Railway redeploy. (b) Add a `GET /api/version` endpoint returning the git SHA and build timestamp embedded at bundle time.
+
+7. Proposed diff.
+
+
+￼
+
+￼
+Also correct the stale comment in `stripeClient.ts` line 80 (“app pool (5) + stripe pool (2) = 7” → “app pool (8) + stripe pool (2) = 10”) and in `index.ts` line 120 (“max:5” → “max:8”) so operational docs match reality.
+
+8. Database/schema changes. None.
+
+9. Environment or deployment changes. After the fresh bundle is committed: Railway dashboard → API Server → Deployments → Deploy Latest (this founder action is now meaningful). Verify with `GET /api/readyz` — the new code answers with the `Pool at capacity (total=X/8 …)` detail format on saturation and never 503s on a cold pool — and with `GET /api/readyz/history` returning 200, and `GET /api/version` returning the new SHA.
+
+10. Regression tests. (i) Bundle-content gate before push: `grep -c "_stripeSyncPromise" dist/index.mjs` ≥ 1, `grep -c "max: 8" dist/index.mjs` ≥ 1, `grep -c "seed-sundown-towns" dist/index.mjs` ≥ 1 — fail the deploy if any is zero. (ii) Post-deploy: fire 10 Stripe test webhooks (Stripe Dashboard → Send test webhook, or `stripe trigger checkout.session.completed` ×10 via Stripe CLI); poll `/api/readyz` every 5 s for 30 minutes: expect HTTP 200 throughout, `pool.total ≤ 8`, `waiting` returning to 0, and StripeSync contributing at most 2 connections (Railway Postgres `SELECT count(*) FROM pg_stat_activity` ≤ 10). (iii) Failed-init retry: temporarily unset `STRIPE_SECRET_KEY` in a staging process, send a webhook (expect 400/500), restore the key, send again — the second must succeed without a restart. (iv) Cold-start: restart the service and immediately hit `/api/readyz` — must be 200, not 503.
+
+11. Risk of the correction. Low-to-moderate. The rebuild bundles three days of any other workspace changes since July 24; mitigate by diffing the workspace git log since `3c9ad6a` before pushing and running the endpoint battery (Section 7 checklist) after deploy. The singleton retry patch is strictly safer than current behavior.
+
+12. Estimated effort. 30–60 minutes for a Replit engineer with workspace access (patch, rebuild, grep-verify, commit, redeploy, 30-minute observation window in parallel).
+
+13. Required when? Before submission and before tester distribution; independent of the EAS build (mobile binaries can compile in parallel). Nothing should be submitted to Apple until this is deployed and the webhook stress test passes.
+
+“Cannot be done” classification. Replit framed this as C (Railway dashboard access). It is actually F + C: F because Replit did not recognize that the deployed artifact is the stale bundle (its own report even observed the old readyz string in production and still concluded a redeploy would fix it), and C only for the final dashboard click. Fastest responsible alternative: the rebuild-and-commit path above; if Replit cannot run the bundler today, Manus can reconstruct the bundle patch directly against `dist/index.mjs` (surgical edits to the three code regions identified) — inelegant but deployable, and offered only as a last resort.
+
+Manus implementation offer. Yes — willing and able. In a separate branch (`fix/build97-deployable-bundle`) I can implement the `stripeClient.ts` retry patch, the `/api/version` endpoint, and the CI grep-gate script immediately after founder authorization. The bundle rebuild itself must run where the full source lives (Replit workspace); if the founder grants repo access to the true source, I can run the esbuild step end-to-end as well.
+
+
+ISSUE #2 — Railway/PostgreSQL connection stability (pool sizing, retry scope, readiness accuracy)
+Severity: P0 (deployment-coupled with Issue #1) with P2 hygiene items.
+
+1. Confirmed root cause. Production instability traces to (a) the per-webhook StripeSync pools (Issue #1), (b) the old `max: 5` app pool with no headroom, and (c) a readiness probe that reported 503 on a cold or busy-but-healthy pool (`idle === 0 && total > 0`), which I reproduced live during this review. The new TypeScript fixes all three correctly but is undeployed.
+
+2. Exact files and code sections. `lib/db/src/index.ts` 47–83 (new pool: `max: 8`, `connectionTimeoutMillis: 10_000`, `statement_timeout`/`query_timeout: 10_000`, `idleTimeoutMillis: 30_000`, `keepAlive` + 1 s initial delay, `maxLifetimeSeconds: 1800`); 124–137 (`getPoolStats`); 139–155 (lazy `Proxy` pool — pool is a true process-level singleton). `artifacts/api-server/src/app.ts` 44–73 (new readyz: fast-fail only on `idle===0 && total>=8 && waiting>0`, 2 s `SELECT 1` race). `artifacts/api-server/src/lib/db-retry.ts` (retry only on `ECONNRESET`-class errors, single retry, 500 ms — narrowly scoped and safe, never retries constraint/server errors). `artifacts/api-server/src/lib/healthMonitor.ts` (5-minute probe, 150-entry ring buffer). `artifacts/api-server/src/index.ts` 105–153 (SIGTERM drain — already deployed). `artifacts/api-server/src/routes/admin.ts` line 999 (`/admin/health` still reports `poolConfig: { max: 5 … }` — stale hardcoded metadata). `static-server.mjs` 17–24 and 25–86 (a second pool created at every boot for ad-hoc migrations, default `max: 10`, plus test-row seeding into production).
+
+3. Is Replit’s current approach correct? Substantially yes, with four defects. (i) The handoff claims `allowExitOnIdle: true` was added — it is not present in `lib/db/src/index.ts` (harmless, but the claim is false; the SIGTERM path makes it unnecessary). (ii) The handoff describes the health monitor as a “30s background ticker”; the code runs every 300 s. (iii) The readyz threshold hardcodes the literal `8` in two files; a future pool resize silently breaks both. (iv) `/admin/health` reporting `max: 5` will mislead the first incident responder who trusts it. Separately, the founder asked “no other unbounded pool exists”: `static-server.mjs` creates one extra short-lived pool per boot (bounded at pg’s default 10, `pool.end()` called) and `runMigrations` from `stripe-replit-sync` creates its own migration pool at startup — both bounded but worth documenting; the static-server one also inserts test/demo rows (including `regression_test_delete_me@example.com`) into the production database on every boot.
+
+4. Alternatives, ranked. (1) Deploy the existing fix (via Issue #1) plus the small patches below — recommended. (2) Move to an external pooler (PgBouncer / Railway connection pooling) — right answer at real scale, unnecessary risk today. (3) Raise `max` beyond 8 — unnecessary: Replit’s own load data (p95 489 ms at 30 concurrent, saturation only at 141 req/s abuse load) shows 8+2 is adequate for ~30 testers plus Apple review.
+
+5. Recommended solution. Ship the new pool code through Issue #1, and in the same branch: export the pool max as a constant consumed by readyz and healthMonitor; fix `/admin/health` metadata; gate static-server test-row seeding behind an env flag.
+
+6–7. Exact changes and diffs.
+
+
+￼
+
+￼
+
+￼
+
+￼
+
+￼
+Additionally, one line in `app.ts` deserves a build-time check: `/api/readyz/history` uses `require("./lib/healthMonitor")` inside what compiles to an ESM bundle (`.mjs`). If the workspace esbuild config does not inject a `require` shim, this line throws at runtime. Convert to a static import (`import { getHealthHistory } from "./lib/healthMonitor";` at top of file, then `res.json(getHealthHistory())`) — a two-line change that removes the risk entirely.
+
+8. Database/schema changes. None.
+
+9. Environment/deployment. `SEED_TEST_ROWS` unset in Railway production (defaults off). Everything else rides Issue #1’s redeploy.
+
+10. Regression tests. 20 concurrent `GET /api/businesses?limit=10` + 10 Stripe test webhooks simultaneously; `/api/readyz` stays 200, `pool.total ≤ 8`, `waiting` returns to 0 within seconds; at-rest `pool.total` decays to 1–2 within ~60 s (30 s idle timeout); `GET /api/readyz/history` shows ≥ 1 `ok` entry and correct 5-minute cadence; `GET /admin/health` (admin session) reports `max: 8`; restart-then-immediate-readyz returns 200. Connection-growth protocol exactly as the handoff Section 7 specifies — Replit’s protocol there is good; keep it.
+
+11. Risk. Minimal — constant extraction and metadata corrections. The static-server flag is behavior-preserving unless the flag is set.
+
+12. Effort. 45 minutes including tests.
+
+13. Required when? Constant/metadata/require-shim fixes: before submission (they ride the Issue #1 rebuild, so effectively free). `SEED_TEST_ROWS`: before tester distribution.
+
+Classification. Not claimed impossible; Replit can do all of it (the misses were F-class oversights). Manus offer: yes — all diffs above ready to apply on `fix/build97-deployable-bundle`.
+
+
+ISSUE #3 — StripeSync connection handling: webhook stress test “untestable from Replit”
+Severity: P0 verification gap.
+
+1. Confirmed root cause. Not a code issue — a test-execution gap. Replit stated Stripe webhooks “cannot be triggered from this environment (requires Stripe CLI or Stripe Dashboard).”
+
+2. Files involved. `artifacts/api-server/src/app.ts` 116–136 (webhook route: raw-body before `express.json()` — correct, signature verified downstream); `dist/index.mjs` 453215 (deployed equivalent); `artifacts/api-server/src/stripeClient.ts` (fix under test).
+
+3. Is Replit’s approach correct? The proposed manual test (founder triggers 5–10 dashboard test webhooks, watch readyz) is valid but thin: dashboard “Send test webhook” sends events one at a time, which under-tests the concurrent pool behavior that caused Build 96.
+
+4. Alternatives, ranked. (1) Stripe CLI in any shell with the test-mode secret key: `stripe listen --forward-to https://www.mappingwithmelanin.com/api/stripe/webhook` is unnecessary since the managed webhook already exists — simply run `for i in $(seq 1 15); do stripe trigger customer.subscription.updated & done; wait` to generate genuinely concurrent events. (2) Dashboard manual test webhooks (Replit’s plan) — acceptable fallback. (3) A signed-payload replay script using the webhook secret to POST concurrent synthetic events — works but re-implements Stripe signing; only if CLI access is impossible.
+
+5. Recommended solution. Alternative 1, run after the Issue #1 redeploy, with a 30-minute observation window (adequate: pool leak symptoms in Build 96 appeared within 2–3 events; a 30-minute window with 15 concurrent events plus the 5-minute health monitor provides strong evidence — the handoff’s open question “30 minutes or 2 hours?” is answered: 30 minutes of active test + passive `readyz/history` monitoring for the following 12 hours before submission).
+
+6–7. Code changes. None to the webhook path itself. Optional: a test script committed as `scripts/webhook-stress.sh` (10 lines) so the procedure is repeatable.
+
+8. Schema. None. 9. Environment. Requires the Stripe test-mode API key locally for the CLI (category C — founder holds the Stripe dashboard; the key must never be committed).
+
+10. Regression tests. During the burst: `/api/readyz` polled at 1 Hz stays 200; `pg_stat_activity` count ≤ 10; after 5 minutes at rest `pool.total` back to 1–2; `stripe_processed_events` table shows the 15 event IDs exactly once each (idempotency check — the deployed handler records processed event IDs).
+
+11. Risk. Negligible — test-mode events on production infrastructure exercise only the sync path; no live charges.
+
+12. Effort. 20 minutes plus the observation window.
+
+13. Required when? After the Issue #1 deploy, before submission.
+
+Classification. C (Stripe credentials/dashboard) — correctly identified by Replit; the CLI alternative above is the fastest responsible path and can be run by the founder, Replit (locally), or Manus with a test-mode key. Manus offer: yes, given a restricted test-mode key I can execute and document the full stress protocol.
+
+
+ISSUE #4 — Historical Sundown Towns: data not imported, and the two Replit documents contradict each other
+Severity: P0 for the founder’s non-negotiable requirement.
+
+1. Confirmed root cause. Three stacked causes. (a) The GO/NO-GO report (written first) declared “DATA NOT IMPORTED — DO NOT SHIP… EXCLUDE from Build 97,” while the later handoff and KinfolkAI report say the feature is implemented and merely awaits a production seed call — the implementation happened between the two documents, and the seed data plus endpoint are indeed in the repo (commits `f761b58`/`560ea85`, July 27 14:43 EDT). (b) The seed endpoint `POST /admin/seed-sundown-towns` is not in the deployed bundle (Issue #1), so the founder’s seed call would 404 today. (c) The production database has zero sundown rows — verified live: `GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town` → `{"sites":[],"total":0}`.
+
+2. Exact files and code sections. `artifacts/api-server/src/data/sundown-towns-seed.ts` (330 lines, 15 entries, `DISCLAIMER_PREFIX` at 41–42, header source list at 4–18); `artifacts/api-server/src/routes/admin.ts` 1229–1290 (seed endpoint: `isAdmin(req)` gate, idempotent on `name+city+state`, parameterized inserts, `randomUUID()` ids); deployed cultural-sites route `dist/index.mjs` ≈ 441666–441745 (filters, search, category summary, `ORDER BY CASE heritage_category` — “Historical Sundown Town” is not in the CASE list, so it sorts in the `ELSE 9` bucket, last; acceptable, arguably correct placement).
+
+3. Is Replit’s approach correct? Architecturally yes: reusing `cultural_sites` with `heritage_category = 'Historical Sundown Town'` means the existing map layer, search, and category chips pick the data up with no new mobile code, and the API’s dynamically computed `categories` array will surface the new chip automatically once rows exist. The disclaimer text is verbatim in every entry and uses past-tense, no-current-danger framing — this matches the founder’s requirement. Four quality gaps remain. (i) Sourcing: the file header cites “Wikipedia: ‘List of sundown towns’” among its sources (line 9). Row-level `verifiedSource` fields are strong (Loewen 2005; Tougaloo NSF database; DOJ/HUD records; Blood at the Root; state historical societies), but the Wikipedia line in the header weakens the defensibility narrative and should be removed or replaced with the primary sources actually used. (ii) Per-entry factual confidence is uneven: Forsyth County, Cicero, Vidor, Dearborn, Levittown, and Edina are documented by federal records or book-length scholarship; entries such as Sundown TX, Cedar Lake IN, and Appleton WI rest primarily on “Loewen (2005)” plus a state-society citation without a specific document. Before shipping, each of the 15 entries should be spot-checked against the Tougaloo database (justice.tougaloo.edu) and the entry’s own `externalUrl` — roughly 1–2 hours of librarian-grade verification. (iii) Semantics: `isFamilyFriendly: true` on several racial-terror history entries is an odd flag for this category; recommend setting all 15 to `false` or excluding the flag from sundown-town UI rendering. (iv) Mobile rendering is unverifiable from this repo: the handoff asserts `FullMapView.tsx` renders unknown heritage categories with a default pin; the mobile source is not in the repository, so the pin/chip behavior for the new category must be visually confirmed on the first EAS build (one 5-minute check).
+
+4. Alternatives, ranked. (1) Deploy (Issue #1) → verify each entry against Tougaloo/externalUrl → founder calls the seed endpoint → verify via `heritageCategory` query and on-map check. (2) Same, but seed via direct SQL against Railway Postgres (bypasses the endpoint if deploy is delayed) — workable, loses the idempotency and audit trail; only if the deploy slips. (3) Defer to Build 98 — rejected: the founder declared the feature non-negotiable, and the GO/NO-GO’s “EXCLUDE” recommendation is overridden by the later implementation; nothing about the current state requires deferral.
+
+5. Recommended solution. Alternative 1, plus the sourcing cleanup diff below, plus 15-entry verification, plus one map-visual check on the first build.
+
+6–7. Code changes and diff.
+
+
+￼
+And for each of the 15 entries: `isFamilyFriendly: false` (or remove the flag from this category’s client rendering). If any entry fails Tougaloo verification, drop it — 12 strongly-documented entries beat 15 with one weak link; the feature remains meaningful (the handoff’s own Question 8 worries about sparseness: 12–15 entries with a “growing archive — full Tougaloo dataset in progress” note in the layer description is defensible for a beta).
+
+8. Database/schema changes. None — `cultural_sites` already has every required column (verified against the insert statement and the deployed SELECT). Recommended index if state-browsing becomes a UI feature: `CREATE INDEX IF NOT EXISTS idx_cultural_sites_heritage_cat ON cultural_sites (heritage_category);` — optional at 170 rows, harmless.
+
+9. Environment/deployment. Requires Issue #1 deployed first; requires `ADMIN_EMAILS` set on Railway and an admin session for the seed call (or extend the endpoint to also accept `Authorization: Bearer CRON_SECRET`, matching the existing `seed-multicultural` pattern, so the founder can seed with a one-line curl — 4-line change, recommended).
+
+10. Regression tests. Post-seed: `GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town` returns exactly the seeded count with the disclaimer prefix present in every description; `GET /api/cultural-sites?search=sundown` returns ≥ 10 rows; re-calling the seed endpoint returns `{ inserted: 0, skipped: N }` (idempotency); the `categories` array includes `{"label":"Historical Sundown Town","count":N}`; map check on device: pins render, tapping shows disclaimer-first description, no crash on the new category; KinfolkAI spot prompt “tell me about sundown towns near Chicago” produces historical framing with no current-danger language.
+
+11. Risk. Content risk is the real one: a factually weak entry invites community harm and press criticism. The verification pass and drop-if-unverified rule mitigate it. Technical risk of the seed itself: negligible (idempotent, parameterized, 15 rows).
+
+12. Effort. Code cleanup 20 minutes; entry verification 1–2 hours; seed + verify 15 minutes.
+
+13. Required when? Seed endpoint must be deployed and data seeded before tester distribution (testers will see an empty category otherwise) and before submission if the category chip is visible to the Apple reviewer. Entry verification: before the seed call.
+
+Classification. Replit’s “cannot be done responsibly today” is D + E (founder confirms source/licensing and runs the import). The licensing analysis in the handoff (facts not copyrightable, Feist v. Rural, original prose not reproduced, per-entry attribution) is legally reasonable for the row-level content; the fastest responsible path is the verification pass above rather than a formal legal review, with the Wikipedia header line removed. Manus offer: yes — I can perform the 15-entry source verification, apply the diffs, and prepare the exact seed-verification curl scripts on the branch; the production seed call itself remains a founder action.
+
+
+ISSUE #5 — Map performance and tablet map layouts
+Severity: P1 (performance verified healthy; tablet layout unverified).
+
+1. Confirmed root cause. No performance defect exists in the API layer: production measurements (businesses 0.36 s, cultural-sites 0.14 s) are consistent with my own live checks, and the cultural-sites query is bounded (`LIMIT 500`) with a single aggregate for the category summary. The genuine gap is that map rendering on tablets has never been observed — no simulator, emulator, or physical test — and the mobile map code is not in the repository to statically review.
+
+2. Files involved. Deployed `GET /api/cultural-sites` (`dist/index.mjs` ≈ 441666, `LIMIT 500`, no pagination) and `GET /api/businesses` (parameterized filters at ≈ 399003); mobile `FullMapView.tsx` (not in repo — unverifiable); `docs/review/app.json` (react-native-maps via `withRnMapsPodfileFix` plugin, Google Maps key in `eas.json`).
+
+3. Is Replit’s approach correct? For ~170 cultural sites and ~102 businesses, sending all rows and rendering plain markers is fine; clustering is unnecessary at this scale. The `LIMIT 500` cap means the endpoint will silently truncate once the sites table grows past 500 — not a Build 97 problem, but worth a `total`-vs-limit note in the response (the endpoint already returns `total` = rows returned, which will equal the cap when truncated; a `truncated: true` flag is a 2-line future improvement). No action required for Build 97.
+
+4–5. Alternatives and recommendation. The only actionable item today is observation: run the first EAS build (or Expo dev build) on the iPad simulator (iPad Air 11-inch M3 profile) and a Pixel Tablet emulator, load the map with the heritage layer on, pan/zoom for 60 seconds, and watch for dropped frames or mispositioned chips. Rank: (1) simulator/emulator audit today (no device needed); (2) physical devices when available (Apple’s actual review device is iPad Air 11” M3, iPadOS 26.5.2 — final check must be physical or on that exact simulator runtime).
+
+6–9. No code, schema, or environment changes required for Build 97.
+
+10. Regression tests. Map cold-load under 3 s on tablet simulator with heritage layer enabled; marker tap opens preview card at both portrait and landscape (landscape currently impossible — see Issue #12, which must land first); denied-location path shows default region without crash; airplane-mode load shows graceful empty state.
+
+11. Risk. Low. 12. Effort. 1–2 hours of guided QA. 13. Required when? Before submission (simulator pass) and before tester distribution (physical pass).
+
+Classification. Replit’s “requires EAS build + founder device” is C/G. The simulator/emulator alternative removes most of the C: it can run today, before any physical device exists. Manus offer: partial — I can write the exact QA script and evaluate screen recordings; I cannot run Xcode simulators in this environment, so execution belongs to Replit or the founder’s Mac.
+
+
+ISSUE #6 — Inclusive diaspora/business designation logic (`blackOwned` vs `ownershipDesignations[]`)
+Severity: P1 (Replit’s P1-2), with a marketing-copy corollary Replit did not flag.
+
+1. Confirmed root cause. Two ownership systems coexist. The legacy boolean `black_owned` (schema default varies by table definition: the businesses table declares `default(false)`, but a seed-path declaration at `dist/index.mjs` 58912 sets `default(true)` — which is how every seed business ended up `blackOwned: true`). The modern `ownership_designations` jsonb array (default `[]`) is what KinfolkAI and the newer filter paths read (`dist/index.mjs` 399006 filters with a jsonb containment query; 399056 matches user preference designations). Because seed businesses have `blackOwned=true` but `ownershipDesignations=[]`, the UI badge says “Black-owned” from an unverified legacy default while the verified-designation system stays empty. One deployed code path is actively confusing: `dist/index.mjs` 437707 sets `ownershipDesignations: isBlackOwned ? [] : ["non-minority-owned"]` — i.e., a Black-owned business gets an empty designation array, guaranteeing divergence between the two systems.
+
+2. Files involved. Schema declarations (`dist/index.mjs` 56813–56814, 58912); filter paths (399003–399006, 399056); the divergent write path (437707); KinfolkAI prompt (verified: generic surfacing uses “minority-owned”; `ownershipBadges` injected per business — `dist/index.mjs` ≈ 420652); web marketing bundle `web-static/assets/index-BwWpNcF2.js` (76 occurrences of “Black-owned/Black-Owned,” most in static marketing copy, vs 1 “minority-owned”).
+
+3. Is Replit’s approach correct? Replit correctly identified this as a data-quality issue and correctly deferred a full migration. But calling it “cosmetic” understates it against the founder’s explicit requirement: “The app does not generically label every business Black-owned… Unknown ownership is shown neutrally.” Today every seed business displays a Black-owned badge sourced from a bulk default, which is precisely the generic labeling the founder prohibited. The founder’s own handoff Question 9 asks whether the badge can ever render when both signals are empty/false — from the available web bundle, badge rendering keys off the boolean, so the false+empty case shows no badge (correct), but the true-by-default case is the problem.
+
+4. Alternatives, ranked. (1) Data backfill, no code change: one UPDATE that copies the legacy signal into the modern system for seed rows that are genuinely known Black-owned, and nulls the boolean where ownership was never verified. Requires the founder to confirm which seed businesses are verified — likely most, since they were curated. (2) UI-side: render the badge only when `ownershipDesignations` is non-empty, treating the boolean as legacy input only — cleaner contract, but requires mobile+web rebuilds; Build 98. (3) Full migration deprecating the boolean — Build 98+.
+
+5. Recommended solution. Alternative 1 before tester distribution, plus fixing the divergent write path, plus one wording change in review notes (Issue #10) so Apple is not told badges are “verified owner-submitted designations” while the data says otherwise.
+
+6–7. Changes. Backfill SQL (run once, after founder confirms the seed list is curated-verified):
+
+
+￼
+Code fix for the divergent write path (source file lives in the Replit workspace; the compiled form is at `dist/index.mjs` 437707):
+
+
+￼
+(Writing `"non-minority-owned"` as a designation is itself questionable — an absence of a minority designation should be an empty array shown neutrally, not a labeled out-group.)
+
+8. Schema. No DDL; data-only. 9. Environment. None.
+
+10. Regression tests. After backfill: `SELECT count(*) FROM businesses WHERE black_owned = true AND ownership_designations = '[]'::jsonb AND verified = true` → 0; API spot-check `GET /api/businesses?limit=5` shows designations arrays populated for verified rows; a business with `black_owned=false` and empty designations renders with no ownership badge on web and mobile; KinfolkAI prompt injection shows `Owned by: black-owned` for verified rows; the ownership filter `GET /api/businesses?ownership=black-owned` (jsonb containment path) returns the backfilled rows.
+
+11. Risk. Low-moderate: mislabeling risk if the founder’s confirmation of the seed list is wrong — mitigated by restricting the first UPDATE to `verified = true` rows and reviewing the affected-row list before commit (wrap in a transaction, `SELECT` first).
+
+12. Effort. 1 hour including founder review of the affected list.
+
+13. Required when? Before tester distribution (testers include business owners who will notice mislabels); the write-path code fix rides the Issue #1 rebuild.
+
+Classification. Replit marked “no action needed for Build 97” — that is a D-class judgment call the founder should overrule given requirement 6. Manus offer: yes — I can prepare the transaction-wrapped backfill with a dry-run report; execution against Railway production requires founder-supplied DB credentials or Replit executing it.
+
+
+ISSUE #7 — KinfolkAI: basic behavior, source grounding, and hallucination prevention
+Severity: P1 (behavior verified good; one prompt gap and one documentation error).
+
+1. Confirmed root cause. Two distinct items. (a) Criterion-4 gap: in Replit’s acceptance tests, 4 of 10 prompts gave general-knowledge answers without explicit “generally speaking / not from our platform” labeling. Root cause confirmed in the deployed system prompt: the honesty rules mandate not inventing data (“Do not invent weather data,” “do not invent listings,” “do not invent opportunities,” “Never pretend…”) and the verified-business injection block instructs prioritizing platform businesses, but no rule requires the model to label the provenance of a recommendation (platform DB vs. general knowledge). (b) Documentation error: the handoff and the drafted App Store review notes state free tier = 0 messages/KinfolkAI locked; the deployed code sets `FREE_MONTHLY_LIMIT = 3` with a 429 `KINFOLK_LIMIT_REACHED` after the third query (`dist/index.mjs` 420817–420853). The Apple reviewer on the planned free account will get three full KinfolkAI answers, then a hard limit mid-review — a confusing, undocumented state transition during review.
+
+2. Files involved. `kinfolk.ts` — not in the repository; all verification against the compiled bundle: system prompt/honesty rules ≈ 420257–420667; weather context with 5 s `AbortSignal` timeouts and `catch → null` ≈ 419741–419794 (verified exactly as claimed); weather-keyword gating 419795–419812; verified-business catalog injection 420639–420667 (includes `ownershipBadges`, `audienceType`, accessibility — well-grounded); free-limit gate 420817–420869; paid-tier pool check (navigator/trailblazer/founding/beta/family) 420854–420869; JSON output contract including `safetyTips` and `safetyNote` fields ≈ 420620–420637.
+
+3. Is Replit’s approach correct? Largely yes — the grounding architecture is genuinely good: platform businesses are injected with rich context only when a destination is known, live weather is fetched with bounded timeouts and honest fallback (“I don’t have real-time weather for that location right now”), and the acceptance tests showed zero hallucinated businesses across 10 prompts. Three refinements are warranted. (i) The missing provenance rule (one prompt line, below). (ii) The output contract’s `safetyTips`/`safetyNote` fields ask the model to produce 3–4 safety tips per recommendation set from general knowledge — against the founder requirement of no unsupported safety claims, these should be constrained to practical logistics framing (parking, hours, neighborhood navigation) rather than danger assessments. (iii) The review-notes/tier documentation must match `FREE_MONTHLY_LIMIT = 3` (or the founder changes the limit to 0 — a one-constant change — but 3 free queries is arguably better for Apple review since the reviewer sees the headline feature working; recommended: keep 3, document it, and give the review account a paid tier anyway per Issue #10).
+
+4. Alternatives, ranked. (1) Two-line system-prompt addition + review-note correction — minimal, targeted, testable. (2) Post-processing layer that verifies each recommended business name against the DB before returning — strongest anti-hallucination guarantee, but adds latency and is not needed on current evidence (0/10 hallucinations). Build 98 candidate. (3) RAG restructuring — out of scope per the founder’s “do not propose later KinfolkAI phases.”
+
+5. Recommended solution. Alternative 1.
+
+6–7. Exact change (in `kinfolk.ts`’s `buildSystemPrompt()` in the Replit workspace — the honesty-rules block that compiles to ≈ `dist/index.mjs` 420480–420506):
+
+
+￼
+8. Schema. None. 9. Environment. None beyond the Issue #1 rebuild (the prompt lives in the bundle).
+
+10. Regression tests. Re-run Replit’s 10-prompt battery (the harness already exists per `KINFOLKAI_TESTS.txt`) and require Criterion 4 = 10/10 with zero UNCLEAR; add three probes: “Is downtown Memphis safe at night?” (expect logistics framing + no danger score), “What’s the weather in Tulsa?” with Open-Meteo blocked (expect the honest no-data response), and a 4th free-tier query from a fresh free account (expect 429 `KINFOLK_LIMIT_REACHED` with the upgrade payload — confirming the documented behavior matches).
+
+11. Risk. Minimal — additive prompt constraints; the only failure mode is slightly more verbose responses. 12. Effort. 30 minutes + 30 minutes of test reruns. 13. Required when? Before submission (it rides the Issue #1 rebuild at zero marginal deploy cost); Replit itself classified the gap as non-blocking, and I concur that if the rebuild were somehow impossible today, this alone would not hold the build.
+
+Classification. Replit called this “post-Build-97” — a D judgment. Since the bundle must be rebuilt anyway (Issue #1), the marginal cost of including it now is near zero; recommend including. Manus offer: yes — prompt diff ready; the edit must be applied in the Replit workspace where `kinfolk.ts` lives, or I can patch the compiled bundle string as a last resort.
+
+
+ISSUE #8 — Apple Sign-In registration
+Severity: P0 verification dependency (code verified correct; deployment env unverified).
+
+1. Confirmed root cause of residual risk. The server-side implementation is correct — verified in the deployed bundle, so this is live behavior, not a claim: `verifyAppleToken()` fetches Apple’s JWKS, verifies RS256 with `issuer: "https://appleid.apple.com"` and `audience: "com.melaninmaps.app"`, and when a `rawNonce` is supplied compares `payload.nonce` against `sha256(rawNonce)` hex (`dist/index.mjs` ≈ 396880–396900). This answers the handoff’s Question 3 affirmatively: the documented client pattern (hashed nonce to `signInAsync`, raw nonce to the server) matches what the server checks, on iPadOS 26 as on any other version — the nonce contract is Apple-standard and version-independent. The residual risks are: (a) new-user registration hard-depends on four Railway env vars — `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`, `APPLE_TOKEN_ENCRYPTION_KEY`. If any is missing, new Apple sign-ups get HTTP 500 “temporarily unavailable” (`APPLE_TOKEN_EXCHANGE_CONFIGURATION_ERROR` path) — during Apple review, that is an instant 2.1 rejection, and it would be invisible in route-liveness checks (the 400 “identityToken is required” probe Replit ran does not exercise this path). (b) The nonce check is skipped when the client omits `rawNonce` — replay-hardening gap, minor. (c) The JWKS fetch has no timeout — an Apple keys endpoint stall would hang sign-ins; and there is no key caching, adding latency and a rate-limit footprint.
+
+2. Files. Server: compiled `auth.ts` in `dist/index.mjs` 396880–396990 (verify + `/auth/apple` route with the token-exchange branch matrix: new user + no code → 400; new user + exchange failure → 401; existing user degradations logged, sign-in continues). Client: `apple-signin-nonce.md` and the mobile auth screen — not in the repo, unverifiable here. Entitlements: `docs/review/app.json` 17–21 (`com.apple.developer.applesignin: ["Default"]`, associated domains) — correct.
+
+3. Is Replit’s approach correct? Yes on protocol; the branch matrix (block new users on unverifiable authorization codes, degrade gracefully for existing users) is thoughtfully designed. The gap is operational verification, not code.
+
+4. Alternatives, ranked. (1) Verify the four env vars on Railway now (dashboard → Variables) and add a boot-time warning; then one scripted end-to-end test with a real `identityToken` from a TestFlight/dev build. (2) Add a `GET /api/auth/apple/config-check` admin endpoint returning which Apple env vars are present (booleans only, never values) — 10 lines, makes this verifiable forever. (3) Full physical-device test (already planned, remains required).
+
+5. Recommended solution. All three, in that order.
+
+6–7. Changes.
+
+
+￼
+JWKS hardening (workspace `auth.ts`, compiled ≈ 396889):
+
+
+￼
+(A 10-minute in-memory JWKS cache is a further nice-to-have; not required for Build 97.)
+
+8. Schema. None. 9. Environment. Founder or Replit confirms the four variables exist in Railway → Variables today; this is a 2-minute dashboard check that de-risks the single most likely silent review failure.
+
+10. Regression tests. `POST /api/auth/apple` with no body → 400 (already passing); with garbage token → 401/400 structured error, no 500; physical/TestFlight: fresh Apple ID sign-up completes and creates a user row; sign-out/sign-in restores session; Apple credential revocation path (Settings → Sign in with Apple → revoke) then re-login — Replit’s own build history includes revocation handling (`feat/apple-revocation-build-95`), so this must be in the device test script.
+
+11. Risk. Hardening diffs are minimal-risk. 12. Effort. 30 minutes code + 2 minutes dashboard + device test window. 13. Required when? Env-var confirmation: today, before submission. Hardening: rides the Issue #1 rebuild. Physical test: before submission.
+
+Classification. Physical test is C (device + founder Apple ID). Env verification is C (Railway dashboard) with a 2-minute cost — Replit should have listed it explicitly. Manus offer: yes for all code diffs and the test script; dashboard checks belong to whoever holds Railway access.
+
+
+ISSUE #9 — Review-account access
+Severity: P0 submission blocker (correctly classified by Replit).
+
+1. Root cause. No reviewer credentials exist; creation requires the founder’s App Store Connect access (Apple ID `tlindsay428@yahoo.com`, Team `Y46Y4A5MMZ`). Genuinely founder-only. Two technical wrinkles Replit under-documented: (a) the admin tier endpoint `PATCH /admin/members/:id` accepts only `VALID_TYPES = ["individual","business","founding","beta","business_referral"]` (`dist/index.mjs` 418440) — `navigator` and `trailblazer` are not settable, so the handoff’s recommendation to give the reviewer “Navigator tier” cannot be executed via the admin API; `founding` works and grants the highest non-family limits (300 msgs/month), which is what Replit’s own KinfolkAI tester used. (b) One conceptual correction to Replit’s steps: an App Store reviewer test account is an in-app user account, not an App Store Connect “Users and Access” user. The correct procedure is to register `appstorereview@mappingwithmelanin.com` through the app’s own registration flow (or `POST /api/auth/register`), then upgrade its tier; adding it as an ASC Customer Support user (Replit’s step 2) is unnecessary and grants console access the reviewer neither needs nor should have.
+
+2. Files. `dist/index.mjs` 396588 (`/auth/register` — live in production, so the account can be created right now, before any deploy), 418434–418460 (tier PATCH). `docs/review-build97/18-review-questions/TEST_ACCOUNT_INSTRUCTIONS_TEMPLATE.md` (review-notes template).
+
+3. Replit’s approach correct? Direction yes, details no — the ASC-user instruction is wrong in kind, and the “no MFA” requirement applies to the in-app account (correct to require) not an ASC role.
+
+4. Alternatives, ranked. (1) Founder (or anyone with the inbox) registers the account through production `POST /api/auth/register` today, founder sets `memberType: "founding"` via admin PATCH, credentials go only into the ASC review-notes field at submission time. (2) Extend `VALID_TYPES` to include `navigator`/`trailblazer` so the reviewer sees the exact tier testers buy — 1-line change, rides the rebuild, optional. (3) Replit’s ASC-user route — rejected as unnecessary.
+
+5. Recommended. Alternative 1 now; Alternative 2 in the rebuild branch.
+
+6–7. Change (workspace `admin-users.ts`/equivalent, compiled ≈ 418440):
+
+
+￼
+Also correct the drafted ASC review notes (handoff Section 6): replace “KinfolkAI requires a paid subscription (Navigator or Trailblazer). Free account shows upgrade prompt” with “The review account is on the Founding tier with full KinfolkAI access. Free accounts receive 3 KinfolkAI queries per month before an upgrade prompt.” — matching Issue #7’s verified behavior.
+
+8. Schema. None. 9. Environment. Email inbox for `appstorereview@…` must exist to receive the verification email (the registration flow’s email-verification requirements should be confirmed — if verification gates login, the inbox is mandatory).
+
+10. Regression tests. Log in as the review account on a clean device/simulator: lands on map; heritage layer visible (including Sundown Towns post-seed); KinfolkAI answers (founding tier); community feed shows seeded posts; membership screen renders without forcing purchase; account-deletion path visible (Apple requires it discoverable); no MFA, no waitlist interstitial, no approval gate.
+
+11. Risk. None beyond credential hygiene (ASC notes only — never in the repo; note the repo is publicly cloneable, see Issue #13). 12. Effort. 15 minutes founder time. 13. Required when? Account creation: anytime from today; must exist before submission.
+
+Classification. C + D — correctly identified; the corrected procedure above is faster than Replit’s. Manus offer: the `VALID_TYPES` diff and a step-by-step founder checklist, yes; account creation itself requires founder-held email/ASC access.
+
+
+ISSUE #10 — Community Feed seeding / launch-state handling
+Severity: P0 for tester experience (Replit’s P0-2), correctly diagnosed.
+
+1. Root cause. Zero rows in `community_posts`. Routes verified live in the deployed bundle (`GET /api/community/posts` at 412588, `POST` at 412760, reports/moderation present). Pure content gap.
+
+2–3. Files / approach. No code defect; Replit’s “founder posts 8–10 genuine posts” is the right primary plan (authentic voice, founder-authored). Two gaps: no empty-state verification (what a tester sees if they arrive before seeding — if the screen renders a bare spinner or blank list, that is a code issue), and no removal plan for test content (founder requirement 8: “test content can later be removed” — deletion/moderation routes exist, so tag seeded test posts conventionally, e.g. a known prefix, for later cleanup).
+
+4. Alternatives, ranked. (1) Founder posts 8–12 posts through the app (mix per Replit’s suggested content list — mission welcome, HBCU heritage spotlight, business spotlight, introduce-yourself prompt, 3–5 community posts). Answering handoff Question 6: 8–10 is sufficient for a first session if at least 3 have images and the newest is < 48 h old at invite time; diversity of voices matters less at beta start than authenticity — faking “diverse users” with founder-authored personas would be worse than an honest founder-led feed. (2) An `POST /admin/seed-community-posts` endpoint with founder-approved copy — faster but the posts read as institutional; acceptable fallback if founder time is the constraint. (3) Inviting 2–3 friendly testers a day early as “founding posters” — good supplement.
+
+5. Recommended. Alternative 1, plus a 10-minute empty-state check on the first build, plus the tag-for-cleanup convention.
+
+6–9. No code/schema/env changes required.
+
+10. Regression tests. Pre-seed: feed renders a designed empty state (not spinner/crash). Post-seed: `GET /api/community/posts` returns the posts with business enrichment; posting from a second account appears in “everyone” feed; report flow files a row reviewable in the moderation queue; guidelines link reachable from the feed screen.
+
+11. Risk. None. 12. Effort. 45–60 minutes founder time. 13. Required when? Before tester invitations (Day 5); not an EAS or submission blocker — Apple’s reviewer should also not see an empty feed, so seed before submission if review will touch it.
+
+Classification. D — correctly identified. Manus offer: I can draft the 8–12 posts in the founder’s brand voice for approval, and the QA script; posting through the app is the founder’s action.
+
+
+ISSUE #11 — Android tablet compatibility
+Severity: P1.
+
+1. Root cause. No tablet-specific defect is known — because no tablet observation has ever happened. Config is reasonable: `withChromebookSupport` plugin, `targetSdkVersion 36`, AAB build. Risk concentrates in the same portrait-lock discussed for iPad (Issue #12): `"orientation": "portrait"` applies to Android too, and Google Play’s large-screen quality guidelines (and Play Store listing eligibility for tablets) penalize portrait-locked apps on tablets; Android 12L+ ignores orientation locks on large screens in some configurations, which — if the app’s layouts assume portrait — can produce letterboxing or stretched layouts.
+
+2. Files. `docs/review/app.json` line 6 (`"orientation": "portrait"`), 139–152 (build properties), 154 (`withChromebookSupport`); mobile layout source not in repo.
+
+3. Replit’s approach correct? Deferring deep tablet optimization is proportionate for a 30-tester beta. Shipping with zero tablet observation is not.
+
+4. Alternatives, ranked. (1) Pixel Tablet emulator audit of the five core screens (map, KinfolkAI, feed, business detail, membership) on the preview APK — 1 hour, today, no device. (2) Orientation unlock (Issue #12’s fix covers Android as a side effect — with responsive-layout verification). (3) Physical tablet test before Play distribution.
+
+5. Recommended. (1) now, (2) with Issue #12, (3) before Android tester distribution.
+
+6–9. Code change shared with Issue #12. No schema/env changes. Note `google-service-account.json` must be present locally for `eas submit` (correctly flagged by Replit; it is properly absent from the repo).
+
+10. Regression tests. On Pixel Tablet emulator (landscape + portrait): no crash on rotation; map controls reachable; KinfolkAI input not obscured by keyboard; feed cards not stretched full-width without max-width constraint; back navigation consistent.
+
+11. Risk. Low. 12. Effort. 1–2 hours. 13. Required when? Emulator pass before Android tester distribution; not an iOS submission blocker.
+
+Classification. G as Replit framed it (“not confirmed… all screens use standard layouts”) — the emulator alternative converts it to doable-today. Manus offer: QA script and screen-recording evaluation, yes; emulator execution belongs where Android Studio runs.
+
+
+ISSUE #12 — iPad layout, navigation, and the orientation contradiction
+Severity: P0-adjacent Apple rejection risk — the most material new finding on the mobile side.
+
+1. Confirmed root cause. `docs/review/app.json` declares `"orientation": "portrait"` globally (line 6) with `supportsTablet: true` (line 11) and no `UIRequiresFullScreen` key in `infoPlist` (lines 22–37). Two consequences. (a) The handoff’s and GO/NO-GO’s claim “iPad orientations: All four declared ✅” is contradicted by the config file in the same repo — Expo compiles `"orientation": "portrait"` to `UISupportedInterfaceOrientations` containing only portrait. (b) Apple’s long-standing rule: an iPad app that does not support all four orientations must opt out of multitasking with `UIRequiresFullScreen = true`; an app that supports iPad, locks portrait, and does not declare full-screen is exposed to ITMS validation warnings and reviewer-facing layout problems — and the GO/NO-GO explicitly (and now inconsistently) claims `UIRequiresFullScreen: false — multitasking permitted`, which combined with portrait-only is precisely the invalid combination. On iPadOS 26 (Apple’s review OS, per the handoff), the new windowing system resizes apps freely unless `UIRequiresFullScreen` is set, making an untested portrait-only layout genuinely risky in front of a reviewer on an iPad Air 11” M3.
+
+2. Files. `docs/review/app.json` line 6, lines 22–37; mobile layout sources not in repo (adaptive-layout audit impossible from here).
+
+3. Is Replit’s approach correct? No — the claim is wrong, and no mitigation is configured either way.
+
+4. Alternatives, ranked. (1) Declare full-screen, keep portrait — add `"UIRequiresFullScreen": true` to `ios.infoPlist`. Honest about current capabilities, removes the invalid combination, avoids untested landscape layouts during review, zero layout work. Downside: opts out of iPad multitasking (acceptable for a beta; Apple accepts full-screen-only apps). (2) Support all four orientations (`"orientation": "default"`) and audit/fix every screen in landscape — the “right” long-term answer; unsafe by today’s deadline with zero landscape testing history (category G). (3) `"requireFullScreen": true` via `expo-build-properties` — same effect as (1), alternative mechanism.
+
+5. Recommended solution. Alternative 1 for Build 97; schedule Alternative 2 for Build 98.
+
+6–7. Diff (`app.json` — applies to the real `artifacts/mobile/app.json` in the workspace and the `docs/review` copy):
+
+
+￼
+8. Schema. None. 9. Environment. None — but this must land before `eas build --platform ios` runs, or Build 97 ships the risky combination; if a build has already started, cancel and restart after the config change (build numbers need not change; EAS rebuilds the same buildNumber before submission).
+
+10. Regression tests. After the change, on iPad simulator (iPad Air 11” M3, iPadOS 26.x runtime): app opens full-screen portrait; rotation to landscape keeps the app portrait (expected with full-screen flag); Split View/Slide Over unavailable (expected); map, KinfolkAI, feed, membership all render correctly at iPad dimensions; no letterboxing artifacts. Validate the built IPA’s `Info.plist` contains `UIRequiresFullScreen` and portrait-only orientations (`plutil -p` on the artifact).
+
+11. Risk. Low — declaring full-screen is a capability restriction, not a behavior change; the only downside is no multitasking, which no current tester flow depends on.
+
+12. Effort. 5 minutes config + 30 minutes simulator verification.
+
+13. Required when? Before building — this is the single fix in this report that must precede `eas build`.
+
+Classification. Not a Replit “cannot” — an F-class incorrect claim (“all four declared”) that survived two self-audits. Manus offer: yes — one-line diff ready; must be applied to the workspace `app.json` that EAS actually reads.
+
+
+ISSUE #13 — Additional findings Replit did not report (security and hygiene)
+Severity: mixed P1/P2 — none block the EAS build; two should land in the rebuild.
+
+(a) Unauthenticated bundle-download endpoints. `app.ts` lines 81–94 expose `GET /api/dl` (downloads the entire compiled server bundle, `dist/index.mjs`, to anyone) and `GET /api/dl/review-package` (a hardcoded `/home/runner/workspace/...` zip path). The server bundle embeds internal logic, route inventory, and prompt IP (the full KinfolkAI system prompt). These are debug conveniences that must not ship. Fix (rides the rebuild):
+
+
+￼
+Regression: both paths return 404 post-deploy. Risk: none. Effort: 5 minutes. Required: before tester distribution (currently exploitable in production if these lines are in the deployed bundle — `GET /api/dl` should be probed once post-deploy either way).
+
+(b) API keys committed to a publicly cloneable repository. I cloned this repo without any credentials, meaning it is public. `docs/review/eas.json` (and the handoff) contain the Google Maps API key (`AIzaSyD-QflBkAV_ps…`) and RevenueCat public keys. RevenueCat public SDK keys are designed to be client-visible (low risk). The Google Maps key is billable: it must be restricted in Google Cloud Console to the iOS bundle ID, Android package + SHA-1, and the web referrer — or rotated. Action: founder/Replit checks key restrictions today (category C, 10 minutes). Do not force-push history rewrites mid-release; restriction is sufficient.
+
+(c) Marketing copy promises “safety scores.” The deployed web bundle sells “neighborhood safety scores” in at least four places (`web-static/assets/index-BwWpNcF2.js`), while the founder’s requirement 5 forbids unsupported present-day danger scores and the handoff states KinfolkAI generates none. If the app exposes no safety-score feature, Apple’s 2.1/metadata review and testers will both notice the gap; if it does, requirement 5 needs re-examination. Action: founder decision (D) — either soften web copy (“community safety insights” → matches safety check-ins/reports features that do exist) or confirm the feature exists in-app. Not an iOS binary blocker (the copy is web-side), but fix before tester invitations since testers will see the website.
+
+(d) Handoff HEAD hash does not exist in the repo (§ 0.2). Action: Replit re-pushes from the workspace and records the true HEAD in the handoff; future audits should verify `git cat-file -t <hash>` first. Effort: minutes.
+
+(e) `/api/readyz/history` ESM `require()` risk — covered in Issue #2; verify at rebuild time.
+
+
+3. “CANNOT BE DONE” — TRUTH CLASSIFICATION OF EVERY REPLIT LIMITATION
+
+￼
+Nothing on Replit’s blocker list is category A (technically impossible). The single most consequential item is #1, where Replit’s own framing understated the work required.
+
+
+4. FIXES REPLIT CAN COMPLETE
+Replit — with its workspace holding the only complete source tree — is the right owner for: the bundle rebuild and fresh `dist/index.mjs` commit with the grep-gate verification (Issue #1, the critical path); the `stripeClient.ts` failed-init retry patch, `POOL_MAX` constant extraction, `/admin/health` metadata fix, readyz `require()`→import conversion, and `SEED_TEST_ROWS` gate (Issue #2); the KinfolkAI provenance and safety-language prompt lines (Issue #7); the Apple env-var boot warning and JWKS timeout (Issue #8); the `VALID_TYPES` extension (Issue #9); removal of the `/api/dl` endpoints (Issue #13a); the `UIRequiresFullScreen` config change in the real `artifacts/mobile/app.json` before running EAS (Issue #12); the sundown seed-file source-header cleanup and `isFamilyFriendly` flags (Issue #4); the divergent `ownershipDesignations` write-path fix (Issue #6); and re-pushing so the recorded HEAD is real (Issue #13d). Every one of these ships in the same rebuild-and-redeploy cycle — one branch, one bundle, one deploy.
+
+5. FIXES MANUS CAN COMPLETE
+I am willing and able to implement, in a separate branch (`fix/build97-remediation`) after founder authorization, without touching production: every diff printed in this report (Issues #1, #2, #4, #6, #7, #8, #9, #12, #13a) as reviewable commits against the repository’s reference sources; the CI grep-gate script that fails any push whose `dist/index.mjs` lacks the singleton, `max: 8`, or the sundown endpoint; the webhook stress-test script and full post-deploy verification battery; the 15-entry Sundown Towns source-verification memo with per-entry keep/drop recommendations; the transaction-wrapped ownership-designation backfill SQL with a dry-run affected-rows report; the corrected App Store review-notes text; and the drafted community seed posts for founder approval. Two constraints are structural: the final bundle rebuild must execute where the full backend source lives (the Replit workspace — unless the founder grants me access to the true source tree, in which case I can run the esbuild step and produce the deployable artifact end-to-end), and I cannot operate simulators/physical devices from this environment, so device QA scripts I write must be executed by Replit or the founder.
+
+6. FIXES REQUIRING FOUNDER ACTION
+Seven items, none requiring code skills, ordered by urgency: (1) authorize the remediation branch and the Replit rebuild — today; (2) confirm the four Apple Sign-In env vars exist in Railway → Variables (2 minutes) — today; (3) trigger Railway “Deploy Latest” after the fresh bundle is committed, and confirm `/api/version` (or the new readyz detail string) proves new code — today; (4) create the in-app review account and set its tier (15 minutes), placing credentials only in ASC review notes — before submission; (5) run or delegate the Stripe webhook stress test (Stripe dashboard or CLI test key) — before submission; (6) approve the verified Sundown Towns entry list and run the one-line seed call, then spot-check the map — before tester distribution; (7) post (or approve Manus-drafted) 8–12 community posts and decide the “safety scores” web-copy question — before tester invitations. Items the founder should also schedule but which do not gate the build: Google Maps key restriction check, RevenueCat product state in ASC, and physical device passes on iPhone and iPad Air M3.
+
+7. FIXES REQUIRING AN EXTERNAL SPECIALIST
+Almost nothing. No item in this review requires a database consultant, a security firm, or Apple developer support. Two narrow exceptions worth naming: if the founder wants formal comfort on the Sundown Towns dataset beyond the engineering-grade source verification offered here, a one-hour consultation with a media/publishing attorney on the Feist fair-use-of-facts posture would close category E definitively (optional — the current posture is reasonable); and if the Google Maps key shows unexplained usage after the restriction check, Google Cloud support handles rotation without downtime. Neither gates Build 97.
+
+8. EXACT FASTEST PATH TO BUILD 97 READINESS
+The critical path is a single serialized chain of about half a day of work, with everything else running in parallel around it.
+
+
+￼
+Sequenced honestly: the EAS builds may start today only after the one-line `app.json` orientation fix lands (Step 1) — that is the sole before-building gate in this report. Everything Replit listed as “in parallel with the builds” remains parallel, with one hard correction: the Railway redeploy is meaningless until Step 2 replaces the bundle, and no submission should occur until Steps 3a and 4 prove the Build 96 root cause is actually dead in production — this time verified against the deployed artifact, not the repository’s good intentions.
+
+
+9. REQUIRED-STAGE SUMMARY OF EVERY FIX
+
+￼
+● required at that stage ◐ strongly recommended at that stage (rides an already-required action at near-zero marginal cost)
+
+
+10. CLOSING STATEMENT
+Replit’s engineering on the Build 97 fixes is largely sound — the singleton pattern, pool sizing, graceful shutdown, retry scoping, readiness semantics, KinfolkAI grounding architecture, and Sundown Towns data model are all professionally built, and this review verified them line by line rather than taking the handoff’s word. The failure is in the last mile: the fixes never entered the artifact that production runs, the verification report observed the symptom of that gap (the old readyz string) without recognizing its cause, and two configuration claims (iPad orientations, free-tier KinfolkAI) do not survive contact with the files in the same repository. None of this requires heroics to correct. One rebuild cycle carrying every diff in this report, one config line before the EAS build, one honest webhook stress test against genuinely-new code, and the founder’s four short actions put Build 97 in a defensible position — with evidence at every step that the deployed system, not the intended one, is what gets submitted to Apple.
+
+Prepared by Manus AI — independent code remediation review. No production systems were modified. All diffs are staged for a separate branch pending founder authorization.

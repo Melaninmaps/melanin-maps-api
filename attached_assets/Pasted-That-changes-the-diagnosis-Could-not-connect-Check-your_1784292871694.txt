@@ -1,0 +1,48 @@
+That changes the diagnosis.
+
+**“Could not connect. Check your internet” means the app did not receive a normal response from the reset endpoint.** It is different from “incorrect reset code.” The newest code may be valid, but the app is failing before it can complete the reset.
+
+This usually means one of these:
+
+* the reset request is calling the wrong URL;
+* the endpoint path in the app does not match the production server route;
+* the request is timing out or being blocked;
+* the app cannot parse the server response and falls into its generic network-error handler;
+* the reset endpoint works through curl, but the installed Android build is using an older or different route.
+
+Send Replit this exact message:
+
+> I used the newest reset code and the app returned: **“Could not connect. Check your internet.”**
+>
+> This is not an invalid-code response. Please trace one fresh password-reset submission from the installed Android app.
+>
+> For that exact attempt, provide:
+>
+> 1. The complete reset endpoint URL the Android app calls.
+> 2. Whether the request reaches Railway logs.
+> 3. The HTTP method and request-body field names.
+> 4. The HTTP status and response body, if Railway receives it.
+> 5. The exact exception caught by the mobile app.
+> 6. Whether the reset flow uses the same `getApiBaseUrl()` function as login.
+> 7. Whether the production APK contains the correct reset endpoint path.
+>
+> Do not trigger another reset or change the database until this request is traced.
+>
+> If Railway receives no request, the problem is in the installed app’s URL or network request.
+>
+> If Railway receives the request and returns a response, the problem is in the app’s response handling.
+
+Also ask them to run the reset directly against both production URLs using a **new test account or disposable reset code**, without exposing any code:
+
+```text
+https://www.mappingwithmelanin.com/api/auth/[exact-reset-route]
+https://api-server-production-a991.up.railway.app/api/auth/[exact-reset-route]
+```
+
+The important distinction now is:
+
+* **No Railway log:** mobile request/configuration problem.
+* **Railway log with 4xx/5xx:** server reset-route problem.
+* **Railway returns 200 but app says “could not connect”:** client parsing or navigation problem.
+
+Do not request another code until Replit is ready to watch the logs live, because each new request may invalidate the previous one.

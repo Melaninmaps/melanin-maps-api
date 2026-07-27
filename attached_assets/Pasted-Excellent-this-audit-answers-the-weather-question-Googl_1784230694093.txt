@@ -1,0 +1,61 @@
+Excellent—this audit answers the weather question: **Google Weather API is not used**, so removing it will not affect your alerts.
+
+It also confirms that we should **not change or save the current key yet**. The same key is being used in too many different places, and restricting it now could break your website or Android maps.
+
+## What the final setup needs
+
+You actually need three separate Maps keys, plus the existing Firebase key:
+
+| Key                   | Used by                                                | Restriction                             |
+| --------------------- | ------------------------------------------------------ | --------------------------------------- |
+| Web Maps key          | Maps JavaScript, browser DirectionsService, Maps Embed | Approved website addresses              |
+| Server Directions key | Replit backend Directions requests                     | Directions API only; server protection  |
+| Android Maps key      | Native Android maps                                    | Android package and signing certificate |
+| Firebase Android key  | Firebase/Android services                              | Keep separate from Maps                 |
+
+The dormant mobile Geocoding request should remain disabled until your developer intentionally configures it. We should not enable Geocoding merely because unused code exists.
+
+## Important correction to Replit’s suggestion
+
+The backend Directions key cannot be protected with website/referrer restrictions because the request originates from the Replit server—not the user’s browser.
+
+Therefore:
+
+* Web key: website restrictions
+* Android key: Android application restrictions
+* Server key: IP restriction if Replit provides a fixed outbound IP; otherwise Directions-only API restriction, quotas, billing alerts, and secret server-side storage
+
+Also, I would avoid authorizing every `*.replit.app` website if we can use your exact Replit production address. A broad wildcard would allow the key to be used from other Replit-hosted sites if it were copied.
+
+## Do not modify the existing key yet
+
+The safe migration order is:
+
+1. Create the new restricted keys.
+2. Have Replit update the code and environment variables.
+3. Build and test the website and Android app.
+4. Confirm Maps, profiles, directions, and Navigator+ work.
+5. Rotate or disable the old unrestricted key.
+6. Monitor Google usage afterward.
+
+## Message to send Replit
+
+> Thank you. Do not change the app yet. Please confirm the required implementation for splitting the current main Google Maps key into three keys:
+>
+> 1. `EXPO_PUBLIC_GOOGLE_MAPS_WEB_KEY` for Maps JavaScript API, browser DirectionsService, and Maps Embed API
+> 2. `GOOGLE_MAPS_SERVER_KEY` for backend legacy Directions API requests only
+> 3. `GOOGLE_MAPS_ANDROID_KEY` for Maps SDK for Android, package `com.melaninmaps.app`
+>
+> The server key must never be returned through an endpoint, included in client JavaScript, placed in `app.json`, or committed to the repository. The web key may be delivered to the browser but must be protected with exact HTTP referrers. The Android key must be restricted by Android package name and the correct SHA-1 signing certificate.
+>
+> Please also identify:
+>
+> * The exact production web domain currently loading Maps JavaScript
+> * The exact Replit production URL that needs authorization
+> * Whether the Maps Embed URL can use the web key
+> * The production Android/EAS signing-certificate SHA-1
+> * Whether the Replit deployment has a fixed outbound IP for the server key
+>
+> Do not activate the dormant mobile Geocoding call. Do not modify the Firebase key or `google-services.json` during this Maps-key change.
+
+Once Replit gives us those exact domains and the Android SHA-1, we can create each key in Google Cloud without guessing. For now, leave this page without saving any changes.

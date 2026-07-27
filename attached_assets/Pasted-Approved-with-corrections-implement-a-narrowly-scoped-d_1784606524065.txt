@@ -1,0 +1,61 @@
+Approved with corrections — implement a narrowly scoped database resilience patch.
+Do not describe the dead-socket mechanism as conclusively proven. The confirmed finding is:
+the running API process entered a state where Drizzle-backed routes hung;
+the direct probe still succeeded;
+restarting the API and recreating the pool restored service.
+Implement only:
+1. Pool recycling
+In lib/db/src/index.ts:
+reduce the current custom idleTimeoutMillis from 300000 to 30000;
+reduce keepAliveInitialDelayMillis from 10000 to 1000;
+retain the existing pool maximum and current timeouts unless testing identifies a specific reason to change them.
+Label this as pool resilience hardening, not a proven complete fix.
+2. Expand /api/db-probe
+Return separately:
+poolStats.totalCount;
+poolStats.idleCount;
+poolStats.waitingCount;
+raw pool.query("SELECT 1") result and elapsed time;
+a small Drizzle query result and elapsed time;
+separate timeout/error information for each.
+Confirm in source that both checks use the exact same exported pool instance.
+Do not expose credentials, full database URLs, private secrets, or unnecessary host details in the public response. Keep the endpoint probe-key protected.
+3. Improve pool logging
+Log pool errors and pool counts through the existing structured logger.
+Do not log passwords, connection strings, tokens, or query parameters containing personal information.
+4. Add a database readiness endpoint
+Keep /api/healthz as process health.
+Add or designate a protected readiness check that confirms:
+raw PostgreSQL query works;
+Drizzle query works;
+pool waiting count is within an acceptable threshold.
+Do not place sensitive diagnostics on an unprotected public endpoint.
+5. Verification before the build
+After deploying:
+Confirm the enhanced probe reports both raw and Drizzle checks as healthy.
+Confirm /api/businesses and /api/cultural-sites respond.
+Complete one valid production test registration and delete the test account afterward through an approved method.
+Test email login.
+Wait at least 35 seconds and repeat the data-backed endpoint tests.
+Run repeated requests sufficient to exceed the five-connection pool size and verify:
+no requests hang;
+waiting count returns to zero;
+all responses complete within the defined timeout.
+Re-run after the API has been idle for at least five minutes.
+Return exact timings, pool counts, and any errors.
+Protected scope
+Do not modify:
+authentication behavior;
+session logic;
+mobile code;
+database schema;
+memberships or payments;
+KinfolkAI;
+map code;
+unrelated routes.
+Authentication impact: NONE.
+Do not authorize EAS automatically.
+End with:
+🟢 DATABASE RESILIENCE DEPLOYED AND VERIFIED — READY FOR BUILD REVIEW
+or
+🔴 DATABASE STABILITY NOT PROVEN — DO NOT BUILD

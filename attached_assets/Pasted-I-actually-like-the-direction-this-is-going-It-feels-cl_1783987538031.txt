@@ -1,0 +1,141 @@
+I actually like the direction this is going. It feels cleaner and more premium than some of the earlier versions. That said, because I know the vision for **Mapping with Melanin™**, I think this slide is underselling what makes you different.
+
+Here's what stands out:
+
+### What's working
+
+* The typography is strong and easy to read.
+* The warm color palette feels trustworthy and premium.
+* The checklist format makes the audience quickly identify themselves.
+* Plenty of white space makes the slide feel polished.
+
+### What I'd change
+
+#### 1. The headline is too generic
+
+"**Built for the moments that matter.**"
+
+This could describe almost any travel app.
+
+Your product is much more than that.
+
+Consider something like:
+
+* **Built for where life takes you next.**
+* **Wherever life takes you, find your people first.**
+* **From home to anywhere—know before you go.**
+* **Travel. Relocate. Connect. Belong.**
+* **Find your community wherever life leads.**
+
+These immediately connect to your mission.
+
+---
+
+#### 2. Add people who never travel
+
+One thing we've talked about repeatedly is making sure people understand this isn't just for relocation.
+
+I'd adjust the list to something like:
+
+✓ Moving to a new city
+
+✓ Exploring your hometown
+
+✓ Planning your next trip
+
+✓ Looking for your community
+
+✓ Supporting minority-owned businesses
+
+✓ Finding trusted local recommendations
+
+Notice how "Exploring your hometown" moves near the top. That tells people immediately this app is useful where they already live.
+
+---
+
+#### 3. Make the emotional payoff stronger
+
+Current:
+
+> If any of these sound like you—
+> you're who we built this for.
+
+I'd make it feel more personal:
+
+> **Whether you're staying close to home or starting somewhere new, Mapping with Melanin™ helps you discover places, people, and businesses that make every community feel a little more like home.**
+
+That reinforces belonging, which is really your brand.
+
+---
+
+#### 4. The phone should be doing more work
+
+Right now the phone is mostly empty.
+
+This is valuable real estate.
+
+I'd show one of these:
+
+* Map with safety overlay
+* Business profile
+* Community feed
+* AI search
+* Kinfolk Circles
+
+Even a blurred version makes the slide feel alive.
+
+---
+
+#### 5. Add one subtle emotional sentence
+
+Instead of ending with:
+
+> you're who we built this for.
+
+Maybe end with:
+
+> **Because everyone deserves to know where they belong before they arrive.**
+
+That line feels very "Mapping with Melanin™."
+
+---
+
+## One thing I would absolutely add
+
+I'd include one bullet that no competitor can honestly claim:
+
+✓ **Knowing before you go**
+
+That's your entire platform distilled into four words.
+
+---
+
+### My suggested final version
+
+**WHO IS IT FOR?**
+
+# Wherever life takes you,
+
+## find your community first.
+
+✓ Moving to a new city
+
+✓ Exploring your hometown
+
+✓ Traveling somewhere unfamiliar
+
+✓ Looking for community
+
+✓ Supporting minority-owned businesses
+
+✓ Finding trusted recommendations
+
+✓ Knowing before you go
+
+---
+
+**Whether you're staying close to home or starting somewhere new, Mapping with Melanin™ helps you discover businesses, communities, and experiences that make every place feel more like home.**
+
+---
+
+I think this is about **8.5/10** as it stands. With a stronger headline, a meaningful app screen in the phone mockup, and copy that emphasizes **belonging** instead of just **travel**, it becomes a **9.8/10** slide and aligns much more closely with the story you've been building throughout the deck.

@@ -1,0 +1,62 @@
+CONDITIONAL APPROVAL — MAP OTA VERIFICATION
+The onLayout-gated MapView repair is approved for controlled verification only.
+Do not publish it directly to all production testers yet.
+Before publishing
+Confirm:
+Build 93 is connected to the production EAS Update channel.
+Build 93 runtime version is exactly 1.1.5.
+The proposed update also resolves to runtime version 1.1.5.
+No native dependencies, app.json native configuration, plugins, or native modules changed.
+The exact Git commit containing only the approved map changes.
+The working tree contains no unrelated mobile changes.
+Controlled release
+Prefer one of these:
+publish first to a staging/preview channel compatible with a production-matching build; or
+use the smallest available EAS rollout percentage or tester cohort.
+If neither is available for Build 93, state that plainly before publishing.
+Required device procedure
+After publishing:
+Force-close Build 93.
+Open it once and wait long enough for the update to download.
+Force-close it again.
+Reopen it.
+Confirm the app is running the new EAS Update ID.
+Open Map.
+Pass criteria on iPhone 16 Pro Max
+Apple map tiles visible;
+Philadelphia visible;
+no white screen;
+map pans and zooms;
+cultural pins visible;
+business pins visible;
+Mother Bethel pin tappable;
+preview card opens;
+no crash or infinite loader.
+Failure rule
+If the map remains white:
+roll back the update immediately;
+do not publish another speculative OTA;
+run the minimal MapView diagnostic and capture onLayout, onMapReady, onMapLoaded, and native logs.
+Protected scope
+Do not modify authentication, sessions, database schema, KinfolkAI, voice, businesses, cultural data, memberships, or unrelated navigation.
+Authentication impact: NONE.
+Return:
+update ID;
+runtime version;
+channel;
+commit;
+exact files changed;
+rollout scope;
+rollback command.
+End with:
+🟡 MAP OTA PUBLISHED FOR CONTROLLED DEVICE VERIFICATION
+Do not call the map fixed until it is visible on the physical device.
+Important corrections to Replit’s report
+The statement that Apple Maps always mounts at 0×0 inside tab navigators and never reloads is still a theory until logs prove that Build 93 actually received a zero-size layout. The change may fix it, but the report should say “suspected root cause addressed”, not confirmed root cause.
+Also, API results do not prove voice works. A 401 only proves the protected endpoint responds without authentication. It does not prove:
+the app sends the valid token;
+microphone permission works;
+speech recognition works;
+TTS audio downloads;
+audio plays through the device speaker.
+Likewise, a 200 from Kinfolk chat does not prove the installed app receives and displays the response.

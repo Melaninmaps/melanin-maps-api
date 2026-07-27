@@ -1,0 +1,58 @@
+I would set limits based on membership
+Free User
+1 profile picture
+Up to 10 post images per month
+Maximum 5 MB per image
+Premium User
+Higher monthly upload limits
+Larger image size
+Travel albums
+Business portfolios
+Businesses
+Community Listing
+5–10 photos
+Growth
+50 photos
+Premium
+Unlimited (or a very generous limit)
+This gives businesses a reason to upgrade while keeping costs predictable.
+Compress every image
+I would never store the original photo unless it's truly needed.
+When someone uploads an image:
+Compress it.
+Create thumbnails.
+Resize large images automatically.
+Most users won't notice the difference, but your storage and bandwidth costs can drop significantly.
+I have one suggestion that could save you thousands
+Don't allow unlimited uploads of the same place.
+For example, if 100 people visit the same restaurant, you don't necessarily need 100 nearly identical photos of the front entrance.
+Instead, consider:
+Business gallery
+Community gallery
+Most helpful photos
+Recent photos
+Prioritize quality over quantity.
+Think about image expiration
+For example:
+Community post photos: keep while the post is active.
+Safety report images: archive after a set retention period if appropriate.
+Event photos: retain with the event.
+Temporary uploads: automatically delete after a defined period.
+Having a retention policy helps manage costs and storage growth.
+My recommendation for launch
+Since you're still in the early stages, I would set conservative limits:
+Consumers: 10–20 image uploads per month.
+Businesses: 10 profile/gallery photos on the free plan.
+Travel bloggers/Creators: Higher limits on paid plans.
+Marketplace sellers: Based on their subscription tier.
+You can always increase those limits as your community grows and you understand real usage patterns.
+One feature I think would be unique
+Since Mapping with Melanin™ is about connection, I wouldn't let businesses simply upload endless marketing photos.
+I'd create a Community Gallery where visitors' photos and the business's own photos appear together (subject to moderation and the user's consent).
+For example:
+Business Photos
+Professional images uploaded by the owner.
+Community Moments
+Photos shared by customers who chose to contribute.
+That gives potential visitors a more authentic view of the business while still allowing owners to showcase their brand.
+From a cost perspective, I'd start with clear upload limits and monitor how people actually use the platform. It's much easier to increase limits later than to reduce them after users have become accustomed to unlimited storage.

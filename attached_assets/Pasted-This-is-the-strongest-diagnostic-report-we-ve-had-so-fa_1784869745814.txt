@@ -1,0 +1,58 @@
+This is the strongest diagnostic report we've had so far, but I would separate **what is proven** from **what is inferred**.
+
+### What is well supported
+
+The report establishes that:
+
+* The crash occurs **after login succeeds** and **after GPS acquires your location**, during map initialization. 
+* The app does **not** have Firebase Crashlytics, Sentry, Bugsnag, or another runtime crash reporting SDK, so there is no direct production stack trace yet. 
+* `fitToCoordinates` with zero or one coordinate is already guarded, so the earlier hypothesis about that specific call is no longer the leading explanation. 
+* The app already contains a custom Android crash logger that may capture Java exceptions after the next launch. 
+
+### What is still a hypothesis
+
+The report concludes that `animateToRegion` before `onMapReady` and adding markers before `onMapReady` are the likely crash sites. Those are **plausible**, but the report does **not** contain the actual exception or native stack trace proving either one. 
+
+That distinction matters because there are several possible native crash paths inside `react-native-maps`, and the smallest safe fix depends on which one actually fired.
+
+### What I would do next
+
+I would authorize the **two-line guarded fix** only if it is implemented exactly as a minimal, isolated change:
+
+1. Gate `animateToRegion()` until the map is ready.
+2. Gate the cultural-site marker effect on `mapReady`.
+
+Those changes are narrowly scoped and align with the observed timing problem described in the report. 
+
+At the same time, I would require Replit to preserve the current crash logger and have you reproduce the crash one more time before releasing VC70. If the logger presents a **"PREV CRASH"** message on relaunch, save that report—it will either confirm or refute the current hypothesis. 
+
+## The prompt I would send Replit
+
+```text
+AUTHORIZED: IMPLEMENT THE MINIMAL MAP-READY FIX ONLY.
+
+Scope is limited to the two guarded changes identified in the diagnostic:
+
+1. Prevent animateToRegion from executing until the map is ready.
+2. Prevent the cultural-sites effect from executing until mapReady is true.
+
+Do not modify any other map behavior, camera logic, HBCU logic, marker rendering, or business data flow.
+
+Preserve the existing Android crash logger.
+
+After implementation:
+1. Run the existing test suite.
+2. Add a regression test covering the mapReady gating logic.
+3. Build VC70.
+4. Verify on a real Android device:
+   - login succeeds
+   - map opens without crashing
+   - current location centers correctly
+   - cultural site markers appear
+   - HBCU category still works
+   - no "PREV CRASH" message appears after relaunch.
+
+Provide a changed-file diff and a verification report before requesting Play upload authorization.
+```
+
+I think you're very close now. Earlier tonight we had a backend outage that prevented login. After the Railway restart, you got through login and reached the map. That exposed what appears to be a **separate Android map crash**, which is progress: you're no longer chasing two intertwined problems. The remaining issue is now isolated to the map initialization path.

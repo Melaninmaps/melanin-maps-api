@@ -1,0 +1,571 @@
+MAPPING WITH MELANIN™ — BUILD 97 PROACTIVE FAILURE,
+CRASH-PREVENTION, AND INCIDENT TESTING PLAN
+
+READ-ONLY PLANNING UNTIL BUILD 96 IS APPROVED
+NO IMPLEMENTATION OR TEST EXECUTION YET
+
+After Apple approves Build 96 and the founder authorizes Build 97,
+proactive failure testing must be included as a formal release
+requirement.
+
+The purpose is to intentionally simulate conditions that could cause
+crashes, broken screens, 404 errors, alarming incidents, data loss, or
+confusing user experiences—without harming production, real users, or
+real production data.
+
+Do not intentionally crash production.
+
+Do not run destructive tests against the production database.
+
+Do not expose secrets or sensitive user information.
+
+Do not modify code until the founder says “Please implement.”
+
+══════════════════════════════════════════════════════════════
+1. TEST ENVIRONMENT REQUIREMENT
+══════════════════════════════════════════════════════════════
+
+Determine the safest environment for controlled failure testing:
+
+- Local development
+- Replit development
+- Preview deployment
+- Dedicated staging API
+- Staging database
+- Mock service layer
+- Test accounts
+- Test object storage
+- Test push-notification environment
+- Sandbox KinfolkAI provider configuration
+
+Report whether a dedicated staging environment currently exists.
+
+If not, propose the minimum safe staging architecture required before
+fault injection begins.
+
+Production may receive only non-destructive smoke tests after staging
+tests pass.
+
+══════════════════════════════════════════════════════════════
+2. STATIC CRASH-RISK AUDIT
+══════════════════════════════════════════════════════════════
+
+Before running the app, scan for:
+
+- Null or undefined property access
+- Missing optional chaining
+- Unhandled promise rejections
+- Async errors without catch handling
+- State updates after component unmount
+- Infinite render loops
+- Excessive rerenders
+- Missing React error boundaries
+- Navigation to nonexistent routes
+- Invalid deep-link targets
+- Requests without timeouts
+- Requests without cancellation
+- Duplicate request triggers
+- JSON parsing without validation
+- API response assumptions
+- Missing-field assumptions
+- Unbounded lists
+- Non-virtualized lists
+- Large images without memory controls
+- Map marker overload
+- Platform-specific code without guards
+- Permission handling without denial states
+- Retry loops without limits
+- Session-renewal loops
+- Authentication redirect loops
+- Upload flows without cleanup
+- Database writes without idempotency
+
+For every risk provide:
+
+- Severity
+- File and line
+- Trigger
+- Expected user impact
+- Proposed correction
+- Regression test
+
+══════════════════════════════════════════════════════════════
+3. CONTROLLED HTTP FAILURE TESTS
+══════════════════════════════════════════════════════════════
+
+Simulate the following responses for every critical API workflow:
+
+- 400 Bad Request
+- 401 Unauthorized
+- 403 Forbidden
+- 404 Not Found
+- 409 Conflict
+- 413 Payload Too Large
+- 422 Validation Error
+- 429 Rate Limited
+- 500 Internal Server Error
+- 502 Bad Gateway
+- 503 Service Unavailable
+- Request timeout
+- Invalid JSON
+- Empty response
+- Structurally incomplete response
+- Extremely slow response
+
+Critical workflows include:
+
+- Registration
+- Login
+- Email verification
+- Password reset
+- Session renewal
+- Profile setup
+- Personalization
+- Business search
+- Map search
+- Heritage search
+- Community feed
+- Posts and reviews
+- Events
+- Resources
+- KinfolkAI
+- Image upload
+- Notifications
+- Saved items
+- Business-owner actions
+
+For every response verify:
+
+- App does not crash
+- Plain-language message appears
+- Retry behavior is safe
+- Back navigation works
+- Duplicate writes do not occur
+- User input is preserved where appropriate
+- Incident is logged
+- Recovery succeeds
+
+══════════════════════════════════════════════════════════════
+4. 404 INVENTORY AND TESTING
+══════════════════════════════════════════════════════════════
+
+Audit and test:
+
+A. API ROUTE 404
+
+- Mobile or web calls a nonexistent API endpoint
+- Version mismatch between mobile and server
+- Route renamed but old client remains
+
+B. RECORD 404
+
+- Deleted business
+- Removed event
+- Removed post
+- Missing heritage place
+- Missing resource
+- Deleted user profile
+- Expired notification target
+- Removed community report
+
+Required response:
+
+“This item is no longer available.”
+
+Do not display raw route names or technical stack traces.
+
+C. NAVIGATION 404
+
+- Notification points to nonexistent screen
+- Deep link points to renamed screen
+- Shared URL points to removed record
+- Route parameters are missing or malformed
+
+D. ASSET 404
+
+- Missing image
+- Missing avatar
+- Missing business logo
+- Missing map image
+- Missing video thumbnail
+- Expired signed URL
+
+Required behavior:
+
+- Placeholder asset
+- No layout collapse
+- No crash
+- Retry only when useful
+
+E. PUBLIC WEB 404
+
+- Branded not-found page
+- Search or discovery path back into the platform
+- No blank screen
+
+Create an automated route and deep-link inventory so existing links are
+checked before every future build.
+
+══════════════════════════════════════════════════════════════
+5. AUTHENTICATION FAULT INJECTION
+══════════════════════════════════════════════════════════════
+
+Simulate:
+
+- Wrong password
+- Unverified email
+- Expired verification code
+- Expired session
+- Revoked session
+- Missing token
+- Corrupt token
+- Session renewal failure
+- Network loss during login
+- Server timeout after credentials submitted
+- Rapid repeated login taps
+- Login followed immediately by app backgrounding
+- Logout while requests are active
+- Apple Sign-In cancellation
+- Apple Sign-In invalid nonce
+- Returning member after app reinstall
+
+Verify:
+
+- No redirect loops
+- No blank screen
+- No accidental duplicate account
+- No false success message
+- Clear recovery path
+- Safe token cleanup
+- Login state remains consistent
+
+══════════════════════════════════════════════════════════════
+6. MAP AND LOCATION FAULT INJECTION
+══════════════════════════════════════════════════════════════
+
+Simulate:
+
+- Location permission denied
+- Location permission permanently denied
+- Location unavailable
+- GPS timeout
+- Invalid coordinates
+- Null coordinates
+- Duplicate coordinates
+- Map provider failure
+- Map tiles unavailable
+- Thousands of mock markers
+- Empty results
+- Slow category query
+- Rapid category switching
+- Search while markers are loading
+- Detail record deleted after marker loaded
+- Heritage layer failure
+- Historical Sundown Town layer failure
+- Business layer failure
+- One layer failing while others remain available
+- App backgrounded during map load
+
+Verify:
+
+- App remains usable
+- Failed layer can be isolated
+- Other map layers continue where possible
+- User sees clear status
+- No infinite loading spinner
+- Marker count remains within safe limits
+- Memory remains stable
+- Bottom navigation remains usable
+
+══════════════════════════════════════════════════════════════
+7. KINFOLKAI FAILURE TESTS
+══════════════════════════════════════════════════════════════
+
+Simulate:
+
+- Provider timeout
+- Rate limit
+- Invalid provider response
+- Empty answer
+- Malformed structured response
+- Source lookup failure
+- Recommendation service unavailable
+- Conversation history unavailable
+- Personalization unavailable
+- Memory unavailable
+- Sponsored result metadata missing
+- Safety context unavailable
+- User closes screen mid-response
+- Duplicate message submission
+
+Verify:
+
+- KinfolkAI does not invent a result to cover a system failure
+- It states when information is unavailable
+- Conversation remains recoverable
+- Member message is not duplicated
+- No private conversation content appears in logs
+- Core app remains usable if KinfolkAI is unavailable
+
+══════════════════════════════════════════════════════════════
+8. DATA AND WRITE-SAFETY TESTS
+══════════════════════════════════════════════════════════════
+
+For every create or update action, test:
+
+- Double tap
+- Network retry
+- Request timeout after server successfully writes
+- App closes during submission
+- Duplicate webhook
+- Conflicting updates
+- Validation failure
+- Partial upload
+- Database rollback
+- Record deleted during edit
+
+Verify:
+
+- Idempotency where required
+- No duplicate posts, reviews, events, profiles, or submissions
+- No orphaned uploads
+- No partially written critical records
+- Clear confirmation state
+- Safe retry path
+
+Use test records only.
+
+══════════════════════════════════════════════════════════════
+9. DEVICE-STRESS TESTS
+══════════════════════════════════════════════════════════════
+
+Test on:
+
+- Small iPhone
+- Standard iPhone
+- Large iPhone
+- iPad
+- Lower-memory Android phone
+- Standard Android phone
+- Android tablet if supported
+
+Simulate:
+
+- Repeated navigation for at least 50 cycles
+- Rapid tapping
+- Long scrolling
+- Large lists
+- Repeated map open/close
+- Repeated KinfolkAI open/close
+- Background/resume cycles
+- Orientation changes where supported
+- Low-memory warning where test tooling permits
+- Slow network
+- Offline/reconnect
+- Battery-saving or reduced-background conditions where practical
+
+Track:
+
+- Crashes
+- Frozen screens
+- Memory growth
+- CPU spikes
+- Slow frames
+- Navigation failures
+- API duplication
+
+══════════════════════════════════════════════════════════════
+10. SYNTHETIC USER JOURNEYS
+══════════════════════════════════════════════════════════════
+
+Create automated or repeatable scripted checks for:
+
+1. New Community Member signup
+2. Email verification
+3. Login and session restore
+4. Personalization
+5. Business discovery
+6. Map category selection
+7. Heritage category selection
+8. Historical context layer
+9. Community post submission
+10. Event discovery
+11. Resource discovery
+12. KinfolkAI question
+13. Profile update
+14. Logout and login again
+
+Run these against every release candidate.
+
+Report the exact step where any journey fails.
+
+══════════════════════════════════════════════════════════════
+11. OBSERVABILITY AND INCIDENT CAPTURE
+══════════════════════════════════════════════════════════════
+
+Confirm or recommend:
+
+- Mobile crash reporting
+- API exception reporting
+- Build/version tagging
+- Device and OS tagging
+- Current screen
+- Navigation breadcrumbs
+- Endpoint and status code
+- Request duration
+- Anonymous session or internal user reference
+- Railway service logs
+- Database error logs
+- Slow-query reporting
+- Alerting for repeated P0/P1 failures
+- Release health dashboard
+
+Logs must not contain:
+
+- Passwords
+- Access tokens
+- Refresh tokens
+- Verification codes
+- Selfies or ID images
+- Private messages
+- Raw KinfolkAI conversations
+- Exact anonymous safety-report identities
+- Sensitive child information
+
+══════════════════════════════════════════════════════════════
+12. INCIDENT AND ALARM CONDITIONS
+══════════════════════════════════════════════════════════════
+
+Define automatic alerts for:
+
+- Authentication failure spike
+- Crash-free session rate decline
+- API 500 spike
+- API 404 spike
+- Database connection failures
+- Railway restarts
+- KinfolkAI timeout spike
+- Map route failure
+- Session renewal failure
+- Upload failure spike
+- Notification deep-link failure
+- Memory or CPU threshold breach
+- Unusual duplicate submissions
+
+For each alert define:
+
+- Trigger threshold
+- Severity
+- Notification recipient
+- Immediate containment action
+- Rollback condition
+- Evidence required before closing
+
+Do not finalize thresholds without observing baseline testing data.
+
+══════════════════════════════════════════════════════════════
+13. DEFECT SEVERITY AND RELEASE RULES
+══════════════════════════════════════════════════════════════
+
+Define:
+
+P0 — CRITICAL
+
+Examples:
+- Data loss
+- Credential or private-data exposure
+- Authentication unavailable for most users
+- App unusable on both platforms
+- Incorrect safety information that creates immediate risk
+
+P1 — HIGH
+
+Examples:
+- Repeatable crash
+- Major screen inaccessible
+- Map unusable
+- Login fails for a supported method
+- Broken session renewal
+- Incorrect paid entitlement
+- Deep links commonly crash
+
+P2 — MEDIUM
+
+Examples:
+- One noncritical workflow fails
+- Poor error recovery
+- Broken optional action
+- Incorrect empty state
+- One device layout issue
+
+P3 — LOW
+
+Examples:
+- Cosmetic issue
+- Minor copy problem
+- Small alignment issue
+
+Release rule:
+
+- No open P0
+- No open P1
+- P2 issues documented with approved workaround or deferral
+- P3 issues may be deferred
+- Actual distributed binaries pass smoke tests
+
+══════════════════════════════════════════════════════════════
+14. REQUIRED DELIVERABLE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Current Test and Staging Architecture
+3. Static Crash-Risk Findings
+4. Known Crash Inventory
+5. 404 Inventory
+6. Authentication Failure Matrix
+7. Map Failure Matrix
+8. KinfolkAI Failure Matrix
+9. Data-Write Failure Matrix
+10. Device-Stress Matrix
+11. Synthetic User Journeys
+12. Observability Status
+13. Incident Alert Plan
+14. Privacy-Safe Logging Standard
+15. P0/P1/P2/P3 Definitions
+16. Release Blocking Rules
+17. Automated Tests That Can Be Created
+18. Manual Tests Still Required
+19. Production Tests That Are Safe
+20. Production Tests That Must Never Be Run
+21. Exact Files, Routes, Screens, and Configurations Reviewed
+22. Build 97 Testing Gates
+23. Next Android Build Testing Gates
+24. Founder Decisions Required
+25. Confirmation That No Changes or Tests Were Performed
+
+At the end answer directly:
+
+A. Can Replit intentionally simulate crash-causing conditions without
+   harming production?
+
+B. What staging or mock infrastructure is required?
+
+C. Can every API route be tested for 404, timeout, and server error
+   handling?
+
+D. Can Replit automatically detect broken navigation and deep links?
+
+E. Can Replit verify that failures produce helpful messages instead of
+   crashes?
+
+F. Can Replit monitor the testing build for alarming incidents as 30
+   testers use it?
+
+G. What conditions would block Build 97 from distribution?
+
+Do not implement.
+Do not execute destructive tests.
+Do not modify production.
+Do not submit a build.

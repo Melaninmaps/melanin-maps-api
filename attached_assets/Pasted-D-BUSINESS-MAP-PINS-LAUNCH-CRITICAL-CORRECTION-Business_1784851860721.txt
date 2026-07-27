@@ -1,0 +1,51 @@
+D. BUSINESS MAP PINS — LAUNCH-CRITICAL CORRECTION
+Business pins are a core Mapping With Melanin™ feature and must be included in the Android map stability work.
+Audit and implement the smallest safe correction so that approved businesses reliably appear on the map without causing Android crashes or performance degradation.
+Required behavior:
+Approved businesses with valid coordinates must render as map pins.
+Invalid or missing coordinates must be skipped safely and logged without crashing the screen.
+Pins must remain visible after:
+initial map load;
+location timeout or location denial;
+app background/foreground;
+map pan and zoom;
+business-data refresh.
+Tapping a business pin must open the intended business preview/profile path.
+Business pins must be visually distinguishable from:
+HBCUs;
+cultural landmarks;
+safety alerts;
+user location.
+Prevent large batches of custom marker views from crashing Android.
+Determine whether Android should use:
+simpler native marker images;
+memoized custom markers;
+marker batching;
+viewport-based rendering;
+clustering at lower zoom levels.
+Do not remove businesses from the map as a workaround.
+Do not replace the business-map experience with the old static pin stub.
+Preserve the future design direction where business pins preview the business experience users will receive.
+Return:
+current source of business map data;
+whether it is production data, seeded data, or static constants;
+number of business markers rendered on initial load;
+exact filtering rules;
+exact pin-tap behavior;
+performance risk on Android;
+smallest implementation needed for VC68;
+regression tests for map load, pin visibility, pin tapping, zooming, panning, and large marker counts.
+One important distinction:
+Business pins must be fixed now.
+The full HBCU flagship redesign can still wait.
+HBCUs can remain a separate marker/layer for VC68, but they should not be allowed to destabilize business pins.
+The build gate for VC68 should now be:
+Backend readiness fix deployed and verified.
+Android login/signup correction retained.
+Map tiles load.
+Location spinner times out safely.
+Business pins render reliably.
+Pin tap opens business preview/profile.
+Cultural/HBCU markers do not crash the map.
+App stays open on the map for several minutes without interaction.
+That keeps the next build focused on the real launch promise: users open the map and can actually discover businesses.

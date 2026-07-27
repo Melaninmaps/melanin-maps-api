@@ -1,0 +1,78 @@
+05.21 Dimension Nine — Exploration Value
+Exploration Value allows the Engine to surface strong options beyond the most obvious or popular results.
+It evaluates:
+novelty to the user;
+underexposure;
+emerging quality;
+local uniqueness;
+category diversity;
+geographic variety;
+cultural significance;
+Hidden Gem potential;
+community relevance;
+reduced prior visibility.
+Exploration Value must never compensate for disqualifying safety or trust concerns.
+05.22 Standard Discovery Score Formula
+Discovery Score =
+  (Intent Relevance × 0.22)
++ (Context Fit × 0.18)
++ (Geographic Fit × 0.12)
++ (Temporal Fit × 0.08)
++ (Evidence Sufficiency × 0.10)
++ (Community Value × 0.10)
++ (Cultural Relevance × 0.08)
++ (Opportunity or Utility Value × 0.07)
++ (Exploration Value × 0.05)
+Example:
+Intent Relevance:        94 × 0.22 = 20.68
+Context Fit:             88 × 0.18 = 15.84
+Geographic Fit:          82 × 0.12 =  9.84
+Temporal Fit:            90 × 0.08 =  7.20
+Evidence Sufficiency:    74 × 0.10 =  7.40
+Community Value:         81 × 0.10 =  8.10
+Cultural Relevance:      92 × 0.08 =  7.36
+Utility Value:           84 × 0.07 =  5.88
+Exploration Value:       65 × 0.05 =  3.25
+
+Raw Discovery Score = 85.55
+Rounded Discovery Score = 86
+The Discovery Score is not the final Belonging Suitability Score.
+It becomes one input to the BIF.
+05.23 Discovery Confidence
+The Engine returns a Discovery Score and a Discovery Confidence level.
+05.23.1 Formula
+Discovery Confidence =
+  Query Confidence
+× Candidate Identity Confidence
+× Attribute Coverage
+× Evidence Quality
+× Availability Confidence
+× Context Confidence
+Normalized to 0–100.
+05.23.2 Attribute Coverage Factor
+Required attributes confirmed	Factor
+100%	1.00
+90–99%	0.95
+75–89%	0.85
+60–74%	0.70
+40–59%	0.50
+20–39%	0.30
+Under 20%	0.10
+Unknown optional attributes do not receive the same penalty as unknown required attributes.
+05.24 Search Eligibility Thresholds
+Discovery Score	Search treatment
+85–100	High relevance
+75–84	Strong relevance
+65–74	Relevant
+55–64	Supporting result
+40–54	Exploratory result
+25–39	Low relevance; ordinarily hidden behind expansion
+1–24	Exclude from ordinary results
+0	Ineligible
+Search eligibility may be allowed at lower scores when:
+exact named entity match exists;
+the user explicitly requests broad exploration;
+the market has very limited coverage;
+the candidate is historically relevant;
+the result is clearly labeled;
+no hard filter is violated.

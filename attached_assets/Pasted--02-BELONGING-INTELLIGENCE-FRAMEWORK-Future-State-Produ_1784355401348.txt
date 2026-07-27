@@ -1,0 +1,1126 @@
+# 02. BELONGING INTELLIGENCE FRAMEWORK™
+
+## Future-State Production Specification v1.0
+
+**Classification:** Foundational Orchestration Architecture
+**Status:** Review Mode — designed as the launch-state model
+**Confidentiality:** Highest restriction; orchestration logic and thresholds are not public
+
+---
+
+## 02.1 Purpose
+
+The Belonging Intelligence Framework™ is the central decision layer that coordinates every Mapping With Melanin™ intelligence engine.
+
+It does not independently decide whether a person, business, event, neighborhood, resource, Cultural Ambassador, or recommendation is “good.”
+
+It determines:
+
+1. what the user is trying to accomplish;
+2. which engines are relevant to that request;
+3. how much influence each engine should have;
+4. whether sufficient reliable evidence exists;
+5. whether safety or governance rules override the normal recommendation;
+6. how conflicting engine outputs are resolved;
+7. what the user may see;
+8. what the platform may recommend;
+9. what the platform may actively promote;
+10. what must be held for human review.
+
+The Framework’s governing question is:
+
+> **Given this person’s context, the available evidence, and the community’s lived experience, what response is most likely to increase confidence, connection, opportunity, and belonging without compromising safety, trust, dignity, or the Constitution?**
+
+---
+
+# 02.2 Core Architectural Rule
+
+No specialized engine may make a final public-facing decision alone.
+
+Every final result passes through this sequence:
+
+```text
+User Intent
+    ↓
+Context Engine™
+    ↓
+Relevant Engine Selection
+    ↓
+Individual Engine Scores
+    ↓
+Evidence Confidence Adjustment
+    ↓
+Safety and Governance Overrides
+    ↓
+Belonging Intelligence Synthesis
+    ↓
+Eligibility Decision
+    ↓
+Ranking / Recommendation / Recognition / Alert
+    ↓
+Public Explanation
+    ↓
+Learning and Audit Record
+```
+
+---
+
+# 02.3 Engines Coordinated by the Framework
+
+## Always evaluated
+
+These engines are evaluated for every consequential recommendation:
+
+1. **Context Engine™**
+2. **Trust Engine™**
+3. **Safety Intelligence Engine™**
+4. **Stewardship Engine™**
+
+## Evaluated when relevant
+
+5. **Community Engine™**
+6. **Discovery Engine™**
+7. **Community Health Index™**
+8. **Cultural Influence Engine™**
+9. **Community Catalyst Model™**
+10. **Opportunity Engine™**
+11. **Hidden Gem Model™**
+12. **Legacy & Learning Engine™**
+13. **Community Recognition System™**
+14. **Business Maturity Model™**
+15. **City Maturity Model™**
+16. **Community Readiness Model™**
+
+## Governing but not ordinarily scored
+
+17. **Governance Engine™**
+18. **Evolution Engine™**
+19. **Institution Test**
+20. **Generational Test**
+
+---
+
+# 02.4 Standard Score Scale
+
+Every scoring engine returns a normalized score from **0 to 100**.
+
+|  Score | Internal meaning            | General interpretation                       |
+| -----: | --------------------------- | -------------------------------------------- |
+| 90–100 | Exceptional                 | Very strong positive evidence                |
+|  80–89 | Strong                      | Reliable positive evidence                   |
+|  70–79 | Established                 | Sufficient evidence for normal use           |
+|  60–69 | Developing                  | Promising, but limited or mixed evidence     |
+|  45–59 | Emerging                    | Insufficient for strong conclusions          |
+|  25–44 | Low confidence              | Significant gaps or concerns                 |
+|   1–24 | Critical concern            | Strong negative or unreliable evidence       |
+|      0 | Disqualified or unavailable | Not eligible, blocked, or no usable evidence |
+
+A score is never interpreted without its associated **confidence level**.
+
+For example:
+
+* `Trust Score: 88 / Confidence: High`
+* `Trust Score: 88 / Confidence: Emerging`
+
+These are not equivalent. The second result must be treated more cautiously.
+
+---
+
+# 02.5 Confidence Scale
+
+Each engine returns both a score and a confidence level.
+
+| Confidence | Numeric factor | Meaning                                          |
+| ---------- | -------------: | ------------------------------------------------ |
+| Verified   |           1.00 | Strong, verified, current, corroborated evidence |
+| High       |           0.90 | Reliable evidence with minor limitations         |
+| Moderate   |           0.75 | Useful evidence with meaningful gaps             |
+| Emerging   |           0.55 | Limited evidence; suitable only for cautious use |
+| Low        |           0.35 | Weak, old, isolated, or unverified evidence      |
+| Unknown    |           0.00 | No reliable conclusion may be drawn              |
+
+## Confidence-adjusted engine score
+
+```text
+Adjusted Engine Score = Raw Engine Score × Confidence Factor
+```
+
+Example:
+
+```text
+Raw Trust Score: 88
+Confidence: Moderate = 0.75
+
+Adjusted Trust Score = 88 × 0.75 = 66
+```
+
+This prevents a high score based on too little evidence from outranking a slightly lower score supported by substantial verified evidence.
+
+---
+
+# 02.6 Evidence Source Influence
+
+The identity or status of the contributor does not automatically make their statement true. It changes how much initial confidence the system places in the evidence before corroboration, behavior history, recency, and anti-gaming review.
+
+## Initial source-reliability multipliers
+
+| Evidence source                                                    | Starting multiplier |
+| ------------------------------------------------------------------ | ------------------: |
+| Verified official or emergency source                              |                1.50 |
+| Confirmed platform administrator or trained moderator              |                1.40 |
+| Multiple independent verified members                              |                1.35 |
+| Verified member with established accuracy                          |                1.25 |
+| Verified Cultural Ambassador with relevant local history           |                1.20 |
+| Verified community organization or nonprofit                       |                1.20 |
+| Verified business owner speaking about their own operational facts |                1.15 |
+| Verified member                                                    |                1.10 |
+| Long-term unverified member with reliable history                  |                0.95 |
+| New verified member                                                |                0.90 |
+| New unverified member                                              |                0.65 |
+| Anonymous report                                                   |                0.45 |
+| Source with repeated inaccurate submissions                        |                0.25 |
+| Suspected coordinated, automated, or purchased activity            | 0.00 pending review |
+| Confirmed fraudulent activity                                      |                0.00 |
+
+## Important restriction
+
+A verified Cultural Ambassador, business owner, moderator, or member receives greater **initial evidentiary influence**, but may not override:
+
+* contradictory verified evidence;
+* documented conflicts of interest;
+* fraud signals;
+* safety escalation rules;
+* human-review requirements;
+* recency limitations;
+* independent corroboration requirements.
+
+Status increases confidence. It does not create immunity from scrutiny.
+
+---
+
+# 02.7 Evidence Quality Score
+
+Each individual piece of evidence receives an Evidence Quality Score before entering an engine.
+
+## Formula
+
+```text
+Evidence Quality =
+Source Reliability ×
+Verification Strength ×
+Corroboration ×
+Recency ×
+Specificity ×
+Behavioral Reliability ×
+Conflict-of-Interest Adjustment ×
+Anti-Gaming Adjustment
+```
+
+Each component is normalized between `0.00` and `1.00`, except the permitted source multipliers shown above.
+
+## Recommended factors
+
+### Verification strength
+
+| Evidence state                                    | Factor |
+| ------------------------------------------------- | -----: |
+| Independently verified                            |   1.00 |
+| Platform-verified submission                      |   0.90 |
+| Strongly supported but not independently verified |   0.75 |
+| Self-reported with supporting details             |   0.60 |
+| Self-reported without supporting details          |   0.40 |
+| Anonymous and unsupported                         |   0.20 |
+
+### Corroboration
+
+| Corroboration state                             | Factor |
+| ----------------------------------------------- | -----: |
+| Five or more independent reliable confirmations |   1.00 |
+| Three to four independent confirmations         |   0.90 |
+| Two independent confirmations                   |   0.75 |
+| One detailed source                             |   0.55 |
+| One vague source                                |   0.30 |
+| Contradicted by stronger evidence               |   0.10 |
+| Confirmed false                                 |   0.00 |
+
+### Specificity
+
+| Submission quality                          | Factor |
+| ------------------------------------------- | -----: |
+| Specific date, location, event, and details |   1.00 |
+| Specific but partially incomplete           |   0.80 |
+| General but usable                          |   0.60 |
+| Vague                                       |   0.35 |
+| Non-actionable                              |   0.10 |
+
+### Conflict-of-interest adjustment
+
+| Condition                                   | Factor |
+| ------------------------------------------- | -----: |
+| No detected conflict                        |   1.00 |
+| Disclosed relationship                      |   0.85 |
+| Self-promotion or direct financial interest |   0.65 |
+| Undisclosed likely relationship             |   0.40 |
+| Confirmed deceptive relationship            |   0.00 |
+
+---
+
+# 02.8 Recency and Decay Rules
+
+Evidence loses influence according to what it describes.
+
+The Framework does not apply one universal decay schedule.
+
+## A. Immediate safety evidence
+
+Examples:
+
+* active emergencies;
+* current road or transit interruption;
+* active harassment or dangerous situation;
+* temporary closure.
+
+| Age          |          Remaining influence |
+| ------------ | ---------------------------: |
+| 0–6 hours    |                         100% |
+| 6–24 hours   |                          85% |
+| 1–3 days     |                          65% |
+| 4–7 days     |                          40% |
+| 8–30 days    | 20% unless part of a pattern |
+| Over 30 days |              Historical only |
+
+## B. Experience and service evidence
+
+Examples:
+
+* welcome experience;
+* customer treatment;
+* business responsiveness;
+* event hosting;
+* profile accuracy.
+
+| Age          | Remaining influence |
+| ------------ | ------------------: |
+| 0–30 days    |                100% |
+| 31–90 days   |                 90% |
+| 3–6 months   |                 75% |
+| 6–12 months  |                 60% |
+| 1–2 years    |                 40% |
+| Over 2 years |  20% unless renewed |
+
+## C. Community contribution evidence
+
+Examples:
+
+* mentorship;
+* event participation;
+* resource sharing;
+* business collaboration;
+* Cultural Ambassador contributions.
+
+| Age          |           Remaining influence |
+| ------------ | ----------------------------: |
+| 0–6 months   |                          100% |
+| 6–12 months  |                           90% |
+| 1–2 years    |                           75% |
+| 2–5 years    |                           55% |
+| Over 5 years | 35% plus legacy consideration |
+
+## D. Historical and legacy evidence
+
+Examples:
+
+* historic significance;
+* long-term community service;
+* cultural preservation;
+* documented community legacy.
+
+These do not automatically decay. They may instead gain legacy relevance over time if accurately preserved and periodically validated.
+
+---
+
+# 02.9 Baseline Engine Weights
+
+The Framework begins with a neutral baseline before context-specific adjustment.
+
+| Engine                            | Baseline weight |
+| --------------------------------- | --------------: |
+| Trust Engine™                     |             20% |
+| Safety Intelligence Engine™       |             20% |
+| Community Engine™                 |             15% |
+| Discovery Engine™                 |             15% |
+| Community Health Index™           |             10% |
+| Opportunity Engine™               |              8% |
+| Cultural Intelligence / Influence |              5% |
+| Legacy & Learning Engine™         |              4% |
+| Stewardship Engine™               |              3% |
+| **Total**                         |        **100%** |
+
+These baseline weights are not the final weights for every user request. The Context Engine modifies them.
+
+---
+
+# 02.10 Context-Specific Weight Profiles
+
+## A. Solo traveler
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Safety Intelligence   |    32% |
+| Trust                 |    23% |
+| Discovery             |    15% |
+| Community             |    12% |
+| Community Health      |     8% |
+| Opportunity           |     3% |
+| Cultural Intelligence |     5% |
+| Legacy                |     1% |
+| Stewardship           |     1% |
+
+## B. Solo woman traveler with late-night context
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Safety Intelligence   |    42% |
+| Trust                 |    25% |
+| Community             |    10% |
+| Discovery             |     9% |
+| Community Health      |     6% |
+| Cultural Intelligence |     4% |
+| Opportunity           |     1% |
+| Legacy                |     1% |
+| Stewardship           |     2% |
+
+Safety may additionally issue an override regardless of the combined score.
+
+## C. Family activity
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Safety Intelligence   |    28% |
+| Trust                 |    20% |
+| Discovery             |    16% |
+| Community             |    14% |
+| Community Health      |    10% |
+| Opportunity           |     4% |
+| Cultural Intelligence |     4% |
+| Legacy                |     2% |
+| Stewardship           |     2% |
+
+## D. Relocation
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Safety Intelligence   |    25% |
+| Community Health      |    20% |
+| Trust                 |    18% |
+| Community             |    15% |
+| Opportunity           |    10% |
+| Discovery             |     7% |
+| Cultural Intelligence |     3% |
+| Legacy                |     1% |
+| Stewardship           |     1% |
+
+## E. Local business discovery
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Discovery             |    25% |
+| Trust                 |    20% |
+| Community             |    15% |
+| Community Health      |    10% |
+| Opportunity           |    10% |
+| Cultural Intelligence |    10% |
+| Safety Intelligence   |     6% |
+| Legacy                |     3% |
+| Stewardship           |     1% |
+
+## F. Minority-owned business support
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Discovery             |    24% |
+| Cultural Intelligence |    18% |
+| Trust                 |    17% |
+| Community             |    15% |
+| Opportunity           |    12% |
+| Community Health      |     7% |
+| Safety Intelligence   |     4% |
+| Legacy                |     2% |
+| Stewardship           |     1% |
+
+## G. Cultural Ambassador discovery
+
+| Engine             | Weight |
+| ------------------ | -----: |
+| Cultural Influence |    28% |
+| Community Catalyst |    22% |
+| Trust              |    18% |
+| Community          |    14% |
+| Community Ripple   |     8% |
+| Legacy & Learning  |     5% |
+| Discovery          |     3% |
+| Stewardship        |     2% |
+
+## H. Business networking
+
+| Engine             | Weight |
+| ------------------ | -----: |
+| Opportunity        |    25% |
+| Community          |    20% |
+| Trust              |    18% |
+| Discovery          |    15% |
+| Community Health   |     8% |
+| Cultural Influence |     6% |
+| Safety             |     4% |
+| Legacy             |     2% |
+| Stewardship        |     2% |
+
+## I. Cultural and historical exploration
+
+| Engine                | Weight |
+| --------------------- | -----: |
+| Legacy & Learning     |    25% |
+| Cultural Intelligence |    22% |
+| Discovery             |    18% |
+| Trust                 |    12% |
+| Community             |    10% |
+| Community Health      |     6% |
+| Safety                |     4% |
+| Opportunity           |     1% |
+| Stewardship           |     2% |
+
+## J. Emergency or immediate safety request
+
+| Engine                                |                  Weight |
+| ------------------------------------- | ----------------------: |
+| Safety Intelligence                   |                     70% |
+| Trust                                 |                     20% |
+| Context                               | Included before scoring |
+| Community corroboration               |                      5% |
+| Stewardship                           |                      5% |
+| All promotional and discovery engines |                      0% |
+
+An emergency response does not use ordinary recommendation ranking.
+
+---
+
+# 02.11 Final Belonging Suitability Score
+
+For ordinary recommendations:
+
+```text
+Belonging Suitability Score =
+Σ (Adjusted Engine Score × Context Weight)
+```
+
+Example:
+
+| Engine           | Adjusted score | Context weight | Contribution |
+| ---------------- | -------------: | -------------: | -----------: |
+| Trust            |             86 |            20% |         17.2 |
+| Safety           |             92 |            20% |         18.4 |
+| Community        |             79 |            15% |        11.85 |
+| Discovery        |             88 |            15% |         13.2 |
+| Community Health |             73 |            10% |          7.3 |
+| Opportunity      |             60 |             8% |          4.8 |
+| Cultural         |             82 |             5% |          4.1 |
+| Legacy           |             70 |             4% |          2.8 |
+| Stewardship      |             96 |             3% |         2.88 |
+| **Total**        |                |                |    **82.53** |
+
+Final internal score: **82.5**
+
+This means the candidate is strong, subject to eligibility rules, confidence minimums, and safety overrides.
+
+---
+
+# 02.12 Overall Confidence Score
+
+The Framework calculates a separate overall confidence level.
+
+```text
+Overall Confidence =
+Weighted average of engine confidence
+× Evidence volume factor
+× Independence factor
+× Anti-gaming factor
+```
+
+## Evidence volume factor
+
+| Usable independent evidence | Factor |
+| --------------------------: | -----: |
+|                         20+ |   1.00 |
+|                       10–19 |   0.90 |
+|                         5–9 |   0.75 |
+|                         3–4 |   0.60 |
+|                           2 |   0.45 |
+|                           1 |   0.30 |
+|                           0 |   0.00 |
+
+## Independence factor
+
+| Evidence composition               | Factor |
+| ---------------------------------- | -----: |
+| Highly independent sources         |   1.00 |
+| Mostly independent                 |   0.90 |
+| Some repeated relationships        |   0.75 |
+| Heavily interconnected sources     |   0.55 |
+| Coordinated sources suspected      |   0.25 |
+| Coordinated manipulation confirmed |   0.00 |
+
+---
+
+# 02.13 Decision Thresholds
+
+## Recommendation eligibility
+
+| Suitability score | Overall confidence | Result                                        |
+| ----------------: | ------------------ | --------------------------------------------- |
+|            85–100 | High or Verified   | Strong recommendation                         |
+|             75–84 | Moderate or higher | Recommend                                     |
+|             65–74 | Moderate or higher | Cautious recommendation                       |
+|             55–64 | Emerging or higher | Discoverable, not actively recommended        |
+|             40–54 | Any                | Search-visible with limited-confidence notice |
+|             25–39 | Any                | Suppressed from recommendations               |
+|              0–24 | Any                | Hold, restrict, warn, or review               |
+
+## Minimum safety requirement
+
+Regardless of total score:
+
+* Safety below `55` prevents active recommendation.
+* Safety below `40` prevents promotion.
+* Safety below `25` may require a warning, temporary restriction, or human review.
+* Active confirmed danger bypasses all normal scoring.
+
+## Minimum trust requirement
+
+* Trust below `50` prevents active promotion.
+* Trust below `40` prevents personalized recommendation.
+* Trust below `25` requires review or exclusion.
+
+---
+
+# 02.14 Search, Recommendation, and Promotion Are Separate
+
+The Framework must never treat visibility as one decision.
+
+## 1. Search eligibility
+
+Can the user locate the profile by name, category, or map?
+
+## 2. Recommendation eligibility
+
+May KinfolkAI or the platform suggest the profile?
+
+## 3. Promotion eligibility
+
+May Mapping With Melanin™ actively feature, spotlight, boost, or place the profile in promotional positions?
+
+These decisions use different rules.
+
+---
+
+# 02.15 Minority-Owned and Non-Minority-Owned Business Rules
+
+## Verified minority-owned business
+
+Eligible for:
+
+* search;
+* recommendations;
+* community-driven discovery;
+* Hidden Gem consideration;
+* editorial spotlight;
+* active platform promotion;
+* Cultural Ambassador collaborations;
+* business growth programs;
+* founding-business programs;
+* sponsored or featured opportunities under approved policies.
+
+Subject to trust, safety, verification, and quality requirements.
+
+## Minority-owned but not yet verified
+
+Eligible for:
+
+* search;
+* limited discovery;
+* claim invitation;
+* community nomination;
+* provisional recommendation when evidence is sufficient.
+
+Not eligible for full ownership-based promotion until verified.
+
+## Non-minority-owned business
+
+May be included when community members add it for:
+
+* practical discovery;
+* safety-related context;
+* accurate neighborhood understanding;
+* positive lived experiences;
+* accessibility;
+* relevant service availability.
+
+It may:
+
+* appear in direct search;
+* appear on the map;
+* receive safety and experience information;
+* be returned when it is the most relevant practical answer;
+* be recommended contextually when appropriate.
+
+It may not receive:
+
+* minority-owned promotional placement;
+* Founding Business designation intended for minority-owned businesses;
+* minority-business campaign placement;
+* Hidden Gem designation when that program is defined specifically for minority-owned discovery;
+* platform-funded promotional elevation intended to advance the company’s minority-business mission.
+
+## Governing distinction
+
+```text
+Discoverable ≠ Recommended ≠ Promoted
+```
+
+A non-minority-owned business may be discoverable and, when context justifies it, recommendable. It is not actively promoted through programs designed to elevate minority-owned businesses.
+
+---
+
+# 02.16 Demo Business Rules During Testing
+
+Clearly labeled demonstration profiles are used to show testers how their actions affect the system.
+
+## Required label
+
+> **Demo Business — For Testing Purposes**
+
+## Demo data isolation
+
+Demo profiles must:
+
+* never enter production rankings;
+* never affect a real city’s Community Health Index;
+* never influence a real business;
+* never affect Cultural Ambassador standing;
+* never appear in public search outside the testing environment;
+* never contribute to real safety alerts;
+* never enter the permanent Legacy & Learning Engine;
+* never create real business opportunities or public recognition.
+
+## Sandbox output
+
+Testers may see:
+
+* how verification changes confidence;
+* how thoughtful reviews affect trust;
+* how event participation affects community contribution;
+* how repeated independent evidence affects reliability;
+* how low-quality or duplicated activity is reduced;
+* how safety reports trigger review rather than automatic public alerts.
+
+## Protected boundary
+
+Testers see the outcome and explanation, but not:
+
+* exact weights;
+* fraud thresholds;
+* source multipliers;
+* anti-gaming rules;
+* recommendation cutoffs;
+* internal confidence calculations.
+
+---
+
+# 02.17 Safety Override Rules
+
+Safety is not merely another weighted category.
+
+It possesses override authority.
+
+## Critical override
+
+Triggered by:
+
+* confirmed active emergency;
+* credible threat of immediate harm;
+* multiple verified recent severe reports;
+* authoritative emergency notice;
+* validated pattern meeting critical threshold.
+
+Result:
+
+* suspend ordinary recommendation;
+* issue appropriate warning;
+* escalate for human review;
+* preserve evidence;
+* notify designated safety operations;
+* record all actions in the Decision Ledger.
+
+## High-risk override
+
+Triggered by:
+
+* strong but incomplete evidence;
+* severe report pending corroboration;
+* sudden anomaly in safety reports;
+* coordinated reports requiring validation.
+
+Result:
+
+* limit promotion;
+* add review hold;
+* request additional verification;
+* avoid definitive public claims until reviewed;
+* permit carefully worded caution when necessary.
+
+## Non-override concern
+
+Triggered by:
+
+* isolated low-confidence report;
+* old report without current corroboration;
+* vague or unsupported submission.
+
+Result:
+
+* retain internally;
+* reduce confidence;
+* seek corroboration;
+* do not publish an alert automatically.
+
+---
+
+# 02.18 Engine Conflict Rules
+
+## Rule 1 — Safety defeats discovery
+
+A high Discovery score may not override a critical Safety result.
+
+## Rule 2 — Trust controls confidence
+
+A strong cultural or community result with low Trust may be discoverable but cannot receive strong recommendation language.
+
+## Rule 3 — Community benefit does not erase harm
+
+A business or person may contribute significantly to the community while still requiring safety or conduct restrictions.
+
+## Rule 4 — Minority ownership does not override quality or safety
+
+Ownership verification creates eligibility for mission-aligned promotion. It does not guarantee recommendation or shield a business from legitimate community concerns.
+
+## Rule 5 — Popularity never overrides mission alignment
+
+Virality, follower count, paid attention, or advertising spend may not defeat trust, safety, community, or governance results.
+
+## Rule 6 — Current evidence may outweigh old reputation
+
+A historically strong profile may be downgraded when recent reliable evidence indicates meaningful change.
+
+## Rule 7 — Long-term patterns may outweigh isolated events
+
+One weak interaction should not erase years of reliable contribution unless it involves serious harm or a critical violation.
+
+## Rule 8 — Human review may override automated output
+
+Every consequential override requires:
+
+* reviewer identity;
+* rationale;
+* evidence cited;
+* scope;
+* duration;
+* expiration or review date;
+* Decision Ledger entry.
+
+---
+
+# 02.19 Cultural Ambassador Application
+
+For Cultural Ambassador recommendations, the Framework considers:
+
+* Community Trust;
+* Cultural Influence;
+* Community Catalyst contribution;
+* authenticity and consistency;
+* Community Ripple;
+* business support;
+* preservation;
+* mentorship;
+* accurate storytelling;
+* conflicts of interest;
+* paid sponsorship disclosures;
+* follower and engagement authenticity.
+
+## Public reach
+
+Follower count and views may be used only as a contextual reach indicator.
+
+They may not exceed **10% of the Cultural Ambassador composite model**.
+
+## Community impact
+
+Verified downstream community actions should outweigh audience size.
+
+Examples:
+
+* businesses visited after an Ambassador feature;
+* event attendance generated;
+* community resources accessed;
+* meaningful new connections;
+* repeat business support;
+* mentorship;
+* preserved stories;
+* community participation;
+* traffic returned to the Ambassador’s own platforms.
+
+## Core principle
+
+The platform follows the Ambassador’s **journey**, not only a moment.
+
+The recommendation system should prioritize people whose sustained contribution creates trust, connection, opportunity, and preservation—not simply those who generated temporary attention.
+
+---
+
+# 02.20 Explanation Rules
+
+The user should understand the reason for a recommendation without seeing proprietary formulas.
+
+## Approved explanation examples
+
+* “Recommended because verified community members consistently describe this place as welcoming.”
+* “This business has a strong history of community participation and current verified information.”
+* “Community confidence is still developing because only a small number of verified experiences are available.”
+* “Recent community reports suggest added caution during late-night hours.”
+* “This Cultural Ambassador has helped community members discover local businesses and events over time.”
+* “This profile is visible for practical discovery but is not part of our minority-owned promotional program.”
+
+## Prohibited explanations
+
+Do not reveal:
+
+* exact weight percentages;
+* source-specific multipliers;
+* internal thresholds;
+* fraud-detection methods;
+* scoring vulnerabilities;
+* protected engine conflicts;
+* full orchestration logic.
+
+This implements:
+
+> **Visible outcomes. Invisible logic.**
+
+---
+
+# 02.21 Anti-Gaming Controls
+
+The Framework must detect manipulation across engines, not only inside one engine.
+
+## Signals
+
+* sudden review spikes;
+* copied or near-identical wording;
+* coordinated account creation;
+* repeated device or network patterns;
+* reciprocal review rings;
+* paid or incentivized submissions not disclosed;
+* Ambassador-business collusion;
+* geographically implausible activity;
+* unusually rapid progression;
+* excessive activity from linked accounts;
+* repeated deletions and reposting;
+* targeted negative campaigns;
+* brigading;
+* business self-review;
+* synthetic engagement;
+* bot behavior;
+* repeated low-quality submissions.
+
+## Response levels
+
+| Level      | Response                                     |
+| ---------- | -------------------------------------------- |
+| Monitor    | Record anomaly; no immediate public effect   |
+| Reduce     | Lower evidence confidence                    |
+| Quarantine | Exclude evidence from scoring pending review |
+| Hold       | Pause recognition, promotion, or alert       |
+| Review     | Moderator or administrator investigation     |
+| Restrict   | Limit account or profile privileges          |
+| Remove     | Delete invalid evidence                      |
+| Escalate   | Security, legal, or executive review         |
+
+---
+
+# 02.22 Cold-Start Rules
+
+New members, businesses, cities, and Ambassadors should not be punished merely because they have limited history.
+
+## New business
+
+May receive a provisional profile based on:
+
+* verification;
+* current information;
+* owner introduction;
+* initial community confirmations;
+* safety checks;
+* business story;
+* platform completeness.
+
+It should not receive an artificially low public rating.
+
+Display:
+
+> **Community confidence is developing.**
+
+## New member
+
+May contribute immediately according to platform rules, but early high-impact evidence receives lower confidence until supported by verification and reliable participation.
+
+## New city
+
+Uses:
+
+* verified public information;
+* cultural institutions;
+* landmarks;
+* transit;
+* community resources;
+* early verified members;
+* local Cultural Ambassadors;
+* moderator review.
+
+The city is not represented as “low belonging” merely because data is limited.
+
+## New Cultural Ambassador
+
+Initial evaluation emphasizes:
+
+* identity verification;
+* authenticity;
+* community alignment;
+* quality of submitted work;
+* accurate representation;
+* initial contributions.
+
+Follower count cannot compensate for lack of community trust.
+
+---
+
+# 02.23 Audit Record
+
+Every consequential decision stores:
+
+* request ID;
+* user context;
+* selected engines;
+* engine versions;
+* raw engine scores;
+* confidence-adjusted scores;
+* context weights;
+* safety status;
+* trust status;
+* governance checks;
+* overrides;
+* human-review status;
+* final output;
+* explanation shown;
+* timestamp;
+* relevant evidence IDs;
+* decay versions;
+* anti-gaming flags;
+* future-review date.
+
+Sensitive internal calculations are stored securely and are not exposed to users.
+
+---
+
+# 02.24 Launch Requirements
+
+The Framework is considered production-ready only when:
+
+1. every active engine returns a normalized score;
+2. every score includes confidence;
+3. context weights sum to 100%;
+4. safety override logic is operational;
+5. trust minimums are enforced;
+6. search, recommendation, and promotion are separated;
+7. demo data is isolated;
+8. anti-gaming monitoring is active;
+9. every consequential decision is auditable;
+10. every human override records a rationale;
+11. public explanations avoid revealing protected logic;
+12. incomplete evidence produces “developing confidence,” not false certainty;
+13. non-minority-owned visibility and promotion rules are enforced separately;
+14. Cultural Ambassador impact is evaluated beyond follower counts;
+15. scoring changes are versioned through the Weight Registers;
+16. rollback to the prior scoring version is possible.
+
+---
+
+# 02.25 Initial Database Objects
+
+Engineering should support at minimum:
+
+```text
+engine_definitions
+engine_versions
+engine_scores
+engine_confidence
+context_profiles
+context_engine_weights
+evidence_records
+evidence_sources
+evidence_quality_scores
+evidence_decay_rules
+score_thresholds
+engine_overrides
+human_reviews
+decision_audit_logs
+anti_gaming_flags
+demo_profile_isolation
+promotion_eligibility
+recommendation_eligibility
+search_eligibility
+public_explanations
+weight_register_versions
+```
+
+---
+
+# 02.26 Final Output Object
+
+Every Framework decision should produce a structured result similar to:
+
+```json
+{
+  "entityId": "business_123",
+  "entityType": "business",
+  "context": "local_business_discovery",
+  "suitabilityScore": 82.5,
+  "confidence": "high",
+  "eligibility": {
+    "search": true,
+    "recommendation": true,
+    "promotion": true
+  },
+  "safetyStatus": "clear",
+  "trustStatus": "strong",
+  "minorityOwnershipStatus": "verified",
+  "explanation": [
+    "Verified minority-owned business",
+    "Strong community participation",
+    "Current business information",
+    "Consistently welcoming community experiences"
+  ],
+  "humanReviewRequired": false,
+  "engineVersion": "BIF-1.0",
+  "decisionTimestamp": "ISO-8601"
+}
+```
+
+This output becomes the standardized contract used by KinfolkAI™, search, business profiles, maps, community feeds, alerts, recognition systems, and future platform experiences.

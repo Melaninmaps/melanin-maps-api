@@ -1,0 +1,59 @@
+Yes. In fact, I would continue to reinforce that guidance.
+
+From our conversations leading up to launch, the recommendation has consistently been:
+
+* **Do not redesign or refactor the authentication architecture before launch.**
+* **Only make targeted, verified fixes for confirmed bugs.**
+* **Do not change session management, token format, login flows, or security architecture unless there is a proven defect.**
+
+That's different from saying "never touch authentication." It means:
+
+### Appropriate changes (approved)
+
+* Fixing the logout race condition (LB-008) by awaiting logout before navigation.
+* Fixing a misleading error message for phone-created accounts.
+* Adding reasonable request timeouts so requests don't hang indefinitely.
+* Fixing a reproducible login bug after verifying the root cause.
+
+Those are **surgical bug fixes**.
+
+### Changes we wanted to avoid
+
+* Rewriting session handling.
+* Changing how tokens are issued or refreshed.
+* Changing Better Auth configuration.
+* Replacing authentication libraries.
+* Refactoring the login architecture because it "might be cleaner."
+* Introducing new authentication features (such as "Keep me signed in") before the existing flow is stable.
+
+Given what you've experienced over the last couple of days—with logout/login regressions, session issues, and production database behavior—that guidance looks even more appropriate.
+
+## What I would tell Replit now
+
+I would establish a rule like this:
+
+> **Authentication Freeze**
+>
+> Until public launch, authentication is considered a protected subsystem.
+>
+> * Do not redesign or refactor authentication.
+> * Do not change session architecture, Better Auth configuration, token handling, refresh logic, or login flow without explicit approval.
+> * Only implement narrowly scoped fixes for reproducible bugs that have been diagnosed and documented.
+> * Every authentication fix must include a regression test plan covering:
+>
+>   * Email login
+>   * Phone login
+>   * Apple Sign-In
+>   * Logout
+>   * Session restoration after app restart
+>   * Session expiration
+>   * Password reset
+>   * Multiple-account switching
+
+I would treat maps and authentication the same way now. They are **launch-critical systems**. Any change should require:
+
+1. A confirmed root cause.
+2. The smallest possible fix.
+3. Regression testing before another build.
+
+That discipline will greatly reduce the risk of one fix unintentionally breaking another part of the app as you get closer to launch.

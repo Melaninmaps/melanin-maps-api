@@ -1,0 +1,46 @@
+/**
+ * Centralized admin authorization helper.
+ *
+ * All admin route guards must import `isAdmin` from here — never inline their
+ * own ADMIN_EMAILS parse.  This keeps authorization logic in one place so
+ * future changes (additional roles, audit logging, etc.) only require a single
+ * edit.
+ *
+ * Authorization has two independent paths (either is sufficient):
+ *   1. Email allowlist — the user's email (normalized) appears in the
+ *      ADMIN_EMAILS environment variable.
+ *   2. Role column — the user's `role` field in the database equals "admin".
+ *
+ * Normalization: both ADMIN_EMAILS entries and the incoming user email are
+ * trimmed and lowercased before comparison so case differences and accidental
+ * whitespace in the environment variable cannot cause a silent auth failure.
+ *
+ * /api/admin/check design note:
+ *   That endpoint intentionally returns HTTP 200 with { isAdmin: true/false }
+ *   for all callers — authenticated or not — rather than 401/403.  This is a
+ *   capability-probe pattern: the client learns whether it should render admin
+ *   UI without exposing authorization details in the HTTP status code.
+ *   Protected admin endpoints (POST, PATCH, GET /admin/*) still enforce
+ *   authorization with explicit 401/403 responses.
+ */
+
+import type { Request } from "express";
+
+const NORMALIZED_ADMIN_EMAILS: Set<string> = new Set(
+  (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+
+/**
+ * Returns true if the authenticated user on `req` has administrator access.
+ * Checks the email allowlist first, then falls back to the DB role column.
+ */
+export function isAdmin(req: Request): boolean {
+  const user = (req as any).user;
+  if (!user?.email) return false;
+  const userEmail = (user.email as string).trim().toLowerCase();
+  if (NORMALIZED_ADMIN_EMAILS.size > 0 && NORMALIZED_ADMIN_EMAILS.has(userEmail)) return true;
+  return user.role === "admin";
+}

@@ -1,0 +1,76 @@
+URGENT: VC69 REAL-DEVICE LOGIN FAILURE — READ-ONLY DIAGNOSIS FIRST
+
+Build 69 is successfully installed on the Android test device, but email/password login still does not work.
+
+The 11 auth-nav-guard tests were insufficient because they passed while the real-device production flow still fails.
+
+DO NOT:
+- build VC70 yet
+- bump the versionCode
+- submit VC69 to Google Play
+- make speculative code changes
+- repeat the existing mocked tests as proof of resolution
+
+FIRST, perform a read-only diagnosis of the exact VC69 production login path.
+
+1. Trace the complete real-device flow:
+   login.tsx handleEmailSignIn
+   → loginWithEmail
+   → production API request
+   → response status/body
+   → token extraction
+   → SecureStore write
+   → refreshUser
+   → /api/auth/user request
+   → user state update
+   → AuthGate
+   → router navigation
+
+2. Compare VC69 production configuration against the working environment:
+   - EXPO_PUBLIC_API_URL embedded in the EAS production build
+   - exact login endpoint URL
+   - exact profile endpoint URL
+   - request method and headers
+   - response schema expected by loginWithEmail
+   - token field name
+   - SecureStore key name
+   - Authorization/cookie behavior
+   - Railway production CORS and mobile-client handling
+
+3. Inspect Railway production logs for my latest failed VC69 login attempt. Correlate by timestamp and report:
+   - whether the request reached Railway
+   - endpoint called
+   - HTTP status
+   - server error/event
+   - whether credentials were accepted
+   - whether a token/session was issued
+   - whether /api/auth/user was called afterward
+
+4. Add narrowly scoped temporary diagnostics only if server logs cannot identify the failure. Diagnostics must never log:
+   - password
+   - complete auth token
+   - session cookie
+   - personal profile data
+
+Safe diagnostics may report:
+   - build/versionCode
+   - API host only
+   - request stage
+   - HTTP status
+   - response keys, not values
+   - token present true/false
+   - SecureStore write success/failure
+   - refreshUser result
+   - AuthGate state transitions
+
+5. Verify the actual VC69 artifact corresponds to commit e6a2aee and that its embedded production API URL is correct.
+
+RETURN A DIAGNOSTIC REPORT BEFORE MODIFYING CODE:
+- exact point of failure
+- supporting production evidence
+- root cause or ranked hypotheses
+- why the existing tests missed it
+- smallest proposed fix
+- new real-integration/regression test required
+
+STOP after the report. Do not build VC70 until I authorize the fix.

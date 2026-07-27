@@ -1,0 +1,60 @@
+05.25 Recommendation Eligibility
+A candidate may be considered for recommendation when:
+Discovery Score ≥ 70
+and
+Discovery Confidence ≥ 65
+and
+BIF recommendation threshold is satisfied
+and
+Safety minimum is satisfied
+and
+Trust minimum is satisfied
+and
+no active recommendation hold exists
+A candidate with lower confidence may be shown as:
+emerging;
+worth exploring;
+newly added;
+community-submitted;
+awaiting verification;
+limited evidence available.
+It must not be described as strongly recommended.
+05.26 Promotion Eligibility
+Promotion is a separate decision.
+The Discovery Engine™ may only identify a candidate as promotion-eligible from a discovery perspective.
+Final promotion requires BIF approval.
+Baseline requirements:
+Discovery Score ≥ 78
+Discovery Confidence ≥ 75
+Trust minimum satisfied
+Safety minimum satisfied
+Community evidence sufficient
+No active governance hold
+No undisclosed conflict of interest
+Paid status does not alter eligibility
+A paid candidate failing eligibility remains ineligible.
+Payment may determine placement only among candidates already approved for promotion and only under clearly disclosed rules.
+05.27 Organic, Sponsored, and Curated Results
+The Engine distinguishes:
+Result type	Meaning
+Organic	Ranked without payment
+Sponsored	Paid placement among eligible candidates
+Curated	Selected by approved editorial or community process
+Recognition-based	Surfaced due to earned status
+Emergency-priority	Surfaced due to urgent need
+User-saved	Surfaced because the user previously saved it
+Partner-supplied	Provided through approved data partnership
+Emerging	Limited evidence but potentially relevant
+Sponsored results must be labeled.
+Sponsored status may not increase Trust, Safety, Community, Cultural Influence, or Discovery quality scores.
+05.28 Ranking Methodology
+After eligibility and scoring, candidates are ranked in five layers:
+Layer 1 — Hard Constraint Satisfaction
+Layer 2 — BIF and Safety Eligibility
+Layer 3 — Discovery Relevance Score
+Layer 4 — Diversity and Exploration Re-ranking
+Layer 5 — Presentation Rules
+The initial rank is not necessarily the displayed rank.
+05.29 Hard Constraint Satisfaction
+Candidates satisfying all explicit hard requirements rank above candidates that do not.
+The Engine must not rank a partially matching result above an exact match solely because the partial match is more popular, more profitable, or more heavily reviewed.

@@ -1,0 +1,312 @@
+COPY / PASTE TO REPLIT
+
+---
+
+# Legacy Collection Architecture — Review and Final Clarifications
+
+**Status: Review Mode. No files should be renamed, moved, merged, or rewritten yet.**
+
+The proposed **Volume → Chapter → Page** model correctly captures the long-term vision:
+
+* **Mapping With Melanin™ Legacy Collection** is the official umbrella.
+* **The Constitution** is Volume I.
+* Presentations are chapters within the Presentation System.
+* Individual presentation screens are pages.
+* Pages may be reused across chapters without losing their approved source, history, or audience-specific variations.
+
+This resolves the concern that the Experience Deck review was being treated as an isolated presentation project. It is one chapter within a much larger institutional collection.
+
+Before implementation, please incorporate the following architectural clarifications.
+
+---
+
+## 1. Rename Volume V
+
+The current structure places:
+
+> Mapping With Melanin™ Legacy Collection
+> → Volume V — Legacy Collection
+
+That duplicates the name of the umbrella and may confuse future collaborators.
+
+### Recommended name:
+
+# Volume V — Legacy Editions
+
+This volume contains the formal published expressions created from the broader Legacy Collection:
+
+* Coffee table books
+* City volumes
+* Published documentary editions
+* Letters to the Future
+* Sounds of Home collections
+* Historical publications
+* Anniversary editions
+* “To the Next Steward”
+
+Alternative acceptable name:
+
+# Volume V — Published Legacy
+
+My preference is **Legacy Editions** because it can naturally support multiple books, films, albums, exhibitions, and future volumes.
+
+---
+
+## 2. Preserve Two Registry Levels
+
+“Chapter Registry” should not fully replace the need to track individual pages.
+
+The system needs both:
+
+### Chapter Registry
+
+Tracks complete presentation chapters:
+
+* Experience Deck
+* Investor Deck
+* Business Deck
+* Community Deck
+* Zoom Deck
+* Welcome Home Tour Deck
+* Team Deck
+* Features Deck
+
+### Page Registry
+
+Tracks every approved reusable page inside those chapters.
+
+A page may appear:
+
+* exactly as approved;
+* as an audience adaptation;
+* as a related concept;
+* in multiple chapters;
+* in print;
+* in a video;
+* on the website;
+* in onboarding;
+* or in a future documentary.
+
+Recommended identifiers:
+
+```text
+MWM-EXP-P01-V1
+MWM-INV-P05-V2
+MWM-BIZ-P09-V1
+```
+
+The word **page** replaces “slide” in formal Legacy Collection language, but both Chapter Registry and Page Registry are necessary.
+
+---
+
+## 3. Add a Legacy Collection Index
+
+The Legacy Collection needs a permanent top-level navigation document.
+
+Recommended:
+
+# The Legacy Collection Index & Manifest
+
+It should identify:
+
+* all volumes;
+* chapters within each volume;
+* page registries;
+* current versions;
+* approval status;
+* confidentiality;
+* document locations;
+* owners;
+* dependencies;
+* related assets;
+* last synchronization date.
+
+This becomes the front door to the entire knowledge system.
+
+The Legacy Collection is the library.
+
+The Index is the catalog.
+
+---
+
+## 4. Clarify What Is Pulled Into Individual Presentations
+
+Individual Zooms, investor meetings, business presentations, and community events should not require rebuilding content from scratch.
+
+The Presentation System should support:
+
+### Full Chapters
+
+A complete approved deck created for one audience.
+
+### Curated Chapter Editions
+
+A shorter edition assembled from approved pages across multiple chapters.
+
+### Individual Approved Pages
+
+A single reusable page inserted into another chapter while retaining its source ID and history.
+
+Example:
+
+A Zoom presentation may pull:
+
+* an opening page from the Experience chapter;
+* a mission page from the Constitution;
+* a business page from the Business chapter;
+* a Founding Community page;
+* the approved three-page closing sequence.
+
+This is the intended system: approved pages can be curated into different audience journeys without losing governance.
+
+---
+
+## 5. The Constitution Does Not Replace the Legacy Collection
+
+Official hierarchy:
+
+```text
+Mapping With Melanin™ Legacy Collection
+│
+├── Volume I — The Constitution
+├── Volume II — Presentation System
+├── Volume III — Living Archive
+├── Volume IV — Community Atlas
+└── Volume V — Legacy Editions
+```
+
+“The Constitution” replaces the working title **Foundations Book**.
+
+It does not replace the name of the full collection.
+
+The **Mapping With Melanin™ Legacy Collection** remains the official umbrella and enduring institutional body of work.
+
+---
+
+## 6. Rename Existing Files Only Through a Migration Plan
+
+Do not immediately rename:
+
+```text
+docs/MWM-Foundations-Book-Outline-v1.0.md
+```
+
+First provide a proposed migration map containing:
+
+* current file name;
+* proposed file name;
+* current references to that file;
+* documents that link to it;
+* potential broken references;
+* required updates;
+* risk level;
+* rollback plan.
+
+Possible future name:
+
+```text
+docs/MWM-Constitution-Outline-v1.0.md
+```
+
+or:
+
+```text
+docs/Legacy-Collection/Volume-I-Constitution/MWM-Constitution-Outline-v1.0.md
+```
+
+No file migration should occur until separately approved.
+
+---
+
+## 7. Relationship to the Current Visual Work
+
+The Experience Deck remains:
+
+```text
+Legacy Collection
+→ Volume II: Presentation System
+→ Experience Chapter
+→ Pages 01–21
+```
+
+The current visual critique applies specifically to the **Experience Chapter**, but its approved design principles may later become global standards governing every presentation chapter.
+
+Changes should not automatically propagate beyond the Experience Chapter.
+
+The correct process remains:
+
+1. Refine the Experience Chapter.
+2. Approve its visual system.
+3. Identify which visual decisions qualify as global standards.
+4. Propose those additions to the Constitution and Creative OS.
+5. Audit other presentation chapters.
+6. Wait for cross-chapter authorization.
+7. Apply only the approved scope.
+
+---
+
+## 8. Recommended Official Language
+
+| Working language   | Official Legacy Collection language  |
+| ------------------ | ------------------------------------ |
+| Bible              | Legacy Collection                    |
+| Foundations Book   | The Constitution                     |
+| Deck               | Presentation Chapter                 |
+| Slide              | Page                                 |
+| Slide Registry     | Page Registry                        |
+| Deck Registry      | Chapter Registry                     |
+| Reusable slide     | Reusable approved page               |
+| Master deck        | Master presentation chapter          |
+| Copying slides     | Curating approved pages              |
+| Updating all decks | Controlled cross-chapter propagation |
+
+“Deck” and “slide” may still be used conversationally when working with standard presentation software, but formal records should use **chapter** and **page**.
+
+---
+
+# Final Architectural Recommendation
+
+The architecture should now be treated as:
+
+```text
+Legacy Collection
+    ↓
+Volumes
+    ↓
+Chapters
+    ↓
+Pages
+    ↓
+Reusable Components and Assets
+```
+
+with:
+
+* a Legacy Collection Index;
+* a Chapter Registry;
+* a Page Registry;
+* controlled propagation;
+* full version history;
+* audience-specific adaptations;
+* and no silent cross-chapter changes.
+
+---
+
+# Next Step
+
+Before returning to individual page visuals, provide one concise **Legacy Collection Architecture v1.0 proposal** incorporating:
+
+1. Volume V renamed to **Legacy Editions**;
+2. both Chapter Registry and Page Registry;
+3. the Legacy Collection Index & Manifest;
+4. full chapters, curated editions, and reusable pages;
+5. the Constitution’s correct place under the Legacy Collection;
+6. a future migration map for existing files.
+
+Do not implement the architecture.
+
+Do not rename files.
+
+Do not modify the Experience Chapter.
+
+This is the final conceptual alignment review so the system Replit maintains matches the actual vision before we return to visual refinement.

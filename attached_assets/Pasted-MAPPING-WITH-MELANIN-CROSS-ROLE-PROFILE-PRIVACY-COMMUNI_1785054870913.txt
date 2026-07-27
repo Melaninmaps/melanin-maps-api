@@ -1,0 +1,552 @@
+MAPPING WITH MELANIN™ — CROSS-ROLE PROFILE PRIVACY,
+COMMUNITY ACTIVITY VISIBILITY, AND SENSITIVE DISCLOSURE STANDARD
+
+BRAINSTORMING AND DOCUMENTATION ONLY — NO IMPLEMENTATION
+
+FOUNDER INTENT
+
+Business Owners, Cultural Ambassadors, Community Organization
+representatives, mentors, and professionals are also Community Members.
+
+Their profiles should overlap enough to create meaningful community
+understanding, trust, and impact—but not in ways that expose private
+searches, saves, attendance, identity, location, family information,
+anonymous reports, or other sensitive activity.
+
+The platform must help people find safe and affirming places while
+recognizing that the world does not yet consistently protect people who
+are publicly identified with every community, event, belief, health
+condition, or life circumstance.
+
+Visibility must therefore be:
+
+- Deliberate
+- Granular
+- Contextual
+- Reversible
+- Private by default for sensitive activity
+- Technically enforced
+- Never required for platform access
+
+Do not implement.
+Do not change schemas.
+Do not alter profiles.
+Do not begin collecting new activity.
+Do not make prior private activity public.
+
+══════════════════════════════════════════════════════════════
+1. ONE ACCOUNT, SEPARATE ROLE CONTEXTS
+══════════════════════════════════════════════════════════════
+
+Document how one account may hold:
+
+- Community Member
+- Verified Community Member
+- Business Owner
+- Verified Business Owner
+- Cultural Ambassador
+- Community Organization representative
+- Mentor
+- Contributor
+- Trusted Contributor
+- Areas of Expertise
+
+Define separate data and visibility contexts for:
+
+A. COMMUNITY MEMBER PROFILE
+B. BUSINESS PROFILE
+C. CULTURAL AMBASSADOR PROFILE
+D. COMMUNITY ORGANIZATION PROFILE
+E. PROFESSIONAL EXPERTISE DISPLAY
+F. PRIVATE KINFOLKAI CONTEXT
+G. KINFOLK CIRCLE CONTEXT
+H. ANONYMOUS CONTRIBUTION CONTEXT
+
+A role may use shared identity fields such as name or profile image only
+when the member has approved that relationship.
+
+Do not automatically expose private Community Member behavior on a
+Business Owner, Ambassador, professional, or organization profile.
+
+══════════════════════════════════════════════════════════════
+2. PROFILE LINKING CONTROL
+══════════════════════════════════════════════════════════════
+
+A member must choose whether public profiles are linked.
+
+Potential controls:
+
+- Show that I own this business
+- Show this business on my Community Member profile
+- Show my Community Member profile from my business page
+- Show my Cultural Ambassador role
+- Show my professional expertise
+- Keep these profiles publicly separate
+
+Document:
+
+- Default settings
+- Effects of each choice
+- Search visibility
+- Whether historical activity becomes linked
+- How unlinking works
+- What remains visible after unlinking
+- How verified statuses are displayed separately
+
+Do not force profile linking as a condition of business ownership,
+verification, promotion, or membership.
+
+══════════════════════════════════════════════════════════════
+3. COMMUNITY ACTIVITY VISIBILITY MODEL
+══════════════════════════════════════════════════════════════
+
+Create three visibility levels:
+
+A. SHARE BY DEFAULT
+
+Only for activity the member knowingly creates as public, such as:
+
+- Public reviews
+- Public recommendations
+- Public event submissions
+- Public posts
+- Public business updates
+- Public resources submitted
+
+B. ASK ME EACH TIME
+
+Examples:
+
+- Event attendance
+- Charitable-event participation
+- Volunteer milestones
+- Mentorship milestones
+- Businesses supported
+- Community impact totals
+- Relocation reflections
+- Local-guide activity
+- Cultural-event participation
+- Professional-community activity
+
+C. ALWAYS PRIVATE BY DEFAULT
+
+- Search history
+- Saved places
+- KinfolkAI conversations
+- Private messages
+- Kinfolk Circle activity
+- Anonymous employer reports
+- Anonymous safety reports
+- Precise location
+- Verification documents
+- Child-related information
+- Health-related searches
+- Legal-service searches
+- Financial-hardship activity
+- Religious activity
+- Sexual-orientation-related activity
+- Political activity
+- Immigration-related activity
+- Domestic-violence resources
+- Crisis-resource use
+
+Members may choose to share a specific item from a sensitive category,
+but no broad setting should automatically publish future sensitive
+activity.
+
+══════════════════════════════════════════════════════════════
+4. SENSITIVE EVENT AND IDENTITY STANDARD
+══════════════════════════════════════════════════════════════
+
+Example:
+
+A member searches for or attends LGBTQIA+ events.
+
+KinfolkAI may use that activity privately to improve that member's
+experience when the member has consented to personalization.
+
+KinfolkAI must not infer:
+
+- Sexual orientation
+- Gender identity
+- Relationship status
+- Political beliefs
+- The reason for attendance
+
+KinfolkAI must not automatically publish:
+
+“Marcus attended 3 LGBTQIA+ events.”
+
+Instead, it may ask privately:
+
+“You attended several community events this month. Would you like to
+share any of that activity?”
+
+Offer granular choices:
+
+- Share only the total number of community events
+- Share one selected event
+- Share the event category
+- Share the organization supported
+- Save this as a private milestone
+- Do not share
+- Never ask me to share this type of activity
+
+Document similar standards for:
+
+- Faith events
+- Political events
+- Health-support events
+- Legal clinics
+- Recovery or crisis groups
+- Immigration events
+- Disability-support events
+- Domestic-violence resources
+- Child and family events
+
+══════════════════════════════════════════════════════════════
+5. PUBLIC IMPACT WITHOUT SENSITIVE EXPOSURE
+══════════════════════════════════════════════════════════════
+
+Design options that allow meaningful public participation without
+revealing unnecessary detail.
+
+Examples:
+
+- “Marcus supported 4 community events this month.”
+- “Marcus volunteered with local organizations.”
+- “Marcus helped welcome new Community Members.”
+- “Marcus contributed information that helped others.”
+- “Johnson Family Bakery supported two neighborhood food drives.”
+
+Members may choose whether to name:
+
+- The event
+- The organization
+- The category
+- The location
+- The date
+- The business involved
+- Their role
+
+Do not publish a precise timeline that could reconstruct a member's
+movements.
+
+══════════════════════════════════════════════════════════════
+6. BUSINESS OWNER AS COMMUNITY MEMBER
+══════════════════════════════════════════════════════════════
+
+Document how a Business Owner may share:
+
+- Charitable partnerships
+- Community events hosted
+- Volunteer work
+- Mentorship
+- Local hiring
+- Scholarships
+- Donations
+- Community milestones
+- Personal founder story
+
+Separate:
+
+A. BUSINESS ACTIVITY
+Activity performed by or officially on behalf of the business.
+
+B. OWNER PERSONAL ACTIVITY
+Activity performed by the owner as a private Community Member.
+
+Do not automatically convert personal attendance or searches into
+business-profile information.
+
+Do not let business staff or co-owners access the owner’s private
+Community Member activity through the business dashboard.
+
+══════════════════════════════════════════════════════════════
+7. ANONYMOUS CONTRIBUTION SAFEGUARDS
+══════════════════════════════════════════════════════════════
+
+Anonymous employer, safety, discrimination, and other protected
+contributions must remain technically separated from public-profile
+activity.
+
+KinfolkAI may privately provide impact feedback:
+
+“Your anonymous workplace insight helped Community Members make more
+informed decisions.”
+
+It must not:
+
+- Add the submission to the public profile
+- Reveal authorship to the employer
+- Reveal authorship to another member
+- Include identifying timing or details
+- Link the anonymous report to public mentorship activity
+- Suggest publicly that the member authored the report
+
+KinfolkAI may separately ask:
+
+“Your insight has helped others. Would you like to explore mentoring in
+your field? This would not reveal or connect you to your anonymous
+submission.”
+
+Document database, analytics, logging, and recommendation boundaries
+required to preserve anonymity.
+
+══════════════════════════════════════════════════════════════
+8. KINFOLKAI PERSONALIZATION VERSUS DISCLOSURE
+══════════════════════════════════════════════════════════════
+
+Create a strict separation between:
+
+- Information KinfolkAI may use privately for the member
+- Information the member has chosen to display publicly
+- Information shared inside a specific Kinfolk Circle
+- Information available to a business
+- Information available to administrators
+- Information used only as an aggregated community signal
+
+Required principle:
+
+“A member’s private activity may improve their own experience, but it
+must not become someone else’s information without explicit permission.”
+
+Document how consent is stored and enforced.
+
+Silence, account creation, event attendance, search behavior, or a prior
+unrelated sharing choice must not count as consent.
+
+══════════════════════════════════════════════════════════════
+9. CHILD AND TEEN CONTROLS
+══════════════════════════════════════════════════════════════
+
+For minors:
+
+- Search history private
+- Saves private
+- Event attendance private by default
+- Precise location never public
+- No public movement timeline
+- No adult discovery based on child activity
+- No direct adult contact outside approved structures
+- Stronger default profile limits
+- Parent-managed sharing where legally and developmentally appropriate
+- Teen agency preserved within approved safety boundaries
+- Sensitive-event categories never publicly suggested for sharing
+- Anonymous reports remain anonymous from parents where law, safety, and
+  product policy require appropriate confidentiality, subject to legal
+  review
+
+Define separate standards for:
+
+- Under 13
+- Ages 13–15
+- Ages 16–17
+- Adults
+
+Identify legal and policy review required before implementing child
+accounts.
+
+══════════════════════════════════════════════════════════════
+10. MEMBER CONTROL EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+Design a clear settings area:
+
+COMMUNITY ACTIVITY VISIBILITY
+
+Potential controls:
+
+- Public profile activity
+- Event attendance
+- Volunteer activity
+- Charitable activity
+- Mentorship
+- Businesses supported
+- Community impact totals
+- Cultural activity
+- Professional activity
+- Location display
+- Profile linking
+- Ask-before-sharing
+- Never ask for sensitive categories
+
+Members must be able to:
+
+- Preview their public profile
+- See what each role can view
+- Remove shared activity
+- Unlink profiles
+- Change future defaults
+- Keep prior private activity private
+- Download visibility settings
+- Report unintended disclosure
+- Request urgent privacy support
+
+Changing a setting must not retroactively publish prior activity.
+
+══════════════════════════════════════════════════════════════
+11. DATA CLASSIFICATION AND ACCESS
+══════════════════════════════════════════════════════════════
+
+Classify profile-related information as:
+
+- Public by member action
+- Public by explicit sharing consent
+- Role-shared
+- Circle-shared
+- Private personal context
+- Anonymous protected contribution
+- Sensitive protected information
+- Administrative restricted information
+- Aggregated de-identified signal
+
+For every data field identify:
+
+- Source
+- Purpose
+- Default visibility
+- Eligible viewers
+- Retention
+- Edit control
+- Deletion control
+- Consent requirement
+- Whether it may influence recommendations
+- Whether it may appear publicly
+- Whether it may be aggregated
+- Whether it is excluded from training or model improvement
+
+══════════════════════════════════════════════════════════════
+12. SAFETY AND ENFORCEMENT
+══════════════════════════════════════════════════════════════
+
+This standard must be technically enforced, not dependent only on copy.
+
+Recommend:
+
+- Server-side authorization
+- Field-level access controls
+- Separate API response models by role
+- Separate anonymous-report identifiers
+- Consent records with timestamps and scope
+- Privacy-safe analytics
+- Audit logs for visibility changes
+- Automated tests for cross-role leakage
+- Tests ensuring anonymous contributions never appear publicly
+- Tests ensuring business dashboards cannot retrieve owner private data
+- Tests ensuring Circle information remains Circle-specific
+- Tests ensuring past private activity is not published after a setting
+  change
+- Emergency privacy rollback or content-removal process
+
+Any privacy breach involving sensitive activity should be classified as
+P0.
+
+══════════════════════════════════════════════════════════════
+13. PERMANENT CONSTITUTION PRINCIPLES
+══════════════════════════════════════════════════════════════
+
+Add:
+
+“Kinfolk helps members express community belonging without requiring
+disclosure of sensitive identity or activity. Visibility is chosen,
+contextual, reversible, and never the price of participation.”
+
+Add:
+
+“A member’s private activity may improve their own experience, but it
+must not become someone else’s information without explicit permission.”
+
+Add:
+
+“Safety takes priority over growth, engagement, promotion, and
+personalization.”
+
+These principles apply to:
+
+- Profiles
+- Feed
+- KinfolkAI
+- Maps
+- Events
+- Business tools
+- Cultural Ambassador tools
+- Community Organizations
+- Mentorship
+- Circles
+- Recommendations
+- Notifications
+- Analytics
+- Verification
+- Community Health
+- Opportunity Intelligence
+
+══════════════════════════════════════════════════════════════
+14. REQUIRED DOCUMENTATION UPDATE
+══════════════════════════════════════════════════════════════
+
+Search existing documents before creating duplicates.
+
+Update or propose updates to:
+
+- Community Intelligence Constitution
+- Platform Privacy Standard
+- KinfolkAI Privacy Model
+- Cross-Role Architecture
+- Community Member Experience
+- Business Owner Experience
+- Cultural Ambassador Experience
+- Community Organization Experience
+- Living Community Feed
+- Child Safety Standard
+- Anonymous Contribution Standard
+- Future-State Register
+- Founder Intent Log
+- Acceptance-Test Register
+- Confidential trade-secret methodology where appropriate
+
+Do not classify the member’s personal information as a trade secret.
+
+Internal matching, privacy-preserving aggregation, and consent-
+enforcement methodology may be confidential, but member rights and
+public privacy promises must remain understandable.
+
+══════════════════════════════════════════════════════════════
+15. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Founder Intent as Understood
+2. Current Cross-Role Data Architecture
+3. Community Member Profile Model
+4. Business Profile Model
+5. Cultural Ambassador Profile Model
+6. Community Organization Profile Model
+7. Professional Expertise Model
+8. Profile Linking Model
+9. Community Activity Visibility Model
+10. Sensitive Activity Standard
+11. Business Owner as Community Member Standard
+12. Anonymous Contribution Standard
+13. KinfolkAI Personalization Versus Disclosure Standard
+14. Kinfolk Circle Privacy Boundaries
+15. Child and Teen Privacy Standard
+16. Member Visibility Settings Experience
+17. Public Profile Preview Experience
+18. Data Classification Matrix
+19. Server-Side Enforcement Requirements
+20. Cross-Role Leakage Risks
+21. Privacy Failure Test Plan
+22. P0 Privacy Incident Definition
+23. Documentation Updates Required
+24. Future-State Register Updates
+25. Founder Decisions Required
+26. Confirmation That No Implementation Occurred
+
+Do not implement.
+Do not alter profile visibility.
+Do not make prior activity public.
+Do not connect anonymous reports to public profiles.
+Do not change child-account behavior.
+Do not change business-dashboard access.

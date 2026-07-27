@@ -1,0 +1,230 @@
+Yes — keep **Vibe Check** where it is culturally and contextually natural, and use a different label for professional and service-based businesses.
+
+The mistake would be forcing one universal language system across every business. Mapping With Melanin™ should adapt the language to the business type.
+
+## Recommended structure
+
+### Entertainment, dining, nightlife, travel, and leisure
+
+Use:
+
+> **Vibe Check**
+
+This works for:
+
+* restaurants
+* bars and lounges
+* nightclubs
+* cafés
+* hotels and resorts
+* museums
+* festivals
+* event venues
+* salons and spas
+* recreational businesses
+* cultural attractions
+
+Examples:
+
+**Restaurant Vibe Check**
+
+* Date Night
+* Brunch With Friends
+* Family Dinner
+* Quick Bite
+* Celebration
+* Solo Friendly
+* Late Night
+* Romantic
+* High Energy
+* Laid-Back
+
+**Hotel Vibe Check**
+
+* Weekend Getaway
+* Business Travel
+* Family Trip
+* Staycation
+* Luxury
+* Budget Friendly
+* Quiet Retreat
+* Group Travel
+
+**Salon or Spa Vibe Check**
+
+* Self-Care Day
+* Special Occasion
+* Quick Appointment
+* Luxury Experience
+* Relaxed
+* Social
+* First-Time Friendly
+
+That preserves the cultural meaning of *“What’s the vibe?”*
+
+## Professional and essential services
+
+Use:
+
+> **Best For**
+
+or:
+
+> **What They Help With**
+
+I prefer **Best For** because it is warm, easy to understand, and works across categories.
+
+**Law Firm — Best For**
+
+* Estate Planning
+* Business Formation
+* Family Law
+* Immigration
+* Personal Injury
+* Criminal Defense
+* First Consultation
+* Small Business Owners
+
+**Dentist — Best For**
+
+* Routine Care
+* Emergency Visits
+* Children
+* Cosmetic Dentistry
+* Nervous Patients
+* Braces and Orthodontics
+* Same-Day Appointments
+* Family Care
+
+**Accountant — Best For**
+
+* Personal Taxes
+* Small Business Taxes
+* Bookkeeping
+* New Business Setup
+* Payroll
+* Tax Planning
+* Nonprofits
+
+**Mechanic — Best For**
+
+* Routine Maintenance
+* Emergency Repairs
+* Diagnostics
+* Older Vehicles
+* Same-Day Service
+* Women-Led Customer Care
+* Fleet Services
+
+## Community and mission-based organizations
+
+Use:
+
+> **Community Role**
+
+This would work for:
+
+* churches
+* nonprofits
+* community centers
+* food banks
+* youth programs
+* cultural organizations
+* advocacy groups
+
+Examples:
+
+* Youth Support
+* Food Assistance
+* Senior Services
+* Family Resources
+* Job Support
+* Cultural Programming
+* Community Organizing
+* Spiritual Community
+
+## Retail
+
+Use:
+
+> **Shop For**
+
+Examples:
+
+* Gifts
+* Everyday Essentials
+* Clothing
+* Beauty
+* Home Décor
+* Local Products
+* Specialty Items
+* Cultural Goods
+
+## Health and wellness
+
+Use:
+
+> **Care Focus**
+
+Examples:
+
+* Primary Care
+* Women’s Health
+* Mental Wellness
+* Physical Therapy
+* Dental Care
+* Children and Families
+* Chronic Care
+* Preventive Care
+
+## The rule for Replit
+
+The platform should first identify the business’s **primary category**, then display the appropriate experience label and tag library.
+
+A business should not receive every possible tag.
+
+A law firm should never receive “Date Night.”
+A nightclub should never receive “Estate Planning.”
+A dentist should not receive “Romantic.”
+A restaurant should not receive “Tax Preparation.”
+
+Businesses with multiple categories can receive more than one relevant tag set, but only where the secondary category is verified.
+
+## Keep Community Sayings separate
+
+You are right that this is a different field.
+
+**Structured category-specific field**
+
+> Vibe Check / Best For / Care Focus / Community Role
+
+This helps search, filtering, KinfolkAI, and recommendations.
+
+**Community Sayings**
+
+> “They make you feel like family.”
+> “Ask for Ms. Renee.”
+> “Worth the drive.”
+> “They explain everything without rushing you.”
+> “Get there before noon.”
+
+This preserves authentic community language without turning every saying into a ranking tag.
+
+## A clean classification model
+
+| Business family                                        | User-facing label  |
+| ------------------------------------------------------ | ------------------ |
+| Dining, nightlife, entertainment, leisure, hospitality | **Vibe Check**     |
+| Professional and essential services                    | **Best For**       |
+| Healthcare and wellness                                | **Care Focus**     |
+| Nonprofits, churches, community organizations          | **Community Role** |
+| Retail and shopping                                    | **Shop For**       |
+| Education and training                                 | **Learning Focus** |
+
+This could become part of the **Adaptive Experience Classification™** system, while **Vibe Check** remains one of its most culturally recognizable expressions.
+
+The guiding rule should be:
+
+> **Use culturally natural language without forcing culturally specific language into contexts where it does not fit.**
+
+That lets Mapping With Melanin™ keep its voice while still being useful and credible across every kind of business.

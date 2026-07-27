@@ -1,0 +1,208 @@
+You are **very close, but I would not authorize the build yet**.
+
+The mobile source appears ready, but the production API recently entered a state where database-backed routes hung. Replit recovered it, but the approved resilience patch still needs to be implemented, deployed, and verified before spending another build credit.
+
+## What must happen before build authorization
+
+Replit should complete the database-resilience patch:
+
+* recycle idle database connections after 30 seconds;
+* start TCP keepalive sooner;
+* add a maximum connection lifetime;
+* upgrade the protected database probe;
+* add the protected readiness check;
+* log pool statistics;
+* return a clear temporary-service error rather than allowing indefinite hangs.
+
+Then verify:
+
+1. `/api/readyz` reports raw PostgreSQL and Drizzle as healthy.
+2. Businesses and cultural sites load.
+3. A valid new registration returns `201`.
+4. Email login works.
+5. All database-backed routes still work after at least 35 seconds of inactivity.
+6. A 30–50 concurrent-request test passes.
+7. The API remains healthy after an extended idle period.
+8. The current mobile source and map repair remain unchanged.
+
+The new admin-dashboard hourly monitor is valuable, but it does **not** have to delay this mobile build. It can be implemented server-side afterward, provided it does not touch authentication or mobile source.
+
+# What should be included in the next build
+
+## Authentication and registration
+
+* New registration with required date of birth
+* Under-13 registration block
+* Email login
+* Phone login
+* Apple Sign-In
+* Logout cleanup repair
+* Immediate login after logout
+* Session restoration after closing and reopening the app
+
+These still require final physical-device acceptance testing.
+
+## iOS map repair
+
+* Bottom-tab navigation using the stable classic layout
+* White iOS map repair
+* Apple map tiles expected to render
+* Philadelphia fallback when location is denied or unavailable
+* Current-location centering when permission is allowed
+* Invalid coordinates safely excluded
+* Business pins
+* Cultural and historical pins
+* Safety layer toggle
+
+## Philadelphia cultural content
+
+The production database now includes:
+
+* Mother Bethel AME Church
+* African American Museum in Philadelphia
+* Marian Anderson Historical Residence
+* Johnson House Historic Site
+
+Howard University is also available when the map is moved to Washington, D.C.
+
+The map should display these records once the iOS map repair works.
+
+## KinfolkAI
+
+* Approved welcome language
+* “Helping you navigate what matters most.”
+* No contrived starter prompts
+* Contextual follow-up suggestions after responses
+* Voice selection and Listen functionality
+* Beta users receive unlimited chat and standard voice access
+
+One remaining beta-access gap: AAVE Voice Level 3 is currently unavailable to beta users unless Replit makes the small server-only permission adjustment.
+
+## Existing community and business functions
+
+Community members should retain existing access to:
+
+* profile creation and profile picture;
+* Discovery and search;
+* saved businesses and places;
+* community feed;
+* events and RSVP;
+* Library and resources;
+* safety surveys and Report Intel;
+* Kinfolk Circles;
+* Life Journeys;
+* memberships and Restore Purchases.
+
+Businesses should retain existing access to:
+
+* claim and edit a profile;
+* primary image and photos;
+* social links;
+* analytics;
+* review responses;
+* existing introduction-video and external-video data where the current UI already supports it.
+
+# What is deferred
+
+## Definitely not in this build
+
+* Side drawer/sidebar navigation
+* Unified search across every platform area
+* Graduated parental controls
+* Multiple API replicas
+* Full admin Production Health dashboard and hourly incident history, unless implemented separately server-side
+* Advanced business media redesign
+* AI business coaching and advanced promotional insights
+
+## Requested, but not yet implemented
+
+These should not be described as included yet:
+
+### Cultural pin to individual story
+
+Pins and preview cards should appear, but **View Details currently leads to the category experience**, not a new dedicated page for that exact site.
+
+A new individual cultural-site screen still needs to be built.
+
+### Community connections
+
+Not yet available:
+
+* Connect request
+* Accept or decline
+* Remove connection
+* Block/report connection
+* Invite a connection into a Circle
+
+The database table exists, but the API and mobile UI do not.
+
+### Invitation/share flow
+
+Not yet available:
+
+* member referral share sheet;
+* QR code;
+* invitation link flow;
+* post-registration connection prompt.
+
+### Contextual notifications
+
+Not yet available in the full requested form:
+
+* connection notifications;
+* business review notifications;
+* RSVP notifications;
+* `@mention` notifications;
+* weekly activity summaries;
+* quiet hours and frequency controls.
+
+### Living Community Map additions
+
+Existing layers are businesses, cultural sites, and safety information.
+
+Still deferred:
+
+* event pins;
+* broader community-activity pins;
+* refined loading and empty-map experiences.
+
+### Business media controls
+
+The underlying fields exist, but the complete tier-based dashboard for managing:
+
+* photo limits;
+* one hosted introduction video;
+* linked social videos;
+* featured video selection;
+* URL validation and broken-link reporting
+
+has not been completed.
+
+# Plain-language build contract
+
+## You should expect to do this
+
+Open the app, create or enter an account, use Discovery, open the Map, see Philadelphia on Apple Maps, see cultural and business pins, tap pins for preview information, open Kinfolk, hear voices, explore Community, Events, Library, Resources, Circles, and business profiles, then log out and log back in without the previous spinner.
+
+## You should not expect to do this yet
+
+* Use a sidebar instead of bottom tabs
+* Connect directly with other members
+* Invite nonmembers through a referral flow
+* Tap Howard’s map pin and go directly to a dedicated Howard story page
+* Receive the complete new business and community notification system
+* Manage the full redesigned tier-based business video experience
+
+## My verdict
+
+**Do not build this minute.**
+
+Authorize the build only after Replit returns:
+
+> **🟢 DATABASE RESILIENCE DEPLOYED AND VERIFIED — MOBILE SOURCE UNCHANGED — READY FOR CONTROLLED BUILD**
+
+Then build from:
+
+`/home/runner/workspace/artifacts/mobile`
+
+with no automatic submission. Install through TestFlight first, and reject the build immediately if the map is white, registration fails, login hangs, pins do not appear, or the tab still says `index`.

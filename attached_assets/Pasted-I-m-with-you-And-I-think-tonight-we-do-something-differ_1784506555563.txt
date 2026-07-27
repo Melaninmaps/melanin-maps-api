@@ -1,0 +1,306 @@
+I'm with you.
+
+And I think tonight we do something different than we've been doing.
+
+For the last several weeks we've been fixing symptoms as they appeared. Tonight we stop that. We don't chase bugs. We prove authentication from the ground up.
+
+I want to leave tonight with one sentence that neither of us has been able to say yet:
+
+> **"Authentication is production-ready."**
+
+Nothing else matters until we can say that.
+
+---
+
+# Authentication War Room
+
+We are **not** working on KinfolkAI.
+
+We are **not** working on Hidden Gems.
+
+We are **not** working on the deck.
+
+We are **not** working on Android.
+
+We are working on exactly one thing.
+
+**Authentication.**
+
+---
+
+# Definition of Done
+
+A user should be able to create one identity for life.
+
+That identity should support:
+
+✅ Email/password
+
+✅ Phone
+
+✅ Apple Sign In
+
+✅ Founder/Admin
+
+without ever creating duplicate users.
+
+One user.
+
+One ID.
+
+Multiple ways to authenticate.
+
+---
+
+# The Founder Account
+
+This is where I think we need to be extremely deliberate.
+
+Your founder account should be able to:
+
+* log in with email/password
+* log in with phone
+* log in with Apple
+* access the app as a community member
+* access the admin dashboard
+
+**All using the same user ID.**
+
+Not two accounts.
+
+Not one admin account and one user account.
+
+One identity.
+
+---
+
+# Tonight's Order
+
+## Phase 1 — Canonical User
+
+I want Replit to prove exactly one thing.
+
+> Which database row is **Teianna**?
+
+Not email.
+
+Not phone.
+
+Not Apple.
+
+Not session.
+
+**The actual user ID.**
+
+Everything else hangs off that.
+
+---
+
+## Phase 2 — Credential Linking
+
+Once we know the canonical row, we verify it contains:
+
+* phone number
+* email
+* password hash
+* Apple identifier
+* admin role
+
+If anything is missing...
+
+**add it to that row.**
+
+Never create another user.
+
+---
+
+## Phase 3 — Session
+
+After login:
+
+Open app.
+
+Force close.
+
+Open app.
+
+Still logged in.
+
+Background.
+
+Return.
+
+Still logged in.
+
+Web.
+
+Still logged in.
+
+Admin.
+
+Still logged in.
+
+---
+
+## Phase 4 — Admin
+
+No separate login.
+
+No separate account.
+
+No special workflow.
+
+The founder account simply has additional permissions.
+
+Exactly how Slack works.
+
+Exactly how GitHub works.
+
+Exactly how Shopify works.
+
+---
+
+# One change I want to make
+
+I think we've been asking Replit for fixes.
+
+Tonight I want us to ask them for **proof.**
+
+Not
+
+> "I fixed it."
+
+Instead
+
+> "Show me."
+
+For every login path:
+
+```
+Canonical User ID:
+Email:
+Phone:
+Apple:
+Password:
+Role:
+
+PASS
+```
+
+Every session:
+
+```
+Session created
+
+PASS
+```
+
+Every logout:
+
+```
+Session destroyed
+
+PASS
+```
+
+Every admin request:
+
+```
+User ID resolved
+
+Role verified
+
+PASS
+```
+
+No assumptions.
+
+No "should."
+
+No "probably."
+
+Everything proven.
+
+---
+
+# I also want to change one philosophy
+
+Earlier you said something that I wrote down mentally.
+
+> "It doesn't matter how beautiful the design is if people can't log in."
+
+I think that becomes our release philosophy.
+
+From tonight forward:
+
+**Reliability before features.**
+
+Always.
+
+If authentication isn't perfect...
+
+we don't build another feature.
+
+If sessions aren't perfect...
+
+we don't build another feature.
+
+If backups aren't perfect...
+
+we don't build another feature.
+
+Because the trust people place in Mapping with Melanin™ starts the moment they create an account.
+
+---
+
+# One thing I'd like to add
+
+I want to introduce something we've never formally had:
+
+## Launch Blockers
+
+Not bugs.
+
+Blockers.
+
+Right now I think there are only **two**.
+
+### BLOCKER 1
+
+Authentication
+
+Status:
+
+🚫 NOT COMPLETE
+
+### BLOCKER 2
+
+Data Protection
+
+(backups, exports, recovery)
+
+Status:
+
+🚫 NOT COMPLETE
+
+Everything else—
+
+KinfolkAI improvements, weather, Hidden Gems polish, onboarding refinements, even parts of the deck—can wait until those two are complete.
+
+---
+
+And finally...
+
+I want you to remember something you told me months ago.
+
+You said your dream wasn't to build the biggest travel app.
+
+You wanted someone to open Mapping with Melanin™ and feel like someone had already thought about their safety before they even asked.
+
+That's still the mission.
+
+Tonight we're doing the least glamorous part of that mission.
+
+We're making sure the doors actually open.
+
+Let's finish authentication. Once it's done, I don't want to revisit it except to make improvements. I want it to become one of the strongest parts of Mapping with Melanin™, because if people trust the first interaction, they'll be much more willing to trust everything that comes after.

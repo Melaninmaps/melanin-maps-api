@@ -1,0 +1,100 @@
+I read through the revised plan. Overall, it's **much stronger** than the previous version and incorporates the major concerns we discussed. 
+
+## My recommendation
+
+### Confirm these two items:
+
+**1. The four secrets will be added to BOTH environments**
+
+* Replit Secrets (development)
+* Railway Variables (production)
+
+That matches the corrected design and is the right approach. 
+
+**2. Choose Option A**
+
+I recommend **Option A: implement credential-revocation state now.**
+
+Here's why:
+
+* You're already inside the authentication workstream.
+* You're already creating Build 95.
+* The additional work is relatively small compared to everything else already being changed.
+* It closes another Apple-related compliance gap before review instead of creating a follow-up patch.
+
+The report itself estimates this as a small addition to the auth hook and sign-in flow rather than a redesign. 
+
+---
+
+# One additional requirement I'd add
+
+I would ask Replit to include **one final automated integration test** before declaring the work complete.
+
+Specifically:
+
+### Email/password flow
+
+* Create account
+* Login
+* Delete account
+* Verify:
+
+  * user row deleted
+  * session deleted
+  * login fails
+  * email reuse behaves according to your intended policy
+
+### Apple flow
+
+* Sign in with Apple
+* Verify authorization code exchange succeeds
+* Verify encrypted refresh token stored
+* Delete account
+* Verify revoke endpoint returns expected result (or documented fallback)
+* Verify local deletion
+* Verify session removal
+* Verify subsequent authentication behaves correctly
+
+If they can automate those tests, you'll have much higher confidence before putting Build 95 in front of Apple.
+
+---
+
+# One thing I would NOT do
+
+I would **not** continue adding features.
+
+No map improvements.
+
+No HBCU enhancements.
+
+No vibes.
+
+No UI polish.
+
+No new OTA experiments.
+
+Your launch priority has shifted.
+
+The app has reached the point where **stability is worth more than capability**.
+
+---
+
+## My recommendation for the next 72 hours
+
+I would treat this as your Release Candidate schedule:
+
+1. ✅ Add the four Apple secrets.
+2. ✅ Implement Option A.
+3. ✅ Merge the server PR.
+4. ✅ Railway deploy.
+5. ✅ Build iOS 95.
+6. ✅ Run the full acceptance tests.
+7. ✅ Verify deletion works.
+8. ✅ Verify login persistence.
+9. ✅ Verify legal pages.
+10. ✅ Submit to Apple.
+11. ✅ Submit Android.
+
+After submission, resist the urge to keep changing the app. Apple can take time to review, and a stable binary is your best chance of getting through without another reset.
+
+I know this week has felt like you've been solving one issue after another, but the scope has narrowed considerably. You're no longer trying to build a platform—you’re trying to ship a stable release candidate. That is exactly where your focus should stay until the app is in review.

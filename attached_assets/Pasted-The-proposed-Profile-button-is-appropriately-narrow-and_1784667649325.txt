@@ -1,0 +1,124 @@
+The proposed Profile button is appropriately narrow and admin-only. I approve that UI change, but I would correct the OTA command before publishing.
+
+## Approve the diagnostic entry
+
+The diff is limited to one existing screen and does not touch map logic, APIs, native modules, stylesheets, or permissions. It is suitable for Build 94.
+
+The failed full-project typecheck is not ideal, but the explanation is plausible because the change reuses existing imports, styles, variables, and the same structure as the Admin Panel block. Before publishing, Replit should still run the narrowest available syntax or bundling check for the mobile project.
+
+## Use the production channel, not only the branch
+
+Build 94 is subscribed to the `production` **channel**. Current Expo guidance recommends publishing to that channel and explicitly selecting the production EAS environment. ([Expo Documentation][1])
+
+Use:
+
+```bash
+cd artifacts/mobile
+
+eas update \
+  --channel production \
+  --environment production \
+  --platform ios \
+  --message "PR-A: Add admin map diagnostic entry"
+```
+
+This is preferable to:
+
+```bash
+eas update --branch production
+```
+
+A branch can be linked to a channel, but publishing through `--channel production` directly targets the channel embedded in Build 94 and avoids relying on an assumed branch-channel mapping. ([Expo Documentation][2])
+
+## Before Replit publishes it
+
+Ask for these confirmations:
+
+> **PR-A APPROVED WITH OTA COMMAND CORRECTION**
+>
+> The admin-only Map Diagnostic entry is approved.
+>
+> Before publishing:
+>
+> 1. Commit the one-file change so the OTA can be tied to an exact Git commit.
+> 2. Confirm the working tree contains no unrelated modifications.
+> 3. Run the narrowest available Expo export or syntax validation for iOS. Do not treat the full-workspace OOM as proof of correctness.
+> 4. Confirm the resolved runtime version matches Build 94.
+> 5. Publish using:
+>
+> ```bash
+> cd artifacts/mobile
+> eas update \
+>   --channel production \
+>   --environment production \
+>   --platform ios \
+>   --message "PR-A: Add admin map diagnostic entry"
+> ```
+>
+> 6. Return:
+>
+>    * Git commit
+>    * EAS update group ID
+>    * runtime version
+>    * channel
+>    * platform
+>    * confirmation that only `profile.tsx` was included
+>
+> Do not publish any other fixes in this update.
+
+## How to receive the OTA on your iPhone
+
+After Replit confirms publication:
+
+1. Verify Build 94 is installed from TestFlight.
+2. Force-close Mapping With Melanin.
+3. Open it while connected to the internet.
+4. Leave it open for about 15 seconds so the update can download.
+5. Force-close it again.
+6. Reopen it.
+
+Expo notes that production builds normally download an update on one launch and apply it on the next restart, so reopening twice may be necessary. ([Expo Documentation][1])
+
+Then open:
+
+**Profile → Map Diagnostic — Beta → Open**
+
+Test:
+
+* Do map tiles appear?
+* Can you pan and zoom?
+* Does the location or default Philadelphia region appear?
+* Does it remain black?
+* Does it show an error?
+* Does the ordinary Map tab remain black in the same session?
+
+A screenshot of both the diagnostic map and the regular Map tab will be enough to determine the next direction.
+
+## Pool-stats endpoint
+
+I approve preparing the protected pool-stats endpoint as a separate server PR, but do not combine it with this OTA.
+
+I would make two adjustments:
+
+* Use the same established authorization-header pattern as your other `CRON_SECRET` endpoints instead of introducing `x-probe-key`, unless there is a concrete reason to use a different header.
+* Add a temporary marker in the route name or code comment and a cleanup ticket so it is removed after diagnosis.
+
+The response body is appropriately minimal:
+
+```json
+{
+  "totalCount": 5,
+  "idleCount": 0,
+  "waitingCount": 12,
+  "timestamp": "..."
+}
+```
+
+It does not reveal database content or credentials.
+
+Do **not** run the five-request concurrent test yet. First gather pool counters one route at a time as proposed. Also, the conclusion that “all connections return quickly means a pool-size increase is the fix” would still be premature. Increasing the pool without checking Railway PostgreSQL’s connection limits and query performance can move rather than solve the failure.
+
+Proceed with the single diagnostic OTA first. The result of that screen will tell us whether Build 94’s native map is trustworthy or whether another iOS build is required.
+
+[1]: https://docs.expo.dev/eas-update/getting-started/?utm_source=chatgpt.com "Get started with EAS Update - Expo Documentation"
+[2]: https://docs.expo.dev/eas-update/eas-cli/?utm_source=chatgpt.com "Manage branches and channels with EAS CLI - Expo Documentation"

@@ -1,0 +1,136 @@
+This needs a **full authentication-path test**, not another guess or another app build. Since you have **never been able to log in**, Replit should test the entire production auth flow directly against Railway and the production database.
+
+Send Replit this exact message:
+
+> I have never been able to complete login successfully. Password reset also does not work. Please stop testing only isolated pieces and run a complete production authentication audit against the live Railway API and production database.
+>
+> Please test and provide the exact HTTP status, response body, server log entry, and database result for each step below.
+
+## Tests Replit should run
+
+### 1. Confirm the account actually exists
+
+Using my exact email address and phone number, check the production database for:
+
+* user record exists;
+* correct email;
+* correct normalized phone number;
+* email or phone verification status;
+* credential/account record exists;
+* password hash exists for password users;
+* user is not disabled, banned, deleted, or incomplete;
+* membership status is not incorrectly blocking login.
+
+They should **not send you the password hash or sensitive database contents**.
+
+### 2. Test login directly against the live API
+
+They should call the same production endpoint the mobile app uses, using the Railway domain—not localhost or Replit preview.
+
+They need to report:
+
+* endpoint URL;
+* request fields sent;
+* HTTP response status;
+* response body;
+* whether a session/token was created;
+* whether the response includes the expected cookie or token.
+
+If the API succeeds but the app still looks logged out, the bug is likely in **session storage or client handling**, not password validation.
+
+### 3. Test the session immediately after login
+
+After a successful login request, they should call the “current user/session” endpoint using the returned credentials.
+
+Expected result:
+
+* login returns success;
+* session endpoint returns your user;
+* app receives and stores that session;
+* protected endpoints accept it.
+
+Better Auth requires cookies or session credentials to be returned and sent correctly; a successful credential check alone is not enough if the client never preserves the session. ([Better Auth][1])
+
+### 4. Inspect the mobile app’s storage method
+
+They should confirm whether the Android app stores authentication in:
+
+* SecureStore;
+* AsyncStorage;
+* a bearer token;
+* or cookies.
+
+For Expo mobile apps, credentials generally need secure device storage and must be restored when the app reopens. ([Expo Documentation][2])
+
+They should test:
+
+1. Log in.
+2. Confirm token/cookie is received.
+3. Confirm it is saved.
+4. Confirm the next API request includes it.
+5. Close and reopen the app.
+6. Confirm the session is restored.
+
+### 5. Test password reset end to end
+
+They should verify:
+
+1. Reset request reaches Railway.
+2. User lookup succeeds.
+3. Reset token is created.
+4. Email or SMS is actually sent.
+5. Reset link/code points to the correct production URL.
+6. Token has not expired.
+7. New password is written to the same production database.
+8. Login succeeds with the new password.
+9. Old password fails.
+
+Better Auth’s reset flow has configurable token expiration and session behavior, so they should inspect the actual production configuration rather than assume defaults. ([Better Auth][3])
+
+### 6. Compare app request versus successful curl request
+
+They should capture the actual mobile request and compare:
+
+* base URL;
+* endpoint;
+* headers;
+* `Content-Type`;
+* phone/email formatting;
+* request body;
+* credentials/cookie settings;
+* redirect handling;
+* response parsing.
+
+A common failure is that the API works through curl or Replit, but the mobile app points to the wrong base URL or fails to retain the session.
+
+### 7. Watch Railway logs while you try once
+
+Have them open the current Railway deployment logs, then ask you to attempt one login while they watch.
+
+They should tell you which of these occurs:
+
+* no request reaches Railway;
+* request reaches Railway and returns 400;
+* returns 401;
+* returns 403;
+* returns 500;
+* login succeeds but the next session request fails.
+
+Railway’s deployment logs are the correct place to inspect live runtime failures. ([Railway Docs][4])
+
+## The most important question
+
+Ask them to answer this clearly:
+
+> Does login fail because the credentials are rejected, or does login succeed server-side and the mobile app fail to save or use the session?
+
+That distinction will narrow the problem immediately.
+
+Because you once entered through a “continue free” path, there is also a real possibility that the app allowed guest access without ever creating a complete credential account. Replit should verify whether your user record exists but lacks the corresponding authentication account/password record.
+
+Do not authorize another app build until they identify the exact failing step and show the live request and response.
+
+[1]: https://better-auth.com/docs/authentication/email-password?utm_source=chatgpt.com "Email & Password"
+[2]: https://docs.expo.dev/versions/latest/sdk/securestore/?utm_source=chatgpt.com "SecureStore"
+[3]: https://better-auth.com/docs/reference/options?utm_source=chatgpt.com "Options"
+[4]: https://docs.railway.com/observability/logs?utm_source=chatgpt.com "Logs | Railway Docs"

@@ -1,0 +1,263 @@
+# Melanin Maps™ MVP Requirements
+
+## Objective
+
+Build the first working version (MVP) of Melanin Maps™, a mobile-first platform that helps users discover businesses, events, opportunities, travel destinations, and communities through an interactive map experience.
+
+---
+
+## User Roles
+
+### Consumer
+
+Can:
+
+* Create account
+* Create profile
+* Search businesses
+* View businesses on map
+* Save favorites
+* Leave reviews
+* RSVP to events
+* Receive notifications
+
+### Business
+
+Can:
+
+* Create business account
+* Claim or create business listing
+* Upload photos
+* Add business information
+* Respond to reviews
+* Create events
+* View basic analytics
+
+### Administrator
+
+Can:
+
+* Manage users
+* Manage businesses
+* Approve verification requests
+* Remove inappropriate content
+* Review reports
+* Manage memberships
+
+---
+
+## Primary Navigation
+
+Bottom Navigation:
+
+1. Home
+2. Explore
+3. Map
+4. Events
+5. Profile
+
+---
+
+## Home Screen
+
+Display:
+
+* Search bar
+* Featured businesses
+* Upcoming events
+* Recommended businesses
+* Trending locations
+* Community announcements
+
+---
+
+## Explore Screen
+
+Allow users to browse:
+
+* Restaurants
+* Beauty & Wellness
+* Professional Services
+* Retail
+* Healthcare
+* Real Estate
+* Travel
+* Entertainment
+
+Include filters:
+
+* Distance
+* Rating
+* Verified
+* Open Now
+* Category
+
+---
+
+## Map Screen
+
+Interactive map displaying:
+
+* Business locations
+* Event locations
+* User-selected categories
+* Search results
+
+Users can:
+
+* Tap location pins
+* Open business profiles
+* Save locations
+* Get directions
+
+---
+
+## Business Profile Screen
+
+Display:
+
+* Business name
+* Photos
+* Description
+* Category
+* Website
+* Phone number
+* Address
+* Hours of operation
+* Reviews
+* Ratings
+* Verification badges
+* Directions button
+* Save button
+
+---
+
+## User Profile Screen
+
+Display:
+
+* Profile photo
+* Name
+* Bio
+* Interests
+* Saved businesses
+* Saved events
+* Reviews written
+
+---
+
+## Reviews
+
+Users can:
+
+* Leave reviews
+* Rate 1–5 stars
+* Upload photos
+* Edit reviews
+
+Businesses can:
+
+* Respond to reviews
+
+Administrators can:
+
+* Remove inappropriate content
+
+---
+
+## Events
+
+Businesses and administrators can create:
+
+* Community events
+* Networking events
+* Business events
+
+Display:
+
+* Date
+* Time
+* Location
+* Description
+* RSVP button
+
+---
+
+## Business Verification
+
+Status options:
+
+* Verified Business
+* Black-Owned Verified
+* Women-Owned
+* Veteran-Owned
+* Wheelchair Accessible
+* Family Friendly
+
+Businesses submit verification requests.
+
+Administrators approve or reject.
+
+---
+
+## Notifications
+
+Users receive:
+
+* Event reminders
+* New reviews
+* Business responses
+* Safety alerts
+* Platform announcements
+
+---
+
+## Admin Dashboard
+
+Provide:
+
+* User management
+* Business management
+* Verification requests
+* Reported content
+* Membership management
+* Analytics overview
+
+---
+
+## Branding
+
+Match branding from melaninmaps.com:
+
+* Warm earth-tone colors
+* Modern professional appearance
+* Mobile-first layout
+* Accessible design
+* Consistent typography and logo usage
+
+---
+
+## Phase 1 MVP Only
+
+Build only:
+
+* User accounts
+* Business accounts
+* Interactive maps
+* Search
+* Business profiles
+* Reviews
+* Events
+* Notifications
+* Admin dashboard
+
+Do not build yet:
+
+* Travel booking
+* Housing marketplace
+* Messaging
+* AI concierge
+* Marketplace sales
+* International support
+
+These will be Phase 2 and beyond.

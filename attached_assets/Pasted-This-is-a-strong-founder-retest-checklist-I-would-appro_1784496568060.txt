@@ -1,0 +1,83 @@
+This is a strong founder-retest checklist. I would approve it after four important corrections.
+
+### 1. Internal uploads are required for testing
+
+Change:
+
+> Do NOT submit to App Store or Google Play until all items pass.
+
+To:
+
+> **Do not submit for public App Review, production release, or wider tester distribution until all required items pass. Internal TestFlight and Google Play internal-track uploads are permitted and required for founder testing.**
+
+Otherwise, you would not be able to install and test the exact store binaries.
+
+### 2. Remove “if implemented” from pass/fail requirements
+
+Weather and “Take me there” cannot be mandatory PASS items while also saying “if implemented.” Put them into one of these categories:
+
+* **Required for Community Beta 3**
+* **Known limitation accepted for this beta**
+* **Future capability**
+
+Based on your expectations, I would require Replit to complete a KinfolkAI capability audit before deciding whether weather and contextual navigation block release.
+
+### 3. Verify build numbers before triggering EAS
+
+Build 90 / Android 64 may be correct, but Replit should verify them against:
+
+* Expo EAS build history
+* App Store Connect
+* Google Play Console
+
+Do not rely only on `app.json`, especially with `autoIncrement` enabled.
+
+### 4. Add the test-business and timeout defects
+
+These were discovered during your founder testing and should not disappear from the checklist:
+
+#### TEST DATA
+
+* [ ] Test businesses are labeled clearly in admin/testing views.
+* [ ] Test businesses do not appear as genuine public or verified businesses.
+* [ ] Test records are excluded from public recommendations, analytics, promotions, ratings and Hidden Gem eligibility.
+* [ ] Test records created during founder testing are documented for cleanup.
+
+#### ERROR AND TIMEOUT HANDLING
+
+* [ ] Slow requests produce a clear loading state.
+* [ ] Every loading indicator ends in success, retry or failure.
+* [ ] Network timeout does not freeze the screen.
+* [ ] Repeated taps do not create duplicate records.
+* [ ] The user remains signed in after a timeout or server error.
+
+## Send Replit this
+
+> The Community Beta 3 founder checklist is accepted with these revisions:
+>
+> 1. Internal TestFlight and Google Play internal-track uploads are allowed and required for founder testing. Do not submit for public App Review, production release or wider tester distribution until all required checks pass.
+> 2. Separate KinfolkAI requirements into:
+>
+>    * required and implemented for CB3;
+>    * accepted beta limitations;
+>    * future capabilities.
+>      Remove “if implemented” from any item being treated as a release gate.
+> 3. Verify the next build numbers directly in EAS, App Store Connect and Google Play before triggering builds. Report the final resolved numbers and EAS build IDs.
+> 4. Add test-business handling and global timeout/error-state testing to the checklist.
+> 5. Add the exact build commit hash so we can prove the binary being tested contains every approved fix.
+> 6. Do not automatically prepare Build 91/65 after a failure. First diagnose the issue, group all required fixes and create one combined correction build.
+>
+> Before triggering EAS, return:
+>
+> * verified next iOS build number;
+> * verified next Android versionCode;
+> * source commit;
+> * Expo Doctor result;
+> * successful iOS and Android export result;
+> * complete list of fixes included.
+>
+> Then build both platforms and upload only to the internal testing channels.
+
+One minor cleanup: the KinfolkAI greeting appears in both **Profile & Login Experience** and **KinfolkAI™**. Keep it only under KinfolkAI so each test appears once.
+
+After those edits, this becomes a reliable release gate rather than merely a long feature checklist.

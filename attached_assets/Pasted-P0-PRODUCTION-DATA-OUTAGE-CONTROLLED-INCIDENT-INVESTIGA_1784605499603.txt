@@ -1,0 +1,69 @@
+P0 PRODUCTION DATA OUTAGE — CONTROLLED INCIDENT INVESTIGATION
+The latest report identifies pool exhaustion as a possible cause, but it is not yet confirmed.
+Do not modify authentication, database schema, mobile source, or unrelated application logic.
+Do not start another EAS build.
+Required evidence
+Use Railway runtime access and production-safe diagnostics to determine:
+Whether the API process has one or multiple pg.Pool instances.
+The live values of:
+pool.totalCount
+pool.idleCount
+pool.waitingCount
+Whether Drizzle and /api/db-probe use the exact same pool object.
+Whether any connection is checked out and not released.
+Whether updateSession() creates unbounded background database work.
+Whether the pool emits:
+connect
+acquire
+release
+remove
+error
+events as expected.
+The exact last completed line for one timed-out:
+/api/businesses?limit=1
+/api/cultural-sites?limit=1
+valid /api/auth/register
+The relevant Railway runtime logs for those requests.
+PostgreSQL’s current view of connections and waits using read-only queries such as:
+SELECT state, count(*)
+FROM pg_stat_activity
+WHERE datname = current_database()
+GROUP BY state;
+and, where permitted:
+SELECT pid, state, wait_event_type, wait_event,
+       now() - query_start AS duration,
+       left(query, 200) AS query
+FROM pg_stat_activity
+WHERE datname = current_database()
+ORDER BY query_start;
+Whether any locks or long-running transactions are present.
+Controlled recovery
+After capturing evidence, if pool exhaustion is confirmed:
+restart api-server, not Postgres, to clear the application pool;
+verify all DB-backed endpoints recover;
+do not treat the restart as the permanent fix.
+Permanent repair proposal
+Return the smallest safe proposal covering:
+bounded session-renewal queries;
+prevention of fire-and-forget DB work accumulating;
+pool statistics and alerts;
+reliable acquisition and statement timeouts;
+explicit 503 responses when DB capacity is unavailable;
+rate limiting and retry behavior;
+a DB-backed readiness check separate from /api/healthz;
+load testing at 50, 100, and 500 simulated users.
+Do not implement until the evidence and exact diff are approved.
+End with one of:
+✅ POOL EXHAUSTION CONFIRMED
+✅ DIFFERENT ROOT CAUSE CONFIRMED
+⚠️ ROOT CAUSE STILL UNPROVEN
+Include the evidence supporting the verdict.
+What should have been normal by now
+At this stage, every build should have passed these gates first:
+Production registration, login, businesses, cultural sites, and Kinfolk return successfully.
+The correct EAS mobile project and commit are proven.
+iOS and Android development builds complete the critical flows.
+The release contract tells you exactly what will and will not be present.
+A paid production build happens only after those checks are green.
+What you are experiencing is not a sign that your expectations are too high. It is a sign that the release and production-observability process needs to mature immediately.
+The current priority is not Build 93. It is restoring stable production database-backed routes and proving they remain stable under repeated requests. Until that happens, no mobile build can be meaningfully tested.

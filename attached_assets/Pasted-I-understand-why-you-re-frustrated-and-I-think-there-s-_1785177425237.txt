@@ -1,0 +1,227 @@
+I understand why you're frustrated, and I think there's a communication problem between what you're asking and what Replit (and sometimes Manus) are optimizing for.
+
+They're optimizing for:
+
+> "What is the smallest release that passes Apple?"
+
+You're optimizing for:
+
+> **"What is the smallest release that both passes Apple *and* gives people something remarkable enough to talk about on my tour."**
+
+Those are not the same objective.
+
+I also want to be careful not to promise something that may not be be realistic **today**. There is a difference between something being **non-negotiable as a product requirement** and something being **physically possible to implement, test, and safely release in a single day**. If Replit believes something cannot be responsibly completed today, it should say that explicitly and explain why—not silently defer it or remove it.
+
+The way to make that expectation clear is to change the assignment from "recommend a scope" to "implement founder-approved scope or justify, with evidence, why a specific item cannot safely ship."
+
+I would send Replit this:
+
+---
+
+# FOUNDER DIRECTIVE — BUILD 97 SCOPE IS NOT NEGOTIABLE
+
+This is a Founder Directive.
+
+This is **not** a request for recommendations.
+
+The founder-approved Build 97 scope has already been defined.
+
+Your responsibility is to implement that scope or clearly identify—with technical evidence—why a specific item cannot responsibly ship in this build.
+
+Do **not** silently defer features.
+
+Do **not** reduce scope because you think it is preferable.
+
+Do **not** replace founder requirements with your own release strategy.
+
+If you believe an approved requirement cannot safely ship, stop and return:
+
+* exactly why,
+* exactly what blocks it,
+* exactly how long it would take,
+* exactly what dependency exists,
+* and the smallest acceptable implementation that still satisfies the founder's intent.
+
+---
+
+## BUILD 97 FOUNDER-APPROVED REQUIREMENTS
+
+These are required unless you provide documented evidence that they cannot responsibly ship.
+
+### AUTHENTICATION
+
+* Apple Sign-In
+* Email Sign-In
+* Registration
+* Session restoration
+* Review account
+* Stable production authentication
+* No crashes
+
+---
+
+### MAPS
+
+Maps are the primary experience for testers.
+
+Required:
+
+* Heritage Places
+* Existing businesses
+* Inclusive diaspora language
+* Business preview cards
+* Search
+* Categories
+* Filters
+* Meaningful descriptions
+* Stable performance
+
+---
+
+### HISTORICAL SUNDOWN TOWNS
+
+This is a founder requirement.
+
+Do not remove it from Build 97 without approval.
+
+Provide the smallest responsible implementation if necessary.
+
+Minimum acceptable implementation:
+
+* historical reference only
+* verified source
+* attribution
+* disclaimer
+* map integration
+* searchable
+* no unsupported current danger claims
+
+If licensing or legal restrictions prevent shipping today, provide evidence and propose the smallest responsible alternative.
+
+Do not simply recommend Build 98.
+
+---
+
+### KINFOLKAI
+
+Required for Build 97:
+
+* answers basic questions
+* uses preferences
+* remembers conversation
+* culturally appropriate tone
+* travel assistance
+* heritage assistance
+* minority business recommendations where appropriate
+* graceful failure handling
+
+Do not evaluate future vision.
+
+Implement the agreed Build 97 foundation.
+
+---
+
+### COMMUNITY
+
+Required:
+
+* seeded community
+* tester engagement
+* community feed
+* reporting
+* moderation
+* meaningful first experience
+
+---
+
+### BUSINESS EXPERIENCE
+
+Required:
+
+* inclusive ownership language
+* business previews
+* current descriptions
+* categories
+* services
+* vibes
+* links where implemented
+
+---
+
+### TABLETS
+
+Required testing:
+
+* iPad
+* Android tablet
+
+---
+
+### STABILITY
+
+Build 97 must be tested against concurrent usage.
+
+Required:
+
+* connection stability
+* stress testing
+* webhook testing
+* production monitoring
+* authentication testing
+* no connection growth
+* no crashes
+
+---
+
+## IMPLEMENTATION RULE
+
+You are no longer authorized to remove approved features from the build because they are "better suited for Build 98."
+
+If you believe a feature cannot ship:
+
+Return a structured exception report.
+
+For every blocked requirement include:
+
+* Requirement
+* Current implementation status
+* Remaining work
+* Estimated effort
+* Technical blocker
+* Legal blocker
+* Performance blocker
+* Risk if shipped
+* Smallest acceptable implementation
+
+Nothing is removed without Founder approval.
+
+---
+
+## SUCCESS CRITERIA
+
+I should be able to hand this app to 30 testers and they should immediately experience:
+
+* Heritage
+* Community
+* Businesses
+* Kinfolk
+* Cultural discovery
+* Historical context
+* Meaningful conversations
+* Reasons to invite someone else
+
+The objective is **not only to pass Apple**.
+
+The objective is to pass Apple **while launching a product worthy of the Mapping With Melanin™ vision.**
+
+---
+
+### One thing I would change
+
+I would add one sentence that I think is missing from all of your instructions:
+
+> **"Do not optimize for the smallest build. Optimize for the smallest build that fulfills the founder-approved vision for Build 97."**
+
+That sentence is the difference between a release that simply gets approved and one that creates momentum for your tour.
+
+One final point: if Replit comes back and says, for example, "we cannot responsibly ship Historical Sundown Towns today because the verified dataset is not yet imported and licensed," that's not them ignoring your requirement—that's them identifying a concrete blocker. In that case, I'd want them to show you exactly what is missing, how long it would take, and how they'd complete it, rather than quietly moving it to a later build.

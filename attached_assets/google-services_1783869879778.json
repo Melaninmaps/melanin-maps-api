@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "977895289878",
+    "project_id": "mapping-with-melanin",
+    "storage_bucket": "mapping-with-melanin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:977895289878:android:ce11182d23eb3e05827137",
+        "android_client_info": {
+          "package_name": "com.melaninmaps.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu7lBIg7nCka1j8CppVa6RhnyT75LmgvU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

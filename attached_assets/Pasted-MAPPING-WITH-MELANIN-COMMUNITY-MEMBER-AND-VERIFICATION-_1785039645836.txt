@@ -1,0 +1,409 @@
+MAPPING WITH MELANIN™ — COMMUNITY MEMBER AND VERIFICATION TRACE
+TARGETED READ-ONLY AUDIT — NO IMPLEMENTATION
+
+I need a precise explanation of why the Community Member experience was
+missing even though the platform already contains identity-verification
+and trust-level infrastructure.
+
+This request is not authorization to change code, schemas, membership
+logic, onboarding, verification providers, or production data.
+
+Do not implement anything until I review the findings and explicitly say:
+“Please implement.”
+
+══════════════════════════════════════════════════════════════
+FOUNDER INTENT — REQUIRED DISTINCTION
+══════════════════════════════════════════════════════════════
+
+Mapping With Melanin™ must distinguish between:
+
+1. COMMUNITY MEMBER
+
+A Community Member is the free base membership identity.
+
+A person joining the platform should be able to choose:
+
+“Join as a Community Member”
+
+This should not require a paid subscription, selfie, government-issued
+ID, or identity verification.
+
+Community membership communicates belonging and participation. It is not
+the same as technical database role “user.”
+
+2. VERIFIED COMMUNITY MEMBER
+
+A Verified Community Member is a Community Member who has completed an
+approved identity-verification process.
+
+Verification may be available only through an eligible paid membership
+tier, according to the approved membership model.
+
+Verification may use:
+
+- Selfie and liveness verification
+- Government-issued ID where required and approved
+- The identity-verification service already being paid for or configured
+
+Verification provides an additional trust designation. It does not create
+the person’s underlying Community Member status.
+
+The intended progression is:
+
+Guest
+→ Community Member
+→ Contributor
+→ Verified Community Member, when eligible and completed
+→ Trusted Contributor
+→ Cultural Ambassador, through a separate qualification process
+
+Verification and Cultural Ambassador status must not be treated as the
+same thing.
+
+══════════════════════════════════════════════════════════════
+QUESTION 1 — WHY WAS COMMUNITY MEMBER MISSING?
+══════════════════════════════════════════════════════════════
+
+Trace the complete history and architecture of Community Member identity.
+
+Explain:
+
+1. Whether Community Member was previously requested, documented, built,
+   partially built, renamed, removed, bypassed, or never connected.
+
+2. Search all relevant:
+   - Prior project documentation
+   - Future-State Register
+   - Audit files
+   - Agent memory
+   - Onboarding specifications
+   - Role definitions
+   - Database schemas
+   - Registration routes
+   - Profile setup
+   - Membership screens
+   - Trust-level logic
+   - Admin role management
+   - Mobile and web account creation
+   - Seed data
+   - Feature flags
+   - Reverted or unused components
+   - Git history, if available
+
+3. Identify the exact reason standard registrations currently receive:
+   - role = "user"
+   - memberType = "individual"
+
+4. Determine whether those values were intended merely as internal
+   technical classifications or whether they unintentionally replaced
+   the visible Community Member product identity.
+
+5. Identify whether any existing screen, copy, route, field, component,
+   or specification previously used:
+   - Community Member
+   - Community Membership
+   - Verified Community Member
+   - Verified Member
+   - Individual Member
+   - Member
+   - User
+
+6. Explain why the member-facing identity moment was not connected to
+   registration even though it existed in founder discussions and
+   platform documentation.
+
+7. Identify whether this happened because of:
+   - Incomplete implementation
+   - Terminology drift
+   - A later refactor
+   - A removed onboarding step
+   - A conflict with business-owner registration
+   - Database-role simplification
+   - Membership-tier logic
+   - An undocumented developer decision
+   - A mistaken interpretation of founder intent
+
+Do not speculate. Distinguish confirmed evidence from inference.
+
+══════════════════════════════════════════════════════════════
+QUESTION 2 — WHAT HAPPENED TO VERIFIED COMMUNITY MEMBER?
+══════════════════════════════════════════════════════════════
+
+Audit the complete identity-verification capability that already exists
+or was previously requested.
+
+Report:
+
+1. The exact verification provider or service currently configured or
+   intended.
+
+2. Whether Mapping With Melanin™ is currently paying for that service.
+
+3. The current subscription, account, package, or integration status,
+   where visible in the project configuration.
+
+4. What the service is intended to verify:
+   - Selfie
+   - Liveness
+   - Government-issued ID
+   - Age
+   - Name
+   - Identity
+   - Business ownership
+   - Any other attribute
+
+5. What is already built:
+   - Database fields
+   - API routes
+   - Provider SDK
+   - Environment variables
+   - Webhook handling
+   - Mobile UI
+   - Web UI
+   - Admin review
+   - Verification status
+   - Badge
+   - Failure handling
+   - Retry handling
+   - Document deletion
+   - Audit logging
+
+6. What is partially built, mocked, disabled, disconnected, or missing.
+
+7. The exact current relationship among:
+   - identityVerified
+   - trustLevel
+   - membership tier
+   - Navigator or other paid tiers
+   - selfie upload
+   - liveness
+   - ID verification
+   - Community Ambassador status
+
+8. The audit previously stated:
+   - Trust Level 1 = Default
+   - Trust Level 2 = Verified Identity
+   - Trust Level 2 may be Navigator+ only
+   - Selfie upload is associated with identity verification
+
+   Confirm whether this is accurate in current code and identify every
+   file, route, screen, and table that supports it.
+
+9. Determine whether the paid verification benefit is:
+   - Fully functional
+   - Available but hidden
+   - Backend-only
+   - UI-only
+   - Partially integrated
+   - No longer connected
+   - Being paid for but unused
+   - Being paid for but incompletely implemented
+
+10. Explain why this capability was not surfaced during registration,
+    membership selection, onboarding, profile setup, or member progression.
+
+11. Confirm whether any paid member is currently being promised
+    verification without receiving a complete usable workflow.
+
+12. Identify any privacy, biometric-data, document-retention, consent,
+    child-safety, or legal issues that must be resolved before enabling
+    verification.
+
+Do not expose credentials, API keys, private documents, or sensitive
+verification data in the response.
+
+══════════════════════════════════════════════════════════════
+REQUIRED PRODUCT MODEL
+══════════════════════════════════════════════════════════════
+
+Evaluate the current code against this intended model:
+
+FREE COMMUNITY MEMBER
+
+- Selects “Join as a Community Member”
+- Receives Community Member identity immediately after signup
+- Can complete basic personalization
+- Can discover, contribute, review, recommend, attend events, and
+  participate within free-tier limits
+- Does not need a selfie or ID simply to belong
+- May later upgrade
+- May remain unverified indefinitely
+- Is clearly distinguished from a Guest
+
+VERIFIED COMMUNITY MEMBER
+
+- Must already be a Community Member
+- Must be in an eligible membership tier if that is the approved model
+- Chooses to begin verification
+- Receives a clear explanation of what is being verified and why
+- Provides explicit consent
+- Completes the approved selfie/liveness or ID process
+- Can see verification status:
+  - Not started
+  - In progress
+  - Needs attention
+  - Verified
+  - Expired, if applicable
+  - Rejected or unable to verify, with respectful next steps
+- Receives a visible Verified Community Member designation
+- Can control appropriate verification information
+- Does not expose ID documents or sensitive data publicly
+- Does not automatically become a Cultural Ambassador
+- Does not receive a higher rating or false recommendation advantage
+  merely because they are verified
+
+BUSINESS OWNER
+
+A person may be both:
+
+- Community Member
+- Business Owner
+- Verified Community Member
+- Verified Business Owner
+- Cultural Ambassador
+
+These must be additive roles or designations on one account, not reasons
+to create duplicate accounts.
+
+Business ownership verification and personal identity verification must
+be treated as separate processes.
+
+══════════════════════════════════════════════════════════════
+PAID SERVICE AND VALUE AUDIT
+══════════════════════════════════════════════════════════════
+
+Because the founder is paying for a verification-related service, provide
+a direct value audit.
+
+Report:
+
+1. Name of service
+2. Current configuration status
+3. Whether it is called by production
+4. Whether successful verification records exist
+5. Whether failed attempts exist
+6. Whether any mobile screen currently launches it
+7. Whether any paid tier advertises it
+8. Whether the provider is charging despite no member-facing usage
+9. Whether the integration can be safely activated
+10. Whether the service should be paused or downgraded until used
+11. What evidence is needed to prove the service works end-to-end
+12. What data the provider retains
+13. What Mapping With Melanin™ retains
+14. Who can access verification records
+15. How a member requests deletion
+
+Do not cancel or change the service. Report only.
+
+══════════════════════════════════════════════════════════════
+DOCUMENTATION TRACE
+══════════════════════════════════════════════════════════════
+
+Because ideas and partially built work have been lost or disconnected,
+trace where these concepts are currently stored.
+
+Identify all documents or records containing:
+
+- Community Member
+- Verified Community Member
+- Identity verification
+- Selfie verification
+- ID verification
+- Trust Level 2
+- Navigator verification benefit
+- Verified badge
+- Member progression
+- Cultural Ambassador progression
+- Business-owner verification
+
+Report which source is authoritative and where contradictions exist.
+
+Add proposed Future-State Register entries for anything not already
+captured, but do not create or change entries until the report identifies
+whether duplicates already exist.
+
+══════════════════════════════════════════════════════════════
+ROOT-CAUSE REQUIREMENT
+══════════════════════════════════════════════════════════════
+
+Do not respond only with:
+
+“The UI was not built.”
+
+Explain the complete root cause:
+
+- What was requested
+- What was documented
+- What was built
+- What was paid for
+- What was connected
+- What became disconnected
+- What the member currently experiences
+- Why the gap was not previously identified
+- What process failure allowed it to remain hidden
+
+Also explain how the new audit-first workflow and Future-State Register
+will prevent this from happening again.
+
+══════════════════════════════════════════════════════════════
+REQUIRED RESPONSE FORMAT
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Founder Intent as Understood
+3. Community Member Terminology History
+4. Current Registration Architecture
+5. Why Community Member Is Missing
+6. Prior Community Member Work Found
+7. Current Member Roles and Designations
+8. Current Trust and Progression Architecture
+9. Verified Community Member Capability
+10. Verification Provider and Paid-Service Status
+11. Verification UI Status
+12. Verification API and Database Status
+13. Membership-Tier Relationship
+14. Selfie and Liveness Status
+15. Government-ID Status
+16. Verification Badge and Member-Facing Status
+17. Business Verification Versus Member Verification
+18. Cultural Ambassador Versus Verified Member
+19. Multi-Role Account Model
+20. Current Privacy and Retention Controls
+21. Current Legal and Consent Gaps
+22. What Is Fully Built
+23. What Is Partially Built
+24. What Is Missing
+25. What Was Previously Requested but Lost or Disconnected
+26. Root Cause
+27. Paid-Service Value Assessment
+28. Exact Files, Routes, Tables, Environment Variables, and Screens Reviewed
+29. Documentation and Future-State Register Crosswalk
+30. Founder Decisions Required
+31. Smallest Safe Build 97 Recommendation
+32. Items That Must Be Deferred
+33. Acceptance Tests Required
+34. Confirmation That No Changes Were Made
+
+At the end, answer these questions directly:
+
+A. Why could a new person not choose Community Member even though this
+   was part of the founder’s intended platform model?
+
+B. Does a functioning Verified Community Member workflow currently exist?
+
+C. Is Mapping With Melanin™ paying for a verification capability that
+   members cannot currently use?
+
+D. What exact work is required to give free users Community Member status
+   while allowing eligible paid members to pursue verification?
+
+E. Can this be safely included in Build 97 and the next Android build
+   without introducing a large architectural refactor?
+
+Do not implement.
+Do not submit builds.
+Do not change membership tiers.
+Do not activate verification.
+Do not alter provider settings.

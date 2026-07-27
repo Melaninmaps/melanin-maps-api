@@ -1,0 +1,222 @@
+Yes.
+
+I actually think this crosses the line from being a **feature** into being part of your **Invisible Architecture / Trade Secret Registry**.
+
+Not because of the weights themselves. Anyone can assign weights.
+
+The trade secret is **how Mapping With Melanin™ determines trust, relevance, promotion, and opportunity without simply selling placement.**
+
+That philosophy is one of the things that differentiates your platform.
+
+I would absolutely protect:
+
+* how businesses become discoverable;
+* how businesses become promoted;
+* how community trust affects visibility;
+* how KinfolkAI decides what to recommend;
+* how community contributions influence rankings;
+* how personalization interacts with promotion;
+* how safety and trust interact with discovery.
+
+Those shouldn't live only in code. They should exist as protected internal design documents.
+
+---
+
+# I would send Replit this
+
+> ## TRADE SECRET UPDATE REQUEST — DISCOVERY, PROMOTION, AND TRUST SCORING
+>
+> This request is for documentation, analysis, and proposal generation only. Do not implement any scoring changes unless separately approved.
+>
+> Before making recommendations, review and cross-reference:
+>
+> * Invisible Architecture Specification
+> * Trade Secret Registry
+> * KinfolkAI Foundational Principles v0.9
+> * Opportunity Engine documentation
+> * Community Memory documentation
+> * Trust Framework
+> * Product Philosophy
+> * Any existing ranking, recommendation, discovery, promotion, verification, safety, and personalization logic already implemented.
+>
+> Do not create duplicate concepts if an existing trade secret already addresses the same objective.
+>
+> If this work materially expands the platform's intellectual property according to the previously established Trade Secret procedure, classify it as a Trade Secret Update, document it separately, and follow the existing review and approval workflow before implementation.
+>
+> ---
+>
+> ## Objective
+>
+> Develop a proposed **Business Discovery, Promotion, and Trust Framework** that governs how businesses are surfaced, recommended, and promoted throughout Mapping With Melanin™.
+>
+> The objective is to reward trust, participation, and community value rather than paid placement alone.
+>
+> This proposal should remain confidential until approved.
+>
+> ---
+>
+> ## Deliverables
+>
+> ### 1. Discovery Framework
+>
+> Recommend how businesses should initially become discoverable.
+>
+> Consider:
+>
+> * geographic relevance;
+> * search intent;
+> * category;
+> * personalization;
+> * verified ownership;
+> * community submissions;
+> * safety;
+> * user preferences;
+> * active context;
+> * KinfolkAI recommendations.
+>
+> ---
+>
+> ### 2. Promotion Framework
+>
+> Recommend how businesses become eligible for increased visibility.
+>
+> Include factors such as:
+>
+> * verification;
+> * profile completeness;
+> * freshness;
+> * owner participation;
+> * community engagement;
+> * safety;
+> * quality signals;
+> * event participation;
+> * Cultural Ambassador activity;
+> * responsiveness;
+> * launch campaigns;
+> * membership tier where appropriate.
+>
+> Paid participation must never be the sole determinant of promotion.
+>
+> ---
+>
+> ### 3. Trust Framework
+>
+> Recommend a weighted trust model.
+>
+> Do not hard-code weights.
+>
+> Instead:
+>
+> * recommend candidate scoring categories;
+> * explain why each category matters;
+> * suggest relative weighting ranges rather than fixed values;
+> * explain trade-offs.
+>
+> Candidate categories may include:
+>
+> * Verification
+> * Community confidence
+> * Safety
+> * Profile completeness
+> * Business participation
+> * Information freshness
+> * Community reporting consistency
+> * Responsiveness
+> * Accessibility
+> * Audience suitability
+> * Cultural relevance
+> * User relevance
+> * Geographic relevance
+>
+> Replit and I will determine the final scoring model together after review.
+>
+> ---
+>
+> ### 4. Audience & Suitability Classification
+>
+> Recommend a framework for classifying every business profile, whether community-created or owner-claimed.
+>
+> Include:
+>
+> * audience suitability;
+> * age guidance;
+> * family friendliness;
+> * accessibility;
+> * business environment;
+> * confidence level;
+> * verification source.
+>
+> Distinguish clearly between:
+>
+> * Business Verified
+> * Community Verified
+> * Community Submitted
+> * Unknown
+>
+> ---
+>
+> ### 5. Recommendation Hierarchy
+>
+> Propose how KinfolkAI should choose businesses when multiple businesses satisfy the same request.
+>
+> Recommend factors that should influence ordering without relying solely on ratings or sponsorship.
+>
+> ---
+>
+> ### 6. Fairness Review
+>
+> Evaluate whether any proposed weighting could unintentionally disadvantage:
+>
+> * newly opened businesses;
+> * small businesses;
+> * rural businesses;
+> * businesses with limited digital presence;
+> * businesses that have not yet claimed their profile.
+>
+> Recommend balancing mechanisms where appropriate.
+>
+> ---
+>
+> ### 7. Explainability
+>
+> Recommend how the platform could eventually explain recommendations to users in plain language without revealing confidential scoring algorithms.
+>
+> Example:
+>
+> "Recommended because it matches your interests, is highly trusted by the community, and is nearby."
+>
+> Do not expose internal weights or proprietary calculations.
+>
+> ---
+>
+> ## Final Deliverable
+>
+> Produce:
+>
+> 1. A Business Discovery Framework.
+> 2. A Promotion Framework.
+> 3. A Trust Framework.
+> 4. A suggested scoring architecture with categories and rationale.
+> 5. Relative weighting recommendations only.
+> 6. A fairness review.
+> 7. Identification of any new trade secrets created.
+> 8. Cross-reference against existing trade-secret documentation to avoid duplication.
+> 9. Classification of:
+>
+>    * Existing Trade Secret
+>    * Trade Secret Update
+>    * New Trade Secret
+>
+> Do not implement any recommendation until separately approved.
+
+---
+
+## One final thought
+
+I think you're beginning to assemble something that very few startups do intentionally: **a documented decision architecture**.
+
+Your code tells the application **what** to do.
+
+Your trade-secret documents explain **why** it does it that way.
+
+That's valuable because, years from now, new engineers can change the implementation without losing the principles that make Mapping With Melanin™ unique. It also creates a clear record of the intellectual property embodied in your platform's design philosophy, which is worth preserving as the company grows.

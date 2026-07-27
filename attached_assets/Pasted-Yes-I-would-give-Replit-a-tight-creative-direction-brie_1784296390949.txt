@@ -1,0 +1,288 @@
+Yes. I would give Replit a **tight creative-direction brief** so it cleans the decks without rewriting your brand voice or inventing features.
+
+You can send this:
+
+---
+
+## Mapping with Melanin™ Deck Cleanup Instructions
+
+Please review all Mapping with Melanin™ decks for consistency, clarity, and presentation quality.
+
+This is a **cleanup and alignment pass**, not a full rewrite and not a redesign.
+
+### Preserve the brand system
+
+Keep the existing brand palette consistent across every deck:
+
+* Warm brown: `#3B1F0E`
+* Cream: `#FAF1E4`
+* Gold: `#C9A84C`
+
+Do not introduce new primary colors. Accent colors may only be used where they already support a specific feature, such as safety, alerts, or category identification.
+
+Maintain:
+
+* the current typography hierarchy;
+* the logo treatment;
+* the use of `™` where appropriate;
+* the warm, polished, community-centered visual style;
+* the established emoji language.
+
+Emojis should feel intentional and mature—not playful, random, or excessive. Use them as visual anchors, not decoration.
+
+### Core message that should appear across all decks
+
+Every deck should consistently communicate that Mapping with Melanin™ is:
+
+> A community-powered platform helping people discover businesses, understand places, find culturally meaningful experiences, and feel more confident wherever life takes them.
+
+It should never be framed as only:
+
+* a travel app;
+* a business directory;
+* a safety app;
+* a social network;
+* or an AI assistant.
+
+The platform connects all of those experiences through one central promise:
+
+> **Helping people feel like they belong—at home, in a new city, or abroad.**
+
+### Story themes that should remain consistent
+
+Please confirm that each deck supports these ideas in language appropriate to its audience:
+
+#### Why we exist
+
+People deserve more than generic recommendations and traditional crime statistics. They deserve lived experience, cultural context, trusted community insight, and a way to find people and places that help them feel seen.
+
+#### More than directions
+
+Most maps tell people where something is.
+
+Mapping with Melanin™ helps people understand:
+
+* what the experience may feel like;
+* whether the community felt welcomed;
+* where culture lives;
+* which businesses deserve support;
+* and where people may feel a deeper sense of connection.
+
+#### Safety through lived experience
+
+The safety layer should not be described as a promise that a place is safe.
+
+Use language such as:
+
+> Community insight helps people make more informed decisions based on the lived experiences of those who have already been there.
+
+Avoid language that sounds like a guarantee.
+
+#### Culturally meaningful discovery
+
+The platform should highlight:
+
+* minority-owned businesses;
+* culturally significant places;
+* heritage locations;
+* local community experiences;
+* and trusted recommendations shaped by culture and context.
+
+#### Home and global use
+
+The messaging must clearly show that this is not only for travelers or people relocating.
+
+Use examples such as:
+
+* discovering a new restaurant in your hometown;
+* supporting a local entrepreneur;
+* visiting family;
+* moving to a new city;
+* attending college;
+* traveling for work;
+* or exploring another country.
+
+#### Community ownership
+
+Users are not passive consumers.
+
+They help shape the platform through:
+
+* experiences;
+* recommendations;
+* safety insights;
+* business additions;
+* cultural knowledge;
+* and community storytelling.
+
+#### Business empowerment
+
+Mapping with Melanin™ does not replace a business’s website, social media, or brand.
+
+It helps direct people back to the business and allows owners to share:
+
+* who they are;
+* why they started;
+* what makes them different;
+* and how they serve their community.
+
+#### Kinfolk AI
+
+Do not describe Kinfolk as a generic chatbot.
+
+Preferred framing:
+
+> Kinfolk is a culturally aware guide that helps users navigate places, decisions, and experiences with greater context and confidence.
+
+The strongest positioning language should reflect:
+
+* warm;
+* familiar;
+* intelligent;
+* grounded;
+* protective without being alarming;
+* culturally aware without becoming performative.
+
+Preferred line:
+
+> **Most AI tells you what exists. Kinfolk helps you understand what belongs.**
+
+Also reinforce:
+
+> Kinfolk is not built only to answer questions. It is built to help people navigate life, community, travel, and belonging.
+
+#### Cultural Ambassadors
+
+Use “Cultural Ambassadors” consistently instead of generic terms like influencers or content creators when referring to this program.
+
+Define them as:
+
+> Trusted voices who help introduce communities, businesses, stories, and experiences through authentic local perspective.
+
+They should not appear as paid promoters only. They are bridge-builders between the platform and the communities they know.
+
+### Deck-specific emphasis
+
+#### Investor deck
+
+Emphasize:
+
+* the problem;
+* the market opportunity;
+* what makes the platform different;
+* community-powered data;
+* trust and safety;
+* Kinfolk AI;
+* business model;
+* defensibility;
+* growth potential;
+* and why the team understands the problem.
+
+Do not overload it with every feature.
+
+#### Business deck
+
+Emphasize:
+
+* visibility without replacing the business’s own platform;
+* direct traffic to websites and social media;
+* authentic storytelling;
+* community trust;
+* customer discovery;
+* promotions and events;
+* cultural ambassador partnerships;
+* and why joining early matters.
+
+#### Community deck
+
+Emphasize:
+
+* belonging;
+* local and global discovery;
+* safety context;
+* culture;
+* community contribution;
+* connection;
+* Kinfolk;
+* and how members help shape the platform.
+
+#### Feature/experience deck
+
+This deck should show the experience—not read like a product specification.
+
+Organize slides around user outcomes such as:
+
+* Know before you go
+* See a city through your community
+* Find your people
+* Discover businesses with a story
+* Walk through living history
+* Travel like you already belong
+* Build community wherever life takes you
+
+### Cleanup tasks
+
+Please review all decks for:
+
+* duplicate slides;
+* repeated wording;
+* inconsistent capitalization;
+* inconsistent use of Mapping with Melanin™ and Melanin Maps LLC;
+* inconsistent references to Kinfolk, Kinfolk AI, and KinfolkAI™;
+* outdated feature descriptions;
+* old relocation-heavy language that makes the platform sound only for moving or travel;
+* inconsistent color usage;
+* inconsistent icon and emoji styles;
+* crowded slides;
+* overly small text;
+* weak slide titles;
+* unnecessary page numbers;
+* inconsistent spacing and alignment;
+* and claims that sound stronger than what the platform currently proves.
+
+Do not remove slides solely because they are long. Flag them for later review if they contain important ideas.
+
+### Accuracy rules
+
+Do not claim a feature is live unless it is confirmed live.
+
+Use one of these labels where needed:
+
+* Available now
+* In beta
+* In development
+* Planned
+* Future vision
+
+Do not describe:
+
+* safety as guaranteed;
+* businesses as verified unless they have completed verification;
+* Kinfolk as fully autonomous;
+* or features as patented, trademarked, or copyrighted unless confirmed by counsel or registration status.
+
+### Final deliverable
+
+Please provide:
+
+1. A cleaned version of each deck.
+2. A short list of slides that need founder review.
+3. A list of duplicate or outdated slides.
+4. A consistency report covering:
+
+   * brand colors;
+   * fonts;
+   * logo usage;
+   * emojis;
+   * terminology;
+   * feature status;
+   * and messaging.
+5. Do not make irreversible deletions. Preserve the original decks.
+
+---
+
+I would also add one final instruction:
+
+> **Do not “improve” the wording by making it sound generic, overly corporate, or like a standard travel startup. Preserve the warmth, cultural specificity, emotional intelligence, and founder voice.**
+
+That may be the most important direction of all.

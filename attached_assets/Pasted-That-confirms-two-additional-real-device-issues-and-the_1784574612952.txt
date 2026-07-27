@@ -1,0 +1,145 @@
+That confirms **two additional real-device issues**, and they should be separated so Replit does not “fix” one login method while missing the other.
+
+Your daughter’s experience tells us:
+
+* **Phone login works**
+* **Email login does not work**
+* **The iOS Map tab renders a white screen**
+
+These are both **must-fix before the next release-candidate build**.
+
+Send Replit this:
+
+> **REAL-DEVICE TEST UPDATE — ADD TWO P0 ISSUES**
+>
+> A second iOS tester reported:
+>
+> 1. She could not log in with her email address.
+> 2. She successfully entered using her phone number.
+> 3. The iOS Map tab displays a white screen.
+>
+> Treat these as separate defects. Do not combine them with LB-008 or the Report Intel submission issue.
+>
+> ---
+>
+> ## LB-012 — iOS email login fails while phone login succeeds
+>
+> Perform a focused read-only diagnosis.
+>
+> Determine:
+>
+> 1. Whether the tester’s email exists in the production `users` table.
+> 2. Whether it belongs to the same canonical user record as her phone number.
+> 3. Whether that record has a password hash.
+> 4. Whether the account originated through phone signup and was never given an email password.
+> 5. Whether there are duplicate records:
+>
+>    * one phone-only account;
+>    * one email-only account;
+>    * or multiple records for the same person.
+> 6. The HTTP status and response body from her email-login attempt.
+> 7. Whether email comparison is normalized for:
+>
+>    * capitalization;
+>    * leading/trailing spaces;
+>    * aliases or changed email addresses.
+> 8. Whether email verification or account approval blocks login.
+> 9. Whether failed email login increments lockout counters on the correct account.
+> 10. Whether the UI incorrectly presents email login to phone-created accounts that have not established a password.
+>
+> Required product behavior:
+>
+> * One person should have one canonical user ID across email, phone, Apple, web, iOS, and Android.
+> * Adding a new login method should link to the existing user—not silently create another account.
+> * A phone-created user who has not established an email password should see a clear setup path, not a generic connection or invalid-password error.
+> * Do not merge accounts automatically unless ownership of both identifiers is verified.
+> * Preserve all profile, business, membership, posts, messages, and saved data during any verified account-linking process.
+>
+> Return:
+>
+> * confirmed root cause;
+> * affected production user-record structure, with private values redacted;
+> * whether duplicate accounts exist;
+> * safest repair and account-linking plan;
+> * exact files/tables involved;
+> * whether server changes, mobile changes, or both are required;
+> * whether a new iOS and Android build is required.
+>
+> Do not modify or merge her account until the diagnosis and preservation plan are approved.
+>
+> ---
+>
+> ## LB-010B — iOS Map tab is a white screen
+>
+> This is distinct from LB-010A, where Report Intel opens but submission fails.
+>
+> Real-device symptom:
+>
+> * Tester opens the iOS Map tab.
+> * Screen is blank/white.
+> * No visible map tiles, pins, loading message, or actionable error.
+>
+> Perform a focused diagnosis:
+>
+> 1. Identify the exact component rendered by the Map tab in the installed iOS build.
+> 2. Confirm whether the map component mounts.
+> 3. Capture iOS runtime logs and any native `react-native-maps` errors.
+> 4. Confirm the selected provider on iOS:
+>
+>    * Apple Maps;
+>    * Google Maps;
+>    * or platform default.
+> 5. Confirm whether the required iOS API key/configuration is present in the built binary—not merely in source or `eas.json`.
+> 6. Confirm whether the key is authorized for the iOS bundle identifier:
+>    `com.melaninmaps.app`.
+> 7. Confirm whether location permission affects rendering or only user-location display.
+> 8. Confirm a valid fallback region exists when location is denied, delayed, or unavailable.
+> 9. Verify the map container has nonzero width and height on iOS.
+> 10. Check whether a loading overlay, theme color, modal, or parent container covers the map.
+> 11. Validate all business coordinates before rendering markers.
+> 12. Confirm `(0,0)`, null, string, `NaN`, or out-of-range coordinates cannot crash or blank the entire map.
+> 13. Confirm `/api/businesses` and all map-data requests succeed from the installed build.
+> 14. Determine whether the white screen occurs:
+>
+>     * for all iOS users;
+>     * only on first launch;
+>     * only when permission is denied;
+>     * only on cellular;
+>     * only for this tester/device.
+>
+> Required tests after repair:
+>
+> * fresh install with location allowed;
+> * fresh install with location denied;
+> * returning user;
+> * Wi-Fi and cellular;
+> * map with zero pins;
+> * map with valid pins;
+> * malformed-coordinate records excluded safely;
+> * background and reopen on Map;
+> * iOS and Android parity.
+>
+> The Map must never show an unexplained blank screen. If loading or unavailable, show a useful state with retry.
+>
+> Return:
+>
+> * confirmed root cause;
+> * exact files/configuration involved;
+> * smallest safe repair;
+> * regression risk;
+> * whether both platforms need new builds.
+>
+> ---
+>
+> ## Priority and build rule
+>
+> Mark:
+>
+> * LB-012: **MUST FIX before launch**
+> * LB-010B: **MUST FIX before next iOS candidate**
+>
+> Do not start iOS 92 or Android 66 until these diagnoses are returned and the approved must-fix repairs are grouped into the next candidate.
+
+One important detail: do **not** provide your daughter’s password to Replit. They can inspect whether a password hash exists and review the server response without needing the password.
+
+Also, the fact that phone login succeeded is encouraging: her account likely still exists and the platform is reachable. The email path may be unlinked or may never have had a password established. That is different from the entire account being broken.

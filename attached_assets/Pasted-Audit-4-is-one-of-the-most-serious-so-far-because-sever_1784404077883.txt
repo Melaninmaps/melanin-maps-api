@@ -1,0 +1,255 @@
+Audit 4 is one of the most serious so far because several findings could affect someone’s privacy, physical decisions, or understanding of a community.
+
+I agree with the **Not Approved** designation. The platform has impressive geographic infrastructure, but the current experience does not yet justify claims such as “safe,” “nearby,” “accessible,” or “community-aligned” without important qualifications. 
+
+# My review of the six P0 findings
+
+## 1. Google Maps key architecture — P0, with an important clarification
+
+A browser Maps JavaScript key being visible is normal; browser map keys cannot truly be secret.
+
+The actual problem is that **one key is reportedly being used for both browser Maps JavaScript and server-side Directions requests**. That prevents us from applying the correct restriction model to each use. 
+
+My decision:
+
+* Create a restricted **web browser key** for Maps JavaScript/Embed.
+* Create a separate **server key** for Directions and other server APIs.
+* Maintain separate Android and iOS keys.
+* Restrict each key to only the required APIs.
+* Verify referrer, package/SHA-1, bundle ID, quotas, and billing alerts in Google Cloud.
+* The `/maps/js-key` route may return the restricted browser key; it must never return the server key.
+
+Therefore, the P0 is not “the web key is visible.” It is:
+
+> **A single credential serves incompatible client and server purposes and may expose server-billable APIs to misuse.**
+
+## 2. `0,0` coordinates — P0 confirmed
+
+This is an absolute launch blocker.
+
+Community-nominated businesses are reportedly created at coordinates `0,0`, placing them in the Gulf of Guinea, breaking nearby results, check-ins, and directions. 
+
+My decision:
+
+> **No business may become geographically discoverable until its location status is valid.**
+
+Required location states:
+
+```text
+Location Pending
+Geocoding Required
+Geocoding Failed
+Approximate Service Area
+Validated Point Location
+Location Hidden by Owner
+Mobile or Pop-Up
+Closed or Moved
+```
+
+Additional rules:
+
+* Reject `0,0`, malformed, and out-of-range coordinates.
+* Store coordinates as numeric geographic types—not text.
+* Geocode submitted addresses before activation.
+* Do not expose exact residential addresses for home-based businesses unless expressly chosen.
+* Give owners a “Correct map location” workflow.
+* Allow community correction suggestions, subject to review.
+* Candidate nominations remain non-live until location validation is complete.
+
+## 3. Silent GPS retention — P0 confirmed
+
+The report says precise member coordinates are stored in `user_locations` without a clear consent explanation, expiration, or member deletion path. 
+
+That directly conflicts with our stated privacy philosophy.
+
+My decision:
+
+* Core discovery must work without location permission.
+* Location permission must have a plain-language pre-prompt.
+* Proximity calculations should be performed transiently wherever practical.
+* `user_locations` should not operate as indefinite location history.
+* Stored coordinates must have a defined purpose and expiration.
+* Members must be able to clear stored location information.
+* Alert confirmation should not silently preserve the confirmer’s exact location.
+* Exact reporter coordinates must never be publicly exposed by default.
+* Historical check-in coordinates require a separate retention and deletion policy.
+
+For many alert purposes, we should store a coarse grid, neighborhood, or generalized location rather than an exact member coordinate.
+
+## 4. Safety heatmap from one survey — P0 confirmed
+
+One response cannot responsibly classify an entire city as safe, moderate, or alert. The audit confirms that the present threshold is one approved survey with no confidence display or time decay. 
+
+My decision:
+
+The public interface must display **risk and confidence separately**.
+
+Example:
+
+```text
+Community Safety Signal: Elevated concern
+Evidence confidence: Very limited
+Based on: 2 recent community observations
+Last updated: July 2026
+```
+
+Proposed minimum standard:
+
+* Fewer than 5 qualifying observations: no public tier; “insufficient information.”
+* 5–19: emerging signal with low confidence.
+* 20–49: moderate confidence.
+* 50+: stronger confidence, subject to source diversity and recency.
+
+Counts alone are not sufficient. The model must also consider:
+
+* unique contributors;
+* verified versus unverified evidence;
+* recency;
+* time of day;
+* geographic specificity;
+* manipulation signals;
+* official alerts versus community observations.
+
+The words **safe** and **unsafe** should not be used as unconditional geographic labels.
+
+## 5. Incorrect Black-owned legend — P0 confirmed
+
+The web legend reportedly says every marker represents a Black-owned business while rendering every business with coordinates. 
+
+That must be corrected before supporters see it.
+
+Decision:
+
+* Marker labels must reflect actual data.
+* Unknown ownership remains “ownership not confirmed.”
+* Community-referenced, owner-provided, ownership-verified, and certified businesses should be visually distinguishable.
+* Pending and suspended businesses should not appear in normal discovery.
+* Paid placement must have a clear “Sponsored” label.
+* Marker meaning must not rely on color alone.
+
+## 6. Unauthenticated cultural-site reseed — P0 confirmed
+
+I would classify this as P0, not P1.
+
+An unauthenticated route capable of truncating cultural sites and cascading deletion into related stories and support links is destructive even if seed data can be restored. 
+
+Decision:
+
+* Admin authorization required.
+* CSRF or equivalent write protection where applicable.
+* Audit log required.
+* Destructive confirmation required.
+* The read path must never truncate or reseed production data.
+* Seeding belongs in an explicit administrative or deployment process.
+* Community/admin-added cultural content must not be overwritten by a catalogue count check.
+
+# Items I would elevate beyond Replit’s priorities
+
+## Accessibility filters should be P0 or the promise must be removed
+
+The platform reportedly stores accessibility fields but does not expose them in map search, and no accessible routing is available. 
+
+Because accessible discovery is part of the stated experience, we have two honest options:
+
+1. Build a minimum Day 1 accessible discovery experience; or
+2. Remove any claim that the platform can presently help members find accessible businesses.
+
+Given your goal of a full Day 1 experience, I recommend building:
+
+* wheelchair-accessible filter;
+* accessibility information on cards and map details;
+* source label: owner-provided, community-reported, or verified;
+* accessible list alternative to the map;
+* non-color marker states;
+* screen-reader labeling;
+* clear notice that route accessibility has not been verified where applicable.
+
+Wheelchair route optimization can remain P1 if it cannot be responsibly completed, but the app must not imply that ordinary walking directions are accessible.
+
+## AI-generated ownership and safety statements should be P0
+
+The travel planner reportedly may assign `isBlackOwned: true` to AI-generated establishments and make unlabelled safety statements. 
+
+My decision:
+
+* AI must never infer minority ownership.
+* Ownership may only come from platform records or an identified authoritative source.
+* Unknown remains unknown.
+* AI safety statements must be labeled and qualified.
+* KinfolkAI should distinguish:
+
+  * verified fact;
+  * official public data;
+  * community observation;
+  * business-provided claim;
+  * platform inference;
+  * AI-generated suggestion.
+
+Until that source discipline exists, unsupported businesses and safety claims should not appear in generated itineraries.
+
+## “Flagged business” proximity logic must be disabled pending redesign
+
+Three alerts within 150 meters do not prove that a business caused or was involved in those alerts. 
+
+My decision:
+
+> **Geographic proximity is context, not causation.**
+
+The platform may say:
+
+> “Several community alerts were reported near this location.”
+
+It may not say:
+
+> “This business is flagged.”
+
+unless the evidence directly concerns the business and has passed the appropriate verification and fairness process.
+
+# Constitutional Commentary addition
+
+I recommend appending this to the sealed Audit 4 record:
+
+> **Geography creates power because visibility affects where people travel, spend money, feel welcome, and perceive risk. Mapping With Melanin™ must distinguish clearly between a place, an incident near a place, and an allegation about the people or businesses within that place. Proximity is not responsibility. A map may reveal context, but it must never manufacture causation.**
+>
+> **Location belongs first to the person who shares it. The platform receives permission to use it for a stated purpose—not ownership of an indefinite history of their movement.**
+
+# Confirmed product decisions for Audit 4
+
+1. **Exact member location is not retained by default.** Use transient processing or generalized coordinates unless a clearly explained feature requires otherwise.
+2. **Location permission defaults to off** and discovery remains usable without it.
+3. **Location sharing requires an explicit recipient, purpose, expiration, and revocation control.**
+4. **“Nearby” is contextual and user-adjustable**, with a sensible urban default such as 5 miles rather than a fixed 10-mile radius for every use.
+5. **Safety overlays default off** until the member chooses to view them and understands the source and confidence.
+6. **Low-confidence data displays no definitive tier.**
+7. **Business coordinates must be validated before geographic publication.**
+8. **Residential, mobile, service-area, seasonal, and pop-up businesses require distinct location models.**
+9. **Promoted map results must be labeled Sponsored.**
+10. **Ownership is never inferred by AI or by omitted data.**
+11. **Incident coordinates shown publicly should be generalized where exact disclosure could expose a reporter, residence, or vulnerable person.**
+12. **Geographic corrections require provenance and an audit record.**
+
+# Audit 4 final assessment
+
+**Status:** 🔴 **Sealed — Not Approved**
+
+I accept the report’s current score of **67/100**, but with the priority refinements above:
+
+* Original P0: 6
+* Accessibility discovery: elevate to P0 unless the promise is removed
+* AI ownership/safety claims: elevate to P0
+* Proximity-based business flagging: disable before launch or redesign
+
+That produces a working planning count of up to **9 P0 concerns**, although overlapping items may later become one implementation task.
+
+## Updated dashboard
+
+| Audit                                       | Score | Status                   |   P0 |    P1 | Ready |
+| ------------------------------------------- | ----: | ------------------------ | ---: | ----: | :---: |
+| 1. Authentication & Account Lifecycle       |    82 | 🟡 Approved with Changes |    4 |     6 |   ❌   |
+| 2. Onboarding, Profiles & Identity          |    71 | 🔴 Not Approved          |    6 |     7 |   ❌   |
+| 3. Business, Discovery & Trust              |    63 | 🔴 Not Approved          |   10 |    14 |   ❌   |
+| 4. Maps, Location & Geographic Intelligence |    67 | 🔴 Not Approved          | 6–9* | 8–11* |   ❌   |
+
+*Final count depends on whether we combine the elevated items into existing AI, accessibility, and safety backlog entries rather than double-counting them.
+
+The next section should be **Audit 5 — Community, Kinfolk Circles, Connections, Messaging & Social Systems**.

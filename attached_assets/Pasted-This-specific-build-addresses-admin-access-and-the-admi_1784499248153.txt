@@ -1,0 +1,53 @@
+This specific build addresses **admin access and the admin login-return flow**, not every login issue.
+
+It fixes:
+
+* `/admin` preserving its destination through login.
+* Returning you to `/admin` after successful authentication.
+* Already-signed-in admins skipping the login form.
+* Centralized, normalized admin authorization.
+* Admin recognition by either:
+
+  * normalized email in `ADMIN_EMAILS`, or
+  * `role === "admin"` in the database.
+
+It does **not by itself** prove or fix all of these broader authentication items:
+
+* Phone login persistence.
+* Repeated SMS behavior.
+* Email login for accounts originally created by phone.
+* Password reset on your canonical admin account.
+* Apple Sign-In.
+* Session persistence in the mobile app.
+* Favorite/save actions preserving the session.
+* The mobile client only clearing auth on a true invalid-session 401.
+
+Those were handled in separate fixes and still need founder retesting together.
+
+There is also an important deployment issue in Replit’s note: **clicking “Redeploy” in Railway only redeploys the code Railway already has.** It will not include these new changes unless the updated web/API artifacts have first been pushed to the Git source or deployment artifact that Railway watches.
+
+Send Replit:
+
+> Please confirm whether the updated adminAuth helper, admin returnTo changes, and already-authenticated redirect are present in the exact artifact or Git commit Railway will redeploy. A Railway “Redeploy” of the existing deployment is not sufficient if the new code has not been pushed.
+>
+> Also provide a consolidated authentication matrix showing the status of:
+>
+> * email login;
+> * phone login;
+> * phone session persistence;
+> * password reset;
+> * Apple Sign-In;
+> * admin login and returnTo;
+> * favorite/save without logout;
+> * 401-only token clearing.
+>
+> Mark each as:
+>
+> * implemented;
+> * deployed;
+> * production verified;
+> * requires new mobile build.
+>
+> Do not state that all login issues are resolved until every row is production-verified.
+
+So the answer is: **this change closes the admin-access portion only.** It should be combined with the earlier server and mobile auth fixes, then tested as one complete authentication release.

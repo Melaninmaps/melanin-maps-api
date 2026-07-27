@@ -1,0 +1,413 @@
+MAPPING WITH MELANIN™ — BUILD 97 SCOPE, FULL ROADMAP,
+VERIFICATION DECISION, AND ROLE-AUDIT SEQUENCE
+
+READ-ONLY PLANNING — NO IMPLEMENTATION
+
+Do not make code, schema, route, prompt, environment, membership,
+verification-provider, or production-data changes.
+
+Do not submit a build.
+
+Build 97 work will not begin until Apple approves Build 96 and the
+founder explicitly says: “Please implement.”
+
+══════════════════════════════════════════════════════════════
+1. CONFIRMED FOUNDER DECISIONS
+══════════════════════════════════════════════════════════════
+
+Record these decisions as approved product direction:
+
+A. COMMUNITY MEMBER
+
+Community Member is the free base membership identity for every person
+who registers.
+
+A person does not need to pay, submit a selfie, or submit government ID
+to become a Community Member.
+
+B. VERIFIED COMMUNITY MEMBER
+
+Eligibility to become a Verified Community Member will be included with
+EVERY paid individual membership.
+
+This is not limited to Navigator or any one named paid tier. The rule is:
+
+- Free membership: Community Member
+- Any active paid membership: eligible to complete Verified Community
+  Member verification
+
+Verification remains optional unless a future high-trust feature has a
+separately approved requirement.
+
+C. MULTIPLE ROLES
+
+A person may simultaneously be:
+
+- Community Member
+- Verified Community Member
+- Business Owner
+- Verified Business Owner
+- Cultural Ambassador
+- Community Organization representative
+- Mentor
+- Contributor or Trusted Contributor
+
+These are additive roles and designations on one account.
+
+A Business Owner may be a Verified Community Member without being a
+Verified Business Owner.
+
+A Verified Business Owner may require separate ownership documentation.
+
+Personal identity verification must never be treated as proof of minority
+business ownership.
+
+D. THIRD-PARTY FUTURE DIRECTION
+
+The founder prefers a third-party identity-verification service for the
+full-launch future state.
+
+The objectives are:
+
+- Lowest reasonable total cost at early-stage volume
+- Strong user protection
+- Provider-hosted capture
+- Mapping With Melanin™ should not store raw selfie or government-ID
+  images
+- Explicit consent
+- Clear deletion/redaction process
+- Reliable iOS and Android experience
+- One included verification for each eligible paid member
+- Duplicate-charge protection
+- Accurate badge meaning
+
+Current recommendation for architectural planning:
+
+Stripe Identity should be evaluated as the leading early-stage option
+because of pay-as-you-go pricing and existing Stripe infrastructure.
+
+Veriff should remain a future comparison option when verification volume
+is high enough to justify a monthly minimum.
+
+Do not select, contract, configure, or activate a vendor during this
+request.
+
+══════════════════════════════════════════════════════════════
+2. BUILD 97 AND NEXT ANDROID BUILD — PROPOSED SCOPE
+══════════════════════════════════════════════════════════════
+
+Prepare an exact implementation inventory for the smallest stable scope.
+
+A. Authentication and sessions
+
+- New Community Member registration
+- Existing account login
+- Email verification
+- Apple Sign-In on iOS
+- Password reset
+- Logout
+- Session renewal
+- Cold launch
+- App close and reopen
+- Background and resume
+- Expired-session handling
+- Lost-network handling
+- Production environment verification
+
+B. Community Member identity
+
+- “Join as a Community Member”
+- Post-signup confirmation
+- Community Member shown on profile
+- Guest versus Community Member explanation
+- Free-tier benefits and limits
+- Existing Trust Level 1 reused
+- No unnecessary schema migration
+- Consistent replacement of Explorer, individual, user, and Community
+  Member in member-facing copy
+
+C. Lightweight personalization
+
+Restore a concise onboarding experience asking:
+
+1. What brings you here?
+2. What would you like to discover?
+3. Which business communities or ownership designations would you
+   especially like to support?
+4. What matters most to you?
+5. How would you like to contribute?
+
+For every question provide:
+
+- Exact wording
+- Answer choices
+- Required or optional
+- Data field used
+- Current recommendation effect
+- Current KinfolkAI effect
+- Edit path
+- Skip and prefer-not-to-answer behavior
+- Privacy explanation
+
+D. Platform language
+
+Include approved launch-facing corrections:
+
+- Universal Black-owned language applied without actual designation or
+  member preference
+- Incorrect SEO and verified-badge language
+- Hardcoded KinfolkAI prompts
+- Placeholder and generic business wording
+- Canonical KinfolkAI naming
+- Community Member terminology
+- Empty states
+- Error and success messages
+- Multiple ethnicity and ownership designations
+
+E. Maps and heritage
+
+Include:
+
+- Business-category tabs
+- Heritage-category tabs
+- Horizontal category scrolling
+- Search
+- Vertical results list
+- Correct counts
+- List and marker synchronization
+- Detail tiles
+- Freedom Trail
+- Safe-area and bottom-navigation clearance
+- Responsive device behavior
+- Reusable results architecture
+
+Exclude future-state videos, saved heritage places, mentorship, alumni,
+Living Legacy submissions, and real-time cultural feeds.
+
+F. Stability and diagnostics
+
+Include:
+
+- Root-cause resolution for known crashes
+- Crash reporting
+- Build/device/OS tagging
+- Navigation breadcrumbs
+- Authentication regression tests
+- Map regression tests
+- Controlled concurrency testing
+- Failure-state testing
+- Actual distributed-binary smoke tests
+
+══════════════════════════════════════════════════════════════
+3. VERIFICATION TREATMENT IN BUILD 97
+══════════════════════════════════════════════════════════════
+
+For Build 97:
+
+- Show Community Member status.
+- Do not activate third-party identity verification.
+- Do not advertise automated liveness or government-ID verification.
+- Correct inaccurate verification claims.
+- Do not store new member ID or selfie images for a promoted verification
+  program.
+- Do not expose a chargeable third-party workflow.
+- Preserve existing code until a migration and deletion plan is approved.
+- Record Verified Community Member as a paid-membership future benefit.
+- Make no provider selection or provider-account changes.
+
+Explain whether the existing manual verification screen should be:
+
+A. Completely hidden
+B. Preserved but inaccessible
+C. Displayed as “Coming at Full Launch”
+
+Recommend the least confusing and safest option.
+
+══════════════════════════════════════════════════════════════
+4. FULL IMPLEMENTATION ROADMAP
+══════════════════════════════════════════════════════════════
+
+Prepare a phased roadmap from Build 97 through the complete founder
+vision.
+
+At minimum organize:
+
+PHASE 1 — Stable testing foundation
+PHASE 2 — Role foundations and multi-role accounts
+PHASE 3 — Community contribution ecosystem
+PHASE 4 — KinfolkAI trust, memory, privacy, and explainability
+PHASE 5 — Third-party Verified Community Member
+PHASE 6 — KinfolkAI Life Journeys and ecosystem intelligence
+PHASE 7 — Kinfolk Circles and real-world connection
+PHASE 8 — Cultural storytelling, heritage, and Living Legacy
+PHASE 9 — Full community orchestration
+
+For each phase include:
+
+- Member outcome
+- Features
+- Existing capabilities reused
+- New work
+- Dependencies
+- Privacy risks
+- Safety risks
+- Legal/policy needs
+- Estimated complexity: small, medium, large
+- Testing requirements
+- Required founder decisions
+- Future-State Register entries
+- Exit criteria
+- Suggested build grouping
+- Features intentionally deferred
+
+Do not assign calendar dates without sufficient evidence.
+
+══════════════════════════════════════════════════════════════
+5. EXPERIENCE AUDITS STILL REQUIRED
+══════════════════════════════════════════════════════════════
+
+Community Member has received its dedicated audit.
+
+Do not repeat that audit from scratch.
+
+The next read-only audits should be:
+
+AUDIT — Business Owner Experience
+AUDIT — Community Organization Experience
+AUDIT — Cultural Ambassador Experience
+AUDIT — Cross-Role and Multi-Role Architecture
+
+For Business Owner, audit the complete journey:
+
+- Joining as a Community Member
+- Adding Business Owner status
+- Creating or claiming a business
+- Ownership verification
+- Profile completion
+- Business storytelling
+- Videos
+- Events
+- Offers
+- Hiring
+- Mentorship
+- Partnerships
+- Cultural Ambassador relationships
+- Community Organization relationships
+- Promotions
+- Sponsored placement
+- Ratings and reviews
+- Responding to reviews
+- Analytics
+- Membership
+- Notifications
+- Multiple locations
+- Enterprise businesses
+- Business closure or transfer
+- Deleting or transferring ownership
+- What is current versus future state
+
+For Community Organizations, audit:
+
+- Eligible organization types
+- Registration
+- One-account/multiple-role model
+- Organization verification
+- Service areas
+- Resources
+- Eligibility requirements
+- Events
+- Volunteers
+- Donations
+- Mentorship
+- Youth services
+- Emergency support
+- Recurring information
+- Expiration and reconfirmation
+- Business partnerships
+- Cultural Ambassador partnerships
+- Privacy of people served
+- Admin moderation
+- Current versus future state
+
+For Cultural Ambassadors, audit:
+
+- Qualification
+- Application or invitation
+- Verification
+- Communities and places represented
+- Guides
+- Videos
+- Events
+- Recommendations
+- Sponsorship disclosure
+- Heritage and Living Legacy contributions
+- Mentorship
+- Safety responsibilities
+- Recognition and incentives
+- Analytics
+- Removal or suspension
+- Current versus future state
+
+For Cross-Role Architecture, determine how one account may hold multiple
+roles without duplicate accounts or conflicting permissions.
+
+══════════════════════════════════════════════════════════════
+6. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Confirmed Founder Decisions
+3. Complete Build 97 Feature Inventory
+4. Complete Next Android Build Inventory
+5. iOS/Android Parity Matrix
+6. Explicitly Deferred Items
+7. Community Member Build 97 Experience
+8. Personalization Build 97 Experience
+9. Platform Language Changes
+10. Maps and Heritage Changes
+11. Authentication Requirements
+12. Stability and Diagnostic Requirements
+13. Verification Treatment in Build 97
+14. Third-Party Verification Future Recommendation
+15. Paid-Membership Eligibility Rule
+16. Personal Verification Versus Business Verification
+17. Full Phase 1–9 Roadmap
+18. Business Owner Audit Scope
+19. Community Organization Audit Scope
+20. Cultural Ambassador Audit Scope
+21. Cross-Role Architecture Audit Scope
+22. Features Replit Believes Are Already Built
+23. Features Replit Believes Are Partially Built
+24. Features Replit Believes Are Missing
+25. Risks and Contradictions
+26. Founder Decisions Still Required
+27. Future-State Register Updates
+28. Exact Documents Updated
+29. Confirmation That No Code or Build Changes Were Made
+
+At the end answer directly:
+
+A. Does Replit understand that every paid membership is eligible for
+   Verified Community Member?
+
+B. Does Replit understand that a verified person is not automatically a
+   verified business owner?
+
+C. What exactly is proposed for Build 97 and the next Android build?
+
+D. What is explicitly excluded?
+
+E. Which experience audits remain necessary before implementation of the
+   larger ecosystem?
+
+F. Is Replit confident that the current app can support 30 testers, and
+   what evidence supports that answer?
+
+Do not implement.
+Do not submit a build.
+Do not change a build number.
+Do not activate verification.
+Do not create a vendor account.
+Do not alter Apple or Android submissions.

@@ -1,0 +1,76 @@
+MAPPING WITH MELANIN™ — BUILD 97 EXECUTIVE RELEASE REVIEW
+Date: July 27, 2026
+To: Founder, Mapping With Melanin™
+From: CPO + CTO + Apple Release Manager
+Subject: Build 97 GO/NO-GO Decision
+
+
+PRIMARY QUESTION
+“If someone downloads Mapping With Melanin™ today, will they immediately understand why this platform exists and want to continue using it?”
+
+YES. Within the first five minutes, a user will see a map that isn’t just a list of stores, but a tapestry of Black Heritage and Minority-Owned Businesses. They will interact with an AI (KinfolkAI) that doesn’t just “chat,” but speaks with a culturally aware voice (AAVE/City Voices) and understands their specific life journey. The product-market fit is visible on every screen.
+
+
+SECTION 1: EXECUTIVE PRODUCT REVIEW
+	•	As Apple: I see a high-quality, stable app that respects privacy and provides clear value. (Probability of Approval: High, pending the Railway restart).
+	•	As an Investor: I see a platform that has solved the “empty map” problem by seeding cultural heritage data, creating an immediate moated value proposition.
+	•	As a First-Time User: I understand that this is my “Digital Green Book” for the modern era. I stay because it feels built for me.
+	•	As a Cultural Ambassador: I am empowered to tell stories through the Heritage layer that Google Maps ignores.
+
+
+SECTION 2: APPLE REVIEW (REJECTION AUDIT)
+If I were on Apple’s review team, I would look for reasons to reject. Here is the audit:
+
+
+￼
+Would I approve this? Only after the Railway restart. If you submit now without that restart, you will be rejected again for the same reason.
+
+
+SECTION 3: TESTER EXPERIENCE (THE FIRST 30 MINUTES)
+	•	0-5m (Onboarding): Smooth. Apple Sign-In works. The 4-step profile setup asks the right questions about cultural identity and travel style.
+	•	5-15m (Discovery): The “Wow” moment. Seeing the Heritage pins alongside businesses. It feels like a living history map.
+	•	15-25m (KinfolkAI): Testers will be delighted by the “DC Voice” or “ATL Voice.” It feels like talking to a cousin, not a computer.
+	•	25-30m (Community): This is the weak point. If the feed is empty, the app feels like a “ghost town.”
+	•	Recommendation: You must seed the feed with 5-10 “Welcome” posts today.
+
+
+SECTION 4: MAP EXPERIENCE
+Google Maps or Mapping With Melanin™?
+It feels like Mapping With Melanin™. By having Heritage pins ON by default, you’ve reclaimed the map. It’s no longer just about consumption (buying things); it’s about context (knowing where you are).
+
+
+SECTION 5: HISTORICAL SUNDOWN TOWNS
+	•	Ethics & Presentation: This is a high-risk feature. If presented as a “danger score,” it will be rejected.
+	•	The Decision: SHIP AS A HISTORICAL LAYER ONLY.
+	•	Constraint: You must use the `cultural_sites` model, include the Tougaloo College attribution, and the “Historical Record Only” disclaimer.
+	•	Status: The data is not yet imported. If you can’t import it by Day 3, hide the category and ship it in Build 98. Do not ship an empty category.
+
+
+SECTION 6: KINFOLK AI
+Does it feel like Kinfolk?
+YES. The dynamic system prompt that pulls in “Life Journey” (e.g., “New to the city”) and “Tone” (AAVE/Formal) makes it feel culturally anchored. It is the most “viral” part of the app. Testers will share screenshots of these conversations.
+
+
+SECTION 7: THE ECOSYSTEM
+The features (Maps, Kinfolk, Community) feel connected because they all draw from the same database of “Minority-Owned” and “Heritage” data. KinfolkAI suggests businesses that are on the map; the Community Feed discusses them. It is a closed-loop ecosystem.
+
+
+SECTION 8: PROMOTION & TOUR READINESS
+Will this build generate conversation?
+YES. The “Heritage Pins” and “Kinfolk Voice” are the primary conversation starters.
+Tour Readiness: The app is stable enough to survive a physical city tour activation, provided the backend is monitored for connection leaks.
+
+
+SECTION 9: EXECUTIVE DECISION
+Would I approve Build 97 if this were MY company?
+CONDITIONAL YES.
+
+THE BLOCKERS (Must fix today):
+	1.	Deploy & Restart Railway: You are running “leaked” code in production. You must push the Build 97 backend and restart Railway immediately.
+	2.	Seed the Community Feed: Post 10 items. A “Community” app with no community is a failure.
+	3.	Verify iPad Layout: Apple’s reviewer is on an iPad Air M3. You must confirm the Map and KinfolkAI chat don’t clip on a large screen.
+
+FINAL VERDICT:
+If you restart Railway and seed the feed, this release successfully communicates the mission of Mapping With Melanin™. You are ready for your tour.
+
+Launch Status: GO (Conditional on Railway Restart).

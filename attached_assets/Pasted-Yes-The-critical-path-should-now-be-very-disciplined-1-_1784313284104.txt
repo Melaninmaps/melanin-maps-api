@@ -1,0 +1,67 @@
+Yes. The critical path should now be very disciplined:
+1. Run the temporary database probe
+Authorize the protected /api/db-probe endpoint exactly as outlined.
+The only goal is to answer:
+Can the running Railway API service connect to PostgreSQL using the same pool used by authentication?
+No other code or infrastructure changes should happen yet.
+2. Choose the fix based on the probe result
+If the probe times out or returns a connection/DNS error:
+verify the Railway API Server and Postgres services are in the same project/environment;
+verify the running API service has the correct current DATABASE_URL;
+restart or redeploy the API service if the variable is correct but stale;
+only then consider temporarily using the public proxy URL;
+add a database connection timeout afterward as protection against future silent hangs.
+If the probe succeeds:
+do not change DATABASE_URL;
+trace the exact auth query through the deployed code;
+inspect pool active/idle/waiting counts;
+compare the deployed bundle with the source;
+identify why normal routes hang even though the probe succeeds.
+3. Prove production authentication before another mobile build
+Once the database connection issue is corrected, Replit should demonstrate against production:
+Email login returns HTTP 200.
+Forgot Password returns promptly.
+A reset code can be used successfully.
+Password reset changes the credential.
+Login with the new password returns 200.
+A session record is created.
+/api/auth/user accepts the session token.
+No secrets should be shown.
+4. Test the current diagnostic APK
+Because this APK already contains the improved session handling, test it before building again:
+Sign in.
+Confirm the main app opens.
+Close the app completely.
+Reopen and confirm the session persists.
+Log out.
+Reopen and confirm the login screen returns.
+Run Forgot Password once.
+Confirm a fresh reset code works.
+If all pass, we may not need another Android code build for authentication.
+5. Decide whether a store build is required
+A new store build is needed only if the installed app still has a client-side issue after the Railway/database fix.
+Server-only fix: redeploy Railway, no Play Store or Apple submission.
+Client fix required: create one verified production build, test internally first, then submit.
+6. Complete launch-blocker testing
+After authentication passes, test only the essential launch flows:
+onboarding;
+Discover;
+business profiles;
+map and cultural layer;
+safety overlay and surveys;
+community feed;
+Kinfolk AI;
+membership screens;
+external links;
+app close/reopen stability.
+Issues should be classified as:
+Blocker: prevents account access, crashes, loses data, or makes a core feature unusable.
+Post-launch: visual polish, nonessential feature gaps, minor copy, or secondary workflows.
+7. Publish and release testers
+Once the blocker list is clear:
+submit the correct Android build if needed;
+submit the correct iOS build if needed;
+confirm each store version/build number;
+release to testers;
+give testers the final test script;
+monitor crashes and authentication for the first 24 hours.

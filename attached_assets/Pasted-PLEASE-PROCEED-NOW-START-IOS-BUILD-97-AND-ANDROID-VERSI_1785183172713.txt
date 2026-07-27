@@ -1,0 +1,270 @@
+PLEASE PROCEED NOW — START IOS BUILD 97 AND ANDROID VERSION 71
+
+Manus has completed the remediation cross-check and confirmed:
+
+- All source-level P0 issues are resolved
+- dist/index.mjs was rebuilt and committed
+- StripeSync singleton fix is included
+- POOL_MAX and readyz corrections are included
+- Apple Sign-In hardening is included
+- KinfolkAI provenance and safety rules are included
+- Historical Sundown Town source corrections are included
+- Debug bundle-download endpoints are removed
+- UIRequiresFullScreen is now present
+- The sole pre-build iOS gate is cleared
+
+Railway has already deployed the Build 97 remediation successfully.
+
+START BOTH BUILDS NOW:
+
+1. iOS Build 97
+2. Android versionCode 71 / versionName 1.1.5
+
+Do not wait for another planning report.
+
+The following work must continue in parallel while EAS builds:
+
+══════════════════════════════════════
+A. PROVE THE DEPLOYED RUNTIME
+══════════════════════════════════════
+
+Return actual results for:
+
+- GET /api/version
+  Must show Build-97 and commit 3ea90c43...
+
+- GET /api/readyz
+  Must return HTTP 200 and status ok
+
+- GET /api/readyz/history
+  Must return HTTP 200
+
+- GET /api/dl
+  Must return HTTP 404
+
+- GET /api/dl/review-package
+  Must return HTTP 404
+
+- GET /api/businesses?limit=3
+  Must return HTTP 200
+
+- GET /api/cultural-sites?limit=3
+  Must return HTTP 200
+
+If any result shows old code, stop distribution and submission, but do
+not cancel the EAS builds unless the mobile configuration itself is wrong.
+
+══════════════════════════════════════
+B. VERIFY APPLE SIGN-IN CONFIG
+══════════════════════════════════════
+
+Confirm presence only, never values, for:
+
+- APPLE_TEAM_ID
+- APPLE_KEY_ID
+- APPLE_PRIVATE_KEY
+- APPLE_TOKEN_ENCRYPTION_KEY
+
+Use the new config-check endpoint or startup logs.
+
+Any missing variable is an Apple submission blocker.
+
+══════════════════════════════════════
+C. HISTORICAL SUNDOWN TOWNS
+══════════════════════════════════════
+
+This feature is required for this release.
+
+After confirming the deployed seed endpoint is live:
+
+- Run POST /api/admin/seed-sundown-towns
+- Confirm inserted/skipped counts
+- Run it again to confirm idempotency
+- Verify:
+  GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town
+- Confirm a nonzero count
+- Confirm disclaimer-first historical descriptions
+- Confirm attribution and source links
+- Confirm no present-day danger score
+- Confirm the map category and pins render on the actual binaries
+
+Do not remove or defer this feature.
+
+══════════════════════════════════════
+D. BUSINESS DESIGNATION FIX
+══════════════════════════════════════
+
+Confirm whether the divergent write-path correction was included in the
+rebuilt bundle.
+
+Do not bulk-update all 101 businesses yet.
+
+Return the full dry-run list grouped by:
+
+- Ownership verified by reliable source
+- Founder-confirmed ownership
+- Ownership unknown
+- Ownership requiring correction
+
+Unknown ownership must display neutrally.
+
+Wait for founder approval before production backfill.
+
+══════════════════════════════════════
+E. STRIPE STRESS TEST
+══════════════════════════════════════
+
+Run 10–15 concurrent Stripe test-mode webhook events.
+
+Measure:
+
+- readyz each second
+- App pool active/idle/waiting
+- Stripe pool usage
+- Total DB connections
+- HTTP 500 count
+- businesses endpoint status
+- baseline before and after
+- duplicate event processing
+
+Pass criteria:
+
+- no monotonic connection growth
+- waiting returns to zero
+- total owned connections remain within intended limits
+- no real financial transaction
+- no service restart
+
+Observe for 30 minutes.
+
+══════════════════════════════════════
+F. KINFOLKAI ACCEPTANCE
+══════════════════════════════════════
+
+Re-run the full prompt battery against the deployed Build 97 backend.
+
+Require:
+
+- basic questions answered
+- follow-up context works
+- platform results labeled as MWM data
+- general guidance labeled as general knowledge
+- no fabricated businesses
+- no fabricated live weather
+- no unsupported current safety claims
+- Sundown Town questions use historical framing
+- preferences and tone work
+- fourth free-tier query returns documented limit behavior
+
+══════════════════════════════════════
+G. REVIEW ACCOUNT
+══════════════════════════════════════
+
+Create a regular in-app production review account.
+
+Do not create an App Store Connect user.
+
+Requirements:
+
+- email verified
+- approved
+- no waitlist
+- no MFA
+- founding tier
+- full Maps access
+- Heritage access
+- Historical Sundown Town access
+- KinfolkAI access
+- Community access
+- account deletion visible
+
+Run 10 consecutive successful logins.
+
+Do not print or commit the password.
+
+══════════════════════════════════════
+H. COMMUNITY FEED
+══════════════════════════════════════
+
+Draft 8–12 founder-approved posts now.
+
+Do not publish without approval.
+
+The feed must not be empty before Apple review or tester invitations.
+
+Confirm:
+
+- empty state is safe
+- posting works
+- reporting works
+- moderation works
+- Guidelines link works
+- posts can later be removed
+
+══════════════════════════════════════
+I. DEVICE TESTS WHEN BUILDS COMPLETE
+══════════════════════════════════════
+
+Install and test the actual binaries on:
+
+- iPhone
+- iPad Air 11-inch class device/simulator
+- Android phone
+- Android tablet
+
+Verify:
+
+- registration
+- Apple Sign-In on iOS
+- returning login
+- review-account login
+- Maps
+- businesses
+- Heritage
+- Historical Sundown Towns
+- KinfolkAI
+- Community
+- Events
+- Profile
+- Saves
+- Membership
+- Restore Purchases
+- account deletion entry point
+- logout/login
+- session restoration
+- keyboard and scrolling
+- no clipping
+- no crash
+
+══════════════════════════════════════
+J. RETURN
+══════════════════════════════════════
+
+Return only:
+
+1. iOS Build 97 status and build URL/ID
+2. Android version 71 status and build URL/ID
+3. /api/version result
+4. readyz result
+5. readyz/history result
+6. debug endpoint results
+7. Apple env presence result
+8. Sundown Town seed result
+9. Business write-path fix confirmation
+10. Stripe stress results
+11. KinfolkAI acceptance results
+12. Review-account result
+13. Community Feed status
+14. iPhone result
+15. iPad result
+16. Android phone result
+17. Android tablet result
+18. Open P0/P1 issues
+19. GO/NO-GO for Apple submission
+20. GO/NO-GO for iOS testers
+21. GO/NO-GO for Android testers
+22. GO/NO-GO for web testers
+
+Do not create another planning document.
+Start both EAS builds now.
+Do not submit or distribute until the final gates pass.

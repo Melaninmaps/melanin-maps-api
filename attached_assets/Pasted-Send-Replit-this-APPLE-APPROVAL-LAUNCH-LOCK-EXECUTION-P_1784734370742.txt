@@ -1,0 +1,144 @@
+Send Replit this:
+
+> # APPLE APPROVAL LAUNCH LOCK — EXECUTION PLAN
+>
+> Our immediate objective is to submit the most stable reviewable version of Mapping With Melanin™ to Apple as quickly as possible, without increasing rejection risk.
+>
+> Effective immediately, enter **Launch Lock**.
+>
+> ## Do not work on
+>
+> * new features
+> * new map interactions
+> * pin-tap enhancements
+> * expanded cultural data
+> * vocabulary additions
+> * design refinements
+> * Android feature changes
+> * any production OTA not required for a confirmed Apple-review blocker
+>
+> Keep the current production rollback as the release-candidate baseline.
+>
+> ## Required task: Apple Reviewer Simulation
+>
+> Perform one complete reviewer simulation using the exact production iOS build, production OTA, production backend, and permanent Apple review account.
+>
+> Test in this order:
+>
+> 1. Launch the app
+> 2. Log in with the Apple review account
+> 3. Confirm the session is created
+> 4. Close and reopen the app
+> 5. Confirm the reviewer remains signed in
+> 6. Open Discover
+> 7. Open at least one business
+> 8. Open the Map
+> 9. Confirm the map renders
+> 10. Select HBCU
+> 11. Confirm the known-good HBCU results list appears
+> 12. Select one HBCU from the list and confirm its information card opens
+> 13. Open Community
+> 14. Open Events
+> 15. Open KinfolkAI and confirm either a successful response or a clear nonblocking error
+> 16. Open Profile
+> 17. Open all required legal and policy links
+> 18. Log out
+> 19. Log back in
+>
+> Stop the simulation at the first failure.
+>
+> ## Production stability checks
+>
+> Before and after the simulation, verify:
+>
+> * `/api/healthz`
+> * `/api/businesses?limit=1`
+> * `/api/community/posts?limit=1`
+> * `/api/events?limit=1`
+> * `/api/cultural-sites?limit=1`
+> * `/api/pool-stats`
+>
+> Report:
+>
+> * HTTP status
+> * latency
+> * JSON versus HTML response
+> * `totalCount`
+> * `idleCount`
+> * `waitingCount`
+> * any 401, 404, 500, timeout, restart, or deployment event
+>
+> Required threshold:
+>
+> * all data routes return HTTP 200
+> * no core route exceeds 3 seconds
+> * `waitingCount` remains 0
+> * login returns a normal JSON result
+> * no blank screen or endless spinner appears
+>
+> ## Apple review account
+>
+> Confirm the account:
+>
+> * is active and permanent
+> * does not expire
+> * is not waitlisted
+> * does not require MFA, email approval, or manual activation
+> * does not require a purchase
+> * can access every feature Apple needs to review
+>
+> Do not expose the password in the report.
+>
+> ## App Review submission audit
+>
+> Confirm:
+>
+> * exact iOS build number
+> * exact production OTA group
+> * exact runtime version
+> * review credentials are entered correctly in App Store Connect
+> * review notes explain the Philadelphia-focused beta and current feature scope
+> * privacy policy URL works
+> * terms URL works
+> * support URL works
+> * account deletion path works
+> * location, camera, photo, microphone, and notification permission descriptions accurately explain their purpose
+> * no diagnostic badge, debug wording, test-only button, or developer control is visible to Apple
+>
+> ## Required final response
+>
+> Return only:
+>
+> ### Release candidate
+>
+> * iOS build
+> * OTA group
+> * runtime
+>
+> ### Reviewer simulation
+>
+> * PASS or FAIL for each step
+>
+> ### Production health
+>
+> * endpoint table
+> * pool statistics before and after
+>
+> ### Submission blockers
+>
+> * list only confirmed blockers
+>
+> ### Release decision
+>
+> Choose exactly one:
+>
+> * `SUBMIT TO APPLE NOW`
+> * `BLOCKED — ONE SPECIFIC P0 FAILURE`
+>
+> If blocked, identify only the single smallest fix required. Do not propose feature work or a broad architecture project.
+>
+> ## Android
+>
+> Once the Apple reviewer simulation passes, prepare the matching stable Android release candidate immediately so the closed-testing timeline begins. Do not add Android-only features before submission.
+
+Your part should be one clean walkthrough using the same credentials and instructions Apple will receive. No coaching, no hidden steps, and no additional production changes unless Replit identifies one specific blocker.

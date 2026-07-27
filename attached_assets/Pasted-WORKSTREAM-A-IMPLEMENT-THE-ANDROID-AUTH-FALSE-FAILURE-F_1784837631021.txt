@@ -1,0 +1,68 @@
+WORKSTREAM A — IMPLEMENT THE ANDROID AUTH FALSE-FAILURE FIX
+Authorization granted: Please implement the smallest safe correction described in the read-only audit for:
+successful signup incorrectly displaying “Could not connect. Please check your internet connection”;
+successful login being treated as unsuccessful when the session token was already received and stored;
+post-authentication navigation/profile-loading failures being misreported as internet failures.
+Implement the proposed changes in:
+artifacts/mobile/app/signup.tsx
+artifacts/mobile/lib/auth.tsx
+Required behavior:
+Once a successful auth response returns a valid token and SecureStore confirms it was retained, treat authentication as successful.
+Do not allow refreshUser(), profile initialization, or router navigation errors to be presented as authentication/network failures.
+Preserve accurate handling for:
+incorrect password;
+duplicate email;
+locked account;
+server validation errors;
+genuine network failure;
+missing or unretained session token;
+later HTTP 401/session invalidation.
+Prevent concurrent navigation calls from throwing on Android.
+Confirm signup routes users to /profile-setup.
+Confirm returning login routes users to /(tabs).
+Before considering the fix complete, test:
+existing-account login;
+new-account registration;
+logout and login again;
+close and reopen app;
+session persistence;
+invalid password;
+duplicate-email registration;
+offline/network-disabled behavior.
+Do not create Android Version Code 67 yet. Implement, typecheck, and report the exact diff and local test results first.
+WORKSTREAM B — WHITE/BLANK ANDROID MAP — READ-ONLY AUDIT ONLY
+A separate issue was confirmed on the physical Android device running Version Code 66:
+the map area is completely white/blank;
+no Google map tiles are visible;
+authentication and other app screens can load.
+Do not modify the map yet. Perform a read-only root-cause audit covering:
+Which map component and file render the affected Android screen.
+Whether it uses react-native-maps and provider={PROVIDER_GOOGLE}.
+Which Google Maps API key, if any, was compiled into Android Version Code 66.
+Whether EXPO_PUBLIC_GOOGLE_MAPS_KEY was present at VC66 build time.
+Whether the native Android configuration includes the required Google Maps metadata entry.
+Whether the key is restricted to:
+Android package: com.melaninmaps.app
+the correct EAS production signing-certificate SHA-1.
+Whether Maps SDK for Android is enabled in the Google Cloud project associated with that key.
+Whether billing is active for that project.
+Whether the white screen is caused by:
+missing key;
+incorrect key;
+wrong SHA-1;
+incorrect package restriction;
+disabled Maps SDK;
+failed native configuration;
+map style/rendering issue;
+zero-height or overlaid white container;
+an Android-only runtime exception.
+Whether the map issue still exists in current HEAD.
+The smallest exact correction required for Version Code 67.
+Return the map findings separately from the authentication implementation report. Do not change Google Cloud, EAS credentials, map code, or API keys without explicit approval.
+RELEASE RULE
+Version Code 66 remains internal-testing only and must not be promoted to closed testing.
+Version Code 67 should not be created until:
+the authentication fix is implemented and validated;
+the white-map root cause is confirmed;
+the proposed map correction is separately approved;
+both fixes are ready to be included in one Android build.

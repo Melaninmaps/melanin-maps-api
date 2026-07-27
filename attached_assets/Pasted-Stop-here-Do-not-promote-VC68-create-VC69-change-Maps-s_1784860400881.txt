@@ -1,0 +1,138 @@
+Stop here. **Do not promote VC68, create VC69, change Maps settings, restart Railway, or ask testers to install it.**
+
+What you just reproduced shows VC68 is **not release-ready**:
+
+* Login-screen flash still occurs.
+* The first map open found your location, but no pins appeared.
+* Tapping **HBCU** caused the app to close.
+* Android returned you to the Play install/testing screen, which strongly suggests a native crash.
+* After reopening, the location spinner became stuck again.
+
+This means at least two assumptions were wrong:
+
+1. The one-line `setIsLoading(true)` change did not fully resolve the login redirect race—or the installed binary did not contain the expected source.
+2. The HBCU/cultural-marker path is still capable of crashing the Android app.
+
+Send Replit this exact stop order:
+
+> **P0 STOP ORDER — VC68 FAILED PHYSICAL-DEVICE VALIDATION**
+>
+> Do not modify code, create VC69, deploy, restart Railway, change EAS variables, or submit/promote any build.
+>
+> Confirmed on a physical Android device running the newly installed VC68 Internal Testing build:
+>
+> **Authentication**
+>
+> * Login succeeds.
+> * Discovery opens.
+> * Login screen flashes again.
+> * Discovery opens again.
+> * Therefore the authentication-navigation flicker still exists.
+>
+> **Map — first open**
+>
+> * Map located the user successfully.
+> * No business or cultural pins were visible.
+> * User tapped the HBCU layer.
+> * App closed immediately.
+> * Device returned to the Google Play install/testing screen, then closed out.
+>
+> **Map — after reopening**
+>
+> * User logged in again.
+> * Map now remains on “Finding your location…” and spins.
+>
+> Perform a read-only production-build investigation first.
+>
+> ## 1. Verify the installed build
+>
+> Confirm from the EAS VC68 build artifact and manifest:
+>
+> * versionCode is exactly 68;
+> * source commit used;
+> * `setIsLoading(true)` exists immediately before `void fetchUser()`;
+> * eight-second location timeout exists in the compiled bundle;
+> * business markers include `tracksViewChanges={false}`;
+> * cultural markers are gated by `mapReady`;
+> * category-specific marker icons are present.
+>
+> Do not assume the source workspace equals the binary. Verify the actual compiled VC68 artifact.
+>
+> ## 2. Retrieve the exact Android crash
+>
+> Obtain the native exception from the first available source:
+>
+> * Google Play Console → Monitor and improve → Android vitals → Crashes and ANRs;
+> * Pre-launch report;
+> * device `adb logcat`;
+> * Expo/EAS runtime diagnostics.
+>
+> Search around the timestamp of the HBCU tap for:
+>
+> * `FATAL EXCEPTION`;
+> * `AndroidRuntime`;
+> * `ReactNativeJS`;
+> * `AirMapMarker`;
+> * `MapView`;
+> * `ExpoLocation`;
+> * `OutOfMemoryError`;
+> * `NullPointerException`;
+> * `SIGSEGV`.
+>
+> Return the exact exception and stack before proposing another marker fix.
+>
+> ## 3. Trace the HBCU tap path
+>
+> Report the exact sequence after the HBCU chip is tapped:
+>
+> * state changes;
+> * cultural-site API request;
+> * number of HBCU markers returned;
+> * marker rendering;
+> * icon values passed to Feather;
+> * selected/filter state;
+> * any navigation or preview-card behavior.
+>
+> Determine why no pins were visible before the tap and why enabling HBCU caused the native process to terminate.
+>
+> Verify all returned HBCU coordinates and marker icon names.
+>
+> ## 4. Re-audit the login flicker using the actual VC68 flow
+>
+> The one-line loading change did not eliminate the physical-device flash.
+>
+> Trace:
+>
+> * login screen’s explicit `router.replace`;
+> * AuthGate redirect;
+> * login screen auto-restore effect;
+> * any onboarding redirect;
+> * every navigation call during successful email login.
+>
+> Add temporary structured navigation logging if needed, but do not build yet.
+>
+> Determine whether there are still two or more competing redirects. Do not merely add another loading flag.
+>
+> ## 5. Location spinner
+>
+> Confirm whether the eight-second timeout is present in the actual VC68 binary and whether it truly cancels or only abandons the location promise.
+>
+> Report why the spinner can still remain visible after reopening.
+>
+> ## 6. Return one evidence report
+>
+> Include:
+>
+> * VC68 build ID and source commit;
+> * compiled-feature verification;
+> * exact native crash stack;
+> * exact HBCU response count and marker-render path;
+> * exact login-navigation sequence;
+> * exact location timeout behavior;
+> * smallest proposed corrections.
+>
+> Stop after the report. No implementation or build authorization.
+
+For your side, do not repeatedly reopen the HBCU layer. One crash is enough evidence. Leave VC68 in Internal Testing only.
+
+Also check the Google Play Console later under **Monitor and improve → Android vitals → Crashes and ANRs**. Crash reports can take some time to appear, but the native stack trace is now essential. We should not authorize another speculative build without it.

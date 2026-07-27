@@ -1,0 +1,121 @@
+The plan is sensible, and **Step 1 should proceed now**. The admin redirect defect is confirmed and the proposed repair is low-risk.
+
+Before Replit changes anything, I would add several safeguards so the fix does not create an open-redirect or account-linking problem.
+
+Send Replit this:
+
+> **Step 1 is approved. Please implement the admin return-path repair now, with the following requirements.**
+>
+> ### Secure return-path handling
+>
+> 1. Update `/admin` so signed-out users are redirected to:
+>
+>    `/login?returnTo=/admin`
+>
+> 2. After successful login, honor `returnTo` only when it is a safe internal path.
+>
+> 3. Reject or ignore:
+>
+>    * full external URLs;
+>    * protocol-relative URLs beginning with `//`;
+>    * encoded external redirects;
+>    * paths that do not begin with a single `/`.
+>
+> 4. Default to the normal authenticated home route when `returnTo` is missing or invalid.
+>
+> 5. Preserve the intended admin destination through:
+>
+>    * successful email login;
+>    * phone login, if supported on web;
+>    * Apple/social login;
+>    * password-reset completion followed by login.
+>
+> ### Admin identity verification
+>
+> Before any production user modification:
+>
+> 1. Run the read-only Railway query and identify the canonical admin user.
+> 2. Confirm there is exactly one user matching the normalized email or verified phone.
+> 3. Report only masked values.
+> 4. Confirm whether:
+>
+>    * `passwordHash` is present or null;
+>    * `role` is `admin`;
+>    * the normalized email is present in `ADMIN_EMAILS`;
+>    * duplicate records exist.
+>
+> Do not create, merge, delete or edit any user record during this step.
+>
+> ### Normalize administrator configuration
+>
+> Ensure `ADMIN_EMAILS` is parsed by:
+>
+> * splitting on commas;
+> * trimming whitespace;
+> * converting entries to lowercase;
+> * removing empty entries.
+>
+> The authenticated user’s email must also be trimmed and lowercased before comparison.
+>
+> Keep the database role check as a second authorization path, but do not grant admin access merely because a user controls a similar forwarding alias.
+>
+> ### Credential repair
+>
+> If the canonical user has no password hash, use the existing verified forgot-password flow to add a password to that **same user ID**.
+>
+> Do not create a replacement account.
+>
+> Before the founder performs the reset, confirm:
+>
+> * the reset email will be sent to the canonical stored email;
+> * the reset endpoint updates the existing row;
+> * phone and Apple-provider identifiers remain attached;
+> * profile, saved data and admin rights remain unchanged.
+>
+> ### Production verification
+>
+> Confirm the actual admin-check endpoint by inspecting the deployed route map. Do not assume `/api/admin/check` exists.
+>
+> Then test:
+>
+> * signed out → `401`;
+> * authenticated non-admin → `403`;
+> * authenticated canonical admin → `200`;
+> * direct visit to `/admin` while signed out → login → automatic return to `/admin`;
+> * refresh preserves access;
+> * nested admin routes remain accessible;
+> * logout removes access;
+> * expired or revoked sessions do not retain admin access.
+>
+> Also verify the core administrator functions load and fail closed.
+>
+> ### Deployment
+>
+> Build and deploy the updated web artifact through the established Railway deployment repository.
+>
+> Return:
+>
+> * exact files changed;
+> * tests added;
+> * source commit;
+> * Railway deployment ID;
+> * masked canonical-user findings;
+> * admin endpoint HTTP results;
+> * `ADMIN VERIFIED` or `NO GO — CORRECTION REQUIRED`.
+>
+> Keep mobile builds paused until the production admin verification is complete.
+
+## What happens after Step 1
+
+Once the new web code is deployed, you should use the same email address you want to preserve:
+
+1. Open `https://www.mappingwithmelanin.com/admin`.
+2. You should be taken to login with `/admin` preserved.
+3. Select **Forgot password** for your existing administrator email.
+4. Enter the code and set a new password.
+5. Sign in using that email and new password.
+6. You should return automatically to the admin dashboard.
+
+This should keep one cohesive identity: the same user ID, email delivery address, phone authentication, profile and administrator access.
+
+One correction to Replit’s wording: a unique email constraint reduces the chance of duplicates but does **not** prove there are no duplicates involving aliases, null emails, different casing from older data, phone-only accounts or separate provider identities. The production read-only query is still necessary.

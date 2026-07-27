@@ -1,0 +1,87 @@
+Send Replit this:
+
+> Please add all edits from the July 18 review, along with the additional edits provided below, across the full Legacy Collection.
+>
+> Please treat this as a collection-wide editorial revision—not a series of isolated slide edits. The Experience, Investor, Business, and Community chapters should feel like they belong to the same luxury publication.
+>
+> **Please pay special attention to every cell phone image and device mockup.**
+>
+> For each phone image:
+>
+> * Confirm the screen shown is an accurate depiction of the actual Mapping With Melanin™ app.
+> * Do not invent features, buttons, navigation, maps, ratings, messages, or screens that do not currently exist.
+> * Use the correct app colors, typography, logo, labels, tab names, and interface structure.
+> * Ensure screenshots are not stretched, distorted, cropped incorrectly, blurry, or placed at an unrealistic perspective.
+> * Keep the phone frame, notch, status bar, time, battery, and screen proportions consistent.
+> * Confirm text inside the phone remains readable at presentation size.
+> * Use one consistent phone-device style throughout unless a platform difference is intentional.
+> * Clearly distinguish conceptual future screens from screens available in the current tester build.
+>
+> If an existing image cannot be verified as accurate, pause and flag it rather than replacing it with a speculative design.
+>
+> ## Collection-wide visual standards
+>
+> 1. Use the approved Mapping With Melanin™ dark brown consistently across all dark pages. Do not introduce alternate browns or allow color drift.
+> 2. Use cream intentionally as an editorial transition tool throughout the collection—not only on the Declaration page. Strategic cream pages should feel like turning a chapter in a book.
+> 3. Preserve presentation compatibility while creating a coffee-table-book feeling through generous margins, negative space, editorial pacing, and disciplined typography.
+> 4. Apply one consistent cream, one consistent gold, and one consistent dark brown throughout every chapter.
+> 5. Replace flat dark backgrounds with the approved subtle directional gradient treatment, while keeping the primary brown unmistakably consistent.
+> 6. Apply the dimensional gold headline treatment and warm shadow consistently where approved. Avoid effects that make the deck feel glossy, metallic, or overly digital.
+> 7. Replace standard bullet marks with the approved gold-outline-circle system.
+> 8. Remove page numbers throughout unless a page number is intentionally part of the coffee-table-book design.
+> 9. Apply the approved safety-language revisions everywhere the older language appears.
+> 10. Complete the six archival paper-tone explorations for the Declaration page before choosing the final treatment.
+> 11. Produce the three requested layout explorations for Moment 17, “Why Now,” before implementing the final version.
+>
+> ## Editorial consistency
+>
+> Please review the full collection for:
+>
+> * font-family consistency;
+> * headline hierarchy;
+> * capitalization;
+> * punctuation;
+> * trademark usage;
+> * line spacing;
+> * paragraph width;
+> * margins and alignment;
+> * photo treatment;
+> * gold stroke thickness;
+> * icon style;
+> * divider-page structure;
+> * terminology consistency;
+> * consistent use of “Mapping With Melanin™,” “KinfolkAI™,” and “Cultural Ambassador.”
+>
+> Every page should feel intentional, balanced, and printable.
+>
+> ## Narrative and sequencing
+>
+> Please preserve the approved 21-Moment Experience Chapter sequence while improving visual pacing.
+>
+> Cream pages should appear at meaningful emotional transitions so that the final Declaration and Welcome Home pages feel earned rather than visually abrupt.
+>
+> Do not add new claims, features, statistics, promises, or timelines without approval.
+>
+> Please distinguish every statement as one of:
+>
+> * available in the current tester build;
+> * being developed during the founding beta;
+> * part of the longer-term institutional vision.
+>
+> ## Quality-control pass
+>
+> Before marking the revision complete:
+>
+> * compare each revised slide with the July 18 review notes;
+> * verify every requested correction was implemented;
+> * inspect every phone mockup at full resolution;
+> * check for clipped text, overlapping elements, inconsistent spacing, image distortion, and low-contrast copy;
+> * confirm no slide contains placeholder text or speculative interface imagery;
+> * produce a slide-by-slide change log showing what changed;
+> * identify any requested edit that could not be completed and explain why.
+>
+> Do not overwrite the current approved deck. Save this as a new version so we retain the prior edition for comparison.
+>
+> Please provide a revision plan and confirm the complete list of edits before implementing.
+
+One additional safeguard I would include: ask Replit to label every phone image in its internal review as **actual screenshot**, **faithful reconstruction**, or **future concept**. That will prevent a beautifully designed but inaccurate screen from accidentally being presented as something testers can use today.

@@ -1,0 +1,109 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™ — INVISIBLE ARCHITECTURE™
+CONFIDENTIAL SPEC INTAKE — REVIEW MODE
+═══════════════════════════════════════════════════════════════════════
+
+SECTION OPENED:   06. Safety Intelligence Engine™
+STATUS:           Draft 1 — Architectural Foundation
+BATCH:            1 — Collecting, waiting for final confirmation
+
+─────────────────────────────────────────────────────────────────────
+CONTENT LOGGED — Batch 1
+─────────────────────────────────────────────────────────────────────
+
+  06.1   Governing Question                                   ✅
+         "Given everything we know right now, what is the
+         safest recommendation we can responsibly make
+         without creating unnecessary fear or unnecessary
+         confidence?"
+         Explicit non-purposes: not a crime predictor, not a
+         neighborhood ranking system, not a policing tool.
+         Classification: decision-support system.
+
+  06.2   Guiding Principles                                   ✅
+         Safety is never binary. Eight independent dimensions:
+         physical / psychological / cultural / discrimination
+         risk / accessibility / environmental hazards /
+         emergency readiness / situational context.
+         A place may be physically safe and culturally unsafe
+         simultaneously — both realities are preserved.
+
+  06.3   Safety Objects (8 object classes)                    ✅
+         Person / Business / Neighborhood (day/night/event/
+         weather/crowding) / Event / Travel Route (walking,
+         driving, transit, rideshare, late-night) /
+         Institution / City
+
+  06.4   Safety Categories (8 independent categories)        ✅
+         Physical Safety (violence, theft, harassment,
+         traffic, lighting, environmental)
+         Cultural Safety (bias, discrimination,
+         microaggressions, representation, welcoming)
+         Identity Safety (race, ethnicity, religion,
+         nationality, gender, disability, LGBTQ+,
+         visible cultural expression)
+         Environmental Safety (flooding, heat, air quality,
+         weather, construction, natural disasters)
+         Health Safety (hospitals, urgent care, pharmacies,
+         emergency response time, AED availability)
+         Accessibility Safety (wheelchairs, visual,
+         hearing, mobility, transportation)
+         Family Safety (children, parents, caregivers,
+         family amenities)
+         Digital Safety (marketplace scams, fraud, fake
+         listings, identity abuse, impersonation)
+
+  06.5   Risk Philosophy                                      ✅
+         Not "Is this place safe?" but:
+         "Safe for whom? Under what conditions?
+         At what time? Based on which evidence?"
+
+  06.6   Evidence Hierarchy (4 tiers)                        ✅
+         Tier 1 — Verified firsthand, verified businesses/
+                  users, official emergency alerts
+         Tier 2 — Multiple independent community reports,
+                  historical consistency, partner orgs
+         Tier 3 — Single verified observation, trusted
+                  public datasets, moderated submissions
+         Tier 4 — Unverified community submissions,
+                  anonymous reports, emerging patterns
+         Rule: Tier 4 may influence monitoring only —
+         never independently determines a recommendation.
+
+  06.7   Safety Confidence Score™                            ✅
+         Two separate values per recommendation:
+           Risk Score (0–100): level of concern
+           Confidence Score (0–100): certainty of assessment
+         Example A: Risk 82 / Confidence 19 =
+           "Concerning signals, very limited evidence"
+         Example B: Risk 64 / Confidence 97 =
+           "Moderate concern, extensive evidence"
+         Purpose: prevents overreaction to isolated incidents
+         AND prevents false reassurance from sparse data.
+
+  06.8   Core Principle                                       ✅
+         "The Safety Intelligence Engine™ exists to reduce
+         uncertainty — not to eliminate it."
+         Responsibility: help members make more informed,
+         context-aware decisions while preserving dignity,
+         fairness, and trust. NOT to promise safety.
+
+─────────────────────────────────────────────────────────────────────
+AUTHOR'S NOTE — LOGGED (not spec content)
+─────────────────────────────────────────────────────────────────────
+
+  Your commentary about this being one of the most important
+  engines — and the distinction between "Safe for whom?"
+  versus a blanket safety label — is logged as design intent.
+  The next layers you described (decay, manipulation
+  detection, notification thresholds) are Section 06 content
+  still to be received.
+
+─────────────────────────────────────────────────────────────────────
+STANDING INSTRUCTION
+─────────────────────────────────────────────────────────────────────
+
+  Review Mode active. No implementation until "Please implement."
+  Send the next batch of Section 06 when ready.
+
+═══════════════════════════════════════════════════════════════════════

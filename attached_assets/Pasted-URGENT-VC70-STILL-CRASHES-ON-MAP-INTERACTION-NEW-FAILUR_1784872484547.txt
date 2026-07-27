@@ -1,0 +1,88 @@
+URGENT: VC70 STILL CRASHES ON MAP INTERACTION — NEW FAILURE PATH
+
+VC70 behavior on the real Android device:
+
+1. Login succeeds.
+2. Map opens successfully.
+3. Current location is found and displayed.
+4. When I tap/click something on the map, the entire app crashes.
+5. After reopening the app and returning to the map, location no longer resolves; it spins indefinitely.
+
+The VC70 mapReady fix improved initial map loading but did not fix the actual interaction crash.
+
+DO NOT:
+- build VC71
+- bump any version number
+- make another speculative camera/mapReady change
+- submit VC70 to Google Play
+- treat the existing tests as proof that the map works
+
+FIRST: RETRIEVE CRASH EVIDENCE
+
+A. Existing custom crash logger
+The Android app already stores Java/Kotlin uncaught crashes.
+
+Have me:
+1. Reproduce the crash once.
+2. Immediately reopen the app without clearing data.
+3. Capture the "PREV CRASH" Toast and the MWM Crash Report share sheet.
+
+Tell me exactly what to copy or screenshot. Do not change code before we attempt this.
+
+B. Google Play Android Vitals
+Check versionCode 70 for the newest Crashes and ANRs entry and obtain:
+- exception type
+- full stack trace
+- all "Caused by" sections
+- first app-owned or react-native-maps frame
+- device model and Android version
+- event timestamp
+
+READ-ONLY CODE TRACE
+
+Identify every action reachable when a user taps something on FullMapView, including:
+- business Marker onPress
+- cultural-site Marker onPress
+- HBCU Marker onPress
+- Callout onPress
+- category/filter chips
+- map press handlers
+- cluster handlers
+- router.push/router.replace
+- selectedMarker or selectedBusiness state
+- fitToCoordinates
+- animateCamera/animateToRegion
+- modal or bottom-sheet opening
+- image rendering inside Marker/Callout
+
+For each handler, report:
+- exact file and line
+- action triggered
+- native map/camera call triggered
+- coordinates or object passed
+- whether values are validated
+- whether it can run before mapReady
+- whether it can run after the screen has unmounted
+- whether it can render unsupported React Native views inside a Google Maps Marker/Callout
+
+POST-CRASH LOCATION SPINNER
+
+Trace why location remains loading after relaunch:
+- initial value of locationLoading
+- where it is set true
+- every success, error, timeout, and cleanup path that sets it false
+- whether Promise.race timeout leaves getCurrentPositionAsync unresolved
+- whether a stale mounted/cancelled ref prevents state completion
+- whether location permission is requested again
+- whether pendingLocationRef or mapReadyRef survives/remounts incorrectly
+- whether the crash logger/share-sheet interrupts initialization
+
+RETURN BEFORE MODIFYING CODE:
+1. Exact interaction that crashes, or a ranked list if the user has not identified which item was tapped.
+2. Actual captured exception/stack if available.
+3. First failing app-owned/native frame.
+4. Explanation for the post-crash infinite location spinner.
+5. Smallest proposed fix for each confirmed issue.
+6. Real-device regression steps.
+
+STOP after the diagnostic report.

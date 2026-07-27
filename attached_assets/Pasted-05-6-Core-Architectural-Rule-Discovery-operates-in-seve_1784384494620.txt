@@ -1,0 +1,127 @@
+05.6 Core Architectural Rule
+Discovery operates in seven stages:
+1. Query and Intent Resolution
+2. Candidate Generation
+3. Eligibility Filtering
+4. Evidence and Confidence Adjustment
+5. Relevance Scoring
+6. Diversity and Exploration Re-ranking
+7. BIF Handoff
+The Engine may not skip eligibility filtering merely because a result has high relevance.
+The Engine may not skip BIF review merely because a result has high popularity.
+05.7 Candidate Generation
+Candidate generation creates the preliminary set of potentially relevant entities.
+Sources may include:
+Mapping With Melanin™ verified records;
+community-submitted entities;
+claimed business profiles;
+verified partner data;
+official public data;
+approved third-party data;
+historical and cultural records;
+user-created resources;
+current events and opportunity feeds;
+saved user entities;
+route-adjacent data;
+Community Engine™ signals;
+Hidden Gem candidates;
+Community Recognition candidates;
+KinfolkAI™ structured retrieval.
+Candidate generation must be broad enough to preserve exploration but bounded enough to prevent irrelevant, unsafe, expired, fraudulent, or prohibited entities from entering final ranking.
+05.8 Candidate Eligibility
+Every candidate receives one of six eligibility states.
+State	Meaning
+ELIGIBLE	May proceed to ranking
+ELIGIBLE_LIMITED	May appear with restrictions
+SEARCH_ONLY	May be found but not recommended
+HOLD	Pending verification or human review
+BLOCKED	Not permitted to appear
+EXPIRED	No longer current or available
+05.8.1 Baseline eligibility requirements
+A candidate must have:
+identifiable entity type;
+sufficient basic information to distinguish it;
+a relevant relationship to the query;
+no active disqualifying safety or governance block;
+no confirmed fraudulent identity;
+no prohibited content status;
+current or appropriately historical relevance;
+geographic or online applicability;
+permissible public display status;
+data-source provenance.
+05.8.2 Search-only conditions
+A candidate may remain searchable but not recommendable when:
+ownership is unverified;
+evidence volume is low;
+operating status is uncertain;
+safety evidence is incomplete;
+community evidence is emerging;
+a business has not been claimed;
+an opportunity has incomplete terms;
+accessibility is unknown for an accessibility-required request;
+the entity is newly added;
+conflicting evidence remains unresolved;
+a report is pending review;
+the item is historically relevant but not operational.
+Search-only status must not be presented as punishment.
+05.8.3 Hold conditions
+A candidate must be held when:
+verification documents are under review;
+severe negative evidence is uncorroborated but credible;
+ownership claims conflict;
+fraudulent activity is suspected;
+legal or governance review is active;
+the entity requests temporary removal;
+a sensitive safety report may materially affect public visibility;
+duplicate identity resolution is incomplete;
+promotion eligibility is disputed;
+the entity’s current operating status cannot be established for a time-sensitive result.
+05.8.4 Block conditions
+A candidate may be blocked when:
+it violates platform rules;
+it is fraudulent;
+it poses a verified critical safety risk;
+it contains illegal or prohibited material;
+it is impersonating another entity;
+it has been removed through governance decision;
+it is a duplicate record selected for suppression;
+it is a non-minority-owned entity attempting to falsely claim protected promotion eligibility;
+it exists solely as demo or test data in production;
+it has no lawful or valid display basis.
+05.9 Demo and Synthetic Data Isolation
+Demo, test, sandbox, synthetic, seeded, or staff-created sample entities must never enter production discovery unless explicitly marked and authorized for a controlled test environment.
+The Engine must:
+assign all synthetic records a non-production flag;
+exclude them from public ranking;
+exclude them from analytics;
+exclude them from community scoring;
+exclude them from promotion;
+exclude them from search counts;
+prevent them from generating notifications;
+prevent them from influencing Hidden Gem status;
+prevent them from contributing to city or community maturity;
+preserve an audit trail of any temporary exception.
+05.10 Query Understanding
+The Engine receives structured context from the Context Engine™ and may also parse discovery-specific query elements.
+A query may contain:
+named entity;
+category;
+location;
+distance;
+time;
+ownership requirement;
+price range;
+accessibility requirement;
+safety condition;
+cultural interest;
+family suitability;
+business purpose;
+resource eligibility;
+opportunity deadline;
+event date;
+transportation mode;
+experience type;
+popularity preference;
+Hidden Gem preference;
+open-now requirement;
+verification requirement.

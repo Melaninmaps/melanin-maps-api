@@ -1,0 +1,186 @@
+Yes. The most likely explanation is that the original Replit site wrote waitlist entries to the **Replit development/production database**, while Railway is now connected to a different PostgreSQL database. The records may still exist in the old database—they may not actually be lost.
+
+Send Replit this exact instruction:
+
+> **Urgent read-only waitlist recovery investigation**
+>
+> Do not create a new waitlist table, run migrations, delete records, or import anything yet.
+>
+> The waitlist was populated while the website was published through Replit. After moving the site/API to Railway, the historical entries disappeared. Search every previously used database and storage source to locate the original records.
+>
+> First, identify every database URL or database provider the project has ever used by checking:
+>
+> * current and historical Replit Secrets;
+> * deployment environment variables;
+> * `.replit`, `replit.nix`, `drizzle.config.*`, Prisma/config files;
+> * Git history;
+> * Railway variables;
+> * old Replit Deployments;
+> * Neon/Replit PostgreSQL connection settings;
+> * any SQLite files, JSON files, CSV exports, or object-storage backups.
+>
+> Do not print full credentials. Report only masked host/database names.
+>
+> Then run the following read-only searches against each PostgreSQL database.
+
+### 1. Find every table that may contain the waitlist
+
+```sql
+SELECT
+  table_schema,
+  table_name
+FROM information_schema.tables
+WHERE table_type = 'BASE TABLE'
+  AND (
+    table_name ILIKE '%wait%'
+    OR table_name ILIKE '%lead%'
+    OR table_name ILIKE '%signup%'
+    OR table_name ILIKE '%subscriber%'
+    OR table_name ILIKE '%referral%'
+  )
+ORDER BY table_schema, table_name;
+```
+
+### 2. Search for likely waitlist columns across all tables
+
+```sql
+SELECT
+  table_schema,
+  table_name,
+  column_name,
+  data_type
+FROM information_schema.columns
+WHERE
+  column_name ILIKE ANY (ARRAY[
+    '%email%',
+    '%first_name%',
+    '%last_name%',
+    '%city%',
+    '%state%',
+    '%referral%',
+    '%waitlist%',
+    '%position%',
+    '%business%'
+  ])
+ORDER BY table_schema, table_name, ordinal_position;
+```
+
+### 3. Count records in likely tables
+
+After identifying the table names, run:
+
+```sql
+SELECT COUNT(*) AS record_count
+FROM public.waitlist;
+```
+
+Replace `public.waitlist` with every likely table found, such as:
+
+```sql
+SELECT COUNT(*) FROM public.waitlist_entries;
+SELECT COUNT(*) FROM public.waitlist_signups;
+SELECT COUNT(*) FROM public.leads;
+SELECT COUNT(*) FROM public.subscribers;
+```
+
+### 4. Preview only masked records
+
+```sql
+SELECT
+  id,
+  LEFT(email, 3) || '***@' || SPLIT_PART(email, '@', 2) AS email_masked,
+  city,
+  state,
+  created_at
+FROM public.waitlist
+ORDER BY created_at DESC
+LIMIT 20;
+```
+
+Adjust the table and column names to match the discovered schema. Do not expose full emails in the report.
+
+### 5. Search the codebase for the real table and endpoint names
+
+Run from the project root:
+
+```bash
+grep -RniE \
+"waitlist|wait_list|waitlist_entries|join.*waitlist|referral_code|waitlist_position|insert.*wait|create.*wait" \
+artifacts apps packages server client . \
+--exclude-dir=node_modules \
+--exclude-dir=dist \
+--exclude-dir=.git
+```
+
+Also search Git history:
+
+```bash
+git log -S"waitlist" --all --oneline
+git log -G"waitlist|referral_code|waitlist_position" --all --oneline
+```
+
+### 6. Compare the active Railway DB with the old Replit DB
+
+For each database, return:
+
+```sql
+SELECT
+  current_database() AS database_name,
+  current_schema() AS current_schema,
+  COUNT(*) AS user_count
+FROM users;
+```
+
+And for the waitlist table:
+
+```sql
+SELECT
+  current_database() AS database_name,
+  COUNT(*) AS waitlist_count,
+  MIN(created_at) AS earliest_entry,
+  MAX(created_at) AS latest_entry
+FROM public.waitlist;
+```
+
+### 7. Check for local database or exported files
+
+```bash
+find . -type f \( \
+  -iname "*.db" -o \
+  -iname "*.sqlite" -o \
+  -iname "*.sqlite3" -o \
+  -iname "*waitlist*.csv" -o \
+  -iname "*waitlist*.json" -o \
+  -iname "*backup*.sql" -o \
+  -iname "*.dump" \
+\) -not -path "*/node_modules/*" -not -path "*/.git/*"
+```
+
+### Required recovery report
+
+> Return:
+>
+> 1. Every database/storage source inspected
+> 2. Masked database host and database name
+> 3. Waitlist table name and schema
+> 4. Number of historical entries found
+> 5. Earliest and latest entry dates
+> 6. Whether the Railway database has an empty replacement table
+> 7. Whether the old Replit database still contains the records
+> 8. A proposed export/import plan
+> 9. Confirmation that no data was modified during investigation
+>
+> Do not migrate anything until a backup is made of both the source and Railway databases and I approve the row counts and field mapping.
+
+The safest recovery path, once found, will usually be:
+
+```text
+Old Replit database
+→ read-only export
+→ deduplicate by normalized email
+→ backup Railway
+→ import into Railway waitlist table
+→ verify counts and referral data
+```
+
+Have Replit start with the code search and database table search. Those two steps should reveal where the entries were originally stored.

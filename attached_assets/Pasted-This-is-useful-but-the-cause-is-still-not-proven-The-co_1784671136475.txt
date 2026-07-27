@@ -1,0 +1,102 @@
+This is useful, but the cause is **still not proven**. The controlled tests show that two and four simultaneous requests complete normally, so an ordinary one-time startup burst does not exhaust the pool.
+
+The strongest new clue is that connections were checked out between Replit’s tests. However, that does not yet prove `useActivityAlerts` is responsible. It could also be another user, web traffic, an admin request, a background job, or a request that happened at the exact moment pool stats were sampled.
+
+## What this report establishes
+
+* Individual routes release their connections.
+* Two simultaneous requests pass.
+* Four simultaneous requests pass.
+* The five-connection pool can handle the tested concurrency.
+* The recurring failure is likely associated with **repeated or sustained traffic**, not one normal screen load.
+* `maxLifetimeSeconds: 1800` matching 30 minutes is probably coincidental because idle connections are closed after 30 seconds.
+* `useActivityAlerts` polling every 30 seconds deserves investigation, but has not been proven as the cause.
+
+One poll every 30 seconds that completes quickly would not exhaust a five-connection pool. The concern becomes credible only if:
+
+* the alert query is unusually slow in production,
+* many app instances are polling simultaneously,
+* duplicate intervals are being created,
+* polling continues after leaving the map,
+* or failed requests retry and overlap.
+
+## Do these checks now
+
+You need to check two items in Railway while Replit finishes the passive observation.
+
+### Railway replica count
+
+1. Open Railway.
+2. Select the `api-server` service.
+3. Open **Settings**.
+4. Look for **Replicas**, **Scaling**, or **Instances**.
+5. Confirm whether it is set to `1`.
+
+Do not change it.
+
+### Database hostname classification
+
+1. In the same `api-server` service, open **Variables**.
+2. Find `DATABASE_URL`.
+3. Do not reveal or copy the full value.
+4. Look only at the hostname section.
+
+Tell Replit whether it contains:
+
+* `-pooler` — pooled Neon connection
+* or no `-pooler` — direct Neon connection
+
+Do not screenshot the full secret.
+
+## What Replit should investigate next
+
+Send this:
+
+> **COMPLETE THE PASSIVE OBSERVATION AND PROVE THE BACKGROUND REQUEST SOURCE**
+>
+> The two-request and four-request tests passed. This means ordinary tested concurrency does not exhaust the pool.
+>
+> Do not conclude that `useActivityAlerts` is the cause based only on checked-out connections between samples.
+>
+> Complete the 45-minute observation and add the following evidence:
+>
+> 1. Count requests to `/api/community-alerts/nearby` during the observation.
+> 2. Report each request’s sanitized timestamp, duration and HTTP status.
+> 3. Determine whether multiple requests overlap.
+> 4. Determine whether the same app session creates duplicate 30-second intervals.
+> 5. Confirm that the interval is cleared when:
+>
+>    * the user leaves the Map tab;
+>    * the component unmounts;
+>    * the app enters the background;
+>    * the user logs out.
+> 6. Count all production requests by route during the 45-minute period.
+> 7. Correlate every interval where `idleCount < totalCount` with the route active at that time.
+> 8. Confirm whether any connection remains checked out longer than three seconds.
+>
+> Also inspect the `/api/community-alerts/nearby` production query:
+>
+> * execution duration;
+> * number of rows scanned;
+> * indexes used;
+> * whether latitude/longitude calculations force a full-table scan;
+> * whether the route returns quickly with no matching alerts.
+>
+> Do not disable polling, increase pool size or change database settings yet.
+>
+> Return the final passive-observation report only after the full 45 minutes have completed.
+
+## A likely design improvement—but not yet approved
+
+Even if the alert poll is not the full cause, polling every 30 seconds may be unnecessarily aggressive for a travel/community app. A safer eventual design may include:
+
+* polling only while the Map screen is focused,
+* stopping while the app is backgrounded,
+* increasing the interval,
+* preventing overlapping requests,
+* aborting the previous request before starting another,
+* and using one shared request rather than one interval per mounted component.
+
+But we should not implement those changes until Replit confirms whether duplicate or overlapping polling is actually happening.
+
+Continue the passive observation. Also complete the Map Diagnostic test independently; the database investigation does not yet tell us whether the minimal Apple map renders.

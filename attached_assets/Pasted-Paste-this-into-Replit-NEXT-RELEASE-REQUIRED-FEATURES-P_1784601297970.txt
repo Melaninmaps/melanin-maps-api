@@ -1,0 +1,621 @@
+Paste this into Replit:
+
+> # NEXT RELEASE — REQUIRED FEATURES, PROCESS, AND PROOF
+>
+> Follow the established Mapping With Melanin™ implementation process.
+> Do not make assumptions, expand scope, or change unrelated systems.
+>
+> ## Permanent protected systems
+>
+> Authentication remains frozen.
+>
+> Do not modify:
+>
+> * email login;
+> * phone login;
+> * Apple Sign-In;
+> * logout;
+> * session restoration;
+> * SecureStore;
+> * tokens;
+> * password reset;
+> * authentication middleware;
+> * Better Auth configuration;
+> * account linking.
+>
+> Every report must state:
+>
+> **Authentication impact: NONE**
+>
+> Stop and request approval if any proposed implementation would affect authentication.
+>
+> Do not implement:
+>
+> * unified discovery enhancements;
+> * graduated parental controls.
+>
+> Those remain deferred to later releases.
+>
+> ---
+>
+> # PHASE 1 — READ-ONLY AUDIT
+>
+> Before changing code, inspect the current mobile app, API, production database, storage, navigation, notification system, Circles, business dashboard, cultural-site experience, and membership tiers.
+>
+> For every requested item below, report:
+>
+> 1. What already exists.
+> 2. What is partially built.
+> 3. What is missing.
+> 4. Exact files, routes, tables, and services involved.
+> 5. Whether a schema change is required.
+> 6. Whether a Railway deployment is required.
+> 7. Whether a new iOS and Android build is required.
+> 8. Risk level:
+>
+>    * Very Low
+>    * Low
+>    * Moderate
+>    * High
+> 9. Smallest safe implementation.
+> 10. Exact user experience after implementation.
+>
+> Do not code during Phase 1. Wait for explicit approval.
+>
+> ---
+>
+> # REQUIRED FEATURE 1 — IOS MAP MUST WORK
+>
+> The next iOS build must not display a white or blank Map screen.
+>
+> Required experience:
+>
+> * Apple map tiles visibly render.
+> * If location is denied or unavailable, the map opens around Philadelphia.
+> * If location is allowed, the map moves to the user’s current area.
+> * Invalid coordinates are ignored without crashing or blanking the map.
+> * Valid business pins display.
+> * Cultural and historical pins display.
+> * Pins are tappable.
+> * Tapping a business pin opens its preview and business profile.
+> * Tapping a cultural pin opens its preview and the correct individual cultural-site story.
+>
+> Keep the approved classic-tab iOS repair.
+>
+> Do not:
+>
+> * restore `unstable-native-tabs`;
+> * change authentication;
+> * change map providers without confirmed evidence;
+> * add unrelated navigation changes during the map repair.
+>
+> ---
+>
+> # REQUIRED FEATURE 2 — CULTURAL PINS THAT TELL STORIES
+>
+> A cultural marker must not function as a generic dot.
+>
+> Each cultural record should support verified fields such as:
+>
+> * site name;
+> * category;
+> * city and state;
+> * valid latitude and longitude;
+> * established year or historical era;
+> * short significance statement;
+> * full story or description;
+> * reliable source;
+> * official website;
+> * image where authorized;
+> * directions;
+> * save;
+> * share;
+> * related community stories or support links where available.
+>
+> ## Direct navigation
+>
+> Change the cultural pin’s **View Details** action so it opens the selected site’s individual detail experience.
+>
+> Required flow:
+>
+> `Map pin → Site preview → That exact site’s story`
+>
+> Do not send the user to a broad category list first.
+>
+> Implement this only if it uses the existing site ID or slug and existing detail experience. Report any larger architectural requirement before coding.
+>
+> ---
+>
+> # REQUIRED FEATURE 3 — PHILADELPHIA CULTURAL CONTENT
+>
+> Audit and seed the following production records if missing:
+>
+> * Mother Bethel AME Church;
+> * African American Museum in Philadelphia;
+> * Marian Anderson Historical Residence;
+> * Johnson House Historic Site.
+>
+> For each record, confirm:
+>
+> * production database status;
+> * valid coordinates;
+> * category;
+> * short significance;
+> * full description;
+> * website/source;
+> * expected map visibility.
+>
+> Seeding must be:
+>
+> * verified;
+> * idempotent;
+> * non-duplicating;
+> * safe for production data.
+>
+> Also confirm Howard University exists with valid coordinates and can be found when navigating to Washington, D.C.
+>
+> ---
+>
+> # REQUIRED FEATURE 4 — COMMUNITY CONNECTIONS
+>
+> Members should be able to build a trusted community without creating popularity mechanics.
+>
+> Use:
+>
+> * **Connect** for mutual member relationships;
+> * **Follow** for businesses, creators, organizations, and groups;
+> * **Save** for places, events, and resources.
+>
+> Required first version:
+>
+> * send a connection request;
+> * receive a connection request;
+> * accept;
+> * decline;
+> * cancel a pending request;
+> * remove a connection silently;
+> * block;
+> * report;
+> * view connection status on a member profile.
+>
+> Do not use public friend counts, popularity rankings, or follower competition.
+>
+> ## Circles integration
+>
+> Connections and Circles must work together without becoming the same feature.
+>
+> * A connection is a mutual relationship between two members.
+> * A Circle is a group organized around travel, interests, planning, family, or community.
+> * A member may invite an accepted connection into a Circle.
+> * Public Circles may still be discoverable according to existing privacy rules.
+> * Private Circles remain invitation-based.
+> * Blocking a member must remove or prevent inappropriate Circle interaction according to the approved safety rules.
+>
+> Do not break existing Kinfolk Circles, tier limits, itineraries, or circle privacy.
+>
+> ---
+>
+> # REQUIRED FEATURE 5 — INVITE AND SHARE FLOW
+>
+> Members should be able to invite people while they are excited about the platform.
+>
+> Required options:
+>
+> * native iOS and Android share sheet;
+> * text message;
+> * email;
+> * WhatsApp or another installed service through the share sheet;
+> * copy referral link;
+> * QR code.
+>
+> Use the existing referral-code infrastructure.
+>
+> The platform must not automatically text or email anyone.
+>
+> The member chooses the recipient and sends the invitation through their device.
+>
+> If the recipient is not registered:
+>
+> * before public launch, direct them to the waitlist or approved signup destination;
+> * after public launch, direct them to the correct store or signup destination.
+>
+> After registration through a referral link, offer:
+>
+> **Connect with the person who invited you?**
+>
+> Do not expose private profile details in the invitation.
+>
+> ---
+>
+> # REQUIRED FEATURE 6 — CONTEXTUAL NOTIFICATIONS
+>
+> Notifications must be based on real platform events and must not copy a small fixed list of example phrases.
+>
+> Use the approved principle:
+>
+> > Every message should make someone feel more informed, connected, appreciated, or empowered.
+>
+> Kinfolk may vary wording naturally, but:
+>
+> * all names, counts, events, and dates must come from real data;
+> * do not invent activity;
+> * do not expose private searches or profile viewers;
+> * do not create false urgency;
+> * do not identify who searched for a business;
+> * immediate notifications are for actions needing attention;
+> * general activity should be aggregated.
+>
+> ## Community-member notifications
+>
+> Include appropriate notifications for:
+>
+> * connection request;
+> * connection accepted;
+> * Circle invitation;
+> * direct reply;
+> * `@mention`;
+> * message request;
+> * important moderation action;
+> * safety information according to existing preferences.
+>
+> ## Business notifications
+>
+> Businesses should receive useful notifications when:
+>
+> * someone leaves a review;
+> * someone replies in a relevant review conversation;
+> * someone sends the business a message;
+> * someone RSVPs to the business’s event;
+> * someone submits a community update about the business;
+> * a claim or verification action requires attention.
+>
+> Search, profile-view, save, and direction activity should generally be aggregated weekly or biweekly rather than sent individually.
+>
+> Advanced AI coaching, marketing advice, and predictive business insights may remain deferred.
+>
+> Provide:
+>
+> * category controls;
+> * frequency choices;
+> * quiet hours;
+> * opt-out controls;
+> * privacy-safe lock-screen previews.
+>
+> Do not build non-OTP outbound SMS until the required consent, STOP handling, compliance review, and program registration are complete.
+>
+> ---
+>
+> # REQUIRED FEATURE 7 — LIVING COMMUNITY MAP
+>
+> The map should feel populated and meaningful rather than like a generic map.
+>
+> Build this incrementally and safely.
+>
+> Initial approved layers:
+>
+> * businesses;
+> * cultural and historical places;
+> * approved community safety information;
+> * events where existing data and performance permit;
+> * current-location and Philadelphia fallback behavior.
+>
+> Requirements:
+>
+> * each layer can be toggled;
+> * one failing layer must not blank the map;
+> * empty or slow API results must show a clear loading or fallback state;
+> * invalid records must be ignored safely;
+> * do not expose private member locations;
+> * do not add live friend-location sharing;
+> * do not overload the initial viewport.
+>
+> Report performance and marker counts before expanding additional layers.
+>
+> ---
+>
+> # REQUIRED FEATURE 8 — BUSINESS MEDIA MODEL
+>
+> Use the approved hybrid media model.
+>
+> ## Hosted by Mapping With Melanin™
+>
+> * business logo or primary image;
+> * business photos according to membership tier;
+> * one business introduction video according to the approved tier;
+> * community-member profile picture available to every registered user regardless of tier.
+>
+> The introduction video is the only business video hosted directly by Mapping With Melanin™.
+>
+> ## Linked from external social platforms
+>
+> Businesses may add:
+>
+> * Instagram;
+> * TikTok;
+> * YouTube;
+> * Facebook;
+> * LinkedIn if supported;
+> * website;
+> * selected social-media video links according to membership tier.
+>
+> The app should store only the approved URL and necessary metadata for external videos.
+>
+> Do not download, copy, transcode, or rehost those social-media videos.
+>
+> Businesses should be able to choose which linked video they feature.
+>
+> For each linked video:
+>
+> * validate and normalize the URL;
+> * identify the platform;
+> * show a safe thumbnail or preview where permitted;
+> * provide a plain-link fallback;
+> * open the native social app when available;
+> * otherwise open the browser;
+> * do not autoplay;
+> * preserve attribution;
+> * allow broken or inappropriate links to be reported.
+>
+> ## Tier enforcement
+>
+> Audit the existing community and business tiers before setting limits.
+>
+> Confirm limits for:
+>
+> * number of photos;
+> * introduction-video availability;
+> * number of linked social videos;
+> * number of social-profile links.
+>
+> Do not alter prices during this implementation.
+>
+> Profile-picture access must remain free for all registered users.
+>
+> ---
+>
+> # REQUIRED FEATURE 9 — KINFOLKAI BETA ACCESS
+>
+> During approved beta testing, testers should be able to test the complete KinfolkAI experience without ordinary membership-tier restrictions.
+>
+> Confirm:
+>
+> * conversation limits;
+> * feature gates;
+> * voice-selection gates;
+> * Listen limits;
+> * relocation, business, community, and planning capabilities;
+> * any hard daily or monthly limits.
+>
+> Propose the safest temporary beta-access method.
+>
+> Continue recording:
+>
+> * usage;
+> * cost;
+> * latency;
+> * failures;
+> * voice usage;
+> * feature usage.
+>
+> Do not remove security, abuse prevention, or reasonable emergency cost controls.
+>
+> Do not change public-launch pricing or permanent tier rules in this phase.
+>
+> ---
+>
+> # PERMANENT LANGUAGE RULE
+>
+> Mapping With Melanin™ is not a Black-only platform.
+>
+> It serves minority communities, the global melanated diaspora, and other underrepresented communities while allowing users to choose their preferences.
+>
+> Use “Black” when:
+>
+> * the user specifically requests it;
+> * verified business identity supports it;
+> * the subject is specifically Black history or culture;
+> * the user selected that preference.
+>
+> Do not make “Black-owned” the automatic generic default.
+>
+> Generic language should use terms such as:
+>
+> * minority-owned business;
+> * community business;
+> * culturally relevant place;
+> * heritage site;
+> * local favorite;
+> * neighborhood recommendation.
+>
+> Permanent principle:
+>
+> **Celebrate specificity without assuming it.**
+>
+> This rule must be added to the permanent project instructions and applied to placeholders, sample prompts, onboarding, search suggestions, Kinfolk responses, seeded content, and notifications. 
+>
+> ---
+>
+> # IMPLEMENTATION PROCESS
+>
+> After the Phase 1 audit, divide the work into small, reversible batches.
+>
+> Recommended sequence:
+>
+> 1. iOS map repair verification and cultural-site deep link.
+> 2. Philadelphia cultural content seeding.
+> 3. Business media and tier enforcement.
+> 4. Invitation/share flow.
+> 5. Community connections and Circles integration.
+> 6. Contextual notifications.
+> 7. Living Community Map layers.
+> 8. KinfolkAI beta-access configuration.
+>
+> For every batch:
+>
+> 1. Create a checkpoint.
+> 2. Show the exact planned diff.
+> 3. State authentication impact.
+> 4. Wait for approval.
+> 5. Implement only the approved scope.
+> 6. Run TypeScript and targeted tests.
+> 7. Report exact files changed.
+> 8. Confirm no unrelated files changed.
+> 9. Create a post-test checkpoint.
+>
+> Do not combine batches without approval.
+>
+> Do not build after each batch.
+>
+> ---
+>
+> # REQUIRED VIDEO PROOF
+>
+> Before another paid production build, provide a screen-recorded demonstration using the closest available production-matching iOS and Android environment.
+>
+> The video must show the screen being navigated—not static screenshots.
+>
+> Record separate demonstrations for:
+>
+> ## Map
+>
+> * open the Map tab;
+> * visible base map;
+> * Philadelphia fallback;
+> * cultural pins;
+> * Mother Bethel pin;
+> * tap cultural pin;
+> * preview opens;
+> * tap View Details;
+> * selected site’s individual story opens;
+> * tap a business pin;
+> * business preview and profile open;
+> * toggle approved layers.
+>
+> ## Business media
+>
+> * open business dashboard;
+> * upload or display introduction video;
+> * add photos according to tier;
+> * add social links;
+> * add a social-video URL;
+> * choose a featured linked video;
+> * open the public business profile;
+> * tap the social video;
+> * verify native app or browser fallback.
+>
+> ## Connections and invitations
+>
+> * open a member profile;
+> * send a connection request;
+> * accept it from the second test account;
+> * show the connected state;
+> * invite the connection to a Circle;
+> * open Invite Someone;
+> * show the native share sheet;
+> * show referral link and QR code.
+>
+> ## Notifications
+>
+> * create a qualifying event such as a connection request, review, message, or RSVP;
+> * show the recipient’s in-app notification;
+> * show notification preferences and frequency controls;
+> * confirm no private search identity is exposed.
+>
+> ## KinfolkAI
+>
+> * open KinfolkAI;
+> * show approved welcome language;
+> * change voice;
+> * play voice preview;
+> * use Listen;
+> * confirm beta access is not blocked by ordinary tier limits.
+>
+> ## Authentication regression
+>
+> * login;
+> * logout;
+> * immediate same-account login;
+> * different-account login;
+> * force-close and restore session.
+>
+> If Replit cannot create a true physical-device recording, state that limitation plainly and provide:
+>
+> * iOS simulator or development-build recording;
+> * Android emulator or development-build recording;
+> * runtime logs;
+> * exact configuration used;
+> * a separate checklist for family physical-device verification.
+>
+> Do not claim physical-device verification if the demonstration used a simulator.
+>
+> ---
+>
+> # FINAL BUILD CONTRACT
+>
+> Before running EAS, return a plain-language report containing:
+>
+> ## What will be in the build
+>
+> For each item, explain:
+>
+> * what screen I open;
+> * what I see;
+> * what I tap;
+> * what happens next.
+>
+> ## What will not be in the build
+>
+> List every deferred feature plainly.
+>
+> ## What is proven
+>
+> Separate:
+>
+> * source-confirmed;
+> * API-confirmed;
+> * video-demonstrated;
+> * physical-device verification still required.
+>
+> ## Non-negotiable build gates
+>
+> Do not build unless:
+>
+> * the iOS map is visibly demonstrated;
+> * Philadelphia cultural pins appear;
+> * Mother Bethel opens its individual story;
+> * business pins work;
+> * business media works according to tier;
+> * connections and invitations work;
+> * Circles remain stable;
+> * required notifications work;
+> * Kinfolk beta access works;
+> * authentication regression tests pass;
+> * the correct mobile EAS project is confirmed;
+> * the source is committed and clean.
+>
+> ## Provenance
+>
+> Provide:
+>
+> * exact commit;
+> * working directory;
+> * `pwd`;
+> * EAS project ID;
+> * app slug;
+> * bundle ID;
+> * app version;
+> * iOS build number;
+> * Android version code;
+> * `app.json` path;
+> * `eas.json` path;
+> * clean working-tree result.
+>
+> Do not use `--auto-submit`.
+>
+> Do not start EAS builds or submit to Apple or Google until I approve the final build contract and video proof.
+>
+> End Phase 1 with:
+>
+> **🔍 AUDIT COMPLETE — AWAITING IMPLEMENTATION APPROVAL**
+>
+> Do not implement yet.

@@ -1,0 +1,187 @@
+Do **not** defer “Sign out all devices.” Add it now to both web and mobile settings. Replit implemented the endpoint specifically as part of authentication hardening, and a security feature that users cannot access is not complete.
+
+However, **D-001 is not the only remaining question**. This report does not confirm that several issues raised in the previous review were corrected. I would not deploy until Replit addresses them explicitly.
+
+Send Replit this:
+
+---
+
+Thank you for applying the cross-platform standard. Please add **“Sign out all devices”** to authenticated account/security settings on both web and mobile now.
+
+Requirements:
+
+* Clearly label it as a security action.
+* Explain that it signs the member out everywhere, including the current device.
+* Require confirmation before proceeding.
+* Call `POST /api/auth/logout-all`.
+* Clear the current device’s stored token/session after success.
+* Redirect to login.
+* Show a clear success or failure message.
+* Test that every previously issued session becomes invalid.
+* Confirm one member cannot revoke another member’s sessions.
+* Add Web Playwright coverage and physical iOS/Android acceptance steps.
+
+Do not deploy yet. The following items from the prior deployment review are still unresolved or are not documented as resolved:
+
+## 1. RevenueCat API contract
+
+The report still says the mobile sync path was not found.
+
+Before Wave 3-D can remain classified as implemented:
+
+* Identify the exact iOS and Android code that calls `/api/revenuecat/sync`.
+* Confirm when that call occurs: purchase, restore, app startup, login, or entitlement refresh.
+* Confirm the API key type matches the RevenueCat endpoint being called.
+* Verify active, expired, missing, and restored entitlements using RevenueCat sandbox accounts.
+* Confirm a legitimate purchase updates the correct tier.
+* Confirm a fake client product ID does not grant access.
+* Confirm RevenueCat downtime fails closed without corrupting the member’s existing valid state.
+
+If the mobile clients never call the sync endpoint, Wave 3-D is functionally incomplete and must be corrected before the beta build.
+
+## 2. Stripe webhook failure and retry behavior
+
+The report verifies duplicate suppression only by code inspection. Confirm the implementation no longer marks an event permanently processed before the business handler succeeds.
+
+Provide evidence for:
+
+1. Stripe event begins processing.
+2. Handler deliberately fails.
+3. Event is recorded as failed or remains retryable.
+4. Stripe replays the event.
+5. Handler succeeds.
+6. Event becomes completed.
+7. Membership or credit is applied exactly once.
+
+If the current table only records `stripe_event_id` before the handler and skips every later retry, revise it before deployment.
+
+## 3. Unsubscribe suppression enforcement
+
+The report confirms that the unsubscribe route sets `marketing_opt_out`. It does not confirm that marketing sends actually honor it.
+
+Before Wave 3-B can be considered implemented:
+
+* Identify every promotional or marketing send path.
+* Confirm each path excludes `marketing_opt_out=true`.
+* Confirm transactional messages such as password reset, security, receipts, and account notices still send.
+* Test:
+
+  * subscribed member receives promotion;
+  * member unsubscribes;
+  * member no longer receives promotion;
+  * member still receives a password-reset or security email.
+
+`COMPANY_MAILING_ADDRESS` must be set to a valid full physical postal address before production marketing email is enabled. The city-only fallback is not acceptable for launch.
+
+## 4. Account lockout recovery
+
+The lockout implementation must not trap legitimate members.
+
+Confirm and test:
+
+* password reset clears `failed_login_attempts` and `locked_until`;
+* successful Apple authentication clears relevant failed-login state;
+* successful phone authentication clears relevant failed-login state where accounts are linked;
+* the locked response explains how long the lock lasts and offers password recovery;
+* repeated attack attempts are logged with masked account identifier, IP, user agent, and timestamp;
+* lockout cannot be extended indefinitely through repeated requests during the active lock.
+
+## 5. Build-number discrepancy
+
+Earlier records identified the current tester build as iOS Build 84 and Android versionCode 60. This report says iOS Build 54 and Android versionCode 54.
+
+Stop and reconcile this before creating another build.
+
+Return:
+
+* current iOS version and build shown in App Store Connect;
+* current iOS build distributed through TestFlight;
+* current Android versionCode distributed through Google Play testing;
+* local values in `app.json` / `app.config`;
+* next valid iOS build number;
+* next valid Android versionCode.
+
+Do not assume Build 55 is valid until App Store Connect is checked. Apple will reject a build number that is not greater than the highest one already uploaded.
+
+## 6. Production migration safety
+
+Before applying anything to Railway Postgres:
+
+* confirm a current backup or recovery point exists;
+* inspect the actual production schema;
+* confirm no new columns or tables already exist under different names;
+* apply the migration;
+* verify all expected structures;
+* confirm existing accounts can still register, log in, reset passwords, and retain sessions;
+* record the migration output in the deployment manifest.
+
+## 7. Playwright and regression coverage
+
+“Playwright not run this sprint” means cross-platform verification is not complete.
+
+Before deployment, run browser tests for:
+
+* registration;
+* login;
+* lockout message;
+* password recovery from lockout;
+* logout;
+* sign out all devices;
+* session invalidation;
+* unsubscribe;
+* marketing suppression;
+* RevenueCat unauthorized request;
+* cron request with and without the secret.
+
+API and unit tests should be added for Stripe retry recovery and RevenueCat entitlement verification.
+
+## 8. Railway variables
+
+Before deployment, provide a PASS/FAIL list for the actual production values—not just assumptions:
+
+* `CRON_SECRET`
+* `NODE_ENV=production`
+* `REVENUECAT_API_KEY_V2` or the corrected RevenueCat key
+* `COMPANY_MAILING_ADDRESS`
+* `SESSION_SECRET`
+* `DATABASE_URL`
+* `RESEND_API_KEY`
+* Twilio credentials
+* Stripe secret and webhook secret
+* `ADMIN_EMAILS`
+* `FRONTEND_URL`
+
+Do not reveal secret values. Report only whether each is present, correctly formatted, and tied to the intended production service.
+
+After these items are completed, return:
+
+1. Revised deployment manifest
+2. Revised platform verification matrix
+3. Exact open defects
+4. Exact production build numbers
+5. Migration and rollback plan
+6. Smoke-test plan
+7. Founder acceptance checklist
+
+No wave moves to 🟢 until deployed on Railway and completed successfully on production web, the exact TestFlight build, and the exact Android testing build where applicable.
+
+---
+
+## My decision on the next step
+
+Authorize Replit to implement **D-001 only**, while simultaneously completing the outstanding evidence and corrections above. Do not authorize another broader feature wave or the EAS build yet.
+
+The correct order is:
+
+1. Add sign-out-all-devices UI.
+2. Resolve RevenueCat, Stripe retry, unsubscribe suppression, and lockout recovery.
+3. Reconcile mobile build numbers.
+4. Verify Railway variables and backup production Postgres.
+5. Run automated regression tests.
+6. Deploy the server and migrations.
+7. Founder-test production web.
+8. Freeze mobile authentication source.
+9. Create the next iOS and Android builds.
+10. Test both physical-device builds before distributing broadly.
+
+This is methodical without slowing us unnecessarily. It prevents us from spending an EAS build on a backend or account-lifecycle problem that we already know needs more verification.

@@ -1,0 +1,69 @@
+Use the **previously established model**.
+
+Do **not** give Replit open-ended permission to “build” based on general feedback. The deck is already strong, and the remaining work is a controlled visual refinement—not a redesign. Open-ended build permission risks them changing copy, structure, pacing, or introducing new styles you did not approve.
+
+Send this:
+
+---
+
+## Review Mode — Visual Refinement Only
+
+Please review the attached Experience Deck and prepare a **specific proposed revision plan** based on the feedback below.
+
+Do **not** implement, rebuild, regenerate, redesign, export, commit, deploy, or replace the current deck yet.
+
+The existing:
+
+* 21-slide structure
+* approved copy
+* storytelling sequence
+* slide order
+* three-part closing
+* custom gold outline icon language
+* overall emotional direction
+
+must remain unchanged unless I explicitly approve a proposed exception.
+
+### Requested refinement areas
+
+1. Shift the visual tone away from near-black and toward Mapping With Melanin™’s warm, moody brown identity.
+2. Propose exact background, surface, text, and gold accent colors.
+3. Replace stark white with a warmer ivory where appropriate.
+4. Improve typography hierarchy and readability, especially on Zoom.
+5. Review low-contrast text and identify every slide where copy is too faint.
+6. Make custom gold outline icons slightly larger and consistently visible.
+7. Use only our custom gold outline icon system where icons or bullets are needed.
+8. Improve spacing on crowded slides without changing the approved copy.
+9. Refine Slide 17 so it feels like a presentation slide rather than a document page.
+10. Preserve the final sequence:
+
+* “We’re mapping belonging.”
+* “You belong here.”
+* “Welcome home.”
+
+### Before implementation, provide:
+
+* The exact proposed color palette with hex codes
+* The typography system and sizes
+* A slide-by-slide list of proposed changes
+* Identification of any slide where you believe the approved copy must change, with the reason
+* Confirmation that no approved content or structure will change without permission
+* A mockup or preview of 3 representative slides:
+
+  * Slide 1
+  * Slide 5
+  * Slide 17
+
+### Implementation Status
+
+**Review Mode**
+
+This is for critique, planning, and approval only.
+
+Do not implement any changes until I explicitly approve the revision plan and clearly authorize implementation.
+
+If there is uncertainty, assume approval has not been given.
+
+---
+
+After Replit returns the palette, typography, slide-by-slide plan, and three previews, we review those first. Then you authorize a tightly defined build—not a general rebuild.

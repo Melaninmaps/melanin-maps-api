@@ -1,0 +1,72 @@
+
+🗺️ Core Discovery
+Business directory — searchable catalog of 24+ cities with filters for category, location, and minimum confidence score
+Google Maps integration — interactive map with custom SVG pins, marker clustering, and rich info windows per business
+Proximity search — "Near Me" geolocation detects your location and finds businesses within ~80km, sorted by distance
+Location autocomplete — full Google Places dropdown (cities, zip codes, neighborhoods, addresses, landmarks)
+Score filter panel — collapsible dropdown with preset chips, slider, and "Verified only" toggle
+Black-Owned filter toggle — free filter that promotes ✊🏾 Black-Owned businesses within results
+🏪 Business Listings
+Community Confidence Score — 0–100 rating displayed on every card and OG image
+✊🏾 Black-Owned badge — visual badge on qualifying listings
+Verified badge — community-verified businesses flagged distinctly
+Safety ratings — wouldReturnAlone, safetyRating, recommendationRate per listing
+Business claim system — multi-step ClaimBusinessModal with email + push notifications on approve/reject
+Business submission form — POST /api/businesses/submit with rate limiting and honeypot spam protection
+Business owner analytics dashboard — stats view for claimed business owners
+Write Review — per-card review trigger
+Report Content — 8-category ReportContentModal on every listing
+📲 Social Sharing
+Per-business share sheet — compact sheet on every card with live OG preview image
+Dynamic OG image generator — /api/og produces branded 1200×630 SVG cards for: business listings, itineraries, referrals, and default pages
+One-tap sharing — X, Facebook, WhatsApp + copy-link with confirmation feedback
+Pre-written captions per platform per business
+Page-level ShareBar — reusable share component used across the site (homepage, for-you, etc.)
+Share analytics — server-side event recording + GA4 share / share_complete events
+🔐 Authentication
+Email/password signup + login — BetterAuth with Drizzle adapter
+Google OAuth — one-tap Google sign-in
+Apple OAuth — Sign in with Apple
+Onboarding trigger — fires automatically on every new signup
+📧 Email & Onboarding
+5-email drip sequence — automated onboarding emails at Day 0, 2, 5, 10, and 30
+Cron scheduler — fires 30s after boot, then every 15 minutes
+Unsubscribe endpoint — POST /api/onboarding/unsubscribe
+Manual trigger — admin can fire onboarding emails on demand
+🎁 Referral Program
+Unique referral codes — per-user shareable links
+5 reward tiers — Early Access (1 referral) → Ambassador (25 referrals)
+Referral OG card — branded dynamic image with inviter name, code, and tier progress
+Multi-platform sharing — Twitter/X, Facebook, WhatsApp, LinkedIn + native share API
+6 pre-written referral captions
+🔔 Push Notifications
+Web Push (VAPID) — service worker at public/sw.js
+NotificationPrompt — animated opt-in banner
+Subscribe endpoint — POST /api/push/subscribe
+🤖 AI Features
+AI Assist — Gemini 2.5 Flash streaming chat (SSE) for travel recommendations
+Personalization Engine — /for-you page, auth-gated, generates curated itineraries
+Itinerary generator — POST /api/personalization/itinerary
+Personalization signals — tracks user behavior to improve recommendations
+💬 Messaging
+Direct Messaging — in-app user-to-user messaging with seeded demo data
+🛡️ Admin Panel
+Nine tabs covering the full platform:
+
+Overview — KPI cards and platform stats
+Safety Reports — review and action community safety flags
+Reviews — moderate submitted reviews
+Moderation Log — full audit trail
+Share Analytics — track sharing activity across the platform
+Claims — approve/reject business ownership claims
+Submissions — review new business submissions
+Referrals — referral program activity
+Engagement — user engagement metrics
+Onboarding Emails — KPI cards, subscriber list, manual trigger
+🌐 Site & SEO
+Waitlist / pre-launch mode — / shows homepage with email capture + referral ShareBar
+Full platform at /home (hidden during pre-launch)
+Community Guidelines page — /community-guidelines
+Dynamic sitemap — locked to 5 public pages during pre-launch
+Google Analytics 4 — full GA4 integration with custom events
+melaninmaps.com — custom domain connected and live

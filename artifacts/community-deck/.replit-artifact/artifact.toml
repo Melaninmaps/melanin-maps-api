@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/community-deck/"
+title = "Mapping With Melanin — Community Deck"
+version = "1.0.0"
+id = "artifacts/community-deck"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/community-deck/" ]
+localPort = 24675
+
+[services.development]
+run = "pnpm --filter @workspace/community-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/community-deck", "run", "build" ]
+publicDir = "artifacts/community-deck/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24675"
+BASE_PATH = "/community-deck/"

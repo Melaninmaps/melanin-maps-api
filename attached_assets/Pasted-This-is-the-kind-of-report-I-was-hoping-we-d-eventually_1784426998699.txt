@@ -1,0 +1,200 @@
+This is the kind of report I was hoping we'd eventually get. It's much more honest, much more traceable, and it identifies new issues instead of assuming success. 
+
+There is **one decision** where I disagree with Replit.
+
+## Do NOT defer Android RevenueCat.
+
+Your vision has always been:
+
+> **One community. One experience.**
+
+If someone downloads Mapping With Melanin™ on Android, they should not discover later that memberships work differently than on iPhone. That creates confusion, increases support requests, and makes your Zoom harder because you'll have to explain platform differences.
+
+I'd rather delay Community Beta 2 by a day than introduce platform inconsistency.
+
+---
+
+## My recommendation
+
+I would send this back:
+
+---
+
+Thank you. This is the level of reporting I want going forward.
+
+The increased transparency is appreciated.
+
+### Decision on D-004
+
+Do **not** document Android as Stripe-only for this build.
+
+Please implement full Android RevenueCat purchase support so the membership experience is consistent across iOS and Android.
+
+We are building an institution, not two different products.
+
+Community Beta 2 should present one membership experience regardless of device whenever reasonably possible.
+
+---
+
+### Before implementing D-004
+
+Please perform a complete Android membership architecture review.
+
+I want to understand:
+
+* why Android RevenueCat is currently stubbed;
+* whether this was intentional or incomplete work;
+* whether Stripe and RevenueCat are both active on Android today;
+* how subscriptions are expected to work from the member's perspective;
+* whether any duplicate payment paths exist;
+* whether restoration works;
+* whether cancellation works;
+* whether renewal works;
+* whether entitlement synchronization works after reinstall;
+* whether login on a second Android device restores entitlements correctly.
+
+Do not begin coding until this review is complete.
+
+---
+
+### RevenueCat
+
+Once implemented, test all of the following:
+
+* new purchase
+* restore purchase
+* expired subscription
+* cancelled subscription
+* renewal
+* failed payment
+* reinstall
+* second device login
+* offline purchase retry
+* duplicate purchase attempt
+
+---
+
+### Membership consistency
+
+Confirm that these flows are identical on:
+
+* Web
+* iOS
+* Android
+
+where applicable.
+
+I do not want members wondering why one platform behaves differently than another.
+
+---
+
+### Additional cross-platform review
+
+Since we discovered Android RevenueCat unexpectedly, I now want a deeper audit.
+
+Please inspect the remainder of the mobile application for any other platform-specific stubs, placeholders, TODO implementations, mock services, or no-op methods.
+
+Return a report listing:
+
+* file
+* feature
+* platform
+* current behavior
+* intended behavior
+* launch impact
+* recommendation
+
+I want to know now—not after testers discover them.
+
+---
+
+### Membership architecture document
+
+Create one document describing the complete subscription lifecycle.
+
+From:
+
+Member taps Upgrade
+
+through:
+
+Purchase
+
+Verification
+
+Entitlement
+
+Renewal
+
+Cancellation
+
+Expiration
+
+Restoration
+
+Second device
+
+New phone
+
+Refund
+
+Downgrade
+
+Upgrade
+
+Every step should identify:
+
+* which platform performs it;
+* which backend endpoint is called;
+* which third-party service is involved;
+* what happens if that service is unavailable.
+
+This becomes our permanent reference.
+
+---
+
+### After D-004
+
+Once Android memberships are complete:
+
+* rerun the platform verification matrix;
+* rerun Playwright;
+* rerun Android physical testing;
+* rerun iOS physical testing;
+* rerun server smoke tests.
+
+Only then should Community Beta 2 be considered ready.
+
+---
+
+## One more thing I want Replit to start doing
+
+Every implementation report should begin with this section:
+
+```
+NEW ISSUES DISCOVERED DURING IMPLEMENTATION
+
+Issue:
+Severity:
+Platforms affected:
+Launch blocker:
+Fixed during this wave:
+Deferred:
+Reason:
+```
+
+That encourages continuous discovery instead of assuming the audit found everything.
+
+### My assessment
+
+Compared with where we were a week ago, the engineering process has improved significantly. Early on, we were seeing statements like "all checks passed" that didn't always reflect the full user experience. This report is different: it identifies what's implemented, what's still unverified, and even surfaces a new Android-specific issue instead of hiding it. That's the level of rigor we want.
+
+I would **not** authorize the EAS build yet. My next authorization would be:
+
+1. Complete Android RevenueCat (D-004).
+2. Perform the mobile stub/TODO audit.
+3. Verify Railway environment variables.
+4. Deploy and smoke-test the backend.
+5. Then freeze the authentication and membership code and create **Community Beta 2**.
+
+That sequence gives you the best chance of sending testers a build that behaves consistently across platforms.

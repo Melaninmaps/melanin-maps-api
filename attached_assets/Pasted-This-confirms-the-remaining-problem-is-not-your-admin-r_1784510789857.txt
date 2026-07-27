@@ -1,0 +1,49 @@
+This confirms the remaining problem is **not your admin role**. It is a frontend authentication inconsistency.
+
+The admin page currently asks two different questions using two different credentials:
+
+* “Who is the current user?” uses only the cookie.
+* “Is this user an admin?” uses the bearer token from localStorage.
+
+Those checks can identify **two different accounts**, which is unsafe and explains the confusing behavior.
+
+Do not accept a solution that depends on the old phone-account cookie remaining active. That would only make the dashboard appear to work temporarily.
+
+Send Replit this:
+
+> The source-code diagnosis confirms the root problem: the Admin page uses two different authentication mechanisms in parallel, and they can resolve to different users.
+>
+> The valid email-login bearer token returns:
+>
+> ```json
+> {
+>   "isAdmin": true,
+>   "requireApproval": false
+> }
+> ```
+>
+> Therefore, do not change my admin role, email, password, or database record.
+>
+> The repair must make the current-user check and the admin check resolve the **same authenticated identity**.
+>
+> Please propose the smallest safe implementation plan before changing code. The intended result is:
+>
+> 1. Email-login users must be recognized by the normal current-user/auth provider.
+> 2. `/api/auth/user` and `/api/admin/check` must use the same session credential or a shared authenticated-user resolution function.
+> 3. The Admin page must not depend on an unrelated OIDC cookie or the accidental phone-only account.
+> 4. The frontend must never combine `auth.user` from one identity with `isAdmin` from another identity.
+> 5. An expired or missing cookie must not redirect a valid bearer-authenticated administrator back to login.
+> 6. A regular user must still be denied through server-side authorization.
+> 7. Do not merge or delete the duplicate phone account as part of this repair. That requires a separate data-preservation review.
+>
+> Before implementation, identify the exact files and lines that will change, whether the repair will affect all email-login users, and the tests you will run.
+>
+> After approval, create a checkpoint and implement only this authentication consistency repair. Do not yet build the Admin ↔ Community switch or change KinfolkAI.
+
+The correct long-term direction is to have **one authoritative session model**, not to keep patching around cookie versus localStorage differences. For the immediate launch-critical repair, both endpoints must at least use the same credential-resolution logic and return the same user.
+
+Also, the report you pasted cuts off after:
+
+> “Scenario B — Phone account OIDC cookie has expired…”
+
+But the conclusion is already clear: a hard refresh is not a real fix. The code must be corrected before we move to the admin/community toggle.

@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+08. COMMUNITY CATALYST MODEL™
+Future-State Production Specification v1.0
+Classification: Community Activation, Opportunity Creation, and Positive Action Intelligence Engine
+Status: Review Mode — designed as the launch-state model
+Confidentiality: Highest restriction; activation scoring, catalyst weighting, opportunity acceleration, intervention thresholds, momentum calculations, community activation logic, and progression methodology are confidential trade secrets and are not publicly disclosed.
+08.1 Purpose
+The Community Catalyst Model™ measures whether a person, business, organization, event, institution, resource, initiative, or network actively creates measurable positive movement within a community.
+Unlike the Community Engine™, which measures the health of a community, the Community Catalyst Model™ measures what causes healthy communities to grow stronger.
+It determines:
+what actions generate meaningful participation;
+which actions increase opportunity;
+what creates lasting momentum;
+which interventions strengthen belonging;
+which people consistently help others participate;
+which organizations accelerate community growth;
+which businesses generate measurable local benefit;
+which resources produce meaningful outcomes;
+which efforts deserve amplification;
+where small interventions may create disproportionately large community benefit.
+The governing question is:
+What action, person, organization, resource, or opportunity is most likely to create meaningful, measurable, and sustainable positive change within this community?
+08.2 Foundational Principle
+Communities rarely change because of one extraordinary event.
+Communities change because ordinary people repeatedly create opportunities for one another.
+Catalysts create movement.
+Movement creates participation.
+Participation creates trust.
+Trust creates belonging.
+Belonging creates stewardship.
+Stewardship creates legacy.
+The Community Catalyst Model™ therefore evaluates movement—not popularity.
+08.3 Definition of a Community Catalyst
+A Community Catalyst is any action, person, organization, business, institution, event, or resource that measurably increases one or more of the following:
+participation;
+opportunity;
+connection;
+collaboration;
+visibility;
+trust;
+support;
+economic circulation;
+learning;
+safety;
+cultural preservation;
+belonging.
+Catalysts may be intentional or unintentional.
+Small actions may produce significant downstream effects.
+08.4 Evaluation Objects
+The Model may evaluate:
+Object	Examples
+Individual	Member, mentor, Cultural Ambassador
+Business	Local business creating community activity
+Organization	Nonprofit, neighborhood association
+Institution	HBCU, museum, school
+Event	Festival, networking event, workshop
+Resource	Scholarship, grant, food pantry
+Opportunity	Job, internship, fellowship
+Community Initiative	Neighborhood cleanup, fundraiser
+Digital Action	Helpful post, discussion, recommendation
+Collaboration	Multi-party partnership
+Network	Alumni network, Kinfolk Circle
+Each object receives an evaluation profile appropriate to its role.
+08.5 Core Evaluation Dimensions
+The Community Catalyst Model™ returns a normalized score from 0–100.
+Dimension	Weight
+Opportunity Creation	18%
+Community Activation	16%
+Participation Growth	15%
+Relationship Multiplication	12%
+Resource Circulation	11%
+Community Momentum	10%
+Collaboration Quality	8%
+Sustainability	6%
+Replicability	4%
+Total	100%
+08.6 Dimension One — Opportunity Creation
+Opportunity Creation measures how often an entity creates meaningful opportunities for others.
+Examples include:
+employment;
+internships;
+mentorship;
+scholarships;
+speaking opportunities;
+vendor opportunities;
+business referrals;
+volunteer positions;
+collaborations;
+grant access;
+educational opportunities;
+introductions.
+Formula:
+Opportunity Creation =
+Qualified Opportunities
+× Accessibility
+× Outcome Quality
+× Community Relevance

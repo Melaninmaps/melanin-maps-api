@@ -1,0 +1,1610 @@
+[
+  {
+    "id": "lc-div-00-cover",
+    "position": 1,
+    "filepath": "./pages/slides/DIV_00LegacyCover.tsx",
+    "title": "The Legacy Collection",
+    "description": "Volume II \u2014 Presentation System. Four chapters. One institutional archive.",
+    "speakerNotes": "The master collection cover."
+  },
+  {
+    "id": "lc-div-01-experience",
+    "position": 2,
+    "filepath": "./pages/slides/DIV_01ExperienceChapter.tsx",
+    "title": "Chapter One \u2014 The Experience Chapter",
+    "description": "Never wonder if you'll feel welcome again. 21 canonical pages.",
+    "speakerNotes": "Chapter divider."
+  },
+  {
+    "id": "lc-exp-fd-01",
+    "position": 3,
+    "filepath": "./pages/slides/FD01Opening.tsx",
+    "title": "Opening",
+    "description": "Never wonder if you'll feel welcome again.",
+    "speakerNotes": "Open with presence. Let the headline breathe. Do not rush past it."
+  },
+  {
+    "id": "lc-exp-fd-02",
+    "position": 4,
+    "filepath": "./pages/slides/FD02MeetZara.tsx",
+    "title": "This Could Be Anyone",
+    "description": "Introducing Zara \u2014 or whoever is listening.",
+    "speakerNotes": "Pause after 'This could be anyone.' Let the audience place themselves in the story."
+  },
+  {
+    "id": "lc-exp-fd-03",
+    "position": 5,
+    "filepath": "./pages/slides/FD03TheJourney.tsx",
+    "title": "The Origin",
+    "description": "Every journey begins with a question. Ours was simple.",
+    "speakerNotes": "Read each line slowly. Let the logo appear in silence."
+  },
+  {
+    "id": "lc-exp-fd-04",
+    "position": 6,
+    "filepath": "./pages/slides/FD04Questions.tsx",
+    "title": "The Questions",
+    "description": "The three questions every traveler, newcomer, and community member asks.",
+    "speakerNotes": "These are the audience's own words. Read them as if asking yourself."
+  },
+  {
+    "id": "lc-exp-fd-05",
+    "position": 7,
+    "filepath": "./pages/slides/FD05TrustScore.tsx",
+    "title": "Trust Score",
+    "description": "Core brand message: We know what your community experienced.",
+    "speakerNotes": "This is the central philosophical distinction. Do not rush it."
+  },
+  {
+    "id": "lc-exp-fd-06",
+    "position": 8,
+    "filepath": "./pages/slides/FD06Discover.tsx",
+    "title": "Discover",
+    "description": "Before: uncertainty. After: confidence. She found certainty.",
+    "speakerNotes": "The category chips at the bottom show breadth without overwhelming."
+  },
+  {
+    "id": "lc-exp-fd-07",
+    "position": 9,
+    "filepath": "./pages/slides/FD07SafetyMap.tsx",
+    "title": "Safety Map",
+    "description": "Peace of mind begins before you leave home.",
+    "speakerNotes": "A pause slide. Let the compass icon and the headline do the work."
+  },
+  {
+    "id": "lc-exp-fd-08",
+    "position": 10,
+    "filepath": "./pages/slides/FD08SafetyCheckin.tsx",
+    "title": "Safety Check-In",
+    "description": "She doesn't travel alone. Even when she's the only one in the room.",
+    "speakerNotes": "Walk through each step of the check-in sequence slowly. The silence at the end is intentional."
+  },
+  {
+    "id": "lc-exp-fd-09",
+    "position": 11,
+    "filepath": "./pages/slides/FD09Community.tsx",
+    "title": "Community",
+    "description": "Community isn't built through followers. It's built through shared experiences.",
+    "speakerNotes": "Build to the final line. It should land with quiet weight."
+  },
+  {
+    "id": "lc-exp-fd-10",
+    "position": 12,
+    "filepath": "./pages/slides/FD10Belonging.tsx",
+    "title": "Belonging",
+    "description": "It happens when you stop being a newcomer and start being known.",
+    "speakerNotes": "Three beats: the problem, the path, the destination."
+  },
+  {
+    "id": "lc-exp-fd-11",
+    "position": 13,
+    "filepath": "./pages/slides/FD11KinfolkTeaser.tsx",
+    "title": "KinfolkAI Teaser",
+    "description": "You've found the city. Now meet someone who knows it.",
+    "speakerNotes": "Pure black slide. Intentional dramatic pause. Let the silence work."
+  },
+  {
+    "id": "lc-exp-fd-12",
+    "position": 14,
+    "filepath": "./pages/slides/FD12KinfolkReveal.tsx",
+    "title": "KinfolkAI Reveal",
+    "description": "Not an assistant. A cultural guide.",
+    "speakerNotes": "Two lines. That is enough. Do not explain further \u2014 let the next slide demonstrate."
+  },
+  {
+    "id": "lc-exp-fd-13",
+    "position": 15,
+    "filepath": "./pages/slides/FD13KinfolkConvo.tsx",
+    "title": "KinfolkAI Conversation",
+    "description": "Placeholder \u2014 conversation written by the founder.",
+    "speakerNotes": "Replace this slide with a real KinfolkAI exchange before presenting."
+  },
+  {
+    "id": "lc-exp-fd-14",
+    "position": 16,
+    "filepath": "./pages/slides/FD14BusinessPeople.tsx",
+    "title": "Business: People First",
+    "description": "People connect with people before they connect with products.",
+    "speakerNotes": "The shift from consumer to business owner. Acknowledge the room if there are business owners present."
+  },
+  {
+    "id": "lc-exp-fd-15",
+    "position": 17,
+    "filepath": "./pages/slides/FD15BeforeAfter.tsx",
+    "title": "The Transformation",
+    "description": "The before and after of discovery for business owners.",
+    "speakerNotes": "Let the contrast speak. Read across \u2014 left then right \u2014 for each row."
+  },
+  {
+    "id": "lc-exp-fd-16",
+    "position": 18,
+    "filepath": "./pages/slides/FD16WhyWeWin.tsx",
+    "title": "Why We Win",
+    "description": "We ask technology to earn the trust of communities. That's the difference.",
+    "speakerNotes": "The middle line should land with full weight. Pause before 'That's the difference.'"
+  },
+  {
+    "id": "lc-exp-fd-17",
+    "position": 19,
+    "filepath": "./pages/slides/FD17WhyNow.tsx",
+    "title": "Why Now?",
+    "description": "Six reasons the moment has arrived.",
+    "speakerNotes": "Each contrast should feel like a tension you're about to resolve. The final line is the answer."
+  },
+  {
+    "id": "lc-exp-fd-18",
+    "position": 20,
+    "filepath": "./pages/slides/FD18Movement.tsx",
+    "title": "The Movement",
+    "description": "Because belonging should never depend on luck.",
+    "speakerNotes": "Read 'Imagine a world where...' slowly. Each line that follows is a promise."
+  },
+  {
+    "id": "lc-exp-fd-19",
+    "position": 21,
+    "filepath": "./pages/slides/FD19Declaration.tsx",
+    "title": "The Declaration",
+    "description": "We aren't just mapping places. We're mapping belonging.",
+    "speakerNotes": "Warm cream slide. Rich brown typography. 'belonging' in gold. Let it sit before advancing."
+  },
+  {
+    "id": "lc-exp-fd-20",
+    "position": 22,
+    "filepath": "./pages/slides/FD20Affirmation.tsx",
+    "title": "The Affirmation",
+    "description": "You belong here.",
+    "speakerNotes": "Two to three seconds of silence after this lands. Then advance."
+  },
+  {
+    "id": "lc-exp-fd-21",
+    "position": 23,
+    "filepath": "./pages/slides/FD21Welcome.tsx",
+    "title": "The Welcome",
+    "description": "Welcome home.",
+    "speakerNotes": "The final emotional note. Or \u2014 end on slide 20 and say 'Welcome home.' aloud. Either works."
+  },
+  {
+    "id": "lc-div-02-investor",
+    "position": 24,
+    "filepath": "./pages/slides/DIV_02InvestorChapter.tsx",
+    "title": "Chapter Two \u2014 The Investor Chapter",
+    "description": "No one should have to wonder if they'll feel welcome. 67 canonical pages.",
+    "speakerNotes": "Chapter divider."
+  },
+  {
+    "id": "lc-inv-inv-slide-01-cover",
+    "position": 25,
+    "filepath": "./pages/slides/INV_Slide01Cover.tsx",
+    "title": "No One Should Have To Wonder",
+    "description": "Opening title \u2014 belonging as the core promise",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-02-vignettes",
+    "position": 26,
+    "filepath": "./pages/slides/INV_Slide02Vignettes.tsx",
+    "title": "Four Stories",
+    "description": "Family, traveler, entrepreneur, student \u2014 four real vignettes",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-03-same-question",
+    "position": 27,
+    "filepath": "./pages/slides/INV_Slide03SameQuestion.tsx",
+    "title": "Same Answer",
+    "description": "Different questions, same underlying search",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-04-where-belong",
+    "position": 28,
+    "filepath": "./pages/slides/INV_Slide04WhereBelong.tsx",
+    "title": "Where Do I Belong?",
+    "description": "The universal question, stated plainly",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-05-mission",
+    "position": 29,
+    "filepath": "./pages/slides/INV_Slide05Mission.tsx",
+    "title": "Our Mission",
+    "description": "Not a directory, not a social network \u2014 confidence, community, opportunity",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-06-imagine-city",
+    "position": 30,
+    "filepath": "./pages/slides/INV_Slide06ImagineCity.tsx",
+    "title": "Discover",
+    "description": "The invitation to discover where you belong \u2014 community-powered, not algorithm-driven",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-07-one-app",
+    "position": 31,
+    "filepath": "./pages/slides/INV_Slide07OneApp.tsx",
+    "title": "One App",
+    "description": "Transition \u2014 finding it all in one place",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-08-thrive",
+    "position": 32,
+    "filepath": "./pages/slides/INV_Slide08MeetJasmine.tsx",
+    "title": "Thrive",
+    "description": "Chapter \u2014 economic empowerment for minority-owned businesses",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-09-app-open",
+    "position": 33,
+    "filepath": "./pages/slides/INV_Slide09AppOpen.tsx",
+    "title": "She Opens The App",
+    "description": "Real app home screen mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-10-safe-neighborhoods",
+    "position": 34,
+    "filepath": "./pages/slides/INV_Slide10SafeNeighborhoods.tsx",
+    "title": "Belong",
+    "description": "Chapter \u2014 community feed showing everywhere-you-go belonging",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-11-meet-jasmine",
+    "position": 35,
+    "filepath": "./pages/slides/INV_Slide11MeetJasmine.tsx",
+    "title": "Meet Jasmine",
+    "description": "User journey intro \u2014 relocating Philadelphia to Houston",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-12-food-beauty",
+    "position": 36,
+    "filepath": "./pages/slides/INV_Slide12FoodBeauty.tsx",
+    "title": "Restaurants & Salons",
+    "description": "Real app discover screen mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-13-doctors-employers",
+    "position": 37,
+    "filepath": "./pages/slides/INV_Slide13DoctorsEmployers.tsx",
+    "title": "Doctors & Employers",
+    "description": "Real app business listings screen mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-14-events-travel",
+    "position": 38,
+    "filepath": "./pages/slides/INV_Slide14EventsTravel.tsx",
+    "title": "Events & Travel",
+    "description": "Real app community screen mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-15-friends-businesses",
+    "position": 39,
+    "filepath": "./pages/slides/INV_Slide15FriendsBusinesses.tsx",
+    "title": "Houston Feels Like Home",
+    "description": "Jasmine's journey resolution",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-16-business-question",
+    "position": 40,
+    "filepath": "./pages/slides/INV_Slide16BusinessQuestion.tsx",
+    "title": "The Other Side",
+    "description": "Transition to the business owner's perspective",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-17-intentional-discovery",
+    "position": 41,
+    "filepath": "./pages/slides/INV_Slide17IntentionalDiscovery.tsx",
+    "title": "Intentional Discovery",
+    "description": "Not advertising \u2014 clicks, recommendations, saved businesses, itineraries",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-18-send-them-back",
+    "position": 42,
+    "filepath": "./pages/slides/INV_Slide18SendThemBack.tsx",
+    "title": "We Send Them Back To You",
+    "description": "Channel grid \u2014 website, social, booking, store, phone, maps",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-19-community-algorithm",
+    "position": 43,
+    "filepath": "./pages/slides/INV_Slide19CommunityAlgorithm.tsx",
+    "title": "Community Is The Algorithm",
+    "description": "Trust-based discovery mechanism",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-20-kinfolk-intro",
+    "position": 44,
+    "filepath": "./pages/slides/INV_Slide20KinfolkIntro.tsx",
+    "title": "Meet Kinfolk AI",
+    "description": "AI positioning \u2014 a business partner, not just AI",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-21-kinfolk-capabilities",
+    "position": 45,
+    "filepath": "./pages/slides/INV_Slide21KinfolkCapabilities.tsx",
+    "title": "Kinfolk AI Capabilities",
+    "description": "Marketing, events, reviews, growth strategy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-22-angela-divider",
+    "position": 46,
+    "filepath": "./pages/slides/INV_Slide22AngelaDivider.tsx",
+    "title": "A New Chapter",
+    "description": "Transition \u2014 from Kinfolk AI into the business owner's journey",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-23-meet-angela",
+    "position": 47,
+    "filepath": "./pages/slides/INV_Slide23MeetMarcus.tsx",
+    "title": "Meet Marcus",
+    "description": "Business owner story \u2014 the business equivalent of Jasmine's journey",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-24-philosophy",
+    "position": 48,
+    "filepath": "./pages/slides/INV_Slide24Philosophy.tsx",
+    "title": "We're Not Replacing Communities",
+    "description": "Company philosophy \u2014 connects, doesn't replace",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-25-flywheel",
+    "position": 49,
+    "filepath": "./pages/slides/INV_Slide25Flywheel.tsx",
+    "title": "The Flywheel",
+    "description": "Compounding network-effect loop diagram",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-26-why-flywheel-matters",
+    "position": 50,
+    "filepath": "./pages/slides/INV_Slide26WhyFlywheelMatters.tsx",
+    "title": "Why the Flywheel Matters",
+    "description": "Kinfolk AI learns from every review, recommendation, saved business, and community interaction",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-27-network-effect",
+    "position": 51,
+    "filepath": "./pages/slides/INV_Slide26NetworkEffect.tsx",
+    "title": "The Bigger Our Community Becomes, the Smarter the Platform Gets",
+    "description": "Network-effect slide \u2014 each new member type compounds platform value",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-28-city-by-city",
+    "position": 52,
+    "filepath": "./pages/slides/INV_Slide26CityByCity.tsx",
+    "title": "City by City",
+    "description": "Rollout strategy across cities",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-29-one-community",
+    "position": 53,
+    "filepath": "./pages/slides/INV_Slide22OneCommunity.tsx",
+    "title": "One Community, Three Experiences",
+    "description": "Signature ecosystem slide \u2014 consumers, businesses, communities",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-30-one-ecosystem",
+    "position": 54,
+    "filepath": "./pages/slides/INV_Slide23OneEcosystem.tsx",
+    "title": "One Ecosystem",
+    "description": "Instead of three apps, one ecosystem",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-31-bigger-than",
+    "position": 55,
+    "filepath": "./pages/slides/INV_Slide24BiggerThan.tsx",
+    "title": "Bigger Than Businesses",
+    "description": "Economic opportunity framing",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-32-one-map",
+    "position": 56,
+    "filepath": "./pages/slides/INV_Slide25OneMap.tsx",
+    "title": "One Map, One Movement",
+    "description": "Closing mission recap",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-33-founding-invite",
+    "position": 57,
+    "filepath": "./pages/slides/INV_Slide26FoundingInvite.tsx",
+    "title": "Founding Businesses",
+    "description": "Closing call to action",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-34-product-ecosystem",
+    "position": 58,
+    "filepath": "./pages/slides/INV_SlideInv34ProductEcosystem.tsx",
+    "title": "One Platform. Six Core Experiences.",
+    "description": "Product overview \u2014 Discover, Safety, Community, Experiences, KinfolkAI, Life Journeys",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-35-market-opportunity",
+    "position": 59,
+    "filepath": "./pages/slides/INV_SlideInv35MarketOpportunity.tsx",
+    "title": "Market Opportunity",
+    "description": "Six high-growth markets totalling $6.4T+ TAM",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-36-business-model",
+    "position": 60,
+    "filepath": "./pages/slides/INV_SlideInv36BusinessModel.tsx",
+    "title": "Business Model",
+    "description": "Diversified revenue \u2014 Consumers, Businesses, Partners",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-37-why-we-win",
+    "position": 61,
+    "filepath": "./pages/slides/INV_SlideInv37WhyWeWin.tsx",
+    "title": "Why We Win",
+    "description": "Competitive advantage matrix \u2014 six categories, clear differentiation",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-38-traction",
+    "position": 62,
+    "filepath": "./pages/slides/INV_SlideInv38Traction.tsx",
+    "title": "Traction",
+    "description": "Pre-revenue proof points \u2014 product, technical, community, market",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-39-go-to-market",
+    "position": 63,
+    "filepath": "./pages/slides/INV_SlideInv39GoToMarket.tsx",
+    "title": "Go-to-Market",
+    "description": "Five-phase city rollout with community growth drivers",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-40-ask",
+    "position": 64,
+    "filepath": "./pages/slides/INV_SlideInv40Ask.tsx",
+    "title": "The Ask",
+    "description": "$750K seed \u2014 use of funds and 18-month milestones",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-41-team",
+    "position": 65,
+    "filepath": "./pages/slides/INV_SlideInv41Team.tsx",
+    "title": "The Team",
+    "description": "Founder-market fit, execution proof, hiring plan, and community support",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-42-business-section",
+    "position": 66,
+    "filepath": "./pages/slides/INV_SlideInv42BusinessSection.tsx",
+    "title": "Part II \u2014 The Businesses This Community Trusts",
+    "description": "Section divider transitioning from investor pitch to business opportunity",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-43-your-customers",
+    "position": 67,
+    "filepath": "./pages/slides/INV_SlideInv42YourCustomers.tsx",
+    "title": "Your Customers Are Already Looking",
+    "description": "Business section opener \u2014 consumer demand, $1.7T market, community-trust discovery mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-44-the-problem",
+    "position": 68,
+    "filepath": "./pages/slides/INV_SlideInv43TheProblem.tsx",
+    "title": "The Tools That Exist Weren't Built For You",
+    "description": "Three-column problem slide \u2014 visibility gap, trust gap, tools gap",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-45-what-we-do",
+    "position": 69,
+    "filepath": "./pages/slides/INV_SlideInv44WhatWeDoForYou.tsx",
+    "title": "Your Business. Trusted. Found. Chosen.",
+    "description": "Solution pivot \u2014 business profile mockup, three value props, free/5min/Day 1 stats",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-46-flywheel",
+    "position": 70,
+    "filepath": "./pages/slides/INV_SlideInv45Flywheel.tsx",
+    "title": "Your Business Grows With Every Interaction",
+    "description": "Business growth loop \u2014 6-step flywheel diagram with KinfolkAI at the center",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-47-dashboard",
+    "position": 71,
+    "filepath": "./pages/slides/INV_SlideInv46Dashboard.tsx",
+    "title": "Know What's Working Before Your Competitors Do",
+    "description": "Business dashboard mockup \u2014 profile views, saves, trust score, KinfolkAI prompt",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-48-kinfolk-ai",
+    "position": 72,
+    "filepath": "./pages/slides/INV_SlideInv47KinfolkAI.tsx",
+    "title": "Not An AI Assistant. Your Business Partner.",
+    "description": "KinfolkAI capabilities \u2014 6 actions: posts, review responses, trends, promotions, growth, alerts",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-49-day-in-life",
+    "position": 73,
+    "filepath": "./pages/slides/INV_SlideInv48DayInLife.tsx",
+    "title": "A Monday With KinfolkAI\u2122",
+    "description": "Day-in-the-life notification feed \u2014 6 time-stamped KinfolkAI moments from 8am to 11pm",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-50-transformation",
+    "position": 74,
+    "filepath": "./pages/slides/INV_SlideInv49Transformation.tsx",
+    "title": "Six Months Later...",
+    "description": "Before/after transformation \u2014 Unknown\u2192Recommended, chasing\u2192found, guessing\u2192knowing, ads\u2192trust, alone\u2192KinfolkAI beside you",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-51-reputation",
+    "position": 75,
+    "filepath": "./pages/slides/INV_SlideInv48Reputation.tsx",
+    "title": "Reputation Becomes Your Competitive Advantage",
+    "description": "Trust chain \u2014 verified badge \u2192 recommendations \u2192 trust score \u2192 search ranking \u2192 loyalty \u2192 word of mouth",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-52-ecosystem",
+    "position": 76,
+    "filepath": "./pages/slides/INV_SlideInv49Ecosystem.tsx",
+    "title": "Businesses Don't Grow Alone",
+    "description": "Orbit diagram \u2014 business at center, 8 community satellite connections",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-53-pricing",
+    "position": 77,
+    "filepath": "./pages/slides/INV_SlideInv50Pricing.tsx",
+    "title": "Simple. Transparent. Built for Small Businesses.",
+    "description": "Three-tier pricing \u2014 Free / Standard $49 / Founding $29 locked forever",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-54-signature",
+    "position": 78,
+    "filepath": "./pages/slides/INV_SlideInv51Signature.tsx",
+    "title": "The More Your Community Grows, The More Your Business Grows",
+    "description": "Signature orbit slide \u2014 business at center, 9 community connection points",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-inv-slide-55-cta",
+    "position": 79,
+    "filepath": "./pages/slides/INV_SlideInv52CTA.tsx",
+    "title": "Become a Founding Business",
+    "description": "Final CTA \u2014 500 spots, $29/month locked, mappingwithmelanin.com/business",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-01-cover",
+    "position": 80,
+    "filepath": "./pages/slides/INV_CB01Cover.tsx",
+    "title": "Become a Community Builder",
+    "description": "Community Builder section cover",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-02-what-is-it",
+    "position": 81,
+    "filepath": "./pages/slides/INV_CB02WhatIsIt.tsx",
+    "title": "What Is It?",
+    "description": "One platform. Every part of belonging.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-01b-why-builders-matter",
+    "position": 82,
+    "filepath": "./pages/slides/INV_CB01bWhyBuildersMatter.tsx",
+    "title": "Why Community Builders Matter",
+    "description": "Every movement begins with one conversation",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-03-who-is-it-for",
+    "position": 83,
+    "filepath": "./pages/slides/INV_CB03WhoIsItFor.tsx",
+    "title": "Who Is It For?",
+    "description": "Six situations with phone mockup",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-04-how-it-works",
+    "position": 84,
+    "filepath": "./pages/slides/INV_CB04HowItWorks.tsx",
+    "title": "How Does It Work?",
+    "description": "Discover \u2192 Connect \u2192 Support \u2192 Recommend \u2192 Strengthen flywheel",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-05-what-makes-it-different",
+    "position": 85,
+    "filepath": "./pages/slides/INV_CB05WhatMakesItDifferent.tsx",
+    "title": "What Makes It Different?",
+    "description": "NOT vs INSTEAD two-column contrast",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-06-why-businesses-love-it",
+    "position": 86,
+    "filepath": "./pages/slides/INV_CB06WhyBusinessesLoveIt.tsx",
+    "title": "Why Businesses Love It",
+    "description": "We send customers to THEIR website/booking/social + phone",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-07-why-community-members-love-it",
+    "position": 87,
+    "filepath": "./pages/slides/INV_CB07WhyCommunityMembersLoveIt.tsx",
+    "title": "Why Community Members Love It",
+    "description": "Six emotional benefit cards",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-08-meet-kinfolkai",
+    "position": 88,
+    "filepath": "./pages/slides/INV_CB08MeetKinfolkAI.tsx",
+    "title": "Meet KinfolkAI\u2122",
+    "description": "Learns / Suggests / Protects / Connects / Grows",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-09-network-effect",
+    "position": 89,
+    "filepath": "./pages/slides/INV_CB09WhatHappensWhenMoreJoin.tsx",
+    "title": "What Happens When More People Join?",
+    "description": "Everyday community flywheel cascade",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-10-how-can-you-help",
+    "position": 90,
+    "filepath": "./pages/slides/INV_CB10HowCanYouHelp.tsx",
+    "title": "How Can You Help?",
+    "description": "Seven ambassador action cards",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-inv-cb-slide-11-closing",
+    "position": 91,
+    "filepath": "./pages/slides/INV_CB11Closing.tsx",
+    "title": "Closing \u2014 Welcome",
+    "description": "Full-screen closing quote",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-div-03-business",
+    "position": 92,
+    "filepath": "./pages/slides/DIV_03BusinessChapter.tsx",
+    "title": "Chapter Three \u2014 The Business & Platform Chapter",
+    "description": "Every feature. Every story. The full product experience. 95 canonical pages.",
+    "speakerNotes": "Chapter divider."
+  },
+  {
+    "id": "lc-biz-demo-s01-cover",
+    "position": 93,
+    "filepath": "./pages/slides/BIZ_DemoS01Cover.tsx",
+    "title": "The Full Product Experience",
+    "description": "Cover \u2014 community member + business owner journeys",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s02-welcome-text",
+    "position": 94,
+    "filepath": "./pages/slides/BIZ_DemoS02WelcomeText.tsx",
+    "title": "Why We Built This",
+    "description": "WHY slide \u2014 the problem we solve for the diaspora",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s03-welcome-screen",
+    "position": 95,
+    "filepath": "./pages/slides/BIZ_DemoS03WelcomeScreen.tsx",
+    "title": "First Launch \u2014 Sign In",
+    "description": "Phone: Apple/Google sign-in screen",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s04-onboarding-text",
+    "position": 96,
+    "filepath": "./pages/slides/BIZ_DemoS04OnboardingText.tsx",
+    "title": "Onboarding \u2014 What We Learn About You",
+    "description": "WHY slide \u2014 personalization onboarding philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s05-onboarding-screen",
+    "position": 97,
+    "filepath": "./pages/slides/BIZ_DemoS05OnboardingScreen.tsx",
+    "title": "Preferences & Setup",
+    "description": "Phone: interest chips, city, lifestyle onboarding",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s06-discover-text",
+    "position": 98,
+    "filepath": "./pages/slides/BIZ_DemoS06DiscoverText.tsx",
+    "title": "Discover \u2014 Built for the Community",
+    "description": "WHY slide \u2014 discover tab philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s07-discover-screen",
+    "position": 99,
+    "filepath": "./pages/slides/BIZ_DemoS07DiscoverScreen.tsx",
+    "title": "Discover Tab \u2014 Home Screen",
+    "description": "Phone: real app-home.jpg screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s08-bizprofile-text",
+    "position": 100,
+    "filepath": "./pages/slides/BIZ_DemoS08BizProfileText.tsx",
+    "title": "Business Profiles \u2014 Trust You Can See",
+    "description": "WHY slide \u2014 business profile structure",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s09-bizprofile-screen",
+    "position": 101,
+    "filepath": "./pages/slides/BIZ_DemoS09BizProfileScreen.tsx",
+    "title": "Copper & Oak Bistro \u2014 Business Profile",
+    "description": "Phone: real app-businesses.jpg screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s10-map-text",
+    "position": 102,
+    "filepath": "./pages/slides/BIZ_DemoS10MapText.tsx",
+    "title": "Map Tab \u2014 See the Territory",
+    "description": "WHY slide \u2014 map with safety overlay + heritage layer",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s11-map-screen",
+    "position": 103,
+    "filepath": "./pages/slides/BIZ_DemoS11MapScreen.tsx",
+    "title": "Map \u2014 Real Businesses, Real Safety Data",
+    "description": "Phone: real app-map.jpg screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s12-heritage-text",
+    "position": 104,
+    "filepath": "./pages/slides/BIZ_DemoS12HeritageText.tsx",
+    "title": "Cultural Heritage \u2014 Living History on Every Map",
+    "description": "WHY slide \u2014 heritage layer on by default, 11 categories, the vision behind it",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s13-heritage-screen",
+    "position": 105,
+    "filepath": "./pages/slides/BIZ_DemoS13HeritageScreen.tsx",
+    "title": "The Map That Carries Our Story",
+    "description": "Phone: map with heritage pins by category \u2014 HBCUs, Civil Rights, History, Art, Music",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s14-safety-text",
+    "position": 106,
+    "filepath": "./pages/slides/BIZ_DemoS12SafetyHubText.tsx",
+    "title": "Safety Hub \u2014 14 Features, One Tab",
+    "description": "WHY slide \u2014 safety hub overview",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s15-safety-screen",
+    "position": 107,
+    "filepath": "./pages/slides/BIZ_DemoS13SafetyHubScreen.tsx",
+    "title": "Safety Hub \u2014 All 14 Features",
+    "description": "Phone: safety hub full feature list",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s16-kinfolk-text",
+    "position": 108,
+    "filepath": "./pages/slides/BIZ_DemoS14KinfolkText.tsx",
+    "title": "KinfolkAI \u2014 Culture-Aware, Voice-Enabled, Always Learning",
+    "description": "WHY slide \u2014 KinfolkAI with Taste Profile, Voice, Session History, Neighbor Voice",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s17-kinfolk-screen",
+    "position": 109,
+    "filepath": "./pages/slides/BIZ_DemoS15KinfolkScreen.tsx",
+    "title": "KinfolkAI \u2014 Taste Profile, Voice & Feedback",
+    "description": "Phone: updated chat with Listen button, voice meter, thumbs, Neighbor Voice, quick-reply chips",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s18-travel-text",
+    "position": 110,
+    "filepath": "./pages/slides/BIZ_DemoS16TravelSafetyText.tsx",
+    "title": "Travel Safety \u2014 Backup for Black Women",
+    "description": "WHY slide \u2014 travel safety (PROTECTED LANGUAGE)",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s19-events-text",
+    "position": 111,
+    "filepath": "./pages/slides/BIZ_DemoS17EventsText.tsx",
+    "title": "Events \u2014 Community Programming",
+    "description": "WHY slide \u2014 events tab philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s20-events-screen",
+    "position": 112,
+    "filepath": "./pages/slides/BIZ_DemoS18EventsScreen.tsx",
+    "title": "Events Tab \u2014 What's Happening",
+    "description": "Phone: events listing screen",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s21-library-text",
+    "position": 113,
+    "filepath": "./pages/slides/BIZ_DemoS19LibraryText.tsx",
+    "title": "Library \u2014 Knowledge the Diaspora Deserves",
+    "description": "WHY slide \u2014 library philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s22-library-screen",
+    "position": 114,
+    "filepath": "./pages/slides/BIZ_DemoS20LibraryScreen.tsx",
+    "title": "Library \u2014 3 Tabs, 70+ Topics",
+    "description": "Phone: library 3-tab UI",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s23-community-text",
+    "position": 115,
+    "filepath": "./pages/slides/BIZ_DemoS21CommunityText.tsx",
+    "title": "Community \u2014 Connection Without the Algorithm",
+    "description": "WHY slide \u2014 community feed philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s24-community-screen",
+    "position": 116,
+    "filepath": "./pages/slides/BIZ_DemoS22CommunityScreen.tsx",
+    "title": "Community Feed",
+    "description": "Phone: community feed with real photos",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s25-circles-text",
+    "position": 117,
+    "filepath": "./pages/slides/BIZ_DemoS23CirclesText.tsx",
+    "title": "Kinfolk Circles \u2014 Plan With Your People",
+    "description": "WHY slide \u2014 circles philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s26-circles-screen",
+    "position": 118,
+    "filepath": "./pages/slides/BIZ_DemoS24CirclesScreen.tsx",
+    "title": "DC Crew Circle \u2014 Group Planning in Action",
+    "description": "Phone: Kinfolk Circle with shared saved places",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s27-search-text",
+    "position": 119,
+    "filepath": "./pages/slides/BIZ_DemoS25SearchText.tsx",
+    "title": "Search \u2014 Zara Searches for Brunch",
+    "description": "WHY slide \u2014 search ranked by trust not ads",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s28-search-screen",
+    "position": 120,
+    "filepath": "./pages/slides/BIZ_DemoS26SearchScreen.tsx",
+    "title": "Search Results \u2014 Ranked by the Community",
+    "description": "Phone: search results with Trust Score ranking",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s29-review-text",
+    "position": 121,
+    "filepath": "./pages/slides/BIZ_DemoS27ReviewText.tsx",
+    "title": "Reviews \u2014 Zara Has Something to Say",
+    "description": "WHY slide \u2014 review as community contribution",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s30-review-screen",
+    "position": 122,
+    "filepath": "./pages/slides/BIZ_DemoS28ReviewScreen.tsx",
+    "title": "Review Form \u2014 Compliment Chips + Written Review",
+    "description": "Phone: full review form with 8 community chips",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s31-save-screen",
+    "position": 123,
+    "filepath": "./pages/slides/BIZ_DemoS29SaveScreen.tsx",
+    "title": "Saved \u2014 Copper & Oak Is Hers Now",
+    "description": "Phone: save confirmation + collection options + points",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s32-trust-text",
+    "position": 124,
+    "filepath": "./pages/slides/BIZ_DemoS30TrustScoreText.tsx",
+    "title": "Trust Score \u2014 What Builds It",
+    "description": "WHY slide \u2014 8 community inputs to the Trust Score",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s33-alert-text",
+    "position": 125,
+    "filepath": "./pages/slides/BIZ_DemoS31SafetyAlertText.tsx",
+    "title": "Community Intelligence \u2014 Not a Police Scanner",
+    "description": "WHY slide \u2014 real-time safety alerts philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s34-alert-screen",
+    "position": 126,
+    "filepath": "./pages/slides/BIZ_DemoS32SafetyAlertScreen.tsx",
+    "title": "Live Safety Alerts \u2014 Shaw / U Street",
+    "description": "Phone: 4 live community intelligence alerts",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s35-checkin-screen",
+    "position": 127,
+    "filepath": "./pages/slides/BIZ_DemoS33SafetyToolsScreen.tsx",
+    "title": "Safety Check-In + Location Sharing",
+    "description": "Phone: check-in active + live location share",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s36-officer-screen",
+    "position": 128,
+    "filepath": "./pages/slides/BIZ_DemoS34OfficerWatchScreen.tsx",
+    "title": "Officer Watch + Report Tools Overview",
+    "description": "Phone: 5 accountability features overview",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s37-event-screen",
+    "position": 129,
+    "filepath": "./pages/slides/BIZ_DemoS35EventDetailScreen.tsx",
+    "title": "Event Detail \u2014 Register & Save",
+    "description": "Phone: Natural Hair Expo with register/save/share actions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s38-article-screen",
+    "position": 130,
+    "filepath": "./pages/slides/BIZ_DemoS36ArticleScreen.tsx",
+    "title": "Library Article \u2014 Know Your Rights",
+    "description": "Phone: article with guidance rating, verified author, community reactions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s39-profile-text",
+    "position": 131,
+    "filepath": "./pages/slides/BIZ_DemoS37ProfileText.tsx",
+    "title": "Profile Tab \u2014 Your Community Identity",
+    "description": "WHY slide \u2014 all 6 profile sections explained",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s40-profile-screen",
+    "position": 132,
+    "filepath": "./pages/slides/BIZ_DemoS38ProfileScreen.tsx",
+    "title": "Zara's Profile \u2014 Navigation Menu",
+    "description": "Phone: full profile screen with all menu items",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s41-settings-screen",
+    "position": 133,
+    "filepath": "./pages/slides/BIZ_DemoS39SettingsScreen.tsx",
+    "title": "Settings \u2014 Every Toggle Is Intentional",
+    "description": "Phone: full settings with notifications, privacy, content toggles",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s42-membership-text",
+    "position": 134,
+    "filepath": "./pages/slides/BIZ_DemoS40MembershipText.tsx",
+    "title": "Membership \u2014 Three Tiers, One Community",
+    "description": "WHY slide \u2014 Explorer/Navigator/Trailblazer comparison",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s43-membership-screen",
+    "position": 135,
+    "filepath": "./pages/slides/BIZ_DemoS41MembershipScreen.tsx",
+    "title": "Upgrade \u2014 Zara Considers Trailblazer",
+    "description": "Phone: membership screen with upgrade flow",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s44-biz-transition",
+    "position": 136,
+    "filepath": "./pages/slides/BIZ_DemoS42BizTransition.tsx",
+    "title": "Part Two \u2014 Meet Marcus",
+    "description": "Split: Marcus photo + Trust Score 97 badge",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s45-bizdash-text",
+    "position": 137,
+    "filepath": "./pages/slides/BIZ_DemoS43BizDashText.tsx",
+    "title": "Business Dashboard \u2014 Not Analytics. Intelligence.",
+    "description": "WHY slide \u2014 dashboard philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s46-bizdash-screen",
+    "position": 138,
+    "filepath": "./pages/slides/BIZ_DemoS44BizDashScreen.tsx",
+    "title": "Dashboard \u2014 Everything Visible",
+    "description": "Phone: dashboard with stats, chip analytics, Trust Score trend",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s47-zara-review-text",
+    "position": 139,
+    "filepath": "./pages/slides/BIZ_DemoS45ZaraReviewText.tsx",
+    "title": "Zara's Review Is Marcus's Signal",
+    "description": "WHY slide \u2014 review as structured community intelligence",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s48-zara-review-screen",
+    "position": 140,
+    "filepath": "./pages/slides/BIZ_DemoS46ZaraReviewScreen.tsx",
+    "title": "Marcus Sees the Review",
+    "description": "Phone: review detail with chips, Trust Score impact, KinfolkAI prompt",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s49-review-integrity",
+    "position": 141,
+    "filepath": "./pages/slides/BIZ_DemoS46bReviewIntegrityText.tsx",
+    "title": "Review Integrity \u2014 Bad Faith Never Reaches Your Score",
+    "description": "WHY slide \u2014 structured survey format, real-time scoring, moderation protection",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s50-kinfolk-resp-text",
+    "position": 142,
+    "filepath": "./pages/slides/BIZ_DemoS47KinfolkResponseText.tsx",
+    "title": "KinfolkAI \u2014 Voice-Matched Response Drafts",
+    "description": "WHY slide \u2014 AI response assist philosophy",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s51-kinfolk-resp-screen",
+    "position": 143,
+    "filepath": "./pages/slides/BIZ_DemoS48KinfolkResponseScreen.tsx",
+    "title": "KinfolkAI \u2014 Three Drafts. Marcus Picks One.",
+    "description": "Phone: 3 AI response options, Marcus selects warm & personal",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s52-trust-biz-text",
+    "position": 144,
+    "filepath": "./pages/slides/BIZ_DemoS49TrustScoreBizText.tsx",
+    "title": "Trust Score \u2014 What the Community Does That Feeds It",
+    "description": "WHY slide \u2014 6 business Trust Score inputs with impact levels",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s53-growth-text",
+    "position": 145,
+    "filepath": "./pages/slides/BIZ_DemoS50BizGrowthText.tsx",
+    "title": "Growth Tools \u2014 Beyond Listed",
+    "description": "WHY slide \u2014 promotions philosophy and 5 placement types",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s54-growth-screen",
+    "position": 146,
+    "filepath": "./pages/slides/BIZ_DemoS51BizGrowthScreen.tsx",
+    "title": "Growth Tools \u2014 Marcus Activates a Placement",
+    "description": "Phone: growth tools with active promotion + 5 placement options",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s55-analytics-screen",
+    "position": 147,
+    "filepath": "./pages/slides/BIZ_DemoS52BizAnalyticsScreen.tsx",
+    "title": "Analytics \u2014 Who Found Marcus and How",
+    "description": "Phone: analytics with traffic sources, conversion funnel, neighborhoods",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s56-bizplans-text",
+    "position": 148,
+    "filepath": "./pages/slides/BIZ_DemoS53BizPlansText.tsx",
+    "title": "Business Plans \u2014 A Tier for Every Stage",
+    "description": "WHY slide \u2014 Community/Growth/Trailblazer Business comparison",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s57-bizplans-screen",
+    "position": 149,
+    "filepath": "./pages/slides/BIZ_DemoS54BizPlansScreen.tsx",
+    "title": "Marcus Upgrades to Growth",
+    "description": "Phone: business plan upgrade screen with Trust Score improvement",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s58-flywheel-text",
+    "position": 150,
+    "filepath": "./pages/slides/BIZ_DemoS55FlywheelText.tsx",
+    "title": "The Community Flywheel",
+    "description": "WHY slide \u2014 4-step flywheel + platform summary",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s59-flywheel-visual",
+    "position": 151,
+    "filepath": "./pages/slides/BIZ_DemoS56FlywheelVisual.tsx",
+    "title": "Every Feature Feeds the Loop",
+    "description": "Flywheel SVG graphic + 6 feature-to-role breakdown",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s60-vision-text",
+    "position": 152,
+    "filepath": "./pages/slides/BIZ_DemoS57VisionText.tsx",
+    "title": "Our Vision \u2014 Infrastructure for Diaspora Discovery",
+    "description": "Cinematic vision statement over photo background",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s61-closing-cta",
+    "position": 153,
+    "filepath": "./pages/slides/BIZ_DemoS58ClosingCTA.tsx",
+    "title": "Find Your People. Anywhere.",
+    "description": "Closing CTA with photo + app store CTAs + stats",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s62-zara-profile",
+    "position": 154,
+    "filepath": "./pages/slides/BIZ_DemoS59ZaraProfileScreen.tsx",
+    "title": "Zara's Profile \u2014 Header & Saved Places",
+    "description": "Phone: full profile header, Navigator badge, stats, saved businesses tab",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s63-zara-reviews",
+    "position": 155,
+    "filepath": "./pages/slides/BIZ_DemoS60ZaraReviewsTab.tsx",
+    "title": "Zara's Reviews \u2014 Her Voice on the Record",
+    "description": "Phone: profile reviews tab \u2014 3 reviews with chips, ratings, business links",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s64-marcus-profile",
+    "position": 156,
+    "filepath": "./pages/slides/BIZ_DemoS61MarcusProfileScreen.tsx",
+    "title": "Marcus's Owner Profile",
+    "description": "Phone: owner profile with Business Owner badge, Copper & Oak link, community posts",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s65-report-biz-text",
+    "position": 157,
+    "filepath": "./pages/slides/BIZ_DemoS62ReportBizText.tsx",
+    "title": "Report a Business \u2014 The Index Stays Honest",
+    "description": "WHY slide \u2014 community accountability, 4 report categories",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s66-report-step1",
+    "position": 158,
+    "filepath": "./pages/slides/BIZ_DemoS63ReportStep1Screen.tsx",
+    "title": "Report \u2014 Step 1: Flag the Business",
+    "description": "Phone: \u22ef menu on Urban Eats Kitchen with Report option highlighted",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s67-report-step2",
+    "position": 159,
+    "filepath": "./pages/slides/BIZ_DemoS64ReportStep2Screen.tsx",
+    "title": "Report \u2014 Step 2: Select Reason",
+    "description": "Phone: 6 report reason options with 'Not minority-owned' selected",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s68-report-step3",
+    "position": 160,
+    "filepath": "./pages/slides/BIZ_DemoS65ReportStep3Screen.tsx",
+    "title": "Report \u2014 Step 3: Context + Anonymous Submit",
+    "description": "Phone: evidence field, anonymous toggle ON, what happens next preview",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s69-report-confirm",
+    "position": 161,
+    "filepath": "./pages/slides/BIZ_DemoS66ReportConfirmScreen.tsx",
+    "title": "Report Submitted \u2014 Community Review Begins",
+    "description": "Phone: success screen, report ID, 3-step progress indicator, identity shield",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s70-officer-text",
+    "position": 162,
+    "filepath": "./pages/slides/BIZ_DemoS67OfficerWatchText.tsx",
+    "title": "Officer Watch \u2014 Real-Time Accountability",
+    "description": "WHY slide \u2014 4 alert types, community-sourced and confirmed",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s71-officer-map",
+    "position": 163,
+    "filepath": "./pages/slides/BIZ_DemoS68OfficerWatchMapScreen.tsx",
+    "title": "Officer Watch Map \u2014 3 Active Alerts",
+    "description": "Phone: dark map with 3 color-coded officer pins, Shaw/U Street area",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s72-officer-submit",
+    "position": 164,
+    "filepath": "./pages/slides/BIZ_DemoS69OfficerSubmitScreen.tsx",
+    "title": "Submit Officer Alert \u2014 Under 30 Seconds",
+    "description": "Phone: activity type grid, auto-location, badge number optional, anonymous toggle",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s73-officer-live",
+    "position": 165,
+    "filepath": "./pages/slides/BIZ_DemoS70OfficerAlertLiveScreen.tsx",
+    "title": "Alert Live \u2014 14 Community Confirmations",
+    "description": "Phone: live alert card with confirmation count, community thread, route alternatives",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s74-unsafe-space",
+    "position": 166,
+    "filepath": "./pages/slides/BIZ_DemoS71UnsafeSpaceScreen.tsx",
+    "title": "Unsafe Space Report \u2014 Harassment at a Business",
+    "description": "Phone: 6 incident types, date/time, notify owner toggle, file report",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s75-unsafe-confirm",
+    "position": 167,
+    "filepath": "./pages/slides/BIZ_DemoS72UnsafeSpaceConfirmScreen.tsx",
+    "title": "Unsafe Space Filed \u2014 Community Caution Path",
+    "description": "Phone: incident confirmation, 1-of-3 progress bar, caution badge preview",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s76-life-journey-text",
+    "position": 168,
+    "filepath": "./pages/slides/BIZ_DemoS73LifeJourneyText.tsx",
+    "title": "Life Journeys \u2014 Your Big Moves, Mapped",
+    "description": "WHY slide \u2014 4 journey types, KinfolkAI integration",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s77-life-journey",
+    "position": 169,
+    "filepath": "./pages/slides/BIZ_DemoS74LifeJourneyScreen.tsx",
+    "title": "Life Journey \u2014 Zara Moving to DC",
+    "description": "Phone: 5-stage journey arc, 8 businesses linked, KinfolkAI journey-aware",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s78-hashtag-text",
+    "position": 170,
+    "filepath": "./pages/slides/BIZ_DemoS75HashtagText.tsx",
+    "title": "Hashtags + Location \u2014 Tag Your World",
+    "description": "WHY slide \u2014 trending strip, tappable tags, location pins, follow tags not accounts",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s79-hashtag-screen",
+    "position": 171,
+    "filepath": "./pages/slides/BIZ_DemoS76HashtagScreen.tsx",
+    "title": "Hashtags \u2014 Trending Strip + Location Tag",
+    "description": "Phone: trending hashtag strip, posts with #tags highlighted, Safe Spaces pill",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s80-safespaces-text",
+    "position": 172,
+    "filepath": "./pages/slides/BIZ_DemoS77SafeSpacesText.tsx",
+    "title": "Safe Spaces \u2014 Community-Verified Havens",
+    "description": "WHY slide \u2014 community-sourced, passive growth from posts, global reach",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s81-safespaces-screen",
+    "position": 173,
+    "filepath": "./pages/slides/BIZ_DemoS78SafeSpacesScreen.tsx",
+    "title": "Safe Spaces Directory \u2014 340 Places",
+    "description": "Phone: dark directory list, search, filter chips, tags, post counts, Add a Space CTA",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s82-impact-text",
+    "position": 174,
+    "filepath": "./pages/slides/BIZ_DemoS79CommunityImpactText.tsx",
+    "title": "Community Impact \u2014 Who's Really Showing Up",
+    "description": "WHY slide \u2014 0-100 score, 3 tiers, business owner linkage, bidirectional trust",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s83-impact-screen",
+    "position": 175,
+    "filepath": "./pages/slides/BIZ_DemoS80CommunityImpactScreen.tsx",
+    "title": "Community Impact Card \u2014 Zara Score 72",
+    "description": "Phone: full profile with CommunityImpactCard expanded \u2014 Builder tier, supports strip",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s84-opportunity-text",
+    "position": 176,
+    "filepath": "./pages/slides/BIZ_DemoS81OpportunityText.tsx",
+    "title": "Opportunity Center \u2014 Career Support Built In",
+    "description": "WHY slide \u2014 Near Me jobs, mentorship with Calendly, 3-step post/register flows",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s85-opportunity-screen",
+    "position": 177,
+    "filepath": "./pages/slides/BIZ_DemoS82OpportunityScreen.tsx",
+    "title": "Opportunity Center \u2014 Jobs + Mentorship",
+    "description": "Phone: Near Me filter, 3 job cards with pay/dist, 2 mentor cards with availability",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s86-resources-text",
+    "position": 178,
+    "filepath": "./pages/slides/BIZ_DemoS83ResourcesHubText.tsx",
+    "title": "Resources Hub \u2014 Three Tools for Community Wealth",
+    "description": "WHY slide \u2014 Marketplace, Wellness Tracker, Financial Hub explained in 3-column grid",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s87-resources-screen",
+    "position": 179,
+    "filepath": "./pages/slides/BIZ_DemoS84ResourcesHubScreen.tsx",
+    "title": "Resources Tab \u2014 Market, Wellness, Financial",
+    "description": "Phone: 3 stacked resource cards \u2014 Marketplace listings, Wellness streak, Financial goals",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s88-guidance-text",
+    "position": 180,
+    "filepath": "./pages/slides/BIZ_DemoS85GuidanceText.tsx",
+    "title": "Community Guidance \u2014 Audience Ratings + Family Mode",
+    "description": "WHY slide \u2014 4-tier scale, Family Mode toggle, granular per-type settings, badge-first",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s89-guidance-screen",
+    "position": 181,
+    "filepath": "./pages/slides/BIZ_DemoS86GuidanceScreen.tsx",
+    "title": "Family Settings \u2014 One Toggle, Full Coverage",
+    "description": "Phone: Family Mode ON, rating scale legend, custom thresholds, audience badge on post",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s90-social-text",
+    "position": 182,
+    "filepath": "./pages/slides/BIZ_DemoS87SocialLayerText.tsx",
+    "title": "Social Layer \u2014 Share With Intention",
+    "description": "WHY slide \u2014 link previews, attributed reposts, visibility picker, Saved Spots share",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s91-social-screen",
+    "position": 183,
+    "filepath": "./pages/slides/BIZ_DemoS88SocialLayerScreen.tsx",
+    "title": "Social Feed \u2014 Previews, Reposts, Visibility",
+    "description": "Phone: post with link preview card, repost with attribution, visibility picker row",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s92-showlove-text",
+    "position": 184,
+    "filepath": "./pages/slides/BIZ_DemoS89ShowLoveText.tsx",
+    "title": "Show Love \u2014 Recognition Over Popularity",
+    "description": "WHY slide \u2014 4 reaction types, Why People Show Love section, Community Impact link",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s93-showlove-screen",
+    "position": 185,
+    "filepath": "./pages/slides/BIZ_DemoS90ShowLoveScreen.tsx",
+    "title": "Show Love \u2014 3-Step Nomination Feed",
+    "description": "Phone: nomination feed with reason, experience quote, community proof count, 4 reactions",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s94-membership-text",
+    "position": 186,
+    "filepath": "./pages/slides/BIZ_DemoS91MembershipText.tsx",
+    "title": "Membership Architecture \u2014 Designed to Give Back",
+    "description": "WHY slide \u2014 5-tier table (AI pool, saved places, topics, family seat), add-on pricing, 3 core principles",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-biz-demo-s95-membership-screen",
+    "position": 187,
+    "filepath": "./pages/slides/BIZ_DemoS92MembershipScreen.tsx",
+    "title": "Family Plan \u2014 One Plan, Your Whole Family",
+    "description": "Phone: Navigator Family Plan screen \u2014 AI pool bar 18/30, 1 family member, invite CTA, feature limits grid",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-div-04-community",
+    "position": 188,
+    "filepath": "./pages/slides/DIV_04CommunityChapter.tsx",
+    "title": "Chapter Four \u2014 The Community Chapter",
+    "description": "Welcome home. 13 canonical pages.",
+    "speakerNotes": "Chapter divider."
+  },
+  {
+    "id": "lc-com-slide-01-welcome-home",
+    "position": 189,
+    "filepath": "./pages/slides/COM_CB01Cover.tsx",
+    "title": "Welcome Home.",
+    "description": "Opening cover \u2014 A Belonging Platform",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-02-more-than-directions",
+    "position": 190,
+    "filepath": "./pages/slides/COM_SlideMoreThanDirections.tsx",
+    "title": "More Than Directions",
+    "description": "Most maps tell you how to get somewhere. We help you understand what it feels like.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-03-one-platform",
+    "position": 191,
+    "filepath": "./pages/slides/COM_CB02WhatIsIt.tsx",
+    "title": "One Platform. Every Part of Belonging.",
+    "description": "People \u2192 Connection \u2192 Community \u2192 Belonging cascade",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-04-every-journey-counts",
+    "position": 192,
+    "filepath": "./pages/slides/COM_SlideEveryJourneyCounts.tsx",
+    "title": "Every Journey Counts",
+    "description": "Not only for vacations \u2014 the full range of belonging moments",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-05-changed-language",
+    "position": 193,
+    "filepath": "./pages/slides/COM_CB05WhatMakesItDifferent.tsx",
+    "title": "We Changed the Language.",
+    "description": "Instead of / Say contrast \u2014 six feature reframes",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-06-before-you-arrive",
+    "position": 194,
+    "filepath": "./pages/slides/COM_SlideBeforeYouArrive.tsx",
+    "title": "Before You Even Arrive",
+    "description": "KinfolkAI pre-arrival travel intelligence with app screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-07-meet-kinfolk",
+    "position": 195,
+    "filepath": "./pages/slides/COM_CB08MeetKinfolkAI.tsx",
+    "title": "Meet Kinfolk.",
+    "description": "Most AI tells you what exists. Kinfolk helps you understand what belongs.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-08-confidence-layer",
+    "position": 196,
+    "filepath": "./pages/slides/COM_SlideConfidenceLayer.tsx",
+    "title": "Know Before You Go",
+    "description": "The Confidence Layer \u2014 community safety intelligence with map screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-09-see-a-city",
+    "position": 197,
+    "filepath": "./pages/slides/COM_SlideSeeACity.tsx",
+    "title": "See a City Through Your Community",
+    "description": "Three-layer map \u2014 business pins, confidence layer, heritage sites",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-10-living-history",
+    "position": 198,
+    "filepath": "./pages/slides/COM_SlideLivingHistory.tsx",
+    "title": "Walk Through Living History",
+    "description": "Cultural heritage sites \u2014 not landmarks, but stories and movements",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-11-businesses-have-stories",
+    "position": 199,
+    "filepath": "./pages/slides/COM_SlideBusinessesHaveStories.tsx",
+    "title": "Businesses Have Stories",
+    "description": "Every business has a reason it exists \u2014 owner story, confidence score, verification",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-12-find-your-people",
+    "position": 200,
+    "filepath": "./pages/slides/COM_SlideFindYourPeople.tsx",
+    "title": "Find Your People",
+    "description": "Community isn't something you stumble into \u2014 Circles, feed, Safe Spaces, events",
+    "speakerNotes": ""
+  },
+  {
+    "id": "lc-com-slide-13-closing",
+    "position": 201,
+    "filepath": "./pages/slides/COM_CB11Closing.tsx",
+    "title": "Welcome Home.",
+    "description": "Home isn't always where you were born. Sometimes it's where you finally feel understood.",
+    "speakerNotes": ""
+  }
+]

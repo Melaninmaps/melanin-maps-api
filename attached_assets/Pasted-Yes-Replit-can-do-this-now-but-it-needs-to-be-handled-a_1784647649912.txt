@@ -1,0 +1,250 @@
+Yes—Replit can do this now, but it needs to be handled as a **single launch-critical recovery**, not another sequence of partial fixes.
+
+The latest audit is clear about what is still missing:
+
+* Build 93 does **not** include the multicultural language updates.
+* Multicultural test businesses have **not** been seeded.
+* Default Discovery is still overwhelmingly Black-owned because 102 of 105 businesses are tagged that way.
+* The map fix is only a suspected fix and still needs device confirmation.
+* Login was restored server-side after the Railway pool issue, but your physical-device logout → login cycle still needs to be verified. 
+
+Given the Zoom sessions were supposed to begin today and the tour is less than two weeks away, I would not break this into several more approvals. I would send Replit one direct implementation authorization with strict proof requirements.
+
+---
+
+# P0 LAUNCH RECOVERY — IMPLEMENT ALL AGREED REQUIREMENTS NOW
+
+We need to move from diagnosis to a stable, demonstrable beta immediately.
+
+The Zoom sessions were scheduled to begin today. The tour begins in less than two weeks. Supporters have been waiting for more than a month, and we currently do not have a stable app experience to show publicly.
+
+This is not a request for additional analysis. It is authorization to implement the agreed launch-critical fixes below, in controlled checkpoints, with no unrelated work.
+
+## Nonnegotiable outcome
+
+At the end of this recovery, I must be able to:
+
+1. Log in with my existing account.
+2. Log out.
+3. Log back in immediately.
+4. Close and reopen the app and retain the session.
+5. Open Discovery without an indefinite spinner.
+6. See multicultural businesses without selecting a demographic preference.
+7. Open the Map and see real Apple map tiles.
+8. See Philadelphia cultural pins representing multiple communities.
+9. Tap pins and open their preview information.
+10. Use KinfolkAI text.
+11. Use Kinfolk voice/listen and microphone input.
+12. Navigate the remaining core tabs without blank or endless loading states.
+
+Do not recommend tester expansion, Zoom demonstrations, App Review, or another paid build until these outcomes are physically demonstrated.
+
+## Workstream 1 — Authentication stability
+
+Complete and deploy the graceful Railway shutdown fix before anything is declared stable.
+
+Then verify against production:
+
+* existing email login;
+* logout;
+* immediate re-login;
+* session restoration after force-close;
+* phone login;
+* Apple login;
+* password reset;
+* correct wrong-password response;
+* server-unavailable response.
+
+Do not ask me to test until the permanent Railway fix is deployed—not merely coded or pending deployment.
+
+Return the deployment ID and confirm the new production process is running the graceful shutdown code.
+
+## Workstream 2 — Map repair
+
+Implement the approved `FullMapView.tsx` layout guard:
+
+* wait for confirmed nonzero container dimensions before mounting `MapView`;
+* use `StyleSheet.absoluteFillObject`;
+* retain all existing overlays and map data behavior.
+
+Before publishing an OTA update:
+
+* confirm Build 93’s actual EAS Update channel;
+* confirm runtime version compatibility;
+* confirm no unrelated mobile files are included.
+
+Publish only after those checks pass.
+
+If Build 93 is not subscribed to the intended channel, do not guess—prepare Build 94.
+
+The map is not “awaiting initial confirmation.” It has already failed on an iPhone 16 Pro Max. Treat it as P0 until visible tiles and pins are confirmed.
+
+## Workstream 3 — Multicultural language corrections
+
+Implement all identified language corrections from the audit.
+
+Change generic default language away from automatic “Black-owned” wording while preserving specific Black identity language where intentionally selected or historically accurate.
+
+The permanent principle is:
+
+> Celebrate specificity without assuming it.
+
+Do not change intentional identity-selection options such as a user deliberately choosing Black-owned businesses.
+
+## Workstream 4 — Multicultural demo businesses
+
+Seed the 12 approved demo businesses from the audit.
+
+Requirements:
+
+* clearly marked as demo/test records;
+* idempotent;
+* no duplicate records;
+* no ownership identity inferred for real businesses;
+* multiple ownership designations supported;
+* valid Philadelphia coordinates;
+* visible in default Discovery when no preference is selected;
+* Black-owned demo records remain included, but no longer dominate the whole experience.
+
+The production data currently shows 102 of 105 businesses as Black-owned, which is why removing preferences does not visibly change the experience. 
+
+## Workstream 5 — Philadelphia cultural pins
+
+Seed the five approved non-Black Philadelphia cultural locations:
+
+* Independence Hall — Annual Reminder Protests
+* Penn Treaty Park — Lenape Treaty Site
+* Norris Square Park — Puerto Rican Cultural Heart
+* Pennsylvania Hall Site — Women’s/Interracial Abolitionist History
+* 9th Street Italian Market — Immigrant Heritage
+
+Retain the existing Black-history sites.
+
+Each new pin must include:
+
+* verified coordinates;
+* category;
+* short significance;
+* full description;
+* reliable source;
+* era;
+* website where available;
+* idempotent production insert.
+
+The final Philadelphia map must visibly represent multiple communities, not just one. 
+
+## Workstream 6 — KinfolkAI and voice
+
+Do not treat API route status as proof.
+
+Verify on a production-matching installed app:
+
+* Kinfolk text message sends and receives a visible response;
+* valid auth token reaches the AI route;
+* Listen produces audible playback;
+* microphone permission is requested correctly;
+* speech input populates the message box;
+* voice preference changes are applied;
+* failures show actionable errors instead of “check your connection.”
+
+## Workstream 7 — Spinning pages
+
+Audit every core tab:
+
+* Discovery
+* Community
+* Safety
+* Events
+* Library
+* Resources
+* Profile
+* KinfolkAI
+
+For each:
+
+* confirm every loading path clears in `finally`;
+* add a bounded timeout;
+* add visible retry;
+* eliminate infinite spinner states;
+* return a clear error when the server is unavailable.
+
+## Implementation process
+
+Proceed in checkpoints:
+
+1. Authentication production fix deployed and verified.
+2. Multicultural data seeding completed and verified.
+3. Language changes completed.
+4. Cultural pins completed.
+5. Map OTA or Build 94 prepared.
+6. Kinfolk and loading-state fixes completed.
+7. Final production verification.
+
+Do not modify unrelated features.
+
+Do not touch:
+
+* pricing;
+* memberships;
+* payment architecture;
+* database data unrelated to the approved seeds;
+* parental controls;
+* sidebar navigation;
+* deferred social connections;
+* deferred advanced media redesign.
+
+## Required proof before I am asked to test
+
+Provide:
+
+### Server-side proof
+
+* graceful shutdown deployment live;
+* production login 200 with test account;
+* businesses query showing mixed ownership designations;
+* cultural-sites query showing all Philadelphia categories;
+* Kinfolk authenticated text and voice routes passing;
+* all critical endpoints under 3 seconds;
+* `/api/readyz` healthy.
+
+### Visual proof
+
+Provide one continuous production-matching screen recording showing:
+
+1. fresh launch;
+2. login;
+3. logout;
+4. login again;
+5. Discovery with multicultural businesses;
+6. Map with visible Apple tiles;
+7. Black-history pin;
+8. non-Black-history pin;
+9. business profile;
+10. cultural pin preview;
+11. Kinfolk text response;
+12. audible voice playback;
+13. microphone input;
+14. Community;
+15. Events;
+16. Library;
+17. Resources;
+18. Profile;
+19. force-close and session restoration.
+
+Clearly state whether the recording is from a physical device or simulator.
+
+Do not ask me to be the first person to discover whether these features work.
+
+## Final release verdict
+
+End with only one of:
+
+**🟢 LAUNCH-CRITICAL EXPERIENCE VISIBLY VERIFIED — READY FOR FOUNDER DEVICE CONFIRMATION**
+
+or
+
+**🔴 LAUNCH-CRITICAL EXPERIENCE STILL INCOMPLETE — DO NOT EXPAND TESTING**
+
+---
+
+My honest view: this is still achievable in time for the tour, but only if Replit freezes everything else and executes this recovery as one controlled launch package. The next milestone should not be “another build exists.” It should be “the complete experience is visibly working.”

@@ -1,0 +1,50 @@
+04.3 Definition of Community
+For Mapping With Melanin™, community is a network of people, institutions, businesses, places, resources, relationships, histories, and opportunities connected by one or more shared conditions and capable of producing mutual support, recognition, access, continuity, or collective benefit.
+Community may be:
+geographic;
+cultural;
+relational;
+professional;
+educational;
+historical;
+interest-based;
+identity-informed;
+purpose-based;
+temporary;
+digital;
+intergenerational;
+diaspora-connected;
+institution-centered;
+crisis-responsive.
+The Community Engine™ must not assume that all members of a shared identity experience community in the same way.
+04.4 Community Evaluation Objects
+The Engine may evaluate community at the following levels.
+Object	Example
+Person	Community member, Cultural Ambassador, organizer
+Business	Restaurant, retailer, service provider
+Event	Festival, workshop, networking gathering
+Organization	Nonprofit, association, cultural institution
+Neighborhood	Local geographic community
+City	Metropolitan or municipal community environment
+Resource	Food bank, scholarship program, legal clinic
+Opportunity	Job, grant, mentorship, contract
+Institution	HBCU, museum, foundation, historic organization
+Digital space	Kinfolk Circle, community discussion, online group
+Network	Business collective, alumni group, diaspora network
+Platform area	Local feed, topic community, resource channel
+The scoring interpretation changes by object type.
+A business is not expected to perform the same community role as a city.
+An event is not expected to provide the same continuity as an institution.
+04.5 Core Evaluation Dimensions
+The Community Engine™ returns a normalized score from 0 to 100 based on seven dimensions.
+Dimension	Baseline weight
+Welcoming Access	15%
+Meaningful Connection	17%
+Reciprocity	17%
+Community Support	16%
+Voice & Influence	13%
+Continuity & Return	12%
+Stewardship & Shared Benefit	10%
+Total	100%
+These are baseline weights.
+The Context Engine™ and approved Weight Registers may adjust them by context.

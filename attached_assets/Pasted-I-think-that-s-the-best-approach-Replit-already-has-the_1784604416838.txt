@@ -1,0 +1,88 @@
+I think that's the best approach.
+
+Replit already has the development environment and can use tools that aren't available in the Railway shell. More importantly, they can perform the test without changing any production code.
+
+I'd send them this exact request:
+
+---
+
+# P0 Production DB Probe Verification (Read-Only)
+
+**Authentication impact:** NONE
+
+**Code changes:** NONE
+
+**Deployments:** NONE
+
+**Database changes:** NONE
+
+## Objective
+
+Run the existing production database probe using the **production** `DB_PROBE_KEY` and determine whether the production API process can successfully execute a database query.
+
+The Railway console does not contain `curl`, so use another method (Node.js, your local tooling, or another equivalent client).
+
+## Requirements
+
+1. Use the **production** `DB_PROBE_KEY` from the Railway API service.
+2. Call:
+
+```
+GET https://www.mappingwithmelanin.com/api/db-probe
+```
+
+with the required `x-probe-key` header.
+
+3. Return the complete JSON response (redact secrets if necessary).
+
+4. If the probe fails, return:
+
+   * HTTP status
+   * response body
+   * timeout duration (if applicable)
+   * any runtime exception
+
+5. If the probe reports `connected: false`, include:
+
+   * error name
+   * error code
+   * error message
+   * elapsed time
+   * host category
+
+6. If the probe reports `connected: true`, immediately test:
+
+* Registration
+* Login
+* `/api/businesses?limit=1`
+* `/api/cultural-sites?limit=1`
+
+and identify exactly which query or endpoint hangs.
+
+## Evidence Required
+
+Do not infer the cause.
+
+Support every conclusion with:
+
+* runtime logs,
+* probe output,
+* or production responses.
+
+Do not declare a root cause without direct runtime evidence.
+
+---
+
+I also want them to answer one additional question that has become very important after everything we've investigated:
+
+> **If the probe succeeds, why do registration, login, businesses, and cultural-sites still time out from the production app?**
+
+That answer will tell us whether the problem is:
+
+* the database connection,
+* the application's query execution,
+* middleware,
+* connection pooling,
+* or something else.
+
+I would **not authorize another build** until this question is answered with evidence. Once we have that, we'll know whether we're dealing with infrastructure or application logic, and we won't be spending additional build credits guessing.

@@ -1,0 +1,72 @@
+Their answer to the audit question is fair and appropriately candid. The methodology gap is real: **API checks proved the plumbing worked, but they did not prove the member journey worked.**
+
+However, I would **not accept the password-manager explanation yet**. Replit is still describing it as “most likely” without evidence from your specific failed attempt. We should test that hypothesis rather than treat it as the root cause.
+
+## Best next step
+
+Have Replit write and run the **Playwright end-to-end browser test first**.
+
+That is better than asking you to keep manually retrying because it gives us a repeatable test that becomes part of every future deployment.
+
+Send this:
+
+> Please write and run the Playwright production test first.
+>
+> The test must use the rendered web interface—not direct API calls—and must:
+>
+> 1. Open `/login`.
+> 2. Register with a generated unique email and a manually specified known password.
+> 3. Assert that registration results in an authenticated state.
+> 4. Log out using the actual UI.
+> 5. Clear local storage and cookies only after logout, as appropriate to simulate a returning member.
+> 6. Return to `/login`.
+> 7. Enter the exact same email and password without browser autofill.
+> 8. Assert that login succeeds and the authenticated user endpoint is reflected in the UI.
+> 9. Refresh the page and confirm the session persists.
+> 10. Run the password-reset flow through the UI and confirm the new password works.
+>
+> Capture:
+>
+> * screenshots at each step;
+> * browser console errors;
+> * failed network requests;
+> * HTTP status and response body for registration, login, current-user, and reset completion;
+> * the exact point of failure, if any.
+>
+> Do not modify production code merely to make the test pass. Report the result and evidence first.
+>
+> Also clarify whether this test runs safely against production using clearly identified temporary test accounts and whether those accounts will be removed afterward.
+
+## Why this is the right order
+
+There are three possibilities:
+
+1. **Playwright passes consistently.**
+   That supports the password/autofill hypothesis, though we should still improve the browser experience and error recovery.
+
+2. **Playwright reproduces your failure.**
+   Then we have a genuine web client or transport defect with exact logs and screenshots.
+
+3. **Playwright is intermittent.**
+   Then the issue may be response loss, timeout, race condition, or deployment/network instability—something curl would not expose.
+
+## One concern in Replit’s explanation
+
+They said:
+
+> `queryClient.invalidateQueries()` “will not throw.”
+
+That is too absolute. Depending on configuration, active observers, network behavior, and surrounding code, async work can still participate in a rejected flow or expose another client-side exception. They should let the browser trace establish what happened rather than reason it away solely from source inspection.
+
+## Build question
+
+Their deployment distinction is correct:
+
+* Any fix in `artifacts/web/src/pages/login.tsx` requires a **web rebuild and Railway deployment**.
+* A server-only fix requires a **Railway backend deployment**.
+* The Apple nonce fix remains a **new mobile/EAS build** requirement.
+* The older tester build will not contain the Apple fix.
+
+So our immediate instruction should be:
+
+**Run the browser-level production test first. Do not patch yet.** Once we see whether it passes or reproduces the failure, we can decide whether the next action is a code fix, a transport investigation, or simply a clearer password-manager-safe user flow.

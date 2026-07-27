@@ -1,0 +1,79 @@
+This screenshot is exactly what we needed.
+It tells us something much more specific than before.
+
+The good news
+You are no longer failing authentication.
+Before, the app said:
+
+"Login failed. Please try again."
+Now it says:
+"Signed in but could not save session (Error)."
+That means:
+✅ Your email is correct.
+
+✅ Your password is correct.
+
+✅ The server authenticated you.
+
+✅ The server returned a session token.
+
+The failure happens after login succeeds.
+
+Where the failure is
+Based on the message, the sequence is now:
+User signs in ✅
+Server returns HTTP 200 ✅
+Token received by app ✅
+App tries to save the session locally ❌
+Session save fails
+User stays on the login screen
+This narrows the problem considerably.
+What Replit should investigate
+I would send them this exact message:
+The new diagnostic build has isolated the issue.
+Authentication is successful.
+
+The app now displays:
+
+"Signed in but could not save session (Error)."
+This means:
+/api/auth/login-email returns HTTP 200.
+The session token is received.
+The failure occurs after authentication during local session persistence.
+Please investigate only the client-side session storage flow.
+Specifically verify:
+
+Does SecureStore.setItemAsync() throw? If so, what is the exact exception?
+Is the token null or undefined before calling SecureStore?
+Is the key name consistent everywhere (session, token, etc.)?
+After saving, does fetchUser() execute, or does execution stop before it?
+Is SecureStore properly configured for the Android build profile?
+Are there any Android permission or encryption errors in Logcat related to Expo SecureStore?
+Please include:
+the exact exception name,
+exception message,
+and stack trace.
+Do not modify authentication or the server. Focus only on why the authenticated session cannot be written to local storage.
+Why I'm encouraged
+This is actually a significant step forward.
+Over the past day we've ruled out:
+
+❌ Wrong password
+❌ Missing account
+❌ Wrong database
+❌ Wrong API endpoint
+❌ GoDaddy routing
+❌ Railway deployment
+❌ Login endpoint
+❌ Session creation
+What's left is one client-side step: persisting the authenticated session on the device.
+That's a much smaller problem than "login doesn't work."
+
+One thing I want Replit to check before changing any code
+Ask them to answer this question first:
+Is this failure occurring inside Expo SecureStore itself, or inside the code immediately after SecureStore returns? Please identify the exact line number where execution stops.
+That answer will tell us whether the issue is:
+the storage API,
+the token value,
+or the code that runs after saving.
+At this point, you're no longer chasing a broad "login bug." You're debugging a single, well-defined step in the authentication flow, which is a much more tractable problem.

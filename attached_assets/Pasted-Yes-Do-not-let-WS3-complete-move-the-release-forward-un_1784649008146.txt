@@ -1,0 +1,88 @@
+Yes. Do **not** let “WS3 complete” move the release forward until login is reverified three ways against production and on the actual TestFlight build.
+
+Send Replit this:
+
+> # P0 LOGIN RE-VERIFICATION — TRIPLE CHECK REQUIRED
+>
+> Before any further implementation is considered complete, re-verify login end to end.
+>
+> I have not yet received visual proof that the app works after the latest production changes.
+>
+> ## Check 1 — Production API
+>
+> Against `https://www.mappingwithmelanin.com`:
+>
+> * existing email/password login → expect 200 + token;
+> * wrong password → expect 401 with correct message;
+> * nonexistent account → expect 401 with correct message;
+> * logout → expect 200;
+> * immediate re-login → expect 200;
+> * session restore with saved token → expect 200 + correct user;
+> * `/api/readyz` healthy before and after the sequence.
+>
+> Return exact status codes and timings.
+>
+> ## Check 2 — Production-matching mobile environment
+>
+> Using the exact Build 93 code and production environment:
+>
+> * enter existing account credentials;
+> * confirm request leaves the app;
+> * confirm exact endpoint and payload shape;
+> * confirm response reaches the app;
+> * confirm the app stores the new token;
+> * confirm navigation reaches the authenticated home screen;
+> * log out;
+> * log back in immediately;
+> * force-close and reopen;
+> * confirm session restoration.
+>
+> Confirm that no generic “Login failed” message appears for a successful login.
+>
+> ## Check 3 — Actual device proof
+>
+> Provide one uninterrupted screen recording from the actual TestFlight build, or state plainly that you cannot produce physical-device proof.
+>
+> The recording must show:
+>
+> 1. app opened while logged out;
+> 2. email entered;
+> 3. password entered with the characters obscured;
+> 4. successful login;
+> 5. home screen visible;
+> 6. logout;
+> 7. immediate successful login again;
+> 8. force-close;
+> 9. reopen with session restored.
+>
+> Do not expose credentials or tokens.
+>
+> ## Additional checks
+>
+> Confirm:
+>
+> * graceful shutdown fix is deployed, not merely coded;
+> * current Railway deployment ID;
+> * current Git commit;
+> * pool counts before and after the test;
+> * no 500s during the sequence;
+> * no stale or expired session reused;
+> * no account lockout triggered;
+> * no schema or database write failure;
+> * no environment mismatch.
+>
+> ## Release rule
+>
+> Do not mark login as resolved until all three checks pass.
+>
+> End with:
+>
+> **🟢 LOGIN TRIPLE-VERIFIED — API, MOBILE FLOW, AND DEVICE EVIDENCE PASS**
+>
+> or
+>
+> **🔴 LOGIN STILL UNVERIFIED — DO NOT PROCEED**
+>
+> Authentication changes are not authorized unless a failure is found and the exact cause is reported first.
+
+The language work can continue in parallel, but it should not be treated as evidence that the app is usable. Login must be proven separately.

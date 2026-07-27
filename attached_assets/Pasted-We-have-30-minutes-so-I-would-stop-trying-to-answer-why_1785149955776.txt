@@ -1,0 +1,126 @@
+We have 30 minutes, so I would stop trying to answer "why" and instead drive to a resubmission.
+
+### Based on the report you uploaded, here's the decision.
+
+The investigation concludes that:
+
+* Apple Sign-In implementation appears correct.
+* Apple secrets on Railway are present.
+* The reviewer hit a period where **all authentication methods failed**, not just Apple Sign-In, because the database became unavailable during that window.  
+
+If that diagnosis is correct, then Build 97 should be extremely small.
+
+## I would tell Replit to do exactly four things today
+
+### 1. Implement the retry logic
+
+Implement only the database resilience fix on:
+
+* `POST /api/auth/apple`
+* `POST /api/auth/login-email`
+* `POST /api/auth/register`
+
+The report specifically recommends a small retry on transient database failures rather than changing Apple Sign-In itself. 
+
+---
+
+### 2. Create the Apple review account
+
+Apple explicitly asked for this.
+
+Have Replit:
+
+* create the production review account
+* verify it works
+* give you:
+
+  * username
+  * password
+  * instructions for App Store Connect
+
+Do not submit without this.
+
+---
+
+### 3. Verify the Apple key
+
+You personally should log into Apple Developer.
+
+Go to:
+
+Developer Portal → Certificates, Identifiers & Profiles → Keys
+
+Verify:
+
+**Key ID**
+`Z2NB4XAZY7`
+
+Status:
+
+✅ Active
+
+The report says this is the one remaining manual verification. 
+
+---
+
+### 4. Run a release gate
+
+Do **not** accept "it works."
+
+Require evidence.
+
+Specifically:
+
+* 20 new Apple registrations
+* 20 Apple logins
+* 20 email registrations
+* 20 email logins
+
+All against production.
+
+No failures.
+
+---
+
+# I would NOT let them
+
+❌ Rewrite Apple authentication
+
+❌ Rewrite sessions
+
+❌ Rewrite Better Auth
+
+❌ Rewrite nonce generation
+
+❌ Change Apple token exchange
+
+The report itself concludes those parts are architecturally correct. 
+
+---
+
+# My biggest concern
+
+One thing still bothers me.
+
+The report attributes this to an intermittent Railway Postgres outage. That is plausible based on the logs they found. 
+
+However, before resubmitting I would ask Replit one final question:
+
+> **Can you reproduce this failure on demand, or is the outage hypothesis based solely on the timing of the logs?**
+
+If they **cannot** reproduce it, the retry logic is still a sensible resilience improvement—but I would want them to say that clearly rather than presenting the outage as conclusively proven.
+
+## Your assignment for the next 30 minutes
+
+Send Replit this:
+
+> **Please implement only the Build 97 approval scope.**
+>
+> 1. Add the database retry logic described in the forensic report to the three authentication routes.
+> 2. Create and verify the Apple review account.
+> 3. Confirm the Apple key status assumptions are still valid and remind me of the one manual Apple Developer check.
+> 4. Execute a release gate consisting of 20 consecutive successful Apple registrations, 20 Apple logins, 20 email registrations, and 20 email logins against production.
+> 5. Return evidence (logs and results), not conclusions.
+> 6. Do not implement any other Build 97 features, refactors, or architecture changes until Apple approval is obtained.
+
+If they can complete those six items successfully today, you'll be in a much stronger position to rebuild confidence in the submission and get Build 97 back to Apple as quickly as possible.

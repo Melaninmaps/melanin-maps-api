@@ -1,0 +1,86 @@
+This is **not fully cleared yet**. The endpoint now responds, but the report introduces three serious inconsistencies that must be reconciled before we treat production as healthy.
+
+Most importantly:
+
+* Earlier, the confirmed production waitlist count was **60**.
+* Now Railway returns **4**, described as “the 4 Neon rows” being seeded.
+* The report shifts from **Neon production** to **Railway Postgres** without explaining which database is now canonical.
+
+That creates a real risk that the API is now connected to a different or older database and only showing four seeded records—not your recovered production data.
+
+Also concerning:
+
+* `static-server.mjs` now alters production schema and seeds records **on every deployment**.
+* Railway is reportedly running a **July 19 bundle**, not clearly the frozen RC1-compatible backend.
+* A diagnostic endpoint remains deployed in production, even if probe-key protected.
+
+Send Replit this before starting the builds:
+
+> **PRODUCTION DATABASE RECONCILIATION — READ ONLY**
+>
+> The endpoints now return successfully, but production is not yet cleared because the waitlist count changed from 60 confirmed records to 4 records.
+>
+> Do not seed, migrate, delete, import, or modify any additional data.
+>
+> Please answer conclusively:
+>
+> 1. What is the single canonical production database currently used by `www.mappingwithmelanin.com`?
+>
+>    * Neon PostgreSQL, or
+>    * Railway PostgreSQL?
+>
+> 2. Show the redacted hostname, database name, and database provider currently used by the live Railway API service.
+>
+> 3. Explain why the prior production query returned 60 waitlist records but the live endpoint now returns 4.
+>
+> 4. Confirm whether the four records were copied or seeded from Neon into Railway PostgreSQL.
+>
+> 5. Identify where the other 56 records currently exist.
+>
+> 6. Confirm whether user accounts, sessions, businesses, reviews, posts, messages, and waitlist records are all using the same production database—or whether production data is split between Neon and Railway.
+>
+> 7. Provide read-only counts from the database currently serving the live API for:
+>
+>    * users;
+>    * sessions;
+>    * waitlist_signups;
+>    * businesses;
+>    * community_posts;
+>    * reviews;
+>    * messages.
+>
+> 8. Provide the same counts from the other database, if it still exists.
+>
+> 9. Confirm exactly what `static-server.mjs` changes on every deployment.
+>
+> 10. Confirm that its seed operation is fully idempotent and cannot overwrite, duplicate, downgrade, or recreate deleted production records.
+>
+> 11. Explain why a July 19 `dist/index.mjs` bundle is currently deployed instead of the latest audited backend source.
+>
+> 12. Confirm whether the P0/P1 security fixes and the latest KinfolkAI changes are present in the live Railway bundle.
+>
+> 13. Confirm whether `/api/waitlist-diag` is required after diagnosis. Recommend removing or disabling it before public launch unless it has a permanent operational purpose.
+>
+> End with:
+>
+> * **Canonical production database**
+> * **Location of the missing 56 waitlist records**
+> * **Whether production data is split**
+> * **Whether the live backend contains all audited security fixes**
+> * **Green / Yellow / Red recommendation**
+>
+> Do not make further changes until I approve the reconciliation plan.
+
+## Build decision
+
+You may queue the **EAS builds from frozen RC1** because the mobile code does not depend on this database reconciliation.
+
+However, I would not submit either build for review yet. First confirm:
+
+1. Your login still resolves to the correct administrator user.
+2. Existing tester profiles still exist.
+3. The 60 waitlist records have not been lost or stranded.
+4. The live backend contains the P0/P1 security fixes.
+5. The production API is not accidentally serving an older backend bundle.
+
+The endpoint responding is progress. But **four records instead of sixty is not a successful final state until we know exactly where the data went.**

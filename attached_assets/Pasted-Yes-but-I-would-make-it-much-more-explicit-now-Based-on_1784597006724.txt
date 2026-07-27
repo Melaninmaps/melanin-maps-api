@@ -1,0 +1,95 @@
+Yes—but I would make it much more explicit now.
+
+Based on everything we've worked through, Replit **should** know that authentication is effectively frozen, but because you've had to revisit LB-008 and the Under-13 gate, I don't want them to assume they have permission to make further auth changes while fixing the map.
+
+I would establish an **Authentication Freeze** for RC2.
+
+Send Replit this:
+
+---
+
+# RC2 AUTHENTICATION FREEZE
+
+Effective immediately, authentication is frozen for RC2.
+
+The following systems are **not** to be modified unless I specifically authorize an authentication work item.
+
+Do **NOT** change:
+
+* Better Auth configuration
+* Login flow
+* Email login
+* Phone login
+* Apple Sign-In
+* Logout logic
+* Session restoration
+* Session expiration
+* SecureStore handling
+* Token generation
+* Token validation
+* Refresh tokens
+* Password reset
+* Registration flow
+* User session middleware
+* RevenueCat authentication
+* Protected route middleware
+* Authentication environment variables
+
+The only exception is if an authentication issue is discovered during testing that is:
+
+* reproducible,
+* documented,
+* and approved by me as a separate work item.
+
+Map repairs, cultural pins, Discovery improvements, UI polish, and content seeding **must not** modify authentication.
+
+If any proposed change touches an authentication file or authentication dependency, stop and request approval before making the change.
+
+For every implementation proposal going forward, include:
+
+**Authentication impact:** None
+
+or
+
+**Authentication impact:** Yes (approval required before implementation).
+
+---
+
+## I would also add one more rule
+
+Because you've now had a few release candidates, I'd ask Replit to include this section in **every** implementation report:
+
+```
+Files modified:
+...
+
+Files intentionally NOT modified:
+- Authentication
+- Membership
+- Payments
+- Database schema
+- Kinfolk memory
+- Notifications
+```
+
+That makes it immediately obvious whether a change stayed within scope.
+
+## My recommendation
+
+For the map work, the scope should be limited to things like:
+
+* `FullMapView.tsx`
+* map-related components
+* cultural-site rendering
+* business marker rendering
+* map services
+* map seed data
+* map navigation (only if required for the map)
+
+If I saw **`auth.tsx`**, **`login.tsx`**, or any authentication middleware in a map pull request, I would immediately stop the implementation and ask why it's being touched.
+
+At this stage of RC2, the safest mindset is:
+
+> **One problem. One scope. One build.**
+
+That's how you'll regain confidence after the time lost today and avoid introducing regressions while fixing the map.

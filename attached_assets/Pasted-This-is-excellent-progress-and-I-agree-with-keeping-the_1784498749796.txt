@@ -1,0 +1,146 @@
+This is excellent progress, and I agree with **keeping the mobile builds paused** until admin access is verified.
+
+There are **two things I would change** before you refresh a Railway token or redeploy.
+
+---
+
+# 1. Do NOT normalize `ADMIN_EMAILS` separately in seven files
+
+This is the only architectural concern I have.
+
+Right now Replit changed seven different route files to do:
+
+```ts
+ADMIN_EMAILS
+  .map(e => e.trim().toLowerCase())
+```
+
+That works today, but it creates **seven copies of the same security logic**.
+
+Instead, ask Replit to centralize it.
+
+For example:
+
+```ts
+const normalizedAdminEmails = parseAdminEmails();
+```
+
+or
+
+```ts
+isAdminEmail(user.email)
+```
+
+Then every admin route calls the same helper.
+
+Why?
+
+If six months from now you change how admin authorization works, you only want **one place** to update.
+
+---
+
+# 2. The `/api/admin/check` behavior is actually good
+
+I noticed something important.
+
+Earlier we expected
+
+* 401
+* 403
+* 200
+
+But Replit discovered the endpoint intentionally returns
+
+```json
+{ "isAdmin": false }
+```
+
+for non-admins and unauthenticated users.
+
+That isn't necessarily wrong.
+
+It's actually a common pattern because it doesn't expose authorization details.
+
+I would **keep that behavior** provided:
+
+* admin-only endpoints still return 403/401 appropriately
+* `/api/admin/check` is only a capability check
+
+I'd ask Replit to document that.
+
+---
+
+# One more thing I'd add
+
+Before deployment I'd ask them to verify one additional scenario.
+
+Suppose you are already logged in.
+
+You manually type:
+
+```
+/login?returnTo=/admin
+```
+
+The app should **not** force another login.
+
+It should detect:
+
+```
+already authenticated
+```
+
+↓
+
+```
+already admin
+```
+
+↓
+
+```
+go directly to /admin
+```
+
+without showing the login screen.
+
+That produces a much smoother admin experience.
+
+---
+
+# Regarding Railway
+
+I would **not generate a brand-new Railway token immediately**.
+
+Instead I'd first determine whether you actually need one.
+
+Since your project is already connected to GitHub, I would ask Replit:
+
+> Can this deployment be completed through the normal GitHub-connected Railway pipeline without requiring a personal Railway token?
+
+If the answer is yes (and I suspect it may be), I'd use that route rather than creating another long-lived credential.
+
+---
+
+# My recommendation
+
+I would tell Replit:
+
+> Step 1 is approved with two changes before deployment:
+>
+> 1. Centralize ADMIN_EMAILS normalization into one shared helper rather than duplicating it across seven route files.
+> 2. Document `/api/admin/check` as an admin-capability endpoint returning `{ isAdmin: false }` for unauthenticated and non-admin users if that is the intended design, while confirming that protected admin APIs still enforce authorization correctly.
+>
+> Also verify that an already-authenticated administrator visiting `/login?returnTo=/admin` is redirected immediately to `/admin` without being prompted to log in again.
+>
+> Finally, confirm whether the deployment can proceed through the existing GitHub→Railway pipeline before requesting a new Railway token.
+
+---
+
+I think we're very close. Once the admin flow is verified, you'll have addressed the three biggest launch risks we uncovered:
+
+* ✅ Authentication
+* ✅ Session persistence
+* ⏳ Administrator access (final verification)
+
+After that, I'd be comfortable moving on to Community Beta 3 founder testing.

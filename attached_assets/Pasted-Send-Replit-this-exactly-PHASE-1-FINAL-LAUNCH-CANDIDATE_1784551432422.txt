@@ -1,0 +1,211 @@
+Send Replit this exactly:
+
+> **PHASE 1 — FINAL LAUNCH CANDIDATE AUDIT**
+>
+> Perform a complete **read-only go/no-go audit** of the current launch candidate before any new iOS or Android build is created.
+>
+> Do not modify code, database schema, production data, environment variables, authentication, sessions, roles, build numbers, or deployments during this audit.
+>
+> Cross-reference the current source, latest deployed web bundle, mobile source, production configuration, and all previously approved launch-critical specifications.
+>
+> ## 1. Authentication and identity
+>
+> Confirm:
+>
+> * web, Android, and iOS use the same production Railway API and production database;
+> * one canonical user ID is used across all platforms;
+> * email/password login works;
+> * Apple/OIDC login linking does not create duplicate users;
+> * logout works;
+> * session restoration works after app restart and hard refresh;
+> * password reset works;
+> * admin authorization works;
+> * Admin ↔ Community navigation works;
+> * no stale-bundle or conflicting-token issue remains;
+> * no authentication files were changed during last night’s KinfolkAI work.
+>
+> Report any remaining duplicate-account risk separately.
+>
+> ## 2. KinfolkAI
+>
+> Verify last night’s launch-safe package is present in the exact source that will be compiled:
+>
+> * “Kinfolk’s here. Let’s map it out.”
+> * universal everyday-question support;
+> * Compassionate Intelligence and permission-aware follow-up;
+> * “Context before conclusions. Curiosity before confidence.”
+> * reversible recommendations;
+> * honest capability boundaries;
+> * conditional live-weather behavior;
+> * active-context clarification;
+> * separate personal-versus-business budgeting framing;
+> * tier-depth enforcement for business owners;
+> * six starter chips on both iOS and Android.
+>
+> Test at minimum:
+>
+> * math/homework;
+> * professional email;
+> * job application;
+> * personal budgeting;
+> * business budgeting;
+> * travel;
+> * relocation;
+> * minority-owned business discovery;
+> * safety;
+> * weather with a location;
+> * weather without a location;
+> * ambiguous personal/business intent.
+>
+> Confirm it does not invent tutors, scholarships, reviews, live data, or unavailable integrations.
+>
+> ## 3. Core mobile features
+>
+> Verify the release source for both platforms:
+>
+> * onboarding;
+> * profile setup;
+> * Discover;
+> * map and business pins;
+> * business profiles;
+> * business submission;
+> * Trust & Audience Classification;
+> * events and RSVP;
+> * Community;
+> * Library;
+> * saved places/favorites;
+> * messages;
+> * safety surveys and reports;
+> * membership/tier display;
+> * push-notification registration;
+> * account/profile controls.
+>
+> Identify every user-visible stub, placeholder, “coming soon” screen, broken link, dead route, or feature that silently fails.
+>
+> Distinguish between:
+>
+> * launch blocker;
+> * acceptable clearly labeled future feature;
+> * dead code not used by the release build.
+>
+> ## 4. Trust & Audience Classification
+>
+> Confirm:
+>
+> * new database columns exist in production;
+> * owner Trust Profile saves and reloads;
+> * public profiles display correct audience and environment information;
+> * unknown/default values do not show misleading badges;
+> * community-listed and owner-confirmed statuses are accurately labeled;
+> * KinfolkAI uses only available classification data;
+> * no safety reporter is forced to complete business metadata.
+>
+> ## 5. Waitlist
+>
+> Audit only—do not import or delete anything.
+>
+> Confirm:
+>
+> * public waitlist submission route works against Railway production;
+> * duplicate email handling is safe;
+> * successful submission gives visible confirmation;
+> * entries appear in the production Admin Waitlist tab;
+> * existing admin actions and status meanings;
+> * recovered 55-record dataset remains staged but not imported;
+> * backup/import work has not partially modified production;
+> * welcome, beta, or launch emails will not fire unintentionally.
+>
+> State clearly whether waitlist defects block store submission or only launch activation.
+>
+> ## 6. Admin
+>
+> Confirm:
+>
+> * Admin Dashboard loads;
+> * Admin ↔ Community navigation works both ways;
+> * Users, businesses, waitlist, moderation, verification, and other existing tabs load;
+> * server-side admin authorization protects direct URLs;
+> * regular users cannot see or access admin controls;
+> * no production action is available without appropriate authorization.
+>
+> List important missing super-admin permissions separately. Do not build them during this audit.
+>
+> ## 7. Production services and configuration
+>
+> Verify:
+>
+> * Railway API health;
+> * production database connection;
+> * Stripe initialization and webhook status;
+> * RevenueCat configuration and webhook secret status;
+> * Google Maps configuration for web and Android;
+> * Apple Maps on iOS;
+> * Object Storage;
+> * Expo push notifications;
+> * email delivery through Resend;
+> * logging and error redaction;
+> * required environment variables;
+> * flight and transit integrations.
+>
+> For every missing secret or failing service, state the exact user impact and whether it blocks build, submission, or only that feature.
+>
+> ## 8. Store and build readiness
+>
+> Report:
+>
+> * current app version;
+> * current iOS build number;
+> * current Android version code;
+> * proposed next numbers;
+> * EAS auto-increment status;
+> * Android signing certificate and upload key status;
+> * whether Google has approved the upload-key reset;
+> * iOS signing/certificate status;
+> * production API domain embedded in each build;
+> * privacy-policy and Terms URLs;
+> * app icons, splash screens, package identifiers, associated domains, permissions, and store metadata alignment.
+>
+> Do not build or submit anything.
+>
+> ## 9. Regression and code-quality checks
+>
+> Run:
+>
+> * TypeScript checks;
+> * API build;
+> * mobile static/build validation available without generating store binaries;
+> * route-reference checks;
+> * unused/dead platform-specific file review;
+> * migration/schema consistency check;
+> * search for unresolved TODO, FIXME, mock, placeholder, demo, and hard-coded test values in user-facing release paths.
+>
+> Do not interpret every TODO as a blocker. Explain whether it is reachable by users.
+>
+> ## 10. Final report
+>
+> Provide:
+>
+> 1. Verified working items.
+> 2. Launch blockers ranked P0/P1/P2.
+> 3. Store-submission blockers versus public-launch blockers.
+> 4. Exact files or configurations involved in each issue.
+> 5. Smallest safe repair for each blocker.
+> 6. Estimated regression surface.
+> 7. What should explicitly be deferred.
+>
+> End with separate recommendations:
+>
+> * **Web:** Green / Yellow / Red
+> * **Android:** Green / Yellow / Red
+> * **iOS:** Green / Yellow / Red
+> * **Waitlist for public launch:** Green / Yellow / Red
+>
+> Then give exactly one overall decision:
+>
+> * **🟢 READY TO BUILD**
+> * **🟡 READY AFTER LISTED FIXES**
+> * **🔴 DO NOT BUILD**
+>
+> Do not implement anything until I review the report and explicitly approve the next step.
+
+This gives us a clean baseline before touching either store build.

@@ -1,0 +1,41 @@
+Yes — this plan creates **another iOS build**, but it is a **separate preview/testing build**, not a replacement for Build 94 and not a production release.
+
+The purpose is to stop testing unproven fixes on your production TestFlight channel.
+
+One important correction: the statement that it will “coexist as a separate app” is only true if the preview profile uses a **different iOS bundle identifier**. A different EAS channel alone does not create a separate app icon. With the same bundle identifier, installing the preview build may replace or conflict with the TestFlight app.
+
+Before starting the build, ask Replit to confirm:
+
+> **PREVIEW BUILD SAFETY CHECK — DO NOT BUILD YET**
+>
+> Confirm whether the preview profile resolves to a different iOS bundle identifier from production.
+>
+> Production bundle ID: report the identifier.
+> Preview bundle ID: report the identifier.
+>
+> To coexist as a separate app, preview must use a distinct identifier, such as:
+>
+> `com.melaninmaps.app.preview`
+>
+> Also confirm:
+>
+> * the preview app has a visibly different name, such as **MWM Preview**;
+> * it uses the `preview` EAS channel;
+> * it points to the intended production or test API environment;
+> * local iOS credentials exist for that preview bundle ID;
+> * no production signing credentials, entitlements, push configuration or associated domains will be overwritten;
+> * the only functional code change is `pointerEvents="none"`;
+> * the production channel remains untouched.
+>
+> Return PASS/FAIL before running the build.
+
+Also, `credentialsSource: "local"` may create extra setup work. Replit must prove the required local iOS credentials are present and valid. Otherwise the build will fail. For a one-off preview build, EAS-managed credentials are often simpler, but they should not change this blindly.
+
+So the answer is:
+
+* **Yes:** one preview binary would be built.
+* **No:** it would not be submitted to Apple for public review.
+* **No:** it should not affect the production OTA channel.
+* **Only proceed after confirming a separate bundle ID and valid credentials.**
+
+Given the repeated production regressions, building a proper isolated preview app is the safer choice.

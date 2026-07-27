@@ -1,0 +1,76 @@
+This is a good result. LB-010B stayed narrow, the map crash risk was addressed, and Replit correctly separated **code fixes** from **content and UX gaps**.
+
+I would approve moving to **LB-018** next.
+
+Before that, I would make two backlog adjustments:
+
+* **MAP-001 should be promoted to “Must seed before launch.”** One Philadelphia heritage pin is too thin for a Philadelphia-centered beta. At minimum, add the African American Museum in Philadelphia, Marian Anderson Historical Residence, and Johnson House Historic Site before the final build or launch data freeze.
+* **MAP-002 should be “Should fix before launch,” not RC3 by default.** A user tapping Howard University should reach Howard University, not a broad HBCU list. It is a small, high-value usability correction, but it should remain separate from LB-010B and follow the normal micro-fix process.
+
+Send Replit:
+
+> **LB-010B is accepted as implemented, pending physical-device verification.**
+>
+> Update backlog priorities:
+>
+> * MAP-001 — Missing Philadelphia cultural sites: **Must seed before launch**
+> * MAP-002 — Cultural map pin should open the selected site directly: **Should fix before launch**
+> * MAP-003 — Missing diaspora categories: **Post-launch content expansion**
+>
+> Do not implement MAP-002 yet. Preserve it as a separate micro-fix requiring explicit approval.
+>
+> Please begin the **LB-018 pre-implementation review**.
+>
+> Requirements:
+>
+> 1. Locate the exact shared KinfolkAI empty-state component used by both iOS and Android.
+>
+> 2. Show the current copy and exact proposed diff before changing code.
+>
+> 3. Confirm all static starter-prompt chips are removed.
+>
+> 4. Confirm contextual follow-up suggestions generated after Kinfolk replies remain unchanged.
+>
+> 5. Add exactly:
+>
+>    **KinfolkAI™**
+>    **Helping you navigate what matters.**
+>
+>    **Kinfolk’s here. Let’s map it out.**
+>
+>    **Ask me anything. I’ll always be honest about what I know—and what I don’t.**
+>
+>    Placeholder:
+>
+>    **What’s on your mind today?**
+>
+> 6. Do not modify:
+>
+>    * system prompts;
+>    * AI behavior;
+>    * voice logic;
+>    * authentication;
+>    * APIs;
+>    * memory;
+>    * membership tiers;
+>    * navigation.
+>
+> 7. Confirm the layout fits small iPhones and Android screens without clipping or keyboard overlap.
+>
+> 8. Show the planned exact diff before implementation.
+>
+> Do not implement until I approve the diff.
+
+One caution: the report says “Apple base tiles render normally” under code status, but that cannot be confirmed from source alone. Keep that item marked **pending physical iPhone verification** until the next build is installed.
+
+So the sequence remains:
+
+1. LB-008 implemented.
+2. LB-010B implemented.
+3. LB-018 review and implementation.
+4. Under-13 gate review and implementation.
+5. Server deployment.
+6. Source regression report.
+7. Build iOS 92 and Android 66.
+8. Physical-device verification of map, login/logout, Kinfolk copy, voices, and Report Intel.
+9. Submit only after the device gate passes.

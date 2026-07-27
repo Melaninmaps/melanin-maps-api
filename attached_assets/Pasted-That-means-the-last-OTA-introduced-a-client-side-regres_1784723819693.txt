@@ -1,0 +1,87 @@
+That means the **last OTA introduced a client-side regression in the results-list logic**. The HBCU category still appears, so the category state is active, but the array being rendered is now empty.
+
+The most likely culprit is change #3:
+
+> `searchedResults rewritten as IIFE`
+
+Do not add more features right now. Have Replit either correct that calculation immediately or roll back only the latest OTA to the prior working map version.
+
+Send this:
+
+> **P0 REGRESSION — CULTURAL RESULTS DISAPPEARED AFTER LAST OTA**
+>
+> After the OTA titled:
+>
+> `Map: fix search, keyboard dismiss, marker taps, card clearance`
+>
+> the HBCU panel opens, but all site listings are missing. It displays only the HBCU heading/category state.
+>
+> The previous OTA correctly displayed 44 HBCU records, including Alabama State, Alcorn State and Benedict College. Therefore:
+>
+> * the API and seeded data were working;
+> * category filtering was working;
+> * this is a regression introduced by the latest `FullMapView.tsx` edits.
+>
+> **Do not modify the API, database, seed records, polling, or category logic.**
+>
+> Immediately compare the latest `searchedResults` implementation against the previous working implementation.
+>
+> Return these live counts from the component:
+>
+> 1. `culturalSites.length`
+> 2. `filteredCulturalSites.length`
+> 3. active category
+> 4. search query value
+> 5. `searchedResults.length`
+>
+> Confirm whether the new IIFE:
+>
+> * fails to return the filtered array when the query is empty;
+> * references the wrong source array;
+> * returns from the callback instead of the outer calculation;
+> * mishandles undefined fields;
+> * or has a memo/dependency issue.
+>
+> **Required behavior**
+>
+> ```ts
+> const searchedResults = useMemo(() => {
+>   const query = culturalSearch.trim().toLowerCase();
+>
+>   if (!query) {
+>     return filteredCulturalSites;
+>   }
+>
+>   return filteredCulturalSites.filter((site) => {
+>     const name = String(site.name ?? "").trim().toLowerCase();
+>     const city = String(site.city ?? "").trim().toLowerCase();
+>     const state = String(site.state ?? "").trim().toLowerCase();
+>
+>     return (
+>       name.includes(query) ||
+>       city.includes(query) ||
+>       state.includes(query)
+>     );
+>   });
+> }, [filteredCulturalSites, culturalSearch]);
+> ```
+>
+> Use the actual state-variable names in the codebase, but preserve this logic:
+>
+> * empty search returns every site in the selected category;
+> * “Howard” returns Howard University;
+> * clearing search restores all 44 HBCUs.
+>
+> Prepare a single-file hotfix OTA only.
+>
+> Acceptance tests:
+>
+> 1. Tap HBCU → all 44 records appear.
+> 2. Search Howard → Howard University appears.
+> 3. Clear search → all 44 return.
+> 4. Tap Howard → keyboard closes, map centers and card opens.
+> 5. Marker taps and card clearance remain fixed.
+>
+> If the cause cannot be identified immediately, republish the previous known-good map OTA to production rather than leaving the listings unavailable.
+
+I would choose the **hotfix** if Replit confirms the problem is only the empty-query return. If they cannot prove it quickly, roll back the latest OTA to the version shown in your prior screenshot where the HBCU list displayed correctly.

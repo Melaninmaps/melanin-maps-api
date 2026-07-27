@@ -1,0 +1,143 @@
+You are right. This is no longer merely inconvenient—it is affecting your launch window, your tour on **August 1**, your promotional runway, and your costs. We need to stop treating every unresolved idea as a reason to delay submission.
+
+The plan now should be:
+
+## The release decision
+
+We submit the **smallest stable release candidate**, not the perfect long-term version.
+
+The cultural pins do not need another production experiment before submission if the known-good version already lets a reviewer:
+
+* open the map,
+* select HBCU,
+* see the HBCU list,
+* select a school,
+* and open its information card.
+
+Direct pin tapping can be placed immediately after submission unless it is the only way to access the information. The repeated login failures, however, remain a true submission blocker.
+
+## Send this to Replit exactly
+
+> # APP STORE SUBMISSION RECOVERY PLAN — DEADLINE-DRIVEN LAUNCH LOCK
+>
+> Mapping With Melanin™ has now been unable to submit its prepared Apple response for six days. The founder’s tour begins August 1, and the Android testing timeline begins when the Android release candidate is submitted. Further delays are creating promotional, operational and financial harm.
+>
+> We are no longer pursuing feature perfection before submission.
+>
+> ## Objective
+>
+> Produce and verify one stable Apple and Android release candidate as quickly as possible, using the current known-good rollback as the baseline.
+>
+> ## Effective immediately: Launch Lock
+>
+> No new features, redesigns, vocabulary additions, data expansion or map experiments.
+>
+> No production OTA changes unless required to correct a submission-blocking P0 failure.
+>
+> The marker `pointerEvents` change remains held and is not required for submission if users and Apple can access cultural-site information through the working HBCU results list.
+>
+> ## Release candidate baseline
+>
+> Use the current production state:
+>
+> * production OTA rollback currently live
+> * map renders
+> * HBCU results list returns 44 records when the API is healthy
+> * selecting a list result opens the cultural-site information card
+> * commercial Apple POIs are filtered
+> * polling lifecycle protections remain active
+>
+> Do not add another map change to this candidate.
+>
+> ## P0 acceptance gate
+>
+> The release candidate may be submitted as soon as all items below pass:
+>
+> ### Authentication
+>
+> 1. Existing account login succeeds.
+> 2. Apple review account login succeeds.
+> 3. Logout and login again succeed.
+> 4. Force-close and reopen preserves the session.
+> 5. Background and foreground preserve the session.
+> 6. No login request returns HTML, 404, 500 or a 10-second pool timeout.
+>
+> ### Production API
+>
+> Verify:
+>
+> * `/api/healthz`
+> * `/api/businesses?limit=1`
+> * `/api/community/posts?limit=1`
+> * `/api/events?limit=1`
+> * `/api/cultural-sites?limit=1`
+> * `/api/pool-stats`
+>
+> Required:
+>
+> * all data routes return HTTP 200;
+> * no route exceeds 3 seconds;
+> * `waitingCount` remains 0;
+> * no pool exhaustion occurs during the reviewer test.
+>
+> ### Reviewer path
+>
+> Starting from a clean app launch, confirm:
+>
+> 1. Login
+> 2. Discover loads businesses
+> 3. Map renders
+> 4. HBCU filter displays the known-good results list
+> 5. Selecting an HBCU opens its information
+> 6. Community loads
+> 7. Events load
+> 8. KinfolkAI gives a response or a clear nonblocking fallback
+> 9. Profile opens
+> 10. Logout and login again work
+>
+> Direct marker tapping is not a submission gate if the existing list provides access to the same cultural-site information.
+>
+> ## Required output today
+>
+> Return one release report with:
+>
+> * exact iOS build and OTA group being submitted;
+> * exact Android build/version code being submitted;
+> * Apple review-account test result;
+> * endpoint status and latency results;
+> * pool statistics before and after the full reviewer walkthrough;
+> * confirmed known issues that are not blockers;
+> * confirmation that no debug badge or diagnostic wording remains;
+> * one of only these decisions:
+>
+>   * `SUBMIT APPLE AND ANDROID NOW`
+>   * `BLOCKED — ONE SPECIFIC P0 FAILURE`
+>
+> Do not return a broad architecture plan in place of the release decision.
+>
+> ## Submission sequence
+>
+> Once the gate passes:
+>
+> 1. Submit the prepared response/build to Apple immediately.
+> 2. Submit the matching stable Android release candidate immediately so its testing timeline begins.
+> 3. Freeze both candidates during review/testing.
+> 4. Continue the production architecture audit in parallel without delaying submission.
+>
+> ## Reliability work after submission
+>
+> The deeper review of authentication, sessions, database connections, observability and safety-alert delivery remains mandatory, but it must run in a separate workstream while Apple review and Android testing are underway.
+>
+> Do not hold submission for post-launch architecture improvements unless a current P0 acceptance test fails.
+
+## What I recommend you do
+
+Do not wait 24 hours merely to watch the app. Have Replit run the defined release test now. You personally test the Apple review account and reviewer path once. If login and the core screens remain healthy through that test, submit Apple and Android immediately.
+
+The architecture review still matters, especially for real safety alerts, but it should now run **in parallel with the store timelines**, not prevent them from starting.
+
+The immediate standard is not “every planned interaction is perfect.” It is:
+
+> **Can Apple install it, log in, access the core experience, and complete review without a failure?**
+
+If yes, submit. If no, Replit must identify the single specific P0 blocker and work only on that blocker until it passes.

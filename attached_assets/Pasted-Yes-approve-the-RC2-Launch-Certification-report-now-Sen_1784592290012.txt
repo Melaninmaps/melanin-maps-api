@@ -1,0 +1,97 @@
+Yes—approve the **RC2 Launch Certification report** now.
+
+Send Replit:
+
+> **Approved — generate the RC2 Launch Certification report.**
+>
+> Maintain the RC2 source freeze. Do not write, refactor, or deploy any additional feature code.
+>
+> The certification report must clearly separate:
+>
+> 1. **Source-confirmed**
+> 2. **Production API-confirmed**
+> 3. **Requires new-build device verification**
+>
+> Include:
+>
+> * exact source commit/checkpoint;
+> * exact files changed for LB-008, LB-010B, LB-018, and LB-013;
+> * confirmation that no unrelated files changed;
+> * confirmation that the Authentication Freeze was followed;
+> * Railway deployment ID and production status for the under-13 gate;
+> * TypeScript/build validation results;
+> * iOS Build 92 and Android Version Code 66 guidance;
+> * production API domain and EAS environment confirmation;
+> * rollback/checkpoint references.
+>
+> ## Required device-test matrix
+>
+> Mark these as **pending device verification**, not PASS based only on source:
+>
+> ### Authentication
+>
+> * email login;
+> * phone login;
+> * Apple Sign-In;
+> * logout → same-account immediate login;
+> * logout → different-account login;
+> * force-close → session restoration;
+> * screen lock/time-out → session remains active;
+> * password reset;
+> * no indefinite spinner.
+>
+> ### Map
+>
+> * iOS base tiles render normally;
+> * Android base map renders;
+> * Philadelphia fallback appears when location is denied;
+> * business pins appear;
+> * malformed coordinates are ignored;
+> * Mother Bethel and other cultural pins appear;
+> * heritage marker preview opens;
+> * business pin opens the correct profile;
+> * pan, zoom, background, and reopen work.
+>
+> ### KinfolkAI
+>
+> * approved welcome wording appears exactly;
+> * no static starter prompts;
+> * contextual suggestions appear only after a response;
+> * microphone and send work;
+> * voice picker opens;
+> * every selectable voice preview plays;
+> * selected voice is used by Listen;
+> * voice choice persists after restart and login.
+>
+> ### Report Intel and admin
+>
+> * submission succeeds;
+> * production record is created;
+> * success message appears;
+> * admin receives the report in the moderation queue;
+> * admin can review and act on it;
+> * duplicate taps do not create duplicate reports.
+>
+> ### Registration
+>
+> * new registration without DOB is rejected;
+> * user turning 13 today is accepted;
+> * existing accounts remain unaffected.
+>
+> ## Build gate
+>
+> End with one of:
+>
+> **🟢 SOURCE READY FOR RC2 BUILDS — DEVICE VERIFICATION REQUIRED**
+>
+> or
+>
+> **🔴 SOURCE NOT READY FOR RC2 BUILDS**
+>
+> Do not claim the app is launch-certified until the physical-device matrix passes.
+>
+> Do not run EAS builds until I separately approve the completed report.
+
+One caution for later: the age-gate test uses UTC, which is consistent technically, but someone near their birthday could cross the threshold several hours earlier or later than their local calendar date. That does not need to reopen RC2 now, but it should be documented for future legal/product review.
+
+After Replit returns the certification report, review it once, authorize iOS 92 and Android 66, then test both builds on physical devices before submitting.

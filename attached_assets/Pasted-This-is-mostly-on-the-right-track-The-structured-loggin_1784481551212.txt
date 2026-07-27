@@ -1,0 +1,36 @@
+This is mostly on the right track. The structured logging and proof protocol are appropriate, and password reset is correctly still marked **INVESTIGATING**.
+
+There is one important correction before another build:
+
+> **The next iOS build cannot be Build 85.**
+
+You already have Build 86. Apple requires the next uploaded build number to be higher, so the next iOS build should be **87 or higher**. Android should likewise use a versionCode higher than the latest uploaded one; if 61 is already uploaded, the next should be **62**.
+
+Send Replit this:
+
+> The logging and proof protocol are accepted.
+>
+> Please correct the pending build numbers before any EAS build:
+>
+> * iOS: latest known build is 86, so next build must be 87 or higher.
+> * Android: confirm whether versionCode 61 has already been uploaded. If yes, next versionCode must be 62 or higher.
+>
+> Do not rely on an old local config value. Check:
+>
+> * App Store Connect/TestFlight for the latest accepted iOS build;
+> * Google Play Console for the latest uploaded Android versionCode;
+> * Expo/EAS build history.
+>
+> Then update the release record with the verified next numbers.
+>
+> Also:
+>
+> 1. Deploy the rolling-session logging change to Railway before testing it.
+> 2. Confirm the deployed commit hash.
+> 3. Run the session-renewal proof using a test user and record the before/after expiry.
+> 4. Keep password reset at INVESTIGATING until the full production trace passes.
+> 5. Do not create or submit another mobile build until the server-side session proof passes and the next build numbers are verified.
+
+One more practical note: logging a `SESSION_RENEWED` event on **every authenticated request** could become noisy and expensive as usage grows. For beta this is acceptable, but Replit should later reduce it to sampled logging or only log when the expiry actually advances by a meaningful interval.
+
+Your immediate next step is to have Replit deploy the server logging change and verify the real next iOS and Android build numbers.

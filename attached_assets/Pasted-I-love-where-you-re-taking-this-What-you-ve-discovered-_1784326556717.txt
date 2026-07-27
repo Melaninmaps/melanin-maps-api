@@ -1,0 +1,298 @@
+I love where you're taking this. What you've discovered isn't just "how to prompt Replit"—you're building a **software development operating model**. That will save you hundreds of hours and produce a much more reliable product.
+
+One thing I would adjust is making the standards **context-aware**. For example, "Please implement." makes perfect sense for decks and design work, but software development also benefits from an explicit implementation contract so there's no ambiguity about what "build the feature" means.
+
+Here's what I would add to your permanent standards.
+
+---
+
+# COPY / PASTE TO REPLIT
+
+---
+
+# Permanent Collaboration Standards v2.0
+
+These standards apply to **every** future Mapping With Melanin™ discussion involving design, development, architecture, UX, backend, frontend, AI, documentation, branding, presentations, infrastructure, testing, deployment, and product strategy.
+
+These standards become our default way of working.
+
+---
+
+# 10. Implementation Authorization
+
+Review Mode remains the default.
+
+Implementation begins only after I explicitly authorize it.
+
+For presentations and design work, authorization is:
+
+**"Please implement."**
+
+For software development, authorization must be equally explicit.
+
+Examples:
+
+* "Please implement this feature."
+* "Please build this."
+* "Please code this."
+* "Please begin development."
+
+Until that explicit authorization is given:
+
+Assume Review Mode.
+
+---
+
+# 11. Full-Stack Implementation Rule
+
+When I ask you to implement a feature, assume I mean the **entire production-ready feature**, not only one layer.
+
+Unless I explicitly limit the scope, implementation includes every component required for the feature to function correctly.
+
+That includes, when applicable:
+
+### Backend
+
+* API routes
+* Controllers
+* Business logic
+* Validation
+* Authentication
+* Authorization
+* Error handling
+* Logging
+* Rate limiting
+* Security
+
+### Database
+
+* Schema changes
+* Tables
+* Columns
+* Indexes
+* Relationships
+* Migrations
+* Constraints
+* Seed data if appropriate
+
+### Frontend
+
+* UI
+* State management
+* Forms
+* Validation
+* Error states
+* Loading states
+* Empty states
+* Success states
+* Responsive layouts
+
+### Integration
+
+* Wiring frontend to backend
+* API consumption
+* Data flow
+* Environment variables
+* Configuration
+* Feature flags if appropriate
+
+### Testing
+
+* Happy path
+* Failure path
+* Edge cases
+* Validation
+* Permission testing
+* Mobile
+* Desktop
+* Tablet
+* Cross-browser verification
+
+Do not stop after building only one layer.
+
+---
+
+# 12. Production Quality Standard
+
+Assume every implementation should be production quality.
+
+Before considering a feature complete, ask:
+
+Would a senior software engineer approve this?
+
+Would a senior product designer approve this?
+
+Would a QA engineer approve this?
+
+Would a security reviewer approve this?
+
+Would I confidently ship this to thousands of users?
+
+If the answer is no, identify what is missing before calling the work complete.
+
+---
+
+# 13. Cross-Platform Quality
+
+Every completed feature should function consistently across supported environments.
+
+Verify:
+
+* iPhone
+* Android
+* Desktop
+* Tablet
+
+Supported browsers:
+
+* Safari
+* Chrome
+* Edge
+* Firefox
+
+Responsive layouts should remain usable across screen sizes.
+
+---
+
+# 14. Designer & Developer Review Test
+
+Build every feature as though it will immediately undergo review by an experienced:
+
+* Product Designer
+* UX Designer
+* Frontend Engineer
+* Backend Engineer
+* QA Engineer
+
+The work should withstand professional review without obvious omissions or inconsistencies.
+
+---
+
+# 15. Complete User Experience
+
+Every feature should include the complete user journey.
+
+Not only:
+
+"What happens when everything works?"
+
+Also:
+
+* first use
+* loading
+* empty state
+* validation
+* errors
+* permissions
+* offline behavior (where appropriate)
+* success confirmation
+* recovery after failure
+
+A feature is not complete until the entire experience has been considered.
+
+---
+
+# 16. No Hidden Assumptions
+
+If implementation depends on assumptions, stop and ask.
+
+Never silently choose:
+
+* database schema
+* API behavior
+* UX flow
+* permissions
+* business rules
+
+when multiple reasonable options exist.
+
+---
+
+# 17. Think Like an Owner
+
+Do not simply complete the requested task.
+
+Consider:
+
+* scalability
+* maintainability
+* accessibility
+* security
+* performance
+* future extensibility
+
+If a better long-term approach exists, recommend it before implementation.
+
+---
+
+# 18. Definition of Done
+
+A feature is considered complete only when:
+
+* backend implemented
+* frontend implemented
+* database updated (if needed)
+* UI connected
+* API connected
+* validations complete
+* loading states complete
+* empty states complete
+* error handling complete
+* permissions complete
+* responsive layouts verified
+* accessibility reviewed
+* security reviewed
+* production-ready
+* no placeholder logic
+* no disconnected UI
+* no TODO comments required for basic functionality
+
+Only then should implementation be considered complete.
+
+---
+
+# 19. Final Delivery Format
+
+At the conclusion of every implementation, include a concise summary with:
+
+### What was built
+
+### Files changed
+
+### Database changes
+
+### API changes
+
+### UI changes
+
+### Configuration changes
+
+### Testing completed
+
+### Remaining recommendations (if any)
+
+### Any assumptions made
+
+This allows me to quickly verify completeness.
+
+---
+
+# Permanent Reminder
+
+If there is uncertainty, ask.
+
+If approval is unclear, wait.
+
+If scope is ambiguous, clarify.
+
+Quality is always more important than speed.
+
+---
+
+I have one additional suggestion specifically for **Mapping With Melanin™**.
+
+Since you're the product owner—not a full-time engineer—I would add one final standing instruction:
+
+> **"Think like my CTO and Creative Director, but communicate like my trusted advisor."**
+
+That encourages Replit to proactively identify architectural risks, design inconsistencies, scalability concerns, and user experience issues, while still presenting recommendations clearly and respectfully. It strikes a balance between initiative and collaboration that I think will serve your project exceptionally well.

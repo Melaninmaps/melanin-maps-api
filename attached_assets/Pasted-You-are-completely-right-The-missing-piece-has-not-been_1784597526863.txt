@@ -1,0 +1,240 @@
+You are completely right. The missing piece has not been more technical detail—it has been a **plain-language contract for each build**:
+
+> What will be in it, what will not be in it, what still requires testing, and what should block the build.
+
+That needs to happen **before** any build is started, every time.
+
+Send Replit this:
+
+> # REQUIRED BEFORE NEXT BUILD — PLAIN-LANGUAGE BUILD EXPECTATION REPORT
+>
+> Before making any more code changes or starting another EAS build, give me a complete, plain-language explanation of exactly what I should expect in the next iOS and Android build.
+>
+> I work full time and dedicate nearly all of my remaining time to this platform. Mistakes cost me time, build credits, momentum, and opportunities to support people. I need complete transparency before I authorize another build.
+>
+> Do not give me only file names, commits, or technical summaries. Translate the release into the actual experience I will see on my phone.
+>
+> ## 1. What I will definitely have in this build
+>
+> For every included feature or fix, state:
+>
+> * what screen I will open;
+> * what I should see;
+> * what I should be able to tap;
+> * what should happen after I tap it;
+> * what will be different from Build 92;
+> * whether this is source-confirmed or device-confirmed.
+>
+> Include at minimum:
+>
+> * login and logout;
+> * email, phone, and Apple sign-in;
+> * session restoration after closing, locking, and reopening the app;
+> * Discovery label;
+> * iOS map;
+> * Philadelphia fallback;
+> * business pins;
+> * cultural and historical pins;
+> * Mother Bethel AME Church;
+> * KinfolkAI welcome wording;
+> * Kinfolk voice selection and playback;
+> * Report Intel;
+> * business profiles;
+> * community features;
+> * membership and Restore Purchases.
+>
+> ## 2. What I will not have in this build
+>
+> List every requested feature that is not included, including:
+>
+> * side drawer/sidebar navigation;
+> * direct map-pin deep link to a specific cultural-site story;
+> * missing Philadelphia cultural sites that have not been seeded;
+> * community connections;
+> * invitations;
+> * community-member social links;
+> * new business media changes;
+> * contextual messaging;
+> * graduated parental controls;
+> * any other deferred RC3 or RC4 item.
+>
+> For each excluded item, state:
+>
+> * why it is excluded;
+> * what release it is planned for;
+> * whether it is a code gap, content gap, legal/privacy decision, or testing gap.
+>
+> ## 3. Non-negotiable expectations
+>
+> Clearly identify which outcomes are release blockers.
+>
+> My non-negotiable expectations for the next build include:
+>
+> * the iOS Map tab must not be white;
+> * visible Apple map tiles;
+> * Philadelphia fallback when location is unavailable or denied;
+> * visible Philadelphia cultural pins;
+> * Mother Bethel AME Church visible and tappable;
+> * valid business pins visible;
+> * tapping a pin produces the expected preview or detail experience;
+> * logout followed by immediate login works;
+> * session restore works;
+> * KinfolkAI opens with the approved welcome language;
+> * Kinfolk voice selection can be opened and heard;
+> * no internal route labels such as `index`;
+> * the build comes from the correct `artifacts/mobile` project and EAS project ID.
+>
+> If any of these cannot be guaranteed before the build, say so now and stop.
+>
+> ## 4. What still requires physical-device testing
+>
+> Separate all claims into:
+>
+> * Source-confirmed
+> * Production API-confirmed
+> * Simulator/development-build confirmed
+> * Physical-device confirmation still required
+>
+> Do not call an item complete if it has only been confirmed in source.
+>
+> ## 5. Exact map expectation
+>
+> Describe exactly what I should see when I open the Map tab:
+>
+> * with location allowed;
+> * with location denied;
+> * with no nearby businesses;
+> * with malformed business coordinates;
+> * when cultural-site data is available.
+>
+> State whether the next build is expected to show:
+>
+> * Mother Bethel AME Church;
+> * African American Museum in Philadelphia;
+> * Marian Anderson Historical Residence;
+> * Johnson House Historic Site;
+> * Howard University after navigating to Washington, D.C.
+>
+> If any record is not yet in production, say so plainly.
+>
+> ## 6. Exact navigation expectation
+>
+> State clearly:
+>
+> * whether the next build uses bottom tabs or a side drawer;
+> * the exact visible tab labels;
+> * whether the sidebar is included or deferred.
+>
+> Do not allow me to expect a feature that is not actually included.
+>
+> ## 7. Exact business and community expectation
+>
+> Explain what community members can do in the next build:
+>
+> * create profile;
+> * upload profile photo;
+> * search;
+> * save;
+> * post;
+> * join groups;
+> * message;
+> * use KinfolkAI;
+> * submit Report Intel;
+> * invite or connect with members, if included.
+>
+> Explain what businesses can do:
+>
+> * claim profile;
+> * edit profile;
+> * add photos;
+> * add videos;
+> * add social links;
+> * review activity;
+> * receive updates.
+>
+> Clearly mark anything not included.
+>
+> ## 8. Build provenance
+>
+> Before starting the build, provide:
+>
+> * exact Git commit;
+> * exact working directory;
+> * `pwd` output;
+> * EAS project ID;
+> * bundle identifier;
+> * app version;
+> * iOS build number;
+> * Android version code;
+> * `eas.json` path;
+> * `app.json` path;
+> * clean working-tree confirmation.
+>
+> The build must stop if:
+>
+> * the directory is not `artifacts/mobile`;
+> * the EAS project is the workspace project;
+> * the mobile EAS project ID is wrong;
+> * the bundle ID is wrong;
+> * EAS asks to configure or relink a project unexpectedly.
+>
+> ## 9. Final release contract
+>
+> End with a table using:
+>
+> * ✅ Included and expected to work
+> * ⚠️ Included but requires device verification
+> * ⏸ Deferred
+> * ❌ Not available
+>
+> Then state:
+>
+> **What I will be able to do in this build**
+>
+> and
+>
+> **What I will still need to wait for**
+>
+> Use plain language, not developer shorthand.
+>
+> Do not implement, build, or submit until I approve this report.
+
+## What you should expect from the next build, based on the current plan
+
+### Expected in the next controlled build
+
+* Bottom navigation, not the sidebar
+* Discovery label corrected
+* Logout/login race repair
+* Under-13 registration gate
+* Kinfolk welcome wording
+* Philadelphia fallback
+* Coordinate guards for bad business records
+* Classic tab layout on iOS to fix the white map
+* Existing business and cultural marker systems
+* Existing profile, business, community, messaging, events, saved places, and membership features
+
+### Still waiting
+
+* Sidebar/drawer navigation
+* Direct pin-to-specific-cultural-story deep link
+* Additional missing Philadelphia cultural records unless seeded first
+* Community member connection requests
+* Invitation/share flow
+* Community-member social profiles
+* Expanded business logo/cover/media redesign
+* Contextual notification system
+* Full teen and parental-control system
+* Broader diaspora content expansion
+
+## The most important correction
+
+Replit should never again say only:
+
+> “This build includes the map fix.”
+
+It should say:
+
+> “When you open the Map tab on an iPhone, you should see Apple map tiles centered on Philadelphia if location is denied. Mother Bethel should appear as a cultural pin. Tapping it should open a preview. The sidebar is not included.”
+
+That is the level of clarity you deserve before spending another hour or build credit.

@@ -1,0 +1,33 @@
+Yes—**I agree with adding the 2,000-character input cap before turning Kinfolk back on.**
+
+Their answer is thoughtful and mostly strong. The main improvement I would make is to reduce the main-chat output limit too. **8,192 output tokens is far more than a normal Kinfolk reply should need** and could increase both cost and response time. GPT-4o supports more than that, but that does not mean your application should allow it for routine chat. ([OpenAI Developers][1])
+
+I would approve these changes first:
+
+* Input message cap: **2,000 characters**
+* Main Kinfolk response cap: around **800–1,200 tokens**
+* Business plans/relocation reports: keep their higher limits only where long-form output is genuinely needed
+* Reject empty or whitespace-only messages
+* Add a server-side timeout and user-friendly fallback
+* Keep the API key only in the Railway API service environment variables, never in the app or browser. ([OpenAI Help Center][2])
+
+Send Replit:
+
+> Yes, please add the 2,000-character input cap now. Also reduce the main Kinfolk chat output limit from 8,192 tokens to 1,000 tokens. The longer 1,000–2,400-token limits may remain for business plans, expansion analysis, and relocation concierge where appropriate.
+>
+> Please also confirm:
+>
+> * empty messages are rejected;
+> * requests have a timeout;
+> * the user receives a graceful error if OpenAI times out;
+> * the limit is enforced server-side, not only in the app interface;
+> * no automatic retry can create duplicate charges.
+>
+> After that, make one checkpoint before I add the Railway variables.
+
+One correction to their data-retention statement: **zero data retention is not simply the default for every API account.** OpenAI has standard API retention practices, and special Zero Data Retention controls generally depend on account eligibility and configuration. So they should not promise users “zero retention” unless you have verified that setting in your OpenAI organization. The safer statement is that conversations are stored in your own database and handled according to OpenAI’s applicable API data controls.
+
+Once the cap is implemented and checkpointed, I would be comfortable adding the two variables and running one controlled test.
+
+[1]: https://developers.openai.com/api/docs/models/gpt-4o?utm_source=chatgpt.com "GPT-4o Model | OpenAI API"
+[2]: https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety?utm_source=chatgpt.com "Best Practices for API Key Safety"

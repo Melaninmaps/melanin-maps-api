@@ -1,0 +1,147 @@
+Yes — we can review and add a **small, launch-safe KinfolkAI package tonight** without touching authentication, provided Replit keeps the changes isolated.
+
+The key is not to attempt the full Opportunity Engine tonight. Testers should experience the concept through a controlled **Phase 1 concept layer** built on the Kinfolk routes that already exist.
+
+Send Replit this:
+
+> **KINFOLKAI LAUNCH-SAFE CONCEPT IMPLEMENTATION — REVIEW FIRST**
+>
+> I want testers to experience as much of the KinfolkAI concept as can be safely delivered before the next iOS and Android builds.
+>
+> Authentication is now stable. Do not modify any authentication, session, login, logout, password-reset, account-linking, user-ID, admin-authorization, or token-storage code.
+>
+> Create a checkpoint first. Then perform a focused impact review and report the exact files that would change. The KinfolkAI work must be isolated to KinfolkAI prompts, routes, services, and user interface components.
+>
+> ## Tonight’s approved scope
+>
+> Implement only the following low-risk capabilities where the existing architecture already supports them:
+>
+> ### 1. Standard greeting
+>
+> Replace the current new-user/default KinfolkAI greeting with:
+>
+> **“Kinfolk’s here. Let’s map it out.”**
+>
+> Contextual prompts may appear after KinfolkAI has reliable user context, but this remains the safe fallback.
+>
+> ### 2. Universal-question capability
+>
+> Confirm that KinfolkAI can answer ordinary questions outside travel, including:
+>
+> * basic math and homework assistance;
+> * writing and email drafting;
+> * résumé and application assistance;
+> * explanations and general knowledge;
+> * budgeting education and organization;
+> * translation and planning.
+>
+> Do not artificially restrict the model to travel or Black-owned business questions.
+>
+> ### 3. Compassionate follow-up behavior
+>
+> Update the KinfolkAI system instructions so that, when appropriate, it may:
+>
+> * answer the immediate question first;
+> * gently explore the obstacle behind the request;
+> * offer one relevant next step or platform resource;
+> * ask permission before moving into personal topics such as finances, health, family, or sensitive circumstances;
+> * never assume the barrier;
+> * never overwhelm the user with unrelated recommendations.
+>
+> Example:
+>
+> A user says they cannot afford a tutor. KinfolkAI may first offer free tutoring, library, school, nonprofit, or community options. It may then ask whether the user would like help exploring a study plan or basic budgeting—not automatically begin analyzing finances.
+>
+> ### 4. Existing-platform enrichment
+>
+> Where already supported by current queries, KinfolkAI may enrich answers using:
+>
+> * the user’s own preferences;
+> * saved places;
+> * Life Journey goals;
+> * businesses;
+> * events;
+> * safety information;
+> * travel and relocation information.
+>
+> It must not claim access to reviews, weather, community posts, messages, tutors, mentors, scholarships, or other information that is not actually connected.
+>
+> When a relevant platform result exists, offer it as an optional addition after answering the original question.
+>
+> ### 5. Honest capability boundaries
+>
+> KinfolkAI must:
+>
+> * never invent a tutor, scholarship, business, event, safety report, or community statistic;
+> * clearly distinguish platform data from general knowledge;
+> * acknowledge when current or local information has not been verified;
+> * avoid presenting medical, legal, financial, or safety information as professional advice;
+> * recommend qualified or emergency assistance when appropriate;
+> * never expose another user’s private information.
+>
+> ### 6. Tester-facing conversation starters
+>
+> Add or update suggested prompts so testers can deliberately test the broader concept:
+>
+> * “Help me understand this math problem.”
+> * “Help me complete a job application.”
+> * “Draft a professional email for me.”
+> * “Help me organize a basic monthly budget.”
+> * “Plan a culturally connected weekend near me.”
+> * “Help me compare two cities for relocation.”
+> * “Find a minority-owned business that fits what I need.”
+> * “What should I consider about safety in this area?”
+>
+> These should be examples, not limits on what the user may ask.
+>
+> ## Explicitly out of scope tonight
+>
+> Do not build:
+>
+> * weather integration;
+> * autonomous background monitoring;
+> * unsolicited push suggestions;
+> * Community Memory;
+> * review or community-post summarization;
+> * tutor, mentor, or scholarship databases that do not exist;
+> * new financial-account connections;
+> * long-term progressive memory architecture;
+> * Circle of Trust UI;
+> * decision-audit storage;
+> * new membership restrictions;
+> * any authentication changes.
+>
+> ## Required pre-build verification
+>
+> Before declaring this complete:
+>
+> 1. Show the exact files changed.
+> 2. Confirm no authentication files changed.
+> 3. Confirm no database migration is required.
+> 4. Confirm the same KinfolkAI behavior is used by iOS and Android.
+> 5. Run representative tests for math, writing, job application help, budgeting education, travel, business discovery, relocation, and safety.
+> 6. For each test, report whether the answer came from general AI knowledge, user context, or Mapping With Melanin platform data.
+> 7. Verify the app never claims an unavailable live integration.
+> 8. Re-run login, logout, and session-restoration smoke tests after the change.
+>
+> Stop and report before implementation if any requested capability requires authentication changes, a database migration, a new paid API, or broad architectural work.
+>
+> First return:
+>
+> * what can be implemented tonight using existing architecture;
+> * what files would change;
+> * risk level;
+> * estimated regression surface;
+> * what must remain roadmap-only.
+>
+> Do not implement until I say **“Please implement the approved KinfolkAI launch-safe package.”**
+
+This gives testers the **real heart of the concept**: KinfolkAI can answer everyday questions, understand context, offer thoughtful next steps, and connect users with the platform’s existing resources.
+
+It avoids the risky parts that need more engineering, especially weather, autonomous proactive monitoring, Community Memory, and sensitive financial personalization.
+
+One correction to protect the vision: KinfolkAI should not automatically move from “I cannot afford a tutor” into budgeting. It should first present free support options and then **ask permission**:
+
+> “Would you like to explore free resources, build a study plan, or look at whether there is room in your budget for occasional tutoring?”
+
+That is compassionate intelligence without becoming invasive.

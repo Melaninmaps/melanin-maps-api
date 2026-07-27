@@ -1,0 +1,80 @@
+Replit’s diagnosis is mostly correct, but the proposed local command is not yet safe enough.
+
+The important facts are:
+
+* iOS **87** and Android **62** are correctly prepared.
+* The session-logging code exists only in the newly built `dist/`.
+* The GraphQL redeploy did **not** deploy that new code.
+* Railway still serves the older artifact.
+* The session proof and password-reset trace cannot begin until the new artifact is actually live.
+
+The part that needs correction is:
+
+> “Run `railway up` from your local clone of the workspace.”
+
+Earlier, Replit established that Railway normally deploys from the separate GitHub repository:
+
+```text
+Melaninmaps/melanin-maps-api
+```
+
+That repository contains the prebuilt `dist/` artifact. Running `railway up` from another local directory could create a one-off deployment that bypasses the established GitHub release process and makes future deployments harder to trace.
+
+Send Replit this:
+
+> The build numbers are confirmed: iOS 87 and Android 62.
+>
+> Do not use a one-off `railway up` deployment yet.
+>
+> Please use the established Railway deployment mechanism:
+>
+> 1. Confirm Railway is still connected to:
+>    `Melaninmaps/melanin-maps-api`
+>    branch `main`.
+>
+> 2. Copy the newly built:
+>
+>    * `artifacts/api-server/dist/`
+>    * and `web-static/` only if it changed
+>
+>    into the Railway deployment repository.
+>
+> 3. Before committing, return:
+>
+>    * `git status`;
+>    * `git diff --stat`;
+>    * confirmation the built artifact contains `SESSION_RENEWED` and `SESSION_RENEWAL_FAILED`;
+>    * confirmation no secrets, `.env` files, credentials, database dumps or unrelated files are included.
+>
+> 4. Commit and push the updated artifact to `main`.
+>
+> 5. Wait for Railway’s GitHub-triggered deployment to show `SUCCESS`.
+>
+> 6. Confirm the new deployment ID and commit hash replace deployment `74b0a666`.
+>
+> 7. Only then run the rolling-session proof and password-reset production trace.
+>
+> Do not mark the GraphQL redeploy as successful deployment of today’s changes, because it rebuilt the previous artifact.
+
+## One more issue with the logging design
+
+Logging `SESSION_RENEWED` for **every authenticated API request** may generate a large number of log entries because one screen can make several API calls.
+
+For founder testing, it is acceptable temporarily. But ask Replit to make it temporary or rate-limited:
+
+> Keep success logging enabled for the founder proof, but afterward reduce it so a session-renewal success is logged at most once per session within a reasonable interval. Continue logging every failure.
+
+The session expiry also does not need to be rewritten on every request. A more efficient pattern is to renew only when the session is approaching expiration—for example, when fewer than two days remain. That can be optimized after the proof; it does not have to block today’s fix.
+
+## Correct next sequence
+
+1. Push the new `dist/` through the established GitHub deployment repository.
+2. Confirm Railway deploys the new artifact.
+3. Verify `SESSION_RENEWED` appears.
+4. Confirm the database expiry advances.
+5. Run the complete password-reset trace.
+6. Only after both pass, build iOS 87 and Android 62.
+7. Founder retest.
+8. Store submission after successful retest.
+
+The release remains **NO GO** until the new server artifact is actually deployed and those two authentication flows are proven in production.

@@ -1,0 +1,86 @@
+This is close, but **do not give Replit your GitHub Personal Access Token**. A classic `repo` token can grant broad control over your private repositories. Use GitHub’s browser authorization instead, or upload/commit through GitHub yourself.
+
+There is also one contradiction that must be resolved before deployment:
+
+> The brief says **“no migration needed—zero schema changes.”**
+
+Earlier implementation reports added:
+
+* `users.marketing_opt_out`
+* `users.failed_login_attempts`
+* `users.locked_until`
+* `auth_events`
+* `stripe_processed_events`
+
+If Railway production does not already have those structures, deploying the new code without applying the schema will cause failures. Replit must inspect Railway Postgres and prove they exist before saying no migration is required.
+
+Send Replit this:
+
+> The deployment plan is accepted with two required changes before proceeding.
+>
+> **1. I will not share a GitHub PAT.**
+>
+> Use one of these safer methods:
+>
+> * `gh auth login` with GitHub browser/device authorization from the Replit Shell;
+> * push through the already-connected GitHub integration;
+> * or give me exact manual GitHub upload/commit steps.
+>
+> Do not request, display, store, or log a classic GitHub token.
+>
+> **2. Reconcile the database migration statement.**
+>
+> Previous waves added:
+>
+> * `users.marketing_opt_out`
+> * `users.failed_login_attempts`
+> * `users.locked_until`
+> * `auth_events`
+> * `stripe_processed_events`
+>
+> Before deploying, inspect Railway Postgres and return PASS/FAIL for each column and table.
+> If any are absent:
+>
+> * create a Railway database snapshot;
+> * run the schema push against Railway Postgres;
+> * verify the structures afterward;
+> * then deploy.
+>
+> Do not conclude “no migration needed” merely because the most recent validation pass contained route-only changes.
+>
+> Also confirm before deployment:
+>
+> * every required Railway variable is present, without exposing values;
+> * `PORT` is not manually defined;
+> * the production source is commit `94a29df1` or a newer approved commit;
+> * the Dockerfile build contains the correct web assets;
+> * Stripe and RevenueCat webhook routes exactly match the deployed Express routes;
+> * no webhook authentication fails open when its secret is missing.
+>
+> After deployment, run the 15 smoke tests, but use disposable production test accounts and clearly label any test records created. Do not trigger real promotional emails, charges, or uncontrolled SMS messages.
+>
+> Return one report containing:
+>
+> 1. Git commit deployed
+> 2. Railway deployment ID
+> 3. Database structure verification
+> 4. Environment-variable PASS/FAIL
+> 5. All 15 smoke-test results
+> 6. Production logs reviewed
+> 7. Open defects
+> 8. Final GO or NO GO for founder device testing
+
+## Correct order now
+
+1. Let Android finish building.
+2. Confirm the Railway database structures.
+3. Verify Railway variables.
+4. Authenticate GitHub safely through browser/device login.
+5. Push the approved commit.
+6. Deploy Railway.
+7. Run all production smoke tests.
+8. Test the website yourself.
+9. Install and test iOS Build 85 and Android 61.
+10. Invite existing testers only after those tests pass.
+
+Do **not** invite testers merely because `/api/healthz` passes. The green light is: **correct commit deployed, schema confirmed, variables confirmed, 15/15 smoke tests passed, and founder authentication works on real devices.**

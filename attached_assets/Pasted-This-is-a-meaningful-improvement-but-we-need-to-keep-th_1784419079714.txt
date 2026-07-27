@@ -1,0 +1,98 @@
+This is a meaningful improvement, but we need to keep the **web** and **mobile** conclusions separate.
+
+## What is now confirmed
+
+For **[www.mappingwithmelanin.com](http://www.mappingwithmelanin.com)**:
+
+* The `/profile` crash is fixed and deployed.
+* Registration and login pass through the real browser UI in Playwright.
+* Diagnostic authentication logging is live.
+* Forgot-password request and UI error states work.
+* The waitlist does not block email registration or login.
+
+So I would now label the web experience:
+
+> **🟢 Web registration and login verified by automated browser testing**
+> **🟡 Full password-reset completion still awaiting a human inbox test**
+
+## What is not confirmed
+
+None of this proves the **currently distributed mobile tester build** works.
+
+You tested the mobile app and it failed. That remains an open, separate issue because the mobile binary may:
+
+* point to a different API URL;
+* use an older authentication implementation;
+* lack the latest client fixes;
+* contain the known Apple nonce defect;
+* handle password-reset links differently from the website.
+
+The tester opting in but never downloading earlier is not the problem. The real question is whether that email ever created an account in Railway production and whether the mobile build is connected to that same production environment.
+
+## What I recommend next
+
+Tell Replit to scope and begin the **Feature Test Traceability Matrix**, but start with a **Mobile Authentication Verification Pack** before testing every feature.
+
+Send this:
+
+> Please proceed with the Feature Test Traceability Matrix, beginning with mobile authentication on the exact iOS and Android builds currently distributed to testers.
+>
+> First provide, without changing code:
+>
+> 1. Exact iOS and Android build/version numbers currently available to testers.
+> 2. The API base URL embedded in each build.
+> 3. Whether each build uses Railway production.
+> 4. Whether each build includes:
+>
+>    * email registration;
+>    * email login;
+>    * forgot-password request;
+>    * reset-code or reset-link completion;
+>    * phone OTP;
+>    * Apple Sign-In;
+>    * session persistence.
+> 5. Which known fixes are absent from those builds.
+>
+> Then create the matrix with separate evidence columns for:
+>
+> * code review;
+> * API test;
+> * web Playwright;
+> * iOS device test;
+> * Android device test;
+> * human acceptance test;
+> * failure/recovery test;
+> * privacy test;
+> * safety test;
+> * accessibility test;
+> * exact build/environment.
+>
+> Do not mark any mobile feature as passed based on web Playwright results.
+>
+> For mobile authentication, test this exact journey:
+>
+> registration → authenticated state → logout → login → forgot password → real code/link → new password → login → app restart → session persists.
+>
+> Report whether a new EAS build is required before implementation.
+
+## Your human password-reset test
+
+You can still test the full reset cycle, but use an email you control that has first created an account in the **same mobile build**. The sequence should be:
+
+1. Register through the mobile app.
+2. Confirm the app shows you as logged in.
+3. Log out.
+4. Request Forgot Password.
+5. Retrieve the real email code or link.
+6. Set a new password.
+7. Log in with the new password.
+8. Close and reopen the app.
+
+If registration fails before you reach step 2, stop and note the exact time. Replit can then search Railway for the diagnostic code associated with that attempt.
+
+The proper status right now is:
+
+* **Web authentication:** largely verified.
+* **Mobile authentication:** not verified and currently reported failing.
+* **Apple Sign-In:** known broken until a new mobile build ships.
+* **Full password reset:** awaiting human completion on both relevant clients.

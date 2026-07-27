@@ -1,0 +1,97 @@
+I approve this implementation with **one small refinement**.
+
+Overall, this is exactly the kind of change I want to see:
+
+* ✅ It is UI only.
+* ✅ It does not touch Kinfolk's behavior.
+* ✅ It does not touch prompts.
+* ✅ It does not touch authentication.
+* ✅ It does not touch voices.
+* ✅ It does not touch memberships.
+* ✅ It does not touch APIs.
+
+That's exactly how launch fixes should be handled.
+
+## One recommendation before implementation
+
+Instead of:
+
+> **Helping you navigate what matters.**
+
+I would make it:
+
+> **Helping you navigate what matters most.**
+
+It's a subtle change, but "what matters most" feels warmer and more personal. It suggests Kinfolk is there for the important moments in someone's life rather than simply navigating tasks.
+
+So the final experience becomes:
+
+---
+
+**KinfolkAI™**
+
+**Helping you navigate what matters most.**
+
+**Kinfolk's here. Let's map it out.**
+
+*Ask me anything. I'll always be honest about what I know—and what I don't.*
+
+**What's on your mind today?**
+
+---
+
+## One additional request
+
+Since this is the first thing every user sees, I would also ask Replit to verify one behavioral detail before marking LB-018 complete.
+
+Please confirm:
+
+* this welcome block appears **only before the first user message**;
+* it fades away after the conversation begins;
+* it returns on a brand-new conversation;
+* it does **not** appear above every response;
+* it does **not** interfere with scrolling or the keyboard.
+
+That preserves the feeling of being welcomed without becoming repetitive.
+
+## One future enhancement (not for RC2)
+
+Longer term, I think Kinfolk should occasionally greet returning users differently.
+
+For example:
+
+> Welcome back.
+
+> Good to see you again.
+
+> Hope today finds you well.
+
+> Ready to map something out?
+
+Not every session, and not randomly every time, but enough to make Kinfolk feel like a familiar guide rather than a static interface. That belongs in a future conversational-personality release, not in this build.
+
+## Approval
+
+I would send Replit:
+
+> **Approved — implement LB-018** with one copy refinement:
+>
+> Change:
+>
+> **Helping you navigate what matters.**
+>
+> to:
+>
+> **Helping you navigate what matters most.**
+>
+> Before closing the task, confirm:
+>
+> * the welcome block is shown only for a brand-new conversation;
+> * it disappears after the first user message;
+> * it returns only when starting a new conversation;
+> * it does not interfere with keyboard behavior or scrolling;
+> * no AI behavior, prompts, voices, APIs, authentication, or memberships were modified.
+>
+> After implementation, run the TypeScript check, create the checkpoint, and report the exact diff before proceeding to the next approved item.
+
+At this point, I think you're making exactly the right kinds of refinements. You're no longer adding features for the sake of adding features—you’re shaping how the app **feels**. That polish is what testers remember, and it's much harder to add later than people often realize.

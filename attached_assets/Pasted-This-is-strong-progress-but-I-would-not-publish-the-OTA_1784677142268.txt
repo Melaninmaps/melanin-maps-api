@@ -1,0 +1,154 @@
+This is strong progress, but I would **not publish the OTA or assume PR 3 is live in Railway yet**. There are a few items Replit needs to clarify first.
+
+## What looks correct
+
+The overall architecture is right:
+
+* Polling is tied to map focus, authentication and app activity.
+* Polling effects remain unconditionally called, preserving React hook order.
+* Cleanup should run when focus, app state or authentication changes.
+* Duplicate recurring polling is disabled in `BusinessMapView`.
+* The server cache remains separate from the mobile changes.
+* No pool-size increase, schema change or broad rewrite was introduced.
+
+## Items that must be resolved before release
+
+### 1. These are described as PRs, but no PR links were provided
+
+Replit appears to have edited all files in one workspace at the same time. We need confirmation that the changes are truly separated into reviewable commits or PRs.
+
+Ask for:
+
+* PR 1 link and exact commit
+* PR 2 link and exact commit
+* PR 3 link and exact commit
+* proof that each contains only its stated files
+* clean working-tree status before each OTA or server build
+
+Do not publish an OTA from a working tree that contains all three uncommitted change sets mixed together.
+
+### 2. PR 3 is probably not live in Railway production
+
+The statement:
+
+> “Server deploy — already live on Railway via the api-server workflow restart”
+
+is concerning.
+
+Restarting the Replit API development server does **not** deploy the changed source to Railway. Your Railway production service deploys from the separate compiled GitHub repository.
+
+Replit must:
+
+1. Rebuild `dist/index.mjs`.
+2. Confirm the cache code exists in the compiled bundle.
+3. Create a separate deployment PR against `Melaninmaps/melanin-maps-api`.
+4. Have you merge it.
+5. Confirm Railway deployed that commit.
+6. Test the production endpoint afterward.
+
+Until that happens, treat the proximity cache as **not live in production**.
+
+### 3. Confirm exactly how `isFocused` is being calculated
+
+The report says `FullMapView` uses `useFocusEffect` to derive `pollingEnabled`, but it does not show the implementation.
+
+It should use a safe pattern such as setting focused state on focus and clearing it in the focus-effect cleanup. Replit needs to provide the exact code because an incorrect callback dependency could repeatedly toggle the polling effect or create extra starts and stops.
+
+Also confirm that `useCallback` is imported from **React**, not from `expo-router`. `useFocusEffect` may come from `expo-router`, but React’s `useCallback` should ordinarily come from `react`.
+
+### 4. PR 2 should remove the hooks, not merely leave disabled copies without explanation
+
+Calling:
+
+```ts
+useActivityAlerts({ enabled: false });
+useSafetyProximity({ enabled: false });
+```
+
+is acceptable as a minimal temporary measure because it preserves hook order, but it still initializes hook-level state and AppState listeners unless the hooks are carefully structured.
+
+Replit should confirm:
+
+* no timer is created,
+* no location subscription is created,
+* no initial fetch runs,
+* no AppState listener is registered unnecessarily when permanently disabled,
+* and no DB request occurs from `BusinessMapView`.
+
+The device observation after OTA is the deciding proof.
+
+### 5. The mobile typecheck did not fully pass
+
+“Zero new errors” is not the same as a clean production build check.
+
+Before OTA publication, Replit should run an Expo export/bundle validation for iOS. A successful JavaScript bundle generation is especially important because the full TypeScript check still contains known errors.
+
+## Send Replit this
+
+> **PRE-PUBLISH REVIEW — HOLD OTA AND SERVER DEPLOY**
+>
+> The implementation direction is approved, but do not publish the OTA or claim the proximity cache is live yet.
+>
+> Please return:
+>
+> ### Separation and source control
+>
+> 1. A separate commit or PR for Mobile PR 1.
+> 2. A separate commit or PR for Mobile PR 2.
+> 3. A separate source commit and Railway deployment PR for Server PR 3.
+> 4. Exact changed files in each.
+> 5. Confirmation that no unrelated changes are included.
+>
+> ### FullMapView focus implementation
+>
+> Show the exact non-secret code used to derive `isFocused` or `pollingEnabled`.
+>
+> Confirm:
+>
+> * `useFocusEffect` is imported from the supported package;
+> * `useCallback` is imported from React;
+> * focus cleanup sets polling inactive;
+> * focus changes do not create duplicate intervals;
+> * hook ordering remains unconditional.
+>
+> ### BusinessMapView verification
+>
+> Confirm that `enabled:false` causes:
+>
+> * zero interval creation;
+> * zero initial fetch;
+> * zero location subscription;
+> * zero production DB requests;
+> * no unnecessary AppState listener if avoidable.
+>
+> ### Mobile validation
+>
+> Run a production-compatible iOS Expo export or JavaScript bundle validation using Build 94’s runtime and production environment.
+>
+> Return the result and confirm the generated bundle includes only Mobile PR 1 and PR 2 changes.
+>
+> ### Server PR 3
+>
+> Rebuilding or restarting the Replit development server does not deploy this change to Railway.
+>
+> Please:
+>
+> * rebuild the compiled API artifact;
+> * confirm the proximity-cache code is present in `dist/index.mjs`;
+> * create a narrow PR against `Melaninmaps/melanin-maps-api`;
+> * return the PR link before merge.
+>
+> Do not combine the mobile OTA with the server deployment.
+
+## Recommended release order
+
+1. Review the exact mobile diffs.
+2. Validate the iOS bundle.
+3. Publish one OTA containing Mobile PR 1 and PR 2.
+4. Repeat the complete device pool observation.
+5. Test **Map Diagnostic — Beta**.
+6. Test the regular Map tab.
+7. Separately merge and deploy the proximity-cache server PR.
+8. Confirm production endpoint behavior and pool stability.
+
+The fixes are promising, but the deployment trail must be clean. We are close enough to launch that we should not allow “edited in Replit” and “live in Railway” to be treated as the same thing.

@@ -1,0 +1,93 @@
+1. Move "Community" slightly down
+Right now it's almost touching the top arrow.
+Move it down about 20–30 pixels so it sits comfortably inside the top arc.
+
+        Community
+instead of
+Community
+↑arrow
+It will feel less cramped.
+2. Move "Discovery" closer to the wheel
+This is the biggest imbalance.
+It's sitting too far to the right.
+
+I'd move it:
+
+40–50 pixels left
+10–15 pixels down
+so it visually belongs to the circle.
+3. Move "Recommendations" down slightly
+It's almost touching the arrow.
+Move it:
+
+15–20 pixels down
+maybe 10 pixels right
+so the bottom-right quadrant breathes.
+4. Move "Business Growth" up
+This is what's making the wheel feel bottom-heavy.
+Right now it's almost sitting on your caption.
+
+I'd move it:
+
+40–50 pixels upward
+10 pixels left
+so it's centered between the arrow and the bottom of the wheel.
+5. Move "Stronger Community" slightly inward
+This label feels detached from the cycle.
+I'd move it:
+
+25 pixels right
+20 pixels down
+It should feel like it's attached to the left arrow.
+If I were laying it out...
+I'd use the wheel like a clock.
+                 Community
+                    12
+
+     Stronger                    Discovery
+    Community                      2
+
+         ↑                      ↓
+
+
+ Business Growth        Recommendations
+         7                    5
+Every label should sit at approximately the same distance from the center.
+The biggest improvement I would make...
+I would actually make the wheel larger.
+Right now, there is a lot of unused space around it.
+
+If the wheel were about 15–20% larger, all of the labels could move outward naturally and wouldn't feel crowded.
+
+That also lets the flywheel become the hero of the slide, which it deserves to be.
+
+Here's a rough overlay of the moves I'd make
+                 ↓
+            Community
+
+      ↘                 ↙
+
+   → Stronger        ← Discovery
+     Community
+
+      ↑                 ↓
+
+ Business Growth ↑     ↓ Recommendations
+Community → slightly down
+Discovery → left & down
+Recommendations → down
+Business Growth → up
+Stronger Community → right & down
+One last refinement
+I would also make Community and Business Growth the only two labels in bold gold.
+Then make Discovery, Recommendations, and Stronger Community either white or a slightly lighter weight.
+
+Why?
+
+Because those two concepts are your value proposition:
+
+Communities create trust.
+Businesses grow because of that trust.
+The other three are the mechanism that connects them.
+Overall
+I think you're now refining aesthetics rather than fixing the story. That's a good sign. If I were polishing this for a final investor presentation, I'd spend another 15–20 minutes nudging the typography until every label feels like it's sitting naturally on an invisible circle. Once you hit that balance, this will be one of the most memorable slides in the deck.

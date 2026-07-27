@@ -1,0 +1,103 @@
+Yes, that makes sense—and I would separate these into two different language updates so Replit does not treat them as the same issue.
+
+The **Black-owned wording on Discover** should be addressed now because it affects how the platform represents businesses. The **Vibe language expansion** can be treated as a second, lower-risk copy enhancement if time is tight.
+
+Send Replit this:
+
+> **LANGUAGE UPDATE CLARIFICATION — DISCOVER + VIBE**
+>
+> There are two separate language items:
+>
+> **1. Discover business ownership language — priority**
+>
+> The current Discover experience presents all featured businesses as “Black-Owned.” That is too narrow for the broader multicultural direction of Mapping With Melanin™.
+>
+> Please audit whether:
+>
+> * every Discover card is hard-coded to display “Black-Owned”
+> * ownership is being inferred instead of read from the business record
+> * the seeded multicultural businesses have accurate ownership designation data
+> * the UI supports multiple ownership labels
+>
+> The Discover card should display the business’s actual verified or self-identified ownership designation, not a universal Black-Owned label.
+>
+> Examples may include:
+>
+> * Black-Owned
+> * Latino-Owned
+> * Indigenous-Owned
+> * Asian-Owned
+> * Women-Owned
+> * LGBTQ+-Owned
+> * Veteran-Owned
+> * Minority-Owned
+> * Multicultural-Owned
+> * Community Recommended
+>
+> Do not assign an identity that is not present in the business record. If ownership is unknown or unverified, omit the ownership badge or use neutral wording such as “Community Listed,” depending on the approved data model.
+>
+> Please return:
+>
+> * the source of the current Black-Owned label
+> * whether it is hard-coded or data-driven
+> * the ownership fields currently available
+> * the smallest safe fix
+> * which seeded businesses need corrected data
+>
+> **2. Vibe language expansion — secondary**
+>
+> The current Vibe section is useful, but I expected the broader culturally specific and inclusive language we discussed.
+>
+> Please audit the existing vibe-tag list and compare it against the intended multicultural direction.
+>
+> Preserve current useful options such as:
+>
+> * Date Night
+> * Group Hangout
+> * Solo Vibes
+> * Bougie Treat
+> * Hood Classic
+> * Soul Food
+> * Late Night
+> * Family Time
+> * Creative Scene
+> * Wellness
+> * Work & Study
+> * Adventure Ready
+>
+> Then propose additional culturally resonant options without stereotyping or assigning a culture to a business without user input.
+>
+> Possible directions include:
+>
+> * For the Culture
+> * Home Away From Home
+> * Feels Like Family
+> * Community Staple
+> * Hidden Gem
+> * Local Favorite
+> * Diaspora Vibes
+> * Heritage Rich
+> * Sunday Best
+> * Grown Folks Vibe
+> * Auntie Approved
+> * Uncle Approved
+> * Family Reunion Energy
+> * Block Party Energy
+> * First-Date Friendly
+> * Celebration Spot
+> * Music & Movement
+> * Art & Culture
+> * Quiet Luxury
+> * Budget-Friendly
+>
+> Do not implement all suggestions automatically. Return the current list, proposed additions, any duplicates, and a recommended launch-safe set.
+>
+> If timing is tight, prioritize the Discover ownership correction now and move the expanded Vibe vocabulary into the next OTA-safe copy update.
+
+My recommendation is:
+
+**Fix now:** the universal “Black-Owned” label, because inaccurate ownership language could confuse users and businesses.
+
+**Can follow shortly after:** expanding the Vibe vocabulary, provided the current tags still work and do not block Apple review.
+
+One important design rule: ownership badges should describe **who owns the business**, while vibe tags should describe **how the place feels**. Keeping those separate will make the app clearer and avoid accidental stereotyping.

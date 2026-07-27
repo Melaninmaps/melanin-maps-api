@@ -1,0 +1,73 @@
+I think this is the right place to freeze the code. I wouldn't make any additional feature changes before these builds.
+
+There is one thing I would add to your checklist, though.
+
+---
+
+# One final release checkpoint
+
+Before you run the EAS commands, ask Replit to create a **Release Candidate (RC1) checkpoint**.
+
+Something like:
+
+> **Create a Release Candidate checkpoint before starting any production builds. Tag this state as RC1. Confirm the current commit hash, deployed versions, EAS configuration, environment variables required for production, and the exact source tree used for the builds. If either Apple or Google requires changes after review, we will branch from RC1 rather than rebuilding from an unknown state.**
+
+That gives you a known, reproducible baseline.
+
+---
+
+# After the builds begin
+
+While EAS is compiling, don't sit idle. There are several launch tasks that don't require code and make good use of the waiting time:
+
+* Finalize your Zoom presentation.
+* Prepare the tester announcement for Community Beta 2.
+* Finalize the waitlist communications and recovery plan.
+* Draft the first welcome email for new users after launch.
+* Review your App Store and Play Store descriptions one last time.
+* Make sure your Privacy Policy and Terms links are correct and accessible.
+
+Those are all productive tasks that won't change the build.
+
+---
+
+# One thing I want us to prioritize after submission
+
+Once the apps are in review, I'd like us to move from **development mode** into **operations mode**.
+
+That means building the internal processes that will make Mapping With Melanin™ scalable:
+
+* Waitlist operations
+* City-by-city release management
+* Business onboarding workflows
+* Moderator workflows
+* Partnership operations
+* Trust & Safety procedures
+* KinfolkAI governance
+* Analytics dashboards
+* Launch metrics
+
+The software is becoming mature. The next stage is making sure the organization around it is equally mature.
+
+---
+
+# One final thought about KinfolkAI
+
+I want to preserve something you said today because I think it belongs alongside your Foundational Principles:
+
+> **"Not does this answer the question—but does this lower the barrier?"**
+
+That is a remarkably practical design test.
+
+Every future Kinfolk feature can be evaluated against it:
+
+* Does this reduce friction?
+* Does this reduce uncertainty?
+* Does this reduce isolation?
+* Does this reduce the distance between the person and their opportunity?
+
+If the answer is yes, it's probably aligned with the mission.
+
+If not, it may still be a useful feature—but it shouldn't take priority over the things that do.
+
+I think that's going to become one of the guiding principles that keeps KinfolkAI focused as it grows.

@@ -1,0 +1,126 @@
+10.6 Ripple Dimensions
+The Engine returns a normalized Ripple Score using eight dimensions.
+Dimension	Weight
+Direct Community Impact	20%
+Downstream Opportunity Creation	18%
+Relationship Expansion	15%
+Community Knowledge Transfer	12%
+Economic Circulation	12%
+Long-Term Continuity	10%
+Cross-Community Propagation	8%
+Intergenerational Influence	5%
+10.7 Dimension One — Direct Community Impact
+Measures immediate verified outcomes directly resulting from the originating action.
+Examples:
+verified business visit;
+event attendance;
+successful referral;
+completed mentorship;
+scholarship awarded.
+Formula:
+Direct Impact =
+Verified Outcomes
+× Outcome Quality
+× Attribution Confidence
+10.8 Dimension Two — Downstream Opportunity Creation
+Measures opportunities that exist because earlier opportunities occurred.
+Examples:
+hired employee later mentors another;
+business expands after referrals;
+scholarship recipient later creates scholarship;
+entrepreneur hires local residents.
+Second-order outcomes receive additional weighting.
+10.9 Dimension Three — Relationship Expansion
+Measures new relationships created through existing relationships.
+Evaluates:
+mentorship chains;
+business introductions;
+alumni networks;
+community friendships;
+collaborative partnerships;
+recurring referrals.
+The Engine measures network expansion—not audience growth.
+10.10 Dimension Four — Community Knowledge Transfer
+Measures how useful information spreads.
+Examples:
+historical education;
+business recommendations;
+travel guidance;
+local safety information;
+educational resources;
+community traditions.
+Knowledge must remain accurate to qualify.
+10.11 Dimension Five — Economic Circulation
+Measures how community resources circulate.
+Includes:
+local purchases;
+referrals;
+repeat business;
+entrepreneur support;
+hiring;
+marketplace activity;
+local investment.
+Economic extraction receives negative adjustments.
+10.12 Dimension Six — Long-Term Continuity
+Measures whether Ripples continue.
+Examples:
+recurring annual event;
+ongoing mentorship;
+repeat community initiatives;
+sustained volunteer programs.
+One-time events receive lower continuity scores.
+10.13 Dimension Seven — Cross-Community Propagation
+Measures movement across:
+neighborhoods;
+cities;
+regions;
+institutions;
+diaspora communities;
+industries.
+Cross-community influence increases propagation value.
+10.14 Dimension Eight — Intergenerational Influence
+Measures whether positive outcomes continue across generations.
+Examples:
+family mentorship;
+alumni mentoring students;
+preserved oral histories;
+recurring scholarships;
+institutional traditions.
+Intergenerational Ripples receive the highest long-term weighting.
+10.15 Ripple Levels
+Community Ripple™ classifies propagation internally.
+Level	Internal Meaning
+Level 0	No measurable Ripple
+Level 1	Direct Ripple
+Level 2	Secondary Ripple
+Level 3	Community Ripple
+Level 4	Regional Ripple
+Level 5	Legacy Ripple
+These levels are internal operational classifications.
+10.16 Ripple Formula
+Ripple Score =
+(Direct Community Impact × .20)
++(Downstream Opportunity × .18)
++(Relationship Expansion × .15)
++(Knowledge Transfer × .12)
++(Economic Circulation × .12)
++(Long-Term Continuity × .10)
++(Cross-Community Propagation × .08)
++(Intergenerational Influence × .05)
+Normalized to 0–100.
+10.17 Ripple Confidence
+Confidence evaluates:
+attribution certainty;
+evidence independence;
+propagation verification;
+observation duration;
+source diversity;
+downstream confirmation.
+Confidence Labels:
+Score	Label
+90–100	Verified
+80–89	High
+65–79	Moderate
+45–64	Emerging
+20–44	Low
+0–19	Unknown

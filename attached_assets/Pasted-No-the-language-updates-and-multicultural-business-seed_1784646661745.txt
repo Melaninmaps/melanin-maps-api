@@ -1,0 +1,196 @@
+No—the language updates and multicultural business seeding are **not confirmed as completed in Build 93**.
+
+Replit’s own latest report still lists both as pending:
+
+* **Multicultural language audit — pending**
+* **Seeded multicultural businesses — pending** 
+
+So what you are seeing—mostly Black-owned businesses even after removing the preference—is consistent with the work **not yet being implemented**, not with your settings being wrong.
+
+You are also correct that the cultural map should represent Philadelphia’s broader history. Philadelphia has verified historical stories beyond Black history that fit your platform, including early LGBTQ+ civil-rights demonstrations at Independence Hall and Indigenous Lenape history tied to the land now known as Philadelphia. ([City of Philadelphia][1])
+
+Send Replit this:
+
+> # P0 RELEASE REQUIREMENT — MULTICULTURAL EXPERIENCE MUST BE INCLUDED
+>
+> Build 93 does not satisfy the approved platform-language and multicultural-seeding requirements.
+>
+> The current user experience still appears overwhelmingly Black-owned even after the user removes demographic preferences.
+>
+> This is not acceptable for broader testing or App Review.
+>
+> Mapping With Melanin™ must celebrate Black businesses and history while also visibly serving minority communities, multicultural communities, the global melanated diaspora, and other historically underrepresented groups.
+>
+> **Celebrate specificity without assuming it.**
+>
+> ## 1. Confirm current status honestly
+>
+> State clearly:
+>
+> * whether the multicultural language audit has been completed;
+> * whether multicultural test businesses have been seeded;
+> * whether multiracial ownership is supported;
+> * whether default search results still prioritize Black-owned records;
+> * whether Build 93 contains any of these changes.
+>
+> Do not describe these items as implemented unless they are visible in production.
+>
+> ## 2. Audit why removing preference still shows only Black-owned businesses
+>
+> Trace the production experience from:
+>
+> `User preferences → Discovery request → API filters → ranking → returned businesses → visible labels`
+>
+> Confirm whether the cause is:
+>
+> * production data is almost entirely Black-owned;
+> * a hard-coded ownership filter;
+> * a default Kinfolk or Discovery preference;
+> * demo data merged into all results;
+> * ranking weights;
+> * cached user preferences;
+> * missing multicultural records;
+> * or another evidence-supported cause.
+>
+> Removing a preference must remove that demographic restriction. It must not silently continue applying it.
+>
+> ## 3. Seed a balanced multicultural test dataset
+>
+> Seed clearly marked, non-public or test-safe businesses representing multiple verified or fictional demo identities, including:
+>
+> * Black/African American;
+> * African diaspora;
+> * Caribbean;
+> * Hispanic/Latino;
+> * Indigenous/Native;
+> * Asian/Pacific Islander;
+> * Middle Eastern/North African;
+> * immigrant-owned;
+> * women-owned;
+> * LGBTQ+-owned;
+> * disability-owned;
+> * veteran-owned;
+> * multicultural or multiracial ownership.
+>
+> At least one business must support multiple ownership identities without being forced into a single category.
+>
+> Do not infer ownership identity for real businesses.
+>
+> Use one of:
+>
+> * verified real businesses with reliable ownership sources; or
+> * clearly labeled fictional demo businesses that cannot be mistaken for live listings.
+>
+> Seeding must be idempotent and nonduplicating.
+>
+> ## 4. Default Discovery behavior
+>
+> A new user with no demographic preference selected must see a diverse mix based on:
+>
+> * location;
+> * category;
+> * relevance;
+> * safety;
+> * quality;
+> * verified identity;
+> * available data.
+>
+> No single identity should be the universal default.
+>
+> A user who intentionally selects a specific identity should receive that focused experience.
+>
+> ## 5. Correct visible language
+>
+> Audit and correct:
+>
+> * onboarding;
+> * Discovery headings;
+> * filters;
+> * empty states;
+> * placeholders;
+> * Kinfolk prompts and responses;
+> * business labels;
+> * seeded descriptions;
+> * notifications;
+> * admin terminology.
+>
+> “Black-owned” should be used only when specifically verified or intentionally requested.
+>
+> Generic surfaces should use language such as:
+>
+> * minority-owned;
+> * community business;
+> * culturally relevant;
+> * heritage site;
+> * multicultural;
+> * local favorite.
+>
+> ## 6. Expand Philadelphia historical and cultural pins
+>
+> In addition to the existing Black-history locations, seed at least one verified Philadelphia location or story representing each available category where reliable data exists:
+>
+> * Indigenous/Lenape history;
+> * Hispanic or Latino history;
+> * Asian or immigrant history;
+> * LGBTQ+ history;
+> * women’s history;
+> * broader multicultural or migration history.
+>
+> Initial verified candidates to audit include:
+>
+> * Independence Hall — early LGBTQ+ “Annual Reminder” civil-rights protests;
+> * a verified Lenape/Indigenous Philadelphia site or interpretive location;
+> * a verified immigrant or ethnic-neighborhood heritage location.
+>
+> Do not publish a pin until its coordinates, historical significance, category, source, and description are verified.
+>
+> Each pin must support:
+>
+> * name;
+> * category;
+> * coordinates;
+> * short significance;
+> * full story;
+> * reliable source;
+> * website where available;
+> * directions;
+> * save and share.
+>
+> ## 7. Required proof
+>
+> Before another tester build or App Review submission, provide one continuous production-matching recording showing:
+>
+> 1. a user removes demographic preferences;
+> 2. Discovery refreshes;
+> 3. businesses from multiple communities are visible;
+> 4. one multiracial or multicultural business profile opens;
+> 5. no Black-only default remains;
+> 6. the Map opens;
+> 7. Black-history pins are visible;
+> 8. at least one non-Black Philadelphia cultural-history pin is visible and tappable;
+> 9. its story opens correctly.
+>
+> ## 8. Release status
+>
+> This is a nonnegotiable release blocker.
+>
+> Do not expand testing or submit to App Review until:
+>
+> * login is stable;
+> * map renders;
+> * multicultural language is corrected;
+> * multicultural businesses are visible;
+> * Philadelphia cultural pins demonstrate more than one community;
+> * the required walkthrough is provided.
+>
+> **Authentication impact: NONE for this workstream.**
+>
+> End with:
+>
+> **🔍 MULTICULTURAL EXPERIENCE AUDIT COMPLETE — AWAITING IMPLEMENTATION APPROVAL**
+>
+> Do not implement until the audit and exact seed plan are approved.
+
+Your strategic instinct is right: after asking supporters to wait, the first usable experience cannot unintentionally communicate that the platform serves only one group. Black culture should remain strongly represented, but the product must visibly demonstrate the broader promise from the first screen.
+
+[1]: https://www.phila.gov/2021-06-23-historic-spotlight-independence-hall-and-early-protests-for-lgbtq-civil-rights-1965-1969/?utm_source=chatgpt.com "Historic Spotlight: Independence Hall and Early Protests for LGBTQ Civil Rights, 1965-1969 | Department of Planning and Development | City of Philadelphia"

@@ -1,0 +1,122 @@
+You are right to be alarmed. At this point, **stop testing and stop publishing additional fixes on top of the current production OTA**.
+
+Your screenshot proves the expected simplification update is **not what your phone is running**:
+
+* The old `HBCU — 0` search/results panel is still visible.
+* It still says `No results for ""`.
+* The intended pin-only experience is not present.
+* Login has failed again.
+
+This is no longer something you should troubleshoot on your phone. You are following the force-close process correctly. Staying logged in overnight did not cause this.
+
+## What should happen now
+
+Replit should perform two emergency actions:
+
+1. **Restore backend stability and verify login.**
+2. **Roll the production OTA back to the last known-good map version**, instead of adding another patch.
+
+The safest known-good map version is the one from your earlier screenshot where:
+
+* `HBCU — 44` displayed,
+* Alabama State, Alcorn State and Benedict College were listed,
+* selecting Alcorn opened its information card,
+* the map rendered correctly.
+
+That version was imperfect, but it was functional. It is safer than leaving users on `HBCU — 0`.
+
+Send Replit this exactly:
+
+> **EMERGENCY RELEASE HOLD — LOGIN FAILURE + BROKEN MAP OTA**
+>
+> Stop all new feature work and do not publish another incremental hotfix.
+>
+> Current device evidence:
+>
+> * Login is failing again with “Login failed. Please try again.”
+> * The production app still displays the broken `HBCU — 0` results panel.
+> * It shows `No results for ""` with an empty search query.
+> * The requested pin-only simplification is not visible.
+> * I followed the two-cycle force-close OTA process correctly.
+>
+> This proves the production client state is not reliable enough for further stacked patches.
+>
+> ### 1. Check production backend immediately
+>
+> Run:
+>
+> * `/api/healthz`
+> * `/api/pool-stats`
+> * `/api/businesses?limit=1`
+> * `/api/cultural-sites?limit=1`
+> * sanitized invalid-credential request to `/api/auth/login-email`
+>
+> Return:
+>
+> * HTTP status
+> * latency
+> * JSON versus HTML response
+> * `totalCount`
+> * `idleCount`
+> * `waitingCount`
+> * current Railway deployment
+>
+> Do not use my credentials.
+>
+> If the pool is exhausted, capture the counters and restart only `api-server` once to restore service.
+>
+> ### 2. Freeze production OTA publishing
+>
+> Do not add another fix on top of the current broken map update.
+>
+> Identify the exact last known-good EAS update where:
+>
+> * the map rendered;
+> * `HBCU — 44` appeared;
+> * the HBCU result list contained Alabama State, Alcorn State and Benedict College;
+> * selecting Alcorn opened the cultural-site information card;
+> * login remained functional.
+>
+> Republish or roll the production channel back to that exact known-good update.
+>
+> Return:
+>
+> * known-good update group ID
+> * current broken update group ID
+> * production channel mapping before rollback
+> * production channel mapping after rollback
+> * runtime version
+> * Git commit for each
+>
+> Do not rely on a description or message alone. Verify the actual update group and commit.
+>
+> ### 3. Confirm rollback on device
+>
+> After rollback, the visible acceptance test is:
+>
+> * login succeeds;
+> * map renders;
+> * HBCU count returns to 44;
+> * the prior result list returns;
+> * selecting Alcorn opens its information card;
+> * `HBCU — 0` is gone.
+>
+> ### 4. Development reset
+>
+> After production is restored, move all further marker-tap work to a non-production validation branch or separate preview build.
+>
+> Do not use the production TestFlight channel as the first test environment for additional map interaction changes.
+>
+> Return the backend results and rollback plan before making any other change.
+
+## What you should do now
+
+Do not keep attempting login. Do not delete the app, reinstall TestFlight, log out of all devices, change your password, or restart Railway yourself.
+
+Wait for Replit to confirm:
+
+* whether the pool is healthy,
+* whether login works server-side,
+* and which exact OTA will be restored.
+
+You did not cause this. The current problem is a release-management and production-stability issue, not user error.

@@ -1,0 +1,66 @@
+This is the right point to create the combined builds. The password-reset flow is now proven end to end, and the remaining fixes are mobile-client changes that cannot be founder-tested until a new binary exists.
+
+Before triggering them, have Replit complete one final preflight:
+
+> Password-reset trace accepted as **PASS 11/11**. Proceed toward the combined mobile build, subject to this final preflight:
+>
+> 1. Confirm App Store Connect’s latest accepted iOS build is 87 or lower, so Build 88 is valid.
+> 2. Confirm Google Play’s latest uploaded `versionCode` is 62 or lower, so 63 is valid.
+> 3. Confirm `app.json` resolves to iOS 88 and Android 63 for these builds.
+> 4. Run from `artifacts/mobile/`:
+>
+> ```bash
+> npx expo-doctor
+> npx expo export --platform ios --platform android
+> ```
+>
+> 5. Run TypeScript checks and the complete test suite.
+> 6. Confirm the final build contains:
+>
+>    * circles button displays an alert instead of routing directly to login;
+>    * `fetchUser()` clears the stored session only after an explicit invalid-session 401;
+>    * role-selection redesign;
+>    * Cultural Ambassador terminology;
+>    * larger password fields;
+>    * approved KinfolkAI greeting and placeholder;
+>    * correct production API URL.
+> 7. Confirm no unfinished experimental changes, secrets or test-only values are included.
+>
+> Please correct the release record wording: the 401-only sign-out change is a **mobile-client fix**, not part of the Railway `authMiddleware` server commit.
+>
+> If every preflight item passes, trigger iOS and Android builds and return:
+>
+> * EAS build IDs;
+> * build numbers;
+> * source commit;
+> * build status;
+> * submission status;
+> * exact founder-retest checklist.
+>
+> Do not submit for public store review until founder retesting passes.
+
+Then Replit can run:
+
+```bash
+cd artifacts/mobile && eas build --platform ios --profile production
+```
+
+```bash
+cd artifacts/mobile && eas build --platform android --profile production
+```
+
+After both finish, founder retesting should cover:
+
+* Existing email login
+* Phone login and force-close/reopen without another SMS
+* Complete password reset
+* Apple Sign-In
+* Session persistence
+* Favorite a business
+* Circles button behavior
+* Onboarding roles
+* Back/cancel controls
+* Hidden Gem nomination
+* KinfolkAI greeting and basic questions
+
+The release can now move from **NO GO — correction required** to **READY TO BUILD FOR FOUNDER RETEST**, but not yet to tester distribution or store review.

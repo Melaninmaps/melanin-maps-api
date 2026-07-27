@@ -1,0 +1,89 @@
+APPLE RELEASE CANDIDATE — CORRECT VERSION STATE AND PRODUCTION RECOVERY
+
+The Heritage Sites release-candidate disable is approved.
+
+Do not build using the stale counters in the report.
+
+CORRECT VERSION BASELINE:
+- app version: 1.1.5
+- current iOS buildNumber: 95
+- next iOS buildNumber: 96
+- current Android versionCode: 71
+- do not change Android versionCode for this iOS-only build
+
+STEP 1 — DEPLOY BACKEND DIAGNOSTICS
+
+Deploy the logger.ts err.cause serializer to Railway production first.
+
+Provide:
+- Railway deployment ID
+- deployed Git commit SHA
+- confirmation the new deployment is active
+
+STEP 2 — CLEAN PRODUCTION DATABASE CONNECTION STATE
+
+After the new Railway deployment is active, restart only the API service once.
+
+Do not change:
+- pool max
+- timeout settings
+- database schema
+- environment variables
+
+STEP 3 — REQUIRED PRODUCTION VERIFICATION
+
+Do not build iOS until all of these pass:
+
+1. GET /api/healthz
+   Expected: 200 in under 2 seconds
+
+2. GET /api/businesses?limit=3
+   Expected: 200 in under 2 seconds
+
+3. POST /api/auth/login-email with invalid credentials
+   Expected: 401 in under 2 seconds, not 500
+
+4. Existing-user real login
+   Expected: success
+
+5. New-user registration using a fresh test email
+   Expected: 201 and account created
+
+6. GET /api/auth/user after successful authentication
+   Expected: 200 with user object
+
+If any request fails, provide the complete new err.cause fields and STOP.
+
+STEP 4 — RELEASE-CANDIDATE SCOPE CONFIRMATION
+
+Confirm Heritage Sites are fully hidden on both iOS and Android:
+- no Heritage Sites toggle
+- no HBCU/category chips
+- no heritage markers
+- no heritage card
+- no /api/cultural-sites request from the map
+- business map and location remain available
+
+Confirm the exact changed-file list.
+
+STEP 5 — IOS BUILD
+
+Only after production verification passes:
+
+- Set ios.buildNumber to 96
+- Keep android.versionCode at 71
+- Keep version at 1.1.5
+- Run the iOS production EAS build directly
+- Do not give me a manual shell command
+- Do not submit to Apple yet
+
+Return:
+- EAS build URL
+- build status
+- iOS buildNumber 96
+- Android versionCode 71
+- app version 1.1.5
+- production profile
+- Git commit SHA
+
+Stop after the build report.

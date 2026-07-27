@@ -1,0 +1,66 @@
+I reviewed the report. Overall, I think it identifies the two real problems correctly, but I'd separate **what is well-supported by evidence** from **what is still a hypothesis**.
+
+### What the report establishes well
+
+The build **does** contain the approved VC68 changes. The authentication loading change, the 8-second location timeout, the marker optimizations, category-specific icons, and Android versionCode 68 are all confirmed to be in the compiled build. 
+
+The report also gives a credible explanation for why the login flash persists: there are still **three competing navigation events** during a successful login. The important evidence is not the proposed fix—it is the observation that multiple `router.replace()` calls are occurring in one login flow. 
+
+### Where I would be more cautious
+
+I would **not** accept the HBCU crash diagnosis as proven yet.
+
+The report itself says:
+
+* the **primary hypothesis** is `fitToCoordinates(...)` with a degenerate bounding box and large edge padding;
+* the **exact native exception is unknown**;
+* the Play Console or `adb logcat` crash stack is still required to confirm it. 
+
+That is the correct level of certainty. I would **not authorize changing `fitToCoordinates` solely on this hypothesis** until we have the Android crash stack.
+
+### The location spinner
+
+I also agree with the report's conclusion that the spinner may be **secondary to the login flicker**. If the map component is mounting, unmounting, and remounting because of the authentication redirect race, the timeout behavior can become misleading. 
+
+### Which authentication option would I choose?
+
+The report presents:
+
+* **A1:** defer navigation one event-loop tick;
+* **A2:** wait for `refreshUser()` before navigating. 
+
+I would **not immediately authorize either**.
+
+Before changing navigation timing again, I want one additional piece of evidence:
+
+> **Instrument the navigation.**
+
+Have Replit temporarily log, in order:
+
+* successful credential response;
+* `loginWithEmail()` return;
+* every `router.replace()` call;
+* AuthGate redirect decisions;
+* login auto-restore effect;
+* current pathname;
+* `isLoading`;
+* `isAuthenticated`;
+* whether a verified token exists.
+
+Once we have the actual runtime sequence from the physical device, we'll know **which redirect is unnecessary**. That lets us remove or delay the correct navigation instead of guessing.
+
+### My recommendation
+
+I would **not authorize VC69 yet**.
+
+The next order should be:
+
+1. Retrieve the Android crash stack from **Google Play Console → Android vitals → Crashes and ANRs**.
+2. Instrument the login navigation sequence.
+3. Return those two reports.
+4. Then approve a **single targeted fix** for:
+
+   * the authentication race; and
+   * the confirmed Android crash.
+
+That keeps you from entering another cycle of speculative builds. At this stage, you've narrowed the failures significantly; the remaining issues deserve evidence-driven fixes rather than another round of educated guesses.

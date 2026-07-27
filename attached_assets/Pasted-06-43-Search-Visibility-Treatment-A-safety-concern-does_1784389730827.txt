@@ -1,0 +1,128 @@
+06.43 Search Visibility Treatment
+A safety concern does not automatically remove an entity from search.
+An entity may remain searchable when:
+public identification is legitimate;
+the user explicitly searches for it;
+the information is historically relevant;
+removal would conceal useful accountability information;
+the concern does not meet block criteria.
+Search results may include approved safety context.
+Critical legal, privacy, impersonation, or governance issues may require removal.
+06.44 Promotion Treatment
+Promotion requires a higher safety standard than search or ordinary recommendation.
+Promotion must be held when:
+a High-Risk or Critical override exists;
+a serious report is under active review;
+evidence has been concealed;
+retaliation is alleged credibly;
+required safety information is materially false;
+the entity refuses necessary verification;
+a current public alert applies.
+Payment may not reduce the concern score or remove a hold.
+06.45 Anti-Manipulation Signals
+Potential manipulation includes:
+coordinated false reports;
+coordinated suppression of legitimate reports;
+copied incident narratives;
+mass account creation;
+location spoofing;
+employee or owner impersonation;
+competitor attacks;
+retaliation reporting patterns;
+incentives for safety ratings;
+edited screenshots;
+forged official notices;
+mass downvoting of safety concerns;
+repeated withdrawal pressure;
+false emergency claims;
+deliberate category misclassification;
+review flooding after publicity;
+coordinated defense campaigns;
+hidden financial relationships;
+fabricated corrective action;
+deletion attempts targeting historical evidence.
+06.46 Anti-Manipulation Responses
+Level	Response
+1	Monitor signal
+2	Discount questionable evidence
+3	Require verification
+4	Freeze public score change
+5	Hold alert or recommendation
+6	Restrict contributor influence
+7	Human investigation
+8	Governance escalation
+9	Account or entity restriction
+10	Removal, legal escalation, or emergency referral
+The system must protect legitimate reporters from being classified as manipulators merely because their report is unpopular.
+06.47 Reporter Protection Rules
+The Engine must:
+permit appropriate anonymity;
+separate public display identity from internal verification;
+restrict access to sensitive reports;
+detect retaliation;
+avoid notifying an accused party before evidence is preserved where doing so could increase harm;
+protect minors;
+minimize location and contact exposure;
+preserve appeal rights;
+distinguish malicious reporting from disputed reporting;
+avoid requiring public confrontation.
+06.48 Accused-Entity Fairness Rules
+The Engine must also:
+distinguish allegation from verified finding;
+provide an appropriate response pathway;
+prevent permanent harm from a single weak report;
+preserve corrective evidence;
+allow factual correction;
+identify conflicts of interest;
+avoid public categorical labels unsupported by evidence;
+maintain timelines;
+document holds;
+provide appeal and Governance review.
+Protecting reporters and preserving fairness are simultaneous obligations.
+06.49 Public Explanation Rules
+Approved public explanations include:
+“Recent safety information affected this recommendation.”
+“Evidence is limited, so this result is shown with caution.”
+“Multiple independent reports describe similar concerns.”
+“An official alert is active.”
+“This concern appears to be historical and may not reflect current conditions.”
+“Verified corrective action has been reported.”
+“Accessibility information could not be confirmed.”
+“This result remains searchable but is not currently eligible for promotion.”
+Prohibited explanations include:
+confidential scores;
+reporter identity;
+internal thresholds;
+anti-gaming signals;
+unsupported guilt;
+unsupported safety guarantees;
+hidden identity assumptions;
+precise private-location information.
+06.50 Batch 2 Status
+SECTION 06 — SAFETY INTELLIGENCE ENGINE™
+
+RECEIVED PREVIOUSLY
+06.1–06.8
+
+THIS BATCH
+06.9–06.50
+
+NEXT BATCH
+06.51 Internal Output Contract
+06.52 Required Database Structures
+06.53 Audit Record Requirements
+06.54 Human Review Requirements
+06.55 Emergency Failure Conditions
+06.56 Constitutional Rules
+06.57 Institution Test
+06.58 Generational Test
+06.59 Launch Readiness
+06.60 Validation Scenarios
+06.61 Versioning and Change Control
+06.62 Future Expansion
+06.63 Final Governing Rule
+═══════════════════════════════════════════════════════════════════════
+END OF SECTION 06 — BATCH 2
+SAFETY INTELLIGENCE ENGINE™
+CONFIDENTIAL — TRADE SECRET — NOT FOR DISTRIBUTION
+═══════════════════════════════════════════════════════════════════════

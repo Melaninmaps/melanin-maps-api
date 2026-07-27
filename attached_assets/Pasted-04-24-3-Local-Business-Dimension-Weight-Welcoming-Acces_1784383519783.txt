@@ -1,0 +1,105 @@
+04.24.3 Local Business
+Dimension	Weight
+Welcoming Access	18%
+Meaningful Connection	13%
+Reciprocity	22%
+Community Support	15%
+Voice & Influence	10%
+Continuity & Return	12%
+Stewardship & Shared Benefit	10%
+04.24.4 Cultural Ambassador
+Dimension	Weight
+Welcoming Access	8%
+Meaningful Connection	18%
+Reciprocity	20%
+Community Support	12%
+Voice & Influence	17%
+Continuity & Return	10%
+Stewardship & Shared Benefit	15%
+04.24.5 Community Resource
+Dimension	Weight
+Welcoming Access	22%
+Meaningful Connection	8%
+Reciprocity	10%
+Community Support	30%
+Voice & Influence	10%
+Continuity & Return	12%
+Stewardship & Shared Benefit	8%
+04.24.6 Cultural Heritage
+Dimension	Weight
+Welcoming Access	10%
+Meaningful Connection	14%
+Reciprocity	12%
+Community Support	8%
+Voice & Influence	12%
+Continuity & Return	20%
+Stewardship & Shared Benefit	24%
+These profiles require Weight Register approval before production use.
+04.25 Entity-Type Interpretation Rules
+04.25.1 Businesses
+Businesses are evaluated on:
+accessibility;
+customer welcome;
+local reciprocity;
+community support;
+responsiveness;
+repeat relationships;
+employment and opportunity;
+cultural respect;
+community contribution.
+Businesses are not required to act as charities.
+Their score reflects whether their community relationship is responsible and mutually beneficial.
+04.25.2 Neighborhoods
+Neighborhoods are evaluated on:
+access;
+social connection;
+resource availability;
+local institutions;
+community voice;
+continuity;
+resident participation;
+newcomer integration;
+economic circulation;
+safety and trust interactions.
+04.25.3 Events
+Events are evaluated on:
+entry access;
+participant connection;
+inclusion;
+community benefit;
+follow-up pathways;
+creator recognition;
+recurring value;
+safety and accessibility.
+A one-time event cannot receive full continuity credit without verified follow-through.
+04.25.4 Cultural Ambassadors
+Cultural Ambassadors are evaluated on:
+authentic connection;
+community reciprocity;
+opportunity creation;
+responsible influence;
+disclosure;
+continuity;
+stewardship;
+treatment of community stories.
+Follower count alone may contribute no more than 10% to related influence calculations and does not directly establish Community Score.
+04.25.5 Resources
+Resources are evaluated on:
+discoverability;
+eligibility clarity;
+accessibility;
+reliability;
+successful use;
+responsiveness;
+reach;
+continuity;
+non-exploitative operation.
+04.25.6 Cities
+Cities are evaluated through aggregated community evidence and coordinated with:
+Community Health Index™;
+City Maturity Model™;
+Safety Intelligence Engine™;
+Opportunity Engine™;
+Discovery Engine™;
+Trust Engine™.
+The Community Engine™ must not treat a city as culturally unified.

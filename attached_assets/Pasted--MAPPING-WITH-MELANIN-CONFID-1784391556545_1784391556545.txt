@@ -1,0 +1,98 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+09. COMMUNITY HEALTH INDEX™
+Future-State Production Specification v1.0
+Classification: Community Well-Being, Resilience, and System Vitality Intelligence Engine
+Status: Review Mode — designed as the launch-state model
+Confidentiality: Highest restriction; Community Health scoring, resilience calculations, intervention thresholds, vitality weighting, predictive deterioration indicators, and recovery methodologies are confidential trade secrets and are not publicly disclosed.
+09.1 Purpose
+The Community Health Index™ measures the overall condition of a community as it exists today.
+Unlike the Community Engine™, which evaluates whether individuals experience belonging, and unlike the Community Catalyst Model™, which evaluates what creates positive movement, the Community Health Index™ evaluates the condition of the ecosystem itself.
+It determines:
+how resilient a community is;
+whether people are thriving or merely participating;
+how resources circulate;
+how opportunity is distributed;
+how trust changes over time;
+how communities respond to challenges;
+where intervention is needed;
+where recovery is occurring;
+where long-term deterioration is emerging;
+whether the community is becoming healthier or weaker.
+The governing question is:
+Given everything we know, is this community becoming stronger, more connected, more resilient, and more capable of supporting its members over time?
+09.2 Foundational Principle
+Healthy communities are living systems.
+A healthy community is not simply one with:
+low crime;
+many businesses;
+high participation;
+large population;
+economic wealth.
+Instead, healthy communities demonstrate:
+resilience;
+adaptability;
+trust;
+reciprocity;
+opportunity;
+belonging;
+stewardship;
+continuity.
+The Community Health Index™ measures these characteristics simultaneously.
+09.3 Definition of Community Health
+Community Health is the collective capacity of a community to:
+support its members;
+solve problems;
+create opportunity;
+preserve culture;
+recover from disruption;
+sustain relationships;
+circulate resources;
+strengthen belonging;
+maintain trust;
+improve over time.
+Health is never treated as a permanent condition.
+Communities continuously improve or decline.
+09.4 Evaluation Objects
+The Index may evaluate:
+Object	Examples
+Neighborhood	Local community
+City	Municipal ecosystem
+Region	Metropolitan area
+Institution	Campus, HBCU, cultural district
+Digital Community	Online network
+Event Ecosystem	Festival or recurring event
+Business District	Commercial corridor
+Cultural District	Historic neighborhood
+Community Network	Kinfolk Circles
+Specialized Community	Alumni, veterans, artists
+09.5 Core Evaluation Dimensions
+The Community Health Index™ returns a normalized score from 0–100.
+Dimension	Weight
+Trust & Safety Stability	18%
+Opportunity Distribution	16%
+Community Participation	15%
+Resource Accessibility	13%
+Relationship Strength	12%
+Cultural Vitality	10%
+Resilience & Recovery	8%
+Leadership & Stewardship	5%
+Future Readiness	3%
+Total	100%
+09.6 Dimension One — Trust & Safety Stability
+Measures:
+community trust;
+safety consistency;
+institutional confidence;
+conflict resolution;
+fairness;
+perceived reliability.
+Formula:
+Trust Stability =
+Trust Indicators
++ Safety Consistency
++ Institutional Reliability
+- Instability Penalties

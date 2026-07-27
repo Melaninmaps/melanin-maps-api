@@ -1,0 +1,105 @@
+This is an excellent checklist. I would approve it with a few additions so that when Community Beta 3 passes, you'll have confidence not just in the fixes, but in the overall user experience.
+
+## Add one new section: Navigation & Session Stability
+
+These are based on the issues you discovered today.
+
+### NAVIGATION & SESSION STABILITY
+
+* [ ] Back, Cancel, or Close is available on every modal, form, and multi-step screen.
+* [ ] iOS swipe-back gesture works where appropriate.
+* [ ] Android system back button behaves correctly.
+* [ ] No authenticated action unexpectedly redirects to the login screen.
+* [ ] Failed API requests (500, timeout, network error) do **not** sign the user out.
+* [ ] Only an explicit invalid-session response (401) clears the stored session.
+
+---
+
+## Expand the KinfolkAI section
+
+I think this should be more comprehensive because KinfolkAI™ is a major differentiator for Mapping With Melanin™.
+
+### KINFOLKAI™
+
+* [ ] Greeting displays:
+
+  > **"Kinfolk's here. Let's explore what's possible."**
+* [ ] Voice input works.
+* [ ] Current conversation context is remembered.
+* [ ] Responds appropriately to:
+
+  * [ ] "What's a good soul food spot in DC?"
+  * [ ] "What's the weather?" (using granted location, if implemented)
+  * [ ] "Take me there." (when discussing a business, if implemented)
+* [ ] Gracefully explains when a capability is unavailable instead of giving an incorrect or confusing answer.
+
+---
+
+## Add a Favorites section
+
+Since favorites exposed the session issue, I'd test it more thoroughly.
+
+### FAVORITES
+
+* [ ] Add business to favorites.
+* [ ] Remove business from favorites.
+* [ ] Favorite state persists after app restart.
+* [ ] Favorite state persists after logout/login.
+* [ ] Duplicate taps do not create inconsistent state.
+
+---
+
+## Expand Hidden Gem
+
+The timeout deserves a little more coverage.
+
+### HIDDEN GEMS
+
+* [ ] Nomination submits successfully.
+* [ ] Loading indicator completes.
+* [ ] Success confirmation is shown.
+* [ ] Refresh shows the expected state.
+* [ ] Duplicate submissions are prevented.
+
+---
+
+## Add Business Profile
+
+These are quick wins but catch a lot of regressions.
+
+### BUSINESS PROFILE
+
+* [ ] Share button works.
+* [ ] Directions opens correctly.
+* [ ] Website button opens.
+* [ ] Phone button works (when available).
+* [ ] Business images load correctly.
+* [ ] No placeholder or test-business content appears unexpectedly.
+
+---
+
+## My last recommendation
+
+At the very end, I would add one final check that often catches subtle issues:
+
+### Overall Experience
+
+* [ ] **Spend 15 uninterrupted minutes using the app naturally without following a script.**
+
+  * Browse.
+  * Search.
+  * Save.
+  * Ask KinfolkAI™ questions.
+  * Open profiles.
+  * Switch tabs.
+  * Leave and return to the app.
+
+The goal is to answer one question:
+
+> **"Does anything make me stop and think about the app instead of what I'm trying to accomplish?"**
+
+That kind of unscripted use often reveals friction that targeted tests miss.
+
+---
+
+If Community Beta 3 passes this expanded checklist, I'd feel much more comfortable moving to a **limited tester distribution**. It won't guarantee there are no bugs—that's rarely possible—but it will mean you've validated the core experience, the critical authentication flows, and the major user journeys that define Mapping With Melanin™.

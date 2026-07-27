@@ -1,0 +1,96 @@
+Please test the app from beginning to end and report:
+Your phone model
+Your iOS or Android version
+The build/version number
+What you were doing when an issue occurred
+A screenshot or screen recording when possible
+1. Install and Launch
+Delete the previous test version from your phone.
+Install the newest build.
+Open the app.
+Confirm the app does not crash, freeze, or show a blank screen.
+Close the app completely and reopen it.
+Pass: App opens normally both times.
+2. Account and Onboarding
+Create a new account or sign in.
+Complete onboarding.
+Allow or deny location permission when prompted.
+Sign out and sign back in.
+Confirm your profile information remains saved.
+Report: Any login loop, error message, missing screen, or information that does not save.
+3. Map Testing — Highest Priority
+Open the Map tab.
+Confirm the map loads without a blank or gray screen.
+Allow location access and confirm your approximate location appears.
+Move and zoom around the map.
+Tap multiple business pins.
+Open a business profile from a map pin.
+Return to the map and confirm it still works.
+Test directions to a business.
+Deny location access and confirm the app handles it without crashing.
+For iPhone testers, please note whether the map displays correctly even if it looks slightly different from the Android version.
+4. Discover and Business Profiles
+Search for a business by name or category.
+Open a business profile.
+Check the website and social-media links.
+Save the business as a favorite.
+Tap directions.
+Confirm the embedded business map loads.
+Return to Discover and confirm the screen remains responsive.
+5. Safety and Location Features
+Open any available neighborhood or safety feature.
+Confirm location-based information loads.
+Submit a test safety rating or survey.
+Confirm the submission saves.
+Test the app with location services temporarily turned off.
+Report immediately: Incorrect location, repeated permission requests, crashes, or alerts that do not match your area.
+6. Community
+Open the Community tab.
+View several posts.
+Create a test post.
+Like, comment, save, or interact where available.
+Join or open a Kinfolk Circle.
+Confirm the keyboard opens and closes normally.
+7. Membership and Payment Screens
+Do not complete a real purchase unless specifically instructed.
+Open the membership or upgrade page.
+Confirm all plans and prices display correctly.
+Tap a plan and confirm the purchase screen opens.
+Cancel before completing payment.
+Confirm the app returns to the correct screen without freezing.
+8. Notifications, Links, and Navigation
+Tap every main navigation tab.
+Open at least one external website or social-media link.
+Return to the app.
+Place the app in the background and reopen it.
+Lock and unlock the phone while the app is open.
+Confirm the app returns to the same or an appropriate screen.
+9. Final Stability Test
+Use the app continuously for at least 10–15 minutes.
+Please watch for:
+Crashes
+Blank screens
+Slow loading
+Buttons that do nothing
+Duplicate screens
+Text cut off
+Keyboard covering fields
+Map failures
+Sign-in problems
+Features that work on Android but not iPhone
+Tester Response Template
+Device:
+Operating system:
+App version/build:
+Did the app install and open? Yes / No
+Did login work? Yes / No
+Did the map load? Yes / No
+Did location work? Yes / No
+Did business profiles and directions work? Yes / No
+Did the app crash or freeze? Yes / No
+Issue found:
+Steps taken before the issue:
+What I expected:
+What happened instead:
+Screenshot or recording attached: Yes / No
+The first test after this build succeeds should be performed by you before it is released to the larger tester group, with special attention to the map, location permissions, login, directions, and whether the app reopens successfully.

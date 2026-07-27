@@ -1,0 +1,84 @@
+I would not accept Replit’s conclusion yet.
+
+Two parts of that response are incorrect or unsupported:
+
+1. **A “stale APK that predates the Railway deployment” would not explain this.**
+   Your installed app calls the live production URL. Server changes on Railway take effect immediately without changing the APK, as long as the endpoint and request format stay the same.
+
+2. **Your login is not resolved from your perspective.**
+   Replit proved a server login using a password it set during its test. Unless you personally know that password—which you should not have shared with them—you cannot use it. Your own password-reset flow still fails inside the app.
+
+Also, this statement is too confident:
+
+> “Could not connect means the request never left the device.”
+
+Their code shows the same message can appear if either:
+
+* `fetch()` throws, **or**
+* `res.json()` throws because the response is empty, HTML, malformed, redirected, or otherwise not JSON.
+
+So the app needs to reveal which one is happening.
+
+Send Replit this:
+
+> The issue is not resolved for me. I cannot use the password created during your test, and the app’s own password-reset flow still returns “Could not connect.”
+>
+> Also, a stale APK would not be caused by an older Railway deployment because the APK calls the live production endpoint.
+>
+> Before making another conclusion, please change the reset handler in one internal diagnostic build so it distinguishes:
+>
+> 1. network/fetch failure;
+> 2. HTTP response received;
+> 3. response body not valid JSON;
+> 4. server JSON error;
+> 5. successful reset followed by navigation failure.
+>
+> Please log safely:
+>
+> * endpoint host and path;
+> * HTTP status;
+> * response `Content-Type`;
+> * whether response text was received;
+> * first 100 characters of the response only if it contains no credentials;
+> * exception name and message;
+> * no reset code, password, token, email, or secret values.
+>
+> Do not change unrelated code. Do not publish this to the closed-testing track.
+
+A safer implementation would read the response as text first, then attempt JSON parsing:
+
+```ts
+const response = await fetch(url, options);
+const contentType = response.headers.get("content-type") ?? "";
+const rawBody = await response.text();
+
+let data: unknown = null;
+
+if (rawBody) {
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    console.error("Reset response was not JSON", {
+      status: response.status,
+      contentType,
+      bodyPreview: rawBody.slice(0, 100),
+    });
+
+    throw new Error(`Non-JSON response: HTTP ${response.status}`);
+  }
+}
+```
+
+Then the interface can show something specific such as:
+
+```text
+Reset failed: HTTP 502
+```
+
+or:
+
+```text
+Reset service returned an unexpected response.
+```
+
+At this point, **one internal diagnostic build is justified** because the live server route works through direct testing, but the installed app’s reset request fails inside the device. The build should diagnose only the login/reset client flow and must not touch your closed-testing release.

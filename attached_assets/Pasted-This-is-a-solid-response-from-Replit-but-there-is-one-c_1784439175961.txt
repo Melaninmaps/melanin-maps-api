@@ -1,0 +1,40 @@
+This is a solid response from Replit, but there is one correction:
+
+The Stripe Dashboard test event is useful for confirming the webhook route accepts a valid Stripe-signed event. However, a generic test `checkout.session.completed` event may not contain the exact metadata or subscription objects your app expects, so it may not prove the membership tier changes correctly.
+
+For the full pipeline, the strongest test is to complete a real **test-mode Checkout** using Stripe’s test card `4242 4242 4242 4242`, then verify the resulting `checkout.session.completed` webhook updates the user’s membership. Stripe recommends fulfilling from webhook events rather than relying only on the success page. ([Stripe Docs][1])
+
+Send Replit:
+
+> Confirmed. Proceed with the automated checks after Railway redeploys.
+>
+> For Stripe, use two separate tests:
+>
+> 1. **Webhook security test**
+>
+>    * no signature → rejected;
+>    * invalid signature → rejected;
+>    * valid Stripe Dashboard test event → accepted.
+> 2. **Real test-mode subscription flow**
+>
+>    * create checkout from the app/web using a fresh test account;
+>    * complete the hosted checkout with Stripe test card `4242 4242 4242 4242`;
+>    * confirm the tier does not change before payment;
+>    * confirm Stripe sends the real `checkout.session.completed` event;
+>    * confirm the database tier changes only after that verified event;
+>    * logout and login again;
+>    * confirm the tier persists;
+>    * confirm the correct paid features unlock.
+>
+> Do not treat a manually generated dashboard fixture alone as proof that the subscription pipeline works.
+>
+> Once the variables are saved and Railway redeploys, run every automated test possible. Tell me only which remaining steps require my browser or physical device.
+
+After you add the six Railway variables, reply to Replit:
+
+> **Variables added. Wait for Railway deployment to finish, then begin the full verification.**
+
+One small correction to Replit’s local CLI example: `stripe trigger checkout.session.completed` is typically used with `stripe listen --forward-to ...` for local forwarding. For your live Railway endpoint, completing a Stripe test-mode Checkout or using the Dashboard’s endpoint test is simpler. ([Stripe Docs][2])
+
+[1]: https://docs.stripe.com/checkout/fulfillment?utm_source=chatgpt.com "Fulfill orders | Stripe Documentation"
+[2]: https://docs.stripe.com/stripe-cli/use-cli?locale=en-GB&utm_source=chatgpt.com "Use the Stripe CLI | Stripe Documentation"

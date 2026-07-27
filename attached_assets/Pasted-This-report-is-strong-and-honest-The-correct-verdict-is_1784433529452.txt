@@ -1,0 +1,162 @@
+This report is strong and honest. The correct verdict is:
+
+> **Do not invite testers yet. Proceed with production preparation, but only after the founder-controlled configuration and database safeguards are complete.**
+
+The current Railway server is still four commits behind, the production database has a confirmed schema mismatch, and only 9 of 15 smoke tests pass. Deploying the new code without correcting those dependencies could make production worse rather than better.
+
+## Send Replit this response
+
+> The pre-deployment report is accepted. The **NO GO for tester distribution** remains in effect.
+>
+> We will proceed with deployment methodically, but the following safeguards are required.
+>
+> ### 1. Database safety before schema push
+>
+> Before running any schema command against Railway Postgres:
+>
+> * create a Railway Postgres snapshot or confirm a current recoverable backup;
+> * inspect the proposed schema diff;
+> * confirm it is additive and does not delete, rename, truncate, or alter existing production columns unexpectedly;
+> * save the schema-push output in the deployment manifest;
+> * provide rollback instructions for any destructive or unexpected change.
+>
+> Do not run the production database push until the snapshot is confirmed.
+>
+> ### 2. Railway variables
+>
+> Walk me through adding or updating these values one at a time:
+>
+> * `STRIPE_SECRET_KEY`
+> * `STRIPE_WEBHOOK_SECRET`
+> * `REVENUECAT_WEBHOOK_AUTH_KEY`
+> * `CRON_SECRET`
+> * `COMPANY_MAILING_ADDRESS`
+> * `FRONTEND_URL=https://www.mappingwithmelanin.com`
+>
+> Do not ask me to paste secret values into chat. I will enter them directly into the appropriate dashboards.
+>
+> Afterward, report only:
+>
+> * present or missing;
+> * correctly formatted or incorrect;
+> * production or test credential;
+> * whether a redeploy is required.
+>
+> ### 3. Confirm exact webhook routes before configuration
+>
+> Previous documents referenced different URLs for Stripe and RevenueCat webhooks.
+>
+> Before I configure either dashboard, inspect the actual Express route registration and confirm the one canonical production endpoint for each:
+>
+> * Stripe webhook;
+> * RevenueCat webhook.
+>
+> Do not rely on previous documentation or guessed route names. Confirm by code and then verify the deployed URL returns the expected authentication response.
+>
+> ### 4. RevenueCat webhook must fail closed
+>
+> Confirm that if `REVENUECAT_WEBHOOK_AUTH_KEY` is missing, the deployed route returns an error and processes no event.
+>
+> Test:
+>
+> * no Authorization header;
+> * wrong Authorization value;
+> * correct Authorization value with a valid test event;
+> * duplicate event behavior.
+>
+> ### 5. Stripe webhook verification
+>
+> Confirm:
+>
+> * the Railway webhook endpoint is registered in Stripe;
+> * the signing secret belongs to that exact endpoint and production mode;
+> * invalid signatures return 400;
+> * valid test events return 2xx;
+> * a failed handler remains retryable;
+> * a successfully processed replay does not apply membership twice.
+>
+> ### 6. GitHub deployment
+>
+> Continue using `gh auth login --web`. I will not provide a personal access token in chat or store one in Replit secrets.
+>
+> Before pushing, confirm:
+>
+> * `f02b645a` is the approved HEAD commit;
+> * the working tree is clean;
+> * the committed `dist` and web assets match the approved source;
+> * no secrets, credentials, certificates, service-account files, or `.env` files are included in the commit.
+>
+> ### 7. Production deployment
+>
+> Deploy only after:
+>
+> * Railway variables pass;
+> * database backup is confirmed;
+> * schema synchronization succeeds;
+> * exact webhook routes are confirmed;
+> * GitHub authentication succeeds securely.
+>
+> After deployment, report:
+>
+> * deployed commit;
+> * Railway deployment ID;
+> * startup status;
+> * production log review;
+> * database schema verification.
+>
+> ### 8. Smoke tests
+>
+> Rerun all 15 smoke tests against `https://www.mappingwithmelanin.com`.
+>
+> Every test must pass. A health check alone is not sufficient.
+>
+> Also add:
+>
+> * cron without secret → denied;
+> * cron with secret → accepted;
+> * RevenueCat webhook without auth → denied;
+> * Stripe webhook with invalid signature → denied;
+> * password reset full request response;
+> * sign out all devices;
+> * production website asset loading.
+>
+> Use disposable test records and do not trigger real charges or uncontrolled marketing sends.
+>
+> ### 9. Test-data cleanup
+>
+> After verification:
+>
+> * remove or clearly retain and label the disposable test account;
+> * remove test community posts and saved-place records;
+> * document any test email or SMS generated;
+> * confirm no test membership or premium entitlement remains.
+>
+> ### 10. Final decision
+>
+> Return only one of:
+>
+> * `GO FOR FOUNDER DEVICE TESTING`
+> * `NO GO — CORRECTION REQUIRED`
+>
+> Do not recommend tester distribution until founder testing passes on production web, iOS Build 85, and Android Build 61.
+
+## What you should do next
+
+Start with the Railway variables, but do not enter values blindly.
+
+The safest order is:
+
+1. Create or confirm the Railway database snapshot.
+2. Confirm the exact Stripe and RevenueCat webhook routes in the code.
+3. Add the six missing or incorrect Railway variables.
+4. Inspect and run the Railway database schema synchronization.
+5. Authenticate to GitHub through the browser device flow.
+6. Push commit `f02b645a`.
+7. Redeploy Railway.
+8. Require every production smoke test to pass.
+9. Test the live website yourself.
+10. Then test iOS and Android on physical devices.
+
+One especially important correction: Replit should **not infer that a table exists merely because the server starts**. For example, `stripe_processed_events` may not be touched during startup. It should query Railway Postgres directly or execute a safe endpoint that actually uses the table. The database verification should be based on the schema itself, not indirect assumptions.
+
+You are now at the real production-deployment stage. The right move is not another feature wave—it is configuration, backup, deployment, verification, and physical testing.

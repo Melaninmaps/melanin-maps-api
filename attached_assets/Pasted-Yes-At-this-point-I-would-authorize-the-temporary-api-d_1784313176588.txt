@@ -1,0 +1,48 @@
+Yes. At this point, I would authorize the temporary /api/db-probe endpoint.
+The reason is simple: Replit has reached the limit of what can be learned from outside the running Railway container, and the current logs cannot distinguish between:
+the request never reaching Railway, or
+the request reaching Railway and hanging on the first database operation.
+The probe is now the smallest controlled change that can close that exact gap.
+Send Replit this:
+I authorize one temporary diagnostic endpoint only:
+GET /api/db-probe
+Requirements:
+It must run a simple SELECT 1 using the same database pool and database object used by the authentication routes.
+It must enforce a hard 3-second timeout.
+It may return only:
+connected: true | false
+elapsedMs
+sanitized error name/code/message
+database host category only, such as internal or public, not the full connection string
+It must not return or log:
+DATABASE_URL
+usernames
+passwords
+tokens
+SSL credentials
+environment variables
+Protect the endpoint with a temporary secret header or admin-only authorization so it is not publicly callable by anyone who finds the URL.
+Do not modify DATABASE_URL, SSL settings, pool configuration, authentication code, or any other route.
+Commit the change separately and provide the commit ID before deployment.
+Deploy once to Railway only. No mobile build and no store submission are required.
+Run the probe once against the live deployment, provide the result, then stop.
+Remove the endpoint immediately after the diagnosis is complete.
+Do not make the underlying fix until I review the probe result.
+What each result means
+connected: true
+Then the running API container can reach the database through its current pool. That means the investigation moves into:
+ORM query behavior;
+pool state after startup;
+a route-specific issue;
+middleware;
+or deployed-code differences.
+Do not change DATABASE_URL.
+Timeout or DNS/connectivity error
+That proves the API container cannot establish the database connection using its current environment. Then we can choose the least disruptive infrastructure fix with evidence.
+Connection succeeds but query errors
+That points toward:
+schema permissions;
+SSL configuration;
+wrong database;
+or a deployment/runtime mismatch.
+The important part is that we will finally have an observation from inside the running application, rather than another outside inference.

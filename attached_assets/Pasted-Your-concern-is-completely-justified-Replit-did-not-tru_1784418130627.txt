@@ -1,0 +1,88 @@
+Your concern is completely justified.
+
+Replit did not truly pass the same test that users failed. It passed a **narrow API test**, while users experienced the **full product journey**.
+
+A direct `curl` test asks:
+
+> “Does the server accept these exact values and return the expected JSON?”
+
+A real user test includes many additional layers:
+
+> Browser form → password manager/autofill → React code → network transport → API → database → session/token storage → authenticated-user refresh → routing → visible screen.
+
+Any one of those layers can fail even while the direct API call passes. So “all checks passed” was too broad. The accurate statement should have been:
+
+> **API-level checks passed. The real browser journey had not yet been verified.**
+
+## Why this matters for safety
+
+You are right: if testing only confirms isolated backend functions, that is **not sufficient validation for safety-dependent features**.
+
+For example, it is not enough to prove:
+
+* an alert can be inserted into the database;
+* a push function can technically send;
+* a safety score endpoint returns JSON.
+
+We must also prove that a real member:
+
+* receives the correct alert;
+* receives it only when relevant;
+* understands its source and confidence;
+* is not shown stale or misleading information;
+* receives a correction when the alert clears;
+* can report a problem;
+* is not falsely reassured when delivery fails.
+
+The login failure does not automatically prove that every safety feature is unsafe. But it **does prove the existing verification method cannot be trusted by itself to certify member-facing safety workflows**.
+
+## The standard should change immediately
+
+Nothing safety-related should be called “working” or “launch-ready” based only on source-code review or direct API tests.
+
+It should require four levels of evidence:
+
+1. **Code review:** Does the intended logic exist?
+2. **API/integration test:** Do the server, database, and outside services work together?
+3. **Real-interface test:** Can a person complete the journey through the actual web or mobile application?
+4. **Failure test:** What happens when the network drops, data is missing, delivery fails, or evidence is uncertain?
+
+For consequential features, we should also require a human test on the same build testers will receive.
+
+## What I recommend we tell Replit
+
+> The distinction between API verification and member-journey verification is now a permanent release requirement.
+>
+> No feature—especially authentication, safety, location sharing, emergency alerts, billing, or moderation—may be reported as “passed,” “working,” or “launch-ready” based solely on curl requests, isolated route tests, or code inspection.
+>
+> Please label future evidence precisely:
+>
+> * Code reviewed
+> * API test passed
+> * Browser end-to-end test passed
+> * Mobile end-to-end test passed
+> * Human acceptance test passed
+> * Failure and recovery test passed
+>
+> A launch-critical workflow is not complete until all applicable levels pass on the exact production or tester-distributed build.
+>
+> For safety features, also document:
+>
+> * what happens if delivery fails;
+> * how uncertainty is shown;
+> * how stale information expires;
+> * how corrections reach affected members;
+> * what fallback is available;
+> * what the platform explicitly does not guarantee.
+
+## My recommendation for launch
+
+Until these real-world tests are completed, the app should not make strong claims such as:
+
+* “Stay safe wherever you go.”
+* “Receive reliable real-time alerts.”
+* “Know whether a neighborhood is safe.”
+
+We can responsibly say the platform provides **community safety information and decision-support signals**, with appropriate limitations. We should not imply a guarantee.
+
+You were right to personally test the login. That one test exposed a weakness not only in authentication, but in the way “verified” was being defined. From this point forward, **the user journey—not the isolated endpoint—must be the final authority.**

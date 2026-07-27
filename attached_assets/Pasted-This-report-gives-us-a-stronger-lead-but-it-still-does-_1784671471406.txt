@@ -1,0 +1,102 @@
+This report gives us a stronger lead, but it still does **not prove** that `useActivityAlerts` is exhausting the pool.
+
+Two parts of Replit’s interpretation need caution:
+
+* On iOS, JavaScript timers are usually suspended or heavily limited after an app enters the background. We should not assume the 30-second interval continues indefinitely without a real device trace.
+* Seeing `idleCount: 0` at a single instant means a connection was in use at that moment—not that it remained continuously checked out between samples.
+
+The important confirmed findings are:
+
+* The polling hook can exist in both the full map and a business-detail map.
+* There is no app-state pause or request-overlap protection.
+* The alert query currently scans the table because there are no relevant indexes.
+* Sequential, two-request and four-request tests all pass.
+* Normal one-time startup concurrency has not reproduced the outage.
+
+## What Replit should finish before proposing a fix
+
+Send this:
+
+> **CONTINUE EVIDENCE COLLECTION — NO FIX YET**
+>
+> The lifecycle audit found a credible risk, but `useActivityAlerts` is not yet proven as the pool-exhaustion cause.
+>
+> Complete the full 45-minute passive observation before making recommendations.
+>
+> During the observation, correlate pool usage with actual production requests. For every sample where `idleCount < totalCount`, report:
+>
+> * route active at that moment;
+> * request start and completion timestamps;
+> * duration;
+> * HTTP status;
+> * whether another request to the same route overlapped;
+> * whether the request came from the same app session, when determinable without exposing user data.
+>
+> Specifically count and time:
+>
+> * `GET /api/community-alerts/nearby`
+> * `POST /api/community-alerts/location`
+> * businesses
+> * cultural sites
+> * Community
+> * Events
+> * session validation
+>
+> Do not assume timers continue in the iOS background. Confirm behavior through device/server request timestamps while:
+>
+> 1. the app is open on Map;
+> 2. the user switches to another tab;
+> 3. the app is placed in the background;
+> 4. a business-detail screen is opened;
+> 5. the business-detail screen is closed;
+> 6. the user logs out.
+>
+> Confirm whether `FullMapView` is actually mounted before the user first opens the Map tab, and whether it remains mounted after leaving it. Do not infer this only from general React Navigation behavior.
+>
+> Also confirm whether `BusinessMapView` fully unmounts when its detail screen is popped.
+>
+> Do not disable polling, alter intervals, add indexes or increase the pool until the request-to-pool correlation is complete.
+
+## Your two Railway checks
+
+You do need to check two settings, but do not change anything.
+
+### 1. Replica count
+
+1. Open Railway.
+2. Open your project.
+3. Select **api-server**.
+4. Open **Settings**.
+5. Look for **Replicas**, **Instances**, or **Horizontal Scaling**.
+6. Tell Replit only the number shown.
+
+### 2. Database connection type
+
+1. Stay in the `api-server` service.
+2. Open **Variables**.
+3. Find `DATABASE_URL`.
+4. Do not copy it or share a screenshot.
+5. Look only at the hostname portion.
+
+Report only one of these:
+
+* `Contains -pooler`
+* `Does not contain -pooler`
+* `Not a Neon hostname`
+
+Do not edit the value.
+
+## Likely eventual correction
+
+Even if polling is not the entire root cause, this hook should probably be hardened later by:
+
+* polling only while the relevant screen is focused;
+* pausing while the app is inactive;
+* preventing overlapping requests;
+* consolidating duplicate map polling;
+* cancelling requests when screens unmount;
+* using a longer interval where immediate updates are unnecessary.
+
+But we should wait for the evidence before approving that implementation.
+
+The map diagnostic remains separate and urgent. Once the OTA appears, please test **Profile → Map Diagnostic — Beta**. That result will tell us whether Build 94’s native Apple map works independently of all these database requests.

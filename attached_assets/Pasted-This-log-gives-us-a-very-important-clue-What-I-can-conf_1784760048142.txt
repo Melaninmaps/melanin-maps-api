@@ -1,0 +1,77 @@
+This log gives us a very important clue.
+
+### What I can confirm from the log
+
+* The new deployment is definitely running. The server starts successfully and is handling requests. 
+* Your Sign in with Apple attempt definitely reached the server. At **22:25:24** the server logged:
+
+  * **"Apple token exchange failed — blocking new account creation"**
+  * followed immediately by the request completing. 
+
+So we know:
+
+✅ The iPhone reached Railway.
+✅ The API executed the Apple sign-in route.
+✅ It reached the token exchange step.
+✅ The server intentionally blocked new account creation because the token exchange failed.
+
+---
+
+## But one thing is missing
+
+The entire reason PR #12 was created was so the log would include fields like:
+
+* `appleHttpStatus`
+* `appleErrorCode`
+
+Instead, the log only contains:
+
+> Apple token exchange failed — blocking new account creation 
+
+There is **no structured JSON** with the new fields.
+
+That means one of these is true:
+
+1. **The logger configuration isn't outputting the structured metadata**, only the message string.
+2. The patch didn't actually attach those fields to the log call the way we expected.
+3. Railway is displaying only the message portion of the log.
+
+---
+
+## There is another issue in these logs
+
+At startup I also see repeated errors:
+
+```
+relation "stripe.accounts" does not exist
+```
+
+The application falls back and continues running, so this isn't causing the Apple Sign-In failure, but it is a separate database issue worth fixing later.  
+
+---
+
+# Where I think we are now
+
+We're no longer guessing whether the request reaches the server—it absolutely does.
+
+The remaining possibilities are now much narrower:
+
+* **`invalid_client`** (Apple credentials mismatch)
+* **`invalid_grant`** (authorization code rejected)
+* **`invalid_request`** (parameter problem)
+
+The problem is we still don't know **which one**, because the detailed error isn't making it into the visible logs.
+
+---
+
+# My recommendation
+
+At this point I would **not** continue adding more logging patches.
+
+Instead, I would have Replit inspect **why the structured fields are not appearing**. A good prompt would be:
+
+> "The production log shows only 'Apple token exchange failed — blocking new account creation' but does not show the structured `appleHttpStatus` and `appleErrorCode` fields added in PR #12. Perform a read-only audit of the logging configuration (Pino/logger setup) and determine whether object fields are being discarded, whether the log call is incorrect, or whether Railway's log output is only showing the message. Do not modify code. Report exactly why the structured fields are missing."
+
+That audit should tell us whether the issue is in the logger, the log statement, or Railway's display.
+
+We're very close now. The remaining problem isn't "does Apple Sign-In reach the server?"—we've proven that it does. The next task is to uncover the specific reason Apple is rejecting the token exchange.

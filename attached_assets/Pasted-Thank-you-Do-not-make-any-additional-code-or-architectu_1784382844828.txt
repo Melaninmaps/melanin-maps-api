@@ -1,0 +1,72 @@
+Thank you. Do not make any additional code or architecture changes yet.
+
+Please now validate and, if necessary, deploy only the authentication changes
+you just completed to the production web application.
+
+FIRST, confirm:
+
+1. Whether the updated frontend code has already been deployed to:
+   https://www.mappingwithmelanin.com
+
+2. Which service hosts and deploys the production frontend:
+   - Railway,
+   - Replit,
+   - or another service.
+
+3. Whether the production deployment process requires a successful full
+   TypeScript typecheck, and whether the pre-existing errors will block it.
+
+4. Whether POST /api/auth/login-email and POST /api/auth/register return:
+   - an authentication token in the response body,
+   - an HttpOnly cookie,
+   - or both.
+
+5. The token expiration period and whether the server validates and invalidates
+   the token used by webAuth.ts.
+
+6. Confirm that POST /api/mobile-auth/logout exists and invalidates the same
+   token issued by /api/auth/login-email and /api/auth/register.
+
+Do not expose any token, password, reset code, secret, or personal user data
+in your response.
+
+If the production frontend has not been deployed, deploy only the files already
+changed for this authentication fix. Do not modify any additional files.
+
+AFTER DEPLOYMENT, run the following production tests using a designated test
+account, not an existing real user account:
+
+1. Open https://www.mappingwithmelanin.com/login.
+2. Confirm Sign In and Create Account are visible.
+3. Register a new test user.
+4. Confirm registration succeeds and redirects correctly.
+5. Refresh the browser and confirm the session remains active.
+6. Log out and confirm the session is invalidated.
+7. Attempt login with an incorrect password and confirm a safe error appears.
+8. Log in with the correct password.
+9. Start forgot-password.
+10. Confirm the reset-code request succeeds without exposing whether unrelated
+    email addresses are registered.
+11. Complete password reset using the test account.
+12. Log in with the new password.
+13. Confirm authenticated API requests contain the intended credential.
+14. Confirm there are no CORS errors in the production browser console.
+15. Confirm there are no 500 authentication errors in Railway logs.
+16. Test both:
+    https://www.mappingwithmelanin.com
+    https://mappingwithmelanin.com
+
+Also run the actual production build command and report whether it succeeds.
+
+Return:
+
+- whether deployment occurred;
+- the production deployment identifier or timestamp;
+- the result of each test;
+- whether authentication uses localStorage, HttpOnly cookies, or both;
+- token expiration and logout invalidation behavior;
+- all remaining errors;
+- confirmation that no additional files, database tables, DNS records, or
+  unrelated environment variables were changed.
+
+Do not make further fixes without reporting the test results first.

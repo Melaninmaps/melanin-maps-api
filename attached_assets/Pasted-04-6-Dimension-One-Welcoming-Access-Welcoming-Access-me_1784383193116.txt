@@ -1,0 +1,71 @@
+04.6 Dimension One — Welcoming Access
+Welcoming Access measures whether people can discover, enter, understand, and participate without avoidable exclusion.
+It evaluates:
+discoverability;
+clarity of entry;
+affordability;
+accessibility;
+language access;
+cultural familiarity;
+newcomer treatment;
+family suitability;
+digital access;
+transportation access;
+transparent eligibility;
+absence of unnecessary gatekeeping.
+04.6.1 Welcoming Access Score
+Welcoming Access Score =
+  Discovery Access
++ Entry Clarity
++ Practical Accessibility
++ Cultural Accessibility
++ Newcomer Experience
+- Exclusion Penalties
+The result is normalized to 0–100.
+04.6.2 Welcoming Access subweights
+Component	Weight
+Discovery Access	15%
+Entry Clarity	15%
+Practical Accessibility	25%
+Cultural Accessibility	20%
+Newcomer Experience	25%
+04.6.3 Positive indicators
+clear public information;
+transparent hours and requirements;
+confirmed physical accessibility;
+welcoming first-time participation;
+multiple entry pathways;
+affordable or free options;
+community members willing to assist newcomers;
+no requirement for insider relationships;
+culturally respectful communication;
+visible explanation of norms;
+family or caregiver accommodations;
+responsive contact methods.
+04.6.4 Exclusion indicators
+hidden eligibility requirements;
+repeated reports of gatekeeping;
+inaccessible location without disclosure;
+discriminatory entry behavior;
+unclear pricing;
+insider-only access;
+hostile treatment of newcomers;
+public welcome language inconsistent with lived experience;
+unnecessary documentation requirements;
+selective enforcement of rules;
+exploitative membership barriers.
+04.7 Dimension Two — Meaningful Connection
+Meaningful Connection measures whether people form useful, trusted, or enduring relationships rather than merely occupying the same space.
+It evaluates:
+repeated interaction;
+relationship depth;
+mutual recognition;
+ease of finding aligned people;
+small-group connection;
+mentorship;
+friendship formation;
+business collaboration;
+information exchange;
+connection across generations;
+connection across neighborhoods or diaspora communities;
+continued contact after first interaction.

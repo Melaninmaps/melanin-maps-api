@@ -1,0 +1,78 @@
+Thank you for clarifying. The earlier statement that a dedicated `/map-diagnostic` screen already existed was incorrect. We should disregard that path.
+
+The new approach is reasonable, but Replit’s interpretation needs one correction:
+
+> **A red “MapKit init…” badge does not automatically prove a native binary problem.**
+
+It could also mean:
+
+* the `MapView` never mounted,
+* its container still has zero height or width,
+* another React view covers it,
+* the component unmounted before `onMapReady`,
+* or a JavaScript/rendering error prevented initialization.
+
+So a red badge would justify deeper inspection before deciding Build 95 is required.
+
+## Proceed with the narrow OTA
+
+Before publishing, have Replit confirm:
+
+* only `FullMapView.tsx` changed,
+* the working tree is clean,
+* the update includes:
+
+  * removal/correction of the `containerReady` gate,
+  * `onMapReady` state,
+  * the temporary diagnostic badge,
+* no polling, authentication, API, ownership-language, or unrelated changes are included.
+
+Then run:
+
+```bash
+cd artifacts/mobile && eas update \
+  --channel production \
+  --environment production \
+  --platform ios \
+  --message "Map: remove containerReady gate + add MapKit diagnostic badge" \
+  --non-interactive
+```
+
+## One useful improvement before publishing
+
+Ask Replit to make the badge show the measured map container dimensions too:
+
+```text
+MapKit ✓ · 390×640
+```
+
+or:
+
+```text
+MapKit init… · 0×0
+```
+
+That would immediately tell us whether the failure is caused by layout sizing rather than native MapKit.
+
+Send this:
+
+> Please include the current measured MapView/container width and height in the temporary diagnostic badge. This will distinguish an `onMapReady` failure caused by zero-size layout from a true initialization failure. Keep the update limited to `FullMapView.tsx`.
+
+## After Replit publishes it
+
+1. Force-close the app.
+2. Reopen and wait 15–20 seconds.
+3. Force-close again.
+4. Reopen.
+5. Open the Map tab.
+6. Take a screenshot showing the whole map and diagnostic badge.
+
+Interpret it as follows:
+
+* **Green `MapKit ✓`, tiles visible:** Map fixed.
+* **Green `MapKit ✓`, screen still black:** MapKit initialized; a React overlay, styling, map type, or covering component is blocking the visible tiles.
+* **Red `MapKit init…` with `0×0`:** layout/container problem, likely OTA-fixable.
+* **Red with nonzero dimensions:** inspect runtime/native logs and MapView configuration before deciding another build is necessary.
+* **No badge:** the OTA did not apply or `FullMapView` is not the screen being rendered.
+
+This is the correct next diagnostic step, and it should remain a single-purpose OTA.

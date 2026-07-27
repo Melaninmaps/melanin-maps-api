@@ -1,0 +1,91 @@
+Please implement the Apple-Priority Beta Package now.
+
+Purpose:
+Produce the smallest safe new EAS build that restores and verifies
+mobile authentication for testers and can be uploaded to TestFlight
+as quickly as possible.
+
+Include in this build:
+
+1. Wave 1-B — Apple Sign-In nonce correction
+   - raw nonce passed to Apple
+   - server verifies SHA256(raw nonce)
+   - remove dead or misleading nonce code
+   - test cancellation, retry, hidden-email, and returning-user paths
+
+2. Mobile email authentication verification
+   - registration
+   - login
+   - logout
+   - session persistence after app restart
+   - clear error handling
+   - confirm the exact Railway production API URL
+
+3. Mobile forgot-password completion
+   - request code/link
+   - open the reset experience correctly
+   - submit a new password
+   - log in with the new password
+   - verify the full flow with a real inbox before declaring it passed
+
+4. Phone OTP verification
+   - send OTP
+   - verify OTP
+   - account creation or login
+   - session persistence
+   - clear invalid/expired-code behavior
+
+5. Any mobile crash or blocker that prevents the above authentication
+   journeys from completing.
+
+Do not include broader experience work in this first build unless it is
+already complete, low-risk, and does not delay the build.
+
+Do not include Welcome Home Experience™, business-discovery redesign,
+or unrelated P0/P1 work in this build if doing so delays Apple testing.
+
+Before building, return a brief implementation contract containing:
+
+- exact files to change;
+- exact changes proposed;
+- server/API dependencies;
+- database changes, if any;
+- risks;
+- acceptance criteria;
+- the new iOS build number and Android versionCode;
+- whether the current app version number changes;
+- expected EAS build profile;
+- expected TestFlight submission steps.
+
+After implementation:
+
+1. Run code and API tests.
+2. Create the new EAS iOS build.
+3. Upload it to App Store Connect/TestFlight.
+4. Report the Apple processing status.
+5. Do not describe the work as verified until a human tests the exact
+   TestFlight build on a physical iPhone.
+
+Required human acceptance test on the new TestFlight build:
+
+- New email registration
+- Logout
+- Email login
+- Forgot password with real email
+- Login with new password
+- Apple Sign-In
+- Phone OTP
+- Close and reopen app
+- Confirm session persists
+
+Also update:
+
+- Launch Readiness Dashboard
+- Audit Crosswalk
+- Implementation Waves
+- Feature Test Traceability Matrix
+
+Status labels must remain:
+
+Implemented — Awaiting Founder Verification
+Verified — only after I personally pass the flow

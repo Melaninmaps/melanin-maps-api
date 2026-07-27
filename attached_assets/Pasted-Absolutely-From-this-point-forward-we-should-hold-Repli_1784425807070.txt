@@ -1,0 +1,91 @@
+Absolutely. From this point forward, we should hold Replit to a **cross-platform release standard**, not a “code looks correct” standard.
+
+The rule should be:
+
+> **If a feature is intended for web, iOS, and Android, it is not complete until it works on all three—or Replit clearly proves why one platform is out of scope for that specific change.**
+
+Send Replit this:
+
+> Please update the deployment and verification standard immediately.
+>
+> We are aiming for the fastest possible launch, but not at the cost of reliability. Every launch-facing feature must be verified across all applicable platforms before it is marked complete.
+>
+> For each wave, provide a platform matrix:
+>
+> | Feature | Web | iOS | Android | API | Human Test | Failure Test | Status |
+>
+> Use only these statuses:
+>
+> * Not tested
+> * Failed
+> * Implemented — verification pending
+> * Verified
+>
+> Do not use “working,” “complete,” or “all checks passed” unless the exact user journey has passed on every applicable platform and build.
+>
+> Required standard:
+>
+> 1. Web
+>
+>    * Production browser test
+>    * Safari and Chrome
+>    * Real user journey through the UI
+> 2. iOS
+>
+>    * Exact TestFlight build
+>    * Physical iPhone
+>    * New-user and returning-user paths
+> 3. Android
+>
+>    * Exact Google Play tester build
+>    * Physical Android device
+>    * New-user and returning-user paths
+> 4. API
+>
+>    * Direct integration test
+>    * Correct authentication and authorization
+>    * Failure and retry behavior
+> 5. Human acceptance
+>
+>    * Founder or named tester completes the journey
+> 6. Failure and recovery
+>
+>    * Network interruption
+>    * Expired or invalid credentials
+>    * Service unavailable
+>    * Duplicate submission
+>    * App restart
+>    * Retry after failure
+>
+> If any applicable test fails:
+>
+> * do not mark the wave verified;
+> * identify the exact failure;
+> * explain the root cause;
+> * propose a correction;
+> * implement only after approval;
+> * rerun the entire affected platform matrix after the correction.
+>
+> Do not test only the changed line. Test the full member journey that depends on it.
+>
+> Before production deployment, return:
+>
+> * revised deployment manifest;
+> * full web/iOS/Android verification matrix;
+> * exact build numbers tested;
+> * open defects;
+> * launch blockers;
+> * regression results;
+> * founder verification steps.
+>
+> No feature should be presented to testers as reliable until the applicable platform matrix is fully verified.
+
+I would also add one practical reality: **perfect should mean no known launch-critical defects and no unverified claims**, not that software can never encounter an issue. The safest standard is:
+
+* no known P0 defects;
+* no failed critical journeys;
+* all applicable platforms tested;
+* graceful handling when something goes wrong;
+* clear disclosures for anything intentionally deferred.
+
+And yes—if Replit tests a flow and it fails, we send it back. We do not lower the standard or explain away the failure. We correct it, rebuild if necessary, and retest the entire journey.

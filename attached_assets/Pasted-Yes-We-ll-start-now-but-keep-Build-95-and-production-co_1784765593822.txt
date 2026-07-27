@@ -1,0 +1,96 @@
+Yes. We’ll start now, but keep **Build 95 and production completely frozen while Apple reviews it**.
+
+The audit confirms two priority areas:
+
+* The HBCU card/tile experience was deliberately removed from `FullMapView.tsx`, though the card pattern still exists in the Library and Cultural Heritage screens. 
+* The inclusive language update is only partially complete; generic “Black-owned” wording remains across many mobile screens and API routes. 
+
+## Step 1 — Create a protected post-review workspace
+
+Send Replit this exact prompt:
+
+> **POST-REVIEW DESIGN WORKSPACE — CREATE BRANCH ONLY**
+>
+> Apple Build 95 is currently under review. Maintain a strict release lock:
+>
+> * Do not modify `main`
+> * Do not merge
+> * Do not deploy to Railway
+> * Do not publish an OTA update
+> * Do not create or replace an iOS build
+> * Do not change production data or configuration
+>
+> Create a protected development branch named:
+>
+> `post-review/design-language-hbcu`
+>
+> On that branch only, create a read-only implementation inventory for these three workstreams:
+>
+> **A. HBCU Map experience**
+>
+> * Current `FullMapView.tsx` pin behavior
+> * Existing heritage cards in `library.tsx`
+> * Existing cards and filters in `cultural-heritage.tsx`
+> * Recoverable map results-panel code from commit `57c043fd`
+> * Components and data that can be reused without duplicating code
+>
+> **B. Platform language**
+>
+> * Every mobile and server occurrence where “Black-owned” is being used as a generic platform default
+> * Separate those from valid uses where “Black-owned” represents an explicit business identity, user-selected preference, or verified category
+> * Recommend the correct replacement for each generic occurrence:
+>
+>   * “minority-owned”
+>   * “community businesses”
+>   * “culturally relevant businesses”
+>   * another context-appropriate phrase
+>
+> **C. Visual layout audit**
+> Inventory the main user-facing screens:
+>
+> * Login/signup
+> * Onboarding
+> * Discover
+> * Map
+> * Community
+> * Library
+> * KinfolkAI
+> * Profile
+> * Settings
+>
+> For each screen, report:
+>
+> * primary user goal
+> * current visual hierarchy
+> * confusing or crowded elements
+> * inconsistent spacing, typography, iconography, cards, buttons, and terminology
+> * empty/loading/error states
+> * launch-critical issue versus post-launch polish
+>
+> Return:
+>
+> 1. Branch confirmation
+> 2. File inventory
+> 3. Prioritized gap table
+> 4. Reusable components
+> 5. Recommended implementation order
+>
+> Do not implement anything yet. Do not touch production.
+
+## The design direction I recommend
+
+For the HBCU map, we should not restore the entire old search panel. Instead, we’ll create a compact horizontal HBCU card strip that appears when the Heritage layer or HBCU filter is active. The audit already confirms the reusable card implementations exist in `library.tsx` and `cultural-heritage.tsx`. 
+
+Each card should eventually communicate more than a pin:
+
+* HBCU name and location
+* Historic significance
+* Founded year
+* “Explore Campus”
+* Directions
+* Save
+* Alumni or community connection features later
+
+This will make HBCUs feel like a meaningful cultural experience rather than another map category.
+
+Send me Replit’s inventory report when it responds. We’ll review it together and authorize the first design change without affecting the Apple submission.

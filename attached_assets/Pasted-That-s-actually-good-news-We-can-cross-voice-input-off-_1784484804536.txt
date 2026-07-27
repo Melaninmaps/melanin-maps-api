@@ -1,0 +1,123 @@
+That's actually good news. We can cross **voice input** off the critical list.
+
+So the issue isn't **"Can I speak?"**
+
+The issue is **"What does KinfolkAI™ do after I speak?"**
+
+From what you've found today, I'd separate the audit into **Capabilities** and **Intelligence**.
+
+### Capabilities (Can it do it?)
+
+From your testing, I'd verify each of these:
+
+* ⏳ Weather (using shared location)
+* ⏳ Navigation and directions
+* ⏳ Nearby minority-owned businesses
+* ⏳ Business hours
+* ⏳ Phone calls
+* ⏳ Website opening
+* ⏳ Save to favorites
+* ⏳ Hidden Gem nominations
+* ⏳ Community events
+* ⏳ Safety information
+* ⏳ Neighborhood recommendations
+* ⏳ Travel planning
+* ⏳ Relocation assistance
+* ⏳ Business comparisons
+* ⏳ Reading business reviews
+* ⏳ Explaining *why* it recommended something
+
+### Intelligence (Does it think naturally?)
+
+This is where I think the biggest gap is.
+
+For example:
+
+**You:** "What's the weather?"
+
+Expected behavior:
+
+> "You're in Philadelphia. It's currently 84° and sunny with a chance of thunderstorms this evening."
+
+Not:
+
+> "What city?"
+
+---
+
+**You:** "Find me brunch."
+
+Expected:
+
+> "Here are the highest-rated minority-owned brunch spots within 10 miles."
+
+---
+
+**You:** "Take me there."
+
+Expected:
+
+> Launch navigation to the last business discussed.
+
+---
+
+**You:** "Is this neighborhood safe?"
+
+Expected:
+
+> Use the current map location or the business being viewed without asking again.
+
+---
+
+### The opening message
+
+I'd also change the placeholder text. Instead of a generic prompt, I'd use something that reflects the platform's mission.
+
+For example:
+
+> **Ask me about your community, nearby businesses, safety, travel, or anything else.**
+
+Or even more conversational:
+
+> **Where can I help you today?**
+
+---
+
+## One feature I'd add
+
+I also think KinfolkAI™ should have **suggested prompts** under the input box, especially for new users. They could rotate based on context.
+
+For example:
+
+**At home**
+
+* 📍 Hidden Gems near me
+* ☕ Find coffee nearby
+* 🎉 What's happening this weekend?
+* 🛡️ Is this neighborhood safe?
+
+**While traveling**
+
+* 🍽️ Minority-owned restaurants
+* 🏨 Find accommodations
+* 🚶 Plan my day
+* ☀️ What's today's weather?
+
+That helps users discover what KinfolkAI™ can do without guessing.
+
+### One thing to tell Replit
+
+Ask them to produce a **KinfolkAI™ capability matrix**. It should list every intended capability and classify it as:
+
+* ✅ Fully implemented
+* 🟡 Partially implemented
+* 🔴 Not implemented
+
+For each item, they should also indicate whether it requires:
+
+* backend work,
+* mobile work,
+* AI prompt/tooling,
+* or integration with external services (such as weather or navigation).
+
+That document will give us a clear roadmap to close the gap between the current beta and the experience you envision, instead of discovering missing capabilities one at a time during testing.

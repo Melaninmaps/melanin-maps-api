@@ -1,0 +1,223 @@
+07.52 Constitutional Rules
+The Cultural Influence Engine™ must:
+distinguish fame from influence;
+distinguish influence from impact;
+distinguish impact from stewardship;
+limit follower-count influence;
+protect cultural complexity;
+avoid identity essentialism;
+prevent payment from creating authenticity;
+preserve community voice;
+require commercial transparency;
+recognize emerging influence;
+value local and intergenerational influence;
+preserve attribution;
+protect consent;
+prevent cultural extraction;
+preserve sensitive cultural knowledge;
+maintain truthful ownership and affiliation;
+allow correction;
+preserve historical evidence;
+support appeal;
+maintain auditability;
+comply with the Institution Test;
+comply with the Generational Test.
+07.53 Institution Test Application
+Before approving a cultural influence rule, Mapping With Melanin™ must ask:
+Would we defend this as a responsible institutional method for recognizing cultural influence 25 years from now?
+A rule fails the Institution Test when it:
+treats popularity as cultural authority;
+reduces culture to demographics;
+cannot distinguish authenticity from performance;
+rewards extraction;
+ignores attribution;
+hides commercial influence;
+disadvantages local or emerging voices;
+creates permanent insiders;
+cannot be appealed;
+cannot be audited;
+stereotypes communities;
+assigns one person authority over an entire culture;
+becomes exploitative at scale;
+protects sponsors over community truth.
+07.54 Generational Test Application
+The Engine must ask:
+Would future generations inherit a system that helps them preserve and shape culture, or one that permanently defines culture for them?
+A rule fails the Generational Test when it:
+freezes current cultural definitions;
+excludes future forms of expression;
+concentrates cultural authority;
+erases local contributors;
+rewards short-term visibility over legacy;
+cannot survive leadership change;
+uses community work without stewardship;
+prevents future correction;
+turns cultural memory into private commercial inventory;
+makes technology the final authority on authenticity.
+07.55 Launch Readiness Requirements
+The Cultural Influence Engine™ is launch-ready only when:
+all nine dimensions are implemented;
+baseline weights are approved;
+object-specific profiles are defined;
+Cultural Ambassador definition is operational;
+evidence categories are implemented;
+relationship types are recorded;
+attribution logic is validated;
+qualified action values are approved;
+commercial disclosures are functioning;
+follower-count limits are enforced;
+Cultural Influence Confidence is validated;
+score caps and penalties are operational;
+decay schedules are implemented;
+corrective-action handling is operational;
+partnership thresholds are tested;
+ambassador-tier rules are approved;
+business–Ambassador matching is implemented;
+“Show Love” nominations are screened;
+community-impact tracking is privacy-protected;
+cultural-extraction protections are operational;
+sensitive-knowledge restrictions are implemented;
+anti-gaming detection is operational;
+Safety integration is complete;
+Trust integration is complete;
+Community integration is complete;
+Discovery integration is complete;
+public explanation templates are approved;
+human-review routing is operational;
+audit records are complete;
+historical decisions are reproducible;
+bias and harm testing is complete;
+privacy review is complete;
+Institution Test is passed;
+Generational Test is passed;
+Governance approves version 1.0;
+rollback procedures exist;
+Decision Ledger entry is complete.
+07.56 Validation Scenarios
+Scenario 1 — Large audience, limited community benefit
+Evidence:
+High follower count
+High views
+Low verified action
+Limited community participation
+No reciprocity evidence
+
+Expected:
+Reach may be strong
+Community Connection and Reciprocity remain low
+Follower count does not dominate
+Partnership eligibility may remain limited
+Scenario 2 — Small local Cultural Ambassador
+Evidence:
+Small audience
+Deep local knowledge
+Strong business referrals
+Repeat community activity
+Responsible attribution
+Verified outcomes
+
+Expected:
+Strong Cultural Influence Score
+Emerging or Community Ambassador eligibility
+No penalty for limited reach
+Scenario 3 — Undisclosed paid promotion
+Evidence:
+Business paid creator
+Promotion presented as organic
+No disclosure
+
+Expected:
+Authenticity reduced
+Disclosure penalty
+Partnership hold
+Trust review
+Scenario 4 — Strong cultural work with poor attribution
+Evidence:
+Historically useful content
+Large educational value
+Local historians not credited
+
+Expected:
+Cultural Grounding may remain meaningful
+Stewardship reduced
+Corrective action required
+Recognition held if material
+Scenario 5 — Viral cultural misinformation
+Evidence:
+High reach
+False historical claim
+Creator refuses correction
+
+Expected:
+Reach does not offset misrepresentation
+Cultural Grounding and Integrity reduced
+Public promotion restricted
+Scenario 6 — Corrected historical error
+Evidence:
+Creator publishes inaccurate statement
+Corrects publicly
+Credits source
+Explains change
+No repeated pattern
+
+Expected:
+Original error preserved
+Corrective action recognized
+Current concern reduced
+Scenario 7 — Business–Ambassador strong match
+Evidence:
+Shared cultural purpose
+Relevant audience
+Strong Trust
+Clear campaign objective
+Community benefit plan
+Transparent compensation
+
+Expected:
+High Match Score
+Partnership candidate
+No automatic approval without consent
+Scenario 8 — Business–Ambassador audience mismatch
+Evidence:
+Ambassador is culturally grounded
+Audience and geography do not match business
+Limited operational fit
+
+Expected:
+Cultural Influence may remain high
+Match Score remains low
+No partnership recommendation for this campaign
+Scenario 9 — Cultural extraction campaign
+Evidence:
+Community stories used without consent
+No compensation
+Commercial brand receives most benefit
+
+Expected:
+Extraction penalty
+Stewardship and Reciprocity reduced
+Promotion and partnership held
+Governance review
+Scenario 10 — Purchased engagement
+Evidence:
+Follower spike
+Bot-like comments
+No corresponding community actions
+Third-party verification indicates purchased traffic
+
+Expected:
+Artificial Reach penalty
+Confidence reduction
+Partnership review
+No automatic account removal from weak signal alone
+Scenario 11 — Sensitive cultural location
+Evidence:
+Culturally significant site
+Community requests no precise public location
+Tourism interest rising
+
+Expected:
+Location restriction preserved
+No automatic geotagging
+Stewardship controls
+Search and promotion treatment adjusted

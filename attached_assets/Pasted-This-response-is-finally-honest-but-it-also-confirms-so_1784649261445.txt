@@ -1,0 +1,110 @@
+This response is finally honest, but it also confirms something unacceptable:
+
+> Replit asked you to verify login even though the permanent Railway fix had **not been deployed**. 
+
+So **do not test yet**. Testing Build 93 before the graceful-shutdown fix reaches production could produce another misleading result.
+
+Also, do **not** paste your real password into Terminal or give it to Replit. Replit can create and use a disposable production test account to verify valid login, logout, and session restoration without your credentials.
+
+Send Replit this:
+
+---
+
+# DEPLOY THE FIX FIRST — THEN COMPLETE LOGIN VERIFICATION
+
+Thank you for clearly stating what is and is not verified.
+
+The immediate blocker is now clear:
+
+> The graceful-shutdown fix is committed but is **not deployed to Railway production**.
+
+Do not ask me to test login while production is still running the pre-fix server.
+
+## Step 1 — Deploy now
+
+Push the approved graceful-shutdown commit to the correct GitHub repository and allow Railway to deploy it.
+
+Before pushing, confirm:
+
+* exact Git commit;
+* exact repository and branch;
+* only approved server changes are included;
+* no authentication logic, mobile files, database schema, pricing, or unrelated features changed.
+
+After deployment, return:
+
+* Railway deployment ID;
+* Git commit deployed;
+* deployment status;
+* startup timestamp;
+* confirmation that the running production process contains the SIGTERM/SIGINT → server close → `pool.end()` logic;
+* `/api/healthz` result;
+* `/api/readyz` result with the production probe key;
+* pool totals after startup.
+
+## Step 2 — Verify valid authentication without my credentials
+
+Do not request or use my password.
+
+Create a disposable production test account using a unique email owned by the test process.
+
+Then complete this full sequence against production:
+
+1. Register account → 201.
+2. Log out → 200.
+3. Log in with correct credentials → 200 + token.
+4. Session restore with token → 200 + correct user.
+5. Log out again → 200.
+6. Immediate login again → 200.
+7. Wrong password → 401.
+8. Nonexistent account → 401.
+9. Wait at least 35 seconds and repeat valid login.
+10. Trigger or perform one controlled API redeployment, then repeat valid login to prove graceful shutdown protects the pool across deployment.
+
+Delete the disposable test account afterward through an approved database method.
+
+Return status codes, timings, deployment timestamps, and safe logs. Do not expose credentials or tokens.
+
+## Step 3 — Device confirmation
+
+Only after Steps 1 and 2 pass, tell me production is ready for founder device confirmation.
+
+I will then test on Build 93:
+
+* existing-account login;
+* logout;
+* immediate re-login;
+* force-close;
+* reopen and confirm session restoration.
+
+## Important correction
+
+A source-code review is not runtime verification.
+
+Do not mark login complete because the request, SecureStore, or navigation code looks correct.
+
+Mark it complete only after:
+
+* deployed production fix;
+* successful disposable-account production test;
+* successful founder device test.
+
+## Current verdict
+
+Until the fix is deployed:
+
+**🔴 LOGIN REMAINS UNVERIFIED — DO NOT ASK FOUNDER TO TEST**
+
+After deployment and production tests:
+
+**🟡 PRODUCTION LOGIN VERIFIED — AWAITING FOUNDER DEVICE CONFIRMATION**
+
+Only after my device test passes:
+
+**🟢 LOGIN VERIFIED END TO END**
+
+Proceed with Step 1 now.
+
+---
+
+This removes unnecessary work from you. Your role should be the **final device confirmation**, not supplying credentials or proving that their server deployment works.

@@ -1,0 +1,60 @@
+Here's what I'd adjust.
+1. Make the wheel perfectly symmetrical
+Right now, the labels are visually "pulling" the circle in different directions.
+I would position them like the numbers on a clock:
+                 Community
+
+    Stronger                  Discovery
+   Communities
+
+ Business Growth      Recommendations
+Everything should sit the same distance from the circle.
+2. Move "Business Growth" out slightly
+It's tucked inside the wheel while "Discovery" and "Recommendations" are outside.
+I'd move Business Growth about 20–30 pixels farther from the arrow so all four labels feel equally weighted.
+3. Move "Stronger Communities" closer to the arrow
+At the moment it feels detached from the flow.
+I'd shift it:
+slightly to the right
+slightly down
+so it clearly reads as the next stage in the cycle.
+4. Align the text with the direction of travel
+One subtle thing I noticed:
+Your eye naturally follows the arrows clockwise, but your labels don't always appear exactly where the arrow is taking you.
+I'd let each arrow "point" directly to the next label.
+Like this:
+Community
+      ↘
+        Discovery
+             ↘
+          Recommendations
+                ↘
+         Business Growth
+               ↘
+      Stronger Communities
+              ↺
+That makes the motion almost effortless.
+5. I would also make one wording change.
+Instead of
+Stronger Communities
+I'd seriously consider
+Stronger Community
+Why?
+Because the whole deck has been about building one community wherever someone goes.
+Singular feels more like a movement.
+It also balances nicely with:
+Community
+Discovery
+Recommendations
+Business Growth
+Stronger Community
+The symmetry is satisfying.
+One more design thought
+I would slightly reduce the size of the words.
+Right now every stage has equal visual weight.
+But they're not equally important.
+I'd make:
+Community — largest (it's the beginning)
+Business Growth — second largest (it's the value created)
+Discovery / Recommendations / Stronger Community — just a touch smaller.
+That subtly tells investors where to focus without them realizing it.

@@ -1,0 +1,185 @@
+Mapping with Melanin™ — Complete Feature Inventory for Mobile App
+1. Authentication & Identity
+Email/password sign up and login
+Google OAuth sign in
+Apple OAuth sign in
+Session management (persistent login)
+User profile (name, email, avatar, membership tier)
+Onboarding flow on first signup (identity, interests, cities, goals)
+2. Business Discovery & Search
+Full-text search by name, keyword, or category
+Location-based search (city name or "Near Me" via GPS)
+Proximity search — ~80km radius, sorted by distance
+Category filter (restaurants, salons, hotels, nightlife, etc.)
+Minimum safety score filter (slider + preset chips)
+"Verified only" toggle
+Black-Owned business filter toggle
+Black-Owned businesses promoted within tiers
+24-city catalog with coordinates
+Business cards showing: name, category, city, safety score, Black-Owned badge, distance
+3. Interactive Map
+Full map view of search results
+Custom SVG pins per business
+Marker clustering for dense areas
+Rich info windows on pin tap (name, score, category, Black-Owned badge)
+Tap info window → navigate to business detail
+"Near Me" geolocation button
+Map visible to all users (no paywall)
+4. Business Detail
+Business name, category, city, address
+Safety score display (community-powered)
+Black-Owned badge
+Verified status badge
+Community reviews list
+Write a review (star rating + text)
+Rate Safety button → Safety Experience Survey
+Claim this business button
+Report content button
+Share business (X, Facebook, WhatsApp, copy link, native share)
+Dynamic OG image preview when sharing
+5. Community Safety Surveys (4 surveys)
+Safety Experience Survey (post-visit, per business)
+
+Overall safety rating, would return alone, community recommendation
+Visit context: time of day, companions, group size, visit frequency
+Incident reporting (conditional): incident type, reporting status
+Safety tips chips + open comments
+Neighborhood Safety Survey (community-reported, per area)
+
+City + neighborhood + visit type + visit frequency
+Daytime safety, nighttime safety, walkability, transit safety ratings
+Community atmosphere, police presence sentiment, accessibility features
+Tips chips + open comments
+Onboarding Preference Survey (personalization setup)
+
+Travel style, cities of interest, companions, budget, trip length
+Interests (multi-select including Black-Owned Only)
+Safety priority level (drives safetyWeight 0.20–1.0)
+Accessibility needs
+AI Itinerary Feedback Survey (post-itinerary)
+
+Overall, accuracy, usefulness star ratings + live score preview
+Would-use-again (5-option sentiment scale)
+What worked + what to improve (multi-select chips)
+Open comments
+6. AI-Powered Personalization (/for-you)
+Personalized business feed based on onboarding profile
+AI-generated itineraries per city (Gemini 2.5 Flash, streaming)
+Itinerary includes: businesses, neighborhoods, timing, safety context
+"Update preferences" → re-runs onboarding survey
+"Rate this itinerary" → Itinerary Feedback Survey
+Personalization signals tracked (views, saves, interactions)
+safetyWeight and blackOwnedWeight applied to curation ranking
+7. AI Assist Chat Widget
+Floating chat widget available site-wide
+Powered by Gemini 2.5 Flash with streaming responses
+Multi-turn conversation support
+Context-aware (knows about the platform, cities, businesses)
+Handles travel questions, safety queries, itinerary help
+8. Business Claims & Verification
+"Claim this business" modal (multi-step)
+Verification methods: email, phone, document upload
+Verification code flow
+Claim status tracking (pending / approved / rejected)
+Email notification to owner on approve/reject
+Push notification on claim status change
+9. Business Owner Dashboard
+Dedicated dashboard for claimed/verified business owners
+Analytics: views, saves, shares, review count, safety score trend
+Review management (view all community reviews)
+Business profile management
+Engagement metrics over time
+10. Business Submission
+Submit a new business for listing
+Fields: name, category, city, address, website, description, Black-Owned flag
+Rate limiting (prevents spam)
+Honeypot field (bot protection)
+Admin review queue for submissions
+11. Direct Messaging
+Inbox with conversation threads
+Send/receive messages between users
+Unread message count badge
+Message button on business cards and profiles
+Conversation list view + individual thread view
+12. Referral Program
+Unique referral link per user
+Referral tracking (clicks, conversions)
+Reward tiers: Early Access (1 referral) → Ambassador (25 referrals)
+Share referral via: Twitter/X, Facebook, WhatsApp, LinkedIn, native share
+Referral dashboard (stats, tier progress, share tools)
+Referral conversion tracked on signup
+13. Push Notifications
+Web push via VAPID / service worker
+Animated opt-in prompt banner
+Subscribe / unsubscribe management
+Notifications for: claim status updates, messages, community alerts
+14. Content Moderation & Reporting
+"Report content" modal on businesses, reviews, and user content
+8 violation categories (harassment, misinformation, spam, etc.)
+Admin moderation queue with approve/reject/dismiss actions
+Moderation log with timestamps and admin notes
+15. Community Hub (/community)
+Community guidelines page
+Community standards page
+Safety resources and tips
+Community confidence score display
+Neighborhood safety data aggregated from surveys
+16. Waitlist & Early Access
+Email waitlist signup with referral tracking
+Referral ShareBar (social sharing from waitlist confirmation)
+Early access tier unlocked at 1 referral
+Waitlist position tracking
+17. Onboarding Email Drip
+5-email automated sequence: Day 0, 2, 5, 10, 30
+Triggered on every new signup
+Unsubscribe endpoint
+Admin panel: KPI cards, manual trigger, subscriber list
+18. Admin Panel (internal — not user-facing)
+Overview: KPIs (users, businesses, reviews, surveys, referrals)
+Safety Reports queue
+Reviews moderation
+Moderation log
+Share analytics
+Business claims management
+Business submissions queue
+Referrals dashboard
+Engagement analytics
+Onboarding email management
+Survey responses viewer (all 4 types, filterable)
+19. Sharing & Social
+Per-business share sheet (X, Facebook, WhatsApp, copy link, native share)
+Dynamic OG image generation per business, itinerary, and page
+Referral link sharing (multi-platform)
+Social sharing from waitlist confirmation
+20. Legal & Trust Pages
+Privacy Policy
+Community Guidelines
+Community Standards
+Safety page (platform safety philosophy)
+Contact form (multiple form types)
+Cookie consent banner
+21. Pricing & Membership
+Pricing page with tier comparison
+Premium membership tier (UI built; Stripe not yet wired)
+Upgrade interest capture (pre-Stripe)
+isPremium flag on user (always false until Stripe is live)
+22. Public Roadmap
+Public-facing product roadmap page
+Feature status: shipped, in progress, planned
+Community voting / interest signals
+Summary Counts
+Category	Count
+Pages / screens	26
+API endpoints	62+
+Community surveys	4
+Onboarding steps	4
+Admin panel tabs	11
+Cities in catalog	24
+Referral reward tiers	5
+Notification types	3+
+This is the full feature set as built. Everything above has a working backend endpoint, frontend component, and admin visibility — with the single exception of Stripe (payment processing is UI-ready but awaiting keys).
+Completed
+
+
+
+

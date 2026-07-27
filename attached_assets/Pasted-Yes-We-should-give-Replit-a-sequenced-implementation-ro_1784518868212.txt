@@ -1,0 +1,150 @@
+Yes. We should give Replit a **sequenced implementation roadmap with gates**, so these features do not sit indefinitely as “future ideas,” but also do not destabilize launch.
+
+I would not tie every feature to a user count alone. Some should be **before public launch**, some after stability is proven, and some only after enough real community data exists to make them useful.
+
+Use this structure:
+
+## Before public launch
+
+These are foundational and should be in place before broad release:
+
+* Standard greeting: **“Kinfolk’s here. Let’s map it out.”**
+* Universal question support
+* Compassionate follow-up behavior
+* Existing platform enrichment
+* Honest limitations and safety boundaries
+* Tester prompts
+* Clear privacy controls for memory and personalization
+* Cross-platform consistency on iOS and Android
+* Basic logging for errors, latency, and failed responses
+
+These are not the full Opportunity Engine. They are the minimum needed for testers to experience the concept honestly.
+
+## After launch stability, not user-count dependent
+
+Build these after the first stable release has been live long enough to prove:
+
+* login is stable;
+* sessions persist;
+* crash rates are acceptable;
+* KinfolkAI responses are reliable;
+* support issues are manageable;
+* users understand the current experience.
+
+I would use a **2–4 week stable-production gate**, rather than waiting for a particular number of users.
+
+At that stage:
+
+* Weather connected to saved outdoor events
+* Better source labeling
+* Improved contextual suggestions
+* Feedback controls such as “helpful,” “not relevant,” and “don’t use this context”
+* Permission-aware memory controls
+* Better application, résumé, writing, and budgeting workflows
+
+## After enough real platform data exists
+
+These features require actual community density. Building them too early would produce weak or misleading results.
+
+Trigger them when a city or category meets minimum data thresholds, for example:
+
+* at least 50–100 active local members;
+* at least 20–30 meaningful community contributions;
+* at least 10 verified businesses in a category or city;
+* enough reports to anonymize and aggregate without exposing individuals.
+
+Then build:
+
+* Community Memory
+* Community trend summaries
+* Neighborhood and business experience synthesis
+* Tutor, mentor, scholarship, and resource recommendations grounded in verified listings
+* City-readiness intelligence
+
+The exact thresholds should be tested rather than treated as permanent numbers.
+
+## After trust and safety validation
+
+These should wait until privacy, consent, moderation, and audit controls are proven:
+
+* Progressive Assistance across months
+* Proactive financial or life-planning suggestions
+* Sensitive barrier detection
+* Cross-domain recommendations involving health, legal, financial, family, or safety circumstances
+* Autonomous notifications based on personal history
+
+These should require explicit user permission, visible controls, and auditability.
+
+Send Replit this:
+
+> Please document the KinfolkAI implementation roadmap so approved future capabilities do not remain undefined.
+>
+> Do not implement the roadmap items now. Create a phased plan with entry criteria, acceptance tests, dependencies, privacy requirements, and rollback considerations.
+>
+> **Phase 1 — Before public launch**
+>
+> * Standard greeting
+> * Universal everyday questions
+> * Compassionate follow-up behavior
+> * Existing-platform enrichment
+> * Honest capability boundaries
+> * Tester-facing prompts
+> * Cross-platform consistency
+> * Basic error and quality monitoring
+>
+> **Phase 2 — After 2–4 weeks of stable production**
+>
+> Entry criteria:
+>
+> * authentication and sessions stable;
+> * no unresolved P0/P1 KinfolkAI defects;
+> * acceptable crash and response-failure rates;
+> * tester feedback reviewed;
+> * no material privacy incident.
+>
+> Candidate capabilities:
+>
+> * weather connected to saved outdoor events;
+> * permission-aware contextual suggestions;
+> * source labels;
+> * feedback controls;
+> * stronger résumé, application, writing, and budgeting workflows.
+>
+> **Phase 3 — After sufficient community-data density**
+>
+> Define measurable minimum thresholds by city and feature before activation. Candidate capabilities:
+>
+> * Community Memory;
+> * anonymized trend summaries;
+> * verified tutor, mentor, scholarship, and resource recommendations;
+> * community-grounded neighborhood and business intelligence.
+>
+> Do not expose summaries when the contributor pool is too small to protect anonymity.
+>
+> **Phase 4 — After trust, consent, and audit controls are proven**
+>
+> Candidate capabilities:
+>
+> * Progressive Assistance;
+> * long-term opportunity planning;
+> * sensitive barrier detection;
+> * proactive financial, family, health, legal, or safety-related suggestions;
+> * autonomous notifications using personal history.
+>
+> These require explicit user permission, memory controls, source attribution, explainability, and an audit trail.
+>
+> For every roadmap capability, document:
+>
+> 1. Whether it needs new code, schema, API, or paid service.
+> 2. Which platforms are affected.
+> 3. What user data it accesses.
+> 4. What consent is required.
+> 5. Minimum data threshold.
+> 6. Safety and privacy risks.
+> 7. Acceptance tests.
+> 8. Rollback plan.
+> 9. Whether it is launch-critical, post-launch, or data-dependent.
+>
+> Preserve this as a roadmap document separate from the confidential trade-secret principles. Do not implement any phase beyond the currently approved launch-safe package without separate approval.
+
+My recommendation is: **launch with the concept clearly visible, improve it after 2–4 weeks of stability, and hold Community Memory until the platform has enough real data to be trustworthy and private.**

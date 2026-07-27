@@ -1,0 +1,130 @@
+Not yet—not from this audit alone.
+
+The audit confirms that the app has a separate cultural-sites feed and protected marker rendering, but it does **not** prove that Howard University or every location we discussed is actually present in the live production database or that tapping a cultural marker opens a full detail page. The earlier production check reported cultural-site records, but we still need a specific data-and-interaction confirmation for the places you care about.
+
+## My recommendation on the default region
+
+For this Philadelphia-centered beta, choose **Option B: Philadelphia focus**.
+
+That means:
+
+* users who grant location access move to their actual area;
+* users who deny or have not yet granted location see Philadelphia rather than a distant full-country view;
+* the map immediately feels populated during this launch phase.
+
+This should eventually become smarter—home city, selected city, last viewed city, or nearest cultural center—but that is a later enhancement. For RC2, Philadelphia is the better experience than an entire-US view.
+
+Howard University is in Washington, D.C., so it would not appear in the initial Philadelphia viewport. A user should still be able to:
+
+* search for Howard University;
+* pan or navigate to Washington, D.C.;
+* see its pin if it exists in production;
+* tap the pin;
+* open a useful detail experience.
+
+## What a Howard University pin should show
+
+Tapping it should not merely display the name. It should open a cultural-site profile containing, where verified:
+
+* official name and location;
+* category: HBCU;
+* brief historical and cultural significance;
+* official website;
+* directions;
+* save/share actions;
+* nearby businesses, events, and community activity;
+* source attribution and last-reviewed date;
+* related community posts or videos, when available and age appropriate.
+
+We should not assume those details are built merely because a marker exists.
+
+## Send Replit this
+
+> **Approved — implement LB-010B with Philadelphia as the RC2 fallback region, subject to cultural-data verification.**
+>
+> ### Approved map repair
+>
+> In `artifacts/mobile/components/FullMapView.tsx`:
+>
+> * exclude null, `NaN`, non-finite, and out-of-range business coordinates before rendering;
+> * preserve the existing Apple Maps provider on iOS;
+> * do not alter authentication, navigation, search, or map providers;
+> * change the no-location fallback region for RC2 to the Philadelphia area:
+>
+>   * latitude approximately `39.9526`
+>   * longitude approximately `-75.1652`
+>   * city-level delta appropriate for Philadelphia and nearby suburbs.
+>
+> Users who grant location access should still animate to their actual location. This fallback applies only when location is unavailable, denied, or not yet granted.
+>
+> ### Required read-only cultural-data verification
+>
+> Before claiming the map experience is complete, query the live production cultural-sites data and report:
+>
+> 1. Total number of cultural and heritage records.
+> 2. Counts by category, including:
+>
+>    * HBCUs;
+>    * Civil Rights;
+>    * African American heritage;
+>    * Caribbean;
+>    * African diaspora;
+>    * Latino;
+>    * Indigenous;
+>    * Asian diaspora;
+>    * museums;
+>    * monuments;
+>    * historic neighborhoods.
+> 3. Confirm whether these specific records exist:
+>
+>    * Howard University;
+>    * Mother Bethel AME Church;
+>    * African American Museum in Philadelphia;
+>    * Marian Anderson Historical Residence or Museum;
+>    * Johnson House Historic Site;
+>    * at least several additional Philadelphia-area cultural locations.
+> 4. For Howard University, provide the production record with sensitive/internal fields omitted:
+>
+>    * name;
+>    * category;
+>    * city/state;
+>    * valid latitude/longitude;
+>    * description;
+>    * website/source;
+>    * image, if available.
+> 5. Confirm whether `/api/cultural-sites` returns Howard University to the mobile app.
+> 6. Confirm whether cultural-site markers have an `onPress` action.
+> 7. Confirm exactly what happens when a cultural marker is tapped:
+>
+>    * opens a detail page;
+>    * opens a preview card;
+>    * only selects the marker;
+>    * or currently does nothing.
+> 8. If a detail experience exists, list its available fields and actions.
+> 9. If cultural markers are not clickable or lack details, log that separately as a clearly scoped map enhancement; do not silently add a large new system to LB-010B.
+>
+> ### Device acceptance criteria
+>
+> On the next physical iPhone build:
+>
+> * Philadelphia fallback map renders when location is denied;
+> * Apple base tiles render normally;
+> * valid business pins render;
+> * malformed coordinates are ignored without blanking the map;
+> * Philadelphia heritage/cultural pins render;
+> * a cultural-site marker can be tapped;
+> * Howard University can be found by search or by navigating to Washington, D.C.;
+> * tapping Howard opens the verified detail experience, if currently implemented.
+>
+> Return:
+>
+> * exact diff;
+> * cultural-site production counts;
+> * Howard University confirmation;
+> * current cultural-marker interaction behavior;
+> * any separately logged gap;
+> * TypeScript result.
+>
+> Do not start the EAS build yet.
+
+The distinction matters: **the coordinate fix will make pins safe to render, but it does not itself guarantee Howard University is stored, searchable, clickable, or richly described.** Replit should prove each of those before we describe the cultural map as complete.

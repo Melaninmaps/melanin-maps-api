@@ -1,0 +1,80 @@
+07.5 Influence Evaluation Objects
+The Engine may evaluate:
+Object	Examples
+Individual	Cultural Ambassador, creator, educator
+Business	Culturally influential business or founder
+Organization	Nonprofit, collective, association
+Institution	HBCU, museum, archive, cultural center
+Event	Festival, tour, lecture, gathering
+Story	Article, video, oral history, documentary
+Campaign	Business-support drive, community initiative
+Partnership	Business–Ambassador collaboration
+Network	Alumni group, diaspora community
+Place	Landmark, neighborhood, cultural corridor
+Program	Mentorship, fellowship, cultural education
+Movement	Sustained community-led initiative
+Each object type must use an approved interpretation profile.
+07.6 Core Evaluation Dimensions
+The Cultural Influence Engine™ returns a normalized score from 0 to 100 using nine dimensions.
+Dimension	Baseline weight
+Cultural Grounding	15%
+Authenticity & Integrity	15%
+Community Connection	14%
+Resonance & Meaning	10%
+Action & Conversion	12%
+Reciprocity & Shared Benefit	13%
+Stewardship & Attribution	9%
+Continuity & Reliability	7%
+Reach & Accessibility	5%
+Total	100%
+Follower count, raw views, and audience size are contained primarily within Reach & Accessibility and may not exceed the limits defined below.
+07.7 Dimension One — Cultural Grounding
+Cultural Grounding measures whether the influence is rooted in meaningful knowledge, lived connection, responsible study, verified history, community relationship, or accountable participation.
+It evaluates:
+relationship to the culture or community;
+depth of knowledge;
+historical accuracy;
+local context;
+cultural specificity;
+community recognition;
+language and terminology;
+acknowledgment of complexity;
+avoidance of stereotype;
+appropriate sourcing;
+relationship to institutions or tradition;
+willingness to correct errors.
+07.7.1 Cultural Grounding Formula
+Cultural Grounding Score =
+  Knowledge Depth
++ Context Accuracy
++ Community Relationship
++ Historical Responsibility
++ Cultural Specificity
+- Misrepresentation Penalties
+Normalized to 0–100.
+07.7.2 Positive indicators
+accurate historical references;
+clear local context;
+consultation with affected communities;
+appropriate attribution;
+acknowledgment of regional and diaspora differences;
+demonstrated long-term connection;
+culturally informed interpretation;
+transparent limits of expertise;
+correction of inaccuracies;
+respectful use of language;
+recognition by credible community institutions;
+preservation of nuance.
+07.7.3 Misrepresentation indicators
+stereotypes;
+invented cultural claims;
+flattening distinct communities into one identity;
+false historical statements;
+claiming authority without basis;
+exoticizing culture;
+using cultural imagery without context;
+erasing local contributors;
+presenting opinion as community consensus;
+appropriating community language for marketing;
+refusing correction;
+misleading ownership or identity claims.

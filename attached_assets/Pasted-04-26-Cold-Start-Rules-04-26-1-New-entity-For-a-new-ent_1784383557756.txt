@@ -1,0 +1,136 @@
+04.26 Cold-Start Rules
+04.26.1 New entity
+For a new entity with limited evidence:
+calculate provisional dimension scores only where evidence exists;
+mark unsupported dimensions as Unknown;
+do not substitute platform averages for entity evidence;
+permit search eligibility where otherwise allowed;
+restrict strong recommendation or promotion;
+show emerging status where appropriate;
+invite community evidence without pressuring positive reviews;
+apply anti-gaming monitoring.
+04.26.2 New community or underrepresented area
+The Engine must not punish a community for having less platform data.
+It may use:
+verified institutional evidence;
+public resource data;
+local organization information;
+official event history;
+business and community submissions;
+historical evidence;
+cautious regional context.
+Low data produces lower confidence, not automatic low community quality.
+04.27 Community Evidence Decay
+Different evidence types decay at different rates.
+04.27.1 Rapid-decay evidence
+Examples:
+current response time;
+active resource availability;
+event participation;
+temporary access issue;
+active conflict.
+Suggested decay:
+0–30 days:     100%
+31–90 days:     75%
+91–180 days:    50%
+181–365 days:   25%
+Over 365 days:  10%
+04.27.2 Moderate-decay evidence
+Examples:
+business community participation;
+repeated support;
+local collaboration;
+mentorship activity;
+accessibility practices.
+0–90 days:      100%
+91–180 days:     90%
+181–365 days:    75%
+1–2 years:       55%
+2–3 years:       35%
+Over 3 years:    20%
+04.27.3 Slow-decay evidence
+Examples:
+institutional continuity;
+historical stewardship;
+long-term community investment;
+sustained local presence.
+0–1 year:       100%
+1–3 years:       90%
+3–5 years:       80%
+5–10 years:      70%
+Over 10 years:   60%
+04.27.4 Persistent evidence
+Certain verified findings remain historically relevant:
+major community milestones;
+verified severe extraction;
+formal accountability outcomes;
+institutional founding;
+long-term stewardship commitments;
+documented historical significance.
+Persistent evidence may lose current operational influence but remains in the Legacy & Learning Engine™.
+04.28 Conflict Resolution
+Community evidence may conflict.
+Examples:
+newcomers report welcome while long-term residents report exclusion;
+an event creates strong connection but provides no continuity;
+a business supports community organizations but ignores customer concerns;
+high participation coexists with low voice;
+an institution preserves history but restricts practical access.
+The Engine applies these rules.
+Rule 1 — Dimension-specific conflict
+Conflicting evidence must first be assigned to the correct dimension rather than averaged indiscriminately.
+Rule 2 — Direct experience outweighs marketing claims
+Verified lived experience ordinarily outweighs self-description.
+Rule 3 — Repeated independent evidence outweighs isolated reports
+Volume alone is insufficient; independence and evidence quality must also be considered.
+Rule 4 — Harm is not canceled by popularity
+High attendance, sales, or follower count may not erase verified exclusion, retaliation, or extraction.
+Rule 5 — Positive impact in one dimension does not erase failure in another
+Strong cultural stewardship does not automatically correct poor accessibility.
+Strong support does not automatically establish voice.
+Rule 6 — Community disagreement may be genuine
+The Engine must preserve materially different experiences when evidence supports them.
+Rule 7 — Recent operational evidence may control current recommendations
+Long-term reputation does not override current verified conditions.
+Rule 8 — Serious unresolved conflict lowers confidence
+When conflicts cannot be resolved, the system must communicate uncertainty rather than force consensus.
+04.29 Community Segmentation Restrictions
+The Engine may distinguish relevant experience groups only when necessary to understand material differences.
+Permitted examples:
+residents versus visitors;
+customers versus employees;
+newcomers versus long-term participants;
+direct recipients versus observers;
+first-time attendees versus repeat attendees;
+business owners versus customers;
+event participants versus organizers;
+daytime versus nighttime visitors.
+The Engine may not create hidden community segments based on inferred protected identity, socioeconomic profiling, political belief, or other sensitive attributes.
+04.30 Anti-Gaming Rules
+Potential manipulation signals include:
+coordinated positive submissions;
+reciprocal rating rings;
+mass account creation;
+copied community narratives;
+event attendance inflation;
+fabricated referrals;
+self-reported community impact without corroboration;
+business employees posing as unrelated community members;
+Cultural Ambassadors concealing paid relationships;
+repeated support claims with no completed outcome;
+artificial return behavior;
+duplicate resource submissions;
+suppressing negative community evidence;
+incentive programs requiring positive ratings;
+geographic spoofing;
+rapid score changes unsupported by real events.
+Responses may include:
+evidence discount;
+confidence reduction;
+temporary score freeze;
+verification request;
+promotion hold;
+contributor weighting reduction;
+network investigation;
+human review;
+Governance escalation.

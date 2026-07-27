@@ -1,0 +1,533 @@
+Yes—this should be handled as **two connected tracks**:
+
+1. **Make the heritage map interactions fully functional now.**
+2. **Document the future cultural ecosystem without allowing future-state work to delay the map fixes.**
+
+The phrase you may have been reaching for was likely something similar to **Living Legacy Profiles**, **Living Memorials**, or **Living Legacy Stories**. I do not have the exact earlier wording preserved, but my strongest recommendation is:
+
+> **Living Legacy Stories** — community-preserved profiles that honor people, places, traditions, and events through verified history, personal memories, archival material, and present-day voices.
+
+“Living memorial” can sometimes sound limited to someone who has died. **Living Legacy Stories** allows you to honor ancestors, current community leaders, institutions, neighborhoods, alumni, traditions, and cultural movements.
+
+## What should work immediately
+
+Every heritage category should behave consistently:
+
+* Tapping a category filters the map and opens its corresponding results panel.
+* Users can horizontally scroll through all category tabs.
+* Each category has its own searchable, vertically scrollable list.
+* Selecting a result highlights the corresponding map marker.
+* Selecting a map marker highlights the corresponding list item.
+* Tapping either the marker or list item opens a place tile.
+* The tile provides a brief, accurate cultural description.
+* Closing the tile should return the user to the same category, search, and scroll position.
+* “All” should clear the selected category without producing conflicting filters.
+* The interface must not be hidden behind the bottom navigation or clipped offscreen.
+
+The categories visible in the screenshot should not simply change marker colors. Each must drive the complete interaction:
+
+* HBCUs
+* Civil Rights
+* Heritage
+* Native
+* Latino
+* LGBTQ+ heritage
+* Any additional approved cultural categories
+
+The same interaction model should later support business categories, so Replit should build or confirm a **reusable map-results component**, not separate hard-coded behavior for every category.
+
+## What each place tile should contain now
+
+For the immediate release:
+
+* Place name
+* Heritage category
+* City and state
+* Established year, when confirmed
+* Brief cultural or historical description
+* Marker/category designation
+* Close action
+* A visible but disabled or omitted future Save action—not a button that appears functional but fails
+
+Future fields may exist in the data model without being exposed yet:
+
+* Official website URL
+* Source citations
+* Video stories
+* Alumni affiliation
+* Mentorship opportunities
+* Events
+* Community groups
+* Accessibility information
+* Suggested corrections
+* Community memories
+* Living Legacy Stories
+* Save/favorite status
+
+## Future-state cultural capabilities I recommend
+
+### Cultural storytelling
+
+Places should feel alive through:
+
+* Alumni reflections
+* Student and faculty stories
+* Elder oral histories
+* Local historian videos
+* Cultural Ambassador features
+* Short “Why this place matters” videos
+* Archival photographs paired with present-day footage
+* Community memories connected to specific locations
+* Time-sensitive footage from reunions, commemorations, festivals, homecomings, and cultural events
+
+Videos should be linked to a **place**, not simply added to a general video feed.
+
+### Real-time cultural presence
+
+The platform could eventually show:
+
+* What is happening at the place now
+* Upcoming cultural events
+* Homecomings and alumni gatherings
+* Restoration or preservation efforts
+* Volunteer opportunities
+* Community alerts involving the location
+* Recent verified videos
+* Calls for photographs, stories, or historical information
+
+“Real time” should mean recent and culturally relevant, not unmoderated livestreaming by default.
+
+### Alumni and member connections
+
+For HBCUs and similar institutions:
+
+* Alumni can identify their school and graduation year privately or publicly.
+* Members can find alumni by city, profession, industry, or mentorship interest.
+* Alumni chapters can maintain verified profiles.
+* Students can request career or relocation guidance.
+* Alumni can volunteer for office hours, campus visits, mock interviews, or community events.
+* Members can follow an institution and receive meaningful updates.
+* Alumni videos can be tagged by topic, decade, campus tradition, career path, or location.
+
+### Mentorship
+
+Mentorship should be structured rather than allowing unrestricted access to people:
+
+* Mentor opt-in
+* Areas of support
+* Availability
+* Student, early-career, business, relocation, or alumni mentorship
+* Age and safety controls
+* Communication boundaries
+* Reporting tools
+* Group mentoring before one-to-one access
+* Verified organizational or alumni affiliations when claimed
+* No public display of personal contact information
+
+### Community preservation
+
+**Living Legacy Stories** could allow members to:
+
+* Nominate a person, place, neighborhood, institution, tradition, or event
+* Explain why it matters
+* Upload a memory, photograph, audio recording, or short video
+* Connect the story to a map location
+* Identify their relationship to the story
+* Submit sources or supporting information
+* Invite others to contribute memories
+* Create a timeline from multiple verified contributions
+* Mark disputed, incomplete, or community-sourced information clearly
+* Preserve stories at risk of being lost
+
+This should not become an open-edit encyclopedia. Submissions should have attribution, moderation, source status, and correction procedures.
+
+---
+
+# Copy-and-paste request for Replit
+
+```text
+MAPPING WITH MELANIN™ — HERITAGE MAP FUNCTIONALITY AND FUTURE-STATE AUDIT
+
+IMPORTANT INSTRUCTIONS
+
+This request has two separate purposes:
+
+1. Identify and fix the launch-critical map behavior that must work immediately.
+2. Provide a read-only explanation of the future-state capabilities already understood, documented, partially built, or anticipated.
+
+Do not allow future-state features to delay the immediate map functionality.
+
+Before changing code, provide the requested audit and implementation plan. Do not implement anything until the current behavior, affected files, data sources, risks, and proposed changes have been clearly documented and approved.
+
+══════════════════════════════════════════════════════════════
+PART 1 — CURRENT HERITAGE MAP AUDIT
+══════════════════════════════════════════════════════════════
+
+Audit the current Map screen and report exactly how each of the following works today:
+
+A. TOP BUSINESS/DISCOVERY CATEGORY TABS
+
+Examples currently visible include:
+- All
+- Food & Beverage
+- Shopping & Retail
+- Beauty
+- Any additional categories
+
+Confirm:
+
+1. Whether the row scrolls horizontally.
+2. Whether every category can be reached on iPhone and Android screen sizes.
+3. What tapping each category currently changes.
+4. Whether it filters map markers, the results list, or both.
+5. Whether the category behavior is reusable or individually hard-coded.
+6. Whether this same component is intended to support business-category previews.
+7. Any clipping, overflow, touch-target, or responsive-layout problems.
+
+B. HERITAGE SITES CONTROL
+
+Audit the Heritage Sites button and all heritage categories, including:
+
+- HBCU
+- Civil Rights
+- Heritage
+- Native
+- Latino
+- LGBTQ+ heritage
+- Every additional category currently present in the code or database
+
+For every category, confirm:
+
+1. Whether the category is clickable.
+2. Whether it becomes visibly selected.
+3. Whether it filters the correct markers.
+4. Whether it opens or updates the correct results panel.
+5. Whether it displays the correct result count.
+6. Whether the results can be searched.
+7. Whether the results can be vertically scrolled.
+8. Whether tapping a list result selects the correct map marker.
+9. Whether tapping a map marker selects the correct result.
+10. Whether the correct detail tile opens.
+11. Whether changing categories clears the prior selection properly.
+12. Whether “All” clears every heritage filter correctly.
+13. Whether Hide closes only the results panel or changes the active filter.
+14. Whether closing the detail tile preserves the user’s current search, category, and scroll position.
+15. Whether any category currently has no data or incomplete behavior.
+
+C. PLACE DETAIL TILE
+
+Audit the bottom place tile shown after selecting a heritage location.
+
+Confirm which of these fields exist and where the data comes from:
+
+- Place name
+- Category
+- City
+- State
+- Established year
+- Brief description
+- Image
+- Official website
+- Source or citation
+- Save status
+- Video stories
+- Alumni association
+- Mentorship
+- Events
+- Community contributions
+- Accessibility information
+- Suggested corrections
+
+Identify:
+
+1. Fields that are live now.
+2. Fields that exist in the data model but are not displayed.
+3. Fields that are mocked or hard-coded.
+4. Fields that do not yet exist.
+5. Whether the tile is a reusable component.
+6. Whether the tile is obscured by or placed beneath the bottom navigation.
+7. Whether all of its content and actions are reachable by scrolling.
+8. Whether the close button behaves consistently.
+9. Whether any buttons appear functional but do not work.
+
+D. DATA AND CONTENT AUDIT
+
+Report:
+
+1. Where heritage-place records are stored.
+2. Whether they are stored in the database, static files, frontend constants, seeded records, or an API.
+3. How many records exist in each category.
+4. Which records contain complete descriptions.
+5. Which records contain verified years, locations, and coordinates.
+6. Whether descriptions or historical claims have source fields.
+7. Whether categories use a single standardized taxonomy.
+8. Whether duplicate records exist.
+9. Whether any marker is missing coordinates.
+10. Whether the current displayed count matches the actual number of results.
+11. Whether search covers name only or also city, state, description, and tags.
+
+Do not invent or silently fill missing historical information.
+
+══════════════════════════════════════════════════════════════
+PART 2 — REQUIRED IMMEDIATE BEHAVIOR
+══════════════════════════════════════════════════════════════
+
+Prepare a proposed implementation plan for the following launch-critical behavior.
+
+Every heritage category must:
+
+1. Be reachable through horizontal scrolling.
+2. Be tappable.
+3. Show a clear selected state.
+4. Filter the map markers.
+5. Filter the associated result list.
+6. Display the correct result count.
+7. Allow users to search within that category.
+8. Allow users to vertically scroll through all results.
+9. Open a detail tile when a result is selected.
+10. Open the same detail tile when the corresponding marker is selected.
+11. Synchronize marker selection and list selection.
+12. Preserve category, search, and scroll state when a detail tile closes.
+13. Work across supported iPhone and Android screen sizes.
+14. Remain visible above the bottom navigation and safe areas.
+15. Use reusable components that can also support business categories.
+
+The immediate place tile must display, when valid data exists:
+
+- Place name
+- Heritage category
+- City and state
+- Established year
+- A concise cultural or historical description
+
+Do not display an established year when the year has not been confirmed.
+
+Do not expose Save, video, mentorship, website, or contribution buttons as functioning actions unless those capabilities truly work.
+
+Provide acceptance tests for every behavior above.
+
+══════════════════════════════════════════════════════════════
+PART 3 — FUTURE-STATE UNDERSTANDING
+READ-ONLY — DO NOT BUILD DURING THE IMMEDIATE MAP FIX
+══════════════════════════════════════════════════════════════
+
+Explain Replit’s current understanding of the intended future state for heritage places.
+
+Search all relevant:
+
+- Code
+- Database schemas
+- Comments
+- Existing prompts or specifications
+- Admin features
+- API routes
+- UI components
+- Feature flags
+- Seed data
+- Partially built workflows
+
+Report what currently exists, what is only documented, what is partially implemented, and what is completely missing for the following areas.
+
+A. SAVED PLACES
+
+Future users should be able to:
+
+- Save a heritage place
+- Organize saved places into lists or trips
+- Follow a place for updates
+- Return to saved places from their profile or library
+
+Explain the expected data model and whether any part already exists.
+
+B. WEBSITE AND SOURCE LINKS
+
+Future tiles may include:
+
+- Official website
+- Historical source links
+- Preservation organization
+- Alumni association
+- Relevant institutional resources
+
+Explain whether URL and citation fields currently exist.
+
+C. VIDEO AND CULTURAL STORYTELLING
+
+Future heritage places should feel alive through place-connected videos such as:
+
+- Alumni reflections
+- Student stories
+- Faculty or historian explanations
+- Elder oral histories
+- Cultural Ambassador videos
+- Community memories
+- Present-day footage
+- Archival comparisons
+- Homecoming and reunion videos
+- “Why this place matters” stories
+
+Explain the expected capabilities for:
+
+- Uploading or linking videos
+- Connecting a video to a specific place
+- Tagging the speaker’s relationship to the place
+- Alumni verification
+- Moderation
+- Reporting
+- Consent
+- Rights and ownership
+- Captions and accessibility
+- Date recorded
+- Location verification
+- Archival versus current content
+- Featured or rotating stories
+- Community submissions
+- Admin approval
+
+D. REAL-TIME CULTURAL CONNECTION
+
+Explain how the future platform could responsibly support:
+
+- Recent verified videos
+- Upcoming events
+- Reunions and homecomings
+- Preservation projects
+- Volunteer opportunities
+- Cultural celebrations
+- Current community updates
+- Calls for stories, photos, or historical information
+
+Real-time content must not mean uncontrolled or unmoderated publication.
+
+E. ALUMNI CONNECTIONS
+
+Explain the expected future capabilities for:
+
+- Members identifying an HBCU or institution
+- Alumni affiliation
+- Graduation year
+- Alumni chapter profiles
+- Finding alumni by city or profession
+- Following an institution
+- Alumni-created videos
+- Alumni events
+- Student and alumni connections
+- Privacy controls
+- Verification of claimed institutional roles
+
+F. MENTORSHIP
+
+Explain potential future support for:
+
+- Mentor opt-in
+- Mentorship categories
+- Student mentorship
+- Career mentorship
+- Business mentorship
+- Relocation mentorship
+- Alumni mentorship
+- Group mentoring
+- Availability and boundaries
+- Safety and reporting
+- Age restrictions
+- Verification
+- Privacy
+- Communication controls
+
+Do not assume that unrestricted direct messaging is appropriate.
+
+G. LIVING LEGACY STORIES
+
+Use the working name “Living Legacy Stories” unless another previously approved term is found in the project.
+
+This capability would preserve community history by allowing approved contributions connected to:
+
+- People
+- Places
+- Neighborhoods
+- Institutions
+- Traditions
+- Cultural events
+- Community leaders
+- Ancestors
+- Current legacy builders
+
+Potential contributions may include:
+
+- Written memories
+- Photographs
+- Audio
+- Short videos
+- Timelines
+- Historical documents
+- Personal reflections
+- Community testimony
+- Source material
+
+Explain the future requirements for:
+
+- Nominations
+- Contributor identity
+- Relationship to the subject
+- Consent
+- Verification
+- Source status
+- Moderation
+- Corrections
+- Disputed information
+- Privacy
+- Memorialized individuals
+- Living individuals
+- Ownership and licensing
+- Removal requests
+- Multiple community perspectives
+- Admin review
+
+Confirm whether any prior term such as Living Memorials, Living Legacies, Legacy Stories, Community Memory, or another approved phrase already exists in the project materials.
+
+══════════════════════════════════════════════════════════════
+PART 4 — REQUIRED RESPONSE FORMAT
+══════════════════════════════════════════════════════════════
+
+Return the audit in this exact structure:
+
+1. Executive Summary
+2. Current Map Architecture
+3. Current Behavior by Category
+4. Current Place-Tile Behavior
+5. Data and Record Counts
+6. Confirmed Bugs
+7. Responsive and Safe-Area Issues
+8. Launch-Critical Fixes
+9. Proposed Reusable Component Architecture
+10. Files and Database Tables Affected
+11. Immediate Acceptance Tests
+12. Future-State Features Already Built
+13. Future-State Features Partially Built
+14. Future-State Features Documented but Not Built
+15. Future-State Features Not Yet Defined
+16. Replit’s Understanding of Living Legacy Stories
+17. Risks, Safety, Moderation, Privacy, and Legal Considerations
+18. Questions Requiring Founder Approval
+19. Recommended Phase Order
+20. Explicit confirmation that no changes were made during this audit
+
+For the phase order, separate the work as:
+
+PHASE 1 — Map functionality required immediately
+PHASE 2 — Content accuracy, sources, and admin management
+PHASE 3 — Saved places and URLs
+PHASE 4 — Place-connected videos and alumni stories
+PHASE 5 — Mentorship and member connections
+PHASE 6 — Living Legacy Stories and deeper community preservation
+
+Do not combine these phases.
+Do not implement future-state features as part of the immediate map repair.
+Do not make any code or database changes during this audit.
+```
+
+The most important architectural decision is that Replit should create one reusable relationship:
+
+> **Category → filtered results → map markers → selected location → place tile**
+
+That same relationship can power heritage places now and business categories later. This prevents the business map from inheriting inconsistent, separately coded behavior.

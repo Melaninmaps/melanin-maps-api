@@ -1,0 +1,71 @@
+You can do either—but for Kinfolk, I recommend eventually hiring a voice actor and using the program to create an authorized AI version of that voice.
+
+The program does not usually invent a truly exclusive, trademark-ready voice automatically. Most platforms offer:
+
+* Standard premade voices that many customers can use
+* Voice-design tools that generate a new synthetic voice from your description
+* Voice-cloning tools that create an AI voice from a real person’s authorized recordings
+
+## The best approach for Kinfolk
+
+### During beta: use a designed or premade AI voice
+
+Have the program generate or select a temporary voice matching your description:
+
+> “A warm, grounded Black male voice, perceived age 35–45, medium-deep tone, conversational pacing, intelligent and reassuring, with natural warmth and subtle humor. Never exaggerated, theatrical, or announcer-like.”
+
+This gets the feature working without delaying the build.
+
+However, verify that the selected voice permits commercial use. Do not call it proprietary or permanent yet.
+
+### After launch: hire and direct a voice actor
+
+Audition several voice actors and select the person who naturally embodies Kinfolk. Record them professionally, then have an AI voice company build a synthetic voice—with the actor’s explicit consent—that can generate Kinfolk’s future responses.
+
+This gives you:
+
+* A more authentic performance
+* Greater emotional range
+* A recognizable voice created specifically for Kinfolk
+* Better control over pronunciation and delivery
+* A stronger story behind “The Voice of Kinfolk”
+* The ability to direct how Kinfolk should sound in discovery, business, and safety situations
+
+## A third option: a fully designed synthetic voice
+
+Some programs allow you to describe a voice and generate several candidates without hiring an actor. That can produce something distinctive, but you must check:
+
+* Is the voice exclusive to Melanin Maps LLC?
+* Can other customers generate or use the same voice?
+* Do you own it or merely have permission to use it?
+* Can you download or transfer it to another provider?
+* What happens if you cancel the service?
+* Can the provider change or discontinue it?
+* Can it be used in advertisements as well as inside the app?
+
+A provider calling a voice “custom” does not necessarily mean it is exclusively yours.
+
+## My candid recommendation
+
+Use a designed synthetic voice first. Do not spend heavily on actors before users have tested Kinfolk’s voice experience.
+
+Once the interaction works and testers respond positively, hire voice actors for the permanent version. The best candidate may not be a traditional announcer. You want someone who can sound like a trusted, culturally aware partner in an ordinary conversation.
+
+The sequence should be:
+
+1. Define Kinfolk’s personality and speech rules.
+2. Generate three temporary voice options.
+3. Test them inside the app.
+4. Learn which vocal qualities users respond to.
+5. Audition actors using those findings.
+6. Choose and professionally direct the permanent voice.
+7. Sign an AI voice and digital-replica agreement.
+8. Create the authorized synthetic model.
+9. Record the signature phrase and audio cue.
+10. Have your attorney assess trademark protection.
+
+So the immediate instruction to your developer is:
+
+> Use a commercially licensed, replaceable synthetic voice for the beta. Do not permanently build Kinfolk around a stock voice. The architecture must allow us to replace it later with an exclusive, authorized signature voice.
+
+That keeps your vision intact without allowing this decision to continue holding up the build.

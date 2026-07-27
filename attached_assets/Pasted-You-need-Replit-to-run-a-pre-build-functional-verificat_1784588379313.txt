@@ -1,0 +1,306 @@
+You need Replit to run a **pre-build functional verification**, not just a code audit.
+
+The key is to make Replit prove that the features work together in the exact experience your testers will use:
+
+* map loads on iOS and Android;
+* heritage sites and cultural layers actually appear;
+* newly added businesses appear on the map;
+* safety overlays and Report Intel work;
+* Kinfolk opens with the new welcome experience;
+* voice selection can be changed;
+* the selected voice actually plays;
+* login, logout, and session restore are stable.
+
+Send Replit this exact request:
+
+> # FINAL PRE-BUILD FUNCTIONAL VERIFICATION
+>
+> **Mapping With Melanin™ — Map, KinfolkAI, Voice, Auth, and New-Business Experience**
+>
+> Do not build yet.
+>
+> I need a full pre-build verification that the practical applications of Mapping With Melanin™ work in the next iOS and Android candidate.
+>
+> This is not a static “the file exists” audit. I need functional proof from the current source and production environment.
+>
+> ---
+>
+> ## 1. MAP — REQUIRED LAUNCH EXPERIENCE
+>
+> Confirm the map works on both iOS and Android and does not show a white or blank screen.
+>
+> Test and report:
+>
+> 1. Base map tiles render.
+> 2. Current-location permission:
+>
+>    * allowed;
+>    * denied;
+>    * not yet decided.
+> 3. A valid fallback region appears when location is unavailable.
+> 4. Map opens near the user’s broader community, not only the exact suburb or current GPS point.
+> 5. A user near Philadelphia can see relevant Philadelphia-area results within the approved discovery radius.
+> 6. Business pins render from production business data.
+> 7. A newly added business appears on:
+>
+>    * Discovery;
+>    * search;
+>    * map;
+>    * business profile.
+> 8. Newly added businesses with missing or invalid coordinates do not blank or crash the entire map.
+> 9. Heritage sites render.
+> 10. HBCU, Civil Rights, Heritage, Native, Latino, and other existing cultural layers render where data exists.
+> 11. Safety Heat renders when enabled.
+> 12. Community alerts and Report Intel markers render after approval or according to the existing workflow.
+> 13. Category filters work.
+> 14. Tapping a marker opens the correct detail.
+> 15. Map survives:
+>
+>     * background and reopen;
+>     * Wi-Fi to cellular switch;
+>     * zero business results;
+>     * slow API response;
+>     * malformed coordinate records.
+> 16. No unexplained white screen is possible. Loading, error, and retry states must be visible.
+>
+> For each map data type, identify:
+>
+> * source API route;
+> * production table;
+> * mobile component;
+> * whether it is currently populated in production;
+> * whether it is visible in the next build.
+>
+> Do not rely on source-code presence alone. Return runtime evidence, logs, screenshots, simulator/device results, or a clearly stated limitation where real-device access is unavailable.
+>
+> ---
+>
+> ## 2. NEW-BUSINESS PRACTICAL FLOW
+>
+> Verify the full experience for a community member or owner adding a business.
+>
+> Test:
+>
+> 1. Add a new business.
+> 2. Required fields validate correctly.
+> 3. Address is geocoded.
+> 4. Latitude and longitude are stored.
+> 5. The business receives the correct status:
+>
+>    * community listed;
+>    * claimed;
+>    * owner confirmed;
+>    * pending approval;
+>    * or another existing status.
+> 6. The business appears in the appropriate admin queue.
+> 7. After approval, it becomes searchable.
+> 8. After approval, it appears on the map.
+> 9. The public profile loads.
+> 10. Ownership and profile-status labels are accurate.
+> 11. A community-added business cannot edit owner-only fields.
+> 12. A verified owner can edit approved owner fields.
+> 13. Business media and social links follow the approved tier rules.
+>
+> Confirm whether map appearance is immediate after approval or requires refresh/cache expiration.
+>
+> ---
+>
+> ## 3. KINFOLKAI WELCOME EXPERIENCE
+>
+> Confirm the next build contains exactly:
+>
+> **KinfolkAI™**
+> **Helping you navigate what matters.**
+>
+> **Kinfolk’s here. Let’s map it out.**
+>
+> **Ask me anything. I’ll always be honest about what I know—and what I don’t.**
+>
+> Input placeholder:
+>
+> **What’s on your mind today?**
+>
+> Confirm:
+>
+> * no static starter-prompt chips appear;
+> * contextual follow-up suggestions may appear only after a reply;
+> * the trust statement is readable;
+> * no clipping or overlap occurs on small iPhones or Android devices;
+> * microphone, send, Listen, and My Lists remain functional;
+> * the production Kinfolk endpoint works after login;
+> * tier behavior still works;
+> * no auth or prompt regression was introduced.
+>
+> ---
+>
+> ## 4. KINFOLK VOICE SELECTION AND PLAYBACK
+>
+> I need proof that users can change Kinfolk’s voice and hear the selected voice.
+>
+> Audit and test:
+>
+> 1. Where voice preferences are stored.
+> 2. Whether the preference is:
+>
+>    * device only;
+>    * user account level;
+>    * synchronized across iOS, Android, and web.
+> 3. All available voice choices.
+> 4. Voice-preview playback for every selectable voice.
+> 5. Whether selecting a new voice changes:
+>
+>    * preview playback;
+>    * Listen playback on Kinfolk responses;
+>    * future sessions after app restart.
+> 6. Whether regional voice/AAVE settings remain separate from the actual voice-selection setting.
+> 7. Whether voice settings persist after:
+>
+>    * logout and login;
+>    * force-close and reopen;
+>    * installation of a new build.
+> 8. What happens if the voice service is unavailable.
+> 9. Whether the app clearly falls back without crashing.
+> 10. Whether voice usage limits and “100% remaining” are calculated correctly.
+>
+> Test on both iOS and Android.
+>
+> Provide a PASS/FAIL matrix for every voice and every persistence scenario.
+>
+> ---
+>
+> ## 5. AUTHENTICATION AND SESSION GATE
+>
+> The next build cannot proceed unless these pass:
+>
+> 1. Email login.
+> 2. Phone login.
+> 3. Logout.
+> 4. Logout → immediate login with same account.
+> 5. Logout → immediate login with different account.
+> 6. Force-close → reopen with valid session.
+> 7. Screen lock/time-out → reopen.
+> 8. Temporary server delay.
+> 9. No request spins indefinitely.
+> 10. Database trouble produces a temporary-service message, not a false password error.
+> 11. One canonical user ID is preserved across supported login methods.
+> 12. Admin and community views still work.
+>
+> LB-008 must be included and verified in the new build.
+>
+> ---
+>
+> ## 6. REPORT INTEL AND ADMIN RECEIPT
+>
+> Verify:
+>
+> 1. Report Intel submission succeeds.
+> 2. The production record is created.
+> 3. The user receives a clear success confirmation.
+> 4. Duplicate taps do not create duplicates.
+> 5. The alert appears according to the moderation workflow.
+> 6. Admin receives an in-app notification or queue entry.
+> 7. Admin can review:
+>
+>    * type;
+>    * location;
+>    * time;
+>    * details;
+>    * verification status;
+>    * duplicate or nearby reports.
+> 8. Admin can approve, reject, hold, or mark resolved according to existing permissions.
+> 9. The reporter’s identity is protected according to policy.
+>
+> Confirm whether the two reports submitted by the tester were received. Provide timestamps and status with personal details redacted.
+>
+> ---
+>
+> ## 7. PRE-BUILD PASS/FAIL MATRIX
+>
+> Return one consolidated table:
+>
+> * iOS map;
+> * Android map;
+> * heritage sites;
+> * cultural layers;
+> * safety heat;
+> * new-business map appearance;
+> * Report Intel;
+> * admin receipt;
+> * Kinfolk welcome UI;
+> * Kinfolk general response;
+> * each Kinfolk voice preview;
+> * selected voice playback;
+> * voice preference persistence;
+> * email login;
+> * phone login;
+> * logout/fresh login;
+> * session restore;
+> * database resilience;
+> * profile-photo upload;
+> * community media;
+> * business media;
+> * navigation labels and side menu.
+>
+> Use only:
+>
+> * ✅ PASS
+> * ⚠️ PARTIAL
+> * ❌ FAIL
+> * ⏸ NOT YET IMPLEMENTED
+>
+> For every non-pass item, state:
+>
+> * exact blocker;
+> * exact file or service;
+> * smallest repair;
+> * whether it requires a server deploy, iOS build, Android build, or all three.
+>
+> ---
+>
+> ## 8. BUILD GATE
+>
+> Do not start EAS builds unless all of these are PASS:
+>
+> * iOS map;
+> * Android map;
+> * new-business map appearance;
+> * Kinfolk welcome experience;
+> * voice selection and playback;
+> * email and phone login;
+> * logout → fresh login;
+> * session restoration;
+> * Report Intel submission;
+> * admin receipt;
+> * production database resilience.
+>
+> End the report with exactly one verdict:
+>
+> **🟢 SAFE TO BUILD**
+>
+> or
+>
+> **🔴 DO NOT BUILD**
+>
+> If the verdict is red, list only the remaining must-fix items in implementation order.
+>
+> Do not build or submit until I separately approve the final report.
+
+## What counts as reassurance
+
+I would not accept:
+
+> “The code is present.”
+
+I would accept:
+
+> “On iPhone, Apple Maps rendered, Philadelphia-area heritage sites appeared, a newly approved test business appeared as a pin, tapping it opened its profile, voice B played in preview and on a Kinfolk response, the selection survived a force-close, and logout → login passed.”
+
+That is the level of proof you need.
+
+Also, because the current iOS build has already shown a white map and login trouble, the next build should not be submitted directly after compilation. The order should be:
+
+1. Replit completes this verification and repairs failures.
+2. Build iOS and Android.
+3. Install both on physical devices.
+4. You personally verify Map, Kinfolk voice, login/logout, Report Intel, and a business profile.
+5. Only then upload iOS and submit Android.

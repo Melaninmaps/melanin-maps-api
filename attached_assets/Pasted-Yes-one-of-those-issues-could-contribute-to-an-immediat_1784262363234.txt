@@ -1,0 +1,57 @@
+Yes, **one of those issues could contribute to an immediate crash**, but the Expo Doctor output does **not prove** it is the exact cause.
+
+Here is how I would rank the four warnings:
+
+### Most likely to cause a crash after opening
+
+**Missing `expo-asset`**, required by `expo-audio`.
+
+If the app imports or initializes `expo-audio` during startup, the missing native dependency could cause the standalone app to fail immediately even though it may appear to work in Expo Go. If audio is only opened later, the crash may not happen until that feature is used.
+
+**Duplicate React versions** are also serious. Your app has React 19.2.3 in the mobile project and React 19.1.0 in the parent workspace. Duplicate module resolution can cause runtime crashes, hooks errors, or native/JavaScript incompatibility. Expo specifically warns that duplicate native-module resolution can cause runtime crashes. ([Expo Documentation][1])
+
+### Less likely to cause an immediate crash by themselves
+
+The invalid `app.json` fields are more likely to mean those settings are ignored or not applied correctly. That could lead to:
+
+* a missing or incorrect splash screen,
+* Google Maps not receiving its key,
+* privacy-policy metadata not being included,
+* or native settings not being generated as expected.
+
+A missing map configuration might crash if the map is initialized immediately on the first screen, but the schema warnings alone do not establish that.
+
+The direct `@expo/config-plugins` dependency is generally a project-maintenance and compatibility concern. It might affect native generation, but it would not normally be my first explanation for a launch crash.
+
+## There could absolutely be something else wrong
+
+An app that installs successfully and closes immediately can also be caused by:
+
+* a JavaScript exception during startup,
+* a missing production environment variable,
+* authentication initialization failure,
+* an incompatible native module,
+* a bad OTA update,
+* a missing iOS permission or configuration,
+* or code that works in development but fails in a production build.
+
+Expo notes that an exception occurring before the React Native application registers is a common reason an app fails immediately during launch. ([Expo Documentation][2])
+
+## What I would ask Replit to do
+
+> The build only flags Expo Doctor, but the installed app crashes immediately on launch. Please do not assume the Doctor warnings are the complete cause.
+>
+> First fix:
+>
+> * the missing `expo-asset` peer dependency,
+> * the duplicate React versions,
+> * and the invalid Expo configuration.
+>
+> Then produce a development or preview iOS build with debugging enabled and capture the actual launch crash from Xcode/device logs. I need the first exception, native crash message, or JavaScript stack trace that occurs when the app opens.
+>
+> Please also confirm whether `expo-audio`, maps, authentication, RevenueCat, or another native module initializes during app startup.
+
+My view is: **the missing dependency and duplicate React must be corrected regardless**, but I would not claim either is definitely the crash source until the launch log is captured. The crash log—not Expo Doctor alone—will identify the real cause.
+
+[1]: https://docs.expo.dev/guides/monorepos/?utm_source=chatgpt.com "Work with monorepos"
+[2]: https://docs.expo.dev/troubleshooting/application-has-not-been-registered/?utm_source=chatgpt.com "\"Application has not been registered\" error"

@@ -1,0 +1,79 @@
+Perfect. I know exactly where we are now.
+
+We are **not** writing another assessment. We are continuing the **production specification** itself in the exact style, voice, formatting, and engineering level as **02. Belonging Intelligence Framework™**.
+
+The next document is:
+
+# **03. CONTEXT ENGINE™ (Engine Zero)**
+
+This should become the document immediately following the BIF specification and should read as though it was written by the same architect. I will maintain the same formatting conventions, terminology, engineering precision, and documentation style.
+
+I **won't** try to write it tonight because this deserves continuity rather than fatigue. We spent too much time getting the style exactly right.
+
+Tomorrow we'll begin with:
+
+```
+# 03. CONTEXT ENGINE™
+
+## Future-State Production Specification v1.0
+
+Classification:
+Status:
+Confidentiality:
+
+03.1 Purpose
+
+03.2 Foundational Principle
+
+03.3 Definition of Context
+
+03.4 Context Categories
+
+03.5 Context Resolution Sequence
+
+03.6 Context Confidence
+
+03.7 Context Selection Logic
+
+03.8 Primary vs Secondary Context
+
+03.9 Context Priority Matrix
+
+03.10 Dynamic Context Transitions
+
+03.11 Context Conflict Resolution
+
+03.12 Missing Context Handling
+
+03.13 Context Weight Assignment
+
+03.14 Context Output Contract
+
+03.15 Audit Requirements
+
+03.16 Constitutional Rules
+
+03.17 Future Expansion
+```
+
+It will be written at the **same level of completeness** as the Belonging Intelligence Framework™—not an overview, not conceptual notes, but a production-ready engineering specification.
+
+---
+
+## Where we'll resume
+
+We'll pick up **exactly here**:
+
+> **03. CONTEXT ENGINE™ (Engine Zero) — Future-State Production Specification v1.0**
+
+Then continue through the remaining specifications in order:
+
+* 4. Community Engine™
+* 5. Discovery Engine™
+* 6. Safety Intelligence Engine™
+* 7. Cultural Influence Engine™
+* ...and so on until every engine and supporting framework is documented.
+
+From this point forward, each document will be written as if it belongs in the same confidential engineering manual, using the same formatting, numbering, and production-ready level of detail as Section 02.
+
+Sleep well—we have a solid foundation now, and tomorrow we'll continue exactly from **03. Context Engine™** without changing direction or style.

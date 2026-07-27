@@ -1,0 +1,77 @@
+CRITICAL DEPLOYMENT CORRECTION — DO NOT BUILD MOBILE YET
+
+Manus independently confirmed that Railway executes dist/index.mjs and
+that the currently committed deployable artifact was last built July 24.
+
+The July 27 Build 97 TypeScript changes exist in source files but were
+never compiled into the artifact Railway actually executes.
+
+This likely means Apple reviewed against the old backend containing the
+StripeSync pool leak and old readiness logic.
+
+Stop all mobile build and submission activity until this is corrected.
+
+1. Confirm the exact Railway build and start commands.
+
+2. Confirm whether Railway:
+   - builds TypeScript during deployment, or
+   - runs the committed dist/index.mjs directly.
+
+3. Rebuild the API deployable artifact from the current corrected source.
+
+4. Verify the rebuilt artifact contains:
+   - StripeSync promise singleton
+   - Stripe pool max 2
+   - Application pool max 8
+   - Corrected readyz logic
+   - Targeted DB retry helper
+   - /api/readyz/history
+   - Graceful shutdown for all pools
+   - Any approved Sundown Town routes required for Build 97
+
+5. Provide:
+   - source commit hash
+   - artifact build timestamp
+   - artifact checksum
+   - files included in the build
+   - exact build command
+   - exact Railway start command
+
+6. Commit and push the rebuilt artifact if Railway requires committed
+   build output.
+
+7. Trigger a fresh Railway deployment.
+
+8. Prove the deployed runtime is new by checking:
+   - the new readyz response format
+   - pool max 8
+   - /api/readyz/history exists
+   - StripeSync singleton behavior
+   - deployment commit and timestamp
+
+9. Trigger 5–10 safe Stripe test webhooks and confirm:
+   - no connection growth per event
+   - waiting returns to zero
+   - readyz remains 200
+   - businesses remains 200
+
+10. Test production:
+   - fresh Apple Sign-In registration
+   - returning Apple Sign-In
+   - email registration
+   - review-account login
+   - business loading
+   - heritage loading
+   - KinfolkAI basic response
+
+Return only:
+- Why the compiled artifact was stale
+- Exact corrected artifact
+- Exact deployed commit
+- Production verification
+- Stripe stress results
+- Whether Apple’s rejection timeline matches the old backend outage
+- GO or NO-GO to begin iOS and Android builds
+
+Do not claim a fix is deployed based only on TypeScript source.
+Verify the artifact Railway actually executes.

@@ -1,0 +1,97 @@
+06.23.3 Family
+Dimension	Weight
+Physical Safety	24%
+Cultural & Discrimination Safety	15%
+Identity-Related Safety	8%
+Environmental Safety	12%
+Health & Emergency Access	12%
+Accessibility Safety	10%
+Family Safety	15%
+Digital Safety	4%
+06.23.4 Relocation
+Dimension	Weight
+Physical Safety	20%
+Cultural & Discrimination Safety	22%
+Identity-Related Safety	12%
+Environmental Safety	13%
+Health & Emergency Access	10%
+Accessibility Safety	8%
+Family Safety	8%
+Digital Safety	7%
+06.23.5 Business Visit
+Dimension	Weight
+Physical Safety	20%
+Cultural & Discrimination Safety	25%
+Identity-Related Safety	12%
+Environmental Safety	8%
+Health & Emergency Access	7%
+Accessibility Safety	10%
+Family Safety	5%
+Digital Safety	13%
+06.23.6 Marketplace or Meetup
+Dimension	Weight
+Physical Safety	30%
+Cultural & Discrimination Safety	8%
+Identity-Related Safety	7%
+Environmental Safety	5%
+Health & Emergency Access	5%
+Accessibility Safety	5%
+Family Safety	5%
+Digital & Transaction Safety	35%
+These profiles require Weight Register approval before production use.
+06.24 Safety Confidence Score™
+The Safety Confidence Score measures how reliable the current assessment is.
+06.24.1 Formula
+Safety Confidence Score =
+  Evidence Quality
+× Evidence Volume
+× Source Independence
+× Corroboration Strength
+× Context Specificity
+× Recency
+× Geographic Precision
+The result is normalized to 0–100.
+06.24.2 Confidence labels
+Score	Label
+90–100	Verified
+80–89	High
+65–79	Moderate
+45–64	Emerging
+20–44	Low
+0–19	Unknown
+06.25 Evidence Volume Factor
+Qualified nonduplicate evidence items	Factor
+30+	1.00
+20–29	0.92
+12–19	0.82
+7–11	0.70
+4–6	0.55
+2–3	0.40
+1	0.25
+0	0.00
+For severe incidents, a single highly verified source may trigger protective action despite low volume.
+Volume increases confidence.
+It does not determine truth by majority vote.
+06.26 Source Independence Factor
+Evidence is independent when it does not originate from the same person, device, organization, coordinated group, source article, repost chain, or common financial interest.
+Independent source structure	Factor
+Five or more independent sources	1.00
+Four independent sources	0.95
+Three independent sources	0.88
+Two independent sources	0.75
+One verified source	0.55
+Multiple dependent reports	0.40
+Coordinated or copied evidence	0.15
+No source independence	0.00
+06.27 Corroboration Strength
+Corroboration measures agreement on material facts, not identical wording.
+06.27.1 Corroboration factors
+Corroboration	Factor
+Independently verified material facts	1.00
+Strong agreement with minor differences	0.90
+Multiple reports with partial agreement	0.75
+One report supported by contextual evidence	0.60
+Single uncorroborated report	0.40
+Conflicting material facts	0.25
+Evidence disproven	0.00
+Identical language across multiple submissions may indicate coordination rather than corroboration.

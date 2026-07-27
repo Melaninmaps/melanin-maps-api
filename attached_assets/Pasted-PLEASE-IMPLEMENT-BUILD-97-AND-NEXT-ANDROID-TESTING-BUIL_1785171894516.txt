@@ -1,0 +1,744 @@
+PLEASE IMPLEMENT — BUILD 97 AND NEXT ANDROID TESTING BUILD
+STABLE TESTER DEMONSTRATION RELEASE
+
+PRIORITY: P0
+FOUNDER OBJECTIVE: APPLE APPROVAL + MEANINGFUL TESTING + TOUR PROMOTION
+
+START OVER FROM THIS SCOPE.
+
+The purpose of these builds is not merely to let users log in.
+
+By the end of this release cycle, approximately 30 testers across iOS and
+Android must be able to enter Mapping With Melanin™, use the central
+features that express the platform’s purpose, create approved test
+activity, and speak meaningfully about their experience.
+
+Apple must also be able to review a complete, stable experience without
+authentication, database, tablet, or app-completeness failures.
+
+The builds are:
+
+- iOS Build 97
+- The corresponding next Android testing build
+- The existing production web experience connected to the same backend
+
+Supported experiences to verify:
+
+- Web
+- iPhone
+- iPad
+- Android phone
+- Android tablet
+
+Do not reduce this release to login and an empty screen.
+
+══════════════════════════════════════════════════════════════
+1. NONNEGOTIABLE MEMBER EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+A tester must be able to:
+
+1. Register or log in
+2. Enter the app successfully
+3. Understand the Mapping With Melanin™ purpose
+4. Open Maps
+5. Discover heritage places
+6. View historical sundown-town information
+7. Preview existing businesses
+8. See inclusive and accurate business identity language
+9. Use KinfolkAI for useful basic questions
+10. View Community
+11. Create permitted test posts or contributions
+12. View Events and other currently available core tabs
+13. Update their profile
+14. Return after closing the app without losing their session
+15. Report bugs or concerning content
+
+The experience must demonstrate:
+
+- Cultural discovery
+- Historical awareness
+- Safety context
+- Minority-owned business support
+- Community
+- Belonging
+- KinfolkAI assistance
+
+══════════════════════════════════════════════════════════════
+2. AUTHENTICATION AND APPLE APPROVAL
+══════════════════════════════════════════════════════════════
+
+Resolve and verify the confirmed production database failures.
+
+Required backend corrections include:
+
+- StripeSync promise-based singleton
+- No new PostgreSQL pool per Stripe webhook
+- Stripe pool max 2
+- Application pool max 8
+- Combined intended maximum of 10 connections per API process
+- Graceful shutdown of application and Stripe pools
+- Targeted retry for confirmed transient connection failures
+- Correct database-aware readiness checks
+- No misleading health response when the database is unavailable
+- Monitoring of active, idle, and waiting connections
+
+Required authentication tests:
+
+- Fresh Apple Sign-In registration
+- Returning Apple Sign-In login
+- Email registration
+- Email login
+- Username availability
+- Password reset
+- Logout
+- Session renewal
+- Cold launch
+- Background and resume
+- Session restoration
+- Expired-session behavior
+- Network interruption
+- Duplicate-account prevention
+
+Create a production Apple review account that:
+
+- Has verified access
+- Is not waitlisted
+- Requires no external code or MFA
+- Can access all features visible to Apple
+- Uses a new password that has never appeared in chat or documentation
+
+Provide complete App Store Connect review instructions.
+
+Test the actual iOS release candidate on:
+
+- iPhone
+- iPad Air 11-inch class device or simulator
+
+No Build 97 submission until Apple’s exact reviewer journey passes.
+
+══════════════════════════════════════════════════════════════
+3. MAPS — REQUIRED IN THIS RELEASE
+══════════════════════════════════════════════════════════════
+
+Maps are required. They are not deferred.
+
+Testers must be able to open the Map and receive meaningful results.
+
+Required map experience:
+
+A. BUSINESS DISCOVERY
+
+- Existing businesses displayed
+- Business-category tabs work
+- Categories can scroll horizontally
+- Results can scroll vertically
+- Search works
+- Result counts are correct
+- Selecting a result shows a brief tile
+- Selecting a marker highlights the corresponding result
+- Business name
+- Business type/category
+- Short description
+- Location
+- Ownership/community designations when supported
+- Vibes and experience tags when already built
+- Website or external link where currently supported
+- Missing optional fields do not crash the screen
+
+B. HERITAGE PLACES
+
+- Heritage category available and visible
+- Heritage places load
+- Heritage-category tabs work
+- Search works
+- Results and markers synchronize
+- Each tile includes:
+  - Name
+  - Location
+  - Brief historical or cultural description
+  - Category
+  - Available source information
+  - Website/link where already supported
+- Freedom Trail category included where current data supports it
+- Empty states are meaningful
+- Heritage content must feel intentional, not like placeholder data
+
+C. HISTORICAL SUNDOWN TOWNS
+
+Include a user-selectable Map layer named:
+
+“HISTORICAL SUNDOWN TOWNS”
+
+This layer must clearly distinguish historical context from current
+conditions.
+
+Minimum release experience:
+
+- State-based browsing
+- Search by place
+- Map marker
+- Place name
+- State
+- Historical evidence/status
+- Brief sourced description
+- Source attribution
+- Clear disclaimer
+- “Learn More” path or source link where available
+
+Potential historical statuses:
+
+- Historically confirmed
+- Probable or strongly documented
+- Possible or still being researched
+- Disputed or incomplete information
+
+Required disclaimer concept:
+
+“This location appears in historical research concerning sundown towns—
+communities that excluded Black people or other racial, ethnic, or
+religious groups through law, intimidation, custom, or violence. This
+historical designation is not, by itself, a statement about every current
+resident or a definitive assessment of present-day conditions.”
+
+Do not:
+
+- Call every historical location currently dangerous
+- Display an unsupported current safety score
+- Present one report as a community-wide conclusion
+- Combine historical records and current reports into one number
+- Use demographics as a proxy for danger
+- Make route-avoidance decisions automatically
+
+If recent MWM reporting volume is not sufficient for responsible trends,
+show the historical layer now and clearly label current information as
+insufficient.
+
+D. MAP PERFORMANCE
+
+The Map must not load an unsafe number of markers simultaneously.
+
+Use as appropriate:
+
+- Marker clustering
+- Viewport/bounding-box loading
+- State-based lazy loading
+- Result limits
+- Progressive loading
+- Cached historical records
+- Layer isolation
+- Safe failure states
+
+Test rapid switching among:
+
+- Businesses
+- Heritage
+- Historical Sundown Towns
+
+One failed layer must not crash the entire Map.
+
+══════════════════════════════════════════════════════════════
+4. BUSINESS LANGUAGE — DIASPORA AND MULTIPLE COMMUNITIES
+══════════════════════════════════════════════════════════════
+
+Remove universal or inaccurate use of “Black-owned” where the platform
+does not have a corresponding business designation or member preference.
+
+Mapping With Melanin™ may center its founding purpose and Black cultural
+experience while also accurately representing the broader diaspora and
+other minority communities.
+
+Audit and correct member-facing language for:
+
+- Business cards
+- Map tiles
+- Search results
+- Detail pages
+- Ownership badges
+- KinfolkAI prompts
+- SEO descriptions
+- Empty states
+- Filters
+- Category labels
+- Business introductions
+
+Use the approved structured identity model where available:
+
+LAYER 1 — OBJECTIVE OWNERSHIP OR DESIGNATION
+
+Examples, only where claimed and appropriately represented:
+
+- Black-owned
+- Minority-owned
+- Women-owned
+- Hispanic or Latino-owned
+- Indigenous-owned
+- Asian American or Pacific Islander-owned
+- Middle Eastern or North African-owned, subject to approved taxonomy
+- LGBTQ+-owned
+- Veteran-owned
+- Disability-owned
+- Immigrant-owned
+- Diaspora-owned or community-serving where approved
+
+LAYER 2 — COMMUNITY AND CULTURAL MEANING
+
+Examples:
+
+- Afro-Caribbean
+- African diaspora
+- HBCU-connected
+- Community institution
+- Family legacy
+- Culturally affirming
+- Community-serving
+
+LAYER 3 — EXPERIENCE OR VIBE
+
+Examples:
+
+- Family-friendly
+- Date night
+- Brunch
+- Luxury
+- Budget-friendly
+- Local favorite
+- Hidden Gem
+- Quiet atmosphere
+- Nightlife
+- Accessible
+- Professional services
+
+Do not fabricate designations.
+
+If identity data is unavailable, use accurate neutral language rather
+than automatically labeling the business Black-owned.
+
+Existing business records should be reviewed so testers see meaningful,
+diverse examples rather than repetitive placeholder descriptions.
+
+══════════════════════════════════════════════════════════════
+5. KINFOLKAI — BASIC USEFUL TESTER EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+KinfolkAI must remain in the builds and provide useful basic chatbot
+functionality now.
+
+This is not authorization for the full future-state Community Operating
+System.
+
+Minimum required capability:
+
+- Open KinfolkAI
+- Ask a general question
+- Receive a coherent answer
+- Ask a follow-up
+- Maintain current conversation context
+- Answer basic planning and informational questions
+- Provide basic travel and local discovery support
+- Recommend businesses or heritage places when relevant and supported by
+  platform data
+- Respect saved user preferences that are already implemented
+- Respect current tone/voice preferences where already implemented
+- Load conversation history where currently supported
+- Handle limits transparently
+- Handle provider timeout or failure without crashing
+
+Examples KinfolkAI should handle:
+
+- “What should I do in Philadelphia this weekend?”
+- “Help me find a family-friendly restaurant.”
+- “What heritage places should I visit?”
+- “Are there historical sundown towns near my route?”
+- “Help me plan a quiet day with museums and parks.”
+- “How much do televisions usually cost?”
+- “What should I pack for a trip?”
+- “What is the weather where I am going?”
+
+WEATHER REQUIREMENT:
+
+If a current approved weather service is already connected, use it and
+identify the location and timing of the information.
+
+If no live weather source is connected, KinfolkAI must not invent current
+weather. It should clearly explain that live weather is unavailable and
+offer planning guidance based on user-provided conditions or direct the
+member to an appropriate live source.
+
+KinfolkAI may intuitively promote minority-owned or culturally relevant
+businesses when:
+
+- The recommendation genuinely applies
+- Platform data supports the business
+- The member’s preferences support it
+- The result is clearly explained
+- Organic and sponsored placement remain distinguishable
+
+KinfolkAI must not:
+
+- Invent business information
+- Claim current facts without a source
+- Overpromise safety
+- Use stereotypes
+- Force promotion into unrelated answers
+- Fail silently
+- Expose raw provider or server errors
+
+Test KinfolkAI on:
+
+- Web
+- iPhone
+- iPad
+- Android phone
+- Android tablet
+
+Verify keyboard, scrolling, response loading, follow-ups, timeout handling,
+and background/resume behavior.
+
+══════════════════════════════════════════════════════════════
+6. COMMUNITY AND TEST CONTENT
+══════════════════════════════════════════════════════════════
+
+Testers need something to do and discuss.
+
+Retain and verify the currently visible Community experience.
+
+Testers should be able to:
+
+- View the Community Feed
+- Create permitted test posts
+- Share a local recommendation
+- Share an event where currently enabled
+- Discuss a heritage place
+- Recommend a business
+- Report content
+- View Community Guidelines
+- See a clear empty state where a section has limited content
+
+Provide optional test prompts such as:
+
+- “Share one place in your community everyone should know.”
+- “Which local business makes you feel welcome?”
+- “What heritage place should someone visit first?”
+- “What do you wish you knew before moving to your city?”
+- “Share a local event happening this week.”
+- “What safety or historical context should a visitor understand?”
+
+Confirm:
+
+- Admin moderation works
+- Test posts can be removed later
+- Testers are told not to post sensitive personal information
+- Anonymous safety or employer reporting remains protected
+- Report and moderation controls remain available
+
+══════════════════════════════════════════════════════════════
+7. CURRENT CORE FEATURES TO RETAIN AND TEST
+══════════════════════════════════════════════════════════════
+
+Do not remove visible features merely to simplify review.
+
+Test every currently visible tab and action, including:
+
+- Discover
+- Map
+- Businesses
+- Heritage
+- Historical Sundown Towns
+- Community
+- Events
+- Resources where visible
+- KinfolkAI
+- Profile
+- Saved places
+- Membership
+- Settings
+- Privacy Policy
+- Terms
+- Community Standards
+- Account deletion
+- Restore Purchases
+- Logout
+
+Any incomplete or nonfunctional feature currently visible must be:
+
+A. Completed enough to work safely
+B. Clearly labeled as limited/test state
+C. Hidden only with founder approval
+
+Do not leave dead buttons, placeholders, blank screens, or features that
+promise functionality but fail.
+
+══════════════════════════════════════════════════════════════
+8. CROSS-PLATFORM RELEASE MATRIX
+══════════════════════════════════════════════════════════════
+
+Test the actual release candidates on:
+
+A. PRODUCTION WEB
+B. IPHONE
+C. IPAD AIR 11-INCH CLASS DEVICE
+D. ANDROID PHONE
+E. ANDROID TABLET
+
+For every platform verify:
+
+- Launch
+- Registration
+- Login
+- Session restoration
+- Discover
+- Business preview
+- Maps
+- Heritage
+- Historical Sundown Towns
+- Map layer switching
+- Community
+- Test post
+- Events
+- KinfolkAI
+- Profile
+- Saved items
+- Settings
+- Policy links
+- Logout/login
+- Slow network
+- Offline/reconnect
+- Missing record
+- Missing image
+- Denied location permission
+- Keyboard behavior
+- Scroll behavior
+- No clipped content
+- No inaccessible controls
+- No crash
+
+Provide device, OS, build number, screenshots, and pass/fail evidence.
+
+══════════════════════════════════════════════════════════════
+9. STRIPE AND DATABASE STRESS TEST
+══════════════════════════════════════════════════════════════
+
+Required:
+
+1. Trigger 5–10 safe Stripe test webhook events that execute the
+   stripe-replit-sync path.
+
+2. Confirm only the singleton Stripe pool exists.
+
+3. Measure database connections:
+   - Before events
+   - During events
+   - Immediately after
+   - Ten minutes after
+
+4. Confirm there is no monotonic connection growth.
+
+5. Confirm:
+   - /api/healthz → 200
+   - /api/readyz → status: ok
+   - /api/readyz/history shows no unexplained degradation
+   - /api/businesses?limit=3 → 200
+
+6. Run the mixed 30-user capacity test against production across the
+   currently visible routes.
+
+Include:
+
+- Login
+- Registration
+- Businesses
+- Map API
+- Heritage API
+- Historical Sundown Town API
+- Community reads
+- Events
+- Profile reads
+- Saved-place reads
+- KinfolkAI, safely cost-limited
+
+Measure:
+
+- Success rate
+- HTTP 500s
+- HTTP 429s
+- Timeouts
+- p95 response time
+- Active/idle/waiting DB connections
+- API CPU and memory
+- PostgreSQL usage
+- Restarts
+- Crashes
+
+Required result:
+
+- No pool exhaustion
+- No recurring connection growth
+- No unexplained HTTP 500
+- No crash
+- No service restart caused by ordinary tester traffic
+
+══════════════════════════════════════════════════════════════
+10. TESTER DISTRIBUTION TODAY
+══════════════════════════════════════════════════════════════
+
+Prepare both testing releases:
+
+IOS
+
+- Build 97 uploaded
+- Apple App Review information complete
+- Review account included
+- iPhone and iPad tested
+- Existing TestFlight groups assigned when allowed
+- State clearly whether external tester access requires Beta App Review
+- Do not claim availability until Apple processing/review permits it
+
+ANDROID
+
+- New Android version code
+- Correct production API
+- Android phone tested
+- Android tablet tested
+- Uploaded to the correct Google Play testing track
+- Tester list/Google Group confirmed
+- Opt-in link confirmed
+- Release status confirmed
+- Tester update instructions prepared
+
+WEB
+
+- Production URL tested
+- Testers may use the web experience immediately if it passes the same
+  stability and content gates
+- Confirm which features are equivalent to mobile and which differ
+
+The objective is to get as many of the approximately 30 testers actively
+testing today as platform processing allows.
+
+Do not falsely claim that Apple or Google processing is under Replit’s
+control.
+
+If iOS is still processing, begin Android and web testing immediately
+after their gates pass.
+
+══════════════════════════════════════════════════════════════
+11. TESTER EXPERIENCE AND PROMOTION READINESS
+══════════════════════════════════════════════════════════════
+
+Prepare a concise tester guide covering:
+
+- What Mapping With Melanin™ is
+- Installed build/version
+- How to log in
+- Which features to test
+- How to use Maps
+- How to view Heritage
+- How to enable Historical Sundown Towns
+- How to preview businesses
+- How to use KinfolkAI
+- How to create approved Community test content
+- How to report bugs
+- What details to include:
+  - Device
+  - OS
+  - Build
+  - Screen
+  - Exact action
+  - Screenshot
+- Reminder not to share private credentials or sensitive personal data
+
+Give testers meaningful prompts so they can create genuine reactions and
+tour-related discussion.
+
+Do not script positive feedback.
+
+Ask for honest feedback about:
+
+- What felt different
+- What made them feel seen
+- What was confusing
+- Which heritage or safety information mattered
+- Whether business discovery felt culturally inclusive
+- Whether KinfolkAI was helpful
+- What they would tell someone else about the app
+
+══════════════════════════════════════════════════════════════
+12. RELEASE GATES
+══════════════════════════════════════════════════════════════
+
+Do not distribute or submit until:
+
+GATE 1 — Confirmed DB leak fix deployed
+GATE 2 — Stripe webhook test passes
+GATE 3 — Connections remain bounded
+GATE 4 — Production readiness is healthy
+GATE 5 — Authentication works
+GATE 6 — Review account works
+GATE 7 — Current Maps work
+GATE 8 — Heritage works
+GATE 9 — Historical Sundown Town layer works
+GATE 10 — Existing businesses display correctly
+GATE 11 — Diaspora/inclusive business language passes review
+GATE 12 — Basic KinfolkAI works
+GATE 13 — Community test contribution works
+GATE 14 — Web passes
+GATE 15 — iPhone passes
+GATE 16 — iPad passes
+GATE 17 — Android phone passes
+GATE 18 — Android tablet passes
+GATE 19 — 30-user production test passes
+GATE 20 — No P0/P1 issue remains open
+GATE 21 — Tester guide and App Review notes are complete
+GATE 22 — Automated monitoring is active
+
+No successful compile substitutes for these gates.
+
+══════════════════════════════════════════════════════════════
+13. REQUIRED BUILD RECAP
+══════════════════════════════════════════════════════════════
+
+Return one consolidated report:
+
+1. Exact iOS Build 97 scope
+2. Exact Android build scope
+3. Exact web experience
+4. Database correction
+5. Stripe pool correction
+6. Authentication results
+7. Apple review-account readiness
+8. Existing Maps results
+9. Heritage results
+10. Historical Sundown Town results
+11. Business preview results
+12. Business identity/language results
+13. KinfolkAI basic-chat results
+14. User-preference and tone results
+15. Community results
+16. Events and current visible-tab results
+17. Web test results
+18. iPhone test results
+19. iPad test results
+20. Android-phone results
+21. Android-tablet results
+22. Stripe webhook stress results
+23. Production connection results
+24. 30-user capacity results
+25. Apple submission status
+26. iOS tester status
+27. Android tester status
+28. Web tester status
+29. Open P0/P1 defects
+30. Open P2/P3 defects
+31. Items intentionally deferred
+32. Active-monitoring status
+33. GO/NO-GO by platform
+34. Confirmation that the release provides a meaningful tester experience
+
+Do not remove Maps.
+Do not remove KinfolkAI.
+Do not submit an empty or login-only experience.
+Do not use universal Black-owned language where the data does not support it.
+Do not invent current safety conclusions.
+Do not add unrelated future-state systems.
+Do not expose credentials or secrets.

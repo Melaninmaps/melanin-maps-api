@@ -1,0 +1,74 @@
+This is a sound, narrowly targeted fix for the exact flicker you observed.
+
+The crucial correction is:
+
+```ts
+setIsLoading(true);
+void fetchUser();
+```
+
+That closes the brief state where the app had a verified stored token but the guard saw `user:null` and `isLoading:false`, incorrectly sending you back to Login.
+
+## One cleanup before VC68
+
+The production fix is only one line, but Replit also added Vitest infrastructure:
+
+* `package.json`
+* `vitest.config.ts`
+* `__tests__/auth-nav-guard.test.ts`
+
+The tests are useful, but ask Replit to confirm:
+
+* the package lock was updated consistently;
+* Vitest remains a development-only dependency;
+* the test files/config are excluded from the production app bundle;
+* the production EAS build does not execute or package test code.
+
+Do not remove the tests merely to reduce the file count; just verify they cannot affect the binary.
+
+## VC68 build authorization
+
+Since you successfully logged in against production and the flicker has now been corrected, send Replit:
+
+> **VC68 BUILD AUTHORIZATION GRANTED**
+>
+> The targeted authentication-navigation flicker correction is approved.
+>
+> Before building, confirm:
+>
+> 1. `vitest` is a development-only dependency.
+> 2. The test configuration and test files are excluded from the production mobile bundle.
+> 3. The package lock is synchronized with `package.json`.
+> 4. No additional authentication, session, navigation, backend, or feature changes are included.
+>
+> Then:
+>
+> 1. Update Android `versionCode` from **67 to 68**.
+> 2. Retain the approved VC67 authentication false-failure correction.
+> 3. Include the new `setIsLoading(true)` authentication-flicker correction.
+> 4. Include the approved VC68 map changes:
+>
+>    * eight-second location timeout and default-region fallback;
+>    * location timeout protection in the related hooks;
+>    * cultural markers deferred until `mapReady`;
+>    * `pointsOfInterestFilter` limited to iOS;
+>    * `tracksViewChanges={false}` on business markers;
+>    * category-specific cultural marker icons;
+>    * “View Site” cultural preview action.
+> 5. Do not add unrelated features, HBCU expansion, redesign work, or backlog items.
+> 6. Build Android using the EAS **production** profile.
+> 7. Do not submit automatically to Google Play.
+>
+> Return:
+>
+> * EAS build ID;
+> * source commit;
+> * version code;
+> * build status;
+> * artifact link;
+> * exact files included;
+> * confirmation that no unapproved changes entered the build.
+>
+> Stop after the `.aab` is successfully built.
+
+Once VC68 is installed, the first test should be: login with no flash, map spinner clears within eight seconds, pins remain visible, and the app stays open on the map for at least five minutes.

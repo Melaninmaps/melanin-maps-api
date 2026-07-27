@@ -1,0 +1,328 @@
+05.57 Required Database Structures
+The production Discovery Engine™ requires, at minimum:
+discovery_requests
+discovery_query_components
+discovery_candidate_sets
+discovery_candidates
+discovery_eligibility_records
+discovery_score_records
+discovery_dimension_scores
+discovery_confidence_records
+discovery_rank_records
+discovery_adjustment_records
+discovery_filter_records
+discovery_rotation_records
+discovery_saturation_records
+hidden_gem_candidate_records
+community_need_records
+discovery_sponsorship_records
+discovery_explanation_records
+discovery_conflict_records
+discovery_manipulation_records
+discovery_audit_records
+These may be incorporated into or linked with the BIF architecture.
+05.58 Audit Record Requirements
+Every consequential discovery decision must record:
+assessment ID;
+request ID;
+user or system actor;
+timestamp;
+engine version;
+discovery mode;
+decision mode;
+normalized query;
+hard filters;
+soft preferences;
+context profile;
+candidate sources;
+candidates generated;
+candidates excluded;
+exclusion reasons;
+eligibility state;
+evidence quality;
+dimension scores;
+confidence;
+raw Discovery Score;
+re-ranking adjustments;
+saturation treatment;
+diversity treatment;
+exploration treatment;
+Hidden Gem treatment;
+sponsorship status;
+search eligibility;
+recommendation candidacy;
+promotion candidacy;
+recognition candidacy;
+public explanation code;
+human-review status;
+BIF decision reference;
+final displayed rank.
+05.59 Human Review Requirements
+Human review is required when:
+a candidate is blocked by disputed ownership;
+severe safety or trust evidence conflicts with high relevance;
+promotion eligibility is contested;
+Hidden Gem status could materially affect reputation or visibility;
+a rank changes by more than an approved threshold due to suspected manipulation;
+duplicate consolidation may erase meaningful history;
+a sponsored result repeatedly ranks above stronger organic results;
+a low-confidence candidate would receive prominent placement;
+a community alleges systemic suppression;
+a business alleges discriminatory ranking;
+a resource or opportunity may be fraudulent;
+the Engine proposes a new ranking adjustment;
+a protected or sensitive context may have influenced personalization;
+a new candidate source is introduced;
+a Governance hold exists.
+05.60 Constitutional Rules
+The Discovery Engine™ must:
+preserve user intent;
+separate search, recommendation, promotion, and recognition;
+prevent payment from creating eligibility;
+limit popularity influence;
+protect emerging and underexposed entities;
+avoid fabricating confidence;
+distinguish unknown from negative;
+preserve relevant diversity;
+prevent exact-match suppression;
+protect hard accessibility and safety requirements;
+avoid identity-based stereotyping;
+preserve community voice;
+maintain truthful ownership labels;
+permit correction and appeal;
+log meaningful ranking decisions;
+prevent hidden commercial influence;
+preserve historical and cultural records;
+support geographic equity;
+pass the Institution Test;
+pass the Generational Test.
+05.61 Institution Test Application
+Before approving a discovery rule, Mapping With Melanin™ must ask:
+Would we defend this as a fair and responsible way to determine what communities can find 25 years from now?
+A rule fails the Institution Test when it:
+makes payment equivalent to relevance;
+permanently rewards incumbency;
+hides qualified emerging entities;
+relies on stereotypes;
+cannot be audited;
+cannot be explained;
+erases community history;
+produces concentrated visibility without review;
+turns popularity into trust;
+disadvantages communities because they have less data;
+removes user choice;
+creates undisclosed favoritism.
+05.62 Generational Test Application
+The Engine must ask:
+Will future generations inherit a system that expands what they can discover, or one that quietly narrows the world to what was already visible?
+A rule fails the Generational Test when it:
+locks current market dominance into future ranking;
+makes cultural discovery dependent on commercial reach;
+suppresses future community definitions;
+cannot be corrected under new leadership;
+rewards extraction;
+forgets historical entities;
+treats low digital visibility as low value;
+becomes unsafe when scaled;
+cannot reproduce past decisions;
+lacks stewardship.
+05.63 Launch Readiness Requirements
+The Discovery Engine™ is launch-ready only when:
+all launch-state discovery modes are implemented;
+object-specific profiles are defined;
+query parsing is validated;
+hard and soft filters are separated;
+eligibility states are implemented;
+demo-data isolation is confirmed;
+candidate generation is tested;
+all nine dimensions are implemented;
+baseline weights are approved;
+context-specific weights are connected;
+confidence calculations are validated;
+search thresholds are tested;
+recommendation handoff is operational;
+promotion separation is enforced;
+sponsorship labeling is functional;
+popularity caps are enforced;
+saturation controls are tested;
+diversity re-ranking is tested;
+result rotation is logged;
+Hidden Gem candidate detection is operational;
+Community Need scoring is validated;
+opportunity expiration is implemented;
+resource availability checks are functioning;
+ownership verification integration is complete;
+anti-gaming controls are operational;
+fairness tests are complete;
+public explanations are approved;
+audit records are complete;
+human-review routing is operational;
+rollback procedures exist;
+Governance approves version 1.0;
+Decision Ledger entry is complete.
+05.64 Validation Scenarios
+Scenario 1 — Exact verified business search
+Request:
+“Find verified Black-owned bookstores in Philadelphia.”
+
+Expected:
+Exact category and ownership filters
+Trust verification required
+Philadelphia geographic scope
+Eligible exact matches rank first
+Pending-verification candidates separated
+Scenario 2 — Popular but irrelevant entity
+Request:
+“Find a quiet local café suitable for working.”
+
+Candidate:
+Highly popular nightclub serving coffee.
+
+Expected:
+Popularity does not overcome poor intent and context fit
+Candidate ranks low or is excluded
+Scenario 3 — Hidden Gem business
+Evidence:
+Low online visibility
+Strong repeat customers
+High community reciprocity
+Verified operating history
+Strong trust
+No safety concerns
+
+Expected:
+Hidden Gem candidate
+Exploration boost allowed
+No automatic award
+Scenario 4 — Paid but ineligible business
+Evidence:
+Business purchases sponsorship
+Active unresolved safety hold
+
+Expected:
+No promotion
+No ranking advantage
+Sponsorship cannot override hold
+Scenario 5 — Urgent resource need
+Request:
+“Food bank open today near me.”
+
+Expected:
+Availability and distance strongly weighted
+Current capacity prioritized
+Popularity minimized
+Expired resources excluded
+Scenario 6 — Family relocation
+Request:
+“We are considering moving to Atlanta with children.”
+
+Expected:
+Relocation and Family contexts
+Discovery combines neighborhoods, resources, institutions,
+community information, safety, and opportunity
+No single popularity ranking
+Scenario 7 — New business with limited evidence
+Evidence:
+Confirmed identity
+Few reviews
+Current hours
+Relevant category
+No negative evidence
+
+Expected:
+Search eligible
+Emerging label
+Recommendation limited by confidence
+No automatic low-quality assumption
+Scenario 8 — Repetitive results
+Evidence:
+Ten top-scoring restaurants concentrated in one neighborhood
+Several similarly qualified alternatives elsewhere
+
+Expected:
+Relevant diversity re-ranking
+No exact-match displacement
+Rotation logged
+Scenario 9 — Expired scholarship
+Evidence:
+High historical interest
+Application deadline passed
+
+Expected:
+Excluded from active opportunity results
+May remain in historical or learning context
+Scenario 10 — Accessibility requirement
+Request:
+“Only show wheelchair-accessible salons.”
+
+Expected:
+Confirmed accessibility is a hard filter
+Unknown does not satisfy requirement
+No inference about user health
+Scenario 11 — Cultural landmark search
+Request:
+“Important Black history sites in New Orleans.”
+
+Expected:
+Historical verification
+Legacy & Learning integration
+Popularity limited
+Community stewardship considered
+Scenario 12 — Search manipulation
+Evidence:
+Mass identical searches
+Coordinated saves
+Rapid visibility increase
+Same network pattern
+
+Expected:
+Signals discounted
+Rank frozen if necessary
+Human review
+No immediate punitive removal from one signal
+05.65 Failure Conditions
+If the Discovery Engine™ is unavailable:
+exact named-entity retrieval may continue where safe;
+broad personalized ranking must stop;
+promotion must stop;
+Hidden Gem surfacing must stop;
+recommendation boosts must stop;
+baseline category search may use deterministic fallback ordering;
+safety and governance filters remain active;
+the failure must be logged;
+public language must not imply personalized recommendation.
+Fallback output:
+{
+  "discovery_engine_status": "UNAVAILABLE",
+  "search_mode": "BASIC_EXACT_OR_CATEGORY",
+  "personalized_ranking_allowed": false,
+  "recommendation_candidate": false,
+  "promotion_candidate": false,
+  "hidden_gem_detection_allowed": false,
+  "human_review_required": true
+}
+05.66 Versioning and Change Control
+Every change requires:
+version number;
+documented purpose;
+affected discovery modes;
+affected object types;
+affected candidate sources;
+affected eligibility rules;
+affected dimensions;
+affected weights;
+affected thresholds;
+affected re-ranking rules;
+affected promotion rules;
+affected Hidden Gem logic;
+anti-gaming review;
+fairness review;
+privacy review;
+public-explanation review;
+Institution Test result;
+Generational Test result;
+test results;
+Governance approval;
+rollback plan;
+Decision Ledger entry.
+Historical rankings must remain reproducible using the version active when the decision occurred.

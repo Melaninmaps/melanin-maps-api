@@ -1,0 +1,194 @@
+This is the priority now. **Do not submit the new builds to Apple or Google yet.** The authentication and onboarding defects need to be fixed, rebuilt, and tested first.
+
+Images would help—especially the exact password-reset error and the role-selection screen—but Replit has enough information to begin investigating immediately.
+
+Send Replit this:
+
+---
+
+## Urgent Founder Authentication Test — NO GO
+
+Founder testing uncovered multiple launch-blocking defects in the current mobile build.
+
+### 1. Phone login works, but sends a paid SMS code for every login
+
+Current behavior:
+
+* A member can create an account using their phone number.
+* Every later login requires a new SMS verification code.
+* There is no option to create or use a password.
+
+This may be intentional passwordless authentication, but it creates an SMS charge every time a member logs in and is not the experience I want.
+
+### Required product behavior
+
+Please assess and implement the safest low-cost model:
+
+* SMS code establishes and verifies the phone number during account creation.
+* The member should remain signed in on that trusted device through persistent sessions.
+* Routine reopening of the app must not trigger another SMS.
+* Provide a secure login credential for returning access, such as:
+
+  * password or app PIN; or
+  * another approved low-cost authentication method.
+* SMS should be reserved primarily for:
+
+  * initial phone verification;
+  * account recovery;
+  * suspicious-device verification;
+  * deliberate sign-in on a new device.
+
+Do not weaken security merely to reduce SMS costs. Present the proposed authentication model before implementation if it changes the account architecture.
+
+### 2. Incorrect onboarding role choices
+
+When prompted to join, the only options shown are:
+
+* Business Owner
+* Content Creator
+* Community Organizer
+
+This excludes the primary ordinary community member/user.
+
+The choices must reflect the approved member structure and terminology. At minimum, a person must be able to join simply as a **Community Member** or equivalent standard user.
+
+Also:
+
+* Replace “Content Creator” with the approved term if the current brand standard is **Cultural Ambassador**.
+* Confirm whether “Community Organizer” is intended as an account type or merely a profile attribute.
+* Do not force ordinary users to identify as a business owner, creator, or organizer.
+
+### 3. Forgot-password completion is broken
+
+Observed behavior:
+
+1. The system recognizes that the email already exists.
+2. “Forgot Password” generates and sends a code successfully.
+3. The code is accepted or allows progression to the new-password step.
+4. Submitting the new password produces:
+   **“Invalid email or password.”**
+5. The account still cannot be accessed.
+
+This is a launch-blocking defect because a user who forgets their password can be permanently locked out.
+
+### Required investigation
+
+Trace the full mobile flow end to end:
+
+```text
+Forgot Password screen
+→ reset request API
+→ email normalization
+→ code storage/hash/expiry
+→ code verification
+→ password update
+→ database write
+→ reset-token invalidation
+→ login with new password
+```
+
+Identify:
+
+* the exact request payload sent by the mobile app;
+* the exact endpoint used at each step;
+* whether the email is preserved correctly between screens;
+* whether the reset code is being confused with a login password;
+* whether the new password is actually written to Railway Postgres;
+* why the API returns “Invalid email or password” during password reset;
+* whether the mobile app is calling the login endpoint instead of the reset-completion endpoint;
+* whether the server returns one error and the app displays a misleading message.
+
+Add internal diagnostic codes and structured logs without exposing passwords or reset codes.
+
+### 4. Existing email is recognized but account cannot be found consistently
+
+The app indicates that the email already exists, but later behaves as though it cannot locate or authenticate the account.
+
+Confirm that all of these use the same:
+
+* Railway production database;
+* normalized email value;
+* user record;
+* password-hash field;
+* authentication method;
+* production API domain.
+
+Check whether accounts created by phone and accounts created by email are being linked, duplicated, or treated as separate identities.
+
+### Mandatory tests before another store submission
+
+Run automated API tests and mobile end-to-end tests for:
+
+#### Email
+
+* New email registration
+* Logout
+* Returning email login
+* Forgot-password request
+* Correct reset code
+* Incorrect reset code
+* Expired reset code
+* Successful password update
+* Old password rejected
+* New password accepted
+* Session persists after closing and reopening
+
+#### Phone
+
+* New phone registration
+* Returning user on same trusted device without unnecessary SMS
+* New-device verification
+* Invalid OTP
+* Expired OTP
+* Resend limits
+* Recovery flow
+* Session persistence
+
+#### Onboarding
+
+* Standard Community Member can join
+* Business Owner can join
+* Cultural Ambassador can join
+* No user is forced into an inaccurate role
+* Selection persists correctly in Railway Postgres
+
+### Release status
+
+Mark the current build:
+
+> **NO GO — CORRECTION REQUIRED**
+
+Do not trigger another EAS build until:
+
+* the root causes are identified;
+* fixes are implemented;
+* local export succeeds;
+* automated tests pass;
+* the full password-reset cycle passes against Railway production;
+* the onboarding role choices are corrected;
+* the phone-login cost/session strategy is approved.
+
+Return a report containing:
+
+1. Root cause for each defect
+2. Exact files and endpoints changed
+3. Database changes, if any
+4. Tests added
+5. Test results
+6. Whether a new iOS and Android build is required
+7. Final `READY FOR FOUNDER RETEST` or `NO GO`
+
+---
+
+## What I need from you
+
+Please take screenshots of:
+
+1. The role-selection screen showing only the three choices.
+2. The final password-reset screen before you submit.
+3. The exact error displayed after submission.
+4. Any screen saying the email exists or the account cannot be found.
+
+Those images will help us confirm that the repaired build shows the right interface and error language, but Replit should begin the code investigation now.
+
+One distinction: requiring an SMS code for every phone login is not necessarily a coding bug—it is a passwordless-login design. However, it is **not the model you want**, so Replit needs to redesign it around persistent sessions and secure recovery while avoiding repeated SMS costs.

@@ -1,0 +1,61 @@
+The pre-build report is strong enough to move forward with **internal founder-test builds**, with one decision you should make first:
+
+## KinfolkAI weather is not automatically an accepted limitation
+
+Earlier, you were clear that KinfolkAI should answer basic weather questions using granted location. Replit has now classified weather as an accepted beta limitation, but **you have not approved that downgrade**.
+
+Choose one:
+
+* **Build now:** Weather remains unavailable for Community Beta 3, and KinfolkAI must honestly say it cannot access live weather yet.
+* **Hold the build:** Replit adds real-time, location-aware weather before creating Builds 90/64.
+
+Given the authentication fixes need testing urgently, my recommendation is to **build now**, clearly document weather as a known limitation, and make weather integration a required pre-public-launch item. It should not hallucinate a forecast.
+
+## The remaining preflight results
+
+These are acceptable for an internal founder build:
+
+* Source commit recorded: `83e55ee503e407ac193fa676b2568da8244ead86`
+* iOS next build: **90**
+* Android next versionCode: **64**
+* Expo Doctor: **19/20**, with patch-level updates deferred
+* iOS Metro starts successfully
+* Android local export was stopped by Replit memory limits, not a proven code defect
+* EAS cloud will perform the authoritative platform builds
+
+However, Replit should not describe the Expo export as fully passed. The release record should accurately state:
+
+> iOS local bundle initialization passed. Android local export was inconclusive due to Replit environment memory limits. Both platforms require successful EAS cloud builds before founder testing.
+
+## Message to send Replit
+
+> Pre-build report accepted for internal founder-test builds.
+>
+> KinfolkAI weather is an **accepted Community Beta 3 limitation only**, not a completed capability and not automatically accepted for public launch. It must give a truthful limitation response and must not generate an invented forecast.
+>
+> “Take me there” remains a future capability.
+>
+> Update the preflight record to state that Android local export was inconclusive due to environment memory limits—not passed. The EAS Android build must complete successfully before founder testing.
+>
+> Confirm the working tree is clean and commit `83e55ee503e407ac193fa676b2568da8244ead86` contains every listed mobile fix. Then trigger:
+>
+> ```bash
+> cd artifacts/mobile
+> eas build --platform ios --profile production --no-wait
+> eas build --platform android --profile production --no-wait
+> ```
+>
+> Return:
+>
+> * iOS EAS build ID and resolved build number;
+> * Android EAS build ID and resolved versionCode;
+> * source commit attached to each build;
+> * build completion status;
+> * App Store Connect upload status;
+> * Google Play internal-track upload status.
+>
+> Upload only to internal testing channels. Do not submit for public review or distribute to wider testers until founder retesting passes.
+
+Once both EAS builds finish successfully, you can begin the Community Beta 3 checklist. The release status is now:
+
+> **READY TO BUILD FOR FOUNDER RETEST — NOT READY FOR STORE REVIEW**.

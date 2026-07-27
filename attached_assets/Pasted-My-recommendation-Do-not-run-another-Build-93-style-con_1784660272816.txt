@@ -1,0 +1,36 @@
+My recommendation
+Do not run another Build 93-style confirmation. Instead:
+Add the correct production value for EXPO_PUBLIC_API_URL.
+Confirm whether EXPO_PUBLIC_GOOGLE_MAPS_KEY should use the existing authorized client-side Maps key—not the private server key.
+Store both as Expo/EAS production environment variables, so they are available consistently to Build and Update jobs.
+Explicitly set the production build profile to use the production environment.
+Re-run a read-only resolved-config and variable-name audit.
+Then run Build 94 once.
+Expo recommends explicitly selecting the EAS environment for build profiles, and its production environment variables can then be used across builds and updates.
+Send Replit this:
+PRE-BUILD 94 ENVIRONMENT HARDENING — DO NOT BUILD YET
+The OTA configuration passed, but before creating the new OTA-capable production baseline, correct the two verified production environment gaps.
+Determine the exact correct production value for EXPO_PUBLIC_API_URL from the currently working production API configuration. Do not guess and do not change API routing.
+Determine which existing Google Maps key is appropriate for EXPO_PUBLIC_GOOGLE_MAPS_KEY.
+Do not expose the private server-side Directions API key.
+Confirm the selected key is intended for client/mobile use and has the correct iOS application restrictions and API restrictions.
+Add these variable names to the Expo/EAS production environment:
+EXPO_PUBLIC_API_URL
+EXPO_PUBLIC_GOOGLE_MAPS_KEY
+Ensure the production profile in eas.json explicitly contains:
+"environment": "production"
+Preserve:
+"channel": "production"
+iOS build number 94
+Android version code 66
+all existing RevenueCat and production variables
+Confirm no secret server credentials are stored in any EXPO_PUBLIC_* variable. These values are visible in the app bundle.
+Return a read-only report showing:
+variable names only, never values
+the relevant production-profile configuration
+exact files changed
+confirmation that family-plan requests resolve to the production API
+confirmation that the geo-safety feature receives its intended mobile Maps key
+Do not begin Build 94 until the report is reviewed.
+One additional point: Build 94’s runtimeVersion uses the app-version policy. That means changing only the iOS build number from 93 to 94 does not create a new OTA runtime if the public app version remains unchanged. That is normal and recommended, but it also means an update published to the production channel could potentially match any older build with the same app version and runtime that was already subscribed to that channel. Build 93 has no channel, so it should not receive it.
+After these variables are corrected, I would trust one Build 94, install it through TestFlight, test the affected features, and then perform one harmless OTA proof before relying on OTA for meaningful fixes.

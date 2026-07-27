@@ -1,0 +1,52 @@
+This is a much stronger and more disciplined fix than the earlier attempts. I would be comfortable authorizing **one internal diagnostic APK build**, but only after two final confirmations.
+
+First, the changes must be committed. Replit says the latest edits are “not yet committed,” so ask them to create a checkpoint and give you the new commit ID before building. The build should point to that exact commit, not only the earlier `9c2a145`.
+
+Second, confirm the `preview` profile is truly internal distribution and produces an APK rather than an AAB.
+
+Send this:
+
+> Please checkpoint and commit the latest authentication changes before building. Provide the final commit ID and confirm that only these files changed:
+>
+> * `artifacts/mobile/lib/auth.tsx`
+> * `artifacts/mobile/app/login.tsx`
+>
+> Also confirm:
+>
+> 1. The EAS `preview` profile uses internal distribution.
+> 2. It produces an installable APK.
+> 3. It will not be submitted to Google Play or replace any closed-testing release.
+> 4. No automatic second build will be started if this one fails.
+> 5. The temporary diagnostic messages and logs contain no email addresses, passwords, tokens, reset codes, or secret values.
+>
+> Once confirmed, proceed with one Android preview/internal build from the new commit.
+
+### My assessment of the logic
+
+The new sequence is sound:
+
+* Authentication succeeds.
+* Token storage is tested immediately.
+* Token read-back confirms storage actually worked.
+* The user profile must load before navigation.
+* A temporary server/profile failure no longer causes an unexplained redirect loop.
+* Stored sessions are retried when the login screen mounts.
+* Logout removes the same key used everywhere else.
+
+That directly addresses the error you saw:
+
+> “Signed in but could not save session.”
+
+One point to watch during testing: the amber **“Connecting…”** state should not remain indefinitely. It should either retry successfully or offer a clear way to log out/remove the stored session if the token is invalid.
+
+After installing the APK, test only this sequence first:
+
+1. Log in.
+2. Confirm you reach the app.
+3. Close the app completely.
+4. Reopen it.
+5. Confirm you remain signed in.
+6. Log out.
+7. Confirm reopening returns you to login.
+
+If those seven steps pass, the core authentication loop is finally stable.

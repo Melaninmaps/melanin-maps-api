@@ -1,0 +1,146 @@
+07.15 Dimension Nine — Reach & Accessibility
+Reach & Accessibility measures whether culturally useful influence can reach relevant people in an understandable and accessible way.
+It may include:
+audience reach;
+geographic reach;
+platform reach;
+language accessibility;
+captioning;
+transcript availability;
+readability;
+disability access;
+cross-platform availability;
+local reach;
+diaspora reach;
+audience relevance.
+07.15.1 Reach Formula
+Reach & Accessibility Score =
+  Relevant Audience Reach
++ Access Quality
++ Geographic or Community Relevance
++ Communication Accessibility
++ Distribution Reliability
+- Artificial Reach Penalty
+07.15.2 Follower-count limitation
+Follower count may contribute no more than:
+10% of the Reach & Accessibility dimension
+Because Reach & Accessibility is weighted at 5% of the baseline Cultural Influence Score, follower count ordinarily contributes no more than:
+0.5% of the total Cultural Influence Score
+An approved context-specific profile may increase the Reach dimension, but direct follower count may never contribute more than 10% of the total Cultural Influence Score under any profile.
+07.16 Standard Cultural Influence Score Formula
+Cultural Influence Score =
+  (Cultural Grounding × 0.15)
++ (Authenticity & Integrity × 0.15)
++ (Community Connection × 0.14)
++ (Resonance & Meaning × 0.10)
++ (Action & Conversion × 0.12)
++ (Reciprocity & Shared Benefit × 0.13)
++ (Stewardship & Attribution × 0.09)
++ (Continuity & Reliability × 0.07)
++ (Reach & Accessibility × 0.05)
+Example:
+Cultural Grounding:              91 × 0.15 = 13.65
+Authenticity & Integrity:        84 × 0.15 = 12.60
+Community Connection:            88 × 0.14 = 12.32
+Resonance & Meaning:             82 × 0.10 =  8.20
+Action & Conversion:             76 × 0.12 =  9.12
+Reciprocity & Shared Benefit:    89 × 0.13 = 11.57
+Stewardship & Attribution:       93 × 0.09 =  8.37
+Continuity & Reliability:        79 × 0.07 =  5.53
+Reach & Accessibility:           58 × 0.05 =  2.90
+
+Raw Cultural Influence Score = 84.26
+Rounded Cultural Influence Score = 84
+The Cultural Influence Score is not the final partnership, recommendation, promotion, or recognition decision.
+It is an input to the Belonging Intelligence Framework™.
+07.17 Cultural Influence Confidence
+The Engine returns both:
+Cultural Influence Score;
+Cultural Influence Confidence.
+07.17.1 Formula
+Cultural Influence Confidence =
+  Evidence Quality
+× Evidence Volume
+× Outcome Attribution
+× Source Independence
+× Time Coverage
+× Community Representation
+× Disclosure Confidence
+Normalized to 0–100.
+07.17.2 Confidence labels
+Score	Label
+90–100	Verified
+80–89	High
+65–79	Moderate
+45–64	Emerging
+20–44	Low
+0–19	Unknown
+07.18 Evidence Categories
+The Engine may accept:
+Category A — Cultural Work
+articles;
+videos;
+documentaries;
+podcasts;
+photography;
+oral histories;
+educational materials;
+tours;
+performances;
+exhibitions;
+archives;
+cultural commentary.
+Category B — Community Relationship
+repeat local participation;
+business relationships;
+institutional collaboration;
+mentorship;
+community referrals;
+event involvement;
+volunteer work;
+Kinfolk Circle participation;
+community feedback;
+partnership continuity.
+Category C — Demonstrated Outcomes
+business traffic;
+bookings;
+event attendance;
+applications;
+donations;
+mentorship formation;
+opportunity access;
+resource use;
+verified referrals;
+repeat support;
+community growth;
+preserved historical materials.
+Category D — Trust and Integrity
+sponsorship disclosures;
+correction history;
+ownership accuracy;
+authentic engagement;
+verified identity;
+complaint response;
+partnership transparency;
+anti-fraud results.
+Category E — Cultural Stewardship
+attribution;
+consent;
+archival responsibility;
+creator credit;
+community ownership;
+historical sourcing;
+preservation;
+cultural repair;
+ethical commercial use.
+Category F — Reach and Distribution
+audience reach;
+local reach;
+diaspora reach;
+shares;
+saves;
+repeat views;
+press coverage;
+accessibility;
+language availability;
+platform diversity.

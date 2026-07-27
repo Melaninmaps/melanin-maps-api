@@ -1,0 +1,201 @@
+Yes—this needs to be made explicit in both the **Alerts settings** and the app’s permission logic.
+
+The three choices mean different things:
+
+* **Never**: the app cannot use the person’s location.
+* **While Using the App**: the app can use location when the app is open, and in limited background situations if location activity is already running.
+* **Always**: the app may receive certain location events even when the app is not open, including some region, visit, or significant-location-change events. Apple recommends requesting this only when it is truly necessary and after the user understands the benefit—not automatically at first launch. ([Apple Developer][1])
+
+## What this means for Mapping With Melanin™
+
+A user can still receive **general push notifications** with location set to Never or While Using. For example:
+
+* a saved business posts an update;
+* an event time changes;
+* a group has a new message;
+* an alert was issued for a city the user manually follows.
+
+But alerts that depend on knowing the user has entered or is near a specific area may require **Always** location access, depending on how Replit implemented them.
+
+Examples:
+
+* “You are approaching an area with a recent safety alert.”
+* “A road closure was reported near your current route.”
+* “A saved place nearby has a new verified safety update.”
+
+If the app only checks location while open, **While Using** may be enough. If it must warn the user while the app is closed or terminated, **Always** may be needed for supported background location services. ([Apple Developer][1])
+
+## Recommended user experience
+
+Do not ask for Always at first launch.
+
+Use this progression:
+
+1. Ask for **While Using the App** when the user first opens the map, directions, nearby discovery, or submits location-based intel.
+2. In Alert Settings, explain that optional background alerts require additional access.
+3. Let the user intentionally enable:
+
+> **Nearby alerts when the app is closed**
+
+Only then should the app explain and request Always access.
+
+This follows Apple’s recommendation to request location in context, immediately before the feature needs it. ([Apple Developer][1])
+
+## Suggested warning in Alerts Settings
+
+### Nearby Safety Alerts
+
+> Receive alerts about verified safety updates, road closures, and other activity near your location.
+
+Then show the current permission:
+
+> **Location access: While Using the App**
+
+And explain:
+
+> With “While Using,” nearby alerts are available when Mapping With Melanin™ is open. To receive eligible location-based alerts when the app is closed, you may choose “Always Allow” in your device settings.
+
+Buttons:
+
+* **Keep While Using**
+* **Enable Background Alerts**
+* **Not Now**
+
+Also include:
+
+> You can still receive alerts for saved places, followed cities, businesses, events, and communities without sharing your background location.
+
+That prevents users from feeling forced to grant Always access.
+
+## Privacy rule
+
+Background location should never be required simply to use the app.
+
+The user should still be able to:
+
+* browse businesses;
+* search cities;
+* use KinfolkAI;
+* follow locations manually;
+* receive non-location-specific alerts;
+* report something using a location they enter themselves.
+
+Also, “Always” should not mean continuous tracking unless the feature genuinely requires it. The app should use the least intrusive location service necessary and clearly state what is collected, when, and why.
+
+## Send Replit this
+
+> **LB-013 — LOCATION PERMISSION AND ALERT TRANSPARENCY AUDIT**
+>
+> The iOS app currently presents the system choices:
+>
+> * Never
+> * While Using the App
+> * Always
+>
+> We need to confirm exactly how each choice affects Mapping With Melanin™ alerts and clearly explain that to users.
+>
+> Perform a read-only audit before implementation.
+>
+> ### Confirm current behavior
+>
+> 1. Identify every location permission requested by iOS and Android.
+> 2. Identify exactly where and when each permission request is triggered.
+> 3. Confirm whether the app requests background/Always access at first launch, on the Map screen, or only after a user enables a specific alert feature.
+> 4. Identify every alert type and classify it as:
+>
+>    * does not require location;
+>    * requires location only while the app is open;
+>    * may require background/Always access.
+> 5. Confirm whether safety alerts currently use:
+>
+>    * foreground GPS;
+>    * continuous background location;
+>    * significant-location-change monitoring;
+>    * region/geofence monitoring;
+>    * scheduled polling;
+>    * saved city or manually selected location;
+>    * push notifications unrelated to current location.
+> 6. Confirm whether “Always” is technically necessary for any currently implemented feature.
+> 7. Confirm whether the app continues collecting location when no location-based feature is active.
+> 8. Confirm the exact iOS usage-description strings currently included in the built app.
+> 9. Confirm Android foreground/background location permission behavior separately.
+>
+> ### Required product rules
+>
+> * Do not request Always/background location at first launch.
+> * Prefer While Using access unless a user intentionally enables a feature that requires background location.
+> * Request location only in context, immediately before the feature needs it.
+> * Background location must remain optional.
+> * Denying Always must not block ordinary app use.
+> * Users with Never or While Using must still be able to receive non-location-based alerts for saved places, followed cities, businesses, events, groups, and communities.
+> * Clearly distinguish:
+>
+>   * general push notifications;
+>   * alerts based on saved places;
+>   * alerts based on the user’s live or background location.
+> * Do not imply that all alerts stop when background location is disabled.
+> * Do not continuously track location unless a currently active feature genuinely requires it.
+> * Store and retain only the minimum location information necessary.
+>
+> ### Alerts Settings copy
+>
+> Propose a new section:
+>
+> **Nearby Safety Alerts**
+>
+> Suggested explanation:
+>
+> “Receive alerts about verified safety updates, road closures, and other activity near your location.”
+>
+> Permission explanation:
+>
+> “With ‘While Using,’ nearby alerts are available when Mapping With Melanin™ is open. To receive eligible location-based alerts when the app is closed, you may choose ‘Always Allow’ in your device settings.”
+>
+> Additional reassurance:
+>
+> “You can still receive alerts for saved places, followed cities, businesses, events, and communities without sharing your background location.”
+>
+> Proposed controls:
+>
+> * Keep While Using
+> * Enable Background Alerts
+> * Not Now
+>
+> ### Required safeguards
+>
+> * Display the current permission state.
+> * Provide a direct link to device settings if permission was previously denied.
+> * Explain why Always is useful before triggering the system prompt.
+> * Never repeatedly pressure users who decline.
+> * Respect parental controls and under-18 profile settings.
+> * Do not expose a child’s precise live location to other members, businesses, groups, or advertisers.
+> * Sensitive safety alerts must not reveal a user’s location in notification text visible on a locked device unless the user explicitly permits detailed previews.
+>
+> ### Deliverable
+>
+> Return:
+>
+> 1. What exists today.
+> 2. Which alerts require each permission level.
+> 3. Whether Always is currently justified.
+> 4. Exact files and configuration involved.
+> 5. Proposed Alerts Settings experience.
+> 6. Updated iOS and Android permission copy.
+> 7. Privacy and parental-control safeguards.
+> 8. Whether this requires a new mobile build.
+>
+> Do not implement until the audit is reviewed.
+
+One more important setting should eventually be included:
+
+> **Show safety-alert details on my lock screen**
+
+Options:
+
+* Full details
+* General notification only
+* Hide safety alerts from lock screen
+
+That matters because a notification like “Incident reported near your home” could reveal sensitive information to anyone holding the phone.
+
+[1]: https://developer.apple.com/documentation/corelocation/requesting-authorization-to-use-location-services?utm_source=chatgpt.com "Requesting authorization to use location services | Apple Developer Documentation"

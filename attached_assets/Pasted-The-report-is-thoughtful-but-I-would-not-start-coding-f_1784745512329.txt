@@ -1,0 +1,104 @@
+The report is thoughtful, but I would **not start coding from it unchanged**. Four corrections are important before you touch Apple credentials or Build 95.
+
+Apple’s current guidance confirms the central requirement: for new Sign in with Apple accounts, the app should securely send the authorization code to its server, exchange it for tokens, securely retain the refresh token, and use Apple’s revocation endpoint during account deletion. Existing accounts without a retained token may use Apple’s documented manual-revocation fallback, but local account deletion must still proceed. ([Apple Developer][1])
+
+## Corrections Replit must make
+
+### 1. The Apple secrets must exist in Railway, not only Replit
+
+The token exchange and revocation run on the production API hosted by Railway. Adding these only to Replit Secrets would make development work while production fails.
+
+They need to be configured as server-only variables in:
+
+* Replit development environment
+* Railway `api-server` production variables
+
+They must **not** be placed in:
+
+* `eas.json`
+* `EXPO_PUBLIC_*` variables
+* the mobile bundle
+* GitHub
+* chat messages
+
+The server variables should be:
+
+* `APPLE_TEAM_ID`
+* `APPLE_KEY_ID`
+* `APPLE_PRIVATE_KEY`
+
+The `client_id` should remain the bundle identifier used during authorization, currently reported as `com.melaninmaps.app`.
+
+### 2. Do not store the refresh token as ordinary plaintext
+
+A plain nullable `varchar` technically stores the token, but Apple says tokens should be stored securely on the server. ([Apple Developer][1])
+
+Ask Replit to use the project’s existing encrypted-secret method, or add application-level encryption using a server-only encryption key. At minimum, Replit must explain:
+
+* how the token is encrypted at rest;
+* who or what can decrypt it;
+* that it is never logged;
+* that API errors never return it;
+* that it is removed when the account is deleted.
+
+Hashing will not work because the original token is needed for revocation.
+
+### 3. New Apple sign-ins should not silently ignore token-exchange failure
+
+The proposal says:
+
+> If exchange fails, log a warning and continue signing in.
+
+That would knowingly create more Apple accounts without revocation credentials—the exact gap this change is intended to close.
+
+For Build 95, a failed authorization-code exchange should return a clear authentication error rather than silently creating or completing a new Apple-backed account. The user can retry Sign in with Apple. Apple’s token endpoint returns the refresh token after successful authorization-code validation. ([Apple Developer][2])
+
+### 4. Manual fallback needs visible user guidance
+
+For an existing Apple account whose stored refresh token is `NULL`, local deletion should still complete. Apple’s current fallback says to delete the account data, direct the user to manually revoke the app’s Apple access, and respond correctly to credential-revocation events. ([Apple Developer][1])
+
+Therefore, `appleRevocationStatus: "not_applicable"` is misleading. Use something such as:
+
+```text
+manual_revocation_required
+```
+
+After successful local deletion, the app should show brief instructions directing that user to revoke Mapping With Melanin under their Apple Account settings. This applies only to legacy Apple accounts without a retained token.
+
+## What to tell Replit
+
+> **APPLE REVOCATION PLAN APPROVED WITH REQUIRED CORRECTIONS**
+>
+> Do not implement until the following revisions are incorporated:
+>
+> 1. Configure `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY` as server-only secrets in both Replit development and Railway production. Do not place them in EAS, mobile code, `EXPO_PUBLIC_*`, GitHub, logs, or responses.
+> 2. Store Apple refresh tokens encrypted at rest—not as readable plaintext. Return the encryption design before altering the schema.
+> 3. Never log authorization codes, access tokens, refresh tokens, private-key content, or generated client secrets.
+> 4. A failed authorization-code exchange must not silently complete a new Apple account sign-in. Return a clear retryable error.
+> 5. For legacy Apple users without a retained token:
+>
+>    * complete local account deletion;
+>    * return `manual_revocation_required`;
+>    * display Apple’s manual access-revocation instructions;
+>    * do not call this `not_applicable`.
+> 6. Session deletion and user deletion must share one transaction with guaranteed client release in `finally`.
+> 7. Confirm the implementation responds to Apple credential-revocation state or clearly identify that remaining requirement before submission.
+>
+> Return the revised schema, encryption method, exact server response states and mobile UX before coding.
+
+## Your immediate Apple-account step
+
+Go to **Apple Developer → Certificates, Identifiers & Profiles → Keys**.
+
+Look for a key with **Sign in with Apple** enabled.
+
+* If one exists and you still possess its `.p8` file, use that key.
+* If one exists but the `.p8` file is lost, Apple does not let you download that private key again; a new appropriate key will be needed.
+* If none exists, create a new key with Sign in with Apple enabled and securely save the downloaded `.p8` file.
+
+Do not paste the `.p8` content here. Add it directly to Replit Secrets and Railway Variables only after Replit returns the corrected secure-storage plan.
+
+This remains the final account-deletion compliance workstream. The map and vibes stay frozen, Build 95 stays unqueued, and nothing else should be added before this passes.
+
+[1]: https://developer.apple.com/documentation/technotes/tn3194-handling-account-deletions-and-revoking-tokens-for-sign-in-with-apple?utm_source=chatgpt.com "TN3194: Handling account deletions and revoking tokens for Sign in with Apple | Apple Developer Documentation"
+[2]: https://developer.apple.com/documentation/SigninwithAppleRESTAPI/Generate-and-validate-tokens?changes=_7&utm_source=chatgpt.com "Token validation | Apple Developer Documentation"

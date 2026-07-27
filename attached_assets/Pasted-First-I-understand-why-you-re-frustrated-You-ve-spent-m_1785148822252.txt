@@ -1,0 +1,228 @@
+First, I understand why you're frustrated. You've spent months getting to this point, you're five days from leaving, and you've already solved what felt like the Apple Sign-In problem once. Seeing another 2.1 rejection is exhausting.
+
+That said, **this rejection is actually much more actionable than some of the earlier ones.** Apple has told us exactly what failed.
+
+## Apple is reporting two separate issues
+
+### 1. Apple Sign-In registration failed
+
+This is the important one.
+
+Apple says:
+
+> **"Error message appeared when tapped on Apple login and tried to register a new account."**
+
+Notice what they did **not** say.
+
+They did **not** say:
+
+* Apple Sign-In is improperly configured.
+* Sign in with Apple entitlement is missing.
+* Apple authentication is rejected.
+* Invalid client ID.
+* Invalid redirect URI.
+
+Instead they said:
+
+> They tapped **Sign in with Apple** → attempted to register → **your app displayed an error message.**
+
+That means one of these is most likely happening:
+
+* Apple authentication succeeded, but your backend failed creating the account.
+* Account creation failed after authentication.
+* Registration validation failed.
+* The app couldn't reach the API.
+* A required field is missing.
+* iPad-specific UI flow failed.
+* Existing-account/new-account logic broke.
+* Session creation failed.
+* An exception is being caught and displayed as a generic error.
+
+Those are very different from an Apple configuration problem.
+
+---
+
+### 2. Apple cannot review the app
+
+This one is actually expected.
+
+They wrote:
+
+> "Provide a username and password."
+
+Because your app requires authentication, Apple needs a way into the app.
+
+If your app currently only exposes:
+
+* Waitlist
+* Registration
+* Login
+
+they still need an account they can use.
+
+They are essentially saying:
+
+> "We cannot verify everything because we cannot access every account type."
+
+That doesn't necessarily mean every feature must be enabled. It means Apple needs whatever credentials are appropriate for the functionality that exists today.
+
+---
+
+# The iPad matters
+
+This is new.
+
+Apple tested on:
+
+> **iPad Air 11-inch (M3)**
+
+You and your testers have mostly been using phones.
+
+That immediately raises questions:
+
+* Is Apple Sign-In different on iPad?
+* Is layout hiding something?
+* Is Safe Area behaving differently?
+* Is a required button off-screen?
+* Is registration behaving differently on iPad?
+* Is there an orientation issue?
+
+This is why I wanted Build 97 to include multi-device testing.
+
+---
+
+# I do NOT think Replit or I intentionally caused this
+
+Based on everything you've shared over the past few weeks:
+
+* authentication has genuinely been improving,
+* session renewal was verified,
+* Google login was fixed,
+* Apple configuration was corrected,
+* production health is up (`status":"ok"`).
+
+Nothing you've shown suggests someone is sabotaging the project.
+
+What I **do** think is happening is that the Apple reviewer has exercised a code path that neither you nor your testers exercised on an iPad.
+
+That is exactly why Apple's review exists.
+
+---
+
+# This is what I would ask Replit immediately
+
+I would **not** ask them to "fix Apple."
+
+I'd ask them to prove exactly where it failed.
+
+---
+
+## Priority 1
+
+> Reproduce Apple's exact failure.
+
+Not approximately.
+
+Exactly.
+
+Using:
+
+* Build 96
+* Production backend
+* Fresh account
+* Apple Sign-In
+* New registration
+* iPad simulator if available
+* iPad layout if physical device unavailable
+
+Then answer:
+
+1. Does Apple authentication succeed?
+
+2. Does backend account creation fail?
+
+3. What exact error is thrown?
+
+4. What API returns the error?
+
+5. Is this reproducible?
+
+6. Can they identify the root cause?
+
+---
+
+## Priority 2
+
+Ask them:
+
+> Why didn't our testing catch this?
+
+That answer is extremely important.
+
+---
+
+## Priority 3
+
+Provide Apple a review account.
+
+Even if the current version only supports the waitlist, Apple should still have working credentials that let them reach the intended experience.
+
+---
+
+# I would NOT jump into Build 97
+
+Everything we've discussed for Kinfolk, maps, heritage, Community Intelligence...
+
+Those are all still the right direction.
+
+But none of them matter until Build 96 gets approved.
+
+Right now the priority is laser-focused:
+
+1. Reproduce Apple's exact registration failure.
+2. Fix only that issue.
+3. Verify on iPhone **and** iPad.
+4. Supply Apple with a functioning review account.
+5. Resubmit.
+
+Only then do we move to Build 97.
+
+---
+
+# One thing Apple accidentally gave us
+
+Apple told us:
+
+> **Internet Connection: Active**
+
+That's helpful.
+
+It means this wasn't an offline/network test.
+
+They were connected.
+
+So we're looking at an application or backend flow rather than a lack of connectivity.
+
+---
+
+## My recommendation tonight
+
+Don't let Replit start making broad changes.
+
+Have them perform a **forensic investigation**.
+
+I would ask for:
+
+* the exact error message Apple would have seen,
+* the API response,
+* server logs,
+* client logs,
+* whether the Apple token reached the backend,
+* whether the user record was created,
+* whether the session was created,
+* whether the failure is iPad-specific,
+* and exactly why the bug escaped previous testing.
+
+Once we know that, the fix is usually much smaller than trying to "rewrite authentication."
+
+We've been deliberately building an audit-first process over the past week. This is exactly the moment where that discipline pays off: identify the precise failure, fix only that failure, verify it on both iPhone and iPad, and then resubmit with confidence.

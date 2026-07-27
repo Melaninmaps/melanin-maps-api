@@ -1,0 +1,412 @@
+Perfect.
+
+I officially consider **Audit 1 complete**. I also think we just established the methodology that will guide the entire audit. From here on, every audit will produce not just engineering findings, but product decisions, constitutional commentary, and implementation guidance.
+
+Now let's move to what I believe is the **single most important user experience audit**.
+
+---
+
+# AUDIT 2 — ONBOARDING, PROFILES, IDENTITY & MEMBER JOURNEY
+
+I actually want to raise the bar before we send this to Replit.
+
+This audit isn't about screens.
+
+It's about the **first 15 minutes** someone spends with Mapping With Melanin™.
+
+If we get those 15 minutes right, everything else becomes easier.
+
+---
+
+# What I want this audit to answer
+
+Not:
+
+> Does onboarding work?
+
+But:
+
+> **Does onboarding create confidence, belonging, and excitement while collecting only the information we genuinely need?**
+
+---
+
+# Areas to audit
+
+## PART A — First Impression
+
+I want Replit to document:
+
+* Every screen in exact order.
+* What the user sees.
+* What actions are available.
+* What can be skipped.
+* What cannot.
+* How long it takes.
+
+Then I want them to answer:
+
+> **If someone had never heard of Mapping With Melanin™, would they understand what makes this platform different before creating an account?**
+
+---
+
+## PART B — Welcome Experience
+
+This is one place where I already have a recommendation.
+
+I don't want users to land immediately on a form.
+
+I would rather see:
+
+```text
+Welcome Home.
+
+You are joining a community built to help people discover
+opportunity, connection, culture, and trusted places.
+
+Let's personalize your experience.
+```
+
+Then continue.
+
+People remember feelings before forms.
+
+---
+
+## PART C — Every Field Review
+
+This is where I want us to become extremely disciplined.
+
+For **every single field** collected during onboarding, Replit should answer:
+
+### 1. Why do we collect it?
+
+### 2. Is it legally required?
+
+### 3. Is it required for functionality?
+
+### 4. Could it be optional?
+
+### 5. Could we ask later instead?
+
+### 6. Does AI use it?
+
+### 7. Does it affect recommendations?
+
+### 8. Does it affect safety?
+
+### 9. Is it displayed publicly?
+
+### 10. Can the user change it later?
+
+---
+
+Example:
+
+Birthday
+
+Instead of asking:
+
+Do we collect birthday?
+
+Ask:
+
+Why?
+
+Maybe all we actually need is:
+
+18+
+
+21+
+
+Under 18
+
+Birth month (optional)
+
+Birthday celebration (optional)
+
+We should never collect more than we truly need.
+
+---
+
+## PART D — Profile Philosophy
+
+This is something I don't think we've formally discussed.
+
+I don't want profiles to feel like social media.
+
+I want them to answer:
+
+Who are you?
+
+How do you connect with your community?
+
+What are you passionate about?
+
+What are you looking for?
+
+How can people support you?
+
+That's a different philosophy than follower counts and vanity metrics.
+
+---
+
+## PART E — Interest Selection
+
+This is incredibly important because it drives:
+
+* KinfolkAI
+* Discovery
+* Events
+* Businesses
+* Communities
+* Resources
+* Recommendations
+
+I want Replit to show:
+
+How interests are stored.
+
+How many.
+
+Can they be changed?
+
+Are they hierarchical?
+
+Can users follow topics?
+
+Can users mute topics?
+
+---
+
+## PART F — Identity Questions
+
+I want a full review of:
+
+Race
+
+Ethnicity
+
+Pronouns
+
+Languages
+
+Accessibility
+
+Disability
+
+Religion
+
+Nationality
+
+Gender
+
+Travel style
+
+Community role
+
+All of these require thoughtful design.
+
+For each:
+
+* Why?
+* Optional?
+* Public?
+* AI use?
+* Recommendations?
+* Hidden?
+
+---
+
+## PART G — Privacy
+
+Can users choose:
+
+Public profile
+
+Private profile
+
+Hidden while traveling
+
+Invisible
+
+Searchable
+
+Friends only
+
+Community only
+
+Business only
+
+---
+
+## PART H — Safety Preferences
+
+This is one of your biggest differentiators.
+
+I want us to inspect:
+
+* neighborhood alerts;
+* emergency contacts;
+* accessibility needs;
+* travel comfort;
+* solo travel;
+* family travel;
+* wheelchair accessibility;
+* language preferences;
+* safety notification preferences.
+
+---
+
+## PART I — Location
+
+This deserves its own constitutional review.
+
+Questions:
+
+When do we ask?
+
+Why?
+
+Background?
+
+Approximate?
+
+Home city?
+
+Travel city?
+
+Can users hide?
+
+Can businesses see?
+
+Can AI infer?
+
+How long is it stored?
+
+---
+
+## PART J — Empty States
+
+One of my biggest pet peeves.
+
+Every empty screen should answer:
+
+Now what?
+
+No businesses?
+
+Recommend adding one.
+
+No friends?
+
+Suggest circles.
+
+No events?
+
+Suggest following cities.
+
+No Hidden Gems?
+
+Explain how nominations work.
+
+No blank screens.
+
+Ever.
+
+---
+
+## PART K — Permissions
+
+Camera
+
+Photos
+
+Location
+
+Notifications
+
+Contacts
+
+Microphone
+
+Each permission should be requested:
+
+Only when needed.
+
+With an explanation.
+
+Never immediately upon opening the app.
+
+---
+
+## PART L — The Welcome Home Moment
+
+I think this deserves an entire section.
+
+When onboarding ends...
+
+I don't want:
+
+Dashboard.
+
+I want:
+
+Welcome Home.
+
+Here's your city.
+
+Here are businesses.
+
+Here are events.
+
+Meet Kinfolk.
+
+Here's today's community.
+
+That's emotional.
+
+Not transactional.
+
+---
+
+# Constitutional Commentary
+
+This will be my contribution to Audit 2.
+
+> Onboarding is not an administrative process.
+>
+> It is the institution's first conversation with a new member.
+>
+> Every screen should answer an unspoken question:
+>
+> **"Do I belong here?"**
+>
+> Information should be requested only when there is a clear purpose, communicated honestly, protected responsibly, and used to create a better experience for the member.
+>
+> We do not collect information because we can.
+>
+> We collect only what helps us strengthen community, improve safety, personalize discovery, or fulfill a legal obligation.
+>
+> Trust begins before the first recommendation is ever made.
+
+---
+
+# One addition I'd like to make
+
+I want every audit to end with a new section called:
+
+## "The Human Test"
+
+For Audit 2, that question is:
+
+> **Imagine a 22-year-old college student, a 67-year-old retiree relocating to a new city, and a first-time business owner all complete onboarding. Would each of them understand what Mapping With Melanin™ is, why we asked for their information, and what to do next?**
+
+If the answer is "no," then onboarding isn't finished—even if every screen works perfectly.
+
+---
+
+## My recommendation
+
+Send Replit **both** the expectation statement we've established and a detailed read-only prompt for Audit 2, just as we did for Authentication.
+
+I have a feeling this audit is going to shape the personality of Mapping With Melanin™ more than any other, because it's where people decide whether they're simply signing up for another app—or joining a community they want to come back to.

@@ -1,0 +1,82 @@
+04.20 Community Risk Indicators
+Risk indicators may reduce dimension scores or trigger review.
+Examples include:
+repeated gatekeeping;
+exclusion of newcomers;
+insider-only access;
+harassment or retaliation;
+extraction without return;
+misleading community claims;
+performative partnerships;
+abandoned commitments;
+suppression of criticism;
+coordination to manipulate scores;
+concentrated benefits;
+cultural exploitation;
+community displacement;
+inaccessible resources;
+public-facing diversity without internal influence;
+unpaid labor expectations;
+inconsistent treatment;
+false urgency;
+resource hoarding;
+reputation management replacing accountability.
+04.21 Exclusion Penalties
+The following baseline penalties may apply.
+Condition	Baseline penalty
+Verified discriminatory exclusion	−30 to −60
+Repeated newcomer gatekeeping	−10 to −25
+Accessibility misrepresentation	−15 to −35
+Hidden eligibility barriers	−10 to −20
+Retaliation for legitimate feedback	−20 to −40
+Community participation restricted for commercial reasons	−10 to −25
+Insider-only benefit pattern	−10 to −30
+Public inclusion claims contradicted by verified evidence	−15 to −35
+Penalties may affect one dimension or the total Community Score.
+Critical safety issues are routed to the Safety Intelligence Engine™ and may trigger an override rather than a standard penalty.
+04.22 Extraction Penalties
+Condition	Baseline penalty
+Cultural use without consent or attribution	−15 to −35
+Repeated unpaid community labor	−10 to −30
+Hidden commercial use of community data	−25 to −50
+Crisis profiteering	−25 to −60
+Community visibility without shared benefit	−10 to −25
+Partnership benefits concentrated outside community	−10 to −30
+Misleading philanthropic claims	−15 to −40
+Community story used after permission withdrawn	−25 to −50
+A severe extraction finding may also reduce Trust, Stewardship, Cultural Influence, or Promotion eligibility.
+04.23 Community Score Floors and Caps
+Certain conditions limit the maximum score.
+04.23.1 Baseline caps
+Condition	Maximum Community Score
+No direct community evidence	59
+Only one evidence category	54
+No reciprocity evidence	69
+No voice or correction pathway	74
+No continuity evidence	79
+Active unresolved exclusion concern	64
+Verified retaliation	49
+Severe extraction finding	39
+Active governance hold	0 for promotion
+04.23.2 Score floors
+No positive activity creates a mandatory score floor.
+The Engine must remain capable of recognizing serious community harm despite high participation or visibility.
+04.24 Context-Specific Weight Profiles
+04.24.1 Local Community
+Dimension	Weight
+Welcoming Access	15%
+Meaningful Connection	20%
+Reciprocity	18%
+Community Support	18%
+Voice & Influence	12%
+Continuity & Return	10%
+Stewardship & Shared Benefit	7%
+04.24.2 Relocation
+Dimension	Weight
+Welcoming Access	13%
+Meaningful Connection	15%
+Reciprocity	13%
+Community Support	20%
+Voice & Influence	12%
+Continuity & Return	17%
+Stewardship & Shared Benefit	10%

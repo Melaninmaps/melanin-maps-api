@@ -1,0 +1,264 @@
+MAPPING WITH MELANIN™ — APPLE REVIEW ACTIVITY AND RISK CHECK
+READ-ONLY — NO IMPLEMENTATION
+
+Build 96 is currently under Apple review.
+
+Before we make any Build 97 changes, conduct a targeted read-only check
+to determine whether there has been any activity that could affect
+Apple’s review experience.
+
+Do not modify code, environment variables, deployments, database records,
+Apple configuration, build numbers, or submissions.
+
+Do not submit a new build.
+
+══════════════════════════════════════════════════════════════
+1. APPLE REVIEW STATUS
+══════════════════════════════════════════════════════════════
+
+Report the current App Store Connect/TestFlight status for Build 96,
+including:
+
+- Build number
+- App version
+- Submission status
+- Date and time submitted
+- Date and time status last changed
+- Whether Apple has opened or begun reviewing it, if visible
+- Whether Apple has sent any messages, questions, warnings, or rejection
+- Whether any compliance questions are pending
+- Whether export compliance, encryption, privacy, pricing, or account
+  information is incomplete
+- Whether tester or review notes are attached to the correct build
+
+If Replit cannot directly access App Store Connect, say so clearly and
+identify what evidence is available from project records, emails, logs,
+or screenshots.
+
+══════════════════════════════════════════════════════════════
+2. CHANGES SINCE SUBMISSION
+══════════════════════════════════════════════════════════════
+
+Identify every change made after Build 96 was submitted, including:
+
+- Production API deployments
+- Railway deployments
+- Database migrations
+- Environment-variable changes
+- Authentication changes
+- Session changes
+- Apple Sign-In changes
+- Domain or redirect changes
+- Feature-flag changes
+- Content or seed-data changes
+- Admin changes
+- Legal or policy-page changes
+- Subscription or pricing changes
+- Maps configuration changes
+- Push-notification changes
+- Storage configuration changes
+- Any production hotfix
+- Any rollback
+- Any service restart
+
+For each change report:
+
+- Date and time
+- Exact change
+- Who or what triggered it, if known
+- Environment affected
+- Whether Build 96 calls or depends on it
+- Risk to Apple review
+- Whether the change was tested
+- Whether rollback is available
+
+If no changes occurred, state that explicitly.
+
+══════════════════════════════════════════════════════════════
+3. PRODUCTION HEALTH DURING REVIEW
+══════════════════════════════════════════════════════════════
+
+Review production activity since submission for:
+
+- Login failures
+- Registration failures
+- Apple Sign-In failures
+- Email verification failures
+- Session-renewal failures
+- API 401, 403, 404, 429, and 500 errors
+- Railway crashes or restarts
+- Database connection failures
+- Slow responses
+- Map failures
+- KinfolkAI failures
+- Broken image or asset requests
+- Missing routes
+- Deep-link failures
+- App crashes reported from Build 96
+- Any tester unable to use the build
+
+Provide counts, timestamps, affected routes, and root-cause status where
+available.
+
+Do not expose passwords, tokens, private messages, or sensitive user data.
+
+══════════════════════════════════════════════════════════════
+4. APPLE REVIEWER JOURNEY CHECK
+══════════════════════════════════════════════════════════════
+
+Verify that an Apple reviewer using Build 96 can complete the expected
+journey today:
+
+1. Launch the app
+2. Reach the correct production environment
+3. Create an account or use the review account
+4. Log in successfully
+5. Complete email verification if required
+6. Complete or skip onboarding
+7. Access the intended launch experience
+8. Use the main navigation
+9. View the waitlist or available features
+10. Log out and log in again
+11. Reopen the app with the session restored
+
+Confirm:
+
+- Review credentials are valid
+- The account is approved
+- No password has changed
+- No verification code is required that Apple cannot access
+- No geographic restriction blocks the reviewer
+- No feature is hidden behind an unavailable invitation
+- No expired test data blocks the journey
+- No screen promises a feature that is unavailable
+- No raw error or blank screen appears
+
+Do not alter the Apple review account during this check unless separately
+authorized.
+
+══════════════════════════════════════════════════════════════
+5. BACKEND COMPATIBILITY
+══════════════════════════════════════════════════════════════
+
+Confirm that the production backend remains compatible with Build 96.
+
+Check for:
+
+- Routes Build 96 calls that were renamed or removed
+- Response fields Build 96 expects that changed
+- New required fields Build 96 does not send
+- Authentication or session format changes
+- Database changes incompatible with the older client
+- Membership or role logic that blocks Build 96
+- Minimum-supported-version checks
+- Forced-update logic
+- Content changes causing null or undefined values
+- API base URL or domain mismatch
+
+List every Build 96 API dependency and its current health.
+
+══════════════════════════════════════════════════════════════
+6. APPLE-SPECIFIC RISKS
+══════════════════════════════════════════════════════════════
+
+Check for review risks involving:
+
+- Apple Sign-In
+- Account deletion availability
+- Subscription disclosures
+- Restore Purchases
+- Pricing accuracy
+- Privacy policy link
+- Terms link
+- Support URL
+- Review notes
+- Demo/review account
+- Permission prompts
+- Location permission explanation
+- Camera/photo permission explanation
+- Tracking disclosure
+- User-generated content moderation
+- Reporting and blocking
+- Child-safety claims
+- Features shown in metadata but unavailable in Build 96
+- Broken external links
+- Placeholder or test content
+- App crashes or incomplete screens
+
+Classify each risk as:
+
+- CLEAR
+- NEEDS VERIFICATION
+- POTENTIAL REVIEW RISK
+- ACTIVE BLOCKER
+
+══════════════════════════════════════════════════════════════
+7. FREEZE CONFIRMATION
+══════════════════════════════════════════════════════════════
+
+Confirm whether the current implementation freeze has been honored.
+
+Report whether any of the following changed after submission:
+
+- Code
+- Schema
+- Routes
+- Production environment
+- Apple configuration
+- Build metadata
+- App Store listing
+- Review notes
+- Screenshots
+- Pricing
+- Legal links
+- Review account
+- Feature availability
+
+If anything changed, explain whether Apple sees the changed backend or
+listing while reviewing the same binary.
+
+══════════════════════════════════════════════════════════════
+8. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Executive Summary
+2. Current Apple Review Status
+3. Last Known Apple Activity
+4. Messages or Warnings From Apple
+5. Changes Since Build 96 Submission
+6. Production Deployments Since Submission
+7. Production Error Summary
+8. Authentication Health
+9. Apple Sign-In Health
+10. Reviewer Account Health
+11. Build 96 Backend Compatibility
+12. Main Reviewer Journey Result
+13. Apple-Specific Compliance Risks
+14. P0/P1 Issues
+15. P2/P3 Issues
+16. Anything That Could Cause Rejection
+17. Anything That Could Cause a Reviewer to Think the App Is Broken
+18. Recommended Immediate Action
+19. Whether the Freeze Should Continue
+20. Confirmation That No Changes Were Made During This Check
+
+At the end, answer directly:
+
+A. Has Apple shown any activity on Build 96?
+
+B. Has anything changed since submission that could affect the review?
+
+C. Can the Apple reviewer currently log in and complete the intended
+journey?
+
+D. Are there any production errors that could make the app appear broken?
+
+E. Is any immediate action required, or should we continue waiting?
+
+Do not implement.
+Do not submit a new build.
+Do not change Build 96.
+Do not change the review account.
+Do not deploy.

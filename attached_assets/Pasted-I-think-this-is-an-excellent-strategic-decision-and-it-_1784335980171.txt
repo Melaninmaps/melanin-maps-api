@@ -1,0 +1,59 @@
+I think this is an excellent strategic decision, and it's one I would elevate from a tour detail to a product governance rule.
+The reasoning isn't just personal safety—although that's important. It also preserves the authenticity of the Welcome Home Tour.
+What you're describing is essentially this:
+A city can be platform-ready long before it is Tour-active.
+Those are two different states.
+For example:
+Atlanta (Platform Ready): KinfolkAI™ understands Atlanta, cultural landmarks are available, museums and historical sites are searchable, businesses can join, safety features work, community members can participate.
+Atlanta (Tour Active): Welcome Home Tour banner, community meetups, founder events, documentary filming, city-specific challenges, tour-exclusive content, Cultural Ambassador spotlights, and live tour storytelling become available only when you intentionally activate them.
+Then, when you arrive in New Orleans:
+Atlanta remains fully functional as a city on the platform.
+Atlanta's Tour Mode quietly ends.
+New Orleans becomes the active Tour City.
+That gives you complete control over where the public knows the tour is happening without removing any of the platform's permanent functionality.
+I would actually formalize this as follows:
+Tour Activation Rule (Proposed)
+Every supported city has two independent states:
+Platform Status
+Not Available
+Early Access
+Active
+Mature
+Tour Status
+Not Scheduled
+Upcoming (private/internal only until authorized)
+Live
+Completed
+Legacy Archive
+Those statuses should never be automatically linked.
+I would also recommend one additional safeguard
+Rather than making a city "Live" the moment you arrive, consider a slight delay.
+For example:
+You spend the day in Atlanta filming and meeting businesses.
+That evening—or even the following morning—you activate Atlanta's Tour content.
+Likewise, when you leave:
+Tour content remains active briefly to capture photos, stories, and community engagement.
+Then it transitions to Completed and becomes part of the Living Archive.
+That way, the app celebrates where you've been without broadcasting your real-time location.
+One more idea I think fits your vision
+Eventually, the platform could distinguish between:
+Platform City — the city exists on Mapping With Melanin™.
+Featured City — editorial spotlight.
+Tour City — part of the Welcome Home Tour.
+Legacy City — a city where the tour has already been completed and archived.
+Those are four different concepts, and separating them gives you much more flexibility.
+About "committing this to memory"
+I can't permanently save information across future conversations on my own. Since the long-term memory tool isn't available for me to write to, I can't honestly say I've "committed" it.
+What I can recommend is adding it to your project documentation—specifically under the Legacy Collection or Product Governance—because it belongs there as a permanent operating principle rather than just a conversation note.
+I would title it:
+Tour Activation & Founder Safety Protocol
+And I'd summarize it with one governing principle:
+The platform's geographic availability and the Welcome Home Tour schedule are intentionally independent. Tour-specific experiences are activated only by founder authorization and are never tied automatically to supported cities or future roadmap locations. This protects founder safety, preserves editorial control, and ensures authentic community engagement.
+I also think we should put this on our working agenda. Before we finalize the presentation work, we should have a dedicated strategy session on Founder Safety & Tour Operations, where we review:
+Tour activation/deactivation rules.
+What becomes visible before, during, and after each city.
+Community meetup safety.
+Documentary and photography permissions.
+Cultural Ambassador coordination.
+How tour content transitions into the Living Archive.
+Given how central the Welcome Home Tour has become to your long-term vision, I think that deserves its own chapter in the Legacy Collection rather than being buried as a product feature.

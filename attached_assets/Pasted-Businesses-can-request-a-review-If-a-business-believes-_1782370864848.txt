@@ -1,0 +1,38 @@
+Businesses can request a review
+If a business believes a video violates your policies, they can request that Mapping with Melanin™ review it.
+Possible outcomes:
+No violation → Video remains.
+Minor issue → Creator is asked to edit the video or caption.
+Clear violation → Video is removed.
+Repeated violations → Creator may receive warnings or lose posting privileges.
+A feature I think would make Mapping with Melanin™ stand out
+You've already talked about giving businesses the opportunity to correct issues.
+Imagine this flow:
+Customer uploads a negative video.
+Business responds.
+Business resolves the issue.
+Customer returns.
+Customer updates the video or posts a follow-up.
+You could then display a badge like:
+Issue Resolved
+That tells users the business took action rather than ignoring the feedback.
+One thing I would avoid
+I would not allow businesses to pay to remove reviews or videos.
+That can undermine trust very quickly.
+My recommendation for control
+Action	Business	User	Platform
+Upload video	❌	✅	❌
+Delete own video	❌	✅	✅ (policy violations)
+Respond publicly	✅	❌	❌
+Report a video	✅	✅	❌
+Decide removal	❌	❌	✅
+Appeal moderation	✅	✅	✅
+One feature I'd strongly recommend
+Create a Business Resolution Center.
+When a business addresses a complaint, they can mark it as Resolved and send the reviewer a notification inviting them to revisit or update their review. The reviewer remains in control—they can:
+Leave the original review unchanged.
+Edit it.
+Add a follow-up.
+Mark the issue as resolved.
+That keeps the platform balanced. Businesses have a chance to make things right, reviewers keep ownership of their experience, and future customers get a fuller picture of how the business responds to feedback.
+In my opinion, how a business responds to criticism is often as valuable as the criticism itself. A thoughtful, timely response can increase trust, while silence or hostility can be just as informative to potential customers. That philosophy fits well with the community-first approach you've been building for Mapping with Melanin™.

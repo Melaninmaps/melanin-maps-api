@@ -1,0 +1,207 @@
+05.47 Personalization Rules
+Personalization may use:
+explicit preferences;
+saved entities;
+current context;
+prior user actions;
+followed topics;
+authorized accessibility preferences;
+travel style;
+budget;
+categories;
+city interests.
+Personalization may not use:
+inferred protected identity;
+private messages unrelated to discovery;
+sensitive reports for advertising;
+emergency behavior for marketing;
+undisclosed third-party profiling;
+precise location without permission;
+family or minor data outside authorized use.
+Personalization must be reversible.
+05.48 Negative Preference Rules
+Users may exclude:
+categories;
+price levels;
+distance ranges;
+event types;
+unavailable times;
+accessibility-incompatible options;
+previously dismissed entities;
+unsafe or unwanted areas;
+nonverified ownership when verification is required.
+The Engine must not infer discriminatory exclusions or facilitate unlawful discriminatory filtering.
+05.49 Anti-Gaming Signals
+Potential discovery manipulation includes:
+keyword stuffing;
+false categories;
+false location claims;
+fake operating hours;
+review rings;
+mass saves;
+artificial click activity;
+paid traffic intended to influence organic rank;
+duplicate listings;
+false ownership claims;
+repeated profile edits to trigger freshness;
+fabricated community impact;
+hidden sponsorship;
+fake event availability;
+expired opportunities kept active;
+coordinated search manipulation;
+location spoofing;
+impersonation;
+false accessibility claims;
+misleading resource capacity.
+05.50 Anti-Gaming Responses
+Level	Response
+1	Signal monitoring
+2	Evidence discount
+3	Ranking adjustment
+4	Temporary visibility limit
+5	Verification request
+6	Promotion hold
+7	Search hold
+8	Human review
+9	Governance escalation
+10	Removal or block
+No punitive action should rely on a single weak signal.
+05.51 Fairness Protections
+The Engine must test for whether ranking systematically disadvantages:
+new businesses;
+small businesses;
+low-review entities;
+rural communities;
+under-documented neighborhoods;
+non-English-speaking communities;
+emerging Cultural Ambassadors;
+historically overlooked institutions;
+community resources without marketing budgets;
+entities outside high-traffic areas;
+communities with limited platform adoption.
+Fairness does not require equal ranking regardless of relevance.
+It requires that structural visibility advantages do not silently become quality assumptions.
+05.52 Geographic Equity
+The Engine must prevent all discovery from concentrating in already-visible cities or neighborhoods.
+Approved mechanisms may include:
+city-normalized visibility;
+neighborhood rotation;
+regional exploration;
+scarcity-aware ranking;
+local relevance weighting;
+underrepresentation monitoring;
+Hidden Gem pathways;
+community-submitted discovery.
+Geographic equity may not invent quality or ignore safety.
+05.53 Emerging Entity Protection
+Emerging entities may receive:
+search visibility;
+emerging labels;
+limited exploration placement;
+evidence collection prompts;
+community verification opportunities;
+Hidden Gem review;
+temporary freshness consideration.
+They may not receive:
+fabricated confidence;
+automatic promotion;
+verified labels without evidence;
+immunity from safety or trust review.
+05.54 Presentation Rules
+The user-facing result may display:
+entity name;
+category;
+location;
+distance;
+open status;
+verification status;
+ownership status;
+relevant community signals;
+accessibility information;
+safety information where approved;
+reason surfaced;
+confidence qualifier;
+sponsored label;
+emerging label;
+Hidden Gem status if formally awarded.
+The Engine must not expose confidential numeric scores or weights.
+05.55 Public Explanation Rules
+Approved examples:
+“Shown because it closely matches your search and location.”
+“Recommended for your relocation search based on community, resource, and trust information.”
+“This is a newer listing with promising community feedback.”
+“Surfaced as an overlooked local option with strong repeat support.”
+“This result matches your request for verified melanated diaspora-owned businesses.”
+“Availability could not be fully confirmed.”
+“Sponsored result — eligibility requirements were still applied.”
+“Shown for exploration because it offers a different nearby option.”
+Prohibited examples:
+“This business paid to rank first.”
+“The algorithm suppressed competitors.”
+“This neighborhood scored poorly because it lacks enough Black users.”
+“You are likely to prefer this because of your race.”
+“The Hidden Gem formula gave this business 86.”
+“The platform secretly reduced this entity’s visibility.”
+“This result is objectively the best.”
+05.56 Internal Output Contract
+{
+  "discovery_assessment_id": "disc_0000000001",
+  "request_id": "req_0000000001",
+  "engine_version": "05.1.0",
+  "discovery_mode": "DISC-CONTEXT",
+  "decision_mode": "RECOMMEND",
+  "query": {
+    "normalized_intent": "find_local_business",
+    "category": "restaurant",
+    "location_id": "location_0001",
+    "hard_filters": [
+      "VERIFIED_MELANATED_OWNERSHIP",
+      "OPEN_NOW"
+    ],
+    "soft_preferences": [
+      "COMMUNITY_RECOMMENDED",
+      "HIDDEN_GEM"
+    ]
+  },
+  "candidate": {
+    "entity_type": "business",
+    "entity_id": "business_0001",
+    "eligibility_state": "ELIGIBLE"
+  },
+  "scores": {
+    "intent_relevance": 94,
+    "context_fit": 88,
+    "geographic_fit": 82,
+    "temporal_fit": 90,
+    "evidence_sufficiency": 74,
+    "community_value": 81,
+    "cultural_relevance": 92,
+    "utility_value": 84,
+    "exploration_value": 65,
+    "raw_discovery_score": 85.55,
+    "rounded_discovery_score": 86
+  },
+  "confidence": {
+    "score": 82,
+    "label": "High"
+  },
+  "adjustments": {
+    "hidden_gem_boost": 6,
+    "diversity_adjustment": 2,
+    "saturation_penalty": 0,
+    "low_confidence_penalty": 0
+  },
+  "displayed_rank_score": 94,
+  "search_eligible": true,
+  "recommendation_candidate": true,
+  "promotion_candidate": true,
+  "recognition_candidate": false,
+  "sponsored": false,
+  "hidden_gem_review_candidate": true,
+  "community_need_score": 68,
+  "hard_filter_failures": [],
+  "holds": [],
+  "public_explanation_code": "STRONG_CONTEXT_MATCH_HIDDEN_GEM",
+  "human_review_required": false,
+  "audit_record_id": "audit_0000000001"
+}

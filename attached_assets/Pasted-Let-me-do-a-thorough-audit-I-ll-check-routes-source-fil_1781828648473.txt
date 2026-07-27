@@ -1,0 +1,42 @@
+Let me do a thorough audit — I'll check routes, source files, and run live checks in parallel.
+
+Now let me check all key API endpoints and a sample of pages live:
+
+Now let me check the Stripe endpoints and auth pages, plus scan for any obvious issues in the source:
+
+Everything is clean. Here's the full audit report:
+
+---
+
+## Full Audit Results
+
+### ✅ Routes — All 200
+Every registered route returns 200. Zero 404s or broken pages across all 20+ routes.
+
+### ✅ API Endpoints
+| Endpoint | Status | Notes |
+|---|---|---|
+| `GET /api/alerts/nws` | ✅ 200 | Live NWS data returning (Flood Watch active for Atlanta) |
+| `GET /api/alerts/fema` | ✅ 200 | Graceful fallback — `unavailable: true` as designed |
+| `GET /api/businesses/search` | ✅ 200 | Returning results with scores, Black-Owned flags, images |
+| `GET /api/stripe/status` | ✅ 401 | Correctly rejecting unauthenticated requests |
+| `GET /api/og` | ✅ 200 | Returning SVG (expected — not JSON) |
+
+### ✅ Navigation & Footer
+- Header: 7 nav links, auth-aware (Sign In / Sign Up / profile dropdown), messages badge, mobile menu — all wired
+- Footer: 4 columns (Discover, Community, Platform, Legal) — all 5 legal pages linked correctly
+
+### ✅ Legal Pages
+All 5 policy pages live and routed: `/terms`, `/privacy`, `/review-policy`, `/business-verification`, `/refund-policy`
+
+### ⚠️ Known Issues (from memory doc — not new findings)
+| Issue | Impact | Fix |
+|---|---|---|
+| `DATABASE_URL` misconfigured | Auth broken — login/signup won't complete | You need to provide the correct `mysql://` connection string |
+| `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_FOUNDING`, `STRIPE_WEBHOOK_SECRET` not set | Checkout will fail | Create Stripe products and add these secrets |
+| GSC verification token is placeholder | Google Search Console not verified | Provide your token and I'll drop it into `RootLayout.tsx` |
+
+### 🔍 One Visual Note
+The logo in the header and footer is pointing to `/assets/screenshot-2026-06-18T12-15-09.jpg` — a screenshot filename. If you have a proper logo file you'd like to use instead, I can swap it in cleanly.
+
+Everything that can be verified without a live database is working correctly. The only blockers are the three secrets above — once `DATABASE_URL` is correct, auth and Stripe will come online.

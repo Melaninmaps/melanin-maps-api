@@ -1,0 +1,118 @@
+05.30 Diversity and Exploration Re-ranking
+The Engine must prevent result sets from becoming unnecessarily repetitive.
+Diversity may be applied across:
+ownership status;
+business category;
+neighborhood;
+price range;
+experience type;
+institution size;
+established versus emerging;
+local versus regional;
+indoor versus outdoor;
+event format;
+resource type;
+Cultural Ambassador perspective;
+route location.
+Diversity must be relevant to the query.
+It must not be imposed in a way that weakens explicit requirements.
+05.30.1 Re-ranking rule
+Displayed Rank Score =
+  Base Discovery Score
++ Exploration Adjustment
++ Diversity Adjustment
++ User-Specific Relevance Adjustment
+- Saturation Penalty
+- Redundancy Penalty
+All adjustments must remain within approved limits.
+05.30.2 Maximum re-ranking adjustments
+Adjustment	Maximum
+Exploration boost	+8
+Hidden Gem boost	+10
+Diversity boost	+6
+User-saved relevance	+5
+Route convenience	+5
+Redundancy penalty	−8
+Saturation penalty	−10
+Low-confidence penalty	−15
+No adjustment may override a hard filter or safety block.
+05.31 Popularity Limitation Rule
+Popularity signals may include:
+views;
+saves;
+visits;
+reviews;
+shares;
+followers;
+clicks;
+bookings;
+transactions;
+event attendance.
+Combined popularity signals may contribute no more than 12% of the Discovery Engine’s internal relevance calculation.
+Popularity must not:
+establish trust;
+establish safety;
+establish ownership;
+establish cultural authenticity;
+establish community impact;
+erase negative evidence;
+permanently dominate visibility.
+05.32 Saturation Control
+Saturation control prevents already-visible entities from capturing disproportionate exposure.
+Potential saturation indicators:
+repeated top placement;
+high share of category impressions;
+high paid and organic overlap;
+frequent repeat exposure to the same user;
+dominance across nearby locations;
+excessive category concentration;
+high visibility unsupported by current relevance.
+The Engine may apply a temporary saturation penalty when adequate alternatives exist.
+Saturation control must not suppress exact-match searches.
+05.33 Result Rotation
+Eligible candidates with similar scores may rotate to preserve opportunity and reduce deterministic concentration.
+Rotation is permitted when:
+scores are within an approved tolerance;
+all candidates meet relevant thresholds;
+no safety-sensitive context requires strict ordering;
+the user has not requested a specific ranking basis;
+rotation does not misrepresent quality.
+Default rotation tolerance:
+Candidates within 5 Discovery Score points
+and within the same eligibility tier
+may rotate.
+Rotation decisions must be logged.
+05.34 Hidden Gem Candidate Detection
+The Discovery Engine™ may identify a Hidden Gem candidate but does not award final Hidden Gem status.
+A candidate may enter Hidden Gem review when it shows:
+strong community evidence;
+strong trust evidence;
+high context relevance;
+limited existing visibility;
+sustained positive lived experience;
+low marketing reach relative to quality;
+no active safety or governance concern;
+current operating status;
+meaningful local or cultural value;
+sufficient evidence independence.
+05.34.1 Hidden Gem Potential Score
+Hidden Gem Potential =
+  Quality Strength
++ Community Strength
++ Trust Strength
++ Cultural or Local Distinctiveness
++ Underexposure
++ Continuity
+- Popularity Saturation
+- Risk Penalties
+Normalized to 0–100.
+05.34.2 Baseline Hidden Gem weights
+Component	Weight
+Quality Strength	20%
+Community Strength	20%
+Trust Strength	15%
+Cultural or Local Distinctiveness	15%
+Underexposure	15%
+Continuity	10%
+Opportunity Relevance	5%
+Risk penalties and disqualifiers apply after weighting.

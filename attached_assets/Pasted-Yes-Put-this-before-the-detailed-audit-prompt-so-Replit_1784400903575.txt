@@ -1,0 +1,78 @@
+Yes. Put this **before** the detailed audit prompt so Replit understands the standard it is being measured against.
+
+```text
+═══════════════════════════════════════════════════════════════════════
+AUDIT EXPECTATION — READ BEFORE BEGINNING
+═══════════════════════════════════════════════════════════════════════
+
+This audit is not asking whether authentication files, routes, screens,
+or database tables merely exist.
+
+Our standard is a complete, production-ready Day 1 member experience.
+
+A capability should be marked COMPLETE only when a real user can
+successfully complete the entire workflow from beginning to end across
+the applicable platform, with:
+
+- working frontend behavior;
+- working backend behavior;
+- correct database persistence;
+- valid production configuration;
+- secure session handling;
+- clear loading, success, error, expired, blocked, and recovery states;
+- appropriate privacy, security, consent, and age protections;
+- no mocked, hardcoded, demo-only, placeholder, or disconnected steps;
+- no dependency on development-only services;
+- no required staff intervention for an ordinary user journey;
+- evidence supporting the conclusion.
+
+The intended Day 1 authentication experience is:
+
+1. Native email/password registration and login serve as the dependable
+   universal baseline for web, iOS, and Android.
+
+2. Replit OIDC must not be treated as the required public production
+   login method. It may remain for development only if appropriate.
+
+3. Members must be able to:
+   - register;
+   - verify ownership of their contact information;
+   - complete onboarding;
+   - sign in again later;
+   - restore a valid session;
+   - recover a forgotten password;
+   - log out securely;
+   - understand any account restriction;
+   - manage sensitive account settings;
+   - deactivate or request deletion of their account;
+   - leave the platform without encountering a broken or undefined flow.
+
+4. Supporters should not experience a feature that appears available
+   but is unfinished, disconnected, unsafe, misleading, or dependent on
+   configuration that is absent from production.
+
+5. A successful build, an existing route, or an existing screen is not
+   proof that the workflow is complete.
+
+6. If any required behavior has not been fully designed, identify it as
+   an UNRESOLVED PRODUCT DECISION rather than making assumptions.
+
+7. If any feature creates security, privacy, legal, child-safety,
+   accessibility, abuse, or account-recovery concerns, identify those
+   concerns explicitly even if the code technically works.
+
+8. Distinguish clearly between:
+   - implemented in the Replit workspace;
+   - committed to GitHub main;
+   - deployed on Railway;
+   - confirmed working in production.
+
+9. Do not make changes or attempt repairs during this audit.
+
+The purpose of this review is to establish the truth of the current
+build so that implementation decisions can be made intentionally and
+there are no surprises for users at launch.
+═══════════════════════════════════════════════════════════════════════
+```
+
+Then paste the full **Audit 01 — Authentication & Account Lifecycle** instruction directly underneath it.

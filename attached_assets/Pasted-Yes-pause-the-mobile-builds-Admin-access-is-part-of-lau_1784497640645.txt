@@ -1,0 +1,93 @@
+Yes—pause the mobile builds. **Admin access is part of launch readiness**, and we should not move forward until we confirm whether this is simply an expired login or an actual authorization defect.
+
+Being redirected from `/admin` to login can be correct **when you are signed out**. The defect is if you log in with your authorized administrator email and:
+
+* are not returned to `/admin`;
+* receive a normal member experience;
+* get a 403;
+* or the system no longer recognizes you as an administrator.
+
+Send Replit this:
+
+> **New launch blocker — production admin access unavailable**
+>
+> Do not trigger Community Beta 3 builds yet.
+>
+> Current behavior:
+>
+> * Visiting `https://www.mappingwithmelanin.com/admin` now redirects to the login screen.
+> * This URL previously opened my administrator dashboard.
+> * Confirm whether this is only because my production session expired or whether administrator authorization is broken.
+>
+> Please trace the complete production admin journey:
+>
+> 1. Open `/admin` while signed out.
+>
+>    * Redirect to login is acceptable.
+>    * Preserve the intended destination as `/admin`.
+> 2. Sign in using my authorized administrator email.
+>
+>    * After successful login, return me automatically to `/admin`.
+>    * Do not send me to the ordinary home page.
+> 3. Confirm the production user record:
+>
+>    * normalized email matches the value in `ADMIN_EMAILS`;
+>    * administrator role/flag is present if the database uses one;
+>    * account is active and approved;
+>    * authentication method used does not create a duplicate non-admin account.
+> 4. Confirm Railway configuration:
+>
+>    * `ADMIN_EMAILS` exists in the production API service;
+>    * it contains my exact normalized email;
+>    * there are no spaces, capitalization issues, quotation marks or stale addresses causing a mismatch;
+>    * the running deployment actually reads this variable.
+> 5. Trace the authorization path:
+>
+>    * `/admin` web route guard;
+>    * current-user request;
+>    * API admin middleware;
+>    * email/role comparison;
+>    * HTTP status returned by the first admin data request;
+>    * exact redirect code path.
+> 6. Confirm all admin APIs fail closed:
+>
+>    * signed out → 401;
+>    * authenticated non-admin → 403;
+>    * authenticated approved admin → 200.
+> 7. Confirm admin login survives:
+>
+>    * page refresh;
+>    * closing and reopening the browser;
+>    * navigating directly to a nested admin page;
+>    * session renewal.
+> 8. Confirm the admin dashboard loads its core functions:
+>
+>    * business approval/moderation;
+>    * reports;
+>    * user or account management;
+>    * test-business identification;
+>    * safety/content moderation queues;
+>    * any other current launch-critical admin tools.
+>
+> Do not bypass authorization or expose admin access merely to restore the page. Fix the underlying session, redirect or permission issue.
+>
+> Return:
+>
+> * whether the behavior was expired authentication or an authorization defect;
+> * the exact production account matched;
+> * the status of `ADMIN_EMAILS` without exposing its full value;
+> * HTTP results for signed-out, non-admin and admin tests;
+> * files or environment variables changed;
+> * whether the fix is web/server-only or affects mobile builds;
+> * `ADMIN VERIFIED` or `NO GO — CORRECTION REQUIRED`.
+>
+> Keep the release at **NO GO** until administrator access is proven in production.
+
+## What you can test immediately
+
+Go to `www.mappingwithmelanin.com/admin`, log in with the exact email that should have admin access, and note what happens next:
+
+* Returning to `/admin` and seeing the dashboard means the redirect was simply protecting a signed-out session.
+* Landing on the regular website, seeing “unauthorized,” or returning to login means the admin flow is defective.
+
+Do not create a new account for this test. Use the original email listed as your administrator account, because a new email would correctly be treated as a regular member.

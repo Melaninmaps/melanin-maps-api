@@ -1,0 +1,139 @@
+A 16-year-old generally should **not need parental permission for every ordinary action**, but they should still have stronger default protections than an adult.
+
+For your app, I would use age bands rather than one blanket “minor” rule:
+
+### Under 13
+
+Require verified parental consent before collecting personal information or allowing features such as account creation, location sharing, messaging, profile photos, videos, or social links. COPPA generally requires verifiable parental consent for children under 13 when an online service collects personal information from them. ([Federal Trade Commission][1])
+
+### Ages 13–15
+
+Allow a teen account, but require parent or guardian involvement for higher-risk features, such as:
+
+* public social-profile links;
+* precise or background location;
+* direct messages from unknown adults;
+* meetups;
+* marketplace transactions;
+* public video posting;
+* purchases or subscriptions;
+* joining adult-oriented groups or events.
+
+### Ages 16–17
+
+Allow more independence, but keep teen safeguards by default:
+
+* age-appropriate result filtering;
+* no public precise location;
+* restricted adult-to-minor messaging;
+* no 18+/21+ businesses, groups, events, or videos;
+* privacy-first social-link visibility;
+* parental oversight available but not required for every search, saved item, group, or ordinary post.
+
+A 16-year-old could search cars, join an age-appropriate anime group, follow an HBCU, save businesses, and view verified resources without asking a parent each time. They should need approval—or be blocked entirely—for genuinely higher-risk actions.
+
+### Age 18+
+
+Full adult controls.
+
+## Important distinction
+
+There are three different things:
+
+1. **Legal parental consent** for collecting a child’s data.
+2. **Parental controls** that help families manage teen activity.
+3. **Age-based safety restrictions** enforced by the platform even when a parent approves.
+
+A parent should not be able to approve a 16-year-old into a 21+ nightclub, explicit video, adult dating environment, or unsafe direct-message scenario. Some restrictions should remain platform-enforced.
+
+Apple also expects apps capable of collecting or sharing minors’ personal information—such as names, location, photos, videos, or chat—to maintain an appropriate privacy policy and comply with children’s privacy laws. ([Apple Developer][2])
+
+## Recommended structure for Mapping With Melanin™
+
+Use these profile levels:
+
+* **Child Account:** under 13, parent-managed
+* **Teen Account:** 13–15, parent-linked with higher-risk approvals
+* **Older Teen Account:** 16–17, greater independence with safety defaults
+* **Adult Account:** 18+
+
+For older teens, I would offer a **Family Connection** rather than calling every action “parental permission.” That feels less infantilizing.
+
+Example:
+
+> **Family Connection**
+> Link a trusted adult for safety settings, purchases, emergency contacts, and higher-risk permissions. Your ordinary searches, interests, and age-appropriate community activity remain private unless your family settings say otherwise.
+
+## Send Replit this
+
+> **LB-016 — Age-Based Accounts and Graduated Parental Controls**
+>
+> Add to backlog for legal, privacy, product, and technical audit before implementation.
+>
+> Do not treat everyone under 18 identically.
+>
+> Proposed age bands:
+>
+> * Under 13: parent-managed child account with verified parental consent before collecting personal information.
+> * Ages 13–15: teen account with parental approval for higher-risk features.
+> * Ages 16–17: older-teen account with greater independence but platform-enforced safety protections.
+> * Age 18+: adult account.
+>
+> Audit applicable laws and store policies by launch jurisdiction before finalizing thresholds.
+>
+> Required distinction:
+>
+> 1. legal parental consent;
+> 2. optional family oversight;
+> 3. platform-enforced age restrictions that cannot be overridden.
+>
+> Ordinary age-appropriate actions should not require repeated parental approval:
+>
+> * search;
+> * following topics;
+> * saving businesses;
+> * reading verified resources;
+> * joining age-appropriate groups;
+> * viewing age-appropriate community posts and videos.
+>
+> Higher-risk actions should require parental approval, additional safeguards, or remain unavailable:
+>
+> * precise/background location;
+> * public social links;
+> * direct messaging with unknown adults;
+> * meetups;
+> * public video posting;
+> * purchases;
+> * marketplace transactions;
+> * adult-oriented groups, businesses, events, or content.
+>
+> Platform-enforced restrictions must block:
+>
+> * 18+/21+ businesses and events for minors;
+> * explicit sexual content;
+> * adult dating;
+> * dangerous or illegal activity;
+> * public disclosure of a minor’s precise location;
+> * inappropriate adult-to-minor contact.
+>
+> For ages 16–17, propose a “Family Connection” model instead of requiring parental permission for every action.
+>
+> Return:
+>
+> * applicable legal and store-policy requirements;
+> * recommended age bands;
+> * exact permissions by age;
+> * data collected by each account type;
+> * privacy defaults;
+> * location rules;
+> * messaging rules;
+> * social-link and video rules;
+> * purchase rules;
+> * account transition at birthdays;
+> * parental-verification method;
+> * whether this affects current launch scope or should be post-launch.
+
+For launch, I would keep this simple: do not market the app as a children’s app, do not enable under-13 independent accounts, and ensure any known minor receives age-filtered content and restricted social/location features until the full graduated system is built.
+
+[1]: https://www.ftc.gov/news-events/news/press-releases/2026/02/ftc-issues-coppa-policy-statement-incentivize-use-age-verification-technologies-protect-children?utm_source=chatgpt.com "FTC Issues COPPA Policy Statement to Incentivize the Use of Age Verification Technologies to Protect Children Online | Federal Trade Commission"
+[2]: https://developer.apple.com/app-store/review/guidelines/?utm_source=chatgpt.com "App Review Guidelines - Apple Developer"

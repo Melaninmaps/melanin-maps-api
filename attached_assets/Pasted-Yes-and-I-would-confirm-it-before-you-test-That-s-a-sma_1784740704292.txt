@@ -1,0 +1,68 @@
+Yes—and I would **confirm it before you test**. That's a smart precaution.
+
+I would ask Replit to perform a **read-only audit** of the delete-account behavior before you delete anything.
+
+Send this:
+
+---
+
+### READ-ONLY AUDIT — Delete Account Behavior
+
+Do not modify any code.
+
+Answer the following with evidence from the implementation.
+
+1. When a user deletes their account, what happens to their email address?
+
+   * Is the user record permanently deleted?
+   * Soft deleted?
+   * Anonymized?
+
+2. After deletion, can the same email address be used to create a new account?
+
+3. If not, what specifically prevents it?
+
+   * Unique database constraint?
+   * Auth provider?
+   * Deleted-user table?
+   * Other?
+
+4. Walk through the exact deletion flow:
+
+   * Which API endpoint is called?
+   * Which service performs the deletion?
+   * Which database tables are affected?
+   * What records remain after deletion?
+
+5. If I create a temporary account with **[test@example.com](mailto:test@example.com)**, delete it, and immediately try to register **[test@example.com](mailto:test@example.com)** again:
+
+   * What will happen?
+   * Explain why based on the code.
+
+6. Does the implementation comply with Apple's requirement for in-app account deletion?
+
+7. Are there any known issues or edge cases that could leave the email unusable after deletion?
+
+Return only verified findings from the code. Do not speculate.
+
+---
+
+### Why I'm recommending this
+
+There are two common, valid designs:
+
+**Option A (what I'd expect for your app):**
+
+* Account is deleted.
+* Email becomes available for reuse.
+* You can create a new account later with the same email.
+
+**Option B (also valid):**
+
+* Account is deleted/anonymized.
+* Email remains reserved forever.
+* You cannot register again with that email.
+
+Neither is inherently wrong—but you should know which one your app implements **before** using an email you may want later.
+
+Given where you are in the App Store process, I'd spend five minutes verifying this rather than discovering afterward that your test email is permanently reserved.

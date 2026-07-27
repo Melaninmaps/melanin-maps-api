@@ -1,0 +1,85 @@
+Yes — the pins should be clickable, and clicking a cultural site such as **Howard University** should open useful context. Right now, the map proves the records are loading, but the user experience is incomplete because the markers have no visible label, callout, or detail view.
+
+The ideal behavior is:
+
+* Tap the Howard marker.
+* A callout appears with:
+
+  * Howard University
+  * HBCU
+  * Washington, DC
+  * a short one-line description
+  * **View Details**
+* Tap **View Details** to open a dedicated cultural-site page with:
+
+  * history and significance
+  * full description
+  * photos
+  * address
+  * directions
+  * website
+  * save/share
+  * related nearby businesses or places
+
+For launch, I would at minimum require a marker callout with the site name and category. A full detail page is better, but the callout is the immediate usability fix.
+
+Send Replit this:
+
+> **P0 MAP CONTEXT — CULTURAL-SITE MARKER INTERACTION**
+>
+> Cultural-site pins now render correctly, but they appear only as unlabeled colored bubbles. Users cannot tell which pin is Howard University or understand why a location matters.
+>
+> Please perform a read-only audit first and report:
+>
+> 1. Whether cultural-site `<Marker>` components currently have:
+>
+>    * `title`
+>    * `description`
+>    * `<Callout>`
+>    * `onPress`
+>    * a detail route
+> 2. Which cultural-site fields are available from `/api/cultural-sites`, including:
+>
+>    * name
+>    * category
+>    * description
+>    * city/state
+>    * address
+>    * website
+>    * image
+>    * latitude/longitude
+> 3. Whether a cultural-site detail screen already exists.
+> 4. The smallest OTA-safe launch fix.
+>
+> **Required launch behavior**
+>
+> When a user taps a cultural-site marker, show a readable callout containing:
+>
+> * site name
+> * cultural category, such as HBCU, Civil Rights, Heritage, Native or Latino
+> * city and state
+> * a short description when available
+> * “View Details” when a detail screen exists
+>
+> If no detail screen exists, implement the callout first and return a separate proposal for a dedicated cultural-site detail page.
+>
+> Specifically verify Howard University can be identified and opened from its map marker.
+>
+> Do not:
+>
+> * alter the POI filter
+> * change marker coordinates
+> * change map polling
+> * add unrelated language work
+> * remove existing business pins
+>
+> Return:
+>
+> * current marker code
+> * available API fields
+> * proposed callout design
+> * whether the fix is OTA-safe
+> * exact files affected
+> * acceptance test
+
+My recommendation is to make the pins visually distinct by category **and** informative on tap. The category color alone is not enough; users need the name and story behind the location.

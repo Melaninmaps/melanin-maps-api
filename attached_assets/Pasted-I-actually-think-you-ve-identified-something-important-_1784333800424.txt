@@ -1,0 +1,351 @@
+I actually think you've identified something important, and I don't think Replit is fully tracking the evolution of the project.
+
+**My answer is: yes, I think we've outgrown the term "Foundations Book."**
+
+From everything we've built together, I believe the hierarchy should actually look like this:
+
+# Mapping With Melanin™ Legacy Collection
+
+*(This becomes the umbrella for everything.)*
+
+The Legacy Collection isn't one book.
+
+It's the entire institutional archive.
+
+Under it are multiple volumes.
+
+---
+
+# Volume I — The Mapping With Melanin™ Legacy Collection
+
+## The Constitution
+
+This replaces what we've been casually calling the "Foundations Book."
+
+This is the living constitution of the company.
+
+Inside it are the Mission, Vision, Principles, Storytelling Standards, Collaboration Standards, Design Philosophy, Core Brand Messages, Four Foundations, Decision Frameworks, etc.
+
+It is **not** presentation-specific.
+
+---
+
+# Volume II — Presentation System
+
+This is where I think Replit is missing the architecture.
+
+The Experience Deck isn't just a PowerPoint.
+
+It's a **chapter**.
+
+So are:
+
+* Investor Deck
+* Business Deck
+* Community Deck
+* Zoom Deck
+* Welcome Home Tour Deck
+* Team Deck
+* Features Deck
+
+They're all chapters of one Presentation System.
+
+Each deck becomes a chapter.
+
+Each slide becomes a page.
+
+Each page has metadata.
+
+Each page has history.
+
+Each page can be reused.
+
+---
+
+# Volume III — Living Archive
+
+Tour.
+
+Community.
+
+History.
+
+Photography.
+
+Videos.
+
+Documentaries.
+
+Press.
+
+Launch.
+
+Cities.
+
+Stories.
+
+---
+
+# Volume IV — Community Atlas
+
+Exactly as we've discussed.
+
+---
+
+# Volume V — Legacy Collection
+
+Coffee books.
+
+Future documentaries.
+
+Letters.
+
+Music.
+
+Historical preservation.
+
+---
+
+## I think this is the piece Replit isn't seeing.
+
+We've been saying:
+
+> "The Foundations Book."
+
+But I think what we actually mean is:
+
+> **The Mapping With Melanin™ Legacy Collection**
+
+Inside that...
+
+is a constitutional volume.
+
+Inside that...
+
+is a Presentation System.
+
+Inside that...
+
+are chapters.
+
+Inside those...
+
+are reusable pages.
+
+---
+
+## Which means...
+
+This isn't the hierarchy:
+
+```
+Foundations Book
+
+Experience Deck
+
+Business Deck
+
+Investor Deck
+```
+
+It's actually:
+
+```
+Mapping With Melanin™ Legacy Collection
+
+    Constitution
+
+        Storytelling Standards
+
+        Mission
+
+        Vision
+
+        Principles
+
+        Design Philosophy
+
+    Presentation System
+
+        Experience Deck
+
+            Slide 1
+
+            Slide 2
+
+            ...
+
+        Investor Deck
+
+        Business Deck
+
+        Zoom Deck
+
+        Community Deck
+
+    Living Archive
+
+    Community Atlas
+
+    Documentary Collection
+```
+
+That distinction matters enormously.
+
+---
+
+# Then something really powerful happens.
+
+Suppose...
+
+We rewrite the Mission.
+
+We don't edit twelve presentations.
+
+Instead...
+
+The Mission chapter changes.
+
+The Presentation Registry immediately knows:
+
+Mission appears in:
+
+✓ Investor
+
+✓ Business
+
+✓ Experience
+
+✓ Zoom
+
+✓ Welcome Home Tour
+
+✓ Community
+
+It asks:
+
+> "Would you like to update every presentation that references the approved Mission chapter?"
+
+That's exactly the propagation system we've been designing.
+
+---
+
+# I also think we need to rename something.
+
+I don't love:
+
+**Slide Registry**
+
+I think it's too technical.
+
+I'd call it:
+
+## Chapter Registry
+
+because...
+
+Every slide is part of a chapter.
+
+Every chapter belongs to a volume.
+
+Every volume belongs to the Legacy Collection.
+
+That's much more in keeping with the institutional language you've been developing.
+
+---
+
+# One more evolution
+
+This is something I hadn't realized until your question.
+
+We keep talking about:
+
+"Slides."
+
+I don't think we should.
+
+They're **pages**.
+
+Think about it.
+
+You're writing a book.
+
+Sometimes that page is presented on a screen.
+
+Sometimes it's printed.
+
+Sometimes it's narrated in the documentary.
+
+Sometimes it's in a coffee table book.
+
+Sometimes it's on the website.
+
+Sometimes it's part of onboarding.
+
+It's still the same page.
+
+The medium changes.
+
+The story doesn't.
+
+---
+
+# So here's what I would tell Replit
+
+Not to build yet—but to **reorganize the conceptual architecture**.
+
+Instead of thinking:
+
+```
+Book
+↓
+Slides
+```
+
+Think:
+
+```
+Mapping With Melanin™ Legacy Collection
+    ↓
+Volumes
+    ↓
+Chapters
+    ↓
+Pages
+    ↓
+Reusable Components
+```
+
+That architecture aligns with everything we've been saying:
+
+* institutional memory
+* propagation
+* documentation
+* documentaries
+* coffee books
+* presentations
+* website
+* onboarding
+* future generations
+
+Everything finally lives under one roof.
+
+---
+
+## My recommendation
+
+Before we touch another visual, I think we should ask Replit for **one thing only**:
+
+> **A proposed information architecture for the entire Mapping With Melanin™ Legacy Collection using the new Volume → Chapter → Page model.**
+
+No implementation.
+
+No files moved.
+
+No content rewritten.
+
+Just the architecture.
+
+Because I think **this** is the missing piece that will keep everything coherent for the next 20 years.
+
+And one final note: I don't think the term **"Bible"** should appear in your formal documentation anymore. It has been useful as a working nickname, but **"Mapping With Melanin™ Legacy Collection"** is more inclusive, more enduring, and better reflects what you're actually building. It communicates preservation, growth, and stewardship rather than a static manual. I would reserve "Legacy Collection" as the official name and use "Constitution," "Volume," "Chapter," and "Page" consistently throughout the system.

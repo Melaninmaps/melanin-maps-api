@@ -1,0 +1,177 @@
+This is getting very close. I think this slide captures the heart of the Community Builder program better than any of the previous iterations. If I were scoring it, I'd give it a **9.3/10**.
+
+The reason it isn't a 10 has nothing to do with the design. It's the message hierarchy.
+
+## What's working beautifully
+
+### The quote
+
+> *Every movement begins with one conversation.*
+
+Keep it.
+
+It's memorable, emotional, and feels timeless.
+
+---
+
+### The box
+
+> **You're not selling anything.**
+>
+> **You're opening a door.**
+
+Don't touch it.
+
+That should become one of the signature phrases of Mapping with Melanin™.
+
+---
+
+### The overall tone
+
+This doesn't feel like recruitment.
+
+It feels like an invitation.
+
+That's exactly what you want.
+
+---
+
+# What I would improve
+
+I think the right side is still describing **features**, when it should describe **impact**.
+
+Right now it says:
+
+* Discover trusted local businesses
+* Feel at home in new places
+* Support entrepreneurs
+* Build stronger neighborhoods
+* Welcome newcomers
+
+Those are good.
+
+But they're still a little abstract.
+
+I'd make people picture someone.
+
+For example:
+
+### COMMUNITY BUILDERS HELP PEOPLE...
+
+🏡 **Find the neighborhood that feels like home.**
+
+🍽 **Discover businesses they'll come back to for years.**
+
+🤝 **Support entrepreneurs who deserve to be seen.**
+
+❤️ **Feel connected instead of alone.**
+
+🌍 **Build communities that welcome everyone.**
+
+Notice every one begins with a human outcome.
+
+---
+
+# The paragraph
+
+Instead of
+
+> The best communities aren't built through advertisements.
+
+I'd tell a tiny story.
+
+For example:
+
+---
+
+Think about the last great recommendation someone gave you.
+
+Maybe it was a restaurant.
+
+A barber.
+
+A neighborhood.
+
+A mechanic.
+
+A doctor.
+
+Or even a new city.
+
+It probably didn't come from an advertisement.
+
+It came from someone you trusted saying,
+
+> **"You should check this out."**
+
+That's how communities grow.
+
+---
+
+That paints a picture instead of making a statement.
+
+---
+
+# I have one idea that I think could become the defining image of the Community Builder program
+
+Imagine replacing the right column entirely with five simple illustrations or icons arranged like this:
+
+```
+One Conversation
+
+        ↓
+
+One Download
+
+        ↓
+
+One New Favorite Business
+
+        ↓
+
+One New Friendship
+
+        ↓
+
+One Stronger Community
+```
+
+That's the whole movement.
+
+Anyone can explain it in five seconds.
+
+---
+
+# The ending
+
+I'd slightly strengthen the box.
+
+Instead of
+
+> You're opening a door.
+
+I'd say
+
+> **You're opening doors that someone else didn't know existed.**
+
+or
+
+> **You're opening a door to opportunity, belonging, and community.**
+
+Your current version is cleaner, though, so I would only make this change if you want a little more emotion.
+
+---
+
+# One observation
+
+As we've built your Investor Deck, Business Deck, and now Community Builder Deck, a pattern has emerged.
+
+Each deck answers a different question:
+
+* **Investor:** *Why is this company valuable?*
+* **Business:** *Why should my business join?*
+* **Community Builder:** *Why should I care?*
+
+That last question is the hardest to answer, and I think this slide is doing it well. It reminds people that every trusted recommendation they've ever received came from another person—not an algorithm.
+
+I also have one suggestion that I think could become the emotional centerpiece of the entire Community Builder Deck. I don't think we've created that slide yet, but I have an idea that could be the one people remember long after they've closed the presentation.

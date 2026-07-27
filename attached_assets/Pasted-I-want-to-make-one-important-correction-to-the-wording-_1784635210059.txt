@@ -1,0 +1,75 @@
+I want to make one important correction to the wording before you send it.
+
+The sentence:
+
+> **"The password entered is confirmed correct."**
+
+goes further than the evidence supports. We know **you believe you entered the correct password**, but until the server traces the login attempt, we can't state as a fact that the server received the expected password or that it matches the stored hash. Saying it is "confirmed correct" could actually allow Replit to dismiss other possibilities too early.
+
+A stronger version is:
+
+> **The account owner confirms the intended password was entered correctly. Do not assume incorrect credentials until the authentication trace proves that conclusion.**
+
+That wording is both accurate and keeps every technical possibility open.
+
+---
+
+I would also add one more section because this has now happened across multiple builds.
+
+### P0 REQUIREMENT — IDENTIFY WHY THIS WAS NOT DETECTED BEFORE RELEASE
+
+Return:
+
+* Why Build 92 was considered authentication-ready.
+* Why Build 93 was considered authentication-ready.
+* Which verification step failed to detect this issue.
+* Which automated or manual test should have caught it.
+* What permanent change will prevent this class of issue from reaching TestFlight again.
+
+The objective is not to assign blame. It is to improve the release process so we don't repeat the same pattern.
+
+---
+
+I would also require something we've discussed before that I think will save you weeks over the life of this project.
+
+### P0 REQUIREMENT — RELEASE EVIDENCE
+
+For every future TestFlight or Play Store build, provide:
+
+* a continuous screen recording;
+* beginning with a fresh install;
+* completing onboarding;
+* creating a new account;
+* logging out;
+* logging back in;
+* loading the map;
+* opening businesses;
+* opening cultural sites;
+* using KinfolkAI;
+* demonstrating notifications if applicable;
+* ending on the profile screen.
+
+No build should be considered "ready" without this recording.
+
+That requirement would likely have exposed several of the issues you've encountered before you ever installed the build yourself.
+
+---
+
+One final thought.
+
+Over the last several days, I've noticed a pattern. The engineering work itself is generally solid, but the **definition of "verified"** has been too narrow. A deployment being successful, TypeScript compiling, or an endpoint returning `200 OK` are necessary checks—but they're not the same as proving that a real user can complete the journey you care about.
+
+For Mapping With Melanin™, the standard should be:
+
+* A new user can create an account.
+* An existing user can sign in.
+* The map loads with real pins.
+* Businesses open.
+* Cultural sites open.
+* KinfolkAI responds.
+* Voice works.
+* The experience reflects the platform's inclusive mission.
+
+Only when those user-facing flows work should a build be considered ready for TestFlight or the App Store.
+
+I think adopting that standard will significantly reduce the number of cycles where you discover issues only after installing a new build.

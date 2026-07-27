@@ -1,0 +1,98 @@
+You found **two separate issues**:
+
+1. **Report Intel submission is failing on iOS**
+2. The bottom navigation label shows **“index”** instead of **“Discovery”**
+
+The screenshot also shows the map/location portion is loading, so the broader iOS map issue may be more specific than “the map does not work.” This particular failure is in the **incident-report submission flow**.
+
+Send Replit this:
+
+> **ADD TO LAUNCH BACKLOG — TWO MUST-FIX IOS ISSUES**
+>
+> ## LB-010A — Report Intel submission failure
+>
+> Real-device evidence from iOS:
+>
+> * Report Intel screen opens.
+> * Location resolves successfully.
+> * User selects **Area to Avoid**.
+> * Submission returns:
+>   **“Error — Failed to submit. Please try again.”**
+>
+> Perform a focused read-only diagnosis first.
+>
+> Confirm:
+>
+> 1. The exact endpoint called when submitting Report Intel.
+> 2. Whether the request reaches Railway.
+> 3. HTTP status and response body.
+> 4. Whether the request includes the correct bearer token.
+> 5. Whether latitude and longitude are being sent as valid numbers.
+> 6. Whether the selected report type value matches the server allowlist.
+> 7. Whether required production columns/tables exist.
+> 8. Whether iOS sends a different payload than Android.
+> 9. Whether the failure is caused by:
+>
+>    * authentication;
+>    * schema mismatch;
+>    * validation;
+>    * malformed payload;
+>    * missing production route;
+>    * server/database timeout;
+>    * another confirmed cause.
+> 10. Replace the generic alert only after the real cause is known.
+>
+> Required tests after repair:
+>
+> * submit each report type;
+> * submit with optional details empty;
+> * submit with details entered;
+> * confirm report appears on map/feed/admin;
+> * confirm duplicate taps do not create duplicate reports;
+> * confirm expired session gets a sign-in message rather than generic failure;
+> * confirm parity on iOS and Android.
+>
+> Return the root cause, exact files, smallest safe repair, and whether a new mobile build is required.
+>
+> Do not implement until the diagnosis is reported unless the issue is a clearly isolated route-label mismatch or missing schema field.
+>
+> ## LB-011 — Bottom tab shows “index”
+>
+> The first bottom navigation tab displays the internal route name:
+>
+> **index**
+>
+> It must display:
+>
+> **Discovery**
+>
+> Confirm whether this comes from Expo Router’s default filename-derived title in the tab layout.
+>
+> Repair requirements:
+>
+> * Set the user-facing tab title explicitly to **Discovery**.
+> * Keep the route filename and navigation path unchanged unless there is a proven need to rename them.
+> * Confirm the correct icon and accessibility label.
+> * Check every bottom tab for internal route names, including:
+>
+>   * index;
+>   * safety-hub;
+>   * any other filename-style labels.
+> * Use user-facing labels consistently:
+>
+>   * Discovery
+>   * Map
+>   * Safety
+>   * Events
+>   * More
+>
+> Test on both iOS and Android and confirm no navigation regression.
+>
+> LB-011 is a small UI fix but should be included in the next launch-candidate build.
+
+My priority classification:
+
+* **Report Intel failure:** must fix before launch
+* **“index” tab label:** must fix before the next final build because it looks unfinished and will be obvious to every tester
+
+Also, do not let Replit fold these into the general “map not working” ticket without separating them. The screenshot proves location and the report screen load; the failure occurs when the submission is sent. That distinction will make the diagnosis much faster.

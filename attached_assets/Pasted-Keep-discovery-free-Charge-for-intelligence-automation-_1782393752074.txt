@@ -1,0 +1,88 @@
+Keep discovery free. Charge for intelligence, automation, and scale.
+People should never have to pay to discover community. They should pay when they're asking the platform to do significant work on their behalf.
+Always Free
+These are the features that create network effects and make the platform more valuable.
+Community
+Search businesses
+Read reviews
+Leave reviews
+Upload photos
+Join groups
+RSVP to events
+Basic messaging
+Basic itinerary
+Save businesses
+Follow businesses
+Community posts
+Safety surveys
+Neighborhood surveys
+Employer surveys
+These features create the content that everyone benefits from.
+Premium Community Features
+These are expensive or high-value features.
+KinfolkAI
+This is a premium feature.
+Examples:
+"I'm relocating to Charlotte with two children."
+Instead of searching 30 businesses...
+KinfolkAI builds an entire relocation plan.
+That AI request costs money every time it runs.
+Smart Pathways™
+This is premium.
+Example:
+"I'm moving to Atlanta."
+Automatically generate:
+Realtors
+Mortgage lenders
+Schools
+Childcare
+Doctors
+Grocery stores
+Black-owned restaurants
+Community groups
+Events
+Churches
+Safety reports
+That is a sophisticated recommendation engine and a premium experience.
+Advanced Safety Intelligence
+Basic safety information should remain free.
+Premium could include:
+AI safety summaries
+Neighborhood comparisons
+Safety trends over time
+Customized alerts
+Confidence reports
+Unlimited Video Uploads
+Videos become expensive quickly.
+Every uploaded video means:
+Storage
+Streaming
+Moderation
+Bandwidth
+Content review
+I would allow:
+Free:
+5 videos
+Premium:
+Unlimited
+AI Travel Planner
+Premium.
+Examples:
+"Plan a four-day trip to Brazil centered around Black-owned businesses and cultural experiences."
+That's a premium concierge service.
+AI Business Match
+Premium.
+"I'm looking for a Black-owned pediatrician accepting new patients."
+Instead of searching...
+KinfolkAI recommends providers based on your preferences and available community information.
+Business Premium Features
+These should definitely remain paid.
+AI business assistant
+Advanced analytics
+Customer insights
+Unlimited broadcasts
+Marketplace discounts
+Featured placement
+Advanced reporting
+Marketing suggestions
+Business health dashboard

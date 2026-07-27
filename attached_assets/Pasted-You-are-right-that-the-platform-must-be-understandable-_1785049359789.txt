@@ -1,0 +1,249 @@
+You are right that the platform must be understandable at a glance **and** defensible when someone wants the deeper explanation.
+
+My recommendation is:
+
+> **Use a simple color-and-label system, but do not reduce everything to one universal “Safety Score.”**
+
+A single number such as **80% safe** sounds clear, but it may falsely combine very different things:
+
+* Historical sundown-town status
+* Recent discrimination reports
+* General crime data
+* Member comfort
+* Community support
+* Accessibility
+* Day versus night experience
+* Quantity and quality of available evidence
+
+A place might have strong community support and active cultural organizations while also having recent discrimination concerns. One score could hide that tension.
+
+## The better model: a clear headline with expandable detail
+
+The map pin could communicate three things immediately:
+
+### Color
+
+* **Red:** Strong concern or caution
+* **Amber:** Mixed, limited, or changing information
+* **Green:** More reassuring recent indicators
+* **Gray:** Not enough current information
+
+But color must never stand alone. W3C accessibility guidance requires information conveyed through color to also be communicated through text, shape, symbols, or another visual means. ([W3C][1])
+
+### Plain-language label
+
+Use labels such as:
+
+* **Use Extra Caution**
+* **Mixed Community Information**
+* **More Reassuring Recent Information**
+* **Not Enough Information Yet**
+* **Historical Context Available**
+
+### Evidence strength
+
+A smaller line could say:
+
+* **High confidence**
+* **Moderate confidence**
+* **Limited information**
+
+That helps a user understand whether the result reflects substantial evidence or only a few data points.
+
+## What the pin might look like
+
+### At-a-glance version
+
+**Red pin — Use Extra Caution**
+
+> Historical exclusion documented
+> Recent discrimination reports increased
+> Moderate evidence
+
+Then:
+
+**Why this result?**
+**Learn more**
+
+### Another example
+
+**Amber pin — Mixed Community Information**
+
+> Strong local community engagement
+> Some recent discrimination concerns
+> Limited recent reporting
+
+### Historical data without present-day evidence
+
+**Gray-and-amber pin — Historical Context Available**
+
+> Historically documented sundown town
+> Not enough current information to characterize conditions today
+
+This is much more honest than assigning a red **35% safety score** solely because of historical data.
+
+# Could you still use a number?
+
+Yes, but I would make the number describe the **information**, not claim to measure absolute safety.
+
+Better possibilities:
+
+### Community Confidence: 80%
+
+Meaning:
+
+> We have enough recent, corroborated information to speak with relatively high confidence.
+
+That is not the same as saying a place is 80% safe.
+
+### Current Community Signal: 72/100
+
+This could reflect current reported experiences, but only after the formula is mature, legally reviewed, and thoroughly tested.
+
+### Evidence Available: 80%
+
+This tells users how complete the information is rather than making a broad promise about safety.
+
+For early versions, I prefer:
+
+> **Label + color + evidence level**
+
+over a percentage.
+
+A percentage feels scientifically precise even when the underlying data may be incomplete, self-selected, unevenly distributed, or outdated.
+
+# Historical Sundown Towns need a separate symbol
+
+Do not let a historical designation automatically determine the present-day color.
+
+For example:
+
+* A distinct **history marker** or symbol identifies historical sundown-town research.
+* A separate color indicates recent community information.
+* The detail view explains both.
+
+A town could therefore show:
+
+**Historical Context:** Confirmed sundown-town history
+**Current Community Signal:** Limited information
+**Recent Reports:** No meaningful trend available
+
+Or:
+
+**Historical Context:** Probable historical record
+**Current Community Signal:** Use Extra Caution
+**Why:** Multiple approved recent discrimination reports
+
+That prevents history from being erased while avoiding unsupported claims about today.
+
+# The experience should have three levels of explanation
+
+This is how you serve a 13-year-old, a 26-year-old, and a person with two doctorates through the same interface.
+
+## Level 1 — Immediate understanding
+
+Visible directly on the pin or card:
+
+> **Use Extra Caution**
+
+> Recent discrimination concerns
+
+No jargon.
+
+## Level 2 — Why
+
+One tap:
+
+> This result reflects several approved reports of discriminatory treatment during the past 12 months and limited recent evidence of community support.
+
+## Level 3 — Learn More
+
+For users who want depth:
+
+* Historical sources
+* Report date ranges
+* Evidence categories
+* Number of qualifying reports
+* Whether reports were corroborated
+* Community organizations
+* Positive engagement and reconciliation work
+* Data limitations
+* Methodology explanation
+* Correction process
+
+The CDC’s Clear Communication Index supports designing public-facing information around everyday language and the characteristics that help people understand important material. ([CDC][2])
+
+That is not “dumbing it down.” It is **progressive disclosure**: the main message is immediately understandable, while greater depth remains available.
+
+# Recommended future classification
+
+I would propose these four member-facing statuses:
+
+| Status                                 | Color | Meaning                                                                      |
+| -------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| **Use Extra Caution**                  | Red   | Meaningful recent concerns supported by sufficient evidence                  |
+| **Mixed Community Information**        | Amber | Positive and concerning signals coexist, or conditions appear to be changing |
+| **More Reassuring Recent Information** | Green | Recent information is generally reassuring, while never guaranteeing safety  |
+| **Not Enough Information Yet**         | Gray  | Insufficient current information to make a responsible characterization      |
+
+Historical context should be an additional marker:
+
+> **Historical Exclusion Record**
+
+It should not be a fifth safety grade.
+
+## I would avoid these labels
+
+* Safe
+* Unsafe
+* Dangerous
+* 100% Safe
+* Low-risk people
+* Bad neighborhood
+* Good neighborhood
+
+No platform can guarantee safety, and those labels can stigmatize communities or imply certainty the evidence does not support.
+
+# Weighting principle
+
+The status should draw from separate dimensions, not one undifferentiated count:
+
+* Recent discrimination reports
+* Corroboration and evidence quality
+* Recency
+* Day/night differences
+* Community support and intervention
+* Community organizations and resources
+* Positive community engagement
+* Documented public findings
+* Historical context
+* Documented reconciliation or corrective activity
+* Data completeness
+
+The internal weights and thresholds may be valuable trade-secret methodology. The public should understand the **categories of information used**, but you do not have to publish the exact formula that competitors could copy or people could manipulate.
+
+However, the system must remain auditable internally and understandable enough externally that a community can challenge an inaccurate result.
+
+# My recommendation for Build 97
+
+For Build 97:
+
+* Add the **Historical Sundown Towns** layer.
+* Use historical evidence/status labels.
+* Keep historical context separate from present-day safety.
+* Replace “Safety Score” with **Community Safety Insights** or **Community Insights**.
+* Use plain-language labels and icons.
+* Do not launch a numerical present-day score until the evidence model, weighting, minimum thresholds, appeals process, and disclaimers are complete.
+* Show **Not Enough Information Yet** rather than inventing a neutral score.
+* Make **Why this result?** available where any current-status label is displayed.
+
+The color system can be part of Build 97 only where the underlying meaning is honest and limited. For the historical sundown-town layer, I would use status-specific history symbols rather than red/green danger coloring unless recent evidence separately supports a caution label.
+
+The guiding design principle should be:
+
+> **Simple first. Clear second. Detailed when requested. Never falsely certain.**
+
+That meets people where they are without alienating or patronizing anyone.
+
+[1]: https://www.w3.org/WAI/WCAG22/Understanding/use-of-color?utm_source=chatgpt.com "Understanding Success Criterion 1.4.1: Use of Color | WAI | W3C"
+[2]: https://www.cdc.gov/ccindex/?utm_source=chatgpt.com "The CDC Clear Communication Index | The CDC Clear Communication Index | Centers for Disease Control and Prevention"

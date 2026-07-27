@@ -1,0 +1,81 @@
+URGENT PRODUCTION INCIDENT — IOS CRASH + REGISTRATION FAILURE
+
+Do not increase the PostgreSQL pool yet.
+Do not restart Railway yet.
+Do not modify mobile code yet.
+
+We now have two production symptoms:
+
+1. A new iOS user reached the final registration screen and received:
+   "Registration failed. Please try again."
+
+2. My iOS app also closed/crashed during testing.
+
+Determine whether these are connected or separate.
+
+A. RAILWAY / DATABASE EVIDENCE
+
+Using the timestamps of the latest failed registration and my iOS test:
+
+1. Find the registration request.
+2. Report:
+   - exact endpoint
+   - HTTP status
+   - full available error
+   - whether the user row was created
+   - whether profile/session creation began
+   - database query or constraint that failed
+
+3. Inspect the same time window for:
+   - pool acquisition timeouts
+   - connection resets
+   - too many clients
+   - Neon connection termination
+   - ETIMEDOUT / ECONNRESET
+   - PostgreSQL SQLSTATE codes
+   - failures across unrelated DB endpoints
+
+4. Report the current production pool configuration:
+   - max
+   - min, if configured
+   - idleTimeoutMillis
+   - connectionTimeoutMillis
+   - statement/query timeout
+   - totalCount
+   - idleCount
+   - waitingCount
+   - number of Railway replicas
+   - Neon connection limit for the current plan
+
+5. Determine whether this is:
+   - pool exhaustion
+   - stale/dead pooled connections
+   - Neon compute wake-up
+   - database constraint/schema failure
+   - another confirmed cause
+
+Do not recommend increasing pool max unless the evidence proves requests
+are waiting because all healthy connections are actively in use.
+
+B. IOS CRASH EVIDENCE
+
+1. Check whether the iOS crash occurred after an API 500 or during map use.
+2. Pull any available TestFlight/App Store Connect crash report.
+3. Check for:
+   - native exception
+   - JavaScript fatal error
+   - map/marker crash
+   - unhandled response parsing
+   - registration-screen exception
+4. Report the exact crash thread and first app-owned frame if available.
+
+RETURN BEFORE CHANGING ANYTHING:
+
+- whether registration and the iOS crash share one cause
+- exact backend failure evidence
+- actual pool metrics/configuration
+- whether a restart is presently needed
+- whether a pool-size change is justified
+- smallest permanent fix
+
+STOP after the diagnostic report.

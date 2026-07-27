@@ -1,0 +1,247 @@
+═══════════════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™
+CONFIDENTIAL ALGORITHM SPECIFICATION
+All content confidential — Review Mode only — Not for distribution
+═══════════════════════════════════════════════════════════════════════
+06. SAFETY INTELLIGENCE ENGINE™
+Future-State Production Specification v1.0
+Continuation — Batch 3 of 3
+06.51 Internal Output Contract
+The Safety Intelligence Engine™ returns a structured assessment to the Belonging Intelligence Framework™.
+The output must preserve the difference between:
+concern;
+protective capacity;
+confidence;
+immediacy;
+recommendation treatment;
+search treatment;
+alert treatment;
+promotion treatment.
+A single combined safety value may not replace these outputs.
+{
+  "safety_assessment_id": "safe_0000000001",
+  "request_id": "req_0000000001",
+  "engine_version": "06.1.0",
+  "evaluated_at": "ISO-8601 timestamp",
+  "evaluation_context": {
+    "primary_context": "CTX-SOLO-NIGHT",
+    "secondary_contexts": [
+      "CTX-LOCAL"
+    ],
+    "context_confidence": 88,
+    "urgency_level": 2
+  },
+  "entity": {
+    "entity_type": "business",
+    "entity_id": "business_0000000001",
+    "location_id": "location_0000000001"
+  },
+  "scores": {
+    "concern_score": 68,
+    "protective_capacity_score": 74,
+    "confidence_score": 83,
+    "confidence_label": "High",
+    "immediacy_level": 2
+  },
+  "dimensions": {
+    "physical_safety": {
+      "status": "APPLICABLE",
+      "concern_score": 61,
+      "confidence_score": 82,
+      "protective_capacity_score": 78
+    },
+    "cultural_discrimination_safety": {
+      "status": "APPLICABLE",
+      "concern_score": 76,
+      "confidence_score": 86,
+      "protective_capacity_score": 62
+    },
+    "identity_related_safety": {
+      "status": "APPLICABLE",
+      "concern_score": 70,
+      "confidence_score": 74,
+      "protective_capacity_score": 60
+    },
+    "environmental_safety": {
+      "status": "APPLICABLE",
+      "concern_score": 24,
+      "confidence_score": 90,
+      "protective_capacity_score": 85
+    },
+    "health_emergency_access": {
+      "status": "APPLICABLE",
+      "concern_score": 35,
+      "confidence_score": 80,
+      "protective_capacity_score": 72
+    },
+    "accessibility_safety": {
+      "status": "UNKNOWN",
+      "concern_score": null,
+      "confidence_score": 28,
+      "protective_capacity_score": null
+    },
+    "family_dependent_safety": {
+      "status": "NOT_APPLICABLE",
+      "concern_score": null,
+      "confidence_score": null,
+      "protective_capacity_score": null
+    },
+    "digital_transaction_safety": {
+      "status": "APPLICABLE",
+      "concern_score": 42,
+      "confidence_score": 71,
+      "protective_capacity_score": 68
+    }
+  },
+  "evidence_summary": {
+    "qualified_evidence_items": 14,
+    "independent_sources": 6,
+    "official_sources": 1,
+    "verified_firsthand_reports": 3,
+    "anonymous_reports": 2,
+    "excluded_items": 4,
+    "corroboration_factor": 0.88,
+    "source_independence_factor": 0.92,
+    "recency_factor": 0.86,
+    "geographic_precision_factor": 0.95
+  },
+  "pattern_assessment": {
+    "status": "MEANINGFUL_PATTERN",
+    "pattern_type": "DISCRIMINATORY_SERVICE",
+    "qualified_reports": 3,
+    "time_periods": 2,
+    "confidence_score": 84
+  },
+  "protective_factors": [
+    "RESPONSIVE_MANAGEMENT",
+    "DOCUMENTED_COMPLAINT_PATHWAY",
+    "WELL_LIT_ENTRANCE"
+  ],
+  "risk_signals": [
+    "REPEATED_DISCRIMINATION_REPORTS",
+    "INCONSISTENT_STAFF_RESPONSE"
+  ],
+  "corrective_actions": [
+    {
+      "action_type": "STAFF_TRAINING",
+      "verification_status": "PARTIALLY_VERIFIED",
+      "current_concern_multiplier": 0.90
+    }
+  ],
+  "override": {
+    "level": 3,
+    "name": "NON_OVERRIDE_CONCERN",
+    "active": true,
+    "reason_code": "CONTEXT_SPECIFIC_CULTURAL_CONCERN"
+  },
+  "recommendation_state": "CAUTION",
+  "search_visibility_state": "VISIBLE_WITH_CONTEXT",
+  "promotion_state": "HOLD",
+  "alert": {
+    "eligible": false,
+    "type": null,
+    "audience": [],
+    "expiration": null
+  },
+  "public_explanation_code": "RECENT_SAFETY_INFORMATION_AFFECTED_RECOMMENDATION",
+  "human_review_required": true,
+  "review_reason_codes": [
+    "PROMOTION_HOLD",
+    "DISCRIMINATION_PATTERN"
+  ],
+  "audit_record_id": "audit_0000000001"
+}
+06.52 Required Database Structures
+The production Safety Intelligence Engine™ requires, at minimum:
+safety_assessments
+safety_dimension_scores
+safety_evidence_items
+safety_report_intakes
+safety_report_relationships
+safety_report_permissions
+safety_source_records
+safety_corroboration_records
+safety_pattern_records
+safety_pattern_members
+safety_protective_capacity_records
+safety_corrective_action_records
+safety_override_records
+safety_alert_records
+safety_alert_audiences
+safety_alert_updates
+safety_recommendation_treatments
+safety_search_treatments
+safety_promotion_holds
+safety_manipulation_signals
+safety_manipulation_responses
+safety_reporter_protection_records
+safety_entity_response_records
+safety_appeal_records
+safety_human_review_records
+safety_public_explanations
+safety_engine_versions
+safety_audit_records
+These structures may be incorporated into the BIF database architecture or implemented as linked production tables.
+Sensitive report content must be separated from public-facing safety records.
+Access permissions must distinguish:
+public information;
+internal moderation information;
+restricted safety information;
+reporter-identifying information;
+emergency information;
+legal or Governance information.
+06.53 Audit Record Requirements
+Every consequential Safety Intelligence Engine™ decision must record:
+safety assessment ID;
+request ID;
+evaluated entity;
+evaluated location;
+timestamp;
+engine version;
+context profile;
+urgency level;
+evidence period;
+evidence items considered;
+evidence items excluded;
+exclusion reasons;
+source relationship types;
+verification status;
+anonymity status;
+reporter-sharing permissions;
+Evidence Quality Scores;
+source multipliers;
+decay applied;
+corroboration factor;
+source independence factor;
+geographic precision;
+dimension applicability;
+dimension concern scores;
+dimension confidence scores;
+dimension protective-capacity scores;
+raw Concern Score;
+Protective Capacity Score;
+Safety Confidence Score;
+Immediacy Level;
+pattern status;
+pattern threshold applied;
+corrective actions;
+corrective-action verification;
+concern multipliers;
+override level;
+override reason;
+recommendation treatment;
+search visibility treatment;
+promotion treatment;
+alert eligibility;
+alert audience;
+alert activation and expiration;
+anti-manipulation signals;
+anti-manipulation response;
+reporter-protection actions;
+accused-entity response opportunity;
+human-review status;
+public explanation code;
+BIF decision reference;
+appeal status;
+final outcome.
+The audit record must preserve enough information to reproduce the decision using the version active at the time.

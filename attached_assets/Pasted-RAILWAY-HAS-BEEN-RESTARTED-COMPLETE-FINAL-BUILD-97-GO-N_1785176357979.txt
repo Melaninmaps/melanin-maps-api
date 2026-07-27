@@ -1,0 +1,354 @@
+RAILWAY HAS BEEN RESTARTED — COMPLETE FINAL BUILD 97 GO/NO-GO CHECK
+
+Railway was manually restarted a few minutes ago.
+
+Do not give me another planning report. Perform the final verification
+required to decide whether we can build iOS Build 97 and the next Android
+testing build now.
+
+Founder objective:
+
+- Apple must be able to review and approve the app.
+- Approximately 30 testers across iOS, Android, web, phones, and tablets
+  must receive a meaningful experience.
+- Testers must be able to use Maps, Heritage, existing businesses,
+  Community, and basic KinfolkAI.
+- The app must not fail from database exhaustion, crashes, broken tablet
+  layouts, empty critical screens, or authentication failures.
+
+══════════════════════════════════════════════════════════════
+1. CONFIRM THE CORRECT BACKEND IS LIVE
+══════════════════════════════════════════════════════════════
+
+Immediately confirm:
+
+- Exact Git commit deployed to Railway
+- Deployment time
+- Deployment status
+- API process count
+- Application pool max = 8
+- Stripe pool max = 2
+- StripeSync singleton is in the deployed code
+- Transient retry helper is in the deployed code
+- Correct readyz logic is in the deployed code
+- No old API instance is still running
+
+Test production:
+
+- GET /api/healthz → HTTP 200
+- GET /api/readyz → HTTP 200 and status: ok
+- GET /api/businesses?limit=3 → HTTP 200 in under 2 seconds
+
+Provide the actual sanitized responses and timing.
+
+If the corrected commit is not deployed, deploy it now and repeat these
+checks.
+
+══════════════════════════════════════════════════════════════
+2. CONFIRM THE RESTART DID NOT ONLY MASK THE ISSUE
+══════════════════════════════════════════════════════════════
+
+Check and report:
+
+- Active DB connections
+- Idle DB connections
+- Waiting connections
+- Pool totals
+- Railway API CPU and memory
+- Railway PostgreSQL metrics
+- API restart count
+- Database restart count
+
+Trigger 5–10 safe Stripe test webhook events.
+
+Record connection counts:
+
+- Before
+- During
+- Immediately after
+- Ten minutes after
+
+PASS requirements:
+
+- Only one StripeSync pool exists
+- No new pool appears per event
+- No monotonic connection growth
+- Waiting returns to zero
+- readyz remains healthy
+- businesses route remains 200
+- No duplicate financial activity
+- No real charge is created
+
+══════════════════════════════════════════════════════════════
+3. CLOSE THE MANUS BLOCKERS
+══════════════════════════════════════════════════════════════
+
+For each item, return IMPLEMENTED, FIXED, VERIFIED, or BLOCKED.
+
+A. Build number
+
+- iOS buildNumber = 97
+- Android versionCode incremented correctly
+- Android versionName confirmed
+- No remaining Build 96 value in effective release configuration
+
+B. iOS permissions
+
+- Remove NSFaceIDUsageDescription if Face ID is not used
+- Remove NSMotionUsageDescription if Motion is not used
+- If either is actually used, replace the generic string with an accurate,
+  specific explanation
+- Confirm effective generated Info.plist, not only app.json
+
+C. Android permissions
+
+- Remove duplicate Android permission entries
+- Confirm the effective AndroidManifest.xml contains only the permissions
+  actually required
+- Confirm Android phone and tablet compatibility
+
+D. Railway
+
+- Confirm the corrected backend is deployed
+- Confirm restart completed
+- Confirm database access remains stable
+
+Do not proceed to builds while any active blocker remains.
+
+══════════════════════════════════════════════════════════════
+4. CONFIRM THE MEANINGFUL TESTER EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+Verify the exact features planned for this release.
+
+A. AUTHENTICATION
+
+- Fresh Apple Sign-In registration
+- Returning Apple Sign-In login
+- Email registration
+- Email login
+- Review-account login
+- Password reset
+- Logout
+- Session restoration
+- No waitlist or approval barrier for the Apple review account
+
+B. MAPS
+
+- Existing businesses load
+- Business previews show useful descriptions
+- Categories and search work
+- Heritage places load
+- Heritage descriptions are meaningful
+- Marker and list selection work
+- Map layer switching works
+- Missing records or images do not crash the app
+- Location denial does not crash the app
+
+C. HISTORICAL SUNDOWN TOWNS
+
+State the actual status:
+
+- Fully implemented
+- Partially implemented
+- Not implemented
+- Data not imported
+- Unsafe to ship
+
+Do not claim it is included unless all of the following exist and pass:
+
+- Reputable sourced data
+- Tougaloo College or other approved attribution
+- Historical-status labels
+- Clear historical/current disclaimer
+- Map or Heritage presentation
+- Search or state browsing
+- No unsupported danger score
+- No empty category
+- Acceptable performance
+
+If it is not ready, state the exact missing work and whether it can
+responsibly be completed before the builds today.
+
+Do not silently remove this founder requirement.
+
+D. BUSINESS LANGUAGE
+
+Verify current screens no longer use universal “Black-owned” wording
+where the record does not support that designation.
+
+Check:
+
+- Map tiles
+- Business cards
+- Search results
+- Business details
+- Filters
+- Kinfolk prompts
+- Empty states
+- SEO/member-facing copy
+
+Confirm the current release accurately supports diaspora and approved
+minority/community designations without fabricating identity data.
+
+E. KINFOLKAI
+
+Verify the current basic experience:
+
+- Opens
+- Answers a basic question
+- Accepts a follow-up
+- Uses current user preferences
+- Uses current tone/voice preference where implemented
+- Answers basic travel, business, and heritage questions
+- Handles timeouts without crashing
+- Does not invent current weather if no live weather source is connected
+- Works on phone and tablet layouts
+
+F. COMMUNITY
+
+- Feed loads
+- Reporting and moderation work
+- Community Guidelines are accessible
+- Seed 5–10 high-quality test posts if the feed is empty
+- Clearly identify which posts were created
+- Do not publish sensitive or misleading content
+- Confirm test posts can be removed later
+
+══════════════════════════════════════════════════════════════
+5. APPLE REVIEW ACCOUNT
+══════════════════════════════════════════════════════════════
+
+Create or verify the production review account.
+
+Requirements:
+
+- New secure password that has never appeared in chat or documentation
+- Email verified
+- Account approved
+- No waitlist
+- No MFA or inaccessible email code
+- Can access every feature visible to Apple
+- Credentials are not committed to Git or evidence files
+
+Run 10 consecutive successful logins.
+
+Prepare exact App Store Connect review notes containing:
+
+- Credentials
+- Login steps
+- Explanation of Maps
+- Heritage navigation
+- KinfolkAI navigation
+- Any limited/test-state explanation
+- Support contact
+
+Do not expose the credentials in your response. Tell me how they will be
+provided securely.
+
+══════════════════════════════════════════════════════════════
+6. CROSS-PLATFORM PRE-BUILD VERIFICATION
+══════════════════════════════════════════════════════════════
+
+Before running EAS builds, confirm configuration and layouts for:
+
+- Production web
+- iPhone
+- iPad Air 11-inch class device
+- Android phone
+- Android tablet
+
+At minimum verify on each supported platform:
+
+- Login/registration screen fits
+- Navigation fits
+- Map fits
+- Heritage fits
+- Historical Sundown Town experience fits if included
+- KinfolkAI fits
+- Community Feed fits
+- Keyboard does not hide required controls
+- Content scrolls
+- No clipped buttons
+- No dead screens
+- No visible unfinished feature
+- No crash
+
+The iPad check is mandatory because Apple used an iPad Air 11-inch M3.
+
+Android tablet testing is mandatory because the tester group includes
+tablet users.
+
+══════════════════════════════════════════════════════════════
+7. FINAL BUILD CONTENT RECAP
+══════════════════════════════════════════════════════════════
+
+Return exactly what will be included in:
+
+A. iOS Build 97
+B. Next Android testing build
+C. Production web experience
+
+The recap must state the status of:
+
+- Authentication
+- Maps
+- Existing business previews
+- Inclusive diaspora language
+- Heritage
+- Historical Sundown Towns
+- KinfolkAI
+- Community Feed
+- Seeded posts
+- Events
+- Profile
+- Saves
+- Membership
+- Restore Purchases
+- Account deletion
+- Policies
+- Phone support
+- Tablet support
+- Production monitoring
+
+Do not say “included” when an item is only documented or partially built.
+
+══════════════════════════════════════════════════════════════
+8. FINAL DECISION
+══════════════════════════════════════════════════════════════
+
+Return only:
+
+1. Railway deployment result
+2. Production health results
+3. Stripe webhook/connection results
+4. Manus blocker reconciliation
+5. Review-account result
+6. Feature readiness matrix
+7. Web result
+8. iPhone configuration result
+9. iPad configuration result
+10. Android-phone configuration result
+11. Android-tablet configuration result
+12. Historical Sundown Town readiness
+13. Community Feed seeded or not
+14. Open P0/P1 issues
+15. Exact remaining founder actions
+16. GO or NO-GO to run iOS Build 97
+17. GO or NO-GO to run the Android build
+
+If GO:
+
+State:
+
+“GO — the release configurations are ready to build.”
+
+Then wait for my authorization to run both builds.
+
+If NO-GO:
+
+List only the specific release blockers and the exact correction required.
+
+Do not create more planning documents.
+Do not add unrelated features.
+Do not submit either build without separate founder authorization.

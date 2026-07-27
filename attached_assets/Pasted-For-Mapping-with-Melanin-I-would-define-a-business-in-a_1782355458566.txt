@@ -1,0 +1,55 @@
+For **Mapping with Melanin™**, I would define a business in a way that is broad enough to include traditional storefronts, mobile businesses, online businesses, and independent professionals, while still keeping the directory focused and trustworthy.
+
+Here's a definition you could use throughout your platform:
+
+> **A business is any legally operating organization, sole proprietor, nonprofit, independent professional, or entrepreneur that provides products, services, or experiences to the public or to other businesses. Businesses may operate from a physical location, online, from home (where permitted), or as a mobile service.**
+
+### Businesses that would qualify
+
+* Restaurants and food trucks
+* Retail stores
+* Salons and barbershops
+* Healthcare providers
+* Attorneys and accountants
+* Real estate professionals
+* Financial advisors
+* Contractors and home services
+* Photographers
+* Event planners
+* Tutors and coaches
+* Fitness trainers
+* Nonprofit organizations
+* Online stores
+* Freelancers and consultants
+* Mobile businesses (food trucks, mobile detailing, mobile grooming, etc.)
+
+### For your "Time in Business" badge
+
+I recommend defining it as:
+
+> **The length of time the business has continuously operated under the same ownership or registered business entity.**
+
+If ownership changes significantly, the business would start over unless the new owner continues the legal business entity and its operations without interruption.
+
+### For the "Current Location" badge
+
+> **The length of time the business has continuously operated at its current physical address.**
+
+This badge changes if the business relocates, while the **Time in Business** badge remains based on the overall age of the business.
+
+### An additional badge worth considering
+
+Many businesses are newer but have experienced owners. You could recognize that distinction with an optional badge such as:
+
+* 👩🏾‍💼 **Experienced Owner** — Owner has 10+ years of experience in the industry.
+* 🎓 **Industry Veteran** — Owner has 20+ years of professional experience.
+
+This lets users distinguish between a newly opened business and an owner who has decades of expertise.
+
+For Mapping with Melanin™, I'd recommend displaying these three pieces of information together:
+
+* 🏢 **In Business:** 18 years
+* 📍 **At This Location:** 4 years
+* 👩🏾‍💼 **Owner Experience:** 22 years
+
+That combination gives users a much richer understanding of the business than a single "Established" date.

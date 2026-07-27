@@ -1,0 +1,175 @@
+Yes. Based on everything we've accomplished today and your stated launch priorities, I would move to **verbiage and user experience polish** next—but with one caveat.
+
+## Before we leave the map
+
+I would only make sure these four items are confirmed:
+
+* ✅ Login works consistently.
+* ✅ The map renders consistently (no more black screen).
+* ⏳ Cultural site markers load correctly after the `EXPO_PUBLIC_API_URL` OTA.
+* ⏳ Apple commercial POIs are filtered while your own markers remain.
+
+Once those are confirmed, I would consider the map stable enough to shift focus.
+
+---
+
+# What I think should be next
+
+## Priority 1 — Platform language (my recommendation)
+
+This is where your app becomes **Mapping With Melanin™** instead of feeling like a generic directory.
+
+We've already designed the framework:
+
+### Layer 1 — Objective
+
+Ownership & verification
+
+* Black-Owned
+* Latino-Owned
+* Indigenous-Owned
+* Women-Owned
+* Veteran-Owned
+* Verified
+
+---
+
+### Layer 2 — Community Recognition
+
+The language that only exists on your platform.
+
+Examples:
+
+* Kinfolk Picks
+* Welcome Home
+* Put Your People On
+* Community Anchor
+* Culture Keeper
+* Hidden Gem
+* Neighborhood Favorite
+* Community Trusted
+* Soul Spot
+* Family Table
+
+This is one of your strongest differentiators.
+
+---
+
+### Layer 3 — Experience
+
+The reason someone chooses a place.
+
+Examples:
+
+* Date Night
+* Family Time
+* Solo Friendly
+* Celebration Spot
+* Hood Classic
+* Bougie Treat
+* Creative Scene
+* Quiet Escape
+* Wellness
+* Group Hangout
+
+...plus category-specific language like we discussed for restaurants, salons, attorneys, coffee shops, etc.
+
+---
+
+## Priority 2 — Business-specific vocabulary
+
+This is the conversation you reminded me about.
+
+A lawyer shouldn't ever be described as
+
+* Romantic
+* Date Night
+* Girls Night
+
+Instead they might have
+
+* Community Trusted
+* Legacy Practice
+* Client Favorite
+* Gives Back
+
+A barber might have
+
+* Hood Classic
+* Come Correct
+* Neighborhood Favorite
+
+A bookstore
+
+* Quiet Escape
+* Culture Keeper
+* Community Anchor
+
+A restaurant
+
+* Family Table
+* Come Hungry
+* Auntie Approved
+* Celebration Spot
+
+This contextual language will make the app feel intentional instead of randomly tagging businesses.
+
+---
+
+## Priority 3 — Complete UX wording audit
+
+I would literally go screen by screen.
+
+Things like:
+
+* button labels
+* empty states
+* loading messages
+* error messages
+* onboarding
+* search
+* filters
+* verification
+* notifications
+
+Everything should sound like **Mapping With Melanin™**, not like default software.
+
+---
+
+## Priority 4 — Founding business experience
+
+Now that businesses are beginning to load properly:
+
+* claiming a business
+* profile wording
+* onboarding prompts
+* suggested intro video prompts
+* verification language
+* badges
+
+---
+
+# I would postpone
+
+These until after the language audit:
+
+* adding new features
+* Vibe AI improvements
+* new map capabilities
+* Android release
+* large UI redesigns
+
+You told me before—and I agree—that the launch-critical work is **testing, polish, legal protection, and launch readiness**, not rebuilding the app.
+
+---
+
+## The order I would follow
+
+1. ✅ Finish the remaining map verification.
+2. **Complete the platform language audit** (every screen).
+3. Build the category-specific vocabulary system.
+4. Polish loading, empty, and error states.
+5. Do a complete Apple readiness walkthrough.
+6. When Apple feels solid, then prepare the Android rollout.
+
+I also think we should preserve the vocabulary work in a way that becomes part of your brand system—not just scattered throughout the app. It deserves its own "Mapping With Melanin™ Language Guide" that your team can use consistently as the platform grows. I believe that's one of the pieces that will make the experience feel uniquely yours.

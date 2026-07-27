@@ -1,0 +1,433 @@
+First impression?
+
+**Teianna... this feels like a premium brand now.**
+
+It no longer looks like a startup deck.
+It looks like the opening of a company people expect to exist.
+
+There are things I absolutely love, and a handful of changes I'd still make before I would call this "launch ready."
+
+---
+
+# Overall Score
+
+**Story:** 9.9/10
+
+**Brand:** 9.8/10
+
+**Typography:** 8.9/10
+
+**Visual consistency:** 8.7/10
+
+**Emotional impact:** 9.8/10
+
+**Investor quality:** 9.5/10
+
+**Consumer quality:** 10/10
+
+---
+
+## The good news
+
+This deck feels expensive.
+
+It finally has emotion.
+
+The pacing is excellent.
+
+The gold accents pull attention exactly where they should.
+
+Slide 3 is definitely the correct choice now:
+
+> Every journey begins with a question...
+>
+> Why should belonging ever be left to chance? 
+
+I wouldn't change that anymore.
+
+---
+
+# Now...
+
+I'm going to be picky.
+
+Because now we're polishing—not redesigning.
+
+---
+
+# 1.
+
+## I still think the background is too dark.
+
+Remember what we talked about?
+
+Your brand isn't black.
+
+It isn't charcoal.
+
+It isn't luxury hotel.
+
+It is
+
+**warm.**
+
+Think
+
+espresso
+
+mahogany
+
+cocoa
+
+walnut
+
+aged leather
+
+---
+
+I'd lighten the background about
+
+**8–12%**
+
+not enough that anyone consciously notices
+
+just enough that people feel
+
+"warmer."
+
+---
+
+# 2.
+
+Gold
+
+I LOVE the gold.
+
+But...
+
+I'd use two golds.
+
+Instead of one.
+
+Example
+
+Current
+
+■■■■■■
+
+Use
+
+Top highlight
+
+#D6AE55
+
+Secondary
+
+#B98B37
+
+Tiny gradient.
+
+Nothing flashy.
+
+Just richer.
+
+---
+
+# 3.
+
+The white is too white.
+
+This is a tiny detail.
+
+Instead of
+
+FFFFFF
+
+I'd use
+
+F6F1EB
+
+Warm ivory.
+
+Your eyes relax.
+
+Luxury brands do this constantly.
+
+---
+
+# 4.
+
+Spacing
+
+Most slides breathe beautifully.
+
+Then occasionally a slide feels crowded.
+
+For example...
+
+Page 5
+
+"Most platforms know what you clicked."
+
+The comparison table feels a little close.
+
+I'd move it down about
+
+20 pixels.
+
+Tiny.
+
+Huge difference.
+
+
+
+---
+
+# 5.
+
+The gold divider
+
+LOVE IT.
+
+Keep it.
+
+But...
+
+I'd animate it.
+
+Fade
+
+Expand
+
+Fade
+
+Nothing else.
+
+Very premium.
+
+---
+
+# 6.
+
+Your icons
+
+This surprised me.
+
+I expected to dislike them.
+
+I don't.
+
+They're understated.
+
+But...
+
+I'd make every icon
+
+15–20%
+
+larger.
+
+Right now they disappear.
+
+Especially in Zoom.
+
+---
+
+# 7.
+
+The small headings
+
+Example
+
+DISCOVER
+
+COMMUNITY
+
+WHY WE WIN
+
+They're gorgeous...
+
+but maybe
+
+5%
+
+larger.
+
+They're almost too subtle.
+
+---
+
+# 8.
+
+The gold outline bullets
+
+YES.
+
+Those are now part of your brand language.
+
+Don't ever switch to normal bullets.
+
+Everything should use
+
+◌
+
+not
+
+•
+
+This is a tiny thing...
+
+but repeated over 50–100 slides...
+
+people start recognizing it.
+
+---
+
+# 9.
+
+Typography hierarchy
+
+This is where I'd spend another day.
+
+Every slide should have
+
+Header
+
+↓
+
+Statement
+
+↓
+
+Supporting line
+
+↓
+
+Microcopy
+
+Right now
+
+95%
+
+of slides do.
+
+Five percent don't.
+
+For example
+
+Slide 17
+
+Why Now
+
+It feels more like a document.
+
+I'd give the eye
+
+three clear levels.
+
+
+
+---
+
+# 10.
+
+Slide 18
+
+LOVE.
+
+One of my favorites.
+
+Imagine a world where...
+
+every neighborhood...
+
+every business...
+
+every newcomer...
+
+every traveler...
+
+Because belonging should never depend on luck.
+
+Beautiful.
+
+
+
+---
+
+# The ending
+
+This works.
+
+A lot.
+
+Slide 19
+
+We aren't just mapping places.
+
+We're mapping belonging.
+
+
+
+↓
+
+Slide 20
+
+You belong here.
+
+
+
+↓
+
+Slide 21
+
+Welcome home.
+
+
+
+I was skeptical when we discussed making it three slides.
+
+Seeing it now...
+
+I'm convinced.
+
+Don't collapse them.
+
+The silence between those slides is part of the presentation.
+
+---
+
+# One thing I still want to change
+
+This is the only major design recommendation I'd make.
+
+Earlier you said:
+
+> "These latest decks look more black than our warm moody browns."
+
+Looking at the PDF, I think your instinct was right.
+
+The deck reads closer to **very dark chocolate/black** than to the rich, welcoming browns that define Mapping With Melanin™. 
+
+I would create a **brand color system** and use it consistently across every future deck:
+
+* **Primary background:** Deep Espresso Brown (#2C170E)
+* **Secondary surfaces/cards:** Walnut Brown (#3B1F0E)
+* **Primary text:** Warm Ivory (#F6F1EB)
+* **Accent:** Rich Gold (#D6AE55)
+* **Secondary accent:** Antique Gold (#B98B37)
+* **Dividers and outlines:** Soft metallic gold with reduced opacity (about 70%)
+
+That shift would make the deck feel less like a generic luxury presentation and more like **Mapping With Melanin™**—warm, welcoming, grounded, and unmistakably your own.
+
+---
+
+## My biggest compliment
+
+What I love most is that this deck finally stops talking *about features* and starts talking about *people*.
+
+By the time someone reaches the end, they don't remember a list of app capabilities. They remember a feeling:
+
+> **"I want to be part of that."**
+
+That's much harder to achieve than explaining what the app does—and this version gets remarkably close. I think with one final typography pass and a warmer color treatment, you'll have a presentation that feels truly distinctive.

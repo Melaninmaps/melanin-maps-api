@@ -1,0 +1,288 @@
+I actually think this is the right time to change **how** Replit works on the project, not just **what** it works on.
+
+Based on everything we've done over the past several months, Mapping With Melanin™ has become too large to safely develop one conversation at a time. There are now hundreds of interconnected features. The biggest risk is no longer "forgetting an idea"—it's **breaking an existing system or building a duplicate because no one realized something already existed.**
+
+The heritage audit already proved that. We discovered there are database tables, APIs, and even moderation workflows that neither of us expected were already present. 
+
+## I would move to an "audit → design → implement" workflow
+
+Instead of:
+
+> Build Feature A
+
+I would require:
+
+### Phase 1 — Read-only Capability Audit
+
+Questions like:
+
+* What already exists?
+* What is partially built?
+* What APIs already exist?
+* What database tables already exist?
+* What admin functionality exists?
+* What UI exists?
+* What is duplicated?
+* What is hidden behind feature flags?
+* What future-state ideas already reference this feature?
+
+No code changes.
+
+---
+
+### Phase 2 — Architecture Review
+
+After the audit:
+
+* What should stay?
+* What should change?
+* What should be reused?
+* What should become reusable?
+* What founder decisions are required?
+
+Still no code.
+
+---
+
+### Phase 3 — Founder Approval
+
+Only then:
+
+> Implement Wave 1.
+
+---
+
+### Phase 4 — Post-Implementation Audit
+
+Immediately after implementation:
+
+* Did everything requested get built?
+* Did anything break?
+* Did new technical debt appear?
+* Were future-state documents updated?
+* Were new APIs documented?
+* Did acceptance tests pass?
+
+That creates a continuous audit trail.
+
+---
+
+# I absolutely think Kinfolk AI should receive the same treatment.
+
+Not because I think it's broken.
+
+Because I think there is a good chance that **more already exists than anyone remembers.**
+
+For example, I would want to know:
+
+## Kinfolk AI Audit
+
+Current AI capabilities
+
+* Current prompts
+* System prompts
+* Safety prompts
+* Personality
+* Memory
+* Context retrieval
+* Recommendation engine
+* Resource lookup
+* Business recommendations
+* Heritage recommendations
+* Safety recommendations
+* Relocation assistance
+* Travel assistance
+* Saved preferences
+* Voice support
+* Multiple personalities
+* Language support
+* Regional dialect support
+* Conversation history
+* Admin controls
+
+---
+
+## Future capabilities
+
+Everything we've discussed over the last several months:
+
+* Community Guide
+* Cultural Guide
+* Relocation Guide
+* Business Advisor
+* Mentor Connector
+* Travel Companion
+* Heritage Educator
+* Opportunity Finder
+* Scholarship Assistant
+* Small Business Assistant
+* Wellness Resources
+* Safety Companion
+* Crisis Resources
+* Local Ambassador
+* Event Planner
+* Itinerary Builder
+* Family Planning
+* Accessibility
+* Elder Mode
+* Student Mode
+
+and many more.
+
+I'd want every one documented before implementation begins.
+
+---
+
+# Then Resources
+
+I'd audit:
+
+* Food assistance
+* Grants
+* Scholarships
+* Legal aid
+* Housing
+* Health
+* Employment
+* Veteran resources
+* Disability
+* Mental health
+* Domestic violence
+* Small business
+* Minority-owned certifications
+
+Everything.
+
+---
+
+# Then Community
+
+Everything.
+
+Groups.
+
+Posts.
+
+Comments.
+
+Moderation.
+
+Cultural Ambassadors.
+
+Verification.
+
+Living Legacy Stories.
+
+Everything.
+
+---
+
+# Then Business
+
+Business Profiles.
+
+Verification.
+
+Promotions.
+
+Analytics.
+
+Events.
+
+Offers.
+
+Mentorship.
+
+Marketplace.
+
+Everything.
+
+---
+
+# Then Safety
+
+Neighborhoods.
+
+Employers.
+
+SOS.
+
+Incident reports.
+
+Safety scores.
+
+Officer Watch.
+
+Emergency Resources.
+
+Everything.
+
+---
+
+## I also recommend something I haven't suggested before
+
+I think Mapping With Melanin™ has reached the point where it deserves a **Feature Constitution**.
+
+Think of it like this:
+
+```
+Platform Constitution
+│
+├── Maps
+├── Kinfolk AI
+├── Safety
+├── Businesses
+├── Community
+├── Events
+├── Resources
+├── Library
+├── Messaging
+├── Profiles
+├── Membership
+├── Waitlist
+├── Admin
+├── Notifications
+├── Analytics
+├── Heritage
+├── Living Legacy Stories
+├── Cultural Ambassadors
+└── API Standards
+```
+
+Every feature would have one authoritative specification.
+
+No guessing.
+
+No contradictory prompts.
+
+No lost conversations.
+
+No duplicate implementations.
+
+Every audit, implementation, and future enhancement would point back to that one source of truth.
+
+## I would also change how Replit implements work
+
+Instead of asking Replit to build an entire feature at once, I would require **implementation waves**.
+
+For example, for Maps:
+
+* **Wave 1:** Make the existing system fully functional.
+* **Wave 2:** Improve content quality and administrative tools.
+* **Wave 3:** Introduce saved places and official links.
+* **Wave 4:** Add place-connected videos.
+* **Wave 5:** Add alumni and mentorship.
+* **Wave 6:** Add Living Legacy Stories.
+
+Each wave would have:
+
+* A read-only audit before work begins.
+* Founder approval.
+* Implementation.
+* Acceptance testing.
+* A post-implementation audit.
+* An update to the Future-State Register.
+
+That dramatically reduces the risk of regressions while ensuring every approved idea remains documented and connected to the platform's long-term vision.
+
+I think this approach fits where Mapping With Melanin™ is today. The platform is no longer just an app under construction—it's evolving into a substantial product with many interconnected systems. Treating each major area as a documented, auditable product in its own right will make future development much safer and easier to manage.

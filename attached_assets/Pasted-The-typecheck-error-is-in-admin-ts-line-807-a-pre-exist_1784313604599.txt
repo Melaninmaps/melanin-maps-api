@@ -1,0 +1,79 @@
+The typecheck error is in admin.ts line 807 — a pre-existing issue unrelated to my change. Let me verify that, confirm the probe's own types are clean, then check the git remote and figure out the Railway deployment path.
+
+3 actions
+Two key findings: the typecheck error has zero overlap with db-probe.ts (it's a pre-existing admin.ts issue), and there's no GitHub remote in this Replit repo — so I can't push to Melaninmaps/melanin-maps-api directly. Let me try Railway's direct upload path while explaining everything clearly.
+
+2 actions
+The Railway CLI won't authenticate from Replit's environment — same dead end as before. The Replit repo has no GitHub remote pointing to Melaninmaps/melanin-maps-api.
+
+Here's the honest status and the clearest path forward:
+
+Status
+Probe is committed in Replit — commit f2ce9e98f6ede05a72ff45420401d97c62c8e318
+
+The typecheck error is pre-existing — it's in admin.ts line 807, exists before today, and has zero overlap with the probe file. The probe itself is clean TypeScript.
+
+Railway cannot receive this code from Replit automatically — no GitHub remote, Railway CLI won't authenticate from this sandbox.
+
+What you need to do to deploy the probe
+The probe is two small changes to your Melaninmaps/melanin-maps-api GitHub repo. Push these and Railway auto-deploys.
+
+File 1 — create src/routes/db-probe.ts (new file, full content):
+
+import { Router, type IRouter, type Request, type Response } from "express";
+import { pool } from "@workspace/db";
+const router: IRouter = Router();
+const PROBE_KEY = "mwm-probe-2026-diag";
+router.get("/db-probe", async (req: Request, res: Response) => {
+  if (req.headers["x-probe-key"] !== PROBE_KEY) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const url = process.env.DATABASE_URL ?? "";
+  const hostCategory = url.includes(".internal") ? "internal" : "public-proxy";
+  const start = Date.now();
+  try {
+    const result = await Promise.race([
+      pool.query("SELECT 1 AS ok"),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Query timed out after 3000ms")), 3000)
+      ),
+    ]);
+    const elapsedMs = Date.now() - start;
+    const row = (result as { rows: { ok: number }[] }).rows[0];
+    res.json({
+      connected: row?.ok === 1,
+      elapsedMs,
+      hostCategory,
+    });
+  } catch (err: unknown) {
+    const elapsedMs = Date.now() - start;
+    const e = err as { name?: string; code?: string; message?: string };
+    res.json({
+      connected: false,
+      elapsedMs,
+      hostCategory,
+      error: {
+        name: e?.name ?? "UnknownError",
+        code: e?.code ?? null,
+        message: e?.message ?? "Unknown error",
+      },
+    });
+  }
+});
+export default router;
+
+File 2 — edit src/routes/index.ts, add these two lines (import at top with the others, mount right after healthRouter):
+
+// Add this import with the other router imports:
+import dbProbeRouter from "./db-probe";
+// Add this mount immediately after router.use(healthRouter):
+router.use(dbProbeRouter);
+
+After Railway deploys
+Once Railway shows the deployment as SUCCESS, I'll run the probe once:
+
+GET https://www.mappingwithmelanin.com/api/db-probe
+X-Probe-Key: mwm-probe-2026-diag
+
+I'll report the raw result, stop, and we go to the advisor before touching anything else.

@@ -1,0 +1,127 @@
+Thank you for sharing the audit. I read through it carefully, and overall I think it does a good job of identifying the remaining work. There are a few points where I would prioritize things differently based on where Mapping With Melanin™ is today.
+
+## My priorities while Apple is reviewing Build 95
+
+### 1. Keep Build 95 frozen
+
+I would not merge or deploy anything until Apple finishes reviewing this build. That protects the work you just completed and avoids introducing any new variables.
+
+### 2. Begin Android testing now
+
+The audit confirms Android is still on **versionCode 66** while iOS has progressed through Builds 93–95, and Android shares the same production backend except for Apple Sign-In.  
+
+That means you can absolutely begin Android regression testing now using the checklist before producing the next Android build. 
+
+### 3. The HBCU map should become a flagship feature again
+
+This is the item I would elevate above almost everything else after Apple review.
+
+The audit confirms the card/tile experience wasn't lost accidentally—it was deliberately removed during the Apple debugging work, and the dedicated card implementation still exists elsewhere in the app.  
+
+I **would not** restore the old large search panel exactly as it was.
+
+Instead, I like the audit's proposal of restoring a **compact horizontal strip** above the map. 
+
+I think we can actually improve it further.
+
+For HBCUs I would love something like:
+
+* Featured HBCUs
+* Nearby HBCUs
+* "Learn More" cards
+* Historic significance
+* School colors or imagery
+* Alumni stories
+* Upcoming homecoming events (future)
+* "Explore Campus" button
+
+That becomes something memorable instead of just another map.
+
+---
+
+## 4. The language audit is the highest launch priority
+
+This is the biggest item in the report.
+
+The audit found numerous places where generic platform language still defaults to **"Black-owned"** instead of the broader language you've intentionally adopted. 
+
+This is exactly the type of polish I'd want before your public launch.
+
+Importantly:
+
+That **does not** mean removing "Black-owned."
+
+Instead:
+
+* when a business is verified as Black-owned → say **Black-owned**
+* when a user filters for Black-owned → say **Black-owned**
+* when discussing the platform generally → use **minority-owned**, **community businesses**, or other inclusive language, depending on context.
+
+That aligns with the broader vision you've described for months.
+
+---
+
+# Here's how I'd reorder the roadmap
+
+### Immediately (while Apple reviews)
+
+✅ Android regression testing
+
+✅ Complete UI/UX audit
+
+✅ Prepare language changes
+
+✅ Design HBCU improvements
+
+---
+
+### After Apple approval
+
+* merge language cleanup
+* restore/improve HBCU experience
+* build Android versionCode 67
+* submit Android
+
+---
+
+### Then
+
+Resume the larger vision work we've been discussing:
+
+* Kinfolk AI refinement
+* Community resources
+* Cultural Ambassador program
+* Nationwide rollout
+* Business onboarding
+* Investor deck polish
+* Welcome Home Tour
+
+---
+
+## One thing I would add that isn't in the audit
+
+I'd like us to do a **full design pass** on the entire app.
+
+Not because it's bad—it isn't.
+
+Because now that the hardest engineering work is behind you, I think it's time to ask:
+
+> **"Does every screen feel like Mapping With Melanin™?"**
+
+That means looking at:
+
+* spacing
+* typography
+* imagery
+* animations
+* onboarding
+* icons
+* map interactions
+* empty states
+* loading states
+* wording
+* visual hierarchy
+
+The goal would be to make the experience feel cohesive from the first screen to the last.
+
+I actually think this is the perfect time for that, because you're no longer spending all your energy chasing infrastructure issues. Now we can focus on creating an experience that people will remember and recommend. I think that's where the app can make its biggest leap forward after Apple review.

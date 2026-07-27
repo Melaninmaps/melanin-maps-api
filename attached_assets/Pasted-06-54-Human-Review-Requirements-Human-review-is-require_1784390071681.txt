@@ -1,0 +1,81 @@
+06.54 Human Review Requirements
+Human review is required when:
+a Critical Override is activated;
+a High-Risk Override affects recommendation or search visibility;
+immediate danger is reported;
+a report alleges severe violence, stalking, threats, or serious bodily harm;
+discrimination reports establish or may establish a pattern;
+retaliation is alleged;
+children or parent-managed minors are involved;
+evidence involves private or precise location information;
+an alert may materially affect reputation or public behavior;
+public wording could imply guilt or categorical danger;
+promotion is held because of a serious report;
+a single severe report triggers a precautionary action;
+official and community evidence conflict;
+corrective action materially changes the score;
+an accused entity disputes material facts;
+a reporter alleges suppression;
+manipulation is suspected;
+evidence may be forged;
+a safety score changes by more than 20 points in 30 days;
+a recommendation could expose a user to substantial harm;
+the context involves accessibility misrepresentation;
+an emergency notice may be outdated or geographically mismatched;
+a new evidence type is used;
+an appeal is submitted;
+the Engine Orchestration Rules do not contain an approved pathway.
+Review priority must correspond to immediacy.
+Immediacy	Review target
+4 — Emergency	Immediate
+3 — Urgent	Within 15 minutes where operationally possible
+2 — Priority	Within 4 hours
+1 — Time-sensitive	Within 24 hours
+0 — Informational	Standard review queue
+These are internal operational targets, not public guarantees.
+06.55 Emergency Failure Conditions
+The Safety Intelligence Engine™ must fail safely.
+If the Engine becomes unavailable:
+emergency contact and routing information must remain accessible;
+active official emergency alerts must remain visible through a protected fallback channel;
+no personalized safety assurance may be issued;
+no entity may be described as safe because the Engine is unavailable;
+ordinary promotion decisions must be held;
+safety-sensitive recommendations must be restricted;
+existing active overrides remain in effect until reviewed;
+new community reports must still be accepted where operationally possible;
+report timestamps and evidence must be preserved;
+human escalation must remain available;
+the failure must be logged;
+the BIF must receive SAFETY_ENGINE_UNAVAILABLE.
+Fallback output:
+{
+  "safety_engine_status": "UNAVAILABLE",
+  "concern_score": null,
+  "protective_capacity_score": null,
+  "confidence_score": 0,
+  "confidence_label": "Unknown",
+  "personalized_safety_recommendation_allowed": false,
+  "promotion_allowed": false,
+  "existing_overrides_preserved": true,
+  "official_alert_fallback_active": true,
+  "emergency_routing_available": true,
+  "human_review_required": true
+}
+06.55.1 Partial failure
+If only one safety dimension is unavailable:
+mark the dimension UNAVAILABLE;
+do not assign zero;
+recalculate only when approved;
+reduce overall confidence;
+apply applicable score caps;
+disclose missing information where relevant;
+hold high-consequence recommendations when the missing dimension is material.
+06.55.2 Alert-delivery failure
+If an alert cannot be delivered:
+retry through approved channels;
+preserve the intended audience;
+log failure reasons;
+do not broaden the audience without authorization;
+escalate when the alert is Emergency or Urgent;
+issue an update when service is restored if the information remains actionable.

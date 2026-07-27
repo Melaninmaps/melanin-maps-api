@@ -1,0 +1,63 @@
+UPDATED VC70 EVIDENCE — BROAD MAP INTERACTION CRASH
+
+The crash is not limited to one heritage-site pin.
+
+Confirmed real-device behavior:
+- Map opens.
+- Current location appears.
+- Tapping the HBCU category chip crashes the entire app.
+- Tapping almost anywhere on the map also causes the app to crash.
+
+This means the crash is associated with the general map interaction/re-render path, not only one selected cultural marker.
+
+Do not build VC71 yet.
+Do not implement only tracksViewChanges={false} and claim resolution.
+Do not restart Railway; production login is healthy.
+
+Perform a controlled read-only isolation of these common triggers:
+
+1. MAP BACKGROUND PRESS
+   Verify whether the MapView onPress handler itself crashes or whether its
+   state updates cause all cultural/business markers to reconcile.
+
+2. HBCU CHIP PRESS
+   Separate and inspect:
+   - setActiveCulturalCategory()
+   - setSelectedCulturalSite(null)
+   - marker collection re-render/reconciliation
+   - fitToCoordinates()
+   - the exact coordinates array and count
+   - whether the native camera call overlaps marker updates
+
+3. MARKER RECONCILIATION
+   Determine whether any state update causes 100+ custom cultural markers to
+   be re-snapshotted or reattached under Android Fabric.
+   Inspect:
+   - tracksViewChanges values before and after every interaction
+   - custom View children inside every Marker
+   - Feather/Text icon rendering inside Marker children
+   - marker keys and whether markers are remounting
+   - selected styles that change size, border, icon size, or zIndex
+
+4. CAMERA ISOLATION
+   Determine whether fitToCoordinates is itself part of the crash by testing
+   the HBCU handler logic without issuing the camera command in a controlled
+   diagnostic environment. Do not change production behavior yet.
+
+5. ACTUAL CRASH EVIDENCE
+   Use the existing Android crash logger:
+   - reproduce the crash
+   - immediately reopen without clearing data
+   - capture the PREV CRASH Toast/share report
+   Also check Play Android Vitals for versionCode 70.
+
+Return:
+- whether background map taps truly invoke the crash
+- whether the first failing native action is marker reconciliation or camera movement
+- actual exception/stack if captured
+- the smallest fix that covers BOTH general taps and HBCU chip taps
+- whether the safe design should temporarily use static markers with
+  tracksViewChanges=false and no selected-size animation on Android
+- whether fitToCoordinates should be delayed until after marker reconciliation
+
+STOP after the diagnostic report. Do not build VC71.

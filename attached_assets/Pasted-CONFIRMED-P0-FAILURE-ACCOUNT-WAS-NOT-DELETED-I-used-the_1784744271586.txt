@@ -1,0 +1,39 @@
+CONFIRMED P0 FAILURE — ACCOUNT WAS NOT DELETED
+I used the in-app Delete Account flow. The app reported success, but I was able to log back in with the exact same email and password more than once.
+Therefore, account deletion did not occur.
+Launch Lock remains active. Do not work on the map, vibes, language, or new features.
+Perform a read-only trace first:
+Identify the exact mobile handler triggered by Delete Account.
+Identify the endpoint, method, headers, and sanitized request body.
+Confirm whether that endpoint exists in the currently deployed Railway bundle.
+Capture the actual HTTP status and sanitized response body.
+Identify the code condition that displays the success message.
+Determine whether the current action:
+only logs out;
+deletes a profile row;
+soft-deletes the user;
+or performs no server deletion.
+Trace the authentication records that still allow password login:
+user record;
+credential/password identity;
+sessions;
+auth accounts.
+Confirm whether deletion is wrapped in a transaction and whether failures roll back.
+Confirm whether related foreign-key records prevent deletion.
+Confirm whether the endpoint returns success before deletion completes.
+Required correction
+The server must delete or legally anonymize the user’s personal account data.
+Password credentials must no longer authenticate.
+All active sessions must be revoked.
+The mobile app must show success only after a verified server success.
+A failed deletion must show an error and keep the user signed in.
+The same email’s future reuse must follow the documented intended policy.
+Required acceptance test
+Create a new disposable account.
+Confirm login works.
+Delete the account in-app.
+Confirm automatic logout.
+Attempt login with the same email/password—must fail because the deleted account no longer exists.
+Confirm user, credential and session records are gone or properly anonymized.
+Confirm whether a new account may be created with the same email.
+Return the root cause and smallest proposed fix before changing anything. Do not publish until the full acceptance test passes.

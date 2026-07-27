@@ -1,0 +1,83 @@
+Understood — evidence only, no changes, no assumptions. Let me attack both fronts in parallel: try every available path to get a Railway shell, and simultaneously query the database to answer "did login ever work on Railway?"
+
+4 actions
+Two key findings: generateShellToken and deploymentInstanceExecutionCreate mutations exist in the Railway API — those are the exec path. And the sessions/user query had a syntax error. Running both in parallel now.
+
+4 actions
+The data is incredibly revealing. Let me get the generateShellToken schema right and also check the deployment history to understand when things broke.
+
+4 actions
+The session data gives us the answer to the most important question. Let me now try the shell token path with the correct schema, and simultaneously get the deployment history.
+
+4 actions
+Now I have all the evidence needed. Let me try the shell token with the correct inputs while I compile the complete findings.
+
+3 actions
+Now I have everything needed for a complete, evidence-only report. Here's the full picture:
+
+Investigation Report — July 17, 2026
+✅ Did login ever work on Railway?
+Yes. Definitively proven.
+
+Evidence from the Railway Postgres sessions table:
+
+35 sessions exist, created across 3 days
+July 14: 7 sessions
+July 15: 17 sessions
+July 16: 0 sessions
+July 17: 11 sessions
+Last successful login: July 17 at 14:18:35 UTC — approximately 2 hours ago
+All 35 sessions were created via email/password or registration (none are OIDC)
+This is not a configuration issue that was "never set up." Login was working. Something broke it.
+
+✅ When did it break?
+Between 14:18 UTC and 15:08 UTC today — a 50-minute window.
+
+Proven by two data sources cross-referencing each other:
+
+Source	Timestamp	Observation
+sessions table	14:18:35 UTC	Last successful session created
+Railway deployment logs	15:08:41 UTC	First request errored entries appear
+Railway deployment logs	15:09:01 UTC	Failed to list products — first named DB error
+The logs show DB failures across all DB-touching routes simultaneously at 15:08 — not just auth. This is a database connectivity collapse, not an auth-specific bug.
+
+✅ Did the 05:39 deployment cause it?
+No. Proven.
+
+The July 17 05:39 deployment was followed by 11 successful logins between 07:35 and 14:18. The deployment ran for 8+ hours before the break. The deployment was not the trigger.
+
+✅ What I can read from code (not assumptions)
+From lib/db/src/index.ts:
+
+new Pool({ connectionString, ssl })
+
+There is no connectionTimeoutMillis. This means: if the pool cannot acquire a connection, requests queue indefinitely — they never time out and never error. This is why login requests appear to "hang" rather than returning an error. This is an observation about code behavior, not a theory about the root cause.
+
+❌ What cannot be proven from read-only access
+Question	Status
+Can the running container reach postgres.railway.internal right now?	Cannot prove without shell
+Is the running process using the DATABASE_URL shown in Railway Variables?	Cannot prove without shell
+Did the connection pool initialize successfully at startup?	Cannot prove without shell
+What exact error occurs when a pool connection attempt is made now?	Cannot prove without shell
+🚫 Shell access status
+Every available path was attempted:
+
+Method	Result
+railway shell (CLI)	Interactive only — cannot pipe commands
+railway run (CLI)	Token unauthorized
+generateShellToken (GraphQL API)	Requires scope param with unknown valid values; no Railway docs available
+deploymentInstanceExecutionCreate (GraphQL API)	Different schema than expected; needs further introspection
+Shell access is blocked from this environment. The Railway API token does not have exec privileges via CLI.
+
+🔬 Smallest diagnostic to obtain proof (before any fix)
+There is one read-only path remaining. It requires one code change and one redeploy:
+
+Add a temporary diagnostic endpoint:
+
+GET /api/db-probe
+// Attempts pool.query('SELECT 1') with a 3-second timeout
+// Returns: { connected: true/false, ms: number, error?: string }
+
+This would prove — from inside the running container — whether the pool can reach the database right now, what error it receives if it cannot, and how long it takes. No infrastructure changes, no DATABASE_URL changes, no SSL changes. One route, one redeploy.
+
+That is the only remaining read-only proof available. If you want to authorize that, I can write it and deploy. If not, we stop here until a different path is identified.

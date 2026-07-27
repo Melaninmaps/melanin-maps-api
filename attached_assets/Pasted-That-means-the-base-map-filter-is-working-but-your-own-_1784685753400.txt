@@ -1,0 +1,55 @@
+That means the base map filter is working, but **your own heritage/cultural markers are not rendering**. Those are separate from Apple’s POIs, so the new filter did not remove them.
+
+The likely causes are now limited:
+
+* the cultural-sites API call is failing,
+* the app receives the data but filters out every site,
+* coordinates are missing or invalid,
+* the selected “Heritage Sites” mode is not actually enabling the marker layer,
+* or the marker layer is rendering behind/under another condition.
+
+Send Replit this:
+
+> **P0 — CULTURAL LANDMARK MARKERS MISSING**
+>
+> The Apple POI filter is working: roads, hospitals and civic context remain, and commercial POIs are suppressed.
+>
+> However, none of the Mapping With Melanin cultural or heritage landmarks are visible, even with **Heritage Sites** selected.
+>
+> Do not change the Apple POI filter.
+>
+> Perform a read-only trace first:
+>
+> 1. Confirm the exact request made by `FullMapView` for cultural sites.
+> 2. Return the HTTP status, latency and sanitized response count.
+> 3. Confirm how many records reach `setCulturalSites`.
+> 4. Confirm how many survive every client-side filter.
+> 5. Confirm each surviving record has valid numeric latitude and longitude.
+> 6. Confirm the marker render condition when:
+>
+>    * `Heritage Sites` is selected,
+>    * each heritage subtype chip is selected,
+>    * no subtype is selected.
+> 7. Confirm whether the five seeded cultural sites are within the current Philadelphia map region.
+> 8. Confirm marker `key`, coordinate, z-index and visibility props.
+> 9. Add temporary diagnostics showing:
+>
+>    * API records received
+>    * valid-coordinate records
+>    * records after category filtering
+>    * markers actually rendered
+>
+> Do not add new data or change the database until the trace identifies where the count drops to zero.
+>
+> Return:
+>
+> * API count
+> * valid coordinate count
+> * filtered count
+> * rendered marker count
+> * root cause
+> * smallest OTA or server fix
+
+One visual clue: your screenshot is zoomed fairly far out. Even so, at least the Philadelphia-area seeded heritage sites should appear if their coordinates and marker conditions are correct.
+
+For now, keep the POI filter. The next job is specifically to prove where the cultural-site data disappears between the API response and the marker render.
