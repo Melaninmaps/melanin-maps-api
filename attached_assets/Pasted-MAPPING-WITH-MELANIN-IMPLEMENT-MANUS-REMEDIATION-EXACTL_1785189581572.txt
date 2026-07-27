@@ -1,0 +1,369 @@
+MAPPING WITH MELANIN™ — IMPLEMENT MANUS REMEDIATION EXACTLY
+PRIORITY: P0
+OBJECTIVE: CLOSE THE LOGIN INCIDENT, PROTECT THE RELEASE, AND CONFIRM
+WHETHER BUILD 97 / ANDROID 71 CAN PROCEED WITHOUT REBUILD
+
+Use the latest Manus incident review as the controlling technical
+recommendation.
+
+Do not defend prior patches.
+Do not add another speculative patch.
+Do not create another broad planning document.
+
+For every Manus recommendation, return one of:
+
+- IMPLEMENTED
+- VERIFIED
+- NOT IMPLEMENTED
+- DISAGREE — with technical evidence
+- REQUIRES FOUNDER ACTION
+- REQUIRES RAILWAY ACCESS
+- REQUIRES NEW MOBILE BUILD
+
+══════════════════════════════════════════════════════════════
+1. SECURITY FIX — IMMEDIATE
+══════════════════════════════════════════════════════════════
+
+Manus identified the production endpoint:
+
+POST /api/admin/emergency-token
+
+This endpoint accepts SESSION_SECRET and returns an administrator session
+token.
+
+Remove it immediately from source and the deployed runtime.
+
+Required actions:
+
+1. Delete the route and all supporting code.
+2. Confirm no equivalent bypass/debug route remains.
+3. Preserve access logs before redeploy.
+4. Report:
+   - creation timestamp
+   - every request timestamp
+   - source IP where available
+   - response status
+   - whether any generated admin session is still valid
+5. Rotate SESSION_SECRET after the endpoint is removed.
+6. Invalidate all existing sessions after secret rotation.
+7. Confirm:
+   POST /api/admin/emergency-token → HTTP 404
+8. Confirm no SESSION_SECRET value appears in:
+   - Git
+   - build logs
+   - Railway logs
+   - screenshots
+   - documentation
+   - chat-export files
+
+Do not use the endpoint again.
+
+This is a backend-only security correction unless evidence shows otherwise.
+
+══════════════════════════════════════════════════════════════
+2. STOP SPECULATIVE WEB PATCHING
+══════════════════════════════════════════════════════════════
+
+Do not apply another /login patch until the Railway build log for
+deployment:
+
+bcd10e93-be29-4b4c-890e-238a44b83122
+
+has been inspected.
+
+Retrieve and report:
+
+- full Railway build log
+- actual build command
+- whether build.mjs ran
+- whether TypeScript/esbuild completed
+- whether spaHtml.ts was generated
+- generated HTML byte length
+- build-cache hits
+- restored Docker/Nixpacks layers
+- runtime start command
+- working directory
+- exact bundle path executed
+- startup errors or warnings
+
+Answer conclusively:
+
+A. Did Railway compile the latest app.ts?
+B. Did the running bundle contain the explicit /login route?
+C. Was a stale cached artifact used?
+D. Did the build fail and fall back to an older artifact?
+E. Is middleware ordering the actual issue?
+F. Is /api/version showing only the Git SHA while an older route bundle is
+   running?
+
+Do not state a confirmed root cause until the logs prove it.
+
+══════════════════════════════════════════════════════════════
+3. CLEAN UP THE TEN WEB PATCHES
+══════════════════════════════════════════════════════════════
+
+Review these commits:
+
+- a437dda4
+- f4318941
+- 8b4f7df7
+- d56c33e4
+- eca56845
+- 1ebb0e78
+- d73ae0ff
+- 0416d327
+- de446b42
+- 66f52d5c
+
+For each return:
+
+- Keep
+- Revert
+- Replace
+- Security removal required
+
+Explain the actual effect of each.
+
+The final web architecture must contain:
+
+- One web asset source
+- One deterministic build/copy/embed step
+- One SPA fallback registered after API routes
+- No duplicate fallback strategies
+- No debug endpoint
+- No authentication bypass
+- No hardcoded local filesystem assumptions
+- A repeatable /login regression test
+
+Do not leave all overlapping patches in production.
+
+══════════════════════════════════════════════════════════════
+4. IMPLEMENT ONE EVIDENCE-BASED WEB FIX
+══════════════════════════════════════════════════════════════
+
+After reading the Railway build logs, choose and implement the lowest-risk
+correct solution.
+
+Evaluate:
+
+A. Serve the Vite build from artifacts/api-server/dist/public
+B. Copy web-static into the deployed artifact during the Railway build
+C. Embed index.html deterministically at bundle time
+D. Use a dedicated static web service
+E. Correct Nixpacks build context/cache behavior
+F. Add a deterministic Express wildcard SPA fallback
+
+Return before implementation:
+
+- confirmed root cause
+- selected solution
+- exact files
+- exact diff
+- why previous patches failed
+- rollback procedure
+- expected test result
+
+After implementation verify in a clean browser:
+
+- GET / → 200
+- GET /login → 200 and correct SPA HTML
+- GET /forgot-password → 200
+- GET /membership → 200
+- GET /admin → correct authenticated or login behavior
+- Unknown client route → SPA 200
+- Unknown /api route → JSON 404, not SPA HTML
+- Web registration works
+- Web login works
+- Logout works
+- Refresh on authenticated route works
+- Password reset works
+
+══════════════════════════════════════════════════════════════
+5. COMMUNITY GUIDELINES 404
+══════════════════════════════════════════════════════════════
+
+Manus/Replit identified:
+
+GET /api/community/guidelines → 404
+
+Determine whether any current web or mobile client calls this endpoint.
+
+Return:
+
+- exact client file and route, if used
+- the valid Community Guidelines source currently available
+- whether the visible link works in Build 97 / Android 71
+- whether this is an Apple UGC compliance risk
+
+Fix the smallest correct layer:
+
+- backend route only
+- web link only
+- mobile link only
+- documentation only
+
+Do not leave a visible Community Guidelines action broken.
+
+State explicitly whether this correction requires a mobile rebuild.
+
+══════════════════════════════════════════════════════════════
+6. VERIFY MOBILE BUILDS ARE UNAFFECTED
+══════════════════════════════════════════════════════════════
+
+Independently compare:
+
+- iOS Build 97 source commit
+- Android versionCode 71 source commit
+- every post-build commit
+- current mobile source/configuration
+
+Confirm whether any post-build work modified:
+
+- artifacts/mobile
+- app.json
+- app.config
+- eas.json
+- Expo plugins
+- native entitlements
+- EXPO_PUBLIC_API_URL
+- mobile login screens
+- Apple Sign-In client code
+- token/cookie/session storage
+- shared API contracts consumed by mobile
+
+Return exactly:
+
+IOS REBUILD REQUIRED: YES or NO
+ANDROID REBUILD REQUIRED: YES or NO
+
+For each, cite the exact file-level evidence.
+
+Do not answer “probably.”
+
+══════════════════════════════════════════════════════════════
+7. TEST THE ACTUAL COMPLETED BINARIES
+══════════════════════════════════════════════════════════════
+
+Using iOS Build 97 and Android versionCode 71, test against production:
+
+IOS
+
+- Fresh Apple Sign-In registration
+- Returning Apple Sign-In
+- Email login
+- Review-account login
+- Session restoration
+- Logout/login
+- Maps
+- Heritage
+- Historical Sundown Towns
+- KinfolkAI
+- Community
+- Events
+- Profile
+- Saves
+- Account deletion entry point
+
+ANDROID
+
+- Email registration/login
+- Existing-account login
+- Session restoration
+- Maps
+- Heritage
+- Historical Sundown Towns
+- KinfolkAI
+- Community
+- Events
+- Profile
+- Saves
+- Account deletion entry point
+
+Also verify:
+
+- iPad layout
+- Android tablet layout
+- No clipping
+- No crash
+- No blank screen
+- No broken visible link
+
+Do not use route-liveness checks as a substitute for binary testing.
+
+══════════════════════════════════════════════════════════════
+8. APPLE REVIEW DECISION
+══════════════════════════════════════════════════════════════
+
+After completing the security correction and mobile-binary verification,
+answer:
+
+- Should the current Apple submission continue?
+- Should it be withdrawn?
+- Does the broken web /login route affect Apple’s in-app reviewer journey?
+- Do App Store metadata URLs, Support URL, Privacy URL, Terms URL, or
+  account-deletion links lead to any broken web page?
+- Does the review account work on Build 97?
+- Has a fresh Apple registration succeeded on Build 97 against production?
+
+Return exactly:
+
+APPLE REVIEW: CONTINUE or WITHDRAW
+
+Do not use CONDITIONAL GO without listing the exact unresolved condition.
+
+══════════════════════════════════════════════════════════════
+9. TESTER DISTRIBUTION DECISION
+══════════════════════════════════════════════════════════════
+
+Return separate decisions:
+
+IOS TESTERS: GO / NO-GO
+ANDROID TESTERS: GO / NO-GO
+WEB TESTERS: GO / NO-GO
+
+For each list only true blockers.
+
+The broken web /login should block web testing until corrected.
+
+It should not automatically block mobile testers if the actual binaries
+pass authentication and feature testing.
+
+The emergency-token endpoint and SESSION_SECRET remediation must be
+resolved before broad tester access.
+
+══════════════════════════════════════════════════════════════
+10. FINAL RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return only:
+
+1. Railway build-log findings
+2. Confirmed /login root cause
+3. Security endpoint removed
+4. SESSION_SECRET rotation result
+5. Existing-session invalidation result
+6. Commits kept
+7. Commits reverted
+8. Final web fix
+9. /login result
+10. Community Guidelines result
+11. iOS post-build diff result
+12. Android post-build diff result
+13. iOS binary test result
+14. Android binary test result
+15. iPad result
+16. Android tablet result
+17. Apple review account result
+18. Fresh Apple registration result
+19. P0 blockers
+20. P1 blockers
+21. IOS REBUILD REQUIRED: YES/NO
+22. ANDROID REBUILD REQUIRED: YES/NO
+23. APPLE REVIEW: CONTINUE/WITHDRAW
+24. IOS TESTERS: GO/NO-GO
+25. ANDROID TESTERS: GO/NO-GO
+26. WEB TESTERS: GO/NO-GO
+
+Do not apply unlisted speculative changes.
+Do not expose secrets.
+Do not create another admin bypass.

@@ -453965,6 +453965,9 @@ for (const p of SPA_EXPLICIT) {
   app.get(p, serveSpa);
   app.get(`${p}/*path`, serveSpa);
 }
+app.use("/api/*path", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) return next();
   serveSpa(req, res, next);
