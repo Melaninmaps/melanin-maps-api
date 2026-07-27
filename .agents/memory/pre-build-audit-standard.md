@@ -1,11 +1,13 @@
 ---
 name: Pre-Build Audit Standard
-description: Mandatory process that must run before implementing any Build N. Covers 11 audit categories the agent must confirm or plan before "Please implement." takes effect.
+description: Mandatory process that must run before implementing any Build N. Covers 11 audit categories the agent must confirm or plan before "Please implement." takes effect. See also SUBMISSION_RELEASE_GATE.md for the separate gate required before EAS submission.
 ---
 
 # Pre-Build Audit Standard
 
 **Why:** The Build 97 session established that implementation failures are avoidable when the right audit questions are asked before writing code — not during QA after the fact. This is now a permanent process gate for every build.
+
+**Companion gate:** Before any EAS submission (not just before implementation), a separate Submission Release Gate must be completed. See `docs/product/SUBMISSION_RELEASE_GATE.md`. The pre-build audit covers code correctness before implementation. The submission release gate covers production stability and Apple-specific requirements before submission. Both are required — neither substitutes for the other.
 
 **How to apply:** When a new build (Build 97, 98, etc.) is authorized with "Please implement.", before touching any code, run or confirm all audit categories below. If any category has not been planned, stop and produce the plan first.
 
