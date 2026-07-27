@@ -1,0 +1,135 @@
+BUILD NUMBER CORRECTION AND FINAL RELEASE EXECUTION
+
+Confirmed:
+
+- iOS release is Build 97
+- Android release is versionCode 72
+- Do not refer to Android versionCode 71 again
+- Do not create another Android build unless a mobile-code or configuration
+  change after VC72 proves a rebuild is required
+
+Proceed using these exact release identifiers:
+
+IOS: Build 97
+ANDROID: versionCode 72
+
+Complete the remaining release actions now.
+
+1. SECURITY — ROTATE SESSION SECRET
+
+The emergency-token endpoint has been removed, but sessions created while
+it existed may still be valid.
+
+Required:
+
+- Preserve relevant access logs
+- Rotate SESSION_SECRET in Railway
+- Allow Railway to redeploy
+- Confirm all prior sessions are invalidated
+- Log back into the production app with legitimate credentials
+- Confirm:
+  - /api/healthz → 200
+  - /api/readyz → 200
+  - /api/version → current SHA
+  - POST /api/admin/emergency-token → 404
+  - /login → 200
+  - authenticated admin functions still work after fresh login
+
+Do not expose the new secret value.
+
+2. IOS BUILD 97
+
+Confirm:
+
+- Exact EAS build ID
+- Exact source commit
+- Build number 97
+- IPA artifact status
+- No mobile changes after the build that require rebuilding
+
+Prepare the exact Apple upload method:
+
+- Upload Build 97 IPA using Apple Transporter
+- Confirm bundle identifier
+- Confirm App Store Connect app
+- Confirm processing status after upload
+- Confirm review account credentials are entered only in App Review
+  Information
+- Confirm review notes reference Build 97
+
+Do not submit a different build number.
+
+3. ANDROID VERSIONCODE 72
+
+Confirm:
+
+- Exact EAS build ID
+- Exact source commit
+- versionCode 72
+- versionName
+- AAB artifact status
+- No mobile changes after VC72 requiring a rebuild
+
+Fix the Google Play submission credential issue:
+
+- Identify the exact Google Cloud service account
+- Confirm the currently configured JSON key is invalid
+- Provide founder-safe steps to create a new JSON key
+- Replace the local/EAS submission credential securely
+- Never commit the JSON key
+- Re-run EAS Submit for Android VC72
+- Confirm the correct Google Play testing track
+- Confirm processing/review status
+- Confirm Android phone and tablet availability
+
+Do not rebuild VC72 merely because submission credentials failed.
+
+4. CORRECT ALL DOCUMENTATION
+
+Update every release report and tester instruction so it consistently says:
+
+- iOS Build 97
+- Android versionCode 72
+
+Search for and correct any remaining reference to Android versionCode 71
+when it refers to the current release.
+
+Do not change historical records showing that 71 was previously used.
+
+5. FINAL TESTER STATUS
+
+After SESSION_SECRET rotation and successful store uploads, return:
+
+- iOS Build 97 upload status
+- TestFlight processing status
+- Apple App Review status
+- Android VC72 upload status
+- Google Play testing-track status
+- Web tester status
+- Whether review account login still works
+- Whether Maps, Heritage, Historical Sundown Towns, Community, and
+  KinfolkAI load after fresh authentication
+
+6. FINAL RESPONSE
+
+Return only:
+
+1. SESSION_SECRET rotated: YES/NO
+2. Existing sessions invalidated: YES/NO
+3. Web login result
+4. iOS Build 97 build ID
+5. iOS Build 97 upload result
+6. Apple processing/review result
+7. Android VC72 build ID
+8. Android VC72 credential correction result
+9. Android VC72 upload result
+10. Google Play testing-track result
+11. IOS REBUILD REQUIRED: YES/NO
+12. ANDROID REBUILD REQUIRED: YES/NO
+13. APPLE REVIEW: CONTINUE/WITHDRAW
+14. IOS TESTERS: GO/NO-GO
+15. ANDROID TESTERS: GO/NO-GO
+16. WEB TESTERS: GO/NO-GO
+
+Do not create Build 98 or Android VC73 unless a confirmed mobile-code
+change requires it.

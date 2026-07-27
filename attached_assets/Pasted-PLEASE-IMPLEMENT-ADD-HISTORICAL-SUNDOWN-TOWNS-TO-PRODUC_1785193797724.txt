@@ -1,0 +1,120 @@
+PLEASE IMPLEMENT — ADD HISTORICAL SUNDOWN TOWNS TO PRODUCTION
+
+I authorize the Historical Sundown Town production seed for Build 97 and
+Android versionCode 72.
+
+Use my existing authenticated production admin session where possible.
+
+Do not ask me to paste my admin session token, SESSION_SECRET, password,
+or any other credential into chat, source code, logs, or documentation.
+
+Complete the following now:
+
+1. Confirm the latest Build 97 backend is live.
+
+Verify:
+
+- GET /api/version returns the current production commit
+- GET /api/readyz returns HTTP 200
+- POST /api/admin/emergency-token returns HTTP 404
+
+2. Confirm the route exists:
+
+POST /api/admin/seed-sundown-towns
+
+3. Before seeding, provide the final record count and confirm that all
+records:
+
+- Have a documented historical source
+- Include source attribution
+- Include an external source link
+- Use historical framing
+- Do not claim present-day danger
+- Do not contain a danger score
+- Have isFamilyFriendly set to false or omitted
+- Do not rely on Wikipedia as the sole source
+
+4. Run the production seed using my authenticated admin session.
+
+5. Return the exact response:
+
+- inserted
+- skipped
+- failed
+- total
+
+6. Run the seed a second time to prove it is idempotent.
+
+Expected second result:
+
+- inserted: 0
+- skipped: existing record count
+
+7. Verify production using the correct query:
+
+GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town
+
+Do not use category=sundown.
+
+8. Confirm:
+
+- The production total is nonzero
+- Every result has a name, city, state, historical description,
+  attribution, and source link
+- The historical disclaimer appears
+- There are no unsupported present-day safety claims
+- The Historical Sundown Town category appears in the cultural-site
+  category response
+
+9. Verify the actual user experience on:
+
+- Production web
+- iPhone Build 97
+- iPad Build 97
+- Android versionCode 72 phone
+- Android versionCode 72 tablet
+
+Confirm:
+
+- Historical Sundown Town category is visible
+- Selecting the category returns results
+- Pins appear
+- Search works
+- State/location filtering works where implemented
+- Tapping a pin opens the detail tile
+- The description and source are readable
+- The disclaimer is visible
+- Switching between Businesses, Heritage, and Historical Sundown Towns
+  does not crash the map
+- No empty category appears
+
+10. Verify KinfolkAI with:
+
+“Tell me about historical sundown towns near Chicago.”
+
+Pass requirement:
+
+- Historical context only
+- No claim that every location is presently unsafe
+- No unsupported danger score
+- Source-aware language
+- Invitation to review the map records or source details
+
+11. Return:
+
+- Seed route result
+- Production record count
+- Category result
+- Web result
+- iPhone result
+- iPad result
+- Android phone result
+- Android tablet result
+- KinfolkAI result
+- Any failed or dropped records
+- GO or NO-GO for Sundown Towns in Build 97 and Android versionCode 72
+
+Do not defer this feature.
+Do not silently hide the category.
+Do not create a new build unless the completed binaries fail to display
+the dynamically loaded category and records.

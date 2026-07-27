@@ -1,0 +1,430 @@
+MAPPING WITH MELANIN™ — APPLE RESPONSE PACKAGE + 12-HOUR AUTONOMOUS MONITORING
+
+PRIORITY: P0
+
+CURRENT RELEASE IDENTIFIERS
+
+- iOS: Build 97
+- Android: versionCode 72
+
+The Apple response must refer to iOS Build 97.
+
+Do not refer to Android versionCode 71 again except in historical records.
+
+══════════════════════════════════════════════════════════════
+1. VERIFY THE APPLE REVIEW ACCOUNT
+══════════════════════════════════════════════════════════════
+
+Before drafting any Apple response, verify the actual production in-app
+review account.
+
+Required account:
+
+Email:
+appstorereview@mappingwithmelanin.com
+
+Confirm:
+
+- Account exists in the production Mapping With Melanin database
+- memberType = founding
+- emailVerified = true
+- approved = true
+- No waitlist restriction
+- No MFA
+- No external verification code required
+- Password works
+- Account has full access to all features visible in Build 97
+- Account deletion option is visible
+- Membership screen does not force a purchase
+
+Run 10 consecutive successful logins using the exact credentials that
+will be supplied to Apple.
+
+After login verify access to:
+
+- Maps
+- Existing businesses
+- Heritage places
+- Historical Sundown Towns
+- Community Feed
+- Events
+- KinfolkAI
+- Profile
+- Saves
+- Membership
+- Settings
+- Account deletion
+
+Do not expose the password in Git, logs, evidence files, or ordinary chat.
+
+Provide the password to the founder only through the agreed secure method.
+
+══════════════════════════════════════════════════════════════
+2. PREPARE THE APP STORE CONNECT SIGN-IN INFORMATION
+══════════════════════════════════════════════════════════════
+
+Prepare the exact text the founder should enter under:
+
+App Store Connect
+→ App Review Information
+→ Sign-in Information
+
+Return it in this format:
+
+USERNAME:
+appstorereview@mappingwithmelanin.com
+
+PASSWORD:
+[PROVIDE SECURELY TO FOUNDER — DO NOT PRINT IN REPORT]
+
+REVIEW NOTES:
+[exact text]
+
+The notes must include:
+
+- This is a regular in-app Mapping With Melanin account
+- It is not an App Store Connect user
+- The account is on the Founding tier
+- It has access to all features visible in Build 97
+- No MFA or verification code is required
+- Exact navigation steps for:
+  - Maps
+  - Heritage
+  - Historical Sundown Towns
+  - KinfolkAI
+  - Community
+  - Events
+  - Membership
+  - Account deletion
+
+Correctly state:
+
+- Free accounts receive 3 KinfolkAI queries per month
+- The supplied review account has full KinfolkAI access
+- Historical Sundown Towns are presented as historical reference
+  information, not as a current danger score
+- The production backend corrections are already deployed
+- The web /login issue was separate from the mobile authentication flow
+  and has been corrected
+
+Do not claim anything that has not been tested.
+
+══════════════════════════════════════════════════════════════
+3. DRAFT THE RESPONSE TO APPLE
+══════════════════════════════════════════════════════════════
+
+Prepare a concise response to Apple’s latest Guideline 2.1(a) message.
+
+Use this structure:
+
+“Hello App Review Team,
+
+Thank you for the additional review details.
+
+We identified and corrected the production issue that affected new Apple
+Sign-In registration during the review of Build 96. The issue was caused
+by backend database connection exhaustion and a stale deployed backend
+artifact. The corrected backend is now deployed and includes bounded
+connection pools, corrected readiness checks, and improved transient
+connection handling.
+
+For Build 97, we have also provided a production in-app review account
+with access to all visible functionality.
+
+Username:
+appstorereview@mappingwithmelanin.com
+
+Password:
+[entered separately in App Review Information]
+
+No MFA or external verification code is required.
+
+After signing in, the reviewer can access:
+
+- Maps and business discovery
+- Heritage places
+- Historical Sundown Towns historical reference layer
+- KinfolkAI
+- Community Feed
+- Events
+- Profile and settings
+- Membership
+- Account deletion
+
+We have also verified the iPad configuration for this release and updated
+the app to run full-screen in portrait mode on iPad.
+
+Please let us know if any additional information is needed.
+
+Thank you.”
+
+Before returning this draft, verify every statement against:
+
+- Deployed production
+- Build 97
+- Review-account behavior
+- Current App Store Connect metadata
+
+Do not mention internal blame, Replit, Manus, connection-pool debugging,
+or speculative causes beyond what is confirmed.
+
+══════════════════════════════════════════════════════════════
+4. CONFIRM WHETHER APPLE REVIEW MAY CONTINUE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+- Build 97 upload status
+- App Store Connect processing status
+- Review account entered in App Review Information: YES/NO
+- Apple response ready: YES/NO
+- Fresh Apple Sign-In registration tested on Build 97: YES/NO
+- Review-account login tested on Build 97: YES/NO
+- APPLE REVIEW: CONTINUE or WITHDRAW
+
+If either Apple Sign-In or review-account login has not been tested on the
+actual Build 97 binary, state that clearly.
+
+══════════════════════════════════════════════════════════════
+5. CONFIGURE 12-HOUR AUTONOMOUS MONITORING
+══════════════════════════════════════════════════════════════
+
+Monitoring must begin when the founder confirms that Build 97 has been
+submitted to Apple.
+
+The monitoring must continue for 12 hours even if the founder is offline
+and even if the Replit chat session closes.
+
+Do not claim monitoring is active unless an independent scheduled process
+has been configured.
+
+Use an appropriate persistent mechanism, such as:
+
+- Railway scheduled service
+- Railway cron
+- Existing always-on worker
+- External uptime monitor
+- Another supported persistent automation
+
+Do not rely on a conversational Replit agent session.
+
+Monitoring frequency:
+
+At least once every 5 minutes for 12 hours.
+
+Minimum expected checks:
+
+- 144 scheduled monitoring cycles
+
+Monitor:
+
+A. SERVICE HEALTH
+
+- GET /api/healthz
+- GET /api/readyz
+- GET /api/readyz/history
+- GET /api/version
+- GET /api/businesses?limit=3
+- GET /api/cultural-sites?limit=3
+- GET /api/cultural-sites?heritageCategory=Historical+Sundown+Town
+
+B. AUTHENTICATION
+
+Using a dedicated non-founder test account:
+
+- Review-account email login
+- GET /api/auth/user after login
+- Session restoration/check
+- Logout and renewed login at a safe interval
+- Apple Sign-In error logs
+- Email-login errors
+- Registration errors
+- Session-renewal failures
+
+Do not store the password in source control or logs.
+
+C. DATABASE AND INFRASTRUCTURE
+
+- Application pool total
+- Application pool idle
+- Application pool waiting
+- Stripe pool usage where observable
+- Total PostgreSQL connections
+- Database latency
+- HTTP 500 count
+- HTTP 429 count
+- Repeated 404 count
+- Railway service restart count
+- Database restart count
+- API CPU
+- API memory
+- PostgreSQL CPU/memory where available
+- Connection baseline at start and end
+- Monotonic connection growth
+
+D. CORE FEATURES
+
+Perform safe read-only checks for:
+
+- Businesses
+- Heritage
+- Historical Sundown Towns
+- Community Feed
+- Events
+- KinfolkAI basic availability
+- Policy/Guidelines endpoint
+- Web /login
+- Support URL
+- Privacy Policy URL
+
+Do not generate excessive KinfolkAI cost.
+A low-frequency controlled check is sufficient.
+
+E. STRIPE
+
+Monitor:
+
+- Stripe webhook failures
+- Duplicate webhook processing
+- Unexpected connection growth following Stripe events
+
+Do not create live charges or subscriptions.
+
+══════════════════════════════════════════════════════════════
+6. ALERT CONDITIONS
+══════════════════════════════════════════════════════════════
+
+Treat the following as P0:
+
+- /api/readyz unavailable
+- Database routes return 500
+- Review-account login fails
+- Apple Sign-In registration failure
+- Pool exhaustion
+- Waiting connections remain above zero persistently
+- Monotonic connection growth
+- API service restart during ordinary use
+- Historical Sundown Town endpoint becomes empty or unavailable
+- Sensitive data or secret exposure
+- Repeatable supported-device crash reported by a tester
+
+Treat the following as P1:
+
+- KinfolkAI unavailable
+- Community Feed unavailable
+- Maps/Heritage endpoints unavailable
+- Repeated 404s on visible routes
+- p95 synthetic latency materially degrades
+- Support, Privacy, Terms, or Guidelines link fails
+
+For any P0/P1 event:
+
+- Record timestamp
+- Record endpoint/action
+- Preserve sanitized response
+- Preserve relevant logs
+- Record connection and infrastructure metrics
+- Notify the founder immediately through the configured alert method
+- State whether Apple review or tester access should be paused
+- Do not silently restart and close the incident
+
+══════════════════════════════════════════════════════════════
+7. MONITORING EVIDENCE
+══════════════════════════════════════════════════════════════
+
+Create:
+
+docs/product/releases/BUILD_97_APPLE_12_HOUR_MONITORING.md
+
+Do not include credentials or secret values.
+
+Record:
+
+- Monitoring start time
+- Monitoring end time
+- Apple submission confirmation time
+- Monitoring mechanism
+- Schedule/frequency
+- Alert destination
+- Total checks expected
+- Total checks completed
+- Successful checks
+- Failed checks
+- Uptime percentage
+- HTTP 500 count
+- HTTP 429 count
+- Authentication-failure count
+- Session-renewal failure count
+- Peak active DB connections
+- Peak idle DB connections
+- Peak waiting DB connections
+- Start/end connection baseline
+- API restart count
+- Database restart count
+- Average latency
+- p95 latency
+- Historical Sundown endpoint result
+- Business endpoint result
+- Community endpoint result
+- KinfolkAI availability result
+- Incidents and resolutions
+- Tester sessions observed where available
+
+At the end of 12 hours return:
+
+- GO
+- CONDITIONAL GO
+- NO-GO
+
+for continued Apple review and tester access.
+
+══════════════════════════════════════════════════════════════
+8. MONITORING CAPABILITY DISCLOSURE
+══════════════════════════════════════════════════════════════
+
+Before the founder submits to Apple, return:
+
+- AUTONOMOUS MONITORING CONFIGURED: YES/NO
+- Monitoring mechanism
+- Start trigger
+- End time
+- Frequency
+- Alert method
+- Where evidence is stored
+- Whether it survives Replit chat closure
+- Any founder action required
+
+If autonomous monitoring cannot be configured, say so immediately and
+provide the exact external monitoring service or Railway configuration
+needed.
+
+Do not imply that Replit itself will “watch” for 12 hours if no persistent
+process exists.
+
+══════════════════════════════════════════════════════════════
+9. FINAL RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return only:
+
+1. Review account verified: YES/NO
+2. Ten login test result
+3. App Review Information text
+4. Apple response text
+5. Build 97 upload/processing status
+6. Fresh Apple Sign-In result
+7. Review-account Build 97 result
+8. APPLE REVIEW: CONTINUE/WITHDRAW
+9. Autonomous monitoring configured: YES/NO
+10. Monitoring mechanism
+11. Monitoring frequency
+12. Monitoring start trigger
+13. Monitoring end time
+14. Alert method
+15. Evidence-file path
+16. Remaining founder actions
+17. Remaining P0/P1 blockers
+
+Do not create another roadmap.
+Do not expose the review password.
+Do not claim monitoring is running until it is independently scheduled.
