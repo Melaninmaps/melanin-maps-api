@@ -1,0 +1,408 @@
+P0 — EXTEND AUTONOMOUS RELEASE MONITORING UNTIL APPLE APPROVAL
+
+Due to the crashes and KinfolkAI connection failure reported during
+testing, the original 12-hour monitoring period is no longer sufficient.
+
+Extend the existing Build 98 autonomous monitoring continuously until:
+
+1. Apple formally approves the app; and
+2. The production system remains stable for an additional 12 hours after
+   approval.
+
+This is a condition-based monitoring requirement—not another single
+12-hour test.
+
+The monitoring must continue when:
+
+- I am offline
+- The Replit chat is closed
+- Apple remains in Waiting for Review
+- Apple begins active review
+- Testers are actively using the app
+
+Do not claim monitoring is extended unless a persistent scheduled service
+is actually running independently.
+
+══════════════════════════════════════════════════════════════
+1. CONFIRM THE EXISTING MONITOR
+══════════════════════════════════════════════════════════════
+
+Return:
+
+- AUTONOMOUS MONITORING CURRENTLY ACTIVE: YES/NO
+- Monitoring mechanism/service
+- Process or deployment ID
+- Current start time
+- Current cycle number
+- Frequency
+- Last completed cycle
+- Current success rate
+- Alert destination
+- Evidence/log location
+- Whether it survives Replit chat closure
+
+Confirm whether the existing monitor will stop automatically after cycle
+144.
+
+If it will stop, update it now so it continues until the new stop
+condition is satisfied.
+
+══════════════════════════════════════════════════════════════
+2. NEW STOP CONDITION
+══════════════════════════════════════════════════════════════
+
+The monitor must not stop based solely on elapsed time.
+
+Continue monitoring until all are true:
+
+- Apple status = Approved or Ready for Sale
+- No unresolved P0 or P1 incident
+- Production remains stable for 12 consecutive hours after approval
+- No repeatable crash is reported during that post-approval period
+- No authentication failure affects Apple or testers
+- No database exhaustion or connection growth is present
+
+If Apple rejects the build:
+
+- Continue monitoring
+- Preserve all evidence surrounding the review period
+- Alert the founder immediately
+- Do not stop until the founder explicitly authorizes monitoring to end
+
+If Apple review remains pending for multiple days, monitoring must remain
+active throughout that period.
+
+══════════════════════════════════════════════════════════════
+3. MONITORING FREQUENCY
+══════════════════════════════════════════════════════════════
+
+Run at least every 5 minutes.
+
+Use lower-frequency checks only for actions that would be costly or
+disruptive, such as KinfolkAI synthetic prompts.
+
+Do not generate live purchases, subscriptions, excessive AI usage, or
+tester content.
+
+══════════════════════════════════════════════════════════════
+4. REQUIRED BACKEND CHECKS
+══════════════════════════════════════════════════════════════
+
+Monitor:
+
+- GET /api/healthz
+- GET /api/readyz
+- GET /api/readyz/history
+- GET /api/version
+- GET /api/businesses?limit=3
+- GET /api/cultural-sites?limit=3
+- Historical Sundown Town endpoint
+- Community Feed endpoint
+- Events endpoint
+- Community Guidelines endpoint
+- Web /login
+- Privacy Policy
+- Terms
+- Support URL
+
+Record:
+
+- HTTP status
+- Latency
+- Response validity
+- Timeouts
+- HTTP 404s
+- HTTP 429s
+- HTTP 500s
+- HTTP 502/503/504s
+
+══════════════════════════════════════════════════════════════
+5. DATABASE AND RAILWAY CHECKS
+══════════════════════════════════════════════════════════════
+
+Monitor:
+
+- Application-pool total
+- Active connections
+- Idle connections
+- Waiting connections
+- Peak connections
+- PostgreSQL total connections
+- Database latency
+- API CPU
+- API memory
+- PostgreSQL CPU/memory where accessible
+- API service restarts
+- Database restarts
+- Deployment changes
+- Monotonic connection growth
+- Connection baseline at the beginning and end of each 12-hour period
+
+P0 conditions include:
+
+- Persistent pool waiting
+- Pool exhaustion
+- Database route returning 500
+- Unexpected Railway restart
+- Repeating connection timeout
+- Connection count increasing without returning toward baseline
+
+══════════════════════════════════════════════════════════════
+6. AUTHENTICATION MONITORING
+══════════════════════════════════════════════════════════════
+
+Using a dedicated safe monitoring account, verify:
+
+- Email login
+- Authenticated session check
+- Session restoration
+- Session renewal
+- Logout/login at controlled intervals
+- Review-account availability
+
+Monitor production logs for:
+
+- Apple Sign-In failures
+- New Apple registration failures
+- Email login failures
+- Registration failures
+- Invalid-session spikes
+- Session-renewal failures
+- Database errors during authentication
+
+Do not log or store passwords, session cookies, Apple tokens, or private
+user information.
+
+A simple endpoint-liveness check is not sufficient. Confirm that a
+complete synthetic login and authenticated session check works.
+
+══════════════════════════════════════════════════════════════
+7. MOBILE CRASH AND FAILURE MONITORING
+══════════════════════════════════════════════════════════════
+
+Because testers reported crashes and KinfolkAI connection failures,
+monitor and correlate:
+
+- TestFlight crash reports
+- App Store Connect crashes
+- Google Play Android Vitals
+- Expo/EAS runtime errors where available
+- JavaScript fatal exceptions
+- Unhandled promise rejections
+- React Native Maps failures
+- Out-of-memory events
+- Watchdog terminations
+- Navigation failures
+- KinfolkAI provider errors
+- Mobile API timeouts
+- Authentication-related closures
+
+For every reported tester incident, record:
+
+- Timestamp
+- Time zone
+- Platform
+- Build/versionCode
+- Device and OS where available
+- Screen
+- Last user action
+- Last successful API call
+- First failing event
+- Backend status at that time
+- Monitoring cycle closest to the event
+- Classification:
+  - confirmed crash
+  - app freeze
+  - controlled error
+  - backend outage
+  - provider failure
+  - insufficient evidence
+
+Do not label a controlled error message as a crash.
+
+══════════════════════════════════════════════════════════════
+8. KINFOLKAI MONITORING
+══════════════════════════════════════════════════════════════
+
+Monitor:
+
+- KinfolkAI endpoint availability
+- Provider response status
+- Provider latency
+- Timeout count
+- HTTP 401/403/429/500 errors
+- Missing or invalid provider configuration
+- Quota/rate-limit failures
+- JSON parsing failures
+- Controlled fallback behavior
+
+At a safe interval, run a basic synthetic question such as:
+
+“Tell me briefly about Philadelphia.”
+
+Confirm:
+
+- A coherent response is returned
+- No fabricated platform listing
+- No unsupported safety claim
+- No generic connection error
+- No provider error is exposed to the user
+
+Do not run the prompt every five minutes. Use a cost-controlled interval,
+such as once per hour, unless an incident is active.
+
+══════════════════════════════════════════════════════════════
+9. MAPS AND REQUIRED FEATURES
+══════════════════════════════════════════════════════════════
+
+Monitor API/data availability for:
+
+- Businesses
+- Heritage places
+- Historical Sundown Towns
+- Community
+- Events
+- Saves
+- Profiles
+
+Track tester reports involving:
+
+- Map crashes
+- Heritage marker crashes
+- Missing Historical Sundown Town category
+- Pin rendering failures
+- Layer-switching crashes
+- Invalid coordinates
+- Detail-card failures
+- Source-link failures
+- Tablet clipping
+
+Backend success does not prove the mobile UI works. Keep device reports
+and API monitoring clearly separated.
+
+══════════════════════════════════════════════════════════════
+10. ALERT RULES
+══════════════════════════════════════════════════════════════
+
+Immediately alert the founder for any P0:
+
+- Review-account login failure
+- Fresh Apple registration failure
+- Repeatable app crash
+- Database outage
+- Pool exhaustion
+- Persistent waiting connections
+- API service restart
+- Core authentication route returning 500
+- Maps/Heritage data unavailable
+- Sensitive information exposure
+- Apple reports inability to access the app
+
+Alert for P1:
+
+- KinfolkAI unavailable
+- Community or Events unavailable
+- Repeated visible 404
+- Material latency degradation
+- Privacy, Terms, Support, or Guidelines unavailable
+- Multiple testers report the same UX failure
+
+For each alert provide:
+
+- Timestamp
+- Severity
+- Affected platform
+- Build
+- Evidence
+- User impact
+- Whether Apple review should continue
+- Whether tester access should pause
+- Recommended immediate action
+
+Do not silently restart a service and close the incident without
+documenting it.
+
+══════════════════════════════════════════════════════════════
+11. APPLE STATUS CHECK
+══════════════════════════════════════════════════════════════
+
+Check Apple review status at an appropriate interval if Replit has
+authorized App Store Connect access.
+
+Track:
+
+- Waiting for Review
+- In Review
+- Pending Developer Release
+- Approved
+- Ready for Sale
+- Rejected
+- Metadata Rejected
+- Developer Action Needed
+
+If direct App Store Connect monitoring is not technically available,
+state that clearly and require the founder to report the status change.
+
+Do not claim automatic Apple-status monitoring unless it is actually
+configured.
+
+══════════════════════════════════════════════════════════════
+12. EVIDENCE AND REPORTING
+══════════════════════════════════════════════════════════════
+
+Maintain:
+
+docs/product/releases/BUILD_98_APPLE_APPROVAL_MONITORING.md
+
+Record:
+
+- Monitoring mechanism
+- Start time
+- Current Apple status
+- Total cycles
+- Successful cycles
+- Failed cycles
+- Uptime
+- HTTP error counts
+- Authentication failures
+- Apple Sign-In failures
+- KinfolkAI failures
+- Tester incidents
+- Crash reports
+- Peak DB connections
+- Peak waiting connections
+- Connection trend
+- API and DB restarts
+- Average and p95 latency
+- P0/P1 incidents
+- Resolution details
+- Approval timestamp
+- Post-approval monitoring start/end
+- Final GO/NO-GO
+
+Do not include credentials, tokens, private user content, or secrets.
+
+══════════════════════════════════════════════════════════════
+13. REQUIRED RESPONSE NOW
+══════════════════════════════════════════════════════════════
+
+Return only:
+
+1. Monitoring active: YES/NO
+2. Existing mechanism
+3. Existing stop time/condition
+4. Extension implemented: YES/NO
+5. New stop condition
+6. Current cycle count
+7. Current success rate
+8. Current P0/P1 count
+9. Alert destination
+10. Evidence-file path
+11. Continues while chat is closed: YES/NO
+12. Apple status monitoring available: YES/NO
+13. Founder action required
+14. Any current release blocker
+
+Do not stop monitoring at cycle 144.
+Do not promise human surveillance.
+Use a persistent automated monitoring process.
