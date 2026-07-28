@@ -82,3 +82,5 @@
 - [Android VC67 Build Content](android-vc67-build-content.md) — Authoritative VC67 inventory: auth fix, map fix, all post-VC66 changes, build gate checklist, pre-existing TS errors list.
 - [Launch Backlog](launch-backlog.md) — Prioritized deferred work: LC (launch-critical), PL (first post-launch), GR (growth roadmap). Status, dependencies, platform impact per item.
 - [Replit UI — no file tree + file delivery](replit-ui-no-file-tree.md) — User has NO file tree sidebar ever. Never suggest it. Only working delivery: GitHub REST API Contents PUT → share github.com blob URLs.
+- [Map DEFAULT_REGION + auto-fit](map-default-region.md) — DEFAULT_REGION changed to US-wide (37.0,-95.0, delta 32/52); fitToCoordinates fires once on first businesses+mapReady; Null Island (lat/lng=0) excluded from mapped filter.
+- [Monitor readyz race fix](monitor-readyz-race.md) — /api/readyz HTTP check removed from monitor; readyz now derived from internal DB probe result to avoid concurrent pool saturation.
