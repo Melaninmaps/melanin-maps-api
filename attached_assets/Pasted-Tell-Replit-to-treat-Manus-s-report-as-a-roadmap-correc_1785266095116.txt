@@ -1,0 +1,520 @@
+Tell Replit to treat Manus’s report as a **roadmap correction and implementation standard**, not as permission to start building everything immediately.
+
+You can send this:
+
+```text
+MAPPING WITH MELANIN™ — REQUIRED ROADMAP RECONCILIATION
+
+This is a READ-ONLY planning and documentation task.
+
+Do not begin implementation.
+Do not modify production.
+Do not create migrations.
+Do not change the current Apple/Google builds.
+Do not silently accept, reject, or reinterpret Manus’s recommendations.
+
+Manus reviewed the phased roadmap and issued a CONDITIONAL GO. The
+overall trust-phase strategy is supported, but several architectural,
+safety, privacy, cultural-governance, and sequencing corrections are
+required before future implementation begins.
+
+Please update the master phased implementation document to incorporate
+the following requirements.
+
+══════════════════════════════════════════════════════════════
+1. COMMIT THE GOVERNING ROADMAP
+══════════════════════════════════════════════════════════════
+
+The complete 8-section plan and 189-capability register must be committed
+to docs/product/ and version-controlled before Build 98 begins.
+
+The current unified plan cannot remain only in chat or an uncommitted
+report.
+
+Provide:
+
+- final document paths;
+- document version;
+- commit SHA;
+- total capability count;
+- change log process;
+- rule that every future founder decision is added to the register.
+
+══════════════════════════════════════════════════════════════
+2. PRESERVE THE TRUST-PHASE STRATEGY
+══════════════════════════════════════════════════════════════
+
+Keep the existing sequencing philosophy:
+
+- stable app;
+- identity;
+- contribution;
+- Kinfolk trust;
+- verification and consent;
+- city/community architecture;
+- journeys and intelligence;
+- Circles;
+- Ambassadors;
+- orchestration.
+
+Every build must remain stop-safe: if development stopped for three
+months after that build, the released platform must still be coherent,
+safe, and usable.
+
+══════════════════════════════════════════════════════════════
+3. IMMEDIATE SERVER-ONLY SAFETY WORK
+══════════════════════════════════════════════════════════════
+
+Separate from future feature builds, document a small server-only safety
+release containing:
+
+- Kinfolk crisis-intervention hard stop;
+- Kinfolk session deletion;
+- deterministic Family Mode enforcement inside KinfolkAI;
+- search-history retention cap;
+- verification that SESSION_SECRET rotation remains documented;
+- regression tests confirming the database-pool and monitoring issues do
+  not return.
+
+These are current safety and privacy gaps, not optional future features.
+
+Do not rely only on prompt language for crisis, family, profanity, or
+other safety enforcement.
+
+══════════════════════════════════════════════════════════════
+4. CORRECT THE BUILD SEQUENCE
+══════════════════════════════════════════════════════════════
+
+Revise the roadmap as follows.
+
+BUILD 98
+- Multi-role identity;
+- replace expanding boolean role flags with a user_roles relation;
+- include role audit history;
+- require founder decision for Community Organization eligibility;
+- verify HBCU and language changes in the actual distributed binary.
+
+BUILD 99
+- Trust progression UI;
+- surfaced reviews;
+- saved heritage places;
+- moderation queue v1;
+- citation/source model v1;
+- Living Legacy nominations only;
+- consented attribution-event collection begins.
+
+Do not open Living Legacy media submissions yet.
+
+BUILD 100
+- Structured mentorship, initially 18+ unless a different minor policy is
+  approved;
+- safeguards, reporting, disclaimers, and boundaries in the same build;
+- migrate the complete 36-city cultural registry into structured,
+  versioned founding-layer records;
+- preserve every existing registry entry cell-for-cell;
+- retain the TypeScript constants temporarily as a flagged read-only
+  fallback until parity is proven;
+- “Things You’ll Hear” must use the new registry and citation model from
+  day one.
+
+BUILD 100/101
+- Kinfolk trust and voice architecture;
+- separate schema-backed settings for Community Voice, cultural language,
+  formality, city/regional voice, profanity, and audio voice;
+- profanity default off and separately opted into;
+- AAVE must never imply profanity;
+- full Family Mode enforcement;
+- crisis safeguards;
+- session deletion and memory controls;
+- “What Kinfolk knows about me” transparency panel;
+- recommendation-reason records;
+- source attribution;
+- modular, size-bounded Kinfolk context builders.
+
+BUILD 102
+- Build one platform-wide consent-record architecture;
+- use it later for verification, memory, journeys, attribution,
+  contributions, and other sensitive features;
+- complete third-party verification-vendor evaluation;
+- legal review is a hard gate;
+- no verification implementation before documented vendor and legal
+  approval.
+
+BUILD 103 MUST BE SPLIT
+
+103a:
+- city, community, and neighborhood entities;
+- city-as-container;
+- re-parent the founding cultural registry onto these entities;
+- no user-facing diaspora expansion yet.
+
+103b:
+- Life Chapters;
+- Journeys;
+- milestones as separate records;
+- My Story;
+- explicit-confirmation-only journey creation;
+- private defaults;
+- pause, delete, notification control, and export;
+- age and family safeguards;
+- no automatic journey creation from searches or sensitive behavior.
+
+103c:
+- Cultural Journeys;
+- diaspora and community layers;
+- only after the cultural-governance framework has completed a real
+  review cycle with named reviewers.
+
+103d:
+- signal aggregation;
+- proportional interpretation;
+- Business Intelligence;
+- no intelligence from raw, seeded, or individually identifiable data.
+
+103b and 103d may proceed in parallel only if they have separate owners
+and all prerequisites are complete. 103a must be completed first. 103c
+comes after governance is operating.
+
+BUILD 104
+- Launch the already-built Kinfolk Circles;
+- include Meet-up Verification and safety guidance;
+- obtain founder decision regarding public/discoverable Circles;
+- exclude private Circle activity from community aggregation.
+
+BUILD 105
+- Cultural Ambassador schema first;
+- Ambassador profiles, expertise, communities served, contributions, and
+  impact-event architecture;
+- Community Impact reports only from consented attribution collected
+  beginning in Build 99;
+- “From the Community” media and Living Legacy submissions;
+- content ownership, licensing, removal rights, and moderation;
+- Pay It Forward only after platform-payment and app-store implications
+  are reviewed.
+
+BUILD 106+
+- Keep orchestration deferred;
+- re-scope it after Builds 100–105 produce real data;
+- every automated recommendation must remain explainable.
+
+══════════════════════════════════════════════════════════════
+5. REQUIRED NEW ARCHITECTURAL FOUNDATIONS
+══════════════════════════════════════════════════════════════
+
+Add the following missing architecture to the roadmap with exact assigned
+builds:
+
+- platform-wide consent records;
+- citation and source records for cultural claims;
+- cities;
+- communities;
+- neighborhoods;
+- cultural profiles;
+- founding and living cultural layers;
+- language terms;
+- historical claims;
+- cultural reviewers;
+- contested-content and rollback status;
+- recommendation reasons;
+- visibility tiers;
+- Life Chapters;
+- Journeys;
+- milestones;
+- journey settings;
+- learning items;
+- Ambassador profiles;
+- expertise and communities served;
+- contributions;
+- licensing and removal states;
+- consented attribution events;
+- aggregated community-need signals.
+
+Do not represent schema-only work as a completed feature.
+
+══════════════════════════════════════════════════════════════
+6. KINFOLK REFACTORING REQUIREMENTS
+══════════════════════════════════════════════════════════════
+
+Before adding more context sources, the current Kinfolk architecture must
+be decomposed.
+
+Do not continue growing one giant route and one giant system prompt.
+
+Document a target module boundary for:
+
+- preference context;
+- voice context;
+- cultural context;
+- business and event retrieval;
+- city/community/neighborhood context;
+- journey context;
+- safety and family enforcement;
+- citation and source attribution;
+- recommendation reasoning.
+
+Each module must have:
+
+- scoped retrieval;
+- a token or size budget;
+- explicit priority;
+- deterministic policy rules;
+- no whole-catalog or whole-table context injection.
+
+Private conversations must never update shared cultural registries.
+
+This must become a tested invariant, not merely documentation.
+
+══════════════════════════════════════════════════════════════
+7. CULTURAL REGISTRY PRESERVATION
+══════════════════════════════════════════════════════════════
+
+Do not delete, flatten, or rewrite the founding 36-city registry during
+migration.
+
+The migration must:
+
+- reproduce every existing entry exactly as founding version 1;
+- preserve historical context, terms, writing guidance, and touchstones;
+- add citations;
+- add version and review status;
+- add review dates;
+- support correction and rollback;
+- separate founding content from future living contributions;
+- eliminate the three duplicated hardcoded sources only after parity is
+  proven.
+
+Provide a registry-parity acceptance test.
+
+No new cultural registry may be created as another hardcoded object.
+
+══════════════════════════════════════════════════════════════
+8. CULTURAL GOVERNANCE BEFORE EXPANSION
+══════════════════════════════════════════════════════════════
+
+Before community language evolves or diaspora profiles are published,
+define an operating governance system containing:
+
+- reviewer qualifications;
+- lived-experience and subject-matter requirements;
+- at least two reviewers for ordinary cultural claims;
+- at least three reviewers for contested historical claims;
+- Indigenous reviewers from the relevant Nation or community;
+- conflicts-of-interest rules;
+- no reviewer approving their own contribution;
+- citation requirements;
+- two sources for historical superlatives;
+- version history;
+- contested flags;
+- correction and appeal;
+- review-due dates;
+- contributor attribution;
+- removal requests;
+- rollback.
+
+Every future community must use the same cultural-profile structure,
+citation standard, and review threshold as the founding Black-city
+registry.
+
+No community may be treated as a smaller or less-developed expansion
+layer.
+
+══════════════════════════════════════════════════════════════
+9. PRIVACY, FAMILY, AND JOURNEY RULES
+══════════════════════════════════════════════════════════════
+
+Encode the following as hard requirements:
+
+- never infer race, religion, sexuality, pregnancy, health, disability,
+  family status, or other protected/sensitive characteristics;
+- use explicit, member-stated preferences;
+- never create or close a Journey without affirmative user confirmation;
+- do not use search history as a Journey trigger;
+- journeys are private by default;
+- users can inspect, pause, edit, delete, reset, and export;
+- Family Mode is independent of membership;
+- profanity controls are independent of membership and cultural voice;
+- youth journeys require age assurance and parental-consent decisions;
+- mentorship should remain 18+ until those safeguards exist;
+- minimal retention for minors;
+- notifications cannot be generated from inferred sensitive events.
+
+Document how each rule will be tested.
+
+══════════════════════════════════════════════════════════════
+10. ATTRIBUTION AND COMMUNITY IMPACT
+══════════════════════════════════════════════════════════════
+
+Begin collecting consented attribution events in Build 99 so later
+Ambassador reporting can be truthful.
+
+Examples may include:
+
+- user indicates that guidance influenced a visit;
+- a business was saved after an Ambassador recommendation;
+- a school was added to a Journey after an alumni story;
+- a user voluntarily confirms that a contribution helped.
+
+Do not claim causal impact solely from views, clicks, location, or
+correlation.
+
+Keep external reach separate from community impact:
+
+External reach:
+- TikTok views;
+- Instagram reach;
+- YouTube views;
+- outbound traffic.
+
+Community impact:
+- questions answered;
+- consented people helped;
+- journeys supported;
+- businesses supported;
+- cultural stories preserved.
+
+Exclude all seeded, synthetic, and Beta Test data from community
+intelligence and impact reports.
+
+══════════════════════════════════════════════════════════════
+11. DEPLOYMENT AND RELEASE STANDARDS
+══════════════════════════════════════════════════════════════
+
+The deployment history requires permanent safeguards.
+
+Document these standing rules:
+
+- CI builds the deployed artifact from committed source;
+- never manually commit or rely on a stale compiled bundle;
+- production exposes an artifact-content fingerprint, not only the Git
+  commit SHA;
+- source, built artifact, Railway deployment, and distributed binary are
+  separately verified;
+- feature flags are verified on-device;
+- every release has a rollback flag or named revert;
+- no build is complete without production evidence;
+- every build receives a clean post-deployment stability window;
+- no internal monitor may exhaust production resources;
+- external uptime monitoring must exist.
+
+══════════════════════════════════════════════════════════════
+12. ACCEPTANCE-GATE REGIME
+══════════════════════════════════════════════════════════════
+
+For every future capability, report status only as:
+
+- Documented only
+- Schema only
+- API complete
+- UI complete
+- Binary verified
+- Production verified
+
+Do not say “implemented” without stating the exact level.
+
+Every build must provide:
+
+- committed source evidence;
+- migration evidence;
+- API evidence;
+- production deployment fingerprint;
+- physical phone evidence;
+- tablet evidence;
+- privacy/consent evidence;
+- access-control evidence;
+- moderation evidence where applicable;
+- rollback evidence;
+- stability evidence;
+- regression tests.
+
+Require repeatable test sets for claims such as:
+
+- “Kinfolk understands”;
+- “Family Mode works”;
+- “AAVE and profanity are separated”;
+- “community reviewed”;
+- “private”;
+- “impact measured”;
+- “Business Intelligence is proportional.”
+
+══════════════════════════════════════════════════════════════
+13. POLICY AND LEGAL GATES
+══════════════════════════════════════════════════════════════
+
+Add explicit gates for:
+
+- UGC moderation, reporting, and blocking before contribution;
+- age-rating review when profanity controls change;
+- biometric/privacy review before Verified Community Member;
+- sensitive-data disclosures before Life Chapters;
+- youth and family legal review before teen journeys;
+- real-world meetup safeguards before Circles;
+- content licensing before Ambassador media;
+- Apple/Google payment analysis before Pay It Forward or digital
+  compensation;
+- privacy-label updates for every build that changes data collection.
+
+══════════════════════════════════════════════════════════════
+14. FOUNDER DECISIONS TO SURFACE
+══════════════════════════════════════════════════════════════
+
+Add these to the founder-decision register:
+
+- Community Organization eligibility;
+- Living Legacy placement:
+  nominations in Build 99, media in Build 105;
+- approval of founding-registry migration method;
+- profanity preference copy and consent moment;
+- minor policy for mentorship and youth journeys;
+- approval of the 103a/103b/103c/103d split;
+- first cultural reviewers;
+- cultural-review thresholds;
+- Pay It Forward compensation model;
+- Kinfolk chat-retention policy;
+- public/discoverable Circles;
+- proactivity and notification limits.
+
+Do not make these decisions on the founder’s behalf.
+
+══════════════════════════════════════════════════════════════
+15. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return an updated roadmap-reconciliation report containing:
+
+1. Each Manus recommendation
+2. ACCEPT / MODIFY / REJECT
+3. Replit’s evidence-based reasoning
+4. Exact roadmap section changed
+5. New assigned build
+6. Dependency
+7. Founder decision required
+8. Acceptance gate
+9. Whether the unified roadmap was committed
+10. Commit SHA and document paths
+
+Finish with:
+
+- recommendations fully accepted;
+- recommendations modified;
+- recommendations rejected;
+- unresolved conflicts;
+- founder decisions required before Build 98;
+- immediate safety items awaiting authorization;
+- confirmation that no code or production changes were made.
+
+This is a planning reconciliation only.
+
+Do not begin Build 98 or any server safety deployment until I separately
+authorize implementation.
+```
+
+The most important things to make sure Replit takes from Manus are:
+
+1. **The roadmap is approved in direction, not approved unchanged.** Manus’s verdict is a conditional go with a 62/100 confidence score. 
+2. **Build 103 cannot remain one build.** It must become 103a through 103d because it currently combines several unrelated and high-risk systems. 
+3. **The founding 36-city registry must be preserved but migrated** from three duplicated hardcoded files into one cited, versioned, reviewable source of truth. 
+4. **The live AAVE/profanity coupling is a real current defect**, not merely a future idea. The current prompt permits profanity at AAVE Level 3, while no separate profanity preference exists. 
+5. **Safety, moderation, citations, consent, and governance must precede the features that depend on them.** Manus’s controlling order is consent before memory, moderation before contribution, citations before cultural content, entities before containers, governance before diaspora, and aggregation before intelligence. 
+6. **The complete roadmap must be committed and version-controlled.** Manus could not fully verify the promised 189-capability unified plan because it was not in the repository. 
+
+This prompt requires Replit to reconcile the report line by line without letting it quietly implement only the easy recommendations or discard the parts that require architectural changes.
