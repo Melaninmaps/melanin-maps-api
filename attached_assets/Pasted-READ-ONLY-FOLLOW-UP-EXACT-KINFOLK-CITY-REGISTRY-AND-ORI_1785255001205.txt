@@ -1,0 +1,204 @@
+READ-ONLY FOLLOW-UP — EXACT KINFOLK CITY REGISTRY AND ORIGINAL
+LIVING LEGACY CITY DESIGN
+
+Do not modify code, data, schemas, prompts, or documentation.
+
+The previous Legacy Cities report was helpful, but it did not answer the
+specific question I was asking.
+
+I am looking for the complete list of the 20-plus cities that were added
+to KinfolkAI for special city-specific cultural treatment.
+
+These cities were designed to connect:
+
+- the city’s cultural and minority history;
+- historic neighborhoods and institutions;
+- HBCUs and cultural landmarks;
+- music, food, language, and local traditions;
+- the city’s present-day community;
+- resident, alumni, business-owner, and Cultural Ambassador stories;
+- future community-submitted videos;
+- living archives that continue growing over time.
+
+We initially focused primarily on historically significant Black cities
+and intended to expand later to additional Hispanic, Latino, Indigenous,
+Asian, immigrant, LGBTQIA+, and other minority cultural cities.
+
+Please complete the following read-only inventory.
+
+1. EXACT CITY REGISTRY
+
+Extract the complete city list directly from every city-specific registry,
+object, dictionary, switch statement, prompt configuration, or seed file.
+
+Include all cities found in:
+
+- KinfolkAI CITY_VOICES or equivalent registry
+- routes/kinfolk.ts
+- routes/travel.ts
+- routes/maps.ts
+- city archive seeds
+- cultural neighborhood seeds
+- web city spotlight pages
+- relocation planning data
+- any other city-specific prompt or cultural-touchstone file
+
+Do not summarize with “20+ cities” or “and more.”
+
+Return every city exactly as stored, including:
+
+- canonical city name
+- state
+- aliases
+- slug
+- source file
+- variable/registry name
+- depth of profile
+
+2. PROFILE DEPTH
+
+Classify each city as:
+
+A. FULL KINFOLK CITY VOICE
+B. DEEP TRAVEL-PLANNER PROFILE
+C. NAVIGATION VOICE ONLY
+D. WEB CITY SPOTLIGHT
+E. CITY ARCHIVE RECORD
+F. CULTURAL NEIGHBORHOOD DATA ONLY
+G. BUSINESS-DATA PRESENCE ONLY
+H. PARTIAL OR PLACEHOLDER
+
+A city may have multiple classifications.
+
+3. WHAT MAKES EACH CITY DIFFERENT
+
+For every city, list the existing:
+
+- local slang or vocabulary
+- signature phrases
+- cultural touchstones
+- historic neighborhoods
+- HBCUs or institutions
+- music or cultural history
+- food traditions
+- notable community references
+- writing guidance
+- navigation voice guidance
+- relocation guidance
+
+Do not invent or improve the data. Report what is actually present.
+
+4. ORIGINAL LIVING CITY / LEGACY CITY FUTURE DESIGN
+
+Locate all existing infrastructure connected to the future experience:
+
+- city_archives
+- archive_contributions
+- heritage_stories
+- video_url
+- audio guides
+- alumni relationships
+- Cultural Ambassador story designation
+- moderation
+- support links
+- tourVisitedAt
+- publish/draft workflow
+- community-submitted stories
+- business-owner stories
+- resident videos
+- alumni videos
+- city nominations
+
+For each capability state:
+
+IMPLEMENTED
+PARTIALLY IMPLEMENTED
+SCHEMA ONLY
+DOCUMENTED ONLY
+NOT PRESENT
+
+5. VIDEO AND LIVING STORY EXPERIENCE
+
+Explain exactly what was previously designed or preserved for:
+
+- alumni videos
+- resident stories
+- local historian videos
+- Cultural Ambassador videos
+- business-owner stories
+- “I remember when” stories
+- family and legacy connections
+- present-day updates connected to historic places
+- city archives that evolve as the community contributes
+
+Identify the source file, schema, documentation, or future-state register
+entry for every item.
+
+6. INITIAL CULTURAL FOCUS
+
+Determine whether the original 20-plus city registry was intentionally
+built around historically significant Black cities.
+
+Do not infer this only from the city names.
+
+Use evidence from:
+
+- prompt comments
+- vocabulary
+- cultural touchstones
+- design documents
+- seed files
+- future-state documentation
+
+Also identify any existing plans or records for expanding the model to:
+
+- Hispanic and Latino cultural cities
+- Caribbean and Dominican cultural centers
+- Brazilian communities
+- Ethiopian and broader African diaspora communities
+- Indigenous communities
+- Asian diaspora communities
+- immigrant communities
+- LGBTQIA+ cultural centers
+
+7. COMPLETE FINAL TABLE
+
+Return one row per city:
+
+City
+State
+Kinfolk voice
+Travel profile
+Navigation voice
+Web spotlight
+City archive
+Heritage records
+Cultural neighborhoods
+Businesses
+Community posts
+Future video/story support
+Current user-visible status
+Source files
+
+8. FOUNDING CONCEPT SUMMARY
+
+Finish with a factual explanation of the original concept using only
+evidence found in the repository and product documents:
+
+- what these specially treated cities were intended to become;
+- how their history was connected to the present;
+- how community videos and stories were intended to keep them alive;
+- how Kinfolk was intended to introduce users to the city before they
+  arrived;
+- how the model was intended to expand beyond the initial Black-city
+  foundation.
+
+This is read-only.
+
+Do not implement a formal Legacy City designation.
+Do not rename anything.
+Do not add cities.
+Do not propose improvements.
+Do not change prompts.
+
+I need the exact historical record of what was previously designed.
