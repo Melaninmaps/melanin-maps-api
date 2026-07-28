@@ -1,0 +1,175 @@
+READ-ONLY KINFOLK CITY VOICE GOVERNANCE CLARIFICATION
+
+Do not modify prompts, code, schemas, or user settings yet.
+
+I want to confirm how the current Kinfolk city-voice system is designed
+and preserve the following founder requirements for future state.
+
+1. PRESCRIPTED VOICE IS A FOUNDATION, NOT THE FINAL MODEL
+
+The existing city-specific vocabulary, phrases, directions language, and
+cultural touchstones may remain as an approved baseline.
+
+However, KinfolkAI must not treat any city's speech patterns as fixed,
+complete, or permanently defined by a hardcoded list.
+
+AAVE, regional Black language, diaspora language, slang, and cultural
+expression evolve continuously.
+
+Future Kinfolk city voices should be capable of learning from community
+usage over time without simply copying individual users or reinforcing
+stereotypes.
+
+2. COMMUNITY-GROUNDED EVOLUTION
+
+Document how a future learning model could responsibly use:
+
+- user-submitted phrase suggestions;
+- Cultural Ambassador contributions;
+- resident and alumni videos;
+- city archive stories;
+- community posts;
+- approved local terminology;
+- corrections from members;
+- emerging phrases and meanings;
+- differences by age, neighborhood, profession, and context.
+
+The system must distinguish:
+
+- broadly recognized local language;
+- temporary trends;
+- individual speaking style;
+- reclaimed language;
+- harmful or derogatory language;
+- professional versus casual context.
+
+No phrase should become a city-wide default solely because a small number
+of users used it.
+
+3. CONSENT AND PRIVACY
+
+Kinfolk must not silently learn a person's private speech patterns and
+reuse them for other users.
+
+Future learning must rely only on:
+
+- content users knowingly submit for community learning;
+- public or approved community contributions;
+- anonymized, aggregated signals where appropriate;
+- explicit correction or phrase-submission tools;
+- Cultural Ambassador or moderator review.
+
+Private chats must not automatically train the shared city voice.
+
+Document what data is currently used and what future consent model would
+be required.
+
+4. PROFANITY MUST BE EXPLICITLY OPT-IN
+
+Profanity must never be enabled by default.
+
+Users must make a clear, affirmative choice before Kinfolk uses profanity
+or explicit language.
+
+Required future preference structure:
+
+- No profanity — default
+- Mild / occasional language
+- Authentic unfiltered language — explicit opt-in only
+
+The setting must be:
+
+- visible;
+- changeable at any time;
+- separate from AAVE level;
+- separate from city voice;
+- separate from casual/formal tone;
+- disabled automatically for minors and family/child modes;
+- respected across text, audio, directions, and notifications.
+
+Do not infer profanity preference from how a user speaks.
+
+5. CONTEXTUAL SAFEGUARDS
+
+Even with opt-in, Kinfolk must not use profanity in:
+
+- emergencies or crisis responses;
+- legal, medical, financial, or safety guidance;
+- child or family mode;
+- account, billing, moderation, or policy messages;
+- professional introductions unless specifically requested and
+  appropriate;
+- content directed at another member without their consent.
+
+Profanity must never be used as a substitute for cultural authenticity.
+
+6. AAVE AND PROFANITY ARE NOT THE SAME THING
+
+Make this a permanent language-governance rule:
+
+AAVE is a complete, rule-governed language variety and must not be
+equated with slang, profanity, broken English, or informality.
+
+A member should be able to select:
+
+- culturally aware language;
+- regional or city voice;
+- AAVE-informed phrasing;
+- formal or professional tone;
+
+without receiving profanity.
+
+7. MEMBER CONTROL AND TRANSPARENCY
+
+Future settings should let members see and control:
+
+- City voice
+- AAVE level
+- Formal/casual tone
+- Profanity level
+- Voice/audio style
+- Whether Kinfolk may use community-learned local expressions
+- Whether the member wants to contribute language suggestions
+
+Kinfolk should be able to explain:
+
+- why a local phrase was used;
+- whether it came from an approved city profile or community contribution;
+- how the user can change the preference.
+
+8. QUALITY AND MODERATION
+
+Document a future review process for new city-language contributions:
+
+- source or contributor type;
+- city and neighborhood relevance;
+- meaning and context;
+- age appropriateness;
+- professional versus casual use;
+- whether the term is reclaimed, contested, or harmful;
+- minimum community signal before adoption;
+- Cultural Ambassador or moderator approval;
+- expiration/review date for temporary slang;
+- rollback process if a phrase causes harm.
+
+9. REQUIRED READ-ONLY RESPONSE
+
+Return:
+
+1. Current city-voice implementation
+2. Current AAVE implementation
+3. Current profanity controls
+4. Whether profanity is currently opt-in
+5. Whether private chats currently influence shared voice behavior
+6. Whether voiceMode is saved persistently
+7. Existing minor/family safeguards
+8. Existing moderation or governance
+9. Gaps against the founder requirements above
+10. Current-state versus future-state matrix
+11. Exact source files and preference fields involved
+12. Founder decisions required before implementation
+
+Do not implement anything.
+Do not broaden profanity permissions.
+Do not treat AAVE as profanity.
+Do not use private conversations as shared training data.
