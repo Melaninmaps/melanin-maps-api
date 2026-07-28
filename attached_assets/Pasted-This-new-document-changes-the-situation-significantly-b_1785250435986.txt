@@ -1,0 +1,98 @@
+This new document changes the situation significantly because it is effectively a **retraction** of the earlier Replit report.
+
+According to this document, Replit is saying:
+
+* They verified the **wrong code**.
+* The fixes they described existed **locally**, but **were never pushed** to GitHub/Railway because of a `.git/index.lock` problem.
+* Production was therefore still running the older commit (`fbfc1754`), while the fixes existed only in a later unpushed local commit (`3880b4aa`). 
+
+If that account is accurate, it explains why Manus and Replit appeared to completely disagree:
+
+* **Manus inspected what was actually deployed.**
+* **Replit initially inspected what they believed had been deployed, but was still only local.**
+
+The document goes on to agree with nearly every major Manus finding, including that:
+
+* Promise.race patterns were still present in production.
+* The monitor still performed direct database work.
+* The production deployment was degraded.
+* The previous "incident resolved" statement was incorrect.
+* Apple review should be withdrawn until stability is demonstrated. 
+
+---
+
+## This actually gives you something positive
+
+The contradiction no longer looks like:
+
+> Replit says X.
+>
+> Manus says Y.
+
+It now looks like:
+
+> Replit's **first report was wrong**.
+>
+> Replit's **second report largely agrees with Manus** after discovering the deployment mistake.
+
+That is a much more coherent explanation.
+
+---
+
+## Before I would accept it completely
+
+There is one thing I would still require.
+
+I would tell Replit:
+
+> I appreciate the correction.
+>
+> Before I authorize resubmission to Apple or release to testers, I need objective proof that commit 3880b4aa (or its successor) is actually deployed.
+>
+> Please provide:
+>
+> 1. Current GitHub HEAD commit.
+> 2. Current Railway deployed commit.
+> 3. `/api/version` output.
+> 4. Production health for at least four consecutive hours.
+> 5. Database pool statistics during that window.
+> 6. Endpoint success logs.
+> 7. Confirmation that the monitor no longer contributes to pool exhaustion.
+> 8. Confirmation that `/__debug` is no longer publicly accessible.
+> 9. Confirmation that the fixes are present in production—not just locally.
+
+That moves the conversation from **"we fixed it"** to **"here is evidence it is fixed."**
+
+---
+
+## I also want to point out something important
+
+You asked me earlier:
+
+> "How can I say something is non-negotiable and three AI systems still miss it?"
+
+This sequence illustrates one answer.
+
+None of the systems intentionally ignored your requirement. The issue was **verification scope**:
+
+* One system reasoned from local source.
+* Another reasoned from deployed production.
+* Another reasoned from live behavior.
+
+Those are different evidence sources. If one assumes "the deployment succeeded" and another verifies "what is actually running," they can reach opposite conclusions.
+
+For a launch like Mapping With Melanin™, the safest standard is:
+
+> **Nothing is considered complete until it is verified in the production environment that users and reviewers actually access.**
+
+---
+
+## Where I think you are now
+
+This is where I would focus:
+
+1. **Get production stable first.** If the pool exhaustion and deployment issues are truly resolved, that becomes the foundation for everything else.
+2. **Confirm the deployed version with evidence**, not just commit messages.
+3. **Then continue the UX improvements** you've already identified (community composer, @mentions, seeded businesses clearly labeled, more culturally diverse businesses and events, KinfolkAI improvements, etc.).
+
+That order aligns well with your launch priorities: ensure reviewers and testers have a stable experience first, then continue refining the experience itself.
