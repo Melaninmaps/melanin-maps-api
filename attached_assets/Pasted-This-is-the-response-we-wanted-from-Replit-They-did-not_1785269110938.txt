@@ -1,0 +1,193 @@
+This is the response we wanted from Replit.
+
+They did **not** start coding, they accepted Manus’s corrections, they preserved your capabilities, and they created a committed master reconciliation document rather than leaving the roadmap scattered across chats. That directly addresses Manus’s concern that the unified plan and capability register were not version-controlled. 
+
+## What Replit has now accomplished
+
+The roadmap appears to have three protections in place:
+
+**Technical protection:** dependencies, sequencing, build splits, safety gates, and acceptance evidence.
+
+**Vision protection:** no capability may be removed without your approval, and the Founder Principles and vision-preservation requirements are now part of the roadmap.
+
+**Accountability:** future work can be measured against a committed document rather than Replit relying on what it remembers from earlier conversations.
+
+The most important confirmations in its response are:
+
+* Every Manus build verdict was accepted.
+* Build 103 was split instead of remaining dangerously overloaded.
+* The 20 missing architectural capabilities were assigned.
+* Living Legacy was clarified as nominations in Build 99 and media in Build 105.
+* Personalization was reconciled into two stages of one system.
+* Trust Recovery, Community Succession, the Business Trust Lifecycle, and Founding Principles were added.
+* No implementation or production change occurred yet.
+* The next work is limited to five current server-side safety issues.
+
+That is a meaningful improvement.
+
+# My recommendation on Build 1.5
+
+I recommend authorizing Build 1.5, but with one final explicit implementation instruction attached.
+
+These are not speculative future features. They address current safety, privacy, and founder-rule issues that Manus found in the live Kinfolk system:
+
+1. Crisis-intervention guard
+2. Kinfolk session deletion
+3. Minimal deterministic Family Mode guard
+4. Separating profanity from AAVE
+5. Search-history retention cap
+
+Manus specifically identified the current AAVE/profanity coupling as a **live defect**, not a future preference: Level 3 currently permits profanity even though no separate profanity field exists.  It also found Family Mode unwired inside Kinfolk and recommended the minimal guard, crisis block, and session deletion be pulled forward into the next server deployment. 
+
+Before simply saying “Please implement,” send this:
+
+```text
+BUILD 1.5 — AUTHORIZATION WITH IMPLEMENTATION CONDITIONS
+
+Please implement Build 1.5 containing only these five approved
+server-side safety items:
+
+1. Kinfolk crisis-intervention hard stop
+2. Kinfolk session-deletion capability
+3. Minimal deterministic Family Mode guard inside KinfolkAI
+4. Immediate AAVE/profanity prompt correction
+5. Search-history retention cap
+
+This authorization does not include Build 98 or any other roadmap work.
+
+FOUNDER-VISION REQUIREMENT
+
+The AAVE/profanity correction must not remove, weaken, flatten, or
+deactivate the existing culturally informed voice experience.
+
+The required outcome is:
+
+- preserve AAVE and cultural-language functionality;
+- preserve the appeal that tested well with younger users;
+- remove the statement or behavior that automatically permits profanity
+  because a user selected AAVE Level 3;
+- profanity remains off unless separately and affirmatively selected;
+- until the complete preference schema is built in Build 100/101,
+  profanity must default to off;
+- do not replace culturally informed language with generic corporate
+  language;
+- do not rewrite or delete the founding city registry;
+- do not alter city terms, voice profiles, cultural histories, or
+  navigation language except where strictly necessary to remove the
+  automatic profanity permission.
+
+FAMILY MODE REQUIREMENT
+
+Family Mode must be enforced deterministically, not only through prompt
+instructions.
+
+For this minimal safety release:
+
+- suppress profanity and explicit language;
+- suppress adult sexual content;
+- use age-appropriate responses;
+- prevent the model from overriding the guard through user prompting;
+- do not connect Family Mode to membership level;
+- do not infer that a user is a minor;
+- preserve the broader full Family Mode architecture for Build 100/101.
+
+CRISIS REQUIREMENT
+
+The crisis-intervention block must:
+
+- detect relevant high-risk requests;
+- interrupt ordinary Kinfolk style and recommendation behavior;
+- respond in a calm, direct, safety-first manner;
+- avoid AAVE, playful voice, business recommendations, travel advice, or
+  promotional content during the crisis flow;
+- avoid inventing local hotline information;
+- log only the minimum operational information required;
+- not store the user’s full crisis message unnecessarily.
+
+SESSION-DELETION REQUIREMENT
+
+Confirm whether “Kinfolk session deletion” means:
+
+- deletion of a single Kinfolk conversation;
+- deletion of all Kinfolk conversations;
+- deletion of stored Kinfolk memory;
+- or each as separate controls.
+
+Do not treat logout as deletion.
+
+Provide a production test proving deleted data is no longer retrievable.
+
+SEARCH-HISTORY REQUIREMENT
+
+The retention cap must specify:
+
+- maximum number of records or maximum age;
+- whether existing excess history is deleted;
+- whether the user can clear it manually;
+- whether search history is excluded from sensitive Journey inference;
+- whether seeded/test data is treated separately.
+
+DEPLOYMENT CONDITIONS
+
+Before deployment, provide:
+
+1. Exact files to be changed
+2. Exact API or database behavior affected
+3. Whether a migration is required
+4. Confirmation no EAS binary is required
+5. Confirmation the submitted Apple binary remains compatible
+6. Rollback method
+7. Test plan for all five items
+
+After deployment, provide:
+
+1. Source commit SHA
+2. Built artifact fingerprint
+3. Railway deployment ID
+4. Production healthz and readyz
+5. Database pool totals, idle, and waiting
+6. Crisis test results
+7. Family Mode adversarial test results
+8. AAVE × profanity test matrix
+9. Session deletion test evidence
+10. Search-history retention evidence
+11. Review-account login test
+12. Kinfolk normal-chat regression test
+13. Confirmation Heritage, Sundown Towns, businesses, events, community,
+    and authentication remain functional
+14. Confirmation no founder capability or cultural registry content was
+    removed
+15. Stability-monitoring results after deployment
+
+Do not begin Build 98.
+
+Please implement Build 1.5 under these conditions.
+```
+
+## Why this extra language matters
+
+The phrase **“AAVE/profanity prompt fix”** could otherwise be interpreted too broadly. Replit might solve the risk by stripping out the culturally informed voice, which would technically remove the coupling but violate your vision.
+
+Your required distinction is:
+
+> **Preserve the cultural voice. Remove only the automatic profanity permission.**
+
+The crisis and Family Mode protections should also be deterministic because Manus found that too much safety behavior currently lives inside one enormous prompt instead of enforceable application logic. 
+
+## One item I would verify before implementation
+
+Ask Replit to give you the commit SHA and paths for:
+
+* `MWM-ROADMAP-RECONCILIATION-v1.0.md`
+* the full 189-capability inventory
+* the Founder Principles document
+
+Replit says they are committed, but the response only names the reconciliation file. You should have concrete confirmation that the complete inventory and governing principles are also committed—not merely referenced inside the reconciliation.
+
+My decision:
+
+**Roadmap reconciliation:** Accept
+**Build 1.5:** Authorize with the conditions above
+**Build 98:** Do not authorize yet
+**Apple review:** Continue
+**New mobile binary:** Not expected for these five server-side changes, but Replit must confirm compatibility before deploying
