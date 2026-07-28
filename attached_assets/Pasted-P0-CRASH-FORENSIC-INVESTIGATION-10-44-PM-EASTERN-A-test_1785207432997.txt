@@ -1,0 +1,220 @@
+P0 CRASH FORENSIC INVESTIGATION — 10:44 PM EASTERN
+
+A tester reported that the app crashed at approximately 10:44 PM Eastern
+on July 27, 2026.
+
+Because July is daylight time, search both:
+
+- July 27, 2026, 10:40–10:50 PM EDT
+- July 28, 2026, 02:40–02:50 UTC
+
+Do not apply a speculative patch before identifying the crash path.
+
+I need a complete correlation across the mobile app, Railway API,
+PostgreSQL, authentication, Maps, KinfolkAI, and monitoring logs.
+
+══════════════════════════════════════════════════════════════
+1. IDENTIFY THE TESTER SESSION
+══════════════════════════════════════════════════════════════
+
+Using privacy-safe logs, identify the session active at 10:44 PM Eastern.
+
+Return:
+
+- Platform: iOS or Android
+- Exact build:
+  - iOS Build 98, or
+  - Android versionCode 73/72, whichever was installed
+- Device model if available
+- OS version if available
+- App version/build number
+- User/session ID, redacted
+- Last successful screen
+- Last successful API request
+- Exact user action immediately before the crash
+- Whether the app closed, froze, restarted, or displayed an error
+
+Do not expose the tester’s credentials, messages, location, or private
+content.
+
+══════════════════════════════════════════════════════════════
+2. SEARCH ALL RELEVANT LOGS
+══════════════════════════════════════════════════════════════
+
+Review the exact time window in:
+
+- Railway application logs
+- Railway deployment and restart history
+- PostgreSQL logs and metrics
+- /api/readyz/history
+- 12-hour monitoring output
+- Expo/EAS runtime logs where available
+- TestFlight crash reports
+- App Store Connect Crashes
+- Google Play Android Vitals
+- Sentry/Bugsnag or other crash reporting, if configured
+- Device console logs, if supplied by the tester
+
+Search for:
+
+- HTTP 500
+- HTTP 502/503/504
+- Database timeout
+- Pool exhaustion
+- Waiting connections
+- Unhandled promise rejection
+- JavaScript exception
+- Native crash
+- Out-of-memory termination
+- React Native Maps error
+- Invalid coordinate or marker error
+- KinfolkAI timeout/provider error
+- Authentication/session failure
+- Infinite render/update loop
+- Missing image or malformed data
+- Navigation error
+- App process restart
+- Railway restart
+- SIGTERM/SIGKILL
+- Watchdog termination
+
+══════════════════════════════════════════════════════════════
+3. CORRELATE THE CRASH WITH FEATURE ACTIVITY
+══════════════════════════════════════════════════════════════
+
+Determine whether the tester was using:
+
+- Login or registration
+- Map
+- Heritage layer
+- Historical Sundown Town pins
+- Business pins
+- Rapid layer switching
+- Detail tile
+- Community Feed
+- KinfolkAI
+- Events
+- Profile
+- Membership
+- External source link
+
+For Maps specifically, inspect:
+
+- Number of markers rendered
+- Invalid/missing coordinates
+- Duplicate marker keys
+- Marker clustering
+- Category-style fallback
+- Selected marker/result synchronization
+- Repeated fetch/render loop
+- Memory pressure
+- Any record that caused the failure
+
+══════════════════════════════════════════════════════════════
+4. MONITORING STATUS AT 10:44 PM
+══════════════════════════════════════════════════════════════
+
+Return the monitoring cycle closest to the crash:
+
+- Cycle number
+- Timestamp
+- healthz status
+- readyz status
+- Database latency
+- Pool total
+- Pool idle
+- Pool waiting
+- HTTP 500 count
+- API restart count
+- PostgreSQL restart count
+- Businesses result
+- Heritage result
+- Historical Sundown Town result
+- KinfolkAI result
+- Authentication result
+
+Explain whether the backend remained healthy while the mobile client
+crashed.
+
+If the monitoring system did not detect the incident, explain why and
+what additional mobile crash telemetry is required.
+
+══════════════════════════════════════════════════════════════
+5. DETERMINE THE CRASH CLASS
+══════════════════════════════════════════════════════════════
+
+Classify the incident as one of:
+
+A. Confirmed native mobile crash
+B. JavaScript fatal exception
+C. App freeze/watchdog termination
+D. Out-of-memory termination
+E. Backend/API failure presented as a crash
+F. Authentication/session failure
+G. Device-specific rendering failure
+H. User closed or backgrounded the app
+I. Insufficient evidence
+
+Do not call it a crash unless the evidence supports that classification.
+
+══════════════════════════════════════════════════════════════
+6. BUILD IMPACT
+══════════════════════════════════════════════════════════════
+
+Answer directly:
+
+- Is this reproducible?
+- Does it affect iOS only?
+- Does it affect Android only?
+- Does it affect phones and tablets?
+- Does it affect the current Apple submission?
+- Does it require a new iOS binary?
+- Does it require a new Android binary?
+- Can it be corrected server-side?
+- Should tester distribution pause?
+- Should Apple review be withdrawn or allowed to continue?
+
+Do not recommend a rebuild merely “to be safe.”
+
+Tie the decision to the exact faulty file or runtime layer.
+
+══════════════════════════════════════════════════════════════
+7. REQUIRED EVIDENCE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Confirmed timestamp
+2. Platform and build
+3. Tester action before failure
+4. Last successful API request
+5. First failing event
+6. Relevant log lines
+7. Monitoring-cycle data
+8. Confirmed or most-supported root cause
+9. Confidence level
+10. Exact files/routes/components involved
+11. Reproduction steps
+12. Smallest correction
+13. Regression test
+14. iOS rebuild required: YES/NO
+15. Android rebuild required: YES/NO
+16. Apple review: CONTINUE/WITHDRAW
+17. iOS testers: GO/PAUSE
+18. Android testers: GO/PAUSE
+19. Whether the 12-hour monitor remains active
+
+If evidence is insufficient, state exactly what the tester must provide:
+
+- Device model
+- OS version
+- Build number
+- Screen being used
+- Exact taps immediately before the issue
+- Screenshot
+- Screen recording
+- TestFlight crash-sharing permission
+- iPhone Analytics crash log, if available
+
+Do not patch first.
+Find the failure, reproduce it, then recommend the smallest correction.

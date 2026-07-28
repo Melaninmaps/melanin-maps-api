@@ -421380,7 +421380,17 @@ router25.get("/kinfolk/sessions/:id", async (req, res) => {
   }
 });
 var FREE_MONTHLY_LIMIT = 3;
+router25.get("/kinfolk/health", (_req, res) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ ok: false, reason: "AI_INTEGRATIONS_OPENAI_API_KEY not set" });
+  }
+  res.json({ ok: true });
+});
 router25.post("/kinfolk/chat", async (req, res) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   const { sessionId, message, vibes = [], voiceMode = "community" } = req.body;
   if (!message?.trim()) {
     res.status(400).json({ error: "message is required" });
@@ -442841,7 +442851,13 @@ async function runCycle() {
     _get("/api/community/posts?limit=1"),
     _get("/api/community/guidelines"),
     _get("/api/events?limit=1"),
-    _post("/api/kinfolk/chat", { message: "ping", conversationId: "monitor" }),
+    // NOTE: was _post("/api/kinfolk/chat", ...) — that probe was unauthenticated,
+    // so the server ran full OpenAI calls that were abandoned when the 8 s HTTP
+    // timeout fired, leaving orphaned handlers whose post-OpenAI DB writes slowly
+    // exhausted the pool (pool_total_growing → pool exhaustion in ~30 min).
+    // Now uses the dedicated /api/kinfolk/health endpoint: no auth required,
+    // no OpenAI call, no DB writes — just checks the AI key is configured.
+    _get("/api/kinfolk/health"),
     _get("/login"),
     _get("/privacy")
   ]);
