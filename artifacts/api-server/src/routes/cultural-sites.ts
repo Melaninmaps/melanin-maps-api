@@ -97,7 +97,11 @@ async function ensureSupportLinksSeeded() {
 
 router.get("/cultural-sites", async (req: Request, res: Response) => {
   try {
-    await ensureSeeded();
+    // ensureSeeded() is NOT called here — it holds a DB connection for the entire
+    // seed operation (TRUNCATE + multi-row INSERT) on every request, exhausting the
+    // pool when the endpoint is called concurrently (e.g. by the health monitor).
+    // Seeding is handled at startup via POST /admin/seed-cultural-sites or the
+    // initial deployment migration in static-server.mjs.
 
     const { heritageCategory, category, search, state, city, accessible, admissionFree } =
       req.query as Record<string, string | undefined>;

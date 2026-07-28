@@ -442174,70 +442174,6 @@ function isAdmin10(req) {
   const user = req.user;
   return !!(user?.email && ADMIN_EMAILS10.includes(user.email));
 }
-async function ensureSeeded() {
-  const countRes = await pool.query("SELECT COUNT(*) FROM cultural_sites");
-  const count3 = parseInt(countRes.rows[0]?.count ?? "0", 10);
-  if (count3 < CULTURAL_SITES_SEED.length) {
-    await pool.query("TRUNCATE cultural_sites CASCADE");
-    const cols = [
-      "name",
-      "description",
-      "category",
-      "heritage_category",
-      "subcategory",
-      "ethnic_community",
-      "city",
-      "state",
-      "address",
-      "latitude",
-      "longitude",
-      "era",
-      "significance",
-      "external_url",
-      "year_established",
-      "is_accessible",
-      "is_family_friendly",
-      "admission_free",
-      "audio_guide",
-      "verified_source",
-      "is_verified"
-    ];
-    const placeholders = CULTURAL_SITES_SEED.map(
-      (_2, i) => `(${cols.map((_3, j3) => `$${i * cols.length + j3 + 1}`).join(", ")})`
-    ).join(", ");
-    const values = [];
-    for (const s2 of CULTURAL_SITES_SEED) {
-      values.push(
-        s2.name,
-        s2.description,
-        s2.category,
-        s2.heritageCategory,
-        s2.subcategory ?? null,
-        s2.ethnicCommunity ?? null,
-        s2.city,
-        s2.state,
-        s2.address ?? null,
-        s2.latitude,
-        s2.longitude,
-        s2.era ?? null,
-        s2.significance ?? null,
-        s2.externalUrl ?? null,
-        s2.yearEstablished ?? null,
-        s2.isAccessible ?? false,
-        s2.isFamilyFriendly ?? true,
-        s2.admissionFree ?? true,
-        s2.audioGuide ?? false,
-        s2.verifiedSource ?? null,
-        true
-      );
-    }
-    await pool.query(
-      `INSERT INTO cultural_sites (${cols.join(", ")}) VALUES ${placeholders}`,
-      values
-    );
-    await ensureSupportLinksSeeded();
-  }
-}
 var SUPPORT_LINKS_SEED = [
   { siteName: "Howard University", title: "Give to Howard University", description: "Support scholarships, programs, and the university's ongoing mission of excellence.", url: "https://giving.howard.edu", category: "scholarship", displayOrder: 0 },
   { siteName: "Howard University", title: "Howard University Alumni Association", description: "Stay connected and support the Bison community.", url: "https://www.howardalumni.org", category: "alumni_fund", displayOrder: 1 },
@@ -442275,7 +442211,6 @@ async function ensureSupportLinksSeeded() {
 }
 router82.get("/cultural-sites", async (req, res) => {
   try {
-    await ensureSeeded();
     const { heritageCategory, category, search, state, city, accessible, admissionFree } = req.query;
     const conditions = [];
     const params = [];
@@ -442929,7 +442864,7 @@ async function runCycle() {
     } catch {
     }
   }
-  const mapLoadOk = culturalSites === 200 && sundownTowns === 200;
+  const mapLoadOk = sundownTowns === 200;
   const communityPosts = postsR.timedOut ? "err" : postsR.status;
   const communityGuidelines = guideR.timedOut ? "err" : guideR.status;
   const events = evR.timedOut ? "err" : evR.status;

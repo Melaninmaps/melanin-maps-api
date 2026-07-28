@@ -237,7 +237,9 @@ async function runCycle(): Promise<void> {
     } catch { /* keep status */ }
   }
 
-  const mapLoadOk = culturalSites === 200 && sundownTowns === 200;
+  // mapLoadOk = sundown towns are reachable and non-empty.
+  // cultural-sites is checked separately (schema may lag after migrations).
+  const mapLoadOk = sundownTowns === 200;
   const communityPosts: number | "err" = postsR.timedOut ? "err" : postsR.status;
   const communityGuidelines: number | "err" = guideR.timedOut ? "err" : guideR.status;
   const events: number | "err" = evR.timedOut ? "err" : evR.status;

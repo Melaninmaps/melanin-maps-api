@@ -78,6 +78,22 @@ async function runMigration() {
     }
     process.stderr.write("DB_MIGRATION: businesses columns ensured\n");
 
+    // Add missing columns to cultural_sites table (schema drift fix).
+    // These columns were added after the initial table creation and may be absent
+    // in older Railway Postgres instances.
+    const culturalSiteCols = [
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS audio_guide BOOLEAN NOT NULL DEFAULT false`,
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS ethnic_community VARCHAR(200)`,
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)`,
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS year_established INTEGER`,
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS country VARCHAR(100) NOT NULL DEFAULT 'United States'`,
+      `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS address VARCHAR(300)`,
+    ];
+    for (const sql of culturalSiteCols) {
+      try { await pool.query(sql); } catch(e) { process.stderr.write(`DB_MIGRATION: cultural_sites col skip: ${e.message}\n`); }
+    }
+    process.stderr.write("DB_MIGRATION: cultural_sites columns ensured\n");
+
     await pool.end();
   } catch(err) { process.stderr.write(`DB_MIGRATION: FATAL ${err.message}\n`); }
 }
