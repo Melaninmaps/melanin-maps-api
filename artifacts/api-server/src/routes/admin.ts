@@ -1300,5 +1300,41 @@ router.post("/admin/seed-sundown-towns", async (req: Request, res: Response) => 
   }
 });
 
+// ── POST /admin/set-user-tier ─────────────────────────────────────────────────
+// Sets memberType on a user by email. CRON_SECRET or admin session.
+// Used for review account setup and internal tier management without
+// requiring an interactive admin browser session.
+// Body: { email: string, memberType: string }
+router.post("/admin/set-user-tier", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeader = req.headers["x-cron-secret"];
+  const hasCronAuth = cronSecret && cronHeader === cronSecret;
+  if (!isAdmin(req) && !hasCronAuth) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { email, memberType } = req.body as { email?: string; memberType?: string };
+  const VALID = ["individual", "navigator", "trailblazer", "founding", "beta", "business", "business_referral"];
+  if (!email || !memberType || !VALID.includes(memberType)) {
+    res.status(400).json({ error: "email and valid memberType required" });
+    return;
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE users SET member_type = $1 WHERE email = $2
+       RETURNING id, email, member_type`,
+      [memberType, email.toLowerCase().trim()]
+    );
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ ok: true, user: result.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/set-user-tier error");
+    res.status(500).json({ error: "Failed to update tier", detail: String(err) });
+  }
+});
+
 export default router;
 
