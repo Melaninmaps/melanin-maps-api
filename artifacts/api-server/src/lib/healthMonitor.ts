@@ -87,14 +87,14 @@ async function runHealthCheck(): Promise<void> {
     return;
   }
 
+  // IMPORTANT: acquire a PoolClient explicitly so release() always runs in
+  // the finally block. Never use Promise.race with pool.query() — it abandons
+  // the pg promise without releasing the client, leaking connections.
+  let client: import("pg").PoolClient | undefined;
   const start = Date.now();
   try {
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("SELECT 1 timed out after 3000ms")), 3000),
-      ),
-    ]);
+    client = await pool.connect();
+    await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry: HealthCheckEntry = {
       ts,
@@ -122,6 +122,8 @@ async function runHealthCheck(): Promise<void> {
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: error",
     );
+  } finally {
+    client?.release();
   }
 }
 

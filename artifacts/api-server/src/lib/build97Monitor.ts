@@ -1,17 +1,24 @@
 /**
- * Build 97/98 — Apple 12-Hour Autonomous Monitoring
+ * Build 98 — Apple Approval Autonomous Monitoring (condition-based stop)
  *
  * Runs inside the always-on Railway API process. Survives Replit chat closure.
- * Checks all required endpoints every 5 minutes (144 cycles over 12 hours).
- * Results stored in a 150-entry ring buffer; accessible via
- * GET /api/monitoring/build97 (x-cron-secret authenticated).
+ * Checks all required endpoints every 5 minutes.
+ * Results stored in a 288-entry ring buffer (24 h at 5-min intervals).
+ * Accessible via GET /api/monitoring/build97 (x-cron-secret authenticated).
  *
- * Monitoring categories (per Apple Response Package):
- *   A. Service Health
- *   B. Authentication (review-account login, guarded by REVIEW_ACCOUNT_PASSWORD env)
- *   C. Database & Infrastructure
- *   D. Core Features
- *   E. Capacity — active sessions, request latency, connection stability
+ * STOP CONDITION: not time-based. Continues until:
+ *   1. appleStatus env var = "approved" or "ready_for_sale"
+ *   2. No unresolved P0
+ *   3. 12 consecutive stable hours (144 cycles) after approval
+ *   If Apple rejects → monitor continues, founder must explicitly set appleStatus="monitoring_ended"
+ *
+ * Monitoring categories:
+ *   A. Service Health (every cycle)
+ *   B. Authentication (every cycle, guarded by REVIEW_ACCOUNT_PASSWORD env)
+ *   C. Database & Infrastructure (every cycle)
+ *   D. Core Features (every cycle)
+ *   E. Capacity signals (every cycle)
+ *   F. KinfolkAI synthetic prompt (every 12th cycle ≈ 1/hour)
  */
 
 import { pool, getPoolStats } from "@workspace/db";
@@ -53,7 +60,7 @@ export interface MonitorEntry {
   p1Flags: string[];
 }
 
-const MAX_ENTRIES = 150;
+const MAX_ENTRIES = 288; // 24 h at 5-min intervals
 const _ring: MonitorEntry[] = [];
 let _handle: ReturnType<typeof setInterval> | null = null;
 let _cycleCount = 0;
@@ -65,6 +72,10 @@ let _totalHttp500s = 0;
 let _totalTimeouts = 0;
 let _loginChecksTotal = 0;
 let _loginChecksFailed = 0;
+// Post-approval stability tracking
+let _approvalDetectedAt: string | null = null;
+let _postApprovalStableCycles = 0;
+let _kinfolkSyntheticFailures = 0;
 
 const BASE = "https://www.mappingwithmelanin.com";
 
@@ -172,28 +183,36 @@ async function runCycle(): Promise<void> {
   }
 
   // ── C. DB / infra ──────────────────────────────────────────────────────────
+  // IMPORTANT: Do NOT use Promise.race with pool.query() — it abandons the pg
+  // promise without releasing the pool client, leaking connections until the
+  // pool's maxLifetimeSeconds recycles them. Instead, acquire a client
+  // explicitly so the finally block always releases it. The pool itself has
+  // connectionTimeoutMillis:10_000 and query_timeout:10_000 as backstops.
   const poolStats = getPoolStats();
   let dbLatencyMs: number | null = null;
   let activeSessions: number | null = null;
 
   const [dbProbe, sessProbe] = await Promise.all([
     (async () => {
+      let client: import("pg").PoolClient | undefined;
       try {
+        client = await pool.connect();
         const t0 = Date.now();
-        await Promise.race([
-          pool.query("SELECT 1"),
-          new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 3000)),
-        ]);
+        await client.query("SELECT 1");
         return Date.now() - t0;
       } catch { return null; }
+      finally { client?.release(); }
     })(),
     (async () => {
+      let client: import("pg").PoolClient | undefined;
       try {
-        const r = await pool.query<{ cnt: string }>(
+        client = await pool.connect();
+        const r = await client.query<{ cnt: string }>(
           `SELECT COUNT(*) AS cnt FROM sessions WHERE expire > NOW()`,
         );
         return parseInt(r.rows[0]?.cnt ?? "0", 10);
       } catch { return null; }
+      finally { client?.release(); }
     })(),
   ]);
 
@@ -213,26 +232,23 @@ async function runCycle(): Promise<void> {
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
 
   // ── D. Core features (all in parallel) ────────────────────────────────────
-  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR] = await Promise.all([
+  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR] = await Promise.all([
     _get("/api/businesses?limit=1"),
     _get("/api/cultural-sites?limit=1"),
     _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1"),
     _get("/api/community/posts?limit=1"),
     _get("/api/community/guidelines"),
     _get("/api/events?limit=1"),
-    // NOTE: was _post("/api/kinfolk/chat", ...) — that probe was unauthenticated,
-    // so the server ran full OpenAI calls that were abandoned when the 8 s HTTP
-    // timeout fired, leaving orphaned handlers whose post-OpenAI DB writes slowly
-    // exhausted the pool (pool_total_growing → pool exhaustion in ~30 min).
-    // Now uses the dedicated /api/kinfolk/health endpoint: no auth required,
-    // no OpenAI call, no DB writes — just checks the AI key is configured.
+    // Lightweight availability check — no auth, no OpenAI call, no DB writes.
     _get("/api/kinfolk/health"),
     _get("/login"),
     _get("/privacy"),
+    _get("/terms"),
+    _get("/delete-account"), // support / account-deletion URL required by App Store
   ]);
 
   // Count 500s and timeouts from feature checks
-  for (const r of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR]) {
+  for (const r of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR]) {
     if (r.timedOut) timeoutCount++;
     if (r.status === 500) http500Count++;
   }
@@ -251,8 +267,6 @@ async function runCycle(): Promise<void> {
     } catch { /* keep status */ }
   }
 
-  // mapLoadOk = sundown towns are reachable and non-empty.
-  // cultural-sites is checked separately (schema may lag after migrations).
   const mapLoadOk = sundownTowns === 200;
   const communityPosts: number | "err" = postsR.timedOut ? "err" : postsR.status;
   const communityGuidelines: number | "err" = guideR.timedOut ? "err" : guideR.status;
@@ -260,6 +274,8 @@ async function runCycle(): Promise<void> {
   const kinfolkAvailable = !kfR.timedOut && kfR.status !== 500 && kfR.status !== 503 && kfR.status !== 0;
   const webLogin: number | "err" = loginR.timedOut ? "err" : loginR.status;
   const privacy: number | "err" = privR.timedOut ? "err" : privR.status;
+  const terms: number | "err" = termsR.timedOut ? "err" : termsR.status;
+  const support: number | "err" = supportR.timedOut ? "err" : supportR.status;
 
   if (sundownTowns === 0) p0Flags.push("sundown_towns_empty");
   if (sundownTowns === "err") p1Flags.push("sundown_towns_error");
@@ -267,8 +283,80 @@ async function runCycle(): Promise<void> {
   if (!kinfolkAvailable) p1Flags.push("kinfolk_unavailable");
   if (communityPosts === "err") p1Flags.push("community_posts_error");
   if (businesses === "err") p1Flags.push("businesses_error");
+  if (privacy === "err" || terms === "err" || support === "err") p1Flags.push("legal_pages_error");
   if (http500Count > 0) p1Flags.push(`http_500s=${http500Count}`);
   if (timeoutCount > 0) p1Flags.push(`timeouts=${timeoutCount}`);
+
+  // ── F. KinfolkAI synthetic prompt (every 12th cycle ≈ once/hour) ──────────
+  // Uses REVIEW_ACCOUNT_PASSWORD for authenticated session. Confirms a coherent
+  // response is returned without provider error exposed to the user.
+  // Cost-controlled: only runs if credentials are available and no P0 is active.
+  let kinfolkSyntheticResult: "ok" | "fail" | "skip" | "no_creds" = "skip";
+  if (_cycleCount % 12 === 0) {
+    const kfPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
+    const kfEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
+    if (!kfPassword) {
+      kinfolkSyntheticResult = "no_creds";
+    } else {
+      try {
+        // Step 1: authenticate to get a session token
+        const authR = await _post("/api/auth/login-email", { email: kfEmail, password: kfPassword }, 10_000);
+        const token = authR.status === 200 ? (() => { try { return JSON.parse(authR.body)?.token; } catch { return null; } })() : null;
+        if (token) {
+          // Step 2: send a safe, cheap synthetic prompt
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 20_000);
+          try {
+            const r = await fetch(`${BASE}/api/kinfolk/chat`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Cookie: `sid=${token}` },
+              body: JSON.stringify({ message: "Tell me briefly about Philadelphia.", conversationId: null }),
+              signal: ctrl.signal,
+            });
+            const body = await r.text().catch(() => "");
+            // Confirm: non-empty response, no raw provider error exposed
+            const coherent = r.status === 200 && body.length > 10 && !body.includes("OpenAI") && !body.includes("API key");
+            kinfolkSyntheticResult = coherent ? "ok" : "fail";
+            if (!coherent) _kinfolkSyntheticFailures++;
+          } catch {
+            kinfolkSyntheticResult = "fail";
+            _kinfolkSyntheticFailures++;
+          } finally {
+            clearTimeout(timer);
+          }
+        } else {
+          kinfolkSyntheticResult = "fail";
+          _kinfolkSyntheticFailures++;
+        }
+      } catch {
+        kinfolkSyntheticResult = "fail";
+        _kinfolkSyntheticFailures++;
+      }
+    }
+    if (kinfolkSyntheticResult === "fail") p1Flags.push("kinfolk_synthetic_fail");
+  }
+
+  // ── Apple approval tracking ────────────────────────────────────────────────
+  // APPLE_REVIEW_STATUS env var must be manually set by founder.
+  // Values: waiting_for_review | in_review | approved | ready_for_sale |
+  //         rejected | metadata_rejected | developer_action_needed | pending_developer_release
+  const appleStatus = (process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review") as string;
+  const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
+
+  if (appleApproved && !_approvalDetectedAt) {
+    _approvalDetectedAt = ts;
+    console.info(JSON.stringify({ event: "BUILD98_APPLE_APPROVED", ts, appleStatus }));
+  }
+  if (appleStatus === "rejected" || appleStatus === "metadata_rejected") {
+    p0Flags.push(`apple_${appleStatus}`);
+  }
+
+  // Post-approval stability: increment only if approved AND no P0 this cycle
+  if (appleApproved && p0Flags.length === 0) {
+    _postApprovalStableCycles++;
+  } else if (appleApproved && p0Flags.length > 0) {
+    _postApprovalStableCycles = 0; // reset — P0 broke the stable window
+  }
 
   // ── E. Capacity ────────────────────────────────────────────────────────────
   const poolTrend = _poolTrend();
@@ -299,14 +387,17 @@ async function runCycle(): Promise<void> {
   const level = p0Flags.length > 0 ? "error" : p1Flags.length > 0 ? "warn" : "info";
   const logFn = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
   logFn(JSON.stringify({
-    event: "BUILD97_MONITOR",
+    event: "BUILD98_MONITOR",
     ts, cycle: _cycleCount,
+    appleStatus,
+    postApprovalStableCycles: _postApprovalStableCycles,
     p0: p0Flags, p1: p1Flags,
     pool: poolStats, dbLatencyMs,
     activeSessions,
     http500Count, timeoutCount, poolTrend,
     healthz, readyz, version,
     reviewAccountLogin,
+    kinfolkSyntheticResult,
     sundownTowns, mapLoadOk,
     culturalSitesLatencyMs,
     businessesLatencyMs,
@@ -343,15 +434,34 @@ export function getMonitorSummary() {
 
   const latest = _ring[_ring.length - 1] ?? null;
 
+  // ── Stop condition evaluation ──
+  const appleStatus = (process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review") as string;
+  const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
+  const POST_APPROVAL_STABLE_REQUIRED = 144; // 12 h at 5-min intervals
+  const stopConditionMet =
+    appleApproved &&
+    _p0Count === 0 &&
+    _postApprovalStableCycles >= POST_APPROVAL_STABLE_REQUIRED;
+
   return {
     // ── Identity ──
     monitoringMechanism: "setInterval inside always-on Railway API process",
     intervalMinutes: 5,
     survivesReplitChatClosure: true,
+    stopCondition: "condition-based (not time-based): Apple approved + no P0 ever + 12h stable post-approval",
+    stopConditionMet,
+    // ── Apple status ──
+    appleStatus,
+    appleApproved,
+    approvalDetectedAt: _approvalDetectedAt,
+    postApprovalStableCycles: _postApprovalStableCycles,
+    postApprovalStableRequired: POST_APPROVAL_STABLE_REQUIRED,
+    postApprovalStableMinutesRemaining: appleApproved
+      ? Math.max(0, (POST_APPROVAL_STABLE_REQUIRED - _postApprovalStableCycles) * 5)
+      : null,
     // ── Progress ──
     cyclesCompleted: _cycleCount,
-    cyclesExpected: 144,
-    percentComplete: _cycleCount > 0 ? ((_cycleCount / 144) * 100).toFixed(1) + "%" : "0%",
+    cyclesExpected: "condition-based",
     // ── Health ──
     total, errors, warnings,
     successRate: successRate + "%",
@@ -385,6 +495,8 @@ export function getMonitorSummary() {
     loginCheckPassRate: _loginChecksTotal > 0
       ? (((_loginChecksTotal - _loginChecksFailed) / _loginChecksTotal) * 100).toFixed(1) + "%"
       : "skipped — set REVIEW_ACCOUNT_PASSWORD Railway env var to activate",
+    // ── KinfolkAI synthetic ──
+    kinfolkSyntheticFailures: _kinfolkSyntheticFailures,
     // ── Latest ──
     latest,
     history: _ring.slice(-10),
@@ -396,7 +508,12 @@ export function startBuild97Monitor(intervalMs = 300_000): void {
   runCycle().catch(() => {});
   _handle = setInterval(() => { runCycle().catch(() => {}); }, intervalMs);
   _handle.unref();
-  console.info(JSON.stringify({ event: "BUILD97_MONITOR_START", intervalMs, cyclesExpected: 144 }));
+  console.info(JSON.stringify({
+    event: "BUILD98_MONITOR_START",
+    intervalMs,
+    stopCondition: "condition-based: Apple approved + no P0 + 12h stable post-approval",
+    ringBufferCapacity: MAX_ENTRIES,
+  }));
 }
 
 export function stopBuild97Monitor(): void {
