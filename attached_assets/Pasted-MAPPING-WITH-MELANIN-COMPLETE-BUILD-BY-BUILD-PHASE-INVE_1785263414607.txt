@@ -1,0 +1,456 @@
+MAPPING WITH MELANIN™ — COMPLETE BUILD-BY-BUILD PHASE INVENTORY
+
+READ-ONLY DOCUMENTATION REQUEST
+
+Do not implement anything.
+Do not modify code, schemas, prompts, databases, settings, builds, or documentation.
+Do not create new features.
+Do not redesign the roadmap.
+Do not recommend additional ideas.
+Do not estimate cost or development time.
+
+I need a clear build-by-build breakdown of the full Mapping With Melanin™
+future roadmap as Replit currently understands it, including the concepts
+and refinements discussed today.
+
+This response should answer only:
+
+WHAT IS INCLUDED IN EACH BUILD?
+
+Use all existing:
+
+- Product roadmap documents
+- Future-State Register
+- Vision documents
+- Community Intelligence Constitution
+- Foundation Build Strategy
+- Existing build plans
+- Current repository implementation
+- Today’s founder clarifications
+
+Do not silently drop, merge, rename, or reinterpret a founder requirement.
+
+══════════════════════════════════════════════════════════════
+1. CURRENT RELEASE BASELINE
+══════════════════════════════════════════════════════════════
+
+Begin by documenting the current baseline:
+
+- Current iOS build
+- Current Android versionCode
+- Current production backend SHA
+- Features currently visible to users
+- Features partially implemented
+- Features hidden or feature-flagged
+- Features represented only by schema or documentation
+- Known open defects or incomplete experiences
+
+This section is the starting point, not a proposed new build.
+
+══════════════════════════════════════════════════════════════
+2. BUILD-BY-BUILD BREAKDOWN
+══════════════════════════════════════════════════════════════
+
+Start with the next authorized future build and continue through every
+currently documented phase.
+
+For each build, provide:
+
+BUILD NUMBER:
+TRUST PHASE:
+BUILD NAME:
+PRIMARY PURPOSE:
+FOUNDER OUTCOME:
+USER-VISIBLE FEATURES:
+BUSINESS FEATURES:
+CULTURAL AMBASSADOR FEATURES:
+KINFOLKAI FEATURES:
+COMMUNITY FEATURES:
+MAP / HERITAGE FEATURES:
+LIBRARY / LEARNING FEATURES:
+SAFETY FEATURES:
+ADMIN / MODERATION FEATURES:
+DATA / SCHEMA WORK:
+PRIVACY / CONSENT REQUIREMENTS:
+AGE / FAMILY SAFEGUARDS:
+DEPENDENCIES:
+EXPLICITLY NOT INCLUDED:
+ACCEPTANCE TEST:
+CURRENT STATUS:
+
+Current Status must use only:
+
+- Already implemented
+- Partially implemented
+- Designed but not implemented
+- Future-state only
+- Founder decision required
+
+Do not describe a feature as implemented because a table or placeholder
+exists.
+
+══════════════════════════════════════════════════════════════
+3. REQUIRED CAPABILITIES TO PLACE IN THE ROADMAP
+══════════════════════════════════════════════════════════════
+
+Every capability below must appear in a specific build or future phase.
+
+If its placement is already documented, preserve it.
+
+If its placement is not documented, mark:
+
+“PLACEMENT REQUIRES FOUNDER APPROVAL”
+
+Do not assign it silently.
+
+A. FOUNDATION AND RELEASE STABILITY
+
+- Authentication reliability
+- Apple review account
+- Android and iOS testing
+- Tablet support
+- Production readiness
+- Database resilience
+- External monitoring
+- Crash reporting
+- Release gates
+- Legal pages
+- Account deletion
+- Privacy controls
+
+B. MAPS, HERITAGE, AND SAFETY
+
+- Business map
+- Heritage places
+- HBCUs
+- Historical Sundown Towns
+- Cultural neighborhoods
+- Source attribution
+- Learn More
+- Community safety intelligence
+- Historical versus current safety distinction
+- Discrimination reports
+- Community engagement signals
+- Community needs and opportunity signals
+- Officer Watch
+- Meet-up Verification
+- Neighborhood surveys
+- Living community results
+- Population-scale weighting
+- Community contribution effects
+
+C. KINFOLK CULTURAL INTELLIGENCE
+
+- Founding 36-city cultural registry
+- City-specific cultural history
+- Local terms
+- Things You’ll Hear
+- Things Locals Appreciate
+- Community etiquette
+- City voices
+- Travel voice
+- Navigation voice
+- Broader-community understanding
+- Micro-community understanding
+- City → Community → Neighborhood → Context → User Preference
+- Community Voice preferences
+- Cultural Language preferences
+- Professional / Friendly or Warm / Local / Home
+- AAVE or culturally informed language levels
+- Code-switching controls
+- Separate profanity controls
+- Explicit profanity opt-in
+- Family and minor safeguards
+- Voice preference persistence
+- Community-governed language evolution
+- Phrase review and correction process
+- Founding Cultural Registry
+- Living Community Language Layer
+- Private chats excluded from shared learning
+- Cultural accuracy and citation governance
+
+D. CULTURAL AND DIASPORA EXPANSION
+
+- Existing Black-city foundation
+- Equal-depth framework for every future community
+- Miami’s multiple community experiences
+- New York’s multiple community experiences
+- Los Angeles’s multiple community experiences
+- Houston’s multiple community experiences
+- Washington DC / DMV community layers
+- Philadelphia community layers
+- Boston–Brockton
+- Minneapolis–Saint Paul
+- Orlando–Kissimmee
+- Newark–Elizabeth
+- Haitian communities
+- Dominican communities
+- Puerto Rican communities
+- Brazilian communities
+- Afro-Latino communities
+- Caribbean communities
+- Ethiopian and East African communities
+- West African communities
+- Indigenous communities
+- Asian diaspora communities
+- MENA and immigrant communities
+- LGBTQIA+ communities
+- Community reviewers and cultural governance
+
+Do not create cultural profiles during this documentation task.
+
+E. LIBRARY AND CULTURAL RECONNECTION
+
+- Cultural Journeys
+- Explore Cultures
+- History
+- Language
+- Faith and religion
+- Music
+- Food
+- Literature
+- Films
+- Podcasts
+- Museums
+- Cultural businesses
+- Cultural sites
+- “If this is your first time…”
+- Saved learning
+- Curiosity Lists
+- Continue where you left off
+- My Cultural Journey
+- Cultural Passport
+- From the Community
+- Resident videos
+- Alumni videos
+- Historian videos
+- Business-owner stories
+- Learn More from locations and businesses
+- Opt-in exploration history
+- Privacy controls
+- No streaks or pressure-based gamification
+
+F. LIFE CHAPTERS AND JOURNEYS
+
+- My Story
+- Life Chapters
+- Journeys
+- Milestones
+- Moments
+- Education
+- College and HBCU exploration
+- Trade schools
+- Apprenticeships
+- Career changes
+- Relocation
+- Travel
+- Marriage and weddings
+- Parenthood
+- Entrepreneurship
+- Home buying
+- Heritage reconnection
+- Wellness
+- Retirement
+- Community leadership
+- Mentorship
+- Pay It Forward
+- Opt-in journey documentation
+- Graduation or milestone summaries
+- Alumni feedback loops
+- Gentle nudges
+- Opt-out and “do not show again”
+- No assumption that every teenager wants college
+- No assumption that every user wants cultural guidance
+- Transactional needs contained inside journeys rather than becoming
+  unnecessary standalone journeys
+
+G. CULTURAL AMBASSADOR ECOSYSTEM
+
+- Cultural Ambassadors
+- Journey Ambassadors or Journey Guides
+- Community Storytellers
+- Trusted Voices
+- Creator onboarding
+- Creator life chapters
+- Multiple creator identities
+- Travel-to-parenting evolution
+- Community Pulse
+- Questions the community is asking
+- Knowledge gaps
+- Opportunity suggestions
+- Content recommendations based on audience needs
+- Different suggestions for different creators in the same city
+- External TikTok / Instagram / YouTube traffic and views
+- Community impact analytics
+- People helped
+- Questions answered
+- Journeys supported
+- Businesses supported
+- Cultural stories preserved
+- Compensation and brand opportunities
+- Creator consent
+- Content ownership
+- Licensing
+- Moderation
+- Transparent reason for every Kinfolk suggestion
+- No manipulation for engagement
+- Contribution over popularity
+- Pay-it-forward prompts
+
+H. COMMUNITY INTELLIGENCE PLATFORM
+
+- Broader community
+- Micro community
+- Community Understanding
+- Living Community Feed
+- Community needs
+- Community opportunity matching
+- Professional shortages
+- Trade and career needs
+- Internship recommendations
+- Business gaps
+- Resource gaps
+- Community requests
+- Community contribution recognition
+- Evidence-based recommendations
+- Scale-aware signals
+- Transparency: why the user or Ambassador is seeing a suggestion
+- Privacy and user control
+- Gradual adaptation
+- Community before engagement
+- Contribution over popularity
+
+I. BUSINESSES AND EVENTS
+
+- Real businesses
+- Clearly identified Beta Test Listings
+- Tester reviews and ratings
+- Test score changes
+- Separation of demo and real metrics
+- Multiple ownership designations
+- Diaspora representation
+- Professional services
+- Culturally diverse businesses
+- Business stories
+- Community teaching moments
+- Learn More
+- Real and Beta Test Events
+- Diverse cultural events
+- RSVP and event interaction
+- Business KinfolkAI
+- Community-needs opportunities for businesses
+- Cultural Ambassador and business partnerships
+
+══════════════════════════════════════════════════════════════
+4. BUILD SCOPE DISCIPLINE
+══════════════════════════════════════════════════════════════
+
+For every build, explicitly state:
+
+- What must be completed for the build to pass
+- What is intentionally deferred
+- What depends on real community data
+- What requires founder decisions
+- What requires cultural or legal review
+- What requires a new mobile binary
+- What requires only a Railway/backend deployment
+- What requires both
+- What can be released independently
+- What should not be bundled together because it creates unnecessary risk
+
+Do not overload an early build merely because the idea has now been
+documented.
+
+Preservation in the Future-State Register is sufficient until the
+appropriate trust phase.
+
+══════════════════════════════════════════════════════════════
+5. TRACEABILITY
+══════════════════════════════════════════════════════════════
+
+For every capability, identify:
+
+- Build or phase assigned
+- Source document
+- Current repository evidence
+- Current implementation status
+- Founder approval status
+- Dependencies
+- Acceptance test
+
+Produce a traceability table:
+
+Capability
+Current state
+Assigned build
+Source document
+Founder decision needed
+Dependency
+User-visible outcome
+
+No capability may be omitted because it appears too far in the future.
+
+══════════════════════════════════════════════════════════════
+6. FOUNDER DECISIONS
+══════════════════════════════════════════════════════════════
+
+After the build breakdown, list only the decisions that prevent accurate
+placement or implementation.
+
+Group them by proposed build.
+
+Do not repeat questions that have already been answered.
+
+Clearly distinguish:
+
+- Decision required before roadmap placement
+- Decision required before implementation
+- Decision that may wait until real user data exists
+- Decision requiring legal, cultural, safety, or privacy review
+
+══════════════════════════════════════════════════════════════
+7. FINAL EXECUTIVE TABLE
+══════════════════════════════════════════════════════════════
+
+Finish with one concise table:
+
+Build
+Trust Phase
+Primary Outcome
+Main Capabilities
+Founder Decisions
+Dependencies
+Release Type
+Current Readiness
+
+Release Type must state:
+
+- Backend only
+- iOS and Android
+- Web
+- Data/content only
+- Mixed release
+
+══════════════════════════════════════════════════════════════
+8. FINAL CONFIRMATION
+══════════════════════════════════════════════════════════════
+
+End with:
+
+1. Total future capabilities accounted for
+2. Total builds/phases documented
+3. Capabilities with confirmed placement
+4. Capabilities awaiting founder placement
+5. Founder decisions required before the next build
+6. Any documented capability that could not be located
+7. Whether anything discussed today was omitted
+
+This is a read-only roadmap reconciliation.
+
+I want the build sequence as Replit currently understands it.
+
+Do not implement.
+Do not rewrite the founder vision.
+Do not provide inspirational copy.
+Do not recommend additional features.
+Do not begin a build.
