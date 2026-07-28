@@ -220,7 +220,13 @@ async function runCycle(): Promise<void> {
     _get("/api/community/posts?limit=1"),
     _get("/api/community/guidelines"),
     _get("/api/events?limit=1"),
-    _post("/api/kinfolk/chat", { message: "ping", conversationId: "monitor" }),
+    // NOTE: was _post("/api/kinfolk/chat", ...) — that probe was unauthenticated,
+    // so the server ran full OpenAI calls that were abandoned when the 8 s HTTP
+    // timeout fired, leaving orphaned handlers whose post-OpenAI DB writes slowly
+    // exhausted the pool (pool_total_growing → pool exhaustion in ~30 min).
+    // Now uses the dedicated /api/kinfolk/health endpoint: no auth required,
+    // no OpenAI call, no DB writes — just checks the AI key is configured.
+    _get("/api/kinfolk/health"),
     _get("/login"),
     _get("/privacy"),
   ]);

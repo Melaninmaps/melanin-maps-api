@@ -112,7 +112,16 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     headers,
     body: JSON.stringify({ message, sessionId, voiceMode }),
   });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (!res.ok) {
+    // Extract server error message so the catch block can surface it to the user
+    // rather than showing a generic "trouble connecting" for actionable errors
+    // (e.g. 429 rate limit, 503 AI key missing, 401 session expired).
+    let serverMsg: string | undefined;
+    try { serverMsg = ((await res.json()) as { error?: string }).error; } catch { /* ignore */ }
+    const err = new Error(serverMsg ?? `API error ${res.status}`) as Error & { status: number };
+    err.status = res.status;
+    throw err;
+  }
   const data = await res.json() as {
     reply?: string;
     taskAction?: TaskActionPayload | null;
@@ -510,10 +519,22 @@ export function AIChatWidget() {
       const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
-    } catch {
+    } catch (err) {
+      // Prefer the server's error message (rate limit, session expired, etc.)
+      // over a generic "trouble connecting" — helps the user take the right action.
+      const status = (err as { status?: number }).status;
+      const serverText = err instanceof Error ? err.message : null;
+      const text =
+        status === 429 && serverText
+          ? serverText                                // e.g. "You've used your 10 free queries…"
+          : status === 401
+            ? "Please sign in again to use KinfolkAI."
+            : status === 503
+              ? "KinfolkAI is temporarily unavailable. Please try again in a moment."
+              : "I'm having trouble connecting right now. Check your connection and try again.";
       const errMsg: Message = {
         id: String(Date.now() + 1),
-        text: "I'm having trouble connecting right now. Check your connection and try again.",
+        text,
         fromUser: false,
         ts: Date.now(),
       };

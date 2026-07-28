@@ -1266,7 +1266,25 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 // ─── POST /api/kinfolk/chat ───────────────────────────────────────────────────
 const FREE_MONTHLY_LIMIT = 3;
 
+// ─── GET /api/kinfolk/health — lightweight liveness check for monitoring ─────
+// Returns 200 if the AI key is configured, 503 if not.
+// Does NOT call OpenAI — safe to poll frequently without pool pressure.
+router.get("/kinfolk/health", (_req: Request, res: Response) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
+    return void res.status(503).json({ ok: false, reason: "AI_INTEGRATIONS_OPENAI_API_KEY not set" });
+  }
+  res.json({ ok: true });
+});
+
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
+  // Authentication is required — unauthenticated probes previously triggered
+  // full OpenAI calls that were abandoned mid-flight when the HTTP client timed
+  // out, leaving orphaned server-side handlers that slowly exhausted the DB pool.
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
   const { sessionId, message, vibes = [], voiceMode = "community" } = req.body as {
     sessionId?: string;
     message: string;
