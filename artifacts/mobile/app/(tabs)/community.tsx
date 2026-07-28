@@ -1240,12 +1240,12 @@ export default function CommunityScreen() {
                     <Feather name="edit-3" size={15} color={colors.primary} />
                   </View>
                   <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
-                    Share something… type{" "}
+                    What&apos;s on your mind? Type{" "}
                     <Text style={{ fontFamily: "Inter_700Bold", color: colors.primary }}>@</Text>
-                    {" "}to tag a business
+                    {" "}to mention someone
                   </Text>
-                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
-                    <Feather name="at-sign" size={13} color={colors.primary} />
+                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "22", borderColor: colors.primary + "45" }]}>
+                    <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>@</Text>
                   </View>
                 </TouchableOpacity>
 
@@ -2014,8 +2014,8 @@ export default function CommunityScreen() {
 
             <TextInput
               ref={inputRef}
-              style={[styles.composeInput, { color: colors.foreground }]}
-              placeholder="Let's connect deeper."
+              style={[styles.composeInput, { color: colors.foreground, backgroundColor: colors.background, borderRadius: 12, marginHorizontal: 16, marginTop: 4, paddingHorizontal: 16, paddingVertical: 12 }]}
+              placeholder="What's on your mind? Type @ to mention someone…"
               placeholderTextColor={colors.mutedForeground}
               value={newPostText}
               onChangeText={(t) => {
@@ -2079,12 +2079,14 @@ export default function CommunityScreen() {
                 onPress={() => void pickAndUploadMedia("image")}
                 disabled={uploadingMedia || mediaAttachments.filter((m) => m.type === "image").length >= 5}
                 activeOpacity={0.7}
+                accessibilityLabel="Add photo"
               >
                 {uploadingMedia ? (
                   <ActivityIndicator size={12} color={colors.mutedForeground} />
                 ) : (
                   <Feather name="image" size={14} color={colors.mutedForeground} />
                 )}
+                <Text style={[styles.mentionBtnText, { color: colors.mutedForeground }]}>Photo</Text>
               </TouchableOpacity>
 
               {/* Video picker button */}
@@ -2093,8 +2095,10 @@ export default function CommunityScreen() {
                 onPress={() => void pickAndUploadMedia("video")}
                 disabled={uploadingMedia || mediaAttachments.some((m) => m.type === "video")}
                 activeOpacity={0.7}
+                accessibilityLabel="Add video"
               >
                 <Feather name="video" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.mentionBtnText, { color: colors.mutedForeground }]}>Video</Text>
               </TouchableOpacity>
               {(() => {
                 const limit = CHAR_LIMITS[newPostType] ?? 1000;
@@ -2324,7 +2328,15 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   modalOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.4)" },
-  composeSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300 },
+  composeSheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    minHeight: 300,
+    // iPad/tablet: constrain width and center
+    alignSelf: "center" as const,
+    width: "100%" as const,
+    maxWidth: 640,
+  },
   composeHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -2361,10 +2373,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,   // was 6 — minimum 44pt Apple HIG touch target
     borderRadius: 8,
     borderWidth: 1,
+    minHeight: 44,
   },
   mentionBtnText: {
     fontFamily: "Inter_600SemiBold",
@@ -2378,8 +2391,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 12,
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,   // was 1 — more visible as an input affordance
     gap: 10,
+    minHeight: 52,      // ensures comfortable tap target
   },
   composeBarAvatar: {
     width: 34,
