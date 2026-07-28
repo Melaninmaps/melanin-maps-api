@@ -1,8 +1,13 @@
 {
-  "lastIosSubmitted": 97,
-  "lastAndroidSubmitted": 72,
-  "iosEasSubmissionId": "961e5c46",
-  "androidEasBuildId": "7a1964ed",
-  "androidSubmissionStatus": "FAILED_CREDENTIAL",
-  "notes": "iOS Build 97: IPA artifact available at Expo CDN (KNLKNeLS). Android VC72: built 7a1964ed, Play Store submission failed due to expired Google Service Account key — see docs/product/releases/ANDROID_VC72_CREDENTIAL_FIX.md"
+  "lastIosSubmitted": 98,
+  "lastAndroidSubmitted": 73,
+  "iosEasBuildId": "04eb33b2-bdf5-4d04-aca8-ed24b18d18e5",
+  "iosEasSubmissionId": "a7cb3544-801d-403c-9a08-62f28cba5004",
+  "iosArtifactUrl": "https://expo.dev/artifacts/eas/qCz8eETo2U1qQLhlItVcrtX5BX8vSeJjSMg3K54RsHM.ipa",
+  "iosSubmissionStatus": "SUBMITTED_TO_ASC",
+  "androidEasBuildId": "3e309685-851f-466f-9d00-cf44f27f954c",
+  "androidArtifactUrl": "https://expo.dev/artifacts/eas/3kdQyf7pgJgqCpZM4Yat2mG4dYV69_jA-TYGtyxwUJ4.aab",
+  "androidSubmissionStatus": "BUILD_COMPLETE_SUBMIT_PENDING_CREDENTIAL",
+  "sourceCommit": "b37c161954f100afa876bf41bf19d0000613fd7a",
+  "notes": "iOS Build 98: submitted directly to App Store Connect via EAS Submit (submission a7cb3544). Android VC73: AAB built successfully — Play Store submission still requires Google Service Account key regeneration (see docs/product/releases/ANDROID_VC72_CREDENTIAL_FIX.md). Both builds fix: HERITAGE_SITES_ENABLED re-enabled, Historical Sundown Town chip added to HERITAGE_CATEGORIES and CATEGORY_STYLES."
 }
