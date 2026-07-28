@@ -35,9 +35,20 @@ const NORMALIZED_ADMIN_EMAILS: Set<string> = new Set(
 
 /**
  * Returns true if the authenticated user on `req` has administrator access.
- * Checks the email allowlist first, then falls back to the DB role column.
+ *
+ * Three independent paths (any one is sufficient):
+ *   1. Email allowlist — user's email appears in ADMIN_EMAILS env var.
+ *   2. Role column    — user's `role` field equals "admin".
+ *   3. CRON_SECRET    — `x-cron-secret` header matches the CRON_SECRET env var.
+ *      Used by internal automation (monitoring, seeding, tier management).
+ *      Only valid when CRON_SECRET is configured and non-empty.
  */
 export function isAdmin(req: Request): boolean {
+  // Path 3: machine-to-machine via CRON_SECRET header
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && req.headers["x-cron-secret"] === cronSecret) return true;
+
+  // Paths 1 & 2: session-based
   const user = (req as any).user;
   if (!user?.email) return false;
   const userEmail = (user.email as string).trim().toLowerCase();
