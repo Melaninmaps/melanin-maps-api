@@ -1,4 +1,5 @@
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
+- [KinfolkAI Cultural Intelligence Model](kinfolk-cultural-intelligence-model.md) — founding principles, city-as-container, two-layer registry, three-setting voice decoupling, code-switching, 16-category depth standard.
 - [Railway production architecture — definitive](railway-architecture.md) — node static-server.mjs is the start cmd; it spawns ROOT dist/index.mjs (not artifacts/api-server/dist/); every build must cp to root.
 - [DB Review type conflict](db-review-type.md) — businesses.ts exports `Review` interface (JSON column type); reviews.ts must export `ReviewRow` to avoid re-export ambiguity in schema/index.ts.
 - [Dark mode pattern](dark-mode-pattern.md) — ThemeProvider wraps SafeAreaProvider in _layout.tsx; useTheme() from contexts/ThemeContext.tsx; AsyncStorage key `@melanin_maps_theme`.
