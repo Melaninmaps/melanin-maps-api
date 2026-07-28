@@ -1,0 +1,161 @@
+READ-ONLY INVENTORY REQUEST — LEGACY CITIES
+
+This is a READ-ONLY documentation request.
+
+Do not modify code.
+Do not add features.
+Do not create placeholders.
+Do not propose improvements.
+Do not implement anything.
+
+I am explaining the Legacy Cities vision to my daughter and I need an accurate inventory of what has already been designed and attached to this feature.
+
+Please produce a complete Legacy Cities Architecture Report based ONLY on what currently exists in the repository and database.
+
+For every item below, classify it as:
+
+• IMPLEMENTED
+• PARTIALLY IMPLEMENTED
+• DESIGNED BUT NOT IMPLEMENTED
+• NOT PRESENT
+
+For each item include:
+
+- Current implementation
+- Files involved
+- Database tables
+- API endpoints
+- Mobile screens
+- Admin tools
+- Dependencies
+- How it interacts with other features
+
+══════════════════════════════════════
+
+SECTION 1 – LEGACY CITY DEFINITION
+
+What is a Legacy City in the current architecture?
+
+How is it identified?
+
+How is it stored?
+
+Can a city be marked as Legacy?
+
+Is there a Legacy City model or database table?
+
+══════════════════════════════════════
+
+SECTION 2 – FEATURES ATTACHED TO LEGACY CITIES
+
+List every feature currently connected to Legacy Cities including but not limited to:
+
+• Heritage Sites
+• Historical Sundown Towns
+• Cultural Neighborhoods
+• HBCUs
+• Historical Markers
+• Community Feed
+• Events
+• Businesses
+• Discovery
+• KinfolkAI
+• Safety
+• Resources
+• Mentorship
+• Cultural Ambassadors
+• Libraries
+• Saved Places
+• Relocation
+• Employer Transparency
+• Neighborhood Intelligence
+• Community Intelligence
+• Community Understanding
+• Officer Watch
+• Meet-up Verification
+• Waitlist
+• Points
+• Membership
+• Verification
+• Reviews
+• Ratings
+
+If any additional features are attached, include them.
+
+══════════════════════════════════════
+
+SECTION 3 – MAP EXPERIENCE
+
+Describe exactly what a user sees today in a Legacy City.
+
+What map layers exist?
+
+Which are active?
+
+Which are hidden?
+
+Which are feature-flagged?
+
+══════════════════════════════════════
+
+SECTION 4 – DATA
+
+List every database table used by Legacy Cities.
+
+List all relationships.
+
+List seeded data.
+
+List production data.
+
+List future placeholders.
+
+══════════════════════════════════════
+
+SECTION 5 – KINFOLKAI
+
+Explain every Legacy City integration with KinfolkAI.
+
+What questions can it answer?
+
+What data does it use?
+
+What is planned but not yet implemented?
+
+══════════════════════════════════════
+
+SECTION 6 – FUTURE ROADMAP
+
+Without changing code, identify every planned Legacy City capability already represented by:
+
+• TODO comments
+• Feature flags
+• Disabled code
+• Design documents
+• Database schema
+• Existing APIs
+• Placeholder screens
+
+══════════════════════════════════════
+
+SECTION 7 – DEPENDENCIES
+
+Explain what must exist before Legacy Cities can become a flagship feature.
+
+══════════════════════════════════════
+
+SECTION 8 – EXECUTIVE INVENTORY
+
+Finish with a table containing:
+
+Feature | Current Status | Percent Complete | User Visible | Admin Visible | Production Ready | Notes
+
+══════════════════════════════════════
+
+This is an inventory only.
+
+Do not recommend changes.
+
+Do not redesign anything.
+
+I want a factual record of exactly what Legacy Cities currently consists of so I can accurately explain the vision and current implementation.
