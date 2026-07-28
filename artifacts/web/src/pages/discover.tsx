@@ -20,7 +20,7 @@ const VIBES = [
   { emoji: "💇🏾", label: "Hair & Beauty", category: "Professional Services" },
   { emoji: "🌙", label: "Date Night", category: "Restaurants & Nightlife" },
   { emoji: "☕", label: "Café Vibes", category: "Restaurants & Nightlife" },
-  { emoji: "💼", label: "Black-Owned", category: "Black-Owned Businesses" },
+  { emoji: "💼", label: "Minority-Owned", category: "Minority-Owned Businesses" },
   { emoji: "🏨", label: "Stay & Explore", category: "Hotels & Stays" },
   { emoji: "🎭", label: "Culture", category: "Cultural Landmarks" },
   { emoji: "🎉", label: "Events & More", category: "Community Events" },
@@ -247,7 +247,7 @@ export default function Discover() {
 
   const categories = [
     "All",
-    "Black-Owned Businesses",
+    "Minority-Owned Businesses",
     "Restaurants & Nightlife",
     "Hotels & Stays",
     "Cultural Landmarks",
@@ -444,7 +444,7 @@ export default function Discover() {
                 <div className="col-span-full">
                   <div className="flex items-center justify-between mb-4 px-1">
                     <div>
-                      <h3 className="font-serif font-bold text-[#3A1F0E] text-lg">Other Black-Owned Businesses</h3>
+                      <h3 className="font-serif font-bold text-[#3A1F0E] text-lg">Other Community Businesses</h3>
                       <p className="text-[#3A1F0E]/60 text-sm">Showing results from all categories — not filtered by your selection</p>
                     </div>
                     <button

@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
-import { BlackOwnedBadge } from "./BlackOwnedBadge";
+import { OwnershipBadge } from "./OwnershipBadges";
 import { NonMinorityBadge } from "./NonMinorityBadge";
 import { ConfidenceScoreBadge } from "./ConfidenceScoreBadge";
 import { RatingStars } from "./RatingStars";
@@ -123,13 +123,17 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           accessibilityHint="Double tap to view details, hold to preview"
         >
           <Image source={img} style={styles.hImage} contentFit="cover" />
-          {business.blackOwned ? (
-            <View style={styles.hBadgeOverlay}>
-              <BlackOwnedBadge size="sm" />
-            </View>
-          ) : business.ownershipDesignations?.includes("non-minority-owned") ? (
+          {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.hBadgeOverlay}>
               <NonMinorityBadge size="sm" />
+            </View>
+          ) : (business.ownershipDesignations?.length ?? 0) > 0 ? (
+            <View style={styles.hBadgeOverlay}>
+              <OwnershipBadge
+                type={business.ownershipDesignations![0] as any}
+                verified={(business.verifiedDesignations ?? []).includes(business.ownershipDesignations![0])}
+                size="sm"
+              />
             </View>
           ) : null}
           <View style={styles.hContent}>
@@ -268,13 +272,17 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
       >
         <View style={styles.vImageWrap}>
           <Image source={img} style={styles.vImage} contentFit="cover" />
-          {business.blackOwned ? (
-            <View style={styles.vBadgeOverlay}>
-              <BlackOwnedBadge size="sm" />
-            </View>
-          ) : business.ownershipDesignations?.includes("non-minority-owned") ? (
+          {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.vBadgeOverlay}>
               <NonMinorityBadge size="sm" />
+            </View>
+          ) : (business.ownershipDesignations?.length ?? 0) > 0 ? (
+            <View style={styles.vBadgeOverlay}>
+              <OwnershipBadge
+                type={business.ownershipDesignations![0] as any}
+                verified={(business.verifiedDesignations ?? []).includes(business.ownershipDesignations![0])}
+                size="sm"
+              />
             </View>
           ) : null}
         </View>

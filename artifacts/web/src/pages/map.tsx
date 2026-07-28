@@ -485,7 +485,7 @@ export default function MapPage() {
         <div className="absolute bottom-6 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex items-center gap-4 pointer-events-none">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#CA922B] border-2 border-[#2B1507]" />
-            <span className="text-xs font-semibold text-[#3A1F0E]/70">Black-Owned Business</span>
+            <span className="text-xs font-semibold text-[#3A1F0E]/70">Community Business</span>
           </div>
           {isPaidMember && (
             <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-4">

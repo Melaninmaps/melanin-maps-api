@@ -66,7 +66,7 @@ const NOTIFS: Notif[] = [
   {
     id: "n6", type: "events", icon: "calendar", color: "#2D7A4F",
     title: "New event near you: Juneteenth Block Party",
-    body: "Houston, TX · June 19 · Free admission · Black-owned food vendors + live music",
+    body: "Houston, TX · June 19 · Free admission · Community food vendors + live music",
     time: "2 days ago", read: true, group: "This Week",
   },
   {

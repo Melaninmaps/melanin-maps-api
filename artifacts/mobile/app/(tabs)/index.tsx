@@ -262,7 +262,7 @@ export default function DiscoverScreen() {
 
   const communityFaves = sortByPref(
     filtered
-      .filter((b) => b.blackOwned && b.verified)
+      .filter((b) => ((b.ownershipDesignations?.length ?? 0) > 0 || b.blackOwned) && b.verified)
       .sort((a, b) => b.confidenceScore - a.confidenceScore)
       .slice(0, 10)
   );
@@ -859,7 +859,7 @@ export default function DiscoverScreen() {
             {/* Community Favorites carousel */}
             {communityFaves.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader title="👑 Community Favorites" subtitle="Verified · Black-Owned" />
+                <SectionHeader title="👑 Community Favorites" subtitle="Verified · Community Owned" />
                 <FlatList
         keyboardDismissMode="on-drag" horizontal data={communityFaves} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
@@ -895,7 +895,7 @@ export default function DiscoverScreen() {
               <Feather name="briefcase" size={20} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.listBizTitle}>Own a Black-Owned Business?</Text>
+              <Text style={styles.listBizTitle}>Own a Community Business?</Text>
               <Text style={styles.listBizSub}>Get discovered by thousands of locals and travelers. Listing is free.</Text>
             </View>
           </View>

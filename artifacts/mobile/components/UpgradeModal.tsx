@@ -12,7 +12,7 @@ type Props = {
 };
 
 const FREE_ALWAYS = [
-  { icon: "search" as const,       label: "Search & discover Black-owned businesses" },
+  { icon: "search" as const,       label: "Search & discover minority-owned businesses" },
   { icon: "star" as const,         label: "Read and leave reviews" },
   { icon: "camera" as const,       label: "Upload photos" },
   { icon: "users" as const,        label: "Join groups & RSVP to events" },
@@ -26,7 +26,7 @@ const PREMIUM_PERKS = [
   { icon: "map-pin" as const,      label: "Smart Pathways™ — personalized moving, travel & safety plans" },
   { icon: "file-text" as const,    label: "Relocation Intelligence Reports — full city deep-dives" },
   { icon: "bar-chart-2" as const,  label: "Advanced Safety Intelligence — AI summaries, trends & comparisons" },
-  { icon: "navigation" as const,   label: "AI Trip Planner — full itineraries built around Black-owned businesses" },
+  { icon: "navigation" as const,   label: "AI Trip Planner — full itineraries built around minority-owned businesses" },
   { icon: "video" as const,        label: "Unlimited video uploads (5 free, unlimited with Premium)" },
   { icon: "award" as const,        label: "Premium member badge & priority support" },
 ];

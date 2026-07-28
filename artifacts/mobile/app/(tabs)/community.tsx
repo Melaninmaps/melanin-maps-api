@@ -1462,9 +1462,6 @@ export default function CommunityScreen() {
                       </View>
                     </View>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      <View style={{ backgroundColor: "#2D7A4F22", borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2 }}>
-                        <Text style={{ color: "#2D7A4F", fontSize: 11, fontWeight: "600" }}>Black-Owned</Text>
-                      </View>
                       <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>{biz.category} · {biz.city}</Text>
                     </View>
                   </View>

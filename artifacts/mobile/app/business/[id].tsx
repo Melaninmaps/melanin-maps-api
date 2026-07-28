@@ -19,7 +19,6 @@ import {
 } from "react-native";
 import { getCaptionsForBusiness } from "@/constants/captions";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlackOwnedBadge } from "@/components/BlackOwnedBadge";
 import { BusinessTimeBadges } from "@/components/BusinessTimeBadges";
 import { OwnershipBadges } from "@/components/OwnershipBadges";
 import { BusinessMapView } from "@/components/BusinessMapView";
@@ -696,7 +695,6 @@ export default function BusinessDetailScreen() {
                     </Text>
                   </View>
                 )}
-                {business.blackOwned && <BlackOwnedBadge size="md" />}
                 <OwnershipBadges
                   designations={business.ownershipDesignations}
                   verifiedDesignations={business.verifiedDesignations}

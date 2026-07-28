@@ -848,7 +848,7 @@ export default function Home() {
               },
               {
                 icon: Store,
-                title: "Recommend Black-Owned Businesses",
+                title: "Recommend Community Businesses",
                 desc: "Know a business that deserves more visibility? Invite them to join and become part of the movement — we'll reach out directly.",
                 color: "bg-[#2B1507]/5 border-[#2B1507]/10",
                 iconColor: "text-[#3A1F0E]",
