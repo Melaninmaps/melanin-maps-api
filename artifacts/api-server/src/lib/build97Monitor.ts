@@ -125,24 +125,26 @@ async function runCycle(): Promise<void> {
   let timeoutCount = 0;
 
   // ── A. Service health ──────────────────────────────────────────────────────
-  const [hrz, rdz, ver] = await Promise.all([
+  // NOTE: /api/readyz is NOT checked via HTTP here — it does its own DB probe
+  // which competes with the monitor's direct DB queries and saturates the max:5
+  // pool when both fire concurrently.  Instead, readyz is derived below from
+  // the internal DB latency check: if the monitor can query the DB, the server
+  // is ready.  healthz (no DB) is still checked via HTTP as an API-layer pulse.
+  const [hrz, ver] = await Promise.all([
     _get("/api/healthz"),
-    _get("/api/readyz"),
     _get("/api/version"),
   ]);
 
   const healthz: number | "err" = hrz.timedOut ? "err" : hrz.status;
-  const readyz: number | "err" = rdz.timedOut ? "err" : rdz.status;
+  // readyz is populated after the DB probe below
+  let readyz: number | "err" = "err";
   let version: string | "err" = "err";
   if (ver.status === 200) {
     try { version = (JSON.parse(ver.body)?.sha ?? "").slice(0, 8); } catch { /* err */ }
   }
 
   if (hrz.timedOut) timeoutCount++;
-  if (rdz.timedOut) timeoutCount++;
   if (hrz.status === 500) http500Count++;
-  if (rdz.status === 500) http500Count++;
-  if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
 
   // ── B. Auth — review account ───────────────────────────────────────────────
   let reviewAccountLogin: "ok" | "fail" | "skip" | "err" = "skip";
@@ -201,7 +203,13 @@ async function runCycle(): Promise<void> {
   if (activeSessions !== null && activeSessions > _peakActiveSessions) {
     _peakActiveSessions = activeSessions;
   }
+  // Derive readyz from DB probe — if the monitor can query the DB, the server is ready.
+  // This avoids making a separate HTTP /api/readyz call which does its own DB check
+  // and can temporarily saturate the pool when fired concurrently with the monitor probes.
+  readyz = dbLatencyMs !== null ? 200 : 503;
+
   if (dbLatencyMs === null) p0Flags.push("db_query_failed");
+  if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
 
   // ── D. Core features (all in parallel) ────────────────────────────────────

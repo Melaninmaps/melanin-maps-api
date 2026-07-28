@@ -442758,13 +442758,12 @@ async function runCycle() {
   const p1Flags = [];
   let http500Count = 0;
   let timeoutCount = 0;
-  const [hrz, rdz, ver] = await Promise.all([
+  const [hrz, ver] = await Promise.all([
     _get("/api/healthz"),
-    _get("/api/readyz"),
     _get("/api/version")
   ]);
   const healthz = hrz.timedOut ? "err" : hrz.status;
-  const readyz = rdz.timedOut ? "err" : rdz.status;
+  let readyz = "err";
   let version6 = "err";
   if (ver.status === 200) {
     try {
@@ -442773,10 +442772,7 @@ async function runCycle() {
     }
   }
   if (hrz.timedOut) timeoutCount++;
-  if (rdz.timedOut) timeoutCount++;
   if (hrz.status === 500) http500Count++;
-  if (rdz.status === 500) http500Count++;
-  if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   let reviewAccountLogin = "skip";
   const reviewEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
   const reviewPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
@@ -442834,7 +442830,9 @@ async function runCycle() {
   if (activeSessions !== null && activeSessions > _peakActiveSessions) {
     _peakActiveSessions = activeSessions;
   }
+  readyz = dbLatencyMs !== null ? 200 : 503;
   if (dbLatencyMs === null) p0Flags.push("db_query_failed");
+  if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
   const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR] = await Promise.all([
     _get("/api/businesses?limit=1"),
