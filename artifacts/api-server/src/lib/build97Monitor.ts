@@ -153,7 +153,12 @@ async function runCycle(): Promise<void> {
     const ar = await _post("/api/auth/login-email", { email: reviewEmail, password: reviewPassword });
     if (ar.timedOut) { reviewAccountLogin = "err"; timeoutCount++; }
     else if (ar.status === 200) {
-      try { reviewAccountLogin = JSON.parse(ar.body)?.user ? "ok" : "fail"; } catch { reviewAccountLogin = "fail"; }
+      try {
+        const parsed = JSON.parse(ar.body);
+        // login-email returns { token: sid } on success (no user wrapper)
+        // registration returns { token, user } — accept either shape
+        reviewAccountLogin = (parsed?.token || parsed?.user) ? "ok" : "fail";
+      } catch { reviewAccountLogin = "fail"; }
     } else {
       reviewAccountLogin = "fail";
       if (ar.status === 500) http500Count++;
