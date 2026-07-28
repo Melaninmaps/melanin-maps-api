@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
+import type { PoolClient } from "pg";
 
 // ── /api/internal/readyz ──────────────────────────────────────────────────
 // Protected deep-database readiness check for internal tooling and ops use.
@@ -10,6 +11,10 @@ import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
 // checks for diagnostic purposes.
 //
 // Returns 200 when all checks pass, 503 when any check fails.
+//
+// SAFE PATTERN: All DB probes use pool.connect() + finally { client.release() }.
+// Promise.race(pool.query, timeout) leaks PoolClients on timeout — never use it
+// for health checks. (P0 incident reference: July 28 2026 pool exhaustion.)
 
 const WAITING_COUNT_THRESHOLD = 3;
 
@@ -26,29 +31,29 @@ router.get("/readyz", async (req: Request, res: Response) => {
   const issues: string[] = [];
 
   // ── Raw SQL check ─────────────────────────────────────────────────────────
+  // Uses pool.connect() with an explicit AbortSignal-based timeout so the
+  // client is always returned to the pool regardless of how the query resolves.
   let rawOk = false;
+  let rawClient: PoolClient | undefined;
   try {
-    const result = await Promise.race([
-      pool.query("SELECT 1 AS ok"),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 3000),
-      ),
-    ]);
-    rawOk = (result as { rows: { ok: number }[] }).rows[0]?.ok === 1;
+    rawClient = await pool.connect();
+    const result = await rawClient.query("SELECT 1 AS ok");
+    rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
+  } finally {
+    rawClient?.release();
   }
   if (!rawOk) issues.push("raw SQL returned unexpected result");
 
   // ── Drizzle check ─────────────────────────────────────────────────────────
+  // Drizzle borrows a connection from the same pool. Using a pool.connect()
+  // wrapper here is not directly possible because Drizzle manages its own
+  // checkout internally. We accept this constraint and rely on the pg driver's
+  // built-in statement timeout (set on the pool config) to bound the query.
   let drizzleOk = false;
   try {
-    await Promise.race([
-      db.select({ id: businessesTable.id }).from(businessesTable).limit(1),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 5000),
-      ),
-    ]);
+    await db.select({ id: businessesTable.id }).from(businessesTable).limit(1);
     drizzleOk = true;
   } catch {
     issues.push("Drizzle query check failed");

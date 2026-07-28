@@ -21,7 +21,9 @@
  *   F. KinfolkAI synthetic prompt (every 12th cycle ≈ 1/hour)
  */
 
-import { pool, getPoolStats } from "@workspace/db";
+// No direct DB imports — monitor derives DB health from HTTP /api/readyz.
+// Direct pool.connect() probes inside the API process caused the July 28 2026
+// pool exhaustion P0 incident. HTTP /api/readyz is the safe, isolated path.
 
 export interface MonitorEntry {
   ts: string;
@@ -136,26 +138,28 @@ async function runCycle(): Promise<void> {
   let timeoutCount = 0;
 
   // ── A. Service health ──────────────────────────────────────────────────────
-  // NOTE: /api/readyz is NOT checked via HTTP here — it does its own DB probe
-  // which competes with the monitor's direct DB queries and saturates the max:5
-  // pool when both fire concurrently.  Instead, readyz is derived below from
-  // the internal DB latency check: if the monitor can query the DB, the server
-  // is ready.  healthz (no DB) is still checked via HTTP as an API-layer pulse.
-  const [hrz, ver] = await Promise.all([
+  // readyz is checked via HTTP — the /api/readyz handler runs its own isolated
+  // pool.connect()+finally probe and returns pool stats in the response body.
+  // The monitor NEVER calls pool.connect() directly; the HTTP path is the only
+  // safe, non-interfering way to obtain DB readiness evidence from inside the
+  // same process.
+  const [hrz, rzR, ver] = await Promise.all([
     _get("/api/healthz"),
+    _get("/api/readyz"),
     _get("/api/version"),
   ]);
 
   const healthz: number | "err" = hrz.timedOut ? "err" : hrz.status;
-  // readyz is populated after the DB probe below
-  let readyz: number | "err" = "err";
+  const readyz: number | "err" = rzR.timedOut ? "err" : rzR.status;
   let version: string | "err" = "err";
   if (ver.status === 200) {
     try { version = (JSON.parse(ver.body)?.sha ?? "").slice(0, 8); } catch { /* err */ }
   }
 
   if (hrz.timedOut) timeoutCount++;
+  if (rzR.timedOut) timeoutCount++;
   if (hrz.status === 500) http500Count++;
+  if (rzR.status === 500) http500Count++;
 
   // ── B. Auth — review account ───────────────────────────────────────────────
   let reviewAccountLogin: "ok" | "fail" | "skip" | "err" = "skip";
@@ -182,52 +186,24 @@ async function runCycle(): Promise<void> {
     }
   }
 
-  // ── C. DB / infra ──────────────────────────────────────────────────────────
-  // IMPORTANT: Do NOT use Promise.race with pool.query() — it abandons the pg
-  // promise without releasing the pool client, leaking connections until the
-  // pool's maxLifetimeSeconds recycles them. Instead, acquire a client
-  // explicitly so the finally block always releases it. The pool itself has
-  // connectionTimeoutMillis:10_000 and query_timeout:10_000 as backstops.
-  const poolStats = getPoolStats();
+  // ── C. DB / infra — derived from HTTP /api/readyz (NO direct pool probes) ──
+  // The monitor MUST NOT call pool.connect() or pool.query() directly.
+  // Doing so inside the API process competes with normal request handling for
+  // the shared connection pool. HTTP /api/readyz returns pool stats in its
+  // response body — parse those instead.
+  let poolStats = { total: 0, idle: 0, waiting: 0 };
   let dbLatencyMs: number | null = null;
-  let activeSessions: number | null = null;
+  const activeSessions: number | null = null; // not queried — avoids direct pool use
 
-  const [dbProbe, sessProbe] = await Promise.all([
-    (async () => {
-      let client: import("pg").PoolClient | undefined;
-      try {
-        client = await pool.connect();
-        const t0 = Date.now();
-        await client.query("SELECT 1");
-        return Date.now() - t0;
-      } catch { return null; }
-      finally { client?.release(); }
-    })(),
-    (async () => {
-      let client: import("pg").PoolClient | undefined;
-      try {
-        client = await pool.connect();
-        const r = await client.query<{ cnt: string }>(
-          `SELECT COUNT(*) AS cnt FROM sessions WHERE expire > NOW()`,
-        );
-        return parseInt(r.rows[0]?.cnt ?? "0", 10);
-      } catch { return null; }
-      finally { client?.release(); }
-    })(),
-  ]);
-
-  dbLatencyMs = dbProbe;
-  activeSessions = sessProbe;
-
-  if (activeSessions !== null && activeSessions > _peakActiveSessions) {
-    _peakActiveSessions = activeSessions;
+  if (rzR.status === 200 || rzR.status === 503) {
+    try {
+      const rz = JSON.parse(rzR.body) as { pool?: { total: number; idle: number; waiting: number } };
+      if (rz.pool) poolStats = rz.pool;
+      // Use readyz HTTP round-trip as a proxy for DB responsiveness
+      dbLatencyMs = rzR.latencyMs;
+    } catch { /* body parse failed — poolStats stays zeroed */ }
   }
-  // Derive readyz from DB probe — if the monitor can query the DB, the server is ready.
-  // This avoids making a separate HTTP /api/readyz call which does its own DB check
-  // and can temporarily saturate the pool when fired concurrently with the monitor probes.
-  readyz = dbLatencyMs !== null ? 200 : 503;
 
-  if (dbLatencyMs === null) p0Flags.push("db_query_failed");
   if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
 

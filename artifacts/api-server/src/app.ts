@@ -90,17 +90,21 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
     });
     return;
   }
+  // ── SAFE PATTERN: pool.connect() with finally { client.release() } ─────────
+  // Promise.race(pool.query, timeout) abandons the pg PoolClient on timeout,
+  // leaking it until maxLifetimeSeconds recycles it. With POOL_MAX=8 this
+  // exhausted all connections within hours (P0 incident, July 28 2026).
+  // pool.connect() + finally guarantees the client is always returned.
+  let client: import("pg").PoolClient | undefined;
   try {
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("SELECT 1 timed out after 2000ms")), 2000),
-      ),
-    ]);
+    client = await pool.connect();
+    await client.query("SELECT 1");
     res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : "unknown error";
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
+  } finally {
+    client?.release();
   }
 });
 

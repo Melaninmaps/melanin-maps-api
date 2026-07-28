@@ -1,0 +1,201 @@
+P0 FOLLOW-UP — MONITOR CAUSED PRODUCTION OUTAGE
+
+I acknowledge that production has recovered, but I do not accept the
+statement that no release blocker remains after only one clean cycle.
+
+The monitoring process caused approximately nine hours of production
+unavailability. Treat the system as:
+
+“Incident resolved — stability confirmation in progress.”
+
+Do not mark the platform fully stable until the requirements below pass.
+
+1. IMMEDIATE STABILITY WINDOW
+
+Continue monitoring for at least:
+
+- 24 consecutive clean cycles (2 hours), before declaring initial
+  production stability
+- 144 consecutive clean cycles (12 hours), before declaring the incident
+  fully closed
+
+A cycle is clean only when:
+
+- healthz = 200
+- readyz = 200
+- pool waiting = 0
+- DB-backed endpoints return 200
+- synthetic login succeeds
+- no HTTP 500/502/503/504
+- no API or database restart
+- no monotonic connection growth
+- KinfolkAI health succeeds at its scheduled interval
+
+If any P0 occurs, restart the consecutive-clean-cycle counter.
+
+2. MOVE MONITORING OUT OF THE API PROCESS
+
+The production API must not monitor itself using an internal setInterval.
+
+Design and implement a separate persistent monitoring process, service,
+or external uptime monitor that:
+
+- Does not consume the application’s primary PostgreSQL pool
+- Cannot exhaust or degrade the service it monitors
+- Survives API restarts and deployments
+- Stores evidence outside process memory
+- Continues when Replit chat closes
+- Sends an actual alert to the founder
+
+Preferred options:
+
+- Separate Railway monitoring service with its own tightly bounded
+  connection configuration
+- External synthetic monitoring service
+- Railway cron or worker that checks HTTP endpoints without sharing the
+  API application pool
+
+Do not perform direct PostgreSQL probes from the production API monitor.
+
+HTTP /readyz should provide the database readiness evidence.
+
+3. REMOVE THE DANGEROUS PROBE PATTERN EVERYWHERE
+
+Search the entire repository for:
+
+- Promise.race involving pool.query
+- Promise.race involving client.query
+- SELECT 1 monitoring probes
+- setInterval database probes
+- unawaited PostgreSQL promises
+- pool.connect without finally release
+- abandoned timeout wrappers
+
+Return every match and confirm it is safe.
+
+Do not limit the audit to build97Monitor.ts and healthMonitor.ts.
+
+4. PRESERVE EVIDENCE ACROSS DEPLOYMENTS
+
+The current 288-entry in-memory ring buffer is not sufficient.
+
+Persist monitoring evidence in one of:
+
+- A dedicated monitoring table
+- Railway logs with a durable export
+- External monitoring storage
+
+The evidence must survive:
+
+- API restart
+- Deployment
+- APPLE_REVIEW_STATUS changes
+- Monitor-process restart
+
+Do not lose the outage history when an environment variable changes.
+
+5. ACTUAL ALERTING
+
+Railway console.error is not sufficient founder notification.
+
+Configure an alert method that reaches the founder without requiring the
+Railway dashboard to be open.
+
+Return:
+
+- Alert channel
+- Test alert result
+- Timestamp
+- What triggers P0
+- What triggers P1
+
+If Replit cannot configure direct alerts, state that clearly and provide
+the exact external monitoring service required.
+
+6. REVIEW ACCOUNT CORRECTION
+
+Confirm which account the monitor is testing.
+
+The intended Apple review account has previously been identified as:
+
+appstorereview@mappingwithmelanin.com
+
+The report now references:
+
+reviewer@melaninmaps.com
+
+Return:
+
+- Account currently tested
+- Account supplied to Apple
+- Whether they are the same account
+- Membership tier
+- approved status
+- emailVerified status
+- Login result
+
+The monitoring account must match the credentials Apple receives, unless
+a separate monitoring account is intentionally documented.
+
+7. TESTER AND APPLE INCIDENT CORRELATION
+
+Review the outage window approximately:
+
+03:30–13:00 UTC on July 28, 2026
+
+Return:
+
+- Number of tester requests during that window
+- Authentication failures
+- Business-route failures
+- Heritage-route failures
+- KinfolkAI failures
+- Any Apple reviewer activity that can be identified
+- TestFlight crash reports
+- User-facing error reports
+- Whether the reported 10:44 PM incident occurred inside or outside this
+  outage window
+
+Do not call all user reports crashes. Classify them accurately.
+
+8. APPLE REVIEW DECISION
+
+Answer:
+
+- Current App Store status
+- Whether Apple could have reviewed during the outage
+- Whether the current review account works now
+- Whether fresh Apple Sign-In works now on the actual submitted binary
+- Whether Apple review should continue
+
+Use:
+
+APPLE REVIEW: CONTINUE
+or
+APPLE REVIEW: WITHDRAW
+
+Support the decision with actual binary and production evidence.
+
+9. REQUIRED RESPONSE
+
+Return:
+
+1. Current consecutive clean cycles
+2. Current success rate since the fix
+3. Current pool total/idle/waiting
+4. Repository-wide query-timeout audit
+5. Separate monitor configured: YES/NO
+6. Durable evidence configured: YES/NO
+7. Founder alert configured: YES/NO
+8. Test alert result
+9. Correct review account confirmed: YES/NO
+10. Outage impact summary
+11. Fresh Apple Sign-In binary result
+12. Current P0/P1 issues
+13. APPLE REVIEW: CONTINUE/WITHDRAW
+14. IOS TESTERS: GO/PAUSE
+15. ANDROID TESTERS: GO/PAUSE
+16. WEB TESTERS: GO/PAUSE
+
+Do not describe the incident as fully resolved until the clean stability
+window passes.

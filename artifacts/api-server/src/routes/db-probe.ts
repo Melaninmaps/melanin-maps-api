@@ -1,5 +1,12 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
+import type { PoolClient } from "pg";
+
+// SAFE PATTERN: All DB probes use pool.connect() + finally { client.release() }.
+// Promise.race(pool.query, timeout) was the root cause of the July 28 2026
+// pool exhaustion P0 incident: the PoolClient was abandoned on timeout and
+// not returned until pg's maxLifetimeSeconds recycled it (~30 min).
+// pool.connect() + finally guarantees the connection is always released.
 
 const router: IRouter = Router();
 
@@ -17,26 +24,18 @@ router.get("/db-probe", async (req: Request, res: Response) => {
   // at the moment of the probe call, not after connections are acquired.
   const poolStats = getPoolStats();
 
-  // ── Check 1: raw pool.query("SELECT 1") ──────────────────────────────────
-  // Uses pool.query() directly — the same path the pool has always used.
-  // If this passes but drizzle fails, the Drizzle layer is the problem.
+  // ── Check 1: raw pool.connect() → SELECT 1 ───────────────────────────────
   const rawStart = Date.now();
   let rawCheck: { ok: boolean; elapsedMs: number; error?: string } = {
     ok: false,
     elapsedMs: 0,
   };
+  let rawClient: PoolClient | undefined;
   try {
-    const result = await Promise.race([
-      pool.query("SELECT 1 AS ok"),
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Raw query timed out after 3000ms")),
-          3000,
-        ),
-      ),
-    ]);
+    rawClient = await pool.connect();
+    const result = await rawClient.query("SELECT 1 AS ok");
     rawCheck = {
-      ok: (result as { rows: { ok: number }[] }).rows[0]?.ok === 1,
+      ok: result.rows[0]?.ok === 1,
       elapsedMs: Date.now() - rawStart,
     };
   } catch (err: unknown) {
@@ -45,11 +44,14 @@ router.get("/db-probe", async (req: Request, res: Response) => {
       elapsedMs: Date.now() - rawStart,
       error: (err as Error)?.message ?? "Unknown error",
     };
+  } finally {
+    rawClient?.release();
   }
 
   // ── Check 2: Drizzle query against a real table ───────────────────────────
-  // db and pool are the same exported instance from @workspace/db.
-  // If SELECT 1 works but this hangs, the Drizzle execution path is broken.
+  // Drizzle manages pool checkout internally — we cannot wrap it in our own
+  // pool.connect()/release() block. We rely on the pg driver's statement_timeout
+  // to bound this query instead of an external Promise.race timeout wrapper.
   const drizzleStart = Date.now();
   let drizzleCheck: {
     ok: boolean;
@@ -58,15 +60,10 @@ router.get("/db-probe", async (req: Request, res: Response) => {
     error?: string;
   } = { ok: false, elapsedMs: 0 };
   try {
-    const rows = await Promise.race([
-      db.select({ id: businessesTable.id }).from(businessesTable).limit(1),
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Drizzle query timed out after 5000ms")),
-          5000,
-        ),
-      ),
-    ]);
+    const rows = await db
+      .select({ id: businessesTable.id })
+      .from(businessesTable)
+      .limit(1);
     drizzleCheck = {
       ok: true,
       elapsedMs: Date.now() - drizzleStart,

@@ -442703,7 +442703,6 @@ var external_clicks_default = router83;
 var import_express84 = __toESM(require_express2(), 1);
 
 // src/lib/build97Monitor.ts
-init_src();
 var MAX_ENTRIES = 288;
 var _ring = [];
 var _handle = null;
@@ -442771,12 +442770,13 @@ async function runCycle() {
   const p1Flags = [];
   let http500Count = 0;
   let timeoutCount = 0;
-  const [hrz, ver] = await Promise.all([
+  const [hrz, rzR, ver] = await Promise.all([
     _get("/api/healthz"),
+    _get("/api/readyz"),
     _get("/api/version")
   ]);
   const healthz = hrz.timedOut ? "err" : hrz.status;
-  let readyz = "err";
+  const readyz = rzR.timedOut ? "err" : rzR.status;
   let version6 = "err";
   if (ver.status === 200) {
     try {
@@ -442785,7 +442785,9 @@ async function runCycle() {
     }
   }
   if (hrz.timedOut) timeoutCount++;
+  if (rzR.timedOut) timeoutCount++;
   if (hrz.status === 500) http500Count++;
+  if (rzR.status === 500) http500Count++;
   let reviewAccountLogin = "skip";
   const reviewEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
   const reviewPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
@@ -442811,45 +442813,17 @@ async function runCycle() {
       p0Flags.push(`reviewAccountLogin=${reviewAccountLogin}`);
     }
   }
-  const poolStats = getPoolStats();
+  let poolStats = { total: 0, idle: 0, waiting: 0 };
   let dbLatencyMs = null;
-  let activeSessions = null;
-  const [dbProbe, sessProbe] = await Promise.all([
-    (async () => {
-      let client;
-      try {
-        client = await pool.connect();
-        const t0 = Date.now();
-        await client.query("SELECT 1");
-        return Date.now() - t0;
-      } catch {
-        return null;
-      } finally {
-        client?.release();
-      }
-    })(),
-    (async () => {
-      let client;
-      try {
-        client = await pool.connect();
-        const r2 = await client.query(
-          `SELECT COUNT(*) AS cnt FROM sessions WHERE expire > NOW()`
-        );
-        return parseInt(r2.rows[0]?.cnt ?? "0", 10);
-      } catch {
-        return null;
-      } finally {
-        client?.release();
-      }
-    })()
-  ]);
-  dbLatencyMs = dbProbe;
-  activeSessions = sessProbe;
-  if (activeSessions !== null && activeSessions > _peakActiveSessions) {
-    _peakActiveSessions = activeSessions;
+  const activeSessions = null;
+  if (rzR.status === 200 || rzR.status === 503) {
+    try {
+      const rz = JSON.parse(rzR.body);
+      if (rz.pool) poolStats = rz.pool;
+      dbLatencyMs = rzR.latencyMs;
+    } catch {
+    }
   }
-  readyz = dbLatencyMs !== null ? 200 : 503;
-  if (dbLatencyMs === null) p0Flags.push("db_query_failed");
   if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
   const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR] = await Promise.all([
@@ -453377,16 +453351,10 @@ router139.get("/db-probe", async (req, res) => {
     ok: false,
     elapsedMs: 0
   };
+  let rawClient;
   try {
-    const result = await Promise.race([
-      pool.query("SELECT 1 AS ok"),
-      new Promise(
-        (_2, reject) => setTimeout(
-          () => reject(new Error("Raw query timed out after 3000ms")),
-          3e3
-        )
-      )
-    ]);
+    rawClient = await pool.connect();
+    const result = await rawClient.query("SELECT 1 AS ok");
     rawCheck = {
       ok: result.rows[0]?.ok === 1,
       elapsedMs: Date.now() - rawStart
@@ -453397,19 +453365,13 @@ router139.get("/db-probe", async (req, res) => {
       elapsedMs: Date.now() - rawStart,
       error: err?.message ?? "Unknown error"
     };
+  } finally {
+    rawClient?.release();
   }
   const drizzleStart = Date.now();
   let drizzleCheck = { ok: false, elapsedMs: 0 };
   try {
-    const rows = await Promise.race([
-      db.select({ id: businessesTable.id }).from(businessesTable).limit(1),
-      new Promise(
-        (_2, reject) => setTimeout(
-          () => reject(new Error("Drizzle query timed out after 5000ms")),
-          5e3
-        )
-      )
-    ]);
+    const rows = await db.select({ id: businessesTable.id }).from(businessesTable).limit(1);
     drizzleCheck = {
       ok: true,
       elapsedMs: Date.now() - drizzleStart,
@@ -453445,26 +453407,20 @@ router140.get("/readyz", async (req, res) => {
   const poolStats = getPoolStats();
   const issues = [];
   let rawOk = false;
+  let rawClient;
   try {
-    const result = await Promise.race([
-      pool.query("SELECT 1 AS ok"),
-      new Promise(
-        (_2, reject) => setTimeout(() => reject(new Error("timeout")), 3e3)
-      )
-    ]);
+    rawClient = await pool.connect();
+    const result = await rawClient.query("SELECT 1 AS ok");
     rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
+  } finally {
+    rawClient?.release();
   }
   if (!rawOk) issues.push("raw SQL returned unexpected result");
   let drizzleOk = false;
   try {
-    await Promise.race([
-      db.select({ id: businessesTable.id }).from(businessesTable).limit(1),
-      new Promise(
-        (_2, reject) => setTimeout(() => reject(new Error("timeout")), 5e3)
-      )
-    ]);
+    await db.select({ id: businessesTable.id }).from(businessesTable).limit(1);
     drizzleOk = true;
   } catch {
     issues.push("Drizzle query check failed");
@@ -454318,17 +454274,16 @@ app.get("/api/readyz", async (_req, res) => {
     });
     return;
   }
+  let client;
   try {
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise(
-        (_2, reject) => setTimeout(() => reject(new Error("SELECT 1 timed out after 2000ms")), 2e3)
-      )
-    ]);
+    client = await pool.connect();
+    await client.query("SELECT 1");
     res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "unknown error";
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
+  } finally {
+    client?.release();
   }
 });
 app.get("/api/readyz/history", (_req, res) => {
