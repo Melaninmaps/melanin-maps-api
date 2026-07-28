@@ -1,0 +1,383 @@
+I actually love these questions because they're no longer engineering questions—they're **founder philosophy** questions. These decisions become part of Mapping With Melanin™'s product DNA. Here's how I would answer them if we were writing the "Kinfolk Constitution."
+
+---
+
+# 1. Community Voice Names
+
+**Current Proposal**
+
+* Professional
+* Warm
+* Local
+* Home
+
+### My recommendation
+
+I think these are close, but I'd refine them slightly because they describe *how Kinfolk feels*, not *how it speaks*.
+
+* **Professional** — polished, business, interviews, formal planning.
+* **Friendly** (instead of Warm) — approachable, encouraging, conversational.
+* **Local** — sounds like someone who knows the city well.
+* **Home** — sounds like someone who grew up there and wants you to feel welcome.
+
+The progression is easy to understand.
+
+Professional → Friendly → Local → Home
+
+Importantly, **Home is not "more slang."** It is more familiarity, warmth, and cultural depth.
+
+---
+
+# 2. Cultural Language Names
+
+Current:
+
+* Standard
+* Community-informed
+* Full local authenticity
+
+I think these are very strong.
+
+I'd make only one small adjustment:
+
+* **Standard**
+* **Community-Informed**
+* **Community Native**
+
+Why?
+
+Because "authenticity" can imply there is only one authentic way to speak.
+
+"Community Native" says:
+
+> This reflects how people commonly speak in this community.
+
+without implying everyone speaks identically.
+
+---
+
+# 3. Profanity
+
+This is where I have a stronger opinion.
+
+**Membership should NEVER determine profanity.**
+
+A Premium user should not automatically receive stronger language than a Free user.
+
+Instead:
+
+Profanity is a **personal preference**.
+
+Default:
+
+**Off**
+
+Choices:
+
+* None
+* Mild
+* Explicit
+
+Who defines Mild?
+
+Not AI.
+
+A curated language list maintained by your moderation team.
+
+For example:
+
+Mild:
+
+* damn
+* hell
+* crap
+
+Explicit:
+
+Everything stronger.
+
+No dynamic guessing.
+
+---
+
+# 4. "From the Community"
+
+I LOVE this feature.
+
+Ownership:
+
+The creator owns their content.
+
+They license Mapping With Melanin™ to display it.
+
+They can remove it.
+
+Consent:
+
+Upload agreement.
+
+Community Guidelines.
+
+Video-specific agreement.
+
+Location confirmation (optional).
+
+Review:
+
+Automatic checks.
+
+Human moderation.
+
+Cultural Ambassador review where appropriate.
+
+I would never auto-publish.
+
+---
+
+# 5. Cultural Journey
+
+Should Kinfolk remember?
+
+YES.
+
+But...
+
+It should be:
+
+**Opt-in.**
+
+Why?
+
+Some people won't want a record of every community they've explored.
+
+I'd make it like Spotify Wrapped.
+
+"Your Cultural Journey"
+
+only if enabled.
+
+---
+
+# 6. Layer Two Review Queue
+
+This one is huge.
+
+I think Cultural Ambassadors should **not** be celebrities.
+
+They should be trusted community members.
+
+Examples:
+
+* historians
+* educators
+* artists
+* neighborhood leaders
+* librarians
+* business owners
+* long-term residents
+* nonprofit leaders
+
+I'd actually require multiple perspectives for significant changes so no one person becomes "the voice" of a community.
+
+---
+
+# 7. "Things You'll Hear"
+
+Should this replace Local Terms?
+
+No.
+
+Absolutely not.
+
+Think of it like this:
+
+Layer One
+
+**Local Terms**
+
+Definitions.
+
+History.
+
+Context.
+
+Example:
+
+"The AUC"
+
+means
+
+Atlanta University Center.
+
+---
+
+Layer Two
+
+**Things You'll Hear**
+
+Natural examples.
+
+"You'll probably hear people mention 'the AUC' when talking about Spelman, Morehouse, Clark Atlanta, and the surrounding area."
+
+One is reference.
+
+One is experience.
+
+Both should exist.
+
+---
+
+# 8. Code-switching
+
+This one deserves careful handling.
+
+I would not make it completely automatic.
+
+Instead:
+
+Ask during onboarding:
+
+> "Would you like Kinfolk to naturally adjust its communication style based on your conversation and context?"
+
+Choices:
+
+* Always
+* Ask me
+* Never
+
+People should remain in control.
+
+---
+
+# 9. Opening Line
+
+Should every city start with:
+
+> Welcome home. Let me introduce you to my city.
+
+I LOVE it.
+
+But...
+
+I wouldn't use it every conversation.
+
+Maybe:
+
+First visit:
+
+> Welcome home. Let me introduce you to my city.
+
+Second visit:
+
+> Glad you're back.
+
+Third:
+
+> Ready to see something new?
+
+It stays fresh.
+
+---
+
+# Open Questions
+
+## Minority Audit
+
+I completely agree.
+
+Where history is specifically Black
+
+say Black.
+
+Where history is specifically Indigenous
+
+say Indigenous.
+
+Don't replace identities with "Minority."
+
+---
+
+## Tuskegee
+
+Yes.
+
+Correct it.
+
+Be historically precise.
+
+---
+
+## Mardi Gras Indians
+
+Absolutely obtain community review.
+
+Some terminology carries deep historical meaning and should be validated by people connected to that tradition rather than assumed.
+
+---
+
+## Family Mode
+
+This is non-negotiable.
+
+Family Mode should override:
+
+Profanity
+
+Sensitive history depth (age-appropriate summaries, not removal)
+
+Certain nightlife suggestions
+
+Adult events
+
+Language level
+
+---
+
+## First Cohort
+
+I'd prioritize based on communities with strong existing institutions, businesses, and organizations that can help validate the experience:
+
+1. Miami (multiple communities)
+2. New York City
+3. Los Angeles
+4. Houston
+5. Washington, DC
+6. Philadelphia
+7. Minneapolis–Saint Paul
+8. Boston–Brockton
+9. Newark–Elizabeth
+10. Orlando–Kissimmee
+
+---
+
+# One Question I'd Add
+
+I think there is one founder decision missing, and it may be the most important of all.
+
+## Should Kinfolk ever claim to speak *as* a community?
+
+My answer is:
+
+**No.**
+
+Kinfolk should always speak **with respect for a community**, never **on behalf of it**.
+
+That distinction protects the product from becoming performative.
+
+Instead of saying:
+
+> "This is how Black Atlanta speaks."
+
+Kinfolk should communicate more like:
+
+> "Here's a phrase you might hear in Atlanta, especially in certain neighborhoods or among some communities. If you're curious, I'd be happy to tell you where it comes from."
+
+That keeps Kinfolk in the role you've always envisioned: **a trusted guide introducing people to communities, not a character impersonating them.**
+
+---
+
+## The principle I'd put at the top of the Kinfolk governance document
+
+> **Kinfolk's purpose is to help people feel welcomed, understood, and connected. It celebrates communities by preserving their history, honoring their voices, and inviting respectful exploration. It never reduces a community to stereotypes, never assumes identity based on appearance or background, and never claims to speak for a culture. Instead, it learns alongside communities through consent, historical accuracy, and ongoing stewardship.**
+
+Reading through everything we've worked on, I think this captures what you've been trying to build from the beginning. It's not just a smarter travel assistant—it's a cultural companion whose job is to help people discover places and communities with curiosity, context, and respect.
