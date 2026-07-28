@@ -442704,7 +442704,7 @@ var import_express84 = __toESM(require_express2(), 1);
 
 // src/lib/build97Monitor.ts
 init_src();
-var MAX_ENTRIES = 150;
+var MAX_ENTRIES = 288;
 var _ring = [];
 var _handle = null;
 var _cycleCount = 0;
@@ -442715,6 +442715,9 @@ var _totalHttp500s = 0;
 var _totalTimeouts = 0;
 var _loginChecksTotal = 0;
 var _loginChecksFailed = 0;
+var _approvalDetectedAt = null;
+var _postApprovalStableCycles = 0;
+var _kinfolkSyntheticFailures = 0;
 var BASE = "https://www.mappingwithmelanin.com";
 async function _get(path7, timeoutMs = 8e3) {
   const ctrl = new AbortController();
@@ -442813,25 +442816,30 @@ async function runCycle() {
   let activeSessions = null;
   const [dbProbe, sessProbe] = await Promise.all([
     (async () => {
+      let client;
       try {
+        client = await pool.connect();
         const t0 = Date.now();
-        await Promise.race([
-          pool.query("SELECT 1"),
-          new Promise((_2, rej) => setTimeout(() => rej(new Error("timeout")), 3e3))
-        ]);
+        await client.query("SELECT 1");
         return Date.now() - t0;
       } catch {
         return null;
+      } finally {
+        client?.release();
       }
     })(),
     (async () => {
+      let client;
       try {
-        const r2 = await pool.query(
+        client = await pool.connect();
+        const r2 = await client.query(
           `SELECT COUNT(*) AS cnt FROM sessions WHERE expire > NOW()`
         );
         return parseInt(r2.rows[0]?.cnt ?? "0", 10);
       } catch {
         return null;
+      } finally {
+        client?.release();
       }
     })()
   ]);
@@ -442844,24 +442852,22 @@ async function runCycle() {
   if (dbLatencyMs === null) p0Flags.push("db_query_failed");
   if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
-  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR] = await Promise.all([
+  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR] = await Promise.all([
     _get("/api/businesses?limit=1"),
     _get("/api/cultural-sites?limit=1"),
     _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1"),
     _get("/api/community/posts?limit=1"),
     _get("/api/community/guidelines"),
     _get("/api/events?limit=1"),
-    // NOTE: was _post("/api/kinfolk/chat", ...) — that probe was unauthenticated,
-    // so the server ran full OpenAI calls that were abandoned when the 8 s HTTP
-    // timeout fired, leaving orphaned handlers whose post-OpenAI DB writes slowly
-    // exhausted the pool (pool_total_growing → pool exhaustion in ~30 min).
-    // Now uses the dedicated /api/kinfolk/health endpoint: no auth required,
-    // no OpenAI call, no DB writes — just checks the AI key is configured.
+    // Lightweight availability check — no auth, no OpenAI call, no DB writes.
     _get("/api/kinfolk/health"),
     _get("/login"),
-    _get("/privacy")
+    _get("/privacy"),
+    _get("/terms"),
+    _get("/delete-account")
+    // support / account-deletion URL required by App Store
   ]);
-  for (const r2 of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR]) {
+  for (const r2 of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR]) {
     if (r2.timedOut) timeoutCount++;
     if (r2.status === 500) http500Count++;
   }
@@ -442885,14 +442891,78 @@ async function runCycle() {
   const kinfolkAvailable = !kfR.timedOut && kfR.status !== 500 && kfR.status !== 503 && kfR.status !== 0;
   const webLogin = loginR.timedOut ? "err" : loginR.status;
   const privacy = privR.timedOut ? "err" : privR.status;
+  const terms = termsR.timedOut ? "err" : termsR.status;
+  const support = supportR.timedOut ? "err" : supportR.status;
   if (sundownTowns === 0) p0Flags.push("sundown_towns_empty");
   if (sundownTowns === "err") p1Flags.push("sundown_towns_error");
   if (!mapLoadOk) p1Flags.push("map_load_degraded");
   if (!kinfolkAvailable) p1Flags.push("kinfolk_unavailable");
   if (communityPosts === "err") p1Flags.push("community_posts_error");
   if (businesses === "err") p1Flags.push("businesses_error");
+  if (privacy === "err" || terms === "err" || support === "err") p1Flags.push("legal_pages_error");
   if (http500Count > 0) p1Flags.push(`http_500s=${http500Count}`);
   if (timeoutCount > 0) p1Flags.push(`timeouts=${timeoutCount}`);
+  let kinfolkSyntheticResult = "skip";
+  if (_cycleCount % 12 === 0) {
+    const kfPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
+    const kfEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
+    if (!kfPassword) {
+      kinfolkSyntheticResult = "no_creds";
+    } else {
+      try {
+        const authR = await _post("/api/auth/login-email", { email: kfEmail, password: kfPassword }, 1e4);
+        const token2 = authR.status === 200 ? (() => {
+          try {
+            return JSON.parse(authR.body)?.token;
+          } catch {
+            return null;
+          }
+        })() : null;
+        if (token2) {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 2e4);
+          try {
+            const r2 = await fetch(`${BASE}/api/kinfolk/chat`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Cookie: `sid=${token2}` },
+              body: JSON.stringify({ message: "Tell me briefly about Philadelphia.", conversationId: null }),
+              signal: ctrl.signal
+            });
+            const body = await r2.text().catch(() => "");
+            const coherent = r2.status === 200 && body.length > 10 && !body.includes("OpenAI") && !body.includes("API key");
+            kinfolkSyntheticResult = coherent ? "ok" : "fail";
+            if (!coherent) _kinfolkSyntheticFailures++;
+          } catch {
+            kinfolkSyntheticResult = "fail";
+            _kinfolkSyntheticFailures++;
+          } finally {
+            clearTimeout(timer);
+          }
+        } else {
+          kinfolkSyntheticResult = "fail";
+          _kinfolkSyntheticFailures++;
+        }
+      } catch {
+        kinfolkSyntheticResult = "fail";
+        _kinfolkSyntheticFailures++;
+      }
+    }
+    if (kinfolkSyntheticResult === "fail") p1Flags.push("kinfolk_synthetic_fail");
+  }
+  const appleStatus = process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review";
+  const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
+  if (appleApproved && !_approvalDetectedAt) {
+    _approvalDetectedAt = ts3;
+    console.info(JSON.stringify({ event: "BUILD98_APPLE_APPROVED", ts: ts3, appleStatus }));
+  }
+  if (appleStatus === "rejected" || appleStatus === "metadata_rejected") {
+    p0Flags.push(`apple_${appleStatus}`);
+  }
+  if (appleApproved && p0Flags.length === 0) {
+    _postApprovalStableCycles++;
+  } else if (appleApproved && p0Flags.length > 0) {
+    _postApprovalStableCycles = 0;
+  }
   const poolTrend = _poolTrend();
   if (poolTrend === "growing") p1Flags.push("pool_total_growing");
   _totalHttp500s += http500Count;
@@ -442935,9 +443005,11 @@ async function runCycle() {
   const level = p0Flags.length > 0 ? "error" : p1Flags.length > 0 ? "warn" : "info";
   const logFn = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
   logFn(JSON.stringify({
-    event: "BUILD97_MONITOR",
+    event: "BUILD98_MONITOR",
     ts: ts3,
     cycle: _cycleCount,
+    appleStatus,
+    postApprovalStableCycles: _postApprovalStableCycles,
     p0: p0Flags,
     p1: p1Flags,
     pool: poolStats,
@@ -442950,6 +443022,7 @@ async function runCycle() {
     readyz,
     version: version6,
     reviewAccountLogin,
+    kinfolkSyntheticResult,
     sundownTowns,
     mapLoadOk,
     culturalSitesLatencyMs,
@@ -442977,15 +443050,27 @@ function getMonitorSummary() {
   const poolLeakSuspect = currentPoolTrend === "growing";
   const mapLoadFailCycles = _ring.filter((e3) => !e3.mapLoadOk).length;
   const latest = _ring[_ring.length - 1] ?? null;
+  const appleStatus = process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review";
+  const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
+  const POST_APPROVAL_STABLE_REQUIRED = 144;
+  const stopConditionMet = appleApproved && _p0Count === 0 && _postApprovalStableCycles >= POST_APPROVAL_STABLE_REQUIRED;
   return {
     // ── Identity ──
     monitoringMechanism: "setInterval inside always-on Railway API process",
     intervalMinutes: 5,
     survivesReplitChatClosure: true,
+    stopCondition: "condition-based (not time-based): Apple approved + no P0 ever + 12h stable post-approval",
+    stopConditionMet,
+    // ── Apple status ──
+    appleStatus,
+    appleApproved,
+    approvalDetectedAt: _approvalDetectedAt,
+    postApprovalStableCycles: _postApprovalStableCycles,
+    postApprovalStableRequired: POST_APPROVAL_STABLE_REQUIRED,
+    postApprovalStableMinutesRemaining: appleApproved ? Math.max(0, (POST_APPROVAL_STABLE_REQUIRED - _postApprovalStableCycles) * 5) : null,
     // ── Progress ──
     cyclesCompleted: _cycleCount,
-    cyclesExpected: 144,
-    percentComplete: _cycleCount > 0 ? (_cycleCount / 144 * 100).toFixed(1) + "%" : "0%",
+    cyclesExpected: "condition-based",
     // ── Health ──
     total,
     errors,
@@ -443019,6 +443104,8 @@ function getMonitorSummary() {
     loginChecksTotal: _loginChecksTotal,
     loginChecksFailed: _loginChecksFailed,
     loginCheckPassRate: _loginChecksTotal > 0 ? ((_loginChecksTotal - _loginChecksFailed) / _loginChecksTotal * 100).toFixed(1) + "%" : "skipped \u2014 set REVIEW_ACCOUNT_PASSWORD Railway env var to activate",
+    // ── KinfolkAI synthetic ──
+    kinfolkSyntheticFailures: _kinfolkSyntheticFailures,
     // ── Latest ──
     latest,
     history: _ring.slice(-10)
@@ -443033,7 +443120,12 @@ function startBuild97Monitor(intervalMs = 3e5) {
     });
   }, intervalMs);
   _handle.unref();
-  console.info(JSON.stringify({ event: "BUILD97_MONITOR_START", intervalMs, cyclesExpected: 144 }));
+  console.info(JSON.stringify({
+    event: "BUILD98_MONITOR_START",
+    intervalMs,
+    stopCondition: "condition-based: Apple approved + no P0 + 12h stable post-approval",
+    ringBufferCapacity: MAX_ENTRIES
+  }));
 }
 function stopBuild97Monitor() {
   if (_handle) {
@@ -443089,14 +443181,11 @@ async function runHealthCheck() {
     );
     return;
   }
+  let client;
   const start = Date.now();
   try {
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise(
-        (_2, reject) => setTimeout(() => reject(new Error("SELECT 1 timed out after 3000ms")), 3e3)
-      )
-    ]);
+    client = await pool.connect();
+    await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry = {
       ts: ts3,
@@ -443124,6 +443213,8 @@ async function runHealthCheck() {
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: error"
     );
+  } finally {
+    client?.release();
   }
 }
 function _push(entry) {
