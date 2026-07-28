@@ -1,0 +1,170 @@
+FOUNDER CLARIFICATION — KEEP SEEDED BUSINESSES AND EVENTS FOR TESTING
+
+Do not delete all seeded businesses or events.
+
+The seeded records are necessary so testers can evaluate:
+
+- ratings
+- comments and reviews
+- saves
+- safety feedback
+- vibes
+- badges
+- score changes
+- discovery
+- search
+- filters
+- recommendations
+- RSVP and event interaction
+
+The requirement is to make seeded content unmistakably different from
+real businesses and real events.
+
+Before making changes, audit the current implementation and propose the
+safest test-content model.
+
+REQUIRED LISTING TYPES
+
+1. REAL BUSINESS
+
+- Real public business
+- Real address and contact information
+- Real operating status
+- Ownership designation only when confirmed
+- No seeded reviews or fabricated metrics
+
+2. BETA TEST BUSINESS
+
+Every seeded fictional listing must display a prominent label on:
+
+- Discovery card
+- Map preview
+- Business detail
+- Search result
+- Saved listing
+- KinfolkAI recommendation
+- Review screen
+
+Approved label concept:
+
+“Beta Test Listing — Created to test ratings, reviews, recommendations,
+and community feedback. This is not a real business.”
+
+Use a distinct visual treatment so it cannot be mistaken for a verified
+real business.
+
+BETA TEST BUSINESSES SHOULD ALLOW
+
+- Ratings
+- Written comments/reviews
+- Would Return
+- Community Fave testing
+- Saves
+- Safety survey
+- Vibe selection
+- Search and category filters
+- Score calculation
+- Report-a-problem
+- Recommendation testing
+- Business-owner response simulation if already supported
+
+BETA TEST BUSINESSES MUST NOT
+
+- Provide real navigation or directions
+- Display invented real-world addresses
+- Display real phone numbers
+- Accept payments, reservations, or orders
+- Claim verified ownership
+- Claim real operating hours
+- Display fabricated customer reviews as genuine
+- Influence real-business ranking
+- Count toward public launch metrics
+- Be recommended without a Beta Test disclosure
+
+TEST DATA RULES
+
+Prefer starting test businesses with:
+
+- 0 reviews
+- 0 ratings
+- 0 saves
+- No earned badges
+
+Allow testers’ actual beta interactions to generate the test scores.
+
+If starter metrics are necessary for UI testing, label them clearly as
+“Sample Data” and keep them separate from tester-generated metrics.
+
+DIVERSITY OF TEST BUSINESSES
+
+Create or retain a culturally representative beta set, including examples
+such as:
+
+- Black-owned business
+- Dominican restaurant
+- Ethiopian restaurant
+- Brazilian bakery or restaurant
+- Hispanic or Latino attorney
+- Afro-Caribbean business
+- LGBTQIA+-owned or affirming business
+- Asian-owned business
+- Indigenous-owned artisan business
+- Minority-owned professional service
+
+These may be fictional test personas, but must never appear to be real
+businesses.
+
+EVENTS
+
+Retain seeded events for testing:
+
+- RSVP
+- Save
+- Invite
+- Comments
+- Event filters
+- Sharing
+- Attendance display logic
+
+Every fictional event must show:
+
+“Beta Test Event — Demonstration Only. This is not a real event.”
+
+Do not use misleading real venues, registration links, prices, or
+attendance claims.
+
+Include a culturally varied beta event mix:
+
+- African American cultural event
+- Dominican or Caribbean event
+- Brazilian festival
+- Ethiopian cultural event
+- Hispanic or Latino professional event
+- LGBTQIA+ community event
+- Asian diaspora event
+- Indigenous arts or heritage event
+- Multicultural family event
+
+AUDIT BEFORE IMPLEMENTATION
+
+Return:
+
+1. Current real businesses
+2. Current seeded businesses
+3. Current real events
+4. Current seeded events
+5. Every screen where seeded content appears
+6. Current seeded ratings, reviews, badges, and scores
+7. Whether test and production metrics are separated
+8. Proposed disclosure design
+9. Proposed test-data reset method
+10. Whether comments and ratings work now
+11. How score changes are calculated
+12. Whether seeded interactions can be deleted/reset
+13. Whether a Railway data update is required
+14. Whether iOS and Android rebuilds are required
+15. Recommended acceptance tests
+
+Do not remove seeded content before founder approval.
+Do not convert fictional businesses into apparently real businesses.
+Do not add fabricated ownership verification.
