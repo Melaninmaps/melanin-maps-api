@@ -1,0 +1,345 @@
+MAPPING WITH MELANIN™ — BUILD 98 / ANDROID VC73
+IMPLEMENTATION EVIDENCE PACKAGE FOR MANUS RELEASE APPROVAL
+
+PRIORITY: P0
+FOUNDER REQUIREMENT: HISTORICAL SUNDOWN TOWNS MUST BE VISIBLE AND USABLE
+ON THE ACTUAL MAP TAB IN THE COMPLETED MOBILE BINARIES
+
+This report is required after implementation and before either new binary
+is submitted or distributed.
+
+Do not provide a general summary.
+Do not state that a requirement is complete because the API or database
+supports it.
+Completion means the actual release binary passes the founder-defined
+acceptance test.
+
+══════════════════════════════════════════════════════════════
+1. FOUNDER ACCEPTANCE TEST — CONTROLLING REQUIREMENT
+══════════════════════════════════════════════════════════════
+
+The release is not complete unless a tester can perform this exact flow
+on the actual binary:
+
+1. Open the app.
+2. Log in.
+3. Open the Map tab.
+4. Enable or select Heritage.
+5. Select “Historical Sundown Town.”
+6. See the 15 production records represented as map pins or synchronized
+   map results.
+7. Tap Cicero, Vidor, and Forsyth County.
+8. View:
+   - Name
+   - City/state
+   - Historical description
+   - HISTORICAL RECORD ONLY disclaimer
+   - Source attribution
+   - External source link where supported
+9. Switch between Businesses, Heritage, and Historical Sundown Towns.
+10. Pan and zoom without crash, freeze, or blank map.
+11. Browse without location permission.
+12. Complete the same flow on phone and tablet.
+
+No backend-only, database-only, API-only, or source-code-only result
+satisfies this requirement.
+
+══════════════════════════════════════════════════════════════
+2. CONFIRMED BUILD 97 FAILURE
+══════════════════════════════════════════════════════════════
+
+Document the exact reasons Build 97 / Android VC72 did not satisfy the
+requirement:
+
+- Historical Sundown Town missing from HERITAGE_CATEGORIES
+- HERITAGE_SITES_ENABLED = false
+- Heritage map markers disabled
+- No one-tap Historical Sundown Town filter on the Map tab
+- Records only reachable through All Sites/search in Heritage Explorer
+
+Include:
+
+- File paths
+- Line numbers
+- Commit where each condition existed
+- Who or what disabled Heritage markers
+- Original crash report or evidence
+- Why previous audits incorrectly marked the feature complete
+- Which prior statements were inaccurate
+
+Do not soften this section.
+
+══════════════════════════════════════════════════════════════
+3. ROOT CAUSE OF HERITAGE MARKER CRASH
+══════════════════════════════════════════════════════════════
+
+Before re-enabling the flag, identify the actual crash root cause.
+
+Provide:
+
+- Device/model
+- OS
+- Build
+- Reproduction steps
+- Error or stack trace
+- Exact component/function
+- Problematic record or marker if applicable
+- Whether caused by:
+  - invalid coordinates
+  - duplicate keys
+  - unsupported marker icons
+  - render loop
+  - excessive marker rendering
+  - React Native Maps provider issue
+  - malformed API response
+  - state race
+  - memory pressure
+  - tablet layout
+
+If no crash evidence exists, say so. Do not claim the root cause is known
+without evidence.
+
+══════════════════════════════════════════════════════════════
+4. EXACT IMPLEMENTATION
+══════════════════════════════════════════════════════════════
+
+For every changed file provide:
+
+- File path
+- Before behavior
+- New behavior
+- Exact code section
+- Commit hash
+- Test covering the change
+
+At minimum include:
+
+A. cultural-heritage.tsx
+
+- Add exact category:
+  Historical Sundown Town
+- Dedicated chip
+- API count badge
+- Exact filter value
+- Appropriate icon/style
+- Safe fallback preserved
+
+B. FullMapView.tsx
+
+- Stabilize Heritage marker rendering
+- Re-enable Heritage layer
+- Historical Sundown Town filter
+- Safe marker rendering
+- Invalid coordinate filtering
+- Stable unique keys
+- Bounded rendering
+- Loading/error state
+- No single-record crash
+- Marker/list synchronization
+
+C. Any supporting types, route mappings, or style files
+
+No unrelated feature work.
+
+══════════════════════════════════════════════════════════════
+5. SOURCE-LEVEL TEST RESULTS
+══════════════════════════════════════════════════════════════
+
+Provide actual automated or repeatable results for:
+
+- Exact category matching
+- 15 Sundown Town records returned
+- Invalid coordinates skipped safely
+- Duplicate IDs handled
+- Unknown category uses fallback
+- Empty API result
+- API timeout
+- Rapid layer switching
+- Detail modal repeated open/close
+- Location permission denied
+- All 15 records retained
+- Source links present
+- No danger score text
+
+Include command, output, pass/fail, and timestamp.
+
+══════════════════════════════════════════════════════════════
+6. BUILD IDENTIFIERS
+══════════════════════════════════════════════════════════════
+
+Create only after source tests pass:
+
+- iOS Build 98
+- Android versionCode 73
+
+Return:
+
+- EAS build ID
+- Source commit
+- Build profile
+- Build timestamp
+- Artifact URL/identifier
+- Effective app configuration
+- Confirmation that no later mobile change exists outside the binaries
+
+══════════════════════════════════════════════════════════════
+7. ACTUAL BINARY DEVICE TESTING
+══════════════════════════════════════════════════════════════
+
+Test the actual completed binaries on:
+
+- iPhone
+- iPad Air 11-inch class simulator or device
+- Android phone
+- Android tablet
+
+For every device provide:
+
+- Device/model
+- OS
+- Build/versionCode
+- Tester
+- Timestamp
+- Screen recording or screenshots where possible
+
+Run the controlling Founder Acceptance Test in Section 1.
+
+Also verify:
+
+- Login
+- Session restoration
+- Business pins
+- Heritage toggle
+- Historical Sundown Town chip
+- 15 records
+- Cicero/Vidor/Forsyth details
+- Source links
+- Disclaimer
+- No danger score
+- Layer switching
+- Pan/zoom for 60 seconds
+- Denied location
+- Keyboard/scrolling
+- No clipping
+- No crash
+
+Do not mark a platform PASS without actual binary evidence.
+
+Simulator evidence must be labeled simulator.
+Physical-device evidence must be labeled physical.
+
+══════════════════════════════════════════════════════════════
+8. REGRESSION REVIEW
+══════════════════════════════════════════════════════════════
+
+Confirm the targeted change did not break:
+
+- Apple Sign-In
+- Email login
+- Businesses
+- Community Feed
+- KinfolkAI
+- Heritage Explorer
+- Events
+- Profile
+- Saves
+- Membership
+- Account deletion
+- iPad portrait full-screen behavior
+- Android tablet behavior
+- API/database stability
+
+List every regression test and result.
+
+══════════════════════════════════════════════════════════════
+9. REQUIREMENT TRACEABILITY MATRIX
+══════════════════════════════════════════════════════════════
+
+Create a table with one row for every founder requirement:
+
+Requirement
+Exact implementation
+Source evidence
+API evidence
+Binary evidence
+Device evidence
+Status
+
+Use only:
+
+- PASS
+- FAIL
+- NOT TESTED
+- BLOCKED
+
+The following row must exist:
+
+“User opens Map → selects Historical Sundown Town → sees and taps 15
+historical pins.”
+
+That row cannot be PASS without actual binary/device evidence.
+
+══════════════════════════════════════════════════════════════
+10. PACKAGE FOR MANUS
+══════════════════════════════════════════════════════════════
+
+Prepare:
+
+MANUS_BUILD_98_VC73_RELEASE_APPROVAL_PACKAGE.zip
+
+Include:
+
+- Executive incident explanation
+- Build 97 miss analysis
+- Exact source diff
+- Root-cause evidence
+- Test outputs
+- EAS build metadata
+- Effective configs
+- Device screenshots/recordings
+- Requirement traceability matrix
+- Open issues
+- Release notes
+- Apple review notes
+- Android testing notes
+
+Do not include secrets or review-account passwords.
+
+Provide Manus the exact source commit and binary identifiers.
+
+══════════════════════════════════════════════════════════════
+11. QUESTIONS MANUS MUST APPROVE
+══════════════════════════════════════════════════════════════
+
+Ask Manus to answer:
+
+1. Does the actual iOS Build 98 satisfy the controlling Map acceptance
+   test?
+2. Does Android VC73 satisfy it?
+3. Was the Heritage marker crash root cause actually fixed?
+4. Are the pins stable on phones and tablets?
+5. Is the Historical Sundown Town presentation responsible and accurate?
+6. Are source/disclaimer details visible?
+7. Did any unrelated regression occur?
+8. Is another iOS or Android rebuild required?
+9. Would Manus submit Build 98 to Apple?
+10. Would Manus distribute VC73 to testers?
+
+══════════════════════════════════════════════════════════════
+12. FINAL REPLIT DECLARATION
+══════════════════════════════════════════════════════════════
+
+Return:
+
+- IOS BUILD 98: PASS / FAIL / NOT TESTED
+- ANDROID VC73: PASS / FAIL / NOT TESTED
+- MAP ACCEPTANCE TEST: PASS / FAIL / NOT TESTED
+- MANUS PACKAGE READY: YES / NO
+- OPEN P0 ISSUES
+- OPEN P1 ISSUES
+- RECOMMEND APPLE SUBMISSION: YES / NO
+- RECOMMEND TESTER DISTRIBUTION: YES / NO
+
+Do not say “implemented” when only source code exists.
+Do not say “verified” when only the API was checked.
+Do not say “ready” until the actual binaries pass.

@@ -1,0 +1,223 @@
+FOUNDER DECISION — TARGETED MOBILE REBUILD REQUIRED
+
+The source review confirms that the current iOS Build 97 and Android
+versionCode 72 do not satisfy the founder-approved Maps requirement.
+
+Confirmed defects in the current binaries:
+
+1. "Historical Sundown Town" is absent from the hardcoded
+   HERITAGE_CATEGORIES array in cultural-heritage.tsx.
+
+2. HERITAGE_SITES_ENABLED = false in FullMapView.tsx, which disables:
+   - Heritage map pins
+   - Heritage map toggle
+   - Heritage category filters on the Map
+   - Historical Sundown Town pins on the Map
+
+The production records and API are correct, but the current binaries do
+not provide the required Map experience.
+
+This is not authorized for deferral.
+
+Create the next targeted release binaries:
+
+- iOS Build 98
+- Android versionCode 73
+
+Do not modify unrelated features.
+
+══════════════════════════════════════════════════════════════
+1. HISTORICAL SUNDOWN TOWN CATEGORY
+══════════════════════════════════════════════════════════════
+
+Add "Historical Sundown Town" to the actual mobile
+HERITAGE_CATEGORIES array used by Cultural Heritage Explorer.
+
+Use a distinct but historically appropriate visual treatment.
+
+The category must:
+
+- Appear as a horizontally scrollable chip
+- Display the API-provided count
+- Filter using the exact value:
+  Historical Sundown Town
+- Return all 15 production records
+- Use the existing safe fallback behavior
+- Preserve the disclaimer and source information
+
+Do not use a danger or safety score.
+
+══════════════════════════════════════════════════════════════
+2. RE-ENABLE HERITAGE MAP PINS SAFELY
+══════════════════════════════════════════════════════════════
+
+Do not simply change HERITAGE_SITES_ENABLED from false to true without
+addressing the crash that caused it to be disabled.
+
+First identify and document the confirmed crash root cause from prior
+real-device testing.
+
+Return:
+
+- Device and OS
+- Crash steps
+- Stack trace or runtime error
+- Exact component/function
+- Whether the crash involved:
+  - marker volume
+  - invalid coordinates
+  - unsupported icon
+  - duplicate keys
+  - malformed records
+  - React Native Maps rendering
+  - tablet layout
+  - state/update loop
+  - memory pressure
+
+Implement the smallest correction that makes Heritage markers stable.
+
+Required safeguards:
+
+- Reject records with invalid/missing latitude or longitude
+- Stable unique marker keys
+- Safe default category style
+- Bounded marker count
+- No repeated refetch/render loop
+- Controlled loading and error state
+- One failed record must not crash the entire Map
+- Historical Sundown Town records must use historical framing only
+
+After correcting the crash, enable Heritage Sites for this release.
+
+══════════════════════════════════════════════════════════════
+3. REQUIRED MAP EXPERIENCE
+══════════════════════════════════════════════════════════════
+
+On the Map tab, testers must be able to:
+
+- View business pins
+- Enable the Heritage layer
+- Select "Historical Sundown Town"
+- See the 15 relevant pins
+- Tap a pin
+- Open a preview/detail tile
+- Read:
+  - Name
+  - City/state
+  - Historical description
+  - HISTORICAL RECORD ONLY disclaimer
+  - Source attribution
+  - External source link where supported
+- Search or browse manually without location permission
+- Switch among Businesses, Heritage, and Historical Sundown Towns
+  without crash or freeze
+
+Do not imply present-day danger.
+Do not add a safety percentage or color-coded danger score.
+
+══════════════════════════════════════════════════════════════
+4. CULTURAL HERITAGE EXPLORER
+══════════════════════════════════════════════════════════════
+
+Retain the existing Library/Safety Hub Heritage Explorer.
+
+Add the dedicated Historical Sundown Town chip there as well.
+
+Verify:
+
+- Count badge = 15
+- Search works for Chicago, Cicero, and Vidor
+- Detail modal renders description, source, external URL, and disclaimer
+- All 15 records are reachable
+- No client-side cap
+
+══════════════════════════════════════════════════════════════
+5. TARGETED REGRESSION TESTING
+══════════════════════════════════════════════════════════════
+
+Before building, run source-level tests for:
+
+- Exact category value matching
+- Invalid coordinates
+- Unknown category fallback
+- Duplicate marker IDs
+- Empty results
+- API timeout
+- Location permission denied
+- Rapid layer switching
+- Detail modal open/close repetition
+
+Then create:
+
+- iOS Build 98
+- Android versionCode 73
+
+Test actual binaries on:
+
+- iPhone
+- iPad Air 11-inch class device/simulator
+- Android phone
+- Android tablet
+
+Required device test:
+
+1. Open Map
+2. Enable Heritage
+3. Select Historical Sundown Town
+4. Confirm 15 results/pins
+5. Tap Cicero, Vidor, and Forsyth County
+6. Confirm full historical detail
+7. Switch layers repeatedly
+8. Pan/zoom for at least 60 seconds
+9. Deny location and browse manually
+10. Confirm no crash, freeze, clipping, or blank screen
+
+Also test Cultural Heritage Explorer on all four device classes.
+
+══════════════════════════════════════════════════════════════
+6. APPLE SUBMISSION DECISION
+══════════════════════════════════════════════════════════════
+
+Do not submit or continue promoting Build 97 as satisfying the founder's
+Map requirement.
+
+Report whether the current Apple submission can be replaced with Build 98
+without withdrawing the app record.
+
+Prepare updated App Review notes that accurately state:
+
+- Maps include businesses and Heritage
+- Historical Sundown Towns are a historical-reference layer
+- No present-day danger score is provided
+- The review account can access all visible features
+
+Do not promise a feature that is absent from the submitted binary.
+
+══════════════════════════════════════════════════════════════
+7. REQUIRED RESPONSE
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Confirmed prior Heritage-marker crash root cause
+2. Exact files changed
+3. Historical Sundown Town chip implementation
+4. Heritage marker stabilization fix
+5. Map layer result
+6. Cultural Heritage Explorer result
+7. iOS Build 98 status
+8. Android versionCode 73 status
+9. iPhone result
+10. iPad result
+11. Android phone result
+12. Android tablet result
+13. Open P0/P1 issues
+14. Apple submission replacement plan
+15. GO/NO-GO for Apple
+16. GO/NO-GO for iOS testers
+17. GO/NO-GO for Android testers
+
+Do not add unrelated features.
+Do not disable Heritage again without founder approval.
+Do not claim the requirement is met merely because the API contains the
+records.
