@@ -1,0 +1,286 @@
+I actually think this is one of the most important design decisions we've made for Kinfolk, because it preserves what is already special while avoiding the biggest risks.
+
+One thing I would **not** do is remove what Replit has built. The current city registry is a strong foundation: it gives Kinfolk historical grounding, local references, and a sense that it actually knows a place rather than reciting facts. 
+
+What I would change is **how that foundation is used**.
+
+## The analogy I keep coming back to
+
+Think of the current registry as Kinfolk's **childhood**.
+
+It knows:
+
+* the neighborhoods,
+* the history,
+* the landmarks,
+* the phrases,
+* the cultural touchstones.
+
+Now Kinfolk needs to **grow up**.
+
+It shouldn't throw away what it learned as a child.
+
+It should become wiser about **when**, **where**, and **how** to use that knowledge.
+
+---
+
+## I wouldn't even call it "learning slang."
+
+I would call it:
+
+> **Cultural Intelligence**
+
+Language is only one piece.
+
+Kinfolk is learning:
+
+* hospitality
+* humor
+* etiquette
+* celebrations
+* food traditions
+* pronunciation
+* history
+* family structures
+* community values
+* local customs
+* neighborhood identity
+
+That's much bigger than vocabulary.
+
+---
+
+## I think there should be two permanent layers
+
+### Layer One
+
+**Founding Cultural Registry**
+
+This never disappears.
+
+It is researched.
+
+Reviewed.
+
+Historically grounded.
+
+Stable.
+
+Think of it as Kinfolk's encyclopedia.
+
+---
+
+### Layer Two
+
+**Living Community Layer**
+
+This evolves.
+
+It comes from:
+
+* Cultural Ambassadors
+* historians
+* educators
+* artists
+* business owners
+* residents
+* alumni
+* community submissions
+
+It changes over time.
+
+It is reviewed.
+
+Nothing goes directly into Layer One.
+
+---
+
+That separation protects the integrity of the foundation while allowing the platform to grow.
+
+---
+
+# I also don't want to lose AAVE.
+
+In fact...
+
+I think you've finally described what it should become.
+
+Not
+
+> AAVE Mode
+
+but
+
+> **Community Voice**
+
+Because what people actually enjoy is not profanity.
+
+It's authenticity.
+
+It's warmth.
+
+It's feeling like Kinfolk "gets it."
+
+The current implementation bundles profanity into AAVE Level 3, which is exactly the kind of coupling you've said you want to avoid. 
+
+---
+
+## So I'd separate them.
+
+Instead of
+
+```
+AAVE 1
+AAVE 2
+AAVE 3
+```
+
+I'd imagine something like
+
+### Community Voice
+
+○ Professional
+
+○ Warm
+
+○ Local
+
+○ Home
+
+---
+
+Then separately
+
+### Cultural Language
+
+○ Standard English
+
+○ Community-informed
+
+○ Full local authenticity
+
+---
+
+Then separately
+
+### Profanity
+
+○ Never
+
+○ Mild (opt in)
+
+○ Unfiltered (explicit opt in)
+
+---
+
+Now someone can choose
+
+Local
+
+Full cultural authenticity
+
+No profanity
+
+Exactly what you've been describing.
+
+---
+
+# Younger users
+
+I completely understand why they liked it.
+
+It feels real.
+
+It feels less robotic.
+
+We shouldn't lose that.
+
+We should refine it.
+
+For example
+
+Kinfolk shouldn't randomly say
+
+> "Bruh."
+
+It should understand
+
+when
+
+who
+
+where
+
+why
+
+Whether that person has selected that style.
+
+Whether it's appropriate in context.
+
+Whether it's a navigation instruction.
+
+Whether it's helping with taxes.
+
+Those should all feel different.
+
+---
+
+# One thing I think Kinfolk should learn
+
+Code-switching.
+
+This is probably the biggest missed opportunity.
+
+Imagine the same user.
+
+Talking to Kinfolk.
+
+"I'm interviewing tomorrow."
+
+Kinfolk naturally shifts.
+
+"I'm nervous."
+
+Kinfolk responds warmly.
+
+"I'm meeting my boys."
+
+Kinfolk relaxes.
+
+"I'm writing a grant."
+
+Kinfolk becomes polished again.
+
+That isn't changing identity.
+
+That's communication.
+
+Many people naturally shift registers depending on context, and Kinfolk should be able to do the same when the user wants it.
+
+---
+
+# My favorite future feature
+
+Imagine Kinfolk saying
+
+> "I noticed you've been exploring Atlanta through Black-owned businesses and music history. Want to broaden today's experience and see what else this neighborhood has to offer?"
+
+Not
+
+because you're Black.
+
+Because you're curious.
+
+---
+
+# The sentence I would actually put into your design document
+
+I think this captures everything you've been trying to say.
+
+> **Kinfolk's founding city registries are not scripts to imitate—they are cultural foundations to build upon. Kinfolk should use them to introduce people to communities with warmth, historical accuracy, and respect. As communities evolve, Kinfolk evolves with them through reviewed, community-guided contributions. The goal is never performance or caricature. The goal is helping every person feel welcomed while celebrating the richness of each community's unique identity.**
+
+I would add one more principle that I think should become part of Mapping With Melanin™'s DNA:
+
+> **Kinfolk does not speak *for* communities. Kinfolk learns *with* communities.**
+
+To me, that's the distinction that protects the integrity of what you're building. It allows the appeal that younger users enjoyed to remain, while making it clear that authenticity comes from ongoing relationships, thoughtful governance, and community participation—not from turning culture into a performance. I think that philosophy will scale whether you're talking about Black Atlanta, Little Haiti in Miami, Indigenous communities in New Mexico, or Korean Los Angeles. It gives every community the same respect and the same opportunity to shape how it is represented.
