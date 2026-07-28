@@ -53,6 +53,34 @@ function verifyCronSecret(req: any, res: any): boolean {
   return true;
 }
 
+/**
+ * POST /cron/set-user-tier
+ * CRON_SECRET authenticated. Sets memberType on a user by email.
+ * Used for review account and internal tier management without requiring
+ * an admin browser session.
+ * Body: { email: string, memberType: string }
+ */
+router.post("/cron/set-user-tier", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  const { email, memberType } = req.body as { email?: string; memberType?: string };
+  const VALID = ["individual", "navigator", "trailblazer", "founding", "beta", "business", "business_referral"];
+  if (!email || !memberType || !VALID.includes(memberType)) {
+    res.status(400).json({ error: "email and valid memberType required" });
+    return;
+  }
+  try {
+    const [updated] = await db
+      .update(usersTable)
+      .set({ memberType } as any)
+      .where(eq(usersTable.email, email))
+      .returning({ id: usersTable.id, email: usersTable.email, memberType: usersTable.memberType });
+    if (!updated) { res.status(404).json({ error: "User not found" }); return; }
+    res.json({ ok: true, user: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tier" });
+  }
+});
+
 router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
 
