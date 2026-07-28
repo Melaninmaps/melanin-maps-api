@@ -411026,6 +411026,8 @@ var NORMALIZED_ADMIN_EMAILS = new Set(
   (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim().toLowerCase()).filter(Boolean)
 );
 function isAdmin2(req) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && req.headers["x-cron-secret"] === cronSecret) return true;
   const user = req.user;
   if (!user?.email) return false;
   const userEmail = user.email.trim().toLowerCase();
@@ -419982,6 +419984,36 @@ router24.post("/admin/seed-sundown-towns", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "POST /admin/seed-sundown-towns error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+router24.post("/admin/set-user-tier", async (req, res) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeader = req.headers["x-cron-secret"];
+  const hasCronAuth = cronSecret && cronHeader === cronSecret;
+  if (!isAdmin2(req) && !hasCronAuth) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { email: email3, memberType } = req.body;
+  const VALID = ["individual", "navigator", "trailblazer", "founding", "beta", "business", "business_referral"];
+  if (!email3 || !memberType || !VALID.includes(memberType)) {
+    res.status(400).json({ error: "email and valid memberType required" });
+    return;
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE users SET member_type = $1 WHERE email = $2
+       RETURNING id, email, member_type`,
+      [memberType, email3.toLowerCase().trim()]
+    );
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ ok: true, user: result.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/set-user-tier error");
+    res.status(500).json({ error: "Failed to update tier", detail: String(err) });
   }
 });
 var admin_default = router24;
@@ -432552,6 +432584,25 @@ function verifyCronSecret(req, res) {
   }
   return true;
 }
+router37.post("/cron/set-user-tier", async (req, res) => {
+  if (!verifyCronSecret(req, res)) return;
+  const { email: email3, memberType } = req.body;
+  const VALID = ["individual", "navigator", "trailblazer", "founding", "beta", "business", "business_referral"];
+  if (!email3 || !memberType || !VALID.includes(memberType)) {
+    res.status(400).json({ error: "email and valid memberType required" });
+    return;
+  }
+  try {
+    const [updated] = await db.update(usersTable).set({ memberType }).where(eq(usersTable.email, email3)).returning({ id: usersTable.id, email: usersTable.email, memberType: usersTable.memberType });
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ ok: true, user: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update tier" });
+  }
+});
 router37.post("/cron/trial-reminders", async (req, res) => {
   if (!verifyCronSecret(req, res)) return;
   const now = /* @__PURE__ */ new Date();
@@ -442714,14 +442765,22 @@ var _handle = null;
 var _cycleCount = 0;
 var _p0Count = 0;
 var _p1Count = 0;
+var _peakActiveSessions = 0;
+var _totalHttp500s = 0;
+var _totalTimeouts = 0;
+var _loginChecksTotal = 0;
+var _loginChecksFailed = 0;
 var BASE = "https://www.mappingwithmelanin.com";
 async function _get(path7, timeoutMs = 8e3) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const t0 = Date.now();
   try {
     const r2 = await fetch(`${BASE}${path7}`, { signal: ctrl.signal });
     const body = await r2.text().catch(() => "");
-    return { status: r2.status, body };
+    return { status: r2.status, body, latencyMs: Date.now() - t0, timedOut: false };
+  } catch {
+    return { status: 0, body: "", latencyMs: Date.now() - t0, timedOut: true };
   } finally {
     clearTimeout(timer);
   }
@@ -442729,6 +442788,7 @@ async function _get(path7, timeoutMs = 8e3) {
 async function _post(path7, body, timeoutMs = 8e3) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const t0 = Date.now();
   try {
     const r2 = await fetch(`${BASE}${path7}`, {
       method: "POST",
@@ -442737,132 +442797,157 @@ async function _post(path7, body, timeoutMs = 8e3) {
       signal: ctrl.signal
     });
     const text5 = await r2.text().catch(() => "");
-    return { status: r2.status, body: text5 };
+    return { status: r2.status, body: text5, latencyMs: Date.now() - t0, timedOut: false };
+  } catch {
+    return { status: 0, body: "", latencyMs: Date.now() - t0, timedOut: true };
   } finally {
     clearTimeout(timer);
   }
+}
+function _poolTrend() {
+  const recent = _ring.slice(-6).map((e3) => e3.pool.total);
+  if (recent.length < 3) return "unknown";
+  let growing = true;
+  for (let i = 1; i < recent.length; i++) {
+    if ((recent[i] ?? 0) <= (recent[i - 1] ?? 0)) {
+      growing = false;
+      break;
+    }
+  }
+  return growing ? "growing" : "stable";
 }
 async function runCycle() {
   const start = Date.now();
   const ts3 = (/* @__PURE__ */ new Date()).toISOString();
   const p0Flags = [];
   const p1Flags = [];
-  let healthz = "err";
-  let readyz = "err";
+  let http500Count = 0;
+  let timeoutCount = 0;
+  const [hrz, rdz, ver] = await Promise.all([
+    _get("/api/healthz"),
+    _get("/api/readyz"),
+    _get("/api/version")
+  ]);
+  const healthz = hrz.timedOut ? "err" : hrz.status;
+  const readyz = rdz.timedOut ? "err" : rdz.status;
   let version6 = "err";
-  try {
-    healthz = (await _get("/api/healthz")).status;
-  } catch {
-  }
-  try {
-    readyz = (await _get("/api/readyz")).status;
-  } catch {
-  }
-  try {
-    const vr3 = await _get("/api/version");
-    if (vr3.status === 200) {
-      const d2 = JSON.parse(vr3.body);
-      version6 = (d2?.sha ?? "").slice(0, 8);
+  if (ver.status === 200) {
+    try {
+      version6 = (JSON.parse(ver.body)?.sha ?? "").slice(0, 8);
+    } catch {
     }
-  } catch {
   }
+  if (hrz.timedOut) timeoutCount++;
+  if (rdz.timedOut) timeoutCount++;
+  if (hrz.status === 500) http500Count++;
+  if (rdz.status === 500) http500Count++;
   if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
   let reviewAccountLogin = "skip";
-  const reviewEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "appstorereview@mappingwithmelanin.com";
+  const reviewEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
   const reviewPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
   if (reviewPassword) {
-    try {
-      const ar4 = await _post("/api/auth/login-email", { email: reviewEmail, password: reviewPassword });
-      if (ar4.status === 200) {
-        try {
-          const d2 = JSON.parse(ar4.body);
-          reviewAccountLogin = d2?.user ? "ok" : "fail";
-        } catch {
-          reviewAccountLogin = "fail";
-        }
-      } else {
+    _loginChecksTotal++;
+    const ar4 = await _post("/api/auth/login-email", { email: reviewEmail, password: reviewPassword });
+    if (ar4.timedOut) {
+      reviewAccountLogin = "err";
+      timeoutCount++;
+    } else if (ar4.status === 200) {
+      try {
+        const parsed = JSON.parse(ar4.body);
+        reviewAccountLogin = parsed?.token || parsed?.user ? "ok" : "fail";
+      } catch {
         reviewAccountLogin = "fail";
       }
-    } catch {
-      reviewAccountLogin = "err";
+    } else {
+      reviewAccountLogin = "fail";
+      if (ar4.status === 500) http500Count++;
     }
-    if (reviewAccountLogin !== "ok") p0Flags.push(`reviewAccountLogin=${reviewAccountLogin}`);
+    if (reviewAccountLogin !== "ok") {
+      _loginChecksFailed++;
+      p0Flags.push(`reviewAccountLogin=${reviewAccountLogin}`);
+    }
   }
   const poolStats = getPoolStats();
   let dbLatencyMs = null;
-  try {
-    const dbStart = Date.now();
-    await Promise.race([
-      pool.query("SELECT 1"),
-      new Promise((_2, rej) => setTimeout(() => rej(new Error("timeout")), 3e3))
-    ]);
-    dbLatencyMs = Date.now() - dbStart;
-  } catch {
+  let activeSessions = null;
+  const [dbProbe, sessProbe] = await Promise.all([
+    (async () => {
+      try {
+        const t0 = Date.now();
+        await Promise.race([
+          pool.query("SELECT 1"),
+          new Promise((_2, rej) => setTimeout(() => rej(new Error("timeout")), 3e3))
+        ]);
+        return Date.now() - t0;
+      } catch {
+        return null;
+      }
+    })(),
+    (async () => {
+      try {
+        const r2 = await pool.query(
+          `SELECT COUNT(*) AS cnt FROM sessions WHERE expire > NOW()`
+        );
+        return parseInt(r2.rows[0]?.cnt ?? "0", 10);
+      } catch {
+        return null;
+      }
+    })()
+  ]);
+  dbLatencyMs = dbProbe;
+  activeSessions = sessProbe;
+  if (activeSessions !== null && activeSessions > _peakActiveSessions) {
+    _peakActiveSessions = activeSessions;
   }
   if (dbLatencyMs === null) p0Flags.push("db_query_failed");
   if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
-  let businesses = "err";
-  let culturalSites = "err";
-  let sundownTowns = "err";
-  let communityPosts = "err";
-  let communityGuidelines = "err";
-  let events = "err";
-  let kinfolkAvailable = false;
-  let webLogin = "err";
-  let privacy = "err";
-  try {
-    businesses = (await _get("/api/businesses?limit=1")).status;
-  } catch {
+  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR] = await Promise.all([
+    _get("/api/businesses?limit=1"),
+    _get("/api/cultural-sites?limit=1"),
+    _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1"),
+    _get("/api/community/posts?limit=1"),
+    _get("/api/community/guidelines"),
+    _get("/api/events?limit=1"),
+    _post("/api/kinfolk/chat", { message: "ping", conversationId: "monitor" }),
+    _get("/login"),
+    _get("/privacy")
+  ]);
+  for (const r2 of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR]) {
+    if (r2.timedOut) timeoutCount++;
+    if (r2.status === 500) http500Count++;
   }
-  try {
-    culturalSites = (await _get("/api/cultural-sites?limit=1")).status;
-  } catch {
-  }
-  try {
-    const st3 = await _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1");
-    if (st3.status === 200) {
-      try {
-        const d2 = JSON.parse(st3.body);
-        const arr = Array.isArray(d2) ? d2 : d2?.sites ?? [];
-        sundownTowns = arr.length > 0 ? 200 : 0;
-      } catch {
-        sundownTowns = st3.status;
-      }
-    } else {
-      sundownTowns = st3.status;
+  const businesses = bizR.timedOut ? "err" : bizR.status;
+  const businessesLatencyMs = bizR.timedOut ? null : bizR.latencyMs;
+  const culturalSites = csR.timedOut ? "err" : csR.status;
+  const culturalSitesLatencyMs = csR.timedOut ? null : csR.latencyMs;
+  let sundownTowns = stR.timedOut ? "err" : stR.status;
+  if (!stR.timedOut && stR.status === 200) {
+    try {
+      const d2 = JSON.parse(stR.body);
+      const arr = Array.isArray(d2) ? d2 : d2?.sites ?? [];
+      sundownTowns = arr.length > 0 ? 200 : 0;
+    } catch {
     }
-  } catch {
   }
-  try {
-    communityPosts = (await _get("/api/community/posts?limit=1")).status;
-  } catch {
-  }
-  try {
-    communityGuidelines = (await _get("/api/community/guidelines")).status;
-  } catch {
-  }
-  try {
-    events = (await _get("/api/events?limit=1")).status;
-  } catch {
-  }
-  try {
-    const kr3 = await _post("/api/kinfolk/chat", { message: "ping", conversationId: "monitor" });
-    kinfolkAvailable = kr3.status !== 500 && kr3.status !== 503 && kr3.status !== 0;
-  } catch {
-  }
-  try {
-    webLogin = (await _get("/login")).status;
-  } catch {
-  }
-  try {
-    privacy = (await _get("/privacy")).status;
-  } catch {
-  }
+  const mapLoadOk = culturalSites === 200 && sundownTowns === 200;
+  const communityPosts = postsR.timedOut ? "err" : postsR.status;
+  const communityGuidelines = guideR.timedOut ? "err" : guideR.status;
+  const events = evR.timedOut ? "err" : evR.status;
+  const kinfolkAvailable = !kfR.timedOut && kfR.status !== 500 && kfR.status !== 503 && kfR.status !== 0;
+  const webLogin = loginR.timedOut ? "err" : loginR.status;
+  const privacy = privR.timedOut ? "err" : privR.status;
   if (sundownTowns === 0) p0Flags.push("sundown_towns_empty");
   if (sundownTowns === "err") p1Flags.push("sundown_towns_error");
+  if (!mapLoadOk) p1Flags.push("map_load_degraded");
   if (!kinfolkAvailable) p1Flags.push("kinfolk_unavailable");
   if (communityPosts === "err") p1Flags.push("community_posts_error");
   if (businesses === "err") p1Flags.push("businesses_error");
+  if (http500Count > 0) p1Flags.push(`http_500s=${http500Count}`);
+  if (timeoutCount > 0) p1Flags.push(`timeouts=${timeoutCount}`);
+  const poolTrend = _poolTrend();
+  if (poolTrend === "growing") p1Flags.push("pool_total_growing");
+  _totalHttp500s += http500Count;
+  _totalTimeouts += timeoutCount;
   const entry = {
     ts: ts3,
     cycleMs: Date.now() - start,
@@ -442870,10 +442955,16 @@ async function runCycle() {
     readyz,
     version: version6,
     reviewAccountLogin,
+    loginChecksTotal: _loginChecksTotal,
+    loginChecksFailed: _loginChecksFailed,
     pool: poolStats,
     dbLatencyMs,
+    activeSessions,
     businesses,
+    businessesLatencyMs,
     culturalSites,
+    culturalSitesLatencyMs,
+    mapLoadOk,
     sundownTowns,
     communityPosts,
     communityGuidelines,
@@ -442881,6 +442972,9 @@ async function runCycle() {
     kinfolkAvailable,
     webLogin,
     privacy,
+    http500Count,
+    timeoutCount,
+    poolTrend,
     p0Flags,
     p1Flags
   };
@@ -442899,11 +442993,18 @@ async function runCycle() {
     p1: p1Flags,
     pool: poolStats,
     dbLatencyMs,
+    activeSessions,
+    http500Count,
+    timeoutCount,
+    poolTrend,
     healthz,
     readyz,
     version: version6,
     reviewAccountLogin,
-    sundownTowns
+    sundownTowns,
+    mapLoadOk,
+    culturalSitesLatencyMs,
+    businessesLatencyMs
   }));
 }
 function getMonitorSummary() {
@@ -442912,27 +443013,64 @@ function getMonitorSummary() {
   const warnings = _ring.filter((e3) => e3.p1Flags.length > 0).length;
   const successRate = total > 0 ? ((total - errors) / total * 100).toFixed(1) : "N/A";
   const latencies = _ring.map((e3) => e3.dbLatencyMs).filter((n2) => n2 !== null);
-  const avgLatency = latencies.length > 0 ? Math.round(latencies.reduce((a, b3) => a + b3, 0) / latencies.length) : null;
-  const p95Latency = latencies.length > 0 ? latencies.sort((a, b3) => a - b3)[Math.floor(latencies.length * 0.95)] ?? null : null;
-  const peakPool = _ring.reduce((acc, e3) => Math.max(acc, e3.pool.total), 0);
-  const peakWaiting = _ring.reduce((acc, e3) => Math.max(acc, e3.pool.waiting), 0);
+  const avgDbLatency = latencies.length > 0 ? Math.round(latencies.reduce((a, b3) => a + b3, 0) / latencies.length) : null;
+  const sortedLat = [...latencies].sort((a, b3) => a - b3);
+  const p95DbLatency = sortedLat.length > 0 ? sortedLat[Math.floor(sortedLat.length * 0.95)] ?? null : null;
+  const csLatencies = _ring.map((e3) => e3.culturalSitesLatencyMs).filter((n2) => n2 !== null);
+  const avgMapLoadMs = csLatencies.length > 0 ? Math.round(csLatencies.reduce((a, b3) => a + b3, 0) / csLatencies.length) : null;
+  const p95MapLoadMs = csLatencies.length > 0 ? [...csLatencies].sort((a, b3) => a - b3)[Math.floor(csLatencies.length * 0.95)] ?? null : null;
+  const bizLatencies = _ring.map((e3) => e3.businessesLatencyMs).filter((n2) => n2 !== null);
+  const avgBizLatencyMs = bizLatencies.length > 0 ? Math.round(bizLatencies.reduce((a, b3) => a + b3, 0) / bizLatencies.length) : null;
+  const poolTotals = _ring.map((e3) => e3.pool.total);
+  const peakPoolTotal = poolTotals.length > 0 ? Math.max(...poolTotals) : 0;
+  const peakPoolWaiting = Math.max(..._ring.map((e3) => e3.pool.waiting), 0);
+  const currentPoolTrend = _poolTrend();
+  const poolLeakSuspect = currentPoolTrend === "growing";
+  const mapLoadFailCycles = _ring.filter((e3) => !e3.mapLoadOk).length;
   const latest = _ring[_ring.length - 1] ?? null;
   return {
+    // ── Identity ──
     monitoringMechanism: "setInterval inside always-on Railway API process",
     intervalMinutes: 5,
     survivesReplitChatClosure: true,
+    // ── Progress ──
     cyclesCompleted: _cycleCount,
     cyclesExpected: 144,
+    percentComplete: _cycleCount > 0 ? (_cycleCount / 144 * 100).toFixed(1) + "%" : "0%",
+    // ── Health ──
     total,
     errors,
     warnings,
-    successRate,
+    successRate: successRate + "%",
     p0EventCount: _p0Count,
     p1EventCount: _p1Count,
-    avgDbLatencyMs: avgLatency,
-    p95DbLatencyMs: p95Latency,
-    peakPoolTotal: peakPool,
-    peakPoolWaiting: peakWaiting,
+    // ── DB ──
+    avgDbLatencyMs: avgDbLatency,
+    p95DbLatencyMs: p95DbLatency,
+    // ── Capacity: concurrent users ──
+    peakActiveSessionsObserved: _peakActiveSessions,
+    latestActiveSessionsCount: latest?.activeSessions ?? null,
+    // ── Capacity: map load ──
+    avgMapLoadMs,
+    p95MapLoadMs,
+    mapLoadFailCycles,
+    mapLoadHealthy: mapLoadFailCycles === 0,
+    // ── Capacity: API latency ──
+    avgBizApiLatencyMs: avgBizLatencyMs,
+    // ── Capacity: 500s and timeouts ──
+    totalHttp500sObserved: _totalHttp500s,
+    totalTimeoutsObserved: _totalTimeouts,
+    anyHttp500OrTimeout: _totalHttp500s > 0 || _totalTimeouts > 0,
+    // ── Capacity: connection stability ──
+    peakPoolTotal,
+    peakPoolWaiting,
+    currentPoolTrend,
+    poolLeakSuspect,
+    // ── Auth checks ──
+    loginChecksTotal: _loginChecksTotal,
+    loginChecksFailed: _loginChecksFailed,
+    loginCheckPassRate: _loginChecksTotal > 0 ? ((_loginChecksTotal - _loginChecksFailed) / _loginChecksTotal * 100).toFixed(1) + "%" : "skipped \u2014 set REVIEW_ACCOUNT_PASSWORD Railway env var to activate",
+    // ── Latest ──
     latest,
     history: _ring.slice(-10)
   };
