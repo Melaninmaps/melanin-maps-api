@@ -49,11 +49,15 @@ const HERITAGE_SITES_ENABLED = true;
 // Current production total is 170 — this allows 47% headroom.
 const MAX_HERITAGE_MARKERS = 250;
 
+// US-wide overview so all business pins are visible on first load.
+// The map animates to the user's GPS position once permission is granted,
+// but if they're not near any businesses they would see an empty map.
+// Starting zoomed out means pins are always visible before location is known.
 const DEFAULT_REGION: Region = {
-  latitude: 39.9526,
-  longitude: -75.1652,
-  latitudeDelta: 0.18,
-  longitudeDelta: 0.18,
+  latitude: 37.0,
+  longitude: -95.0,
+  latitudeDelta: 32,
+  longitudeDelta: 52,
 };
 
 interface HeatmapPoint {
@@ -131,6 +135,7 @@ export function FullMapView() {
   const mapRef = useRef<MapView>(null);
   const mapReadyRef = useRef(false);
   const pendingLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const hasFitToBusinessesRef = useRef(false); // fire fitToCoordinates only once on load
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(true);
@@ -163,6 +168,25 @@ export function FullMapView() {
   const pollingEnabled = isFocused && user !== null;
 
   const { businesses } = useBusinesses();
+
+  // ── Auto-fit to business pins on first load ────────────────────────────────
+  // Fires once when both the map is ready and businesses have loaded.
+  // Without this, the map opens at DEFAULT_REGION (US overview) which is fine,
+  // but if the user pans away before businesses arrive they'd miss the pins.
+  // Also handles the common case where the user's GPS location has no nearby
+  // businesses — the fit ensures something is always visible.
+  useEffect(() => {
+    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
+    hasFitToBusinessesRef.current = true;
+    // Give the map a brief moment to finish rendering before fitting
+    setTimeout(() => {
+      mapRef.current?.fitToCoordinates(
+        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
+        { edgePadding: { top: 80, right: 40, bottom: 100, left: 40 }, animated: true },
+      );
+    }, 600);
+  }, [mapReady, mapped]);
+
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
@@ -177,6 +201,8 @@ export function FullMapView() {
       isFinite(b.longitude) &&
       b.latitude >= -90 && b.latitude <= 90 &&
       b.longitude >= -180 && b.longitude <= 180 &&
+      // Exclude "Null Island" (0,0) — means coordinates were never geocoded
+      (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001) &&
       (activeCategory === "All" || b.category === activeCategory),
   );
 
