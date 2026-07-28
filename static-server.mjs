@@ -119,10 +119,9 @@ app.post("/__client-error", (req, res) => {
 });
 
 app.get("/__errors", (req, res) => { res.json({ count: clientErrors.length, errors: clientErrors }); });
-app.get("/__debug", (req, res) => {
-  res.json({ cwd: process.cwd(), __dirname, WEB_STATIC,
-    cwdContents: (() => { try { return fs.readdirSync(process.cwd()); } catch { return "error"; } })() });
-});
+// /__debug REMOVED (July 28 2026) — exposed full workspace file listing including
+// .jks keystores, .ipa build artifacts, .pem certificates, and .aab bundles to
+// any unauthenticated request. Security issue identified by independent audit.
 
 // Full table counts for reconciliation — probe-key protected
 app.get("/api/waitlist-diag", async (req, res) => {

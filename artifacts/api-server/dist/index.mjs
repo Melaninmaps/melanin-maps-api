@@ -35099,7 +35099,7 @@ var require_textParsers = __commonJS({
 var require_pg_int8 = __commonJS({
   "../../node_modules/.pnpm/pg-int8@1.0.1/node_modules/pg-int8/index.js"(exports2, module) {
     "use strict";
-    var BASE2 = 1e6;
+    var BASE = 1e6;
     function readInt8(buffer) {
       var high = buffer.readInt32BE(0);
       var low = buffer.readUInt32BE(4);
@@ -35117,11 +35117,11 @@ var require_pg_int8 = __commonJS({
       var l4;
       var i;
       {
-        carry = high % BASE2;
-        high = high / BASE2 >>> 0;
+        carry = high % BASE;
+        high = high / BASE >>> 0;
         t2 = 4294967296 * carry + low;
-        low = t2 / BASE2 >>> 0;
-        digits = "" + (t2 - BASE2 * low);
+        low = t2 / BASE >>> 0;
+        digits = "" + (t2 - BASE * low);
         if (low === 0 && high === 0) {
           return sign + digits + result;
         }
@@ -35133,11 +35133,11 @@ var require_pg_int8 = __commonJS({
         result = pad + digits + result;
       }
       {
-        carry = high % BASE2;
-        high = high / BASE2 >>> 0;
+        carry = high % BASE;
+        high = high / BASE >>> 0;
         t2 = 4294967296 * carry + low;
-        low = t2 / BASE2 >>> 0;
-        digits = "" + (t2 - BASE2 * low);
+        low = t2 / BASE >>> 0;
+        digits = "" + (t2 - BASE * low);
         if (low === 0 && high === 0) {
           return sign + digits + result;
         }
@@ -35149,11 +35149,11 @@ var require_pg_int8 = __commonJS({
         result = pad + digits + result;
       }
       {
-        carry = high % BASE2;
-        high = high / BASE2 >>> 0;
+        carry = high % BASE;
+        high = high / BASE >>> 0;
         t2 = 4294967296 * carry + low;
-        low = t2 / BASE2 >>> 0;
-        digits = "" + (t2 - BASE2 * low);
+        low = t2 / BASE >>> 0;
+        digits = "" + (t2 - BASE * low);
         if (low === 0 && high === 0) {
           return sign + digits + result;
         }
@@ -35165,9 +35165,9 @@ var require_pg_int8 = __commonJS({
         result = pad + digits + result;
       }
       {
-        carry = high % BASE2;
+        carry = high % BASE;
         t2 = 4294967296 * carry + low;
-        digits = "" + t2 % BASE2;
+        digits = "" + t2 % BASE;
         return sign + digits + result;
       }
     }
@@ -61613,7 +61613,7 @@ var init_src = __esm({
         JSON.stringify({ msg: msg ?? "[db-pool]", ...typeof data === "object" ? data : { detail: data } })
       )
     };
-    POOL_MAX = 8;
+    POOL_MAX = 20;
     _pool = null;
     _db = null;
     pool = new Proxy({}, {
@@ -325445,7 +325445,7 @@ var require_bignumber = __commonJS({
   "../../node_modules/.pnpm/bignumber.js@9.3.1/node_modules/bignumber.js/bignumber.js"(exports2, module) {
     (function(globalObject) {
       "use strict";
-      var BigNumber, isNumeric = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i, mathceil = Math.ceil, mathfloor = Math.floor, bignumberError = "[BigNumber Error] ", tooManyDigits = bignumberError + "Number primitive has more than 15 significant digits: ", BASE2 = 1e14, LOG_BASE = 14, MAX_SAFE_INTEGER = 9007199254740991, POWS_TEN = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13], SQRT_BASE = 1e7, MAX = 1e9;
+      var BigNumber, isNumeric = /^-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i, mathceil = Math.ceil, mathfloor = Math.floor, bignumberError = "[BigNumber Error] ", tooManyDigits = bignumberError + "Number primitive has more than 15 significant digits: ", BASE = 1e14, LOG_BASE = 14, MAX_SAFE_INTEGER = 9007199254740991, POWS_TEN = [1, 10, 100, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13], SQRT_BASE = 1e7, MAX = 1e9;
       function clone2(configObject) {
         var div, convertBase, parseNumeric, P3 = BigNumber2.prototype = { constructor: BigNumber2, toString: null, valueOf: null }, ONE = new BigNumber2(1), DECIMAL_PLACES = 20, ROUNDING_MODE = 4, TO_EXP_NEG = -7, TO_EXP_POS = 21, MIN_EXP = -1e7, MAX_EXP = 1e7, CRYPTO = false, MODULO_MODE = 1, POW_PRECISION = 0, FORMAT = {
           prefix: "",
@@ -325697,7 +325697,7 @@ var require_bignumber = __commonJS({
               if (String(c3[0]).length == i) {
                 for (i = 0; i < c3.length; i++) {
                   n2 = c3[i];
-                  if (n2 < 0 || n2 >= BASE2 || n2 !== mathfloor(n2)) break out;
+                  if (n2 < 0 || n2 >= BASE || n2 !== mathfloor(n2)) break out;
                 }
                 if (n2 !== 0) return true;
               }
@@ -325914,7 +325914,7 @@ var require_bignumber = __commonJS({
             e3 = x4.e - y2.e;
             s2 = dp + e3 + 1;
             if (!base) {
-              base = BASE2;
+              base = BASE;
               e3 = bitFloor(x4.e / LOG_BASE) - bitFloor(y2.e / LOG_BASE);
               s2 = s2 / LOG_BASE | 0;
             }
@@ -325993,7 +325993,7 @@ var require_bignumber = __commonJS({
               more = rem[0] != null;
               if (!qc[0]) qc.splice(0, 1);
             }
-            if (base == BASE2) {
+            if (base == BASE) {
               for (i = 1, s2 = qc[0]; s2 >= 10; s2 /= 10, i++) ;
               round(q3, dp + (q3.e = i + e3 * LOG_BASE - 1) + 1, rm, more);
             } else {
@@ -326152,12 +326152,12 @@ var require_bignumber = __commonJS({
                     for (k3 = 1; j3 >= 10; j3 /= 10, k3++) ;
                     if (i != k3) {
                       x4.e++;
-                      if (xc[0] == BASE2) xc[0] = 1;
+                      if (xc[0] == BASE) xc[0] = 1;
                     }
                     break;
                   } else {
                     xc[ni4] += k3;
-                    if (xc[ni4] != BASE2) break;
+                    if (xc[ni4] != BASE) break;
                     xc[ni4--] = 0;
                     k3 = 1;
                   }
@@ -326366,12 +326366,12 @@ var require_bignumber = __commonJS({
           }
           b3 = (j3 = yc.length) - (i = xc.length);
           if (b3 > 0) for (; b3--; xc[i++] = 0) ;
-          b3 = BASE2 - 1;
+          b3 = BASE - 1;
           for (; j3 > a; ) {
             if (xc[--j3] < yc[j3]) {
               for (i = j3; i && !xc[--i]; xc[i] = b3) ;
               --xc[i];
-              xc[j3] += BASE2;
+              xc[j3] += BASE;
             }
             xc[j3] -= yc[j3];
           }
@@ -326433,7 +326433,7 @@ var require_bignumber = __commonJS({
             ycL = i;
           }
           for (i = xcL + ycL, zc = []; i--; zc.push(0)) ;
-          base = BASE2;
+          base = BASE;
           sqrtBase = SQRT_BASE;
           for (i = ycL; --i >= 0; ) {
             c3 = 0;
@@ -326499,8 +326499,8 @@ var require_bignumber = __commonJS({
             b3 = a;
           }
           for (a = 0; b3; ) {
-            a = (xc[--b3] = xc[b3] + yc[b3] + a) / BASE2 | 0;
-            xc[b3] = BASE2 === xc[b3] ? 0 : xc[b3] % BASE2;
+            a = (xc[--b3] = xc[b3] + yc[b3] + a) / BASE | 0;
+            xc[b3] = BASE === xc[b3] ? 0 : xc[b3] % BASE;
           }
           if (a) {
             xc = [a].concat(xc);
@@ -442703,7 +442703,6 @@ var external_clicks_default = router83;
 var import_express84 = __toESM(require_express2(), 1);
 
 // src/lib/build97Monitor.ts
-var MAX_ENTRIES = 288;
 var _ring = [];
 var _handle = null;
 var _cycleCount = 0;
@@ -442717,40 +442716,6 @@ var _loginChecksFailed = 0;
 var _approvalDetectedAt = null;
 var _postApprovalStableCycles = 0;
 var _kinfolkSyntheticFailures = 0;
-var BASE = "https://www.mappingwithmelanin.com";
-async function _get(path7, timeoutMs = 8e3) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  const t0 = Date.now();
-  try {
-    const r2 = await fetch(`${BASE}${path7}`, { signal: ctrl.signal });
-    const body = await r2.text().catch(() => "");
-    return { status: r2.status, body, latencyMs: Date.now() - t0, timedOut: false };
-  } catch {
-    return { status: 0, body: "", latencyMs: Date.now() - t0, timedOut: true };
-  } finally {
-    clearTimeout(timer);
-  }
-}
-async function _post(path7, body, timeoutMs = 8e3) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  const t0 = Date.now();
-  try {
-    const r2 = await fetch(`${BASE}${path7}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: ctrl.signal
-    });
-    const text5 = await r2.text().catch(() => "");
-    return { status: r2.status, body: text5, latencyMs: Date.now() - t0, timedOut: false };
-  } catch {
-    return { status: 0, body: "", latencyMs: Date.now() - t0, timedOut: true };
-  } finally {
-    clearTimeout(timer);
-  }
-}
 function _poolTrend() {
   const recent = _ring.slice(-6).map((e3) => e3.pool.total);
   if (recent.length < 3) return "unknown";
@@ -442762,246 +442727,6 @@ function _poolTrend() {
     }
   }
   return growing ? "growing" : "stable";
-}
-async function runCycle() {
-  const start = Date.now();
-  const ts3 = (/* @__PURE__ */ new Date()).toISOString();
-  const p0Flags = [];
-  const p1Flags = [];
-  let http500Count = 0;
-  let timeoutCount = 0;
-  const [hrz, rzR, ver] = await Promise.all([
-    _get("/api/healthz"),
-    _get("/api/readyz"),
-    _get("/api/version")
-  ]);
-  const healthz = hrz.timedOut ? "err" : hrz.status;
-  const readyz = rzR.timedOut ? "err" : rzR.status;
-  let version6 = "err";
-  if (ver.status === 200) {
-    try {
-      version6 = (JSON.parse(ver.body)?.sha ?? "").slice(0, 8);
-    } catch {
-    }
-  }
-  if (hrz.timedOut) timeoutCount++;
-  if (rzR.timedOut) timeoutCount++;
-  if (hrz.status === 500) http500Count++;
-  if (rzR.status === 500) http500Count++;
-  let reviewAccountLogin = "skip";
-  const reviewEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
-  const reviewPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
-  if (reviewPassword) {
-    _loginChecksTotal++;
-    const ar4 = await _post("/api/auth/login-email", { email: reviewEmail, password: reviewPassword });
-    if (ar4.timedOut) {
-      reviewAccountLogin = "err";
-      timeoutCount++;
-    } else if (ar4.status === 200) {
-      try {
-        const parsed = JSON.parse(ar4.body);
-        reviewAccountLogin = parsed?.token || parsed?.user ? "ok" : "fail";
-      } catch {
-        reviewAccountLogin = "fail";
-      }
-    } else {
-      reviewAccountLogin = "fail";
-      if (ar4.status === 500) http500Count++;
-    }
-    if (reviewAccountLogin !== "ok") {
-      _loginChecksFailed++;
-      p0Flags.push(`reviewAccountLogin=${reviewAccountLogin}`);
-    }
-  }
-  let poolStats = { total: 0, idle: 0, waiting: 0 };
-  let dbLatencyMs = null;
-  const activeSessions = null;
-  if (rzR.status === 200 || rzR.status === 503) {
-    try {
-      const rz = JSON.parse(rzR.body);
-      if (rz.pool) poolStats = rz.pool;
-      dbLatencyMs = rzR.latencyMs;
-    } catch {
-    }
-  }
-  if (readyz !== 200) p0Flags.push(`readyz=${readyz}`);
-  if (poolStats.waiting > 0) p0Flags.push(`pool_waiting=${poolStats.waiting}`);
-  const [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR] = await Promise.all([
-    _get("/api/businesses?limit=1"),
-    _get("/api/cultural-sites?limit=1"),
-    _get("/api/cultural-sites?heritageCategory=Historical%20Sundown%20Town&limit=1"),
-    _get("/api/community/posts?limit=1"),
-    _get("/api/community/guidelines"),
-    _get("/api/events?limit=1"),
-    // Lightweight availability check — no auth, no OpenAI call, no DB writes.
-    _get("/api/kinfolk/health"),
-    _get("/login"),
-    _get("/privacy"),
-    _get("/terms"),
-    _get("/delete-account")
-    // support / account-deletion URL required by App Store
-  ]);
-  for (const r2 of [bizR, csR, stR, postsR, guideR, evR, kfR, loginR, privR, termsR, supportR]) {
-    if (r2.timedOut) timeoutCount++;
-    if (r2.status === 500) http500Count++;
-  }
-  const businesses = bizR.timedOut ? "err" : bizR.status;
-  const businessesLatencyMs = bizR.timedOut ? null : bizR.latencyMs;
-  const culturalSites = csR.timedOut ? "err" : csR.status;
-  const culturalSitesLatencyMs = csR.timedOut ? null : csR.latencyMs;
-  let sundownTowns = stR.timedOut ? "err" : stR.status;
-  if (!stR.timedOut && stR.status === 200) {
-    try {
-      const d2 = JSON.parse(stR.body);
-      const arr = Array.isArray(d2) ? d2 : d2?.sites ?? [];
-      sundownTowns = arr.length > 0 ? 200 : 0;
-    } catch {
-    }
-  }
-  const mapLoadOk = sundownTowns === 200;
-  const communityPosts = postsR.timedOut ? "err" : postsR.status;
-  const communityGuidelines = guideR.timedOut ? "err" : guideR.status;
-  const events = evR.timedOut ? "err" : evR.status;
-  const kinfolkAvailable = !kfR.timedOut && kfR.status !== 500 && kfR.status !== 503 && kfR.status !== 0;
-  const webLogin = loginR.timedOut ? "err" : loginR.status;
-  const privacy = privR.timedOut ? "err" : privR.status;
-  const terms = termsR.timedOut ? "err" : termsR.status;
-  const support = supportR.timedOut ? "err" : supportR.status;
-  if (sundownTowns === 0) p0Flags.push("sundown_towns_empty");
-  if (sundownTowns === "err") p1Flags.push("sundown_towns_error");
-  if (!mapLoadOk) p1Flags.push("map_load_degraded");
-  if (!kinfolkAvailable) p1Flags.push("kinfolk_unavailable");
-  if (communityPosts === "err") p1Flags.push("community_posts_error");
-  if (businesses === "err") p1Flags.push("businesses_error");
-  if (privacy === "err" || terms === "err" || support === "err") p1Flags.push("legal_pages_error");
-  if (http500Count > 0) p1Flags.push(`http_500s=${http500Count}`);
-  if (timeoutCount > 0) p1Flags.push(`timeouts=${timeoutCount}`);
-  let kinfolkSyntheticResult = "skip";
-  if (_cycleCount % 12 === 0) {
-    const kfPassword = process.env.REVIEW_ACCOUNT_PASSWORD;
-    const kfEmail = process.env.REVIEW_ACCOUNT_EMAIL ?? "reviewer@melaninmaps.com";
-    if (!kfPassword) {
-      kinfolkSyntheticResult = "no_creds";
-    } else {
-      try {
-        const authR = await _post("/api/auth/login-email", { email: kfEmail, password: kfPassword }, 1e4);
-        const token2 = authR.status === 200 ? (() => {
-          try {
-            return JSON.parse(authR.body)?.token;
-          } catch {
-            return null;
-          }
-        })() : null;
-        if (token2) {
-          const ctrl = new AbortController();
-          const timer = setTimeout(() => ctrl.abort(), 2e4);
-          try {
-            const r2 = await fetch(`${BASE}/api/kinfolk/chat`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Cookie: `sid=${token2}` },
-              body: JSON.stringify({ message: "Tell me briefly about Philadelphia.", conversationId: null }),
-              signal: ctrl.signal
-            });
-            const body = await r2.text().catch(() => "");
-            const coherent = r2.status === 200 && body.length > 10 && !body.includes("OpenAI") && !body.includes("API key");
-            kinfolkSyntheticResult = coherent ? "ok" : "fail";
-            if (!coherent) _kinfolkSyntheticFailures++;
-          } catch {
-            kinfolkSyntheticResult = "fail";
-            _kinfolkSyntheticFailures++;
-          } finally {
-            clearTimeout(timer);
-          }
-        } else {
-          kinfolkSyntheticResult = "fail";
-          _kinfolkSyntheticFailures++;
-        }
-      } catch {
-        kinfolkSyntheticResult = "fail";
-        _kinfolkSyntheticFailures++;
-      }
-    }
-    if (kinfolkSyntheticResult === "fail") p1Flags.push("kinfolk_synthetic_fail");
-  }
-  const appleStatus = process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review";
-  const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
-  if (appleApproved && !_approvalDetectedAt) {
-    _approvalDetectedAt = ts3;
-    console.info(JSON.stringify({ event: "BUILD98_APPLE_APPROVED", ts: ts3, appleStatus }));
-  }
-  if (appleStatus === "rejected" || appleStatus === "metadata_rejected") {
-    p0Flags.push(`apple_${appleStatus}`);
-  }
-  if (appleApproved && p0Flags.length === 0) {
-    _postApprovalStableCycles++;
-  } else if (appleApproved && p0Flags.length > 0) {
-    _postApprovalStableCycles = 0;
-  }
-  const poolTrend = _poolTrend();
-  if (poolTrend === "growing") p1Flags.push("pool_total_growing");
-  _totalHttp500s += http500Count;
-  _totalTimeouts += timeoutCount;
-  const entry = {
-    ts: ts3,
-    cycleMs: Date.now() - start,
-    healthz,
-    readyz,
-    version: version6,
-    reviewAccountLogin,
-    loginChecksTotal: _loginChecksTotal,
-    loginChecksFailed: _loginChecksFailed,
-    pool: poolStats,
-    dbLatencyMs,
-    activeSessions,
-    businesses,
-    businessesLatencyMs,
-    culturalSites,
-    culturalSitesLatencyMs,
-    mapLoadOk,
-    sundownTowns,
-    communityPosts,
-    communityGuidelines,
-    events,
-    kinfolkAvailable,
-    webLogin,
-    privacy,
-    http500Count,
-    timeoutCount,
-    poolTrend,
-    p0Flags,
-    p1Flags
-  };
-  _ring.push(entry);
-  if (_ring.length > MAX_ENTRIES) _ring.shift();
-  _cycleCount++;
-  if (p0Flags.length > 0) _p0Count++;
-  if (p1Flags.length > 0) _p1Count++;
-  const level = p0Flags.length > 0 ? "error" : p1Flags.length > 0 ? "warn" : "info";
-  const logFn = level === "error" ? console.error : level === "warn" ? console.warn : console.info;
-  logFn(JSON.stringify({
-    event: "BUILD98_MONITOR",
-    ts: ts3,
-    cycle: _cycleCount,
-    appleStatus,
-    postApprovalStableCycles: _postApprovalStableCycles,
-    p0: p0Flags,
-    p1: p1Flags,
-    pool: poolStats,
-    dbLatencyMs,
-    activeSessions,
-    http500Count,
-    timeoutCount,
-    poolTrend,
-    healthz,
-    readyz,
-    version: version6,
-    reviewAccountLogin,
-    kinfolkSyntheticResult,
-    sundownTowns,
-    mapLoadOk,
-    culturalSitesLatencyMs,
-    businessesLatencyMs
-  }));
 }
 function getMonitorSummary() {
   const total = _ring.length;
@@ -443085,22 +442810,6 @@ function getMonitorSummary() {
     history: _ring.slice(-10)
   };
 }
-function startBuild97Monitor(intervalMs = 3e5) {
-  if (_handle) return;
-  runCycle().catch(() => {
-  });
-  _handle = setInterval(() => {
-    runCycle().catch(() => {
-    });
-  }, intervalMs);
-  _handle.unref();
-  console.info(JSON.stringify({
-    event: "BUILD98_MONITOR_START",
-    intervalMs,
-    stopCondition: "condition-based: Apple approved + no P0 + 12h stable post-approval",
-    ringBufferCapacity: MAX_ENTRIES
-  }));
-}
 function stopBuild97Monitor() {
   if (_handle) {
     clearInterval(_handle);
@@ -443110,7 +442819,7 @@ function stopBuild97Monitor() {
 
 // src/lib/healthMonitor.ts
 init_src();
-var MAX_ENTRIES2 = 150;
+var MAX_ENTRIES = 150;
 var _history = [];
 var _monitorHandle = null;
 var _logger2 = {
@@ -443193,7 +442902,7 @@ async function runHealthCheck() {
 }
 function _push(entry) {
   _history.push(entry);
-  if (_history.length > MAX_ENTRIES2) _history.shift();
+  if (_history.length > MAX_ENTRIES) _history.shift();
 }
 function startHealthMonitor(intervalMs = 3e5) {
   if (_monitorHandle) return;
@@ -454543,7 +454252,6 @@ var server = app_default.listen(port, (err) => {
   logger.info({ pool: getPoolStats() }, "server ready \u2014 initial pool state");
   setMonitorLogger(logger);
   startHealthMonitor();
-  startBuild97Monitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));
   runStartupMigrations(logger).catch(
     (err2) => logger.error({ err: err2 }, "Startup migrations failed")

@@ -90,7 +90,13 @@ const server = app.listen(port, (err) => {
   // 5-minute synthetic DB health checks — maintains 12-hour evidence ring buffer.
   // Results visible at GET /api/readyz/history.
   startHealthMonitor();
-  startBuild97Monitor();
+  // build97Monitor DISABLED (July 28 2026) — it fired 11 parallel HTTP requests
+  // to DB-backed endpoints every 5 minutes, each consuming a pool connection via
+  // the shared pg.Pool. Combined with the 2 direct pool.connect() probes and
+  // Railway healthchecks, peak demand exceeded POOL_MAX causing recurring P0
+  // pool exhaustion. Monitoring is now handled by the external monitoring-service
+  // (separate Railway service). Re-enable only after external monitor is deployed.
+  // startBuild97Monitor();
 
   initStripe().catch((err) => logger.error({ err }, "Background Stripe init failed"));
 

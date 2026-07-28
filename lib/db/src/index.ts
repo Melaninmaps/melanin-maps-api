@@ -34,8 +34,16 @@ export function setDbLogger(logger: DbLogger): void {
  * Maximum connections in the application pg.Pool.
  * Total live DB connections: POOL_MAX (app) + 2 (StripeSync) = POOL_MAX + 2.
  * Exported so readyz and healthMonitor use the same value rather than hardcoding it.
+ *
+ * Increased 8→20 (July 28 2026) after recurring pool exhaustion P0:
+ *   - 11 parallel HTTP checks in build97Monitor each hit DB-backed handlers
+ *   - Railway healthcheck polls /api/readyz on ~10s interval
+ *   - healthMonitor fires pool.connect() every 5 min
+ *   - Combined peak demand exceeded 8 slots → all slots held as zombies
+ * 20 provides headroom for: production traffic + Railway healthchecks +
+ * healthMonitor probe + any background jobs, without saturation.
  */
-export const POOL_MAX = 8;
+export const POOL_MAX = 20;
 
 let _pool: pg.Pool | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
