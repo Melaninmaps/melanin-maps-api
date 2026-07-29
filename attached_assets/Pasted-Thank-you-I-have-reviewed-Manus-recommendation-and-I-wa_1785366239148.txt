@@ -1,0 +1,119 @@
+Thank you. I have reviewed Manus' recommendation, and I want to align Build 99 with a phased launch rather than trying to demonstrate every future capability.
+
+Please use the following as our Apple review strategy unless there is a technical or App Review reason not to.
+
+══════════════════════════════════════════════════════════════
+BUILD 99 APPLE REVIEW STRATEGY
+══════════════════════════════════════════════════════════════
+
+The purpose of Build 99 is to demonstrate a stable, functioning application that accurately represents our current launch phase.
+
+Priority order:
+
+1. No crashes
+2. Stable authentication
+3. Correct waitlist/member routing
+4. Accurate representation of the current product
+5. Clear App Review Notes explaining phased rollout
+
+I agree that Apple does not need to experience every future role if those workflows are not part of the initial member onboarding.
+
+══════════════════════════════════════════════════════════════
+REVIEW ACCOUNT
+══════════════════════════════════════════════════════════════
+
+Prepare one fully functioning Community Member review account.
+
+It should feel like a genuine account rather than a fresh install.
+
+Include:
+
+• completed onboarding
+• Community Agreement accepted
+• completed profile
+• saved businesses or places
+• several realistic community posts
+• one Kinfolk conversation (if Kinfolk is included in Build 99)
+• several events
+• several resources
+• several cultural sites
+• realistic map experience
+
+The reviewer should never encounter empty screens, broken navigation, or unfinished flows.
+
+══════════════════════════════════════════════════════════════
+DEMONSTRATION DATA
+══════════════════════════════════════════════════════════════
+
+Please review the current demonstration data before submission.
+
+Right now many businesses appear obviously seeded.
+
+Examples include:
+
+• repeated placeholder images
+• nearly identical ratings
+• nearly every business marked Black-owned
+• overly positive trust signals
+• unrealistic uniformity
+
+I am NOT asking you to onboard production businesses.
+
+Instead, make the demonstration data feel realistic while avoiding any production emails, DMs, invitations, notifications, or outreach.
+
+Please confirm whether these improvements are backend-only or require a new mobile build.
+
+══════════════════════════════════════════════════════════════
+OTHER MEMBERSHIP ROLES
+══════════════════════════════════════════════════════════════
+
+Business, Community Ambassador, and Organization experiences can be described in the App Review Notes if they are not part of the initial registration experience.
+
+Please ensure there are no broken buttons, inaccessible navigation paths, or placeholder screens that would confuse reviewers.
+
+══════════════════════════════════════════════════════════════
+POOL LEAK MONITORING
+══════════════════════════════════════════════════════════════
+
+The Manus audit identified a possible recurrence of the database pool leak.
+
+This remains a release blocker until proven resolved.
+
+After implementing the fix:
+
+• verify the correct commit is deployed
+• verify stale_bundle becomes FALSE
+• monitor every minute for at least 90 minutes
+• continue monitoring every 5 minutes for the next 6 hours
+• continue monitoring every 15 minutes through the first 24 hours
+
+At every sample capture:
+
+• total connections
+• active connections
+• idle connections
+• waiting requests
+• restart count
+• process ID
+• deployed commit SHA
+
+The pool must return to its normal baseline after activity stops.
+
+Please provide graphs or logs showing that the connection count stabilizes rather than continually increasing.
+
+══════════════════════════════════════════════════════════════
+FINAL RELEASE CHECKLIST
+══════════════════════════════════════════════════════════════
+
+Before submitting Build 99, please provide one consolidated GO/NO-GO report confirming:
+
+• production is running the correct commit
+• stale_bundle is FALSE
+• pool monitoring passed
+• Sentry is fully operational
+• Apple Sign In works
+• review account has been validated
+• review notes have been prepared
+• any remaining known limitations are documented
+
+Our objective is to submit one stable, truthful representation of the current product—not future roadmap functionality.

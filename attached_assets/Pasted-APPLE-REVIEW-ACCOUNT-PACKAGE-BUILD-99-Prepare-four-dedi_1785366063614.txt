@@ -1,0 +1,82 @@
+APPLE REVIEW ACCOUNT PACKAGE — BUILD 99
+
+Prepare four dedicated App Review accounts, unless a role is not actually
+available in the submitted iOS app.
+
+1. COMMUNITY MEMBER REVIEW ACCOUNT
+Provide an admitted member account with:
+- Community Agreement completed
+- populated profile and preferences
+- Discover/map access
+- demonstration businesses and business details
+- cultural sites
+- community feed
+- events
+- saved items
+- one joined Circle
+- resources/library
+- Kinfolk only where safely implemented
+- settings and in-app account deletion
+
+2. BUSINESS OWNER REVIEW ACCOUNT
+Provide an account connected to one clearly controlled demonstration
+business with:
+- business dashboard
+- editable profile
+- images, hours and contact details
+- demonstration review and owner response
+- events/offers and analytics only if included in Build 99
+- no communications to real or unonboarded businesses
+- no fabricated verification, ratings, reviews or safety claims
+
+3. COMMUNITY AMBASSADOR REVIEW ACCOUNT
+Show only Ambassador functions that are genuinely implemented:
+- Ambassador role/profile state
+- permitted contribution or curation tools
+- nomination/recommendation workflow if live
+- disclosure controls if live
+
+Do not represent future Ambassador governance or Kinfolk influence as
+complete.
+
+4. ADMIN/MODERATOR REVIEW ACCOUNT
+Provide this only if administration is available inside the submitted iOS
+app. Show:
+- moderation queue
+- claims and verification review
+- report handling
+- waitlist/member management
+- approve/reject actions
+
+If admin is web-only, state that clearly in App Review Notes and do not
+unnecessarily expose privileged production access.
+
+PUBLIC/WAITLIST TEST
+Also provide exact steps for Apple to test:
+- new-user registration
+- Community Agreement
+- waitlist submission
+- confirmation
+- server-side prevention of unauthorized membership access
+
+REVIEW-DATA REQUIREMENTS
+- realistic and varied demonstration data
+- no repeated placeholder image across most businesses
+- no obviously fake universal five-star ratings
+- no fabricated safety scores
+- no false verified badges
+- no real business outreach or notifications
+- no action that depends on staff manually approving Apple during review
+- no OTP or MFA unless the required code is provided and remains usable
+
+For every account provide:
+- username/email
+- password
+- role
+- exact screens to review
+- expected results
+- any limitations
+- confirmation credentials remain active throughout review
+
+Confirm which of these experiences are actually in Build 99 and identify
+anything that is future-state only.
