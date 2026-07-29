@@ -61328,6 +61328,37 @@ function initPoolInstrumentation(pool4) {
     _baseline = snap.total;
   }, 6e4);
   sweepHandle.unref();
+  const REAPER_ZOMBIE_THRESHOLD = 5;
+  const reaperHandle = setInterval(() => {
+    const snap = poolSnapshot(pool4);
+    if (snap.total <= REAPER_ZOMBIE_THRESHOLD || snap.idle > 0) return;
+    const clients = pool4._clients ?? [];
+    const reaped = [];
+    clients.forEach((client, idx) => {
+      try {
+        client.connection?.stream?.destroy();
+        reaped.push(idx);
+      } catch (_2) {
+      }
+    });
+    if (reaped.length > 0) {
+      const msg = {
+        level: "error",
+        event: "POOL_REAPER_FIRED",
+        reaped: reaped.length,
+        pool: snap,
+        detail: "zombie connections detected (total>" + REAPER_ZOMBIE_THRESHOLD + ", idle=0). Force-closed TCP sockets so pool can recover."
+      };
+      console.error(JSON.stringify(msg));
+      push({
+        ts: (/* @__PURE__ */ new Date()).toISOString(),
+        type: "error",
+        detail: `pool_reaper: force-closed ${reaped.length} zombie connections`,
+        pool: snap
+      });
+    }
+  }, 6e4);
+  reaperHandle.unref();
 }
 function getPoolAuditLog(limit2 = 200) {
   return _ring.slice(-limit2);
@@ -61414,14 +61445,18 @@ function getPool() {
       //   signal for the POOL_GROWTH_DETECTED warning in pool-instrumentation.
       // keepAliveInitialDelayMillis: start TCP keepalive probes after 1 s
       //   (was 10 s). Dead sockets detected in seconds, not up to 685 s.
-      // maxLifetimeSeconds: recycle every connection after 30 minutes
-      //   regardless of idle state. Second-layer defense against long-lived
-      //   connections that survive a Railway network reconfiguration.
+      // maxLifetimeSeconds: recycle every connection after 2 minutes
+      //   regardless of state. Any zombie (checked-out connection whose
+      //   release() is never called) is automatically killed at the 2-minute
+      //   mark. This is the Manus-recommended systemic fix — rather than
+      //   hunting individual leak sources, every connection has a hard
+      //   2-minute ceiling so leaks can never accumulate past one cycle.
+      //   Was 1800s (30 min); reduced to 120s (2 min) July 29 2026.
       idleTimeoutMillis: 1e4,
       allowExitOnIdle: true,
       keepAlive: true,
       keepAliveInitialDelayMillis: 1e3,
-      maxLifetimeSeconds: 1800,
+      maxLifetimeSeconds: 120,
       // ─── Server-side zombie connection killers ───────────────────────────
       // idle_in_transaction_session_timeout: PostgreSQL forcibly closes any
       //   connection that has been idle inside an open transaction for longer
@@ -454140,8 +454175,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "66778f8c853f4ae2907302e0af62e1d94cda9aa5";
-var BUILD_AT = "2026-07-29T19:49:49.304Z";
+var BUILT_FROM_SHA = "a66000694f3ac98317585728e55bc1908f650141";
+var BUILD_AT = "2026-07-29T20:38:40.365Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
