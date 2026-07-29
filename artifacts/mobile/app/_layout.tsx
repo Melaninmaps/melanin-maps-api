@@ -68,6 +68,7 @@ import {
   setAppStateBreadcrumb,
   addMemoryWarningBreadcrumb,
   checkAndSendSavedCrash,
+  reportErrorBoundary,
 } from "@/lib/crashLogger";
 
 installCrashLogger();
@@ -829,7 +830,7 @@ function _RootLayout() {
   return (
     <ThemeProvider>
     <SafeAreaProvider>
-      <ErrorBoundary>
+      <ErrorBoundary onError={reportErrorBoundary}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <SubscriptionProvider>

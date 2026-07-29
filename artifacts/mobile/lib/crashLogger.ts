@@ -299,6 +299,22 @@ export async function clearSavedCrashReport(): Promise<void> {
   } catch {}
 }
 
+/**
+ * reportErrorBoundary — called by ErrorBoundary.onError
+ *
+ * Builds and sends a crash report typed "error_boundary" so React render-tree
+ * errors (component exceptions that don't bubble to the global error handler)
+ * are captured in the same pipeline as JS exceptions and unhandled rejections.
+ */
+export function reportErrorBoundary(error: Error, componentStack: string): void {
+  // Append componentStack to the error stack so it's visible in Railway logs.
+  const enriched = new Error(error.message);
+  enriched.name = error.name ?? "ErrorBoundary";
+  enriched.stack = `${error.stack ?? error.message}\n\nComponent Stack:${componentStack}`;
+  const report = buildReport("error_boundary", enriched);
+  saveAndSend(report).catch(() => {});
+}
+
 // ─── Global error handler installation ───────────────────────────────────────
 
 let _installed = false;
