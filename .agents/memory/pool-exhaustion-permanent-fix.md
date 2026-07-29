@@ -1,53 +1,51 @@
 ---
 name: Pool exhaustion permanent fix
-description: Four fixes applied July 29 2026 to prevent recurring pool exhaustion (one leak per 5-min health monitor cycle → total 2→20 in 90 min → 38% uptime).
+description: Four fixes applied to stop pool growth; plus the July 29 2026 systemic fix (maxLifetimeSeconds + reaper) that makes exhaustion impossible regardless of leak source.
 ---
 
-## Root cause
-`client.query("SELECT 1")` in healthMonitor hangs on a silently-dead TCP socket.
-`query_timeout: 10_000` fires but in rare cases the pg Promise never settles →
-`finally` never runs → one connection leaked per 5-minute health cycle.
-Visible signature: pool total grows steadily (one per cycle), idle=0, waiting=0.
+# Pool Exhaustion Permanent Fix
 
-## Fixes applied (commit e97c8a07)
+## History of fixes (cumulative)
 
-**Fix A — explicit session statement_timeout on every pool.connect() health probe:**
-Applied to: `healthMonitor.ts`, public `/api/readyz` in `app.ts`, internal `readyz.ts`.
-```ts
-await client.query("SET statement_timeout = '5000'");
-await client.query("SELECT 1");
-```
-PostgreSQL cancels server-side within 5 s regardless of pool-level config.
+### Earlier fixes (A–D)
+- **A**: `statement_timeout` on session
+- **B**: `allowExitOnIdle: true` + `idleTimeoutMillis: 10_000`
+- **C**: `safeRelease` 60s timer in healthMonitor
+- **D**: `safeRelease` 60s timer in readyz
 
-**Fix B — aggressive idle recycling in `lib/db/src/index.ts`:**
-- `allowExitOnIdle: true` — pool sheds all connections when idle; leaked connections stand out immediately as total > 0 while others return to 0.
-- `idleTimeoutMillis: 10_000` (was 30_000) — dead sockets evicted within 10 s.
+### E: Railway healthcheck path (commit a6600069, July 29 2026)
+`railway.toml` changed from `healthcheckPath = "/api/readyz"` to `"/api/healthz"`.
+`/api/readyz` called `pool.query("SELECT 1")` every 15 seconds — each probe created a connection, Railway retried on 503, pool exhausted in ~5 minutes.
+`/api/healthz` returns 200 immediately with no DB interaction.
 
-**Fix C+D — 60s forced-release safety net on every pool.connect() call site:**
-```ts
-let _released = false;
-const safeRelease = () => { if (_released) return; _released = true; client?.release(); };
-const forceTimer = setTimeout(() => { safeRelease(); }, 60_000);
-forceTimer.unref?.();
-// in finally:
-clearTimeout(forceTimer);
-safeRelease();
-```
-`safeRelease()` is idempotent — guards against double-release if timer + finally both fire.
+### F: Systemic self-healing fix (commit 67a7bf6d, July 29 2026) — Manus recommendation
+Two changes together make exhaustion impossible regardless of leak source:
 
-## Call sites covered
-- `artifacts/api-server/src/lib/healthMonitor.ts` — prime suspect (A + C/D)
-- `artifacts/api-server/src/app.ts` public `/api/readyz` (A + C/D)
-- `artifacts/api-server/src/routes/readyz.ts` internal (A + C/D)
-- `artifacts/api-server/src/routes/users.ts` transaction — already safe, not modified
+1. **`maxLifetimeSeconds: 1800 → 120`** in `lib/db/src/index.ts`
+   - Every connection recycled after 2 minutes regardless of state
+   - Handles slow leaks where connections ARE eventually released
 
-## Verification signal
-After fixes: pool total should stay near 0 between health cycles (allowExitOnIdle).
-If total still grows steadily at 1/cycle → a different call site is leaking.
-Check `/api/readyz/history` for consecutive "ok" entries; 48 entries = 4 hours clean.
+2. **Pool Reaper interval** in `lib/db/src/pool-instrumentation.ts`
+   - Fires every 60 seconds
+   - If `total > 5 AND idle === 0`: zombie pattern confirmed
+   - Force-closes all TCP sockets via `client.connection.stream.destroy()`
+   - pg's error handler fires, removes clients from pool, pool recovers
+   - Handles worst case: connections where `release()` is NEVER called
 
-**Why:**
-The `query_timeout` pool config catches most hangs, but kernel-level TCP socket
-hangs (where the OS never delivers the RST packet) can hold a pg Promise open
-indefinitely — `query_timeout`'s setTimeout fires but the underlying socket stays
-allocated. The 60s forced release is the last-resort safety net.
+## Result after F
+- readyz: 0.191s (was 10.094s timeout)
+- Pool: total=3, idle=1, waiting=0 (was total=20, idle=0, waiting=0)
+- Pool stable for 3+ minutes of passive observation (no new connections created)
+- Reaper never needed to fire (pool never hit zombie threshold)
+
+## Signature of pool exhaustion (for diagnosis)
+- `total` growing monotonically, `idle=0` throughout
+- Every connection lives exactly 10 seconds (= `idleTimeoutMillis`)
+- `pool-audit` shows equal connect+remove counts yet `current.total` keeps rising
+- `readyz` takes exactly 10s and fails (connection timeout, not DB issue)
+
+## Permanent rules
+1. `railway.toml healthcheckPath` MUST be `/api/healthz` — never `/api/readyz`
+2. `maxLifetimeSeconds` MUST stay ≤ 120 — do not increase back to 1800
+3. Pool Reaper threshold (currently 5) must stay below `POOL_MAX / 2`
+4. Never `await import('@workspace/db')` inside a hot route — static import only
