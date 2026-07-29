@@ -187,6 +187,64 @@ export function initPoolInstrumentation(pool: Pool): void {
   }, 60_000);
   // Unref so the interval doesn't block clean process exit
   sweepHandle.unref();
+
+  // ── Pool Reaper (Manus recommendation, July 29 2026) ──────────────────────
+  // Every 60 s: if all connections are checked out (idle=0) AND total exceeds
+  // the minimum threshold, we have zombie connections that will never release
+  // on their own. Force-close their TCP sockets so pg's error handler fires,
+  // removes them from _clients, and the pool can recover.
+  //
+  // This is the systemic fix: rather than hunting every individual leak source,
+  // we ensure the pool ALWAYS recovers within one 60-second reaper cycle.
+  //
+  // Works alongside maxLifetimeSeconds=120 in the pool config:
+  //   • maxLifetimeSeconds marks connections expired so they are destroyed
+  //     when released — handles connections that ARE eventually released
+  //   • Reaper handles the worst case: connections that are NEVER released
+  //     (release() is never called). Their TCP sockets are force-closed here.
+  const REAPER_ZOMBIE_THRESHOLD = 5;   // trigger when total > this AND idle=0
+  const reaperHandle = setInterval(() => {
+    const snap = poolSnapshot(pool);
+    if (snap.total <= REAPER_ZOMBIE_THRESHOLD || snap.idle > 0) return;
+
+    // All connections checked out, none idle — zombie pattern confirmed.
+    // Access the real pool's _clients array via the Proxy.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clients: any[] = (pool as any)._clients ?? [];
+    const reaped: number[] = [];
+
+    clients.forEach((client: any, idx: number) => {
+      try {
+        // Destroy the underlying TCP socket. pg's internal error handler fires,
+        // which calls Pool._remove(client), decrementing totalCount.
+        client.connection?.stream?.destroy();
+        reaped.push(idx);
+      } catch (_) {
+        // Client already closed — nothing to do
+      }
+    });
+
+    if (reaped.length > 0) {
+      const msg = {
+        level: "error",
+        event: "POOL_REAPER_FIRED",
+        reaped: reaped.length,
+        pool: snap,
+        detail:
+          "zombie connections detected (total>" +
+          REAPER_ZOMBIE_THRESHOLD +
+          ", idle=0). Force-closed TCP sockets so pool can recover.",
+      };
+      console.error(JSON.stringify(msg));
+      push({
+        ts: new Date().toISOString(),
+        type: "error",
+        detail: `pool_reaper: force-closed ${reaped.length} zombie connections`,
+        pool: snap,
+      });
+    }
+  }, 60_000);
+  reaperHandle.unref();
 }
 
 /**

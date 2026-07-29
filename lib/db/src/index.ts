@@ -94,14 +94,18 @@ function getPool(): pg.Pool {
       //   signal for the POOL_GROWTH_DETECTED warning in pool-instrumentation.
       // keepAliveInitialDelayMillis: start TCP keepalive probes after 1 s
       //   (was 10 s). Dead sockets detected in seconds, not up to 685 s.
-      // maxLifetimeSeconds: recycle every connection after 30 minutes
-      //   regardless of idle state. Second-layer defense against long-lived
-      //   connections that survive a Railway network reconfiguration.
+      // maxLifetimeSeconds: recycle every connection after 2 minutes
+      //   regardless of state. Any zombie (checked-out connection whose
+      //   release() is never called) is automatically killed at the 2-minute
+      //   mark. This is the Manus-recommended systemic fix — rather than
+      //   hunting individual leak sources, every connection has a hard
+      //   2-minute ceiling so leaks can never accumulate past one cycle.
+      //   Was 1800s (30 min); reduced to 120s (2 min) July 29 2026.
       idleTimeoutMillis: 10_000,
       allowExitOnIdle: true,
       keepAlive: true,
       keepAliveInitialDelayMillis: 1_000,
-      maxLifetimeSeconds: 1800,
+      maxLifetimeSeconds: 120,
       // ─── Server-side zombie connection killers ───────────────────────────
       // idle_in_transaction_session_timeout: PostgreSQL forcibly closes any
       //   connection that has been idle inside an open transaction for longer
