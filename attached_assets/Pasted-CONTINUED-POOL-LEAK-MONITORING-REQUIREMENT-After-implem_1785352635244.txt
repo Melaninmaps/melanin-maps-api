@@ -1,0 +1,81 @@
+CONTINUED POOL-LEAK MONITORING REQUIREMENT
+
+After implementing the Manus-identified fix and proving the correct commit
+is deployed, continue production monitoring as follows:
+
+PHASE 1 — IMMEDIATE VALIDATION
+- sample every 1 minute for 90 minutes
+- include both idle periods and controlled test traffic
+
+PHASE 2 — SAME-DAY STABILITY
+- sample every 5 minutes for the next 6 hours
+
+PHASE 3 — OVERNIGHT VALIDATION
+- sample every 15 minutes until 24 hours after deployment
+
+PHASE 4 — POST-RELEASE WATCH
+- review the daily connection trend for 7 days
+- alert immediately if the pool shows sustained growth, waiting requests,
+  saturation, unexpected restarts, or a failure to return to baseline
+
+At every sample capture:
+
+- timestamp
+- total connections
+- active connections
+- idle connections
+- waiting requests
+- configured pool maximum
+- process ID
+- restart count
+- deployed commit SHA
+- stale_bundle status
+
+During the first 90 minutes, also attribute database client acquisition to:
+
+- request ID
+- route or operation
+- checkout time
+- release time
+- total duration held
+- success, timeout, exception, or rollback
+- confirmation that client.release() executed
+
+Run controlled repetitions of:
+
+- login
+- registration and waitlist routing
+- session renewal
+- businesses list
+- business detail
+- map loading and refresh
+- Kinfolk requests
+- readyz and health endpoints
+- transaction rollback
+- API timeout and exception paths
+
+PASS CRITERIA
+
+The pool must:
+
+- stabilize rather than grow continuously
+- return close to baseline after each test
+- maintain zero waiting requests under normal traffic
+- show no abandoned clients or transactions
+- avoid saturation and restarts
+- remain on the intended deployed commit
+- keep stale_bundle false
+
+Do not close the incident based only on a restart, a short healthy window,
+or the pool remaining below its maximum.
+
+Provide:
+
+1. baseline before testing
+2. peak during testing
+3. time required to return to baseline
+4. 90-minute graph or time-series log
+5. 6-hour summary
+6. 24-hour summary
+7. remaining risks
+8. final GO or NO-GO recommendation

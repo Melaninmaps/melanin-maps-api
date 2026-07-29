@@ -8,7 +8,7 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, usersTable, getPoolStats, memberAgreementsTable } from "@workspace/db";
+import { db, usersTable, getPoolStats, memberAgreementsTable, waitlistTable } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
@@ -559,6 +559,37 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       res.status(409).json({ error: "That @username is already taken — please choose a different one. Your email address is fine." });
       return;
     }
+
+    // ── Waitlist enforcement (server-side gate) ───────────────────────────────
+    // Mapping With Melanin is invite-only during phased launch. Registration is
+    // only permitted for emails that appear in waitlist_signups AND have been
+    // approved by an admin (approvedAt is non-null). This enforces the gate at
+    // the API level — anyone addressing the endpoint directly without an approved
+    // waitlist entry receives 403, not a new account.
+    const [waitlistEntry] = await db
+      .select({ approvedAt: waitlistTable.approvedAt })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.email, cleanEmail))
+      .limit(1);
+
+    if (!waitlistEntry) {
+      req.log.info({ ...diagBase, event: "AUTH_REGISTER_NOT_ON_WAITLIST", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
+      res.status(403).json({
+        error: "Mapping With Melanin is currently invite-only. Join the waitlist at mappingwithmelanin.com to request access.",
+        code: "WAITLIST_REQUIRED",
+      });
+      return;
+    }
+    if (!waitlistEntry.approvedAt) {
+      req.log.info({ ...diagBase, event: "AUTH_REGISTER_WAITLIST_PENDING", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
+      res.status(403).json({
+        error: "Your waitlist application is still pending review. You'll receive an email when you're approved to join.",
+        code: "WAITLIST_PENDING",
+      });
+      return;
+    }
+    // ── End waitlist enforcement ──────────────────────────────────────────────
+
     const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
 
     const [user] = await db

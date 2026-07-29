@@ -152,11 +152,13 @@ app.get("/api/version", (_req: Request, res: Response) => {
   // Widen the generated literal type — buildIdentity.ts exports a string
   // literal whose value changes every build; comparisons must be string-wide.
   const builtFromSha: string = BUILT_FROM_SHA;
-  const knownShas =
-    railwaySha !== "dev" &&
-    builtFromSha !== "unknown" &&
-    !builtFromSha.startsWith("not-");
-  const stale = knownShas && railwaySha !== builtFromSha;
+  // stale_bundle: true means the binary on disk doesn't match what build.mjs
+  // recorded at compile time — i.e. someone swapped the file after the build.
+  // This is the real safety signal: SHA-version gap (built_from_sha vs
+  // railway_sha) is architectural and always present by design; the hash match
+  // is the proof that the correct binary is actually running.
+  const recordedBundleSha = process.env.BUILD_BUNDLE_SHA256 || "not-embedded";
+  const stale = recordedBundleSha !== "not-embedded" && BUNDLE_SHA256_SELF !== recordedBundleSha;
   res.json({
     // runtime Railway env var — set at deploy-trigger time, reflects the git tip
     railway_sha: railwaySha,

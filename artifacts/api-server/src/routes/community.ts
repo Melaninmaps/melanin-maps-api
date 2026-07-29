@@ -91,6 +91,10 @@ async function resolveAuthorInfo(userId: string): Promise<{ name: string; initia
 
 // GET /community/posts — paginated feed with business enrichment
 router.get("/community/posts", async (req: Request, res: Response) => {
+  if (!(req as any).user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const postType = typeof req.query.postType === "string" ? req.query.postType : undefined;

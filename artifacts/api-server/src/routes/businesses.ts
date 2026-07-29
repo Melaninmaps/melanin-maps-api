@@ -41,6 +41,11 @@ function isAdmin(req: Request): boolean {
 }
 
 router.get("/businesses", async (req: Request, res: Response) => {
+  // Members-only: all discovery is gated behind authentication
+  if (!(req as any).user) {
+    res.status(401).json({ error: "Authentication required. Please sign in to browse businesses." });
+    return;
+  }
   try {
     await withDbRetry(async () => {
     const { category, search, state, handle, culturalPreference, ownership } = req.query;
@@ -820,6 +825,10 @@ router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response)
 });
 
 router.get("/businesses/:id", async (req: Request, res: Response) => {
+  if (!(req as any).user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const id = String(req.params.id);
     const [business] = await db

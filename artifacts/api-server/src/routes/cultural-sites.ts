@@ -96,6 +96,10 @@ async function ensureSupportLinksSeeded() {
 // ── GET /cultural-sites ───────────────────────────────────────────────────────
 
 router.get("/cultural-sites", async (req: Request, res: Response) => {
+  if (!(req as any).user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     // ensureSeeded() is NOT called here — it holds a DB connection for the entire
     // seed operation (TRUNCATE + multi-row INSERT) on every request, exhausting the

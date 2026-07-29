@@ -396954,6 +396954,23 @@ router2.post("/auth/register", async (req, res) => {
         res.status(409).json({ error: "That @username is already taken \u2014 please choose a different one. Your email address is fine." });
         return;
       }
+      const [waitlistEntry] = await db.select({ approvedAt: waitlistTable.approvedAt }).from(waitlistTable).where(eq(waitlistTable.email, cleanEmail)).limit(1);
+      if (!waitlistEntry) {
+        req.log.info({ ...diagBase, event: "AUTH_REGISTER_NOT_ON_WAITLIST", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(403).json({
+          error: "Mapping With Melanin is currently invite-only. Join the waitlist at mappingwithmelanin.com to request access.",
+          code: "WAITLIST_REQUIRED"
+        });
+        return;
+      }
+      if (!waitlistEntry.approvedAt) {
+        req.log.info({ ...diagBase, event: "AUTH_REGISTER_WAITLIST_PENDING", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
+        res.status(403).json({
+          error: "Your waitlist application is still pending review. You'll receive an email when you're approved to join.",
+          code: "WAITLIST_PENDING"
+        });
+        return;
+      }
       const referralCode = crypto5.randomBytes(4).toString("hex").toUpperCase();
       const [user] = await db.insert(usersTable).values({
         email: cleanEmail,
@@ -399319,6 +399336,10 @@ function isAdmin(req) {
   return ADMIN_EMAILS2.includes(user.email);
 }
 router4.get("/businesses", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required. Please sign in to browse businesses." });
+    return;
+  }
   try {
     await withDbRetry(async () => {
       const { category, search, state, handle, culturalPreference, ownership } = req.query;
@@ -400027,6 +400048,10 @@ router4.patch("/businesses/mine/weekly-schedule", async (req, res) => {
   }
 });
 router4.get("/businesses/:id", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const id2 = String(req.params.id);
     const [business] = await db.select().from(businessesTable).where(eq(businessesTable.id, id2));
@@ -412917,6 +412942,10 @@ async function resolveAuthorInfo(userId) {
   return { name: name3, initials, color };
 }
 router17.get("/community/posts", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const category = typeof req.query.category === "string" ? req.query.category : void 0;
     const postType = typeof req.query.postType === "string" ? req.query.postType : void 0;
@@ -417178,6 +417207,10 @@ init_src();
 init_drizzle_orm();
 var router21 = (0, import_express21.Router)();
 router21.get("/events", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const { category, search, featured } = req.query;
     const conditions = [];
@@ -420558,14 +420591,14 @@ function isWeatherQuery(msg) {
   return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(msg);
 }
 var CITY_VOICES2 = {
-  "new york": { slang: ["deadass", "no cap", "mad", "wildin", "fam", "bussin", "lowkey", "bet"], phrases: ["deadass this spot is legendary", "no cap you need to pull up", "mad vibes in this neighborhood"], culturalTouchstones: ["Harlem Renaissance", "Brooklyn Minority excellence", "Bed-Stuy do or die"], writingGuidance: "Write like a proud New Yorker \u2014 direct, confident, a little fast-paced. Use 'deadass', 'no cap', 'mad' as an adjective, 'fam'. Reference Harlem, Brooklyn, the Bronx." },
-  "atlanta": { slang: ["slime", "on gang", "bussin", "the A", "ATLien", "drip", "lowkey", "no cap", "period"], phrases: ["on gang this spot is bussin", "the A never misses", "this is where the culture lives"], culturalTouchstones: ["Sweet Auburn", "the BeltLine", "Old Fourth Ward", "Atlanta as the Minority mecca", "HBCUs", "trap music origins"], writingGuidance: "Write with Atlanta swagger \u2014 confident, aspirational, culturally rich. ATL is the Minority mecca. Use 'the A', 'slime', 'on gang', 'bussin'. Reference BeltLine, Sweet Auburn, HBCUs." },
+  "new york": { slang: ["deadass", "no cap", "mad", "wildin", "fam", "bussin", "lowkey", "bet"], phrases: ["deadass this spot is legendary", "no cap you need to pull up", "mad vibes in this neighborhood"], culturalTouchstones: ["Harlem Renaissance", "Brooklyn Black excellence", "Bed-Stuy do or die"], writingGuidance: "Write like a proud New Yorker \u2014 direct, confident, a little fast-paced. Use 'deadass', 'no cap', 'mad' as an adjective, 'fam'. Reference Harlem, Brooklyn, the Bronx." },
+  "atlanta": { slang: ["slime", "on gang", "bussin", "the A", "ATLien", "drip", "lowkey", "no cap", "period"], phrases: ["on gang this spot is bussin", "the A never misses", "this is where the culture lives"], culturalTouchstones: ["Sweet Auburn", "the BeltLine", "Old Fourth Ward", "Atlanta as the Black mecca", "HBCUs", "trap music origins"], writingGuidance: "Write with Atlanta swagger \u2014 confident, aspirational, culturally rich. ATL is the Black mecca. Use 'the A', 'slime', 'on gang', 'bussin'. Reference BeltLine, Sweet Auburn, HBCUs." },
   "chicago": { slang: ["shorty", "the chi", "finna", "lowkey", "on me", "no cap", "drip", "bro", "gang"], phrases: ["this spot is cold on me", "the Chi never misses", "finna pull up to this jawn"], culturalTouchstones: ["Bronzeville Black Metropolis", "South Side culture", "Chicago blues roots", "Kanye and Chance legacy", "Harold Washington legacy"], writingGuidance: "Write with Chi-town pride \u2014 real, resilient, deeply rooted. Use 'the Chi', 'shorty', 'finna', 'on me', reference the South Side and Bronzeville." },
   "houston": { slang: ["trill", "H-Town", "third coast", "finna", "bruh", "what it do", "screwed up"], phrases: ["trill vibes only in H-Town", "what it do, this spot is everything"], culturalTouchstones: ["Third Ward", "Emancipation Park", "DJ Screw legacy", "UGK", "Juneteenth origins in Texas", "Project Row Houses"], writingGuidance: "Write with Houston trill energy \u2014 slow, confident, layered. Use 'trill', 'H-Town', 'third coast', 'what it do'. Reference the screwed music legacy and Juneteenth origins." },
-  "los angeles": { slang: ["no cap", "faded", "saucy", "dub", "west side", "lowkey", "bussin", "hard", "fire", "on god"], phrases: ["this spot hits different out west", "no cap the west coast eats", "lowkey this is the move"], culturalTouchstones: ["Crenshaw District", "Leimert Park Village", "Inglewood culture", "Compton legacy", "Central Avenue jazz history", "Minority Hollywood"], writingGuidance: "Write with West Coast cool \u2014 laid back but confident. Reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence." },
+  "los angeles": { slang: ["no cap", "faded", "saucy", "dub", "west side", "lowkey", "bussin", "hard", "fire", "on god"], phrases: ["this spot hits different out west", "no cap the west coast eats", "lowkey this is the move"], culturalTouchstones: ["Crenshaw District", "Leimert Park Village", "Inglewood culture", "Compton legacy", "Central Avenue jazz history", "Black Hollywood"], writingGuidance: "Write with West Coast cool \u2014 laid back but confident. Reference Leimert Park, Crenshaw, Inglewood. The vibe is sun-kissed excellence." },
   "dc": { slang: ["junt", "bama", "DMV", "no cap", "go-go", "move", "finna", "bruh", "joint", "hard"], phrases: ["this junt is everything in the DMV", "go-go vibes all day", "the District never misses"], culturalTouchstones: ["U Street Corridor", "go-go music culture", "Howard University legacy", "Anacostia history", "Chuck Brown legacy", "Ben's Chili Bowl"], writingGuidance: "Write with DMV energy \u2014 sophisticated but with that go-go bounce. Reference U Street, Howard University, go-go culture." },
   "new orleans": { slang: ["cher", "lagniappe", "making groceries", "pass a good time", "where y'at", "laissez les bons temps rouler", "NOLA"], phrases: ["cher this spot will make you pass a good time", "lagniappe \u2014 a little something extra"], culturalTouchstones: ["Trem\xE9 neighborhood", "Second Line traditions", "Mardi Gras Indian culture", "jazz origins", "Dooky Chase legacy", "Congo Square history"], writingGuidance: "Write with NOLA warmth and rhythm \u2014 joyful, deep-rooted, full of life. Use 'cher', 'lagniappe', 'pass a good time'. Reference the Trem\xE9, Second Line, Mardi Gras Indians." },
-  "miami": { slang: ["305", "no cap", "drip", "lit", "Magic City", "fam", "fire", "on god", "bussin", "lowkey"], phrases: ["305 always delivers", "Magic City energy is unmatched"], culturalTouchstones: ["Little Haiti culture", "Overtown Minority history", "Liberty City", "Afro-Caribbean influence", "Miami Bass music origins"], writingGuidance: "Write with Miami heat \u2014 vibrant, multicultural, bold. Reference the Afro-Caribbean influence, Overtown, Little Haiti." },
+  "miami": { slang: ["305", "no cap", "drip", "lit", "Magic City", "fam", "fire", "on god", "bussin", "lowkey"], phrases: ["305 always delivers", "Magic City energy is unmatched"], culturalTouchstones: ["Little Haiti culture", "Overtown Black history", "Liberty City", "Afro-Caribbean influence", "Miami Bass music origins"], writingGuidance: "Write with Miami heat \u2014 vibrant, multicultural, bold. Reference the Afro-Caribbean influence, Overtown, Little Haiti." },
   "philadelphia": { slang: ["jawn", "iight", "no cap", "joint", "wooder ice", "young bull", "ard"], phrases: ["this jawn is everything", "iight pull up to this spot"], culturalTouchstones: ["Black Bottom history", "North Philly culture", "West Philly", "Roots and Questlove", "South Street"], writingGuidance: "Write with Philly energy \u2014 gritty, proud, loyal. Use 'jawn' liberally, 'iight', 'young bull', 'ard'." },
   "detroit": { slang: ["finna", "no cap", "Motown", "313", "on me", "hard", "drip", "bruh", "slime", "lowkey"], phrases: ["313 never misses", "Motown energy in this spot", "Detroit hard as ever"], culturalTouchstones: ["Motown Records legacy", "Black Bottom neighborhood history", "Paradise Valley", "The Heidelberg Project", "Detroit techno origins"], writingGuidance: "Write with Detroit resilience \u2014 proud, gritty, innovative. Use '313', 'Motown', reference Black Bottom, Paradise Valley." },
   "memphis": { slang: ["no cap", "bruh", "finna", "901", "Bluff City", "slime", "hard", "on god", "lowkey", "fam"], phrases: ["901 always delivers", "Bluff City culture is everything"], culturalTouchstones: ["Beale Street heritage", "Memphis blues origins", "Civil Rights history (Lorraine Motel)", "Three 6 Mafia legacy", "soul food capital", "Stax Records"], writingGuidance: "Write with Memphis soul \u2014 deep, soulful, historically rooted. Use '901', 'Bluff City', reference Beale Street, Stax Records, the Civil Rights legacy." },
@@ -421180,7 +421213,7 @@ For any city or trip question, automatically include:
 Responses should feel warm, researched, and personalized \u2014 like a knowledgeable friend who already did the homework.` : `
 EXPLORE TIER \u2014 FOCUSED & CURATED:
 For city or trip questions: deliver 2\u20133 carefully chosen restaurants + 1 relevant lifestyle service. Quality over quantity. At the end, warmly mention: "Upgrade to Navigator or Trailblazer to unlock your full personalized lifestyle bundle \u2014 restaurants, events, your barber or nail tech already found \u2014 all in one place."`;
-  return `You are KinfolkAI\u2122 \u2014 the most intuitive, knowledgeable life companion built for the Minority community. You are not a search engine and not a restricted bot. You are the user's most trusted, well-connected friend \u2014 someone who knows them, remembers everything, and genuinely helps with all of life's questions: travel, weather, community, moving, business, family, health, finances, and everything in between.
+  return `You are KinfolkAI\u2122 \u2014 the most intuitive, knowledgeable life companion built for the Black community. You are not a search engine and not a restricted bot. You are the user's most trusted, well-connected friend \u2014 someone who knows them, remembers everything, and genuinely helps with all of life's questions: travel, weather, community, moving, business, family, health, finances, and everything in between.
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
@@ -421401,7 +421434,7 @@ If you're asking a question or don't have enough info yet, set "recommendations"
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
 BUSINESSES ARRAY \u2014 PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the VERIFIED PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business that is not explicitly listed in the VERIFIED PLATFORM BUSINESSES section. If no platform businesses match what the user is looking for, set "businesses": [] and explain in the "reply" field: "Mapping With Melanin doesn't have a verified listing for that specific type in [city] yet \u2014 here's what I know generally..." then offer general guidance in the reply. Never populate the businesses array with invented or unverified names.
 SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY \u2014 parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
-Only recommend real Minority-owned or culturally Minority spots \u2014 no tourist traps, no chains.${businessCatalog?.length ? `
+Only recommend real Black-owned or culturally significant spots \u2014 no tourist traps, no chains.${businessCatalog?.length ? `
 
 VERIFIED PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} \u2014 PRIORITIZE THESE:
 These are real, verified minority-owned businesses listed on Mapping With Melanin\u2122. When they match the user's vibe or needs, recommend them by name and tell their story authentically. Weave in their mission, values, and personality \u2014 not just their category.
@@ -442434,6 +442467,10 @@ async function ensureSupportLinksSeeded() {
   }
 }
 router82.get("/cultural-sites", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const { heritageCategory, category, search, state, city, accessible, admissionFree } = req.query;
     const conditions = [];
@@ -454386,8 +454423,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "5a4db56e8cf7a6f9742cb40b2039475ef31de24d";
-var BUILD_AT = "2026-07-29T19:01:38.804Z";
+var BUILT_FROM_SHA = "383d6eb02e7c270a8916eb0277bade3339bd0367";
+var BUILD_AT = "2026-07-29T19:24:56.929Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454465,8 +454502,8 @@ var BUNDLE_SHA256_SELF = (() => {
 app.get("/api/version", (_req, res) => {
   const railwaySha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev";
   const builtFromSha = BUILT_FROM_SHA;
-  const knownShas = railwaySha !== "dev" && builtFromSha !== "unknown" && !builtFromSha.startsWith("not-");
-  const stale = knownShas && railwaySha !== builtFromSha;
+  const recordedBundleSha = process.env.BUILD_BUNDLE_SHA256 || "not-embedded";
+  const stale = recordedBundleSha !== "not-embedded" && BUNDLE_SHA256_SELF !== recordedBundleSha;
   res.json({
     // runtime Railway env var — set at deploy-trigger time, reflects the git tip
     railway_sha: railwaySha,

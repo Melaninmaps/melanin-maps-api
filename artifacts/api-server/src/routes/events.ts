@@ -6,6 +6,10 @@ import { getUserTier } from "../middleware/requireMembership";
 const router: IRouter = Router();
 
 router.get("/events", async (req: Request, res: Response) => {
+  if (!(req as any).user) {
+    res.status(401).json({ error: "Authentication required." });
+    return;
+  }
   try {
     const { category, search, featured } = req.query;
 
