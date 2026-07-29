@@ -61253,7 +61253,7 @@ function extractSql(args) {
   }
   return void 0;
 }
-function initPoolInstrumentation(pool4) {
+function initPoolInstrumentation(pool4, getRealPool) {
   if (_initialized) return;
   _initialized = true;
   pool4.on("connect", (_client2) => {
@@ -61331,38 +61331,44 @@ function initPoolInstrumentation(pool4) {
   const REAPER_INTERVAL_MS = 3e4;
   const MAX_CONNECTION_AGE_MS = 6e4;
   const reaperHandle = setInterval(() => {
+    const realPool = getRealPool ? getRealPool() : pool4;
     const snap = poolSnapshot(pool4);
     if (snap.total === 0) return;
     const now = Date.now();
-    const clients = pool4._clients ?? [];
+    const clients = (realPool._clients ?? []).slice();
     const reaped = [];
-    clients.forEach((client, idx) => {
+    clients.forEach((client) => {
       const createdAt = client._createdAt ?? 0;
       const ageMs = now - createdAt;
-      if (ageMs > MAX_CONNECTION_AGE_MS) {
-        try {
-          client.connection?.stream?.destroy();
-          reaped.push({ idx, ageMs });
-        } catch (_2) {
-        }
+      if (ageMs <= MAX_CONNECTION_AGE_MS) return;
+      try {
+        client.connection?.stream?.destroy();
+      } catch (_2) {
       }
+      try {
+        realPool._remove(client);
+      } catch (_2) {
+      }
+      reaped.push({ ageMs });
     });
     if (reaped.length > 0) {
       const maxAge = Math.max(...reaped.map((r2) => r2.ageMs));
+      const snapAfter = poolSnapshot(pool4);
       const msg = {
         level: "error",
         event: "POOL_REAPER_FIRED",
         reaped: reaped.length,
         maxAgeMs: maxAge,
-        pool: snap,
-        detail: `killed ${reaped.length} connections older than ${MAX_CONNECTION_AGE_MS / 1e3}s (oldest: ${Math.round(maxAge / 1e3)}s)`
+        poolBefore: snap,
+        poolAfter: snapAfter,
+        detail: `reaped ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1e3}s old (oldest: ${Math.round(maxAge / 1e3)}s); total ${snap.total}\u2192${snapAfter.total}`
       };
       console.error(JSON.stringify(msg));
       push({
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: "error",
-        detail: `pool_reaper: killed ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1e3}s old`,
-        pool: snap
+        detail: `pool_reaper: reaped ${reaped.length} connections; total ${snap.total}\u2192${snapAfter.total}`,
+        pool: snapAfter
       });
     }
   }, REAPER_INTERVAL_MS);
@@ -454187,8 +454193,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "1f273663b9c3292d6e237d063253367d68acc994";
-var BUILD_AT = "2026-07-29T21:48:39.738Z";
+var BUILT_FROM_SHA = "fd9902b0e703cc51a5df485bd6cf29105c29812b";
+var BUILD_AT = "2026-07-29T22:04:26.245Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454542,7 +454548,7 @@ var server = app_default.listen(port, (err) => {
   }
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready \u2014 initial pool state");
-  initPoolInstrumentation(pool);
+  initPoolInstrumentation(pool, getPool);
   setMonitorLogger(logger);
   startHealthMonitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));

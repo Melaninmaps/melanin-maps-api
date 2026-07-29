@@ -171,6 +171,11 @@ export function getPoolStats(): {
   };
 }
 
+/** Expose the real pg.Pool instance for internal use (pool-instrumentation reaper).
+ *  Do NOT use this in route handlers — always use the exported `pool` Proxy
+ *  so the lazy-init singleton pattern is preserved. */
+export { getPool };
+
 export const pool: pg.Pool = new Proxy({} as pg.Pool, {
   get(_target, prop) {
     return (getPool() as any)[prop];

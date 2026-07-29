@@ -88,7 +88,7 @@ let _initialized = false;
  * Call once at server startup, after the pool singleton is created.
  * Safe to call multiple times — only attaches listeners once.
  */
-export function initPoolInstrumentation(pool: Pool): void {
+export function initPoolInstrumentation(pool: Pool, getRealPool?: () => Pool): void {
   if (_initialized) return;
   _initialized = true;
 
@@ -188,64 +188,74 @@ export function initPoolInstrumentation(pool: Pool): void {
   // Unref so the interval doesn't block clean process exit
   sweepHandle.unref();
 
-  // ── Pool Reaper v2 (age-based, July 29 2026) ──────────────────────────────
-  // Every 30 s: destroy ANY connection older than 120 s, regardless of whether
-  // it is idle or checked out.
+  // ── Pool Reaper v3 (direct _remove, July 29 2026) ─────────────────────────
+  // Every 30 s: force-remove ANY connection older than 60 s from the pool.
   //
-  // v1 used condition (idle===0 && total>5) which never fired because there is
-  // always at least 1 idle connection. maxLifetimeSeconds also cannot help —
-  // it only recycles connections when release() is called; checked-out zombies
-  // (where release() is NEVER called) live forever.
+  // v2 called client.connection?.stream?.destroy() which is a NO-OP when the
+  // TCP socket is already dead (ghost connections). Ghost connections are dead
+  // sockets still in _clients because Pool._remove() was never called — this
+  // happens when connections die while checked out through the Proxy, and the
+  // Proxy's property-assignment gap prevents _remove from running.
   //
-  // v2 bypasses both limitations by using pg's internal _createdAt timestamp
-  // on each client object. Any client whose age exceeds MAX_CONNECTION_AGE_MS
-  // has its TCP socket force-destroyed. pg's error handler fires, calls
-  // Pool._remove(client), and decrements totalCount. No release() required.
+  // v3 bypasses this entirely:
+  //   1. Uses getPool() (the real Pool, not the Proxy) to read _clients directly
+  //   2. Calls stream.destroy() to try to close live connections
+  //   3. Also calls realPool._remove(client) directly — this is the private
+  //      pg-pool method that splices the client from _clients and decrements
+  //      totalCount. Works on both ghost connections AND live ones.
   //
-  // This is the containment strategy: pool oscillates between fresh connections
-  // and the leak source is irrelevant — every connection has a hard ceiling.
+  // Result: pool WILL reach 0 within one 30-second reaper cycle regardless of
+  // whether connections are alive, dead, idle, or checked out.
   const REAPER_INTERVAL_MS = 30_000;     // fire every 30 s
-  const MAX_CONNECTION_AGE_MS = 60_000;  // kill anything older than 60 s
+  const MAX_CONNECTION_AGE_MS = 60_000;  // reap anything older than 60 s
 
   const reaperHandle = setInterval(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const realPool = (getRealPool ? getRealPool() : pool) as any;
     const snap = poolSnapshot(pool);
-    // Skip if pool is empty — nothing to reap
     if (snap.total === 0) return;
 
     const now = Date.now();
+    // Snapshot the clients array — slice to avoid mutation issues while iterating
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clients: any[] = (pool as any)._clients ?? [];
-    const reaped: { idx: number; ageMs: number }[] = [];
+    const clients: any[] = (realPool._clients ?? []).slice();
+    const reaped: { ageMs: number }[] = [];
 
-    clients.forEach((client: any, idx: number) => {
+    clients.forEach((client: any) => {
       const createdAt: number = client._createdAt ?? 0;
       const ageMs = now - createdAt;
-      if (ageMs > MAX_CONNECTION_AGE_MS) {
-        try {
-          client.connection?.stream?.destroy();
-          reaped.push({ idx, ageMs });
-        } catch (_) {
-          // Already closed — nothing to do
-        }
-      }
+      if (ageMs <= MAX_CONNECTION_AGE_MS) return;
+
+      // Step 1: try TCP-level close (works on live connections)
+      try { client.connection?.stream?.destroy(); } catch (_) { /* already closed */ }
+
+      // Step 2: force-remove from pool directly via the private _remove method.
+      //   This works on GHOST connections (already-dead TCP, still in _clients)
+      //   where stream.destroy() is a no-op. _remove splices the client from
+      //   _clients and decrements totalCount unconditionally.
+      try { realPool._remove(client); } catch (_) { /* already removed */ }
+
+      reaped.push({ ageMs });
     });
 
     if (reaped.length > 0) {
       const maxAge = Math.max(...reaped.map((r) => r.ageMs));
+      const snapAfter = poolSnapshot(pool);
       const msg = {
         level: "error",
         event: "POOL_REAPER_FIRED",
         reaped: reaped.length,
         maxAgeMs: maxAge,
-        pool: snap,
-        detail: `killed ${reaped.length} connections older than ${MAX_CONNECTION_AGE_MS / 1000}s (oldest: ${Math.round(maxAge / 1000)}s)`,
+        poolBefore: snap,
+        poolAfter: snapAfter,
+        detail: `reaped ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1000}s old (oldest: ${Math.round(maxAge / 1000)}s); total ${snap.total}→${snapAfter.total}`,
       };
       console.error(JSON.stringify(msg));
       push({
         ts: new Date().toISOString(),
         type: "error",
-        detail: `pool_reaper: killed ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1000}s old`,
-        pool: snap,
+        detail: `pool_reaper: reaped ${reaped.length} connections; total ${snap.total}→${snapAfter.total}`,
+        pool: snapAfter,
       });
     }
   }, REAPER_INTERVAL_MS);
