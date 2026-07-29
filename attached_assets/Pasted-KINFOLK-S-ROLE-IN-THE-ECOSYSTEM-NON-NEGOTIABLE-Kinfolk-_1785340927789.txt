@@ -1,0 +1,253 @@
+KINFOLK’S ROLE IN THE ECOSYSTEM — NON-NEGOTIABLE
+
+Kinfolk is not a standalone chatbot and is not merely one feature inside
+Mapping With Melanin™.
+
+Kinfolk is intended to become the permission-aware intelligence layer
+that helps the ecosystem understand, organize, connect, and responsibly
+surface community knowledge.
+
+Kinfolk has several connected roles:
+
+1. PERSONAL GUIDE
+
+Kinfolk learns from the individual member’s stated preferences,
+permissions, history, saved interests, location choices, travel plans,
+safety needs, and membership context.
+
+It helps the member decide:
+
+- where to go
+- what to support
+- what to explore
+- what events or resources may be relevant
+- how to prepare for a trip, relocation, meetup, or local experience
+- what community context should be considered before acting
+
+It must explain why a suggestion is relevant and allow the member to
+control, correct, or disable personalization.
+
+2. COMMUNITY LIBRARY AND RESOURCE GUIDE
+
+Kinfolk is the primary conversational interface to the platform’s
+community library and resource ecosystem.
+
+The library may include:
+
+- member-contributed knowledge
+- verified articles and resources
+- cultural sites and history
+- scholarships
+- grants and business resources
+- food, housing, employment, and community assistance
+- travel and relocation information
+- safety context
+- community discussions
+- events
+- creator, Ambassador, and business contributions
+
+Kinfolk must distinguish among:
+
+- verified facts
+- official resources
+- business-provided information
+- Ambassador-curated information
+- member experiences
+- community consensus
+- disputed claims
+- unverified submissions
+- paid or sponsored information
+
+It must never flatten all of these into one undifferentiated answer.
+
+3. COMMUNITY INTELLIGENCE INTERPRETER
+
+Community feedback does not merely create ratings.
+
+Kinfolk should help interpret patterns across:
+
+- member reviews
+- safety reports
+- nominations
+- business responses
+- repeated recommendations
+- cultural context
+- time and location
+- member type and stated experience
+- verification status
+- Ambassador activity
+
+The system should identify meaningful patterns without exposing private
+members, overgeneralizing from limited feedback, or treating one report
+as proven fact.
+
+Replit must explain how raw feedback becomes safe, explainable,
+permission-aware community intelligence.
+
+Do not disclose proprietary formulas or weights. Provide the conceptual
+decision flow, safeguards, data classifications, confidence rules, and
+human-review requirements.
+
+4. BUSINESS TRUST AND GROWTH LOOP
+
+Kinfolk should connect community feedback to the business experience.
+
+Replit must explain how the proposed design handles:
+
+- member nominations
+- business claims
+- verification
+- reviews and lived experiences
+- safety signals
+- owner responses
+- “make it right” opportunities
+- changing trust over time
+- positive community recognition
+- Hidden Gem status
+- sponsored or promoted placement
+- removal, suspension, or appeal
+- protection against coordinated manipulation
+
+The audit must determine whether businesses are represented as static
+listings or as evolving community relationships.
+
+Kinfolk must never secretly alter ratings or present paid promotion as
+organic trust.
+
+5. COMMUNITY AMBASSADOR LOOP
+
+Community Ambassadors are trusted contributors, connectors, curators, and
+community stewards. They are not simply influencers.
+
+Replit must define:
+
+- what Ambassadors may contribute
+- what they may verify or recommend
+- what additional weight, if any, their contributions receive
+- how conflicts of interest are disclosed
+- how sponsored relationships are handled
+- how Ambassador activity is reviewed
+- how status is earned, maintained, suspended, and appealed
+- how abuse or favoritism is prevented
+- how Kinfolk uses Ambassador input without allowing one person to define
+  community truth
+
+Kinfolk should help members understand the source and context of
+Ambassador guidance.
+
+6. JOURNEYS
+
+Journeys are guided, contextual experiences through the ecosystem. They
+should not be reduced to itineraries or static lists.
+
+A Journey may connect:
+
+- member goals
+- location
+- businesses
+- cultural sites
+- events
+- community stories
+- safety information
+- resources
+- Ambassadors
+- Circles
+- reflection, saving, sharing, or contribution
+
+Examples may include:
+
+- discovering community in a member’s own city
+- preparing for relocation
+- exploring Black history in a destination
+- supporting businesses along a route
+- navigating an event weekend
+- finding culturally relevant family activities
+- building a safety-aware travel plan
+- following an Ambassador-curated experience
+
+Kinfolk should help create, adapt, explain, and guide Journeys while
+respecting membership permissions and data boundaries.
+
+Replit must clarify:
+
+- who can create a Journey
+- whether Journeys are private, shared, curated, or public to members
+- how member feedback improves a Journey
+- how outdated or unsafe stops are handled
+- how paid placements are disclosed
+- how recommendations change when safety or trust signals change
+- how Journeys work during outages or incomplete data
+- how members report errors
+
+7. ECOSYSTEM FEEDBACK LOOP
+
+The future-state design must show how information moves through the
+ecosystem:
+
+Member contribution
+→ classification and moderation
+→ verification or confidence assessment
+→ business, resource, event, site, or Journey context
+→ permission-aware retrieval
+→ Kinfolk guidance
+→ member action or experience
+→ new feedback
+→ correction, trust update, or community learning
+
+This loop must include:
+
+- consent
+- attribution
+- privacy controls
+- moderation
+- dispute handling
+- correction
+- confidence levels
+- expiration or freshness
+- audit history
+- rollback
+- prevention of feedback manipulation
+
+8. KINFOLK MUST NOT BECOME A SINGLE POINT OF FAILURE
+
+Although Kinfolk powers the ecosystem, core platform functions must still
+work when Kinfolk or the AI provider is unavailable.
+
+Members must still be able to:
+
+- access saved items
+- browse permitted community information
+- view businesses and events
+- access safety information
+- use Circles
+- review resources
+- report concerns
+- manage their account
+
+Replit must propose graceful degradation, cached safe responses,
+provider failover where justified, cost controls, monitoring, and feature
+flags.
+
+9. REQUIRED ARCHITECTURE OUTPUT
+
+Replit must provide a high-level ecosystem diagram showing Kinfolk at the
+center and its permission-controlled connections to:
+
+- member profile and preferences
+- community feed
+- library/resources
+- businesses
+- reviews and trust signals
+- safety systems
+- Ambassadors
+- Journeys
+- events
+- Circles
+- cultural sites
+- relocation and travel tools
+- memberships and entitlements
+- moderation and administration
+- verified external sources
+
+The diagram must also show which systems remain independently usable when
+Kinfolk is unavailable.

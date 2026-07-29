@@ -1,0 +1,188 @@
+PREPARE A SANITIZED FUTURE-STATE REVIEW PACKAGE FOR MANUS
+
+Purpose:
+Allow an independent auditor to compare the founder’s vision for Mapping
+With Melanin™ against Replit’s proposed future-state architecture, with
+special focus on Kinfolk.
+
+Do not include:
+- source code
+- credentials or environment-variable values
+- proprietary ranking or recommendation formulas
+- internal scoring weights
+- fraud-detection rules
+- unreleased verification methods
+- private member data
+- database connection details
+- exact trade-secret workflows
+
+Include only enough detail to evaluate whether the proposed system can
+safely, reliably, and accurately deliver the founder’s vision.
+
+══════════════════════════════════════════════════════════════
+1. FOUNDER VISION — CURRENT UNDERSTANDING
+══════════════════════════════════════════════════════════════
+
+Document Replit’s current understanding of:
+
+- Mapping With Melanin as a private membership ecosystem, not a public
+  directory
+- community-generated and community-protected cultural intelligence
+- safety-first discovery
+- verified and community-contextualized businesses
+- local, travel, relocation, cultural, social, business, and resource
+  use cases
+- member trust, contribution, verification, governance, and privacy
+- the role of Kinfolk within the broader ecosystem
+- how free, paid, business, ambassador, family, and administrative roles
+  interact
+
+Clearly label:
+- confirmed founder decisions
+- assumptions
+- unresolved founder decisions
+- proposed Replit interpretations
+
+══════════════════════════════════════════════════════════════
+2. FUTURE-STATE SYSTEM MAP
+══════════════════════════════════════════════════════════════
+
+Provide a high-level, non-proprietary system map showing:
+
+- member onboarding and admission
+- waitlist and city activation
+- identity and membership status
+- community feed
+- business discovery and trust context
+- reviews, nominations, verification, and moderation
+- safety reporting
+- events
+- Circles
+- Kinfolk
+- resources
+- employer transparency
+- cultural sites and heritage
+- Ambassadors
+- memberships and entitlements
+- notifications
+- admin and moderation
+- data retention and deletion
+- mobile, web, API, database, AI, and third-party dependencies
+
+Show data flow and system boundaries without exposing secrets.
+
+══════════════════════════════════════════════════════════════
+3. KINFOLK — COMPLETE FUNCTIONAL SPECIFICATION
+══════════════════════════════════════════════════════════════
+
+Explain Kinfolk in plain language and include:
+
+- primary purpose
+- target users
+- situations where members should use it
+- situations where it must refuse or redirect
+- how it differs from a general chatbot
+- how it uses member preferences and context
+- what information it may access
+- what information it must never access
+- how consent is obtained
+- how memory works
+- how members review, correct, delete, or disable memory
+- whether conversations are private, shared, or used for training
+- how recommendations are sourced and verified
+- how cultural context is handled without stereotyping
+- how location and safety context are handled
+- how minors and family accounts are handled
+- how legal, medical, financial, emergency, and safety questions are
+  handled
+- how member-generated information is distinguished from verified facts
+- how misinformation, hallucinations, bias, and outdated information are
+  controlled
+- how Kinfolk behaves when confidence is low
+- how it cites or attributes recommendations
+- how businesses, sponsorships, paid promotion, and organic
+  recommendations are separated
+- how users are informed when a result is sponsored or prioritized
+- how abuse, manipulation, prompt injection, harassment, and surveillance
+  attempts are prevented
+- how Kinfolk is monitored, audited, and improved
+- failure modes and graceful fallbacks
+- availability and outage behavior
+- cost controls and usage limits
+- model-provider portability
+- logging and observability
+- human escalation and reporting
+
+Include example user journeys but no proprietary prompt text or hidden
+system instructions.
+
+══════════════════════════════════════════════════════════════
+4. ARCHITECTURE AND IMPLEMENTATION PLAN
+══════════════════════════════════════════════════════════════
+
+For each future feature provide:
+
+- objective
+- dependencies
+- data required
+- permissions required
+- security risks
+- privacy risks
+- moderation risks
+- compliance risks
+- performance risks
+- accessibility considerations
+- failure states
+- testing requirements
+- monitoring requirements
+- rollback method
+- feature-flag plan
+- phased release recommendation
+
+Separate:
+- must exist before launch
+- first post-launch build
+- later roadmap
+- experimental ideas
+
+══════════════════════════════════════════════════════════════
+5. KNOWN RISKS AND OPEN QUESTIONS
+══════════════════════════════════════════════════════════════
+
+List every known:
+
+- product ambiguity
+- technical dependency
+- architectural risk
+- privacy concern
+- safety concern
+- legal/compliance concern
+- moderation challenge
+- AI reliability issue
+- scalability concern
+- cost concern
+- App Store or Google Play concern
+- data-quality concern
+- user-experience conflict
+- conflict between current implementation and founder vision
+
+Do not conceal incomplete or mocked functionality.
+
+══════════════════════════════════════════════════════════════
+6. COMPLETION EVIDENCE
+══════════════════════════════════════════════════════════════
+
+Provide:
+
+- document version
+- repository commit reviewed
+- feature inventory
+- architecture diagrams
+- current versus proposed comparison
+- unresolved-decision register
+- implementation sequencing
+- test strategy
+- risk register
+- assumptions requiring founder approval
+
+This package is read-only. Do not implement changes.
