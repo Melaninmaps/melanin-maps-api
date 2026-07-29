@@ -48,6 +48,18 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS quiet_hours_from VARCHAR(10) NOT NULL DEFAULT '10:00 PM',
       ADD COLUMN IF NOT EXISTS quiet_hours_until VARCHAR(10) NOT NULL DEFAULT '8:00 AM'`,
   },
+  {
+    name: "member_agreements_table",
+    sql: `CREATE TABLE IF NOT EXISTS member_agreements (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      agreement_version VARCHAR(20) NOT NULL DEFAULT 'v1',
+      accepted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      platform VARCHAR(20) NOT NULL DEFAULT 'web',
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      revoked_at TIMESTAMP
+    )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

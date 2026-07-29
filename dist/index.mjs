@@ -454341,8 +454341,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "9f42107ab2be329c8ee5148c467f0399a5392965";
-var BUILD_AT = "2026-07-29T23:17:18.926Z";
+var BUILT_FROM_SHA = "de3e35c3ddb24fc1bcf615037b2a822e1a1ef1da";
+var BUILD_AT = "2026-07-29T23:21:30.333Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454612,6 +454612,18 @@ var MIGRATIONS = [
       ADD COLUMN IF NOT EXISTS quiet_hours_enabled BOOLEAN NOT NULL DEFAULT TRUE,
       ADD COLUMN IF NOT EXISTS quiet_hours_from VARCHAR(10) NOT NULL DEFAULT '10:00 PM',
       ADD COLUMN IF NOT EXISTS quiet_hours_until VARCHAR(10) NOT NULL DEFAULT '8:00 AM'`
+  },
+  {
+    name: "member_agreements_table",
+    sql: `CREATE TABLE IF NOT EXISTS member_agreements (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      agreement_version VARCHAR(20) NOT NULL DEFAULT 'v1',
+      accepted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      platform VARCHAR(20) NOT NULL DEFAULT 'web',
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      revoked_at TIMESTAMP
+    )`
   }
 ];
 async function runStartupMigrations(logger4) {
