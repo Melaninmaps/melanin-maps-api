@@ -188,62 +188,67 @@ export function initPoolInstrumentation(pool: Pool): void {
   // Unref so the interval doesn't block clean process exit
   sweepHandle.unref();
 
-  // ── Pool Reaper (Manus recommendation, July 29 2026) ──────────────────────
-  // Every 60 s: if all connections are checked out (idle=0) AND total exceeds
-  // the minimum threshold, we have zombie connections that will never release
-  // on their own. Force-close their TCP sockets so pg's error handler fires,
-  // removes them from _clients, and the pool can recover.
+  // ── Pool Reaper v2 (age-based, July 29 2026) ──────────────────────────────
+  // Every 30 s: destroy ANY connection older than 120 s, regardless of whether
+  // it is idle or checked out.
   //
-  // This is the systemic fix: rather than hunting every individual leak source,
-  // we ensure the pool ALWAYS recovers within one 60-second reaper cycle.
+  // v1 used condition (idle===0 && total>5) which never fired because there is
+  // always at least 1 idle connection. maxLifetimeSeconds also cannot help —
+  // it only recycles connections when release() is called; checked-out zombies
+  // (where release() is NEVER called) live forever.
   //
-  // Works alongside maxLifetimeSeconds=120 in the pool config:
-  //   • maxLifetimeSeconds marks connections expired so they are destroyed
-  //     when released — handles connections that ARE eventually released
-  //   • Reaper handles the worst case: connections that are NEVER released
-  //     (release() is never called). Their TCP sockets are force-closed here.
-  const REAPER_ZOMBIE_THRESHOLD = 5;   // trigger when total > this AND idle=0
+  // v2 bypasses both limitations by using pg's internal _createdAt timestamp
+  // on each client object. Any client whose age exceeds MAX_CONNECTION_AGE_MS
+  // has its TCP socket force-destroyed. pg's error handler fires, calls
+  // Pool._remove(client), and decrements totalCount. No release() required.
+  //
+  // This is the containment strategy: pool oscillates between fresh connections
+  // and the leak source is irrelevant — every connection has a hard ceiling.
+  const REAPER_INTERVAL_MS = 30_000;      // fire every 30 s
+  const MAX_CONNECTION_AGE_MS = 120_000;  // kill anything older than 2 min
+
   const reaperHandle = setInterval(() => {
     const snap = poolSnapshot(pool);
-    if (snap.total <= REAPER_ZOMBIE_THRESHOLD || snap.idle > 0) return;
+    // Skip if pool is empty — nothing to reap
+    if (snap.total === 0) return;
 
-    // All connections checked out, none idle — zombie pattern confirmed.
-    // Access the real pool's _clients array via the Proxy.
+    const now = Date.now();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const clients: any[] = (pool as any)._clients ?? [];
-    const reaped: number[] = [];
+    const reaped: { idx: number; ageMs: number }[] = [];
 
     clients.forEach((client: any, idx: number) => {
-      try {
-        // Destroy the underlying TCP socket. pg's internal error handler fires,
-        // which calls Pool._remove(client), decrementing totalCount.
-        client.connection?.stream?.destroy();
-        reaped.push(idx);
-      } catch (_) {
-        // Client already closed — nothing to do
+      const createdAt: number = client._createdAt ?? 0;
+      const ageMs = now - createdAt;
+      if (ageMs > MAX_CONNECTION_AGE_MS) {
+        try {
+          client.connection?.stream?.destroy();
+          reaped.push({ idx, ageMs });
+        } catch (_) {
+          // Already closed — nothing to do
+        }
       }
     });
 
     if (reaped.length > 0) {
+      const maxAge = Math.max(...reaped.map((r) => r.ageMs));
       const msg = {
         level: "error",
         event: "POOL_REAPER_FIRED",
         reaped: reaped.length,
+        maxAgeMs: maxAge,
         pool: snap,
-        detail:
-          "zombie connections detected (total>" +
-          REAPER_ZOMBIE_THRESHOLD +
-          ", idle=0). Force-closed TCP sockets so pool can recover.",
+        detail: `killed ${reaped.length} connections older than ${MAX_CONNECTION_AGE_MS / 1000}s (oldest: ${Math.round(maxAge / 1000)}s)`,
       };
       console.error(JSON.stringify(msg));
       push({
         ts: new Date().toISOString(),
         type: "error",
-        detail: `pool_reaper: force-closed ${reaped.length} zombie connections`,
+        detail: `pool_reaper: killed ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1000}s old`,
         pool: snap,
       });
     }
-  }, 60_000);
+  }, REAPER_INTERVAL_MS);
   reaperHandle.unref();
 }
 

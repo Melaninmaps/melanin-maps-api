@@ -61328,36 +61328,44 @@ function initPoolInstrumentation(pool4) {
     _baseline = snap.total;
   }, 6e4);
   sweepHandle.unref();
-  const REAPER_ZOMBIE_THRESHOLD = 5;
+  const REAPER_INTERVAL_MS = 3e4;
+  const MAX_CONNECTION_AGE_MS = 12e4;
   const reaperHandle = setInterval(() => {
     const snap = poolSnapshot(pool4);
-    if (snap.total <= REAPER_ZOMBIE_THRESHOLD || snap.idle > 0) return;
+    if (snap.total === 0) return;
+    const now = Date.now();
     const clients = pool4._clients ?? [];
     const reaped = [];
     clients.forEach((client, idx) => {
-      try {
-        client.connection?.stream?.destroy();
-        reaped.push(idx);
-      } catch (_2) {
+      const createdAt = client._createdAt ?? 0;
+      const ageMs = now - createdAt;
+      if (ageMs > MAX_CONNECTION_AGE_MS) {
+        try {
+          client.connection?.stream?.destroy();
+          reaped.push({ idx, ageMs });
+        } catch (_2) {
+        }
       }
     });
     if (reaped.length > 0) {
+      const maxAge = Math.max(...reaped.map((r2) => r2.ageMs));
       const msg = {
         level: "error",
         event: "POOL_REAPER_FIRED",
         reaped: reaped.length,
+        maxAgeMs: maxAge,
         pool: snap,
-        detail: "zombie connections detected (total>" + REAPER_ZOMBIE_THRESHOLD + ", idle=0). Force-closed TCP sockets so pool can recover."
+        detail: `killed ${reaped.length} connections older than ${MAX_CONNECTION_AGE_MS / 1e3}s (oldest: ${Math.round(maxAge / 1e3)}s)`
       };
       console.error(JSON.stringify(msg));
       push({
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: "error",
-        detail: `pool_reaper: force-closed ${reaped.length} zombie connections`,
+        detail: `pool_reaper: killed ${reaped.length} connections >${MAX_CONNECTION_AGE_MS / 1e3}s old`,
         pool: snap
       });
     }
-  }, 6e4);
+  }, REAPER_INTERVAL_MS);
   reaperHandle.unref();
 }
 function getPoolAuditLog(limit2 = 200) {
@@ -454175,8 +454183,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "a66000694f3ac98317585728e55bc1908f650141";
-var BUILD_AT = "2026-07-29T20:38:40.365Z";
+var BUILT_FROM_SHA = "a000a3670f8a81dbc840b66545ea05bffe01607a";
+var BUILD_AT = "2026-07-29T21:40:52.759Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
