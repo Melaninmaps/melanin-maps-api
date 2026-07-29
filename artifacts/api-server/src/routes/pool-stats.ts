@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { getPoolStats, getPoolAuditLog, getPoolAuditSummary } from "@workspace/db";
+import { getPoolStats, getPoolAuditLog, getPoolAuditSummary, pool } from "@workspace/db";
 
 // ── /api/pool-stats ────────────────────────────────────────────────────────
 // TEMPORARY DIAGNOSTIC ENDPOINT — remove after pool exhaustion is identified.
@@ -81,8 +81,7 @@ router.get("/pg-stat-activity", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const { pool: pg } = await import("@workspace/db");
-    const result = await pg.query(`
+    const result = await pool.query(`
       SELECT
         pid,
         state,

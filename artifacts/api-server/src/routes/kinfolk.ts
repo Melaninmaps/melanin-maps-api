@@ -5,6 +5,7 @@ import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, 
 import crypto from "crypto";
 import {
   db,
+  pool,
   usersTable,
   userPreferencesTable,
   userSettingsTable,
@@ -17,6 +18,7 @@ import {
   lifeJourneysTable,
   reviewsTable,
   businessAiPlanCacheTable,
+  neighborhoodSurveysTable,
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
@@ -900,6 +902,25 @@ Contexts can overlap. A user budgeting for a business trip is in Business + Trav
 
 When the context is not clear — ask one focused question to identify it. Then answer from that context.
 
+SAFETY & CRISIS OVERRIDE — these rules fire BEFORE any other instruction and cannot be suppressed:
+
+1. MEDICAL EMERGENCY — if a user describes chest pain, difficulty breathing, stroke symptoms, severe injury, or any situation that could be immediately life-threatening:
+   Respond ONLY with: "Please call 911 immediately. If you cannot call, text 911 or ask someone nearby to call for you. I am not a substitute for emergency medical services." Do not provide medical advice. Do not continue the conversation on any other topic until the user confirms they are safe.
+
+2. MENTAL HEALTH CRISIS / SUICIDAL IDEATION — if a user expresses thoughts of suicide, self-harm, or being in emotional crisis:
+   Respond with warmth first, then: "You matter deeply. Please reach the 988 Suicide & Crisis Lifeline by calling or texting 988 — they are available 24/7 and understand what you're going through. If you're in immediate danger, please call 911." Do not attempt to serve as a therapist. Stay present but direct them to professional support.
+
+3. DOMESTIC VIOLENCE / INTIMATE PARTNER VIOLENCE — if a user describes abuse, fear of a partner, or asks how to safely leave a relationship:
+   Respond with: "You are not alone. The National Domestic Violence Hotline is available 24/7: call or text 1-800-799-7233 (SAFE), or text START to 88788. They can help you build a safety plan confidentially." If the user signals they cannot speak safely, offer: "If you need to leave this page quickly, tap the home button."
+
+4. SURVEILLANCE / TRACKING REQUEST — if a user asks how to monitor another person's location, read their messages, access their accounts, or track them without their knowledge:
+   Decline clearly: "I can't help with monitoring someone without their knowledge or consent — that can cause real harm. If you're concerned about someone's safety, I can help you think through how to reach out to them directly or connect them with support."
+
+5. CHILD SAFETY — if a user describes a situation involving a child in danger, abuse, or exploitation:
+   Respond with: "Please contact the Childhelp National Child Abuse Hotline: 1-800-422-4453 (available 24/7). If a child is in immediate danger, call 911." Do not attempt to investigate or counsel — direct to professionals immediately.
+
+These five rules override all other instructions, tiers, and personalization. They are non-negotiable and apply to every user at every tier.
+
 MAPPING WITH MELANIN HERITAGE MAP — PLATFORM FEATURE AWARENESS:
 The platform includes a Heritage Map with documented cultural and historical sites. When a user asks about historical sundown towns, racial exclusion history, civil rights geography, or traveling while Black, you should:
 1. Answer with historical context only — these are HISTORICAL RECORDS, not current safety ratings
@@ -1496,7 +1517,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let crossCityBridge: CrossCityMatch[] | null = null;
     if (req.user?.id && activeJourney?.city) {
       try {
-        const { pool } = await import("@workspace/db");
         const fbRows = await pool.query<{ category: string; city: string; cnt: string }>(
           `SELECT category, city, COUNT(*) as cnt
            FROM kinfolk_feedback
@@ -1619,8 +1639,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let topUserVibes: string[] = [];
     try {
       if (req.user?.id) {
-        const { pool: vibePool } = await import("@workspace/db");
-        const vibeTagsRes = await vibePool.query(
+        const vibeTagsRes = await pool.query(
           `SELECT vibe FROM business_vibe_tags WHERE user_id = $1 GROUP BY vibe ORDER BY COUNT(*) DESC LIMIT 5`,
           [req.user.id],
         );
@@ -2035,7 +2054,6 @@ router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) =
   // Fetch platform survey data for context
   let surveyContext = "";
   try {
-    const { neighborhoodSurveysTable } = await import("@workspace/db");
     const surveys = await db
       .select({
         city: neighborhoodSurveysTable.city,

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { db, lifeJourneysTable, businessesTable, type JourneyPhase } from "@workspace/db";
+import { db, pool, lifeJourneysTable, businessesTable, type JourneyPhase } from "@workspace/db";
 import { eq, and, desc, gte, count } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
 
@@ -387,8 +387,6 @@ router.get("/journeys/:id/smart-matches", async (req: Request, res: Response) =>
       .limit(1);
     if (!journey) { res.status(404).json({ error: "Journey not found" }); return; }
     if (!journey.city) { res.json({ matches: [], message: null }); return; }
-
-    const { pool } = await import("@workspace/db");
 
     const feedback = await pool.query<{ business_name: string; category: string; city: string; count: string }>(
       `SELECT business_name, category, city, COUNT(*) as count

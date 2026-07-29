@@ -38806,15 +38806,15 @@ var require_pg_pool = __commonJS({
       });
       return { callback: cb, result };
     }
-    function makeIdleListener(pool5, client) {
+    function makeIdleListener(pool4, client) {
       return function idleListener(err) {
         err.client = client;
         client.removeListener("error", idleListener);
         client.on("error", () => {
-          pool5.log("additional client error after disconnection due to error", err);
+          pool4.log("additional client error after disconnection due to error", err);
         });
-        pool5._remove(client);
-        pool5.emit("error", err, client);
+        pool4._remove(client);
+        pool4.emit("error", err, client);
       };
     }
     var Pool4 = class extends EventEmitter5 {
@@ -61232,11 +61232,11 @@ function push(ev) {
   _ring.push(ev);
   if (_ring.length > RING_SIZE) _ring.shift();
 }
-function poolSnapshot(pool5) {
+function poolSnapshot(pool4) {
   return {
-    total: pool5.totalCount,
-    idle: pool5.idleCount,
-    waiting: pool5.waitingCount
+    total: pool4.totalCount,
+    idle: pool4.idleCount,
+    waiting: pool4.waitingCount
   };
 }
 function callerFrame() {
@@ -61253,20 +61253,20 @@ function extractSql(args) {
   }
   return void 0;
 }
-function initPoolInstrumentation(pool5) {
+function initPoolInstrumentation(pool4) {
   if (_initialized) return;
   _initialized = true;
-  pool5.on("connect", (_client2) => {
-    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "connect", pool: poolSnapshot(pool5) });
+  pool4.on("connect", (_client2) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "connect", pool: poolSnapshot(pool4) });
   });
-  pool5.on("remove", (_client2) => {
-    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "remove", pool: poolSnapshot(pool5) });
+  pool4.on("remove", (_client2) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "remove", pool: poolSnapshot(pool4) });
   });
-  pool5.on("error", (err) => {
-    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "error", detail: err.message, pool: poolSnapshot(pool5) });
+  pool4.on("error", (err) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "error", detail: err.message, pool: poolSnapshot(pool4) });
   });
-  const origQuery = pool5.query.bind(pool5);
-  pool5.query = (...args) => {
+  const origQuery = pool4.query.bind(pool4);
+  pool4.query = (...args) => {
     const start = Date.now();
     const sql11 = extractSql(args);
     const caller = callerFrame();
@@ -61279,7 +61279,7 @@ function initPoolInstrumentation(pool5) {
         ms: ms3,
         sql: sql11,
         caller,
-        pool: poolSnapshot(pool5)
+        pool: poolSnapshot(pool4)
       };
       push(ev);
       if (ms3 >= SLOW_QUERY_MS) {
@@ -61294,17 +61294,17 @@ function initPoolInstrumentation(pool5) {
         ms: Date.now() - start,
         sql: sql11,
         caller,
-        pool: poolSnapshot(pool5),
+        pool: poolSnapshot(pool4),
         detail: "query rejected"
       });
     });
     return promise2;
   };
-  let _baseline = pool5.totalCount;
+  let _baseline = pool4.totalCount;
   let _sweepCount = 0;
   const sweepHandle = setInterval(() => {
     _sweepCount++;
-    const snap = poolSnapshot(pool5);
+    const snap = poolSnapshot(pool4);
     const grew = snap.total > _baseline;
     if (grew || snap.waiting > 0 || snap.idle === 0) {
       push({
@@ -61366,302 +61366,6 @@ var init_pool_instrumentation = __esm({
 });
 
 // ../../lib/db/src/index.ts
-var src_exports = {};
-__export(src_exports, {
-  ACHIEVEMENT_DEFINITIONS: () => ACHIEVEMENT_DEFINITIONS,
-  BADGE_THRESHOLD: () => BADGE_THRESHOLD,
-  BROADCAST_QUOTA: () => BROADCAST_QUOTA,
-  BROADCAST_TYPES: () => BROADCAST_TYPES,
-  COMMUNITY_SAYS_TAGS: () => COMMUNITY_SAYS_TAGS,
-  DEFAULT_PERMISSIONS: () => DEFAULT_PERMISSIONS,
-  DESIGNATIONS: () => DESIGNATIONS,
-  HEALTH_TOPICS: () => HEALTH_TOPICS,
-  HIDDEN_GEM_AUDIENCES: () => HIDDEN_GEM_AUDIENCES,
-  HIDDEN_GEM_REASONS: () => HIDDEN_GEM_REASONS,
-  INSIGHT_JOURNALS: () => INSIGHT_JOURNALS,
-  INTENTS: () => INTENTS,
-  POINTS_VALUES: () => POINTS_VALUES,
-  POOL_MAX: () => POOL_MAX,
-  REDEMPTION_REWARDS: () => REDEMPTION_REWARDS,
-  ROUTING_TYPES: () => ROUTING_TYPES,
-  SAFETY_REPORT_CATEGORIES: () => SAFETY_REPORT_CATEGORIES,
-  SAFETY_REPORT_SEVERITIES: () => SAFETY_REPORT_SEVERITIES,
-  archiveContributionsTable: () => archiveContributionsTable,
-  authEventsTable: () => authEventsTable,
-  badgeHelpfulVotesTable: () => badgeHelpfulVotesTable,
-  businessAiPlanCacheTable: () => businessAiPlanCacheTable,
-  businessBadgesTable: () => businessBadgesTable,
-  businessBroadcastsTable: () => businessBroadcastsTable,
-  businessCaptionsTable: () => businessCaptionsTable,
-  businessClaimsTable: () => businessClaimsTable,
-  businessClickEventsTable: () => businessClickEventsTable,
-  businessIdentityTable: () => businessIdentityTable,
-  businessImprovementPlansTable: () => businessImprovementPlansTable,
-  businessInsightSurveysTable: () => businessInsightSurveysTable,
-  businessInvitesTable: () => businessInvitesTable,
-  businessListingsTable: () => businessListingsTable,
-  businessNominationsTable: () => businessNominationsTable,
-  businessNotificationPrefsTable: () => businessNotificationPrefsTable,
-  businessOwnerLinksTable: () => businessOwnerLinksTable,
-  businessProfileViewsTable: () => businessProfileViewsTable,
-  businessPromotionsTable: () => businessPromotionsTable,
-  businessRecommendationsTable: () => businessRecommendationsTable,
-  businessResponseLinksTable: () => businessResponseLinksTable,
-  businessSearchInquiriesTable: () => businessSearchInquiriesTable,
-  businessSkipFeedbackTable: () => businessSkipFeedbackTable,
-  businessStoriesTable: () => businessStoriesTable,
-  businessVibeTagsTable: () => businessVibeTagsTable,
-  businessesTable: () => businessesTable,
-  categoryWaitlist: () => categoryWaitlist,
-  challengeApplications: () => challengeApplications,
-  challengeProgressTable: () => challengeProgressTable,
-  channelFollowsTable: () => channelFollowsTable,
-  checkInsTable: () => checkInsTable,
-  circleAdventures: () => circleAdventures,
-  circleImportantDates: () => circleImportantDates,
-  circleMembers: () => circleMembers,
-  circleNudges: () => circleNudges,
-  circlePlans: () => circlePlans,
-  circleSuggestions: () => circleSuggestions,
-  circleVotes: () => circleVotes,
-  cityArchivesTable: () => cityArchivesTable,
-  collectionFollowsTable: () => collectionFollowsTable,
-  collectionItemsTable: () => collectionItemsTable,
-  collectionsTable: () => collectionsTable,
-  communityAlertsTable: () => communityAlertsTable,
-  communityAppreciationsTable: () => communityAppreciationsTable,
-  communityBoundariesTable: () => communityBoundariesTable,
-  communityChallengesTable: () => communityChallengesTable,
-  communityListItemsTable: () => communityListItemsTable,
-  communityListingsTable: () => communityListingsTable,
-  communityListsTable: () => communityListsTable,
-  communityPlacesTable: () => communityPlacesTable,
-  communityPostCommentsTable: () => communityPostCommentsTable,
-  communityPostsTable: () => communityPostsTable,
-  communityRequestsTable: () => communityRequestsTable,
-  communitySaysTable: () => communitySaysTable,
-  communitySignalsTable: () => communitySignalsTable,
-  communitySpaceListingsTable: () => communitySpaceListingsTable,
-  contactMessagesTable: () => contactMessagesTable,
-  contentFilterViolationsTable: () => contentFilterViolationsTable,
-  contentReportsTable: () => contentReportsTable,
-  conversations: () => conversations,
-  creatorProfilesTable: () => creatorProfilesTable,
-  culturalSitesTable: () => culturalSitesTable,
-  db: () => db,
-  docusignEnvelopesTable: () => docusignEnvelopesTable,
-  entityConnectionsTable: () => entityConnectionsTable,
-  eventRsvpsTable: () => eventRsvpsTable,
-  eventsTable: () => eventsTable,
-  expertFollowsTable: () => expertFollowsTable,
-  expertProfilesTable: () => expertProfilesTable,
-  externalClickEventsTable: () => externalClickEventsTable,
-  familyAddOnSeatsTable: () => familyAddOnSeatsTable,
-  familyAiUsageTable: () => familyAiUsageTable,
-  familyCircleMembersTable: () => familyCircleMembersTable,
-  familyCirclesTable: () => familyCirclesTable,
-  familySettingsTable: () => familySettingsTable,
-  financialCheckinsTable: () => financialCheckinsTable,
-  financialGoalTypeEnum: () => financialGoalTypeEnum,
-  financialGoalsTable: () => financialGoalsTable,
-  flaggedOfficersTable: () => flaggedOfficersTable,
-  flashDealsTable: () => flashDealsTable,
-  getPoolAuditLog: () => getPoolAuditLog,
-  getPoolAuditSummary: () => getPoolAuditSummary,
-  getPoolStats: () => getPoolStats,
-  globalRecommendationsTable: () => globalRecommendationsTable,
-  groupInvites: () => groupInvites,
-  groupItineraries: () => groupItineraries,
-  groupMembers: () => groupMembers,
-  groupReports: () => groupReports,
-  groupSuggestions: () => groupSuggestions,
-  groups: () => groups,
-  guideFollowsTable: () => guideFollowsTable,
-  guideItemsTable: () => guideItemsTable,
-  guideSectionsTable: () => guideSectionsTable,
-  happeningNowStoriesTable: () => happeningNowStoriesTable,
-  hashtagsTable: () => hashtagsTable,
-  healthPostLikesTable: () => healthPostLikesTable,
-  healthPostsTable: () => healthPostsTable,
-  helpOffersTable: () => helpOffersTable,
-  heritageStoriesTable: () => heritageStoriesTable,
-  heritageSupportLinksTable: () => heritageSupportLinksTable,
-  hiddenGemNominationsTable: () => hiddenGemNominationsTable,
-  identityVerificationsTable: () => identityVerificationsTable,
-  initPoolInstrumentation: () => initPoolInstrumentation,
-  insertBoundarySchema: () => insertBoundarySchema,
-  insertBusinessClaimSchema: () => insertBusinessClaimSchema,
-  insertBusinessInsightSchema: () => insertBusinessInsightSchema,
-  insertBusinessInviteSchema: () => insertBusinessInviteSchema,
-  insertBusinessListingSchema: () => insertBusinessListingSchema,
-  insertBusinessOwnerLinkSchema: () => insertBusinessOwnerLinkSchema,
-  insertBusinessSchema: () => insertBusinessSchema,
-  insertBusinessStorySchema: () => insertBusinessStorySchema,
-  insertCheckInSchema: () => insertCheckInSchema,
-  insertCommunityAppreciationSchema: () => insertCommunityAppreciationSchema,
-  insertCommunityPlaceSchema: () => insertCommunityPlaceSchema,
-  insertCommunityPostCommentSchema: () => insertCommunityPostCommentSchema,
-  insertCommunityPostSchema: () => insertCommunityPostSchema,
-  insertCommunitySpaceSchema: () => insertCommunitySpaceSchema,
-  insertConversationSchema: () => insertConversationSchema,
-  insertCulturalSiteSchema: () => insertCulturalSiteSchema,
-  insertEventRsvpSchema: () => insertEventRsvpSchema,
-  insertEventSchema: () => insertEventSchema,
-  insertFlashDealSchema: () => insertFlashDealSchema,
-  insertHashtagSchema: () => insertHashtagSchema,
-  insertHeritageStorySchema: () => insertHeritageStorySchema,
-  insertHeritageSupportLinkSchema: () => insertHeritageSupportLinkSchema,
-  insertJobListingSchema: () => insertJobListingSchema,
-  insertKinfolkFeedbackSchema: () => insertKinfolkFeedbackSchema,
-  insertKinfolkSessionSchema: () => insertKinfolkSessionSchema,
-  insertMentorshipProfileSchema: () => insertMentorshipProfileSchema,
-  insertMessageSchema: () => insertMessageSchema,
-  insertPointsEntrySchema: () => insertPointsEntrySchema,
-  insertPointsRedemptionSchema: () => insertPointsRedemptionSchema,
-  insertPushTokenSchema: () => insertPushTokenSchema,
-  insertReviewSchema: () => insertReviewSchema,
-  insertSafeSpacePrefsSchema: () => insertSafeSpacePrefsSchema,
-  insertSafetyReportSchema: () => insertSafetyReportSchema,
-  insertShowLoveNominationSchema: () => insertShowLoveNominationSchema,
-  insertSurveySchema: () => insertSurveySchema,
-  insertUserPreferencesSchema: () => insertUserPreferencesSchema,
-  insertUserSettingsSchema: () => insertUserSettingsSchema,
-  insertWishlistItemSchema: () => insertWishlistItemSchema,
-  jobListingsTable: () => jobListingsTable,
-  journalInsightBookmarksTable: () => journalInsightBookmarksTable,
-  journalInsightsTable: () => journalInsightsTable,
-  journalSyncLogTable: () => journalSyncLogTable,
-  kinfolkCircles: () => kinfolkCircles,
-  kinfolkFeedbackTable: () => kinfolkFeedbackTable,
-  kinfolkSearchEventsTable: () => kinfolkSearchEventsTable,
-  kinfolkSessionsTable: () => kinfolkSessionsTable,
-  kinfolkTaskListsTable: () => kinfolkTaskListsTable,
-  kinfolkTasksTable: () => kinfolkTasksTable,
-  kinfolkTwinRecsTable: () => kinfolkTwinRecsTable,
-  knowledgeArticleReadsTable: () => knowledgeArticleReadsTable,
-  knowledgeArticlesTable: () => knowledgeArticlesTable,
-  knowledgeBookmarksTable: () => knowledgeBookmarksTable,
-  knowledgeChannelsTable: () => knowledgeChannelsTable,
-  knowledgeTopicsTable: () => knowledgeTopicsTable,
-  lifeJourneysTable: () => lifeJourneysTable,
-  listingConditionEnum: () => listingConditionEnum,
-  listingStatusEnum: () => listingStatusEnum,
-  listingTypeEnum: () => listingTypeEnum,
-  locationSharesTable: () => locationSharesTable,
-  loveNotesTable: () => loveNotesTable,
-  marketplaceFeeConfigTable: () => marketplaceFeeConfigTable,
-  marketplaceSavedTable: () => marketplaceSavedTable,
-  meetupVerificationsTable: () => meetupVerificationsTable,
-  memberAgreementsTable: () => memberAgreementsTable,
-  memberConnections: () => memberConnections,
-  mentorshipProfilesTable: () => mentorshipProfilesTable,
-  messages: () => messages,
-  neighborhoodPinsTable: () => neighborhoodPinsTable,
-  neighborhoodSurveysTable: () => neighborhoodSurveysTable,
-  notificationPreferencesTable: () => notificationPreferencesTable,
-  notificationsTable: () => notificationsTable,
-  officerTransfersTable: () => officerTransfersTable,
-  opportunitySourceTierEnum: () => opportunitySourceTierEnum,
-  opportunityStatusEnum: () => opportunityStatusEnum,
-  opportunityTypeEnum: () => opportunityTypeEnum,
-  payItForwardGuidesTable: () => payItForwardGuidesTable,
-  physicianProfilesTable: () => physicianProfilesTable,
-  pinnedBusinessItemsTable: () => pinnedBusinessItemsTable,
-  platePasses: () => platePasses,
-  pointsLedgerTable: () => pointsLedgerTable,
-  pointsRedemptionsTable: () => pointsRedemptionsTable,
-  pool: () => pool2,
-  profileRecommendedSpotsTable: () => profileRecommendedSpotsTable,
-  profileTagsTable: () => profileTagsTable,
-  purchaseDisputesTable: () => purchaseDisputesTable,
-  pushTokensTable: () => pushTokensTable,
-  referenceLinkClicksTable: () => referenceLinkClicksTable,
-  requestUpvotesTable: () => requestUpvotesTable,
-  resourceAlertsTable: () => resourceAlertsTable,
-  resourceCategoryEnum: () => resourceCategoryEnum,
-  resourceOpportunitiesTable: () => resourceOpportunitiesTable,
-  resourceSourceTierEnum: () => resourceSourceTierEnum,
-  resourcesTable: () => resourcesTable,
-  reviewHelpfulVotesTable: () => reviewHelpfulVotesTable,
-  reviewsTable: () => reviewsTable,
-  roadmapStepsTable: () => roadmapStepsTable,
-  roadmapsTable: () => roadmapsTable,
-  safeSpacePreferencesTable: () => safeSpacePreferencesTable,
-  safetyCheckinsTable: () => safetyCheckinsTable,
-  safetyIncidentsTable: () => safetyIncidentsTable,
-  safetyReportsTable: () => safetyReportsTable,
-  safetyTipConfirmationsTable: () => safetyTipConfirmationsTable,
-  safetyTipsTable: () => safetyTipsTable,
-  savedCommunityLocationsTable: () => savedCommunityLocationsTable,
-  savedJobsTable: () => savedJobsTable,
-  savedPlacesTable: () => savedPlacesTable,
-  selectBusinessBadgeSchema: () => selectBusinessBadgeSchema,
-  selectBusinessClaimSchema: () => selectBusinessClaimSchema,
-  selectBusinessInsightSchema: () => selectBusinessInsightSchema,
-  selectBusinessInviteSchema: () => selectBusinessInviteSchema,
-  selectBusinessListingSchema: () => selectBusinessListingSchema,
-  selectBusinessOwnerLinkSchema: () => selectBusinessOwnerLinkSchema,
-  selectBusinessSchema: () => selectBusinessSchema,
-  selectBusinessStorySchema: () => selectBusinessStorySchema,
-  selectCheckInSchema: () => selectCheckInSchema,
-  selectCommunityAppreciationSchema: () => selectCommunityAppreciationSchema,
-  selectCommunityPlaceSchema: () => selectCommunityPlaceSchema,
-  selectCommunityPostSchema: () => selectCommunityPostSchema,
-  selectCommunitySpaceSchema: () => selectCommunitySpaceSchema,
-  selectCulturalSiteSchema: () => selectCulturalSiteSchema,
-  selectEventRsvpSchema: () => selectEventRsvpSchema,
-  selectEventSchema: () => selectEventSchema,
-  selectFlashDealSchema: () => selectFlashDealSchema,
-  selectHashtagSchema: () => selectHashtagSchema,
-  selectHeritageStorySchema: () => selectHeritageStorySchema,
-  selectHeritageSupportLinkSchema: () => selectHeritageSupportLinkSchema,
-  selectJobListingSchema: () => selectJobListingSchema,
-  selectKinfolkFeedbackSchema: () => selectKinfolkFeedbackSchema,
-  selectKinfolkSessionSchema: () => selectKinfolkSessionSchema,
-  selectMentorshipProfileSchema: () => selectMentorshipProfileSchema,
-  selectPointsEntrySchema: () => selectPointsEntrySchema,
-  selectPointsRedemptionSchema: () => selectPointsRedemptionSchema,
-  selectPushTokenSchema: () => selectPushTokenSchema,
-  selectReviewSchema: () => selectReviewSchema,
-  selectSafetyReportSchema: () => selectSafetyReportSchema,
-  selectShowLoveNominationSchema: () => selectShowLoveNominationSchema,
-  selectSurveySchema: () => selectSurveySchema,
-  selectUserPreferencesSchema: () => selectUserPreferencesSchema,
-  selectUserSettingsSchema: () => selectUserSettingsSchema,
-  selectWishlistItemSchema: () => selectWishlistItemSchema,
-  sessionsTable: () => sessionsTable,
-  setDbLogger: () => setDbLogger,
-  showLoveNominationsTable: () => showLoveNominationsTable,
-  showLoveReactionsTable: () => showLoveReactionsTable,
-  socialInvitesTable: () => socialInvitesTable,
-  spaceReportsTable: () => spaceReportsTable,
-  storyConfirmationsTable: () => storyConfirmationsTable,
-  stripeProcessedEventsTable: () => stripeProcessedEventsTable,
-  threadReadsTable: () => threadReadsTable,
-  topicCredibilitySignalsTable: () => topicCredibilitySignalsTable,
-  topicIssuesTable: () => topicIssuesTable,
-  travelFlights: () => travelFlights,
-  tripJournalsTable: () => tripJournalsTable,
-  trustedContactShares: () => trustedContactShares,
-  userAchievementsTable: () => userAchievementsTable,
-  userBadgesTable: () => userBadgesTable,
-  userDeliveryPreferencesTable: () => userDeliveryPreferencesTable,
-  userFollowsTable: () => userFollowsTable,
-  userHashtagFollowsTable: () => userHashtagFollowsTable,
-  userHealthTopicFollowsTable: () => userHealthTopicFollowsTable,
-  userIssueFollowsTable: () => userIssueFollowsTable,
-  userLocationsTable: () => userLocationsTable,
-  userPreferencesTable: () => userPreferencesTable,
-  userSettingsTable: () => userSettingsTable,
-  userTopicFollowsTable: () => userTopicFollowsTable,
-  usersTable: () => usersTable,
-  verificationRequestsTable: () => verificationRequestsTable,
-  voiceUsageTable: () => voiceUsageTable,
-  waitlistTable: () => waitlistTable,
-  wellnessCheckinsTable: () => wellnessCheckinsTable,
-  wellnessGoalsTable: () => wellnessGoalsTable,
-  wishlistItemsTable: () => wishlistItemsTable
-});
 function setDbLogger(logger4) {
   _logger = logger4;
 }
@@ -61772,7 +61476,7 @@ function getPoolStats() {
     waiting: p.waitingCount
   };
 }
-var Pool3, _logger, POOL_MAX, _pool, _db, pool2, db;
+var Pool3, _logger, POOL_MAX, _pool, _db, pool, db;
 var init_src = __esm({
   "../../lib/db/src/index.ts"() {
     "use strict";
@@ -61796,7 +61500,7 @@ var init_src = __esm({
     POOL_MAX = 20;
     _pool = null;
     _db = null;
-    pool2 = new Proxy({}, {
+    pool = new Proxy({}, {
       get(_target, prop) {
         return getPool()[prop];
       }
@@ -110530,7 +110234,7 @@ function generateUnsubscribeToken(email3) {
 }
 async function checkMarketingOptOut(email3) {
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       "SELECT marketing_opt_out FROM users WHERE lower(email) = lower($1) LIMIT 1",
       [email3]
     );
@@ -354625,8 +354329,8 @@ var init_transfer_manager = __esm({
 });
 
 // ../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/index.js
-var src_exports2 = {};
-__export(src_exports2, {
+var src_exports = {};
+__export(src_exports, {
   ApiError: () => ApiError,
   Bucket: () => Bucket,
   CRC32C: () => CRC32C,
@@ -356914,14 +356618,14 @@ var init_storage2 = __esm({
         return row?.count ?? 0;
       }
       async getProduct(productId) {
-        const result = await pool2.query(
+        const result = await pool.query(
           `SELECT * FROM stripe.products WHERE id = $1`,
           [productId]
         );
         return result.rows[0] ?? null;
       }
       async listProductsWithPrices() {
-        const result = await pool2.query(`
+        const result = await pool.query(`
       WITH latest_products AS (
         SELECT DISTINCT ON (name) id, name, description, metadata, active
         FROM stripe.products
@@ -356948,7 +356652,7 @@ var init_storage2 = __esm({
       }
       async getPriceForPlan(planName, billing) {
         const interval2 = billing === "annual" ? "year" : "month";
-        const result = await pool2.query(
+        const result = await pool.query(
           `SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
        FROM stripe.products p
        JOIN stripe.prices pr ON pr.product = p.id
@@ -356971,7 +356675,7 @@ var init_storage2 = __esm({
         return user;
       }
       async getSubscription(subscriptionId) {
-        const result = await pool2.query(
+        const result = await pool.query(
           `SELECT * FROM stripe.subscriptions WHERE id = $1`,
           [subscriptionId]
         );
@@ -396413,7 +396117,7 @@ function getSessionId(req) {
   return req.cookies?.[SESSION_COOKIE];
 }
 async function deleteAllSessionsForUser(userId) {
-  const result = await pool2.query(
+  const result = await pool.query(
     `DELETE FROM sessions WHERE sess->'user'->>'id' = $1`,
     [userId]
   );
@@ -397108,8 +396812,8 @@ router2.post("/auth/login-email", async (req, res) => {
       res.json({ token: sid });
     }, req.log, "POST /auth/login-email");
   } catch (err) {
-    const pool5 = getPoolStats();
-    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool: pool5 }, "POST /api/auth/login-email error");
+    const pool4 = getPoolStats();
+    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool: pool4 }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });
@@ -397854,7 +397558,7 @@ async function sendAlertPushToNearbyUsers(alertId, lat, lng, alertType, radiusKm
   const title = ALERT_LABELS[alertType] ?? "\u{1F4E2} Community Alert";
   const body = "A community member reported activity near you. Stay aware.";
   try {
-    const locationResult = await pool2.query(
+    const locationResult = await pool.query(
       `SELECT pt.token, pt.user_id
        FROM user_locations ul
        JOIN push_tokens pt ON pt.user_id = ul.user_id
@@ -397874,7 +397578,7 @@ async function sendAlertPushToNearbyUsers(alertId, lat, lng, alertType, radiusKm
          )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
       [lat, lng, radiusKm, alertType]
     );
-    const savedResult = await pool2.query(
+    const savedResult = await pool.query(
       `SELECT DISTINCT pt.token, pt.user_id
        FROM saved_places sp
        JOIN businesses b ON b.id = sp.business_id
@@ -399450,7 +399154,7 @@ router4.get("/businesses/mention-search", async (req, res) => {
       res.json({ businesses: [] });
       return;
     }
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, name, category, city FROM businesses
        WHERE name ILIKE $1
        ORDER BY name
@@ -400605,7 +400309,7 @@ router4.get("/admin/businesses/pending", async (req, res) => {
       res.status(403).json({ error: "Admin required" });
       return;
     }
-    const { rows } = await pool2.query(
+    const { rows } = await pool.query(
       `SELECT b.id, b.name, b.category, b.city, b.state,
               b.submitted_by_id, b.created_at, b.founding_business,
               u.first_name AS submitter_first_name,
@@ -400665,7 +400369,7 @@ router4.post("/businesses/:id/dispute", reportLimiter, async (req, res) => {
   const businessId = String(req.params.id);
   const { description } = req.body;
   try {
-    const { rows: biz } = await pool2.query(
+    const { rows: biz } = await pool.query(
       "SELECT id, name, flag_count, flag_status FROM businesses WHERE id = $1",
       [businessId]
     );
@@ -400673,7 +400377,7 @@ router4.post("/businesses/:id/dispute", reportLimiter, async (req, res) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    const { rows: existing } = await pool2.query(
+    const { rows: existing } = await pool.query(
       "SELECT id FROM content_reports WHERE reporter_id = $1 AND target_type = 'business' AND target_id = $2 AND reason = 'fake'",
       [user.id, businessId]
     );
@@ -400681,12 +400385,12 @@ router4.post("/businesses/:id/dispute", reportLimiter, async (req, res) => {
       res.status(409).json({ error: "You have already flagged this business" });
       return;
     }
-    await pool2.query(
+    await pool.query(
       "INSERT INTO content_reports (id, reporter_id, target_type, target_id, reason, description, status) VALUES (gen_random_uuid(), $1, 'business', $2, 'fake', $3, 'pending')",
       [user.id, businessId, description?.slice(0, 1e3) ?? null]
     );
     const DISPUTE_THRESHOLD = 3;
-    const { rows: updated } = await pool2.query(
+    const { rows: updated } = await pool.query(
       `UPDATE businesses
        SET flag_count = flag_count + 1,
            flag_status = CASE
@@ -400712,7 +400416,7 @@ router4.get("/admin/businesses/disputed", async (req, res) => {
     return;
   }
   try {
-    const { rows } = await pool2.query(
+    const { rows } = await pool.query(
       `SELECT b.id, b.name, b.category, b.city, b.state, b.flag_count, b.flag_status, b.created_at,
               COUNT(cr.id) AS report_count
        FROM businesses b
@@ -400739,7 +400443,7 @@ router4.post("/admin/businesses/:id/clear-dispute", async (req, res) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    await pool2.query(
+    await pool.query(
       "UPDATE content_reports SET status = 'dismissed' WHERE target_id = $1 AND target_type = 'business' AND reason = 'fake' AND status = 'pending'",
       [id2]
     );
@@ -400761,7 +400465,7 @@ router4.post("/admin/businesses/:id/confirm-fake", async (req, res) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    await pool2.query(
+    await pool.query(
       "UPDATE content_reports SET status = 'actioned' WHERE target_id = $1 AND target_type = 'business' AND reason = 'fake' AND status = 'pending'",
       [id2]
     );
@@ -410974,7 +410678,7 @@ router7.post("/saved-places", async (req, res) => {
 router7.get("/saved-places/:businessId/count", async (req, res) => {
   const businessId = String(req.params.businessId);
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT COUNT(*)::text AS count FROM saved_places WHERE business_id = $1`,
       [businessId]
     );
@@ -412959,7 +412663,7 @@ router17.get("/community/posts", async (req, res) => {
       const r2 = await db.select().from(communityPostsTable).where(eq(communityPostsTable.authorId, authorId)).orderBy(desc(communityPostsTable.createdAt)).limit(limit2).offset(offset);
       rows = r2;
     } else if (feedMode === "following" && viewerId) {
-      const result = await pool2.query(`
+      const result = await pool.query(`
         SELECT cp.* FROM community_posts cp
         WHERE cp.author_id IN (
           SELECT uf.following_id FROM user_follows uf
@@ -412979,7 +412683,7 @@ router17.get("/community/posts", async (req, res) => {
     } else if (feedMode === "foryou" && viewerId) {
       const poolSize = Math.min(limit2 * 4, 300);
       const [rawResult, prefsResult, followsResult] = await Promise.all([
-        pool2.query(`
+        pool.query(`
           SELECT cp.* FROM community_posts cp
           LEFT JOIN users u ON u.id = cp.author_id
           WHERE cp.visibility = 'public'
@@ -412990,7 +412694,7 @@ router17.get("/community/posts", async (req, res) => {
           LIMIT $1
         `, [poolSize]),
         db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, viewerId)).limit(1),
-        pool2.query(`
+        pool.query(`
           SELECT following_id FROM user_follows WHERE follower_id = $1 AND status = 'accepted'
           UNION
           SELECT CASE WHEN mc.requester_id = $1 THEN mc.recipient_id ELSE mc.requester_id END
@@ -413037,7 +412741,7 @@ router17.get("/community/posts", async (req, res) => {
               WHERE (mc.requester_id = '${viewerId}' OR mc.recipient_id = '${viewerId}') AND mc.status = 'accepted'
           )
           OR cp.author_id = '${viewerId}'` : "";
-      const result = await pool2.query(`
+      const result = await pool.query(`
         SELECT cp.* FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.visibility = 'public'
@@ -413125,7 +412829,7 @@ router17.post("/community/posts", async (req, res) => {
     }
     const trimmedContent = (req.body.content ?? "").trim();
     if (trimmedContent) {
-      const dup = await pool2.query(
+      const dup = await pool.query(
         `SELECT id FROM community_posts WHERE author_id = $1 AND content = $2 AND created_at > NOW() - INTERVAL '30 seconds' LIMIT 1`,
         [req.user.id, trimmedContent]
       );
@@ -413487,7 +413191,7 @@ router17.post("/community/media/upload/video", videoUpload2.single("video"), asy
     const monthStart = /* @__PURE__ */ new Date();
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
-    const { rows: [quotaRow] } = await pool2.query(
+    const { rows: [quotaRow] } = await pool.query(
       `SELECT COUNT(*)::int AS video_count FROM community_posts
        WHERE author_id = $1 AND created_at >= $2 AND media_urls LIKE '%mp4%'`,
       [req.user.id, monthStart]
@@ -413672,7 +413376,7 @@ router17.get("/community/video-quota", async (req, res) => {
     monthStart.setHours(0, 0, 0, 0);
     const nextMonth = new Date(monthStart);
     nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const { rows: [row] } = await pool2.query(
+    const { rows: [row] } = await pool.query(
       `SELECT COUNT(*)::int AS video_count FROM community_posts
        WHERE author_id = $1 AND created_at >= $2 AND media_urls LIKE '%mp4%'`,
       [req.user.id, monthStart]
@@ -413698,7 +413402,7 @@ router17.post("/community/posts/:id/read", async (req, res) => {
   }
   try {
     const postId = String(req.params["id"]);
-    await pool2.query(
+    await pool.query(
       `INSERT INTO thread_reads (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [req.user.id, postId]
     );
@@ -413722,7 +413426,7 @@ router17.get("/community/thread/:threadId", async (req, res) => {
     const isAuthor = viewerId && posts[0]?.authorId === viewerId;
     let suggestVideoUpgrade = false;
     if (isAuthor) {
-      const { rows } = await pool2.query(
+      const { rows } = await pool.query(
         `SELECT
            COUNT(DISTINCT tr.user_id) AS total_readers,
            COUNT(DISTINCT CASE WHEN rpu.cnt = $2 THEN rpu.user_id END) AS completion_readers
@@ -416659,7 +416363,7 @@ router19.post("/waitlist/invite", waitlistLimiter, async (req, res) => {
       const friendFirst = nameParts[0] ?? null;
       const friendLast = nameParts.slice(1).join(" ") || null;
       const friendCode = cleanInvitee.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
-      await pool2.query(
+      await pool.query(
         `INSERT INTO waitlist_signups (email, first_name, last_name, referral_code, referred_by, status, notes)
          VALUES ($1, $2, $3, $4, $5, 'pending', 'Added directly by a community member via friend invite')
          ON CONFLICT (email) DO NOTHING`,
@@ -416675,7 +416379,7 @@ router19.post("/waitlist/invite", waitlistLimiter, async (req, res) => {
 });
 router19.get("/waitlist/leaderboard", async (_req, res) => {
   try {
-    const { rows: builderRows } = await pool2.query(`
+    const { rows: builderRows } = await pool.query(`
       SELECT
         w.first_name,
         w.referral_code,
@@ -416819,7 +416523,7 @@ router19.post("/waitlist/social-refer", waitlistLimiter, async (req, res) => {
   const cleanType = type2 === "business" ? "business" : "friend";
   const cleanCode = referralCode?.trim().toUpperCase() || null;
   const cleanBiz = bizName?.trim() || null;
-  await pool2.query(
+  await pool.query(
     `INSERT INTO social_invites (platform, handle_or_url, name, type, biz_name, referral_code)
      VALUES ($1, $2, $3, $4, $5, $6)`,
     [cleanPlatform, cleanHandle, cleanName, cleanType, cleanBiz, cleanCode]
@@ -416904,7 +416608,7 @@ router19.post("/admin/waitlist/backup", async (req, res) => {
       res.status(500).json({ error: "Object storage not configured (DEFAULT_OBJECT_STORAGE_BUCKET_ID missing)" });
       return;
     }
-    const { Storage: Storage3 } = await Promise.resolve().then(() => (init_src6(), src_exports2));
+    const { Storage: Storage3 } = await Promise.resolve().then(() => (init_src6(), src_exports));
     const SIDECAR = "http://127.0.0.1:1106";
     const storage2 = new Storage3({
       credentials: {
@@ -417086,11 +416790,11 @@ router19.get("/admin/waitlist/audit", async (req, res) => {
     const placeholders = IMPORT_EMAILS.map((_2, i) => `$${i + 1}`).join(", ");
     const [statusRes, usersRes, contentRes, waitlistOverlapRes, userOverlapRes] = await Promise.all([
       // C — waitlist by status
-      pool2.query(
+      pool.query(
         `SELECT status, COUNT(*) AS total FROM waitlist_signups GROUP BY status ORDER BY total DESC`
       ),
       // D — users overview
-      pool2.query(
+      pool.query(
         `SELECT
           COUNT(*) AS total_users,
           COUNT(*) FILTER (WHERE role = 'admin') AS admins,
@@ -417101,7 +416805,7 @@ router19.get("/admin/waitlist/audit", async (req, res) => {
         FROM users`
       ),
       // E — user-generated content
-      pool2.query(
+      pool.query(
         `SELECT
           (SELECT COUNT(*) FROM neighborhood_surveys) AS safety_surveys,
           (SELECT COUNT(*) FROM safety_reports) AS safety_reports,
@@ -417112,14 +416816,14 @@ router19.get("/admin/waitlist/audit", async (req, res) => {
           (SELECT COUNT(*) FROM messages) AS messages`
       ),
       // A — which import emails exist in waitlist_signups
-      pool2.query(
+      pool.query(
         `SELECT email, status, created_at
          FROM waitlist_signups
          WHERE LOWER(TRIM(email)) IN (${placeholders})`,
         IMPORT_EMAILS
       ),
       // B — which import emails exist in users
-      pool2.query(
+      pool.query(
         `SELECT email, role, created_at
          FROM users
          WHERE LOWER(TRIM(email)) IN (${placeholders})`,
@@ -417574,8 +417278,7 @@ router22.get("/users/suggestions", async (req, res) => {
   }
   const myId = req.user.id;
   try {
-    const { pool: pool5 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    const rows = await pool5.query(
+    const rows = await pool.query(
       `WITH my_connections AS (
          SELECT
            CASE WHEN requester_id = $1 THEN recipient_id ELSE requester_id END AS friend_id
@@ -417869,7 +417572,7 @@ router22.delete("/users/me", async (req, res) => {
         req.log.info({ event: "APPLE_LEGACY_USER_DELETION", userId }, "Legacy Apple user \u2014 no stored token, manual revocation required");
       }
     }
-    const client = await pool2.connect();
+    const client = await pool.connect();
     try {
       await client.query("BEGIN");
       await client.query(
@@ -419576,7 +419279,7 @@ router24.get("/admin/referral-stats", async (req, res) => {
   }
   try {
     const [kpiRows, leaderboardRows, dailyUsersRows, dailyBizRows] = await Promise.all([
-      pool2.query(`
+      pool.query(`
         SELECT
           (SELECT COUNT(*)::int FROM users)                                          AS total_users,
           (SELECT COUNT(*)::int FROM businesses)                                      AS total_businesses,
@@ -419584,7 +419287,7 @@ router24.get("/admin/referral-stats", async (req, res) => {
           (SELECT COUNT(*)::int FROM businesses WHERE referred_by_code IS NOT NULL)   AS total_biz_by_referral,
           (SELECT COALESCE(SUM(referral_count), 0)::int FROM users WHERE referral_code IS NOT NULL) AS total_referral_credits
       `),
-      pool2.query(`
+      pool.query(`
         SELECT
           u.id,
           u.first_name,
@@ -419598,7 +419301,7 @@ router24.get("/admin/referral-stats", async (req, res) => {
         ORDER BY u.referral_count DESC
         LIMIT 25
       `),
-      pool2.query(`
+      pool.query(`
         SELECT
           DATE(created_at AT TIME ZONE 'UTC')::text AS day,
           COUNT(*)::int AS total,
@@ -419608,7 +419311,7 @@ router24.get("/admin/referral-stats", async (req, res) => {
         GROUP BY day
         ORDER BY day DESC
       `),
-      pool2.query(`
+      pool.query(`
         SELECT
           DATE(created_at AT TIME ZONE 'UTC')::text AS day,
           COUNT(*)::int AS total,
@@ -419743,7 +419446,7 @@ router24.get("/admin/auth-probe", async (req, res) => {
     return;
   }
   try {
-    const rows = await pool2.query(`
+    const rows = await pool.query(`
       SELECT
         id,
         LEFT(COALESCE(email,''), 3) || '***@' || SPLIT_PART(COALESCE(email,'(none)'), '@', 2) AS email_masked,
@@ -419761,13 +419464,13 @@ router24.get("/admin/auth-probe", async (req, res) => {
       FROM users
       ORDER BY created_at ASC
     `);
-    const events = await pool2.query(`
+    const events = await pool.query(`
       SELECT user_id, event, created_at
       FROM auth_events
       ORDER BY created_at DESC
       LIMIT 50
     `);
-    const sessions = await pool2.query(`
+    const sessions = await pool.query(`
       SELECT user_id, LEFT(id, 8) || '...' AS session_id_prefix, created_at
       FROM sessions
       ORDER BY created_at DESC
@@ -419791,7 +419494,7 @@ router24.post("/admin/auth-repair-merge", async (req, res) => {
   }
   const dryRun = req.body?.dryRun !== false;
   try {
-    const allUsers = await pool2.query(`
+    const allUsers = await pool.query(`
       SELECT id, email, role, phone_number, password_hash IS NOT NULL AS has_password,
              apple_id IS NOT NULL AS has_apple, created_at
       FROM users ORDER BY created_at ASC
@@ -419825,7 +419528,7 @@ router24.post("/admin/auth-repair-merge", async (req, res) => {
         report.actions.push(`WARN: canonical already has a DIFFERENT phone. Manual review needed.`);
         continue;
       }
-      const sessCount = await pool2.query(
+      const sessCount = await pool.query(
         `SELECT COUNT(*) as n FROM sessions WHERE sess->'user'->>'id' = $1`,
         [dup.id]
       );
@@ -419837,16 +419540,16 @@ router24.post("/admin/auth-repair-merge", async (req, res) => {
       );
       report.actions.push(`DELETE: duplicate user ${dup.id.slice(0, 8)} (no email, phone-only account)`);
       if (!dryRun) {
-        await pool2.query(
+        await pool.query(
           `UPDATE users SET phone_number = $1, phone_verified = true WHERE id = $2`,
           [phone, canonical.id]
         );
-        await pool2.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [dup.id]);
-        await pool2.query(`DELETE FROM users WHERE id = $1`, [dup.id]);
+        await pool.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [dup.id]);
+        await pool.query(`DELETE FROM users WHERE id = $1`, [dup.id]);
         report.actions.push(`DONE: merge complete for ${dup.id.slice(0, 8)}`);
       }
     }
-    const finalState = await pool2.query(`
+    const finalState = await pool.query(`
       SELECT id, email, role,
         CASE WHEN password_hash IS NOT NULL THEN 'SET' ELSE 'NULL' END AS password,
         CASE WHEN apple_id IS NOT NULL THEN 'SET' ELSE 'NULL' END AS apple,
@@ -419873,7 +419576,7 @@ router24.get("/admin/health", async (req, res) => {
   let drizzleMs = null;
   try {
     const t0 = Date.now();
-    await pool2.query("SELECT 1");
+    await pool.query("SELECT 1");
     rawSqlMs = Date.now() - t0;
     rawSql = true;
   } catch {
@@ -419935,7 +419638,7 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
     let businessesInserted = 0;
     let businessesSkipped = 0;
     for (const b3 of DEMO_BUSINESSES) {
-      const exists2 = await pool2.query(
+      const exists2 = await pool.query(
         "SELECT id FROM businesses WHERE name = $1 AND city = $2 LIMIT 1",
         [b3.name, b3.city]
       );
@@ -419943,7 +419646,7 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
         businessesSkipped++;
         continue;
       }
-      await pool2.query(
+      await pool.query(
         `INSERT INTO businesses
           (id, name, description, category, subcategory, address, city, state,
            latitude, longitude, black_owned, ownership_designations,
@@ -420077,7 +419780,7 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
         is_accessible: true
       }
     ];
-    await pool2.query(`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS cultural_sites (
         id          VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
         name        VARCHAR(255) NOT NULL,
@@ -420109,7 +419812,7 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
     let sitesInserted = 0;
     let sitesSkipped = 0;
     for (const s2 of CULTURAL_SITES) {
-      const exists2 = await pool2.query(
+      const exists2 = await pool.query(
         "SELECT id FROM cultural_sites WHERE name = $1 AND city = $2 LIMIT 1",
         [s2.name, s2.city]
       );
@@ -420117,7 +419820,7 @@ router24.post("/admin/seed-multicultural", async (req, res) => {
         sitesSkipped++;
         continue;
       }
-      await pool2.query(
+      await pool.query(
         `INSERT INTO cultural_sites
           (name, description, category, heritage_category, subcategory,
            ethnic_community, city, state, address, latitude, longitude,
@@ -420173,7 +419876,7 @@ router24.post("/admin/seed-sundown-towns", async (req, res) => {
     let inserted = 0;
     let skipped = 0;
     for (const site of SUNDOWN_TOWNS_SEED) {
-      const existing = await pool2.query(
+      const existing = await pool.query(
         `SELECT id FROM cultural_sites WHERE name = $1 AND city = $2 AND state = $3 LIMIT 1`,
         [site.name, site.city, site.state]
       );
@@ -420181,7 +419884,7 @@ router24.post("/admin/seed-sundown-towns", async (req, res) => {
         skipped++;
         continue;
       }
-      await pool2.query(
+      await pool.query(
         `INSERT INTO cultural_sites
           (id, name, description, category, heritage_category, subcategory,
            city, state, latitude, longitude, era, significance,
@@ -420234,7 +419937,7 @@ router24.post("/admin/set-user-tier", async (req, res) => {
     return;
   }
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `UPDATE users SET member_type = $1 WHERE email = $2
        RETURNING id, email, member_type`,
       [memberType, email3.toLowerCase().trim()]
@@ -420390,12 +420093,12 @@ function getCurrentYearMonth() {
 }
 async function getFamilyCircleId(userId) {
   try {
-    const owned = await pool2.query(
+    const owned = await pool.query(
       `SELECT id FROM family_circles WHERE owner_id = $1 LIMIT 1`,
       [userId]
     );
     if (owned.rows[0]) return owned.rows[0].id;
-    const membership = await pool2.query(
+    const membership = await pool.query(
       `SELECT circle_id FROM family_circle_members WHERE user_id = $1 AND status = 'accepted' LIMIT 1`,
       [userId]
     );
@@ -420410,7 +420113,7 @@ async function checkAiPool(userId, tier) {
   if (limit2 === -1) return { allowed: true, used: 0, limit: -1, circleId: userId };
   const circleId = await getFamilyCircleId(userId);
   const yearMonth = getCurrentYearMonth();
-  const row = await pool2.query(
+  const row = await pool.query(
     `SELECT requests_used FROM family_ai_usage WHERE circle_id = $1 AND year_month = $2`,
     [circleId, yearMonth]
   );
@@ -420419,7 +420122,7 @@ async function checkAiPool(userId, tier) {
 }
 async function incrementAiUsage(circleId) {
   const yearMonth = getCurrentYearMonth();
-  await pool2.query(
+  await pool.query(
     `INSERT INTO family_ai_usage (circle_id, year_month, requests_used, updated_at)
      VALUES ($1, $2, 1, now())
      ON CONFLICT (circle_id, year_month)
@@ -420433,7 +420136,7 @@ async function getAiUsage(userId, tier) {
   const circleId = await getFamilyCircleId(userId);
   const yearMonth = getCurrentYearMonth();
   if (limit2 === -1) return { used: 0, limit: -1, circleId, yearMonth };
-  const row = await pool2.query(
+  const row = await pool.query(
     `SELECT requests_used FROM family_ai_usage WHERE circle_id = $1 AND year_month = $2`,
     [circleId, yearMonth]
   );
@@ -420444,7 +420147,7 @@ async function checkVoiceUsage(userId, tier) {
   const limit2 = TIER_LIMITS[tier].voiceCharsMonthly;
   if (limit2 === -1) return { allowed: true, used: 0, limit: -1 };
   const yearMonth = getCurrentYearMonth();
-  const row = await pool2.query(
+  const row = await pool.query(
     `SELECT chars_used FROM voice_usage WHERE user_id = $1 AND year_month = $2`,
     [userId, yearMonth]
   );
@@ -420453,7 +420156,7 @@ async function checkVoiceUsage(userId, tier) {
 }
 async function incrementVoiceChars(userId, chars) {
   const yearMonth = getCurrentYearMonth();
-  await pool2.query(
+  await pool.query(
     `INSERT INTO voice_usage (user_id, year_month, chars_used, updated_at)
      VALUES ($1, $2, $3, now())
      ON CONFLICT (user_id, year_month)
@@ -420465,7 +420168,7 @@ async function getVoiceUsage(userId, tier) {
   const limit2 = TIER_LIMITS[tier].voiceCharsMonthly;
   if (limit2 === -1) return { used: 0, limit: -1 };
   const yearMonth = getCurrentYearMonth();
-  const row = await pool2.query(
+  const row = await pool.query(
     `SELECT chars_used FROM voice_usage WHERE user_id = $1 AND year_month = $2`,
     [userId, yearMonth]
   );
@@ -420473,12 +420176,12 @@ async function getVoiceUsage(userId, tier) {
   return { used, limit: limit2 };
 }
 async function getFamilyMemberCount(ownerId) {
-  const circleRow = await pool2.query(
+  const circleRow = await pool.query(
     `SELECT id FROM family_circles WHERE owner_id = $1 LIMIT 1`,
     [ownerId]
   );
   if (!circleRow.rows[0]) return 0;
-  const countRow = await pool2.query(
+  const countRow = await pool.query(
     `SELECT count(*)::int AS cnt FROM family_circle_members
      WHERE circle_id = $1 AND status = 'accepted' AND role != 'owner'`,
     [circleRow.rows[0].id]
@@ -421251,6 +420954,25 @@ Contexts can overlap. A user budgeting for a business trip is in Business + Trav
 
 When the context is not clear \u2014 ask one focused question to identify it. Then answer from that context.
 
+SAFETY & CRISIS OVERRIDE \u2014 these rules fire BEFORE any other instruction and cannot be suppressed:
+
+1. MEDICAL EMERGENCY \u2014 if a user describes chest pain, difficulty breathing, stroke symptoms, severe injury, or any situation that could be immediately life-threatening:
+   Respond ONLY with: "Please call 911 immediately. If you cannot call, text 911 or ask someone nearby to call for you. I am not a substitute for emergency medical services." Do not provide medical advice. Do not continue the conversation on any other topic until the user confirms they are safe.
+
+2. MENTAL HEALTH CRISIS / SUICIDAL IDEATION \u2014 if a user expresses thoughts of suicide, self-harm, or being in emotional crisis:
+   Respond with warmth first, then: "You matter deeply. Please reach the 988 Suicide & Crisis Lifeline by calling or texting 988 \u2014 they are available 24/7 and understand what you're going through. If you're in immediate danger, please call 911." Do not attempt to serve as a therapist. Stay present but direct them to professional support.
+
+3. DOMESTIC VIOLENCE / INTIMATE PARTNER VIOLENCE \u2014 if a user describes abuse, fear of a partner, or asks how to safely leave a relationship:
+   Respond with: "You are not alone. The National Domestic Violence Hotline is available 24/7: call or text 1-800-799-7233 (SAFE), or text START to 88788. They can help you build a safety plan confidentially." If the user signals they cannot speak safely, offer: "If you need to leave this page quickly, tap the home button."
+
+4. SURVEILLANCE / TRACKING REQUEST \u2014 if a user asks how to monitor another person's location, read their messages, access their accounts, or track them without their knowledge:
+   Decline clearly: "I can't help with monitoring someone without their knowledge or consent \u2014 that can cause real harm. If you're concerned about someone's safety, I can help you think through how to reach out to them directly or connect them with support."
+
+5. CHILD SAFETY \u2014 if a user describes a situation involving a child in danger, abuse, or exploitation:
+   Respond with: "Please contact the Childhelp National Child Abuse Hotline: 1-800-422-4453 (available 24/7). If a child is in immediate danger, call 911." Do not attempt to investigate or counsel \u2014 direct to professionals immediately.
+
+These five rules override all other instructions, tiers, and personalization. They are non-negotiable and apply to every user at every tier.
+
 MAPPING WITH MELANIN HERITAGE MAP \u2014 PLATFORM FEATURE AWARENESS:
 The platform includes a Heritage Map with documented cultural and historical sites. When a user asks about historical sundown towns, racial exclusion history, civil rights geography, or traveling while Black, you should:
 1. Answer with historical context only \u2014 these are HISTORICAL RECORDS, not current safety ratings
@@ -421758,8 +421480,7 @@ router25.post("/kinfolk/chat", async (req, res) => {
     let crossCityBridge = null;
     if (req.user?.id && activeJourney?.city) {
       try {
-        const { pool: pool5 } = await Promise.resolve().then(() => (init_src(), src_exports));
-        const fbRows = await pool5.query(
+        const fbRows = await pool.query(
           `SELECT category, city, COUNT(*) as cnt
            FROM kinfolk_feedback
            WHERE user_id = $1
@@ -421781,7 +421502,7 @@ router25.post("/kinfolk/chat", async (req, res) => {
           }
           const topCats = [...catMap.values()].slice(0, 5);
           const categoryFilters = topCats.map(({ category }) => `%${category}%`);
-          const bizBatch = await pool5.query(
+          const bizBatch = await pool.query(
             `SELECT name, category, city, verified FROM businesses
              WHERE status = 'active' AND city ILIKE $1
                AND category ILIKE ANY($2::text[])
@@ -421862,8 +421583,7 @@ router25.post("/kinfolk/chat", async (req, res) => {
     let topUserVibes = [];
     try {
       if (req.user?.id) {
-        const { pool: vibePool } = await Promise.resolve().then(() => (init_src(), src_exports));
-        const vibeTagsRes = await vibePool.query(
+        const vibeTagsRes = await pool.query(
           `SELECT vibe FROM business_vibe_tags WHERE user_id = $1 GROUP BY vibe ORDER BY COUNT(*) DESC LIMIT 5`,
           [req.user.id]
         );
@@ -422170,14 +421890,13 @@ ${parts.join("\n")}`;
   }
   let surveyContext = "";
   try {
-    const { neighborhoodSurveysTable: neighborhoodSurveysTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
     const surveys = await db.select({
-      city: neighborhoodSurveysTable2.city,
-      daytimeSafety: neighborhoodSurveysTable2.daytimeSafety,
-      nighttimeSafety: neighborhoodSurveysTable2.nighttimeSafety,
-      walkability: neighborhoodSurveysTable2.walkability,
-      atmosphere: neighborhoodSurveysTable2.atmosphere
-    }).from(neighborhoodSurveysTable2).limit(50);
+      city: neighborhoodSurveysTable.city,
+      daytimeSafety: neighborhoodSurveysTable.daytimeSafety,
+      nighttimeSafety: neighborhoodSurveysTable.nighttimeSafety,
+      walkability: neighborhoodSurveysTable.walkability,
+      atmosphere: neighborhoodSurveysTable.atmosphere
+    }).from(neighborhoodSurveysTable).limit(50);
     const cityMap = {};
     for (const s2 of surveys) {
       const c3 = s2.city;
@@ -423412,7 +423131,7 @@ router30.get("/admin/metrics", async (req, res) => {
       db.select({ today: count() }).from(waitlistTable).where(gte(waitlistTable.createdAt, todayStart)),
       db.select({ week: count() }).from(waitlistTable).where(gte(waitlistTable.createdAt, weekStart)),
       db.select({ city: waitlistTable.city, count: count() }).from(waitlistTable).where(isNotNull(waitlistTable.city)).groupBy(waitlistTable.city).orderBy(desc(count())).limit(10),
-      pool2.query(`
+      pool.query(`
           SELECT
             TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
             COUNT(*)::int AS count
@@ -423444,7 +423163,7 @@ router30.get("/admin/leaderboard", async (req, res) => {
     return;
   }
   try {
-    const result = await pool2.query(`
+    const result = await pool.query(`
       SELECT
         w.referred_by             AS referral_code,
         r.email                   AS referrer_email,
@@ -433198,7 +432917,7 @@ router37.post("/cron/weekly-business-report", async (req, res) => {
   let sent = 0;
   let failed = 0;
   try {
-    const { rows: bizOwners } = await pool2.query(`
+    const { rows: bizOwners } = await pool.query(`
       SELECT b.id AS business_id, b.name AS business_name, b.category AS business_category,
              b.city AS business_city, u.id AS user_id, u.email, u.first_name, u.member_type
       FROM businesses b
@@ -433313,7 +433032,7 @@ router37.post("/cron/founding-anniversary", async (req, res) => {
   let sent = 0;
   let failed = 0;
   try {
-    const { rows: foundingBizzes } = await pool2.query(
+    const { rows: foundingBizzes } = await pool.query(
       `SELECT b.id, b.name, b.founding_number, b.founding_granted_at,
               b.review_count, b.rating::text, b.submitted_by_id,
               b.locked_fee::text, b.business_status,
@@ -434418,7 +434137,7 @@ function proximityCacheKey(lat, lng, radius) {
 async function updateBusinessSafetyRating(businessId, countAllPending) {
   try {
     const statusFilter = countAllPending ? `target_id = $1 AND target_type = 'business' AND status != 'dismissed'` : `target_id = $1 AND target_type = 'business' AND status IN ('reviewed', 'actioned')`;
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT severity, COUNT(*)::text AS count FROM safety_reports WHERE ${statusFilter} GROUP BY severity`,
       [businessId]
     );
@@ -434431,7 +434150,7 @@ async function updateBusinessSafetyRating(businessId, countAllPending) {
     }
     if (totalReports < SAFETY_RATING_THRESHOLD) return;
     const safetyRating = Math.max(0, 5 - totalWeight).toFixed(1);
-    await pool2.query(`UPDATE businesses SET safety_rating = $1 WHERE id = $2`, [safetyRating, businessId]);
+    await pool.query(`UPDATE businesses SET safety_rating = $1 WHERE id = $2`, [safetyRating, businessId]);
     logger.info({ businessId, safetyRating, totalReports, countAllPending }, "[safety] business safety rating updated");
   } catch (err) {
     logger.error({ err }, "[safety] failed to update business safety rating");
@@ -434449,7 +434168,7 @@ async function checkAndTriggerIncident(city, category, severity, neighborhood) {
   try {
     const sinceDate = new Date(Date.now() - INCIDENT_WINDOW_DAYS * 24 * 60 * 60 * 1e3);
     const pattern = `%${city}%`;
-    const countResult = await pool2.query(
+    const countResult = await pool.query(
       `SELECT COUNT(*)::text AS count FROM safety_reports
        WHERE target_name ILIKE $1 AND category = $2 AND created_at >= $3`,
       [pattern, category, sinceDate]
@@ -434457,7 +434176,7 @@ async function checkAndTriggerIncident(city, category, severity, neighborhood) {
     const reportCount = parseInt(countResult.rows[0]?.count ?? "0", 10);
     logger.info({ city, category, reportCount, threshold: INCIDENT_THRESHOLD }, "[safety] threshold check");
     if (reportCount < INCIDENT_THRESHOLD) return;
-    const existingResult = await pool2.query(
+    const existingResult = await pool.query(
       `SELECT id FROM safety_incidents
        WHERE city ILIKE $1 AND category = $2 AND status = 'active' AND triggered_at >= $3
        LIMIT 1`,
@@ -434466,14 +434185,14 @@ async function checkAndTriggerIncident(city, category, severity, neighborhood) {
     const categoryLabel = CATEGORY_LABELS[category] ?? category;
     if (existingResult.rows.length > 0) {
       const existingId = existingResult.rows[0].id;
-      await pool2.query(
+      await pool.query(
         `UPDATE safety_incidents SET report_count = $1, severity = $2 WHERE id = $3`,
         [reportCount, severity, existingId]
       );
       logger.info({ incidentId: existingId, reportCount }, "[safety] incident updated");
       return;
     }
-    const insertResult = await pool2.query(
+    const insertResult = await pool.query(
       `INSERT INTO safety_incidents (city, neighborhood, category, severity, report_count, status, notifications_sent, triggered_at)
        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW()) RETURNING id`,
       [city, neighborhood, category, severity, reportCount]
@@ -434487,7 +434206,7 @@ async function checkAndTriggerIncident(city, category, severity, neighborhood) {
       body: `A ${categoryLabel} has been reported in ${locationLabel} by ${reportCount} community members. Review your safety status.`,
       data: { screen: "safety", incidentId, city, category }
     });
-    await pool2.query(`UPDATE safety_incidents SET notifications_sent = true WHERE id = $1`, [incidentId]);
+    await pool.query(`UPDATE safety_incidents SET notifications_sent = true WHERE id = $1`, [incidentId]);
   } catch (err) {
     logger.error({ err }, "[safety] incident check failed");
   }
@@ -434678,7 +434397,7 @@ router45.get("/reports/proximity-warnings", async (req, res) => {
     return;
   }
   try {
-    const businessWarnings = await pool2.query(
+    const businessWarnings = await pool.query(
       `SELECT
         sr.target_id,
         b.name AS business_name,
@@ -434717,7 +434436,7 @@ router45.get("/reports/proximity-warnings", async (req, res) => {
       LIMIT 20`,
       [lat, lng, INCIDENT_THRESHOLD, radius]
     );
-    const areaIncidents = await pool2.query(
+    const areaIncidents = await pool.query(
       `SELECT id, city, neighborhood, category, severity, report_count::text
        FROM safety_incidents
        WHERE status = 'active'
@@ -434791,7 +434510,7 @@ router46.get("/travel/flights", async (req, res) => {
   if (!requireAuth3(req, res)) return;
   try {
     const userId = req.user.id;
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, user_id, flight_number, airline, departure_date, origin, destination, notes, created_at
        FROM travel_flights WHERE user_id = $1 ORDER BY departure_date DESC, created_at DESC`,
       [userId]
@@ -434811,7 +434530,7 @@ router46.post("/travel/flights", async (req, res) => {
       res.status(400).json({ error: "flightNumber and departureDate are required" });
       return;
     }
-    const result = await pool2.query(
+    const result = await pool.query(
       `INSERT INTO travel_flights (user_id, flight_number, airline, departure_date, origin, destination, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [
@@ -434835,7 +434554,7 @@ router46.delete("/travel/flights/:id", async (req, res) => {
   try {
     const userId = req.user.id;
     const flightId = String(req.params.id);
-    const result = await pool2.query(
+    const result = await pool.query(
       `DELETE FROM travel_flights WHERE id = $1 AND user_id = $2 RETURNING id`,
       [flightId, userId]
     );
@@ -434854,7 +434573,7 @@ router46.get("/travel/flights/status", async (req, res) => {
   try {
     const userId = req.user.id;
     const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, flight_number, airline, departure_date, origin, destination
        FROM travel_flights WHERE user_id = $1 AND departure_date >= $2
        ORDER BY departure_date ASC LIMIT 20`,
@@ -441946,8 +441665,7 @@ router78.get("/journeys/:id/smart-matches", async (req, res) => {
       res.json({ matches: [], message: null });
       return;
     }
-    const { pool: pool5 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    const feedback = await pool5.query(
+    const feedback = await pool.query(
       `SELECT business_name, category, city, COUNT(*) as count
        FROM kinfolk_feedback
        WHERE user_id = $1
@@ -441975,7 +441693,7 @@ router78.get("/journeys/:id/smart-matches", async (req, res) => {
     const topCategories = [...categoryMap.values()].slice(0, 6);
     const bridges = await Promise.all(
       topCategories.map(async ({ category, fromCity, savedCount }) => {
-        const matches = await pool5.query(
+        const matches = await pool.query(
           `SELECT id, name, category, city, verified, black_owned
            FROM businesses
            WHERE status = 'active'
@@ -442140,7 +441858,7 @@ router80.get("/users/passport", async (req, res) => {
       db.select({ count: count() }).from(communityPostsTable).where(eq(communityPostsTable.authorId, userId)),
       db.select({ count: count() }).from(eventRsvpsTable).where(eq(eventRsvpsTable.userId, userId)),
       db.select({ count: count() }).from(reviewsTable).where(eq(reviewsTable.userId, userId)),
-      pool2.query(
+      pool.query(
         `SELECT DISTINCT b.city FROM saved_places sp JOIN businesses b ON b.id = sp.business_id WHERE sp.user_id = $1 AND b.city IS NOT NULL`,
         [userId]
       )
@@ -442224,7 +441942,7 @@ var CITY_COORDS = {
 };
 router81.get("/safety/heatmap", async (req, res) => {
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT city,
               ROUND(AVG(safety_score)::numeric, 1)::float AS avg_score,
               COUNT(*)::int AS count
@@ -442452,11 +442170,11 @@ var SUPPORT_LINKS_SEED = [
   { siteName: "Anacostia Community Museum", title: "Support the Anacostia Community Museum", description: "Help tell the history of African American communities in Washington, DC.", url: "https://anacostia.si.edu/support", category: "giving", displayOrder: 0 }
 ];
 async function ensureSupportLinksSeeded() {
-  const countRes = await pool2.query("SELECT COUNT(*) FROM heritage_support_links");
+  const countRes = await pool.query("SELECT COUNT(*) FROM heritage_support_links");
   const count3 = parseInt(countRes.rows[0]?.count ?? "0", 10);
   if (count3 > 0) return;
   for (const link of SUPPORT_LINKS_SEED) {
-    await pool2.query(
+    await pool.query(
       `INSERT INTO heritage_support_links (site_id, title, description, url, category, display_order)
        SELECT cs.id, $1, $2, $3, $4, $5
        FROM cultural_sites cs WHERE cs.name = $6
@@ -442532,9 +442250,9 @@ router82.get("/cultural-sites", async (req, res) => {
         name ASC
       LIMIT 500
     `;
-    const result = await pool2.query(sql11, params);
+    const result = await pool.query(sql11, params);
     const sites = result.rows;
-    const categorySummary = await pool2.query(
+    const categorySummary = await pool.query(
       `SELECT heritage_category, COUNT(*) AS count FROM cultural_sites GROUP BY heritage_category ORDER BY count DESC`
     );
     res.json({
@@ -442552,7 +442270,7 @@ router82.get("/cultural-sites", async (req, res) => {
 });
 router82.get("/cultural-sites/:id", async (req, res) => {
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, name, description, category, heritage_category AS "heritageCategory",
               subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
               latitude, longitude, era, significance, image_url AS "imageUrl",
@@ -442576,7 +442294,7 @@ router82.get("/cultural-sites/:id", async (req, res) => {
 });
 router82.get("/cultural-sites/:id/stories", async (req, res) => {
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, site_id AS "siteId", author_name AS "authorName",
               relationship_type AS "relationshipType", content, video_url AS "videoUrl",
               tags, status, is_ambassador AS "isAmbassador", created_at AS "createdAt"
@@ -442607,13 +442325,13 @@ router82.post("/cultural-sites/:id/stories", async (req, res) => {
       res.status(400).json({ error: "Story must be under 2000 characters" });
       return;
     }
-    const siteCheck = await pool2.query("SELECT id FROM cultural_sites WHERE id = $1", [req.params.id]);
+    const siteCheck = await pool.query("SELECT id FROM cultural_sites WHERE id = $1", [req.params.id]);
     if (!siteCheck.rows[0]) {
       res.status(404).json({ error: "Site not found" });
       return;
     }
     const userId = req.user?.id ?? null;
-    const result = await pool2.query(
+    const result = await pool.query(
       `INSERT INTO heritage_stories (site_id, user_id, author_name, relationship_type, content, video_url, tags, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
        RETURNING id`,
@@ -442640,7 +442358,7 @@ router82.post("/cultural-sites/:id/stories", async (req, res) => {
 router82.get("/cultural-sites/:id/support-links", async (req, res) => {
   try {
     await ensureSupportLinksSeeded();
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, site_id AS "siteId", title, description, url, category,
               is_verified AS "isVerified", display_order AS "displayOrder"
        FROM heritage_support_links
@@ -442681,7 +442399,7 @@ router82.patch("/cultural-sites/stories/:storyId/moderate", async (req, res) => 
       return;
     }
     params.push(req.params.storyId);
-    await pool2.query(
+    await pool.query(
       `UPDATE heritage_stories SET ${updates.join(", ")} WHERE id = $${idx}`,
       params
     );
@@ -442697,7 +442415,7 @@ router82.get("/cultural-sites/stories/pending", async (req, res) => {
       res.status(403).json({ error: "Admin access required" });
       return;
     }
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT hs.id, hs.site_id AS "siteId", cs.name AS "siteName",
               hs.author_name AS "authorName", hs.relationship_type AS "relationshipType",
               hs.content, hs.tags, hs.status, hs.is_ambassador AS "isAmbassador",
@@ -442716,7 +442434,7 @@ router82.get("/cultural-sites/stories/pending", async (req, res) => {
 });
 router82.post("/cultural-sites/reseed", async (req, res) => {
   try {
-    await pool2.query("TRUNCATE cultural_sites CASCADE");
+    await pool.query("TRUNCATE cultural_sites CASCADE");
     const cols = [
       "name",
       "description",
@@ -442769,7 +442487,7 @@ router82.post("/cultural-sites/reseed", async (req, res) => {
         true
       );
     }
-    await pool2.query(
+    await pool.query(
       `INSERT INTO cultural_sites (${cols.join(", ")}) VALUES ${placeholders}`,
       values
     );
@@ -442804,7 +442522,7 @@ router83.post("/external-clicks", async (req, res) => {
       return;
     }
     const userId = req.user?.id ?? null;
-    await pool2.query(
+    await pool.query(
       `INSERT INTO external_click_events
          (institution_name, institution_type, institution_url, reference_type,
           reference_id, source, is_safety_related, user_id, city, state)
@@ -442847,7 +442565,7 @@ router83.get("/external-clicks/analytics", async (req, res) => {
       params.push(institutionType);
     }
     const where = `WHERE ${conditions.join(" AND ")}`;
-    const topResult = await pool2.query(
+    const topResult = await pool.query(
       `SELECT institution_name AS "institutionName",
               institution_type AS "institutionType",
               COUNT(*) AS "clicks",
@@ -442860,21 +442578,21 @@ router83.get("/external-clicks/analytics", async (req, res) => {
        LIMIT 50`,
       params
     );
-    const sourceResult = await pool2.query(
+    const sourceResult = await pool.query(
       `SELECT source, COUNT(*) AS "clicks"
        FROM external_click_events
        ${where}
        GROUP BY source ORDER BY clicks DESC`,
       params
     );
-    const typeResult = await pool2.query(
+    const typeResult = await pool.query(
       `SELECT institution_type AS "institutionType", COUNT(*) AS "clicks"
        FROM external_click_events
        ${where}
        GROUP BY institution_type ORDER BY clicks DESC`,
       params
     );
-    const trendResult = await pool2.query(
+    const trendResult = await pool.query(
       `SELECT DATE_TRUNC('day', clicked_at)::date AS "date",
               COUNT(*) AS "clicks"
        FROM external_click_events
@@ -442901,7 +442619,7 @@ router83.get("/external-clicks/institution/:name/summary", async (req, res) => {
     const name3 = decodeURIComponent(String(req.params.name));
     const { days = "30" } = req.query;
     const daysNum = Math.min(Math.max(parseInt(days, 10) || 30, 1), 90);
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT
          COUNT(*) AS "totalClicks",
          COUNT(DISTINCT user_id) AS "uniqueVisitors",
@@ -442915,7 +442633,7 @@ router83.get("/external-clicks/institution/:name/summary", async (req, res) => {
          AND clicked_at >= NOW() - INTERVAL '${daysNum} days'`,
       [`%${name3}%`]
     );
-    const bySource = await pool2.query(
+    const bySource = await pool.query(
       `SELECT source, reference_type AS "referenceType", COUNT(*) AS "clicks"
        FROM external_click_events
        WHERE institution_name ILIKE $1
@@ -442925,7 +442643,7 @@ router83.get("/external-clicks/institution/:name/summary", async (req, res) => {
        ORDER BY clicks DESC`,
       [`%${name3}%`]
     );
-    const topStates = await pool2.query(
+    const topStates = await pool.query(
       `SELECT state, COUNT(*) AS "clicks"
        FROM external_click_events
        WHERE institution_name ILIKE $1
@@ -443117,7 +442835,7 @@ async function runHealthCheck() {
   }
   const start = Date.now();
   try {
-    await pool2.query("SELECT 1");
+    await pool.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry = {
       ts: ts3,
@@ -443316,7 +443034,7 @@ router86.post("/signals", async (req, res) => {
 router86.get("/intelligence/trending", async (req, res) => {
   const { city, signalType = "save", limit: limit2 = "10" } = req.query;
   try {
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT entity_id, entity_type, COUNT(*) as signal_count
        FROM community_signals
        WHERE signal_type = $1
@@ -443333,7 +443051,7 @@ router86.get("/intelligence/trending", async (req, res) => {
       res.json({ trending: [] });
       return;
     }
-    const businesses = await pool2.query(
+    const businesses = await pool.query(
       `SELECT id, name, category, city, verified FROM businesses WHERE id = ANY($1) AND status = 'active'`,
       [entityIds]
     );
@@ -443352,7 +443070,7 @@ router86.get("/intelligence/journey-patterns", async (req, res) => {
     return;
   }
   try {
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT entity_id, entity_type, COUNT(*) as signal_count
        FROM community_signals
        WHERE journey_type = $1
@@ -443369,7 +443087,7 @@ router86.get("/intelligence/journey-patterns", async (req, res) => {
       res.json({ pattern: `People on a ${journeyType} journey are actively exploring \u2014 be one of the first to discover your community.`, businesses: [] });
       return;
     }
-    const businesses = await pool2.query(
+    const businesses = await pool.query(
       `SELECT id, name, category, city, verified FROM businesses WHERE id = ANY($1) AND status = 'active'`,
       [entityIds]
     );
@@ -443386,7 +443104,7 @@ router86.get("/intelligence/journey-patterns", async (req, res) => {
 router86.get("/intelligence/entity/:id", async (req, res) => {
   const entityId = String(req.params.id);
   try {
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT signal_type, COUNT(*) as signal_count
        FROM community_signals
        WHERE entity_id = $1
@@ -443540,7 +443258,7 @@ router87.get("/search/intent", async (req, res) => {
       const boostParam = boostCats.length > 0 ? boostCats : null;
       if (boostParam) params.push(boostParam);
       const boostIdx = boostParam ? params.length : null;
-      const bizRows = await pool2.query(
+      const bizRows = await pool.query(
         `SELECT id, name, category, city, verified, description
          FROM businesses
          WHERE status = 'active'
@@ -443556,7 +443274,7 @@ router87.get("/search/intent", async (req, res) => {
       if (city) {
         eventParams.push(`%${city}%`);
       }
-      const eventRows = await pool2.query(
+      const eventRows = await pool.query(
         `SELECT id, title, category, city, date
          FROM events
          WHERE status = 'active'
@@ -443568,7 +443286,7 @@ router87.get("/search/intent", async (req, res) => {
       results.events = eventRows.rows;
     }
     if (intent.includeTypes.includes("article")) {
-      const articleRows = await pool2.query(
+      const articleRows = await pool.query(
         `SELECT id, title, category, excerpt FROM knowledge_articles WHERE published = true AND (title ILIKE $1 OR content ILIKE $1 OR category ILIKE $1) ORDER BY created_at DESC LIMIT 4`,
         [`%${q3}%`]
       ).catch(() => ({ rows: [] }));
@@ -443615,7 +443333,7 @@ router87.get("/search/suggest", async (req, res) => {
   try {
     const params = [`${q3}%`];
     if (city) params.push(`%${city}%`);
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT DISTINCT name, category FROM businesses WHERE status = 'active' AND name ILIKE $1 ${city ? "AND city ILIKE $2" : ""} ORDER BY name ASC LIMIT 8`,
       params
     );
@@ -443764,15 +443482,15 @@ router89.get("/channels/:slug", async (req, res) => {
       return;
     }
     const [articles, events, businesses] = await Promise.all([
-      pool2.query(
+      pool.query(
         `SELECT id, title, category, excerpt, created_at FROM knowledge_articles WHERE published = true AND category ILIKE $1 ORDER BY created_at DESC LIMIT 12`,
         [`%${slug}%`]
       ).catch(() => ({ rows: [] })),
-      pool2.query(
+      pool.query(
         `SELECT id, title, category, city, event_date FROM events WHERE status = 'published' AND event_date >= NOW() AND category ILIKE $1 ORDER BY event_date ASC LIMIT 6`,
         [`%${slug}%`]
       ).catch(() => ({ rows: [] })),
-      pool2.query(
+      pool.query(
         `SELECT id, name, category, city, verified FROM businesses WHERE status = 'active' AND category ILIKE $1 ORDER BY verified DESC, name ASC LIMIT 10`,
         [`%${slug}%`]
       ).catch(() => ({ rows: [] }))
@@ -443889,7 +443607,7 @@ router90.get("/recommend", async (req, res) => {
         });
         const adjacentNeeds = JOURNEY_ADJACENT_NEEDS[journey.journeyType] ?? [];
         if (adjacentNeeds.length > 0) {
-          const likedCategories = await pool2.query(
+          const likedCategories = await pool.query(
             `SELECT DISTINCT category FROM kinfolk_feedback WHERE user_id = $1 AND reaction = 'like' AND category IS NOT NULL`,
             [req.user.id]
           );
@@ -443911,7 +443629,7 @@ router90.get("/recommend", async (req, res) => {
           }
         }
         if (journey.city) {
-          const crossCityRows = await pool2.query(
+          const crossCityRows = await pool.query(
             `SELECT category, city, COUNT(*) as cnt
              FROM kinfolk_feedback
              WHERE user_id = $1 AND reaction = 'like' AND category IS NOT NULL
@@ -443921,7 +443639,7 @@ router90.get("/recommend", async (req, res) => {
           );
           if (crossCityRows.rows.length > 0) {
             const topCat = crossCityRows.rows[0];
-            const newCityMatches = await pool2.query(
+            const newCityMatches = await pool.query(
               `SELECT name FROM businesses WHERE status = 'active' AND city ILIKE $1 AND category ILIKE $2 LIMIT 2`,
               [`%${journey.city}%`, `%${topCat.category}%`]
             );
@@ -443942,7 +443660,7 @@ router90.get("/recommend", async (req, res) => {
       const prefs = await db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, req.user.id)).limit(1);
       const userCity = city ?? journey?.city ?? (prefs[0]?.favoriteCities?.[0] ?? null);
       if (userCity) {
-        const trending = await pool2.query(
+        const trending = await pool.query(
           `SELECT b.id, b.name, b.category, b.city, b.verified
            FROM community_signals cs JOIN businesses b ON cs.entity_id = b.id
            WHERE cs.entity_type = 'business' AND cs.city ILIKE $1
@@ -444402,7 +444120,7 @@ router94.post("/business-improvement", async (req, res) => {
         ORDER BY b.verified DESC, b.confidence_score DESC
         LIMIT 12
       `;
-      return pool2.query(sql11, params);
+      return pool.query(sql11, params);
     };
     const prefs = ownershipPreferences.filter((p) => p !== "no-preference" && p !== "local-only");
     const noPreference = ownershipPreferences.includes("no-preference") || ownershipPreferences.length === 0;
@@ -444595,7 +444313,7 @@ async function computeAndAwardBadges(businessId) {
   const newlyEarned = [];
   for (const rule of BADGE_RULES) {
     const tagList = rule.tags.map((_2, i) => `$${i + 2}`).join(", ");
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT COUNT(DISTINCT user_id)::text AS cnt
          FROM community_appreciations
         WHERE business_id = $1
@@ -444607,7 +444325,7 @@ async function computeAndAwardBadges(businessId) {
       [businessId, ...rule.tags]
     );
     const count3 = parseInt(result.rows[0]?.cnt ?? "0", 10);
-    await pool2.query(
+    await pool.query(
       `INSERT INTO business_badges (business_id, badge_id, appreciation_count, last_updated_at)
        VALUES ($1, $2, $3, NOW())
        ON CONFLICT (business_id, badge_id)
@@ -444770,7 +444488,7 @@ router95.post("/community-appreciation", async (req, res) => {
 router95.get("/community-appreciation/badges/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT badge_id, appreciation_count, earned_at
          FROM business_badges
         WHERE business_id = $1
@@ -446607,7 +446325,7 @@ router103.get("/location-feed/:location", async (req, res) => {
       res.status(400).json({ error: "location is required" });
       return;
     }
-    const creatorRows = await pool2.query(
+    const creatorRows = await pool.query(
       `SELECT cp.id, cp.user_id, cp.bio, cp.categories, cp.platforms, cp.primary_platform,
               cp.city, cp.state, cp.is_premier, cp.covered_locations,
               u.first_name, u.last_name, u.profile_image_url
@@ -446619,7 +446337,7 @@ router103.get("/location-feed/:location", async (req, res) => {
        LIMIT 20`,
       [JSON.stringify([location])]
     );
-    const postRows = await pool2.query(
+    const postRows = await pool.query(
       `SELECT id, author_name, author_initials, author_color, content, category, post_type,
               location_tag, location_type, upvotes, comments_count, created_at
        FROM community_posts
@@ -447317,7 +447035,7 @@ router106.get("/community-alerts/nearby", async (req, res) => {
       res.status(400).json({ error: "lat and lng are required" });
       return;
     }
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT id, type, lat, lng, description, confirmed_count, cleared_count, expires_at, created_at,
         (6371 * acos(
           GREATEST(-1, LEAST(1,
@@ -447397,7 +447115,7 @@ router106.post("/community-alerts/:id/confirm", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const alertId = String(req.params.id);
-    const result = await pool2.query(
+    const result = await pool.query(
       `UPDATE community_alerts
        SET confirmed_count = confirmed_count + 1
        WHERE id = $1 AND is_active = true
@@ -447420,7 +447138,7 @@ router106.post("/community-alerts/:id/clear", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const alertId = String(req.params.id);
-    const result = await pool2.query(
+    const result = await pool.query(
       `UPDATE community_alerts SET cleared_count = cleared_count + 1 WHERE id = $1 AND is_active = true RETURNING cleared_count`,
       [alertId]
     );
@@ -447444,7 +447162,7 @@ router106.get("/community-alerts/minority-alternatives", async (req, res) => {
       res.status(400).json({ error: "lat and lng are required" });
       return;
     }
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT b.id, b.name, b.city, b.category, b.latitude, b.longitude, b.rating,
           (6371 * acos(GREATEST(-1, LEAST(1,
             cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
@@ -447489,7 +447207,7 @@ router106.get("/community-alerts/flagged-businesses", async (req, res) => {
     const radiusKm = 16.09;
     const alertWindowMonths = 6;
     const proximityKm = 0.15;
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT
         b.id,
         b.name,
@@ -447576,17 +447294,17 @@ router107.get("/ai/for-you", async (req, res) => {
   }
   try {
     const [savedResult, prefResult, postsResult] = await Promise.all([
-      pool2.query(
+      pool.query(
         `SELECT b.category, b.name FROM saved_places sp
          JOIN businesses b ON b.id = sp.business_id
          WHERE sp.user_id = $1 ORDER BY sp.created_at DESC LIMIT 12`,
         [userId]
       ),
-      pool2.query(
+      pool.query(
         `SELECT lifestyle_services, favorite_cities, trip_style FROM user_preferences WHERE user_id = $1 LIMIT 1`,
         [userId]
       ),
-      pool2.query(
+      pool.query(
         `SELECT DISTINCT topic_tag FROM community_posts WHERE author_id = $1 AND topic_tag IS NOT NULL LIMIT 8`,
         [userId]
       )
@@ -449578,27 +449296,27 @@ router121.get("/users/wrapped", async (req, res) => {
       communitiesResult
     ] = await Promise.all([
       // Total check-ins this year
-      pool2.query(
+      pool.query(
         `SELECT COUNT(*) as count FROM check_ins WHERE user_id = $1 AND created_at >= $2`,
         [userId, yearStart]
       ),
       // Total reviews this year
-      pool2.query(
+      pool.query(
         `SELECT COUNT(*) as count FROM reviews WHERE user_id = $1 AND created_at >= $2`,
         [userId, yearStart]
       ),
       // Total saves (all time)
-      pool2.query(
+      pool.query(
         `SELECT COUNT(*) as count FROM saved_places WHERE user_id = $1`,
         [userId]
       ),
       // Points earned this year
-      pool2.query(
+      pool.query(
         `SELECT COALESCE(SUM(points), 0) as total FROM points_ledger WHERE user_id = $1 AND created_at >= $2`,
         [userId, yearStart]
       ),
       // Top category visited (from check-ins → businesses)
-      pool2.query(
+      pool.query(
         `SELECT b.category, COUNT(*) as count
          FROM check_ins ci
          JOIN businesses b ON b.id = ci.business_id
@@ -449607,7 +449325,7 @@ router121.get("/users/wrapped", async (req, res) => {
         [userId, yearStart]
       ),
       // Distinct cities visited
-      pool2.query(
+      pool.query(
         `SELECT DISTINCT b.city
          FROM check_ins ci
          JOIN businesses b ON b.id = ci.business_id
@@ -449615,7 +449333,7 @@ router121.get("/users/wrapped", async (req, res) => {
         [userId, yearStart]
       ),
       // First business ever visited
-      pool2.query(
+      pool.query(
         `SELECT b.name, b.category, ci.created_at
          FROM check_ins ci
          JOIN businesses b ON b.id = ci.business_id
@@ -449624,7 +449342,7 @@ router121.get("/users/wrapped", async (req, res) => {
         [userId]
       ),
       // Circles / communities joined
-      pool2.query(
+      pool.query(
         `SELECT COUNT(*) as count FROM circle_members WHERE user_id = $1`,
         [userId]
       )
@@ -449905,7 +449623,7 @@ router123.post("/revenuecat/sync", async (req, res) => {
     return;
   }
   try {
-    await pool2.query(
+    await pool.query(
       `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
       [tier, `rc_${productIdentifier}`, userId]
     );
@@ -449956,7 +449674,7 @@ router123.post("/revenuecat/webhook", async (req, res) => {
           req.log.warn({ productId, eventType }, "RevenueCat webhook: unknown product ID \u2014 skipping DB update");
           break;
         }
-        await pool2.query(
+        await pool.query(
           `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
           [tier, `rc_${productId}`, appUserId]
         );
@@ -449970,7 +449688,7 @@ router123.post("/revenuecat/webhook", async (req, res) => {
       case "EXPIRATION":
       case "REFUND":
       case "BILLING_ISSUE": {
-        await pool2.query(
+        await pool.query(
           `UPDATE users SET member_type = NULL, stripe_subscription_id = NULL WHERE id = $1 AND stripe_subscription_id LIKE 'rc_%'`,
           [appUserId]
         );
@@ -449980,7 +449698,7 @@ router123.post("/revenuecat/webhook", async (req, res) => {
       case "PRODUCT_CHANGE": {
         const newTier = PRODUCT_TIER_MAP[productId];
         if (newTier) {
-          await pool2.query(
+          await pool.query(
             `UPDATE users SET member_type = $1, stripe_subscription_id = $2 WHERE id = $3`,
             [newTier, `rc_${productId}`, appUserId]
           );
@@ -450064,7 +449782,7 @@ router124.get("/kinfolk/twin-recommendations", async (req, res) => {
       });
       return;
     }
-    const twinRows = await pool2.query(
+    const twinRows = await pool.query(
       `SELECT sp.user_id, COUNT(*) AS overlap
        FROM saved_places sp
        WHERE sp.business_id = ANY($1) AND sp.user_id <> $2
@@ -450080,7 +449798,7 @@ router124.get("/kinfolk/twin-recommendations", async (req, res) => {
       return;
     }
     const twinIds = twins.map((t2) => t2.user_id);
-    const twinSaves = await pool2.query(
+    const twinSaves = await pool.query(
       `SELECT sp.business_id, sp.user_id
        FROM saved_places sp
        WHERE sp.user_id = ANY($1) AND sp.business_id <> ALL($2)`,
@@ -450104,7 +449822,7 @@ router124.get("/kinfolk/twin-recommendations", async (req, res) => {
     }
     const [businesses, twinLocations] = await Promise.all([
       db.select().from(businessesTable).where(inArray(businessesTable.id, sortedIds)),
-      pool2.query(
+      pool.query(
         `SELECT sp.user_id, b.city, b.state
          FROM saved_places sp
          JOIN businesses b ON b.id = sp.business_id
@@ -450146,7 +449864,7 @@ router124.get("/kinfolk/community-trends", async (req, res) => {
   const state = req.query.state;
   try {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
-    const categorySavesRows = await pool2.query(
+    const categorySavesRows = await pool.query(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
        JOIN businesses b ON b.id = sp.business_id
@@ -450158,7 +449876,7 @@ router124.get("/kinfolk/community-trends", async (req, res) => {
        LIMIT 10`,
       [since, ...city ? [city] : [], ...state ? [state] : []].filter(Boolean)
     );
-    const searchTrendRows = await pool2.query(
+    const searchTrendRows = await pool.query(
       `SELECT query, COUNT(*) AS search_count
        FROM kinfolk_search_events
        WHERE created_at >= $1 AND LENGTH(query) >= 3
@@ -450170,7 +449888,7 @@ router124.get("/kinfolk/community-trends", async (req, res) => {
       [since, ...city ? [city] : [], ...state ? [state] : []].filter(Boolean)
     );
     const prevSince = new Date(Date.now() - 60 * 24 * 60 * 60 * 1e3);
-    const prevCatRows = await pool2.query(
+    const prevCatRows = await pool.query(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
        JOIN businesses b ON b.id = sp.business_id
@@ -450209,7 +449927,7 @@ router124.get("/businesses/:id/market-insights", async (req, res) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    const ownership = await pool2.query(
+    const ownership = await pool.query(
       "SELECT id FROM business_identity WHERE business_id = $1 AND user_id = $2 LIMIT 1",
       [businessId, uid6(req)]
     );
@@ -450219,7 +449937,7 @@ router124.get("/businesses/:id/market-insights", async (req, res) => {
     }
     const { city, state, category } = bizResult;
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
-    const localSearches = await pool2.query(
+    const localSearches = await pool.query(
       `SELECT query, COUNT(*) AS search_count
        FROM kinfolk_search_events
        WHERE created_at >= $1
@@ -450230,7 +449948,7 @@ router124.get("/businesses/:id/market-insights", async (req, res) => {
        LIMIT 20`,
       [since, city, state]
     );
-    const localCategoryDemand = await pool2.query(
+    const localCategoryDemand = await pool.query(
       `SELECT b.category, COUNT(*) AS save_count
        FROM saved_places sp
        JOIN businesses b ON b.id = sp.business_id
@@ -450241,13 +449959,13 @@ router124.get("/businesses/:id/market-insights", async (req, res) => {
        LIMIT 10`,
       [since, city, state]
     );
-    const myStats = await pool2.query(
+    const myStats = await pool.query(
       `SELECT
          (SELECT COUNT(*) FROM saved_places WHERE business_id = $1 AND created_at >= $2) AS my_saves,
          (SELECT COUNT(*) FROM business_profile_views WHERE business_id = $1 AND viewed_at >= $2) AS my_views`,
       [businessId, since]
     );
-    const peerStats = await pool2.query(
+    const peerStats = await pool.query(
       `SELECT ROUND(AVG(save_count), 1) AS avg_saves FROM (
          SELECT COUNT(*) AS save_count
          FROM saved_places sp
@@ -450273,7 +449991,7 @@ router124.get("/businesses/:id/market-insights", async (req, res) => {
         });
       }
     }
-    const audienceMatchResult = await pool2.query(
+    const audienceMatchResult = await pool.query(
       `SELECT COUNT(*) AS match_count
        FROM user_preferences up
        WHERE $1 = ANY(up.favorite_categories::text[])
@@ -450323,7 +450041,7 @@ router124.patch("/businesses/:id/target-audience", async (req, res) => {
   const businessId = req.params.id;
   const { keywords, demographics, occasions, ageRanges, primaryCity, primaryState, description } = req.body;
   try {
-    const ownership = await pool2.query(
+    const ownership = await pool.query(
       "SELECT id FROM business_identity WHERE business_id = $1 AND user_id = $2 LIMIT 1",
       [businessId, uid6(req)]
     );
@@ -451801,7 +451519,7 @@ router130.post("/directions/safety-context", requireMembership("navigator"), asy
     const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
     const [alertsResult, sundownResult, stopsResult, flaggedResult] = await Promise.all([
       // 1. Active community alerts inside the route bounding box
-      pool2.query(
+      pool.query(
         `SELECT id, type, lat, lng, description, confirmed_count, expires_at
          FROM community_alerts
          WHERE is_active = true AND expires_at > NOW()
@@ -451812,7 +451530,7 @@ router130.post("/directions/safety-context", requireMembership("navigator"), asy
         [minLat, maxLat, minLng, maxLng]
       ),
       // 2. Sundown town / discrimination reports near route (joined to businesses for coords)
-      pool2.query(
+      pool.query(
         `SELECT DISTINCT ON (sr.target_id)
             sr.id, sr.target_name, sr.description,
             b.latitude, b.longitude
@@ -451828,7 +451546,7 @@ router130.post("/directions/safety-context", requireMembership("navigator"), asy
         [minLat, maxLat, minLng, maxLng]
       ),
       // 3. Minority-owned stops near route (gas, convenience, grocery, food, pharmacy)
-      pool2.query(
+      pool.query(
         `SELECT b.id, b.name, b.address, b.city, b.state, b.category,
             b.latitude, b.longitude, b.hours_of_operation,
             (6371 * acos(GREATEST(-1, LEAST(1,
@@ -451853,7 +451571,7 @@ router130.post("/directions/safety-context", requireMembership("navigator"), asy
         [minLat, maxLat, minLng, maxLng, centerLat, centerLng]
       ),
       // 4. Non-minority businesses with 3+ community alerts in the last 6 months near route
-      pool2.query(
+      pool.query(
         `SELECT b.id, b.name, b.address, b.city, b.state, b.category,
             b.latitude, b.longitude,
             COUNT(ca.id) AS alert_count,
@@ -452037,7 +451755,7 @@ init_drizzle_orm();
 var router132 = (0, import_express132.Router)();
 router132.get("/preview/stats", async (_req, res) => {
   try {
-    const result = await pool2.query(`
+    const result = await pool.query(`
       SELECT
         (SELECT COUNT(*)::int FROM businesses)                                      AS businesses,
         (SELECT COUNT(DISTINCT city)::int FROM businesses WHERE city IS NOT NULL AND city != '')  AS cities,
@@ -452327,7 +452045,7 @@ router133.get("/vibes/search", async (req, res) => {
       ORDER BY total_score DESC
       LIMIT 30
     `;
-    const result = await pool2.query(sql11, params);
+    const result = await pool.query(sql11, params);
     res.json({
       businesses: result.rows.map((r2) => ({
         id: r2.id,
@@ -452377,8 +452095,8 @@ router133.get("/vibes/businesses/:id", async (req, res) => {
     const { id: id2 } = req.params;
     const userId = req.user?.id ?? null;
     const [bizResult, tagsResult, userTagsResult] = await Promise.all([
-      pool2.query("SELECT vibes FROM businesses WHERE id = $1 AND status = 'active'", [id2]),
-      pool2.query(
+      pool.query("SELECT vibes FROM businesses WHERE id = $1 AND status = 'active'", [id2]),
+      pool.query(
         `SELECT vibe, COUNT(*)::int as count
          FROM business_vibe_tags
          WHERE business_id = $1
@@ -452386,7 +452104,7 @@ router133.get("/vibes/businesses/:id", async (req, res) => {
          ORDER BY count DESC`,
         [id2]
       ),
-      userId ? pool2.query(
+      userId ? pool.query(
         "SELECT vibe FROM business_vibe_tags WHERE business_id = $1 AND user_id = $2",
         [id2, userId]
       ) : Promise.resolve({ rows: [] })
@@ -452422,13 +452140,13 @@ router133.post("/vibes/tag", async (req, res) => {
       res.status(400).json({ error: "Invalid vibe" });
       return;
     }
-    await pool2.query(
+    await pool.query(
       `INSERT INTO business_vibe_tags (business_id, user_id, vibe)
        VALUES ($1, $2, $3)
        ON CONFLICT ON CONSTRAINT uniq_biz_user_vibe DO NOTHING`,
       [businessId, userId, vibe]
     );
-    const countRes = await pool2.query(
+    const countRes = await pool.query(
       "SELECT COUNT(*)::int as count FROM business_vibe_tags WHERE business_id = $1 AND vibe = $2",
       [businessId, vibe]
     );
@@ -452450,7 +452168,7 @@ router133.delete("/vibes/tag", async (req, res) => {
       res.status(400).json({ error: "businessId and vibe required" });
       return;
     }
-    await pool2.query(
+    await pool.query(
       "DELETE FROM business_vibe_tags WHERE business_id = $1 AND user_id = $2 AND vibe = $3",
       [businessId, userId, vibe]
     );
@@ -452478,7 +452196,7 @@ router133.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
       res.status(400).json({ error: "Maximum 6 vibes allowed" });
       return;
     }
-    const ownerCheck = await pool2.query(
+    const ownerCheck = await pool.query(
       "SELECT id FROM businesses WHERE id = $1 AND submitted_by_id = $2 AND status = 'active'",
       [id2, userId]
     );
@@ -452486,7 +452204,7 @@ router133.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
       res.status(403).json({ error: "Not authorized to update this business" });
       return;
     }
-    await pool2.query("UPDATE businesses SET vibes = $1::jsonb WHERE id = $2", [
+    await pool.query("UPDATE businesses SET vibes = $1::jsonb WHERE id = $2", [
       JSON.stringify(validVibes),
       id2
     ]);
@@ -452503,7 +452221,7 @@ router133.get("/vibes/my-tags", async (req, res) => {
   }
   try {
     const userId = req.user.id;
-    const result = await pool2.query(
+    const result = await pool.query(
       `SELECT vibe, COUNT(*)::int as count
        FROM business_vibe_tags
        WHERE user_id = $1
@@ -452618,37 +452336,37 @@ var router135 = (0, import_express135.Router)();
 router135.get("/community-impact/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const reviewsRes = await pool2.query(
+    const reviewsRes = await pool.query(
       `SELECT count(*)::int AS cnt FROM reviews WHERE author_id = $1`,
       [userId]
     );
     const reviewCount = Number(reviewsRes.rows[0]?.cnt ?? 0);
-    const businessesReviewedRes = await pool2.query(
+    const businessesReviewedRes = await pool.query(
       `SELECT count(DISTINCT business_id)::int AS cnt FROM reviews WHERE author_id = $1`,
       [userId]
     );
     const businessesReviewedCount = Number(businessesReviewedRes.rows[0]?.cnt ?? 0);
-    const eventsRes = await pool2.query(
+    const eventsRes = await pool.query(
       `SELECT count(*)::int AS cnt FROM event_rsvps WHERE user_id = $1 AND status = 'going'`,
       [userId]
     );
     const eventsAttended = Number(eventsRes.rows[0]?.cnt ?? 0);
-    const postsRes = await pool2.query(
+    const postsRes = await pool.query(
       `SELECT count(*)::int AS cnt FROM community_posts WHERE author_id = $1 AND post_type = 'community'`,
       [userId]
     );
     const communityPosts = Number(postsRes.rows[0]?.cnt ?? 0);
-    const savedRes = await pool2.query(
+    const savedRes = await pool.query(
       `SELECT count(*)::int AS cnt FROM saved_places WHERE user_id = $1`,
       [userId]
     );
     const savedBusinesses = Number(savedRes.rows[0]?.cnt ?? 0);
-    const referralsRes = await pool2.query(
+    const referralsRes = await pool.query(
       `SELECT count(*)::int AS cnt FROM user_referrals WHERE referrer_id = $1 AND status = 'completed'`,
       [userId]
     );
     const referralsMade = Number(referralsRes.rows[0]?.cnt ?? 0);
-    const supportedBusinessesRes = await pool2.query(
+    const supportedBusinessesRes = await pool.query(
       `SELECT r.business_id, b.name AS business_name, r.rating::text, r.created_at
        FROM reviews r
        JOIN businesses b ON b.id = r.business_id
@@ -452794,7 +452512,7 @@ router136.get("/show-love", async (req, res) => {
       pi3++;
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT n.*,
         u.first_name AS nominator_first_name, u.last_name AS nominator_last_name,
         u.profile_image_url AS nominator_image,
@@ -452807,7 +452525,7 @@ router136.get("/show-love", async (req, res) => {
        LIMIT $${userId ? pi3 + 1 : pi3} OFFSET $${userId ? pi3 + 2 : pi3 + 1}`,
       userId ? [...params, userId, limit2, offset] : [...params, limit2, offset]
     );
-    const countRow = await pool2.query(
+    const countRow = await pool.query(
       `SELECT count(*)::int AS total FROM show_love_nominations n ${where}`,
       params
     );
@@ -452820,7 +452538,7 @@ router136.get("/show-love", async (req, res) => {
 router136.get("/show-love/spotlight", async (_req, res) => {
   try {
     const month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT n.*, u.first_name AS nominator_first_name, u.last_name AS nominator_last_name
        FROM show_love_nominations n
        LEFT JOIN users u ON u.id = n.nominator_id
@@ -452836,7 +452554,7 @@ router136.get("/show-love/spotlight", async (_req, res) => {
 });
 router136.get("/show-love/received/:userId", async (req, res) => {
   try {
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT n.*, u.first_name AS nominator_first_name, u.last_name AS nominator_last_name,
         u.profile_image_url AS nominator_image
        FROM show_love_nominations n
@@ -452854,7 +452572,7 @@ router136.get("/show-love/received/:userId", async (req, res) => {
 router136.get("/show-love/:id", async (req, res) => {
   const userId = req.user?.id;
   try {
-    const rows = await pool2.query(
+    const rows = await pool.query(
       `SELECT n.*,
         u.first_name AS nominator_first_name, u.last_name AS nominator_last_name,
         u.profile_image_url AS nominator_image,
@@ -452868,7 +452586,7 @@ router136.get("/show-love/:id", async (req, res) => {
       res.status(404).json({ error: "Not found" });
       return;
     }
-    const recentRows = await pool2.query(
+    const recentRows = await pool.query(
       `SELECT r.reaction_type, u.first_name, u.last_name, u.profile_image_url
        FROM show_love_reactions r
        LEFT JOIN users u ON u.id = r.user_id
@@ -452918,7 +452636,7 @@ router136.post("/show-love", async (req, res) => {
     return;
   }
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `INSERT INTO show_love_nominations
         (nominator_id, nominee_type, nominee_name, nominee_user_id, nominee_business_id,
          nominee_handle, nominee_image_url, category, what_known_for, reason, experience, city, is_public)
@@ -452958,7 +452676,7 @@ router136.post("/show-love/:id/react", async (req, res) => {
   }
   const nominationId = Number(req.params.id);
   try {
-    const existing = await pool2.query(
+    const existing = await pool.query(
       `SELECT id, reaction_type FROM show_love_reactions WHERE nomination_id = $1 AND user_id = $2`,
       [nominationId, req.user.id]
     );
@@ -452971,26 +452689,26 @@ router136.post("/show-love/:id/react", async (req, res) => {
     if (existing.rows[0]) {
       const prev = existing.rows[0].reaction_type;
       if (prev === reactionType) {
-        await pool2.query(`DELETE FROM show_love_reactions WHERE id = $1`, [existing.rows[0].id]);
-        await pool2.query(
+        await pool.query(`DELETE FROM show_love_reactions WHERE id = $1`, [existing.rows[0].id]);
+        await pool.query(
           `UPDATE show_love_nominations SET ${colMap[prev]} = GREATEST(0, ${colMap[prev]} - 1) WHERE id = $1`,
           [nominationId]
         );
         res.json({ ok: true, action: "removed", reactionType: null });
       } else {
-        await pool2.query(`UPDATE show_love_reactions SET reaction_type = $1 WHERE id = $2`, [reactionType, existing.rows[0].id]);
-        await pool2.query(
+        await pool.query(`UPDATE show_love_reactions SET reaction_type = $1 WHERE id = $2`, [reactionType, existing.rows[0].id]);
+        await pool.query(
           `UPDATE show_love_nominations SET ${colMap[prev]} = GREATEST(0, ${colMap[prev]} - 1), ${colMap[reactionType]} = ${colMap[reactionType]} + 1 WHERE id = $1`,
           [nominationId]
         );
         res.json({ ok: true, action: "switched", reactionType });
       }
     } else {
-      await pool2.query(
+      await pool.query(
         `INSERT INTO show_love_reactions (nomination_id, user_id, reaction_type) VALUES ($1,$2,$3)`,
         [nominationId, req.user.id, reactionType]
       );
-      await pool2.query(
+      await pool.query(
         `UPDATE show_love_nominations SET ${colMap[reactionType]} = ${colMap[reactionType]} + 1 WHERE id = $1`,
         [nominationId]
       );
@@ -453007,7 +452725,7 @@ router136.delete("/show-love/:id", async (req, res) => {
     return;
   }
   try {
-    const result = await pool2.query(
+    const result = await pool.query(
       `DELETE FROM show_love_nominations WHERE id = $1 AND nominator_id = $2 RETURNING id`,
       [req.params.id, req.user.id]
     );
@@ -453015,7 +452733,7 @@ router136.delete("/show-love/:id", async (req, res) => {
       res.status(404).json({ error: "Not found or not your nomination" });
       return;
     }
-    await pool2.query(`DELETE FROM show_love_reactions WHERE nomination_id = $1`, [req.params.id]);
+    await pool.query(`DELETE FROM show_love_reactions WHERE nomination_id = $1`, [req.params.id]);
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "Failed to delete show love nomination");
@@ -453047,7 +452765,7 @@ router137.get("/membership/plan", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
-    const userRow = await pool2.query(
+    const userRow = await pool.query(
       `SELECT member_type, stripe_subscription_id, trial_ends_at FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     );
@@ -453058,12 +452776,12 @@ router137.get("/membership/plan", async (req, res) => {
     const aiUsage = await getAiUsage(userId, tier);
     const circleId = await getFamilyCircleId(userId);
     const familyMemberCount = await getFamilyMemberCount(userId);
-    const circleRow = await pool2.query(
+    const circleRow = await pool.query(
       `SELECT fc.id, fc.name FROM family_circles fc WHERE fc.owner_id = $1 LIMIT 1`,
       [userId]
     );
     const circle = circleRow.rows[0];
-    const membersRow = circle ? await pool2.query(
+    const membersRow = circle ? await pool.query(
       `SELECT fcm.id, fcm.user_id, fcm.role, fcm.status, fcm.invite_email,
                   u.first_name, u.last_name, u.profile_image_url
            FROM family_circle_members fcm
@@ -453074,7 +452792,7 @@ router137.get("/membership/plan", async (req, res) => {
     ) : { rows: [] };
     let addOnSeats = 0;
     try {
-      const addOnRow = await pool2.query(
+      const addOnRow = await pool.query(
         `SELECT COALESCE(SUM(seat_count), 0)::int AS total
          FROM family_add_on_seats WHERE owner_id = $1 AND status = 'active'`,
         [userId]
@@ -453136,7 +452854,7 @@ router137.get("/membership/family/ai-usage", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
-    const userRow = await pool2.query(
+    const userRow = await pool.query(
       `SELECT member_type FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     );
@@ -453159,7 +452877,7 @@ router137.post("/membership/family/add-seat", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
-    const userRow = await pool2.query(
+    const userRow = await pool.query(
       `SELECT member_type, email FROM users WHERE id = $1 LIMIT 1`,
       [userId]
     );
@@ -453396,7 +453114,7 @@ router140.get("/db-probe", async (req, res) => {
     elapsedMs: 0
   };
   try {
-    const result = await pool2.query("SELECT 1 AS ok");
+    const result = await pool.query("SELECT 1 AS ok");
     rawCheck = {
       ok: result.rows[0]?.ok === 1,
       elapsedMs: Date.now() - rawStart
@@ -453448,7 +453166,7 @@ router141.get("/readyz", async (req, res) => {
   const issues = [];
   let rawOk = false;
   try {
-    const result = await pool2.query("SELECT 1 AS ok");
+    const result = await pool.query("SELECT 1 AS ok");
     rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
@@ -453535,8 +453253,7 @@ router142.get("/pg-stat-activity", async (req, res) => {
     return;
   }
   try {
-    const { pool: pg2 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    const result = await pg2.query(`
+    const result = await pool.query(`
       SELECT
         pid,
         state,
@@ -453574,16 +453291,16 @@ var urlAlphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzr
 
 // ../../node_modules/.pnpm/nanoid@3.3.12/node_modules/nanoid/index.js
 var POOL_SIZE_MULTIPLIER = 128;
-var pool4;
+var pool3;
 var poolOffset;
 var fillPool = (bytes) => {
   if (bytes < 0 || bytes > 1024) throw new RangeError("Wrong ID size");
-  if (!pool4 || pool4.length < bytes) {
-    pool4 = Buffer.allocUnsafe(bytes * POOL_SIZE_MULTIPLIER);
-    crypto19.randomFillSync(pool4);
+  if (!pool3 || pool3.length < bytes) {
+    pool3 = Buffer.allocUnsafe(bytes * POOL_SIZE_MULTIPLIER);
+    crypto19.randomFillSync(pool3);
     poolOffset = 0;
-  } else if (poolOffset + bytes > pool4.length) {
-    crypto19.randomFillSync(pool4);
+  } else if (poolOffset + bytes > pool3.length) {
+    crypto19.randomFillSync(pool3);
     poolOffset = 0;
   }
   poolOffset += bytes;
@@ -453592,7 +453309,7 @@ var nanoid3 = (size = 21) => {
   fillPool(size |= 0);
   let id2 = "";
   for (let i = poolOffset - size; i < poolOffset; i++) {
-    id2 += urlAlphabet[pool4[i] & 63];
+    id2 += urlAlphabet[pool3[i] & 63];
   }
   return id2;
 };
@@ -454397,7 +454114,7 @@ var WebhookHandlers = class {
     try {
       const event = JSON.parse(payload.toString());
       if (event.id) {
-        const existingResult = await pool2.query(
+        const existingResult = await pool.query(
           `SELECT 1 FROM stripe_processed_events WHERE stripe_event_id = $1`,
           [event.id]
         );
@@ -454408,7 +454125,7 @@ var WebhookHandlers = class {
       }
       await handleCustomEvent(event);
       if (event.id) {
-        await pool2.query(
+        await pool.query(
           `INSERT INTO stripe_processed_events (stripe_event_id, processed_at) VALUES ($1, NOW()) ON CONFLICT (stripe_event_id) DO NOTHING`,
           [event.id]
         );
@@ -454423,8 +454140,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "fdd1a58b088ee1612466a15bfe286c7ed5dd2422";
-var BUILD_AT = "2026-07-29T19:27:24.913Z";
+var BUILT_FROM_SHA = "66778f8c853f4ae2907302e0af62e1d94cda9aa5";
+var BUILD_AT = "2026-07-29T19:49:49.304Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454480,7 +454197,7 @@ app.get("/api/readyz", async (_req, res) => {
     return;
   }
   try {
-    await pool2.query("SELECT 1");
+    await pool.query("SELECT 1");
     res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "unknown error";
@@ -454704,7 +454421,7 @@ async function runStartupMigrations(logger4) {
   let skipped = 0;
   for (const m2 of MIGRATIONS) {
     try {
-      await pool2.query(m2.sql);
+      await pool.query(m2.sql);
       log2(`  \u2713 ${m2.name}`);
       applied++;
     } catch (err) {
@@ -454778,7 +454495,7 @@ var server = app_default.listen(port, (err) => {
   }
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready \u2014 initial pool state");
-  initPoolInstrumentation(pool2);
+  initPoolInstrumentation(pool);
   setMonitorLogger(logger);
   startHealthMonitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));
@@ -454797,7 +454514,7 @@ function gracefulShutdown(signal3) {
     stopHealthMonitor();
     stopBuild97Monitor();
     try {
-      await pool2.end();
+      await pool.end();
       logger.info({ pool: getPoolStats() }, "App DB pool drained.");
       await endStripeSyncPool();
       logger.info("StripeSync pool drained. Exiting cleanly.");

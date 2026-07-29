@@ -139,8 +139,6 @@ router.get("/users/suggestions", async (req: Request, res: Response) => {
   }
   const myId = req.user.id;
   try {
-    const { pool } = await import("@workspace/db");
-
     const rows = await pool.query<{
       id: string; firstName: string | null; lastName: string | null;
       username: string | null; profileImageUrl: string | null; bio: string | null; mutualCount: number;
