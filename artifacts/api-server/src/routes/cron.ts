@@ -1047,99 +1047,95 @@ router.post("/cron/seed-reviewer", async (req: any, res: any): Promise<void> => 
       reviewerId = newUser.id;
     }
 
-    // 3. Upsert member_agreements entry ────────────────────────────────────────
-    // Use a stable deterministic ID based on userId so re-runs are idempotent
-    const agreementId = `agr-${reviewerId.slice(0, 28)}`;
-    await db.insert(memberAgreementsTable).values({
-      id:               agreementId,
-      userId:           reviewerId,
-      agreementVersion: "v1",
-      platform:         "ios",
-      active:           true,
-    }).onConflictDoNothing();
+    const stepErrors: Record<string, string> = {};
 
-    // 4. Save several businesses for the reviewer ──────────────────────────────
-    const bizList = await db.select({ id: businessesTable.id })
-      .from(businessesTable)
-      .limit(8);
-
-    for (const biz of bizList) {
-      await db.insert(savedPlacesTable).values({
-        userId:     reviewerId,
-        businessId: biz.id,
-        isPublic:   false,
-      }).onConflictDoNothing();
+    // 3. Member agreements (best-effort — schema may differ in prod) ───────────
+    try {
+      const agreementId = `agr-${reviewerId.replace(/-/g, "").slice(0, 28)}`;
+      await pool.query(
+        `INSERT INTO member_agreements (id, user_id, agreement_version, platform, active)
+         VALUES ($1, $2, 'v1', 'ios', true)
+         ON CONFLICT (id) DO NOTHING`,
+        [agreementId, reviewerId],
+      );
+    } catch (e: any) {
+      stepErrors.agreements = e?.message ?? "failed";
     }
 
-    // 5. Create realistic community posts ──────────────────────────────────────
-    const posts = [
+    // 4. Save several businesses for the reviewer ──────────────────────────────
+    let savedBizCount = 0;
+    try {
+      const bizList = await db.select({ id: businessesTable.id })
+        .from(businessesTable).limit(10);
+      for (const biz of bizList) {
+        try {
+          await pool.query(
+            `INSERT INTO saved_places (user_id, business_id, is_public)
+             VALUES ($1, $2, false)
+             ON CONFLICT (user_id, business_id) DO NOTHING`,
+            [reviewerId, biz.id],
+          );
+          savedBizCount++;
+        } catch { /* skip duplicates */ }
+      }
+    } catch (e: any) {
+      stepErrors.savedPlaces = e?.message ?? "failed";
+    }
+
+    // 5. Create realistic community posts (skip if already seeded) ─────────────
+    let postsCreated = 0;
+    const postDefs = [
       {
-        authorName:     "Jordan W.",
-        authorInitials: "JW",
-        authorColor:    "#6B4F3A",
-        content:        "Just discovered this incredible soul food spot in West Philly — the cornbread alone is worth the trip. This community keeps finding the gems I never would have found on my own. 💛",
-        category:       "food",
-        locationCity:   "Philadelphia",
-        locationCountry:"US",
-        hashtags:       ["#PhillyEats", "#SoulFood", "#MappingWithMelanin"],
+        content: "Just discovered this incredible soul food spot in West Philly — the cornbread alone is worth the trip. This community keeps finding the gems I never would have found on my own.",
+        category: "food", city: "Philadelphia",
       },
       {
-        authorName:     "Jordan W.",
-        authorInitials: "JW",
-        authorColor:    "#6B4F3A",
-        content:        "Attended a community business fair in North Philly today. So many amazing Black-owned businesses doing incredible work. Saved all of them to my list. Proud of this city. 🙌",
-        category:       "community",
-        locationCity:   "Philadelphia",
-        locationCountry:"US",
-        hashtags:       ["#BlackOwned", "#PhillyCommunity", "#SupportLocal"],
+        content: "Attended a community business fair in North Philly today. So many amazing minority-owned businesses doing incredible work. Saved all of them to my list. Proud of this city.",
+        category: "community", city: "Philadelphia",
       },
       {
-        authorName:     "Jordan W.",
-        authorInitials: "JW",
-        authorColor:    "#6B4F3A",
-        content:        "KinfolkAI just helped me plan the perfect weekend in Harlem — historic brownstones, jazz venues, and a farmers market I never would have known about. This platform is something special.",
-        category:       "travel",
-        locationCity:   "New York",
-        locationCountry:"US",
-        hashtags:       ["#Harlem", "#CulturalTravel", "#KinfolkAI"],
+        content: "KinfolkAI just helped me plan the perfect weekend in Harlem — historic brownstones, jazz venues, and a farmers market I never would have known about. This platform is something special.",
+        category: "travel", city: "New York",
       },
       {
-        authorName:     "Jordan W.",
-        authorInitials: "JW",
-        authorColor:    "#6B4F3A",
-        content:        "Reminder that the art exhibit at the African American Museum in Philadelphia runs through next month. Powerful work — the community should see this. Free on Sundays! 🎨",
-        category:       "events",
-        locationCity:   "Philadelphia",
-        locationCountry:"US",
-        hashtags:       ["#PhillyArts", "#AAMP", "#CommunityEvents"],
+        content: "Reminder that the art exhibit at the African American Museum in Philadelphia runs through next month. Powerful work — the community should see this. Free on Sundays!",
+        category: "events", city: "Philadelphia",
       },
     ];
-
-    for (const p of posts) {
-      await db.insert(communityPostsTable).values({
-        authorId:        reviewerId,
-        authorName:      p.authorName,
-        authorInitials:  p.authorInitials,
-        authorColor:     p.authorColor,
-        content:         p.content,
-        category:        p.category,
-        postType:        "community",
-        locationCity:    p.locationCity,
-        locationCountry: p.locationCountry,
-        hashtags:        p.hashtags,
-        visibility:      "public",
-        audienceRating:  "everyone",
-      }).onConflictDoNothing();
+    try {
+      // Only seed if the reviewer has no posts yet
+      const { rows: existing } = await pool.query(
+        `SELECT COUNT(*) AS n FROM community_posts WHERE author_id = $1`,
+        [reviewerId],
+      );
+      if (parseInt(existing[0].n, 10) === 0) {
+        for (const p of postDefs) {
+          await pool.query(
+            `INSERT INTO community_posts
+               (author_id, author_name, author_initials, author_color,
+                content, category, post_type, location_city, location_country,
+                visibility, audience_rating)
+             VALUES ($1,'Jordan W.','JW','#6B4F3A',$2,$3,'community',$4,'US','public','everyone')`,
+            [reviewerId, p.content, p.category, p.city],
+          );
+          postsCreated++;
+        }
+      } else {
+        postsCreated = parseInt(existing[0].n, 10);
+      }
+    } catch (e: any) {
+      stepErrors.posts = e?.message ?? "failed";
     }
 
     res.json({
-      ok:          true,
+      ok:         Object.keys(stepErrors).length === 0,
       reviewerId,
-      email:       REVIEWER_EMAIL,
-      tier:        "navigator",
-      savedBiz:    bizList.length,
-      posts:       posts.length,
-      message:     "Reviewer account seeded successfully. Login: reviewer@melaninmaps.com / MapReview2026!",
+      email:      REVIEWER_EMAIL,
+      tier:       "navigator",
+      savedBiz:   savedBizCount,
+      posts:      postsCreated,
+      stepErrors: Object.keys(stepErrors).length > 0 ? stepErrors : undefined,
+      message:    "Reviewer account ready. Login: reviewer@melaninmaps.com / MapReview2026!",
     });
   } catch (err: any) {
     logger.error({ err }, "seed-reviewer failed");
