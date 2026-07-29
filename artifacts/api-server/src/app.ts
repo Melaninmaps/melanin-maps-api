@@ -114,28 +114,22 @@ app.get("/api/readyz/history", (_req: Request, res: Response) => {
   res.json(getHealthHistory());
 });
 
-// ── Build identity: loaded once at startup ──────────────────────────────────
-// Reads the BUILD_IDENTITY file written by build.mjs at compile time.
-// _dirname is already defined above (line 20) as path.dirname(fileURLToPath(import.meta.url)).
-// In the Railway bundle (dist/index.mjs), _dirname = root dist/ directory, so
-// BUILD_IDENTITY is at dist/BUILD_IDENTITY — exactly where nixpacks.toml copies it.
+// ── Build identity: passed from static-server.mjs as env vars ───────────────
+// static-server.mjs reads dist/BUILD_IDENTITY (written by build.mjs) and passes
+// the three tamper-evident values as env vars to this process at spawn time.
+// Using env vars (not file reads) avoids import.meta.url path issues in esbuild bundles.
 //
-// The file contains three tamper-evident values:
-//   bundle_sha256 — SHA-256 of the compiled dist/index.mjs; computed at build time
-//                   from the actual artifact, not from any env var
-//   built_from_sha — git SHA at the moment `node build.mjs` ran; embedded in artifact
-//   built_at — ISO timestamp of the build
-//
-// Any mismatch between bundle_sha256 (computed from the file on disk by running
-// `sha256sum dist/index.mjs`) and the value returned here proves the running bundle
-// was replaced without a rebuild.
-let _buildIdentity: { bundle_sha256: string; built_from_sha: string; built_at: string } | null = null;
-try {
-  const raw = readFileSync(path.join(_dirname, "BUILD_IDENTITY"), "utf8");
-  _buildIdentity = JSON.parse(raw) as { bundle_sha256: string; built_from_sha: string; built_at: string };
-} catch {
-  // BUILD_IDENTITY absent in dev mode — degrade gracefully, all fields return "not-embedded"
-}
+//   BUILD_BUNDLE_SHA256 — SHA-256 of the compiled dist/index.mjs, computed at
+//                         build time from the actual artifact; not an env var
+//                         that Railway sets — this must match what `sha256sum
+//                         dist/index.mjs` returns to prove provenance.
+//   BUILD_FROM_SHA       — git SHA at the moment `node build.mjs` ran.
+//   BUILD_AT             — ISO timestamp of the build.
+const _buildIdentity = {
+  bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || null,
+  built_from_sha: process.env.BUILD_FROM_SHA || null,
+  built_at: process.env.BUILD_AT || null,
+};
 
 // Version / build identity — used to confirm Railway is running the expected artifact.
 // Returns only public build metadata; never exposes secrets, paths, or config.

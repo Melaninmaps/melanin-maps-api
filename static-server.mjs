@@ -99,8 +99,28 @@ async function runMigration() {
 }
 runMigration();
 
+// ── Build identity: read from dist/BUILD_IDENTITY (written by build.mjs) ─────
+// Pass the values to the spawned API process as env vars so /api/version
+// can return artifact-embedded proof of which code is actually running.
+// This is more reliable than reading the file inside the esbuild bundle,
+// where import.meta.url resolution varies across esbuild configurations.
+let _buildId = {};
+try {
+  const _idPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
+  _buildId = JSON.parse(fs.readFileSync(_idPath, "utf8"));
+  process.stderr.write(`BUILD_IDENTITY: sha256=${_buildId.bundle_sha256?.slice(0,16)}... built_from=${_buildId.built_from_sha?.slice(0,10)}...\n`);
+} catch (e) {
+  process.stderr.write(`BUILD_IDENTITY: not found (${e.message}) — /api/version will show "not-embedded"\n`);
+}
+
 const api = spawn(process.execPath, ["dist/index.mjs"], {
-  env: { ...process.env, PORT: String(API_PORT) },
+  env: {
+    ...process.env,
+    PORT: String(API_PORT),
+    BUILD_BUNDLE_SHA256: _buildId.bundle_sha256 ?? "",
+    BUILD_FROM_SHA: _buildId.built_from_sha ?? "",
+    BUILD_AT: _buildId.built_at ?? "",
+  },
   stdio: "inherit",
 });
 api.on("exit", (code) => { process.stderr.write(`API server exited: ${code}\n`); process.exit(code || 1); });

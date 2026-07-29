@@ -454393,12 +454393,11 @@ app.get("/api/readyz", async (_req, res) => {
 app.get("/api/readyz/history", (_req, res) => {
   res.json(getHealthHistory());
 });
-var _buildIdentity = null;
-try {
-  const raw = readFileSync(path6.join(_dirname, "BUILD_IDENTITY"), "utf8");
-  _buildIdentity = JSON.parse(raw);
-} catch {
-}
+var _buildIdentity = {
+  bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || null,
+  built_from_sha: process.env.BUILD_FROM_SHA || null,
+  built_at: process.env.BUILD_AT || null
+};
 app.get("/api/version", (_req, res) => {
   res.json({
     // Runtime Railway env var — reflects the git SHA at deploy trigger time.
