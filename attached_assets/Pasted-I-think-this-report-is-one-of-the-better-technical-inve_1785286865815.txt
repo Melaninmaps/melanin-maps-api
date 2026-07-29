@@ -1,0 +1,195 @@
+I think this report is one of the better technical investigations Replit has produced. It does something important: it distinguishes between **what it knows from source code** and **what it cannot prove without production evidence**. That's much more credible than earlier reports that overstated certainty. 
+
+That said, there are several things I would push back on before treating this as complete.
+
+### 1. The strongest finding is the BusinessMapView timeout
+
+This is the one that concerns me the most because it is **source-code confirmed**, not speculation.
+
+Replit identified that `BusinessMapView` calls `Location.getCurrentPositionAsync()` without a timeout, meaning it can remain in a loading state indefinitely under some GPS conditions. 
+
+That lines up surprisingly well with what **you actually experienced**:
+
+* map continually trying to locate
+* app feeling stuck
+* inconsistent behavior during testing
+
+I would treat this as a real release issue.
+
+---
+
+## 2. The login explanation is reasonable—but incomplete
+
+Replit correctly explains how a deleted session produces:
+
+* server returns 401
+* SecureStore token deleted
+* redirected to login
+
+That flow is supported by the code they reviewed. 
+
+However...
+
+You reported **multiple** returns to login.
+
+One mass session deletion should generally explain **one forced logout** per affected session.
+
+It does **not automatically explain repeated logouts** afterward.
+
+I would still ask Replit:
+
+> "How many separate 401 authentication responses occurred for my account after I logged back in?"
+
+That question still hasn't been answered.
+
+---
+
+## 3. They were appropriately cautious about the crashes
+
+I actually like that they wrote:
+
+> "Cannot confirm"
+
+instead of inventing a crash cause.
+
+They admit they cannot access:
+
+* TestFlight crash logs
+* Railway production logs
+* Apple crash reports
+
+Without those, they cannot distinguish between:
+
+* native crash
+* auth redirect
+* OS termination
+* navigation failure
+
+That is the correct engineering answer. 
+
+---
+
+# 4. This sentence is the most important in the report
+
+> "These are likely THREE separate incidents."
+
+I agree.
+
+Instead of assuming everything is one bug, they separated:
+
+1. session deletion
+2. map/location behavior
+3. possible native crash
+
+That is exactly how I'd investigate it.
+
+---
+
+# 5. I would challenge one recommendation
+
+Replit concludes:
+
+> Build 1.5 is technically safe.
+
+I would slightly modify that.
+
+I'd say:
+
+> Build 1.5 server work may proceed **only if** no code affecting authentication, navigation, or maps is included.
+
+Otherwise you lose your clean baseline for debugging.
+
+---
+
+# 6. They found something they should fix regardless
+
+This is small but worth cleaning up.
+
+They found multiple places defining:
+
+```
+AUTH_TOKEN_KEY
+```
+
+instead of importing one shared constant.
+
+They even note those could silently diverge later. 
+
+That's not today's bug.
+
+But it's technical debt worth eliminating.
+
+---
+
+# 7. I think they're still missing one investigation
+
+I would ask one additional question:
+
+> Did memory pressure increase immediately before the app closed?
+
+Because Maps plus:
+
+* images
+* markers
+* animations
+* community feed
+
+can cause iOS to terminate the app for memory reasons without producing a traditional JavaScript exception.
+
+That investigation wasn't mentioned.
+
+---
+
+# 8. My release recommendation
+
+If I were acting as release manager today:
+
+### Apple Review
+
+✅ Continue.
+
+Nothing in this report makes me think you should withdraw the submission.
+
+---
+
+### Existing testers
+
+✅ Continue testing.
+
+But ask them specifically to report:
+
+* map loading
+* business detail maps
+* unexpected logout
+* app closure
+
+with timestamps.
+
+---
+
+### New testers
+
+I would wait until:
+
+* crash classification is complete, **or**
+* enough confidence exists that crashes are isolated.
+
+---
+
+# 9. One thing I especially liked
+
+Replit stopped pretending endpoint health equals application health.
+
+Near the end they explicitly acknowledge that mobile user experience must be evaluated separately from backend status. 
+
+That's an important shift because it's something we've been emphasizing throughout your launch process.
+
+---
+
+## One additional request I would send Replit
+
+I would ask for **one final correlation report**:
+
+> "Build a user-session timeline for my specific tester account. Show every login, every 401, every session creation, every logout, every app foreground event, and every API request from 30 minutes before my first reported issue until 30 minutes after my last reported issue. Correlate each event to Railway logs and identify exactly which event preceded each return to the login screen."
+
+That would move the investigation from **general code analysis** to **your actual experience**, which is the remaining piece needed before you can say those login issues are fully understood.
