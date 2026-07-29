@@ -18887,14 +18887,14 @@ var require_etag = __commonJS({
   "../../node_modules/.pnpm/etag@1.8.1/node_modules/etag/index.js"(exports2, module) {
     "use strict";
     module.exports = etag;
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var Stats = __require("fs").Stats;
     var toString = Object.prototype.toString;
     function entitytag(entity) {
       if (entity.length === 0) {
         return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"';
       }
-      var hash2 = crypto19.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
+      var hash2 = crypto20.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
       var len = typeof entity === "string" ? Buffer.byteLength(entity, "utf8") : entity.length;
       return '"' + len.toString(16) + "-" + hash2 + '"';
     }
@@ -20617,27 +20617,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router145;
+    module.exports = Router146;
     module.exports.Route = Route;
-    function Router145(options) {
-      if (!(this instanceof Router145)) {
-        return new Router145(options);
+    function Router146(options) {
+      if (!(this instanceof Router146)) {
+        return new Router146(options);
       }
       const opts = options || {};
-      function router145(req, res, next) {
-        router145.handle(req, res, next);
+      function router146(req, res, next) {
+        router146.handle(req, res, next);
       }
-      Object.setPrototypeOf(router145, this);
-      router145.caseSensitive = opts.caseSensitive;
-      router145.mergeParams = opts.mergeParams;
-      router145.params = {};
-      router145.strict = opts.strict;
-      router145.stack = [];
-      return router145;
+      Object.setPrototypeOf(router146, this);
+      router146.caseSensitive = opts.caseSensitive;
+      router146.mergeParams = opts.mergeParams;
+      router146.params = {};
+      router146.strict = opts.strict;
+      router146.stack = [];
+      return router146;
     }
-    Router145.prototype = function() {
+    Router146.prototype = function() {
     };
-    Router145.prototype.param = function param2(name3, fn3) {
+    Router146.prototype.param = function param2(name3, fn3) {
       if (!name3) {
         throw new TypeError("argument name is required");
       }
@@ -20657,7 +20657,7 @@ var require_router = __commonJS({
       params.push(fn3);
       return this;
     };
-    Router145.prototype.handle = function handle(req, res, callback) {
+    Router146.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20784,7 +20784,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router145.prototype.use = function use(handler) {
+    Router146.prototype.use = function use(handler) {
       let offset = 0;
       let path7 = "/";
       if (typeof handler !== "function") {
@@ -20817,7 +20817,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router145.prototype.route = function route(path7) {
+    Router146.prototype.route = function route(path7) {
       const route2 = new Route(path7);
       const layer = new Layer(path7, {
         sensitive: this.caseSensitive,
@@ -20832,7 +20832,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router145.prototype[method] = function(path7) {
+      Router146.prototype[method] = function(path7) {
         const route = this.route(path7);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21015,13 +21015,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve3 = __require("node:path").resolve;
     var once = require_once();
-    var Router145 = require_router();
+    var Router146 = require_router();
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var app2 = exports2 = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router145 = null;
+      var router146 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21030,13 +21030,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router145 === null) {
-            router145 = new Router145({
+          if (router146 === null) {
+            router146 = new Router146({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router145;
+          return router146;
         }
       });
     };
@@ -21107,15 +21107,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router145 = this.router;
+      var router146 = this.router;
       fns.forEach(function(fn4) {
         if (!fn4 || !fn4.handle || !fn4.set) {
-          return router145.use(path7, fn4);
+          return router146.use(path7, fn4);
         }
         debug(".use app under %s", path7);
         fn4.mountpath = path7;
         fn4.parent = this;
-        router145.use(path7, function mounted_app(req, res, next) {
+        router146.use(path7, function mounted_app(req, res, next) {
           var orig = req.app;
           fn4.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -22369,17 +22369,17 @@ var require_content_disposition = __commonJS({
 // ../../node_modules/.pnpm/cookie-signature@1.2.2/node_modules/cookie-signature/index.js
 var require_cookie_signature = __commonJS({
   "../../node_modules/.pnpm/cookie-signature@1.2.2/node_modules/cookie-signature/index.js"(exports2) {
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     exports2.sign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Cookie value must be provided as a string.");
       if (null == secret) throw new TypeError("Secret key must be provided.");
-      return val + "." + crypto19.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
+      return val + "." + crypto20.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
     };
     exports2.unsign = function(input, secret) {
       if ("string" != typeof input) throw new TypeError("Signed cookie string must be provided.");
       if (null == secret) throw new TypeError("Secret key must be provided.");
       var tentativeValue = input.slice(0, input.lastIndexOf(".")), expectedInput = exports2.sign(tentativeValue, secret), expectedBuffer = Buffer.from(expectedInput), inputBuffer = Buffer.from(input);
-      return expectedBuffer.length === inputBuffer.length && crypto19.timingSafeEqual(expectedBuffer, inputBuffer) ? tentativeValue : false;
+      return expectedBuffer.length === inputBuffer.length && crypto20.timingSafeEqual(expectedBuffer, inputBuffer) ? tentativeValue : false;
     };
   }
 });
@@ -23688,7 +23688,7 @@ var require_express = __commonJS({
     var EventEmitter5 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router145 = require_router();
+    var Router146 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module.exports = createApplication;
@@ -23710,8 +23710,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router145.Route;
-    exports2.Router = Router145;
+    exports2.Route = Router146.Route;
+    exports2.Router = Router146;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -24009,11 +24009,11 @@ var require_lib3 = __commonJS({
 // ../../node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/index.js
 var require_cookie_signature2 = __commonJS({
   "../../node_modules/.pnpm/cookie-signature@1.0.6/node_modules/cookie-signature/index.js"(exports2) {
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     exports2.sign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Cookie value must be provided as a string.");
       if ("string" != typeof secret) throw new TypeError("Secret string must be provided.");
-      return val + "." + crypto19.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
+      return val + "." + crypto20.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
     };
     exports2.unsign = function(val, secret) {
       if ("string" != typeof val) throw new TypeError("Signed cookie string must be provided.");
@@ -24022,7 +24022,7 @@ var require_cookie_signature2 = __commonJS({
       return sha12(mac) == sha12(val) ? str2 : false;
     };
     function sha12(str2) {
-      return crypto19.createHash("sha1").update(str2).digest("hex");
+      return crypto20.createHash("sha1").update(str2).digest("hex");
     }
   }
 });
@@ -35928,7 +35928,7 @@ var require_cert_signatures = __commonJS({
 var require_sasl = __commonJS({
   "../../node_modules/.pnpm/pg@8.20.0/node_modules/pg/lib/crypto/sasl.js"(exports2, module) {
     "use strict";
-    var crypto19 = require_utils5();
+    var crypto20 = require_utils5();
     var { signatureAlgorithmHashFromCertificate } = require_cert_signatures();
     function startSession(mechanisms, stream) {
       const candidates = ["SCRAM-SHA-256"];
@@ -35940,7 +35940,7 @@ var require_sasl = __commonJS({
       if (mechanism === "SCRAM-SHA-256-PLUS" && typeof stream.getPeerCertificate !== "function") {
         throw new Error("SASL: Mechanism SCRAM-SHA-256-PLUS requires a certificate");
       }
-      const clientNonce = crypto19.randomBytes(18).toString("base64");
+      const clientNonce = crypto20.randomBytes(18).toString("base64");
       const gs2Header = mechanism === "SCRAM-SHA-256-PLUS" ? "p=tls-server-end-point" : stream ? "y" : "n";
       return {
         mechanism,
@@ -35975,20 +35975,20 @@ var require_sasl = __commonJS({
         const peerCert = stream.getPeerCertificate().raw;
         let hashName = signatureAlgorithmHashFromCertificate(peerCert);
         if (hashName === "MD5" || hashName === "SHA-1") hashName = "SHA-256";
-        const certHash = await crypto19.hashByName(hashName, peerCert);
+        const certHash = await crypto20.hashByName(hashName, peerCert);
         const bindingData = Buffer.concat([Buffer.from("p=tls-server-end-point,,"), Buffer.from(certHash)]);
         channelBinding = bindingData.toString("base64");
       }
       const clientFinalMessageWithoutProof = "c=" + channelBinding + ",r=" + sv.nonce;
       const authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
       const saltBytes = Buffer.from(sv.salt, "base64");
-      const saltedPassword = await crypto19.deriveKey(password, saltBytes, sv.iteration);
-      const clientKey = await crypto19.hmacSha256(saltedPassword, "Client Key");
-      const storedKey = await crypto19.sha256(clientKey);
-      const clientSignature = await crypto19.hmacSha256(storedKey, authMessage);
+      const saltedPassword = await crypto20.deriveKey(password, saltBytes, sv.iteration);
+      const clientKey = await crypto20.hmacSha256(saltedPassword, "Client Key");
+      const storedKey = await crypto20.sha256(clientKey);
+      const clientSignature = await crypto20.hmacSha256(storedKey, authMessage);
       const clientProof = xorBuffers(Buffer.from(clientKey), Buffer.from(clientSignature)).toString("base64");
-      const serverKey = await crypto19.hmacSha256(saltedPassword, "Server Key");
-      const serverSignatureBytes = await crypto19.hmacSha256(serverKey, authMessage);
+      const serverKey = await crypto20.hmacSha256(saltedPassword, "Server Key");
+      const serverSignatureBytes = await crypto20.hmacSha256(serverKey, authMessage);
       session.message = "SASLResponse";
       session.serverSignature = Buffer.from(serverSignatureBytes).toString("base64");
       session.response = clientFinalMessageWithoutProof + ",p=" + clientProof;
@@ -38156,7 +38156,7 @@ var require_client = __commonJS({
     var Query2 = require_query();
     var defaults4 = require_defaults();
     var Connection2 = require_connection();
-    var crypto19 = require_utils5();
+    var crypto20 = require_utils5();
     var activeQueryDeprecationNotice = nodeUtils.deprecate(
       () => {
       },
@@ -38391,7 +38391,7 @@ var require_client = __commonJS({
       _handleAuthMD5Password(msg) {
         this._getPassword(async () => {
           try {
-            const hashedPassword = await crypto19.postgresMd5PasswordHash(this.user, this.password, msg.salt);
+            const hashedPassword = await crypto20.postgresMd5PasswordHash(this.user, this.password, msg.salt);
             this.connection.password(hashedPassword);
           } catch (e3) {
             this.emit("error", e3);
@@ -38806,15 +38806,15 @@ var require_pg_pool = __commonJS({
       });
       return { callback: cb, result };
     }
-    function makeIdleListener(pool3, client) {
+    function makeIdleListener(pool4, client) {
       return function idleListener(err) {
         err.client = client;
         client.removeListener("error", idleListener);
         client.on("error", () => {
-          pool3.log("additional client error after disconnection due to error", err);
+          pool4.log("additional client error after disconnection due to error", err);
         });
-        pool3._remove(client);
-        pool3.emit("error", err, client);
+        pool4._remove(client);
+        pool4.emit("error", err, client);
       };
     }
     var Pool4 = class extends EventEmitter5 {
@@ -60784,6 +60784,25 @@ var init_voice_usage = __esm({
   }
 });
 
+// ../../lib/db/src/schema/member-agreements.ts
+var memberAgreementsTable;
+var init_member_agreements = __esm({
+  "../../lib/db/src/schema/member-agreements.ts"() {
+    "use strict";
+    init_pg_core();
+    memberAgreementsTable = pgTable("member_agreements", {
+      id: varchar("id", { length: 36 }).primaryKey(),
+      userId: varchar("user_id", { length: 255 }).notNull(),
+      agreementVersion: varchar("agreement_version", { length: 20 }).notNull().default("v1"),
+      acceptedAt: timestamp("accepted_at").defaultNow().notNull(),
+      /** ios | android | web */
+      platform: varchar("platform", { length: 20 }).notNull().default("web"),
+      active: boolean("active").notNull().default(true),
+      revokedAt: timestamp("revoked_at")
+    });
+  }
+});
+
 // ../../lib/db/src/schema/index.ts
 var schema_exports = {};
 __export(schema_exports, {
@@ -60965,6 +60984,7 @@ __export(schema_exports, {
   marketplaceFeeConfigTable: () => marketplaceFeeConfigTable,
   marketplaceSavedTable: () => marketplaceSavedTable,
   meetupVerificationsTable: () => meetupVerificationsTable,
+  memberAgreementsTable: () => memberAgreementsTable,
   memberConnections: () => memberConnections,
   mentorshipProfilesTable: () => mentorshipProfilesTable,
   messages: () => messages,
@@ -61203,6 +61223,7 @@ var init_schema2 = __esm({
     init_heritage_support_links();
     init_external_click_events();
     init_voice_usage();
+    init_member_agreements();
   }
 });
 
@@ -61390,6 +61411,7 @@ __export(src_exports, {
   marketplaceFeeConfigTable: () => marketplaceFeeConfigTable,
   marketplaceSavedTable: () => marketplaceSavedTable,
   meetupVerificationsTable: () => meetupVerificationsTable,
+  memberAgreementsTable: () => memberAgreementsTable,
   memberConnections: () => memberConnections,
   mentorshipProfilesTable: () => mentorshipProfilesTable,
   messages: () => messages,
@@ -61943,14 +61965,14 @@ var require_buffer_equal_constant_time = __commonJS({
 var require_jwa = __commonJS({
   "../../node_modules/.pnpm/jwa@2.0.1/node_modules/jwa/index.js"(exports2, module) {
     var Buffer4 = require_safe_buffer().Buffer;
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var formatEcdsa = require_ecdsa_sig_formatter();
     var util3 = __require("util");
     var MSG_INVALID_ALGORITHM = '"%s" is not a valid algorithm.\n  Supported algorithms are:\n  "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512" and "none".';
     var MSG_INVALID_SECRET = "secret must be a string or buffer";
     var MSG_INVALID_VERIFIER_KEY = "key must be a string or a buffer";
     var MSG_INVALID_SIGNER_KEY = "key must be a string, a buffer or an object";
-    var supportsKeyObjects = typeof crypto19.createPublicKey === "function";
+    var supportsKeyObjects = typeof crypto20.createPublicKey === "function";
     if (supportsKeyObjects) {
       MSG_INVALID_VERIFIER_KEY += " or a KeyObject";
       MSG_INVALID_SECRET += "or a KeyObject";
@@ -62040,17 +62062,17 @@ var require_jwa = __commonJS({
       return function sign(thing, secret) {
         checkIsSecretKey(secret);
         thing = normalizeInput(thing);
-        var hmac = crypto19.createHmac("sha" + bits, secret);
+        var hmac = crypto20.createHmac("sha" + bits, secret);
         var sig = (hmac.update(thing), hmac.digest("base64"));
         return fromBase64(sig);
       };
     }
     var bufferEqual;
-    var timingSafeEqual2 = "timingSafeEqual" in crypto19 ? function timingSafeEqual3(a, b3) {
+    var timingSafeEqual2 = "timingSafeEqual" in crypto20 ? function timingSafeEqual3(a, b3) {
       if (a.byteLength !== b3.byteLength) {
         return false;
       }
-      return crypto19.timingSafeEqual(a, b3);
+      return crypto20.timingSafeEqual(a, b3);
     } : function timingSafeEqual3(a, b3) {
       if (!bufferEqual) {
         bufferEqual = require_buffer_equal_constant_time();
@@ -62067,7 +62089,7 @@ var require_jwa = __commonJS({
       return function sign(thing, privateKey) {
         checkIsPrivateKey(privateKey);
         thing = normalizeInput(thing);
-        var signer = crypto19.createSign("RSA-SHA" + bits);
+        var signer = crypto20.createSign("RSA-SHA" + bits);
         var sig = (signer.update(thing), signer.sign(privateKey, "base64"));
         return fromBase64(sig);
       };
@@ -62077,7 +62099,7 @@ var require_jwa = __commonJS({
         checkIsPublicKey(publicKey);
         thing = normalizeInput(thing);
         signature = toBase64(signature);
-        var verifier = crypto19.createVerify("RSA-SHA" + bits);
+        var verifier = crypto20.createVerify("RSA-SHA" + bits);
         verifier.update(thing);
         return verifier.verify(publicKey, signature, "base64");
       };
@@ -62086,11 +62108,11 @@ var require_jwa = __commonJS({
       return function sign(thing, privateKey) {
         checkIsPrivateKey(privateKey);
         thing = normalizeInput(thing);
-        var signer = crypto19.createSign("RSA-SHA" + bits);
+        var signer = crypto20.createSign("RSA-SHA" + bits);
         var sig = (signer.update(thing), signer.sign({
           key: privateKey,
-          padding: crypto19.constants.RSA_PKCS1_PSS_PADDING,
-          saltLength: crypto19.constants.RSA_PSS_SALTLEN_DIGEST
+          padding: crypto20.constants.RSA_PKCS1_PSS_PADDING,
+          saltLength: crypto20.constants.RSA_PSS_SALTLEN_DIGEST
         }, "base64"));
         return fromBase64(sig);
       };
@@ -62100,12 +62122,12 @@ var require_jwa = __commonJS({
         checkIsPublicKey(publicKey);
         thing = normalizeInput(thing);
         signature = toBase64(signature);
-        var verifier = crypto19.createVerify("RSA-SHA" + bits);
+        var verifier = crypto20.createVerify("RSA-SHA" + bits);
         verifier.update(thing);
         return verifier.verify({
           key: publicKey,
-          padding: crypto19.constants.RSA_PKCS1_PSS_PADDING,
-          saltLength: crypto19.constants.RSA_PSS_SALTLEN_DIGEST
+          padding: crypto20.constants.RSA_PKCS1_PSS_PADDING,
+          saltLength: crypto20.constants.RSA_PSS_SALTLEN_DIGEST
         }, signature, "base64");
       };
     }
@@ -88043,7 +88065,7 @@ var require_react_dom_server_node_production = __commonJS({
   "../../node_modules/.pnpm/react-dom@19.2.3_react@19.2.3/node_modules/react-dom/cjs/react-dom-server.node.production.js"(exports2) {
     "use strict";
     var util3 = __require("util");
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var async_hooks = __require("async_hooks");
     var React = require_react();
     var ReactDOM = require_react_dom();
@@ -90795,7 +90817,7 @@ var require_react_dom_server_node_production = __commonJS({
     function createPostbackActionStateKey(permalink, componentKeyPath, hookIndex) {
       if (void 0 !== permalink) return "p" + permalink;
       permalink = JSON.stringify([componentKeyPath, null, hookIndex]);
-      componentKeyPath = crypto19.createHash("md5");
+      componentKeyPath = crypto20.createHash("md5");
       componentKeyPath.update(permalink);
       return "k" + componentKeyPath.digest("hex");
     }
@@ -104012,7 +104034,7 @@ var require_react_dom_server_node_development = __commonJS({
       function createPostbackActionStateKey(permalink, componentKeyPath, hookIndex) {
         if (void 0 !== permalink) return "p" + permalink;
         permalink = JSON.stringify([componentKeyPath, null, hookIndex]);
-        componentKeyPath = crypto19.createHash("md5");
+        componentKeyPath = crypto20.createHash("md5");
         componentKeyPath.update(permalink);
         return "k" + componentKeyPath.digest("hex");
       }
@@ -107371,7 +107393,7 @@ var require_react_dom_server_node_development = __commonJS({
           }
         };
       }
-      var util3 = __require("util"), crypto19 = __require("crypto"), async_hooks = __require("async_hooks"), React = require_react(), ReactDOM = require_react_dom(), stream = __require("stream"), REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = /* @__PURE__ */ Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = /* @__PURE__ */ Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = /* @__PURE__ */ Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = /* @__PURE__ */ Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = /* @__PURE__ */ Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = /* @__PURE__ */ Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = /* @__PURE__ */ Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = /* @__PURE__ */ Symbol.for("react.memo"), REACT_LAZY_TYPE = /* @__PURE__ */ Symbol.for("react.lazy"), REACT_SCOPE_TYPE = /* @__PURE__ */ Symbol.for("react.scope"), REACT_ACTIVITY_TYPE = /* @__PURE__ */ Symbol.for("react.activity"), REACT_LEGACY_HIDDEN_TYPE = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), REACT_MEMO_CACHE_SENTINEL = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), REACT_VIEW_TRANSITION_TYPE = /* @__PURE__ */ Symbol.for("react.view_transition"), MAYBE_ITERATOR_SYMBOL = Symbol.iterator, isArrayImpl = Array.isArray, jsxPropsParents = /* @__PURE__ */ new WeakMap(), jsxChildrenParents = /* @__PURE__ */ new WeakMap(), CLIENT_REFERENCE_TAG = /* @__PURE__ */ Symbol.for("react.client.reference"), scheduleMicrotask = queueMicrotask, currentView = null, writtenBytes = 0, destinationHasCapacity$1 = true, textEncoder2 = new util3.TextEncoder(), assign = Object.assign, hasOwnProperty = Object.prototype.hasOwnProperty, VALID_ATTRIBUTE_NAME_REGEX = RegExp(
+      var util3 = __require("util"), crypto20 = __require("crypto"), async_hooks = __require("async_hooks"), React = require_react(), ReactDOM = require_react_dom(), stream = __require("stream"), REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = /* @__PURE__ */ Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = /* @__PURE__ */ Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = /* @__PURE__ */ Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = /* @__PURE__ */ Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = /* @__PURE__ */ Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = /* @__PURE__ */ Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = /* @__PURE__ */ Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = /* @__PURE__ */ Symbol.for("react.memo"), REACT_LAZY_TYPE = /* @__PURE__ */ Symbol.for("react.lazy"), REACT_SCOPE_TYPE = /* @__PURE__ */ Symbol.for("react.scope"), REACT_ACTIVITY_TYPE = /* @__PURE__ */ Symbol.for("react.activity"), REACT_LEGACY_HIDDEN_TYPE = /* @__PURE__ */ Symbol.for("react.legacy_hidden"), REACT_MEMO_CACHE_SENTINEL = /* @__PURE__ */ Symbol.for("react.memo_cache_sentinel"), REACT_VIEW_TRANSITION_TYPE = /* @__PURE__ */ Symbol.for("react.view_transition"), MAYBE_ITERATOR_SYMBOL = Symbol.iterator, isArrayImpl = Array.isArray, jsxPropsParents = /* @__PURE__ */ new WeakMap(), jsxChildrenParents = /* @__PURE__ */ new WeakMap(), CLIENT_REFERENCE_TAG = /* @__PURE__ */ Symbol.for("react.client.reference"), scheduleMicrotask = queueMicrotask, currentView = null, writtenBytes = 0, destinationHasCapacity$1 = true, textEncoder2 = new util3.TextEncoder(), assign = Object.assign, hasOwnProperty = Object.prototype.hasOwnProperty, VALID_ATTRIBUTE_NAME_REGEX = RegExp(
         "^[:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD][:A-Z_a-z\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\-.0-9\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$"
       ), illegalAttributeNameCache = {}, validatedAttributeNameCache = {}, unitlessNumbers = new Set(
         "animationIterationCount aspectRatio borderImageOutset borderImageSlice borderImageWidth boxFlex boxFlexGroup boxOrdinalGroup columnCount columns flex flexGrow flexPositive flexShrink flexNegative flexOrder gridArea gridRow gridRowEnd gridRowSpan gridRowStart gridColumn gridColumnEnd gridColumnSpan gridColumnStart fontWeight lineClamp lineHeight opacity order orphans scale tabSize widows zIndex zoom fillOpacity floodOpacity stopOpacity strokeDasharray strokeDashoffset strokeMiterlimit strokeOpacity strokeWidth MozAnimationIterationCount MozBoxFlex MozBoxFlexGroup MozLineClamp msAnimationIterationCount msFlex msZoom msFlexGrow msFlexNegative msFlexOrder msFlexPositive msFlexShrink msGridColumn msGridColumnSpan msGridRow msGridRowSpan WebkitAnimationIterationCount WebkitBoxFlex WebKitBoxFlexGroup WebkitBoxOrdinalGroup WebkitColumnCount WebkitColumns WebkitFlex WebkitFlexGrow WebkitFlexPositive WebkitFlexShrink WebkitLineClamp".split(
@@ -121986,7 +122008,7 @@ var require_form_data = __commonJS({
     var parseUrl = __require("url").parse;
     var fs6 = __require("fs");
     var Stream2 = __require("stream").Stream;
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var mime3 = require_mime_types2();
     var asynckit = require_asynckit();
     var setToStringTag = require_es_set_tostringtag();
@@ -122195,7 +122217,7 @@ var require_form_data = __commonJS({
       return Buffer.concat([dataBuffer, Buffer.from(this._lastBoundary())]);
     };
     FormData2.prototype._generateBoundary = function() {
-      this._boundary = "--------------------------" + crypto19.randomBytes(12).toString("hex");
+      this._boundary = "--------------------------" + crypto20.randomBytes(12).toString("hex");
     };
     FormData2.prototype.getLengthSync = function() {
       var knownLength = this._overheadLength + this._valueLength;
@@ -123282,7 +123304,7 @@ var require_axios = __commonJS({
   "../../node_modules/.pnpm/axios@1.18.1/node_modules/axios/dist/node/axios.cjs"(exports2, module) {
     "use strict";
     var FormData$1 = require_form_data();
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var url3 = __require("url");
     var HttpsProxyAgent = require_dist4();
     var http2 = __require("http");
@@ -124502,7 +124524,7 @@ var require_axios = __commonJS({
         length
       } = alphabet;
       const randomValues = new Uint32Array(size);
-      crypto19.randomFillSync(randomValues);
+      crypto20.randomFillSync(randomValues);
       for (let i = 0; i < size; i++) {
         str2 += alphabet[randomValues[i] % length];
       }
@@ -305368,7 +305390,7 @@ var require_scmpCompare = __commonJS({
 var require_scmp = __commonJS({
   "../../node_modules/.pnpm/scmp@2.1.0/node_modules/scmp/index.js"(exports2, module) {
     "use strict";
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var scmpCompare = require_scmpCompare();
     module.exports = function scmp(a, b3) {
       if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b3)) {
@@ -305377,8 +305399,8 @@ var require_scmp = __commonJS({
       if (a.length !== b3.length) {
         return false;
       }
-      if (crypto19.timingSafeEqual) {
-        return crypto19.timingSafeEqual(a, b3);
+      if (crypto20.timingSafeEqual) {
+        return crypto20.timingSafeEqual(a, b3);
       }
       return scmpCompare(a, b3);
     };
@@ -317163,9 +317185,9 @@ var require_disk = __commonJS({
     var fs6 = __require("fs");
     var os4 = __require("os");
     var path7 = __require("path");
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     function getFilename(req, file2, cb) {
-      crypto19.randomBytes(16, function(err, raw) {
+      crypto20.randomBytes(16, function(err, raw) {
         cb(err, err ? void 0 : raw.toString("hex"));
       });
     }
@@ -328061,22 +328083,22 @@ var require_crypto2 = __commonJS({
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.NodeCrypto = void 0;
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var NodeCrypto = class {
       async sha256DigestBase64(str2) {
-        return crypto19.createHash("sha256").update(str2).digest("base64");
+        return crypto20.createHash("sha256").update(str2).digest("base64");
       }
       randomBytesBase64(count3) {
-        return crypto19.randomBytes(count3).toString("base64");
+        return crypto20.randomBytes(count3).toString("base64");
       }
       async verify(pubkey, data, signature) {
-        const verifier = crypto19.createVerify("RSA-SHA256");
+        const verifier = crypto20.createVerify("RSA-SHA256");
         verifier.update(data);
         verifier.end();
         return verifier.verify(pubkey, signature, "base64");
       }
       async sign(privateKey, data) {
-        const signer = crypto19.createSign("RSA-SHA256");
+        const signer = crypto20.createSign("RSA-SHA256");
         signer.update(data);
         signer.end();
         return signer.sign(privateKey, "base64");
@@ -328094,7 +328116,7 @@ var require_crypto2 = __commonJS({
        *   string in hexadecimal encoding.
        */
       async sha256DigestHex(str2) {
-        return crypto19.createHash("sha256").update(str2).digest("hex");
+        return crypto20.createHash("sha256").update(str2).digest("hex");
       }
       /**
        * Computes the HMAC hash of a message using the provided crypto key and the
@@ -328106,7 +328128,7 @@ var require_crypto2 = __commonJS({
        */
       async signWithHmacSha256(key, msg) {
         const cryptoKey = typeof key === "string" ? key : toBuffer(key);
-        return toArrayBuffer(crypto19.createHmac("sha256", cryptoKey).update(msg).digest());
+        return toArrayBuffer(crypto20.createHmac("sha256", cryptoKey).update(msg).digest());
       }
     };
     exports2.NodeCrypto = NodeCrypto;
@@ -328662,10 +328684,10 @@ var require_oauth2client = __commonJS({
        * https://github.com/googleapis/google-auth-library-nodejs/blob/main/samples/oauth2-codeVerifier.js
        */
       async generateCodeVerifierAsync() {
-        const crypto19 = (0, crypto_1.createCrypto)();
-        const randomString2 = crypto19.randomBytesBase64(96);
+        const crypto20 = (0, crypto_1.createCrypto)();
+        const randomString2 = crypto20.randomBytesBase64(96);
         const codeVerifier = randomString2.replace(/\+/g, "~").replace(/=/g, "_").replace(/\//g, "-");
-        const unencodedCodeChallenge = await crypto19.sha256DigestBase64(codeVerifier);
+        const unencodedCodeChallenge = await crypto20.sha256DigestBase64(codeVerifier);
         const codeChallenge = unencodedCodeChallenge.split("=")[0].replace(/\+/g, "-").replace(/\//g, "_");
         return { codeVerifier, codeChallenge };
       }
@@ -329109,7 +329131,7 @@ var require_oauth2client = __commonJS({
        * @return Returns a promise resolving to LoginTicket on verification.
        */
       async verifySignedJwtWithCertsAsync(jwt5, certs, requiredAudience, issuers, maxExpiry) {
-        const crypto19 = (0, crypto_1.createCrypto)();
+        const crypto20 = (0, crypto_1.createCrypto)();
         if (!maxExpiry) {
           maxExpiry = _OAuth2Client.DEFAULT_MAX_TOKEN_LIFETIME_SECS_;
         }
@@ -329122,7 +329144,7 @@ var require_oauth2client = __commonJS({
         let envelope;
         let payload;
         try {
-          envelope = JSON.parse(crypto19.decodeBase64StringUtf8(segments[0]));
+          envelope = JSON.parse(crypto20.decodeBase64StringUtf8(segments[0]));
         } catch (err) {
           if (err instanceof Error) {
             err.message = `Can't parse token envelope: ${segments[0]}': ${err.message}`;
@@ -329133,7 +329155,7 @@ var require_oauth2client = __commonJS({
           throw new Error("Can't parse token envelope: " + segments[0]);
         }
         try {
-          payload = JSON.parse(crypto19.decodeBase64StringUtf8(segments[1]));
+          payload = JSON.parse(crypto20.decodeBase64StringUtf8(segments[1]));
         } catch (err) {
           if (err instanceof Error) {
             err.message = `Can't parse token payload '${segments[0]}`;
@@ -329150,7 +329172,7 @@ var require_oauth2client = __commonJS({
         if (envelope.alg === "ES256") {
           signature = formatEcdsa.joseToDer(signature, "ES256").toString("base64");
         }
-        const verified = await crypto19.verify(cert, signed, signature);
+        const verified = await crypto20.verify(cert, signed, signature);
         if (!verified) {
           throw new Error("Invalid token signature: " + jwt5);
         }
@@ -331295,14 +331317,14 @@ var require_awsrequestsigner = __commonJS({
       }
     };
     exports2.AwsRequestSigner = AwsRequestSigner;
-    async function sign(crypto19, key, msg) {
-      return await crypto19.signWithHmacSha256(key, msg);
+    async function sign(crypto20, key, msg) {
+      return await crypto20.signWithHmacSha256(key, msg);
     }
-    async function getSigningKey(crypto19, key, dateStamp, region, serviceName) {
-      const kDate = await sign(crypto19, `AWS4${key}`, dateStamp);
-      const kRegion = await sign(crypto19, kDate, region);
-      const kService = await sign(crypto19, kRegion, serviceName);
-      const kSigning = await sign(crypto19, kService, "aws4_request");
+    async function getSigningKey(crypto20, key, dateStamp, region, serviceName) {
+      const kDate = await sign(crypto20, `AWS4${key}`, dateStamp);
+      const kRegion = await sign(crypto20, kDate, region);
+      const kService = await sign(crypto20, kRegion, serviceName);
+      const kSigning = await sign(crypto20, kService, "aws4_request");
       return kSigning;
     }
     async function generateAuthenticationHeaderMap(options) {
@@ -332887,24 +332909,24 @@ var require_googleauth = __commonJS({
           const signed = await client.sign(data);
           return signed.signedBlob;
         }
-        const crypto19 = (0, crypto_1.createCrypto)();
+        const crypto20 = (0, crypto_1.createCrypto)();
         if (client instanceof jwtclient_1.JWT && client.key) {
-          const sign = await crypto19.sign(client.key, data);
+          const sign = await crypto20.sign(client.key, data);
           return sign;
         }
         const creds = await this.getCredentials();
         if (!creds.client_email) {
           throw new Error("Cannot sign data without `client_email`.");
         }
-        return this.signBlob(crypto19, creds.client_email, data, endpoint);
+        return this.signBlob(crypto20, creds.client_email, data, endpoint);
       }
-      async signBlob(crypto19, emailOrUniqueId, data, endpoint) {
+      async signBlob(crypto20, emailOrUniqueId, data, endpoint) {
         const url3 = new URL(endpoint + `${emailOrUniqueId}:signBlob`);
         const res = await this.request({
           method: "POST",
           url: url3.href,
           data: {
-            payload: crypto19.encodeBase64StringUtf8(data)
+            payload: crypto20.encodeBase64StringUtf8(data)
           },
           retry: true,
           retryConfig: {
@@ -376044,13 +376066,13 @@ var require_migration_file = __commonJS({
     var util_1 = __require("util");
     var fs6 = __require("fs");
     var path7 = __require("path");
-    var crypto19 = __require("crypto");
+    var crypto20 = __require("crypto");
     var load_sql_from_js_1 = require_load_sql_from_js();
     var file_name_parser_1 = require_file_name_parser();
     var readFile2 = util_1.promisify(fs6.readFile);
     var getFileName = (filePath) => path7.basename(filePath);
     var getFileContents = async (filePath) => readFile2(filePath, "utf8");
-    var hashString = (s2) => crypto19.createHash("sha1").update(s2, "utf8").digest("hex");
+    var hashString = (s2) => crypto20.createHash("sha1").update(s2, "utf8").digest("hex");
     var getSqlStringLiteral = (filePath, contents, type2) => {
       switch (type2) {
         case "sql":
@@ -390296,7 +390318,7 @@ var require_opentype = __commonJS({
 });
 
 // src/app.ts
-var import_express145 = __toESM(require_express2(), 1);
+var import_express146 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -390369,7 +390391,7 @@ var SPA_HTML = `<!DOCTYPE html>
 `;
 
 // src/routes/index.ts
-var import_express142 = __toESM(require_express2(), 1);
+var import_express143 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -396785,6 +396807,14 @@ router2.post("/auth/register", async (req, res) => {
         referralCode
       }).returning();
       req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
+      db.insert(memberAgreementsTable).values({
+        id: crypto5.randomUUID(),
+        userId: user.id,
+        agreementVersion: "v1",
+        platform: req.headers["x-platform"] || "web",
+        active: true
+      }).catch(() => {
+      });
       sendWelcomeEmail(user.email, user.firstName).catch(() => {
       });
       const sessionData = {
@@ -396900,8 +396930,8 @@ router2.post("/auth/login-email", async (req, res) => {
       res.json({ token: sid });
     }, req.log, "POST /auth/login-email");
   } catch (err) {
-    const pool3 = getPoolStats();
-    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool: pool3 }, "POST /api/auth/login-email error");
+    const pool4 = getPoolStats();
+    req.log.error({ ...diagBase, err, event: "AUTH_LOGIN_ERROR", emailMasked, durationMs: Date.now() - t0, pool: pool4 }, "POST /api/auth/login-email error");
     res.status(500).json({ error: "Login failed. Please try again." });
   }
 });
@@ -397115,6 +397145,14 @@ router2.post("/auth/apple", async (req, res) => {
           ...encryptedRefreshToken ? { appleRefreshToken: encryptedRefreshToken } : {}
         }).returning();
         user = created;
+        db.insert(memberAgreementsTable).values({
+          id: crypto5.randomUUID(),
+          userId: created.id,
+          agreementVersion: "v1",
+          platform: "ios",
+          active: true
+        }).catch(() => {
+        });
       } else if (encryptedRefreshToken) {
         await db.update(usersTable).set({ appleRefreshToken: encryptedRefreshToken }).where(eq(usersTable.id, user.id));
       }
@@ -400572,13 +400610,13 @@ function __classPrivateFieldGet6(receiver, state, kind, f2) {
 
 // ../../node_modules/.pnpm/openai@6.43.0_ws@8.21.0_zod@3.25.76/node_modules/openai/internal/utils/uuid.mjs
 var uuid42 = function() {
-  const { crypto: crypto19 } = globalThis;
-  if (crypto19?.randomUUID) {
-    uuid42 = crypto19.randomUUID.bind(crypto19);
-    return crypto19.randomUUID();
+  const { crypto: crypto20 } = globalThis;
+  if (crypto20?.randomUUID) {
+    uuid42 = crypto20.randomUUID.bind(crypto20);
+    return crypto20.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto19 ? () => crypto19.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto20 ? () => crypto20.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c3) => (+c3 ^ randomByte() & 15 >> +c3 / 4).toString(16));
 };
 
@@ -416999,6 +417037,7 @@ router21.get("/events", async (req, res) => {
       conditions.push(eq(eventsTable.featured, true));
     }
     conditions.push(eq(eventsTable.status, "active"));
+    conditions.push(isNotNull(eventsTable.createdById));
     const rawEvents = await db.select().from(eventsTable).where(and(...conditions)).orderBy(desc(eventsTable.createdAt)).limit(100);
     let events = rawEvents.map((e3) => ({ ...e3, relevanceScore: 0 }));
     if (req.user?.id) {
@@ -417341,8 +417380,8 @@ router22.get("/users/suggestions", async (req, res) => {
   }
   const myId = req.user.id;
   try {
-    const { pool: pool3 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    const rows = await pool3.query(
+    const { pool: pool4 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const rows = await pool4.query(
       `WITH my_connections AS (
          SELECT
            CASE WHEN requester_id = $1 THEN recipient_id ELSE requester_id END AS friend_id
@@ -421525,8 +421564,8 @@ router25.post("/kinfolk/chat", async (req, res) => {
     let crossCityBridge = null;
     if (req.user?.id && activeJourney?.city) {
       try {
-        const { pool: pool3 } = await Promise.resolve().then(() => (init_src(), src_exports));
-        const fbRows = await pool3.query(
+        const { pool: pool4 } = await Promise.resolve().then(() => (init_src(), src_exports));
+        const fbRows = await pool4.query(
           `SELECT category, city, COUNT(*) as cnt
            FROM kinfolk_feedback
            WHERE user_id = $1
@@ -421549,7 +421588,7 @@ router25.post("/kinfolk/chat", async (req, res) => {
           const topCats = [...catMap.values()].slice(0, 5);
           const bridges = await Promise.all(
             topCats.map(async ({ category, fromCity, savedCount }) => {
-              const bizRows = await pool3.query(
+              const bizRows = await pool4.query(
                 `SELECT name, category, city, verified FROM businesses
                  WHERE status = 'active' AND city ILIKE $1 AND category ILIKE $2
                  ORDER BY verified DESC, name ASC LIMIT 3`,
@@ -441699,8 +441738,8 @@ router78.get("/journeys/:id/smart-matches", async (req, res) => {
       res.json({ matches: [], message: null });
       return;
     }
-    const { pool: pool3 } = await Promise.resolve().then(() => (init_src(), src_exports));
-    const feedback = await pool3.query(
+    const { pool: pool4 } = await Promise.resolve().then(() => (init_src(), src_exports));
+    const feedback = await pool4.query(
       `SELECT business_name, category, city, COUNT(*) as count
        FROM kinfolk_feedback
        WHERE user_id = $1
@@ -441728,7 +441767,7 @@ router78.get("/journeys/:id/smart-matches", async (req, res) => {
     const topCategories = [...categoryMap.values()].slice(0, 6);
     const bridges = await Promise.all(
       topCategories.map(async ({ category, fromCity, savedCount }) => {
-        const matches = await pool3.query(
+        const matches = await pool4.query(
           `SELECT id, name, category, city, verified, black_owned
            FROM businesses
            WHERE status = 'active'
@@ -453178,156 +453217,259 @@ router141.get("/pool-stats", (req, res) => {
 });
 var pool_stats_default = router141;
 
-// src/routes/index.ts
-var router142 = (0, import_express142.Router)();
-router142.use(health_default);
-router142.use(db_probe_default);
-router142.use("/internal", readyz_default);
-router142.use(pool_stats_default);
-router142.use(auth_default);
-router142.use(phone_auth_default);
-router142.use(businesses_default);
-router142.use(travel_default);
-router142.use(surveys_default);
-router142.use(saved_places_default);
-router142.use(alerts_default);
-router142.use(moderation_default);
-router142.use(safety_context_default);
-router142.use(reviews_default);
-router142.use(checkins_default);
-router142.use(points_default);
-router142.use(event_rsvps_default);
-router142.use(push_token_default);
-router142.use(community_default);
-router142.use(conversations_default);
-router142.use(waitlist_default);
-router142.use(contact_default);
-router142.use(events_default);
-router142.use(users_default);
-router142.use(groups_default);
-router142.use(admin_default);
-router142.use(kinfolk_default);
-router142.use(kinfolk_tasks_default);
-router142.use(wishlist_default);
-router142.use(claims_default);
-router142.use(notifications_default);
-router142.use(stripe_default);
-router142.use(admin_users_default);
-router142.use(maps_default);
-router142.use(og_default);
-router142.use(jobs_default);
-router142.use(impact_default);
-router142.use(submit_business_default);
-router142.use(billing_default);
-router142.use(cron_default);
-router142.use(referrals_default);
-router142.use(content_reports_default);
-router142.use(verification_default);
-router142.use(deals_default);
-router142.use(stories_default);
-router142.use(redemptions_default);
-router142.use(mentorship_default);
-router142.use(reports_default);
-router142.use(travel_flights_default);
-router142.use(connections_default);
-router142.use(family_default);
-router142.use(safety_checkins_default);
-router142.use(location_shares_default);
-router142.use(meetup_verifications_default);
-router142.use(safety_tips_default);
-router142.use(skip_feedback_default);
-router142.use(businesses_analytics_default);
-router142.use(promote_default);
-router142.use(post_nudge_default);
-router142.use(user_settings_default);
-router142.use(space_reports_default);
-router142.use(connect_default);
-router142.use(community_spaces_default);
-router142.use(journals_default);
-router142.use(plate_passes_default);
-router142.use(lists_default);
-router142.use(challenge_applications_default);
-router142.use(category_waitlist_default);
-router142.use(business_nominations_default);
-router142.use(business_identity_default);
-router142.use(broadcasts_default);
-router142.use(community_health_default);
-router142.use(journal_insights_default);
-router142.use(saved_locations_default);
-router142.use(disputes_default);
-router142.use(docusign_default);
-router142.use(smart_pathways_default);
-router142.use(knowledge_default);
-router142.use(marketplace_fees_default);
-router142.use(trust_default);
-router142.use(journeys_default);
-router142.use(entity_connections_default);
-router142.use(signals_default);
-router142.use(smart_search_default);
-router142.use(notifications_hub_default);
-router142.use(knowledge_channels_default);
-router142.use(router89);
-router142.use(captions_default);
-router142.use(community_boundaries_default);
-router142.use(business_response_default);
-router142.use(business_improvement_default);
-router142.use(community_appreciation_default);
-router142.use(circles_default);
-router142.use(community_requests_default);
-router142.use(user_achievements_default);
-router142.use(community_says_default);
-router142.use(community_challenges_new_default);
-router142.use(follows_default);
-router142.use(pinned_default);
-router142.use(creator_profiles_default);
-router142.use(community_alerts_default);
-router142.use(knowledge_delivery_default);
-router142.use(business_insights_default);
-router142.use(topic_briefs_default);
-router142.use(knowledge_hubs_default);
-router142.use(for_you_default);
-router142.use(global_recommendations_default);
-router142.use(officer_watch_default);
-router142.use(wellness_default);
-router142.use(featured_video_default);
-router142.use(hub_badges_default);
-router142.use(collections_default);
-router142.use(roadmaps_default);
-router142.use(guides_default);
-router142.use(travel_planner_default);
-router142.use(smart_fill_default);
-router142.use(wrapped_default);
-router142.use(archive_default);
-router142.use(revenuecat_default);
-router142.use(kinfolk_intelligence_default);
-router142.use("/hidden-gems", hidden_gems_default);
-router142.use(resources_default);
-router142.use(marketplace_default);
-router142.use(wellness_tracker_default);
-router142.use(financial_hub_default);
-router142.use(directions_default);
-router142.use(recommended_spots_default);
-router142.use(preview_default);
-router142.use(vibes_default);
-router142.use(hashtags_default);
-router142.use(community_places_default);
-router142.use(community_impact_default);
-router142.use(show_love_default);
-router142.use(membership_family_default);
-router142.use(legal_default);
-router142.use(business_membership_info_default);
-router142.use(passport_default);
-router142.use(safety_heatmap_default);
-router142.use(cultural_sites_default);
-router142.use(external_clicks_default);
-router142.use(monitor_build97_default);
-var routes_default = router142;
+// src/routes/membership.ts
+var import_express142 = __toESM(require_express2(), 1);
 
-// src/routes/web-ssr.ts
-var import_express143 = __toESM(require_express2(), 1);
+// ../../node_modules/.pnpm/nanoid@3.3.12/node_modules/nanoid/index.js
+import crypto19 from "crypto";
+
+// ../../node_modules/.pnpm/nanoid@3.3.12/node_modules/nanoid/url-alphabet/index.js
+var urlAlphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
+
+// ../../node_modules/.pnpm/nanoid@3.3.12/node_modules/nanoid/index.js
+var POOL_SIZE_MULTIPLIER = 128;
+var pool3;
+var poolOffset;
+var fillPool = (bytes) => {
+  if (bytes < 0 || bytes > 1024) throw new RangeError("Wrong ID size");
+  if (!pool3 || pool3.length < bytes) {
+    pool3 = Buffer.allocUnsafe(bytes * POOL_SIZE_MULTIPLIER);
+    crypto19.randomFillSync(pool3);
+    poolOffset = 0;
+  } else if (poolOffset + bytes > pool3.length) {
+    crypto19.randomFillSync(pool3);
+    poolOffset = 0;
+  }
+  poolOffset += bytes;
+};
+var nanoid3 = (size = 21) => {
+  fillPool(size |= 0);
+  let id2 = "";
+  for (let i = poolOffset - size; i < poolOffset; i++) {
+    id2 += urlAlphabet[pool3[i] & 63];
+  }
+  return id2;
+};
+
+// src/routes/membership.ts
 init_src();
 init_drizzle_orm();
+var router142 = (0, import_express142.Router)();
+router142.post("/agreement", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  try {
+    const userId = req.user.id;
+    const platform = req.body?.platform ?? "web";
+    const agreementVersion = req.body?.agreementVersion ?? "v1";
+    const [existing] = await db.select({ id: memberAgreementsTable.id, acceptedAt: memberAgreementsTable.acceptedAt }).from(memberAgreementsTable).where(
+      and(
+        eq(memberAgreementsTable.userId, userId),
+        eq(memberAgreementsTable.agreementVersion, agreementVersion),
+        eq(memberAgreementsTable.active, true)
+      )
+    ).limit(1);
+    if (existing) {
+      res.json({ recorded: false, reason: "already_active", id: existing.id, acceptedAt: existing.acceptedAt });
+      return;
+    }
+    const id2 = nanoid3();
+    await db.insert(memberAgreementsTable).values({
+      id: id2,
+      userId,
+      agreementVersion,
+      platform,
+      active: true
+    });
+    res.json({ recorded: true, id: id2, agreementVersion, platform });
+  } catch (err) {
+    req.log.error({ err }, "POST /membership/agreement error");
+    res.status(500).json({ error: "Could not record agreement" });
+  }
+});
+router142.get("/agreement", async (req, res) => {
+  if (!req.user) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  try {
+    const [record2] = await db.select({
+      id: memberAgreementsTable.id,
+      agreementVersion: memberAgreementsTable.agreementVersion,
+      acceptedAt: memberAgreementsTable.acceptedAt,
+      platform: memberAgreementsTable.platform,
+      active: memberAgreementsTable.active
+    }).from(memberAgreementsTable).where(
+      and(
+        eq(memberAgreementsTable.userId, req.user.id),
+        eq(memberAgreementsTable.active, true)
+      )
+    ).orderBy(memberAgreementsTable.acceptedAt).limit(1);
+    if (!record2) {
+      res.json({ hasAgreement: false });
+      return;
+    }
+    res.json({ hasAgreement: true, ...record2 });
+  } catch (err) {
+    req.log.error({ err }, "GET /membership/agreement error");
+    res.status(500).json({ error: "Could not fetch agreement status" });
+  }
+});
+var membership_default = router142;
+
+// src/routes/index.ts
 var router143 = (0, import_express143.Router)();
+router143.use(health_default);
+router143.use(db_probe_default);
+router143.use("/internal", readyz_default);
+router143.use(pool_stats_default);
+router143.use(auth_default);
+router143.use("/membership", membership_default);
+router143.use(phone_auth_default);
+router143.use(businesses_default);
+router143.use(travel_default);
+router143.use(surveys_default);
+router143.use(saved_places_default);
+router143.use(alerts_default);
+router143.use(moderation_default);
+router143.use(safety_context_default);
+router143.use(reviews_default);
+router143.use(checkins_default);
+router143.use(points_default);
+router143.use(event_rsvps_default);
+router143.use(push_token_default);
+router143.use(community_default);
+router143.use(conversations_default);
+router143.use(waitlist_default);
+router143.use(contact_default);
+router143.use(events_default);
+router143.use(users_default);
+router143.use(groups_default);
+router143.use(admin_default);
+router143.use(kinfolk_default);
+router143.use(kinfolk_tasks_default);
+router143.use(wishlist_default);
+router143.use(claims_default);
+router143.use(notifications_default);
+router143.use(stripe_default);
+router143.use(admin_users_default);
+router143.use(maps_default);
+router143.use(og_default);
+router143.use(jobs_default);
+router143.use(impact_default);
+router143.use(submit_business_default);
+router143.use(billing_default);
+router143.use(cron_default);
+router143.use(referrals_default);
+router143.use(content_reports_default);
+router143.use(verification_default);
+router143.use(deals_default);
+router143.use(stories_default);
+router143.use(redemptions_default);
+router143.use(mentorship_default);
+router143.use(reports_default);
+router143.use(travel_flights_default);
+router143.use(connections_default);
+router143.use(family_default);
+router143.use(safety_checkins_default);
+router143.use(location_shares_default);
+router143.use(meetup_verifications_default);
+router143.use(safety_tips_default);
+router143.use(skip_feedback_default);
+router143.use(businesses_analytics_default);
+router143.use(promote_default);
+router143.use(post_nudge_default);
+router143.use(user_settings_default);
+router143.use(space_reports_default);
+router143.use(connect_default);
+router143.use(community_spaces_default);
+router143.use(journals_default);
+router143.use(plate_passes_default);
+router143.use(lists_default);
+router143.use(challenge_applications_default);
+router143.use(category_waitlist_default);
+router143.use(business_nominations_default);
+router143.use(business_identity_default);
+router143.use(broadcasts_default);
+router143.use(community_health_default);
+router143.use(journal_insights_default);
+router143.use(saved_locations_default);
+router143.use(disputes_default);
+router143.use(docusign_default);
+router143.use(smart_pathways_default);
+router143.use(knowledge_default);
+router143.use(marketplace_fees_default);
+router143.use(trust_default);
+router143.use(journeys_default);
+router143.use(entity_connections_default);
+router143.use(signals_default);
+router143.use(smart_search_default);
+router143.use(notifications_hub_default);
+router143.use(knowledge_channels_default);
+router143.use(router89);
+router143.use(captions_default);
+router143.use(community_boundaries_default);
+router143.use(business_response_default);
+router143.use(business_improvement_default);
+router143.use(community_appreciation_default);
+router143.use(circles_default);
+router143.use(community_requests_default);
+router143.use(user_achievements_default);
+router143.use(community_says_default);
+router143.use(community_challenges_new_default);
+router143.use(follows_default);
+router143.use(pinned_default);
+router143.use(creator_profiles_default);
+router143.use(community_alerts_default);
+router143.use(knowledge_delivery_default);
+router143.use(business_insights_default);
+router143.use(topic_briefs_default);
+router143.use(knowledge_hubs_default);
+router143.use(for_you_default);
+router143.use(global_recommendations_default);
+router143.use(officer_watch_default);
+router143.use(wellness_default);
+router143.use(featured_video_default);
+router143.use(hub_badges_default);
+router143.use(collections_default);
+router143.use(roadmaps_default);
+router143.use(guides_default);
+router143.use(travel_planner_default);
+router143.use(smart_fill_default);
+router143.use(wrapped_default);
+router143.use(archive_default);
+router143.use(revenuecat_default);
+router143.use(kinfolk_intelligence_default);
+router143.use("/hidden-gems", hidden_gems_default);
+router143.use(resources_default);
+router143.use(marketplace_default);
+router143.use(wellness_tracker_default);
+router143.use(financial_hub_default);
+router143.use(directions_default);
+router143.use(recommended_spots_default);
+router143.use(preview_default);
+router143.use(vibes_default);
+router143.use(hashtags_default);
+router143.use(community_places_default);
+router143.use(community_impact_default);
+router143.use(show_love_default);
+router143.use(membership_family_default);
+router143.use(legal_default);
+router143.use(business_membership_info_default);
+router143.use(passport_default);
+router143.use(safety_heatmap_default);
+router143.use(cultural_sites_default);
+router143.use(external_clicks_default);
+router143.use(monitor_build97_default);
+var routes_default = router143;
+
+// src/routes/web-ssr.ts
+var import_express144 = __toESM(require_express2(), 1);
+init_src();
+init_drizzle_orm();
+var router144 = (0, import_express144.Router)();
 var BASE_DOMAIN = "https://www.melaninmaps.com";
 function isBot(ua4) {
   return /facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|pinterest|googlebot|bingbot|applebot|iframely|opengraph|embedly/i.test(
@@ -453337,7 +453479,7 @@ function isBot(ua4) {
 function escapeHtml2(str2) {
   return str2.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-router143.get("/web/businesses/:id", async (req, res) => {
+router144.get("/web/businesses/:id", async (req, res) => {
   const id2 = String(req.params.id);
   const ua4 = String(req.headers["user-agent"] ?? "");
   try {
@@ -453412,11 +453554,11 @@ router143.get("/web/businesses/:id", async (req, res) => {
     res.redirect(302, "/web/");
   }
 });
-var web_ssr_default = router143;
+var web_ssr_default = router144;
 
 // src/routes/privacy.ts
-var import_express144 = __toESM(require_express2(), 1);
-var router144 = (0, import_express144.Router)();
+var import_express145 = __toESM(require_express2(), 1);
+var router145 = (0, import_express145.Router)();
 var SECTIONS = [
   {
     title: "What We Collect",
@@ -453614,17 +453756,17 @@ function pageShell(title, body) {
 </body>
 </html>`;
 }
-router144.get("/privacy", (_req, res) => {
+router145.get("/privacy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router144.get("/privacy-policy", (_req, res) => {
+router145.get("/privacy-policy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router144.get("/terms", (_req, res) => {
+router145.get("/terms", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453643,7 +453785,7 @@ router144.get("/terms", (_req, res) => {
   `;
   res.send(pageShell("Terms of Service", body));
 });
-router144.get("/delete-account", (_req, res) => {
+router145.get("/delete-account", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453685,7 +453827,7 @@ router144.get("/delete-account", (_req, res) => {
   `;
   res.send(pageShell("Delete Your Account", body));
 });
-router144.get("/support", (_req, res) => {
+router145.get("/support", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453715,7 +453857,7 @@ router144.get("/support", (_req, res) => {
   `;
   res.send(pageShell("Support", body));
 });
-var privacy_default = router144;
+var privacy_default = router145;
 
 // src/middlewares/authMiddleware.ts
 init_src();
@@ -453961,7 +454103,7 @@ for (const dir of SPA_SEARCH_DIRS) {
   } catch {
   }
 }
-var app = (0, import_express145.default)();
+var app = (0, import_express146.default)();
 app.set("trust proxy", 1);
 app.get("/api/healthz", (_req, res) => {
   res.json({ status: "ok" });
@@ -454027,7 +454169,7 @@ app.use(
 );
 app.post(
   "/api/stripe/webhook",
-  import_express145.default.raw({ type: "application/json" }),
+  import_express146.default.raw({ type: "application/json" }),
   async (req, res) => {
     const signature = req.headers["stripe-signature"];
     if (!signature) {
@@ -454063,14 +454205,27 @@ app.use(
   })
 );
 app.use((0, import_cookie_parser.default)());
-app.use(import_express145.default.json());
-app.use(import_express145.default.urlencoded({ extended: true }));
+app.use(import_express146.default.json());
+app.use(import_express146.default.urlencoded({ extended: true }));
 app.use(authMiddleware);
 app.use("/api", generalLimiter);
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/api/")) return next();
+  const stats = getPoolStats();
+  if (stats.total >= POOL_MAX && stats.idle === 0 && stats.waiting >= 2) {
+    logger.warn({ pool: stats, url: req.url, method: req.method }, "pool-pressure-guard: 503");
+    res.status(503).json({
+      error: "Service temporarily unavailable. Please retry in a moment.",
+      retryAfter: 5
+    });
+    return;
+  }
+  next();
+});
 app.use("/api", routes_default);
 app.use(web_ssr_default);
 app.use(privacy_default);
-app.use(import_express145.default.static(spaServeDir));
+app.use(import_express146.default.static(spaServeDir));
 var serveSpa = (_req, res, next) => {
   const html = spaHtml && spaHtml.length > 100 ? spaHtml : SPA_HTML;
   if (html && html.length > 100) {

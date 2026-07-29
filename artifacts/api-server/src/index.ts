@@ -1,6 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { setDbLogger, pool, getPoolStats } from "@workspace/db";
+import { setDbLogger, pool, getPoolStats, initPoolInstrumentation } from "@workspace/db";
 import { getStripeSync, endStripeSyncPool } from "./stripeClient";
 import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
@@ -84,6 +84,12 @@ const server = app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready — initial pool state");
+
+  // Attach connection lifecycle instrumentation to the pg Pool.
+  // Records every connect/remove/query event to a 500-entry ring buffer.
+  // Accessible at GET /api/pool-audit (x-cron-secret auth).
+  // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
+  initPoolInstrumentation(pool);
 
   // Route monitor log events through pino so they appear in Railway's log stream.
   setMonitorLogger(logger);

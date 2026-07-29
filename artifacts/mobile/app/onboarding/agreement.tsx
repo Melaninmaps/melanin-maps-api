@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -74,6 +75,26 @@ export default function OnboardingAgreement() {
   const agree = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     AsyncStorage.setItem("@mwm_community_agreement_v1", "true").catch(() => {});
+
+    // If the user is already logged in (re-accepting after a version change),
+    // sync the acceptance to the server immediately. For new users coming through
+    // onboarding, the server record is created automatically during signup.
+    if (Platform.OS !== "web") {
+      SecureStore.getItemAsync("auth_session_token").then((token) => {
+        if (!token) return;
+        const base = process.env.EXPO_PUBLIC_API_URL ?? "";
+        fetch(`${base}/api/membership/agreement`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+            "x-platform": Platform.OS,
+          },
+          body: JSON.stringify({ agreementVersion: "v1", platform: Platform.OS }),
+        }).catch(() => {});
+      }).catch(() => {});
+    }
+
     goTo(CURRENT + 1);
   };
 

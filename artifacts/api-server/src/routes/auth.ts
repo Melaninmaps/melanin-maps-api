@@ -8,7 +8,7 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, usersTable, getPoolStats } from "@workspace/db";
+import { db, usersTable, getPoolStats, memberAgreementsTable } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
@@ -579,6 +579,16 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
     req.log.info({ ...diagBase, event: "AUTH_REGISTER_USER_CREATED", emailMasked, status: 201, durationMs: Date.now() - t0 }, "auth diagnostic");
 
+    // Create server-authoritative Community Agreement record for every new member.
+    // Non-blocking — a failure here must never fail the signup itself.
+    db.insert(memberAgreementsTable).values({
+      id: crypto.randomUUID(),
+      userId: user.id,
+      agreementVersion: "v1",
+      platform: (req.headers["x-platform"] as string) || "web",
+      active: true,
+    }).catch(() => {});
+
     sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
 
     const sessionData: SessionData = {
@@ -1007,6 +1017,16 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
         })
         .returning();
       user = created;
+
+      // Create server-authoritative Community Agreement record for every new member.
+      // Non-blocking — a failure here must never interrupt the Apple auth flow.
+      db.insert(memberAgreementsTable).values({
+        id: crypto.randomUUID(),
+        userId: created.id,
+        agreementVersion: "v1",
+        platform: "ios",
+        active: true,
+      }).catch(() => {});
     } else if (encryptedRefreshToken) {
       await db
         .update(usersTable)

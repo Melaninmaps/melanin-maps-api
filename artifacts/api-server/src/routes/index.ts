@@ -140,6 +140,7 @@ import businessMembershipInfoRouter from "./business-membership-info";
 import dbProbeRouter from "./db-probe";
 import readyzRouter from "./readyz";
 import poolStatsRouter from "./pool-stats";
+import membershipRouter from "./membership";
 
 const router: IRouter = Router();
 
@@ -148,6 +149,7 @@ router.use(dbProbeRouter);
 router.use("/internal", readyzRouter);
 router.use(poolStatsRouter);
 router.use(authRouter);
+router.use("/membership", membershipRouter);
 router.use(phoneAuthRouter);
 router.use(businessesRouter);
 router.use(travelRouter);

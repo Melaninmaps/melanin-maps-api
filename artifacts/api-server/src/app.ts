@@ -194,6 +194,32 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authMiddleware);
 app.use("/api", generalLimiter);
 
+// ── Pool pressure guard ──────────────────────────────────────────────────────
+// Rejects API requests immediately with 503 when the connection pool is
+// critically saturated: all slots in use, none idle, requests already queued.
+//
+// Without this guard, new requests queue behind pool.connect() and wait up to
+// connectionTimeoutMillis (10 s) before failing — which makes exhaustion worse
+// because each waiting request holds an HTTP connection open and a JS closure
+// in memory. A clean 503 sent here lets clients retry immediately and prevents
+// the cascade that turns a momentary traffic spike into a 7-hour outage.
+//
+// Threshold: total >= POOL_MAX AND idle === 0 AND waiting >= 2.
+// "waiting >= 2" (not 1) avoids false positives from a single in-flight probe.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!req.path.startsWith("/api/")) return next();
+  const stats = getPoolStats();
+  if (stats.total >= POOL_MAX && stats.idle === 0 && stats.waiting >= 2) {
+    logger.warn({ pool: stats, url: req.url, method: req.method }, "pool-pressure-guard: 503");
+    res.status(503).json({
+      error: "Service temporarily unavailable. Please retry in a moment.",
+      retryAfter: 5,
+    });
+    return;
+  }
+  next();
+});
+
 app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);

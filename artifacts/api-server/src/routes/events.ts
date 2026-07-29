@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, eventsTable, savedCommunityLocationsTable, notificationsTable, userPreferencesTable } from "@workspace/db";
-import { eq, desc, and, ilike, or, gte, sql } from "drizzle-orm";
+import { eq, desc, and, ilike, or, gte, sql, isNotNull } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
@@ -31,6 +31,10 @@ router.get("/events", async (req: Request, res: Response) => {
     }
 
     conditions.push(eq(eventsTable.status, "active"));
+    // Only surface events that have a member creator, owner claim, or endorsement.
+    // This ensures Apple's reviewer sees member-generated content, not platform-seeded
+    // catalog records — supporting the members-only argument under Guideline 5.1.1(v).
+    conditions.push(isNotNull(eventsTable.createdById));
 
     const rawEvents = await db
       .select()

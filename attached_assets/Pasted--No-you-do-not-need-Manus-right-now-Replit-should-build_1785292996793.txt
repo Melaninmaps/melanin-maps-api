@@ -1,0 +1,228 @@
+**No, you do not need Manus right now. Replit should build and verify this now.**
+
+But the changes listed are **not enough to resubmit yet**.
+
+## What is good and should stay
+
+* GPS timeout fixes
+* Community Agreement screen
+* Membership-first onboarding copy
+* Community as the first tab
+* Community context shown before business facts
+
+These strengthen your members-only argument.
+
+## What must be fixed before the next Apple review
+
+### 1. Fix production Apple Sign-In and the connection leak
+
+This is the immediate blocker. Apple could not log in. No amount of positioning matters until the reviewer can authenticate reliably.
+
+Replit must:
+
+* identify and fix the database connection leak
+* restart production only after the fix is ready
+* verify the pool remains healthy under repeated logins
+* test Apple Sign-In on production
+* test email login on production
+* confirm the demo account works on both iPhone and iPad
+
+Apple requires the backend to remain live and the demo account to be functional throughout review. ([Apple Developer][1])
+
+### 2. The Community Agreement cannot live only in AsyncStorage
+
+This is not strong enough:
+
+```text
+@mwm_community_agreement_v1 stored in AsyncStorage
+```
+
+That proves only that one installation recorded a local flag. It can be deleted by reinstalling the app and cannot be audited or enforced by the server.
+
+For this submission, require:
+
+* `member_agreements` database record
+* user ID
+* agreement version
+* accepted timestamp
+* source/platform
+* current agreement status
+* reacceptance when the agreement materially changes
+
+### 3. Apple’s demo account must be fully populated
+
+Create one dedicated review account that opens directly into a convincing membership experience containing:
+
+* community posts
+* member reviews
+* at least one Circle
+* saved businesses
+* community-vouched businesses
+* events
+* Kinfolk history or sample context
+* trust level/badge
+* no empty screens
+* no setup prompts that prevent review
+
+Provide the username and password in App Review Information. Apple explicitly requires an active demo account or fully featured approved demo mode for login-based apps. ([Apple Developer][1])
+
+### 4. Do not rely on copy alone for the members-only ruling
+
+Apple already rejected the actual behavior under 5.1.1(v). The new copy improves your case, but the reviewer may still see searchable businesses and decide it remains a gated catalog.
+
+For this next build, Replit should also make these minimum structural changes:
+
+* Business results must lead with member standing.
+* Every visible business should show at least one of:
+
+  * member nomination
+  * owner claim
+  * member review
+  * community verification
+  * Ambassador endorsement
+* Events should be member-created, member-claimed, or member-endorsed.
+* The home screen should contain genuine member activity—not merely a reordered tab.
+* App Review notes must explain why each major surface is member-dependent.
+
+Apple’s current guideline allows login when the app contains significant account-based functionality, but otherwise expects access without login. Your next submission must demonstrate that membership is core to the functionality, not merely a label applied to the entry screen. ([Apple Developer][1])
+
+## Tell Replit this now
+
+```text
+APPLE REMEDIATION — IMPLEMENT NOW
+
+Do not involve Manus.
+Do not begin unrelated roadmap work.
+Do not add new future-state features.
+The only objective is a stable, review-ready members-only build.
+
+Keep the remediation work already completed:
+
+1. GPS timeouts in BusinessMapView and FullMapView
+2. Community Agreement onboarding screen
+3. Private membership onboarding language
+4. Community as the first post-login tab
+5. Community Voice signals on business details
+
+Before producing the next EAS build, complete the following required work:
+
+A. PRODUCTION STABILITY
+
+1. Identify and permanently fix the PostgreSQL connection leak.
+2. Do not treat a service restart as the permanent fix.
+3. Prove connections are released correctly.
+4. Run repeated production tests for:
+   - Apple Sign-In
+   - email login
+   - session lookup
+   - app close/reopen
+   - background/foreground
+   - iPhone
+   - iPad
+5. Provide pool totals, idle, and waiting values during a sustained test.
+6. No submission while pool idle remains zero or connection timeouts occur.
+
+B. COMMUNITY AGREEMENT RECORD
+
+Replace the AsyncStorage-only agreement record with a server-side
+member_agreements record containing:
+
+- userId
+- agreementVersion
+- acceptedAt
+- platform
+- active/revoked status
+
+AsyncStorage may remain as a local convenience cache, but it cannot be
+the authoritative membership record.
+
+C. APP REVIEW ACCOUNT
+
+Create and verify one dedicated App Review account with:
+
+- active credentials
+- Community Agreement already accepted
+- completed profile
+- community member status
+- populated community feed
+- member reviews
+- saved places
+- at least one Circle
+- events
+- community-vouched businesses
+- Kinfolk access
+- no empty or blocked screens
+
+Confirm the account works from a fresh iPhone installation and a fresh
+iPad installation.
+
+D. MEMBERSHIP-DEPENDENT CONTENT
+
+For this build, ensure every business displayed to the reviewer has
+visible community standing through at least one of:
+
+- member nomination
+- member review
+- owner claim
+- Community Verified status
+- Ambassador endorsement
+
+Do not present a raw directory-first business screen.
+
+Ensure visible events are member-created, member-claimed, or
+member-endorsed.
+
+The first post-login screen must contain real member activity and make
+clear that the app's content is created, shaped, or protected through
+membership.
+
+E. APP REVIEW NOTES
+
+Draft review notes explaining:
+
+- Mapping With Melanin is a private membership community.
+- Membership includes an explicit Community Agreement.
+- Content is member-generated, member-shaped, personalized, or
+  safety-protective.
+- Businesses are presented through member standing and community
+  context, not as a public catalog.
+- Anonymous access would expose community-contributed cultural and
+  safety information.
+- Membership is open to people of every background who accept the
+  agreement and conduct standards.
+- The demo account credentials and exact navigation path.
+- Account deletion location.
+
+F. REQUIRED RELEASE EVIDENCE
+
+Before asking me to submit, provide:
+
+1. Changed files
+2. Commit SHA
+3. Production deployment ID
+4. EAS build number
+5. Apple Sign-In production test evidence
+6. Email login production test evidence
+7. Database pool stability results
+8. Fresh-install iPhone test
+9. Fresh-install iPad test
+10. Community Agreement database evidence
+11. Demo account credentials and populated-content checklist
+12. Map timeout test results
+13. Confirmation no unrelated roadmap features were added
+14. Clear GO / NO-GO recommendation for Apple resubmission
+
+Do not submit or tell me the build is ready until every item passes.
+```
+
+## The other deferred features
+
+Put them into the **very next build after Apple approval**, not this submission. Mixing them in now increases regression risk.
+
+Right now the order is:
+
+**Apple remediation build → approval → next planned feature build.**
+
+This remediation build needs to be narrow, stable, and independently testable.
+
+[1]: https://developer.apple.com/app-store/review/guidelines/?utm_source=chatgpt.com "App Review Guidelines - Apple Developer"

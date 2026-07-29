@@ -1,0 +1,168 @@
+LAUNCH EXECUTION MODEL — NO MORE REPEATED RELEASE DELAYS
+
+I am authorizing a permanent separation between release work and future
+development.
+
+We will not stop building the approved roadmap, but future work may not
+destabilize the Apple remediation submission.
+
+Create and document three workstreams:
+
+1. APPLE RELEASE TRACK
+2. NEXT-BUILD TRACK
+3. FUTURE ROADMAP TRACK
+
+══════════════════════════════════════════════════════════════
+1. APPLE RELEASE TRACK
+══════════════════════════════════════════════════════════════
+
+This branch contains only:
+
+- PostgreSQL connection-leak correction
+- Apple Sign-In reliability
+- email-login reliability
+- session persistence and error handling
+- map timeout fixes already completed
+- Community Agreement changes
+- membership-first onboarding and navigation
+- Apple review demo account
+- App Review metadata and notes
+- iPhone and iPad release testing
+
+No unrelated feature may enter this branch.
+
+Create:
+
+release/apple-remediation
+
+Tag the exact source used for the EAS binary and record:
+
+- Git commit SHA
+- EAS build number
+- backend deployment ID
+- artifact fingerprint
+- database migration version
+
+══════════════════════════════════════════════════════════════
+2. NEXT-BUILD TRACK
+══════════════════════════════════════════════════════════════
+
+Create:
+
+develop/next-build
+
+The other already approved work may continue here without delaying the
+Apple release.
+
+All incomplete features must:
+
+- remain behind server-side and client-side feature flags;
+- default to OFF in production;
+- have no migrations that affect the release branch unless separately
+  reviewed;
+- not alter authentication, navigation, Maps, or session handling used by
+  the Apple remediation binary;
+- not be merged into release/apple-remediation before Apple approval.
+
+Provide the list of approved features assigned to this track so nothing
+is forgotten.
+
+══════════════════════════════════════════════════════════════
+3. FUTURE ROADMAP TRACK
+══════════════════════════════════════════════════════════════
+
+The reconciled roadmap, Founder Principles, Manus findings, and future
+architecture remain version-controlled planning requirements.
+
+Do not implement future roadmap work in the Apple release branch.
+
+══════════════════════════════════════════════════════════════
+4. PERMANENT RELEASE GATES
+══════════════════════════════════════════════════════════════
+
+Before any future EAS submission, automatically test:
+
+- 50 consecutive Apple Sign-In attempts against production
+- 50 consecutive email-login attempts
+- session close/reopen persistence
+- background/foreground persistence
+- temporary network failure without token deletion
+- connection-pool growth and release
+- zero waiting pool connections after the test
+- map allowed/denied/slow-GPS behavior
+- iPhone fresh install
+- iPad fresh install
+- demo-account content completeness
+- account deletion
+- production rollback
+
+The release fails automatically if:
+
+- any login fails;
+- pool connections grow without returning to idle;
+- waiting connections remain;
+- a 401 is produced by a dependency failure;
+- the map spins beyond the approved timeout;
+- any required review screen is empty;
+- source, deployment, and binary fingerprints do not match.
+
+══════════════════════════════════════════════════════════════
+5. CONNECTION-POOL FIX
+══════════════════════════════════════════════════════════════
+
+Do not solve the current pool exhaustion only by restarting Railway.
+
+Identify every connection acquisition and prove that every acquired
+connection is released.
+
+Search for:
+
+- pool.connect()
+- new Pool()
+- client acquisition without finally
+- Promise.race around database operations
+- long transactions
+- streaming queries
+- event listeners holding clients
+- health monitors acquiring but not releasing clients
+- per-request pool creation
+- session-store pool misuse
+
+Add instrumentation that records:
+
+- acquisition source
+- acquisition time
+- release time
+- pool total
+- pool idle
+- pool waiting
+- connections older than the allowed threshold
+
+After the correction, run a sustained production-equivalent test long
+enough to exceed the previous 65-minute leak window.
+
+A test shorter than the former failure window is not sufficient.
+
+══════════════════════════════════════════════════════════════
+6. REQUIRED DELIVERY PLAN
+══════════════════════════════════════════════════════════════
+
+Return:
+
+1. Exact owner for each task
+2. What Replit can complete directly
+3. What requires Railway dashboard access
+4. What requires App Store Connect access
+5. What requires founder action
+6. Estimated engineering hours, not vague calendar language
+7. Parallel tasks versus sequential dependencies
+8. Earliest technically responsible EAS build point
+9. Exact GO/NO-GO criteria
+10. Rollback plan
+11. List of next-build features continuing in parallel
+12. Confirmation that future work will not delay the release branch
+
+Do not respond with “we need another build” as the plan.
+
+The plan must explain how this release becomes stable and how the same
+failure pattern is prevented permanently.

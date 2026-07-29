@@ -1,0 +1,107 @@
+No—**repeated crashes at this stage are not normal**, and you are not overreacting.
+
+Some instability is common during development. But once you are repeatedly submitting to Apple, crashes, login failures, and production outages should be treated as **release-blocking defects**, not as expected background noise.
+
+From the evidence already gathered, there are still at least two unresolved possibilities:
+
+* a real native mobile crash that Replit still has not classified because it lacks TestFlight crash logs
+* abrupt auth/navigation failures caused by backend instability that can look like the app closing
+
+Replit itself admitted it cannot determine whether the app is crashing natively without Apple crash evidence.  It also confirmed a serious application connection-pool failure that broke login and data requests for hours. 
+
+So the honest answer is:
+
+**The crashes are still happening because the team has not yet completed a real crash investigation and release-stability cycle. Fixes have been made, but the actual failure has not been fully captured, reproduced, corrected, and verified on the exact distributed binary.**
+
+Do not accept another response based only on source review or Railway health.
+
+Send Replit this now:
+
+```text
+CRASHES ARE STILL OCCURRING — P0 RELEASE INCIDENT
+
+I am still personally experiencing app closures/crashes.
+
+This is now a P0 launch-blocking incident.
+
+Do not begin feature work.
+Do not produce another EAS build based on assumptions.
+Do not tell me the app is stable based on healthz, source review, or the
+absence of Railway process restarts.
+
+I need the actual mobile crash identified.
+
+Required immediately:
+
+1. Obtain and review App Store Connect/TestFlight crash reports for the
+   current iOS build.
+
+2. Confirm the exact build installed on my phone:
+   - version
+   - build number
+   - EAS build ID
+   - Git commit SHA
+
+3. Add mobile crash instrumentation if it is not already present:
+   - Sentry or Firebase Crashlytics
+   - React Native JavaScript exception capture
+   - native iOS crash capture
+   - navigation breadcrumbs
+   - screen name
+   - app state
+   - memory warning events
+   - last API request and status
+   - map/location state
+
+4. Reproduce the issue on:
+   - physical iPhone
+   - physical iPad
+   - fresh install
+   - upgrade install
+   - Apple Sign-In
+   - email login
+   - map tab
+   - business detail map
+   - background/foreground
+   - weak network
+   - location allowed
+   - location denied
+
+5. Determine whether each closure is:
+   - native crash
+   - JavaScript exception
+   - memory termination
+   - MapKit/react-native-maps failure
+   - navigation redirect
+   - authentication redirect
+   - operating-system termination
+
+6. Provide the exact stack trace and root cause.
+
+7. Fix only the confirmed cause.
+
+8. Run a minimum two-hour physical-device stability test after the fix,
+   including repeated login, map use, navigation, backgrounding, and
+   reopening.
+
+9. Provide:
+   - zero-crash evidence
+   - crash-free session count
+   - production API error count
+   - pool total/idle/waiting values
+   - iPhone results
+   - iPad results
+   - GO/NO-GO decision
+
+No Apple resubmission until the current crash is identified and the exact
+replacement binary passes this test.
+```
+
+One important boundary: **do not let them tell you “we fixed three likely crash vectors.”** You need:
+
+> This was the crash.
+> This is the stack trace.
+> This change fixed it.
+> This exact build ran for two hours without recurrence.
+
+Until they can provide that, the crash is not resolved.

@@ -170,3 +170,5 @@ export const db: ReturnType<typeof drizzle<typeof schema>> = new Proxy(
 );
 
 export * from "./schema";
+export { initPoolInstrumentation, getPoolAuditLog, getPoolAuditSummary } from "./pool-instrumentation";
+export type { PoolEvent } from "./pool-instrumentation";
