@@ -114,42 +114,45 @@ app.get("/api/readyz/history", (_req: Request, res: Response) => {
   res.json(getHealthHistory());
 });
 
-// ── Build identity: passed from static-server.mjs as env vars ───────────────
-// static-server.mjs reads dist/BUILD_IDENTITY (written by build.mjs) and passes
-// the three tamper-evident values as env vars to this process at spawn time.
-// Using env vars (not file reads) avoids import.meta.url path issues in esbuild bundles.
+// ── Build identity: compile-time constants injected by esbuild define ────────
+// __BUILT_FROM_SHA__ and __BUILD_AT__ are baked into dist/index.mjs by build.mjs
+// using esbuild's `define` option. They cannot be changed after compilation —
+// not by Railway env vars, not by any runtime override. They prove what git commit
+// was used to compile this exact binary.
 //
-//   BUILD_BUNDLE_SHA256 — SHA-256 of the compiled dist/index.mjs, computed at
-//                         build time from the actual artifact; not an env var
-//                         that Railway sets — this must match what `sha256sum
-//                         dist/index.mjs` returns to prove provenance.
-//   BUILD_FROM_SHA       — git SHA at the moment `node build.mjs` ran.
-//   BUILD_AT             — ISO timestamp of the build.
-const _buildIdentity = {
-  bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || null,
-  built_from_sha: process.env.BUILD_FROM_SHA || null,
-  built_at: process.env.BUILD_AT || null,
-};
+// Secondary: BUILD_BUNDLE_SHA256 is passed from static-server.mjs (which reads
+// dist/BUILD_IDENTITY after the build) as an env var. It proves the bundle hash.
+// If static-server.mjs can't find BUILD_IDENTITY (older deploys), it's absent.
+//
+// If built_from_sha !== railway_sha, the bundle is stale: Railway believes it
+// deployed a newer commit, but the compiled code is from an earlier one.
+declare const __BUILT_FROM_SHA__: string;
+declare const __BUILD_AT__: string;
 
 // Version / build identity — used to confirm Railway is running the expected artifact.
 // Returns only public build metadata; never exposes secrets, paths, or config.
-// bundle_sha256 and built_from_sha are embedded in the artifact at build time
-// and cannot be spoofed by setting a Railway environment variable.
+//
+// Provenance verification:
+//   1. built_from_sha is compiled into the bundle by esbuild define — cannot
+//      be faked by changing an env var after the build.
+//   2. If built_from_sha !== railway_sha, the bundle is stale: Railway deployed
+//      a newer commit but the compiled code is from an earlier one.
+//   3. bundle_sha256 (passed from static-server.mjs via env var) provides a
+//      second proof point — sha256sum the running dist/index.mjs to verify.
 app.get("/api/version", (_req: Request, res: Response) => {
   res.json({
-    // Runtime Railway env var — reflects the git SHA at deploy trigger time.
-    // May lag if Railway caches builds between pushes.
+    // runtime Railway env var — set at deploy-trigger time, reflects the git tip
     railway_sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
     deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
     release: "Build-98",
     env: process.env.NODE_ENV ?? "unknown",
-    // Artifact-embedded values — written by build.mjs at compile time.
-    // If built_from_sha !== railway_sha, the bundle is stale relative to
-    // the git tip Railway believes it deployed. This is the deployment
-    // integrity gap indicator.
-    bundle_sha256: _buildIdentity?.bundle_sha256 ?? "not-embedded",
-    built_from_sha: _buildIdentity?.built_from_sha ?? "not-embedded",
-    built_at: _buildIdentity?.built_at ?? "not-embedded",
+    // compile-time constants — baked into dist/index.mjs by esbuild define;
+    // zero runtime dependency; not influenced by Railway env vars
+    built_from_sha: (typeof __BUILT_FROM_SHA__ !== "undefined" ? __BUILT_FROM_SHA__ : null) ?? "not-embedded",
+    built_at: (typeof __BUILD_AT__ !== "undefined" ? __BUILD_AT__ : null) ?? "not-embedded",
+    // bundle hash — computed post-build and passed from static-server.mjs as env var;
+    // present only when static-server.mjs reads dist/BUILD_IDENTITY successfully
+    bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || "not-embedded",
   });
 });
 

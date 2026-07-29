@@ -454393,26 +454393,20 @@ app.get("/api/readyz", async (_req, res) => {
 app.get("/api/readyz/history", (_req, res) => {
   res.json(getHealthHistory());
 });
-var _buildIdentity = {
-  bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || null,
-  built_from_sha: process.env.BUILD_FROM_SHA || null,
-  built_at: process.env.BUILD_AT || null
-};
 app.get("/api/version", (_req, res) => {
   res.json({
-    // Runtime Railway env var — reflects the git SHA at deploy trigger time.
-    // May lag if Railway caches builds between pushes.
+    // runtime Railway env var — set at deploy-trigger time, reflects the git tip
     railway_sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
     deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
     release: "Build-98",
     env: process.env.NODE_ENV ?? "unknown",
-    // Artifact-embedded values — written by build.mjs at compile time.
-    // If built_from_sha !== railway_sha, the bundle is stale relative to
-    // the git tip Railway believes it deployed. This is the deployment
-    // integrity gap indicator.
-    bundle_sha256: _buildIdentity?.bundle_sha256 ?? "not-embedded",
-    built_from_sha: _buildIdentity?.built_from_sha ?? "not-embedded",
-    built_at: _buildIdentity?.built_at ?? "not-embedded"
+    // compile-time constants — baked into dist/index.mjs by esbuild define;
+    // zero runtime dependency; not influenced by Railway env vars
+    built_from_sha: (true ? "bf0a20b9edef0fc747f533aefb718dbbd0b48f68" : null) ?? "not-embedded",
+    built_at: (true ? "2026-07-29T04:47:49.934Z" : null) ?? "not-embedded",
+    // bundle hash — computed post-build and passed from static-server.mjs as env var;
+    // present only when static-server.mjs reads dist/BUILD_IDENTITY successfully
+    bundle_sha256: process.env.BUILD_BUNDLE_SHA256 || "not-embedded"
   });
 });
 app.use(
