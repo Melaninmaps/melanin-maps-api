@@ -4,8 +4,12 @@ cmds = [
   "pnpm --filter @workspace/web run build",
   # 2. Sync web output into api-server/web-static (what api-server build.mjs reads)
   "cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/ && find artifacts/api-server/web-static -name '*.zip' -o -name '*.ipa' -o -name '*.apk' -o -name '*.aab' | xargs rm -f 2>/dev/null || true",
-  # 3. Build api-server (esbuild + copies web-static → dist/public + writes BUILD_IDENTITY)
-  "pnpm --filter @workspace/api-server run build",
+  # 3. Build api-server — cache-bust token is IN this command so Docker layer cache
+  #    misses on every change here, forcing a fresh TypeScript compile. When Railway
+  #    compiles fresh, git rev-parse HEAD returns the current commit SHA, which becomes
+  #    built_from_sha — making stale_bundle:false after deploy.
+  #    UPDATE THIS TOKEN ON EVERY PUSH THAT MUST DEPLOY CLEAN.
+  "echo build-258a7daa-db-execute-fix && pnpm --filter @workspace/api-server run build",
   # 4. Sync api-server output to root dist (what static-server.mjs spawns)
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
@@ -15,10 +19,3 @@ cmds = [
 
 [start]
 cmd = "node static-server.mjs"
-
-# Cache-bust: this commit SHA is embedded in the command string itself.
-# Docker layer caches key on the command string — when the SHA changes
-# (every push), all downstream layers including the TypeScript build
-# are invalidated and rebuilt fresh.
-[phases.prebuild]
-cmds = ["echo build-ref-adc4f207-db-execute-fix > /tmp/build_ref.txt"]
