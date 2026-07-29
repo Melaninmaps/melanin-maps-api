@@ -7,7 +7,8 @@ node_modules
 dist
 
 # development / local tooling
-.git
+# NOTE: .git must NOT be excluded — build.mjs calls `git rev-parse HEAD`
+# to embed the commit SHA in the bundle. Excluding .git breaks every build.
 .gitignore
 .local
 .agents
