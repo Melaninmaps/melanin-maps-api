@@ -204,8 +204,8 @@ export function initPoolInstrumentation(pool: Pool): void {
   //
   // This is the containment strategy: pool oscillates between fresh connections
   // and the leak source is irrelevant — every connection has a hard ceiling.
-  const REAPER_INTERVAL_MS = 30_000;      // fire every 30 s
-  const MAX_CONNECTION_AGE_MS = 120_000;  // kill anything older than 2 min
+  const REAPER_INTERVAL_MS = 30_000;     // fire every 30 s
+  const MAX_CONNECTION_AGE_MS = 60_000;  // kill anything older than 60 s
 
   const reaperHandle = setInterval(() => {
     const snap = poolSnapshot(pool);

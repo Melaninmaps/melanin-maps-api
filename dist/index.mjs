@@ -61329,7 +61329,7 @@ function initPoolInstrumentation(pool4) {
   }, 6e4);
   sweepHandle.unref();
   const REAPER_INTERVAL_MS = 3e4;
-  const MAX_CONNECTION_AGE_MS = 12e4;
+  const MAX_CONNECTION_AGE_MS = 6e4;
   const reaperHandle = setInterval(() => {
     const snap = poolSnapshot(pool4);
     if (snap.total === 0) return;
@@ -442877,8 +442877,10 @@ async function runHealthCheck() {
     return;
   }
   const start = Date.now();
+  let client;
   try {
-    await pool.query("SELECT 1");
+    client = await pool.connect();
+    await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry = {
       ts: ts3,
@@ -442906,6 +442908,8 @@ async function runHealthCheck() {
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: error"
     );
+  } finally {
+    client?.release();
   }
 }
 function _push(entry) {
@@ -454183,8 +454187,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "a000a3670f8a81dbc840b66545ea05bffe01607a";
-var BUILD_AT = "2026-07-29T21:40:52.759Z";
+var BUILT_FROM_SHA = "1f273663b9c3292d6e237d063253367d68acc994";
+var BUILD_AT = "2026-07-29T21:48:39.738Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

@@ -97,16 +97,24 @@ async function runHealthCheck(): Promise<void> {
   // never settle. The forced-release timer guarantees the connection is returned
   // within 60 s regardless, preventing the one-per-cycle pool exhaustion pattern
   // observed in production (total 2→20 over 90 min → 38% uptime).
-  // ── SAFE PATTERN: pool.query() auto-releases the connection ─────────────────
-  // pool.connect() + manual release was the prior pattern; switched to
-  // pool.query() (July 29 2026) because pool.query() returns the connection to
-  // the pool automatically when the query resolves — no safeRelease timer, no
-  // forceTimer, no possibility of a missed client.release() call.
+  // ── SAFE PATTERN: explicit pool.connect() + client.release() in finally ──────
+  // pool.query() was used previously, but the pool export is a Proxy with only
+  // a get trap (no set trap). When pg-pool's Pool.prototype.query runs with
+  // this=Proxy, any internal property assignments (connection tracking) write
+  // to the Proxy's empty target {} instead of the real Pool — orphaning the
+  // connection permanently. This caused exactly +1 leak per healthMonitor cycle.
+  //
+  // Explicit pool.connect() + client.release() bypasses the issue: release() is
+  // called directly on the client object, which holds its own back-reference to
+  // the real Pool. No Proxy indirection involved in the release path.
+  //
   // statement_timeout (10s) is set on every connection by the pool config so
   // a hung SELECT 1 will be killed server-side without any client-side guard.
   const start = Date.now();
+  let client: import("pg").PoolClient | undefined;
   try {
-    await pool.query("SELECT 1");
+    client = await pool.connect();
+    await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry: HealthCheckEntry = {
       ts,
@@ -134,6 +142,11 @@ async function runHealthCheck(): Promise<void> {
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: error",
     );
+  } finally {
+    // Always release — even on error, even if query hung and was killed by
+    // statement_timeout. This is the guarantee that pool.query() failed to
+    // provide through the Proxy.
+    client?.release();
   }
 }
 
