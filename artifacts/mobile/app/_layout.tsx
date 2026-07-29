@@ -56,6 +56,18 @@ if (_sentryDsn) {
     // This is the primary evidence for OOM terminations vs. native crashes.
     attachStacktrace: true,
   });
+  // Wire Sentry into the internal crash logger so every JS exception,
+  // unhandled rejection, and ErrorBoundary catch also creates a Sentry event.
+  // This runs synchronously after Sentry.init() so the bridge is active before
+  // any code can throw.
+  // Using withScope ensures breadcrumbs + extras land on the right event.
+  injectSentryCaptureException((err, extras) => {
+    Sentry.withScope((scope) => {
+      if (extras) scope.setExtras(extras as Record<string, unknown>);
+      scope.setTag("layer", "js_crash_logger");
+      Sentry.captureException(err);
+    });
+  });
 }
 
 // ── JS crash logger (Layer 1 — OTA-deployed, always active) ──────────────────
@@ -64,6 +76,7 @@ if (_sentryDsn) {
 // Stores to AsyncStorage and POSTs to /api/crash-reports on Railway.
 import {
   installCrashLogger,
+  injectSentryCaptureException,
   addNavBreadcrumb,
   setAppStateBreadcrumb,
   addMemoryWarningBreadcrumb,

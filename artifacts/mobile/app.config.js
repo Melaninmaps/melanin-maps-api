@@ -10,7 +10,21 @@ module.exports = ({ config }) => ({
     // (source maps to Sentry) and links the native Sentry SDK so iOS
     // crash signals (SIGSEGV, SIGABRT, OOM) are captured in addition to
     // JS exceptions. A no-op if EXPO_PUBLIC_SENTRY_DSN is absent.
-    "@sentry/react-native",
+    // Full plugin config: organization + project enable source-map and dSYM
+    // upload during `eas build`. Values come from EAS Dashboard env vars
+    // SENTRY_ORG and SENTRY_PROJECT (set alongside SENTRY_AUTH_TOKEN).
+    // If those vars are absent, the SDK still initialises; only symbolication is skipped.
+    [
+      "@sentry/react-native/expo",
+      {
+        organization: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+        // Upload dSYMs / proguard mappings automatically during the build.
+        // Requires SENTRY_AUTH_TOKEN in EAS Dashboard → Environment Variables.
+        uploadSourceMaps: true,
+        includeNativeSources: true,
+      },
+    ],
   ],
   // NOTE: ios.config.googleMapsApiKey is intentionally NOT set here.
   // The app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps SDK needed on iOS.

@@ -81,6 +81,32 @@ export interface CrashReport {
   sent: boolean;
 }
 
+// ─── Sentry bridge (lazy-injected from _layout.tsx after Sentry.init) ──────────
+//
+// crashLogger is a plain module with no direct Sentry import so it can be
+// required before the native Sentry SDK is available. _layout.tsx calls
+// injectSentryCaptureException() after Sentry.init() to wire the two layers.
+//
+// Sentry receives every event that the internal crash logger captures:
+//   • JS exceptions (fatal + non-fatal)
+//   • Unhandled promise rejections
+//   • ErrorBoundary component-tree crashes
+//
+// Native OS crashes (SIGSEGV, SIGABRT, OOM) are handled by the Sentry native
+// SDK directly via Sentry.wrap(RootLayout) — no wiring needed here.
+
+type SentryCaptureFn = (err: Error, extras?: Record<string, unknown>) => void;
+let _sentryCaptureException: SentryCaptureFn | null = null;
+
+/**
+ * Call once after Sentry.init() to connect the crash logger to Sentry.
+ * All subsequently captured JS errors will be forwarded to Sentry in addition
+ * to being saved to AsyncStorage and sent to the Railway crash-reports endpoint.
+ */
+export function injectSentryCaptureException(fn: SentryCaptureFn): void {
+  _sentryCaptureException = fn;
+}
+
 // ─── In-memory state ──────────────────────────────────────────────────────────
 
 const MAX_BREADCRUMBS = 20;
@@ -311,6 +337,11 @@ export function reportErrorBoundary(error: Error, componentStack: string): void 
   const enriched = new Error(error.message);
   enriched.name = error.name ?? "ErrorBoundary";
   enriched.stack = `${error.stack ?? error.message}\n\nComponent Stack:${componentStack}`;
+  // Forward to Sentry first (if wired) so the event includes the full
+  // component stack in the Sentry UI before the process potentially terminates.
+  try {
+    _sentryCaptureException?.(enriched, { type: "error_boundary", componentStack });
+  } catch { /* never block the crash logger */ }
   const report = buildReport("error_boundary", enriched);
   saveAndSend(report).catch(() => {});
 }
@@ -328,7 +359,11 @@ export function installCrashLogger(): void {
     const prev = (global as any).ErrorUtils?.getGlobalHandler?.();
     (global as any).ErrorUtils?.setGlobalHandler?.((err: Error, isFatal?: boolean) => {
       const type: CrashReport["type"] = isFatal ? "js_fatal" : "js_exception";
-      const report = buildReport(type, err instanceof Error ? err : new Error(String(err)));
+      const asErr = err instanceof Error ? err : new Error(String(err));
+      // Forward to Sentry before saving locally — ensures the event is captured
+      // even if the process terminates before AsyncStorage write completes.
+      try { _sentryCaptureException?.(asErr, { type, isFatal }); } catch {}
+      const report = buildReport(type, asErr);
       saveAndSend(report).catch(() => {});
       if (prev) prev(err, isFatal);
     });
@@ -345,6 +380,7 @@ export function installCrashLogger(): void {
         allRejections: true,
         onUnhandled: (_id: number, err: unknown) => {
           const asErr = err instanceof Error ? err : new Error(String(err));
+          try { _sentryCaptureException?.(asErr, { type: "unhandled_rejection" }); } catch {}
           const report = buildReport("unhandled_rejection", asErr);
           saveAndSend(report).catch(() => {});
         },

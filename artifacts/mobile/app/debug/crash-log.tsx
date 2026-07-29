@@ -25,6 +25,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as Sentry from "@sentry/react-native";
 import { getSavedCrashReport, clearSavedCrashReport, type CrashReport } from "@/lib/crashLogger";
 
 export default function CrashLogScreen() {
@@ -39,6 +40,41 @@ export default function CrashLogScreen() {
       setLoading(false);
     });
   }, []);
+
+  // ── Sentry verification helpers ──────────────────────────────────────────────
+  const [sentryStatus, setSentryStatus] = useState<string | null>(null);
+
+  const handleSentryTestEvent = () => {
+    try {
+      // Sends a non-fatal message to Sentry — appears under "Issues" with level=info.
+      // Use this to confirm the DSN is wired and source maps are uploaded.
+      const eventId = Sentry.captureMessage(
+        "Build 99 Sentry verification — non-fatal test event from debug screen",
+        "info",
+      );
+      setSentryStatus(`✓ Test event sent  (id: ${eventId?.slice(0, 8) ?? "unknown"})`);
+    } catch (e) {
+      setSentryStatus(`✗ Sentry not active: ${String(e)}`);
+    }
+  };
+
+  // Named function so the stack trace in Sentry is fully symbolicated and readable.
+  function triggerTestCrash(): never {
+    throw new Error(
+      "Build 99 controlled crash — verify symbolicated stack trace in Sentry",
+    );
+  }
+
+  const handleJsCrash = () => {
+    Alert.alert(
+      "Trigger JS Crash",
+      "This throws a deliberate JS exception. The app will briefly show an error overlay. Check Sentry for the symbolicated stack trace.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Crash now", style: "destructive", onPress: () => triggerTestCrash() },
+      ],
+    );
+  };
 
   const handleShare = async () => {
     if (!report) return;
@@ -75,6 +111,11 @@ export default function CrashLogScreen() {
     return (
       <View style={[styles.center, { paddingTop: insets.top }]}>
         <Text style={styles.label}>No crash report on record.</Text>
+        <SentryTestPanel
+          onTestEvent={handleSentryTestEvent}
+          onJsCrash={handleJsCrash}
+          status={sentryStatus}
+        />
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backBtnTxt}>← Back</Text>
         </TouchableOpacity>
@@ -101,6 +142,13 @@ export default function CrashLogScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        {/* Sentry verification — always visible at the top of the report view */}
+        <SentryTestPanel
+          onTestEvent={handleSentryTestEvent}
+          onJsCrash={handleJsCrash}
+          status={sentryStatus}
+        />
+
         {/* Summary */}
         <Section title="Summary">
           <Row label="Type" value={report.type} />
@@ -166,6 +214,37 @@ export default function CrashLogScreen() {
   );
 }
 
+// ── Sentry verification panel ─────────────────────────────────────────────────
+// Accessible from both the "no report" empty state and the main crash-log view.
+// Two actions:
+//   1. "Send Test Event" — non-fatal captureMessage, confirms DSN + source maps
+//   2. "Trigger JS Crash" — deliberate throw, confirms symbolicated stack trace
+
+function SentryTestPanel({
+  onTestEvent,
+  onJsCrash,
+  status,
+}: {
+  onTestEvent: () => void;
+  onJsCrash: () => void;
+  status: string | null;
+}) {
+  return (
+    <View style={styles.sentryPanel}>
+      <Text style={styles.sentryTitle}>SENTRY VERIFICATION</Text>
+      <View style={styles.sentryBtns}>
+        <TouchableOpacity style={styles.sentryBtn} onPress={onTestEvent} activeOpacity={0.8}>
+          <Text style={styles.sentryBtnTxt}>Send Test Event</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.sentryBtn, styles.sentryBtnDanger]} onPress={onJsCrash} activeOpacity={0.8}>
+          <Text style={[styles.sentryBtnTxt, { color: "#FF6B6B" }]}>Trigger JS Crash</Text>
+        </TouchableOpacity>
+      </View>
+      {status ? <Text style={styles.sentryStatus}>{status}</Text> : null}
+    </View>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
@@ -217,6 +296,13 @@ const styles = StyleSheet.create({
   apiError: { color: "#FF6B6B" },
   apiUrl: { color: "#C0A882", fontSize: 11, fontFamily: "Courier" },
   apiErrorMsg: { color: "#FF6B6B", fontSize: 11 },
+  sentryPanel: { width: "90%", backgroundColor: "#1A0D04", borderWidth: 1, borderColor: "#C9A84C44", borderRadius: 12, padding: 16, gap: 10, marginVertical: 12 },
+  sentryTitle: { color: "#C9A84C", fontSize: 11, fontWeight: "700", letterSpacing: 1, textTransform: "uppercase" },
+  sentryBtns: { flexDirection: "row", gap: 8 },
+  sentryBtn: { flex: 1, paddingVertical: 9, borderRadius: 8, backgroundColor: "#2A1208", alignItems: "center" },
+  sentryBtnDanger: { borderWidth: 1, borderColor: "#FF6B6B44" },
+  sentryBtnTxt: { color: "#C9A84C", fontSize: 13, fontWeight: "600" },
+  sentryStatus: { color: "#78D97B", fontSize: 12, fontFamily: "Courier" },
   label: { color: "#7A5C3C", fontSize: 14 },
   backBtn: { paddingVertical: 10, paddingHorizontal: 20, backgroundColor: "#2A1208", borderRadius: 8 },
   backBtnTxt: { color: "#C9A84C", fontWeight: "600" },
