@@ -454329,8 +454329,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "79bb5b002fd0f9b104e8c0a9b8da93078f39a2fa";
-var BUILD_AT = "2026-07-29T07:12:33.346Z";
+var BUILT_FROM_SHA = "5b6befa4c2f6593c4e0646a04fff006eb15a9641";
+var BUILD_AT = "2026-07-29T07:24:45.348Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454400,7 +454400,15 @@ app.get("/api/readyz", async (_req, res) => {
 app.get("/api/readyz/history", (_req, res) => {
   res.json(getHealthHistory());
 });
-var BUNDLE_SHA256_SELF = createHash10("sha256").update(`${BUILT_FROM_SHA}:${BUILD_AT}`).digest("hex");
+var BUNDLE_SHA256_SELF = (() => {
+  try {
+    const entry = process.argv[1];
+    if (!entry) return "unknown-entry";
+    return createHash10("sha256").update(readFileSync(entry)).digest("hex");
+  } catch (e3) {
+    return `unhashable:${e3.message.slice(0, 40)}`;
+  }
+})();
 app.get("/api/version", (_req, res) => {
   const railwaySha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev";
   const builtFromSha = BUILT_FROM_SHA;

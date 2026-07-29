@@ -139,13 +139,15 @@ import { BUILT_FROM_SHA, BUILD_AT } from "./generated/buildIdentity";
 //   differ: Railway deployed a newer commit but the compiled code is older.
 //   This single boolean is the one-probe stale-deployment detector.
 import { createHash } from "node:crypto";
-// Derived proof-of-compile fingerprint: sha256(BUILT_FROM_SHA + ":" + BUILD_AT).
-// Always a 64-char hex; unique per build; no file I/O needed; computed once at
-// module load (< 1 ms). Satisfies the audit requirement that bundle_sha256_self
-// is never "not-embedded" — if the process runs, it has a real hash.
-const BUNDLE_SHA256_SELF: string = createHash("sha256")
-  .update(`${BUILT_FROM_SHA as string}:${BUILD_AT as string}`)
-  .digest("hex");
+const BUNDLE_SHA256_SELF: string = (() => {
+  try {
+    const entry = process.argv[1];
+    if (!entry) return "unknown-entry";
+    return createHash("sha256").update(readFileSync(entry)).digest("hex");
+  } catch (e) {
+    return `unhashable:${(e as Error).message.slice(0, 40)}`;
+  }
+})();
 
 app.get("/api/version", (_req: Request, res: Response) => {
   const railwaySha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev";
