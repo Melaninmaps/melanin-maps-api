@@ -57,8 +57,8 @@ export default function OnboardingJoin() {
       />
 
       <View style={[styles.topBar, { paddingTop: topPad + 8 }]}>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => { markComplete(); router.replace("/signup"); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Text style={styles.skipText}>Sign Up</Text>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => { markComplete(); router.replace("/waitlist" as never); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Text style={styles.skipText}>Join Waitlist</Text>
         </TouchableOpacity>
         <View style={styles.dots}>
           {ROUTES.map((_, i) => (
@@ -99,15 +99,17 @@ export default function OnboardingJoin() {
         </View>
 
         <View style={styles.finalBtns}>
+          {/* Primary: waitlist — most first-time visitors should request access */}
           <TouchableOpacity
             style={styles.primaryBtn}
-            onPress={() => { markComplete(); router.replace("/signup"); }}
+            onPress={() => { markComplete(); router.replace("/waitlist" as never); }}
             activeOpacity={0.85}
           >
-            <Text style={styles.primaryBtnTxt}>Create Account — It's Free</Text>
+            <Text style={styles.primaryBtnTxt}>Request Access</Text>
             <Feather name="arrow-right" size={18} color="#1C0E06" />
           </TouchableOpacity>
 
+          {/* Secondary: existing account login */}
           <TouchableOpacity
             style={styles.ghostBtn}
             onPress={() => { markComplete(); router.replace("/login"); }}
@@ -117,13 +119,14 @@ export default function OnboardingJoin() {
             <Text style={styles.ghostTxt}>I already have an account</Text>
           </TouchableOpacity>
 
+          {/* Tertiary: direct signup — for users with an existing invite */}
           <TouchableOpacity
             style={styles.waitlistBtn}
-            onPress={() => { markComplete(); router.replace("/waitlist" as never); }}
+            onPress={() => { markComplete(); router.replace("/signup"); }}
             activeOpacity={0.8}
           >
-            <Feather name="clock" size={16} color="rgba(255,255,255,0.55)" />
-            <Text style={styles.waitlistBtnText}>Join the Waitlist</Text>
+            <Feather name="check-circle" size={16} color="rgba(255,255,255,0.55)" />
+            <Text style={styles.waitlistBtnText}>I have an invite</Text>
           </TouchableOpacity>
 
         </View>

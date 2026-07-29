@@ -33,7 +33,7 @@ export interface NeighborhoodSurveyData {
   comments: string;
 }
 
-const CITIES = ["Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Baltimore", "Philadelphia"];
+const CITIES = ["Philadelphia", "Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Baltimore"];
 const ATMOSPHERE_OPTIONS = [
   { id: "welcoming", label: "Welcoming" },
   { id: "neutral", label: "Neutral" },

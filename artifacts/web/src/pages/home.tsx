@@ -70,9 +70,9 @@ interface WaitlistStats {
 }
 
 const FALLBACK_CITIES = [
-  { city: "Atlanta, GA" }, { city: "Houston, TX" }, { city: "Chicago, IL" },
-  { city: "Washington, DC" }, { city: "Los Angeles, CA" }, { city: "New York, NY" },
-  { city: "Charlotte, NC" }, { city: "Dallas, TX" },
+  { city: "Philadelphia, PA" }, { city: "Atlanta, GA" }, { city: "Houston, TX" },
+  { city: "Chicago, IL" }, { city: "Washington, DC" }, { city: "Los Angeles, CA" },
+  { city: "New York, NY" }, { city: "New Orleans, LA" },
 ];
 
 function formatCount(n: number): string {
@@ -1069,8 +1069,8 @@ export default function Home() {
                 img: "https://images.pexels.com/photos/1181391/pexels-photo-1181391.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
-                quote: "The relocation intelligence is what sold me. I was moving from Chicago to Charlotte and had no idea where to start. Mapping with Melanin gave me neighborhood insights I couldn't find anywhere else.",
-                name: "Simone R.", role: "Relocating Professional", loc: "Charlotte, NC",
+                quote: "The relocation intelligence is what sold me. I was moving from Chicago to Philadelphia and had no idea where to start. Mapping with Melanin gave me neighborhood insights I couldn't find anywhere else.",
+                name: "Simone R.", role: "Relocating Professional", loc: "Philadelphia, PA",
                 img: "https://images.pexels.com/photos/7446989/pexels-photo-7446989.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {

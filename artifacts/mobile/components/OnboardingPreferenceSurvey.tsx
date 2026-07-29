@@ -37,7 +37,7 @@ const TRAVEL_STYLES = [
   { id: "shopaholic", label: "Shopper", emoji: "🛍️", sub: "Retail & markets" },
 ];
 
-const CITIES = ["Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Miami", "Baltimore", "Philadelphia", "Charlotte"];
+const CITIES = ["Philadelphia", "Atlanta", "Houston", "Chicago", "Los Angeles", "New York", "DC", "Detroit", "New Orleans", "Miami", "Baltimore", "Charlotte"];
 
 const GROUP_TYPES = [
   { id: "solo", label: "Solo", emoji: "🧍🏾" },
