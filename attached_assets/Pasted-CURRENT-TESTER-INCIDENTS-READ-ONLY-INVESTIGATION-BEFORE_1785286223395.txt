@@ -1,0 +1,252 @@
+CURRENT TESTER INCIDENTS — READ-ONLY INVESTIGATION BEFORE BUILD 1.5
+
+Do not change code yet.
+Do not deploy patches yet.
+Do not begin Build 98.
+Do not classify these reports as resolved without evidence.
+
+During testing this evening, I personally experienced several incidents:
+
+1. The mobile app unexpectedly closed.
+2. At other times, the app returned me to the login screen.
+3. The Map continues attempting to determine my location without
+   completing or giving me a clear error, timeout, retry, or manual
+   browsing option.
+
+These are current-release issues affecting the distributed tester
+binary. Investigate them as release incidents before Build 1.5 is
+authorized.
+
+══════════════════════════════════════════════════════════════
+A. FIRST PRESERVE EVIDENCE
+══════════════════════════════════════════════════════════════
+
+Before restarting Railway, clearing sessions, deploying, changing
+variables, or modifying code, preserve and review:
+
+- Railway API logs for the full testing period;
+- authentication and session logs;
+- database errors and pool metrics;
+- KinfolkAI errors;
+- Maps/location-related API errors;
+- TestFlight crash reports;
+- Expo/EAS or Sentry crash information, if configured;
+- native iOS crash logs available for the distributed build;
+- Android vitals or crash logs, if Android testing was active;
+- deployment and restart history;
+- frontend error-boundary logs;
+- current production SHA and artifact fingerprint.
+
+Do not destroy the evidence by restarting services first.
+
+══════════════════════════════════════════════════════════════
+B. APP CLOSING / CRASH INVESTIGATION
+══════════════════════════════════════════════════════════════
+
+Determine whether each app closure was:
+
+- a native application crash;
+- an unhandled JavaScript exception;
+- an operating-system termination;
+- a memory-pressure termination;
+- an authentication redirect that appeared to be a crash;
+- a navigation failure;
+- a map/location crash;
+- or another cause.
+
+Search specifically for crashes involving:
+
+- map screens;
+- location permission;
+- location watchers;
+- marker rendering;
+- KinfolkAI;
+- community;
+- authentication;
+- secure-token storage;
+- navigation;
+- image rendering;
+- background/foreground transitions.
+
+For every matching event provide:
+
+- exact timestamp;
+- platform;
+- binary/build number;
+- affected screen;
+- exception or termination type;
+- stack trace;
+- likely trigger;
+- whether it is reproducible;
+- whether it requires a mobile rebuild;
+- severity: P0, P1, P2, or informational.
+
+Do not answer “no crash found” solely because Railway remained healthy.
+A native mobile crash may never reach Railway.
+
+══════════════════════════════════════════════════════════════
+C. RETURN TO LOGIN SCREEN
+══════════════════════════════════════════════════════════════
+
+Separate the intentional session invalidation from any ongoing defect.
+
+Confirm:
+
+1. The exact timestamp when 182 sessions were deleted.
+2. Whether my first logout occurred before or after that deletion.
+3. Whether any logout after my next successful login could still be
+   explained by the deletion.
+4. Whether the mobile app stores and reloads the new session correctly.
+5. Whether session renewal is functioning in the distributed binary.
+6. Whether app backgrounding/foregrounding loses the session.
+7. Whether an ordinary API 401 or temporary network failure incorrectly
+   clears the local token and forces logout.
+8. Whether the app distinguishes:
+   - expired session;
+   - revoked session;
+   - temporary connection failure;
+   - API 500/503;
+   - malformed response.
+9. Whether multiple auth-storage mechanisms or token keys exist.
+10. Whether a server restart invalidates or disrupts active sessions.
+
+A temporary backend or network failure must not automatically erase a
+valid local session and send the user to login.
+
+Provide an authenticated-device test covering:
+
+- log in;
+- close and reopen app;
+- background for 10 minutes;
+- switch between Wi-Fi and cellular;
+- trigger a temporary failed API request;
+- return after a Railway deployment;
+- confirm the user remains logged in whenever the session remains valid.
+
+State clearly whether the login-screen incidents require:
+
+- backend-only correction;
+- mobile code correction and new binary;
+- both;
+- or no correction because the event was solely the one-time session
+  invalidation.
+
+══════════════════════════════════════════════════════════════
+D. MAP LOCATION LOOP
+══════════════════════════════════════════════════════════════
+
+Investigate why the Map remains in a continuing “finding location” state.
+
+Review:
+
+- permission request flow;
+- foreground location permission status;
+- denied/restricted/undetermined states;
+- getCurrentPosition timeout;
+- location watcher creation and cleanup;
+- repeated effects or render loops;
+- loading-state reset;
+- error handling;
+- cached last-known location;
+- simulator/device behavior;
+- app background and foreground transitions;
+- whether a watcher is created more than once;
+- whether the Map waits for location before loading businesses or
+  heritage data;
+- whether location denial blocks manual browsing;
+- whether coordinates are ever null, undefined, stale, or 0/0.
+
+Required user behavior:
+
+- Location must be optional for manual map browsing.
+- The app must not spin indefinitely.
+- After a reasonable timeout, show a clear message and choices such as:
+  Retry, Browse Manually, Enter a City, or Open Settings.
+- Denied permission must not repeatedly prompt during the same session.
+- The Map should use a safe last-known or default browsing region when
+  appropriate.
+- All location subscriptions must be cleaned up.
+- No location error should close the app.
+- No 0,0 “Null Island” pins may be created.
+
+Test at minimum:
+
+- permission allowed;
+- permission denied;
+- permission set to Never;
+- location services disabled;
+- poor GPS signal;
+- no network;
+- slow response;
+- app backgrounded during lookup;
+- app reopened;
+- switching Wi-Fi/cellular;
+- manual city search without location.
+
+State whether the defect is in the submitted mobile binary and whether a
+new EAS build is required.
+
+══════════════════════════════════════════════════════════════
+E. CORRELATION WITH RECENT CHANGES
+══════════════════════════════════════════════════════════════
+
+Create a timeline containing:
+
+- SESSION_SECRET rotation;
+- deletion of 182 sessions;
+- every Railway deployment;
+- every production restart;
+- stability-monitor entries;
+- my reported app closures;
+- my returns to login;
+- map-location failures;
+- any corresponding 401, 429, 500, 502, 503, or timeout.
+
+Determine whether these issues are:
+
+- related to the recent session/security work;
+- pre-existing mobile defects;
+- related to the Map location implementation;
+- related to production instability;
+- or separate incidents.
+
+Do not combine unrelated issues under one root cause.
+
+══════════════════════════════════════════════════════════════
+F. REQUIRED REPORT
+══════════════════════════════════════════════════════════════
+
+Return a PASS/FAIL table:
+
+Issue
+Confirmed?
+Evidence
+Root cause
+Current user impact
+Severity
+Backend fix required?
+Mobile rebuild required?
+Reproducible?
+Recommended action
+Release blocker?
+
+Also provide:
+
+1. Current iOS build actually installed/tested
+2. Current Android versionCode if relevant
+3. Current backend SHA and artifact fingerprint
+4. Number of app crashes found
+5. Number of auth-forced logouts found
+6. Number of expected one-time logouts caused by session deletion
+7. Map-location failure root cause
+8. Whether Apple could encounter any of these issues
+9. Whether current testers should pause
+10. Whether Apple review should continue
+11. Whether Build 1.5 remains safe to implement now
+12. Whether these fixes must be added to Build 1.5
+13. Whether a replacement iOS or Android binary is required
+
+Do not implement until I review this report.
+
+Do not tell me the system is healthy based only on HTTP endpoint checks.
+The user-facing mobile experience is part of release health.
