@@ -83,15 +83,22 @@ function getPool(): pg.Pool {
       statement_timeout: 10_000,
       query_timeout: 10_000,
       // ─── Connection recycling (resilience hardening) ───────────────────────
-      // idleTimeoutMillis: close idle connections after 30 s (was 300 s).
-      //   Dead sockets from Railway network events are replaced within one
-      //   idle cycle rather than persisting for up to 5 minutes.
+      // idleTimeoutMillis: close idle connections after 10 s (was 30 s).
+      //   Aggressive recycling means stale/dead sockets are evicted quickly.
+      //   At the 5-minute health-monitor interval the pool will be fully idle
+      //   between cycles; short idle timeout keeps totalCount near 0 between
+      //   bursts, making a slow leak visible immediately as steady growth.
+      // allowExitOnIdle: pool sheds all connections when idle. Combined with
+      //   the short idleTimeoutMillis this means if a connection IS leaked it
+      //   shows up as total growing while the rest return to zero — a clean
+      //   signal for the POOL_GROWTH_DETECTED warning in pool-instrumentation.
       // keepAliveInitialDelayMillis: start TCP keepalive probes after 1 s
       //   (was 10 s). Dead sockets detected in seconds, not up to 685 s.
       // maxLifetimeSeconds: recycle every connection after 30 minutes
       //   regardless of idle state. Second-layer defense against long-lived
       //   connections that survive a Railway network reconfiguration.
-      idleTimeoutMillis: 30_000,
+      idleTimeoutMillis: 10_000,
+      allowExitOnIdle: true,
       keepAlive: true,
       keepAliveInitialDelayMillis: 1_000,
       maxLifetimeSeconds: 1800,

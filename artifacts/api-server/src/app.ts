@@ -95,16 +95,34 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   // leaking it until maxLifetimeSeconds recycles it. With POOL_MAX=8 this
   // exhausted all connections within hours (P0 incident, July 28 2026).
   // pool.connect() + finally guarantees the client is always returned.
+  //
+  // 60-second forced-release safety net: if client.query() hangs on a silently-
+  // dead TCP socket, the forced-release timer guarantees the connection is
+  // returned within 60 s regardless (Manus audit fix C/D, July 29 2026).
   let client: import("pg").PoolClient | undefined;
+  let _released = false;
+  const safeRelease = () => {
+    if (_released) return;
+    _released = true;
+    try { client?.release(); } catch { /* ignore */ }
+  };
+  const forceTimer = setTimeout(() => {
+    logger.error({ event: "READYZ_FORCED_RELEASE", pool: getPoolStats() }, "readyz: forced release after 60s");
+    safeRelease();
+  }, 60_000);
+  (forceTimer as NodeJS.Timeout).unref?.();
   try {
     client = await pool.connect();
+    // Explicit session-level statement timeout — defense-in-depth (fix A).
+    await client.query("SET statement_timeout = '5000'");
     await client.query("SELECT 1");
     res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : "unknown error";
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
   } finally {
-    client?.release();
+    clearTimeout(forceTimer);
+    safeRelease();
   }
 });
 

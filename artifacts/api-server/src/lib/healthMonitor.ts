@@ -90,10 +90,40 @@ async function runHealthCheck(): Promise<void> {
   // IMPORTANT: acquire a PoolClient explicitly so release() always runs in
   // the finally block. Never use Promise.race with pool.query() — it abandons
   // the pg promise without releasing the client, leaking connections.
+  //
+  // 60-second forced-release safety net (Manus audit fix C/D, July 29 2026):
+  // If client.query() hangs on a silently-dead TCP socket, query_timeout fires
+  // after 10 s but in rare cases (kernel-level socket hang) the pg promise may
+  // never settle. The forced-release timer guarantees the connection is returned
+  // within 60 s regardless, preventing the one-per-cycle pool exhaustion pattern
+  // observed in production (total 2→20 over 90 min → 38% uptime).
+  // safeRelease() guards against the double-release that would occur if both the
+  // timer and the finally block fire.
   let client: import("pg").PoolClient | undefined;
+  let _released = false;
+  const safeRelease = () => {
+    if (_released) return;
+    _released = true;
+    try { client?.release(); } catch { /* ignore double-release */ }
+  };
+  const forceTimer = setTimeout(() => {
+    _logger.error(
+      { event: "HEALTH_MONITOR_FORCED_RELEASE", pool: getPoolStats() },
+      "health-monitor: forced release after 60s — connection leak suspected",
+    );
+    safeRelease();
+  }, 60_000);
+  // Unref so the timer doesn't prevent clean process exit.
+  (forceTimer as NodeJS.Timeout).unref?.();
+
   const start = Date.now();
   try {
     client = await pool.connect();
+    // Explicit session-level statement timeout (Manus audit fix A): defense-in-
+    // depth on top of the pool-level statement_timeout:10_000. Ensures PostgreSQL
+    // cancels a hung query server-side within 5 s even if the pool default is
+    // overridden or ignored by a future config change.
+    await client.query("SET statement_timeout = '5000'");
     await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry: HealthCheckEntry = {
@@ -123,7 +153,8 @@ async function runHealthCheck(): Promise<void> {
       "health-monitor: error",
     );
   } finally {
-    client?.release();
+    clearTimeout(forceTimer);
+    safeRelease();
   }
 }
 

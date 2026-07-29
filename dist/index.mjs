@@ -61699,15 +61699,22 @@ function getPool() {
       statement_timeout: 1e4,
       query_timeout: 1e4,
       // ─── Connection recycling (resilience hardening) ───────────────────────
-      // idleTimeoutMillis: close idle connections after 30 s (was 300 s).
-      //   Dead sockets from Railway network events are replaced within one
-      //   idle cycle rather than persisting for up to 5 minutes.
+      // idleTimeoutMillis: close idle connections after 10 s (was 30 s).
+      //   Aggressive recycling means stale/dead sockets are evicted quickly.
+      //   At the 5-minute health-monitor interval the pool will be fully idle
+      //   between cycles; short idle timeout keeps totalCount near 0 between
+      //   bursts, making a slow leak visible immediately as steady growth.
+      // allowExitOnIdle: pool sheds all connections when idle. Combined with
+      //   the short idleTimeoutMillis this means if a connection IS leaked it
+      //   shows up as total growing while the rest return to zero — a clean
+      //   signal for the POOL_GROWTH_DETECTED warning in pool-instrumentation.
       // keepAliveInitialDelayMillis: start TCP keepalive probes after 1 s
       //   (was 10 s). Dead sockets detected in seconds, not up to 685 s.
       // maxLifetimeSeconds: recycle every connection after 30 minutes
       //   regardless of idle state. Second-layer defense against long-lived
       //   connections that survive a Railway network reconfiguration.
-      idleTimeoutMillis: 3e4,
+      idleTimeoutMillis: 1e4,
+      allowExitOnIdle: true,
       keepAlive: true,
       keepAliveInitialDelayMillis: 1e3,
       maxLifetimeSeconds: 1800
@@ -443046,9 +443053,27 @@ async function runHealthCheck() {
     return;
   }
   let client;
+  let _released = false;
+  const safeRelease = () => {
+    if (_released) return;
+    _released = true;
+    try {
+      client?.release();
+    } catch {
+    }
+  };
+  const forceTimer = setTimeout(() => {
+    _logger2.error(
+      { event: "HEALTH_MONITOR_FORCED_RELEASE", pool: getPoolStats() },
+      "health-monitor: forced release after 60s \u2014 connection leak suspected"
+    );
+    safeRelease();
+  }, 6e4);
+  forceTimer.unref?.();
   const start = Date.now();
   try {
     client = await pool.connect();
+    await client.query("SET statement_timeout = '5000'");
     await client.query("SELECT 1");
     const dbMs = Date.now() - start;
     const entry = {
@@ -443078,7 +443103,8 @@ async function runHealthCheck() {
       "health-monitor: error"
     );
   } finally {
-    client?.release();
+    clearTimeout(forceTimer);
+    safeRelease();
   }
 }
 function _push(entry) {
@@ -453386,14 +453412,30 @@ router141.get("/readyz", async (req, res) => {
   const issues = [];
   let rawOk = false;
   let rawClient;
+  let _rawReleased = false;
+  const safeRawRelease = () => {
+    if (_rawReleased) return;
+    _rawReleased = true;
+    try {
+      rawClient?.release();
+    } catch {
+    }
+  };
+  const rawForceTimer = setTimeout(() => {
+    console.error(JSON.stringify({ event: "INTERNAL_READYZ_FORCED_RELEASE", pool: poolStats }));
+    safeRawRelease();
+  }, 6e4);
+  rawForceTimer.unref?.();
   try {
     rawClient = await pool.connect();
+    await rawClient.query("SET statement_timeout = '5000'");
     const result = await rawClient.query("SELECT 1 AS ok");
     rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
   } finally {
-    rawClient?.release();
+    clearTimeout(rawForceTimer);
+    safeRawRelease();
   }
   if (!rawOk) issues.push("raw SQL returned unexpected result");
   let drizzleOk = false;
@@ -454329,8 +454371,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "5b6befa4c2f6593c4e0646a04fff006eb15a9641";
-var BUILD_AT = "2026-07-29T07:24:45.348Z";
+var BUILT_FROM_SHA = "75baea6edbee582b360460a833becf1468600855";
+var BUILD_AT = "2026-07-29T11:44:09.143Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454386,15 +454428,31 @@ app.get("/api/readyz", async (_req, res) => {
     return;
   }
   let client;
+  let _released = false;
+  const safeRelease = () => {
+    if (_released) return;
+    _released = true;
+    try {
+      client?.release();
+    } catch {
+    }
+  };
+  const forceTimer = setTimeout(() => {
+    logger.error({ event: "READYZ_FORCED_RELEASE", pool: getPoolStats() }, "readyz: forced release after 60s");
+    safeRelease();
+  }, 6e4);
+  forceTimer.unref?.();
   try {
     client = await pool.connect();
+    await client.query("SET statement_timeout = '5000'");
     await client.query("SELECT 1");
     res.json({ status: "ok", db: "ok", pool: getPoolStats() });
   } catch (err) {
     const detail = err instanceof Error ? err.message : "unknown error";
     res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
   } finally {
-    client?.release();
+    clearTimeout(forceTimer);
+    safeRelease();
   }
 });
 app.get("/api/readyz/history", (_req, res) => {

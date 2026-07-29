@@ -31,18 +31,31 @@ router.get("/readyz", async (req: Request, res: Response) => {
   const issues: string[] = [];
 
   // ── Raw SQL check ─────────────────────────────────────────────────────────
-  // Uses pool.connect() with an explicit AbortSignal-based timeout so the
-  // client is always returned to the pool regardless of how the query resolves.
+  // pool.connect() + finally { release() } + 60s forced-release safety net.
   let rawOk = false;
   let rawClient: PoolClient | undefined;
+  let _rawReleased = false;
+  const safeRawRelease = () => {
+    if (_rawReleased) return;
+    _rawReleased = true;
+    try { rawClient?.release(); } catch { /* ignore */ }
+  };
+  const rawForceTimer = setTimeout(() => {
+    console.error(JSON.stringify({ event: "INTERNAL_READYZ_FORCED_RELEASE", pool: poolStats }));
+    safeRawRelease();
+  }, 60_000);
+  (rawForceTimer as NodeJS.Timeout).unref?.();
   try {
     rawClient = await pool.connect();
+    // Explicit session-level statement timeout — fix A defense-in-depth.
+    await rawClient.query("SET statement_timeout = '5000'");
     const result = await rawClient.query("SELECT 1 AS ok");
     rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
   } finally {
-    rawClient?.release();
+    clearTimeout(rawForceTimer);
+    safeRawRelease();
   }
   if (!rawOk) issues.push("raw SQL returned unexpected result");
 
