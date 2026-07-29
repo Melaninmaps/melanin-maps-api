@@ -1,0 +1,71 @@
+What Changed Since the Audit — and What That Meant for Scope
+Between the crash-vector audit and this implementation, Replit pushed nine further commits to `main` (through `1a3b2244`). I verified each blocker’s current status against that HEAD and against live production before writing any code, and adjusted scope so the branch contains only work that is genuinely still open:
+
+
+￼
+
+2. Every File Changed, With Exact Changes
+2.1 Fix 1 — Build-fingerprint hardening — `artifacts/api-server/src/app.ts`
+Replit’s mechanism embeds `BUILT_FROM_SHA` at build time (good — kept) but sources the bundle hash from `dist/BUILD_IDENTITY` relayed through a `static-server.mjs` env var. Production proves that chain breaks silently: every fingerprint field currently reads `"not-embedded"`. The hardening adds a proof point that cannot fail silently and a one-probe staleness verdict:
+
+
+￼
+The `/api/version` response gains two fields and a canary release bump (`Build-98.2`):
+
+
+￼
+A TS literal-type widening (`const builtFromSha: string = BUILT_FROM_SHA`) was required because the generated module exports a string literal type (this was caught by typecheck, which now passes cleanly for the api-server).
+
+Smoke-test evidence (local run of the rebuilt bundle): `/api/version` returned `bundle_sha256_self = 3e95f36c…` exactly matching `sha256sum dist/index.mjs`; with a matching `RAILWAY_GIT_COMMIT_SHA` it returned `stale_bundle: false`, and with a deliberately mismatched SHA it returned `stale_bundle: true`.
+
+2.2 Fix 2 — iOS heritage marker isolation + TDZ crash fix — `artifacts/mobile/components/FullMapView.tsx`
+Marker isolation (the prime native-crash suspect from the audit). The `Platform.OS === "android" ? plainCircle : viewWithFeatherIcon` branch inside the heritage `<Marker>` was replaced with an unconditional plain circle. Expo SDK 57 makes Fabric mandatory on both platforms; the crash class that forced the Android isolation (view-recycling SIGSEGV when markers contain Text/icon children) exists identically on iOS, and up to 250 such markers mount and recycle during pan/zoom. Selection feedback is preserved via the existing size-change style (`culturalMarkerSelected`) and the selection card. Icon restoration remains gated on crash-logger evidence, exactly as the Android comment already specified.
+
+
+￼
+TDZ crash fix. The auto-fit `useEffect` (lines 172–188 on `main`) referenced `mapped` twenty-two lines before `const mapped = businesses.filter(…)` — a temporal-dead-zone error. This is not stylistic: `tsc` fails on it today (TS2448/TS2454 — mobile typecheck was red on `main`), and Hermes throws `ReferenceError` at component mount when the effect closure is created. The effect block was moved below the `mapped` declaration with logic byte-for-byte unchanged. Mobile typecheck error count drops from 10 to 8; the remaining 8 pre-exist on `main` in files this branch does not touch (`AIChatWidget.tsx`, `stripePricing.ts`, etc.).
+
+2.3 Fix 3 — `BusinessMapView` cultural markers — `artifacts/mobile/components/BusinessMapView.tsx`
+The same isolation applied to the second map component, which the audit found had the identical Feather-child pattern plus two hardening gaps: the `<View><Feather name="book-open"/></View>` child becomes a plain circle, `tracksViewChanges={false}` is added (it was missing here, unlike FullMapView), and coordinate validation is upgraded from `isNaN`-only to `Number.isFinite` plus latitude/longitude range checks, matching FullMapView:
+
+
+￼
+2.4 Fix 4 — OTA runtime pinning — `artifacts/mobile/app.json` + `docs/OTA-COMPATIBILITY-POLICY.md` (new)
+`"runtimeVersion": { "policy": "appVersion" }` became `"runtimeVersion": "1.1.5-native.2"`. Under the old policy, all four live binaries (iOS 97/98, Android VC71/VC73) shared runtime `1.1.5`, so any `eas update` reached all of them simultaneously — and the next binary adds Sentry’s native SDK, making a forward-incompatible OTA a realistic fleet-wide crash event. The explicit `-native.N` suffix increments only when the native surface changes; the new `docs/OTA-COMPATIBILITY-POLICY.md` codifies the rule, the operational consequences (existing binaries are intentionally frozen — safe-by-default), and the founder-gated exception path for emergency JS fixes to the legacy fleet.
+
+2.5 Fix 5 — Security hygiene — `dist/public/mobile-build.zip` removed from tracking
+The 14.5 MB mobile app source archive was still git-tracked inside the deployable public asset directory. It currently 404s in production, but any future deploy that serves `dist/public/` statically would re-expose it. Removed via `git rm --cached` in commit `f8845285`.
+
+2.6 The rebuilt bundle — `dist/index.mjs`, `dist/index.mjs.map`, `dist/BUILD_IDENTITY`, `dist/public/*`
+Per the standing instruction (and the three-time-recurring deployment-gap failure class), the committed root bundle was rebuilt from the branch source so the fixes ship even if the Docker build phase fails silently again and `static-server.mjs` falls back to the committed artifact. Facts: `BUILT_FROM_SHA = b43b9923…` (the source commit) is embedded; `bundle_sha256 = 3e95f36c3999e76a5826cc9cc51bf6e9bc19de75f30dd410cfdd45c87fb778cc` recorded in `dist/BUILD_IDENTITY` (now committed so `static-server.mjs` can relay it); `grep bundle_sha256_self dist/index.mjs` → present; local smoke test confirmed `/api/version` (fields correct), `POST /api/crash-reports` → 400 validation (route wired), `/api/readyz` responding.
+
+
+3. Deliverables in `/home/ubuntu/work/`
+Because the branch could not be pushed (GitHub connector unavailable), the work travels in three redundant forms — use whichever fits:
+
+
+￼
+All four individual code patches were verified with `git apply --check` against `main` @ `1a3b2244`. They are independent — any subset can be applied — with one note: fix2 and fix3 are the two halves of the marker-crash mitigation and should ship together.
+
+4. Exact Commands for Replit — Apply, Rebuild, Deploy
+Option A — apply the git bundle (preferred; preserves the reviewed commits exactly). Copy `manus-crash-blockers.bundle` into the workspace, then:
+
+
+￼
+Option B — apply the source-only patch, then rebuild.
+
+
+￼
+Option C — apply fixes selectively: `git apply --index patches/fixN-*.patch` for any subset, then commit.
+
+Rebuild the committed fallback bundle (required after B or C; already done in the bundle from Option A):
+
+
+￼
+Deploy (server changes): push `main` (after founder-approved merge) — Railway builds via the Dockerfile; the healthcheck (`/api/readyz`) gates cutover. Mobile changes (fixes 2–4): the marker isolation and TDZ fix are pure JS and OTA-deliverable to the current fleet before the runtimeVersion change lands — publish the OTA first (`eas update --branch production`), then merge fix4, which pins future updates to the next binaries (iOS 99 / VC74). This ordering matters: reversing it strands the current fleet without the marker fix.
+
+5. How to Verify Each Fix After Deployment
+
+￼
+6. Regression Surface and Risk
+The server change is additive (two new JSON fields, one startup hash of a ~19 MB file — a one-time ~50 ms cost, measured locally). The marker isolation removes rendering complexity rather than adding it; the visual change (icon → colored circle) matches what Android testers have already been seeing since VC71 and is explicitly reversible once crash evidence lands. The TDZ move changes no logic. The OTA pin’s only behavioral effect is deliberate: legacy binaries stop receiving updates (§2.4 policy documents the exception path). Typecheck: api-server fully clean; mobile reduced to pre-existing errors only. The one sequencing risk is the OTA-before-merge ordering for fix4 described in §4 — it is called out in bold there because getting it backwards strands the current fleet without the marker fix.
