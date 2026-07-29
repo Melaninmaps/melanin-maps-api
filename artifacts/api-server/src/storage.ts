@@ -1,4 +1,4 @@
-import { db, usersTable } from "@workspace/db";
+import { db, pool, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 
 export class Storage {
@@ -27,14 +27,19 @@ export class Storage {
   }
 
   async getProduct(productId: string) {
-    const result = await db.execute(
-      sql`SELECT * FROM stripe.products WHERE id = ${productId}`,
+    // pool.query() instead of db.execute() — db.execute() can silently hang
+    // (never-resolving Promise) in esbuild bundles, permanently holding the
+    // pg connection. pool.query() always resolves or rejects within the
+    // pool-level statement_timeout (10 s).
+    const result = await pool.query(
+      `SELECT * FROM stripe.products WHERE id = $1`,
+      [productId],
     );
     return result.rows[0] ?? null;
   }
 
   async listProductsWithPrices() {
-    const result = await db.execute(sql`
+    const result = await pool.query(`
       WITH latest_products AS (
         SELECT DISTINCT ON (name) id, name, description, metadata, active
         FROM stripe.products
@@ -62,17 +67,18 @@ export class Storage {
 
   async getPriceForPlan(planName: string, billing: "monthly" | "annual") {
     const interval = billing === "annual" ? "year" : "month";
-    const result = await db.execute(sql`
-      SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
-      FROM stripe.products p
-      JOIN stripe.prices pr ON pr.product = p.id
-      WHERE p.name = ${planName}
-        AND p.active = true
-        AND pr.active = true
-        AND pr.recurring->>'interval' = ${interval}
-      ORDER BY p.created DESC
-      LIMIT 1
-    `);
+    const result = await pool.query(
+      `SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
+       FROM stripe.products p
+       JOIN stripe.prices pr ON pr.product = p.id
+       WHERE p.name = $1
+         AND p.active = true
+         AND pr.active = true
+         AND pr.recurring->>'interval' = $2
+       ORDER BY p.created DESC
+       LIMIT 1`,
+      [planName, interval],
+    );
     return (result.rows[0] ?? null) as { price_id: string; unit_amount: number } | null;
   }
 
@@ -91,8 +97,9 @@ export class Storage {
   }
 
   async getSubscription(subscriptionId: string) {
-    const result = await db.execute(
-      sql`SELECT * FROM stripe.subscriptions WHERE id = ${subscriptionId}`,
+    const result = await pool.query(
+      `SELECT * FROM stripe.subscriptions WHERE id = $1`,
+      [subscriptionId],
     );
     return result.rows[0] ?? null;
   }

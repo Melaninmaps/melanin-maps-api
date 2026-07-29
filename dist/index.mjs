@@ -29396,10 +29396,10 @@ var init_subquery = __esm({
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql10, fields, alias2, isWith = false, usedTables = []) {
+      constructor(sql11, fields, alias2, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql10,
+          sql: sql11,
           selectedFields: fields,
           alias: alias2,
           isWith,
@@ -43210,10 +43210,10 @@ var init_raw = __esm({
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql10, query, mapBatchResult) {
+      constructor(execute, sql11, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql10;
+        this.sql = sql11;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -43533,8 +43533,8 @@ var init_db = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql10, params) {
-  const dataToHash = `${sql10}-${JSON.stringify(params)}`;
+async function hashQuery(sql11, params) {
+  const dataToHash = `${sql11}-${JSON.stringify(params)}`;
   const encoder2 = new TextEncoder();
   const data = encoder2.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -61268,7 +61268,7 @@ function initPoolInstrumentation(pool5) {
   const origQuery = pool5.query.bind(pool5);
   pool5.query = (...args) => {
     const start = Date.now();
-    const sql10 = extractSql(args);
+    const sql11 = extractSql(args);
     const caller = callerFrame();
     const promise2 = origQuery(...args);
     promise2.then(() => {
@@ -61277,14 +61277,14 @@ function initPoolInstrumentation(pool5) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: ms3 >= SLOW_QUERY_MS ? "slow" : "query",
         ms: ms3,
-        sql: sql10,
+        sql: sql11,
         caller,
         pool: poolSnapshot(pool5)
       };
       push(ev);
       if (ms3 >= SLOW_QUERY_MS) {
         console.warn(
-          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql10, caller, pool: ev.pool })
+          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql11, caller, pool: ev.pool })
         );
       }
     }).catch(() => {
@@ -61292,7 +61292,7 @@ function initPoolInstrumentation(pool5) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: "error",
         ms: Date.now() - start,
-        sql: sql10,
+        sql: sql11,
         caller,
         pool: poolSnapshot(pool5),
         detail: "query rejected"
@@ -356914,13 +356914,14 @@ var init_storage2 = __esm({
         return row?.count ?? 0;
       }
       async getProduct(productId) {
-        const result = await db.execute(
-          sql`SELECT * FROM stripe.products WHERE id = ${productId}`
+        const result = await pool2.query(
+          `SELECT * FROM stripe.products WHERE id = $1`,
+          [productId]
         );
         return result.rows[0] ?? null;
       }
       async listProductsWithPrices() {
-        const result = await db.execute(sql`
+        const result = await pool2.query(`
       WITH latest_products AS (
         SELECT DISTINCT ON (name) id, name, description, metadata, active
         FROM stripe.products
@@ -356947,17 +356948,18 @@ var init_storage2 = __esm({
       }
       async getPriceForPlan(planName, billing) {
         const interval2 = billing === "annual" ? "year" : "month";
-        const result = await db.execute(sql`
-      SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
-      FROM stripe.products p
-      JOIN stripe.prices pr ON pr.product = p.id
-      WHERE p.name = ${planName}
-        AND p.active = true
-        AND pr.active = true
-        AND pr.recurring->>'interval' = ${interval2}
-      ORDER BY p.created DESC
-      LIMIT 1
-    `);
+        const result = await pool2.query(
+          `SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
+       FROM stripe.products p
+       JOIN stripe.prices pr ON pr.product = p.id
+       WHERE p.name = $1
+         AND p.active = true
+         AND pr.active = true
+         AND pr.recurring->>'interval' = $2
+       ORDER BY p.created DESC
+       LIMIT 1`,
+          [planName, interval2]
+        );
         return result.rows[0] ?? null;
       }
       async getUserByStripeCustomerId(customerId) {
@@ -356969,8 +356971,9 @@ var init_storage2 = __esm({
         return user;
       }
       async getSubscription(subscriptionId) {
-        const result = await db.execute(
-          sql`SELECT * FROM stripe.subscriptions WHERE id = ${subscriptionId}`
+        const result = await pool2.query(
+          `SELECT * FROM stripe.subscriptions WHERE id = $1`,
+          [subscriptionId]
         );
         return result.rows[0] ?? null;
       }
@@ -375884,13 +375887,13 @@ var require_yesql = __commonJS({
             sqls[sqls.length - 1] += "\n\n" + lines;
           }
           return sqls;
-        }, []).forEach((sql10) => {
-          if (sql10.trim().startsWith("--")) {
-            const sqlName = sql10.split("\n")[0].trim().substring(2).trim();
+        }, []).forEach((sql11) => {
+          if (sql11.trim().startsWith("--")) {
+            const sqlName = sql11.split("\n")[0].trim().substring(2).trim();
             if (acc[sqlName]) {
               throw new Error('Duplicate SQL query name "' + sqlName + '" found, please rename other one.');
             }
-            acc[sqlName] = options.type ? module.exports[options.type](sql10, options) : sql10;
+            acc[sqlName] = options.type ? module.exports[options.type](sql11, options) : sql11;
           }
         });
         return acc;
@@ -375935,7 +375938,7 @@ var require_yesql = __commonJS({
     var mysql = (query, options = {}) => {
       return (data = {}) => {
         const values = [];
-        const sql10 = query.split(matchQuoted).map((part) => {
+        const sql11 = query.split(matchQuoted).map((part) => {
           if (!part || matchQuoted.test(part)) {
             return part;
           } else {
@@ -375961,7 +375964,7 @@ var require_yesql = __commonJS({
           }
         }).join("").trim();
         return {
-          sql: sql10,
+          sql: sql11,
           values
         };
       };
@@ -376248,15 +376251,15 @@ var require_migration_file = __commonJS({
       try {
         const { id: id2, name: name3, type: type2 } = file_name_parser_1.parseFileName(fileName);
         const contents = await getFileContents(filePath);
-        const sql10 = getSqlStringLiteral(filePath, contents, type2);
-        const hash2 = hashString(fileName + sql10);
+        const sql11 = getSqlStringLiteral(filePath, contents, type2);
+        const hash2 = hashString(fileName + sql11);
         return {
           id: id2,
           name: name3,
           contents,
           fileName,
           hash: hash2,
-          sql: sql10
+          sql: sql11
         };
       } catch (err) {
         throw new Error(`${err.message} - Offending file: '${fileName}'.`);
@@ -376340,8 +376343,8 @@ var require_run_migration = __commonJS({
     };
     var insertMigration = async (migrationTableName = "migrations", migrationSchemaName = "public", client, migration, log2) => {
       log2(`Saving migration to '${migrationSchemaName}.${migrationTableName}': ${migration.id} | ${migration.name} | ${migration.hash}`);
-      const sql10 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
-      return client.query(sql10);
+      const sql11 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
+      return client.query(sql11);
     };
     var runMigration = (migrationTableName = "migrations", migrationSchemaName = "public", client, log2 = noop2) => async (migration) => {
       const inTransaction = migration.sql.includes("-- postgres-migrations disable-transaction") === false;
@@ -423376,7 +423379,7 @@ router30.get("/admin/metrics", async (req, res) => {
       db.select({ today: count() }).from(waitlistTable).where(gte(waitlistTable.createdAt, todayStart)),
       db.select({ week: count() }).from(waitlistTable).where(gte(waitlistTable.createdAt, weekStart)),
       db.select({ city: waitlistTable.city, count: count() }).from(waitlistTable).where(isNotNull(waitlistTable.city)).groupBy(waitlistTable.city).orderBy(desc(count())).limit(10),
-      db.execute(sql`
+      pool2.query(`
           SELECT
             TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
             COUNT(*)::int AS count
@@ -423408,7 +423411,7 @@ router30.get("/admin/leaderboard", async (req, res) => {
     return;
   }
   try {
-    const result = await db.execute(sql`
+    const result = await pool2.query(`
       SELECT
         w.referred_by             AS referral_code,
         r.email                   AS referrer_email,
@@ -442466,7 +442469,7 @@ router82.get("/cultural-sites", async (req, res) => {
       idx++;
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const sql10 = `
+    const sql11 = `
       SELECT id, name, description, category, heritage_category AS "heritageCategory",
              subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
              latitude, longitude, era, significance, image_url AS "imageUrl",
@@ -442492,7 +442495,7 @@ router82.get("/cultural-sites", async (req, res) => {
         name ASC
       LIMIT 500
     `;
-    const result = await pool2.query(sql10, params);
+    const result = await pool2.query(sql11, params);
     const sites = result.rows;
     const categorySummary = await pool2.query(
       `SELECT heritage_category, COUNT(*) AS count FROM cultural_sites GROUP BY heritage_category ORDER BY count DESC`
@@ -444346,7 +444349,7 @@ router94.post("/business-improvement", async (req, res) => {
     const findProviders = async (ownershipFilter, extraCondition = "") => {
       const params = [businessCity.toLowerCase()];
       if (keywords.length > 0) params.push(...keywords.map((k3) => `%${k3}%`));
-      const sql10 = `
+      const sql11 = `
         SELECT b.id, b.name, b.category, b.description, b.city, b.state,
                b.phone, b.website, b.verified, b.black_owned,
                b.ownership_designations
@@ -444362,7 +444365,7 @@ router94.post("/business-improvement", async (req, res) => {
         ORDER BY b.verified DESC, b.confidence_score DESC
         LIMIT 12
       `;
-      return pool2.query(sql10, params);
+      return pool2.query(sql11, params);
     };
     const prefs = ownershipPreferences.filter((p) => p !== "no-preference" && p !== "local-only");
     const noPreference = ownershipPreferences.includes("no-preference") || ownershipPreferences.length === 0;
@@ -445928,9 +445931,9 @@ router99.post("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql10 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql10`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql11`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to upvote love note");
@@ -445943,9 +445946,9 @@ router99.delete("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql10 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql10`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql11`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to remove upvote");
@@ -452197,7 +452200,7 @@ router133.get("/vibes/search", async (req, res) => {
         WHERE sp.business_id = b.id AND sp.user_id = $${params.length}
       ) THEN 15 ELSE 0 END`;
     }
-    const sql10 = `
+    const sql11 = `
       SELECT
         b.id,
         b.name,
@@ -452287,7 +452290,7 @@ router133.get("/vibes/search", async (req, res) => {
       ORDER BY total_score DESC
       LIMIT 30
     `;
-    const result = await pool2.query(sql10, params);
+    const result = await pool2.query(sql11, params);
     res.json({
       businesses: result.rows.map((r2) => ({
         id: r2.id,
@@ -454383,8 +454386,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "e9ace8c2453ed6fad768ae4479d4609839d9bd12";
-var BUILD_AT = "2026-07-29T17:51:14.541Z";
+var BUILT_FROM_SHA = "adc4f2076df72152fe213e2abc9c0de00eae79c2";
+var BUILD_AT = "2026-07-29T18:14:27.040Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

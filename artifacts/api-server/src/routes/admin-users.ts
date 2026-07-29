@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, usersTable, waitlistTable } from "@workspace/db";
+import { db, pool, usersTable, waitlistTable } from "@workspace/db";
 import { eq, desc, count, gte, isNotNull, sql } from "drizzle-orm";
 import { sendApprovalNotification } from "../lib/email";
 import { sendPushToUser } from "../lib/pushNotifications";
@@ -161,7 +161,7 @@ router.get("/admin/metrics", async (req: Request, res: Response) => {
           .groupBy(waitlistTable.city)
           .orderBy(desc(count()))
           .limit(10),
-        db.execute(sql`
+        pool.query(`
           SELECT
             TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS date,
             COUNT(*)::int AS count
@@ -195,7 +195,7 @@ router.get("/admin/leaderboard", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const result = await db.execute(sql`
+    const result = await pool.query(`
       SELECT
         w.referred_by             AS referral_code,
         r.email                   AS referrer_email,
