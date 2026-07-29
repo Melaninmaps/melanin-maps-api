@@ -102,6 +102,15 @@ function getPool(): pg.Pool {
       keepAlive: true,
       keepAliveInitialDelayMillis: 1_000,
       maxLifetimeSeconds: 1800,
+      // ─── Server-side zombie connection killers ───────────────────────────
+      // idle_in_transaction_session_timeout: PostgreSQL forcibly closes any
+      //   connection that has been idle inside an open transaction for longer
+      //   than this interval. Kills the most dangerous class of leaked
+      //   connection (transaction opened, never committed/rolled back) even if
+      //   Node.js code silently drops the reference. 60 s is generous — any
+      //   real transaction should commit in < 1 s.
+      // This is a server-side enforcement layer independent of Node.js.
+      idle_in_transaction_session_timeout: 60_000,
     });
 
     // ─── Pool event logging (structured JSON via injected logger) ─────────

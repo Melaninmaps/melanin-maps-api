@@ -1,6 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
-import type { PoolClient } from "pg";
 
 // ── /api/internal/readyz ──────────────────────────────────────────────────
 // Protected deep-database readiness check for internal tooling and ops use.
@@ -12,9 +11,9 @@ import type { PoolClient } from "pg";
 //
 // Returns 200 when all checks pass, 503 when any check fails.
 //
-// SAFE PATTERN: All DB probes use pool.connect() + finally { client.release() }.
-// Promise.race(pool.query, timeout) leaks PoolClients on timeout — never use it
-// for health checks. (P0 incident reference: July 28 2026 pool exhaustion.)
+// SAFE PATTERN: All DB probes use pool.query() which auto-releases connections.
+// Switched from pool.connect()+safeRelease to pool.query() (July 29 2026) to
+// eliminate any possibility of a missed client.release() call.
 
 const WAITING_COUNT_THRESHOLD = 3;
 
@@ -31,31 +30,13 @@ router.get("/readyz", async (req: Request, res: Response) => {
   const issues: string[] = [];
 
   // ── Raw SQL check ─────────────────────────────────────────────────────────
-  // pool.connect() + finally { release() } + 60s forced-release safety net.
+  // pool.query() auto-releases the connection on every code path.
   let rawOk = false;
-  let rawClient: PoolClient | undefined;
-  let _rawReleased = false;
-  const safeRawRelease = () => {
-    if (_rawReleased) return;
-    _rawReleased = true;
-    try { rawClient?.release(); } catch { /* ignore */ }
-  };
-  const rawForceTimer = setTimeout(() => {
-    console.error(JSON.stringify({ event: "INTERNAL_READYZ_FORCED_RELEASE", pool: poolStats }));
-    safeRawRelease();
-  }, 60_000);
-  (rawForceTimer as NodeJS.Timeout).unref?.();
   try {
-    rawClient = await pool.connect();
-    // Explicit session-level statement timeout — fix A defense-in-depth.
-    await rawClient.query("SET statement_timeout = '5000'");
-    const result = await rawClient.query("SELECT 1 AS ok");
+    const result = await pool.query("SELECT 1 AS ok");
     rawOk = result.rows[0]?.ok === 1;
   } catch {
     issues.push("raw SQL check failed");
-  } finally {
-    clearTimeout(rawForceTimer);
-    safeRawRelease();
   }
   if (!rawOk) issues.push("raw SQL returned unexpected result");
 

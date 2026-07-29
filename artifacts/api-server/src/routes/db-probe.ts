@@ -1,12 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
-import type { PoolClient } from "pg";
 
-// SAFE PATTERN: All DB probes use pool.connect() + finally { client.release() }.
-// Promise.race(pool.query, timeout) was the root cause of the July 28 2026
-// pool exhaustion P0 incident: the PoolClient was abandoned on timeout and
-// not returned until pg's maxLifetimeSeconds recycled it (~30 min).
-// pool.connect() + finally guarantees the connection is always released.
+// SAFE PATTERN: All DB probes use pool.query() which auto-releases connections.
+// Switched from pool.connect()+finally to pool.query() (July 29 2026).
 
 const router: IRouter = Router();
 
@@ -20,20 +16,17 @@ router.get("/db-probe", async (req: Request, res: Response) => {
   const url = process.env.DATABASE_URL ?? "";
   const hostCategory = url.includes(".internal") ? "internal" : "public-proxy";
 
-  // Snapshot pool stats before running queries — reflects the waiting state
-  // at the moment of the probe call, not after connections are acquired.
+  // Snapshot pool stats before running queries.
   const poolStats = getPoolStats();
 
-  // ── Check 1: raw pool.connect() → SELECT 1 ───────────────────────────────
+  // ── Check 1: pool.query() → SELECT 1 ─────────────────────────────────────
   const rawStart = Date.now();
   let rawCheck: { ok: boolean; elapsedMs: number; error?: string } = {
     ok: false,
     elapsedMs: 0,
   };
-  let rawClient: PoolClient | undefined;
   try {
-    rawClient = await pool.connect();
-    const result = await rawClient.query("SELECT 1 AS ok");
+    const result = await pool.query("SELECT 1 AS ok");
     rawCheck = {
       ok: result.rows[0]?.ok === 1,
       elapsedMs: Date.now() - rawStart,
@@ -44,8 +37,6 @@ router.get("/db-probe", async (req: Request, res: Response) => {
       elapsedMs: Date.now() - rawStart,
       error: (err as Error)?.message ?? "Unknown error",
     };
-  } finally {
-    rawClient?.release();
   }
 
   // ── Check 2: Drizzle query against a real table ───────────────────────────

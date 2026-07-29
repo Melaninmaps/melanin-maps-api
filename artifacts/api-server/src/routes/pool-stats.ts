@@ -66,4 +66,46 @@ router.get("/pool-audit", (req: Request, res: Response) => {
   });
 });
 
+// ── /api/pg-stat-activity ──────────────────────────────────────────────────
+// Runs SELECT against pg_stat_activity on the PRODUCTION Railway database.
+// Shows every active connection: PID, state, query text, duration, wait event.
+// "idle in transaction" rows here are the zombie connections causing pool growth.
+// Auth: same x-cron-secret header.
+router.get("/pg-stat-activity", async (req: Request, res: Response) => {
+  if (!CRON_SECRET) {
+    res.status(503).json({ error: "Diagnostic endpoint not configured." });
+    return;
+  }
+  if (req.headers["x-cron-secret"] !== CRON_SECRET) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  try {
+    const { pool: pg } = await import("@workspace/db");
+    const result = await pg.query(`
+      SELECT
+        pid,
+        state,
+        LEFT(query, 120)          AS query,
+        age(clock_timestamp(), query_start) AS duration,
+        wait_event_type,
+        wait_event,
+        application_name,
+        client_addr::text
+      FROM pg_stat_activity
+      WHERE datname = current_database()
+        AND pid <> pg_backend_pid()
+      ORDER BY query_start NULLS LAST
+    `);
+    res.json({
+      rows: result.rows,
+      count: result.rowCount,
+      timestamp: new Date().toISOString(),
+      currentPool: getPoolStats(),
+    });
+  } catch (err: unknown) {
+    res.status(500).json({ error: (err as Error)?.message ?? "Unknown error" });
+  }
+});
+
 export default router;

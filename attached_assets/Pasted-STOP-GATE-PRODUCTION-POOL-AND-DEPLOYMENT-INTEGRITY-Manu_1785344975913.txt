@@ -1,0 +1,161 @@
+STOP-GATE: PRODUCTION POOL AND DEPLOYMENT INTEGRITY
+
+Manus has independently observed the following in production:
+
+- the server restarted and the pool dropped from approximately 20/saturated
+  to 3–5 connections
+- the pool is already growing again despite zero idle connections
+- this resembles the prior leak pattern
+- stale_bundle remains TRUE
+- therefore, the latest audited commit does not appear to be running in
+  the deployed Railway artifact
+
+Do not begin or represent Build 99 as release-ready until these issues are
+resolved and proven.
+
+══════════════════════════════════════════════════════════════
+PHASE 1 — PROVE THE CORRECT CODE IS DEPLOYED
+══════════════════════════════════════════════════════════════
+
+1. Identify:
+   - intended release commit SHA
+   - Railway deployed commit SHA
+   - build artifact version
+   - deployment timestamp
+   - mobile API target environment
+
+2. Explain exactly why stale_bundle remains TRUE.
+
+3. Deploy the intended audited commit to Railway.
+
+4. Add or confirm a production deployment fingerprint endpoint that returns:
+   - commit SHA
+   - build timestamp
+   - environment
+   - release/build number
+   - service version
+
+5. Confirm stale_bundle changes to FALSE after deployment.
+
+Do not rely only on a successful Railway deployment message. Provide the
+actual production endpoint response proving the running artifact matches
+the intended commit.
+
+══════════════════════════════════════════════════════════════
+PHASE 2 — IDENTIFY THE POOL GROWTH SOURCE
+══════════════════════════════════════════════════════════════
+
+After the correct commit is proven live:
+
+1. Capture pool metrics every minute for at least 65 minutes:
+   - total connections
+   - active connections
+   - idle connections
+   - waiting requests
+   - maximum pool size
+   - process ID
+   - restart count
+
+2. Instrument every database checkout and release with:
+   - route or operation name
+   - request ID
+   - checkout timestamp
+   - release timestamp
+   - duration held
+   - success, timeout, or error
+   - whether the client was released
+
+3. Audit every use of:
+   - pool.connect()
+   - client.query()
+   - transactions
+   - streaming queries
+   - background jobs
+   - health checks
+   - session renewal
+   - notification polling
+   - scheduled jobs
+
+4. Confirm every pool.connect() uses a guaranteed finally block:
+
+   const client = await pool.connect();
+   try {
+     // database work
+   } finally {
+     client.release();
+   }
+
+5. Search for:
+   - missing client.release()
+   - early returns before release
+   - exceptions before release
+   - transactions without COMMIT or ROLLBACK
+   - multiple pool instances
+   - pools created per request
+   - duplicated background workers
+   - health endpoints opening connections unnecessarily
+   - retry loops that create new clients
+   - long-running or abandoned queries
+
+6. Confirm the application creates only one intended pool per process.
+
+7. Add temporary connection acquisition stack tracing or equivalent
+   diagnostic attribution so every unreleased client can be tied to its
+   originating operation.
+
+══════════════════════════════════════════════════════════════
+PHASE 3 — FIX AND PROVE
+══════════════════════════════════════════════════════════════
+
+The issue is not closed merely because the server was restarted.
+
+Provide proof that:
+
+- the intended commit is live
+- stale_bundle is FALSE
+- total pool connections stabilize under idle conditions
+- no steady upward connection trend exists
+- every checked-out client is released
+- waiting requests remain zero under normal load
+- the service survives the full monitoring period without saturation
+- repeated login, session renewal, map loading, business detail loading,
+  and health checks do not increase the pool baseline
+- restart count remains unchanged
+
+Run controlled tests for:
+
+- 25 repeated logins
+- 25 session renewals
+- repeated map refreshes
+- repeated business detail opens
+- repeated readyz and health calls
+- transaction failure and rollback
+- API timeout and exception paths
+
+After each test, confirm the pool returns to its established baseline.
+
+══════════════════════════════════════════════════════════════
+REQUIRED DELIVERABLE
+══════════════════════════════════════════════════════════════
+
+Return one consolidated report containing:
+
+1. root cause
+2. affected file/function or service
+3. exact fix
+4. intended commit SHA
+5. deployed commit SHA
+6. production fingerprint response
+7. stale_bundle status
+8. before-and-after pool metrics
+9. 65-minute monitoring results
+10. evidence that clients are released
+11. restart count
+12. remaining risks
+13. GO or NO-GO conclusion
+
+Do not mask the issue with restarts, larger pool limits, increased database
+connections, or SENTRY_ALLOW_FAILURE.
+
+Do not proceed to the EAS production build until the production artifact
+is verified and the pool remains stable.
