@@ -1048,8 +1048,10 @@ router.post("/cron/seed-reviewer", async (req: any, res: any): Promise<void> => 
     }
 
     // 3. Upsert member_agreements entry ────────────────────────────────────────
+    // Use a stable deterministic ID based on userId so re-runs are idempotent
+    const agreementId = `agr-${reviewerId.slice(0, 28)}`;
     await db.insert(memberAgreementsTable).values({
-      id:               `reviewer-agreement-v1`,
+      id:               agreementId,
       userId:           reviewerId,
       agreementVersion: "v1",
       platform:         "ios",

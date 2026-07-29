@@ -433335,8 +433335,9 @@ router37.post("/cron/seed-reviewer", async (req, res) => {
       }).returning({ id: usersTable.id });
       reviewerId = newUser.id;
     }
+    const agreementId = `agr-${reviewerId.slice(0, 28)}`;
     await db.insert(memberAgreementsTable).values({
-      id: `reviewer-agreement-v1`,
+      id: agreementId,
       userId: reviewerId,
       agreementVersion: "v1",
       platform: "ios",
@@ -454337,8 +454338,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "648fb4ee33ce5b96c2a77f8ac9f366475e29c1ad";
-var BUILD_AT = "2026-07-29T23:08:54.213Z";
+var BUILT_FROM_SHA = "de6df72b3dae189f9c3b053e3569eb5846c96597";
+var BUILD_AT = "2026-07-29T23:13:55.045Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
