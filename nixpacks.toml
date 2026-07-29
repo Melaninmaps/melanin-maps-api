@@ -16,6 +16,9 @@ cmds = [
 [start]
 cmd = "node static-server.mjs"
 
-# Force cache-bust: timestamp changes every deploy so Docker layer cache is invalidated
+# Cache-bust: this commit SHA is embedded in the command string itself.
+# Docker layer caches key on the command string — when the SHA changes
+# (every push), all downstream layers including the TypeScript build
+# are invalidated and rebuilt fresh.
 [phases.prebuild]
-cmds = ["echo Cache-bust:$(date -u +%Y%m%dT%H%M%S) > /tmp/cache_bust.txt"]
+cmds = ["echo build-ref-117ffdf38eda > /tmp/build_ref.txt"]
