@@ -1518,17 +1518,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             catMap.get(key)!.savedCount += parseInt(row.cnt, 10);
           }
           const topCats = [...catMap.values()].slice(0, 5);
-          const bridges = await Promise.all(
-            topCats.map(async ({ category, fromCity, savedCount }) => {
-              const bizRows = await pool.query<{ name: string; category: string; city: string; verified: boolean }>(
-                `SELECT name, category, city, verified FROM businesses
-                 WHERE status = 'active' AND city ILIKE $1 AND category ILIKE $2
-                 ORDER BY verified DESC, name ASC LIMIT 3`,
-                [`%${activeJourney.city}%`, `%${category}%`],
-              );
-              return { category, fromCity, savedCount, matches: bizRows.rows };
-            }),
+          // ── SINGLE BATCHED QUERY (replaces Promise.all with N parallel pool.query calls) ──
+          // Promise.all fired up to 5 concurrent pool.query() calls. With 4 concurrent
+          // chat users that exhausts the entire 20-slot pool. Replaced with one query
+          // using ILIKE ANY(array) so only 1 connection is consumed per chat request.
+          const categoryFilters = topCats.map(({ category }) => `%${category}%`);
+          const bizBatch = await pool.query<{ name: string; category: string; city: string; verified: boolean }>(
+            `SELECT name, category, city, verified FROM businesses
+             WHERE status = 'active' AND city ILIKE $1
+               AND category ILIKE ANY($2::text[])
+             ORDER BY verified DESC, name ASC LIMIT 15`,
+            [`%${activeJourney.city}%`, categoryFilters],
           );
+          const bridges = topCats.map(({ category, fromCity, savedCount }) => ({
+            category,
+            fromCity,
+            savedCount,
+            matches: bizBatch.rows
+              .filter((r) => r.category.toLowerCase().includes(category.toLowerCase()))
+              .slice(0, 3),
+          }));
           crossCityBridge = bridges.filter((b) => b.matches.length > 0);
           if (crossCityBridge.length === 0) crossCityBridge = null;
         }
@@ -1558,36 +1567,51 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : "free";
 
     // Fetch algorithmic twin recommendations (fire-and-forget on error)
+    // ── SINGLE CTE QUERY (replaces 3 sequential pool.query + 1 Drizzle call) ──
+    // The prior pattern made 3 round-trips to Postgres, each holding a pool
+    // connection sequentially. Combined into one CTE so only 1 connection is
+    // consumed for the entire twin-recommendation block.
     let twinRecs: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }> = [];
     try {
       const currentUserId = req.user?.id;
       if (currentUserId) {
         const myIds = (await db.select({ businessId: savedPlacesTable.businessId }).from(savedPlacesTable).where(eq(savedPlacesTable.userId, currentUserId))).map((s) => s.businessId);
         if (myIds.length >= 2) {
-          const { pool: twinPool } = await import("@workspace/db");
-          const twinRows = await twinPool.query<{ user_id: string; overlap: string }>(
-            `SELECT sp.user_id, COUNT(*) AS overlap FROM saved_places sp WHERE sp.business_id = ANY($1) AND sp.user_id <> $2 GROUP BY sp.user_id HAVING COUNT(*) >= 2 ORDER BY COUNT(*) DESC LIMIT 30`,
+          const twinResult = await pool.query<{ id: string; name: string; city: string; state: string; twin_count: string; score: string }>(
+            `WITH overlap AS (
+               SELECT sp.user_id, COUNT(*) AS overlap_cnt
+               FROM saved_places sp
+               WHERE sp.business_id = ANY($1) AND sp.user_id <> $2
+               GROUP BY sp.user_id
+               HAVING COUNT(*) >= 2
+               ORDER BY COUNT(*) DESC
+               LIMIT 30
+             ),
+             candidate_saves AS (
+               SELECT sp.business_id, sp.user_id
+               FROM saved_places sp
+               WHERE sp.user_id IN (SELECT user_id FROM overlap)
+                 AND sp.business_id <> ALL($1)
+               LIMIT 200
+             )
+             SELECT b.id, b.name, b.city, b.state,
+                    COUNT(DISTINCT cs.user_id)::text AS twin_count,
+                    SUM(o.overlap_cnt)::text          AS score
+             FROM candidate_saves cs
+             JOIN overlap o ON o.user_id = cs.user_id
+             JOIN businesses b ON b.id = cs.business_id AND b.status = 'active'
+             GROUP BY b.id, b.name, b.city, b.state
+             ORDER BY SUM(o.overlap_cnt) DESC
+             LIMIT 8`,
             [myIds, currentUserId],
           );
-          if (twinRows.rows.length) {
-            const twinIds = twinRows.rows.map((t: { user_id: string; overlap: string }) => t.user_id);
-            const twinSaves = await twinPool.query<{ business_id: string; user_id: string }>(
-              `SELECT sp.business_id, sp.user_id FROM saved_places sp WHERE sp.user_id = ANY($1) AND sp.business_id <> ALL($2) LIMIT 200`,
-              [twinIds, myIds],
-            );
-            const scoreMap: Record<string, { score: number; twinCount: number }> = {};
-            const overlapMap = Object.fromEntries(twinRows.rows.map((t: { user_id: string; overlap: string }) => [t.user_id, Number(t.overlap)]));
-            for (const row of twinSaves.rows) {
-              if (!scoreMap[row.business_id]) scoreMap[row.business_id] = { score: 0, twinCount: 0 };
-              scoreMap[row.business_id].score += overlapMap[row.user_id] ?? 1;
-              scoreMap[row.business_id].twinCount += 1;
-            }
-            const topIds = Object.entries(scoreMap).sort(([, a], [, b]) => b.score - a.score).slice(0, 8).map(([id]) => id);
-            if (topIds.length) {
-              const bizRows = await db.select({ id: businessesTable.id, name: businessesTable.name, city: businessesTable.city, state: businessesTable.state }).from(businessesTable).where(inArray(businessesTable.id, topIds));
-              twinRecs = bizRows.map((b) => ({ businessName: b.name, city: b.city, state: b.state, twinCount: scoreMap[b.id]?.twinCount ?? 1, reason: `${scoreMap[b.id]?.twinCount ?? 1} taste-matched users saved this` }));
-            }
-          }
+          twinRecs = twinResult.rows.map((b) => ({
+            businessName: b.name,
+            city: b.city,
+            state: b.state,
+            twinCount: Number(b.twin_count),
+            reason: `${b.twin_count} taste-matched users saved this`,
+          }));
         }
       }
     } catch { /* non-fatal — proceed without twin recs */ }
