@@ -9,7 +9,7 @@ cmds = [
   #    compiles fresh, git rev-parse HEAD returns the current commit SHA, which becomes
   #    built_from_sha — making stale_bundle:false after deploy.
   #    UPDATE THIS TOKEN ON EVERY PUSH THAT MUST DEPLOY CLEAN.
-  "echo build-5a4db56e-dynamic-import-fix-deployed && pnpm --filter @workspace/api-server run build",
+  "echo build-fdd1a58b-K0-auth-gates-waitlist-cultural-fix && pnpm --filter @workspace/api-server run build",
   # 4. Sync api-server output to root dist (what static-server.mjs spawns)
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
