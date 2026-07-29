@@ -18,9 +18,13 @@ function getApiBase(): string {
 function NativeTabLayout() {
   return (
     <NativeTabs>
+      <NativeTabs.Trigger name="community">
+        <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
+        <Label>Community</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "safari", selected: "safari.fill" }} />
-        <Label>Discovery</Label>
+        <Label>Discover</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="map">
         <Icon sf={{ default: "map", selected: "map.fill" }} />
@@ -41,10 +45,6 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="resources">
         <Icon sf={{ default: "heart.text.square", selected: "heart.text.square.fill" }} />
         <Label>Resources</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="community">
-        <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
-        <Label>Community</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
@@ -81,6 +81,7 @@ function ClassicTabLayout() {
 
   return (
     <Tabs
+      initialRouteName="community"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
@@ -115,9 +116,21 @@ function ClassicTabLayout() {
       }}
     >
       <Tabs.Screen
+        name="community"
+        options={{
+          title: "Community",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="person.3" tintColor={color} size={24} />
+            ) : (
+              <Feather name="users" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
         name="index"
         options={{
-          title: "Discovery",
+          title: "Discover",
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="safari" tintColor={color} size={24} />
@@ -184,18 +197,6 @@ function ClassicTabLayout() {
               <SymbolView name="heart.text.square" tintColor={color} size={24} />
             ) : (
               <Feather name="heart" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="community"
-        options={{
-          title: "Community",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="person.3" tintColor={color} size={24} />
-            ) : (
-              <Feather name="users" size={22} color={color} />
             ),
         }}
       />

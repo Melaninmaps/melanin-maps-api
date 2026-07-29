@@ -26,6 +26,7 @@ const ROUTES = [
   "/onboarding/safety",
   "/onboarding/travel",
   "/onboarding/identity",
+  "/onboarding/agreement",
   "/onboarding/join",
 ];
 

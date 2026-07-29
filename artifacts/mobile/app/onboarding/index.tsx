@@ -22,6 +22,7 @@ const ROUTES = [
   "/onboarding/safety",
   "/onboarding/travel",
   "/onboarding/identity",
+  "/onboarding/agreement",
   "/onboarding/join",
 ];
 
@@ -72,15 +73,15 @@ export default function OnboardingWelcome() {
       </View>
 
       <View style={[styles.content, { paddingBottom: bottomPad + 24 }]}>
-        <Text style={styles.eyebrow}>SAFETY-FIRST COMMUNITY INTELLIGENCE</Text>
+        <Text style={styles.eyebrow}>PRIVATE MEMBERSHIP COMMUNITY</Text>
         <View style={styles.titleBlock}>
-          <Text style={styles.title}>{"Map Your Life.\nConnect Deeper."}</Text>
-          <Text style={styles.titleItalic}>Live With Purpose.</Text>
+          <Text style={styles.title}>{"A Community\nBuilt on Trust."}</Text>
+          <Text style={styles.titleItalic}>For Us, By Us.</Text>
         </View>
         <Text style={styles.subtitle}>
-          Mapping with Melanin™ connects people to trusted businesses, meaningful relationships,
-          thriving communities, and new opportunities through the power of shared experiences
-          and community-driven insights.
+          Mapping With Melanin™ is a private membership network where members share
+          the cultural intelligence, safety awareness, and lived experiences that
+          keep each other safe, seen, and connected.
         </Text>
         <TouchableOpacity
           style={styles.nextBtn}

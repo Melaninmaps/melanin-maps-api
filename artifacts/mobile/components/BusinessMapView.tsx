@@ -107,9 +107,12 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
           return;
         }
         setLocationGranted(true);
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const loc = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("location timeout")), 8_000),
+          ),
+        ]) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
         mapRef.current?.animateToRegion(
           {
             latitude: loc.coords.latitude,
@@ -161,9 +164,12 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
 
   const recenter = async () => {
     try {
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
+      const loc = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("location timeout")), 8_000),
+        ),
+      ]) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
       mapRef.current?.animateToRegion(
         {
           latitude: loc.coords.latitude,

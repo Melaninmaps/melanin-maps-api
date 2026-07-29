@@ -316,7 +316,12 @@ export function FullMapView() {
 
   const recenter = async () => {
     try {
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Promise.race([
+        Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("location timeout")), 8_000),
+        ),
+      ]) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
       mapRef.current?.animateToRegion(
         { latitude: loc.coords.latitude, longitude: loc.coords.longitude, latitudeDelta: 0.12, longitudeDelta: 0.12 },
         600,

@@ -35,6 +35,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      initialRouteName="community"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
@@ -50,6 +51,13 @@ export default function TabLayout() {
         },
       }}
     >
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: "Community",
+          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{
@@ -84,13 +92,6 @@ export default function TabLayout() {
         options={{
           title: "Resources",
           tabBarIcon: ({ color }) => <Feather name="heart" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="community"
-        options={{
-          title: "Community",
-          tabBarIcon: ({ color }) => <Feather name="users" size={22} color={color} />,
         }}
       />
       <Tabs.Screen

@@ -730,6 +730,32 @@ export default function BusinessDetailScreen() {
             <ReviewSourceBar stats={reviewStats} />
           )}
 
+          {/* Community Voice — member signal leads, not directory info */}
+          {((business.reviewCount ?? 0) > 0 || business.verified || (gemStatus?.totalNominations ?? 0) > 0) && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+              {business.verified && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: "#2D7A4F12", borderWidth: 1, borderColor: "#2D7A4F40" }}>
+                  <Feather name="check-circle" size={12} color="#2D7A4F" />
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" }}>Community Verified</Text>
+                </View>
+              )}
+              {(business.reviewCount ?? 0) > 0 && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: "#CA922B12", borderWidth: 1, borderColor: "#CA922B40" }}>
+                  <Feather name="users" size={12} color="#CA922B" />
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#CA922B" }}>
+                    {business.reviewCount} Member {(business.reviewCount ?? 0) === 1 ? "Voice" : "Voices"}
+                  </Text>
+                </View>
+              )}
+              {(gemStatus?.totalNominations ?? 0) > 0 && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, backgroundColor: "#CA922B08", borderWidth: 1, borderColor: "#CA922B30" }}>
+                  <Feather name="star" size={12} color="#CA922B" />
+                  <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#CA922B" }}>Community Nominated</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Hidden Gem / Community Spotlight badge */}
           {gemStatus?.isActive && gemStatus.label ? (
             <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: "#CA922B12", borderWidth: 1, borderColor: "#CA922B30", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginTop: 10 }}>
