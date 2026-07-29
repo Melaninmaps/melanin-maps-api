@@ -66,9 +66,24 @@ async function buildAll() {
   // These constants are compiled into dist/index.mjs itself — not read from a
   // file or env var at runtime. Any external party can verify provenance by
   // comparing __BUILT_FROM_SHA__ (returned by /api/version) with the git log.
-  let _builtFromSha = "unknown";
+  //
+  // SHA priority (highest → lowest):
+  //   1. RAILWAY_GIT_COMMIT_SHA — Railway injects this into the build environment
+  //      as the SHA of the commit being deployed. It is authoritative on Railway
+  //      because Railway's git checkout can sometimes show a previous HEAD if the
+  //      Docker layer cache is partially reused.
+  //   2. git rev-parse HEAD — used for local builds where RAILWAY_GIT_COMMIT_SHA
+  //      is not set.
+  let _builtFromSha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "unknown";
+  try {
+    const fromGit = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+    // Only override the env var if we are NOT in Railway (env var absent).
+    // In Railway the env var is the authoritative value; git can lag by one commit.
+    if (!process.env.RAILWAY_GIT_COMMIT_SHA && /^[0-9a-f]{40}$/.test(fromGit)) {
+      _builtFromSha = fromGit;
+    }
+  } catch {}
   let _buildAt = new Date().toISOString();
-  try { _builtFromSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(); } catch {}
   console.log(`BUILD define: __BUILT_FROM_SHA__=${_builtFromSha.slice(0,12)}... __BUILD_AT__=${_buildAt}`);
 
   await esbuild({
@@ -206,9 +221,14 @@ async function writeBuildIdentity(distDir) {
   const bundlePath = path.resolve(distDir, "index.mjs");
   const identityPath = path.resolve(distDir, "BUILD_IDENTITY");
 
-  let gitSha = "unknown";
+  // Same priority logic as buildAll(): prefer RAILWAY_GIT_COMMIT_SHA so the
+  // BUILD_IDENTITY file on disk matches what is embedded in the bundle.
+  let gitSha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "unknown";
   try {
-    gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+    const fromGit = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+    if (!process.env.RAILWAY_GIT_COMMIT_SHA && /^[0-9a-f]{40}$/.test(fromGit)) {
+      gitSha = fromGit;
+    }
   } catch {}
 
   let bundleHash = "unknown";
