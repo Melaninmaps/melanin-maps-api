@@ -59,7 +59,8 @@
         "PNPM_VERSION": "10.26.1",
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_YtlteQfYyxtiWoOvOylWcxKaIBk",
-        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv"
+        "EXPO_PUBLIC_REVENUECAT_TEST_API_KEY": "appl_evRvvCBBMxNrhJJKrqQELZrxeJv",
+        "SENTRY_ALLOW_FAILURE": "true"
       }
     }
   },
