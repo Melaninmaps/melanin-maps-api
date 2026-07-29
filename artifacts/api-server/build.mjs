@@ -22,7 +22,9 @@ async function generateBuildIdentity() {
   const genDir = path.resolve(artifactDir, "src", "generated");
   const genFile = path.resolve(genDir, "buildIdentity.ts");
 
-  let gitSha = "unknown";
+  // Try git first; fall back to RAILWAY_GIT_COMMIT_SHA (set as Docker build arg)
+  // so the SHA is embedded even when .git is absent from the Docker build context.
+  let gitSha = process.env.RAILWAY_GIT_COMMIT_SHA ?? "unknown";
   try { gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(); } catch {}
   const buildAt = new Date().toISOString();
 

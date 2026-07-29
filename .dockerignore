@@ -1,0 +1,32 @@
+# node_modules — pnpm install inside the image rebuilds these
+node_modules
+**/node_modules
+
+# compiled output — rebuilt inside the image
+**/dist
+dist
+
+# development / local tooling
+.git
+.gitignore
+.local
+.agents
+*.log
+*.tsbuildinfo
+
+# test artifacts
+coverage
+.nyc_output
+
+# editor / OS
+.DS_Store
+.idea
+.vscode
+*.swp
+*.swo
+
+# EAS / Expo
+artifacts/mobile/.expo
+artifacts/mobile/android
+artifacts/mobile/ios
+artifacts/mobile/.cache
