@@ -1,0 +1,38 @@
+# OTA (expo-updates) Compatibility Policy
+
+**Status:** Mandatory. Introduced on branch `manus/crash-blockers` (Build 99 preparation), July 29, 2026.
+
+## Why this policy exists
+
+Until this change, `app.json` used `"runtimeVersion": { "policy": "appVersion" }` with `version: 1.1.5`.
+Because iOS Build 97, iOS Build 98, Android VC71, and Android VC73 all share app version 1.1.5, they
+all shared runtime version `1.1.5` — so **every `eas update --branch production` shipped the same JS
+bundle to all four binaries simultaneously**. Those binaries do **not** have the same native surface
+(Build 98 added the Android crash-logger config plugin; the next binary adds Sentry's native SDK).
+Any OTA referencing a native module present only in newer binaries would crash every older binary at
+JS load — a fleet-wide, unrecoverable-without-another-OTA event, invisible to TestFlight review.
+
+## The rule
+
+1. `runtimeVersion` is now an **explicit string** in `app.json`: `"<appVersion>-native.<N>"`
+   (currently `1.1.5-native.2`).
+2. **Increment `<N>` whenever the native surface changes** — any of: adding/removing/upgrading a
+   package containing native code, adding/removing a config plugin, changing `expo-build-properties`,
+   changing entitlements/Info.plist keys that affect native behavior, or upgrading the Expo SDK.
+3. **Never increment `<N>` for pure-JS changes.** That is what keeps OTA useful.
+4. An OTA published for runtime `1.1.5-native.2` reaches **only** binaries built with
+   `1.1.5-native.2`. Existing Build 97/98/VC71/VC73 binaries (runtime `1.1.5` under the old policy)
+   are intentionally **frozen**: they receive no further OTA updates. The last OTA they received
+   remains installed. This is safe-by-default: legacy binaries can no longer be crashed by a
+   forward-incompatible update.
+5. Before every `eas update`, the publisher MUST confirm the diff contains no `import` of a native
+   module that is not present in the oldest binary sharing the current runtime version. Record the
+   check in the PR description.
+
+## Operational consequences (read before the next release)
+
+- The next binaries (iOS buildNumber 99, Android VC74) must be built **after** this change so they
+  carry runtime `1.1.5-native.2`. From then on, OTA targets them exclusively.
+- If an emergency JS fix must reach the frozen Build 97/98 fleet, temporarily publish with
+  `--runtime-version 1.1.5` **only after** verifying the bundle against the Build 97 native surface
+  (the oldest live binary). This is an exception path requiring founder sign-off.

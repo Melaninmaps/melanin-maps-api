@@ -229,16 +229,22 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
         {showCulturalSites && culturalSites.map((site) => {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
-          if (isNaN(lat) || isNaN(lng)) return null;
+          // Build 99 hardening: Number.isFinite + range validation (matches
+          // FullMapView) — rejects Infinity and out-of-range values that
+          // isNaN alone lets through and that crash the native map layer.
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+          if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
           return (
             <Marker
               key={site.id}
               coordinate={{ latitude: lat, longitude: lng }}
               onPress={() => { setSelectedCulturalSite(site); setSelectedBusiness(null); }}
+              tracksViewChanges={false}
             >
-              <View style={s.culturalMarker}>
-                <Feather name="book-open" size={10} color="#fff" />
-              </View>
+              {/* Build 99 crash-blocker: plain circle — no Feather/Text child
+                  inside the Marker. Same Fabric view-recycling isolation as
+                  FullMapView (see comment there); applies to both platforms. */}
+              <View pointerEvents="none" style={s.culturalMarker} />
             </Marker>
           );
         })}

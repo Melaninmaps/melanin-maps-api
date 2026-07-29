@@ -169,24 +169,6 @@ export function FullMapView() {
 
   const { businesses } = useBusinesses();
 
-  // ── Auto-fit to business pins on first load ────────────────────────────────
-  // Fires once when both the map is ready and businesses have loaded.
-  // Without this, the map opens at DEFAULT_REGION (US overview) which is fine,
-  // but if the user pans away before businesses arrive they'd miss the pins.
-  // Also handles the common case where the user's GPS location has no nearby
-  // businesses — the fit ensures something is always visible.
-  useEffect(() => {
-    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
-    hasFitToBusinessesRef.current = true;
-    // Give the map a brief moment to finish rendering before fitting
-    setTimeout(() => {
-      mapRef.current?.fitToCoordinates(
-        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
-        { edgePadding: { top: 80, right: 40, bottom: 100, left: 40 }, animated: true },
-      );
-    }, 600);
-  }, [mapReady, mapped]);
-
   const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: pollingEnabled });
   const { warnings, dismissWarning } = useSafetyProximity({ enabled: pollingEnabled });
   const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
@@ -205,6 +187,28 @@ export function FullMapView() {
       (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001) &&
       (activeCategory === "All" || b.category === activeCategory),
   );
+
+  // ── Auto-fit to business pins on first load ────────────────────────────────
+  // Build 99 crash-blocker note: this effect previously sat ABOVE the
+  // `mapped` declaration — a temporal-dead-zone ReferenceError (TS2448/
+  // TS2454; Hermes throws at component mount). Moved below the declaration;
+  // logic unchanged.
+  // Fires once when both the map is ready and businesses have loaded.
+  // Without this, the map opens at DEFAULT_REGION (US overview) which is fine,
+  // but if the user pans away before businesses arrive they'd miss the pins.
+  // Also handles the common case where the user's GPS location has no nearby
+  // businesses — the fit ensures something is always visible.
+  useEffect(() => {
+    if (!mapReady || mapped.length === 0 || hasFitToBusinessesRef.current) return;
+    hasFitToBusinessesRef.current = true;
+    // Give the map a brief moment to finish rendering before fitting
+    setTimeout(() => {
+      mapRef.current?.fitToCoordinates(
+        mapped.map((b) => ({ latitude: b.latitude, longitude: b.longitude })),
+        { edgePadding: { top: 80, right: 40, bottom: 100, left: 40 }, animated: true },
+      );
+    }, 600);
+  }, [mapReady, mapped]);
 
   const filteredCulturalSites = activeCulturalCategory
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
@@ -424,35 +428,31 @@ export function FullMapView() {
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={false}
             >
-              {/* Android isolation (VC71): plain colored circle — no Feather/Text
-                  child inside the Marker. On Android Fabric, rendering a View
-                  containing a Text node (Feather icon) via view.draw(canvas) in
-                  an unattached-Window context corrupts the Marker's native touch
-                  descriptor, crashing the map on first interaction. The plain
-                  circle eliminates font rendering from the bitmap-capture path.
-                  This is an isolation step; icon restoration is gated on
-                  crash-logger evidence from the VC71 build.
+              {/* Marker isolation (VC71 → extended to iOS, Build 99): plain
+                  colored circle — no Feather/Text child inside the Marker.
+                  On Android Fabric, rendering a View containing a Text node
+                  (Feather icon) via view.draw(canvas) in an unattached-Window
+                  context corrupts the Marker's native touch descriptor,
+                  crashing the map on first interaction.
 
-                  iOS: current appearance preserved (Feather icon + selection
-                  size change). tracksViewChanges=false applies to both
-                  platforms — the selection card is the selection indicator. */}
-              {Platform.OS === "android" ? (
-                <View
-                  pointerEvents="none"
-                  style={[s.culturalMarker, { backgroundColor: cs.color }]}
-                />
-              ) : (
-                <View
-                  pointerEvents="none"
-                  style={[
-                    s.culturalMarker,
-                    { backgroundColor: cs.color },
-                    isSelected && s.culturalMarkerSelected,
-                  ]}
-                >
-                  <Feather name={cs.icon} size={isSelected ? 13 : 10} color="#fff" />
-                </View>
-              )}
+                  iOS (Build 99 crash-blocker): Expo SDK 57 makes Fabric
+                  mandatory on BOTH platforms, and the same marker
+                  view-recycling crash class exists in AIRMap under Fabric —
+                  it is the prime suspect for the unidentified native iOS
+                  crash from the Build 98 tester reports (up to 250 markers
+                  with custom children mounting/recycling during pan/zoom).
+                  Until a TestFlight crash log rules it out, iOS gets the
+                  identical plain-circle isolation proven on Android.
+                  Selection remains indicated by size change + the selection
+                  card; icon restoration is gated on crash-logger evidence. */}
+              <View
+                pointerEvents="none"
+                style={[
+                  s.culturalMarker,
+                  { backgroundColor: cs.color },
+                  isSelected && s.culturalMarkerSelected,
+                ]}
+              />
             </Marker>
           );
         })}
