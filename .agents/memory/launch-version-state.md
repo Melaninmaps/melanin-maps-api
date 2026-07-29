@@ -3,16 +3,19 @@ name: Launch version state
 description: Current iOS buildNumber, Android versionCode, version string — check before any EAS build commands.
 ---
 
-**Current Build (as of July 27 2026):**
+**Current Build (as of July 29 2026):**
 - version: 1.1.5
-- iOS buildNumber: 97 (Build 97)
-- Android versionCode: 71
+- iOS buildNumber: 100 (commit f938b045)
+- Android versionCode: 75 (commit f938b045)
 - eas.json production profile: has `channel: "production"` field ✅
 
-**Build 97 EAS submissions (July 27 2026):**
-- iOS Build 97: `ddb83b3e-a6fb-4cfd-bbf2-5773d4e4e011` — FINISHED ✅  
-  Artifact: https://expo.dev/artifacts/eas/KNLKNeLS-LfRwJ2ftCDADl_dozFtyX1Oa74f3jvvPUs.ipa
-- Android versionCode 71: `926bb936-dc23-4920-ba26-d57e9d0a4455` — started 2026-07-27T20:30 UTC, status pending check
+**Build 100 EAS submissions (July 29 2026):**
+- iOS Build 100: `183a3d97-7eea-4c2f-8c87-dab80a28f55f` — queued, auto-submit to TestFlight ✅
+  Submission ID: fb2d0184-1f85-4249-a881-ad90ca6f5faf
+- Android versionCode 75: `5c268981-7657-4ba2-8805-ef430d3ac00e` — queued ✅
+
+**Previously submitted (already in stores):**
+- iOS Build 99 / Android VC74 — commit 123527c, submitted ~July 29 2026
 
 **Why:**  
 Always check app.json build numbers before giving build commands. Expo uses these exact values for store submission versioning.
