@@ -1,0 +1,157 @@
+I would keep Build 99 **focused on passing Apple and establishing a permanent release process**. Based on everything you've shared, here's the prompt I would send to Replit.
+
+---
+
+# BUILD 99 — FINAL APPLE RELEASE CANDIDATE
+
+Build 99 is intended to be the production launch candidate for Apple review.
+
+The objective is **not** to add future roadmap work. The objective is to produce a stable, members-only release that satisfies Apple, passes our internal release gates, and eliminates every known launch blocker identified by both Replit and the independent audit.
+
+## 1. Build Scope
+
+Include:
+
+* Every completed Apple remediation change.
+* Every approved crash mitigation.
+* Every remaining crash-blocker identified by the independent audit.
+* The approved Build 99 product improvements already planned for this release.
+* No experimental or future-roadmap work.
+
+## 2. Members-Only Experience
+
+The app must clearly communicate:
+
+* Mapping With Melanin™ is a **private membership community**.
+* Community knowledge is contributed and protected by members.
+* Membership is required to access community features.
+* Users who are not yet admitted should be directed to the **waitlist**, not into the member experience.
+* Replace any references to Charlotte with **Philadelphia** wherever applicable for launch planning and seeded content.
+
+The first-run experience, onboarding, review notes, and post-login navigation should consistently reinforce this positioning.
+
+## 3. Complete Every Remaining Audit Blocker
+
+Before Build 99 is created:
+
+* Resolve the deployment integrity issue so production is verifiably running the audited code.
+* Complete the remaining BusinessMapView fix.
+* Deploy working crash-report endpoints.
+* Complete ErrorBoundary → crash logger integration.
+* Populate map diagnostic data.
+* Complete iOS marker isolation if applicable.
+* Add native crash reporting (Sentry or equivalent) before the production binary is cut.
+* Resolve every remaining P0 blocker identified in the independent audit.
+
+## 4. Mandatory Release Verification
+
+Before producing the EAS build, Replit must complete and document:
+
+### Authentication
+
+* Apple Sign-In
+* Email login
+* Session persistence
+* Logout/login cycles
+* Background/foreground recovery
+
+### Maps
+
+* Permission granted
+* Permission denied
+* Slow GPS
+* Business detail maps
+* Full map
+* Marker rendering
+
+### Stability
+
+* No crashes
+* No white screens
+* No navigation loops
+* No memory-related failures observed
+
+### Database
+
+* Stable connection pool
+* No pool growth
+* No waiting connection accumulation
+* No leaked connections
+
+### Production
+
+* Deployment fingerprint matches audited source
+* Version endpoint confirms deployed build
+* Crash reporting operational
+* Pool instrumentation operational
+
+## 5. Device Validation
+
+Test on physical devices, not only simulators.
+
+Minimum:
+
+* iPhone
+* iPad
+* Fresh install
+* Upgrade install
+
+Confirm:
+
+* onboarding
+* membership flow
+* waitlist flow
+* login
+* logout
+* community feed
+* business pages
+* maps
+* profile
+* account deletion
+
+## 6. Soak Test
+
+Run the production candidate continuously before submission.
+
+Minimum acceptance:
+
+* sustained production-equivalent testing
+* stable authentication
+* stable database pool
+* no unexplained crashes
+* no increasing pool usage
+* no degraded performance
+
+## 7. Philadelphia Launch Preparation
+
+Seed Build 99 with launch-ready Philadelphia content.
+
+Prepare:
+
+* founding member accounts
+* sample community posts
+* cultural sites
+* member discussions
+* community-vouched businesses
+* launch events where appropriate
+
+The goal is that reviewers and early members immediately experience an active community rather than an empty platform.
+
+## 8. Release Deliverables
+
+Do not ask for submission approval until you provide:
+
+* Complete Build 99 change log.
+* Confirmation every independent audit blocker has been addressed.
+* Results of all automated and manual testing.
+* Production deployment verification.
+* Device testing results.
+* Crash testing results.
+* Database stability results.
+* Final GO / NO-GO recommendation.
+
+If any release gate fails, Build 99 is **NO-GO** until corrected.
+
+---
+
+I have one recommendation to add that wasn't explicitly in either report: **make Build 99 a release candidate and freeze it.** Once this build passes all of your release gates, do not continue adding features to it. If another enhancement comes up, put it into Build 100. That discipline reduces the chance of introducing new regressions just before Apple review and gives you the best opportunity to get this submission approved.
