@@ -454393,12 +454393,27 @@ app.get("/api/readyz", async (_req, res) => {
 app.get("/api/readyz/history", (_req, res) => {
   res.json(getHealthHistory());
 });
+var _buildIdentity = null;
+try {
+  const raw = readFileSync(path6.join(_dirname, "BUILD_IDENTITY"), "utf8");
+  _buildIdentity = JSON.parse(raw);
+} catch {
+}
 app.get("/api/version", (_req, res) => {
   res.json({
-    sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
+    // Runtime Railway env var — reflects the git SHA at deploy trigger time.
+    // May lag if Railway caches builds between pushes.
+    railway_sha: process.env.RAILWAY_GIT_COMMIT_SHA ?? "dev",
     deploymentId: process.env.RAILWAY_DEPLOYMENT_ID ?? "dev",
-    release: "Build-97",
-    env: process.env.NODE_ENV ?? "unknown"
+    release: "Build-98",
+    env: process.env.NODE_ENV ?? "unknown",
+    // Artifact-embedded values — written by build.mjs at compile time.
+    // If built_from_sha !== railway_sha, the bundle is stale relative to
+    // the git tip Railway believes it deployed. This is the deployment
+    // integrity gap indicator.
+    bundle_sha256: _buildIdentity?.bundle_sha256 ?? "not-embedded",
+    built_from_sha: _buildIdentity?.built_from_sha ?? "not-embedded",
+    built_at: _buildIdentity?.built_at ?? "not-embedded"
   });
 });
 app.use(

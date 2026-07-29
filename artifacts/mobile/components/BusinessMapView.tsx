@@ -188,7 +188,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
     <View style={s.container}>
       <MapView
         ref={mapRef}
-        style={StyleSheet.absoluteFillObject}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
         initialRegion={DEFAULT_REGION}
         showsUserLocation={locationGranted}
         showsMyLocationButton={false}
@@ -395,7 +395,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
 
       {/* ── Locating spinner (centered, non-blocking) ── */}
       {locating && (
-        <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <View style={s.locatingWrap}>
             <View style={s.locatingPill}>
               <ActivityIndicator size="small" color={GOLD} />

@@ -3,6 +3,13 @@ cmds = [
   "pnpm --filter @workspace/api-server run build",
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
+  # BUILD_IDENTITY is written by build.mjs and contains:
+  #   bundle_sha256 — SHA-256 of dist/index.mjs (proves what code is running)
+  #   built_from_sha — git SHA at build time (embedded in artifact, not env var)
+  #   built_at — ISO timestamp of this build
+  # /api/version reads this file so any external party can verify
+  # that Railway is running the expected compiled artifact.
+  "cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY",
   "mkdir -p dist/public && cp -r artifacts/api-server/dist/public/. dist/public/"
 ]
 

@@ -2010,7 +2010,7 @@ export default function BusinessDetailScreen() {
       {/* Hidden Gem Nomination Sheet */}
       <Modal visible={nomSheetOpen} transparent animationType="slide" onRequestClose={() => setNomSheetOpen(false)}>
         <View style={{ flex: 1, justifyContent: "flex-end" }}>
-          <TouchableOpacity style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "#00000055" } as any} activeOpacity={1} onPress={() => setNomSheetOpen(false)} />
+          <TouchableOpacity style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "#00000055" } as any} activeOpacity={1} onPress={() => setNomSheetOpen(false)} />
           <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: Math.max(insets.bottom, 20), maxHeight: "88%" }}>
             <View style={{ width: 36, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: "center", marginTop: 10, marginBottom: 16 }} />
             <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>

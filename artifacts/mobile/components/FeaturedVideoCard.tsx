@@ -124,7 +124,7 @@ const s = StyleSheet.create({
   thumbnail: { width: "100%", height: "100%" },
   thumbnailFallback: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
   thumbnailIcon: { fontSize: 48, fontWeight: "700" },
-  overlay: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.25)" },
+  overlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.25)" },
   playBtn: { width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
   platformBadge: { position: "absolute", top: 10, right: 10, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   platformLabel: { color: "#FFF", fontFamily: "Inter_700Bold", fontSize: 11 },

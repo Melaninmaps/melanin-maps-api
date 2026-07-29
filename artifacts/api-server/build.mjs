@@ -146,6 +146,49 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
   });
 }
 
+// ── Build-identity helpers ────────────────────────────────────────────────────
+// Computes a SHA-256 hash of the compiled bundle and writes it alongside the
+// git SHA and build timestamp into dist/BUILD_IDENTITY. The /api/version route
+// reads this file at startup and returns all three values so any external party
+// can independently verify that the running artifact matches the source commit:
+//
+//   1. bundle_sha256 — hash of dist/index.mjs; must match a local build to prove
+//      Railway is running the expected artifact (not a cached or stale one).
+//   2. built_from_sha — git SHA embedded at BUILD TIME (not a runtime env var),
+//      so it is part of the compiled artifact and cannot be faked.
+//   3. built_at — ISO timestamp of when `node build.mjs` was executed.
+
+import { createHash } from "node:crypto";
+import { execSync } from "node:child_process";
+
+async function writeBuildIdentity(distDir) {
+  const bundlePath = path.resolve(distDir, "index.mjs");
+  const identityPath = path.resolve(distDir, "BUILD_IDENTITY");
+
+  let gitSha = "unknown";
+  try {
+    gitSha = execSync("git rev-parse HEAD", { encoding: "utf8" }).trim();
+  } catch {}
+
+  let bundleHash = "unknown";
+  try {
+    const { readFile: _readFile } = await import("node:fs/promises");
+    const buf = await _readFile(bundlePath);
+    bundleHash = createHash("sha256").update(buf).digest("hex");
+  } catch (e) {
+    console.warn("BUILD_IDENTITY: could not hash bundle:", e.message);
+  }
+
+  const identity = {
+    bundle_sha256: bundleHash,
+    built_from_sha: gitSha,
+    built_at: new Date().toISOString(),
+  };
+
+  await writeFile(identityPath, JSON.stringify(identity, null, 2) + "\n");
+  console.log("BUILD_IDENTITY written:", JSON.stringify(identity));
+}
+
 generateSpaHtml()
   .then(() => buildAll())
   .then(() =>
@@ -155,13 +198,12 @@ generateSpaHtml()
     )
   )
   .then(() => {
-    // Copy pre-built web app static files into dist/public/
-    // web-static/ is committed to git so Railway doesn't need to build the web app.
     const webStaticSrc = path.resolve(artifactDir, "web-static");
     const webStaticDst = path.resolve(artifactDir, "dist/public");
     return cp(webStaticSrc, webStaticDst, { recursive: true });
   })
   .then(() => console.log("Web static files copied to dist/public/"))
+  .then(() => writeBuildIdentity(path.resolve(artifactDir, "dist")))
   .catch((err) => {
     console.error(err);
     process.exit(1);

@@ -5,6 +5,12 @@ module.exports = ({ config }) => ({
   ...config,
   plugins: [
     ...(config.plugins ?? []),
+    // Sentry native crash capture — requires @sentry/react-native.
+    // The Expo plugin registers the Sentry upload-artifacts build step
+    // (source maps to Sentry) and links the native Sentry SDK so iOS
+    // crash signals (SIGSEGV, SIGABRT, OOM) are captured in addition to
+    // JS exceptions. A no-op if EXPO_PUBLIC_SENTRY_DSN is absent.
+    "@sentry/react-native",
   ],
   // NOTE: ios.config.googleMapsApiKey is intentionally NOT set here.
   // The app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps SDK needed on iOS.

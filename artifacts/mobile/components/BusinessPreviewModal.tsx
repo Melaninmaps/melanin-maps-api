@@ -210,7 +210,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
 
 const s = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: "#00000060",
   },
   sheet: {
@@ -247,7 +247,7 @@ const s = StyleSheet.create({
     height: "100%",
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: "#00000055",
   },
   heroContent: {
