@@ -17797,9 +17797,9 @@ var require_stringify = __commonJS({
       }
     };
     var isArray2 = Array.isArray;
-    var push = Array.prototype.push;
+    var push2 = Array.prototype.push;
     var pushToArray = function(arr, valueOrArray) {
-      push.apply(arr, isArray2(valueOrArray) ? valueOrArray : [valueOrArray]);
+      push2.apply(arr, isArray2(valueOrArray) ? valueOrArray : [valueOrArray]);
     };
     var toISO = Date.prototype.toISOString;
     var defaultFormat = formats["default"];
@@ -20617,27 +20617,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router146;
+    module.exports = Router147;
     module.exports.Route = Route;
-    function Router146(options) {
-      if (!(this instanceof Router146)) {
-        return new Router146(options);
+    function Router147(options) {
+      if (!(this instanceof Router147)) {
+        return new Router147(options);
       }
       const opts = options || {};
-      function router146(req, res, next) {
-        router146.handle(req, res, next);
+      function router147(req, res, next) {
+        router147.handle(req, res, next);
       }
-      Object.setPrototypeOf(router146, this);
-      router146.caseSensitive = opts.caseSensitive;
-      router146.mergeParams = opts.mergeParams;
-      router146.params = {};
-      router146.strict = opts.strict;
-      router146.stack = [];
-      return router146;
+      Object.setPrototypeOf(router147, this);
+      router147.caseSensitive = opts.caseSensitive;
+      router147.mergeParams = opts.mergeParams;
+      router147.params = {};
+      router147.strict = opts.strict;
+      router147.stack = [];
+      return router147;
     }
-    Router146.prototype = function() {
+    Router147.prototype = function() {
     };
-    Router146.prototype.param = function param2(name3, fn3) {
+    Router147.prototype.param = function param2(name3, fn3) {
       if (!name3) {
         throw new TypeError("argument name is required");
       }
@@ -20657,7 +20657,7 @@ var require_router = __commonJS({
       params.push(fn3);
       return this;
     };
-    Router146.prototype.handle = function handle(req, res, callback) {
+    Router147.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20784,7 +20784,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router146.prototype.use = function use(handler) {
+    Router147.prototype.use = function use(handler) {
       let offset = 0;
       let path7 = "/";
       if (typeof handler !== "function") {
@@ -20817,7 +20817,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router146.prototype.route = function route(path7) {
+    Router147.prototype.route = function route(path7) {
       const route2 = new Route(path7);
       const layer = new Layer(path7, {
         sensitive: this.caseSensitive,
@@ -20832,7 +20832,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router146.prototype[method] = function(path7) {
+      Router147.prototype[method] = function(path7) {
         const route = this.route(path7);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21015,13 +21015,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve3 = __require("node:path").resolve;
     var once = require_once();
-    var Router146 = require_router();
+    var Router147 = require_router();
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var app2 = exports2 = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router146 = null;
+      var router147 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21030,13 +21030,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router146 === null) {
-            router146 = new Router146({
+          if (router147 === null) {
+            router147 = new Router147({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router146;
+          return router147;
         }
       });
     };
@@ -21107,15 +21107,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router146 = this.router;
+      var router147 = this.router;
       fns.forEach(function(fn4) {
         if (!fn4 || !fn4.handle || !fn4.set) {
-          return router146.use(path7, fn4);
+          return router147.use(path7, fn4);
         }
         debug(".use app under %s", path7);
         fn4.mountpath = path7;
         fn4.parent = this;
-        router146.use(path7, function mounted_app(req, res, next) {
+        router147.use(path7, function mounted_app(req, res, next) {
           var orig = req.app;
           fn4.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23688,7 +23688,7 @@ var require_express = __commonJS({
     var EventEmitter5 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router146 = require_router();
+    var Router147 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module.exports = createApplication;
@@ -23710,8 +23710,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router146.Route;
-    exports2.Router = Router146;
+    exports2.Route = Router147.Route;
+    exports2.Router = Router147;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -28311,7 +28311,7 @@ var require_pino = __commonJS({
     };
     var normalize3 = createArgsNormalizer(defaultOptions4);
     var serializers = Object.assign(/* @__PURE__ */ Object.create(null), stdSerializers);
-    function pino2(...args) {
+    function pino3(...args) {
       const instance = {};
       const { opts, stream } = normalize3(instance, caller(), ...args);
       if (opts.level && typeof opts.level === "string" && DEFAULT_LEVELS[opts.level.toLowerCase()] !== void 0) opts.level = opts.level.toLowerCase();
@@ -28413,7 +28413,7 @@ var require_pino = __commonJS({
       instance[setLevelSym](level);
       return instance;
     }
-    module.exports = pino2;
+    module.exports = pino3;
     module.exports.destination = (dest = process.stdout.fd) => {
       if (typeof dest === "object") {
         dest.dest = normalizeDestFileDescriptor(dest.dest || process.stdout.fd);
@@ -28429,8 +28429,8 @@ var require_pino = __commonJS({
     module.exports.stdTimeFunctions = Object.assign({}, time4);
     module.exports.symbols = symbols;
     module.exports.version = version6;
-    module.exports.default = pino2;
-    module.exports.pino = pino2;
+    module.exports.default = pino3;
+    module.exports.pino = pino3;
   }
 });
 
@@ -28462,7 +28462,7 @@ var require_get_caller_file = __commonJS({
 var require_logger = __commonJS({
   "../../node_modules/.pnpm/pino-http@10.5.0/node_modules/pino-http/logger.js"(exports2, module) {
     "use strict";
-    var { pino: pino2, symbols: { stringifySym, chindingsSym } } = require_pino();
+    var { pino: pino3, symbols: { stringifySym, chindingsSym } } = require_pino();
     var serializers = require_pino_std_serializers();
     var getCallerFile = require_get_caller_file();
     var startTime = /* @__PURE__ */ Symbol("startTime");
@@ -28524,18 +28524,18 @@ var require_logger = __commonJS({
       delete opts.customErroredMessage;
       const quietReqLogger = !!opts.quietReqLogger;
       const quietResLogger = !!opts.quietResLogger;
-      const logger3 = wrapChild(opts, theStream);
-      const validLogLevels = Object.keys(logger3.levels.values).concat("silent");
+      const logger4 = wrapChild(opts, theStream);
+      const validLogLevels = Object.keys(logger4.levels.values).concat("silent");
       const useLevel = getValidLogLevel(opts.useLevel);
       delete opts.useLevel;
       const genReqId2 = reqIdGenFactory(opts.genReqId);
       const result = (req, res, next) => {
-        return loggingMiddleware(logger3, req, res, next);
+        return loggingMiddleware(logger4, req, res, next);
       };
-      result.logger = logger3;
+      result.logger = logger4;
       return result;
-      function onResFinished(res, logger4, err) {
-        let log2 = logger4;
+      function onResFinished(res, logger5, err) {
+        let log2 = logger5;
         const responseTime = Date.now() - res[startTime];
         const req = res[reqObject];
         const level = getLogLevelFromCustomLogLevel(customLogLevel, useLevel, res, err, req);
@@ -28544,10 +28544,10 @@ var require_logger = __commonJS({
         }
         const customPropBindings = typeof customProps === "function" ? customProps(req, res) : customProps;
         if (customPropBindings) {
-          const customPropBindingStr = logger4[stringifySym](customPropBindings).replace(/[{}]/g, "");
-          const customPropBindingsStr = logger4[chindingsSym];
+          const customPropBindingStr = logger5[stringifySym](customPropBindings).replace(/[{}]/g, "");
+          const customPropBindingsStr = logger5[chindingsSym];
           if (!customPropBindingsStr.includes(customPropBindingStr)) {
-            log2 = logger4.child(customPropBindings);
+            log2 = logger5.child(customPropBindings);
           }
         }
         if (err || res.err || res.statusCode >= 500) {
@@ -28570,10 +28570,10 @@ var require_logger = __commonJS({
           successMessage(req, res, responseTime)
         );
       }
-      function loggingMiddleware(logger4, req, res, next) {
+      function loggingMiddleware(logger5, req, res, next) {
         let shouldLogSuccess = true;
         req.id = req.id || genReqId2(req, res);
-        const log2 = quietReqLogger ? logger4.child({ [requestIdKey]: req.id }) : logger4;
+        const log2 = quietReqLogger ? logger5.child({ [requestIdKey]: req.id }) : logger5;
         let fullReqLogger = log2.child({ [reqKey]: req });
         const customPropBindings = typeof customProps === "function" ? customProps(req, res) : customProps;
         if (customPropBindings) {
@@ -28629,20 +28629,20 @@ var require_logger = __commonJS({
     function wrapChild(opts, stream) {
       const prevLogger = opts.logger;
       const prevGenReqId = opts.genReqId;
-      let logger3 = null;
+      let logger4 = null;
       if (prevLogger) {
         opts.logger = void 0;
         opts.genReqId = void 0;
-        logger3 = prevLogger.child({}, opts);
+        logger4 = prevLogger.child({}, opts);
         opts.logger = prevLogger;
         opts.genReqId = prevGenReqId;
       } else {
         if (opts.transport && !opts.transport.caller) {
           opts.transport.caller = getCallerFile();
         }
-        logger3 = pino2(opts, stream);
+        logger4 = pino3(opts, stream);
       }
-      return logger3;
+      return logger4;
     }
     function reqIdGenFactory(func) {
       if (typeof func === "function") return func;
@@ -37874,7 +37874,7 @@ var require_split2 = __commonJS({
       this[kLast] = list.pop();
       for (let i = 0; i < list.length; i++) {
         try {
-          push(this, this.mapper(list[i]));
+          push2(this, this.mapper(list[i]));
         } catch (error40) {
           return cb(error40);
         }
@@ -37890,14 +37890,14 @@ var require_split2 = __commonJS({
       this[kLast] += this[kDecoder].end();
       if (this[kLast]) {
         try {
-          push(this, this.mapper(this[kLast]));
+          push2(this, this.mapper(this[kLast]));
         } catch (error40) {
           return cb(error40);
         }
       }
       cb();
     }
-    function push(self2, val) {
+    function push2(self2, val) {
       if (val !== void 0) {
         self2.push(val);
       }
@@ -43902,12 +43902,12 @@ var init_session2 = __esm({
     init_utils();
     ({ Pool: Pool2, types: types2 } = esm_default);
     NodePgPreparedQuery = class extends PgPreparedQuery {
-      constructor(client, queryString, params, logger3, cache, queryMetadata, cacheConfig, fields, name3, _isResponseInArrayMode, customResultMapper) {
+      constructor(client, queryString, params, logger4, cache, queryMetadata, cacheConfig, fields, name3, _isResponseInArrayMode, customResultMapper) {
         super({ sql: queryString, params }, cache, queryMetadata, cacheConfig);
         this.client = client;
         this.queryString = queryString;
         this.params = params;
-        this.logger = logger3;
+        this.logger = logger4;
         this.fields = fields;
         this._isResponseInArrayMode = _isResponseInArrayMode;
         this.customResultMapper = customResultMapper;
@@ -44120,11 +44120,11 @@ var init_session2 = __esm({
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/node-postgres/driver.js
 function construct(client, config2 = {}) {
   const dialect = new PgDialect({ casing: config2.casing });
-  let logger3;
+  let logger4;
   if (config2.logger === true) {
-    logger3 = new DefaultLogger();
+    logger4 = new DefaultLogger();
   } else if (config2.logger !== false) {
-    logger3 = config2.logger;
+    logger4 = config2.logger;
   }
   let schema;
   if (config2.schema) {
@@ -44138,7 +44138,7 @@ function construct(client, config2 = {}) {
       tableNamesMap: tablesConfig.tableNamesMap
     };
   }
-  const driver = new NodePgDriver(client, dialect, { logger: logger3, cache: config2.cache });
+  const driver = new NodePgDriver(client, dialect, { logger: logger4, cache: config2.cache });
   const session = driver.createSession(schema);
   const db2 = new NodePgDatabase(dialect, session, schema);
   db2.$client = client;
@@ -61227,6 +61227,144 @@ var init_schema2 = __esm({
   }
 });
 
+// ../../lib/db/src/pool-instrumentation.ts
+function push(ev) {
+  _ring.push(ev);
+  if (_ring.length > RING_SIZE) _ring.shift();
+}
+function poolSnapshot(pool4) {
+  return {
+    total: pool4.totalCount,
+    idle: pool4.idleCount,
+    waiting: pool4.waitingCount
+  };
+}
+function callerFrame() {
+  const raw = new Error().stack ?? "";
+  const frame = raw.split("\n")[3]?.trim() ?? "unknown";
+  return frame.replace(/^at\s+/, "").slice(0, 100);
+}
+function extractSql(args) {
+  if (!args.length) return void 0;
+  const first = args[0];
+  if (typeof first === "string") return first.slice(0, 120);
+  if (first && typeof first === "object" && "text" in first) {
+    return String(first.text).slice(0, 120);
+  }
+  return void 0;
+}
+function initPoolInstrumentation(pool4) {
+  if (_initialized) return;
+  _initialized = true;
+  pool4.on("connect", (_client2) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "connect", pool: poolSnapshot(pool4) });
+  });
+  pool4.on("remove", (_client2) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "remove", pool: poolSnapshot(pool4) });
+  });
+  pool4.on("error", (err) => {
+    push({ ts: (/* @__PURE__ */ new Date()).toISOString(), type: "error", detail: err.message, pool: poolSnapshot(pool4) });
+  });
+  const origQuery = pool4.query.bind(pool4);
+  pool4.query = (...args) => {
+    const start = Date.now();
+    const sql10 = extractSql(args);
+    const caller = callerFrame();
+    const promise2 = origQuery(...args);
+    promise2.then(() => {
+      const ms3 = Date.now() - start;
+      const ev = {
+        ts: (/* @__PURE__ */ new Date()).toISOString(),
+        type: ms3 >= SLOW_QUERY_MS ? "slow" : "query",
+        ms: ms3,
+        sql: sql10,
+        caller,
+        pool: poolSnapshot(pool4)
+      };
+      push(ev);
+      if (ms3 >= SLOW_QUERY_MS) {
+        console.warn(
+          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql10, caller, pool: ev.pool })
+        );
+      }
+    }).catch(() => {
+      push({
+        ts: (/* @__PURE__ */ new Date()).toISOString(),
+        type: "error",
+        ms: Date.now() - start,
+        sql: sql10,
+        caller,
+        pool: poolSnapshot(pool4),
+        detail: "query rejected"
+      });
+    });
+    return promise2;
+  };
+  let _baseline = pool4.totalCount;
+  let _sweepCount = 0;
+  const sweepHandle = setInterval(() => {
+    _sweepCount++;
+    const snap = poolSnapshot(pool4);
+    const grew = snap.total > _baseline;
+    if (grew || snap.waiting > 0 || snap.idle === 0) {
+      push({
+        ts: (/* @__PURE__ */ new Date()).toISOString(),
+        type: "acquire",
+        detail: grew ? `pool_growth: total grew ${_baseline}\u2192${snap.total} in last 60s` : snap.waiting > 0 ? `pool_pressure: waiting=${snap.waiting}` : "pool_full: idle=0 total=" + snap.total,
+        pool: snap
+      });
+      if (grew || snap.waiting > 0) {
+        console.warn(
+          JSON.stringify({
+            level: "warn",
+            event: "POOL_GROWTH_DETECTED",
+            baseline: _baseline,
+            current: snap,
+            sweepCount: _sweepCount
+          })
+        );
+      }
+    }
+    _baseline = snap.total;
+  }, 6e4);
+  sweepHandle.unref();
+}
+function getPoolAuditLog(limit2 = 200) {
+  return _ring.slice(-limit2);
+}
+function getPoolAuditSummary() {
+  const counts = {};
+  const slowQueries = [];
+  let peakTotal = 0;
+  let peakWaiting = 0;
+  for (const ev of _ring) {
+    counts[ev.type] = (counts[ev.type] ?? 0) + 1;
+    if (ev.type === "slow") slowQueries.push(ev);
+    if (ev.pool) {
+      if (ev.pool.total > peakTotal) peakTotal = ev.pool.total;
+      if (ev.pool.waiting > peakWaiting) peakWaiting = ev.pool.waiting;
+    }
+  }
+  return {
+    counts,
+    peakTotal,
+    peakWaiting,
+    slowQueriesInWindow: slowQueries.slice(-10),
+    ringSize: _ring.length,
+    ringCapacity: RING_SIZE
+  };
+}
+var RING_SIZE, SLOW_QUERY_MS, _ring, _initialized;
+var init_pool_instrumentation = __esm({
+  "../../lib/db/src/pool-instrumentation.ts"() {
+    "use strict";
+    RING_SIZE = 500;
+    SLOW_QUERY_MS = 5e3;
+    _ring = [];
+    _initialized = false;
+  }
+});
+
 // ../../lib/db/src/index.ts
 var src_exports = {};
 __export(src_exports, {
@@ -61328,6 +61466,8 @@ __export(src_exports, {
   financialGoalsTable: () => financialGoalsTable,
   flaggedOfficersTable: () => flaggedOfficersTable,
   flashDealsTable: () => flashDealsTable,
+  getPoolAuditLog: () => getPoolAuditLog,
+  getPoolAuditSummary: () => getPoolAuditSummary,
   getPoolStats: () => getPoolStats,
   globalRecommendationsTable: () => globalRecommendationsTable,
   groupInvites: () => groupInvites,
@@ -61348,6 +61488,7 @@ __export(src_exports, {
   heritageSupportLinksTable: () => heritageSupportLinksTable,
   hiddenGemNominationsTable: () => hiddenGemNominationsTable,
   identityVerificationsTable: () => identityVerificationsTable,
+  initPoolInstrumentation: () => initPoolInstrumentation,
   insertBoundarySchema: () => insertBoundarySchema,
   insertBusinessClaimSchema: () => insertBusinessClaimSchema,
   insertBusinessInsightSchema: () => insertBusinessInsightSchema,
@@ -61521,8 +61662,8 @@ __export(src_exports, {
   wellnessGoalsTable: () => wellnessGoalsTable,
   wishlistItemsTable: () => wishlistItemsTable
 });
-function setDbLogger(logger3) {
-  _logger = logger3;
+function setDbLogger(logger4) {
+  _logger = logger4;
 }
 function getPool() {
   if (!_pool) {
@@ -61623,6 +61764,7 @@ var init_src = __esm({
     init_esm();
     init_schema2();
     init_schema2();
+    init_pool_instrumentation();
     ({ Pool: Pool3 } = esm_default);
     _logger = {
       info: (data, msg) => console.info(
@@ -125378,7 +125520,7 @@ var require_axios = __commonJS({
       let tail = 0;
       let firstSampleTS;
       min2 = min2 !== void 0 ? min2 : 1e3;
-      return function push(chunkLength) {
+      return function push2(chunkLength) {
         const now = Date.now();
         const startedAt = timestamps[tail];
         if (!firstSampleTS) {
@@ -317333,7 +317475,7 @@ var require_buffer_list = __commonJS({
       }
       _createClass(BufferList, [{
         key: "push",
-        value: function push(v7) {
+        value: function push2(v7) {
           var entry = {
             data: v7,
             next: null
@@ -327439,12 +327581,12 @@ var require_logging_utils = __commonJS({
             this.setFilters();
             this.filtersSet = true;
           }
-          let logger3 = this.cached.get(namespace);
-          if (!logger3) {
-            logger3 = this.makeLogger(namespace);
-            this.cached.set(namespace, logger3);
+          let logger4 = this.cached.get(namespace);
+          if (!logger4) {
+            logger4 = this.makeLogger(namespace);
+            this.cached.set(namespace, logger4);
           }
-          logger3(fields, ...args);
+          logger4(fields, ...args);
         } catch (e3) {
           console.error(e3);
         }
@@ -327581,7 +327723,7 @@ var require_logging_utils = __commonJS({
       } else if (cachedBackend === void 0) {
         cachedBackend = getNodeBackend();
       }
-      const logger3 = (() => {
+      const logger4 = (() => {
         let previousBackend = void 0;
         const newLogger = new AdhocDebugLogger(namespace, (fields, ...args) => {
           if (previousBackend !== cachedBackend) {
@@ -327596,8 +327738,8 @@ var require_logging_utils = __commonJS({
         });
         return newLogger;
       })();
-      loggerCache.set(namespace, logger3);
-      return logger3.func;
+      loggerCache.set(namespace, logger4);
+      return logger4.func;
     }
   }
 });
@@ -327661,14 +327803,14 @@ var require_src5 = __commonJS({
     var gaxios_1 = require_src3();
     var jsonBigint = require_json_bigint();
     var gcp_residency_1 = require_gcp_residency();
-    var logger3 = require_src4();
+    var logger4 = require_src4();
     exports2.BASE_PATH = "/computeMetadata/v1";
     exports2.HOST_ADDRESS = "http://169.254.169.254";
     exports2.SECONDARY_HOST_ADDRESS = "http://metadata.google.internal.";
     exports2.HEADER_NAME = "Metadata-Flavor";
     exports2.HEADER_VALUE = "Google";
     exports2.HEADERS = Object.freeze({ [exports2.HEADER_NAME]: exports2.HEADER_VALUE });
-    var log2 = logger3.log("gcp metadata");
+    var log2 = logger4.log("gcp metadata");
     exports2.METADATA_SERVER_DETECTION = Object.freeze({
       "assume-present": "don't try to ping the metadata server, but assume it's present",
       none: "don't try to ping the metadata server, but don't try to use it either",
@@ -368568,7 +368710,7 @@ var init_multipart = __esm({
       const textEncoder2 = new TextEncoder();
       let buffer = new Uint8Array(0);
       const endBuffer = textEncoder2.encode("\r\n");
-      function push(l4) {
+      function push2(l4) {
         const prevBuffer = buffer;
         const newBuffer = l4 instanceof Uint8Array ? l4 : new Uint8Array(textEncoder2.encode(l4));
         buffer = new Uint8Array(prevBuffer.length + newBuffer.length + 2);
@@ -368585,20 +368727,20 @@ var init_multipart = __esm({
           continue;
         }
         const v7 = flattenedData[k3];
-        push(`--${segno}`);
+        push2(`--${segno}`);
         if (Object.prototype.hasOwnProperty.call(v7, "data")) {
           const typedEntry = v7;
-          push(`Content-Disposition: form-data; name=${q3(k3)}; filename=${q3(typedEntry.name || "blob")}`);
-          push(`Content-Type: ${typedEntry.type || "application/octet-stream"}`);
-          push("");
-          push(typedEntry.data);
+          push2(`Content-Disposition: form-data; name=${q3(k3)}; filename=${q3(typedEntry.name || "blob")}`);
+          push2(`Content-Type: ${typedEntry.type || "application/octet-stream"}`);
+          push2("");
+          push2(typedEntry.data);
         } else {
-          push(`Content-Disposition: form-data; name=${q3(k3)}`);
-          push("");
-          push(v7);
+          push2(`Content-Disposition: form-data; name=${q3(k3)}`);
+          push2("");
+          push2(v7);
         }
       }
-      push(`--${segno}--`);
+      push2(`--${segno}--`);
       return buffer;
     };
   }
@@ -376490,7 +376632,7 @@ function getErrorType(error40) {
   }
   return "unknown";
 }
-async function withRetry(fn3, config2 = {}, logger3) {
+async function withRetry(fn3, config2 = {}, logger4) {
   const retryConfig = { ...DEFAULT_RETRY_CONFIG, ...config2 };
   let lastError;
   for (let attempt = 0; attempt <= retryConfig.maxRetries; attempt++) {
@@ -376502,7 +376644,7 @@ async function withRetry(fn3, config2 = {}, logger3) {
         throw error40;
       }
       if (attempt >= retryConfig.maxRetries) {
-        logger3?.error(
+        logger4?.error(
           {
             error: error40 instanceof Error ? error40.message : String(error40),
             errorType: getErrorType(error40),
@@ -376515,7 +376657,7 @@ async function withRetry(fn3, config2 = {}, logger3) {
       }
       const retryAfterMs = getRetryAfterMs(error40);
       const delay = calculateDelay(attempt, retryConfig, retryAfterMs);
-      logger3?.warn(
+      logger4?.warn(
         {
           error: error40 instanceof Error ? error40.message : String(error40),
           errorType: getErrorType(error40),
@@ -376532,7 +376674,7 @@ async function withRetry(fn3, config2 = {}, logger3) {
   }
   throw lastError;
 }
-function createRetryableStripeClient(stripe, retryConfig = {}, logger3) {
+function createRetryableStripeClient(stripe, retryConfig = {}, logger4) {
   const isTest = process.env.NODE_ENV === "test" || process.env.VITEST === "true" || process.env.JEST_WORKER_ID !== void 0;
   if (isTest) {
     return stripe;
@@ -376541,13 +376683,13 @@ function createRetryableStripeClient(stripe, retryConfig = {}, logger3) {
     get(target, prop, receiver) {
       const original = Reflect.get(target, prop, receiver);
       if (original && typeof original === "object" && !isPromise(original)) {
-        return wrapResource(original, retryConfig, logger3);
+        return wrapResource(original, retryConfig, logger4);
       }
       return original;
     }
   });
 }
-function wrapResource(resource, retryConfig, logger3) {
+function wrapResource(resource, retryConfig, logger4) {
   return new Proxy(resource, {
     get(target, prop, receiver) {
       const original = Reflect.get(target, prop, receiver);
@@ -376558,13 +376700,13 @@ function wrapResource(resource, retryConfig, logger3) {
             return result;
           }
           if (isPromise(result)) {
-            return withRetry(() => Promise.resolve(result), retryConfig, logger3);
+            return withRetry(() => Promise.resolve(result), retryConfig, logger4);
           }
           return result;
         };
       }
       if (original && typeof original === "object" && !isPromise(original)) {
-        return wrapResource(original, retryConfig, logger3);
+        return wrapResource(original, retryConfig, logger4);
       }
       return original;
     }
@@ -376601,20 +376743,20 @@ async function doesTableExist(client, schema, tableName) {
   );
   return result.rows[0]?.exists || false;
 }
-async function renameMigrationsTableIfNeeded(client, schema = "stripe", logger3) {
+async function renameMigrationsTableIfNeeded(client, schema = "stripe", logger4) {
   const oldTableExists = await doesTableExist(client, schema, "migrations");
   const newTableExists = await doesTableExist(client, schema, "_migrations");
   if (oldTableExists && !newTableExists) {
-    logger3?.info("Renaming migrations table to _migrations");
+    logger4?.info("Renaming migrations table to _migrations");
     await client.query(`ALTER TABLE "${schema}"."migrations" RENAME TO "_migrations"`);
-    logger3?.info("Successfully renamed migrations table");
+    logger4?.info("Successfully renamed migrations table");
   }
 }
-async function cleanupSchema(client, schema, logger3) {
-  logger3?.warn(`Migrations table is empty - dropping and recreating schema "${schema}"`);
+async function cleanupSchema(client, schema, logger4) {
+  logger4?.warn(`Migrations table is empty - dropping and recreating schema "${schema}"`);
   await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
   await client.query(`CREATE SCHEMA "${schema}"`);
-  logger3?.info(`Schema "${schema}" has been reset`);
+  logger4?.info(`Schema "${schema}" has been reset`);
 }
 async function connectAndMigrate(client, migrationsDirectory, config2, logOnError = false) {
   if (!fs4.existsSync(migrationsDirectory)) {
@@ -379235,22 +379377,22 @@ var require_b64 = __commonJS({
         arr = new Arr(b642.length * 3 / 4 - placeHolders);
         l4 = placeHolders > 0 ? b642.length - 4 : b642.length;
         var L3 = 0;
-        function push(v7) {
+        function push2(v7) {
           arr[L3++] = v7;
         }
         for (i = 0, j3 = 0; i < l4; i += 4, j3 += 3) {
           tmp = decode2(b642.charAt(i)) << 18 | decode2(b642.charAt(i + 1)) << 12 | decode2(b642.charAt(i + 2)) << 6 | decode2(b642.charAt(i + 3));
-          push((tmp & 16711680) >> 16);
-          push((tmp & 65280) >> 8);
-          push(tmp & 255);
+          push2((tmp & 16711680) >> 16);
+          push2((tmp & 65280) >> 8);
+          push2(tmp & 255);
         }
         if (placeHolders === 2) {
           tmp = decode2(b642.charAt(i)) << 2 | decode2(b642.charAt(i + 1)) >> 4;
-          push(tmp & 255);
+          push2(tmp & 255);
         } else if (placeHolders === 1) {
           tmp = decode2(b642.charAt(i)) << 10 | decode2(b642.charAt(i + 1)) << 4 | decode2(b642.charAt(i + 2)) >> 2;
-          push(tmp >> 8 & 255);
-          push(tmp & 255);
+          push2(tmp >> 8 & 255);
+          push2(tmp & 255);
         }
         return arr;
       }
@@ -390318,7 +390460,7 @@ var require_opentype = __commonJS({
 });
 
 // src/app.ts
-var import_express146 = __toESM(require_express2(), 1);
+var import_express147 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -390391,7 +390533,7 @@ var SPA_HTML = `<!DOCTYPE html>
 `;
 
 // src/routes/index.ts
-var import_express143 = __toESM(require_express2(), 1);
+var import_express144 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -398749,15 +398891,15 @@ var validations = {
     }
   }
 };
-function validateLogger(logger3) {
-  if (typeof logger3 !== "object" || typeof logger3.error !== "function" || typeof logger3.warn !== "function") {
+function validateLogger(logger4) {
+  if (typeof logger4 !== "object" || typeof logger4.error !== "function" || typeof logger4.warn !== "function") {
     throw new TypeError(
       "Provided logger does not implement the Logger interface"
     );
   }
 }
-var getValidations = (_enabled, logger3) => {
-  validateLogger(logger3);
+var getValidations = (_enabled, logger4) => {
+  validateLogger(logger4);
   let enabled;
   if (typeof _enabled === "boolean") {
     enabled = {
@@ -398783,8 +398925,8 @@ var getValidations = (_enabled, logger3) => {
             args
           );
         } catch (error40) {
-          if (error40 instanceof ChangeWarning) logger3.warn(error40);
-          else logger3.error(error40);
+          if (error40 instanceof ChangeWarning) logger4.warn(error40);
+          else logger4.error(error40);
         }
       };
   }
@@ -398835,10 +398977,10 @@ var getOptionsFromConfig = (config2) => {
 };
 var parseOptions = (passedOptions) => {
   const notUndefinedOptions = omitUndefinedProperties(passedOptions);
-  const logger3 = passedOptions.logger ?? ConsoleLogger;
+  const logger4 = passedOptions.logger ?? ConsoleLogger;
   const validations2 = getValidations(
     notUndefinedOptions?.validate ?? true,
-    logger3
+    logger4
   );
   validations2.validationsConfig();
   validations2.knownOptions(passedOptions);
@@ -398915,7 +399057,7 @@ var parseOptions = (passedOptions) => {
     ),
     // Print an error to the console if a few known misconfigurations are detected.
     validations: validations2,
-    logger: logger3
+    logger: logger4
   };
   if (typeof config2.store.increment !== "function" || typeof config2.store.decrement !== "function" || typeof config2.store.resetKey !== "function" || config2.store.resetAll !== void 0 && typeof config2.store.resetAll !== "function" || config2.store.init !== void 0 && typeof config2.store.init !== "function") {
     throw new TypeError(
@@ -401543,11 +401685,11 @@ var parseLogLevel = (maybeLevel, sourceName, client) => {
 };
 function noop() {
 }
-function makeLogFn(fnLevel, logger3, logLevel) {
-  if (!logger3 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+function makeLogFn(fnLevel, logger4, logLevel) {
+  if (!logger4 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
     return noop;
   } else {
-    return logger3[fnLevel].bind(logger3);
+    return logger4[fnLevel].bind(logger4);
   }
 }
 var noopLogger = {
@@ -401558,22 +401700,22 @@ var noopLogger = {
 };
 var cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
-  const logger3 = client.logger;
+  const logger4 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger3) {
+  if (!logger4) {
     return noopLogger;
   }
-  const cachedLogger = cachedLoggers.get(logger3);
+  const cachedLogger = cachedLoggers.get(logger4);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn("error", logger3, logLevel),
-    warn: makeLogFn("warn", logger3, logLevel),
-    info: makeLogFn("info", logger3, logLevel),
-    debug: makeLogFn("debug", logger3, logLevel)
+    error: makeLogFn("error", logger4, logLevel),
+    warn: makeLogFn("warn", logger4, logLevel),
+    info: makeLogFn("info", logger4, logLevel),
+    debug: makeLogFn("debug", logger4, logLevel)
   };
-  cachedLoggers.set(logger3, [logLevel, levelLogger]);
+  cachedLoggers.set(logger4, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails = (details) => {
@@ -401607,7 +401749,7 @@ var Stream = class _Stream {
   }
   static fromSSEResponse(response, controller, client, synthesizeEventData) {
     let consumed = false;
-    const logger3 = client ? loggerFor(client) : console;
+    const logger4 = client ? loggerFor(client) : console;
     async function* iterator() {
       if (consumed) {
         throw new OpenAIError("Cannot iterate over a consumed stream, use `.tee()` to split the stream.");
@@ -401627,8 +401769,8 @@ var Stream = class _Stream {
             try {
               data = JSON.parse(sse.data);
             } catch (e3) {
-              logger3.error(`Could not parse message into JSON:`, sse.data);
-              logger3.error(`From chunk:`, sse.raw);
+              logger4.error(`Could not parse message into JSON:`, sse.data);
+              logger4.error(`From chunk:`, sse.raw);
               throw e3;
             }
             if (data && data.error) {
@@ -413806,8 +413948,8 @@ var defaultLogger = {
   }
 };
 var activeLogger = defaultLogger;
-function setLogger(logger3) {
-  activeLogger = logger3 ?? defaultLogger;
+function setLogger(logger4) {
+  activeLogger = logger4 ?? defaultLogger;
 }
 var logger2 = {
   info: (message) => activeLogger.info(message),
@@ -442742,7 +442884,7 @@ var external_clicks_default = router83;
 var import_express84 = __toESM(require_express2(), 1);
 
 // src/lib/build97Monitor.ts
-var _ring = [];
+var _ring2 = [];
 var _handle = null;
 var _cycleCount = 0;
 var _p0Count = 0;
@@ -442756,7 +442898,7 @@ var _approvalDetectedAt = null;
 var _postApprovalStableCycles = 0;
 var _kinfolkSyntheticFailures = 0;
 function _poolTrend() {
-  const recent = _ring.slice(-6).map((e3) => e3.pool.total);
+  const recent = _ring2.slice(-6).map((e3) => e3.pool.total);
   if (recent.length < 3) return "unknown";
   let growing = true;
   for (let i = 1; i < recent.length; i++) {
@@ -442768,26 +442910,26 @@ function _poolTrend() {
   return growing ? "growing" : "stable";
 }
 function getMonitorSummary() {
-  const total = _ring.length;
-  const errors = _ring.filter((e3) => e3.p0Flags.length > 0).length;
-  const warnings = _ring.filter((e3) => e3.p1Flags.length > 0).length;
+  const total = _ring2.length;
+  const errors = _ring2.filter((e3) => e3.p0Flags.length > 0).length;
+  const warnings = _ring2.filter((e3) => e3.p1Flags.length > 0).length;
   const successRate = total > 0 ? ((total - errors) / total * 100).toFixed(1) : "N/A";
-  const latencies = _ring.map((e3) => e3.dbLatencyMs).filter((n2) => n2 !== null);
+  const latencies = _ring2.map((e3) => e3.dbLatencyMs).filter((n2) => n2 !== null);
   const avgDbLatency = latencies.length > 0 ? Math.round(latencies.reduce((a, b3) => a + b3, 0) / latencies.length) : null;
   const sortedLat = [...latencies].sort((a, b3) => a - b3);
   const p95DbLatency = sortedLat.length > 0 ? sortedLat[Math.floor(sortedLat.length * 0.95)] ?? null : null;
-  const csLatencies = _ring.map((e3) => e3.culturalSitesLatencyMs).filter((n2) => n2 !== null);
+  const csLatencies = _ring2.map((e3) => e3.culturalSitesLatencyMs).filter((n2) => n2 !== null);
   const avgMapLoadMs = csLatencies.length > 0 ? Math.round(csLatencies.reduce((a, b3) => a + b3, 0) / csLatencies.length) : null;
   const p95MapLoadMs = csLatencies.length > 0 ? [...csLatencies].sort((a, b3) => a - b3)[Math.floor(csLatencies.length * 0.95)] ?? null : null;
-  const bizLatencies = _ring.map((e3) => e3.businessesLatencyMs).filter((n2) => n2 !== null);
+  const bizLatencies = _ring2.map((e3) => e3.businessesLatencyMs).filter((n2) => n2 !== null);
   const avgBizLatencyMs = bizLatencies.length > 0 ? Math.round(bizLatencies.reduce((a, b3) => a + b3, 0) / bizLatencies.length) : null;
-  const poolTotals = _ring.map((e3) => e3.pool.total);
+  const poolTotals = _ring2.map((e3) => e3.pool.total);
   const peakPoolTotal = poolTotals.length > 0 ? Math.max(...poolTotals) : 0;
-  const peakPoolWaiting = Math.max(..._ring.map((e3) => e3.pool.waiting), 0);
+  const peakPoolWaiting = Math.max(..._ring2.map((e3) => e3.pool.waiting), 0);
   const currentPoolTrend = _poolTrend();
   const poolLeakSuspect = currentPoolTrend === "growing";
-  const mapLoadFailCycles = _ring.filter((e3) => !e3.mapLoadOk).length;
-  const latest = _ring[_ring.length - 1] ?? null;
+  const mapLoadFailCycles = _ring2.filter((e3) => !e3.mapLoadOk).length;
+  const latest = _ring2[_ring2.length - 1] ?? null;
   const appleStatus = process.env.APPLE_REVIEW_STATUS ?? "waiting_for_review";
   const appleApproved = appleStatus === "approved" || appleStatus === "ready_for_sale";
   const POST_APPROVAL_STABLE_REQUIRED = 144;
@@ -442846,7 +442988,7 @@ function getMonitorSummary() {
     kinfolkSyntheticFailures: _kinfolkSyntheticFailures,
     // ── Latest ──
     latest,
-    history: _ring.slice(-10)
+    history: _ring2.slice(-10)
   };
 }
 function stopBuild97Monitor() {
@@ -442866,8 +443008,8 @@ var _logger2 = {
   warn: (data, msg) => console.warn(JSON.stringify({ msg, ...data })),
   error: (data, msg) => console.error(JSON.stringify({ msg, ...data }))
 };
-function setMonitorLogger(logger3) {
-  _logger2 = logger3;
+function setMonitorLogger(logger4) {
+  _logger2 = logger4;
 }
 function getHealthHistory() {
   const total = _history.length;
@@ -442990,12 +443132,100 @@ router84.get("/readyz/history", (req, res) => {
 });
 var monitor_build97_default = router84;
 
-// src/routes/signals.ts
+// src/routes/crash-reports.ts
 var import_express85 = __toESM(require_express2(), 1);
-init_src();
-init_src();
+var import_pino2 = __toESM(require_pino(), 1);
 var router85 = (0, import_express85.Router)();
-router85.post("/signals", async (req, res) => {
+var logger3 = (0, import_pino2.default)({ name: "crash-reports" });
+var MAX_STORED = 50;
+var _recent = [];
+function pushRecent(report) {
+  _recent.push(report);
+  if (_recent.length > MAX_STORED) _recent.shift();
+}
+var _ipCounts = /* @__PURE__ */ new Map();
+var WINDOW_MS = 5 * 60 * 1e3;
+var LIMIT = 10;
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = _ipCounts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    _ipCounts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > LIMIT;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of _ipCounts.entries()) {
+    if (now > entry.resetAt) _ipCounts.delete(ip);
+  }
+}, WINDOW_MS).unref();
+router85.post("/crash-reports", (req, res) => {
+  const ip = req.ip ?? "unknown";
+  if (isRateLimited(ip)) {
+    res.status(429).json({ error: "Rate limit exceeded" });
+    return;
+  }
+  try {
+    const body = req.body ?? {};
+    if (!body.type || !body.error?.message) {
+      res.status(400).json({ error: "Invalid crash report shape" });
+      return;
+    }
+    const report = {
+      ...body,
+      receivedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      sourceIp: ip
+    };
+    logger3.error(
+      {
+        event: "MOBILE_CRASH_REPORT",
+        crashType: report.type,
+        errorName: report.error?.name,
+        errorMessage: report.error?.message,
+        currentScreen: report.context?.currentScreen,
+        appState: report.context?.appState,
+        platform: report.context?.platform,
+        osVersion: report.context?.osVersion,
+        buildNumber: report.context?.buildNumber,
+        version: report.context?.version,
+        commitSha: report.context?.commitSha,
+        lastApiRequests: report.context?.lastApiRequests,
+        breadcrumbCount: report.context?.breadcrumbs?.length,
+        mapState: report.context?.mapState,
+        stack: report.error?.stack?.slice(0, 2e3)
+      },
+      "MOBILE_CRASH_REPORT"
+    );
+    pushRecent(report);
+    res.status(201).json({ received: true, id: report.id });
+  } catch (err) {
+    logger3.error({ err }, "crash-reports: failed to process report");
+    res.status(500).json({ error: "Failed to process crash report" });
+  }
+});
+router85.get("/crash-reports/recent", (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    res.status(503).json({ error: "Not configured" });
+    return;
+  }
+  if (req.headers["x-cron-secret"] !== secret) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  res.json({ count: _recent.length, reports: [..._recent].reverse() });
+});
+var crash_reports_default = router85;
+
+// src/routes/signals.ts
+var import_express86 = __toESM(require_express2(), 1);
+init_src();
+init_src();
+var router86 = (0, import_express86.Router)();
+router86.post("/signals", async (req, res) => {
   const { entityId, entityType, signalType, city, journeyType, context } = req.body;
   if (!entityId || !entityType || !signalType) {
     res.status(400).json({ error: "entityId, entityType, signalType required" });
@@ -443017,7 +443247,7 @@ router85.post("/signals", async (req, res) => {
     res.status(202).json({ ok: true });
   }
 });
-router85.get("/intelligence/trending", async (req, res) => {
+router86.get("/intelligence/trending", async (req, res) => {
   const { city, signalType = "save", limit: limit2 = "10" } = req.query;
   try {
     const rows = await pool.query(
@@ -443049,7 +443279,7 @@ router85.get("/intelligence/trending", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch trending" });
   }
 });
-router85.get("/intelligence/journey-patterns", async (req, res) => {
+router86.get("/intelligence/journey-patterns", async (req, res) => {
   const { journeyType, city, limit: limit2 = "8" } = req.query;
   if (!journeyType) {
     res.status(400).json({ error: "journeyType required" });
@@ -443087,7 +443317,7 @@ router85.get("/intelligence/journey-patterns", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch journey patterns" });
   }
 });
-router85.get("/intelligence/entity/:id", async (req, res) => {
+router86.get("/intelligence/entity/:id", async (req, res) => {
   const entityId = String(req.params.id);
   try {
     const rows = await pool.query(
@@ -443108,14 +443338,14 @@ router85.get("/intelligence/entity/:id", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-var signals_default = router85;
+var signals_default = router86;
 
 // src/routes/smart-search.ts
-var import_express86 = __toESM(require_express2(), 1);
+var import_express87 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router86 = (0, import_express86.Router)();
+var router87 = (0, import_express87.Router)();
 var INTENT_PATTERNS = [
   {
     pattern: /\b(move|moving|relocat|new city|new home)\b/i,
@@ -443178,7 +443408,7 @@ function detectIntent(query) {
     contextNote: "Showing businesses, events, and resources"
   };
 }
-router86.post("/search/history", async (req, res) => {
+router87.post("/search/history", async (req, res) => {
   const user = req.user;
   if (!user?.id) {
     res.status(401).json({ error: "Unauthorized" });
@@ -443201,7 +443431,7 @@ router86.post("/search/history", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-router86.get("/search/history", async (req, res) => {
+router87.get("/search/history", async (req, res) => {
   const user = req.user;
   if (!user?.id) {
     res.status(401).json({ error: "Unauthorized" });
@@ -443218,7 +443448,7 @@ router86.get("/search/history", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-router86.get("/search/intent", async (req, res) => {
+router87.get("/search/intent", async (req, res) => {
   const { q: q3, city, limit: limit2 = "12", recentCategories } = req.query;
   if (!q3?.trim()) {
     res.status(400).json({ error: "q (query) required" });
@@ -443310,7 +443540,7 @@ router86.get("/search/intent", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router86.get("/search/suggest", async (req, res) => {
+router87.get("/search/suggest", async (req, res) => {
   const { q: q3, city } = req.query;
   if (!q3?.trim() || q3.length < 2) {
     res.json({ suggestions: [] });
@@ -443328,15 +443558,15 @@ router86.get("/search/suggest", async (req, res) => {
     res.json({ suggestions: [] });
   }
 });
-var smart_search_default = router86;
+var smart_search_default = router87;
 
 // src/routes/notifications-hub.ts
-var import_express87 = __toESM(require_express2(), 1);
+var import_express88 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router87 = (0, import_express87.Router)();
+var router88 = (0, import_express88.Router)();
 var ALL_TOPICS = ["community", "safety", "business", "events", "knowledge", "travel", "health", "marketplace", "journey", "challenge"];
-router87.get("/notifications", async (req, res) => {
+router88.get("/notifications", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443354,7 +443584,7 @@ router87.get("/notifications", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
-router87.patch("/notifications/:id/read", async (req, res) => {
+router88.patch("/notifications/:id/read", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443368,7 +443598,7 @@ router87.patch("/notifications/:id/read", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-router87.patch("/notifications/read-all", async (req, res) => {
+router88.patch("/notifications/read-all", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443381,7 +443611,7 @@ router87.patch("/notifications/read-all", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-router87.get("/notifications/preferences", async (req, res) => {
+router88.get("/notifications/preferences", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443397,7 +443627,7 @@ router87.get("/notifications/preferences", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-router87.put("/notifications/preferences", async (req, res) => {
+router88.put("/notifications/preferences", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443424,14 +443654,14 @@ router87.put("/notifications/preferences", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-var notifications_hub_default = router87;
+var notifications_hub_default = router88;
 
 // src/routes/knowledge-channels.ts
-var import_express88 = __toESM(require_express2(), 1);
+var import_express89 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router88 = (0, import_express88.Router)();
+var router89 = (0, import_express89.Router)();
 var DEFAULT_CHANNELS = [
   { slug: "health", label: "Health & Wellness", icon: "\u{1FA7A}", description: "Healthcare, mental health, fitness, and holistic wellness resources", color: "#16A34A", sortOrder: 1 },
   { slug: "travel", label: "Travel & Culture", icon: "\u2708\uFE0F", description: "City guides, travel tips, cultural destinations, and hidden gems", color: "#2563EB", sortOrder: 2 },
@@ -443446,7 +443676,7 @@ var DEFAULT_CHANNELS = [
   { slug: "safety", label: "Safety & Community", icon: "\u{1F6E1}\uFE0F", description: "Community safety insights, resources, and neighborhood guides", color: "#DC2626", sortOrder: 11 },
   { slug: "spirituality", label: "Faith & Spirituality", icon: "\u{1F64F}\u{1F3FE}", description: "Houses of worship, spiritual wellness, and community gatherings", color: "#A16207", sortOrder: 12 }
 ];
-router88.get("/channels", async (_req, res) => {
+router89.get("/channels", async (_req, res) => {
   try {
     let channels = await db.select().from(knowledgeChannelsTable).where(eq(knowledgeChannelsTable.published, true)).orderBy(asc(knowledgeChannelsTable.sortOrder));
     if (channels.length === 0) {
@@ -443459,7 +443689,7 @@ router88.get("/channels", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch channels" });
   }
 });
-router88.get("/channels/:slug", async (req, res) => {
+router89.get("/channels/:slug", async (req, res) => {
   const slug = String(req.params.slug);
   try {
     const [channel] = await db.select().from(knowledgeChannelsTable).where(eq(knowledgeChannelsTable.slug, slug)).limit(1);
@@ -443487,7 +443717,7 @@ router88.get("/channels/:slug", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch channel" });
   }
 });
-router88.post("/channels/:slug/follow", async (req, res) => {
+router89.post("/channels/:slug/follow", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443506,7 +443736,7 @@ router88.post("/channels/:slug/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to update channel follow" });
   }
 });
-router88.get("/channels/my/following", async (req, res) => {
+router89.get("/channels/my/following", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -443519,14 +443749,14 @@ router88.get("/channels/my/following", async (req, res) => {
     res.status(500).json({ error: "Failed" });
   }
 });
-var knowledge_channels_default = router88;
+var knowledge_channels_default = router89;
 
 // src/routes/recommend.ts
-var import_express89 = __toESM(require_express2(), 1);
+var import_express90 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router89 = (0, import_express89.Router)();
+var router90 = (0, import_express90.Router)();
 var JOURNEY_ADJACENT_NEEDS = {
   moving: [
     { question: "Have you found a healthcare provider in your new city?", category: "Healthcare", icon: "\u{1F3E5}" },
@@ -443567,7 +443797,7 @@ var JOURNEY_ADJACENT_NEEDS = {
     { question: "Have you connected with senior community groups?", category: "Community", icon: "\u{1F91D}\u{1F3FE}" }
   ]
 };
-router89.get("/recommend", async (req, res) => {
+router90.get("/recommend", async (req, res) => {
   const context = String(req.query.context ?? "home");
   const city = req.query.city ? String(req.query.city) : null;
   const limit2 = Math.min(parseInt(String(req.query.limit ?? "5"), 10), 10);
@@ -443745,7 +443975,7 @@ router89.get("/recommend", async (req, res) => {
 });
 
 // src/routes/captions.ts
-var import_express90 = __toESM(require_express2(), 1);
+var import_express91 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var ADMIN_EMAILS11 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
@@ -443754,8 +443984,8 @@ function isAdmin11(req) {
   if (!user?.email) return false;
   return ADMIN_EMAILS11.includes(user.email) || user.role === "admin";
 }
-var router90 = (0, import_express90.Router)();
-router90.get("/captions/:businessId", async (req, res) => {
+var router91 = (0, import_express91.Router)();
+router91.get("/captions/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
     const rows = await db.select({
@@ -443767,7 +443997,7 @@ router90.get("/captions/:businessId", async (req, res) => {
     res.json({ captions: [] });
   }
 });
-router90.get("/admin/captions", async (req, res) => {
+router91.get("/admin/captions", async (req, res) => {
   if (!isAdmin11(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -443784,7 +444014,7 @@ router90.get("/admin/captions", async (req, res) => {
     res.json({ captions: [] });
   }
 });
-router90.delete("/admin/captions", async (req, res) => {
+router91.delete("/admin/captions", async (req, res) => {
   if (!isAdmin11(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -443801,7 +444031,7 @@ router90.delete("/admin/captions", async (req, res) => {
     res.status(500).json({ error: "Failed to remove caption" });
   }
 });
-router90.post("/captions/:businessId", async (req, res) => {
+router91.post("/captions/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
     const userId = req.user?.id ?? null;
@@ -443827,13 +444057,13 @@ router90.post("/captions/:businessId", async (req, res) => {
     res.json({ ok: false });
   }
 });
-var captions_default = router90;
+var captions_default = router91;
 
 // src/routes/community-boundaries.ts
-var import_express91 = __toESM(require_express2(), 1);
+var import_express92 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router91 = (0, import_express91.Router)();
+var router92 = (0, import_express92.Router)();
 function requireAuth12(req, res) {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Authentication required" });
@@ -443841,7 +444071,7 @@ function requireAuth12(req, res) {
   }
   return true;
 }
-router91.get("/boundaries", requireAuth12, async (req, res) => {
+router92.get("/boundaries", requireAuth12, async (req, res) => {
   try {
     const boundaries = await db.select().from(communityBoundariesTable).where(eq(communityBoundariesTable.userId, req.user.id));
     res.json({ boundaries });
@@ -443850,7 +444080,7 @@ router91.get("/boundaries", requireAuth12, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch boundaries" });
   }
 });
-router91.post("/boundaries", requireAuth12, async (req, res) => {
+router92.post("/boundaries", requireAuth12, async (req, res) => {
   const { targetType, targetId, targetName, boundaryTypes } = req.body;
   if (!targetType || !targetId || !boundaryTypes?.length) {
     res.status(400).json({ error: "targetType, targetId, and at least one boundaryType are required" });
@@ -443879,7 +444109,7 @@ router91.post("/boundaries", requireAuth12, async (req, res) => {
     res.status(500).json({ error: "Failed to set boundary" });
   }
 });
-router91.delete("/boundaries/:targetId", requireAuth12, async (req, res) => {
+router92.delete("/boundaries/:targetId", requireAuth12, async (req, res) => {
   try {
     await db.delete(communityBoundariesTable).where(
       and(
@@ -443893,7 +444123,7 @@ router91.delete("/boundaries/:targetId", requireAuth12, async (req, res) => {
     res.status(500).json({ error: "Failed to remove boundary" });
   }
 });
-router91.get("/boundaries/preferences", requireAuth12, async (req, res) => {
+router92.get("/boundaries/preferences", requireAuth12, async (req, res) => {
   try {
     const [prefs] = await db.select().from(safeSpacePreferencesTable).where(eq(safeSpacePreferencesTable.userId, req.user.id)).limit(1);
     res.json({ preferences: prefs ?? null });
@@ -443902,7 +444132,7 @@ router91.get("/boundaries/preferences", requireAuth12, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch preferences" });
   }
 });
-router91.put("/boundaries/preferences", requireAuth12, async (req, res) => {
+router92.put("/boundaries/preferences", requireAuth12, async (req, res) => {
   const {
     hideNotInterested,
     hideUnresolvedAlerts,
@@ -443943,20 +444173,20 @@ router91.put("/boundaries/preferences", requireAuth12, async (req, res) => {
     res.status(500).json({ error: "Failed to update preferences" });
   }
 });
-var community_boundaries_default = router91;
+var community_boundaries_default = router92;
 
 // src/routes/business-response.ts
-var import_express92 = __toESM(require_express2(), 1);
+var import_express93 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router92 = (0, import_express92.Router)();
+var router93 = (0, import_express93.Router)();
 var CATEGORY_LABELS3 = {
   safety: "Safety or Conduct Concern",
   discrimination: "Discrimination Concern",
   sundown: "Community Safety Warning",
   business: "Business Experience Concern"
 };
-router92.get("/business-response/:token", async (req, res) => {
+router93.get("/business-response/:token", async (req, res) => {
   const { token: token2 } = req.params;
   try {
     const [link] = await db.select().from(businessResponseLinksTable).where(eq(businessResponseLinksTable.token, token2)).limit(1);
@@ -443993,7 +444223,7 @@ router92.get("/business-response/:token", async (req, res) => {
     res.status(500).json({ error: "Failed to load response form" });
   }
 });
-router92.post("/business-response/:token", async (req, res) => {
+router93.post("/business-response/:token", async (req, res) => {
   const { token: token2 } = req.params;
   const { responseStatement, correctiveActions, trustPlan, disputesFacts, disputeDetails } = req.body;
   if (!responseStatement?.trim()) {
@@ -444030,14 +444260,14 @@ router92.post("/business-response/:token", async (req, res) => {
     res.status(500).json({ error: "Failed to submit response" });
   }
 });
-var business_response_default = router92;
+var business_response_default = router93;
 
 // src/routes/business-improvement.ts
-var import_express93 = __toESM(require_express2(), 1);
+var import_express94 = __toESM(require_express2(), 1);
 init_src();
 init_src();
 init_drizzle_orm();
-var router93 = (0, import_express93.Router)();
+var router94 = (0, import_express94.Router)();
 var PREF_TO_DESIGNATIONS = {
   "black-owned": ["Black-Owned", "African American-Owned"],
   "women-owned": ["Women-Owned", "Woman-Owned", "Female-Owned"],
@@ -444063,7 +444293,7 @@ var SERVICE_TO_KEYWORDS = {
   "Interior Designer": ["interior design", "interior", "decor", "furnishing", "design"],
   "Other": []
 };
-router93.post("/business-improvement", async (req, res) => {
+router94.post("/business-improvement", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -444264,7 +444494,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown, no extra text.`;
     res.status(500).json({ error: "Failed to generate improvement plan" });
   }
 });
-router93.get("/business-improvement/:businessId", async (req, res) => {
+router94.get("/business-improvement/:businessId", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -444277,14 +444507,14 @@ router93.get("/business-improvement/:businessId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch plans" });
   }
 });
-var business_improvement_default = router93;
+var business_improvement_default = router94;
 
 // src/routes/community-appreciation.ts
-var import_express94 = __toESM(require_express2(), 1);
+var import_express95 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router94 = (0, import_express94.Router)();
+var router95 = (0, import_express95.Router)();
 var BADGE_THRESHOLD2 = 3;
 var BADGE_RULES = [
   { id: "community_welcomed", tags: ["Made me feel welcome", "A comfortable, familiar space", "Inclusive and welcoming environment"] },
@@ -444414,7 +444644,7 @@ async function sendAppreciationEmail(opts) {
     })
   });
 }
-router94.post("/community-appreciation", async (req, res) => {
+router95.post("/community-appreciation", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -444471,7 +444701,7 @@ router94.post("/community-appreciation", async (req, res) => {
     res.status(500).json({ error: "Failed to save appreciation" });
   }
 });
-router94.get("/community-appreciation/badges/:businessId", async (req, res) => {
+router95.get("/community-appreciation/badges/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
     const rows = await pool.query(
@@ -444487,10 +444717,10 @@ router94.get("/community-appreciation/badges/:businessId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch badges" });
   }
 });
-var community_appreciation_default = router94;
+var community_appreciation_default = router95;
 
 // src/routes/circles.ts
-var import_express95 = __toESM(require_express2(), 1);
+var import_express96 = __toESM(require_express2(), 1);
 init_src();
 init_schema2();
 init_drizzle_orm();
@@ -444507,7 +444737,7 @@ function getTierKey(memberType) {
   if (memberType in CIRCLE_LIMITS) return memberType;
   return "free";
 }
-var router95 = (0, import_express95.Router)();
+var router96 = (0, import_express96.Router)();
 function uid(req) {
   return req.user?.id;
 }
@@ -444527,7 +444757,7 @@ async function getCircleWithAuth(circleId, userId, res) {
   const [membership] = await db.select().from(circleMembers).where(and(eq(circleMembers.circleId, circleId), eq(circleMembers.userId, userId))).limit(1);
   return { circle, membership: membership ?? null };
 }
-router95.get("/circles", async (req, res) => {
+router96.get("/circles", async (req, res) => {
   if (!authed(req, res)) return;
   try {
     const myIds = await db.select({ circleId: circleMembers.circleId }).from(circleMembers).where(eq(circleMembers.userId, uid(req)));
@@ -444541,7 +444771,7 @@ router95.get("/circles", async (req, res) => {
     res.status(500).json({ error: "Failed to load circles" });
   }
 });
-router95.get("/circles/community", async (req, res) => {
+router96.get("/circles/community", async (req, res) => {
   try {
     const circles = await db.select().from(kinfolkCircles).where(and(eq(kinfolkCircles.type, "community"), eq(kinfolkCircles.privacy, "public"))).orderBy(desc(kinfolkCircles.createdAt)).limit(30);
     res.json({ circles });
@@ -444550,7 +444780,7 @@ router95.get("/circles/community", async (req, res) => {
     res.status(500).json({ error: "Failed to load community circles" });
   }
 });
-router95.post("/circles", async (req, res) => {
+router96.post("/circles", async (req, res) => {
   if (!authed(req, res)) return;
   const { name: name3, type: type2, privacy, description, emoji: emoji3, maxMembers, city, state, planningMode } = req.body;
   if (!name3 || typeof name3 !== "string" || name3.trim().length < 2) {
@@ -444614,7 +444844,7 @@ router95.post("/circles", async (req, res) => {
     res.status(500).json({ error: "Failed to create circle" });
   }
 });
-router95.get("/circles/:id/saved-places", async (req, res) => {
+router96.get("/circles/:id/saved-places", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444639,7 +444869,7 @@ router95.get("/circles/:id/saved-places", async (req, res) => {
     res.status(500).json({ error: "Failed to load saved places" });
   }
 });
-router95.get("/circles/:id", async (req, res) => {
+router96.get("/circles/:id", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444663,7 +444893,7 @@ router95.get("/circles/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load circle" });
   }
 });
-router95.patch("/circles/:id", async (req, res) => {
+router96.patch("/circles/:id", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444697,7 +444927,7 @@ router95.patch("/circles/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update circle" });
   }
 });
-router95.delete("/circles/:id", async (req, res) => {
+router96.delete("/circles/:id", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444721,7 +444951,7 @@ router95.delete("/circles/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete circle" });
   }
 });
-router95.post("/circles/:id/join", async (req, res) => {
+router96.post("/circles/:id/join", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444755,7 +444985,7 @@ router95.post("/circles/:id/join", async (req, res) => {
     res.status(500).json({ error: "Failed to join circle" });
   }
 });
-router95.post("/circles/:id/leave", async (req, res) => {
+router96.post("/circles/:id/leave", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444779,7 +445009,7 @@ router95.post("/circles/:id/leave", async (req, res) => {
     res.status(500).json({ error: "Failed to leave circle" });
   }
 });
-router95.post("/circles/:id/invite", async (req, res) => {
+router96.post("/circles/:id/invite", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444810,7 +445040,7 @@ router95.post("/circles/:id/invite", async (req, res) => {
     res.status(500).json({ error: "Failed to invite member" });
   }
 });
-router95.delete("/circles/:id/members/:userId", async (req, res) => {
+router96.delete("/circles/:id/members/:userId", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const targetId = String(req.params.userId);
@@ -444835,7 +445065,7 @@ router95.delete("/circles/:id/members/:userId", async (req, res) => {
     res.status(500).json({ error: "Failed to remove member" });
   }
 });
-router95.post("/circles/:id/transfer", async (req, res) => {
+router96.post("/circles/:id/transfer", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const { userId: newHostId } = req.body;
@@ -444862,7 +445092,7 @@ router95.post("/circles/:id/transfer", async (req, res) => {
     res.status(500).json({ error: "Failed to transfer ownership" });
   }
 });
-router95.get("/circles/:id/suggestions", async (req, res) => {
+router96.get("/circles/:id/suggestions", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444877,7 +445107,7 @@ router95.get("/circles/:id/suggestions", async (req, res) => {
     res.status(500).json({ error: "Failed to load suggestions" });
   }
 });
-router95.post("/circles/:id/suggestions", async (req, res) => {
+router96.post("/circles/:id/suggestions", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -444910,7 +445140,7 @@ router95.post("/circles/:id/suggestions", async (req, res) => {
     res.status(500).json({ error: "Failed to add suggestion" });
   }
 });
-router95.post("/circles/:id/suggestions/:sugId/upvote", async (req, res) => {
+router96.post("/circles/:id/suggestions/:sugId/upvote", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const sugId = parseInt(req.params.sugId);
@@ -444926,7 +445156,7 @@ router95.post("/circles/:id/suggestions/:sugId/upvote", async (req, res) => {
     res.status(500).json({ error: "Failed to upvote" });
   }
 });
-router95.delete("/circles/:id/suggestions/:sugId", async (req, res) => {
+router96.delete("/circles/:id/suggestions/:sugId", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const sugId = parseInt(req.params.sugId);
@@ -445001,7 +445231,7 @@ Include 5\u20138 stops that flow naturally. Keep times realistic. Prioritize min
   const raw = response.choices[0]?.message?.content ?? "{}";
   return JSON.parse(raw);
 }
-router95.post("/circles/:id/plans", async (req, res) => {
+router96.post("/circles/:id/plans", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445086,7 +445316,7 @@ router95.post("/circles/:id/plans", async (req, res) => {
     res.status(500).json({ error: "Failed to generate plan" });
   }
 });
-router95.get("/circles/:id/plans", async (req, res) => {
+router96.get("/circles/:id/plans", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445101,7 +445331,7 @@ router95.get("/circles/:id/plans", async (req, res) => {
     res.status(500).json({ error: "Failed to load plans" });
   }
 });
-router95.post("/circles/:id/plans/:planId/vote", async (req, res) => {
+router96.post("/circles/:id/plans/:planId/vote", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const planId = parseInt(req.params.planId);
@@ -445148,7 +445378,7 @@ router95.post("/circles/:id/plans/:planId/vote", async (req, res) => {
     res.status(500).json({ error: "Failed to vote" });
   }
 });
-router95.get("/circles/:id/adventures", async (req, res) => {
+router96.get("/circles/:id/adventures", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445168,7 +445398,7 @@ router95.get("/circles/:id/adventures", async (req, res) => {
     res.status(500).json({ error: "Failed to load adventures" });
   }
 });
-router95.post("/circles/:id/adventures", async (req, res) => {
+router96.post("/circles/:id/adventures", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const { title, adventureDate, places, note } = req.body;
@@ -445195,7 +445425,7 @@ router95.post("/circles/:id/adventures", async (req, res) => {
     res.status(500).json({ error: "Failed to log adventure" });
   }
 });
-router95.get("/circles/:id/nudges", async (req, res) => {
+router96.get("/circles/:id/nudges", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445215,7 +445445,7 @@ router95.get("/circles/:id/nudges", async (req, res) => {
     res.status(500).json({ error: "Failed to load nudges" });
   }
 });
-router95.post("/circles/:id/nudges", async (req, res) => {
+router96.post("/circles/:id/nudges", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445265,7 +445495,7 @@ router95.post("/circles/:id/nudges", async (req, res) => {
     res.status(500).json({ error: "Failed to send nudge" });
   }
 });
-router95.patch("/circles/:id/nudges/:nudgeId/read", async (req, res) => {
+router96.patch("/circles/:id/nudges/:nudgeId/read", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const nudgeId = parseInt(req.params.nudgeId);
@@ -445295,7 +445525,7 @@ router95.patch("/circles/:id/nudges/:nudgeId/read", async (req, res) => {
     res.status(500).json({ error: "Failed to mark read" });
   }
 });
-router95.get("/circles/:id/dates", async (req, res) => {
+router96.get("/circles/:id/dates", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445347,7 +445577,7 @@ router95.get("/circles/:id/dates", async (req, res) => {
     res.status(500).json({ error: "Failed to load dates" });
   }
 });
-router95.post("/circles/:id/dates", async (req, res) => {
+router96.post("/circles/:id/dates", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   if (isNaN(circleId)) {
@@ -445382,7 +445612,7 @@ router95.post("/circles/:id/dates", async (req, res) => {
     res.status(500).json({ error: "Failed to add date" });
   }
 });
-router95.delete("/circles/:id/dates/:dateId", async (req, res) => {
+router96.delete("/circles/:id/dates/:dateId", async (req, res) => {
   if (!authed(req, res)) return;
   const circleId = parseInt(req.params.id);
   const dateId = parseInt(req.params.dateId);
@@ -445412,13 +445642,13 @@ router95.delete("/circles/:id/dates/:dateId", async (req, res) => {
     res.status(500).json({ error: "Failed to delete date" });
   }
 });
-var circles_default = router95;
+var circles_default = router96;
 
 // src/routes/community-requests.ts
-var import_express96 = __toESM(require_express2(), 1);
+var import_express97 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router96 = (0, import_express96.Router)();
+var router97 = (0, import_express97.Router)();
 function uid2(req) {
   return req.user?.id ?? null;
 }
@@ -445428,7 +445658,7 @@ async function awardAchievement(userId, type2) {
     await db.insert(userAchievementsTable).values({ userId, achievementType: type2 });
   }
 }
-router96.get("/community-requests", async (req, res) => {
+router97.get("/community-requests", async (req, res) => {
   try {
     const { city, category, status } = req.query;
     let q3 = db.select().from(communityRequestsTable).orderBy(desc(communityRequestsTable.upvotes), desc(communityRequestsTable.createdAt)).limit(50);
@@ -445443,7 +445673,7 @@ router96.get("/community-requests", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch requests" });
   }
 });
-router96.post("/community-requests", async (req, res) => {
+router97.post("/community-requests", async (req, res) => {
   const user = uid2(req);
   if (!user) {
     res.status(401).json({ error: "Sign in to post a request" });
@@ -445471,7 +445701,7 @@ router96.post("/community-requests", async (req, res) => {
     res.status(500).json({ error: "Failed to create request" });
   }
 });
-router96.get("/community-requests/:id", async (req, res) => {
+router97.get("/community-requests/:id", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     const [request] = await db.select().from(communityRequestsTable).where(eq(communityRequestsTable.id, id2)).limit(1);
@@ -445486,7 +445716,7 @@ router96.get("/community-requests/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch request" });
   }
 });
-router96.post("/community-requests/:id/upvote", async (req, res) => {
+router97.post("/community-requests/:id/upvote", async (req, res) => {
   const user = uid2(req);
   if (!user) {
     res.status(401).json({ error: "Authentication required" });
@@ -445507,7 +445737,7 @@ router96.post("/community-requests/:id/upvote", async (req, res) => {
     res.status(500).json({ error: "Failed to upvote" });
   }
 });
-router96.post("/community-requests/:id/help", async (req, res) => {
+router97.post("/community-requests/:id/help", async (req, res) => {
   const user = uid2(req);
   if (!user) {
     res.status(401).json({ error: "Sign in to offer help" });
@@ -445539,14 +445769,14 @@ router96.post("/community-requests/:id/help", async (req, res) => {
     res.status(500).json({ error: "Failed to submit help" });
   }
 });
-var community_requests_default = router96;
+var community_requests_default = router97;
 
 // src/routes/user-achievements.ts
-var import_express97 = __toESM(require_express2(), 1);
+var import_express98 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router97 = (0, import_express97.Router)();
-router97.get("/users/me/achievements", async (req, res) => {
+var router98 = (0, import_express98.Router)();
+router98.get("/users/me/achievements", async (req, res) => {
   const user = req.user?.id;
   if (!user) {
     res.status(401).json({ error: "Authentication required" });
@@ -445564,7 +445794,7 @@ router97.get("/users/me/achievements", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch achievements" });
   }
 });
-router97.get("/users/:id/achievements", async (req, res) => {
+router98.get("/users/:id/achievements", async (req, res) => {
   const userId = String(req.params.id);
   try {
     const rows = await db.select().from(userAchievementsTable).where(eq(userAchievementsTable.userId, userId)).orderBy(desc(userAchievementsTable.earnedAt));
@@ -445578,17 +445808,17 @@ router97.get("/users/:id/achievements", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch achievements" });
   }
 });
-var user_achievements_default = router97;
+var user_achievements_default = router98;
 
 // src/routes/community-says.ts
-var import_express98 = __toESM(require_express2(), 1);
+var import_express99 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router98 = (0, import_express98.Router)();
+var router99 = (0, import_express99.Router)();
 function uid3(req) {
   return req.user?.id ?? null;
 }
-router98.get("/businesses/:id/community-says", async (req, res) => {
+router99.get("/businesses/:id/community-says", async (req, res) => {
   const businessId = String(req.params.id);
   try {
     const tags = await db.select({ tag: communitySaysTable.tag, total: count() }).from(communitySaysTable).where(eq(communitySaysTable.businessId, businessId)).groupBy(communitySaysTable.tag).orderBy(desc(count()));
@@ -445604,7 +445834,7 @@ router98.get("/businesses/:id/community-says", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch data" });
   }
 });
-router98.post("/businesses/:id/community-says", async (req, res) => {
+router99.post("/businesses/:id/community-says", async (req, res) => {
   const user = uid3(req);
   if (!user) {
     res.status(401).json({ error: "Sign in to tag this business" });
@@ -445631,7 +445861,7 @@ router98.post("/businesses/:id/community-says", async (req, res) => {
     res.status(500).json({ error: "Failed to tag" });
   }
 });
-router98.post("/businesses/:id/love-note", async (req, res) => {
+router99.post("/businesses/:id/love-note", async (req, res) => {
   const user = uid3(req);
   if (!user) {
     res.status(401).json({ error: "Sign in to leave a love note" });
@@ -445666,7 +445896,7 @@ router98.post("/businesses/:id/love-note", async (req, res) => {
     res.status(500).json({ error: "Failed to save note" });
   }
 });
-router98.post("/love-notes/:id/upvote", async (req, res) => {
+router99.post("/love-notes/:id/upvote", async (req, res) => {
   const user = uid3(req);
   if (!user) {
     res.status(401).json({ error: "Authentication required" });
@@ -445681,7 +445911,7 @@ router98.post("/love-notes/:id/upvote", async (req, res) => {
     res.status(500).json({ error: "Failed to upvote" });
   }
 });
-router98.delete("/love-notes/:id/upvote", async (req, res) => {
+router99.delete("/love-notes/:id/upvote", async (req, res) => {
   const user = uid3(req);
   if (!user) {
     res.status(401).json({ error: "Authentication required" });
@@ -445696,13 +445926,13 @@ router98.delete("/love-notes/:id/upvote", async (req, res) => {
     res.status(500).json({ error: "Failed to remove selection" });
   }
 });
-var community_says_default = router98;
+var community_says_default = router99;
 
 // src/routes/community-challenges-new.ts
-var import_express99 = __toESM(require_express2(), 1);
+var import_express100 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router99 = (0, import_express99.Router)();
+var router100 = (0, import_express100.Router)();
 function uid4(req) {
   return req.user?.id ?? null;
 }
@@ -445720,7 +445950,7 @@ var DEFAULT_CHALLENGES = [
   { title: "Attend a Local Festival", description: "RSVP or check in to a local community event.", icon: "\u{1F389}", challengeType: "event_rsvp", targetCount: 1, pointsReward: 35 },
   { title: "Post a Community Request", description: "Ask for what your community needs. Your voice shapes the platform.", icon: "\u{1F64B}", challengeType: "community_request", targetCount: 1, pointsReward: 30 }
 ];
-router99.get("/community-challenges", async (req, res) => {
+router100.get("/community-challenges", async (req, res) => {
   const user = uid4(req);
   try {
     const existing = await db.select({ id: communityChallengesTable.id }).from(communityChallengesTable).limit(1);
@@ -445740,7 +445970,7 @@ router99.get("/community-challenges", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch challenges" });
   }
 });
-router99.post("/community-challenges/:id/progress", async (req, res) => {
+router100.post("/community-challenges/:id/progress", async (req, res) => {
   const user = uid4(req);
   if (!user) {
     res.status(401).json({ error: "Sign in to track progress" });
@@ -445784,7 +446014,7 @@ router99.post("/community-challenges/:id/progress", async (req, res) => {
     res.status(500).json({ error: "Failed to update progress" });
   }
 });
-router99.post("/admin/community-challenges", async (req, res) => {
+router100.post("/admin/community-challenges", async (req, res) => {
   if (!isAdmin12(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -445810,14 +446040,14 @@ router99.post("/admin/community-challenges", async (req, res) => {
     res.status(500).json({ error: "Failed to create challenge" });
   }
 });
-var community_challenges_new_default = router99;
+var community_challenges_new_default = router100;
 
 // src/routes/follows.ts
-var import_express100 = __toESM(require_express2(), 1);
+var import_express101 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router100 = (0, import_express100.Router)();
-router100.get("/users/:id/profile", async (req, res) => {
+var router101 = (0, import_express101.Router)();
+router101.get("/users/:id/profile", async (req, res) => {
   const targetId = String(req.params.id);
   const viewerId = req.user?.id;
   try {
@@ -445859,7 +446089,7 @@ router100.get("/users/:id/profile", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.post("/users/:id/follow", async (req, res) => {
+router101.post("/users/:id/follow", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -445923,7 +446153,7 @@ router100.post("/users/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.delete("/users/:id/follow", async (req, res) => {
+router101.delete("/users/:id/follow", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -445947,7 +446177,7 @@ router100.delete("/users/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.get("/users/:id/followers", async (req, res) => {
+router101.get("/users/:id/followers", async (req, res) => {
   const targetId = String(req.params.id);
   const viewerId = req.user?.id;
   try {
@@ -445982,7 +446212,7 @@ router100.get("/users/:id/followers", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.get("/users/:id/following", async (req, res) => {
+router101.get("/users/:id/following", async (req, res) => {
   const targetId = String(req.params.id);
   const viewerId = req.user?.id;
   try {
@@ -446017,7 +446247,7 @@ router100.get("/users/:id/following", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.get("/users/me/follow-requests", async (req, res) => {
+router101.get("/users/me/follow-requests", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446038,7 +446268,7 @@ router100.get("/users/me/follow-requests", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.post("/users/follow-requests/:id/accept", async (req, res) => {
+router101.post("/users/follow-requests/:id/accept", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446059,7 +446289,7 @@ router100.post("/users/follow-requests/:id/accept", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router100.delete("/users/follow-requests/:id", async (req, res) => {
+router101.delete("/users/follow-requests/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446073,19 +446303,19 @@ router100.delete("/users/follow-requests/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var follows_default = router100;
+var follows_default = router101;
 
 // src/routes/pinned.ts
-var import_express101 = __toESM(require_express2(), 1);
+var import_express102 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router101 = (0, import_express101.Router)();
+var router102 = (0, import_express102.Router)();
 var PIN_DURATION_MS = 90 * 24 * 60 * 60 * 1e3;
 async function getOwnerBusinessId(userId) {
   const [biz] = await db.select({ id: businessesTable.id }).from(businessesTable).where(eq(businessesTable.submittedById, userId)).limit(1);
   return biz?.id ?? null;
 }
-router101.get("/businesses/:id/pinned", async (req, res) => {
+router102.get("/businesses/:id/pinned", async (req, res) => {
   const businessId = String(req.params.id);
   try {
     const items = await db.select().from(pinnedBusinessItemsTable).where(and(eq(pinnedBusinessItemsTable.businessId, businessId), eq(pinnedBusinessItemsTable.status, "active"))).orderBy(desc(pinnedBusinessItemsTable.pinnedAt)).limit(4);
@@ -446097,7 +446327,7 @@ router101.get("/businesses/:id/pinned", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router101.get("/business/pinned", async (req, res) => {
+router102.get("/business/pinned", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446123,7 +446353,7 @@ router101.get("/business/pinned", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router101.post("/business/pinned", async (req, res) => {
+router102.post("/business/pinned", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446178,7 +446408,7 @@ router101.post("/business/pinned", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router101.delete("/business/pinned/:id", async (req, res) => {
+router102.delete("/business/pinned/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -446202,13 +446432,13 @@ router101.delete("/business/pinned/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-var pinned_default = router101;
+var pinned_default = router102;
 
 // src/routes/creator-profiles.ts
-var import_express102 = __toESM(require_express2(), 1);
+var import_express103 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router102 = (0, import_express102.Router)();
+var router103 = (0, import_express103.Router)();
 function requireAuth13(req, res) {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
@@ -446216,7 +446446,7 @@ function requireAuth13(req, res) {
   }
   return true;
 }
-router102.get("/creator-profile/me", async (req, res) => {
+router103.get("/creator-profile/me", async (req, res) => {
   if (!requireAuth13(req, res)) return;
   try {
     const userId = req.user.id;
@@ -446227,7 +446457,7 @@ router102.get("/creator-profile/me", async (req, res) => {
     res.status(500).json({ error: "Failed to load creator profile." });
   }
 });
-router102.post("/creator-profile/me", async (req, res) => {
+router103.post("/creator-profile/me", async (req, res) => {
   if (!requireAuth13(req, res)) return;
   try {
     const userId = req.user.id;
@@ -446255,7 +446485,7 @@ router102.post("/creator-profile/me", async (req, res) => {
     res.status(500).json({ error: "Failed to save creator profile." });
   }
 });
-router102.get("/creator-profile/:userId", async (req, res) => {
+router103.get("/creator-profile/:userId", async (req, res) => {
   try {
     const userId = String(req.params.userId);
     const [profile] = await db.select().from(creatorProfilesTable).where(eq(creatorProfilesTable.userId, userId)).limit(1);
@@ -446274,7 +446504,7 @@ router102.get("/creator-profile/:userId", async (req, res) => {
     res.status(500).json({ error: "Failed to load creator profile." });
   }
 });
-router102.get("/creators", async (req, res) => {
+router103.get("/creators", async (req, res) => {
   try {
     const { city, state, q: q3 } = req.query;
     const conditions = [eq(creatorProfilesTable.isPublic, true)];
@@ -446304,7 +446534,7 @@ router102.get("/creators", async (req, res) => {
     res.status(500).json({ error: "Failed to load creators." });
   }
 });
-router102.get("/location-feed/:location", async (req, res) => {
+router103.get("/location-feed/:location", async (req, res) => {
   try {
     const location = String(req.params.location).trim();
     if (!location) {
@@ -446370,11 +446600,11 @@ router102.get("/location-feed/:location", async (req, res) => {
     res.status(500).json({ error: "Failed to load location feed" });
   }
 });
-var creator_profiles_default = router102;
+var creator_profiles_default = router103;
 
 // src/routes/topic-briefs.ts
-var import_express103 = __toESM(require_express2(), 1);
-var router103 = (0, import_express103.Router)();
+var import_express104 = __toESM(require_express2(), 1);
+var router104 = (0, import_express104.Router)();
 var TOPIC_PROFILES = {
   "health & wellness": {
     label: "Health & Wellness",
@@ -446490,7 +446720,7 @@ One powerful closing paragraph \u2014 why this matters and what the community's 
 Format with bold section headers as shown above. Be thorough, specific, and cite real names/institutions wherever possible.`
   };
 }
-router103.get("/topic-brief/:topic", async (req, res) => {
+router104.get("/topic-brief/:topic", async (req, res) => {
   try {
     if (!openai) {
       res.status(503).json({ error: "AI service unavailable" });
@@ -446527,10 +446757,10 @@ router103.get("/topic-brief/:topic", async (req, res) => {
     res.status(500).json({ error: "Failed to generate topic brief" });
   }
 });
-var topic_briefs_default = router103;
+var topic_briefs_default = router104;
 
 // src/routes/knowledge-hubs.ts
-var import_express104 = __toESM(require_express2(), 1);
+var import_express105 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 
@@ -446727,8 +446957,8 @@ function getSourcesForTopic(category, topicType, topicName) {
 }
 
 // src/routes/knowledge-hubs.ts
-var router104 = (0, import_express104.Router)();
-router104.post("/knowledge/hubs/resolve", async (req, res) => {
+var router105 = (0, import_express105.Router)();
+router105.post("/knowledge/hubs/resolve", async (req, res) => {
   const { query } = req.body;
   if (!query?.trim()) {
     res.status(400).json({ error: "query required" });
@@ -446812,7 +447042,7 @@ router104.post("/knowledge/hubs/resolve", async (req, res) => {
     res.status(500).json({ error: "Resolution failed" });
   }
 });
-router104.get("/knowledge/hubs/:topicId", async (req, res) => {
+router105.get("/knowledge/hubs/:topicId", async (req, res) => {
   const topicId = String(req.params.topicId);
   const userId = req.user?.id;
   try {
@@ -446908,7 +447138,7 @@ router104.get("/knowledge/hubs/:topicId", async (req, res) => {
     res.status(500).json({ error: "Could not load hub" });
   }
 });
-router104.get("/knowledge/hubs/:topicId/recommendations", async (req, res) => {
+router105.get("/knowledge/hubs/:topicId/recommendations", async (req, res) => {
   const topicId = String(req.params.topicId);
   try {
     const [topic] = await db.select({ name: knowledgeTopicsTable.canonicalName, category: knowledgeTopicsTable.category }).from(knowledgeTopicsTable).where(eq(knowledgeTopicsTable.id, topicId)).limit(1);
@@ -446950,7 +447180,7 @@ router104.get("/knowledge/hubs/:topicId/recommendations", async (req, res) => {
     res.json({ recommendations: [] });
   }
 });
-router104.put("/knowledge/hubs/:topicId/intent", async (req, res) => {
+router105.put("/knowledge/hubs/:topicId/intent", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });
@@ -446971,14 +447201,14 @@ router104.put("/knowledge/hubs/:topicId/intent", async (req, res) => {
     res.status(500).json({ error: "Could not update intent" });
   }
 });
-var knowledge_hubs_default = router104;
+var knowledge_hubs_default = router105;
 
 // src/routes/community-alerts.ts
-var import_express105 = __toESM(require_express2(), 1);
+var import_express106 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router105 = (0, import_express105.Router)();
+var router106 = (0, import_express106.Router)();
 var EXPIRY_MINUTES = {
   // Legacy safety types
   ice: 120,
@@ -447012,7 +447242,7 @@ function requireAuth14(req, res) {
 function computeStatus(confirmedCount) {
   return confirmedCount >= CONFIRM_THRESHOLD ? "confirmed" : "possible";
 }
-router105.get("/community-alerts/nearby", async (req, res) => {
+router106.get("/community-alerts/nearby", async (req, res) => {
   try {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
@@ -447062,7 +447292,7 @@ router105.get("/community-alerts/nearby", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch nearby alerts." });
   }
 });
-router105.post("/community-alerts", async (req, res) => {
+router106.post("/community-alerts", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447097,7 +447327,7 @@ router105.post("/community-alerts", async (req, res) => {
     res.status(500).json({ error: "Failed to create alert." });
   }
 });
-router105.post("/community-alerts/:id/confirm", async (req, res) => {
+router106.post("/community-alerts/:id/confirm", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const alertId = String(req.params.id);
@@ -447120,7 +447350,7 @@ router105.post("/community-alerts/:id/confirm", async (req, res) => {
     res.status(500).json({ error: "Failed to confirm alert." });
   }
 });
-router105.post("/community-alerts/:id/clear", async (req, res) => {
+router106.post("/community-alerts/:id/clear", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const alertId = String(req.params.id);
@@ -447137,7 +447367,7 @@ router105.post("/community-alerts/:id/clear", async (req, res) => {
     res.status(500).json({ error: "Failed to clear alert." });
   }
 });
-router105.get("/community-alerts/minority-alternatives", async (req, res) => {
+router106.get("/community-alerts/minority-alternatives", async (req, res) => {
   try {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
@@ -447182,7 +447412,7 @@ router105.get("/community-alerts/minority-alternatives", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alternatives." });
   }
 });
-router105.get("/community-alerts/flagged-businesses", async (req, res) => {
+router106.get("/community-alerts/flagged-businesses", async (req, res) => {
   try {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
@@ -447247,7 +447477,7 @@ router105.get("/community-alerts/flagged-businesses", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch flagged businesses." });
   }
 });
-router105.post("/community-alerts/location", async (req, res) => {
+router106.post("/community-alerts/location", async (req, res) => {
   if (!requireAuth14(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447266,13 +447496,13 @@ router105.post("/community-alerts/location", async (req, res) => {
     res.status(500).json({ error: "Failed to update location." });
   }
 });
-var community_alerts_default = router105;
+var community_alerts_default = router106;
 
 // src/routes/for-you.ts
-var import_express106 = __toESM(require_express2(), 1);
+var import_express107 = __toESM(require_express2(), 1);
 init_src();
-var router106 = (0, import_express106.Router)();
-router106.get("/ai/for-you", async (req, res) => {
+var router107 = (0, import_express107.Router)();
+router107.get("/ai/for-you", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -447347,10 +447577,10 @@ Generate 3 proactive suggestions for this user.`
     res.json({ suggestions: [] });
   }
 });
-var for_you_default = router106;
+var for_you_default = router107;
 
 // src/routes/knowledge-delivery.ts
-var import_express107 = __toESM(require_express2(), 1);
+var import_express108 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var ADMIN_EMAILS12 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
@@ -447360,7 +447590,7 @@ function isAdmin13(req) {
   if (ADMIN_EMAILS12.length > 0 && ADMIN_EMAILS12.includes(user.email)) return true;
   return user.role === "admin";
 }
-var router107 = (0, import_express107.Router)();
+var router108 = (0, import_express108.Router)();
 function requireAuth15(req, res) {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
@@ -447368,7 +447598,7 @@ function requireAuth15(req, res) {
   }
   return true;
 }
-router107.get("/knowledge/delivery-preferences", async (req, res) => {
+router108.get("/knowledge/delivery-preferences", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447386,7 +447616,7 @@ router107.get("/knowledge/delivery-preferences", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch delivery preferences." });
   }
 });
-router107.put("/knowledge/delivery-preferences", async (req, res) => {
+router108.put("/knowledge/delivery-preferences", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447413,7 +447643,7 @@ router107.put("/knowledge/delivery-preferences", async (req, res) => {
     res.status(500).json({ error: "Failed to save delivery preferences." });
   }
 });
-router107.get("/knowledge/issues", async (req, res) => {
+router108.get("/knowledge/issues", async (req, res) => {
   try {
     const userId = req.user?.id;
     const issues = await db.select().from(topicIssuesTable).where(eq(topicIssuesTable.isActive, true)).orderBy(topicIssuesTable.name);
@@ -447430,7 +447660,7 @@ router107.get("/knowledge/issues", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch issues." });
   }
 });
-router107.post("/knowledge/issues/:id/follow", async (req, res) => {
+router108.post("/knowledge/issues/:id/follow", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447442,7 +447672,7 @@ router107.post("/knowledge/issues/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to follow issue." });
   }
 });
-router107.delete("/knowledge/issues/:id/follow", async (req, res) => {
+router108.delete("/knowledge/issues/:id/follow", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447454,7 +447684,7 @@ router107.delete("/knowledge/issues/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to unfollow issue." });
   }
 });
-router107.patch("/knowledge/topics/:id/follow/pin", async (req, res) => {
+router108.patch("/knowledge/topics/:id/follow/pin", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447476,7 +447706,7 @@ router107.patch("/knowledge/topics/:id/follow/pin", async (req, res) => {
     res.status(500).json({ error: "Failed to update pin." });
   }
 });
-router107.patch("/knowledge/issues/:id/follow/pin", async (req, res) => {
+router108.patch("/knowledge/issues/:id/follow/pin", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447498,7 +447728,7 @@ router107.patch("/knowledge/issues/:id/follow/pin", async (req, res) => {
     res.status(500).json({ error: "Failed to update pin." });
   }
 });
-router107.get("/knowledge/happening-now", async (req, res) => {
+router108.get("/knowledge/happening-now", async (req, res) => {
   try {
     const userId = req.user?.id;
     const rows = await db.select({
@@ -447531,7 +447761,7 @@ router107.get("/knowledge/happening-now", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch stories." });
   }
 });
-router107.post("/knowledge/happening-now", async (req, res) => {
+router108.post("/knowledge/happening-now", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447559,7 +447789,7 @@ router107.post("/knowledge/happening-now", async (req, res) => {
     res.status(500).json({ error: "Failed to submit story." });
   }
 });
-router107.post("/knowledge/happening-now/:id/confirm", async (req, res) => {
+router108.post("/knowledge/happening-now/:id/confirm", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447588,7 +447818,7 @@ router107.post("/knowledge/happening-now/:id/confirm", async (req, res) => {
     res.status(500).json({ error: "Failed to confirm story." });
   }
 });
-router107.patch("/knowledge/happening-now/:id/status", async (req, res) => {
+router108.patch("/knowledge/happening-now/:id/status", async (req, res) => {
   if (!isAdmin13(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -447608,7 +447838,7 @@ router107.patch("/knowledge/happening-now/:id/status", async (req, res) => {
     res.status(500).json({ error: "Failed to update story status." });
   }
 });
-router107.get("/knowledge/happening-now/pending", async (req, res) => {
+router108.get("/knowledge/happening-now/pending", async (req, res) => {
   if (!isAdmin13(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -447621,7 +447851,7 @@ router107.get("/knowledge/happening-now/pending", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch pending stories." });
   }
 });
-router107.get("/knowledge/digest", async (req, res) => {
+router108.get("/knowledge/digest", async (req, res) => {
   if (!requireAuth15(req, res)) return;
   try {
     const userId = req.user.id;
@@ -447658,15 +447888,15 @@ router107.get("/knowledge/digest", async (req, res) => {
     res.status(500).json({ error: "Failed to generate digest." });
   }
 });
-var knowledge_delivery_default = router107;
+var knowledge_delivery_default = router108;
 
 // src/routes/business-insights.ts
-var import_express108 = __toESM(require_express2(), 1);
+var import_express109 = __toESM(require_express2(), 1);
 init_src();
 init_schema2();
 init_drizzle_orm();
-var router108 = (0, import_express108.Router)();
-router108.post("/business-insights", async (req, res) => {
+var router109 = (0, import_express109.Router)();
+router109.post("/business-insights", async (req, res) => {
   try {
     const {
       businessId,
@@ -447708,7 +447938,7 @@ router108.post("/business-insights", async (req, res) => {
     res.status(500).json({ error: "Failed to submit insight" });
   }
 });
-router108.get("/business-insights/summary/:businessId", async (req, res) => {
+router109.get("/business-insights/summary/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
     const rows = await db.select({
@@ -447731,13 +447961,13 @@ router108.get("/business-insights/summary/:businessId", async (req, res) => {
     res.status(500).json({ error: "Failed to load insights" });
   }
 });
-var business_insights_default = router108;
+var business_insights_default = router109;
 
 // src/routes/global-recommendations.ts
-var import_express109 = __toESM(require_express2(), 1);
+var import_express110 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router109 = (0, import_express109.Router)();
+var router110 = (0, import_express110.Router)();
 var ALLOWED_TYPES = [
   "restaurant",
   "hotel",
@@ -447759,7 +447989,7 @@ function computeBadge(count3) {
   if (count3 >= 5) return "community_ambassador";
   return "local_insider";
 }
-router109.post("/global-recommendations", async (req, res) => {
+router110.post("/global-recommendations", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -447799,7 +448029,7 @@ router109.post("/global-recommendations", async (req, res) => {
     res.status(500).json({ error: "Failed to submit recommendation" });
   }
 });
-router109.get("/global-recommendations", async (req, res) => {
+router110.get("/global-recommendations", async (req, res) => {
   const { country, limit: limit2 } = req.query;
   const take = Math.min(parseInt(limit2 ?? "50", 10), 100);
   try {
@@ -447826,7 +448056,7 @@ router109.get("/global-recommendations", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
-router109.get("/global-recommendations/mine", async (req, res) => {
+router110.get("/global-recommendations/mine", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -447841,7 +448071,7 @@ router109.get("/global-recommendations/mine", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch your recommendations" });
   }
 });
-router109.patch("/global-recommendations/:id/status", async (req, res) => {
+router110.patch("/global-recommendations/:id/status", async (req, res) => {
   if (!isAdmin14(req)) {
     res.status(403).json({ error: "Admin only" });
     return;
@@ -447863,7 +448093,7 @@ router109.patch("/global-recommendations/:id/status", async (req, res) => {
     res.status(500).json({ error: "Failed to update status" });
   }
 });
-router109.get("/global-recommendations/pending", async (req, res) => {
+router110.get("/global-recommendations/pending", async (req, res) => {
   if (!isAdmin14(req)) {
     res.status(403).json({ error: "Admin only" });
     return;
@@ -447889,13 +448119,13 @@ router109.get("/global-recommendations/pending", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch pending recommendations" });
   }
 });
-var global_recommendations_default = router109;
+var global_recommendations_default = router110;
 
 // src/routes/officer-watch.ts
-var import_express110 = __toESM(require_express2(), 1);
+var import_express111 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router110 = (0, import_express110.Router)();
+var router111 = (0, import_express111.Router)();
 function requireAuth16(req, res) {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
@@ -447914,7 +448144,7 @@ function requireAdmin(req, res) {
   }
   return true;
 }
-router110.get("/safety/officer-watch", async (req, res) => {
+router111.get("/safety/officer-watch", async (req, res) => {
   try {
     const { city, state } = req.query;
     let query = db.select().from(flaggedOfficersTable).where(eq(flaggedOfficersTable.status, "verified"));
@@ -447942,7 +448172,7 @@ router110.get("/safety/officer-watch", async (req, res) => {
     res.status(500).json({ error: "Failed to load officer watch" });
   }
 });
-router110.post("/safety/officer-watch", async (req, res) => {
+router111.post("/safety/officer-watch", async (req, res) => {
   if (!requireAuth16(req, res)) return;
   try {
     const { officerName, badgeNumber, department, city, state, offenseType, offenseDescription, offenseDate, sourceUrl } = req.body;
@@ -447969,7 +448199,7 @@ router110.post("/safety/officer-watch", async (req, res) => {
     res.status(500).json({ error: "Failed to submit tip" });
   }
 });
-router110.patch("/safety/officer-watch/:id/verify", async (req, res) => {
+router111.patch("/safety/officer-watch/:id/verify", async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const { status } = req.body;
@@ -447988,7 +448218,7 @@ router110.patch("/safety/officer-watch/:id/verify", async (req, res) => {
     res.status(500).json({ error: "Failed to update officer" });
   }
 });
-router110.post("/safety/officer-watch/:id/transfer", async (req, res) => {
+router111.post("/safety/officer-watch/:id/transfer", async (req, res) => {
   if (!requireAuth16(req, res)) return;
   try {
     const officerId = Number(req.params.id);
@@ -448035,7 +448265,7 @@ router110.post("/safety/officer-watch/:id/transfer", async (req, res) => {
     res.status(500).json({ error: "Failed to log transfer" });
   }
 });
-router110.get("/safety/officer-watch/pending", async (req, res) => {
+router111.get("/safety/officer-watch/pending", async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const pending = await db.select().from(flaggedOfficersTable).where(eq(flaggedOfficersTable.status, "pending")).orderBy(desc(flaggedOfficersTable.createdAt)).limit(100);
@@ -448046,11 +448276,11 @@ router110.get("/safety/officer-watch/pending", async (req, res) => {
     res.status(500).json({ error: "Failed to load pending submissions" });
   }
 });
-var officer_watch_default = router110;
+var officer_watch_default = router111;
 
 // src/routes/wellness.ts
-var import_express111 = __toESM(require_express2(), 1);
-var router111 = (0, import_express111.Router)();
+var import_express112 = __toESM(require_express2(), 1);
+var router112 = (0, import_express112.Router)();
 var TYPE_KEYWORDS = {
   aa: ["alcoholics anonymous", "aa meeting", "alcohol", "12-step"],
   na: ["narcotics anonymous", "na meeting", "narcotics", "substance"],
@@ -448066,7 +448296,7 @@ function scoreResult(name3, type2) {
   const nameLower = name3.toLowerCase();
   return keywords.some((kw) => nameLower.includes(kw));
 }
-router111.get("/wellness/meetings", async (req, res) => {
+router112.get("/wellness/meetings", async (req, res) => {
   const location = req.query["location"]?.trim() ?? "";
   const radius = Number(req.query["radius"] ?? 25);
   const type2 = req.query["type"] ?? "all";
@@ -448111,7 +448341,7 @@ router111.get("/wellness/meetings", async (req, res) => {
     res.json({ facilities: [] });
   }
 });
-router111.get("/wellness/crisis-resources", (_req, res) => {
+router112.get("/wellness/crisis-resources", (_req, res) => {
   res.json({
     resources: [
       { id: "988", name: "988 Suicide & Crisis Lifeline", phone: "988", text: "988", available: "24/7" },
@@ -448124,14 +448354,14 @@ router111.get("/wellness/crisis-resources", (_req, res) => {
     ]
   });
 });
-var wellness_default = router111;
+var wellness_default = router112;
 
 // src/routes/kinfolk-tasks.ts
-var import_express112 = __toESM(require_express2(), 1);
+var import_express113 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router112 = (0, import_express112.Router)();
-router112.get("/kinfolk/lists", async (req, res) => {
+var router113 = (0, import_express113.Router)();
+router113.get("/kinfolk/lists", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448144,7 +448374,7 @@ router112.get("/kinfolk/lists", async (req, res) => {
     res.status(500).json({ error: "Failed to load lists" });
   }
 });
-router112.post("/kinfolk/lists", async (req, res) => {
+router113.post("/kinfolk/lists", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448162,7 +448392,7 @@ router112.post("/kinfolk/lists", async (req, res) => {
     res.status(500).json({ error: "Failed to create list" });
   }
 });
-router112.delete("/kinfolk/lists/:id", async (req, res) => {
+router113.delete("/kinfolk/lists/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448181,7 +448411,7 @@ router112.delete("/kinfolk/lists/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete list" });
   }
 });
-router112.get("/kinfolk/tasks", async (req, res) => {
+router113.get("/kinfolk/tasks", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448201,7 +448431,7 @@ router112.get("/kinfolk/tasks", async (req, res) => {
     res.status(500).json({ error: "Failed to load tasks" });
   }
 });
-router112.post("/kinfolk/tasks", async (req, res) => {
+router113.post("/kinfolk/tasks", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448227,7 +448457,7 @@ router112.post("/kinfolk/tasks", async (req, res) => {
     res.status(500).json({ error: "Failed to create task" });
   }
 });
-router112.post("/kinfolk/tasks/bulk", async (req, res) => {
+router113.post("/kinfolk/tasks/bulk", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448254,7 +448484,7 @@ router112.post("/kinfolk/tasks/bulk", async (req, res) => {
     res.status(500).json({ error: "Failed to create tasks" });
   }
 });
-router112.patch("/kinfolk/tasks/:id", async (req, res) => {
+router113.patch("/kinfolk/tasks/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448276,7 +448506,7 @@ router112.patch("/kinfolk/tasks/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update task" });
   }
 });
-router112.delete("/kinfolk/tasks/:id", async (req, res) => {
+router113.delete("/kinfolk/tasks/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -448291,13 +448521,13 @@ router112.delete("/kinfolk/tasks/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete task" });
   }
 });
-var kinfolk_tasks_default = router112;
+var kinfolk_tasks_default = router113;
 
 // src/routes/featured-video.ts
-var import_express113 = __toESM(require_express2(), 1);
+var import_express114 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router113 = (0, import_express113.Router)();
+var router114 = (0, import_express114.Router)();
 function uid5(req) {
   return req.user?.id ?? null;
 }
@@ -448330,7 +448560,7 @@ function isAllowedUrl(url3) {
     return false;
   }
 }
-router113.patch("/businesses/:id/featured-video", async (req, res) => {
+router114.patch("/businesses/:id/featured-video", async (req, res) => {
   const user = uid5(req);
   if (!user) {
     res.status(401).json({ error: "Authentication required" });
@@ -448378,14 +448608,14 @@ router113.patch("/businesses/:id/featured-video", async (req, res) => {
     res.status(500).json({ error: "Failed to save video" });
   }
 });
-var featured_video_default = router113;
+var featured_video_default = router114;
 
 // src/routes/hub-badges.ts
-var import_express114 = __toESM(require_express2(), 1);
+var import_express115 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router114 = (0, import_express114.Router)();
-router114.get("/knowledge/hubs/:topicId/experts", async (req, res) => {
+var router115 = (0, import_express115.Router)();
+router115.get("/knowledge/hubs/:topicId/experts", async (req, res) => {
   const topicId = String(req.params.topicId);
   try {
     const experts = await db.select({
@@ -448417,7 +448647,7 @@ router114.get("/knowledge/hubs/:topicId/experts", async (req, res) => {
     res.status(500).json({ error: "Failed to load experts" });
   }
 });
-router114.post("/knowledge/hubs/:topicId/volunteer-expert", async (req, res) => {
+router115.post("/knowledge/hubs/:topicId/volunteer-expert", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448451,7 +448681,7 @@ router114.post("/knowledge/hubs/:topicId/volunteer-expert", async (req, res) => 
     res.status(500).json({ error: "Failed to register as expert" });
   }
 });
-router114.get("/users/:userId/badges", async (req, res) => {
+router115.get("/users/:userId/badges", async (req, res) => {
   const targetUserId = String(req.params.userId);
   try {
     const badges = await db.select({
@@ -448474,7 +448704,7 @@ router114.get("/users/:userId/badges", async (req, res) => {
     res.status(500).json({ error: "Failed to load badges" });
   }
 });
-router114.post("/badges/:badgeId/vote", async (req, res) => {
+router115.post("/badges/:badgeId/vote", async (req, res) => {
   const voterId = req.user?.id;
   if (!voterId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448489,14 +448719,14 @@ router114.post("/badges/:badgeId/vote", async (req, res) => {
     res.status(500).json({ error: "Failed to vote" });
   }
 });
-var hub_badges_default = router114;
+var hub_badges_default = router115;
 
 // src/routes/collections.ts
-var import_express115 = __toESM(require_express2(), 1);
+var import_express116 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router115 = (0, import_express115.Router)();
-router115.get("/collections", async (req, res) => {
+var router116 = (0, import_express116.Router)();
+router116.get("/collections", async (req, res) => {
   const { topicId, userId: filterUserId } = req.query;
   try {
     const conditions = [eq(collectionsTable.isPublic, true)];
@@ -448523,7 +448753,7 @@ router115.get("/collections", async (req, res) => {
     res.status(500).json({ error: "Failed to load collections" });
   }
 });
-router115.post("/collections", async (req, res) => {
+router116.post("/collections", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448549,7 +448779,7 @@ router115.post("/collections", async (req, res) => {
     res.status(500).json({ error: "Failed to create collection" });
   }
 });
-router115.get("/collections/:id", async (req, res) => {
+router116.get("/collections/:id", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     const [collection] = await db.select({
@@ -448579,7 +448809,7 @@ router115.get("/collections/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load collection" });
   }
 });
-router115.post("/collections/:id/items", async (req, res) => {
+router116.post("/collections/:id/items", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448609,7 +448839,7 @@ router115.post("/collections/:id/items", async (req, res) => {
     res.status(500).json({ error: "Failed to add item" });
   }
 });
-router115.delete("/collections/:id/items/:itemId", async (req, res) => {
+router116.delete("/collections/:id/items/:itemId", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448631,7 +448861,7 @@ router115.delete("/collections/:id/items/:itemId", async (req, res) => {
     res.status(500).json({ error: "Failed to remove item" });
   }
 });
-router115.post("/collections/:id/follow", async (req, res) => {
+router116.post("/collections/:id/follow", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448647,7 +448877,7 @@ router115.post("/collections/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to follow" });
   }
 });
-router115.delete("/collections/:id/follow", async (req, res) => {
+router116.delete("/collections/:id/follow", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448663,14 +448893,14 @@ router115.delete("/collections/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to unfollow" });
   }
 });
-var collections_default = router115;
+var collections_default = router116;
 
 // src/routes/roadmaps.ts
-var import_express116 = __toESM(require_express2(), 1);
+var import_express117 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router116 = (0, import_express116.Router)();
-router116.post("/roadmaps/generate", async (req, res) => {
+var router117 = (0, import_express117.Router)();
+router117.post("/roadmaps/generate", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448765,7 +448995,7 @@ Guidelines:
     res.status(500).json({ error: "Failed to generate roadmap" });
   }
 });
-router116.get("/roadmaps", async (req, res) => {
+router117.get("/roadmaps", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448779,7 +449009,7 @@ router116.get("/roadmaps", async (req, res) => {
     res.status(500).json({ error: "Failed to load roadmaps" });
   }
 });
-router116.get("/roadmaps/:id", async (req, res) => {
+router117.get("/roadmaps/:id", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448799,7 +449029,7 @@ router116.get("/roadmaps/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load roadmap" });
   }
 });
-router116.put("/roadmaps/:id/steps/:stepId/toggle", async (req, res) => {
+router117.put("/roadmaps/:id/steps/:stepId/toggle", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448832,15 +449062,15 @@ router116.put("/roadmaps/:id/steps/:stepId/toggle", async (req, res) => {
     res.status(500).json({ error: "Failed to update step" });
   }
 });
-var roadmaps_default = router116;
+var roadmaps_default = router117;
 
 // src/routes/guides.ts
-var import_express117 = __toESM(require_express2(), 1);
+var import_express118 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router117 = (0, import_express117.Router)();
+var router118 = (0, import_express118.Router)();
 var STORY_TYPES = ["university", "health", "business", "neighborhood", "career", "travel", "lifestyle", "general"];
-router117.get("/guides", async (req, res) => {
+router118.get("/guides", async (req, res) => {
   const { storyType, search, limit: qLimit } = req.query;
   const maxRows = Math.min(parseInt(qLimit ?? "30", 10), 60);
   try {
@@ -448880,7 +449110,7 @@ router117.get("/guides", async (req, res) => {
     res.status(500).json({ error: "Failed to load guides" });
   }
 });
-router117.post("/guides", async (req, res) => {
+router118.post("/guides", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448909,7 +449139,7 @@ router117.post("/guides", async (req, res) => {
     res.status(500).json({ error: "Failed to create guide" });
   }
 });
-router117.get("/guides/:id", async (req, res) => {
+router118.get("/guides/:id", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     const [guide] = await db.select({
@@ -448946,7 +449176,7 @@ router117.get("/guides/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load guide" });
   }
 });
-router117.post("/guides/:id/sections", async (req, res) => {
+router118.post("/guides/:id/sections", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448976,7 +449206,7 @@ router117.post("/guides/:id/sections", async (req, res) => {
     res.status(500).json({ error: "Failed to add section" });
   }
 });
-router117.delete("/guides/:id/sections/:sectionId", async (req, res) => {
+router118.delete("/guides/:id/sections/:sectionId", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -448999,7 +449229,7 @@ router117.delete("/guides/:id/sections/:sectionId", async (req, res) => {
     res.status(500).json({ error: "Failed to delete section" });
   }
 });
-router117.post("/guides/:id/items", async (req, res) => {
+router118.post("/guides/:id/items", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449035,7 +449265,7 @@ router117.post("/guides/:id/items", async (req, res) => {
     res.status(500).json({ error: "Failed to add item" });
   }
 });
-router117.delete("/guides/:id/items/:itemId", async (req, res) => {
+router118.delete("/guides/:id/items/:itemId", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449057,7 +449287,7 @@ router117.delete("/guides/:id/items/:itemId", async (req, res) => {
     res.status(500).json({ error: "Failed to delete item" });
   }
 });
-router117.post("/guides/:id/follow", async (req, res) => {
+router118.post("/guides/:id/follow", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449073,7 +449303,7 @@ router117.post("/guides/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to follow" });
   }
 });
-router117.delete("/guides/:id/follow", async (req, res) => {
+router118.delete("/guides/:id/follow", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449089,7 +449319,7 @@ router117.delete("/guides/:id/follow", async (req, res) => {
     res.status(500).json({ error: "Failed to unfollow" });
   }
 });
-router117.get("/users/:userId/guides", async (req, res) => {
+router118.get("/users/:userId/guides", async (req, res) => {
   const targetUserId = String(req.params.userId);
   const requesterId = req.user?.id;
   try {
@@ -449104,14 +449334,14 @@ router117.get("/users/:userId/guides", async (req, res) => {
     res.status(500).json({ error: "Failed to load guides" });
   }
 });
-var guides_default = router117;
+var guides_default = router118;
 
 // src/routes/travel-planner.ts
-var import_express118 = __toESM(require_express2(), 1);
+var import_express119 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router118 = (0, import_express118.Router)();
-router118.post("/travel-planner/generate", async (req, res) => {
+var router119 = (0, import_express119.Router)();
+router119.post("/travel-planner/generate", async (req, res) => {
   const { destination, days, style, interests } = req.body;
   if (!destination || !days) {
     res.status(400).json({ error: "destination and days are required" });
@@ -449204,12 +449434,12 @@ CRITICAL: Return ONLY valid JSON matching this exact structure, no extra text:
     res.status(500).json({ error: "Failed to generate itinerary" });
   }
 });
-var travel_planner_default = router118;
+var travel_planner_default = router119;
 
 // src/routes/smart-fill.ts
-var import_express119 = __toESM(require_express2(), 1);
-var router119 = (0, import_express119.Router)();
-router119.post("/businesses/smart-fill", async (req, res) => {
+var import_express120 = __toESM(require_express2(), 1);
+var router120 = (0, import_express120.Router)();
+router120.post("/businesses/smart-fill", async (req, res) => {
   const { name: name3, city } = req.body;
   if (!name3?.trim()) {
     res.status(400).json({ error: "name is required" });
@@ -449257,13 +449487,13 @@ Return ONLY valid JSON with this exact structure (no extra text):
     res.status(500).json({ error: "Failed to generate listing details" });
   }
 });
-var smart_fill_default = router119;
+var smart_fill_default = router120;
 
 // src/routes/wrapped.ts
-var import_express120 = __toESM(require_express2(), 1);
+var import_express121 = __toESM(require_express2(), 1);
 init_src();
-var router120 = (0, import_express120.Router)();
-router120.get("/users/wrapped", async (req, res) => {
+var router121 = (0, import_express121.Router)();
+router121.get("/users/wrapped", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -449363,14 +449593,14 @@ router120.get("/users/wrapped", async (req, res) => {
     res.status(500).json({ error: "Failed to load wrapped stats" });
   }
 });
-var wrapped_default = router120;
+var wrapped_default = router121;
 
 // src/routes/archive.ts
-var import_express121 = __toESM(require_express2(), 1);
+var import_express122 = __toESM(require_express2(), 1);
 init_src();
 init_src();
 init_drizzle_orm();
-var router121 = (0, import_express121.Router)();
+var router122 = (0, import_express122.Router)();
 var CONTRIBUTION_TYPES = [
   "interview",
   "place",
@@ -449380,7 +449610,7 @@ var CONTRIBUTION_TYPES = [
   "local_tip",
   "home_sentence"
 ];
-router121.get("/archive/cities", async (req, res) => {
+router122.get("/archive/cities", async (req, res) => {
   try {
     const cities = await db.select().from(cityArchivesTable).where(eq(cityArchivesTable.isPublished, true)).orderBy(desc(cityArchivesTable.tourVisitedAt), asc(cityArchivesTable.city));
     res.json({ cities });
@@ -449389,7 +449619,7 @@ router121.get("/archive/cities", async (req, res) => {
     res.status(500).json({ error: "Failed to load cities" });
   }
 });
-router121.get("/archive/cities/all", async (req, res) => {
+router122.get("/archive/cities/all", async (req, res) => {
   const user = req.user;
   if (!user) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449403,7 +449633,7 @@ router121.get("/archive/cities/all", async (req, res) => {
     res.status(500).json({ error: "Failed to load cities" });
   }
 });
-router121.get("/archive/cities/:slug", async (req, res) => {
+router122.get("/archive/cities/:slug", async (req, res) => {
   const { slug } = req.params;
   try {
     const [city] = await db.select().from(cityArchivesTable).where(eq(cityArchivesTable.slug, slug)).limit(1);
@@ -449428,7 +449658,7 @@ router121.get("/archive/cities/:slug", async (req, res) => {
     res.status(500).json({ error: "Failed to load city archive" });
   }
 });
-router121.post("/archive/cities/:slug/contribute", async (req, res) => {
+router122.post("/archive/cities/:slug/contribute", async (req, res) => {
   const { slug } = req.params;
   const user = req.user;
   const { type: type2, title, content, mediaUrl, businessId, neighborhood, contributorName } = req.body;
@@ -449465,7 +449695,7 @@ router121.post("/archive/cities/:slug/contribute", async (req, res) => {
     res.status(500).json({ error: "Failed to submit contribution" });
   }
 });
-router121.post("/archive/cities/:slug/contributions/:id/upvote", async (req, res) => {
+router122.post("/archive/cities/:slug/contributions/:id/upvote", async (req, res) => {
   const { id: id2 } = req.params;
   try {
     await db.update(archiveContributionsTable).set({ upvotes: sql`${archiveContributionsTable.upvotes} + 1` }).where(eq(archiveContributionsTable.id, id2));
@@ -449475,7 +449705,7 @@ router121.post("/archive/cities/:slug/contributions/:id/upvote", async (req, res
     res.status(500).json({ error: "Failed to upvote" });
   }
 });
-router121.post("/archive/nominate-city", async (req, res) => {
+router122.post("/archive/nominate-city", async (req, res) => {
   const { city, state, email: email3, reason } = req.body;
   if (!city?.trim()) {
     res.status(400).json({ error: "City name is required" });
@@ -449503,7 +449733,7 @@ router121.post("/archive/nominate-city", async (req, res) => {
     res.status(500).json({ error: "Failed to submit nomination" });
   }
 });
-router121.patch("/archive/contributions/:id/approve", async (req, res) => {
+router122.patch("/archive/contributions/:id/approve", async (req, res) => {
   const user = req.user;
   const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
   if (!user?.email || !ADMIN_EMAILS15.includes(user.email)) {
@@ -449523,7 +449753,7 @@ router121.patch("/archive/contributions/:id/approve", async (req, res) => {
     res.status(500).json({ error: "Failed to approve contribution" });
   }
 });
-router121.post("/archive/admin/cities", async (req, res) => {
+router122.post("/archive/admin/cities", async (req, res) => {
   const user = req.user;
   const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
   if (!user?.email || !ADMIN_EMAILS15.includes(user.email)) {
@@ -449543,12 +449773,12 @@ router121.post("/archive/admin/cities", async (req, res) => {
     res.status(500).json({ error: "Failed to save city archive" });
   }
 });
-var archive_default = router121;
+var archive_default = router122;
 
 // src/routes/revenuecat.ts
-var import_express122 = __toESM(require_express2(), 1);
+var import_express123 = __toESM(require_express2(), 1);
 init_src();
-var router122 = (0, import_express122.Router)();
+var router123 = (0, import_express123.Router)();
 var PRODUCT_TIER_MAP = {
   mwm_nav_monthly: "navigator",
   mwm_navigator_annual: "navigator",
@@ -449559,7 +449789,7 @@ var PRODUCT_TIER_MAP = {
   mwm_legacy_member_monthly: "legacy_member",
   mwm_legacy_member_annual: "legacy_member"
 };
-router122.post("/revenuecat/sync", async (req, res) => {
+router123.post("/revenuecat/sync", async (req, res) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });
@@ -449620,7 +449850,7 @@ router122.post("/revenuecat/sync", async (req, res) => {
     res.status(500).json({ error: "Failed to sync purchase" });
   }
 });
-router122.post("/revenuecat/webhook", async (req, res) => {
+router123.post("/revenuecat/webhook", async (req, res) => {
   const authKey = process.env.REVENUECAT_WEBHOOK_AUTH_KEY;
   if (!authKey) {
     req.log.error({}, "REVENUECAT_WEBHOOK_AUTH_KEY not configured \u2014 rejecting webhook request to prevent unauthorized processing");
@@ -449702,14 +449932,14 @@ router122.post("/revenuecat/webhook", async (req, res) => {
   }
   res.json({ ok: true });
 });
-var revenuecat_default = router122;
+var revenuecat_default = router123;
 
 // src/routes/kinfolk-intelligence.ts
-var import_express123 = __toESM(require_express2(), 1);
+var import_express124 = __toESM(require_express2(), 1);
 init_src();
 init_schema2();
 init_drizzle_orm();
-var router123 = (0, import_express123.Router)();
+var router124 = (0, import_express124.Router)();
 function authed2(req, res) {
   if (!req.userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -449720,7 +449950,7 @@ function authed2(req, res) {
 function uid6(req) {
   return req.userId;
 }
-router123.post("/kinfolk/log-search", async (req, res) => {
+router124.post("/kinfolk/log-search", async (req, res) => {
   const { query, category, city, state } = req.body;
   if (!query || typeof query !== "string" || query.trim().length < 2) {
     res.json({ ok: true });
@@ -449740,7 +449970,7 @@ router123.post("/kinfolk/log-search", async (req, res) => {
     res.json({ ok: true });
   }
 });
-router123.get("/kinfolk/twin-recommendations", async (req, res) => {
+router124.get("/kinfolk/twin-recommendations", async (req, res) => {
   if (!authed2(req, res)) return;
   const twinTier = await getUserTier(String(req.user?.id ?? ""));
   if (twinTier === "free") {
@@ -449845,7 +450075,7 @@ router123.get("/kinfolk/twin-recommendations", async (req, res) => {
     res.status(500).json({ error: "Failed to load recommendations" });
   }
 });
-router123.get("/kinfolk/community-trends", async (req, res) => {
+router124.get("/kinfolk/community-trends", async (req, res) => {
   const city = req.query.city;
   const state = req.query.state;
   try {
@@ -449900,7 +450130,7 @@ router123.get("/kinfolk/community-trends", async (req, res) => {
     res.status(500).json({ error: "Failed to load trends" });
   }
 });
-router123.get("/businesses/:id/market-insights", async (req, res) => {
+router124.get("/businesses/:id/market-insights", async (req, res) => {
   if (!authed2(req, res)) return;
   const marketTier = await getUserTier(String(req.user?.id ?? ""));
   if (marketTier === "free") {
@@ -450007,7 +450237,7 @@ router123.get("/businesses/:id/market-insights", async (req, res) => {
     res.status(500).json({ error: "Failed to load market insights" });
   }
 });
-router123.get("/businesses/:id/target-audience", async (req, res) => {
+router124.get("/businesses/:id/target-audience", async (req, res) => {
   if (!authed2(req, res)) return;
   const businessId = req.params.id;
   try {
@@ -450022,7 +450252,7 @@ router123.get("/businesses/:id/target-audience", async (req, res) => {
     res.status(500).json({ error: "Failed to load target audience" });
   }
 });
-router123.patch("/businesses/:id/target-audience", async (req, res) => {
+router124.patch("/businesses/:id/target-audience", async (req, res) => {
   if (!authed2(req, res)) return;
   const businessId = req.params.id;
   const { keywords, demographics, occasions, ageRanges, primaryCity, primaryState, description } = req.body;
@@ -450052,10 +450282,10 @@ router123.patch("/businesses/:id/target-audience", async (req, res) => {
     res.status(500).json({ error: "Failed to save target audience" });
   }
 });
-var kinfolk_intelligence_default = router123;
+var kinfolk_intelligence_default = router124;
 
 // src/routes/hidden-gems.ts
-var import_express124 = __toESM(require_express2(), 1);
+var import_express125 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var PAID_TIERS3 = /* @__PURE__ */ new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
@@ -450064,7 +450294,7 @@ function isAdmin15(req) {
   const user = req.user;
   return !!(user?.email && ADMIN_EMAILS13.includes(user.email));
 }
-var router124 = (0, import_express124.Router)();
+var router125 = (0, import_express125.Router)();
 var AUTO_AWARD_MIN_NOMINATIONS = 10;
 var AUTO_AWARD_MIN_RATING = 4.3;
 var GEM_EXPIRY_DAYS = 90;
@@ -450108,7 +450338,7 @@ function pickTagline(businessName) {
   const idx = businessName.charCodeAt(0) % GEM_TAGLINES.length;
   return GEM_TAGLINES[idx];
 }
-router124.post("/:businessId/nominate", async (req, res) => {
+router125.post("/:businessId/nominate", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450172,7 +450402,7 @@ router124.post("/:businessId/nominate", async (req, res) => {
     res.status(500).json({ error: "Failed to submit nomination" });
   }
 });
-router124.get("/:businessId/status", async (req, res) => {
+router125.get("/:businessId/status", async (req, res) => {
   const businessId = String(req.params.businessId);
   try {
     const [biz] = await db.select({
@@ -450209,7 +450439,7 @@ router124.get("/:businessId/status", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch status" });
   }
 });
-router124.get("/", async (req, res) => {
+router125.get("/", async (req, res) => {
   if (!req.user?.id) {
     res.json({ locked: true, lockedReason: "auth_required", gems: [] });
     return;
@@ -450263,7 +450493,7 @@ router124.get("/", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch Hidden Gems" });
   }
 });
-router124.post("/admin/:businessId/award", async (req, res) => {
+router125.post("/admin/:businessId/award", async (req, res) => {
   if (!isAdmin15(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
@@ -450296,7 +450526,7 @@ router124.post("/admin/:businessId/award", async (req, res) => {
     res.status(500).json({ error: "Failed to award status" });
   }
 });
-router124.post("/admin/:businessId/revoke", async (req, res) => {
+router125.post("/admin/:businessId/revoke", async (req, res) => {
   if (!isAdmin15(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
@@ -450316,13 +450546,13 @@ router124.post("/admin/:businessId/revoke", async (req, res) => {
     res.status(500).json({ error: "Failed to revoke status" });
   }
 });
-var hidden_gems_default = router124;
+var hidden_gems_default = router125;
 
 // src/routes/resources.ts
-var import_express125 = __toESM(require_express2(), 1);
+var import_express126 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router125 = (0, import_express125.Router)();
+var router126 = (0, import_express126.Router)();
 var ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
 function isAdmin16(req) {
   const user = req.user;
@@ -450363,7 +450593,7 @@ var CURATED_SOURCES = [
   { title: "HRSA Find a Health Center", description: "Find federally qualified health centers for free or low-cost medical and dental care.", category: "safety_rights", subcategory: "health care", sourceTier: "official", organization: "HRSA", url: "https://findahealthcenter.hrsa.gov", isNational: true, keywords: ["health clinic", "free health care", "dental", "medical", "community health"] },
   { title: "U.S. Department of Veterans Affairs", description: "Benefits, health care, housing, employment, and education resources for veterans and their families.", category: "safety_rights", subcategory: "veterans", sourceTier: "official", organization: "U.S. Department of Veterans Affairs", url: "https://www.va.gov", isNational: true, keywords: ["veteran", "VA", "military", "benefits", "health care"] }
 ];
-router125.get("/resources", async (req, res) => {
+router126.get("/resources", async (req, res) => {
   const { category, city, state, sourceTier, q: q3, limit: limitStr, offset: offsetStr } = req.query;
   const limit2 = Math.min(parseInt(limitStr ?? "20", 10), 50);
   const offset = parseInt(offsetStr ?? "0", 10);
@@ -450394,7 +450624,7 @@ router125.get("/resources", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch resources" });
   }
 });
-router125.get("/resources/:id", async (req, res) => {
+router126.get("/resources/:id", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     const [resource] = await db.select().from(resourcesTable).where(eq(resourcesTable.id, id2)).limit(1);
@@ -450408,7 +450638,7 @@ router125.get("/resources/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch resource" });
   }
 });
-router125.post("/resources/:id/report", async (req, res) => {
+router126.post("/resources/:id/report", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450422,7 +450652,7 @@ router125.post("/resources/:id/report", async (req, res) => {
     res.status(500).json({ error: "Failed to report resource" });
   }
 });
-router125.get("/resources/opportunities", async (req, res) => {
+router126.get("/resources/opportunities", async (req, res) => {
   const { type: type2, city, state, isRemote, isSecondChance, q: q3, limit: limitStr, offset: offsetStr } = req.query;
   const limit2 = Math.min(parseInt(limitStr ?? "20", 10), 50);
   const offset = parseInt(offsetStr ?? "0", 10);
@@ -450453,7 +450683,7 @@ router125.get("/resources/opportunities", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch opportunities" });
   }
 });
-router125.post("/resources/opportunities", async (req, res) => {
+router126.post("/resources/opportunities", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450535,7 +450765,7 @@ router125.post("/resources/opportunities", async (req, res) => {
     res.status(500).json({ error: "Failed to submit opportunity" });
   }
 });
-router125.patch("/resources/opportunities/:id/status", async (req, res) => {
+router126.patch("/resources/opportunities/:id/status", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450564,7 +450794,7 @@ router125.patch("/resources/opportunities/:id/status", async (req, res) => {
     res.status(500).json({ error: "Failed to update status" });
   }
 });
-router125.post("/resources/opportunities/:id/report", async (req, res) => {
+router126.post("/resources/opportunities/:id/report", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450578,7 +450808,7 @@ router125.post("/resources/opportunities/:id/report", async (req, res) => {
     res.status(500).json({ error: "Failed to report opportunity" });
   }
 });
-router125.get("/resources/alerts", async (req, res) => {
+router126.get("/resources/alerts", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450591,7 +450821,7 @@ router125.get("/resources/alerts", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch alerts" });
   }
 });
-router125.post("/resources/alerts", async (req, res) => {
+router126.post("/resources/alerts", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450616,7 +450846,7 @@ router125.post("/resources/alerts", async (req, res) => {
     res.status(500).json({ error: "Failed to save alert" });
   }
 });
-router125.delete("/resources/alerts/:id", async (req, res) => {
+router126.delete("/resources/alerts/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450630,7 +450860,7 @@ router125.delete("/resources/alerts/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete alert" });
   }
 });
-router125.post("/resources/ai-search", async (req, res) => {
+router126.post("/resources/ai-search", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450725,7 +450955,7 @@ Location: ${city}${state ? `, ${state}` : ""}` : ""}`
     res.status(500).json({ error: "Failed to search resources" });
   }
 });
-router125.post("/resources/admin/seed-curated", async (req, res) => {
+router126.post("/resources/admin/seed-curated", async (req, res) => {
   if (!isAdmin16(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
@@ -450744,14 +450974,14 @@ router125.post("/resources/admin/seed-curated", async (req, res) => {
     res.status(500).json({ error: "Failed to seed resources" });
   }
 });
-var resources_default = router125;
+var resources_default = router126;
 
 // src/routes/marketplace.ts
-var import_express126 = __toESM(require_express2(), 1);
+var import_express127 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_email();
-var router126 = (0, import_express126.Router)();
+var router127 = (0, import_express127.Router)();
 var CATEGORIES2 = [
   "Clothing & Accessories",
   "Electronics & Tech",
@@ -450772,7 +451002,7 @@ var CATEGORIES2 = [
   "Digital Products",
   "Other"
 ];
-router126.get("/marketplace", async (req, res) => {
+router127.get("/marketplace", async (req, res) => {
   const { type: type2, category, city, state, priceType, q: q3, limit: lStr, offset: oStr } = req.query;
   const limit2 = Math.min(parseInt(lStr ?? "20", 10), 50);
   const offset = parseInt(oStr ?? "0", 10);
@@ -450820,8 +451050,8 @@ router126.get("/marketplace", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listings" });
   }
 });
-router126.get("/marketplace/categories", (_req, res) => res.json({ categories: CATEGORIES2 }));
-router126.get("/marketplace/saved", async (req, res) => {
+router127.get("/marketplace/categories", (_req, res) => res.json({ categories: CATEGORIES2 }));
+router127.get("/marketplace/saved", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450840,7 +451070,7 @@ router126.get("/marketplace/saved", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch saved listings" });
   }
 });
-router126.get("/marketplace/my/listings", async (req, res) => {
+router127.get("/marketplace/my/listings", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450853,7 +451083,7 @@ router126.get("/marketplace/my/listings", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listings" });
   }
 });
-router126.get("/marketplace/:id", async (req, res) => {
+router127.get("/marketplace/:id", async (req, res) => {
   try {
     const [listing] = await db.select().from(communityListingsTable).where(eq(communityListingsTable.id, String(req.params.id))).limit(1);
     if (!listing) {
@@ -450873,7 +451103,7 @@ router126.get("/marketplace/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch listing" });
   }
 });
-router126.post("/marketplace", async (req, res) => {
+router127.post("/marketplace", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450936,7 +451166,7 @@ router126.post("/marketplace", async (req, res) => {
     res.status(500).json({ error: "Failed to create listing" });
   }
 });
-router126.post("/marketplace/:id/inquiry", async (req, res) => {
+router127.post("/marketplace/:id/inquiry", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450972,7 +451202,7 @@ router126.post("/marketplace/:id/inquiry", async (req, res) => {
     res.status(500).json({ error: "Failed to send inquiry" });
   }
 });
-router126.post("/marketplace/:id/save", async (req, res) => {
+router127.post("/marketplace/:id/save", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -450987,7 +451217,7 @@ router126.post("/marketplace/:id/save", async (req, res) => {
     res.status(500).json({ error: "Failed to save listing" });
   }
 });
-router126.delete("/marketplace/:id/save", async (req, res) => {
+router127.delete("/marketplace/:id/save", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451002,7 +451232,7 @@ router126.delete("/marketplace/:id/save", async (req, res) => {
     res.status(500).json({ error: "Failed to unsave listing" });
   }
 });
-router126.patch("/marketplace/:id", async (req, res) => {
+router127.patch("/marketplace/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451031,7 +451261,7 @@ router126.patch("/marketplace/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update listing" });
   }
 });
-router126.delete("/marketplace/:id", async (req, res) => {
+router127.delete("/marketplace/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451054,7 +451284,7 @@ router126.delete("/marketplace/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to remove listing" });
   }
 });
-router126.post("/marketplace/:id/report", async (req, res) => {
+router127.post("/marketplace/:id/report", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451067,14 +451297,14 @@ router126.post("/marketplace/:id/report", async (req, res) => {
     res.status(500).json({ error: "Failed to report listing" });
   }
 });
-var marketplace_default = router126;
+var marketplace_default = router127;
 
 // src/routes/wellness-tracker.ts
-var import_express127 = __toESM(require_express2(), 1);
+var import_express128 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router127 = (0, import_express127.Router)();
-router127.post("/wellness/checkin", async (req, res) => {
+var router128 = (0, import_express128.Router)();
+router128.post("/wellness/checkin", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451120,7 +451350,7 @@ router127.post("/wellness/checkin", async (req, res) => {
     res.status(500).json({ error: "Failed to save check-in" });
   }
 });
-router127.get("/wellness/checkins", async (req, res) => {
+router128.get("/wellness/checkins", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451139,7 +451369,7 @@ router127.get("/wellness/checkins", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch check-ins" });
   }
 });
-router127.get("/wellness/streak", async (req, res) => {
+router128.get("/wellness/streak", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451147,7 +451377,7 @@ router127.get("/wellness/streak", async (req, res) => {
   const streak = await computeStreak(req.user.id);
   res.json({ streak });
 });
-router127.get("/wellness/goals", async (req, res) => {
+router128.get("/wellness/goals", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451160,7 +451390,7 @@ router127.get("/wellness/goals", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch goals" });
   }
 });
-router127.post("/wellness/goals", async (req, res) => {
+router128.post("/wellness/goals", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451189,7 +451419,7 @@ router127.post("/wellness/goals", async (req, res) => {
     res.status(500).json({ error: "Failed to create goal" });
   }
 });
-router127.patch("/wellness/goals/:id", async (req, res) => {
+router128.patch("/wellness/goals/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451238,13 +451468,13 @@ async function computeStreak(userId) {
     return 0;
   }
 }
-var wellness_tracker_default = router127;
+var wellness_tracker_default = router128;
 
 // src/routes/financial-hub.ts
-var import_express128 = __toESM(require_express2(), 1);
+var import_express129 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router128 = (0, import_express128.Router)();
+var router129 = (0, import_express129.Router)();
 var FINANCIAL_RESOURCES = [
   { title: "Consumer Financial Protection Bureau (CFPB)", url: "https://www.consumerfinance.gov", description: "Free tools for budgeting, credit reports, debt management, and consumer rights.", category: "budgeting" },
   { title: "MyMoney.gov", url: "https://www.mymoney.gov", description: "Official federal financial literacy resources \u2014 saving, investing, credit, homeownership.", category: "literacy" },
@@ -451257,8 +451487,8 @@ var FINANCIAL_RESOURCES = [
   { title: "Minority Deposit Institution (MDI) Finder", url: "https://www.fdic.gov/resources/resolutions/bank-failures/failed-bank-list/banklist.html", description: "Find minority-owned banks and credit unions in your area.", category: "banking" },
   { title: "Operation HOPE", url: "https://www.operationhope.org", description: "Financial empowerment and coaching for underserved communities, including credit and small business support.", category: "empowerment" }
 ];
-router128.get("/financial/resources", (_req, res) => res.json({ resources: FINANCIAL_RESOURCES }));
-router128.get("/financial/goals", async (req, res) => {
+router129.get("/financial/resources", (_req, res) => res.json({ resources: FINANCIAL_RESOURCES }));
+router129.get("/financial/goals", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451271,7 +451501,7 @@ router128.get("/financial/goals", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch goals" });
   }
 });
-router128.post("/financial/goals", async (req, res) => {
+router129.post("/financial/goals", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451304,7 +451534,7 @@ router128.post("/financial/goals", async (req, res) => {
     res.status(500).json({ error: "Failed to create goal" });
   }
 });
-router128.post("/financial/goals/:id/checkin", async (req, res) => {
+router129.post("/financial/goals/:id/checkin", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451342,7 +451572,7 @@ router128.post("/financial/goals/:id/checkin", async (req, res) => {
     res.status(500).json({ error: "Failed to update goal" });
   }
 });
-router128.patch("/financial/goals/:id", async (req, res) => {
+router129.patch("/financial/goals/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451369,7 +451599,7 @@ router128.patch("/financial/goals/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update goal" });
   }
 });
-router128.delete("/financial/goals/:id", async (req, res) => {
+router129.delete("/financial/goals/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451383,7 +451613,7 @@ router128.delete("/financial/goals/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete goal" });
   }
 });
-router128.get("/financial/goals/:id/history", async (req, res) => {
+router129.get("/financial/goals/:id/history", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451397,12 +451627,12 @@ router128.get("/financial/goals/:id/history", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch history" });
   }
 });
-var financial_hub_default = router128;
+var financial_hub_default = router129;
 
 // src/routes/directions.ts
-var import_express129 = __toESM(require_express2(), 1);
+var import_express130 = __toESM(require_express2(), 1);
 init_src();
-var router129 = (0, import_express129.Router)();
+var router130 = (0, import_express130.Router)();
 function stripHtml(html) {
   return html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&#39;/g, "'").trim();
 }
@@ -451419,7 +451649,7 @@ var ALERT_LABEL = {
   avoid_area: "Area to Avoid",
   other: "Community Alert"
 };
-router129.get("/directions", requireMembership("navigator"), async (req, res) => {
+router130.get("/directions", requireMembership("navigator"), async (req, res) => {
   try {
     const { lat, lng, destLat, destLng, destName, mode } = req.query;
     if (!lat || !lng || !destLat || !destLng) {
@@ -451488,7 +451718,7 @@ router129.get("/directions", requireMembership("navigator"), async (req, res) =>
     res.status(500).json({ error: "Failed to fetch directions" });
   }
 });
-router129.post("/directions/safety-context", requireMembership("navigator"), async (req, res) => {
+router130.post("/directions/safety-context", requireMembership("navigator"), async (req, res) => {
   try {
     const { waypoints } = req.body;
     if (!waypoints?.length) {
@@ -451630,14 +451860,14 @@ router129.post("/directions/safety-context", requireMembership("navigator"), asy
     res.status(500).json({ error: "Failed to fetch safety context" });
   }
 });
-var directions_default = router129;
+var directions_default = router130;
 
 // src/routes/recommended-spots.ts
-var import_express130 = __toESM(require_express2(), 1);
+var import_express131 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router130 = (0, import_express130.Router)();
-router130.get("/users/:userId/recommended-spots", async (req, res) => {
+var router131 = (0, import_express131.Router)();
+router131.get("/users/:userId/recommended-spots", async (req, res) => {
   try {
     const spots = await db.select().from(profileRecommendedSpotsTable).where(eq(profileRecommendedSpotsTable.userId, req.params.userId)).orderBy(profileRecommendedSpotsTable.displayOrder).limit(5);
     res.json({ spots });
@@ -451646,7 +451876,7 @@ router130.get("/users/:userId/recommended-spots", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch recommended spots" });
   }
 });
-router130.post("/users/me/recommended-spots", async (req, res) => {
+router131.post("/users/me/recommended-spots", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451686,7 +451916,7 @@ router130.post("/users/me/recommended-spots", async (req, res) => {
     res.status(500).json({ error: "Failed to add recommended spot" });
   }
 });
-router130.patch("/users/me/recommended-spots/:businessId", async (req, res) => {
+router131.patch("/users/me/recommended-spots/:businessId", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451714,7 +451944,7 @@ router130.patch("/users/me/recommended-spots/:businessId", async (req, res) => {
     res.status(500).json({ error: "Failed to update recommended spot" });
   }
 });
-router130.delete("/users/me/recommended-spots/:businessId", async (req, res) => {
+router131.delete("/users/me/recommended-spots/:businessId", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -451732,14 +451962,14 @@ router130.delete("/users/me/recommended-spots/:businessId", async (req, res) => 
     res.status(500).json({ error: "Failed to remove recommended spot" });
   }
 });
-var recommended_spots_default = router130;
+var recommended_spots_default = router131;
 
 // src/routes/preview.ts
-var import_express131 = __toESM(require_express2(), 1);
+var import_express132 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router131 = (0, import_express131.Router)();
-router131.get("/preview/stats", async (_req, res) => {
+var router132 = (0, import_express132.Router)();
+router132.get("/preview/stats", async (_req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -451759,7 +451989,7 @@ router131.get("/preview/stats", async (_req, res) => {
     res.status(500).json({ error: "Failed to load stats" });
   }
 });
-router131.get("/preview/spotlight", async (_req, res) => {
+router132.get("/preview/spotlight", async (_req, res) => {
   try {
     const rows = await db.select({
       id: businessesTable.id,
@@ -451782,7 +452012,7 @@ router131.get("/preview/spotlight", async (_req, res) => {
     res.status(500).json({ error: "Failed to load spotlight" });
   }
 });
-router131.get("/preview/posts", async (_req, res) => {
+router132.get("/preview/posts", async (_req, res) => {
   try {
     const rows = await db.select({
       id: communityPostsTable.id,
@@ -451815,12 +452045,12 @@ router131.get("/preview/posts", async (_req, res) => {
     res.status(500).json({ error: "Failed to load posts" });
   }
 });
-var preview_default = router131;
+var preview_default = router132;
 
 // src/routes/vibes.ts
-var import_express132 = __toESM(require_express2(), 1);
+var import_express133 = __toESM(require_express2(), 1);
 init_src();
-var router132 = (0, import_express132.Router)();
+var router133 = (0, import_express133.Router)();
 var VIBE_LIST = [
   {
     id: "date-night",
@@ -451907,10 +452137,10 @@ var VIBE_LIST = [
     priceHint: "$-$$"
   }
 ];
-router132.get("/vibes/list", (_req, res) => {
+router133.get("/vibes/list", (_req, res) => {
   res.json({ vibes: VIBE_LIST });
 });
-router132.get("/vibes/search", async (req, res) => {
+router133.get("/vibes/search", async (req, res) => {
   try {
     const rawVibes = req.query.vibes;
     const rawPrices = req.query.price;
@@ -452076,7 +452306,7 @@ router132.get("/vibes/search", async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
-router132.get("/vibes/businesses/:id", async (req, res) => {
+router133.get("/vibes/businesses/:id", async (req, res) => {
   try {
     const { id: id2 } = req.params;
     const userId = req.user?.id ?? null;
@@ -452109,7 +452339,7 @@ router132.get("/vibes/businesses/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load vibe data" });
   }
 });
-router132.post("/vibes/tag", async (req, res) => {
+router133.post("/vibes/tag", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452142,7 +452372,7 @@ router132.post("/vibes/tag", async (req, res) => {
     res.status(500).json({ error: "Failed to add vibe tag" });
   }
 });
-router132.delete("/vibes/tag", async (req, res) => {
+router133.delete("/vibes/tag", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452164,7 +452394,7 @@ router132.delete("/vibes/tag", async (req, res) => {
     res.status(500).json({ error: "Failed to remove vibe tag" });
   }
 });
-router132.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
+router133.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452200,7 +452430,7 @@ router132.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
     res.status(500).json({ error: "Failed to update vibes" });
   }
 });
-router132.get("/vibes/my-tags", async (req, res) => {
+router133.get("/vibes/my-tags", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452224,14 +452454,14 @@ router132.get("/vibes/my-tags", async (req, res) => {
     res.status(500).json({ error: "Failed to load vibe data" });
   }
 });
-var vibes_default = router132;
+var vibes_default = router133;
 
 // src/routes/community-places.ts
-var import_express133 = __toESM(require_express2(), 1);
+var import_express134 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router133 = (0, import_express133.Router)();
-router133.get("/places/search", async (req, res) => {
+var router134 = (0, import_express134.Router)();
+router134.get("/places/search", async (req, res) => {
   const q3 = typeof req.query.q === "string" ? req.query.q.trim() : "";
   const country = typeof req.query.country === "string" ? req.query.country.trim() : void 0;
   if (!q3 || q3.length < 2) {
@@ -452253,7 +452483,7 @@ router133.get("/places/search", async (req, res) => {
     res.status(500).json({ error: "Failed to search places" });
   }
 });
-router133.get("/places", async (req, res) => {
+router134.get("/places", async (req, res) => {
   const country = typeof req.query.country === "string" ? req.query.country : void 0;
   const city = typeof req.query.city === "string" ? req.query.city : void 0;
   const limit2 = Math.min(Number(req.query.limit) || 30, 100);
@@ -452269,7 +452499,7 @@ router133.get("/places", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch places" });
   }
 });
-router133.get("/places/:id", async (req, res) => {
+router134.get("/places/:id", async (req, res) => {
   try {
     const [place] = await db.select().from(communityPlacesTable).where(eq(communityPlacesTable.id, String(req.params.id)));
     if (!place) {
@@ -452282,7 +452512,7 @@ router133.get("/places/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch place" });
   }
 });
-router133.post("/places", async (req, res) => {
+router134.post("/places", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452311,15 +452541,15 @@ router133.post("/places", async (req, res) => {
     res.status(500).json({ error: "Failed to create place" });
   }
 });
-var community_places_default = router133;
+var community_places_default = router134;
 
 // src/routes/community-impact.ts
-var import_express134 = __toESM(require_express2(), 1);
+var import_express135 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_src();
-var router134 = (0, import_express134.Router)();
-router134.get("/community-impact/:userId", async (req, res) => {
+var router135 = (0, import_express135.Router)();
+router135.get("/community-impact/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
     const reviewsRes = await pool.query(
@@ -452403,7 +452633,7 @@ router134.get("/community-impact/:userId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch community impact" });
   }
 });
-router134.get("/businesses/:id/owner-profile", async (req, res) => {
+router135.get("/businesses/:id/owner-profile", async (req, res) => {
   try {
     const link = await db.select({
       userId: businessOwnerLinksTable.userId,
@@ -452438,7 +452668,7 @@ router134.get("/businesses/:id/owner-profile", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch owner profile" });
   }
 });
-router134.post("/businesses/:id/claim", async (req, res) => {
+router135.post("/businesses/:id/claim", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452467,13 +452697,13 @@ router134.post("/businesses/:id/claim", async (req, res) => {
     res.status(500).json({ error: "Failed to submit claim" });
   }
 });
-var community_impact_default = router134;
+var community_impact_default = router135;
 
 // src/routes/show-love.ts
-var import_express135 = __toESM(require_express2(), 1);
+var import_express136 = __toESM(require_express2(), 1);
 init_src();
-var router135 = (0, import_express135.Router)();
-router135.get("/show-love", async (req, res) => {
+var router136 = (0, import_express136.Router)();
+router136.get("/show-love", async (req, res) => {
   const limit2 = Math.min(Number(req.query.limit) || 20, 50);
   const offset = Number(req.query.offset) || 0;
   const category = req.query.category;
@@ -452521,7 +452751,7 @@ router135.get("/show-love", async (req, res) => {
     res.status(500).json({ error: "Failed to list nominations" });
   }
 });
-router135.get("/show-love/spotlight", async (_req, res) => {
+router136.get("/show-love/spotlight", async (_req, res) => {
   try {
     const month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
     const rows = await pool.query(
@@ -452538,7 +452768,7 @@ router135.get("/show-love/spotlight", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch spotlight" });
   }
 });
-router135.get("/show-love/received/:userId", async (req, res) => {
+router136.get("/show-love/received/:userId", async (req, res) => {
   try {
     const rows = await pool.query(
       `SELECT n.*, u.first_name AS nominator_first_name, u.last_name AS nominator_last_name,
@@ -452555,7 +452785,7 @@ router135.get("/show-love/received/:userId", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch received nominations" });
   }
 });
-router135.get("/show-love/:id", async (req, res) => {
+router136.get("/show-love/:id", async (req, res) => {
   const userId = req.user?.id;
   try {
     const rows = await pool.query(
@@ -452586,7 +452816,7 @@ router135.get("/show-love/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch nomination" });
   }
 });
-router135.post("/show-love", async (req, res) => {
+router136.post("/show-love", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452650,7 +452880,7 @@ router135.post("/show-love", async (req, res) => {
     res.status(500).json({ error: "Failed to create nomination" });
   }
 });
-router135.post("/show-love/:id/react", async (req, res) => {
+router136.post("/show-love/:id/react", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452705,7 +452935,7 @@ router135.post("/show-love/:id/react", async (req, res) => {
     res.status(500).json({ error: "Failed to react" });
   }
 });
-router135.delete("/show-love/:id", async (req, res) => {
+router136.delete("/show-love/:id", async (req, res) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return;
@@ -452726,13 +452956,13 @@ router135.delete("/show-love/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to delete nomination" });
   }
 });
-var show_love_default = router135;
+var show_love_default = router136;
 
 // src/routes/membership-family.ts
-var import_express136 = __toESM(require_express2(), 1);
+var import_express137 = __toESM(require_express2(), 1);
 init_src();
 init_stripe_esm_node();
-var router136 = (0, import_express136.Router)();
+var router137 = (0, import_express137.Router)();
 function requireAuth17(req, res) {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
@@ -452747,7 +452977,7 @@ var TIER_DISPLAY2 = {
   community_builder: { name: "Community Builder", monthlyPrice: 29.99, annualPrice: 299.9, color: "#1A3B8B" },
   legacy_member: { name: "Legacy Member", monthlyPrice: 79.99, annualPrice: 799.9, color: "#6B1A8B" }
 };
-router136.get("/membership/plan", async (req, res) => {
+router137.get("/membership/plan", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
@@ -452836,7 +453066,7 @@ router136.get("/membership/plan", async (req, res) => {
     res.status(500).json({ error: "Failed to load membership plan" });
   }
 });
-router136.get("/membership/family/ai-usage", async (req, res) => {
+router137.get("/membership/family/ai-usage", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
@@ -452859,7 +453089,7 @@ router136.get("/membership/family/ai-usage", async (req, res) => {
     res.status(500).json({ error: "Failed to load AI usage" });
   }
 });
-router136.post("/membership/family/add-seat", async (req, res) => {
+router137.post("/membership/family/add-seat", async (req, res) => {
   if (!requireAuth17(req, res)) return;
   try {
     const userId = req.user.id;
@@ -452923,11 +453153,11 @@ router136.post("/membership/family/add-seat", async (req, res) => {
     res.status(500).json({ error: "Failed to create checkout session" });
   }
 });
-var membership_family_default = router136;
+var membership_family_default = router137;
 
 // src/routes/legal.ts
-var import_express137 = __toESM(require_express2(), 1);
-var router137 = (0, import_express137.Router)();
+var import_express138 = __toESM(require_express2(), 1);
+var router138 = (0, import_express138.Router)();
 var DISCLAIMERS = [
   {
     id: "general",
@@ -453020,10 +453250,10 @@ var DISCLAIMERS = [
     full: "Community recognition, badges, and rankings are based on user participation and platform activity. These recognitions are intended to celebrate community engagement and should not be interpreted as endorsements or guarantees of quality or conduct."
   }
 ];
-router137.get("/legal/disclaimers", (req, res) => {
+router138.get("/legal/disclaimers", (req, res) => {
   res.json({ disclaimers: DISCLAIMERS });
 });
-router137.get("/legal/disclaimers/:id", (req, res) => {
+router138.get("/legal/disclaimers/:id", (req, res) => {
   const disclaimer = DISCLAIMERS.find((d2) => d2.id === req.params.id);
   if (!disclaimer) {
     res.status(404).json({ error: "Disclaimer not found" });
@@ -453031,11 +453261,11 @@ router137.get("/legal/disclaimers/:id", (req, res) => {
   }
   res.json(disclaimer);
 });
-var legal_default = router137;
+var legal_default = router138;
 
 // src/routes/business-membership-info.ts
-var import_express138 = __toESM(require_express2(), 1);
-var router138 = (0, import_express138.Router)();
+var import_express139 = __toESM(require_express2(), 1);
+var router139 = (0, import_express139.Router)();
 var INCLUDED_BENEFITS = [
   { icon: "map-pin", label: "Business Profile" },
   { icon: "user", label: "One Matching Community Membership" },
@@ -453071,7 +453301,7 @@ var MISSION_ITEMS = [
   { icon: "map", label: "Expand to new cities" },
   { icon: "shield", label: "Build new safety features" }
 ];
-router138.get("/business-membership-info", (_req, res) => {
+router139.get("/business-membership-info", (_req, res) => {
   res.json({
     includedBenefits: INCLUDED_BENEFITS,
     matchingTiers: MATCHING_TIERS,
@@ -453079,13 +453309,13 @@ router138.get("/business-membership-info", (_req, res) => {
     missionItems: MISSION_ITEMS
   });
 });
-var business_membership_info_default = router138;
+var business_membership_info_default = router139;
 
 // src/routes/db-probe.ts
-var import_express139 = __toESM(require_express2(), 1);
+var import_express140 = __toESM(require_express2(), 1);
 init_src();
-var router139 = (0, import_express139.Router)();
-router139.get("/db-probe", async (req, res) => {
+var router140 = (0, import_express140.Router)();
+router140.get("/db-probe", async (req, res) => {
   const probeKey = process.env.DB_PROBE_KEY;
   if (!probeKey || req.headers["x-probe-key"] !== probeKey) {
     res.status(401).json({ error: "Unauthorized" });
@@ -453139,14 +453369,14 @@ router139.get("/db-probe", async (req, res) => {
     drizzle: drizzleCheck
   });
 });
-var db_probe_default = router139;
+var db_probe_default = router140;
 
 // src/routes/readyz.ts
-var import_express140 = __toESM(require_express2(), 1);
+var import_express141 = __toESM(require_express2(), 1);
 init_src();
 var WAITING_COUNT_THRESHOLD = 3;
-var router140 = (0, import_express140.Router)();
-router140.get("/readyz", async (req, res) => {
+var router141 = (0, import_express141.Router)();
+router141.get("/readyz", async (req, res) => {
   const probeKey = process.env.DB_PROBE_KEY;
   if (!probeKey || req.headers["x-probe-key"] !== probeKey) {
     res.status(401).json({ error: "Unauthorized" });
@@ -453190,14 +453420,14 @@ router140.get("/readyz", async (req, res) => {
     ...issues.length > 0 ? { issues } : {}
   });
 });
-var readyz_default = router140;
+var readyz_default = router141;
 
 // src/routes/pool-stats.ts
-var import_express141 = __toESM(require_express2(), 1);
+var import_express142 = __toESM(require_express2(), 1);
 init_src();
-var router141 = (0, import_express141.Router)();
+var router142 = (0, import_express142.Router)();
 var CRON_SECRET3 = process.env.CRON_SECRET;
-router141.get("/pool-stats", (req, res) => {
+router142.get("/pool-stats", (req, res) => {
   if (!CRON_SECRET3) {
     res.status(503).json({ error: "Diagnostic endpoint not configured." });
     return;
@@ -453215,10 +453445,32 @@ router141.get("/pool-stats", (req, res) => {
     timestamp: (/* @__PURE__ */ new Date()).toISOString()
   });
 });
-var pool_stats_default = router141;
+router142.get("/pool-audit", (req, res) => {
+  if (!CRON_SECRET3) {
+    res.status(503).json({ error: "Diagnostic endpoint not configured." });
+    return;
+  }
+  const auth2 = req.headers["x-cron-secret"];
+  if (auth2 !== CRON_SECRET3) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const limit2 = Math.min(Number(req.query.limit ?? 200), 500);
+  const summary = req.query.summary === "true";
+  if (summary) {
+    res.json(getPoolAuditSummary());
+    return;
+  }
+  res.json({
+    events: getPoolAuditLog(limit2),
+    current: getPoolStats(),
+    timestamp: (/* @__PURE__ */ new Date()).toISOString()
+  });
+});
+var pool_stats_default = router142;
 
 // src/routes/membership.ts
-var import_express142 = __toESM(require_express2(), 1);
+var import_express143 = __toESM(require_express2(), 1);
 
 // ../../node_modules/.pnpm/nanoid@3.3.12/node_modules/nanoid/index.js
 import crypto19 from "crypto";
@@ -453254,8 +453506,8 @@ var nanoid3 = (size = 21) => {
 // src/routes/membership.ts
 init_src();
 init_drizzle_orm();
-var router142 = (0, import_express142.Router)();
-router142.post("/agreement", async (req, res) => {
+var router143 = (0, import_express143.Router)();
+router143.post("/agreement", async (req, res) => {
   if (!req.user) {
     res.status(401).json({ error: "Not authenticated" });
     return;
@@ -453289,7 +453541,7 @@ router142.post("/agreement", async (req, res) => {
     res.status(500).json({ error: "Could not record agreement" });
   }
 });
-router142.get("/agreement", async (req, res) => {
+router143.get("/agreement", async (req, res) => {
   if (!req.user) {
     res.status(401).json({ error: "Not authenticated" });
     return;
@@ -453317,159 +453569,160 @@ router142.get("/agreement", async (req, res) => {
     res.status(500).json({ error: "Could not fetch agreement status" });
   }
 });
-var membership_default = router142;
+var membership_default = router143;
 
 // src/routes/index.ts
-var router143 = (0, import_express143.Router)();
-router143.use(health_default);
-router143.use(db_probe_default);
-router143.use("/internal", readyz_default);
-router143.use(pool_stats_default);
-router143.use(auth_default);
-router143.use("/membership", membership_default);
-router143.use(phone_auth_default);
-router143.use(businesses_default);
-router143.use(travel_default);
-router143.use(surveys_default);
-router143.use(saved_places_default);
-router143.use(alerts_default);
-router143.use(moderation_default);
-router143.use(safety_context_default);
-router143.use(reviews_default);
-router143.use(checkins_default);
-router143.use(points_default);
-router143.use(event_rsvps_default);
-router143.use(push_token_default);
-router143.use(community_default);
-router143.use(conversations_default);
-router143.use(waitlist_default);
-router143.use(contact_default);
-router143.use(events_default);
-router143.use(users_default);
-router143.use(groups_default);
-router143.use(admin_default);
-router143.use(kinfolk_default);
-router143.use(kinfolk_tasks_default);
-router143.use(wishlist_default);
-router143.use(claims_default);
-router143.use(notifications_default);
-router143.use(stripe_default);
-router143.use(admin_users_default);
-router143.use(maps_default);
-router143.use(og_default);
-router143.use(jobs_default);
-router143.use(impact_default);
-router143.use(submit_business_default);
-router143.use(billing_default);
-router143.use(cron_default);
-router143.use(referrals_default);
-router143.use(content_reports_default);
-router143.use(verification_default);
-router143.use(deals_default);
-router143.use(stories_default);
-router143.use(redemptions_default);
-router143.use(mentorship_default);
-router143.use(reports_default);
-router143.use(travel_flights_default);
-router143.use(connections_default);
-router143.use(family_default);
-router143.use(safety_checkins_default);
-router143.use(location_shares_default);
-router143.use(meetup_verifications_default);
-router143.use(safety_tips_default);
-router143.use(skip_feedback_default);
-router143.use(businesses_analytics_default);
-router143.use(promote_default);
-router143.use(post_nudge_default);
-router143.use(user_settings_default);
-router143.use(space_reports_default);
-router143.use(connect_default);
-router143.use(community_spaces_default);
-router143.use(journals_default);
-router143.use(plate_passes_default);
-router143.use(lists_default);
-router143.use(challenge_applications_default);
-router143.use(category_waitlist_default);
-router143.use(business_nominations_default);
-router143.use(business_identity_default);
-router143.use(broadcasts_default);
-router143.use(community_health_default);
-router143.use(journal_insights_default);
-router143.use(saved_locations_default);
-router143.use(disputes_default);
-router143.use(docusign_default);
-router143.use(smart_pathways_default);
-router143.use(knowledge_default);
-router143.use(marketplace_fees_default);
-router143.use(trust_default);
-router143.use(journeys_default);
-router143.use(entity_connections_default);
-router143.use(signals_default);
-router143.use(smart_search_default);
-router143.use(notifications_hub_default);
-router143.use(knowledge_channels_default);
-router143.use(router89);
-router143.use(captions_default);
-router143.use(community_boundaries_default);
-router143.use(business_response_default);
-router143.use(business_improvement_default);
-router143.use(community_appreciation_default);
-router143.use(circles_default);
-router143.use(community_requests_default);
-router143.use(user_achievements_default);
-router143.use(community_says_default);
-router143.use(community_challenges_new_default);
-router143.use(follows_default);
-router143.use(pinned_default);
-router143.use(creator_profiles_default);
-router143.use(community_alerts_default);
-router143.use(knowledge_delivery_default);
-router143.use(business_insights_default);
-router143.use(topic_briefs_default);
-router143.use(knowledge_hubs_default);
-router143.use(for_you_default);
-router143.use(global_recommendations_default);
-router143.use(officer_watch_default);
-router143.use(wellness_default);
-router143.use(featured_video_default);
-router143.use(hub_badges_default);
-router143.use(collections_default);
-router143.use(roadmaps_default);
-router143.use(guides_default);
-router143.use(travel_planner_default);
-router143.use(smart_fill_default);
-router143.use(wrapped_default);
-router143.use(archive_default);
-router143.use(revenuecat_default);
-router143.use(kinfolk_intelligence_default);
-router143.use("/hidden-gems", hidden_gems_default);
-router143.use(resources_default);
-router143.use(marketplace_default);
-router143.use(wellness_tracker_default);
-router143.use(financial_hub_default);
-router143.use(directions_default);
-router143.use(recommended_spots_default);
-router143.use(preview_default);
-router143.use(vibes_default);
-router143.use(hashtags_default);
-router143.use(community_places_default);
-router143.use(community_impact_default);
-router143.use(show_love_default);
-router143.use(membership_family_default);
-router143.use(legal_default);
-router143.use(business_membership_info_default);
-router143.use(passport_default);
-router143.use(safety_heatmap_default);
-router143.use(cultural_sites_default);
-router143.use(external_clicks_default);
-router143.use(monitor_build97_default);
-var routes_default = router143;
+var router144 = (0, import_express144.Router)();
+router144.use(health_default);
+router144.use(db_probe_default);
+router144.use("/internal", readyz_default);
+router144.use(pool_stats_default);
+router144.use(auth_default);
+router144.use("/membership", membership_default);
+router144.use(phone_auth_default);
+router144.use(businesses_default);
+router144.use(travel_default);
+router144.use(surveys_default);
+router144.use(saved_places_default);
+router144.use(alerts_default);
+router144.use(moderation_default);
+router144.use(safety_context_default);
+router144.use(reviews_default);
+router144.use(checkins_default);
+router144.use(points_default);
+router144.use(event_rsvps_default);
+router144.use(push_token_default);
+router144.use(community_default);
+router144.use(conversations_default);
+router144.use(waitlist_default);
+router144.use(contact_default);
+router144.use(events_default);
+router144.use(users_default);
+router144.use(groups_default);
+router144.use(admin_default);
+router144.use(kinfolk_default);
+router144.use(kinfolk_tasks_default);
+router144.use(wishlist_default);
+router144.use(claims_default);
+router144.use(notifications_default);
+router144.use(stripe_default);
+router144.use(admin_users_default);
+router144.use(maps_default);
+router144.use(og_default);
+router144.use(jobs_default);
+router144.use(impact_default);
+router144.use(submit_business_default);
+router144.use(billing_default);
+router144.use(cron_default);
+router144.use(referrals_default);
+router144.use(content_reports_default);
+router144.use(verification_default);
+router144.use(deals_default);
+router144.use(stories_default);
+router144.use(redemptions_default);
+router144.use(mentorship_default);
+router144.use(reports_default);
+router144.use(travel_flights_default);
+router144.use(connections_default);
+router144.use(family_default);
+router144.use(safety_checkins_default);
+router144.use(location_shares_default);
+router144.use(meetup_verifications_default);
+router144.use(safety_tips_default);
+router144.use(skip_feedback_default);
+router144.use(businesses_analytics_default);
+router144.use(promote_default);
+router144.use(post_nudge_default);
+router144.use(user_settings_default);
+router144.use(space_reports_default);
+router144.use(connect_default);
+router144.use(community_spaces_default);
+router144.use(journals_default);
+router144.use(plate_passes_default);
+router144.use(lists_default);
+router144.use(challenge_applications_default);
+router144.use(category_waitlist_default);
+router144.use(business_nominations_default);
+router144.use(business_identity_default);
+router144.use(broadcasts_default);
+router144.use(community_health_default);
+router144.use(journal_insights_default);
+router144.use(saved_locations_default);
+router144.use(disputes_default);
+router144.use(docusign_default);
+router144.use(smart_pathways_default);
+router144.use(knowledge_default);
+router144.use(marketplace_fees_default);
+router144.use(trust_default);
+router144.use(journeys_default);
+router144.use(entity_connections_default);
+router144.use(signals_default);
+router144.use(smart_search_default);
+router144.use(notifications_hub_default);
+router144.use(knowledge_channels_default);
+router144.use(router90);
+router144.use(captions_default);
+router144.use(community_boundaries_default);
+router144.use(business_response_default);
+router144.use(business_improvement_default);
+router144.use(community_appreciation_default);
+router144.use(circles_default);
+router144.use(community_requests_default);
+router144.use(user_achievements_default);
+router144.use(community_says_default);
+router144.use(community_challenges_new_default);
+router144.use(follows_default);
+router144.use(pinned_default);
+router144.use(creator_profiles_default);
+router144.use(community_alerts_default);
+router144.use(knowledge_delivery_default);
+router144.use(business_insights_default);
+router144.use(topic_briefs_default);
+router144.use(knowledge_hubs_default);
+router144.use(for_you_default);
+router144.use(global_recommendations_default);
+router144.use(officer_watch_default);
+router144.use(wellness_default);
+router144.use(featured_video_default);
+router144.use(hub_badges_default);
+router144.use(collections_default);
+router144.use(roadmaps_default);
+router144.use(guides_default);
+router144.use(travel_planner_default);
+router144.use(smart_fill_default);
+router144.use(wrapped_default);
+router144.use(archive_default);
+router144.use(revenuecat_default);
+router144.use(kinfolk_intelligence_default);
+router144.use("/hidden-gems", hidden_gems_default);
+router144.use(resources_default);
+router144.use(marketplace_default);
+router144.use(wellness_tracker_default);
+router144.use(financial_hub_default);
+router144.use(directions_default);
+router144.use(recommended_spots_default);
+router144.use(preview_default);
+router144.use(vibes_default);
+router144.use(hashtags_default);
+router144.use(community_places_default);
+router144.use(community_impact_default);
+router144.use(show_love_default);
+router144.use(membership_family_default);
+router144.use(legal_default);
+router144.use(business_membership_info_default);
+router144.use(passport_default);
+router144.use(safety_heatmap_default);
+router144.use(cultural_sites_default);
+router144.use(external_clicks_default);
+router144.use(monitor_build97_default);
+router144.use(crash_reports_default);
+var routes_default = router144;
 
 // src/routes/web-ssr.ts
-var import_express144 = __toESM(require_express2(), 1);
+var import_express145 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router144 = (0, import_express144.Router)();
+var router145 = (0, import_express145.Router)();
 var BASE_DOMAIN = "https://www.melaninmaps.com";
 function isBot(ua4) {
   return /facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|pinterest|googlebot|bingbot|applebot|iframely|opengraph|embedly/i.test(
@@ -453479,7 +453732,7 @@ function isBot(ua4) {
 function escapeHtml2(str2) {
   return str2.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-router144.get("/web/businesses/:id", async (req, res) => {
+router145.get("/web/businesses/:id", async (req, res) => {
   const id2 = String(req.params.id);
   const ua4 = String(req.headers["user-agent"] ?? "");
   try {
@@ -453554,11 +453807,11 @@ router144.get("/web/businesses/:id", async (req, res) => {
     res.redirect(302, "/web/");
   }
 });
-var web_ssr_default = router144;
+var web_ssr_default = router145;
 
 // src/routes/privacy.ts
-var import_express145 = __toESM(require_express2(), 1);
-var router145 = (0, import_express145.Router)();
+var import_express146 = __toESM(require_express2(), 1);
+var router146 = (0, import_express146.Router)();
 var SECTIONS = [
   {
     title: "What We Collect",
@@ -453756,17 +454009,17 @@ function pageShell(title, body) {
 </body>
 </html>`;
 }
-router145.get("/privacy", (_req, res) => {
+router146.get("/privacy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router145.get("/privacy-policy", (_req, res) => {
+router146.get("/privacy-policy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router145.get("/terms", (_req, res) => {
+router146.get("/terms", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453785,7 +454038,7 @@ router145.get("/terms", (_req, res) => {
   `;
   res.send(pageShell("Terms of Service", body));
 });
-router145.get("/delete-account", (_req, res) => {
+router146.get("/delete-account", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453827,7 +454080,7 @@ router145.get("/delete-account", (_req, res) => {
   `;
   res.send(pageShell("Delete Your Account", body));
 });
-router145.get("/support", (_req, res) => {
+router146.get("/support", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -453857,7 +454110,7 @@ router145.get("/support", (_req, res) => {
   `;
   res.send(pageShell("Support", body));
 });
-var privacy_default = router145;
+var privacy_default = router146;
 
 // src/middlewares/authMiddleware.ts
 init_src();
@@ -454103,7 +454356,7 @@ for (const dir of SPA_SEARCH_DIRS) {
   } catch {
   }
 }
-var app = (0, import_express146.default)();
+var app = (0, import_express147.default)();
 app.set("trust proxy", 1);
 app.get("/api/healthz", (_req, res) => {
   res.json({ status: "ok" });
@@ -454169,7 +454422,7 @@ app.use(
 );
 app.post(
   "/api/stripe/webhook",
-  import_express146.default.raw({ type: "application/json" }),
+  import_express147.default.raw({ type: "application/json" }),
   async (req, res) => {
     const signature = req.headers["stripe-signature"];
     if (!signature) {
@@ -454205,8 +454458,8 @@ app.use(
   })
 );
 app.use((0, import_cookie_parser.default)());
-app.use(import_express146.default.json());
-app.use(import_express146.default.urlencoded({ extended: true }));
+app.use(import_express147.default.json());
+app.use(import_express147.default.urlencoded({ extended: true }));
 app.use(authMiddleware);
 app.use("/api", generalLimiter);
 app.use((req, res, next) => {
@@ -454225,7 +454478,7 @@ app.use((req, res, next) => {
 app.use("/api", routes_default);
 app.use(web_ssr_default);
 app.use(privacy_default);
-app.use(import_express146.default.static(spaServeDir));
+app.use(import_express147.default.static(spaServeDir));
 var serveSpa = (_req, res, next) => {
   const html = spaHtml && spaHtml.length > 100 ? spaHtml : SPA_HTML;
   if (html && html.length > 100) {
@@ -454323,9 +454576,9 @@ var MIGRATIONS = [
       ADD COLUMN IF NOT EXISTS quiet_hours_until VARCHAR(10) NOT NULL DEFAULT '8:00 AM'`
   }
 ];
-async function runStartupMigrations(logger3) {
-  const log2 = (msg) => logger3 ? logger3.info(msg) : console.log(`[startup-migrations] ${msg}`);
-  const warn = (msg) => logger3 ? logger3.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
+async function runStartupMigrations(logger4) {
+  const log2 = (msg) => logger4 ? logger4.info(msg) : console.log(`[startup-migrations] ${msg}`);
+  const warn = (msg) => logger4 ? logger4.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
   log2("Running startup schema migrations...");
   let applied = 0;
   let skipped = 0;
@@ -454405,6 +454658,7 @@ var server = app_default.listen(port, (err) => {
   }
   logger.info({ port }, "Server listening");
   logger.info({ pool: getPoolStats() }, "server ready \u2014 initial pool state");
+  initPoolInstrumentation(pool);
   setMonitorLogger(logger);
   startHealthMonitor();
   initStripe().catch((err2) => logger.error({ err: err2 }, "Background Stripe init failed"));

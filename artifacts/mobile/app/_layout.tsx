@@ -15,31 +15,26 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter, usePathname, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useRef } from "react";
-import { Alert, Animated, Platform, StyleSheet, View } from "react-native";
+import { Alert, Animated, AppState, type AppStateStatus, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import * as SecureStore from "expo-secure-store";
 
-// Crash reporter: intercept ALL unhandled JS errors before ErrorBoundary mounts
-// so we can read the actual error on next launch as an Alert.
-(function installCrashReporter() {
-  try {
-    const prev = (global as any).ErrorUtils?.getGlobalHandler?.();
-    (global as any).ErrorUtils?.setGlobalHandler?.((err: Error, isFatal?: boolean) => {
-      try {
-        const msg = err?.message ?? String(err);
-        const stack = (err?.stack ?? "").substring(0, 600);
-        AsyncStorage.setItem(
-          "@__crash__",
-          JSON.stringify({ msg, stack, fatal: isFatal, ts: new Date().toISOString() })
-        ).catch(() => {});
-      } catch {}
-      if (prev) prev(err, isFatal);
-    });
-  } catch {}
-})();
+// ── Enhanced crash logger ─────────────────────────────────────────────────────
+// Replaces the previous 600-char IIFE. Captures: full stack trace, navigation
+// breadcrumbs, app state, memory warnings, last 10 API requests, map/location
+// state. Stores to AsyncStorage AND sends to Railway via POST /api/crash-reports.
+import {
+  installCrashLogger,
+  addNavBreadcrumb,
+  setAppStateBreadcrumb,
+  addMemoryWarningBreadcrumb,
+  checkAndSendSavedCrash,
+} from "@/lib/crashLogger";
+
+installCrashLogger();
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -296,6 +291,54 @@ function SessionExpiryWatcher() {
       router.replace("/login?expired=1");
     }
   }, [isLoading, sessionExpired, router]);
+
+  return null;
+}
+
+/**
+ * CrashLoggerSetup — mounts once at the root level and feeds live context
+ * into the crash logger ring buffer.
+ *
+ * Tracks:
+ *   • Route changes (navigation breadcrumbs)
+ *   • App state transitions (foreground / background / inactive)
+ *   • iOS low-memory warnings (fires before OS termination)
+ *   • On first mount: replays any unsent crash from the previous session
+ */
+function CrashLoggerSetup() {
+  const pathname = usePathname();
+
+  // Navigation breadcrumb on every route change
+  useEffect(() => {
+    addNavBreadcrumb(pathname);
+  }, [pathname]);
+
+  // App state + memory warnings + crash replay — runs once on mount
+  useEffect(() => {
+    // Replay any crash report that failed to send last session
+    checkAndSendSavedCrash().catch(() => {});
+
+    // Foreground / background transitions
+    const stateSub = AppState.addEventListener("change", (next: AppStateStatus) => {
+      setAppStateBreadcrumb(next);
+    });
+
+    // iOS low-memory warnings — the OS sends this before force-killing the process.
+    // Capturing it lets us distinguish OOM terminations from true native crashes.
+    let memSub: { remove: () => void } | null = null;
+    try {
+      const { DeviceEventEmitter } = require("react-native");
+      const handler = DeviceEventEmitter.addListener("memoryWarning", () => {
+        addMemoryWarningBreadcrumb();
+      });
+      memSub = handler;
+    } catch {}
+
+    return () => {
+      stateSub.remove();
+      memSub?.remove();
+    };
+  }, []);
 
   return null;
 }
@@ -760,6 +803,7 @@ export default function RootLayout() {
                   <SessionExpiryWatcher />
                   <BiometricEnrollmentPrompt />
                   <PushNotificationRegistrar />
+                  <CrashLoggerSetup />
                   <RootLayoutNav />
                   <AIChatWidget />
                   <OfflineBanner />
