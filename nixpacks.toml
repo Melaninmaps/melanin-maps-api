@@ -21,4 +21,4 @@ cmd = "node static-server.mjs"
 # (every push), all downstream layers including the TypeScript build
 # are invalidated and rebuilt fresh.
 [phases.prebuild]
-cmds = ["echo build-ref-117ffdf38eda > /tmp/build_ref.txt"]
+cmds = ["echo build-ref-be3f0f2f7db6 > /tmp/build_ref.txt"]
