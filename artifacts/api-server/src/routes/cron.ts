@@ -17,7 +17,11 @@ import {
   businessProfileViewsTable,
   marketplaceFeeConfigTable,
   reviewsTable,
+  communityPostsTable,
+  memberAgreementsTable,
+  waitlistTable,
 } from "@workspace/db";
+import bcrypt from "bcryptjs";
 import { and, isNotNull, lte, gt, eq, isNull, gte, inArray, or, count, sql } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import {
@@ -968,6 +972,176 @@ router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
   } catch (err: unknown) {
     logger.error({ err }, "Meetup checkin cron failed");
     res.status(500).json({ error: "Cron failed" });
+  }
+});
+
+// ─── POST /cron/seed-reviewer ─────────────────────────────────────────────────
+// One-time endpoint: creates and populates the Apple reviewer demo account.
+// Protected by CRON_SECRET. Safe to run multiple times (upsert pattern).
+//
+// Reviewer account:  reviewer@melaninmaps.com / MapReview2026!
+// Tier: navigator  |  Profile: complete  |  Demo data: seeded
+router.post("/cron/seed-reviewer", async (req: any, res: any): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+
+  const REVIEWER_EMAIL = "reviewer@melaninmaps.com";
+  const REVIEWER_PASS  = "MapReview2026!";
+
+  try {
+    const passwordHash = await bcrypt.hash(REVIEWER_PASS, 8);
+
+    // 1. Upsert waitlist entry (approved) ──────────────────────────────────────
+    await db.insert(waitlistTable).values({
+      email: REVIEWER_EMAIL,
+      firstName: "Apple",
+      lastName:  "Reviewer",
+      city:      "Philadelphia",
+      status:    "approved",
+      approvedAt: new Date(),
+    }).onConflictDoUpdate({
+      target: waitlistTable.email,
+      set: { status: "approved", approvedAt: new Date() },
+    });
+
+    // 2. Create or update the reviewer user ────────────────────────────────────
+    const [existing] = await db.select({ id: usersTable.id })
+      .from(usersTable).where(eq(usersTable.email, REVIEWER_EMAIL)).limit(1);
+
+    let reviewerId: string;
+
+    if (existing) {
+      reviewerId = existing.id;
+      await db.update(usersTable).set({
+        approved: true,
+        memberType: "navigator",
+        profileSetupComplete: true,
+        agreeToTerms: true,
+        emailVerified: true,
+        passwordHash,
+        firstName: "Jordan",
+        lastName:  "Williams",
+        username:  "jordanwilliams_mwm",
+        homeCity:  "Philadelphia, PA",
+        bio:       "Community explorer and local guide. Connecting people to the places that matter.",
+        trustLevel: 3,
+        reputationScore: 45,
+      }).where(eq(usersTable.email, REVIEWER_EMAIL));
+    } else {
+      const [newUser] = await db.insert(usersTable).values({
+        email:               REVIEWER_EMAIL,
+        firstName:           "Jordan",
+        lastName:            "Williams",
+        username:            "jordanwilliams_mwm",
+        passwordHash,
+        approved:            true,
+        emailVerified:       true,
+        agreeToTerms:        true,
+        memberType:          "navigator",
+        profileSetupComplete: true,
+        homeCity:            "Philadelphia, PA",
+        bio:                 "Community explorer and local guide. Connecting people to the places that matter.",
+        trustLevel:          3,
+        reputationScore:     45,
+        role:                "user",
+      }).returning({ id: usersTable.id });
+      reviewerId = newUser.id;
+    }
+
+    // 3. Upsert member_agreements entry ────────────────────────────────────────
+    await db.insert(memberAgreementsTable).values({
+      id:               `reviewer-agreement-v1`,
+      userId:           reviewerId,
+      agreementVersion: "v1",
+      platform:         "ios",
+      active:           true,
+    }).onConflictDoNothing();
+
+    // 4. Save several businesses for the reviewer ──────────────────────────────
+    const bizList = await db.select({ id: businessesTable.id })
+      .from(businessesTable)
+      .limit(8);
+
+    for (const biz of bizList) {
+      await db.insert(savedPlacesTable).values({
+        userId:     reviewerId,
+        businessId: biz.id,
+        isPublic:   false,
+      }).onConflictDoNothing();
+    }
+
+    // 5. Create realistic community posts ──────────────────────────────────────
+    const posts = [
+      {
+        authorName:     "Jordan W.",
+        authorInitials: "JW",
+        authorColor:    "#6B4F3A",
+        content:        "Just discovered this incredible soul food spot in West Philly — the cornbread alone is worth the trip. This community keeps finding the gems I never would have found on my own. 💛",
+        category:       "food",
+        locationCity:   "Philadelphia",
+        locationCountry:"US",
+        hashtags:       ["#PhillyEats", "#SoulFood", "#MappingWithMelanin"],
+      },
+      {
+        authorName:     "Jordan W.",
+        authorInitials: "JW",
+        authorColor:    "#6B4F3A",
+        content:        "Attended a community business fair in North Philly today. So many amazing Black-owned businesses doing incredible work. Saved all of them to my list. Proud of this city. 🙌",
+        category:       "community",
+        locationCity:   "Philadelphia",
+        locationCountry:"US",
+        hashtags:       ["#BlackOwned", "#PhillyCommunity", "#SupportLocal"],
+      },
+      {
+        authorName:     "Jordan W.",
+        authorInitials: "JW",
+        authorColor:    "#6B4F3A",
+        content:        "KinfolkAI just helped me plan the perfect weekend in Harlem — historic brownstones, jazz venues, and a farmers market I never would have known about. This platform is something special.",
+        category:       "travel",
+        locationCity:   "New York",
+        locationCountry:"US",
+        hashtags:       ["#Harlem", "#CulturalTravel", "#KinfolkAI"],
+      },
+      {
+        authorName:     "Jordan W.",
+        authorInitials: "JW",
+        authorColor:    "#6B4F3A",
+        content:        "Reminder that the art exhibit at the African American Museum in Philadelphia runs through next month. Powerful work — the community should see this. Free on Sundays! 🎨",
+        category:       "events",
+        locationCity:   "Philadelphia",
+        locationCountry:"US",
+        hashtags:       ["#PhillyArts", "#AAMP", "#CommunityEvents"],
+      },
+    ];
+
+    for (const p of posts) {
+      await db.insert(communityPostsTable).values({
+        authorId:        reviewerId,
+        authorName:      p.authorName,
+        authorInitials:  p.authorInitials,
+        authorColor:     p.authorColor,
+        content:         p.content,
+        category:        p.category,
+        postType:        "community",
+        locationCity:    p.locationCity,
+        locationCountry: p.locationCountry,
+        hashtags:        p.hashtags,
+        visibility:      "public",
+        audienceRating:  "everyone",
+      }).onConflictDoNothing();
+    }
+
+    res.json({
+      ok:          true,
+      reviewerId,
+      email:       REVIEWER_EMAIL,
+      tier:        "navigator",
+      savedBiz:    bizList.length,
+      posts:       posts.length,
+      message:     "Reviewer account seeded successfully. Login: reviewer@melaninmaps.com / MapReview2026!",
+    });
+  } catch (err: any) {
+    logger.error({ err }, "seed-reviewer failed");
+    res.status(500).json({ error: err?.message ?? "Seed failed" });
   }
 });
 

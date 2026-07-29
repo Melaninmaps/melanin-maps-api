@@ -432593,6 +432593,7 @@ var billing_default = router36;
 // src/routes/cron.ts
 var import_express37 = __toESM(require_express2(), 1);
 init_src();
+init_bcryptjs();
 init_drizzle_orm();
 init_email();
 var router37 = (0, import_express37.Router)();
@@ -433276,6 +433277,149 @@ router37.post("/cron/meetup-checkins", async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Meetup checkin cron failed");
     res.status(500).json({ error: "Cron failed" });
+  }
+});
+router37.post("/cron/seed-reviewer", async (req, res) => {
+  if (!verifyCronSecret(req, res)) return;
+  const REVIEWER_EMAIL = "reviewer@melaninmaps.com";
+  const REVIEWER_PASS = "MapReview2026!";
+  try {
+    const passwordHash = await bcryptjs_default.hash(REVIEWER_PASS, 8);
+    await db.insert(waitlistTable).values({
+      email: REVIEWER_EMAIL,
+      firstName: "Apple",
+      lastName: "Reviewer",
+      city: "Philadelphia",
+      status: "approved",
+      approvedAt: /* @__PURE__ */ new Date()
+    }).onConflictDoUpdate({
+      target: waitlistTable.email,
+      set: { status: "approved", approvedAt: /* @__PURE__ */ new Date() }
+    });
+    const [existing] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, REVIEWER_EMAIL)).limit(1);
+    let reviewerId;
+    if (existing) {
+      reviewerId = existing.id;
+      await db.update(usersTable).set({
+        approved: true,
+        memberType: "navigator",
+        profileSetupComplete: true,
+        agreeToTerms: true,
+        emailVerified: true,
+        passwordHash,
+        firstName: "Jordan",
+        lastName: "Williams",
+        username: "jordanwilliams_mwm",
+        homeCity: "Philadelphia, PA",
+        bio: "Community explorer and local guide. Connecting people to the places that matter.",
+        trustLevel: 3,
+        reputationScore: 45
+      }).where(eq(usersTable.email, REVIEWER_EMAIL));
+    } else {
+      const [newUser] = await db.insert(usersTable).values({
+        email: REVIEWER_EMAIL,
+        firstName: "Jordan",
+        lastName: "Williams",
+        username: "jordanwilliams_mwm",
+        passwordHash,
+        approved: true,
+        emailVerified: true,
+        agreeToTerms: true,
+        memberType: "navigator",
+        profileSetupComplete: true,
+        homeCity: "Philadelphia, PA",
+        bio: "Community explorer and local guide. Connecting people to the places that matter.",
+        trustLevel: 3,
+        reputationScore: 45,
+        role: "user"
+      }).returning({ id: usersTable.id });
+      reviewerId = newUser.id;
+    }
+    await db.insert(memberAgreementsTable).values({
+      id: `reviewer-agreement-v1`,
+      userId: reviewerId,
+      agreementVersion: "v1",
+      platform: "ios",
+      active: true
+    }).onConflictDoNothing();
+    const bizList = await db.select({ id: businessesTable.id }).from(businessesTable).limit(8);
+    for (const biz of bizList) {
+      await db.insert(savedPlacesTable).values({
+        userId: reviewerId,
+        businessId: biz.id,
+        isPublic: false
+      }).onConflictDoNothing();
+    }
+    const posts = [
+      {
+        authorName: "Jordan W.",
+        authorInitials: "JW",
+        authorColor: "#6B4F3A",
+        content: "Just discovered this incredible soul food spot in West Philly \u2014 the cornbread alone is worth the trip. This community keeps finding the gems I never would have found on my own. \u{1F49B}",
+        category: "food",
+        locationCity: "Philadelphia",
+        locationCountry: "US",
+        hashtags: ["#PhillyEats", "#SoulFood", "#MappingWithMelanin"]
+      },
+      {
+        authorName: "Jordan W.",
+        authorInitials: "JW",
+        authorColor: "#6B4F3A",
+        content: "Attended a community business fair in North Philly today. So many amazing Black-owned businesses doing incredible work. Saved all of them to my list. Proud of this city. \u{1F64C}",
+        category: "community",
+        locationCity: "Philadelphia",
+        locationCountry: "US",
+        hashtags: ["#BlackOwned", "#PhillyCommunity", "#SupportLocal"]
+      },
+      {
+        authorName: "Jordan W.",
+        authorInitials: "JW",
+        authorColor: "#6B4F3A",
+        content: "KinfolkAI just helped me plan the perfect weekend in Harlem \u2014 historic brownstones, jazz venues, and a farmers market I never would have known about. This platform is something special.",
+        category: "travel",
+        locationCity: "New York",
+        locationCountry: "US",
+        hashtags: ["#Harlem", "#CulturalTravel", "#KinfolkAI"]
+      },
+      {
+        authorName: "Jordan W.",
+        authorInitials: "JW",
+        authorColor: "#6B4F3A",
+        content: "Reminder that the art exhibit at the African American Museum in Philadelphia runs through next month. Powerful work \u2014 the community should see this. Free on Sundays! \u{1F3A8}",
+        category: "events",
+        locationCity: "Philadelphia",
+        locationCountry: "US",
+        hashtags: ["#PhillyArts", "#AAMP", "#CommunityEvents"]
+      }
+    ];
+    for (const p of posts) {
+      await db.insert(communityPostsTable).values({
+        authorId: reviewerId,
+        authorName: p.authorName,
+        authorInitials: p.authorInitials,
+        authorColor: p.authorColor,
+        content: p.content,
+        category: p.category,
+        postType: "community",
+        locationCity: p.locationCity,
+        locationCountry: p.locationCountry,
+        hashtags: p.hashtags,
+        visibility: "public",
+        audienceRating: "everyone"
+      }).onConflictDoNothing();
+    }
+    res.json({
+      ok: true,
+      reviewerId,
+      email: REVIEWER_EMAIL,
+      tier: "navigator",
+      savedBiz: bizList.length,
+      posts: posts.length,
+      message: "Reviewer account seeded successfully. Login: reviewer@melaninmaps.com / MapReview2026!"
+    });
+  } catch (err) {
+    logger.error({ err }, "seed-reviewer failed");
+    res.status(500).json({ error: err?.message ?? "Seed failed" });
   }
 });
 var cron_default = router37;
@@ -454193,8 +454337,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "fd9902b0e703cc51a5df485bd6cf29105c29812b";
-var BUILD_AT = "2026-07-29T22:04:26.245Z";
+var BUILT_FROM_SHA = "648fb4ee33ce5b96c2a77f8ac9f366475e29c1ad";
+var BUILD_AT = "2026-07-29T23:08:54.213Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
