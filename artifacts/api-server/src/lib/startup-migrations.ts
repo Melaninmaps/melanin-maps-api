@@ -78,6 +78,24 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     )`,
   },
   {
+    name: "city_launch_events_table",
+    sql: `CREATE TABLE IF NOT EXISTS city_launch_events (
+      id SERIAL PRIMARY KEY,
+      slug VARCHAR(120) NOT NULL,
+      recorded_at DATE NOT NULL DEFAULT CURRENT_DATE,
+      waitlist_size INTEGER NOT NULL DEFAULT 0,
+      active_members INTEGER NOT NULL DEFAULT 0,
+      businesses_onboarded INTEGER NOT NULL DEFAULT 0,
+      events_live INTEGER NOT NULL DEFAULT 0,
+      community_posts INTEGER NOT NULL DEFAULT 0,
+      UNIQUE (slug, recorded_at)
+    )`,
+  },
+  {
+    name: "city_launch_events_index",
+    sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`,
+  },
+  {
     name: "city_launches_seed",
     sql: `INSERT INTO city_launches (city, state, slug, sequence_order, status, checklist)
       VALUES

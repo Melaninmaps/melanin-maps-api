@@ -453722,9 +453722,65 @@ router144.get("/admin/city-launches", async (req, res) => {
       };
     });
     res.json({ cities: result });
+    void (async () => {
+      try {
+        for (const c3 of result) {
+          await pool.query(
+            `INSERT INTO city_launch_events
+               (slug, recorded_at, waitlist_size, active_members, businesses_onboarded, events_live, community_posts)
+             VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6)
+             ON CONFLICT (slug, recorded_at) DO UPDATE SET
+               waitlist_size        = GREATEST(EXCLUDED.waitlist_size,        city_launch_events.waitlist_size),
+               active_members       = GREATEST(EXCLUDED.active_members,       city_launch_events.active_members),
+               businesses_onboarded = GREATEST(EXCLUDED.businesses_onboarded, city_launch_events.businesses_onboarded),
+               events_live          = GREATEST(EXCLUDED.events_live,          city_launch_events.events_live),
+               community_posts      = GREATEST(EXCLUDED.community_posts,      city_launch_events.community_posts)`,
+            [
+              c3.slug,
+              c3.metrics.waitlistSize,
+              c3.metrics.activeMembers,
+              c3.metrics.businessesOnboarded,
+              c3.metrics.eventsLive,
+              c3.metrics.communityPosts
+            ]
+          );
+        }
+      } catch {
+      }
+    })();
   } catch (err) {
     req.log.error({ err }, "Failed to fetch city launches");
     res.status(500).json({ error: "Failed to fetch city launches" });
+  }
+});
+router144.get("/admin/city-launches/:slug/trend", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { slug } = req.params;
+  const days = Math.min(parseInt(String(req.query.days ?? "30"), 10) || 30, 90);
+  try {
+    const { rows } = await pool.query(
+      `SELECT recorded_at, waitlist_size, active_members, businesses_onboarded, events_live, community_posts
+       FROM city_launch_events
+       WHERE slug = $1
+         AND recorded_at >= CURRENT_DATE - ($2 || ' days')::INTERVAL
+       ORDER BY recorded_at ASC`,
+      [slug, days]
+    );
+    const trend = rows.map((r2) => ({
+      date: String(r2.recorded_at).slice(0, 10),
+      waitlist: r2.waitlist_size,
+      members: r2.active_members,
+      businesses: r2.businesses_onboarded,
+      events: r2.events_live,
+      posts: r2.community_posts
+    }));
+    res.json({ slug, days, trend });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city trend");
+    res.status(500).json({ error: "Failed to fetch trend" });
   }
 });
 router144.patch("/admin/city-launches/:slug/checklist", async (req, res) => {
@@ -454581,8 +454637,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "5a9615c4ae41fb3fbdadb8c46d9168ba1f2a4357";
-var BUILD_AT = "2026-07-30T01:02:40.146Z";
+var BUILT_FROM_SHA = "3ed38225459d5bebfc6891e4fa6995521844d5a6";
+var BUILD_AT = "2026-07-30T01:07:14.332Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454881,6 +454937,24 @@ var MIGRATIONS = [
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`
+  },
+  {
+    name: "city_launch_events_table",
+    sql: `CREATE TABLE IF NOT EXISTS city_launch_events (
+      id SERIAL PRIMARY KEY,
+      slug VARCHAR(120) NOT NULL,
+      recorded_at DATE NOT NULL DEFAULT CURRENT_DATE,
+      waitlist_size INTEGER NOT NULL DEFAULT 0,
+      active_members INTEGER NOT NULL DEFAULT 0,
+      businesses_onboarded INTEGER NOT NULL DEFAULT 0,
+      events_live INTEGER NOT NULL DEFAULT 0,
+      community_posts INTEGER NOT NULL DEFAULT 0,
+      UNIQUE (slug, recorded_at)
+    )`
+  },
+  {
+    name: "city_launch_events_index",
+    sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`
   },
   {
     name: "city_launches_seed",

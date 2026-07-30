@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
 import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from "recharts";
 
 const BASE = import.meta.env.BASE_URL;
@@ -188,6 +188,15 @@ type CityLaunch = {
   };
   createdAt: string;
   updatedAt: string;
+};
+
+type CityTrendPoint = {
+  date: string;
+  waitlist: number;
+  members: number;
+  businesses: number;
+  events: number;
+  posts: number;
 };
 
 type HealthData = {
@@ -407,6 +416,18 @@ export default function Admin() {
   const [selectedCity, setSelectedCity] = useState<CityLaunch | null>(null);
   const [checklistUpdating, setChecklistUpdating] = useState<string | null>(null);
   const [cityStatusUpdating, setCityStatusUpdating] = useState<string | null>(null);
+  const [cityTrend, setCityTrend] = useState<CityTrendPoint[]>([]);
+  const [cityTrendLoading, setCityTrendLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedCity) { setCityTrend([]); return; }
+    setCityTrendLoading(true);
+    fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/trend`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => setCityTrend(data.trend ?? []))
+      .catch(() => setCityTrend([]))
+      .finally(() => setCityTrendLoading(false));
+  }, [selectedCity?.slug]);
 
   useEffect(() => {
     syncTokenToCookie();
@@ -2845,6 +2866,72 @@ export default function Admin() {
                     <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide mt-0.5">{m.label}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Trend sparklines */}
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-bold text-[#3A1F0E]">30-Day Growth Trend</h4>
+                  {cityTrendLoading && (
+                    <div className="w-4 h-4 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {!cityTrendLoading && cityTrend.length === 0 && (
+                    <span className="text-xs text-[#3A1F0E]/40">No data yet — updates each time this tab loads</span>
+                  )}
+                  {!cityTrendLoading && cityTrend.length > 0 && (
+                    <span className="text-xs text-[#3A1F0E]/40">{cityTrend.length} day{cityTrend.length !== 1 ? "s" : ""} of data</span>
+                  )}
+                </div>
+                {cityTrend.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {[
+                      { key: "waitlist" as const, label: "Waitlist Growth", color: "#CA922B" },
+                      { key: "members" as const, label: "Active Members", color: "#16a34a" },
+                    ].map(({ key, label, color }) => {
+                      const latest = cityTrend[cityTrend.length - 1]?.[key] ?? 0;
+                      const first = cityTrend[0]?.[key] ?? 0;
+                      const delta = latest - first;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-semibold text-[#3A1F0E]">{label}</span>
+                            <span className="text-xs font-bold" style={{ color }}>
+                              {latest.toLocaleString()}
+                              {delta !== 0 && (
+                                <span className={`ml-1.5 ${delta > 0 ? "text-green-600" : "text-red-500"}`}>
+                                  {delta > 0 ? "+" : ""}{delta.toLocaleString()}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <ResponsiveContainer width="100%" height={80}>
+                            <LineChart data={cityTrend} margin={{ top: 2, right: 4, left: 0, bottom: 2 }}>
+                              <XAxis dataKey="date" hide />
+                              <YAxis hide domain={["auto", "auto"]} />
+                              <Tooltip
+                                contentStyle={{ fontSize: 11, borderRadius: 8, border: "1px solid #e2d5c3", background: "#fffbf5" }}
+                                labelFormatter={(v: string) => new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                formatter={(v: number) => [v.toLocaleString(), label]}
+                              />
+                              <Line
+                                type="monotone"
+                                dataKey={key}
+                                stroke={color}
+                                strokeWidth={2}
+                                dot={false}
+                                activeDot={{ r: 3, fill: color }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : !cityTrendLoading ? (
+                  <div className="h-20 flex items-center justify-center text-sm text-[#3A1F0E]/30">
+                    Trend data will appear here after the dashboard is opened on multiple days.
+                  </div>
+                ) : null}
               </div>
 
               {(["pre_launch","community","marketing","operations"] as const).map(section => {

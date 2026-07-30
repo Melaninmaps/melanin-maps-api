@@ -94,9 +94,82 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
     });
 
     res.json({ cities: result });
+
+    // Fire-and-forget: upsert today's snapshot for all cities
+    // First call of the day records baseline; subsequent calls update to highest seen value
+    void (async () => {
+      try {
+        for (const c of result) {
+          await pool.query(
+            `INSERT INTO city_launch_events
+               (slug, recorded_at, waitlist_size, active_members, businesses_onboarded, events_live, community_posts)
+             VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6)
+             ON CONFLICT (slug, recorded_at) DO UPDATE SET
+               waitlist_size        = GREATEST(EXCLUDED.waitlist_size,        city_launch_events.waitlist_size),
+               active_members       = GREATEST(EXCLUDED.active_members,       city_launch_events.active_members),
+               businesses_onboarded = GREATEST(EXCLUDED.businesses_onboarded, city_launch_events.businesses_onboarded),
+               events_live          = GREATEST(EXCLUDED.events_live,          city_launch_events.events_live),
+               community_posts      = GREATEST(EXCLUDED.community_posts,      city_launch_events.community_posts)`,
+            [
+              c.slug,
+              c.metrics.waitlistSize,
+              c.metrics.activeMembers,
+              c.metrics.businessesOnboarded,
+              c.metrics.eventsLive,
+              c.metrics.communityPosts,
+            ]
+          );
+        }
+      } catch {
+        // snapshot failures are non-critical; server keeps running
+      }
+    })();
   } catch (err) {
     req.log.error({ err }, "Failed to fetch city launches");
     res.status(500).json({ error: "Failed to fetch city launches" });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GET /admin/city-launches/:slug/trend
+// Return last 30 days of daily snapshots for a city
+// ──────────────────────────────────────────────────────────────────────────────
+router.get("/admin/city-launches/:slug/trend", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const { slug } = req.params;
+  const days = Math.min(parseInt(String(req.query.days ?? "30"), 10) || 30, 90);
+
+  try {
+    const { rows } = await pool.query<{
+      recorded_at: string;
+      waitlist_size: number;
+      active_members: number;
+      businesses_onboarded: number;
+      events_live: number;
+      community_posts: number;
+    }>(
+      `SELECT recorded_at, waitlist_size, active_members, businesses_onboarded, events_live, community_posts
+       FROM city_launch_events
+       WHERE slug = $1
+         AND recorded_at >= CURRENT_DATE - ($2 || ' days')::INTERVAL
+       ORDER BY recorded_at ASC`,
+      [slug, days]
+    );
+
+    const trend = rows.map(r => ({
+      date: String(r.recorded_at).slice(0, 10),
+      waitlist: r.waitlist_size,
+      members: r.active_members,
+      businesses: r.businesses_onboarded,
+      events: r.events_live,
+      posts: r.community_posts,
+    }));
+
+    res.json({ slug, days, trend });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city trend");
+    res.status(500).json({ error: "Failed to fetch trend" });
   }
 });
 
