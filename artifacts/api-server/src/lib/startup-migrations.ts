@@ -107,10 +107,12 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     name: "founder_admin_promotion",
     sql: `UPDATE users
       SET role = 'admin'
-      WHERE email IN (
+      WHERE lower(email) IN (
         'tlindsay428@yahoo.com',
         'tlindsay428@gmail.com',
-        'tlindsay428@aol.com'
+        'tlindsay428@aol.com',
+        'bigdot6017@gmail.com',
+        'kaylacardwell3@gmail.com'
       ) AND role != 'admin'`,
   },
   {

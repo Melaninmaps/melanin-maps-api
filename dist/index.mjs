@@ -454744,8 +454744,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "0a7204ec999fdd9cbecb150124a3af7541559a27";
-var BUILD_AT = "2026-07-30T14:11:03.791Z";
+var BUILT_FROM_SHA = "3a9b73fe30b7c2ef4552cb699cb72f8de0f18862";
+var BUILD_AT = "2026-07-30T14:20:46.065Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -455075,10 +455075,12 @@ var MIGRATIONS = [
     name: "founder_admin_promotion",
     sql: `UPDATE users
       SET role = 'admin'
-      WHERE email IN (
+      WHERE lower(email) IN (
         'tlindsay428@yahoo.com',
         'tlindsay428@gmail.com',
-        'tlindsay428@aol.com'
+        'tlindsay428@aol.com',
+        'bigdot6017@gmail.com',
+        'kaylacardwell3@gmail.com'
       ) AND role != 'admin'`
   },
   {
