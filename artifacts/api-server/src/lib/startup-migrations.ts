@@ -101,6 +101,19 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`,
   },
   {
+    // One-time promotion: grant admin role to the founder's production accounts.
+    // Uses email list so it's safe on dev (no matching rows = no-op).
+    // Idempotent: WHERE role != 'admin' means repeat runs touch nothing.
+    name: "founder_admin_promotion",
+    sql: `UPDATE users
+      SET role = 'admin'
+      WHERE email IN (
+        'tlindsay428@yahoo.com',
+        'tlindsay428@gmail.com',
+        'tlindsay428@aol.com'
+      ) AND role != 'admin'`,
+  },
+  {
     name: "city_launches_seed",
     sql: `INSERT INTO city_launches (city, state, slug, sequence_order, status, checklist)
       VALUES

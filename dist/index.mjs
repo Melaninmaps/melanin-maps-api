@@ -454744,8 +454744,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "ed9fc4efc4cfe156eb920f798b432e32f19a9e44";
-var BUILD_AT = "2026-07-30T13:33:45.476Z";
+var BUILT_FROM_SHA = "0a7204ec999fdd9cbecb150124a3af7541559a27";
+var BUILD_AT = "2026-07-30T14:11:03.791Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -455067,6 +455067,19 @@ var MIGRATIONS = [
   {
     name: "city_launch_events_index",
     sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`
+  },
+  {
+    // One-time promotion: grant admin role to the founder's production accounts.
+    // Uses email list so it's safe on dev (no matching rows = no-op).
+    // Idempotent: WHERE role != 'admin' means repeat runs touch nothing.
+    name: "founder_admin_promotion",
+    sql: `UPDATE users
+      SET role = 'admin'
+      WHERE email IN (
+        'tlindsay428@yahoo.com',
+        'tlindsay428@gmail.com',
+        'tlindsay428@aol.com'
+      ) AND role != 'admin'`
   },
   {
     name: "city_launches_seed",
