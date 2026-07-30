@@ -81,28 +81,20 @@ export interface CrashReport {
   sent: boolean;
 }
 
-// ─── Sentry bridge (lazy-injected from _layout.tsx after Sentry.init) ──────────
+// ─── Sentry bridge (disabled — native SDK removed from Build 101+) ─────────────
 //
-// crashLogger is a plain module with no direct Sentry import so it can be
-// required before the native Sentry SDK is available. _layout.tsx calls
-// injectSentryCaptureException() after Sentry.init() to wire the two layers.
+// @sentry/react-native was removed because the native KSCrash module caused a
+// pre-JS crash on Build 100 before any UI could render. The JS crash logger
+// (AsyncStorage + Railway POST) remains fully active.
 //
-// Sentry receives every event that the internal crash logger captures:
-//   • JS exceptions (fatal + non-fatal)
-//   • Unhandled promise rejections
-//   • ErrorBoundary component-tree crashes
-//
-// Native OS crashes (SIGSEGV, SIGABRT, OOM) are handled by the Sentry native
-// SDK directly via Sentry.wrap(RootLayout) — no wiring needed here.
+// To re-enable Sentry: add @sentry/react-native back to package.json, restore
+// the Expo plugin in app.config.js, and test on a dev/preview build with a
+// confirmed SENTRY_DSN before shipping to production.
 
 type SentryCaptureFn = (err: Error, extras?: Record<string, unknown>) => void;
 let _sentryCaptureException: SentryCaptureFn | null = null;
 
-/**
- * Call once after Sentry.init() to connect the crash logger to Sentry.
- * All subsequently captured JS errors will be forwarded to Sentry in addition
- * to being saved to AsyncStorage and sent to the Railway crash-reports endpoint.
- */
+/** No-op — Sentry not active. Kept for API compatibility. */
 export function injectSentryCaptureException(fn: SentryCaptureFn): void {
   _sentryCaptureException = fn;
 }

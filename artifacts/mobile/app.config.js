@@ -5,26 +5,13 @@ module.exports = ({ config }) => ({
   ...config,
   plugins: [
     ...(config.plugins ?? []),
-    // Sentry native crash capture — requires @sentry/react-native.
-    // The Expo plugin registers the Sentry upload-artifacts build step
-    // (source maps to Sentry) and links the native Sentry SDK so iOS
-    // crash signals (SIGSEGV, SIGABRT, OOM) are captured in addition to
-    // JS exceptions. A no-op if EXPO_PUBLIC_SENTRY_DSN is absent.
-    // Full plugin config: organization + project enable source-map and dSYM
-    // upload during `eas build`. Values come from EAS Dashboard env vars
-    // SENTRY_ORG and SENTRY_PROJECT (set alongside SENTRY_AUTH_TOKEN).
-    // If those vars are absent, the SDK still initialises; only symbolication is skipped.
-    [
-      "@sentry/react-native/expo",
-      {
-        organization: process.env.SENTRY_ORG,
-        project: process.env.SENTRY_PROJECT,
-        // Upload dSYMs / proguard mappings automatically during the build.
-        // Requires SENTRY_AUTH_TOKEN in EAS Dashboard → Environment Variables.
-        uploadSourceMaps: true,
-        includeNativeSources: true,
-      },
-    ],
+    // NOTE: @sentry/react-native was removed from this plugin list.
+    // The native Sentry SDK (KSCrash) auto-initialises before JS runs and
+    // caused a native crash on launch for all testers on Build 100.
+    // JS-level crash reporting (AsyncStorage + Railway POST) remains active
+    // via lib/crashLogger.ts without needing any native module.
+    // Re-add with a confirmed SENTRY_DSN once the native integration is
+    // properly configured and tested on a dev/preview build first.
   ],
   // NOTE: ios.config.googleMapsApiKey is intentionally NOT set here.
   // The app uses PROVIDER_DEFAULT (Apple Maps) on iOS — no Google Maps SDK needed on iOS.

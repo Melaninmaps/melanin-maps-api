@@ -22,53 +22,16 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import * as SecureStore from "expo-secure-store";
 
-// ── Sentry native crash capture ───────────────────────────────────────────────
-// Phase 2 of the P0 crash investigation: captures native iOS signals
-// (SIGSEGV, SIGABRT, OOM terminations) that the JS crash logger cannot reach.
-// Requires EXPO_PUBLIC_SENTRY_DSN to be set in EAS Dashboard environment vars.
-// If DSN is absent, Sentry.init() is a no-op and the JS crash logger still runs.
+// ── Sentry removed from native integration ────────────────────────────────────
+// @sentry/react-native native SDK caused a pre-JS native crash on Build 100.
+// JS crash logging (AsyncStorage + Railway POST) remains active via crashLogger.
+// Sentry will be re-added once a confirmed DSN and dev/preview build validates
+// the native integration without crashing testers.
 //
-// To activate:
-//   1. Create a free Sentry project at sentry.io (React Native)
-//   2. Copy the DSN from Project Settings → Client Keys (DSN)
-//   3. Add EXPO_PUBLIC_SENTRY_DSN to EAS Dashboard → Environment Variables
-//   4. Build a new binary (eas build --platform ios --profile production)
-//
-// Source maps are uploaded to Sentry automatically by the @sentry/react-native
-// Expo plugin registered in app.config.js — crash stacks will be symbolicated.
-import * as Sentry from "@sentry/react-native";
-
-const _sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
-if (_sentryDsn) {
-  Sentry.init({
-    dsn: _sentryDsn,
-    // Native crash handling: captures iOS/Android process signals and OOM
-    // terminations that occur outside the JS thread.
-    enableNativeCrashHandling: true,
-    // Session tracking: detects abnormal terminations (OS kills without a
-    // proper crash signal — the most common cause of "unexplained" rejections).
-    enableAutoSessionTracking: true,
-    sessionTrackingIntervalMillis: 30_000,
-    // Performance: 10% of sessions captured for traces.
-    tracesSampleRate: 0.1,
-    environment: process.env.NODE_ENV === "production" ? "production" : "development",
-    // Attach OS-level context: free memory, CPU load, thermal state.
-    // This is the primary evidence for OOM terminations vs. native crashes.
-    attachStacktrace: true,
-  });
-  // Wire Sentry into the internal crash logger so every JS exception,
-  // unhandled rejection, and ErrorBoundary catch also creates a Sentry event.
-  // This runs synchronously after Sentry.init() so the bridge is active before
-  // any code can throw.
-  // Using withScope ensures breadcrumbs + extras land on the right event.
-  injectSentryCaptureException((err, extras) => {
-    Sentry.withScope((scope) => {
-      if (extras) scope.setExtras(extras as Record<string, unknown>);
-      scope.setTag("layer", "js_crash_logger");
-      Sentry.captureException(err);
-    });
-  });
-}
+// NOTE: The Sentry import and init block below are removed. The crash logger
+// and Railway reporting continue working without the native SDK.
+const _sentryDsn: string | undefined = undefined; // reserved — not active
+// Sentry.init() removed — native SDK not active in this build.
 
 // ── JS crash logger (Layer 1 — OTA-deployed, always active) ──────────────────
 // Captures JS exceptions, unhandled rejections, navigation breadcrumbs,
@@ -76,7 +39,6 @@ if (_sentryDsn) {
 // Stores to AsyncStorage and POSTs to /api/crash-reports on Railway.
 import {
   installCrashLogger,
-  injectSentryCaptureException,
   addNavBreadcrumb,
   setAppStateBreadcrumb,
   addMemoryWarningBreadcrumb,
@@ -873,7 +835,6 @@ function _RootLayout() {
   );
 }
 
-// Export wrapped with Sentry for native session + crash correlation.
-// If EXPO_PUBLIC_SENTRY_DSN is absent this is a transparent passthrough.
-const RootLayout = _sentryDsn ? Sentry.wrap(_RootLayout) : _RootLayout;
-export default RootLayout;
+// Sentry.wrap removed — native SDK not active. JS crash logger via crashLogger.ts
+// (AsyncStorage + Railway POST) remains fully active.
+export default _RootLayout;
