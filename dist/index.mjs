@@ -396409,7 +396409,7 @@ async function upsertUser(claims) {
 }
 router2.get("/auth/user", async (req, res) => {
   if (!req.isAuthenticated()) {
-    res.json({ user: null });
+    res.status(401).json({ user: null });
     return;
   }
   try {
@@ -454744,8 +454744,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "0b85cc99e4f89e58bca07c4e4d239068697319ac";
-var BUILD_AT = "2026-07-30T01:19:45.612Z";
+var BUILT_FROM_SHA = "ed9fc4efc4cfe156eb920f798b432e32f19a9e44";
+var BUILD_AT = "2026-07-30T13:33:45.476Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
