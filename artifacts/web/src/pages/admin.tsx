@@ -178,6 +178,7 @@ type CityLaunch = {
   notes: string | null;
   rolloutPercentage: number;
   autoAdvance: boolean;
+  healthLevel: "ok" | "warning" | "critical";
   checklistProgress: { completed: number; total: number; pct: number };
   metrics: {
     waitlistSize: number;
@@ -198,6 +199,23 @@ type CityTrendPoint = {
   businesses: number;
   events: number;
   posts: number;
+};
+
+type CityHealthSignal = { level: "ok" | "warning" | "critical"; message: string };
+type CityHealth = {
+  level: "ok" | "warning" | "critical";
+  signals: CityHealthSignal[];
+  probeMs: number;
+  poolStats: { total: number; idle: number; waiting: number };
+  activity: {
+    signups24h: number;
+    signups7d: number;
+    posts24h: number;
+    posts7d: number;
+    waitlistSignups24h: number;
+  };
+  cityStatus: string;
+  checkedAt: string;
 };
 
 type HealthData = {
@@ -421,15 +439,23 @@ export default function Admin() {
   const [cityTrendLoading, setCityTrendLoading] = useState(false);
   const [cityStatusBanner, setCityStatusBanner] = useState<{ message: string; newStatus: string } | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [cityHealth, setCityHealth] = useState<CityHealth | null>(null);
+  const [cityHealthLoading, setCityHealthLoading] = useState(false);
 
   useEffect(() => {
-    if (!selectedCity) { setCityTrend([]); return; }
+    if (!selectedCity) { setCityTrend([]); setCityHealth(null); return; }
     setCityTrendLoading(true);
     fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/trend`, { credentials: "include" })
       .then(r => r.json())
       .then(data => setCityTrend(data.trend ?? []))
       .catch(() => setCityTrend([]))
       .finally(() => setCityTrendLoading(false));
+    setCityHealthLoading(true);
+    fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/health`, { credentials: "include" })
+      .then(r => r.json())
+      .then((data: CityHealth) => setCityHealth(data))
+      .catch(() => setCityHealth(null))
+      .finally(() => setCityHealthLoading(false));
   }, [selectedCity?.slug]);
 
   useEffect(() => {
@@ -2773,9 +2799,17 @@ export default function Admin() {
                         <h3 className="font-bold text-[#3A1F0E] text-lg leading-tight">{city.city}</h3>
                         <span className="text-sm text-[#3A1F0E]/40">{city.state}</span>
                       </div>
-                      <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${sc}`}>
-                        {statusLabel[city.status] ?? city.status}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {city.healthLevel === "critical" && (
+                          <span title="Health critical" className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+                        )}
+                        {city.healthLevel === "warning" && (
+                          <span title="Health warning" className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+                        )}
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${sc}`}>
+                          {statusLabel[city.status] ?? city.status}
+                        </span>
+                      </div>
                     </div>
                     <div className="mb-4">
                       <div className="flex items-center justify-between text-xs mb-1.5">
@@ -2964,6 +2998,72 @@ export default function Admin() {
                     Trend data will appear here after the dashboard is opened on multiple days.
                   </div>
                 ) : null}
+              </div>
+
+              {/* Health Signals */}
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-[#3A1F0E]">Health Signals</h4>
+                    {cityHealth && cityHealth.level !== "ok" && (
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cityHealth.level === "critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
+                        {cityHealth.level === "critical" ? "Critical" : "Warning"}
+                      </span>
+                    )}
+                    {cityHealth && cityHealth.level === "ok" && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Healthy</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {cityHealth && (
+                      <span className="text-xs text-[#3A1F0E]/40">DB {cityHealth.probeMs}ms · pool {cityHealth.poolStats.total}/{cityHealth.poolStats.idle} idle</span>
+                    )}
+                    {cityHealthLoading && (
+                      <div className="w-4 h-4 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
+                </div>
+                {cityHealth ? (
+                  <div className="space-y-2">
+                    {cityHealth.signals.map((sig, i) => (
+                      <div key={i} className={`flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-sm ${
+                        sig.level === "critical" ? "bg-red-50 border border-red-200 text-red-800"
+                        : sig.level === "warning" ? "bg-amber-50 border border-amber-200 text-amber-800"
+                        : "bg-green-50 border border-green-200 text-green-800"
+                      }`}>
+                        {sig.level === "critical" ? (
+                          <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                        ) : sig.level === "warning" ? (
+                          <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01"/></svg>
+                        ) : (
+                          <svg className="w-4 h-4 mt-0.5 shrink-0 text-green-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        )}
+                        {sig.message}
+                      </div>
+                    ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                      {[
+                        { label: "Signups 24h", val: cityHealth.activity.signups24h },
+                        { label: "Signups 7d", val: cityHealth.activity.signups7d },
+                        { label: "Posts 24h", val: cityHealth.activity.posts24h },
+                        { label: "Posts 7d", val: cityHealth.activity.posts7d },
+                      ].map(m => (
+                        <div key={m.label} className="bg-[#FAF6EF] rounded-xl px-2 py-2 text-center">
+                          <div className="text-base font-bold text-[#3A1F0E]">{m.val}</div>
+                          <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide mt-0.5">{m.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : cityHealthLoading ? (
+                  <div className="h-16 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="h-16 flex items-center justify-center text-sm text-[#3A1F0E]/30">
+                    Health data unavailable
+                  </div>
+                )}
               </div>
 
               {(["pre_launch","community","marketing","operations"] as const).map(section => {

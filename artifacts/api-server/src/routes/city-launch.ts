@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { pool } from "@workspace/db";
+import { pool, getPoolStats } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
 import type { ChecklistSection } from "@workspace/db";
 
@@ -55,6 +55,9 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
     const eventMap = toMap(eventStats);
     const postMap = toMap(postStats);
 
+    // Pool stats are read without a DB query — safe to include in every response
+    const ps = getPoolStats();
+
     const result = cities.map(c => {
       const key = c.city.toLowerCase();
       const checklist = c.checklist as ChecklistSection;
@@ -65,6 +68,18 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
         ...Object.values(checklist.operations),
       ];
       const completedItems = allItems.filter(Boolean).length;
+
+      const activeMembers = userMap[key] ?? 0;
+      const communityPosts = postMap[key] ?? 0;
+      const isActiveLive = ["live", "soft_launch"].includes(c.status);
+
+      // Lightweight health level — no extra DB query needed
+      const healthLevel: "ok" | "warning" | "critical" =
+        ps.waiting > 3 ? "critical"
+        : ps.waiting > 0 ? "warning"
+        : (isActiveLive && activeMembers === 0 && communityPosts === 0) ? "warning"
+        : "ok";
+
       return {
         id: c.id,
         city: c.city,
@@ -77,6 +92,7 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
         notes: c.notes,
         rolloutPercentage: c.rollout_percentage,
         autoAdvance: c.auto_advance,
+        healthLevel,
         checklistProgress: {
           completed: completedItems,
           total: allItems.length,
@@ -84,11 +100,11 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
         },
         metrics: {
           waitlistSize: waitlistMap[key] ?? 0,
-          activeMembers: userMap[key] ?? 0,
+          activeMembers,
           businessesOnboarded: bizMap[key] ?? 0,
           eventsLive: eventMap[key] ?? 0,
           ambassadorCount: 0, // future: ambassador table
-          communityPosts: postMap[key] ?? 0,
+          communityPosts,
         },
         createdAt: c.created_at,
         updatedAt: c.updated_at,
@@ -129,6 +145,94 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch city launches");
     res.status(500).json({ error: "Failed to fetch city launches" });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GET /admin/city-launches/:slug/health
+// Returns pool stats + city-scoped activity signals for the last 24 h / 7 d
+// ──────────────────────────────────────────────────────────────────────────────
+router.get("/admin/city-launches/:slug/health", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const { slug } = req.params;
+
+  try {
+    const { rows: cityRows } = await pool.query<{ city: string; status: string }>(
+      `SELECT city, status FROM city_launches WHERE slug = $1`, [slug]
+    );
+    if (!cityRows[0]) { res.status(404).json({ error: "City not found" }); return; }
+
+    const cityName = cityRows[0].city.toLowerCase();
+    const cityStatus = cityRows[0].status;
+
+    // Pool stats — no DB round-trip needed
+    const ps = getPoolStats();
+
+    // DB response time probe (single lightweight query)
+    const probeStart = Date.now();
+    await pool.query(`SELECT 1`);
+    const probeMs = Date.now() - probeStart;
+
+    // City activity — run sequentially to avoid parallel pool pressure
+    const { rows: s24h } = await pool.query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM users WHERE LOWER(TRIM(home_city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+    const { rows: s7d } = await pool.query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM users WHERE LOWER(TRIM(home_city)) = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+      [cityName]
+    );
+    const { rows: p24h } = await pool.query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM community_posts WHERE LOWER(TRIM(location_city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+    const { rows: p7d } = await pool.query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM community_posts WHERE LOWER(TRIM(location_city)) = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+      [cityName]
+    );
+    const { rows: w24h } = await pool.query<{ cnt: string }>(
+      `SELECT COUNT(*) as cnt FROM waitlist WHERE LOWER(TRIM(city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+
+    const activity = {
+      signups24h:        parseInt(s24h[0]?.cnt ?? "0", 10),
+      signups7d:         parseInt(s7d[0]?.cnt  ?? "0", 10),
+      posts24h:          parseInt(p24h[0]?.cnt  ?? "0", 10),
+      posts7d:           parseInt(p7d[0]?.cnt   ?? "0", 10),
+      waitlistSignups24h: parseInt(w24h[0]?.cnt ?? "0", 10),
+    };
+
+    // ── Build health signals ─────────────────────────────────────────────────
+    type SignalLevel = "ok" | "warning" | "critical";
+    const signals: { level: SignalLevel; message: string }[] = [];
+
+    if (ps.waiting > 3)  signals.push({ level: "critical", message: `DB pool pressure: ${ps.waiting} connections waiting` });
+    else if (ps.waiting > 0) signals.push({ level: "warning", message: `DB pool elevated: ${ps.waiting} waiting (${ps.total} total)` });
+
+    if (probeMs > 1000) signals.push({ level: "critical", message: `DB slow: ${probeMs}ms round-trip` });
+    else if (probeMs > 300) signals.push({ level: "warning", message: `DB response elevated: ${probeMs}ms` });
+
+    const isActiveLive = ["live", "soft_launch"].includes(cityStatus);
+    if (isActiveLive) {
+      if (activity.signups7d === 0)
+        signals.push({ level: "warning", message: "No new member sign-ups in the last 7 days" });
+      if (activity.posts7d === 0)
+        signals.push({ level: "warning", message: "No community posts in the last 7 days" });
+    }
+
+    if (signals.length === 0) signals.push({ level: "ok", message: "All systems healthy" });
+
+    const level: SignalLevel =
+      signals.some(s => s.level === "critical") ? "critical"
+      : signals.some(s => s.level === "warning")  ? "warning"
+      : "ok";
+
+    res.json({ slug, level, signals, probeMs, poolStats: ps, activity, cityStatus, checkedAt: new Date().toISOString() });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city health");
+    res.status(500).json({ error: "Failed to fetch city health" });
   }
 });
 

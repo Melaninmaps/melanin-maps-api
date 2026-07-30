@@ -453682,6 +453682,7 @@ router144.get("/admin/city-launches", async (req, res) => {
     const bizMap = toMap(bizStats);
     const eventMap = toMap(eventStats);
     const postMap = toMap(postStats);
+    const ps3 = getPoolStats();
     const result = cities.map((c3) => {
       const key = c3.city.toLowerCase();
       const checklist = c3.checklist;
@@ -453692,6 +453693,10 @@ router144.get("/admin/city-launches", async (req, res) => {
         ...Object.values(checklist.operations)
       ];
       const completedItems = allItems.filter(Boolean).length;
+      const activeMembers = userMap[key] ?? 0;
+      const communityPosts = postMap[key] ?? 0;
+      const isActiveLive = ["live", "soft_launch"].includes(c3.status);
+      const healthLevel = ps3.waiting > 3 ? "critical" : ps3.waiting > 0 ? "warning" : isActiveLive && activeMembers === 0 && communityPosts === 0 ? "warning" : "ok";
       return {
         id: c3.id,
         city: c3.city,
@@ -453704,6 +453709,7 @@ router144.get("/admin/city-launches", async (req, res) => {
         notes: c3.notes,
         rolloutPercentage: c3.rollout_percentage,
         autoAdvance: c3.auto_advance,
+        healthLevel,
         checklistProgress: {
           completed: completedItems,
           total: allItems.length,
@@ -453711,12 +453717,12 @@ router144.get("/admin/city-launches", async (req, res) => {
         },
         metrics: {
           waitlistSize: waitlistMap[key] ?? 0,
-          activeMembers: userMap[key] ?? 0,
+          activeMembers,
           businessesOnboarded: bizMap[key] ?? 0,
           eventsLive: eventMap[key] ?? 0,
           ambassadorCount: 0,
           // future: ambassador table
-          communityPosts: postMap[key] ?? 0
+          communityPosts
         },
         createdAt: c3.created_at,
         updatedAt: c3.updated_at
@@ -453752,6 +453758,74 @@ router144.get("/admin/city-launches", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch city launches");
     res.status(500).json({ error: "Failed to fetch city launches" });
+  }
+});
+router144.get("/admin/city-launches/:slug/health", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { slug } = req.params;
+  try {
+    const { rows: cityRows } = await pool.query(
+      `SELECT city, status FROM city_launches WHERE slug = $1`,
+      [slug]
+    );
+    if (!cityRows[0]) {
+      res.status(404).json({ error: "City not found" });
+      return;
+    }
+    const cityName = cityRows[0].city.toLowerCase();
+    const cityStatus = cityRows[0].status;
+    const ps3 = getPoolStats();
+    const probeStart = Date.now();
+    await pool.query(`SELECT 1`);
+    const probeMs = Date.now() - probeStart;
+    const { rows: s24h } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM users WHERE LOWER(TRIM(home_city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+    const { rows: s7d } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM users WHERE LOWER(TRIM(home_city)) = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+      [cityName]
+    );
+    const { rows: p24h } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM community_posts WHERE LOWER(TRIM(location_city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+    const { rows: p7d } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM community_posts WHERE LOWER(TRIM(location_city)) = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+      [cityName]
+    );
+    const { rows: w24h } = await pool.query(
+      `SELECT COUNT(*) as cnt FROM waitlist WHERE LOWER(TRIM(city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      [cityName]
+    );
+    const activity = {
+      signups24h: parseInt(s24h[0]?.cnt ?? "0", 10),
+      signups7d: parseInt(s7d[0]?.cnt ?? "0", 10),
+      posts24h: parseInt(p24h[0]?.cnt ?? "0", 10),
+      posts7d: parseInt(p7d[0]?.cnt ?? "0", 10),
+      waitlistSignups24h: parseInt(w24h[0]?.cnt ?? "0", 10)
+    };
+    const signals = [];
+    if (ps3.waiting > 3) signals.push({ level: "critical", message: `DB pool pressure: ${ps3.waiting} connections waiting` });
+    else if (ps3.waiting > 0) signals.push({ level: "warning", message: `DB pool elevated: ${ps3.waiting} waiting (${ps3.total} total)` });
+    if (probeMs > 1e3) signals.push({ level: "critical", message: `DB slow: ${probeMs}ms round-trip` });
+    else if (probeMs > 300) signals.push({ level: "warning", message: `DB response elevated: ${probeMs}ms` });
+    const isActiveLive = ["live", "soft_launch"].includes(cityStatus);
+    if (isActiveLive) {
+      if (activity.signups7d === 0)
+        signals.push({ level: "warning", message: "No new member sign-ups in the last 7 days" });
+      if (activity.posts7d === 0)
+        signals.push({ level: "warning", message: "No community posts in the last 7 days" });
+    }
+    if (signals.length === 0) signals.push({ level: "ok", message: "All systems healthy" });
+    const level = signals.some((s2) => s2.level === "critical") ? "critical" : signals.some((s2) => s2.level === "warning") ? "warning" : "ok";
+    res.json({ slug, level, signals, probeMs, poolStats: ps3, activity, cityStatus, checkedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city health");
+    res.status(500).json({ error: "Failed to fetch city health" });
   }
 });
 router144.get("/admin/city-launches/:slug/trend", async (req, res) => {
@@ -454670,8 +454744,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "5876eed69618086c1aa7e1dea8d23d6a5582e9bd";
-var BUILD_AT = "2026-07-30T01:11:48.882Z";
+var BUILT_FROM_SHA = "0b85cc99e4f89e58bca07c4e4d239068697319ac";
+var BUILD_AT = "2026-07-30T01:19:45.612Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
