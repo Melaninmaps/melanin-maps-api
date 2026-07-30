@@ -417944,9 +417944,9 @@ router23.get("/groups/:id", async (req, res) => {
     }
     const members = await db.select({ userId: groupMembers.userId, role: groupMembers.role, joinedAt: groupMembers.joinedAt }).from(groupMembers).where(eq(groupMembers.groupId, id2)).limit(100);
     const isMember = req.isAuthenticated() ? members.some((m2) => m2.userId === req.user.id) : false;
-    const isAdmin17 = req.isAuthenticated() ? members.some((m2) => m2.userId === req.user.id && m2.role === "admin") : false;
+    const isAdmin16 = req.isAuthenticated() ? members.some((m2) => m2.userId === req.user.id && m2.role === "admin") : false;
     let pendingInvites = [];
-    if (isAdmin17) {
+    if (isAdmin16) {
       pendingInvites = await db.select({
         id: groupInvites.id,
         invitedUserId: groupInvites.invitedUserId,
@@ -417955,7 +417955,7 @@ router23.get("/groups/:id", async (req, res) => {
         createdAt: groupInvites.createdAt
       }).from(groupInvites).leftJoin(usersTable, eq(usersTable.id, groupInvites.invitedUserId)).where(and(eq(groupInvites.groupId, id2), eq(groupInvites.status, "pending")));
     }
-    res.json({ group: { ...group, isMember, isAdmin: isAdmin17 }, members, pendingInvites });
+    res.json({ group: { ...group, isMember, isAdmin: isAdmin16 }, members, pendingInvites });
   } catch (err) {
     req.log.error({ err }, "GET /api/groups/:id error");
     res.status(500).json({ error: "Internal server error" });
@@ -423129,15 +423129,9 @@ var import_express30 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 init_email();
-var ADMIN_EMAILS5 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin5(req) {
-  const user = req.user;
-  if (!user?.email) return false;
-  return ADMIN_EMAILS5.includes(user.email);
-}
 var router30 = (0, import_express30.Router)();
 router30.get("/admin/users", async (req, res) => {
-  if (!isAdmin5(req)) {
+  if (!isAdmin2(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -423159,7 +423153,7 @@ router30.get("/admin/users", async (req, res) => {
   }
 });
 router30.patch("/admin/users/:id", async (req, res) => {
-  if (!isAdmin5(req)) {
+  if (!isAdmin2(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -423209,7 +423203,7 @@ router30.patch("/admin/users/:id", async (req, res) => {
   }
 });
 router30.delete("/admin/users/:id", async (req, res) => {
-  if (!isAdmin5(req)) {
+  if (!isAdmin2(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -423233,7 +423227,7 @@ router30.delete("/admin/users/:id", async (req, res) => {
   }
 });
 router30.get("/admin/metrics", async (req, res) => {
-  if (!isAdmin5(req)) {
+  if (!isAdmin2(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -423257,6 +423251,36 @@ router30.get("/admin/metrics", async (req, res) => {
           ORDER BY date
         `)
     ]);
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1e3);
+    const sessResult = await pool.query(
+      `SELECT COUNT(*)::int AS cnt FROM sessions WHERE expire > NOW()`
+    );
+    const activeSessions = sessResult.rows[0]?.cnt ?? 0;
+    const mTotalResult = await pool.query(`SELECT COUNT(*)::int AS cnt FROM users`);
+    const membersTotal = mTotalResult.rows[0]?.cnt ?? 0;
+    const mTodayResult = await pool.query(
+      `SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= $1`,
+      [todayStart]
+    );
+    const membersToday = mTodayResult.rows[0]?.cnt ?? 0;
+    let communityPostsToday = 0;
+    try {
+      const postsResult = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM community_posts WHERE created_at >= $1`,
+        [todayStart]
+      );
+      communityPostsToday = postsResult.rows[0]?.cnt ?? 0;
+    } catch {
+    }
+    const authResult = await pool.query(
+      `SELECT
+        SUM(CASE WHEN event = 'AUTH_LOGIN_SUCCESS' THEN 1 ELSE 0 END)::int AS logins,
+        SUM(CASE WHEN event IN ('AUTH_LOGIN_FAILURE','AUTH_LOGIN_PASSWORD_MISMATCH','AUTH_LOGIN_USER_NOT_FOUND') THEN 1 ELSE 0 END)::int AS failures
+       FROM auth_events WHERE created_at >= $1`,
+      [hourAgo]
+    );
+    const loginsLastHour = authResult.rows[0]?.logins ?? 0;
+    const failuresLastHour = authResult.rows[0]?.failures ?? 0;
     res.json({
       total: Number(total),
       approved: Number(approved),
@@ -423266,7 +423290,18 @@ router30.get("/admin/metrics", async (req, res) => {
       daily: daily.rows.map((r2) => ({
         date: r2.date,
         count: Number(r2.count)
-      }))
+      })),
+      platform: {
+        uptimeSeconds: Math.floor(process.uptime()),
+        generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        pool: getPoolStats(),
+        activeSessions,
+        membersTotal,
+        membersToday,
+        communityPostsToday,
+        loginsLastHour,
+        failuresLastHour
+      }
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch metrics");
@@ -423274,7 +423309,7 @@ router30.get("/admin/metrics", async (req, res) => {
   }
 });
 router30.get("/admin/leaderboard", async (req, res) => {
-  if (!isAdmin5(req)) {
+  if (!isAdmin2(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -433699,8 +433734,8 @@ router39.post("/content-reports", reportLimiter, async (req, res) => {
   }
 });
 router39.get("/admin/content-reports", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -433713,8 +433748,8 @@ router39.get("/admin/content-reports", async (req, res) => {
   }
 });
 router39.patch("/admin/content-reports/:id", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -434584,8 +434619,8 @@ router45.get("/incidents", async (req, res) => {
   }
 });
 router45.get("/admin/safety-reports", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -434598,8 +434633,8 @@ router45.get("/admin/safety-reports", async (req, res) => {
   }
 });
 router45.patch("/admin/safety-reports/:id", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -434633,8 +434668,8 @@ router45.patch("/admin/safety-reports/:id", async (req, res) => {
   }
 });
 router45.get("/admin/safety-incidents", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -434740,8 +434775,8 @@ router45.get("/reports/proximity-warnings", async (req, res) => {
   }
 });
 router45.patch("/admin/safety-incidents/:id/resolve", async (req, res) => {
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!req.user?.email || !ADMIN_EMAILS15.includes(req.user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS14.includes(req.user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -437698,8 +437733,8 @@ async function requireBusinessOwner(req, res, businessId) {
     res.status(404).json({ error: "Business not found" });
     return null;
   }
-  const isAdmin17 = req.user.role === "admin";
-  if (biz.submittedById !== req.user.id && !isAdmin17) {
+  const isAdmin16 = req.user.role === "admin";
+  if (biz.submittedById !== req.user.id && !isAdmin16) {
     res.status(403).json({ error: "You do not own this business" });
     return null;
   }
@@ -438389,11 +438424,11 @@ var import_express65 = __toESM(require_express2(), 1);
 init_src();
 init_schema2();
 init_drizzle_orm();
-var ADMIN_EMAILS6 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin6(req) {
+var ADMIN_EMAILS5 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin5(req) {
   const user = req.user;
   if (!user?.email) return false;
-  if (ADMIN_EMAILS6.length > 0 && ADMIN_EMAILS6.includes(user.email)) return true;
+  if (ADMIN_EMAILS5.length > 0 && ADMIN_EMAILS5.includes(user.email)) return true;
   return user.role === "admin";
 }
 var router65 = (0, import_express65.Router)();
@@ -438424,7 +438459,7 @@ router65.post("/category-waitlist", async (req, res) => {
   }
 });
 router65.get("/admin/category-waitlist", async (req, res) => {
-  if (!isAdmin6(req)) {
+  if (!isAdmin5(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -438446,11 +438481,11 @@ var category_waitlist_default = router65;
 var import_express66 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var ADMIN_EMAILS7 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin7(req) {
+var ADMIN_EMAILS6 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin6(req) {
   const user = req.user;
   if (!user?.email) return false;
-  if (ADMIN_EMAILS7.length > 0 && ADMIN_EMAILS7.includes(user.email)) return true;
+  if (ADMIN_EMAILS6.length > 0 && ADMIN_EMAILS6.includes(user.email)) return true;
   return user.role === "admin";
 }
 var router66 = (0, import_express66.Router)();
@@ -438599,7 +438634,7 @@ router66.get("/business-nominations/mine", async (req, res) => {
   }
 });
 router66.get("/admin/business-nominations", async (req, res) => {
-  if (!isAdmin7(req)) {
+  if (!isAdmin6(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -438612,7 +438647,7 @@ router66.get("/admin/business-nominations", async (req, res) => {
   }
 });
 router66.patch("/admin/business-nominations/:id", async (req, res) => {
-  if (!isAdmin7(req)) {
+  if (!isAdmin6(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -441008,11 +441043,11 @@ var import_express76 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var router76 = (0, import_express76.Router)();
-var ADMIN_EMAILS8 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin8(req) {
+var ADMIN_EMAILS7 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin7(req) {
   const user = req.user;
   if (!user?.email) return false;
-  if (ADMIN_EMAILS8.length > 0 && ADMIN_EMAILS8.includes(user.email)) return true;
+  if (ADMIN_EMAILS7.length > 0 && ADMIN_EMAILS7.includes(user.email)) return true;
   return user.role === "admin";
 }
 var VALID_TIERS2 = ["community", "growth", "premium"];
@@ -441100,7 +441135,7 @@ router76.get("/marketplace-fees/config", async (req, res) => {
       return;
     }
     const configs = await getOrSeedConfigs();
-    if (isAdmin8(req)) {
+    if (isAdmin7(req)) {
       res.json({ configs });
     } else {
       res.json({
@@ -441123,7 +441158,7 @@ router76.get("/marketplace-fees/config", async (req, res) => {
 });
 router76.put("/marketplace-fees/config/:tier", async (req, res) => {
   try {
-    if (!isAdmin8(req)) {
+    if (!isAdmin7(req)) {
       res.status(403).json({ error: "Admin required" });
       return;
     }
@@ -441165,7 +441200,7 @@ router76.put("/marketplace-fees/config/:tier", async (req, res) => {
 });
 router76.put("/marketplace-fees/config/:tier/founding", async (req, res) => {
   try {
-    if (!isAdmin8(req)) {
+    if (!isAdmin7(req)) {
       res.status(403).json({ error: "Admin required" });
       return;
     }
@@ -441252,7 +441287,7 @@ router76.get("/marketplace-fees/businesses/:id", async (req, res) => {
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    if (biz.submittedById !== req.user.id && !isAdmin8(req)) {
+    if (biz.submittedById !== req.user.id && !isAdmin7(req)) {
       res.status(403).json({ error: "Access denied" });
       return;
     }
@@ -441266,7 +441301,7 @@ router76.get("/marketplace-fees/businesses/:id", async (req, res) => {
 });
 router76.patch("/marketplace-fees/businesses/:id/profile", async (req, res) => {
   try {
-    if (!isAdmin8(req)) {
+    if (!isAdmin7(req)) {
       res.status(403).json({ error: "Admin required" });
       return;
     }
@@ -441330,11 +441365,11 @@ var import_express77 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var router77 = (0, import_express77.Router)();
-var ADMIN_EMAILS9 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin9(req) {
+var ADMIN_EMAILS8 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin8(req) {
   const user = req.user;
   if (!user?.email) return false;
-  if (ADMIN_EMAILS9.length > 0 && ADMIN_EMAILS9.includes(user.email)) return true;
+  if (ADMIN_EMAILS8.length > 0 && ADMIN_EMAILS8.includes(user.email)) return true;
   return user.role === "admin";
 }
 router77.get("/users/me/trust", async (req, res) => {
@@ -441455,7 +441490,7 @@ router77.post("/reviews/:id/helpful", async (req, res) => {
   }
 });
 router77.get("/admin/identity-verifications/:id/selfie-url", async (req, res) => {
-  if (!isAdmin9(req)) {
+  if (!isAdmin8(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -441488,7 +441523,7 @@ router77.get("/admin/identity-verifications/:id/selfie-url", async (req, res) =>
   }
 });
 router77.get("/admin/identity-verifications", async (req, res) => {
-  if (!isAdmin9(req)) {
+  if (!isAdmin8(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -441511,7 +441546,7 @@ router77.get("/admin/identity-verifications", async (req, res) => {
   }
 });
 router77.patch("/admin/identity-verifications/:id", async (req, res) => {
-  if (!isAdmin9(req)) {
+  if (!isAdmin8(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -441537,7 +441572,7 @@ router77.patch("/admin/identity-verifications/:id", async (req, res) => {
   }
 });
 router77.post("/admin/users/:id/ambassador", async (req, res) => {
-  if (!isAdmin9(req)) {
+  if (!isAdmin8(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -441556,7 +441591,7 @@ router77.post("/admin/users/:id/ambassador", async (req, res) => {
   }
 });
 router77.post("/admin/users/:id/policy-violation", async (req, res) => {
-  if (!isAdmin9(req)) {
+  if (!isAdmin8(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -442408,10 +442443,10 @@ var CULTURAL_SITES_SEED = [
 
 // src/routes/cultural-sites.ts
 var router82 = (0, import_express82.Router)();
-var ADMIN_EMAILS10 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin10(req) {
+var ADMIN_EMAILS9 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin9(req) {
   const user = req.user;
-  return !!(user?.email && ADMIN_EMAILS10.includes(user.email));
+  return !!(user?.email && ADMIN_EMAILS9.includes(user.email));
 }
 var SUPPORT_LINKS_SEED = [
   { siteName: "Howard University", title: "Give to Howard University", description: "Support scholarships, programs, and the university's ongoing mission of excellence.", url: "https://giving.howard.edu", category: "scholarship", displayOrder: 0 },
@@ -442638,7 +442673,7 @@ router82.get("/cultural-sites/:id/support-links", async (req, res) => {
 });
 router82.patch("/cultural-sites/stories/:storyId/moderate", async (req, res) => {
   try {
-    if (!isAdmin10(req)) {
+    if (!isAdmin9(req)) {
       res.status(403).json({ error: "Admin access required" });
       return;
     }
@@ -442675,7 +442710,7 @@ router82.patch("/cultural-sites/stories/:storyId/moderate", async (req, res) => 
 });
 router82.get("/cultural-sites/stories/pending", async (req, res) => {
   try {
-    if (!isAdmin10(req)) {
+    if (!isAdmin9(req)) {
       res.status(403).json({ error: "Admin access required" });
       return;
     }
@@ -444030,11 +444065,11 @@ router90.get("/recommend", async (req, res) => {
 var import_express91 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var ADMIN_EMAILS11 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin11(req) {
+var ADMIN_EMAILS10 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin10(req) {
   const user = req.user;
   if (!user?.email) return false;
-  return ADMIN_EMAILS11.includes(user.email) || user.role === "admin";
+  return ADMIN_EMAILS10.includes(user.email) || user.role === "admin";
 }
 var router91 = (0, import_express91.Router)();
 router91.get("/captions/:businessId", async (req, res) => {
@@ -444050,7 +444085,7 @@ router91.get("/captions/:businessId", async (req, res) => {
   }
 });
 router91.get("/admin/captions", async (req, res) => {
-  if (!isAdmin11(req)) {
+  if (!isAdmin10(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -444067,7 +444102,7 @@ router91.get("/admin/captions", async (req, res) => {
   }
 });
 router91.delete("/admin/captions", async (req, res) => {
-  if (!isAdmin11(req)) {
+  if (!isAdmin10(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -445988,7 +446023,7 @@ var router100 = (0, import_express100.Router)();
 function uid4(req) {
   return req.user?.id ?? null;
 }
-function isAdmin12(req) {
+function isAdmin11(req) {
   const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
   return adminEmails.includes(req.user?.email ?? "");
 }
@@ -446067,7 +446102,7 @@ router100.post("/community-challenges/:id/progress", async (req, res) => {
   }
 });
 router100.post("/admin/community-challenges", async (req, res) => {
-  if (!isAdmin12(req)) {
+  if (!isAdmin11(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -447635,11 +447670,11 @@ var for_you_default = router107;
 var import_express108 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var ADMIN_EMAILS12 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin13(req) {
+var ADMIN_EMAILS11 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin12(req) {
   const user = req.user;
   if (!user?.email) return false;
-  if (ADMIN_EMAILS12.length > 0 && ADMIN_EMAILS12.includes(user.email)) return true;
+  if (ADMIN_EMAILS11.length > 0 && ADMIN_EMAILS11.includes(user.email)) return true;
   return user.role === "admin";
 }
 var router108 = (0, import_express108.Router)();
@@ -447871,7 +447906,7 @@ router108.post("/knowledge/happening-now/:id/confirm", async (req, res) => {
   }
 });
 router108.patch("/knowledge/happening-now/:id/status", async (req, res) => {
-  if (!isAdmin13(req)) {
+  if (!isAdmin12(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -447891,7 +447926,7 @@ router108.patch("/knowledge/happening-now/:id/status", async (req, res) => {
   }
 });
 router108.get("/knowledge/happening-now/pending", async (req, res) => {
-  if (!isAdmin13(req)) {
+  if (!isAdmin12(req)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -448032,7 +448067,7 @@ var ALLOWED_TYPES = [
   "transportation",
   "other"
 ];
-function isAdmin14(req) {
+function isAdmin13(req) {
   const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim().toLowerCase()).filter(Boolean);
   return !!(req.user?.email && adminEmails.includes(req.user.email.toLowerCase()));
 }
@@ -448124,7 +448159,7 @@ router110.get("/global-recommendations/mine", async (req, res) => {
   }
 });
 router110.patch("/global-recommendations/:id/status", async (req, res) => {
-  if (!isAdmin14(req)) {
+  if (!isAdmin13(req)) {
     res.status(403).json({ error: "Admin only" });
     return;
   }
@@ -448146,7 +448181,7 @@ router110.patch("/global-recommendations/:id/status", async (req, res) => {
   }
 });
 router110.get("/global-recommendations/pending", async (req, res) => {
-  if (!isAdmin14(req)) {
+  if (!isAdmin13(req)) {
     res.status(403).json({ error: "Admin only" });
     return;
   }
@@ -449787,8 +449822,8 @@ router122.post("/archive/nominate-city", async (req, res) => {
 });
 router122.patch("/archive/contributions/:id/approve", async (req, res) => {
   const user = req.user;
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!user?.email || !ADMIN_EMAILS15.includes(user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!user?.email || !ADMIN_EMAILS14.includes(user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -449807,8 +449842,8 @@ router122.patch("/archive/contributions/:id/approve", async (req, res) => {
 });
 router122.post("/archive/admin/cities", async (req, res) => {
   const user = req.user;
-  const ADMIN_EMAILS15 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-  if (!user?.email || !ADMIN_EMAILS15.includes(user.email)) {
+  const ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+  if (!user?.email || !ADMIN_EMAILS14.includes(user.email)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -450341,10 +450376,10 @@ var import_express125 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var PAID_TIERS3 = /* @__PURE__ */ new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
-var ADMIN_EMAILS13 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin15(req) {
+var ADMIN_EMAILS12 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin14(req) {
   const user = req.user;
-  return !!(user?.email && ADMIN_EMAILS13.includes(user.email));
+  return !!(user?.email && ADMIN_EMAILS12.includes(user.email));
 }
 var router125 = (0, import_express125.Router)();
 var AUTO_AWARD_MIN_NOMINATIONS = 10;
@@ -450546,7 +450581,7 @@ router125.get("/", async (req, res) => {
   }
 });
 router125.post("/admin/:businessId/award", async (req, res) => {
-  if (!isAdmin15(req)) {
+  if (!isAdmin14(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
   }
@@ -450579,7 +450614,7 @@ router125.post("/admin/:businessId/award", async (req, res) => {
   }
 });
 router125.post("/admin/:businessId/revoke", async (req, res) => {
-  if (!isAdmin15(req)) {
+  if (!isAdmin14(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
   }
@@ -450605,10 +450640,10 @@ var import_express126 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var router126 = (0, import_express126.Router)();
-var ADMIN_EMAILS14 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
-function isAdmin16(req) {
+var ADMIN_EMAILS13 = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
+function isAdmin15(req) {
   const user = req.user;
-  return !!(user?.email && ADMIN_EMAILS14.includes(user.email));
+  return !!(user?.email && ADMIN_EMAILS13.includes(user.email));
 }
 var CURATED_SOURCES = [
   // Essential Support
@@ -450835,7 +450870,7 @@ router126.patch("/resources/opportunities/:id/status", async (req, res) => {
       res.status(404).json({ error: "Not found" });
       return;
     }
-    if (opp.submittedByUserId !== req.user.id && !isAdmin16(req)) {
+    if (opp.submittedByUserId !== req.user.id && !isAdmin15(req)) {
       res.status(403).json({ error: "Not authorized" });
       return;
     }
@@ -451008,7 +451043,7 @@ Location: ${city}${state ? `, ${state}` : ""}` : ""}`
   }
 });
 router126.post("/resources/admin/seed-curated", async (req, res) => {
-  if (!isAdmin16(req)) {
+  if (!isAdmin15(req)) {
     res.status(403).json({ error: "Admin access required" });
     return;
   }
@@ -454744,8 +454779,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "3a9b73fe30b7c2ef4552cb699cb72f8de0f18862";
-var BUILD_AT = "2026-07-30T14:20:46.065Z";
+var BUILT_FROM_SHA = "fb876d54060b7bd13549829b389e2a835666fdc0";
+var BUILD_AT = "2026-07-30T15:25:46.000Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

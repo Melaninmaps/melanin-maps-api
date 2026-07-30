@@ -155,6 +155,17 @@ type MetricsData = {
   week: number;
   cities: { city: string | null; count: number }[];
   daily: { date: string; count: number }[];
+  platform?: {
+    uptimeSeconds: number;
+    generatedAt: string;
+    pool: { total: number; idle: number; waiting: number };
+    activeSessions: number;
+    membersTotal: number;
+    membersToday: number;
+    communityPostsToday: number;
+    loginsLastHour: number;
+    failuresLastHour: number;
+  };
 };
 
 type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities";
@@ -3510,8 +3521,84 @@ function MetricsTab({
     return days;
   })();
 
+  const p = metrics.platform;
+  const poolOk = !p || p.pool.waiting === 0;
+  const poolWarn = p && p.pool.waiting > 0 && p.pool.waiting < 3;
+  const poolCrit = p && p.pool.waiting >= 3;
+  const uptimeStr = p
+    ? (() => {
+        const s = p.uptimeSeconds;
+        if (s < 60) return `${s}s`;
+        if (s < 3600) return `${Math.floor(s / 60)}m`;
+        return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+      })()
+    : "—";
+
   return (
     <div className="space-y-8">
+      {/* ── Live Platform Status ── */}
+      {p && (
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#CA922B]" />
+              <h3 className="font-bold text-[#3A1F0E]">Live Platform Status</h3>
+            </div>
+            <span className="text-xs text-[#3A1F0E]/40">
+              as of {new Date(p.generatedAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+              {" · "}uptime {uptimeStr}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+            {/* Pool health */}
+            <div className={`rounded-xl p-4 border ${poolCrit ? "bg-red-50 border-red-200" : poolWarn ? "bg-amber-50 border-amber-200" : "bg-green-50 border-green-200"}`}>
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">DB Pool</div>
+              <div className={`text-2xl font-bold ${poolCrit ? "text-red-600" : poolWarn ? "text-amber-600" : "text-green-600"}`}>
+                {poolCrit ? "Busy" : poolWarn ? "Warm" : "OK"}
+              </div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">
+                {p.pool.total} open · {p.pool.idle} idle · {p.pool.waiting} waiting
+              </div>
+            </div>
+            {/* Active sessions */}
+            <div className="rounded-xl p-4 border border-[#3A1F0E]/10 bg-[#FAF6EF]">
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">Active Sessions</div>
+              <div className="text-2xl font-bold text-[#3A1F0E]">{p.activeSessions}</div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">valid tokens in DB</div>
+            </div>
+            {/* Logins last hour */}
+            <div className="rounded-xl p-4 border border-[#3A1F0E]/10 bg-[#FAF6EF]">
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">Logins / hr</div>
+              <div className="text-2xl font-bold text-green-600">{p.loginsLastHour}</div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">
+                {p.failuresLastHour > 0
+                  ? <span className="text-amber-600 font-medium">{p.failuresLastHour} failed</span>
+                  : "0 failures"}
+              </div>
+            </div>
+            {/* Posts today */}
+            <div className="rounded-xl p-4 border border-[#3A1F0E]/10 bg-[#FAF6EF]">
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">Posts Today</div>
+              <div className="text-2xl font-bold text-[#CA922B]">{p.communityPostsToday}</div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">community activity</div>
+            </div>
+          </div>
+          {/* Member row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl p-4 border border-[#3A1F0E]/10 bg-[#FAF6EF]">
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">Total Members</div>
+              <div className="text-2xl font-bold text-[#3A1F0E]">{p.membersTotal.toLocaleString()}</div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">registered accounts</div>
+            </div>
+            <div className="rounded-xl p-4 border border-[#3A1F0E]/10 bg-[#FAF6EF]">
+              <div className="text-xs font-bold uppercase tracking-wider mb-1 text-[#3A1F0E]/50">New Today</div>
+              <div className="text-2xl font-bold text-[#CA922B]">{p.membersToday}</div>
+              <div className="text-xs text-[#3A1F0E]/40 mt-0.5">since midnight UTC</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <div className="flex items-center gap-3 mb-4">
           <TrendingUp className="w-6 h-6 text-[#CA922B]" />

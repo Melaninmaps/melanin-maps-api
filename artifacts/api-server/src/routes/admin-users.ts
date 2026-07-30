@@ -1,19 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, usersTable, waitlistTable } from "@workspace/db";
+import { db, pool, getPoolStats, usersTable, waitlistTable } from "@workspace/db";
 import { eq, desc, count, gte, isNotNull, sql } from "drizzle-orm";
 import { sendApprovalNotification } from "../lib/email";
 import { sendPushToUser } from "../lib/pushNotifications";
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim())
-  .filter(Boolean);
-
-function isAdmin(req: Request): boolean {
-  const user = (req as any).user;
-  if (!user?.email) return false;
-  return ADMIN_EMAILS.includes(user.email);
-}
+import { isAdmin } from "../lib/adminAuth";
 
 const router: IRouter = Router();
 
@@ -172,6 +162,42 @@ router.get("/admin/metrics", async (req: Request, res: Response) => {
         `),
       ]);
 
+    // ── Platform health — sequential queries (no Promise.all per pool-exhaustion rule) ──
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    const sessResult = await pool.query(
+      `SELECT COUNT(*)::int AS cnt FROM sessions WHERE expire > NOW()`
+    );
+    const activeSessions: number = sessResult.rows[0]?.cnt ?? 0;
+
+    const mTotalResult = await pool.query(`SELECT COUNT(*)::int AS cnt FROM users`);
+    const membersTotal: number = mTotalResult.rows[0]?.cnt ?? 0;
+
+    const mTodayResult = await pool.query(
+      `SELECT COUNT(*)::int AS cnt FROM users WHERE created_at >= $1`,
+      [todayStart]
+    );
+    const membersToday: number = mTodayResult.rows[0]?.cnt ?? 0;
+
+    let communityPostsToday = 0;
+    try {
+      const postsResult = await pool.query(
+        `SELECT COUNT(*)::int AS cnt FROM community_posts WHERE created_at >= $1`,
+        [todayStart]
+      );
+      communityPostsToday = postsResult.rows[0]?.cnt ?? 0;
+    } catch { /* table may not exist on dev */ }
+
+    const authResult = await pool.query(
+      `SELECT
+        SUM(CASE WHEN event = 'AUTH_LOGIN_SUCCESS' THEN 1 ELSE 0 END)::int AS logins,
+        SUM(CASE WHEN event IN ('AUTH_LOGIN_FAILURE','AUTH_LOGIN_PASSWORD_MISMATCH','AUTH_LOGIN_USER_NOT_FOUND') THEN 1 ELSE 0 END)::int AS failures
+       FROM auth_events WHERE created_at >= $1`,
+      [hourAgo]
+    );
+    const loginsLastHour: number = authResult.rows[0]?.logins ?? 0;
+    const failuresLastHour: number = authResult.rows[0]?.failures ?? 0;
+
     res.json({
       total: Number(total),
       approved: Number(approved),
@@ -182,6 +208,17 @@ router.get("/admin/metrics", async (req: Request, res: Response) => {
         date: r.date,
         count: Number(r.count),
       })),
+      platform: {
+        uptimeSeconds: Math.floor(process.uptime()),
+        generatedAt: new Date().toISOString(),
+        pool: getPoolStats(),
+        activeSessions,
+        membersTotal,
+        membersToday,
+        communityPostsToday,
+        loginsLastHour,
+        failuresLastHour,
+      },
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch metrics");
