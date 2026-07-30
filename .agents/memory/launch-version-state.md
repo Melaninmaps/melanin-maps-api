@@ -9,11 +9,12 @@ description: Current iOS buildNumber, Android versionCode, version string — ch
 - Android versionCode: 76 (commit 0450c381)
 - eas.json production profile: has `channel: "production"` field ✅
 
-**Build 101 EAS submissions (July 30 2026):**
-- iOS Build 101: f37b8d5c-bdb7-4330-bef6-f8456f1ad719 — queued, auto-submit to TestFlight ✅
-  iOS Submission ID: a6e62b20-f144-465d-86a8-9a427e39f693
-- Android VC76: 7b522362-f2d5-40aa-922a-42915e6641ad — queued, auto-submit to Play Internal ✅
-  Android Submission ID: 3b54d4b2-645c-48cc-9de3-d55a938f3010
+**Build 101 EAS submissions (July 30 2026) — SECOND ATTEMPT (first errored):**
+- iOS Build 101: 2f46adcc-fbac-47a5-b830-0d74a78fc940 — queued, auto-submit to TestFlight ✅
+  iOS Submission ID: 08b68cee-d37e-44fb-a6d8-7485a41ea6e5
+- Android VC76: 9dc3377e-1642-453b-aa68-3df86b04cdf4 — queued, auto-submit to Play Internal ✅
+  Android Submission ID: c7964b7d-0526-422e-b2a9-55ea9f6d8409
+- First attempt errored: app/debug/crash-log.tsx still imported @sentry/react-native after package removal
 - Purpose: removes @sentry/react-native native SDK (KSCrash caused pre-JS crash on Build 100)
 - JS crash logger (AsyncStorage + Railway POST) remains active
 
