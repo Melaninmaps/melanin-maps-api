@@ -78,6 +78,11 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     )`,
   },
   {
+    name: "city_launches_auto_advance_col",
+    sql: `ALTER TABLE city_launches
+      ADD COLUMN IF NOT EXISTS auto_advance BOOLEAN NOT NULL DEFAULT true`,
+  },
+  {
     name: "city_launch_events_table",
     sql: `CREATE TABLE IF NOT EXISTS city_launch_events (
       id SERIAL PRIMARY KEY,

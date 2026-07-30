@@ -24,6 +24,7 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
       checklist: ChecklistSection;
       notes: string | null;
       rollout_percentage: number;
+      auto_advance: boolean;
       created_at: string;
       updated_at: string;
     }>(`SELECT * FROM city_launches ORDER BY sequence_order ASC`);
@@ -75,6 +76,7 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
         checklist,
         notes: c.notes,
         rolloutPercentage: c.rollout_percentage,
+        autoAdvance: c.auto_advance,
         checklistProgress: {
           completed: completedItems,
           total: allItems.length,
@@ -197,25 +199,70 @@ router.patch("/admin/city-launches/:slug/checklist", async (req: Request, res: R
   }
 
   try {
-    const { rows } = await pool.query<{ checklist: ChecklistSection }>(
-      `SELECT checklist FROM city_launches WHERE slug = $1`,
+    const { rows } = await pool.query<{
+      checklist: ChecklistSection;
+      status: string;
+      auto_advance: boolean;
+    }>(
+      `SELECT checklist, status, auto_advance FROM city_launches WHERE slug = $1`,
       [slug]
     );
     if (!rows[0]) { res.status(404).json({ error: "City not found" }); return; }
 
     const checklist = rows[0].checklist as ChecklistSection;
+    const currentStatus = rows[0].status;
+    const autoAdvance = rows[0].auto_advance;
+
     const sectionObj = checklist[section] as Record<string, boolean>;
     if (!(item in sectionObj)) {
       res.status(400).json({ error: `Unknown item "${item}" in section "${section}"` }); return;
     }
     sectionObj[item] = value;
 
+    // ── Auto-advance logic ────────────────────────────────────────────────
+    // Determine whether completing this section triggers a status promotion
+    const STATUS_ORDER = ["planning", "pre_launch", "soft_launch", "live", "paused"] as const;
+    type CityStatus = typeof STATUS_ORDER[number];
+
+    const SECTION_ADVANCEMENT: Partial<Record<keyof ChecklistSection, { requiredStatus: CityStatus; nextStatus: CityStatus }>> = {
+      pre_launch: { requiredStatus: "planning",   nextStatus: "pre_launch"  },
+      operations: { requiredStatus: "pre_launch", nextStatus: "soft_launch" },
+    };
+
+    let statusAdvanced = false;
+    let newStatus: string | null = null;
+    let advancedSection: string | null = null;
+
+    const advancement = SECTION_ADVANCEMENT[section];
+    if (advancement && currentStatus === advancement.requiredStatus) {
+      const allDone = Object.values(checklist[section]).every(Boolean);
+      if (allDone) {
+        newStatus = advancement.nextStatus;
+        advancedSection = section;
+        if (autoAdvance) {
+          statusAdvanced = true;
+          await pool.query(
+            `UPDATE city_launches SET checklist = $1, status = $2, updated_at = NOW() WHERE slug = $3`,
+            [JSON.stringify(checklist), newStatus, slug]
+          );
+        } else {
+          // notify-only: save checklist but not status
+          await pool.query(
+            `UPDATE city_launches SET checklist = $1, updated_at = NOW() WHERE slug = $2`,
+            [JSON.stringify(checklist), slug]
+          );
+        }
+        res.json({ ok: true, checklist, statusAdvanced, newStatus, advancedSection, autoAdvance });
+        return;
+      }
+    }
+
     await pool.query(
       `UPDATE city_launches SET checklist = $1, updated_at = NOW() WHERE slug = $2`,
       [JSON.stringify(checklist), slug]
     );
 
-    res.json({ ok: true, checklist });
+    res.json({ ok: true, checklist, statusAdvanced: false, newStatus: null, advancedSection: null });
   } catch (err) {
     req.log.error({ err }, "Failed to update city checklist");
     res.status(500).json({ error: "Failed to update checklist" });

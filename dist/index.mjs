@@ -453703,6 +453703,7 @@ router144.get("/admin/city-launches", async (req, res) => {
         checklist,
         notes: c3.notes,
         rolloutPercentage: c3.rollout_percentage,
+        autoAdvance: c3.auto_advance,
         checklistProgress: {
           completed: completedItems,
           total: allItems.length,
@@ -453801,7 +453802,7 @@ router144.patch("/admin/city-launches/:slug/checklist", async (req, res) => {
   }
   try {
     const { rows } = await pool.query(
-      `SELECT checklist FROM city_launches WHERE slug = $1`,
+      `SELECT checklist, status, auto_advance FROM city_launches WHERE slug = $1`,
       [slug]
     );
     if (!rows[0]) {
@@ -453809,17 +453810,49 @@ router144.patch("/admin/city-launches/:slug/checklist", async (req, res) => {
       return;
     }
     const checklist = rows[0].checklist;
+    const currentStatus = rows[0].status;
+    const autoAdvance = rows[0].auto_advance;
     const sectionObj = checklist[section];
     if (!(item in sectionObj)) {
       res.status(400).json({ error: `Unknown item "${item}" in section "${section}"` });
       return;
     }
     sectionObj[item] = value;
+    const STATUS_ORDER = ["planning", "pre_launch", "soft_launch", "live", "paused"];
+    const SECTION_ADVANCEMENT = {
+      pre_launch: { requiredStatus: "planning", nextStatus: "pre_launch" },
+      operations: { requiredStatus: "pre_launch", nextStatus: "soft_launch" }
+    };
+    let statusAdvanced = false;
+    let newStatus = null;
+    let advancedSection = null;
+    const advancement = SECTION_ADVANCEMENT[section];
+    if (advancement && currentStatus === advancement.requiredStatus) {
+      const allDone = Object.values(checklist[section]).every(Boolean);
+      if (allDone) {
+        newStatus = advancement.nextStatus;
+        advancedSection = section;
+        if (autoAdvance) {
+          statusAdvanced = true;
+          await pool.query(
+            `UPDATE city_launches SET checklist = $1, status = $2, updated_at = NOW() WHERE slug = $3`,
+            [JSON.stringify(checklist), newStatus, slug]
+          );
+        } else {
+          await pool.query(
+            `UPDATE city_launches SET checklist = $1, updated_at = NOW() WHERE slug = $2`,
+            [JSON.stringify(checklist), slug]
+          );
+        }
+        res.json({ ok: true, checklist, statusAdvanced, newStatus, advancedSection, autoAdvance });
+        return;
+      }
+    }
     await pool.query(
       `UPDATE city_launches SET checklist = $1, updated_at = NOW() WHERE slug = $2`,
       [JSON.stringify(checklist), slug]
     );
-    res.json({ ok: true, checklist });
+    res.json({ ok: true, checklist, statusAdvanced: false, newStatus: null, advancedSection: null });
   } catch (err) {
     req.log.error({ err }, "Failed to update city checklist");
     res.status(500).json({ error: "Failed to update checklist" });
@@ -454637,8 +454670,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "3ed38225459d5bebfc6891e4fa6995521844d5a6";
-var BUILD_AT = "2026-07-30T01:07:14.332Z";
+var BUILT_FROM_SHA = "5876eed69618086c1aa7e1dea8d23d6a5582e9bd";
+var BUILD_AT = "2026-07-30T01:11:48.882Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454937,6 +454970,11 @@ var MIGRATIONS = [
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`
+  },
+  {
+    name: "city_launches_auto_advance_col",
+    sql: `ALTER TABLE city_launches
+      ADD COLUMN IF NOT EXISTS auto_advance BOOLEAN NOT NULL DEFAULT true`
   },
   {
     name: "city_launch_events_table",
