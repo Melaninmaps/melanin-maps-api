@@ -157,7 +157,38 @@ type MetricsData = {
   daily: { date: string; count: number }[];
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities";
+
+type ChecklistSection = {
+  pre_launch: Record<string, boolean>;
+  community: Record<string, boolean>;
+  marketing: Record<string, boolean>;
+  operations: Record<string, boolean>;
+};
+
+type CityLaunch = {
+  id: string;
+  city: string;
+  state: string;
+  slug: string;
+  sequenceOrder: number;
+  status: "planning" | "pre_launch" | "soft_launch" | "live" | "paused";
+  launchDate: string | null;
+  checklist: ChecklistSection;
+  notes: string | null;
+  rolloutPercentage: number;
+  checklistProgress: { completed: number; total: number; pct: number };
+  metrics: {
+    waitlistSize: number;
+    activeMembers: number;
+    businessesOnboarded: number;
+    eventsLive: number;
+    ambassadorCount: number;
+    communityPosts: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
 
 type HealthData = {
   status: "ok" | "degraded" | "down";
@@ -371,6 +402,12 @@ export default function Admin() {
   const [globalRecsLoading, setGlobalRecsLoading] = useState(false);
   const [globalRecUpdating, setGlobalRecUpdating] = useState<string | null>(null);
 
+  const [cityLaunches, setCityLaunches] = useState<CityLaunch[]>([]);
+  const [cityLaunchesLoading, setCityLaunchesLoading] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<CityLaunch | null>(null);
+  const [checklistUpdating, setChecklistUpdating] = useState<string | null>(null);
+  const [cityStatusUpdating, setCityStatusUpdating] = useState<string | null>(null);
+
   useEffect(() => {
     syncTokenToCookie();
     const token = getWebToken();
@@ -479,9 +516,23 @@ export default function Admin() {
       .finally(() => setGlobalRecsLoading(false));
   }, []);
 
+  const loadCityLaunches = useCallback(() => {
+    setCityLaunchesLoading(true);
+    return fetch(`${BASE}api/admin/city-launches`, { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        const cities = data.cities ?? [];
+        setCityLaunches(cities);
+        setSelectedCity(prev => prev ? (cities.find((c: CityLaunch) => c.slug === prev.slug) ?? prev) : null);
+        setLastRefreshed(new Date());
+      })
+      .catch(() => {})
+      .finally(() => setCityLaunchesLoading(false));
+  }, []);
+
   const refreshAll = useCallback(() => {
-    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist(), loadPendingGlobalRecs(), loadMetrics()]);
-  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist, loadPendingGlobalRecs, loadMetrics]);
+    return Promise.all([loadWaitlist(), loadUsers(), loadBusinesses(), loadMembers(), loadReviews(), loadReports(), loadChallengeApps(), loadCategoryWaitlist(), loadPendingGlobalRecs(), loadMetrics(), loadCityLaunches()]);
+  }, [loadWaitlist, loadUsers, loadBusinesses, loadMembers, loadReviews, loadReports, loadChallengeApps, loadCategoryWaitlist, loadPendingGlobalRecs, loadMetrics, loadCityLaunches]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -893,6 +944,7 @@ export default function Admin() {
     { id: "category-waitlist", label: "Category Waitlist", icon: <BarChart2 className="w-4 h-4" />, badge: categoryWaitlistEntries.length || undefined },
     { id: "global-recs", label: "Global Recs", icon: <Globe className="w-4 h-4" />, badge: pendingGlobalRecs.filter(r => r.status === "pending").length || undefined },
     { id: "health", label: "Production Health", icon: <Activity className="w-4 h-4" /> },
+    { id: "cities", label: "City Launches", icon: <MapPin className="w-4 h-4" /> },
   ];
 
   return (
@@ -2647,6 +2699,255 @@ export default function Admin() {
           )}
         </div>
       )}
+
+      {/* ─── City Launches ─────────────────────────────────────────────── */}
+      {tab === "cities" && (
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-[#3A1F0E]">City Launch Dashboard</h2>
+              <p className="text-[#3A1F0E]/60 text-sm mt-0.5">
+                Operational playbook for every city. Track readiness, metrics, and launch status in one place.
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => void loadCityLaunches()} disabled={cityLaunchesLoading} className="gap-2">
+              <RefreshCw className={`w-3.5 h-3.5 ${cityLaunchesLoading ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+          </div>
+
+          {cityLaunchesLoading && cityLaunches.length === 0 && (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-7 h-7 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {!selectedCity ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cityLaunches.map((city) => {
+                const statusColors: Record<string, string> = {
+                  live:        "bg-green-100 text-green-700 border-green-200",
+                  soft_launch: "bg-blue-100 text-blue-700 border-blue-200",
+                  pre_launch:  "bg-amber-100 text-amber-700 border-amber-200",
+                  planning:    "bg-[#3A1F0E]/10 text-[#3A1F0E]/60 border-[#3A1F0E]/10",
+                  paused:      "bg-red-100 text-red-700 border-red-200",
+                };
+                const statusLabel: Record<string, string> = {
+                  live: "Live", soft_launch: "Soft Launch", pre_launch: "Pre-Launch",
+                  planning: "Planning", paused: "Paused",
+                };
+                const sc = statusColors[city.status] ?? statusColors.planning;
+                const p = city.checklistProgress;
+                return (
+                  <button
+                    key={city.slug}
+                    onClick={() => setSelectedCity(city)}
+                    className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5 text-left hover:border-[#CA922B]/40 hover:shadow-md transition-all group"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-[#3A1F0E]/30">#{city.sequenceOrder}</span>
+                        <h3 className="font-bold text-[#3A1F0E] text-lg leading-tight">{city.city}</h3>
+                        <span className="text-sm text-[#3A1F0E]/40">{city.state}</span>
+                      </div>
+                      <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-full border ${sc}`}>
+                        {statusLabel[city.status] ?? city.status}
+                      </span>
+                    </div>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="text-[#3A1F0E]/50">Checklist</span>
+                        <span className="font-bold text-[#3A1F0E]">{p.completed}/{p.total}</span>
+                      </div>
+                      <div className="h-2 bg-[#FAF6EF] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${p.pct === 100 ? "bg-green-500" : p.pct > 50 ? "bg-[#CA922B]" : "bg-[#CA922B]/40"}`}
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { label: "Waitlist", val: city.metrics.waitlistSize },
+                        { label: "Members", val: city.metrics.activeMembers },
+                        { label: "Businesses", val: city.metrics.businessesOnboarded },
+                      ].map(m => (
+                        <div key={m.label} className="bg-[#FAF6EF] rounded-xl px-2 py-1.5 text-center">
+                          <div className="text-base font-bold text-[#3A1F0E]">{m.val.toLocaleString()}</div>
+                          <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide">{m.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 text-xs text-[#CA922B] font-medium group-hover:underline">View checklist →</div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSelectedCity(null)}
+                    className="flex items-center gap-1.5 text-sm text-[#3A1F0E]/50 hover:text-[#3A1F0E] transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4 6 8l4 4"/></svg>
+                    All Cities
+                  </button>
+                  <h3 className="text-xl font-bold text-[#3A1F0E]">
+                    {selectedCity.city}, {selectedCity.state}
+                    <span className="ml-2 text-sm font-normal text-[#3A1F0E]/40">#{selectedCity.sequenceOrder}</span>
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-[#3A1F0E]/50">Status:</span>
+                  {(["planning","pre_launch","soft_launch","live","paused"] as const).map(s => (
+                    <button
+                      key={s}
+                      disabled={cityStatusUpdating === selectedCity.slug}
+                      onClick={async () => {
+                        if (selectedCity.status === s) return;
+                        setCityStatusUpdating(selectedCity.slug);
+                        try {
+                          await fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/status`, {
+                            method: "PATCH", credentials: "include",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ status: s }),
+                          });
+                          await loadCityLaunches();
+                        } finally { setCityStatusUpdating(null); }
+                      }}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-colors ${
+                        selectedCity.status === s
+                          ? s === "live" ? "bg-green-600 text-white border-green-600"
+                          : s === "soft_launch" ? "bg-blue-600 text-white border-blue-600"
+                          : s === "paused" ? "bg-red-600 text-white border-red-600"
+                          : "bg-[#3A1F0E] text-white border-[#3A1F0E]"
+                          : "bg-white text-[#3A1F0E]/50 border-[#3A1F0E]/20 hover:border-[#3A1F0E]/40"
+                      }`}
+                    >
+                      {s === "pre_launch" ? "Pre-Launch" : s === "soft_launch" ? "Soft Launch" : s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {[
+                  { label: "Waitlist", val: selectedCity.metrics.waitlistSize, color: "text-[#CA922B]" },
+                  { label: "Active Members", val: selectedCity.metrics.activeMembers, color: "text-green-600" },
+                  { label: "Businesses", val: selectedCity.metrics.businessesOnboarded, color: "text-blue-600" },
+                  { label: "Events", val: selectedCity.metrics.eventsLive, color: "text-purple-600" },
+                  { label: "Ambassadors", val: selectedCity.metrics.ambassadorCount, color: "text-amber-600" },
+                  { label: "Community Posts", val: selectedCity.metrics.communityPosts, color: "text-teal-600" },
+                ].map(m => (
+                  <div key={m.label} className="bg-white rounded-2xl border border-[#3A1F0E]/10 px-4 py-3 text-center">
+                    <div className={`text-2xl font-bold ${m.color}`}>{m.val.toLocaleString()}</div>
+                    <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide mt-0.5">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {(["pre_launch","community","marketing","operations"] as const).map(section => {
+                const sectionLabels: Record<string, string> = {
+                  pre_launch: "Pre-Launch", community: "Community",
+                  marketing: "Marketing", operations: "Operations",
+                };
+                const itemLabels: Record<string, Record<string, string>> = {
+                  pre_launch: {
+                    businesses_seeded: "Businesses Seeded", cultural_sites: "Cultural Sites",
+                    historical_sites: "Historical Sites", community_resources: "Community Resources",
+                    events: "Events", city_imagery: "City Imagery", moderation_review: "Moderation Review",
+                    kinfolk_city_context: "Kinfolk City Context", search_validation: "Search Validation",
+                    map_validation: "Map Validation", analytics_enabled: "Analytics Enabled",
+                  },
+                  community: {
+                    founding_members: "Founding Members", founding_businesses: "Founding Businesses",
+                    ambassadors: "Ambassadors", creators: "Creators",
+                    volunteers: "Volunteers", local_organizations: "Local Organizations",
+                  },
+                  marketing: {
+                    city_landing_page: "City Landing Page", launch_announcement: "Launch Announcement",
+                    social_assets: "Social Assets", founder_interview_prompts: "Founder Interview Prompts",
+                    local_press_checklist: "Local Press Checklist", city_hashtags: "City Hashtags",
+                    referral_campaign: "Referral Campaign",
+                  },
+                  operations: {
+                    feature_flags: "Feature Flags", rollout_percentage: "Rollout Percentage",
+                    monitoring: "Monitoring", crash_dashboard: "Crash Dashboard",
+                    waitlist_activation: "Waitlist Activation", rollback_plan: "Rollback Plan",
+                  },
+                };
+                const items = selectedCity.checklist[section] as Record<string, boolean>;
+                const completed = Object.values(items).filter(Boolean).length;
+                const total = Object.keys(items).length;
+                return (
+                  <div key={section} className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-[#3A1F0E]">{sectionLabels[section]}</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-24 bg-[#FAF6EF] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${completed === total ? "bg-green-500" : "bg-[#CA922B]"}`}
+                            style={{ width: `${Math.round((completed / total) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-[#3A1F0E]/50">{completed}/{total}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {Object.entries(items).map(([key, val]) => {
+                        const updKey = `${selectedCity.slug}-${section}-${key}`;
+                        const isUpdating = checklistUpdating === updKey;
+                        return (
+                          <button
+                            key={key}
+                            disabled={isUpdating}
+                            onClick={async () => {
+                              setChecklistUpdating(updKey);
+                              try {
+                                const r = await fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/checklist`, {
+                                  method: "PATCH", credentials: "include",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ section, item: key, value: !val }),
+                                });
+                                if (r.ok) await loadCityLaunches();
+                              } finally { setChecklistUpdating(null); }
+                            }}
+                            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all text-left ${
+                              val
+                                ? "bg-green-50 border border-green-200 text-green-700 hover:bg-green-100"
+                                : "bg-[#FAF6EF] border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:border-[#3A1F0E]/20"
+                            } disabled:opacity-50`}
+                          >
+                            {isUpdating ? (
+                              <div className="w-4 h-4 border border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                            ) : val ? (
+                              <svg className="w-4 h-4 shrink-0 text-green-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            ) : (
+                              <div className="w-4 h-4 rounded border border-[#3A1F0E]/20 shrink-0" />
+                            )}
+                            {itemLabels[section]?.[key] ?? key.replace(/_/g, " ")}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 p-5">
+                <h4 className="font-bold text-[#3A1F0E] mb-3">Launch Notes</h4>
+                <CityNotesEditor
+                  slug={selectedCity.slug}
+                  notes={selectedCity.notes ?? ""}
+                  base={BASE}
+                  onSave={loadCityLaunches}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -3202,6 +3503,53 @@ function UsersTab({
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function CityNotesEditor({ slug, notes, base, onSave }: {
+  slug: string; notes: string; base: string; onSave: () => void;
+}) {
+  const [value, setValue] = useState(notes);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => { setValue(notes); }, [notes]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await fetch(`${base}api/admin/city-launches/${slug}/status`, {
+        method: "PATCH", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: value }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      onSave();
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="space-y-2">
+      <textarea
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        rows={4}
+        placeholder="Add launch notes, founder decisions, blockers, or context for this city…"
+        className="w-full border border-[#3A1F0E]/15 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#CA922B] resize-none"
+      />
+      <div className="flex items-center gap-2">
+        <button
+          onClick={save}
+          disabled={saving || value === notes}
+          className="flex items-center gap-1.5 bg-[#CA922B] text-white rounded-xl px-4 py-1.5 text-sm font-bold disabled:opacity-50 hover:bg-[#B38024] transition-colors"
+        >
+          {saving ? <div className="w-3.5 h-3.5 border border-white border-t-transparent rounded-full animate-spin" /> : null}
+          {saving ? "Saving…" : "Save Notes"}
+        </button>
+        {saved && <span className="text-xs text-green-600 font-medium">Saved</span>}
+      </div>
     </div>
   );
 }

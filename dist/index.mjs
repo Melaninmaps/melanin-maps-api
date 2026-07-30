@@ -20617,27 +20617,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router147;
+    module.exports = Router148;
     module.exports.Route = Route;
-    function Router147(options) {
-      if (!(this instanceof Router147)) {
-        return new Router147(options);
+    function Router148(options) {
+      if (!(this instanceof Router148)) {
+        return new Router148(options);
       }
       const opts = options || {};
-      function router147(req, res, next) {
-        router147.handle(req, res, next);
+      function router148(req, res, next) {
+        router148.handle(req, res, next);
       }
-      Object.setPrototypeOf(router147, this);
-      router147.caseSensitive = opts.caseSensitive;
-      router147.mergeParams = opts.mergeParams;
-      router147.params = {};
-      router147.strict = opts.strict;
-      router147.stack = [];
-      return router147;
+      Object.setPrototypeOf(router148, this);
+      router148.caseSensitive = opts.caseSensitive;
+      router148.mergeParams = opts.mergeParams;
+      router148.params = {};
+      router148.strict = opts.strict;
+      router148.stack = [];
+      return router148;
     }
-    Router147.prototype = function() {
+    Router148.prototype = function() {
     };
-    Router147.prototype.param = function param2(name3, fn3) {
+    Router148.prototype.param = function param2(name3, fn3) {
       if (!name3) {
         throw new TypeError("argument name is required");
       }
@@ -20657,7 +20657,7 @@ var require_router = __commonJS({
       params.push(fn3);
       return this;
     };
-    Router147.prototype.handle = function handle(req, res, callback) {
+    Router148.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20784,7 +20784,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router147.prototype.use = function use(handler) {
+    Router148.prototype.use = function use(handler) {
       let offset = 0;
       let path7 = "/";
       if (typeof handler !== "function") {
@@ -20817,7 +20817,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router147.prototype.route = function route(path7) {
+    Router148.prototype.route = function route(path7) {
       const route2 = new Route(path7);
       const layer = new Layer(path7, {
         sensitive: this.caseSensitive,
@@ -20832,7 +20832,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router147.prototype[method] = function(path7) {
+      Router148.prototype[method] = function(path7) {
         const route = this.route(path7);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -21015,13 +21015,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve3 = __require("node:path").resolve;
     var once = require_once();
-    var Router147 = require_router();
+    var Router148 = require_router();
     var slice = Array.prototype.slice;
     var flatten2 = Array.prototype.flat;
     var app2 = exports2 = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router147 = null;
+      var router148 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -21030,13 +21030,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router147 === null) {
-            router147 = new Router147({
+          if (router148 === null) {
+            router148 = new Router148({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router147;
+          return router148;
         }
       });
     };
@@ -21107,15 +21107,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router147 = this.router;
+      var router148 = this.router;
       fns.forEach(function(fn4) {
         if (!fn4 || !fn4.handle || !fn4.set) {
-          return router147.use(path7, fn4);
+          return router148.use(path7, fn4);
         }
         debug(".use app under %s", path7);
         fn4.mountpath = path7;
         fn4.parent = this;
-        router147.use(path7, function mounted_app(req, res, next) {
+        router148.use(path7, function mounted_app(req, res, next) {
           var orig = req.app;
           fn4.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23688,7 +23688,7 @@ var require_express = __commonJS({
     var EventEmitter5 = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router147 = require_router();
+    var Router148 = require_router();
     var req = require_request();
     var res = require_response();
     exports2 = module.exports = createApplication;
@@ -23710,8 +23710,8 @@ var require_express = __commonJS({
     exports2.application = proto;
     exports2.request = req;
     exports2.response = res;
-    exports2.Route = Router147.Route;
-    exports2.Router = Router147;
+    exports2.Route = Router148.Route;
+    exports2.Router = Router148;
     exports2.json = bodyParser.json;
     exports2.raw = bodyParser.raw;
     exports2.static = require_serve_static();
@@ -44357,6 +44357,70 @@ var init_city_archives = __esm({
   }
 });
 
+// ../../lib/db/src/schema/city-launches.ts
+var DEFAULT_CHECKLIST, cityLaunchesTable;
+var init_city_launches = __esm({
+  "../../lib/db/src/schema/city-launches.ts"() {
+    "use strict";
+    init_pg_core();
+    init_drizzle_orm();
+    DEFAULT_CHECKLIST = {
+      pre_launch: {
+        businesses_seeded: false,
+        cultural_sites: false,
+        historical_sites: false,
+        community_resources: false,
+        events: false,
+        city_imagery: false,
+        moderation_review: false,
+        kinfolk_city_context: false,
+        search_validation: false,
+        map_validation: false,
+        analytics_enabled: false
+      },
+      community: {
+        founding_members: false,
+        founding_businesses: false,
+        ambassadors: false,
+        creators: false,
+        volunteers: false,
+        local_organizations: false
+      },
+      marketing: {
+        city_landing_page: false,
+        launch_announcement: false,
+        social_assets: false,
+        founder_interview_prompts: false,
+        local_press_checklist: false,
+        city_hashtags: false,
+        referral_campaign: false
+      },
+      operations: {
+        feature_flags: false,
+        rollout_percentage: false,
+        monitoring: false,
+        crash_dashboard: false,
+        waitlist_activation: false,
+        rollback_plan: false
+      }
+    };
+    cityLaunchesTable = pgTable("city_launches", {
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+      city: varchar("city", { length: 100 }).notNull(),
+      state: varchar("state", { length: 50 }).notNull(),
+      slug: varchar("slug", { length: 120 }).notNull().unique(),
+      sequenceOrder: integer("sequence_order").notNull(),
+      status: varchar("status", { length: 30 }).notNull().default("planning"),
+      launchDate: timestamp("launch_date"),
+      checklist: jsonb("checklist").$type().notNull().default(DEFAULT_CHECKLIST),
+      notes: text("notes"),
+      rolloutPercentage: integer("rollout_percentage").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow(),
+      updatedAt: timestamp("updated_at").notNull().defaultNow()
+    });
+  }
+});
+
 // ../../lib/db/src/schema/family-circles.ts
 var DEFAULT_PERMISSIONS, familyCirclesTable, familyCircleMembersTable;
 var init_family_circles = __esm({
@@ -60811,6 +60875,7 @@ __export(schema_exports, {
   BROADCAST_QUOTA: () => BROADCAST_QUOTA,
   BROADCAST_TYPES: () => BROADCAST_TYPES,
   COMMUNITY_SAYS_TAGS: () => COMMUNITY_SAYS_TAGS,
+  DEFAULT_CHECKLIST: () => DEFAULT_CHECKLIST,
   DEFAULT_PERMISSIONS: () => DEFAULT_PERMISSIONS,
   DESIGNATIONS: () => DESIGNATIONS,
   HEALTH_TOPICS: () => HEALTH_TOPICS,
@@ -60862,6 +60927,7 @@ __export(schema_exports, {
   circleSuggestions: () => circleSuggestions,
   circleVotes: () => circleVotes,
   cityArchivesTable: () => cityArchivesTable,
+  cityLaunchesTable: () => cityLaunchesTable,
   collectionFollowsTable: () => collectionFollowsTable,
   collectionItemsTable: () => collectionItemsTable,
   collectionsTable: () => collectionsTable,
@@ -61097,6 +61163,7 @@ var init_schema2 = __esm({
     "use strict";
     init_auth();
     init_city_archives();
+    init_city_launches();
     init_family_circles();
     init_officer_watch();
     init_community_boundaries();
@@ -390232,7 +390299,7 @@ var require_opentype = __commonJS({
 });
 
 // src/app.ts
-var import_express147 = __toESM(require_express2(), 1);
+var import_express148 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_cookie_parser = __toESM(require_cookie_parser(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
@@ -390305,7 +390372,7 @@ var SPA_HTML = `<!DOCTYPE html>
 `;
 
 // src/routes/index.ts
-var import_express144 = __toESM(require_express2(), 1);
+var import_express145 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -453583,158 +453650,331 @@ router143.get("/agreement", async (req, res) => {
 });
 var membership_default = router143;
 
-// src/routes/index.ts
+// src/routes/city-launch.ts
+var import_express144 = __toESM(require_express2(), 1);
+init_src();
 var router144 = (0, import_express144.Router)();
-router144.use(health_default);
-router144.use(db_probe_default);
-router144.use("/internal", readyz_default);
-router144.use(pool_stats_default);
-router144.use(auth_default);
-router144.use("/membership", membership_default);
-router144.use(phone_auth_default);
-router144.use(businesses_default);
-router144.use(travel_default);
-router144.use(surveys_default);
-router144.use(saved_places_default);
-router144.use(alerts_default);
-router144.use(moderation_default);
-router144.use(safety_context_default);
-router144.use(reviews_default);
-router144.use(checkins_default);
-router144.use(points_default);
-router144.use(event_rsvps_default);
-router144.use(push_token_default);
-router144.use(community_default);
-router144.use(conversations_default);
-router144.use(waitlist_default);
-router144.use(contact_default);
-router144.use(events_default);
-router144.use(users_default);
-router144.use(groups_default);
-router144.use(admin_default);
-router144.use(kinfolk_default);
-router144.use(kinfolk_tasks_default);
-router144.use(wishlist_default);
-router144.use(claims_default);
-router144.use(notifications_default);
-router144.use(stripe_default);
-router144.use(admin_users_default);
-router144.use(maps_default);
-router144.use(og_default);
-router144.use(jobs_default);
-router144.use(impact_default);
-router144.use(submit_business_default);
-router144.use(billing_default);
-router144.use(cron_default);
-router144.use(referrals_default);
-router144.use(content_reports_default);
-router144.use(verification_default);
-router144.use(deals_default);
-router144.use(stories_default);
-router144.use(redemptions_default);
-router144.use(mentorship_default);
-router144.use(reports_default);
-router144.use(travel_flights_default);
-router144.use(connections_default);
-router144.use(family_default);
-router144.use(safety_checkins_default);
-router144.use(location_shares_default);
-router144.use(meetup_verifications_default);
-router144.use(safety_tips_default);
-router144.use(skip_feedback_default);
-router144.use(businesses_analytics_default);
-router144.use(promote_default);
-router144.use(post_nudge_default);
-router144.use(user_settings_default);
-router144.use(space_reports_default);
-router144.use(connect_default);
-router144.use(community_spaces_default);
-router144.use(journals_default);
-router144.use(plate_passes_default);
-router144.use(lists_default);
-router144.use(challenge_applications_default);
-router144.use(category_waitlist_default);
-router144.use(business_nominations_default);
-router144.use(business_identity_default);
-router144.use(broadcasts_default);
-router144.use(community_health_default);
-router144.use(journal_insights_default);
-router144.use(saved_locations_default);
-router144.use(disputes_default);
-router144.use(docusign_default);
-router144.use(smart_pathways_default);
-router144.use(knowledge_default);
-router144.use(marketplace_fees_default);
-router144.use(trust_default);
-router144.use(journeys_default);
-router144.use(entity_connections_default);
-router144.use(signals_default);
-router144.use(smart_search_default);
-router144.use(notifications_hub_default);
-router144.use(knowledge_channels_default);
-router144.use(router90);
-router144.use(captions_default);
-router144.use(community_boundaries_default);
-router144.use(business_response_default);
-router144.use(business_improvement_default);
-router144.use(community_appreciation_default);
-router144.use(circles_default);
-router144.use(community_requests_default);
-router144.use(user_achievements_default);
-router144.use(community_says_default);
-router144.use(community_challenges_new_default);
-router144.use(follows_default);
-router144.use(pinned_default);
-router144.use(creator_profiles_default);
-router144.use(community_alerts_default);
-router144.use(knowledge_delivery_default);
-router144.use(business_insights_default);
-router144.use(topic_briefs_default);
-router144.use(knowledge_hubs_default);
-router144.use(for_you_default);
-router144.use(global_recommendations_default);
-router144.use(officer_watch_default);
-router144.use(wellness_default);
-router144.use(featured_video_default);
-router144.use(hub_badges_default);
-router144.use(collections_default);
-router144.use(roadmaps_default);
-router144.use(guides_default);
-router144.use(travel_planner_default);
-router144.use(smart_fill_default);
-router144.use(wrapped_default);
-router144.use(archive_default);
-router144.use(revenuecat_default);
-router144.use(kinfolk_intelligence_default);
-router144.use("/hidden-gems", hidden_gems_default);
-router144.use(resources_default);
-router144.use(marketplace_default);
-router144.use(wellness_tracker_default);
-router144.use(financial_hub_default);
-router144.use(directions_default);
-router144.use(recommended_spots_default);
-router144.use(preview_default);
-router144.use(vibes_default);
-router144.use(hashtags_default);
-router144.use(community_places_default);
-router144.use(community_impact_default);
-router144.use(show_love_default);
-router144.use(membership_family_default);
-router144.use(legal_default);
-router144.use(business_membership_info_default);
-router144.use(passport_default);
-router144.use(safety_heatmap_default);
-router144.use(cultural_sites_default);
-router144.use(external_clicks_default);
-router144.use(monitor_build97_default);
-router144.use(crash_reports_default);
-var routes_default = router144;
+router144.get("/admin/city-launches", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const { rows: cities } = await pool.query(`SELECT * FROM city_launches ORDER BY sequence_order ASC`);
+    const { rows: waitlistStats } = await pool.query(
+      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM waitlist GROUP BY LOWER(TRIM(city))`
+    );
+    const { rows: userStats } = await pool.query(
+      `SELECT LOWER(TRIM(home_city)) as city, COUNT(*) as cnt FROM users WHERE approved = true AND home_city IS NOT NULL GROUP BY LOWER(TRIM(home_city))`
+    );
+    const { rows: bizStats } = await pool.query(
+      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM businesses WHERE status = 'active' GROUP BY LOWER(TRIM(city))`
+    );
+    const { rows: eventStats } = await pool.query(
+      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM events WHERE city IS NOT NULL GROUP BY LOWER(TRIM(city))`
+    );
+    const { rows: postStats } = await pool.query(
+      `SELECT LOWER(TRIM(location_city)) as city, COUNT(*) as cnt FROM community_posts WHERE location_city IS NOT NULL GROUP BY LOWER(TRIM(location_city))`
+    );
+    const toMap = (rows) => Object.fromEntries(rows.map((r2) => [r2.city, parseInt(r2.cnt, 10)]));
+    const waitlistMap = toMap(waitlistStats);
+    const userMap = toMap(userStats);
+    const bizMap = toMap(bizStats);
+    const eventMap = toMap(eventStats);
+    const postMap = toMap(postStats);
+    const result = cities.map((c3) => {
+      const key = c3.city.toLowerCase();
+      const checklist = c3.checklist;
+      const allItems = [
+        ...Object.values(checklist.pre_launch),
+        ...Object.values(checklist.community),
+        ...Object.values(checklist.marketing),
+        ...Object.values(checklist.operations)
+      ];
+      const completedItems = allItems.filter(Boolean).length;
+      return {
+        id: c3.id,
+        city: c3.city,
+        state: c3.state,
+        slug: c3.slug,
+        sequenceOrder: c3.sequence_order,
+        status: c3.status,
+        launchDate: c3.launch_date,
+        checklist,
+        notes: c3.notes,
+        rolloutPercentage: c3.rollout_percentage,
+        checklistProgress: {
+          completed: completedItems,
+          total: allItems.length,
+          pct: Math.round(completedItems / allItems.length * 100)
+        },
+        metrics: {
+          waitlistSize: waitlistMap[key] ?? 0,
+          activeMembers: userMap[key] ?? 0,
+          businessesOnboarded: bizMap[key] ?? 0,
+          eventsLive: eventMap[key] ?? 0,
+          ambassadorCount: 0,
+          // future: ambassador table
+          communityPosts: postMap[key] ?? 0
+        },
+        createdAt: c3.created_at,
+        updatedAt: c3.updated_at
+      };
+    });
+    res.json({ cities: result });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city launches");
+    res.status(500).json({ error: "Failed to fetch city launches" });
+  }
+});
+router144.patch("/admin/city-launches/:slug/checklist", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { slug } = req.params;
+  const { section, item, value } = req.body;
+  const validSections = ["pre_launch", "community", "marketing", "operations"];
+  if (!validSections.includes(section)) {
+    res.status(400).json({ error: "Invalid section" });
+    return;
+  }
+  if (typeof value !== "boolean") {
+    res.status(400).json({ error: "value must be a boolean" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT checklist FROM city_launches WHERE slug = $1`,
+      [slug]
+    );
+    if (!rows[0]) {
+      res.status(404).json({ error: "City not found" });
+      return;
+    }
+    const checklist = rows[0].checklist;
+    const sectionObj = checklist[section];
+    if (!(item in sectionObj)) {
+      res.status(400).json({ error: `Unknown item "${item}" in section "${section}"` });
+      return;
+    }
+    sectionObj[item] = value;
+    await pool.query(
+      `UPDATE city_launches SET checklist = $1, updated_at = NOW() WHERE slug = $2`,
+      [JSON.stringify(checklist), slug]
+    );
+    res.json({ ok: true, checklist });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update city checklist");
+    res.status(500).json({ error: "Failed to update checklist" });
+  }
+});
+router144.patch("/admin/city-launches/:slug/status", async (req, res) => {
+  if (!isAdmin2(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { slug } = req.params;
+  const { status, rolloutPercentage, notes, launchDate } = req.body;
+  const validStatuses = ["planning", "pre_launch", "soft_launch", "live", "paused"];
+  if (status && !validStatuses.includes(status)) {
+    res.status(400).json({ error: "Invalid status" });
+    return;
+  }
+  if (rolloutPercentage !== void 0 && (rolloutPercentage < 0 || rolloutPercentage > 100)) {
+    res.status(400).json({ error: "rolloutPercentage must be 0\u2013100" });
+    return;
+  }
+  try {
+    const sets = ["updated_at = NOW()"];
+    const vals = [];
+    let i = 1;
+    if (status) {
+      sets.push(`status = $${i++}`);
+      vals.push(status);
+    }
+    if (rolloutPercentage !== void 0) {
+      sets.push(`rollout_percentage = $${i++}`);
+      vals.push(rolloutPercentage);
+    }
+    if (notes !== void 0) {
+      sets.push(`notes = $${i++}`);
+      vals.push(notes);
+    }
+    if (launchDate !== void 0) {
+      sets.push(`launch_date = $${i++}`);
+      vals.push(launchDate ?? null);
+    }
+    vals.push(slug);
+    const { rowCount } = await pool.query(
+      `UPDATE city_launches SET ${sets.join(", ")} WHERE slug = $${i}`,
+      vals
+    );
+    if (!rowCount) {
+      res.status(404).json({ error: "City not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update city status");
+    res.status(500).json({ error: "Failed to update city status" });
+  }
+});
+var city_launch_default = router144;
+
+// src/routes/index.ts
+var router145 = (0, import_express145.Router)();
+router145.use(health_default);
+router145.use(db_probe_default);
+router145.use("/internal", readyz_default);
+router145.use(pool_stats_default);
+router145.use(auth_default);
+router145.use("/membership", membership_default);
+router145.use(phone_auth_default);
+router145.use(businesses_default);
+router145.use(travel_default);
+router145.use(surveys_default);
+router145.use(saved_places_default);
+router145.use(alerts_default);
+router145.use(moderation_default);
+router145.use(safety_context_default);
+router145.use(reviews_default);
+router145.use(checkins_default);
+router145.use(points_default);
+router145.use(event_rsvps_default);
+router145.use(push_token_default);
+router145.use(community_default);
+router145.use(conversations_default);
+router145.use(waitlist_default);
+router145.use(contact_default);
+router145.use(events_default);
+router145.use(users_default);
+router145.use(groups_default);
+router145.use(admin_default);
+router145.use(kinfolk_default);
+router145.use(kinfolk_tasks_default);
+router145.use(wishlist_default);
+router145.use(claims_default);
+router145.use(notifications_default);
+router145.use(stripe_default);
+router145.use(admin_users_default);
+router145.use(maps_default);
+router145.use(og_default);
+router145.use(jobs_default);
+router145.use(impact_default);
+router145.use(submit_business_default);
+router145.use(billing_default);
+router145.use(cron_default);
+router145.use(referrals_default);
+router145.use(content_reports_default);
+router145.use(verification_default);
+router145.use(deals_default);
+router145.use(stories_default);
+router145.use(redemptions_default);
+router145.use(mentorship_default);
+router145.use(reports_default);
+router145.use(travel_flights_default);
+router145.use(connections_default);
+router145.use(family_default);
+router145.use(safety_checkins_default);
+router145.use(location_shares_default);
+router145.use(meetup_verifications_default);
+router145.use(safety_tips_default);
+router145.use(skip_feedback_default);
+router145.use(businesses_analytics_default);
+router145.use(promote_default);
+router145.use(post_nudge_default);
+router145.use(user_settings_default);
+router145.use(space_reports_default);
+router145.use(connect_default);
+router145.use(community_spaces_default);
+router145.use(journals_default);
+router145.use(plate_passes_default);
+router145.use(lists_default);
+router145.use(challenge_applications_default);
+router145.use(category_waitlist_default);
+router145.use(business_nominations_default);
+router145.use(business_identity_default);
+router145.use(broadcasts_default);
+router145.use(community_health_default);
+router145.use(journal_insights_default);
+router145.use(saved_locations_default);
+router145.use(disputes_default);
+router145.use(docusign_default);
+router145.use(smart_pathways_default);
+router145.use(knowledge_default);
+router145.use(marketplace_fees_default);
+router145.use(trust_default);
+router145.use(journeys_default);
+router145.use(entity_connections_default);
+router145.use(signals_default);
+router145.use(smart_search_default);
+router145.use(notifications_hub_default);
+router145.use(knowledge_channels_default);
+router145.use(router90);
+router145.use(captions_default);
+router145.use(community_boundaries_default);
+router145.use(business_response_default);
+router145.use(business_improvement_default);
+router145.use(community_appreciation_default);
+router145.use(circles_default);
+router145.use(community_requests_default);
+router145.use(user_achievements_default);
+router145.use(community_says_default);
+router145.use(community_challenges_new_default);
+router145.use(follows_default);
+router145.use(pinned_default);
+router145.use(creator_profiles_default);
+router145.use(community_alerts_default);
+router145.use(knowledge_delivery_default);
+router145.use(business_insights_default);
+router145.use(topic_briefs_default);
+router145.use(knowledge_hubs_default);
+router145.use(for_you_default);
+router145.use(global_recommendations_default);
+router145.use(officer_watch_default);
+router145.use(wellness_default);
+router145.use(featured_video_default);
+router145.use(hub_badges_default);
+router145.use(collections_default);
+router145.use(roadmaps_default);
+router145.use(guides_default);
+router145.use(travel_planner_default);
+router145.use(smart_fill_default);
+router145.use(wrapped_default);
+router145.use(archive_default);
+router145.use(revenuecat_default);
+router145.use(kinfolk_intelligence_default);
+router145.use("/hidden-gems", hidden_gems_default);
+router145.use(resources_default);
+router145.use(marketplace_default);
+router145.use(wellness_tracker_default);
+router145.use(financial_hub_default);
+router145.use(directions_default);
+router145.use(recommended_spots_default);
+router145.use(preview_default);
+router145.use(vibes_default);
+router145.use(hashtags_default);
+router145.use(community_places_default);
+router145.use(community_impact_default);
+router145.use(show_love_default);
+router145.use(membership_family_default);
+router145.use(legal_default);
+router145.use(business_membership_info_default);
+router145.use(city_launch_default);
+router145.use(passport_default);
+router145.use(safety_heatmap_default);
+router145.use(cultural_sites_default);
+router145.use(external_clicks_default);
+router145.use(monitor_build97_default);
+router145.use(crash_reports_default);
+var routes_default = router145;
 
 // src/routes/web-ssr.ts
-var import_express145 = __toESM(require_express2(), 1);
+var import_express146 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-var router145 = (0, import_express145.Router)();
+var router146 = (0, import_express146.Router)();
 var BASE_DOMAIN = "https://www.melaninmaps.com";
 function isBot(ua4) {
   return /facebookexternalhit|twitterbot|linkedinbot|slackbot|telegrambot|whatsapp|discordbot|pinterest|googlebot|bingbot|applebot|iframely|opengraph|embedly/i.test(
@@ -453744,7 +453984,7 @@ function isBot(ua4) {
 function escapeHtml2(str2) {
   return str2.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-router145.get("/web/businesses/:id", async (req, res) => {
+router146.get("/web/businesses/:id", async (req, res) => {
   const id2 = String(req.params.id);
   const ua4 = String(req.headers["user-agent"] ?? "");
   try {
@@ -453819,11 +454059,11 @@ router145.get("/web/businesses/:id", async (req, res) => {
     res.redirect(302, "/web/");
   }
 });
-var web_ssr_default = router145;
+var web_ssr_default = router146;
 
 // src/routes/privacy.ts
-var import_express146 = __toESM(require_express2(), 1);
-var router146 = (0, import_express146.Router)();
+var import_express147 = __toESM(require_express2(), 1);
+var router147 = (0, import_express147.Router)();
 var SECTIONS = [
   {
     title: "What We Collect",
@@ -454021,17 +454261,17 @@ function pageShell(title, body) {
 </body>
 </html>`;
 }
-router146.get("/privacy", (_req, res) => {
+router147.get("/privacy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router146.get("/privacy-policy", (_req, res) => {
+router147.get("/privacy-policy", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   res.send(buildHtml());
 });
-router146.get("/terms", (_req, res) => {
+router147.get("/terms", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -454050,7 +454290,7 @@ router146.get("/terms", (_req, res) => {
   `;
   res.send(pageShell("Terms of Service", body));
 });
-router146.get("/delete-account", (_req, res) => {
+router147.get("/delete-account", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -454092,7 +454332,7 @@ router146.get("/delete-account", (_req, res) => {
   `;
   res.send(pageShell("Delete Your Account", body));
 });
-router146.get("/support", (_req, res) => {
+router147.get("/support", (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=86400");
   const body = `
@@ -454122,7 +454362,7 @@ router146.get("/support", (_req, res) => {
   `;
   res.send(pageShell("Support", body));
 });
-var privacy_default = router146;
+var privacy_default = router147;
 
 // src/middlewares/authMiddleware.ts
 init_src();
@@ -454341,8 +454581,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "de3e35c3ddb24fc1bcf615037b2a822e1a1ef1da";
-var BUILD_AT = "2026-07-29T23:21:30.333Z";
+var BUILT_FROM_SHA = "5a9615c4ae41fb3fbdadb8c46d9168ba1f2a4357";
+var BUILD_AT = "2026-07-30T01:02:40.146Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -454375,7 +454615,7 @@ for (const dir of SPA_SEARCH_DIRS) {
   } catch {
   }
 }
-var app = (0, import_express147.default)();
+var app = (0, import_express148.default)();
 app.set("trust proxy", 1);
 app.get("/api/healthz", (_req, res) => {
   res.json({ status: "ok" });
@@ -454460,7 +454700,7 @@ app.use(
 );
 app.post(
   "/api/stripe/webhook",
-  import_express147.default.raw({ type: "application/json" }),
+  import_express148.default.raw({ type: "application/json" }),
   async (req, res) => {
     const signature = req.headers["stripe-signature"];
     if (!signature) {
@@ -454496,8 +454736,8 @@ app.use(
   })
 );
 app.use((0, import_cookie_parser.default)());
-app.use(import_express147.default.json());
-app.use(import_express147.default.urlencoded({ extended: true }));
+app.use(import_express148.default.json());
+app.use(import_express148.default.urlencoded({ extended: true }));
 app.use(authMiddleware);
 app.use("/api", generalLimiter);
 app.use((req, res, next) => {
@@ -454516,7 +454756,7 @@ app.use((req, res, next) => {
 app.use("/api", routes_default);
 app.use(web_ssr_default);
 app.use(privacy_default);
-app.use(import_express147.default.static(spaServeDir));
+app.use(import_express148.default.static(spaServeDir));
 var serveSpa = (_req, res, next) => {
   const html = spaHtml && spaHtml.length > 100 ? spaHtml : SPA_HTML;
   if (html && html.length > 100) {
@@ -454624,6 +454864,38 @@ var MIGRATIONS = [
       active BOOLEAN NOT NULL DEFAULT TRUE,
       revoked_at TIMESTAMP
     )`
+  },
+  {
+    name: "city_launches_table",
+    sql: `CREATE TABLE IF NOT EXISTS city_launches (
+      id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+      city VARCHAR(100) NOT NULL,
+      state VARCHAR(50) NOT NULL,
+      slug VARCHAR(120) NOT NULL UNIQUE,
+      sequence_order INTEGER NOT NULL,
+      status VARCHAR(30) NOT NULL DEFAULT 'planning',
+      launch_date TIMESTAMPTZ,
+      checklist JSONB NOT NULL DEFAULT '{}',
+      notes TEXT,
+      rollout_percentage INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`
+  },
+  {
+    name: "city_launches_seed",
+    sql: `INSERT INTO city_launches (city, state, slug, sequence_order, status, checklist)
+      VALUES
+        ('Philadelphia', 'PA', 'philadelphia', 1, 'live', '{"pre_launch":{"businesses_seeded":true,"cultural_sites":true,"historical_sites":true,"community_resources":true,"events":true,"city_imagery":true,"moderation_review":true,"kinfolk_city_context":true,"search_validation":true,"map_validation":true,"analytics_enabled":true},"community":{"founding_members":true,"founding_businesses":true,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":true,"launch_announcement":true,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":true,"rollout_percentage":true,"monitoring":true,"crash_dashboard":true,"waitlist_activation":true,"rollback_plan":false}}'),
+        ('Washington', 'DC', 'washington-dc', 2, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Richmond', 'VA', 'richmond', 3, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Charlotte', 'NC', 'charlotte', 4, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Columbia', 'SC', 'columbia', 5, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Atlanta', 'GA', 'atlanta', 6, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Birmingham', 'AL', 'birmingham', 7, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('New Orleans', 'LA', 'new-orleans', 8, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}'),
+        ('Houston', 'TX', 'houston', 9, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}')
+      ON CONFLICT (slug) DO NOTHING`
   }
 ];
 async function runStartupMigrations(logger4) {
