@@ -25,7 +25,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import * as Sentry from "@sentry/react-native";
 import { getSavedCrashReport, clearSavedCrashReport, type CrashReport } from "@/lib/crashLogger";
 
 export default function CrashLogScreen() {
@@ -45,23 +44,15 @@ export default function CrashLogScreen() {
   const [sentryStatus, setSentryStatus] = useState<string | null>(null);
 
   const handleSentryTestEvent = () => {
-    try {
-      // Sends a non-fatal message to Sentry — appears under "Issues" with level=info.
-      // Use this to confirm the DSN is wired and source maps are uploaded.
-      const eventId = Sentry.captureMessage(
-        "Build 99 Sentry verification — non-fatal test event from debug screen",
-        "info",
-      );
-      setSentryStatus(`✓ Test event sent  (id: ${eventId?.slice(0, 8) ?? "unknown"})`);
-    } catch (e) {
-      setSentryStatus(`✗ Sentry not active: ${String(e)}`);
-    }
+    // Sentry removed in Build 101 — native SDK caused pre-JS crash.
+    // Re-enable once a confirmed DSN is tested on a preview build.
+    setSentryStatus("Sentry not active in this build (removed Build 101)");
   };
 
-  // Named function so the stack trace in Sentry is fully symbolicated and readable.
+  // Named function so the stack trace is readable in Railway crash logs.
   function triggerTestCrash(): never {
     throw new Error(
-      "Build 99 controlled crash — verify symbolicated stack trace in Sentry",
+      "Build 101 controlled JS crash — verify crash logger posts to Railway",
     );
   }
 
