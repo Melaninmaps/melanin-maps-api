@@ -31,6 +31,7 @@ const businesses = [
     website: "sweetauburnbbq.com",
     hours: "Mon–Sun 11am–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "2",
@@ -61,6 +62,7 @@ const businesses = [
     website: "essencebeautylounge.com",
     hours: "Tue–Sat 9am–7pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "3",
@@ -90,6 +92,7 @@ const businesses = [
     website: "harambeetehhub.com",
     hours: "Mon–Fri 8am–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "4",
@@ -120,6 +123,7 @@ const businesses = [
     website: "rootsandculturebooks.com",
     hours: "Mon–Sat 10am–7pm, Sun 12–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "5",
@@ -149,6 +153,7 @@ const businesses = [
     website: "ujimawellness.com",
     hours: "Mon–Fri 9am–7pm, Sat 10am–4pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "6",
@@ -178,6 +183,7 @@ const businesses = [
     website: "carterandassociates.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "7",
@@ -206,6 +212,7 @@ const businesses = [
     ],
     phone: "(404) 555-0714",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "8",
@@ -235,6 +242,7 @@ const businesses = [
     website: "melaninmoney.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "9",
@@ -265,6 +273,7 @@ const businesses = [
     website: "tremesoulkitchen.com",
     hours: "Wed–Mon 11am–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "10",
@@ -294,6 +303,7 @@ const businesses = [
     website: "sankofaapothecary.com",
     hours: "Mon–Sat 10am–8pm, Sun 11am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "11",
@@ -322,6 +332,7 @@ const businesses = [
     phone: "(404) 555-0312",
     hours: "Tue–Sun 12pm–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "12",
@@ -351,6 +362,7 @@ const businesses = [
     website: "ironandthread.com",
     hours: "Mon–Sat 11am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "13",
@@ -381,6 +393,7 @@ const businesses = [
     website: "griotscoffee.com",
     hours: "Mon–Sun 7am–9pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "14",
@@ -410,6 +423,7 @@ const businesses = [
     website: "heritagept.com",
     hours: "Mon–Fri 8am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "15",
@@ -439,6 +453,7 @@ const businesses = [
     phone: "(404) 555-0751",
     hours: "Tue–Sun 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "16",
@@ -468,6 +483,7 @@ const businesses = [
     website: "blackpearlinvestments.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "17",
@@ -497,6 +513,7 @@ const businesses = [
     website: "soledadyoga.com",
     hours: "Mon–Sun 6am–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "18",
@@ -526,6 +543,7 @@ const businesses = [
     website: "uhurtech.com",
     hours: "Mon–Fri 9am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "19",
@@ -554,6 +572,7 @@ const businesses = [
     phone: "(504) 555-1124",
     hours: "Mon–Sun 4pm–2am",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "20",
@@ -583,6 +602,7 @@ const businesses = [
     website: "legacylegalgroup.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "21",
@@ -611,6 +631,7 @@ const businesses = [
     phone: "(313) 555-1347",
     hours: "Mon–Sun 8am–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "22",
@@ -640,6 +661,7 @@ const businesses = [
     website: "crownandglorywigs.com",
     hours: "Tue–Sat 9am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "23",
@@ -669,6 +691,7 @@ const businesses = [
     website: "nexuscoworkingmia.com",
     hours: "Mon–Fri 8am–8pm, Sat 10am–4pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "24",
@@ -697,6 +720,7 @@ const businesses = [
     phone: "(212) 555-1672",
     hours: "Mon–Sun 10am–10pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "25",
@@ -726,6 +750,7 @@ const businesses = [
     website: "sanarahealingarts.com",
     hours: "Mon–Fri 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "26",
@@ -754,6 +779,7 @@ const businesses = [
     phone: "(404) 555-1893",
     hours: "Wed–Sun 5pm–2am",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "27",
@@ -783,6 +809,7 @@ const businesses = [
     website: "verdantdesignco.com",
     hours: "Mon–Fri 8am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "28",
@@ -813,6 +840,7 @@ const businesses = [
     website: "freebornroasters.com",
     hours: "Mon–Sun 7am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "29",
@@ -841,6 +869,7 @@ const businesses = [
     phone: "(314) 555-2196",
     hours: "Mon, Wed, Fri 10am–6pm, Sat 9am–1pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "30",
@@ -870,6 +899,7 @@ const businesses = [
     website: "inkwellmia.com",
     hours: "Tue–Sun 12pm–9pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "31",
@@ -898,6 +928,7 @@ const businesses = [
     phone: "(773) 555-2419",
     hours: "Mon–Fri 7am–5pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "32",
@@ -926,6 +957,7 @@ const businesses = [
     phone: "(404) 555-2534",
     hours: "Mon–Sun 7am–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "33",
@@ -955,6 +987,7 @@ const businesses = [
     website: "baldwinbrownadv.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "34",
@@ -984,6 +1017,7 @@ const businesses = [
     website: "queencityfitness.com",
     hours: "Mon–Fri 5am–10pm, Sat–Sun 7am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "35",
@@ -1013,6 +1047,7 @@ const businesses = [
     website: "houseofpraiseatx.com",
     hours: "By appointment",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Charlotte, NC ---
@@ -1043,6 +1078,7 @@ const businesses = [
     phone: "(704) 555-3601",
     hours: "Tue–Sun 11am–8pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "37",
@@ -1071,6 +1107,7 @@ const businesses = [
     phone: "(704) 555-3728",
     hours: "Mon–Sat 9am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "38",
@@ -1100,6 +1137,7 @@ const businesses = [
     website: "sankofaclt.com",
     hours: "Tue–Sat 10am–7pm, Sun 12–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "39",
@@ -1129,6 +1167,7 @@ const businesses = [
     website: "crownwellnessnc.com",
     hours: "Tue–Sun 9am–7pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "40",
@@ -1157,6 +1196,7 @@ const businesses = [
     phone: "(704) 555-4087",
     hours: "Mon–Fri 9am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Memphis, TN ---
@@ -1188,6 +1228,7 @@ const businesses = [
     phone: "(901) 555-4101",
     hours: "Mon–Sun 11am–11pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "42",
@@ -1217,6 +1258,7 @@ const businesses = [
     website: "orangemoundrealty.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "43",
@@ -1245,6 +1287,7 @@ const businesses = [
     phone: "(901) 555-4337",
     hours: "Tue–Sat 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "44",
@@ -1274,6 +1317,7 @@ const businesses = [
     website: "staxmusicacademy.com",
     hours: "Mon–Sat 10am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "45",
@@ -1302,6 +1346,7 @@ const businesses = [
     phone: "(901) 555-4561",
     hours: "Mon–Fri 7am–7pm, Sat–Sun 8am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Detroit, MI ---
@@ -1333,6 +1378,7 @@ const businesses = [
     phone: "(313) 555-4601",
     hours: "Tue–Sun 11am–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "47",
@@ -1362,6 +1408,7 @@ const businesses = [
     website: "blackbottombrewing.com",
     hours: "Wed–Sun 3pm–11pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "48",
@@ -1391,6 +1438,7 @@ const businesses = [
     website: "inksterfinancial.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "49",
@@ -1419,6 +1467,7 @@ const businesses = [
     phone: "(313) 555-4947",
     hours: "Tue–Sat 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "50",
@@ -1448,6 +1497,7 @@ const businesses = [
     website: "detroitfuturetech.com",
     hours: "Mon–Fri 9am–8pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Baltimore, MD ---
@@ -1478,6 +1528,7 @@ const businesses = [
     phone: "(410) 555-5101",
     hours: "Mon–Sat 8am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "52",
@@ -1507,6 +1558,7 @@ const businesses = [
     website: "charmcitylawgroup.com",
     hours: "Mon–Fri 9am–6pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "53",
@@ -1535,6 +1587,7 @@ const businesses = [
     phone: "(410) 555-5329",
     hours: "Mon–Sat 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "54",
@@ -1564,6 +1617,7 @@ const businesses = [
     website: "chesapeakewellnessbalt.com",
     hours: "Mon–Fri 9am–7pm, Sat 10am–3pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "55",
@@ -1592,6 +1646,7 @@ const businesses = [
     phone: "(410) 555-5552",
     hours: "Tue–Sat 10am–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Oakland, CA ---
@@ -1623,6 +1678,7 @@ const businesses = [
     phone: "(510) 555-5601",
     hours: "Tue–Sun 11am–8pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "57",
@@ -1652,6 +1708,7 @@ const businesses = [
     website: "blackoakcollective.com",
     hours: "Wed–Sun 12pm–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "58",
@@ -1681,6 +1738,7 @@ const businesses = [
     website: "pantherhealthoakland.com",
     hours: "Mon–Fri 8am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "59",
@@ -1710,6 +1768,7 @@ const businesses = [
     website: "ashbyartsacademy.com",
     hours: "Mon–Sat 2pm–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "60",
@@ -1738,6 +1797,7 @@ const businesses = [
     phone: "(510) 555-6061",
     hours: "Mon–Sun 7am–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Durham / Research Triangle, NC ---
@@ -1770,6 +1830,7 @@ const businesses = [
     website: "bullcitycreamery.com",
     hours: "Mon–Sun 12pm–9pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "62",
@@ -1799,6 +1860,7 @@ const businesses = [
     website: "haytiheritage.org",
     hours: "Tue–Sat 9am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "63",
@@ -1828,6 +1890,7 @@ const businesses = [
     website: "solesistersrunning.com",
     hours: "Mon–Sat 10am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "64",
@@ -1857,6 +1920,7 @@ const businesses = [
     website: "thedurhamkitchen.com",
     hours: "Tue–Sat 5pm–10pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Nashville, TN ---
@@ -1888,6 +1952,7 @@ const businesses = [
     phone: "(615) 555-6501",
     hours: "Wed–Mon 11am–8pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "66",
@@ -1916,6 +1981,7 @@ const businesses = [
     phone: "(615) 555-6614",
     hours: "Mon–Fri 10am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "67",
@@ -1945,6 +2011,7 @@ const businesses = [
     website: "liftevryvoiceyoga.com",
     hours: "Mon–Sun 6am–8pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "68",
@@ -1973,6 +2040,7 @@ const businesses = [
     phone: "(615) 555-6839",
     hours: "Tue–Sat 11am–7pm, Sun 12pm–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "69",
@@ -2001,6 +2069,7 @@ const businesses = [
     phone: "(615) 555-6951",
     hours: "Wed–Mon 8am–3pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Richmond, VA ---
@@ -2032,6 +2101,7 @@ const businesses = [
     website: "jacksonwardbistro.com",
     hours: "Tue–Sun 5pm–10pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "71",
@@ -2061,6 +2131,7 @@ const businesses = [
     website: "firstfreedom.org",
     hours: "Tue–Sat 10am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "72",
@@ -2089,6 +2160,7 @@ const businesses = [
     phone: "(804) 555-7226",
     hours: "Tue–Sat 9am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "73",
@@ -2117,6 +2189,7 @@ const businesses = [
     phone: "(804) 555-7339",
     hours: "Mon–Fri 5am–10pm, Sat–Sun 7am–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Kansas City, MO ---
@@ -2147,6 +2220,7 @@ const businesses = [
     phone: "(816) 555-7401",
     hours: "Tue–Sun 11am–10pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "75",
@@ -2176,6 +2250,7 @@ const businesses = [
     website: "paseoartskc.com",
     hours: "Thu–Sun 12pm–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "76",
@@ -2204,6 +2279,7 @@ const businesses = [
     phone: "(816) 555-7628",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "77",
@@ -2232,6 +2308,7 @@ const businesses = [
     phone: "(816) 555-7742",
     hours: "Mon–Sat 7am–9pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Seattle, WA ---
@@ -2262,6 +2339,7 @@ const businesses = [
     phone: "(206) 555-7801",
     hours: "Mon–Sun 7am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "79",
@@ -2291,6 +2369,7 @@ const businesses = [
     website: "nwblackattorneys.com",
     hours: "Mon–Fri 9am–5pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "80",
@@ -2320,6 +2399,7 @@ const businesses = [
     website: "umojahealthseattle.com",
     hours: "Mon–Fri 9am–6pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "81",
@@ -2348,6 +2428,7 @@ const businesses = [
     phone: "(206) 555-8141",
     hours: "Mon–Sat 9am–7pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- Birmingham, AL ---
@@ -2378,6 +2459,7 @@ const businesses = [
     phone: "(205) 555-8201",
     hours: "Mon–Sat 11am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "83",
@@ -2407,6 +2489,7 @@ const businesses = [
     website: "alabamablackentrepreneurs.com",
     hours: "Mon–Fri 8am–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "84",
@@ -2436,6 +2519,7 @@ const businesses = [
     website: "bethelbaptistbhm.org",
     hours: "Mon–Sat 9am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- More Atlanta ---
@@ -2466,6 +2550,7 @@ const businesses = [
     phone: "(404) 555-8501",
     hours: "Sat–Sun 9am–4pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "86",
@@ -2495,6 +2580,7 @@ const businesses = [
     website: "cascadeheightsdental.com",
     hours: "Mon–Fri 8am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "87",
@@ -2523,6 +2609,7 @@ const businesses = [
     phone: "(404) 555-8726",
     hours: "Mon–Fri 8am–6pm, Sat 10am–4pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "88",
@@ -2551,6 +2638,7 @@ const businesses = [
     phone: "(404) 555-8841",
     hours: "Mon–Fri 5:30am–9pm, Sat–Sun 7am–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- More NYC / Brooklyn ---
@@ -2581,6 +2669,7 @@ const businesses = [
     phone: "(718) 555-8901",
     hours: "Tue–Sat 10am–6pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "90",
@@ -2610,6 +2699,7 @@ const businesses = [
     website: "bedstuyapothecary.com",
     hours: "Mon–Sat 11am–7pm, Sun 12pm–5pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "91",
@@ -2638,6 +2728,7 @@ const businesses = [
     phone: "(718) 555-9124",
     hours: "Tue–Sun 12pm–9pm",
     priceRange: "$$",
+    imageUrl: 'https://images.pexels.com/photos/6579020/pexels-photo-6579020.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "92",
@@ -2667,6 +2758,7 @@ const businesses = [
     website: "harlemprgroup.com",
     hours: "Mon–Fri 9am–6pm",
     priceRange: "$$$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- More Chicago ---
@@ -2698,6 +2790,7 @@ const businesses = [
     phone: "(312) 555-9301",
     hours: "Sat–Wed 8am–2pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/6140968/pexels-photo-6140968.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "94",
@@ -2726,6 +2819,7 @@ const businesses = [
     phone: "(312) 555-9415",
     hours: "Tue–Sun 9am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2269872/pexels-photo-2269872.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "95",
@@ -2754,6 +2848,7 @@ const businesses = [
     phone: "(312) 555-9528",
     hours: "Mon–Sat 9am–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- More Los Angeles ---
@@ -2784,6 +2879,7 @@ const businesses = [
     phone: "(323) 555-9601",
     hours: "Thu–Sun 12pm–7pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "97",
@@ -2812,6 +2908,7 @@ const businesses = [
     phone: "(310) 555-9714",
     hours: "Mon–Sat 9am–7pm, Sun 10am–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "98",
@@ -2840,6 +2937,7 @@ const businesses = [
     phone: "(323) 555-9827",
     hours: "Mon–Fri 5am–10pm, Sat–Sun 7am–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 
   // --- More Houston ---
@@ -2870,6 +2968,7 @@ const businesses = [
     phone: "(713) 555-9901",
     hours: "Sat–Sun 9am–3pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/2731372/pexels-photo-2731372.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "100",
@@ -2899,6 +2998,7 @@ const businesses = [
     website: "projectrowhouses.org",
     hours: "Wed–Sun 12pm–5pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/1820978/pexels-photo-1820978.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {
     id: "101",
@@ -2927,6 +3027,7 @@ const businesses = [
     phone: "(713) 555-10127",
     hours: "Mon–Sat 6am–8pm",
     priceRange: "$",
+    imageUrl: 'https://images.pexels.com/photos/3894383/pexels-photo-3894383.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 ];
 
