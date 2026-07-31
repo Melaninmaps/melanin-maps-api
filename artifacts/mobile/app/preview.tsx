@@ -301,7 +301,7 @@ export default function PreviewScreen() {
             <Feather name="map-pin" size={28} color={colors.primary} />
           </View>
           <Text style={[s.heroTitle, { color: colors.foreground }]}>
-            Ever been in a new city and wondered where YOUR people eat, shop, or get their hair done?
+            Ever been in a new city and wondered where our community eats, shops, or gets their hair done?
           </Text>
           <Text style={[s.heroSub, { color: colors.mutedForeground }]}>
             Mapping With Melanin is the first travel and discovery platform built entirely for our community — by our community. Here's a taste of what Founding Members get.
