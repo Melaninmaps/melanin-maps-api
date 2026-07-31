@@ -20,6 +20,7 @@ const EVENTS = [
     latitude: "33.7609000",
     longitude: "-84.3939000",
     featured: true,
+    imageUrl: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=600&fit=crop",
   },
   {
     id: "e2",
@@ -40,6 +41,7 @@ const EVENTS = [
     latitude: "41.8527000",
     longitude: "-87.6158000",
     featured: true,
+    imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
   },
   {
     id: "e3",
@@ -60,6 +62,7 @@ const EVENTS = [
     latitude: "40.8004000",
     longitude: "-73.9464000",
     featured: false,
+    imageUrl: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&h=600&fit=crop",
   },
   {
     id: "e4",
@@ -80,6 +83,7 @@ const EVENTS = [
     latitude: "38.9017000",
     longitude: "-77.0229000",
     featured: true,
+    imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=600&fit=crop",
   },
   {
     id: "e5",
@@ -100,6 +104,7 @@ const EVENTS = [
     latitude: "29.7355000",
     longitude: "-95.3615000",
     featured: false,
+    imageUrl: "https://images.unsplash.com/photo-1559526324-593bc073d938?w=800&h=600&fit=crop",
   },
 ];
 

@@ -101,6 +101,10 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`,
   },
   {
+    name: "events_image_url_col",
+    sql: `ALTER TABLE events ADD COLUMN IF NOT EXISTS image_url TEXT`,
+  },
+  {
     // One-time promotion: grant admin role to the founder's production accounts.
     // Uses email list so it's safe on dev (no matching rows = no-op).
     // Idempotent: WHERE role != 'admin' means repeat runs touch nothing.

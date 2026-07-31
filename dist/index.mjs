@@ -454779,8 +454779,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "57b15227afcf8ba30fb1d53f4a3e5758b765cc00";
-var BUILD_AT = "2026-07-31T11:58:26.973Z";
+var BUILT_FROM_SHA = "636979a0c5c36c0af34bc2adf737e0294a37f589";
+var BUILD_AT = "2026-07-31T12:34:05.103Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -455102,6 +455102,10 @@ var MIGRATIONS = [
   {
     name: "city_launch_events_index",
     sql: `CREATE INDEX IF NOT EXISTS idx_city_launch_events_slug ON city_launch_events(slug, recorded_at DESC)`
+  },
+  {
+    name: "events_image_url_col",
+    sql: `ALTER TABLE events ADD COLUMN IF NOT EXISTS image_url TEXT`
   },
   {
     // One-time promotion: grant admin role to the founder's production accounts.
