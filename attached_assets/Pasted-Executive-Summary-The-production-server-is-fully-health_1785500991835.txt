@@ -1,0 +1,79 @@
+Executive Summary
+The production server is fully healthy, running the correct compiled binary with all database migrations intact. The 4 identified issues (missing images, lack of diversity designations, and missing cultural sites) are entirely server-side data issues. The code supports them, but the data has not been seeded on production. An OTA update is NOT required for these 4 data fixes.
+
+The only required binary update is Build 101, which strips the Sentry SDK to prevent crashes. The primary focus before the 4:00 PM EST deadline is confirming Build 101’s availability in TestFlight and running the necessary data seeds on the production database.
+
+
+PASTE TO REPLIT — PRIORITY ACTIONS BEFORE 4 PM EST
+Please execute the following numbered tasks in exact order.
+
+1. Confirm Build 101 in TestFlight
+Check the EAS build status. Confirm that Build 101 (which strips `@sentry/react-native`) has successfully built and is available to testers in TestFlight. Resolve any EAS blockers immediately if it is not.
+
+2. Run the Multicultural Seed on Production
+The database needs the diverse businesses and cultural sites data. Run the following command against the production server:
+
+
+￼
+(This adds 12 diverse businesses with proper `ownershipDesignations` and 5 cultural sites for Philadelphia.)
+
+3. Add Images to Businesses
+Currently, `seed-businesses.ts` has zero `imageUrl` fields, causing the app to show placeholders.
+
+	•	Update `seed-businesses.ts` to include a unique, contextually appropriate Unsplash image URL for each of the 101 businesses.
+	•	Format: `https://images.unsplash.com/photo-XXXXX?w=800&h=600&fit=crop`
+	•	Match categories: Food/Restaurant → food photos, Beauty → salon photos, Retail → store photos, etc.
+	•	Action: After updating the file, re-run the business seed against production.
+
+4. Add Images to Events
+Currently, `seed-events.ts` has zero `imageUrl` fields.
+
+	•	Update `seed-events.ts` to include a unique, appropriate image URL for each event (e.g., cultural events → cultural celebration photos).
+	•	Action: After updating the file, re-run the events seed against production.
+
+5. Verify Founder Admin Access
+The startup migration (`founder_admin_promotion`) has run, but we need to ensure the founder’s accounts have admin privileges.
+
+	•	Ask the founder to log in and test the admin toggle.
+	•	If it does not work, manually execute this SQL against the production database:
+
+
+￼
+6. Final Production Verification
+After running all seeds, verify the server state:
+
+
+￼
+(Ensure `stale_bundle: false` is returned.)
+
+
+WHAT DOES NOT REQUIRE A NEW BUILD
+All 4 identified data/content issues are server-side database fixes.
+The mobile app already contains the necessary UI code to display images, diverse ownership designations, and cultural sites. The issue is simply that the data does not exist in the production database.
+
+Because these are data-level fixes, an OTA (Over-The-Air) update is NOT needed. The app will display the correct information as soon as the seeds are run on the backend. Build 101 (the Sentry removal) is the only binary change required for today’s event.
+
+
+VERIFICATION CHECKLIST
+Use these commands to verify the system is ready for the event:
+
+
+￼
+
+WHY THIS KEEPS HAPPENING
+There is a recurring pattern: code changes are pushed successfully, but the corresponding data seeds are forgotten on production. The code is correct, the endpoints exist, and the schema supports the features, but the production database remains empty.
+
+Process Improvement: Every deployment must include a strict post-deploy checklist:
+
+	1.	Verify `/api/version` shows the correct SHA and `stale_bundle: false`.
+	2.	Run any new or updated data seeds against the production database.
+	3.	Manually verify the data is present via the API or App UI.
+
+
+EVENT TIMELINE
+	•	NOW (8:25 AM EST): Server is healthy. Build 101 status is currently unknown.
+	•	BY 12:00 PM EST: All seeds must be run, images added to seed files, and Build 101 confirmed available in TestFlight.
+	•	BY 2:00 PM EST: Founder must personally test the app (verify login, admin toggle, map with diverse businesses, and cultural sites).
+	•	BY 3:00 PM EST: Buffer period for resolving any issues discovered during founder testing.
+	•	4:00 PM EST: HARD DEADLINE — The app must be fully working and stable for testers.
+	•	6:00 PM EST: Event begins.
