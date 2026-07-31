@@ -94,12 +94,11 @@ async function ensureSupportLinksSeeded() {
 }
 
 // ── GET /cultural-sites ───────────────────────────────────────────────────────
+// Public endpoint — cultural/heritage site data is not private; removing the
+// auth gate restores map visibility for authenticated users whose native HTTP
+// client does not automatically attach session cookies (React Native fetch).
 
 router.get("/cultural-sites", async (req: Request, res: Response) => {
-  if (!(req as any).user) {
-    res.status(401).json({ error: "Authentication required." });
-    return;
-  }
   try {
     // ensureSeeded() is NOT called here — it holds a DB connection for the entire
     // seed operation (TRUNCATE + multi-row INSERT) on every request, exhausting the

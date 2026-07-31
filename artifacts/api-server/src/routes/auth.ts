@@ -37,6 +37,7 @@ import {
 import jwt from "jsonwebtoken";
 import { encryptToken, generateClientSecret, exchangeAuthCode } from "../lib/apple";
 import { sendWelcomeEmail, sendPasswordResetEmail, generateUnsubscribeToken } from "../lib/email";
+import { getUserTier, TESTING_MODE } from "../middleware/requireMembership";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -155,6 +156,9 @@ router.get("/auth/user", async (req: Request, res: Response) => {
       .from(usersTable)
       .where(eq(usersTable.id, req.user!.id))
       .limit(1);
+    // Compute effective tier so mobile client can suppress upgrade prompts
+    const tier = await getUserTier(req.user!.id);
+
     res.json({
       user: {
         ...req.user,
@@ -173,6 +177,8 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         trustLevel: dbRow?.trustLevel ?? 1,
         reputationScore: dbRow?.reputationScore ?? 0,
         profileSetupComplete: dbRow?.profileSetupComplete ?? false,
+        tier,
+        testingMode: TESTING_MODE,
       },
     });
   } catch {

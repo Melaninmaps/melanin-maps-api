@@ -19,6 +19,37 @@ type Stats = { businesses: number; cities: number; members: number; reviews: num
 type SpotBiz = { id: string; name: string; category: string; city: string; state: string | null; rating: string; confidenceScore: number; imageUrl: string | null; verified: boolean };
 type PreviewPost = { id: string; authorName: string; authorInitials: string; authorColor: string; contentPreview: string; contentLength: number; isBlurred: boolean; category: string; topicTag: string | null; locationTag: string | null; upvotes: number; commentsCount: number; createdAt: string };
 
+// ─── Community Voice Cards ────────────────────────────────────────────────────
+const VOICE_CARDS = [
+  {
+    id: "v1",
+    quote:
+      "I broke down in rural Georgia on a road trip. Within 60 seconds I found a Black-owned mechanic 4 miles away. He got me back on the road and treated me like family. That doesn't happen by accident.",
+    name: "Marcus T.",
+    location: "Atlanta, GA",
+    color: "#2D7A4F",
+    initials: "MT",
+  },
+  {
+    id: "v2",
+    quote:
+      "My daughter is touring HBCUs this fall. Being able to see every campus, every nearby community business, and every historical site on one map — nothing else does that. This app was built for us.",
+    name: "Denise K.",
+    location: "Chicago, IL",
+    color: "#CA922B",
+    initials: "DK",
+  },
+  {
+    id: "v3",
+    quote:
+      "I travel for work constantly. Hotels, chain restaurants, airports — it all blurs together. This is the first time a travel tool was built FOR me. I feel like a person again, not a demographic.",
+    name: "James W.",
+    location: "Houston, TX",
+    color: "#7B2D8B",
+    initials: "JW",
+  },
+];
+
 // ─── Feature tier cards ───────────────────────────────────────────────────────
 const MEMBER_FEATURES = [
   { icon: "bookmark" as const, label: "Save Favorite Spots", tier: "free" },
@@ -190,13 +221,13 @@ function JoinNudge({ colors, onJoin, onLogin }: { colors: ReturnType<typeof useC
       <View style={[s.nudgeIcon, { backgroundColor: colors.primary + "15" }]}>
         <Feather name="users" size={22} color={colors.primary} />
       </View>
-      <Text style={[s.nudgeTitle, { color: colors.foreground }]}>You're almost in</Text>
+      <Text style={[s.nudgeTitle, { color: colors.foreground }]}>This is your invitation</Text>
       <Text style={[s.nudgeSub, { color: colors.mutedForeground }]}>
-        Create a free account to read community posts, save businesses, and earn founding member status.
+        Founding Members lock in permanent recognition as part of the first cohort who helped build this platform for our community.
       </Text>
       <TouchableOpacity style={[s.nudgeBtn, { backgroundColor: colors.primary }]} onPress={onJoin} activeOpacity={0.85}>
-        <Feather name="user-plus" size={16} color="#FFFFFF" />
-        <Text style={s.nudgeBtnText}>Join Free — It Takes 30 Seconds</Text>
+        <Feather name="award" size={16} color="#FFFFFF" />
+        <Text style={s.nudgeBtnText}>Become a Founding Member</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={onLogin} activeOpacity={0.75}>
         <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", marginTop: 8 }}>
@@ -258,7 +289,7 @@ export default function PreviewScreen() {
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.foreground }]}>Platform Preview</Text>
         <TouchableOpacity onPress={handleJoin} activeOpacity={0.8} style={[s.headerJoinBtn, { backgroundColor: colors.primary }]}>
-          <Text style={s.headerJoinText}>Join Free</Text>
+          <Text style={s.headerJoinText}>Join Now</Text>
         </TouchableOpacity>
       </View>
 
@@ -267,14 +298,23 @@ export default function PreviewScreen() {
         {/* Hero banner */}
         <View style={[s.hero, { backgroundColor: colors.primary + "12", borderBottomColor: colors.primary + "20" }]}>
           <View style={[s.heroIconWrap, { backgroundColor: colors.primary + "20" }]}>
-            <Feather name="compass" size={28} color={colors.primary} />
+            <Feather name="map-pin" size={28} color={colors.primary} />
           </View>
           <Text style={[s.heroTitle, { color: colors.foreground }]}>
-            Community Discovery, Reimagined
+            Ever been in a new city and wondered where YOUR people eat, shop, or get their hair done?
           </Text>
           <Text style={[s.heroSub, { color: colors.mutedForeground }]}>
-            Find melanated-owned businesses, read real community safety intel, and plan journeys with confidence. Here's a taste of what's waiting for you.
+            Mapping With Melanin is the first travel and discovery platform built entirely for our community — by our community. Here's a taste of what Founding Members get.
           </Text>
+
+          {/* Founding badge */}
+          <View style={[s.foundingBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}>
+            <Feather name="award" size={13} color={colors.primary} />
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.primary }}>
+              Founding Member Class Is Open
+            </Text>
+            <View style={[s.foundingDot, { backgroundColor: colors.primary }]} />
+          </View>
 
           {/* Tab toggle */}
           <View style={[s.tabToggle, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -302,7 +342,9 @@ export default function PreviewScreen() {
           {/* Platform stats */}
           {stats && (
             <View style={s.statsSection}>
-              <Text style={[s.sectionLabel, { color: colors.mutedForeground }]}>LIVE PLATFORM STATS</Text>
+              <Text style={[s.sectionLabel, { color: colors.mutedForeground }]}>
+                FOUNDING MEMBERS ALREADY BUILDING THIS
+              </Text>
               <View style={s.statsRow}>
                 <StatChip icon="briefcase" value={stats.businesses} label="Businesses" colors={colors} />
                 <StatChip icon="map-pin" value={stats.cities} label="Cities" colors={colors} />
@@ -311,6 +353,28 @@ export default function PreviewScreen() {
               </View>
             </View>
           )}
+
+          {/* Community Voice Cards */}
+          <View style={[s.section, { gap: 12 }]}>
+            <View style={s.sectionHeader}>
+              <Feather name="message-circle" size={15} color={colors.primary} />
+              <Text style={[s.sectionTitle, { color: colors.foreground }]}>Straight From the Community</Text>
+            </View>
+            {VOICE_CARDS.map((card) => (
+              <View key={card.id} style={[s.voiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[s.voiceQuote, { color: colors.foreground }]}>"{card.quote}"</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 }}>
+                  <View style={[s.voiceAvatar, { backgroundColor: card.color }]}>
+                    <Text style={s.avatarText}>{card.initials}</Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 13, color: colors.foreground }}>{card.name}</Text>
+                    <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground }}>{card.location}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
 
           {activeTab === "community" ? (
             <>
@@ -451,8 +515,8 @@ export default function PreviewScreen() {
           {/* Sticky bottom CTA */}
           <View style={[s.bottomCTA, { borderTopColor: colors.border, backgroundColor: colors.background, paddingBottom: insets.bottom > 0 ? 0 : 16 }]}>
             <TouchableOpacity style={[s.ctaBtn, { backgroundColor: colors.primary }]} onPress={handleJoin} activeOpacity={0.85}>
-              <Feather name="user-plus" size={17} color="#FFFFFF" />
-              <Text style={s.ctaBtnText}>Join the Community — Free</Text>
+              <Feather name="award" size={17} color="#FFFFFF" />
+              <Text style={s.ctaBtnText}>Become a Founding Member</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[s.ctaBtnGhost, { borderColor: colors.primary + "50" }]} onPress={handleLogin} activeOpacity={0.8}>
               <Feather name="log-in" size={17} color={colors.primary} />
@@ -496,6 +560,41 @@ const s = StyleSheet.create({
   },
   heroTitle: { fontFamily: "Inter_700Bold", fontSize: 22, textAlign: "center" },
   heroSub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 22 },
+
+  foundingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  foundingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  voiceCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  voiceQuote: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 22,
+    fontStyle: "italic",
+  },
+  voiceAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   tabToggle: {
     flexDirection: "row",

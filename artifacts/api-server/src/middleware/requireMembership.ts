@@ -35,6 +35,11 @@ function resolveFromMemberType(memberType: string | null | undefined): Membershi
 function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipTier {
   if (!user) return "free";
 
+  // ── TESTING_MODE: all authenticated users get Trailblazer during test phases ──
+  // Set TESTING_MODE=true in Railway environment variables to enable.
+  // Remove or set to "false" before production launch.
+  if (process.env.TESTING_MODE === "true") return "trailblazer";
+
   const now = new Date();
   const trialActive = user.trialEndsAt && user.trialEndsAt > now;
 
@@ -49,6 +54,9 @@ function getTier(user: Awaited<ReturnType<typeof storage.getUser>>): MembershipT
 
   return "free";
 }
+
+/** True when the server is running in testing mode (all users get Trailblazer). */
+export const TESTING_MODE = process.env.TESTING_MODE === "true";
 
 /** Resolves the membership tier for any user ID. Use in route handlers for soft limit checks. */
 export async function getUserTier(userId: string): Promise<MembershipTier> {

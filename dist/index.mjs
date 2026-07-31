@@ -112827,6 +112827,100 @@ var init_email = __esm({
   }
 });
 
+// src/storage.ts
+var storage_exports = {};
+__export(storage_exports, {
+  Storage: () => Storage,
+  storage: () => storage
+});
+var Storage, storage;
+var init_storage = __esm({
+  "src/storage.ts"() {
+    "use strict";
+    init_src();
+    init_drizzle_orm();
+    Storage = class {
+      async getUser(id2) {
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id2));
+        return user;
+      }
+      async updateUserStripeInfo(userId, info) {
+        const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
+        return user;
+      }
+      async getFoundingMemberCount() {
+        const [row] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(eq(usersTable.memberType, "founding"));
+        return row?.count ?? 0;
+      }
+      async getProduct(productId) {
+        const result = await pool.query(
+          `SELECT * FROM stripe.products WHERE id = $1`,
+          [productId]
+        );
+        return result.rows[0] ?? null;
+      }
+      async listProductsWithPrices() {
+        const result = await pool.query(`
+      WITH latest_products AS (
+        SELECT DISTINCT ON (name) id, name, description, metadata, active
+        FROM stripe.products
+        WHERE active = true
+        ORDER BY name, created DESC
+      )
+      SELECT
+        p.id        AS product_id,
+        p.name      AS product_name,
+        p.description AS product_description,
+        p.active    AS product_active,
+        p.metadata  AS product_metadata,
+        pr.id       AS price_id,
+        pr.unit_amount,
+        pr.currency,
+        pr.recurring,
+        pr.active   AS price_active,
+        pr.metadata AS price_metadata
+      FROM latest_products p
+      LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
+      ORDER BY p.name, pr.unit_amount
+    `);
+        return result.rows;
+      }
+      async getPriceForPlan(planName, billing) {
+        const interval2 = billing === "annual" ? "year" : "month";
+        const result = await pool.query(
+          `SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
+       FROM stripe.products p
+       JOIN stripe.prices pr ON pr.product = p.id
+       WHERE p.name = $1
+         AND p.active = true
+         AND pr.active = true
+         AND pr.recurring->>'interval' = $2
+       ORDER BY p.created DESC
+       LIMIT 1`,
+          [planName, interval2]
+        );
+        return result.rows[0] ?? null;
+      }
+      async getUserByStripeCustomerId(customerId) {
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId)).limit(1);
+        return user ?? null;
+      }
+      async setMemberStatus(userId, info) {
+        const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
+        return user;
+      }
+      async getSubscription(subscriptionId) {
+        const result = await pool.query(
+          `SELECT * FROM stripe.subscriptions WHERE id = $1`,
+          [subscriptionId]
+        );
+        return result.rows[0] ?? null;
+      }
+    };
+    storage = new Storage();
+  }
+});
+
 // ../../node_modules/.pnpm/delayed-stream@1.0.0/node_modules/delayed-stream/lib/delayed_stream.js
 var require_delayed_stream = __commonJS({
   "../../node_modules/.pnpm/delayed-stream@1.0.0/node_modules/delayed-stream/lib/delayed_stream.js"(exports2, module) {
@@ -339257,7 +339351,7 @@ import * as url2 from "url";
 var SignerExceptionMessages, DEFAULT_SIGNING_VERSION, SEVEN_DAYS, URLSigner, SigningError;
 var init_signer = __esm({
   "../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/signer.js"() {
-    init_storage();
+    init_storage2();
     init_util2();
     (function(SignerExceptionMessages2) {
       SignerExceptionMessages2["ACCESSIBLE_DATE_INVALID"] = "The accessible at date provided was invalid.";
@@ -339267,7 +339361,7 @@ var init_signer = __esm({
     DEFAULT_SIGNING_VERSION = "v2";
     SEVEN_DAYS = 7 * 24 * 60 * 60;
     URLSigner = class {
-      constructor(auth2, bucket, file2, storage2 = new Storage()) {
+      constructor(auth2, bucket, file2, storage2 = new Storage2()) {
         this.auth = auth2;
         this.bucket = bucket;
         this.file = file2;
@@ -339498,7 +339592,7 @@ var init_file = __esm({
     import_promisify3 = __toESM(require_src10(), 1);
     import_mime = __toESM(require_mime(), 1);
     init_resumable_upload();
-    init_storage();
+    init_storage2();
     init_bucket();
     init_acl();
     init_signer();
@@ -343340,7 +343434,7 @@ var init_bucket = __esm({
     init_file();
     init_iam();
     init_notification();
-    init_storage();
+    init_storage2();
     init_signer();
     (function(BucketActionToHTTPMethod2) {
       BucketActionToHTTPMethod2["list"] = "GET";
@@ -346567,7 +346661,7 @@ var import_promisify8, HmacKey;
 var init_hmacKey = __esm({
   "../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/hmacKey.js"() {
     init_nodejs_common();
-    init_storage();
+    init_storage2();
     import_promisify8 = __toESM(require_src10(), 1);
     HmacKey = class extends ServiceObject {
       /**
@@ -346858,8 +346952,8 @@ var init_hmacKey = __esm({
 
 // ../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/storage.js
 import { Readable as Readable3 } from "stream";
-var import_paginator2, import_promisify9, import_package_json_helper4, import_google_auth_library4, IdempotencyStrategy, ExceptionMessages, StorageExceptionMessages, PROTOCOL_REGEX2, AUTO_RETRY_DEFAULT2, MAX_RETRY_DEFAULT2, RETRY_DELAY_MULTIPLIER_DEFAULT, TOTAL_TIMEOUT_DEFAULT, MAX_RETRY_DELAY_DEFAULT, IDEMPOTENCY_STRATEGY_DEFAULT, RETRYABLE_ERR_FN_DEFAULT, Storage;
-var init_storage = __esm({
+var import_paginator2, import_promisify9, import_package_json_helper4, import_google_auth_library4, IdempotencyStrategy, ExceptionMessages, StorageExceptionMessages, PROTOCOL_REGEX2, AUTO_RETRY_DEFAULT2, MAX_RETRY_DEFAULT2, RETRY_DELAY_MULTIPLIER_DEFAULT, TOTAL_TIMEOUT_DEFAULT, MAX_RETRY_DELAY_DEFAULT, IDEMPOTENCY_STRATEGY_DEFAULT, RETRYABLE_ERR_FN_DEFAULT, Storage2;
+var init_storage2 = __esm({
   "../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/storage.js"() {
     init_nodejs_common();
     import_paginator2 = __toESM(require_src11(), 1);
@@ -346924,7 +347018,7 @@ var init_storage = __esm({
       }
       return false;
     };
-    Storage = class _Storage extends Service {
+    Storage2 = class _Storage extends Service {
       getBucketsStream() {
         return new Readable3();
       }
@@ -347751,17 +347845,17 @@ var init_storage = __esm({
         return new HmacKey(this, accessId, options);
       }
     };
-    Storage.Bucket = Bucket;
-    Storage.Channel = Channel;
-    Storage.File = File2;
-    Storage.HmacKey = HmacKey;
-    Storage.acl = {
+    Storage2.Bucket = Bucket;
+    Storage2.Channel = Channel;
+    Storage2.File = File2;
+    Storage2.HmacKey = HmacKey;
+    Storage2.acl = {
       OWNER_ROLE: "OWNER",
       READER_ROLE: "READER",
       WRITER_ROLE: "WRITER"
     };
-    import_paginator2.paginator.extend(Storage, ["getBuckets", "getHmacKeys"]);
-    (0, import_promisify9.promisifyAll)(Storage, {
+    import_paginator2.paginator.extend(Storage2, ["getBuckets", "getHmacKeys"]);
+    (0, import_promisify9.promisifyAll)(Storage2, {
       exclude: ["bucket", "channel", "hmacKey"]
     });
   }
@@ -354463,13 +354557,13 @@ __export(src_exports, {
   MultiPartUploadError: () => MultiPartUploadError,
   Notification: () => Notification,
   RETRYABLE_ERR_FN_DEFAULT: () => RETRYABLE_ERR_FN_DEFAULT,
-  Storage: () => Storage,
+  Storage: () => Storage2,
   TransferManager: () => TransferManager
 });
 var init_src6 = __esm({
   "../../node_modules/.pnpm/@google-cloud+storage@7.21.0/node_modules/@google-cloud/storage/build/esm/src/index.js"() {
     init_nodejs_common();
-    init_storage();
+    init_storage2();
     init_bucket();
     init_crc32c();
     init_channel();
@@ -354564,7 +354658,7 @@ function getClient() {
   if (_clientError) throw _clientError;
   if (!_client) {
     try {
-      _client = new Storage({
+      _client = new Storage2({
         credentials: {
           audience: "replit",
           subject_token_type: "access_token",
@@ -356705,100 +356799,6 @@ var require_ip_address = __commonJS({
     } });
     var helpers = __importStar(require_helpers2());
     exports2.v6 = { helpers };
-  }
-});
-
-// src/storage.ts
-var storage_exports = {};
-__export(storage_exports, {
-  Storage: () => Storage2,
-  storage: () => storage
-});
-var Storage2, storage;
-var init_storage2 = __esm({
-  "src/storage.ts"() {
-    "use strict";
-    init_src();
-    init_drizzle_orm();
-    Storage2 = class {
-      async getUser(id2) {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id2));
-        return user;
-      }
-      async updateUserStripeInfo(userId, info) {
-        const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
-        return user;
-      }
-      async getFoundingMemberCount() {
-        const [row] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(eq(usersTable.memberType, "founding"));
-        return row?.count ?? 0;
-      }
-      async getProduct(productId) {
-        const result = await pool.query(
-          `SELECT * FROM stripe.products WHERE id = $1`,
-          [productId]
-        );
-        return result.rows[0] ?? null;
-      }
-      async listProductsWithPrices() {
-        const result = await pool.query(`
-      WITH latest_products AS (
-        SELECT DISTINCT ON (name) id, name, description, metadata, active
-        FROM stripe.products
-        WHERE active = true
-        ORDER BY name, created DESC
-      )
-      SELECT
-        p.id        AS product_id,
-        p.name      AS product_name,
-        p.description AS product_description,
-        p.active    AS product_active,
-        p.metadata  AS product_metadata,
-        pr.id       AS price_id,
-        pr.unit_amount,
-        pr.currency,
-        pr.recurring,
-        pr.active   AS price_active,
-        pr.metadata AS price_metadata
-      FROM latest_products p
-      LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
-      ORDER BY p.name, pr.unit_amount
-    `);
-        return result.rows;
-      }
-      async getPriceForPlan(planName, billing) {
-        const interval2 = billing === "annual" ? "year" : "month";
-        const result = await pool.query(
-          `SELECT pr.id AS price_id, pr.unit_amount, pr.currency, pr.recurring
-       FROM stripe.products p
-       JOIN stripe.prices pr ON pr.product = p.id
-       WHERE p.name = $1
-         AND p.active = true
-         AND pr.active = true
-         AND pr.recurring->>'interval' = $2
-       ORDER BY p.created DESC
-       LIMIT 1`,
-          [planName, interval2]
-        );
-        return result.rows[0] ?? null;
-      }
-      async getUserByStripeCustomerId(customerId) {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId)).limit(1);
-        return user ?? null;
-      }
-      async setMemberStatus(userId, info) {
-        const [user] = await db.update(usersTable).set(info).where(eq(usersTable.id, userId)).returning();
-        return user;
-      }
-      async getSubscription(subscriptionId) {
-        const result = await pool.query(
-          `SELECT * FROM stripe.subscriptions WHERE id = $1`,
-          [subscriptionId]
-        );
-        return result.rows[0] ?? null;
-      }
-    };
-    storage = new Storage2();
   }
 });
 
@@ -396332,6 +396332,72 @@ async function revokeAppleToken(refreshToken, clientId, clientSecret) {
 
 // src/routes/auth.ts
 init_email();
+
+// src/middleware/requireMembership.ts
+init_storage();
+var TIER_DISPLAY = {
+  free: "Explorer",
+  navigator: "Navigator",
+  trailblazer: "Trailblazer",
+  community_builder: "Community Builder",
+  legacy_member: "Legacy Member"
+};
+var TIER_RANK = {
+  free: 0,
+  navigator: 1,
+  trailblazer: 2,
+  community_builder: 3,
+  legacy_member: 4
+};
+var PAID_TIERS = ["navigator", "trailblazer", "community_builder", "legacy_member"];
+function resolveFromMemberType(memberType) {
+  if (memberType && PAID_TIERS.includes(memberType)) return memberType;
+  return "navigator";
+}
+function getTier(user) {
+  if (!user) return "free";
+  if (process.env.TESTING_MODE === "true") return "trailblazer";
+  const now = /* @__PURE__ */ new Date();
+  const trialActive = user.trialEndsAt && user.trialEndsAt > now;
+  if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
+  if (user.stripeSubscriptionId) return resolveFromMemberType(user.memberType);
+  if (trialActive) return resolveFromMemberType(user.memberType);
+  return "free";
+}
+var TESTING_MODE = process.env.TESTING_MODE === "true";
+async function getUserTier(userId) {
+  const user = await storage.getUser(userId);
+  return getTier(user);
+}
+function requireMembership(minTier = "navigator") {
+  return async (req, res, next) => {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({
+        error: "Authentication required",
+        code: "AUTH_REQUIRED"
+      });
+      return;
+    }
+    const user = await storage.getUser(userId);
+    const tier = getTier(user);
+    if (TIER_RANK[tier] < TIER_RANK[minTier]) {
+      res.status(403).json({
+        error: `This feature requires a ${TIER_DISPLAY[minTier]} or higher membership.`,
+        code: "MEMBERSHIP_REQUIRED",
+        upgradeUrl: "/membership",
+        currentTier: tier,
+        currentTierDisplay: TIER_DISPLAY[tier],
+        requiredTier: minTier,
+        requiredTierDisplay: TIER_DISPLAY[minTier]
+      });
+      return;
+    }
+    next();
+  };
+}
+
+// src/routes/auth.ts
 var ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e3) => e3.trim()).filter(Boolean);
 function isAdminReq(req) {
   const user = req.user;
@@ -396430,6 +396496,7 @@ router2.get("/auth/user", async (req, res) => {
       reputationScore: usersTable.reputationScore,
       profileSetupComplete: usersTable.profileSetupComplete
     }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
+    const tier = await getUserTier(req.user.id);
     res.json({
       user: {
         ...req.user,
@@ -396447,7 +396514,9 @@ router2.get("/auth/user", async (req, res) => {
         displayNameFormat: dbRow?.displayNameFormat ?? "full",
         trustLevel: dbRow?.trustLevel ?? 1,
         reputationScore: dbRow?.reputationScore ?? 0,
-        profileSetupComplete: dbRow?.profileSetupComplete ?? false
+        profileSetupComplete: dbRow?.profileSetupComplete ?? false,
+        tier,
+        testingMode: TESTING_MODE
       }
     });
   } catch {
@@ -412564,69 +412633,7 @@ var hashtags_default = router16;
 
 // src/routes/community.ts
 init_drizzle_orm();
-init_storage2();
-
-// src/middleware/requireMembership.ts
-init_storage2();
-var TIER_DISPLAY = {
-  free: "Explorer",
-  navigator: "Navigator",
-  trailblazer: "Trailblazer",
-  community_builder: "Community Builder",
-  legacy_member: "Legacy Member"
-};
-var TIER_RANK = {
-  free: 0,
-  navigator: 1,
-  trailblazer: 2,
-  community_builder: 3,
-  legacy_member: 4
-};
-var PAID_TIERS = ["navigator", "trailblazer", "community_builder", "legacy_member"];
-function resolveFromMemberType(memberType) {
-  if (memberType && PAID_TIERS.includes(memberType)) return memberType;
-  return "navigator";
-}
-function getTier(user) {
-  if (!user) return "free";
-  const now = /* @__PURE__ */ new Date();
-  const trialActive = user.trialEndsAt && user.trialEndsAt > now;
-  if (user.memberType === "founding" || user.memberType === "beta") return "legacy_member";
-  if (user.stripeSubscriptionId) return resolveFromMemberType(user.memberType);
-  if (trialActive) return resolveFromMemberType(user.memberType);
-  return "free";
-}
-async function getUserTier(userId) {
-  const user = await storage.getUser(userId);
-  return getTier(user);
-}
-function requireMembership(minTier = "navigator") {
-  return async (req, res, next) => {
-    const userId = req.user?.id;
-    if (!userId) {
-      res.status(401).json({
-        error: "Authentication required",
-        code: "AUTH_REQUIRED"
-      });
-      return;
-    }
-    const user = await storage.getUser(userId);
-    const tier = getTier(user);
-    if (TIER_RANK[tier] < TIER_RANK[minTier]) {
-      res.status(403).json({
-        error: `This feature requires a ${TIER_DISPLAY[minTier]} or higher membership.`,
-        code: "MEMBERSHIP_REQUIRED",
-        upgradeUrl: "/membership",
-        currentTier: tier,
-        currentTierDisplay: TIER_DISPLAY[tier],
-        requiredTier: minTier,
-        requiredTierDisplay: TIER_DISPLAY[minTier]
-      });
-      return;
-    }
-    next();
-  };
-}
+init_storage();
 
 // src/lib/familyFilter.ts
 init_src();
@@ -420308,7 +420315,7 @@ async function getFamilyMemberCount(ownerId) {
 // src/routes/kinfolk.ts
 init_src();
 init_drizzle_orm();
-init_storage2();
+init_storage();
 import crypto15 from "crypto";
 var router25 = (0, import_express25.Router)();
 var WMO_CODES = {
@@ -422838,7 +422845,7 @@ var notifications_default = router28;
 
 // src/routes/stripe.ts
 var import_express29 = __toESM(require_express2(), 1);
-init_storage2();
+init_storage();
 
 // src/stripeClient.ts
 init_stripe_esm_node();
@@ -432518,7 +432525,7 @@ var submit_business_default = router35;
 
 // src/routes/billing.ts
 var import_express36 = __toESM(require_express2(), 1);
-init_storage2();
+init_storage();
 init_src();
 init_drizzle_orm();
 var router36 = (0, import_express36.Router)();
@@ -433534,7 +433541,7 @@ var cron_default = router37;
 var import_express38 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-init_storage2();
+init_storage();
 var router38 = (0, import_express38.Router)();
 var MAX_REFERRALS = 20;
 function generateCode(userId) {
@@ -435541,7 +435548,7 @@ init_src();
 init_drizzle_orm();
 
 // src/middleware/requireFamilySafety.ts
-init_storage2();
+init_storage();
 var SIX_MONTHS_MS = 6 * 30 * 24 * 60 * 60 * 1e3;
 var NAVIGATOR_TYPES = /* @__PURE__ */ new Set(["navigator", "trailblazer", "founding", "beta"]);
 async function requireFamilySafety(req, res, next) {
@@ -436427,7 +436434,7 @@ var skip_feedback_default = router53;
 var import_express54 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
-init_storage2();
+init_storage();
 var router54 = (0, import_express54.Router)();
 function computeEngagementScore(metrics, benchmarks, business) {
   const safeDiv = (n2, d2) => d2 === 0 ? 0.5 : Math.min(n2 / d2, 2);
@@ -440458,7 +440465,7 @@ router75.get("/knowledge/articles/:id", async (req, res) => {
         res.json({ article: { ...article, content: article.content.slice(0, 400) + "\u2026", locked: true } });
         return;
       }
-      const { storage: storage2 } = await Promise.resolve().then(() => (init_storage2(), storage_exports));
+      const { storage: storage2 } = await Promise.resolve().then(() => (init_storage(), storage_exports));
       const user = await storage2.getUser(userId);
       const now = /* @__PURE__ */ new Date();
       const hasSub = user?.stripeSubscriptionId || user?.trialEndsAt && user.trialEndsAt > now || user?.memberType === "founding" || user?.memberType === "beta";
@@ -442484,10 +442491,6 @@ async function ensureSupportLinksSeeded() {
   }
 }
 router82.get("/cultural-sites", async (req, res) => {
-  if (!req.user) {
-    res.status(401).json({ error: "Authentication required." });
-    return;
-  }
   try {
     const { heritageCategory, category, search, state, city, accessible, admissionFree } = req.query;
     const conditions = [];
@@ -444811,7 +444814,7 @@ var import_express96 = __toESM(require_express2(), 1);
 init_src();
 init_schema2();
 init_drizzle_orm();
-init_storage2();
+init_storage();
 var CIRCLE_LIMITS = {
   free: { maxCircles: 1, maxPrivateMembers: 4, maxCommunityMembers: 0 },
   navigator: { maxCircles: 3, maxPrivateMembers: 10, maxCommunityMembers: 25 },
@@ -454779,8 +454782,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "636979a0c5c36c0af34bc2adf737e0294a37f589";
-var BUILD_AT = "2026-07-31T12:34:05.103Z";
+var BUILT_FROM_SHA = "b825a8ce5443806a35d27db2574399c6391b6e98";
+var BUILD_AT = "2026-07-31T17:30:25.166Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

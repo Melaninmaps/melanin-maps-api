@@ -1,0 +1,114 @@
+he app is a React Native Expo mobile app with a Node/Express backend on Railway. Production URL: https://www.mappingwithmelanin.com. The app connects minority communities to trusted businesses, cultural sites, safety intel, and community. The founder’s vision is NOT a generic business directory — it’s a trust network for cultural consumerism and safety from harm.
+
+Critical Constraint: The founder has a strict deadline of 4 PM EST today. The following tasks must be completed in the exact priority order listed below.
+
+
+Priority 1: All TestFlight Testers Get Top-Tier Access
+Requirement:
+All TestFlight testers must be treated as “Trailblazer” (top tier) during the testing phase.
+
+Action Items:
+
+	•	Implement a server-side flag or environment variable (e.g., `TESTING_MODE=true`).
+	•	When this flag is active, all authenticated users must be granted Trailblazer-level access automatically.
+	•	Ensure full map access is granted with all pins visible.
+	•	Unlock all premium features (KinfolkAI, safety overlays, journey planner, turn-by-turn navigation, circles, etc.).
+	•	Completely disable all paywalls and “upgrade to unlock” prompts during testing.
+
+Acceptance Criteria:
+
+	•	A new user signing in via TestFlight immediately has access to all Trailblazer features without seeing any upgrade prompts.
+
+
+Priority 2: Restore Heritage Sites, Cultural Sites, and HBCUs on the Map (Regression Fix)
+Requirement:
+This functionality existed in a previous build but was lost. It must be fully restored as a regression fix.
+
+Action Items:
+
+	•	Map Pins: Ensure Cultural sites (HBCUs, heritage sites, museums, landmarks) appear as pins on the map.
+	•	Filtering: Restore clickable category headers ABOVE the map (e.g., “HBCUs”, “Heritage Sites”, “Museums”) to filter visible pins.
+	•	Search: Ensure users can search for specific sites (e.g., searching “Howard” finds Howard University).
+	•	Pin Details: When a pin is tapped, it must show a brief description card containing:
+	◦	Name of the site
+	◦	Category (HBCU, Heritage Site, Museum, etc.)
+	◦	Brief description (1-2 sentences about what it is and why it matters)
+	◦	City/State
+	◦	Image (if available)
+	•	Seed Data: The cultural sites data must be seeded with at least 20-30 real entries.
+	◦	HBCUs: Howard University, Spelman College, Morehouse College, Hampton University, Tuskegee University, FAMU, Clark Atlanta, Xavier University, North Carolina A&T, Tennessee State.
+	◦	Heritage Sites: National Museum of African American History (DC), Lorraine Motel/National Civil Rights Museum (Memphis), Edmund Pettus Bridge (Selma), Sweet Auburn District (Atlanta), Greenwood District (Tulsa).
+	◦	Data Structure: Each entry needs name, category, latitude, longitude, city, state, and a brief description (2-3 sentences explaining cultural significance).
+
+Acceptance Criteria:
+
+	•	The map displays pins for HBCUs and Heritage Sites.
+	•	Filtering and search functions work for these categories.
+	•	Tapping a pin opens a card with the correct detailed information.
+
+
+Priority 3: Preview Screen Redesign (Emotional Rewrite)
+Requirement:
+The current preview screen (stats and blurred content) must be redesigned to be emotionally compelling, reflecting the founder’s vision of a trusted network for cultural consumerism and safety.
+
+Action Items:
+
+	•	Preview Flow: Implement the following structure:
+	1.	Hero: Emotional hook question (e.g., “Ever been in a new city and wondered where YOUR people eat, shop, or get their hair done?”, “Ever felt unsafe and wished you had real-time intel from people who look like you?”).
+	2.	Map Preview: Show a visual preview of the map with pins (HBCUs, businesses, heritage sites), even if locked/blurred, so users can see the experience.
+	3.	Community Voice Cards (2-3): Replace generic “Apple Reviewer” text with realistic, emotionally resonant voices.
+	◦	Example 1: “Found a Black-owned mechanic through this app when I broke down in rural Georgia. He didn’t just fix my car — he made sure I had water and directions to a safe rest stop. This community is different.”
+	◦	Example 2: “My daughter is touring HBCUs this fall. Being able to see every campus on one map with community reviews from actual students? Game changer.”
+	◦	Example 3: “I travel for work constantly. This app is the first time I’ve felt like someone built a travel tool FOR me, not just with me as an afterthought.”
+	4.	Live Stats: Display businesses, cities, and members to create FOMO (“X people in [city] are already building this community. Your city needs you.”).
+	5.	Feature Highlights: Highlight safety, discovery, and community.
+	6.	Call to Action (CTA): Change the CTA from “Join Free” to something movement-oriented like “Become a Founding Member”, “Help Build Your City’s Network”, or “Join the Movement — Your Community is Waiting”.
+
+Acceptance Criteria:
+
+	•	The preview screen follows the new flow with emotional hooks, realistic community voices, a visible map preview, and the updated CTA.
+
+
+Priority 4: Business Diversity in Seed Data and Unique Images
+Requirement:
+The current 117 businesses lack diversity in ownership designation and use duplicate images. This must be fixed in the seed data.
+
+Action Items:
+
+	•	Diversity: Update the seed data to include a variety of ownership designations:
+	◦	Hispanic/Latino-owned
+	◦	Indigenous/Native-owned
+	◦	Asian-owned
+	◦	LGBTQ+-owned
+	◦	Women-owned
+	◦	Veteran-owned
+	◦	Multiple designations (e.g., “Black-owned, Women-owned, Veteran-owned”)
+	•	UI Update: Ensure the `ownershipDesignation` field displays as a badge/tag on each business card on the Discovery page.
+	•	Unique Images:
+	◦	All 117+ businesses MUST have UNIQUE, category-appropriate images (use distinct Unsplash/Pexels URLs).
+	◦	All events must have unique images.
+	◦	Cultural sites should have images where available.
+	◦	NO duplicate images anywhere in the app.
+
+Acceptance Criteria:
+
+	•	The Discovery page shows diverse ownership badges on business cards.
+	•	No two businesses or events share the same image placeholder.
+
+
+Critical Execution Notes for Replit Agent
+	1.	Production Database: These changes MUST be applied to the RAILWAY PRODUCTION database, not Replit’s internal database. The production app uses Railway Postgres at `tokaido.proxy.rlwy.net:10066`.
+	2.	Run Seed Scripts: The seed scripts must actually be RUN against the production database after updating them. Committing the file is not enough.
+	3.	Regression Fix: Priority 2 (Cultural sites/HBCUs) is a regression. It worked in a previous build and must be restored exactly as specified.
+	4.	Deadline: All tasks must be completed before 4 PM EST today.
+
+
+Definition of Done Checklist
+	•	`TESTING_MODE` flag implemented and grants Trailblazer access to all authenticated users.
+	•	No paywalls or upgrade prompts appear for TestFlight users.
+	•	HBCUs and Heritage Sites appear on the map with filtering and search functionality restored.
+	•	Pin detail cards show correct information and descriptions for cultural sites.
+	•	Preview screen redesigned with emotional hooks, map preview, new community voices, and updated CTA.
+	•	Seed data updated with diverse ownership designations and badges appear in the UI.
+	•	All businesses, events, and cultural sites have 100% unique images (no duplicates).
+	•	Seed scripts successfully executed against the Railway production database (`tokaido.proxy.rlwy.net:10066`).
