@@ -454572,7 +454572,7 @@ var renewalThrottle = /* @__PURE__ */ new Map();
 async function refreshIfExpired(sid, session) {
   const now = Math.floor(Date.now() / 1e3);
   if (!session.expires_at || now <= session.expires_at) return session;
-  if (!session.refresh_token) return null;
+  if (!session.refresh_token) return session;
   try {
     const config2 = await getOidcConfig();
     const tokens = await refreshTokenGrant(
@@ -454782,8 +454782,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "b825a8ce5443806a35d27db2574399c6391b6e98";
-var BUILD_AT = "2026-07-31T17:30:25.166Z";
+var BUILT_FROM_SHA = "c7d6c14bbcd03ec1bc898c7173c4a954fece8cdb";
+var BUILD_AT = "2026-08-01T05:32:58.117Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

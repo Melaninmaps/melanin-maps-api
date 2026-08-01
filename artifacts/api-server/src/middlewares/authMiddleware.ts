@@ -43,7 +43,9 @@ async function refreshIfExpired(
   const now = Math.floor(Date.now() / 1000);
   if (!session.expires_at || now <= session.expires_at) return session;
 
-  if (!session.refresh_token) return null;
+  // Non-OIDC sessions (email/password, Apple Sign-In) have no refresh_token.
+  // They rely solely on the DB session TTL — never refresh via OIDC.
+  if (!session.refresh_token) return session;
 
   try {
     const config = await getOidcConfig();
