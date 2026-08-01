@@ -329,19 +329,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (Platform.OS !== "ios") return;
+
+    // Track last check time to enforce cooldown between checks.
+    const lastCheckRef = { current: 0 };
+    // Record when this effect mounted so we can apply a post-login grace period.
+    // The AppState "active" event fires immediately after login completes (as the
+    // app transitions from background to foreground during the sign-in sheet dismiss),
+    // which can cause a spurious logout if Apple's credential API hasn't settled yet.
+    const mountedAt = Date.now();
+    const COOLDOWN_MS = 5 * 60 * 1000;  // check at most once per 5 minutes
+    const LOGIN_GRACE_MS = 10 * 1000;   // skip check for 10s after mount/login
+
     const subscription = AppState.addEventListener("change", async (nextState) => {
       if (nextState !== "active") return;
+
+      // Skip during post-login grace period — Apple's sandbox credential API
+      // is unreliable in the seconds immediately after sign-in completes.
+      if (Date.now() - mountedAt < LOGIN_GRACE_MS) return;
+
+      // Cooldown: don't hammer Apple's API on every foreground transition.
+      if (Date.now() - lastCheckRef.current < COOLDOWN_MS) return;
+      lastCheckRef.current = Date.now();
+
       const appleUserId = await SecureStore.getItemAsync("apple_user_id").catch(() => null);
       if (!appleUserId) return;
+
       try {
         const AppleAuth = await import("expo-apple-authentication");
         const credState = await AppleAuth.getCredentialStateAsync(appleUserId);
-        if (
-          credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED ||
-          credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
-        ) {
+        console.log("[AppleAuth] foreground credential state:", credState);
+
+        if (credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED) {
+          // Definitive revocation — log out immediately.
           await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
           await logout();
+        } else if (credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND) {
+          // NOT_FOUND can be a transient sandbox/TestFlight glitch — retry once
+          // before treating it as a hard revocation.
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          const retryState = await AppleAuth.getCredentialStateAsync(appleUserId);
+          console.log("[AppleAuth] credential state retry:", retryState);
+          if (retryState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND) {
+            await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
+            await logout();
+          }
         }
       } catch {
         // Credential state check unavailable — Apple services unreachable or unsupported platform
