@@ -181,8 +181,9 @@ router.get("/auth/user", async (req: Request, res: Response) => {
         testingMode: TESTING_MODE,
       },
     });
-  } catch {
-    res.json({ user: req.user });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/auth/user: DB lookup failed, refusing to serve potentially stale role");
+    res.status(503).json({ error: "Unable to verify user data, please try again shortly" });
   }
 });
 
