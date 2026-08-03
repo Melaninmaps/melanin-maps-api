@@ -29396,10 +29396,10 @@ var init_subquery = __esm({
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql12, fields, alias2, isWith = false, usedTables = []) {
+      constructor(sql11, fields, alias2, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql12,
+          sql: sql11,
           selectedFields: fields,
           alias: alias2,
           isWith,
@@ -29571,7 +29571,7 @@ function isDriverValueEncoder(value) {
 function param(value, encoder2) {
   return new Param(value, encoder2);
 }
-function sql2(strings, ...params) {
+function sql(strings, ...params) {
   const queryChunks = [];
   if (params.length > 0 || strings.length > 0 && strings[0] !== "") {
     queryChunks.push(new StringChunk(strings[0]));
@@ -29902,7 +29902,7 @@ var init_sql = __esm({
         return new Param(value, encoder2);
       }
       sql23.param = param2;
-    })(sql2 || (sql2 = {}));
+    })(sql || (sql = {}));
     ((SQL2) => {
       class Aliased {
         constructor(sql23, fieldAlias) {
@@ -29982,7 +29982,7 @@ function mapColumnsInAliasedSQLToAlias(query, alias2) {
   return new SQL.Aliased(mapColumnsInSQLToAlias(query.sql, alias2), query.fieldAlias);
 }
 function mapColumnsInSQLToAlias(query, alias2) {
-  return sql2.join(query.queryChunks.map((c3) => {
+  return sql.join(query.queryChunks.map((c3) => {
     if (is(c3, Column)) {
       return aliasedTableColumn(c3, alias2);
     }
@@ -30677,7 +30677,7 @@ var init_date_common = __esm({
     PgDateColumnBaseBuilder = class extends PgColumnBuilder {
       static [entityKind] = "PgDateColumnBaseBuilder";
       defaultNow() {
-        return this.default(sql2`now()`);
+        return this.default(sql`now()`);
       }
     };
   }
@@ -31727,7 +31727,7 @@ var init_uuid = __esm({
        * Adds `default gen_random_uuid()` to the column definition.
        */
       defaultRandom() {
-        return this.default(sql2`gen_random_uuid()`);
+        return this.default(sql`gen_random_uuid()`);
       }
       /** @internal */
       build(table) {
@@ -32132,7 +32132,7 @@ function and(...unfilteredConditions) {
   }
   return new SQL([
     new StringChunk("("),
-    sql2.join(conditions, new StringChunk(" and ")),
+    sql.join(conditions, new StringChunk(" and ")),
     new StringChunk(")")
   ]);
 }
@@ -32148,96 +32148,96 @@ function or(...unfilteredConditions) {
   }
   return new SQL([
     new StringChunk("("),
-    sql2.join(conditions, new StringChunk(" or ")),
+    sql.join(conditions, new StringChunk(" or ")),
     new StringChunk(")")
   ]);
 }
 function not(condition) {
-  return sql2`not ${condition}`;
+  return sql`not ${condition}`;
 }
 function inArray(column, values) {
   if (Array.isArray(values)) {
     if (values.length === 0) {
-      return sql2`false`;
+      return sql`false`;
     }
-    return sql2`${column} in ${values.map((v7) => bindIfParam(v7, column))}`;
+    return sql`${column} in ${values.map((v7) => bindIfParam(v7, column))}`;
   }
-  return sql2`${column} in ${bindIfParam(values, column)}`;
+  return sql`${column} in ${bindIfParam(values, column)}`;
 }
 function notInArray(column, values) {
   if (Array.isArray(values)) {
     if (values.length === 0) {
-      return sql2`true`;
+      return sql`true`;
     }
-    return sql2`${column} not in ${values.map((v7) => bindIfParam(v7, column))}`;
+    return sql`${column} not in ${values.map((v7) => bindIfParam(v7, column))}`;
   }
-  return sql2`${column} not in ${bindIfParam(values, column)}`;
+  return sql`${column} not in ${bindIfParam(values, column)}`;
 }
 function isNull(value) {
-  return sql2`${value} is null`;
+  return sql`${value} is null`;
 }
 function isNotNull(value) {
-  return sql2`${value} is not null`;
+  return sql`${value} is not null`;
 }
 function exists(subquery) {
-  return sql2`exists ${subquery}`;
+  return sql`exists ${subquery}`;
 }
 function notExists(subquery) {
-  return sql2`not exists ${subquery}`;
+  return sql`not exists ${subquery}`;
 }
 function between(column, min2, max2) {
-  return sql2`${column} between ${bindIfParam(min2, column)} and ${bindIfParam(
+  return sql`${column} between ${bindIfParam(min2, column)} and ${bindIfParam(
     max2,
     column
   )}`;
 }
 function notBetween(column, min2, max2) {
-  return sql2`${column} not between ${bindIfParam(
+  return sql`${column} not between ${bindIfParam(
     min2,
     column
   )} and ${bindIfParam(max2, column)}`;
 }
 function like(column, value) {
-  return sql2`${column} like ${value}`;
+  return sql`${column} like ${value}`;
 }
 function notLike(column, value) {
-  return sql2`${column} not like ${value}`;
+  return sql`${column} not like ${value}`;
 }
 function ilike(column, value) {
-  return sql2`${column} ilike ${value}`;
+  return sql`${column} ilike ${value}`;
 }
 function notIlike(column, value) {
-  return sql2`${column} not ilike ${value}`;
+  return sql`${column} not ilike ${value}`;
 }
 function arrayContains(column, values) {
   if (Array.isArray(values)) {
     if (values.length === 0) {
       throw new Error("arrayContains requires at least one value");
     }
-    const array2 = sql2`${bindIfParam(values, column)}`;
-    return sql2`${column} @> ${array2}`;
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} @> ${array2}`;
   }
-  return sql2`${column} @> ${bindIfParam(values, column)}`;
+  return sql`${column} @> ${bindIfParam(values, column)}`;
 }
 function arrayContained(column, values) {
   if (Array.isArray(values)) {
     if (values.length === 0) {
       throw new Error("arrayContained requires at least one value");
     }
-    const array2 = sql2`${bindIfParam(values, column)}`;
-    return sql2`${column} <@ ${array2}`;
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} <@ ${array2}`;
   }
-  return sql2`${column} <@ ${bindIfParam(values, column)}`;
+  return sql`${column} <@ ${bindIfParam(values, column)}`;
 }
 function arrayOverlaps(column, values) {
   if (Array.isArray(values)) {
     if (values.length === 0) {
       throw new Error("arrayOverlaps requires at least one value");
     }
-    const array2 = sql2`${bindIfParam(values, column)}`;
-    return sql2`${column} && ${array2}`;
+    const array2 = sql`${bindIfParam(values, column)}`;
+    return sql`${column} && ${array2}`;
   }
-  return sql2`${column} && ${bindIfParam(values, column)}`;
+  return sql`${column} && ${bindIfParam(values, column)}`;
 }
 var eq, ne, gt, gte, lt, lte;
 var init_conditions = __esm({
@@ -32247,32 +32247,32 @@ var init_conditions = __esm({
     init_table();
     init_sql();
     eq = (left2, right2) => {
-      return sql2`${left2} = ${bindIfParam(right2, left2)}`;
+      return sql`${left2} = ${bindIfParam(right2, left2)}`;
     };
     ne = (left2, right2) => {
-      return sql2`${left2} <> ${bindIfParam(right2, left2)}`;
+      return sql`${left2} <> ${bindIfParam(right2, left2)}`;
     };
     gt = (left2, right2) => {
-      return sql2`${left2} > ${bindIfParam(right2, left2)}`;
+      return sql`${left2} > ${bindIfParam(right2, left2)}`;
     };
     gte = (left2, right2) => {
-      return sql2`${left2} >= ${bindIfParam(right2, left2)}`;
+      return sql`${left2} >= ${bindIfParam(right2, left2)}`;
     };
     lt = (left2, right2) => {
-      return sql2`${left2} < ${bindIfParam(right2, left2)}`;
+      return sql`${left2} < ${bindIfParam(right2, left2)}`;
     };
     lte = (left2, right2) => {
-      return sql2`${left2} <= ${bindIfParam(right2, left2)}`;
+      return sql`${left2} <= ${bindIfParam(right2, left2)}`;
     };
   }
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js
 function asc(column) {
-  return sql2`${column} asc`;
+  return sql`${column} asc`;
 }
 function desc(column) {
-  return sql2`${column} desc`;
+  return sql`${column} desc`;
 }
 var init_select = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/expressions/select.js"() {
@@ -32312,12 +32312,12 @@ function getOperators() {
     notIlike,
     notInArray,
     or,
-    sql: sql2
+    sql
   };
 }
 function getOrderByOperators() {
   return {
-    sql: sql2,
+    sql,
     asc,
     desc
   };
@@ -32573,28 +32573,28 @@ var init_relations = __esm({
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js
 function count(expression) {
-  return sql2`count(${expression || sql2.raw("*")})`.mapWith(Number);
+  return sql`count(${expression || sql.raw("*")})`.mapWith(Number);
 }
 function countDistinct(expression) {
-  return sql2`count(distinct ${expression})`.mapWith(Number);
+  return sql`count(distinct ${expression})`.mapWith(Number);
 }
 function avg(expression) {
-  return sql2`avg(${expression})`.mapWith(String);
+  return sql`avg(${expression})`.mapWith(String);
 }
 function avgDistinct(expression) {
-  return sql2`avg(distinct ${expression})`.mapWith(String);
+  return sql`avg(distinct ${expression})`.mapWith(String);
 }
 function sum(expression) {
-  return sql2`sum(${expression})`.mapWith(String);
+  return sql`sum(${expression})`.mapWith(String);
 }
 function sumDistinct(expression) {
-  return sql2`sum(distinct ${expression})`.mapWith(String);
+  return sql`sum(distinct ${expression})`.mapWith(String);
 }
 function max(expression) {
-  return sql2`max(${expression})`.mapWith(is(expression, Column) ? expression : String);
+  return sql`max(${expression})`.mapWith(is(expression, Column) ? expression : String);
 }
 function min(expression) {
-  return sql2`min(${expression})`.mapWith(is(expression, Column) ? expression : String);
+  return sql`min(${expression})`.mapWith(is(expression, Column) ? expression : String);
 }
 var init_aggregate = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/aggregate.js"() {
@@ -32610,39 +32610,39 @@ function toSql(value) {
 }
 function l2Distance(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <-> ${toSql(value)}`;
+    return sql`${column} <-> ${toSql(value)}`;
   }
-  return sql2`${column} <-> ${value}`;
+  return sql`${column} <-> ${value}`;
 }
 function l1Distance(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <+> ${toSql(value)}`;
+    return sql`${column} <+> ${toSql(value)}`;
   }
-  return sql2`${column} <+> ${value}`;
+  return sql`${column} <+> ${value}`;
 }
 function innerProduct(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <#> ${toSql(value)}`;
+    return sql`${column} <#> ${toSql(value)}`;
   }
-  return sql2`${column} <#> ${value}`;
+  return sql`${column} <#> ${value}`;
 }
 function cosineDistance(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <=> ${toSql(value)}`;
+    return sql`${column} <=> ${toSql(value)}`;
   }
-  return sql2`${column} <=> ${value}`;
+  return sql`${column} <=> ${value}`;
 }
 function hammingDistance(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <~> ${toSql(value)}`;
+    return sql`${column} <~> ${toSql(value)}`;
   }
-  return sql2`${column} <~> ${value}`;
+  return sql`${column} <~> ${value}`;
 }
 function jaccardDistance(column, value) {
   if (Array.isArray(value)) {
-    return sql2`${column} <%> ${toSql(value)}`;
+    return sql`${column} <%> ${toSql(value)}`;
   }
-  return sql2`${column} <%> ${value}`;
+  return sql`${column} <%> ${value}`;
 }
 var init_vector2 = __esm({
   "../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/sql/functions/vector.js"() {
@@ -32784,7 +32784,7 @@ __export(drizzle_orm_exports, {
   param: () => param,
   placeholder: () => placeholder,
   relations: () => relations,
-  sql: () => sql2,
+  sql: () => sql,
   sum: () => sum,
   sumDistinct: () => sumDistinct,
   textDecoder: () => textDecoder
@@ -40086,27 +40086,27 @@ var init_dialect = __esm({
       async migrate(migrations, session, config2) {
         const migrationsTable = typeof config2 === "string" ? "__drizzle_migrations" : config2.migrationsTable ?? "__drizzle_migrations";
         const migrationsSchema = typeof config2 === "string" ? "drizzle" : config2.migrationsSchema ?? "drizzle";
-        const migrationTableCreate = sql2`
-			CREATE TABLE IF NOT EXISTS ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} (
+        const migrationTableCreate = sql`
+			CREATE TABLE IF NOT EXISTS ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} (
 				id SERIAL PRIMARY KEY,
 				hash text NOT NULL,
 				created_at bigint
 			)
 		`;
-        await session.execute(sql2`CREATE SCHEMA IF NOT EXISTS ${sql2.identifier(migrationsSchema)}`);
+        await session.execute(sql`CREATE SCHEMA IF NOT EXISTS ${sql.identifier(migrationsSchema)}`);
         await session.execute(migrationTableCreate);
         const dbMigrations = await session.all(
-          sql2`select id, hash, created_at from ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} order by created_at desc limit 1`
+          sql`select id, hash, created_at from ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} order by created_at desc limit 1`
         );
         const lastDbMigration = dbMigrations[0];
         await session.transaction(async (tx) => {
           for await (const migration of migrations) {
             if (!lastDbMigration || Number(lastDbMigration.created_at) < migration.folderMillis) {
               for (const stmt of migration.sql) {
-                await tx.execute(sql2.raw(stmt));
+                await tx.execute(sql.raw(stmt));
               }
               await tx.execute(
-                sql2`insert into ${sql2.identifier(migrationsSchema)}.${sql2.identifier(migrationsTable)} ("hash", "created_at") values(${migration.hash}, ${migration.folderMillis})`
+                sql`insert into ${sql.identifier(migrationsSchema)}.${sql.identifier(migrationsTable)} ("hash", "created_at") values(${migration.hash}, ${migration.folderMillis})`
               );
             }
           }
@@ -40123,21 +40123,21 @@ var init_dialect = __esm({
       }
       buildWithCTE(queries) {
         if (!queries?.length) return void 0;
-        const withSqlChunks = [sql2`with `];
+        const withSqlChunks = [sql`with `];
         for (const [i, w4] of queries.entries()) {
-          withSqlChunks.push(sql2`${sql2.identifier(w4._.alias)} as (${w4._.sql})`);
+          withSqlChunks.push(sql`${sql.identifier(w4._.alias)} as (${w4._.sql})`);
           if (i < queries.length - 1) {
-            withSqlChunks.push(sql2`, `);
+            withSqlChunks.push(sql`, `);
           }
         }
-        withSqlChunks.push(sql2` `);
-        return sql2.join(withSqlChunks);
+        withSqlChunks.push(sql` `);
+        return sql.join(withSqlChunks);
       }
       buildDeleteQuery({ table, where, returning, withList }) {
         const withSql = this.buildWithCTE(withList);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        return sql2`${withSql}delete from ${table}${whereSql}${returningSql}`;
+        const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
+        const whereSql = where ? sql` where ${where}` : void 0;
+        return sql`${withSql}delete from ${table}${whereSql}${returningSql}`;
       }
       buildUpdateSet(table, set2) {
         const tableColumns = table[Table.Symbol.Columns];
@@ -40145,13 +40145,13 @@ var init_dialect = __esm({
           (colName) => set2[colName] !== void 0 || tableColumns[colName]?.onUpdateFn !== void 0
         );
         const setSize = columnNames.length;
-        return sql2.join(columnNames.flatMap((colName, i) => {
+        return sql.join(columnNames.flatMap((colName, i) => {
           const col = tableColumns[colName];
           const onUpdateFnResult = col.onUpdateFn?.();
-          const value = set2[colName] ?? (is(onUpdateFnResult, SQL) ? onUpdateFnResult : sql2.param(onUpdateFnResult, col));
-          const res = sql2`${sql2.identifier(this.casing.getColumnCasing(col))} = ${value}`;
+          const value = set2[colName] ?? (is(onUpdateFnResult, SQL) ? onUpdateFnResult : sql.param(onUpdateFnResult, col));
+          const res = sql`${sql.identifier(this.casing.getColumnCasing(col))} = ${value}`;
           if (i < setSize - 1) {
-            return [res, sql2.raw(", ")];
+            return [res, sql.raw(", ")];
           }
           return [res];
         }));
@@ -40162,13 +40162,13 @@ var init_dialect = __esm({
         const tableSchema = table[PgTable.Symbol.Schema];
         const origTableName = table[PgTable.Symbol.OriginalName];
         const alias2 = tableName === origTableName ? void 0 : tableName;
-        const tableSql = sql2`${tableSchema ? sql2`${sql2.identifier(tableSchema)}.` : void 0}${sql2.identifier(origTableName)}${alias2 && sql2` ${sql2.identifier(alias2)}`}`;
+        const tableSql = sql`${tableSchema ? sql`${sql.identifier(tableSchema)}.` : void 0}${sql.identifier(origTableName)}${alias2 && sql` ${sql.identifier(alias2)}`}`;
         const setSql = this.buildUpdateSet(table, set2);
-        const fromSql = from && sql2.join([sql2.raw(" from "), this.buildFromTable(from)]);
+        const fromSql = from && sql.join([sql.raw(" from "), this.buildFromTable(from)]);
         const joinsSql = this.buildJoins(joins);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: !from })}` : void 0;
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        return sql2`${withSql}update ${tableSql} set ${setSql}${fromSql}${joinsSql}${whereSql}${returningSql}`;
+        const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: !from })}` : void 0;
+        const whereSql = where ? sql` where ${where}` : void 0;
+        return sql`${withSql}update ${tableSql} set ${setSql}${fromSql}${joinsSql}${whereSql}${returningSql}`;
       }
       /**
        * Builds selection SQL with provided fields/expressions
@@ -40186,7 +40186,7 @@ var init_dialect = __esm({
         const chunks = fields.flatMap(({ field }, i) => {
           const chunk = [];
           if (is(field, SQL.Aliased) && field.isSelectionField) {
-            chunk.push(sql2.identifier(field.fieldAlias));
+            chunk.push(sql.identifier(field.fieldAlias));
           } else if (is(field, SQL.Aliased) || is(field, SQL)) {
             const query = is(field, SQL.Aliased) ? field.sql : field;
             if (isSingleTable) {
@@ -40194,7 +40194,7 @@ var init_dialect = __esm({
                 new SQL(
                   query.queryChunks.map((c3) => {
                     if (is(c3, PgColumn)) {
-                      return sql2.identifier(this.casing.getColumnCasing(c3));
+                      return sql.identifier(this.casing.getColumnCasing(c3));
                     }
                     return c3;
                   })
@@ -40204,11 +40204,11 @@ var init_dialect = __esm({
               chunk.push(query);
             }
             if (is(field, SQL.Aliased)) {
-              chunk.push(sql2` as ${sql2.identifier(field.fieldAlias)}`);
+              chunk.push(sql` as ${sql.identifier(field.fieldAlias)}`);
             }
           } else if (is(field, Column)) {
             if (isSingleTable) {
-              chunk.push(sql2.identifier(this.casing.getColumnCasing(field)));
+              chunk.push(sql.identifier(this.casing.getColumnCasing(field)));
             } else {
               chunk.push(field);
             }
@@ -40224,11 +40224,11 @@ var init_dialect = __esm({
             chunk.push(field);
           }
           if (i < columnsLen - 1) {
-            chunk.push(sql2`, `);
+            chunk.push(sql`, `);
           }
           return chunk;
         });
-        return sql2.join(chunks);
+        return sql.join(chunks);
       }
       buildJoins(joins) {
         if (!joins || joins.length === 0) {
@@ -40237,18 +40237,18 @@ var init_dialect = __esm({
         const joinsArray = [];
         for (const [index2, joinMeta] of joins.entries()) {
           if (index2 === 0) {
-            joinsArray.push(sql2` `);
+            joinsArray.push(sql` `);
           }
           const table = joinMeta.table;
-          const lateralSql = joinMeta.lateral ? sql2` lateral` : void 0;
-          const onSql = joinMeta.on ? sql2` on ${joinMeta.on}` : void 0;
+          const lateralSql = joinMeta.lateral ? sql` lateral` : void 0;
+          const onSql = joinMeta.on ? sql` on ${joinMeta.on}` : void 0;
           if (is(table, PgTable)) {
             const tableName = table[PgTable.Symbol.Name];
             const tableSchema = table[PgTable.Symbol.Schema];
             const origTableName = table[PgTable.Symbol.OriginalName];
             const alias2 = tableName === origTableName ? void 0 : joinMeta.alias;
             joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${tableSchema ? sql2`${sql2.identifier(tableSchema)}.` : void 0}${sql2.identifier(origTableName)}${alias2 && sql2` ${sql2.identifier(alias2)}`}${onSql}`
+              sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${tableSchema ? sql`${sql.identifier(tableSchema)}.` : void 0}${sql.identifier(origTableName)}${alias2 && sql` ${sql.identifier(alias2)}`}${onSql}`
             );
           } else if (is(table, View)) {
             const viewName = table[ViewBaseConfig].name;
@@ -40256,26 +40256,26 @@ var init_dialect = __esm({
             const origViewName = table[ViewBaseConfig].originalName;
             const alias2 = viewName === origViewName ? void 0 : joinMeta.alias;
             joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${viewSchema ? sql2`${sql2.identifier(viewSchema)}.` : void 0}${sql2.identifier(origViewName)}${alias2 && sql2` ${sql2.identifier(alias2)}`}${onSql}`
+              sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${viewSchema ? sql`${sql.identifier(viewSchema)}.` : void 0}${sql.identifier(origViewName)}${alias2 && sql` ${sql.identifier(alias2)}`}${onSql}`
             );
           } else {
             joinsArray.push(
-              sql2`${sql2.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`
+              sql`${sql.raw(joinMeta.joinType)} join${lateralSql} ${table}${onSql}`
             );
           }
           if (index2 < joins.length - 1) {
-            joinsArray.push(sql2` `);
+            joinsArray.push(sql` `);
           }
         }
-        return sql2.join(joinsArray);
+        return sql.join(joinsArray);
       }
       buildFromTable(table) {
         if (is(table, Table) && table[Table.Symbol.IsAlias]) {
-          let fullName = sql2`${sql2.identifier(table[Table.Symbol.OriginalName])}`;
+          let fullName = sql`${sql.identifier(table[Table.Symbol.OriginalName])}`;
           if (table[Table.Symbol.Schema]) {
-            fullName = sql2`${sql2.identifier(table[Table.Symbol.Schema])}.${fullName}`;
+            fullName = sql`${sql.identifier(table[Table.Symbol.Schema])}.${fullName}`;
           }
-          return sql2`${fullName} ${sql2.identifier(table[Table.Symbol.Name])}`;
+          return sql`${fullName} ${sql.identifier(table[Table.Symbol.Name])}`;
         }
         return table;
       }
@@ -40310,42 +40310,42 @@ var init_dialect = __esm({
         const withSql = this.buildWithCTE(withList);
         let distinctSql;
         if (distinct) {
-          distinctSql = distinct === true ? sql2` distinct` : sql2` distinct on (${sql2.join(distinct.on, sql2`, `)})`;
+          distinctSql = distinct === true ? sql` distinct` : sql` distinct on (${sql.join(distinct.on, sql`, `)})`;
         }
         const selection = this.buildSelection(fieldsList, { isSingleTable });
         const tableSql = this.buildFromTable(table);
         const joinsSql = this.buildJoins(joins);
-        const whereSql = where ? sql2` where ${where}` : void 0;
-        const havingSql = having ? sql2` having ${having}` : void 0;
+        const whereSql = where ? sql` where ${where}` : void 0;
+        const havingSql = having ? sql` having ${having}` : void 0;
         let orderBySql;
         if (orderBy && orderBy.length > 0) {
-          orderBySql = sql2` order by ${sql2.join(orderBy, sql2`, `)}`;
+          orderBySql = sql` order by ${sql.join(orderBy, sql`, `)}`;
         }
         let groupBySql;
         if (groupBy && groupBy.length > 0) {
-          groupBySql = sql2` group by ${sql2.join(groupBy, sql2`, `)}`;
+          groupBySql = sql` group by ${sql.join(groupBy, sql`, `)}`;
         }
-        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql2` limit ${limit2}` : void 0;
-        const offsetSql = offset ? sql2` offset ${offset}` : void 0;
-        const lockingClauseSql = sql2.empty();
+        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql` limit ${limit2}` : void 0;
+        const offsetSql = offset ? sql` offset ${offset}` : void 0;
+        const lockingClauseSql = sql.empty();
         if (lockingClause) {
-          const clauseSql = sql2` for ${sql2.raw(lockingClause.strength)}`;
+          const clauseSql = sql` for ${sql.raw(lockingClause.strength)}`;
           if (lockingClause.config.of) {
             clauseSql.append(
-              sql2` of ${sql2.join(
+              sql` of ${sql.join(
                 Array.isArray(lockingClause.config.of) ? lockingClause.config.of : [lockingClause.config.of],
-                sql2`, `
+                sql`, `
               )}`
             );
           }
           if (lockingClause.config.noWait) {
-            clauseSql.append(sql2` nowait`);
+            clauseSql.append(sql` nowait`);
           } else if (lockingClause.config.skipLocked) {
-            clauseSql.append(sql2` skip locked`);
+            clauseSql.append(sql` skip locked`);
           }
           lockingClauseSql.append(clauseSql);
         }
-        const finalQuery = sql2`${withSql}select${distinctSql} ${selection} from ${tableSql}${joinsSql}${whereSql}${groupBySql}${havingSql}${orderBySql}${limitSql}${offsetSql}${lockingClauseSql}`;
+        const finalQuery = sql`${withSql}select${distinctSql} ${selection} from ${tableSql}${joinsSql}${whereSql}${groupBySql}${havingSql}${orderBySql}${limitSql}${offsetSql}${lockingClauseSql}`;
         if (setOperators.length > 0) {
           return this.buildSetOperations(finalQuery, setOperators);
         }
@@ -40368,39 +40368,39 @@ var init_dialect = __esm({
         leftSelect,
         setOperator: { type: type2, isAll, rightSelect, limit: limit2, orderBy, offset }
       }) {
-        const leftChunk = sql2`(${leftSelect.getSQL()}) `;
-        const rightChunk = sql2`(${rightSelect.getSQL()})`;
+        const leftChunk = sql`(${leftSelect.getSQL()}) `;
+        const rightChunk = sql`(${rightSelect.getSQL()})`;
         let orderBySql;
         if (orderBy && orderBy.length > 0) {
           const orderByValues = [];
           for (const singleOrderBy of orderBy) {
             if (is(singleOrderBy, PgColumn)) {
-              orderByValues.push(sql2.identifier(singleOrderBy.name));
+              orderByValues.push(sql.identifier(singleOrderBy.name));
             } else if (is(singleOrderBy, SQL)) {
               for (let i = 0; i < singleOrderBy.queryChunks.length; i++) {
                 const chunk = singleOrderBy.queryChunks[i];
                 if (is(chunk, PgColumn)) {
-                  singleOrderBy.queryChunks[i] = sql2.identifier(chunk.name);
+                  singleOrderBy.queryChunks[i] = sql.identifier(chunk.name);
                 }
               }
-              orderByValues.push(sql2`${singleOrderBy}`);
+              orderByValues.push(sql`${singleOrderBy}`);
             } else {
-              orderByValues.push(sql2`${singleOrderBy}`);
+              orderByValues.push(sql`${singleOrderBy}`);
             }
           }
-          orderBySql = sql2` order by ${sql2.join(orderByValues, sql2`, `)} `;
+          orderBySql = sql` order by ${sql.join(orderByValues, sql`, `)} `;
         }
-        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql2` limit ${limit2}` : void 0;
-        const operatorChunk = sql2.raw(`${type2} ${isAll ? "all " : ""}`);
-        const offsetSql = offset ? sql2` offset ${offset}` : void 0;
-        return sql2`${leftChunk}${operatorChunk}${rightChunk}${orderBySql}${limitSql}${offsetSql}`;
+        const limitSql = typeof limit2 === "object" || typeof limit2 === "number" && limit2 >= 0 ? sql` limit ${limit2}` : void 0;
+        const operatorChunk = sql.raw(`${type2} ${isAll ? "all " : ""}`);
+        const offsetSql = offset ? sql` offset ${offset}` : void 0;
+        return sql`${leftChunk}${operatorChunk}${rightChunk}${orderBySql}${limitSql}${offsetSql}`;
       }
       buildInsertQuery({ table, values: valuesOrSelect, onConflict, returning, withList, select, overridingSystemValue_ }) {
         const valuesSqlList = [];
         const columns = table[Table.Symbol.Columns];
         const colEntries = Object.entries(columns).filter(([_2, col]) => !col.shouldDisableInsert());
         const insertOrder = colEntries.map(
-          ([, column]) => sql2.identifier(this.casing.getColumnCasing(column))
+          ([, column]) => sql.identifier(this.casing.getColumnCasing(column))
         );
         if (select) {
           const select2 = valuesOrSelect;
@@ -40411,7 +40411,7 @@ var init_dialect = __esm({
           }
         } else {
           const values = valuesOrSelect;
-          valuesSqlList.push(sql2.raw("values "));
+          valuesSqlList.push(sql.raw("values "));
           for (const [valueIndex, value] of values.entries()) {
             const valueList = [];
             for (const [fieldName, col] of colEntries) {
@@ -40419,14 +40419,14 @@ var init_dialect = __esm({
               if (colValue === void 0 || is(colValue, Param) && colValue.value === void 0) {
                 if (col.defaultFn !== void 0) {
                   const defaultFnResult = col.defaultFn();
-                  const defaultValue = is(defaultFnResult, SQL) ? defaultFnResult : sql2.param(defaultFnResult, col);
+                  const defaultValue = is(defaultFnResult, SQL) ? defaultFnResult : sql.param(defaultFnResult, col);
                   valueList.push(defaultValue);
                 } else if (!col.default && col.onUpdateFn !== void 0) {
                   const onUpdateFnResult = col.onUpdateFn();
-                  const newValue = is(onUpdateFnResult, SQL) ? onUpdateFnResult : sql2.param(onUpdateFnResult, col);
+                  const newValue = is(onUpdateFnResult, SQL) ? onUpdateFnResult : sql.param(onUpdateFnResult, col);
                   valueList.push(newValue);
                 } else {
-                  valueList.push(sql2`default`);
+                  valueList.push(sql`default`);
                 }
               } else {
                 valueList.push(colValue);
@@ -40434,21 +40434,21 @@ var init_dialect = __esm({
             }
             valuesSqlList.push(valueList);
             if (valueIndex < values.length - 1) {
-              valuesSqlList.push(sql2`, `);
+              valuesSqlList.push(sql`, `);
             }
           }
         }
         const withSql = this.buildWithCTE(withList);
-        const valuesSql = sql2.join(valuesSqlList);
-        const returningSql = returning ? sql2` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
-        const onConflictSql = onConflict ? sql2` on conflict ${onConflict}` : void 0;
-        const overridingSql = overridingSystemValue_ === true ? sql2`overriding system value ` : void 0;
-        return sql2`${withSql}insert into ${table} ${insertOrder} ${overridingSql}${valuesSql}${onConflictSql}${returningSql}`;
+        const valuesSql = sql.join(valuesSqlList);
+        const returningSql = returning ? sql` returning ${this.buildSelection(returning, { isSingleTable: true })}` : void 0;
+        const onConflictSql = onConflict ? sql` on conflict ${onConflict}` : void 0;
+        const overridingSql = overridingSystemValue_ === true ? sql`overriding system value ` : void 0;
+        return sql`${withSql}insert into ${table} ${insertOrder} ${overridingSql}${valuesSql}${onConflictSql}${returningSql}`;
       }
       buildRefreshMaterializedViewQuery({ view, concurrently, withNoData }) {
-        const concurrentlySql = concurrently ? sql2` concurrently` : void 0;
-        const withNoDataSql = withNoData ? sql2` with no data` : void 0;
-        return sql2`refresh materialized view${concurrentlySql} ${view}${withNoDataSql}`;
+        const concurrentlySql = concurrently ? sql` concurrently` : void 0;
+        const withNoDataSql = withNoData ? sql` with no data` : void 0;
+        return sql`refresh materialized view${concurrentlySql} ${view}${withNoDataSql}`;
       }
       prepareTyping(encoder2) {
         if (is(encoder2, PgJsonb) || is(encoder2, PgJson)) {
@@ -41021,7 +41021,7 @@ var init_dialect = __esm({
           }
           let extras;
           if (config2.extras) {
-            extras = typeof config2.extras === "function" ? config2.extras(aliasedColumns, { sql: sql2 }) : config2.extras;
+            extras = typeof config2.extras === "function" ? config2.extras(aliasedColumns, { sql }) : config2.extras;
             for (const [tsKey, value] of Object.entries(extras)) {
               fieldsSelection.push({
                 tsKey,
@@ -41079,9 +41079,9 @@ var init_dialect = __esm({
               joinOn: joinOn2,
               nestedQueryRelation: relation
             });
-            const field = sql2`${sql2.identifier(relationTableAlias)}.${sql2.identifier("data")}`.as(selectedRelationTsKey);
+            const field = sql`${sql.identifier(relationTableAlias)}.${sql.identifier("data")}`.as(selectedRelationTsKey);
             joins.push({
-              on: sql2`true`,
+              on: sql`true`,
               table: new Subquery(builtRelation.sql, {}, relationTableAlias),
               alias: relationTableAlias,
               joinType: "left",
@@ -41103,14 +41103,14 @@ var init_dialect = __esm({
         let result;
         where = and(joinOn, where);
         if (nestedQueryRelation) {
-          let field = sql2`json_build_array(${sql2.join(
+          let field = sql`json_build_array(${sql.join(
             selection.map(
-              ({ field: field2, tsKey, isJson }) => isJson ? sql2`${sql2.identifier(`${tableAlias}_${tsKey}`)}.${sql2.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
+              ({ field: field2, tsKey, isJson }) => isJson ? sql`${sql.identifier(`${tableAlias}_${tsKey}`)}.${sql.identifier("data")}` : is(field2, SQL.Aliased) ? field2.sql : field2
             ),
-            sql2`, `
+            sql`, `
           )})`;
           if (is(nestedQueryRelation, Many)) {
-            field = sql2`coalesce(json_agg(${field}${orderBy.length > 0 ? sql2` order by ${sql2.join(orderBy, sql2`, `)}` : void 0}), '[]'::json)`;
+            field = sql`coalesce(json_agg(${field}${orderBy.length > 0 ? sql` order by ${sql.join(orderBy, sql`, `)}` : void 0}), '[]'::json)`;
           }
           const nestedSelection = [{
             dbKey: "data",
@@ -41127,7 +41127,7 @@ var init_dialect = __esm({
               fields: {},
               fieldsFlat: [{
                 path: [],
-                field: sql2.raw("*")
+                field: sql.raw("*")
               }],
               where,
               limit: limit2,
@@ -42613,12 +42613,12 @@ var init_insert = __esm({
        */
       onConflictDoNothing(config2 = {}) {
         if (config2.target === void 0) {
-          this.config.onConflict = sql2`do nothing`;
+          this.config.onConflict = sql`do nothing`;
         } else {
           let targetColumn = "";
           targetColumn = Array.isArray(config2.target) ? config2.target.map((it4) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it4))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config2.target));
-          const whereSql = config2.where ? sql2` where ${config2.where}` : void 0;
-          this.config.onConflict = sql2`(${sql2.raw(targetColumn)})${whereSql} do nothing`;
+          const whereSql = config2.where ? sql` where ${config2.where}` : void 0;
+          this.config.onConflict = sql`(${sql.raw(targetColumn)})${whereSql} do nothing`;
         }
         return this;
       }
@@ -42657,13 +42657,13 @@ var init_insert = __esm({
             'You cannot use both "where" and "targetWhere"/"setWhere" at the same time - "where" is deprecated, use "targetWhere" or "setWhere" instead.'
           );
         }
-        const whereSql = config2.where ? sql2` where ${config2.where}` : void 0;
-        const targetWhereSql = config2.targetWhere ? sql2` where ${config2.targetWhere}` : void 0;
-        const setWhereSql = config2.setWhere ? sql2` where ${config2.setWhere}` : void 0;
+        const whereSql = config2.where ? sql` where ${config2.where}` : void 0;
+        const targetWhereSql = config2.targetWhere ? sql` where ${config2.targetWhere}` : void 0;
+        const setWhereSql = config2.setWhere ? sql` where ${config2.setWhere}` : void 0;
         const setSql = this.dialect.buildUpdateSet(this.config.table, mapUpdateSet(this.config.table, config2.set));
         let targetColumn = "";
         targetColumn = Array.isArray(config2.target) ? config2.target.map((it4) => this.dialect.escapeName(this.dialect.casing.getColumnCasing(it4))).join(",") : this.dialect.escapeName(this.dialect.casing.getColumnCasing(config2.target));
-        this.config.onConflict = sql2`(${sql2.raw(targetColumn)})${targetWhereSql} do update set ${setSql}${whereSql}${setWhereSql}`;
+        this.config.onConflict = sql`(${sql.raw(targetColumn)})${targetWhereSql} do update set ${setSql}${whereSql}${setWhereSql}`;
         return this;
       }
       /** @internal */
@@ -43046,10 +43046,10 @@ var init_count = __esm({
       [Symbol.toStringTag] = "PgCountBuilder";
       session;
       static buildEmbeddedCount(source, filters) {
-        return sql2`(select count(*) from ${source}${sql2.raw(" where ").if(filters)}${filters})`;
+        return sql`(select count(*) from ${source}${sql.raw(" where ").if(filters)}${filters})`;
       }
       static buildCount(source, filters) {
-        return sql2`select count(*) as count from ${source}${sql2.raw(" where ").if(filters)}${filters};`;
+        return sql`select count(*) as count from ${source}${sql.raw(" where ").if(filters)}${filters};`;
       }
       /** @intrnal */
       setToken(token2) {
@@ -43210,10 +43210,10 @@ var init_raw = __esm({
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql12, query, mapBatchResult) {
+      constructor(execute, sql11, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql12;
+        this.sql = sql11;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -43510,7 +43510,7 @@ var init_db = __esm({
       }
       authToken;
       execute(query) {
-        const sequel = typeof query === "string" ? sql2.raw(query) : query.getSQL();
+        const sequel = typeof query === "string" ? sql.raw(query) : query.getSQL();
         const builtQuery = this.dialect.sqlToQuery(sequel);
         const prepared = this.session.prepareQuery(
           builtQuery,
@@ -43533,8 +43533,8 @@ var init_db = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql12, params) {
-  const dataToHash = `${sql12}-${JSON.stringify(params)}`;
+async function hashQuery(sql11, params) {
+  const dataToHash = `${sql11}-${JSON.stringify(params)}`;
   const encoder2 = new TextEncoder();
   const data = encoder2.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -43667,7 +43667,7 @@ var init_schema = __esm({
         return pgSequenceWithSchema(name3, options, this.schemaName);
       };
       getSQL() {
-        return new SQL([sql2.identifier(this.schemaName)]);
+        return new SQL([sql.identifier(this.schemaName)]);
       }
       shouldOmitSQLParens() {
         return true;
@@ -43838,10 +43838,10 @@ var init_session = __esm({
         if (typeof config2.deferrable === "boolean") {
           chunks.push(config2.deferrable ? "deferrable" : "not deferrable");
         }
-        return sql2.raw(chunks.join(" "));
+        return sql.raw(chunks.join(" "));
       }
       setTransaction(config2) {
-        return this.session.execute(sql2`set transaction ${this.getTransactionConfigSQL(config2)}`);
+        return this.session.execute(sql`set transaction ${this.getTransactionConfigSQL(config2)}`);
       }
     };
   }
@@ -44074,13 +44074,13 @@ var init_session2 = __esm({
         const isPool = this.client instanceof Pool2 || Object.getPrototypeOf(this.client).constructor.name.includes("Pool");
         const session = isPool ? new _NodePgSession(await this.client.connect(), this.dialect, this.schema, this.options) : this;
         const tx = new NodePgTransaction(this.dialect, session, this.schema);
-        await tx.execute(sql2`begin${config2 ? sql2` ${tx.getTransactionConfigSQL(config2)}` : void 0}`);
+        await tx.execute(sql`begin${config2 ? sql` ${tx.getTransactionConfigSQL(config2)}` : void 0}`);
         try {
           const result = await transaction(tx);
-          await tx.execute(sql2`commit`);
+          await tx.execute(sql`commit`);
           return result;
         } catch (error40) {
-          await tx.execute(sql2`rollback`);
+          await tx.execute(sql`rollback`);
           throw error40;
         } finally {
           if (isPool) session.client.release();
@@ -44103,13 +44103,13 @@ var init_session2 = __esm({
           this.schema,
           this.nestedIndex + 1
         );
-        await tx.execute(sql2.raw(`savepoint ${savepointName}`));
+        await tx.execute(sql.raw(`savepoint ${savepointName}`));
         try {
           const result = await transaction(tx);
-          await tx.execute(sql2.raw(`release savepoint ${savepointName}`));
+          await tx.execute(sql.raw(`release savepoint ${savepointName}`));
           return result;
         } catch (err) {
-          await tx.execute(sql2.raw(`rollback to savepoint ${savepointName}`));
+          await tx.execute(sql.raw(`rollback to savepoint ${savepointName}`));
           throw err;
         }
       }
@@ -44227,7 +44227,7 @@ var init_auth = __esm({
       (table) => [index("IDX_session_expire").on(table.expire)]
     );
     usersTable = pgTable("users", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       email: varchar("email").unique(),
       firstName: varchar("first_name"),
       lastName: varchar("last_name"),
@@ -44302,7 +44302,7 @@ var init_auth = __esm({
     authEventsTable = pgTable(
       "auth_events",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id"),
         event: varchar("event", { length: 60 }).notNull(),
         ipAddress: varchar("ip_address", { length: 100 }),
@@ -44323,7 +44323,7 @@ var init_city_archives = __esm({
     init_pg_core();
     init_drizzle_orm();
     cityArchivesTable = pgTable("city_archives", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       city: varchar("city", { length: 100 }).notNull(),
       state: varchar("state", { length: 50 }).notNull(),
       slug: varchar("slug", { length: 120 }).notNull().unique(),
@@ -44339,7 +44339,7 @@ var init_city_archives = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     archiveContributionsTable = pgTable("archive_contributions", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       archiveId: varchar("archive_id").notNull().references(() => cityArchivesTable.id, { onDelete: "cascade" }),
       userId: varchar("user_id"),
       contributorName: varchar("contributor_name", { length: 150 }),
@@ -44405,7 +44405,7 @@ var init_city_launches = __esm({
       }
     };
     cityLaunchesTable = pgTable("city_launches", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       city: varchar("city", { length: 100 }).notNull(),
       state: varchar("state", { length: 50 }).notNull(),
       slug: varchar("slug", { length: 120 }).notNull().unique(),
@@ -44439,7 +44439,7 @@ var init_family_circles = __esm({
       contentFilter: "none"
     };
     familyCirclesTable = pgTable("family_circles", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       name: varchar("name", { length: 100 }).notNull().default("My Family"),
       ownerId: varchar("owner_id").notNull(),
       inviteCode: varchar("invite_code", { length: 12 }).notNull().unique(),
@@ -44447,14 +44447,14 @@ var init_family_circles = __esm({
       updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
     });
     familyCircleMembersTable = pgTable("family_circle_members", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       circleId: varchar("circle_id").notNull().references(() => familyCirclesTable.id, { onDelete: "cascade" }),
       userId: varchar("user_id"),
       inviteEmail: varchar("invite_email", { length: 255 }),
       displayName: varchar("display_name", { length: 100 }),
       role: varchar("role", { enum: ["owner", "member"] }).notNull().default("member"),
       status: varchar("status", { enum: ["pending", "accepted", "removed"] }).notNull().default("pending"),
-      permissions: jsonb("permissions").$type().notNull().default(sql2`'{"canViewTrips":false,"shareLocation":false,"emergencyContact":false,"sosNotifications":true,"safetyAlerts":true,"approveFriendRequests":false,"messagingEnabled":true,"contentFilter":"none"}'::jsonb`),
+      permissions: jsonb("permissions").$type().notNull().default(sql`'{"canViewTrips":false,"shareLocation":false,"emergencyContact":false,"sosNotifications":true,"safetyAlerts":true,"approveFriendRequests":false,"messagingEnabled":true,"contentFilter":"none"}'::jsonb`),
       invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
       joinedAt: timestamp("joined_at", { withTimezone: true })
     });
@@ -56393,7 +56393,7 @@ var init_community_boundaries = __esm({
     init_drizzle_zod();
     init_v4();
     communityBoundariesTable = pgTable("community_boundaries", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       targetType: varchar("target_type", { length: 20 }).notNull(),
       targetId: varchar("target_id").notNull(),
@@ -56403,7 +56403,7 @@ var init_community_boundaries = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     safeSpacePreferencesTable = pgTable("safe_space_preferences", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull().unique(),
       hideNotInterested: boolean("hide_not_interested").notNull().default(true),
       hideUnresolvedAlerts: boolean("hide_unresolved_alerts").notNull().default(false),
@@ -56672,7 +56672,7 @@ var init_knowledge = __esm({
     init_drizzle_orm();
     init_auth();
     knowledgeArticlesTable = pgTable("knowledge_articles", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       title: varchar("title", { length: 250 }).notNull(),
       slug: varchar("slug", { length: 250 }).notNull(),
       summary: text("summary").notNull(),
@@ -56699,7 +56699,7 @@ var init_knowledge = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     expertProfilesTable = pgTable("expert_profiles", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       displayName: varchar("display_name", { length: 150 }).notNull(),
       specialty: varchar("specialty", { length: 100 }).notNull(),
@@ -56714,19 +56714,19 @@ var init_knowledge = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     knowledgeBookmarksTable = pgTable("knowledge_bookmarks", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       articleId: varchar("article_id", { length: 100 }).notNull(),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     expertFollowsTable = pgTable("expert_follows", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       followerId: varchar("follower_id", { length: 100 }).notNull(),
       expertId: varchar("expert_id", { length: 100 }).notNull(),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     knowledgeTopicsTable = pgTable("knowledge_topics", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       topicName: varchar("topic_name", { length: 200 }).notNull(),
       canonicalName: varchar("canonical_name", { length: 200 }),
       category: varchar("category", { length: 50 }).notNull(),
@@ -56751,7 +56751,7 @@ var init_knowledge = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     topicCredibilitySignalsTable = pgTable("topic_credibility_signals", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       topicId: varchar("topic_id", { length: 100 }).notNull(),
       userId: varchar("user_id", { length: 100 }).references(() => usersTable.id, { onDelete: "set null" }),
       signalType: varchar("signal_type", { length: 30 }).notNull(),
@@ -56760,7 +56760,7 @@ var init_knowledge = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     userTopicFollowsTable = pgTable("user_topic_follows", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       topicId: varchar("topic_id", { length: 100 }).notNull(),
       isPinnedToProfile: boolean("is_pinned_to_profile").notNull().default(false),
@@ -56770,7 +56770,7 @@ var init_knowledge = __esm({
       uniqueIndex("user_topic_follows_unique").on(table.userId, table.topicId)
     ]);
     knowledgeArticleReadsTable = pgTable("knowledge_article_reads", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       articleId: varchar("article_id", { length: 100 }).notNull(),
       topicId: varchar("topic_id", { length: 100 }),
@@ -56787,7 +56787,7 @@ var init_knowledge = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     topicIssuesTable = pgTable("topic_issues", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       name: varchar("name", { length: 200 }).notNull(),
       description: text("description"),
       category: varchar("category", { length: 50 }),
@@ -56797,7 +56797,7 @@ var init_knowledge = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     userIssueFollowsTable = pgTable("user_issue_follows", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       issueId: varchar("issue_id", { length: 100 }).notNull(),
       isPinnedToProfile: boolean("is_pinned_to_profile").notNull().default(false),
@@ -56806,7 +56806,7 @@ var init_knowledge = __esm({
       uniqueIndex("user_issue_follows_unique").on(table.userId, table.issueId)
     ]);
     happeningNowStoriesTable = pgTable("happening_now_stories", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       title: varchar("title", { length: 300 }).notNull(),
       summary: text("summary").notNull(),
       category: varchar("category", { length: 50 }).notNull().default("other"),
@@ -56821,7 +56821,7 @@ var init_knowledge = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     storyConfirmationsTable = pgTable("story_confirmations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       storyId: varchar("story_id", { length: 100 }).notNull().references(() => happeningNowStoriesTable.id, { onDelete: "cascade" }),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -56829,7 +56829,7 @@ var init_knowledge = __esm({
       uniqueIndex("story_confirmations_unique").on(table.storyId, table.userId)
     ]);
     userBadgesTable = pgTable("user_badges", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       topicId: varchar("topic_id", { length: 100 }),
       badgeType: varchar("badge_type", { length: 50 }).notNull(),
@@ -56845,7 +56845,7 @@ var init_knowledge = __esm({
       expiresAt: timestamp("expires_at")
     });
     badgeHelpfulVotesTable = pgTable("badge_helpful_votes", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       badgeId: varchar("badge_id", { length: 100 }).notNull().references(() => userBadgesTable.id, { onDelete: "cascade" }),
       voterId: varchar("voter_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -57060,7 +57060,7 @@ var init_surveys = __esm({
     init_drizzle_zod();
     init_v4();
     neighborhoodSurveysTable = pgTable("neighborhood_surveys", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id"),
       city: varchar("city", { length: 100 }).notNull(),
       neighborhood: varchar("neighborhood", { length: 255 }),
@@ -57092,7 +57092,7 @@ var init_surveys = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     safetyReportsTable = pgTable("safety_reports", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       reporterId: varchar("reporter_id"),
       reporterName: varchar("reporter_name", { length: 255 }).notNull().default("Anonymous"),
       category: varchar("category", { length: 100 }).notNull(),
@@ -57152,7 +57152,7 @@ var init_surveys = __esm({
     });
     selectSafetyReportSchema = createSelectSchema(safetyReportsTable);
     safetyIncidentsTable = pgTable("safety_incidents", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       city: varchar("city", { length: 100 }).notNull(),
       neighborhood: varchar("neighborhood", { length: 255 }),
       category: varchar("category", { length: 100 }).notNull(),
@@ -57195,7 +57195,7 @@ var init_reviews = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     reviewsTable = pgTable("reviews", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id"),
       businessId: varchar("business_id").notNull(),
       authorName: varchar("author_name", { length: 255 }).notNull().default("Community Member"),
@@ -57258,7 +57258,7 @@ var init_check_ins = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     checkInsTable = pgTable("check_ins", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       businessId: varchar("business_id").notNull(),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -57290,7 +57290,7 @@ var init_points = __esm({
       referral: 25
     };
     pointsLedgerTable = pgTable("points_ledger", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       action: varchar("action", { length: 50 }).notNull(),
       points: integer("points").notNull(),
@@ -57337,7 +57337,7 @@ var init_community_posts = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     communityPostsTable = pgTable("community_posts", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       authorId: varchar("author_id"),
       authorName: varchar("author_name", { length: 100 }).notNull(),
       authorInitials: varchar("author_initials", { length: 4 }).notNull(),
@@ -57397,7 +57397,7 @@ var init_community_posts = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     communityPostCommentsTable = pgTable("community_post_comments", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       postId: varchar("post_id").notNull(),
       authorId: varchar("author_id"),
       authorName: varchar("author_name", { length: 100 }).notNull(),
@@ -57426,7 +57426,7 @@ var init_thread_reads = __esm({
     init_pg_core();
     init_drizzle_orm();
     threadReadsTable = pgTable("thread_reads", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       postId: varchar("post_id").notNull(),
       readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow()
@@ -57444,7 +57444,7 @@ var init_waitlist = __esm({
     init_pg_core();
     init_drizzle_orm();
     waitlistTable = pgTable("waitlist_signups", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       email: varchar("email", { length: 255 }).notNull().unique(),
       firstName: varchar("first_name", { length: 100 }),
       lastName: varchar("last_name", { length: 100 }),
@@ -57477,7 +57477,7 @@ var init_contact = __esm({
     init_pg_core();
     init_drizzle_orm();
     contactMessagesTable = pgTable("contact_messages", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       formType: varchar("form_type", { length: 50 }).notNull(),
       name: varchar("name", { length: 255 }).notNull(),
       email: varchar("email", { length: 255 }).notNull(),
@@ -57612,7 +57612,7 @@ var init_business_invites = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessInvitesTable = pgTable("business_invites", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       reviewId: varchar("review_id"),
       invitedByUserId: varchar("invited_by_user_id"),
       businessId: varchar("business_id"),
@@ -57621,7 +57621,7 @@ var init_business_invites = __esm({
       socialPlatform: varchar("social_platform", { length: 30 }).notNull(),
       status: varchar("status", { length: 30 }).notNull().default("pending"),
       trialStartDate: timestamp("trial_start_date", { withTimezone: true }).notNull().defaultNow(),
-      trialEndDate: timestamp("trial_end_date", { withTimezone: true }).notNull().default(sql2`now() + interval '60 days'`),
+      trialEndDate: timestamp("trial_end_date", { withTimezone: true }).notNull().default(sql`now() + interval '60 days'`),
       notes: text("notes"),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
@@ -57679,7 +57679,7 @@ var init_kinfolk_sessions = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     kinfolkSessionsTable = pgTable("kinfolk_sessions", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       title: varchar("title", { length: 255 }),
       destination: varchar("destination", { length: 255 }),
@@ -57707,7 +57707,7 @@ var init_kinfolk_feedback = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     kinfolkFeedbackTable = pgTable("kinfolk_feedback", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       sessionId: varchar("session_id"),
       businessName: varchar("business_name", { length: 255 }).notNull(),
@@ -57732,7 +57732,7 @@ var init_kinfolk_task_lists = __esm({
     init_pg_core();
     init_drizzle_orm();
     kinfolkTaskListsTable = pgTable("kinfolk_task_lists", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 255 }).notNull(),
       name: varchar("name", { length: 100 }).notNull(),
       icon: varchar("icon", { length: 10 }).default("\u{1F4CB}"),
@@ -57749,7 +57749,7 @@ var init_kinfolk_tasks = __esm({
     init_pg_core();
     init_drizzle_orm();
     kinfolkTasksTable = pgTable("kinfolk_tasks", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 255 }).notNull(),
       listId: varchar("list_id", { length: 255 }),
       title: varchar("title", { length: 300 }).notNull(),
@@ -57773,7 +57773,7 @@ var init_wishlist_items = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     wishlistItemsTable = pgTable("wishlist_items", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       businessName: varchar("business_name", { length: 255 }).notNull(),
       category: varchar("category", { length: 100 }),
@@ -57804,7 +57804,7 @@ var init_business_claims = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessClaimsTable = pgTable("business_claims", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id", { length: 255 }).notNull(),
       businessName: varchar("business_name", { length: 255 }),
       userId: varchar("user_id"),
@@ -57853,7 +57853,7 @@ var init_job_listings = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     jobListingsTable = pgTable("job_listings", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessName: varchar("business_name", { length: 255 }).notNull(),
       businessId: varchar("business_id"),
       title: varchar("title", { length: 255 }).notNull(),
@@ -57897,7 +57897,7 @@ var init_content_reports = __esm({
     init_drizzle_orm();
     init_pg_core();
     contentReportsTable = pgTable("content_reports", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       reporterId: varchar("reporter_id"),
       targetType: varchar("target_type", { enum: ["review", "survey", "business", "post", "user"] }).notNull(),
       targetId: varchar("target_id").notNull(),
@@ -57919,7 +57919,7 @@ var init_verification_requests = __esm({
     init_drizzle_orm();
     init_pg_core();
     verificationRequestsTable = pgTable("verification_requests", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       submitterId: varchar("submitter_id"),
       businessId: varchar("business_id"),
       businessName: varchar("business_name").notNull(),
@@ -57966,7 +57966,7 @@ var init_flash_deals = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     flashDealsTable = pgTable("flash_deals", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       createdBy: varchar("created_by").notNull(),
       title: varchar("title", { length: 120 }).notNull(),
@@ -57990,7 +57990,7 @@ var init_business_stories = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessStoriesTable = pgTable("business_stories", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       authorId: varchar("author_id").notNull(),
       authorName: varchar("author_name", { length: 100 }).notNull(),
@@ -58020,7 +58020,7 @@ var init_points_redemptions = __esm({
       { id: "partner_discount", title: "10% Partner Discount", pointsCost: 100, description: "One-time 10% discount code for a partner business of your choice." }
     ];
     pointsRedemptionsTable = pgTable("points_redemptions", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       rewardId: varchar("reward_id", { length: 60 }).notNull(),
       rewardTitle: varchar("reward_title", { length: 120 }).notNull(),
@@ -58044,7 +58044,7 @@ var init_mentorship_profiles = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     mentorshipProfilesTable = pgTable("mentorship_profiles", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull().unique(),
       fullName: varchar("full_name", { length: 100 }).notNull(),
       bio: text("bio"),
@@ -58083,7 +58083,7 @@ var init_notifications = __esm({
     notificationsTable = pgTable(
       "notifications",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id").notNull(),
         type: varchar("type", {
           enum: ["system", "review", "safety", "community", "promo", "events", "knowledge", "travel", "health", "marketplace", "journey", "challenge", "business"]
@@ -58102,9 +58102,9 @@ var init_notifications = __esm({
       ]
     );
     notificationPreferencesTable = pgTable("notification_preferences", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull().unique(),
-      topics: text("topics").array().notNull().default(sql2`ARRAY['community','safety','events','business']::text[]`),
+      topics: text("topics").array().notNull().default(sql`ARRAY['community','safety','events','business']::text[]`),
       pushEnabled: boolean("push_enabled").notNull().default(true),
       emailEnabled: boolean("email_enabled").notNull().default(false),
       updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => /* @__PURE__ */ new Date())
@@ -58120,7 +58120,7 @@ var init_travel = __esm({
     init_pg_core();
     init_drizzle_orm();
     travelFlights = pgTable("travel_flights", {
-      id: varchar("id", { length: 36 }).primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 255 }).notNull(),
       flightNumber: varchar("flight_number", { length: 20 }).notNull(),
       airline: varchar("airline", { length: 100 }),
@@ -58247,7 +58247,7 @@ var init_family_safety = __esm({
       allowYoungAdult: boolean("allow_young_adult").notNull().default(true),
       allowAdult: boolean("allow_adult").notNull().default(true),
       familyModeEnabled: boolean("family_mode_enabled").notNull().default(false),
-      updatedAt: timestamp("updated_at").notNull().default(sql2`now()`)
+      updatedAt: timestamp("updated_at").notNull().default(sql`now()`)
     });
     contentFilterViolationsTable = pgTable("content_filter_violations", {
       id: serial("id").primaryKey(),
@@ -58471,7 +58471,7 @@ var init_space_reports = __esm({
     init_drizzle_orm();
     init_pg_core();
     spaceReportsTable = pgTable("space_reports", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       reporterId: varchar("reporter_id"),
       spaceName: varchar("space_name", { length: 200 }).notNull(),
       address: varchar("address", { length: 300 }),
@@ -58530,7 +58530,7 @@ var init_community_spaces = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     communitySpaceListingsTable = pgTable("community_space_listings", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       postedById: varchar("posted_by_id").notNull(),
       postedByName: varchar("posted_by_name", { length: 200 }),
       title: varchar("title", { length: 255 }).notNull(),
@@ -58569,7 +58569,7 @@ var init_saved_community_locations = __esm({
     init_pg_core();
     init_drizzle_orm();
     savedCommunityLocationsTable = pgTable("saved_community_locations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       label: varchar("label", { length: 100 }).notNull(),
       locationType: varchar("loc_type", { length: 20 }).notNull().default("geographic"),
@@ -58592,7 +58592,7 @@ var init_purchase_disputes = __esm({
     init_pg_core();
     init_drizzle_orm();
     purchaseDisputesTable = pgTable("purchase_disputes", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       businessId: varchar("business_id").notNull(),
       listingId: varchar("listing_id"),
@@ -58619,7 +58619,7 @@ var init_docusign_envelopes = __esm({
     init_drizzle_orm();
     init_pg_core();
     docusignEnvelopesTable = pgTable("docusign_envelopes", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       envelopeId: varchar("envelope_id").notNull().unique(),
       businessId: varchar("business_id"),
       userId: varchar("user_id"),
@@ -58643,7 +58643,7 @@ var init_business_promotions = __esm({
     init_drizzle_orm();
     init_pg_core();
     businessPromotionsTable = pgTable("business_promotions", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       type: varchar("type", {
         enum: [
@@ -58694,7 +58694,7 @@ var init_business_recommendations = __esm({
     init_pg_core();
     init_drizzle_orm();
     businessRecommendationsTable = pgTable("business_recommendations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       recommenderUserId: varchar("recommender_user_id"),
       recommenderEmail: varchar("recommender_email", { length: 255 }),
       businessName: varchar("business_name", { length: 255 }).notNull(),
@@ -58719,7 +58719,7 @@ var init_community_requests = __esm({
     init_pg_core();
     init_drizzle_orm();
     communityRequestsTable = pgTable("community_requests", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       title: text("title").notNull(),
       category: varchar("category", { length: 100 }).notNull(),
@@ -58732,7 +58732,7 @@ var init_community_requests = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     helpOffersTable = pgTable("help_offers", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       requestId: varchar("request_id").notNull(),
       userId: varchar("user_id").notNull(),
       offerTypes: json("offer_types").$type().notNull().default([]),
@@ -58740,7 +58740,7 @@ var init_community_requests = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     requestUpvotesTable = pgTable("request_upvotes", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       requestId: varchar("request_id").notNull(),
       userId: varchar("user_id").notNull(),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -58774,7 +58774,7 @@ var init_user_achievements = __esm({
       challenge_streak_3: { title: "On Fire", icon: "\u{1F525}", desc: "Completed 3 challenges in a row" }
     };
     userAchievementsTable = pgTable("user_achievements", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       achievementType: varchar("achievement_type", { length: 60 }).notNull(),
       metadata: json("metadata").$type(),
@@ -58805,14 +58805,14 @@ var init_community_says = __esm({
       { id: "culturally_rich", label: "Culturally Rich", emoji: "\u{1F3A8}" }
     ];
     communitySaysTable = pgTable("community_says", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       userId: varchar("user_id").notNull(),
       tag: varchar("tag", { length: 60 }).notNull(),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     loveNotesTable = pgTable("love_notes", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       userId: varchar("user_id").notNull(),
       note: text("note").notNull(),
@@ -58831,7 +58831,7 @@ var init_community_challenges = __esm({
     init_pg_core();
     init_drizzle_orm();
     communityChallengesTable = pgTable("community_challenges", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       title: text("title").notNull(),
       description: text("description").notNull(),
       icon: varchar("icon", { length: 10 }).notNull().default("\u{1F3C6}"),
@@ -58845,7 +58845,7 @@ var init_community_challenges = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     challengeProgressTable = pgTable("challenge_progress", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       challengeId: varchar("challenge_id").notNull(),
       progress: integer("progress").notNull().default(0),
@@ -58977,7 +58977,7 @@ var init_business_nominations = __esm({
     init_auth();
     init_businesses();
     businessNominationsTable = pgTable("business_nominations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       nominatedByUserId: varchar("nominated_by_user_id").references(() => usersTable.id, { onDelete: "set null" }),
       nominatorEmail: varchar("nominator_email", { length: 255 }),
       businessName: varchar("business_name", { length: 255 }).notNull(),
@@ -59034,7 +59034,7 @@ var init_hidden_gem_nominations = __esm({
     hiddenGemNominationsTable = pgTable(
       "hidden_gem_nominations",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id").references(() => usersTable.id, { onDelete: "cascade" }).notNull(),
         businessId: varchar("business_id").references(() => businessesTable.id, { onDelete: "cascade" }).notNull(),
         reason: varchar("reason", { length: 50 }).notNull(),
@@ -59059,7 +59059,7 @@ var init_saved_jobs = __esm({
     savedJobsTable = pgTable(
       "saved_jobs",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id").references(() => usersTable.id, { onDelete: "cascade" }).notNull(),
         jobId: varchar("job_id").references(() => jobListingsTable.id, { onDelete: "cascade" }).notNull(),
         createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
@@ -59348,7 +59348,7 @@ var init_marketplace_fees = __esm({
     init_pg_core();
     init_drizzle_orm();
     marketplaceFeeConfigTable = pgTable("marketplace_fee_config", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       tier: varchar("tier", { length: 20 }).notNull().unique(),
       // community | growth | premium
       tierLabel: varchar("tier_label", { length: 50 }).notNull(),
@@ -59374,7 +59374,7 @@ var init_identity_verifications = __esm({
     init_drizzle_orm();
     init_pg_core();
     identityVerificationsTable = pgTable("identity_verifications", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       status: varchar("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
       adminNotes: text("admin_notes"),
@@ -59396,7 +59396,7 @@ var init_review_helpful_votes = __esm({
     reviewHelpfulVotesTable = pgTable(
       "review_helpful_votes",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         reviewId: varchar("review_id").notNull(),
         userId: varchar("user_id").notNull(),
         createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
@@ -59414,7 +59414,7 @@ var init_life_journeys = __esm({
     init_drizzle_orm();
     init_pg_core();
     lifeJourneysTable = pgTable("life_journeys", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       journeyType: varchar("journey_type", {
         enum: ["moving", "new-baby", "career-change", "new-to-city", "retirement", "getting-married", "starting-business", "college"]
@@ -59423,7 +59423,7 @@ var init_life_journeys = __esm({
       city: varchar("city", { length: 100 }),
       state: varchar("state", { length: 100 }),
       status: varchar("status", { enum: ["active", "paused", "completed"] }).notNull().default("active"),
-      phases: jsonb("phases").$type().notNull().default(sql2`'[]'::jsonb`),
+      phases: jsonb("phases").$type().notNull().default(sql`'[]'::jsonb`),
       aiContext: varchar("ai_context", { length: 2e3 }),
       kinfolkSessionId: varchar("kinfolk_session_id"),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -59442,7 +59442,7 @@ var init_entity_connections = __esm({
     entityConnectionsTable = pgTable(
       "entity_connections",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         fromId: varchar("from_id").notNull(),
         fromType: varchar("from_type", {
           enum: ["business", "event", "creator", "neighborhood", "community_group", "user"]
@@ -59475,7 +59475,7 @@ var init_community_signals = __esm({
     communitySignalsTable = pgTable(
       "community_signals",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id"),
         entityId: varchar("entity_id").notNull(),
         entityType: varchar("entity_type", {
@@ -59507,7 +59507,7 @@ var init_knowledge_channels = __esm({
     init_drizzle_orm();
     init_pg_core();
     knowledgeChannelsTable = pgTable("knowledge_channels", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       slug: varchar("slug", { length: 80 }).notNull().unique(),
       label: varchar("label", { length: 100 }).notNull(),
       icon: varchar("icon", { length: 10 }).notNull(),
@@ -59520,7 +59520,7 @@ var init_knowledge_channels = __esm({
     channelFollowsTable = pgTable(
       "channel_follows",
       {
-        id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+        id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
         userId: varchar("user_id").notNull(),
         channelSlug: varchar("channel_slug", { length: 80 }).notNull(),
         createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
@@ -59538,7 +59538,7 @@ var init_business_captions = __esm({
     init_pg_core();
     init_drizzle_orm();
     businessCaptionsTable = pgTable("business_captions", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id", { length: 255 }).notNull(),
       userId: varchar("user_id", { length: 255 }),
       caption: varchar("caption", { length: 255 }).notNull(),
@@ -59629,14 +59629,14 @@ var init_community_appreciations = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     communityAppreciationsTable = pgTable("community_appreciations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       reviewId: varchar("review_id"),
       businessId: varchar("business_id").notNull(),
       businessName: varchar("business_name", { length: 255 }),
       userId: varchar("user_id"),
       sharePreference: varchar("share_preference", { length: 20 }).notNull().default("private"),
-      recognitionTags: text("recognition_tags").array().default(sql2`ARRAY[]::text[]`),
-      encouragementTags: text("encouragement_tags").array().default(sql2`ARRAY[]::text[]`),
+      recognitionTags: text("recognition_tags").array().default(sql`ARRAY[]::text[]`),
+      encouragementTags: text("encouragement_tags").array().default(sql`ARRAY[]::text[]`),
       commentOption: varchar("comment_option", { length: 20 }),
       reviewText: text("review_text"),
       appreciationNote: text("appreciation_note"),
@@ -59681,7 +59681,7 @@ var init_business_badges = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessBadgesTable = pgTable("business_badges", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id").notNull(),
       badgeId: varchar("badge_id", { length: 50 }).notNull(),
       appreciationCount: integer("appreciation_count").notNull().default(1),
@@ -59832,7 +59832,7 @@ var init_business_insight_surveys = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessInsightSurveysTable = pgTable("business_insight_surveys", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       businessId: varchar("business_id"),
       businessName: varchar("business_name", { length: 255 }).notNull(),
       businessCity: varchar("business_city", { length: 100 }),
@@ -59893,7 +59893,7 @@ var init_creator_profiles = __esm({
       state: varchar("state", { length: 50 }),
       isPublic: boolean("is_public").notNull().default(true),
       isPremier: boolean("is_premier").notNull().default(false),
-      coveredLocations: jsonb("covered_locations").$type().notNull().default(sql2`'[]'::jsonb`),
+      coveredLocations: jsonb("covered_locations").$type().notNull().default(sql`'[]'::jsonb`),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
       updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => /* @__PURE__ */ new Date())
     });
@@ -59947,7 +59947,7 @@ var init_social_invites = __esm({
     init_pg_core();
     init_drizzle_orm();
     socialInvitesTable = pgTable("social_invites", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       platform: varchar("platform", { length: 30 }).notNull(),
       handleOrUrl: varchar("handle_or_url", { length: 500 }).notNull(),
       name: varchar("name", { length: 200 }),
@@ -59985,7 +59985,7 @@ var init_global_recommendations = __esm({
     init_auth();
     init_businesses();
     globalRecommendationsTable = pgTable("global_recommendations", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").references(() => usersTable.id, { onDelete: "set null" }),
       businessId: varchar("business_id").references(() => businessesTable.id, { onDelete: "set null" }),
       country: varchar("country", { length: 100 }).notNull(),
@@ -60014,7 +60014,7 @@ var init_collections = __esm({
     init_drizzle_orm();
     init_auth();
     collectionsTable = pgTable("collections", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       title: varchar("title", { length: 200 }).notNull(),
       description: text("description"),
@@ -60027,7 +60027,7 @@ var init_collections = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     collectionItemsTable = pgTable("collection_items", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       collectionId: varchar("collection_id", { length: 100 }).notNull().references(() => collectionsTable.id, { onDelete: "cascade" }),
       itemType: varchar("item_type", { length: 30 }).notNull(),
       itemId: varchar("item_id", { length: 100 }).notNull(),
@@ -60040,7 +60040,7 @@ var init_collections = __esm({
       uniqueIndex("collection_items_unique").on(table.collectionId, table.itemType, table.itemId)
     ]);
     collectionFollowsTable = pgTable("collection_follows", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       collectionId: varchar("collection_id", { length: 100 }).notNull().references(() => collectionsTable.id, { onDelete: "cascade" }),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -60059,7 +60059,7 @@ var init_roadmaps = __esm({
     init_drizzle_orm();
     init_auth();
     roadmapsTable = pgTable("roadmaps", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
       title: varchar("title", { length: 300 }).notNull(),
       description: text("description"),
@@ -60075,7 +60075,7 @@ var init_roadmaps = __esm({
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
     roadmapStepsTable = pgTable("roadmap_steps", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       roadmapId: varchar("roadmap_id", { length: 100 }).notNull().references(() => roadmapsTable.id, { onDelete: "cascade" }),
       category: varchar("category", { length: 100 }).notNull(),
       categoryEmoji: varchar("category_emoji", { length: 10 }).notNull().default("\u{1F4CB}"),
@@ -60100,7 +60100,7 @@ var init_guides = __esm({
     init_pg_core();
     init_drizzle_orm();
     payItForwardGuidesTable = pgTable("pay_it_forward_guides", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       title: varchar("title", { length: 200 }).notNull(),
       personalStory: text("personal_story"),
@@ -60118,7 +60118,7 @@ var init_guides = __esm({
       updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow()
     });
     guideSectionsTable = pgTable("guide_sections", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       guideId: varchar("guide_id", { length: 100 }).notNull(),
       title: varchar("title", { length: 150 }).notNull(),
       sectionEmoji: varchar("section_emoji", { length: 10 }).notNull().default("\u{1F4CC}"),
@@ -60126,7 +60126,7 @@ var init_guides = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     guideItemsTable = pgTable("guide_items", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       guideId: varchar("guide_id", { length: 100 }).notNull(),
       sectionId: varchar("section_id", { length: 100 }).notNull(),
       itemType: varchar("item_type", { length: 30 }).notNull().default("tip"),
@@ -60139,7 +60139,7 @@ var init_guides = __esm({
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
     });
     guideFollowsTable = pgTable("guide_follows", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id", { length: 100 }).notNull(),
       guideId: varchar("guide_id", { length: 100 }).notNull(),
       createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow()
@@ -60588,7 +60588,7 @@ var init_community_places = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     communityPlacesTable = pgTable("community_places", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       name: varchar("name", { length: 200 }).notNull(),
       venueName: varchar("venue_name", { length: 200 }),
       category: varchar("category", { length: 50 }).notNull().default("general"),
@@ -60618,7 +60618,7 @@ var init_business_owner_links = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     businessOwnerLinksTable = pgTable("business_owner_links", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       userId: varchar("user_id").notNull(),
       businessId: varchar("business_id").notNull(),
       role: varchar("role", { length: 20 }).notNull().default("owner"),
@@ -60692,10 +60692,10 @@ var init_membership_family = __esm({
       circleId: varchar("circle_id", { length: 255 }).notNull(),
       yearMonth: varchar("year_month", { length: 7 }).notNull(),
       requestsUsed: integer("requests_used").notNull().default(0),
-      updatedAt: timestamp("updated_at").notNull().default(sql2`now()`)
+      updatedAt: timestamp("updated_at").notNull().default(sql`now()`)
     });
     familyAddOnSeatsTable = pgTable("family_add_on_seats", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       ownerId: varchar("owner_id", { length: 255 }).notNull(),
       stripeSubscriptionItemId: varchar("stripe_subscription_item_id", { length: 255 }),
       stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
@@ -60716,7 +60716,7 @@ var init_cultural_sites = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     culturalSitesTable = pgTable("cultural_sites", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       name: varchar("name", { length: 255 }).notNull(),
       description: text("description").notNull(),
       category: varchar("category", { length: 100 }).notNull().default("Heritage"),
@@ -60756,7 +60756,7 @@ var init_heritage_stories = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     heritageStoriesTable = pgTable("heritage_stories", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       siteId: varchar("site_id", { length: 255 }).notNull(),
       userId: varchar("user_id", { length: 255 }),
       authorName: varchar("author_name", { length: 100 }),
@@ -60785,7 +60785,7 @@ var init_heritage_support_links = __esm({
     init_drizzle_orm();
     init_drizzle_zod();
     heritageSupportLinksTable = pgTable("heritage_support_links", {
-      id: varchar("id").primaryKey().default(sql2`gen_random_uuid()`),
+      id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
       siteId: varchar("site_id", { length: 255 }).notNull(),
       title: varchar("title", { length: 255 }).notNull(),
       description: text("description"),
@@ -61356,7 +61356,7 @@ function initPoolInstrumentation(pool4, getRealPool) {
   const origQuery = pool4.query.bind(pool4);
   pool4.query = (...args) => {
     const start = Date.now();
-    const sql12 = extractSql(args);
+    const sql11 = extractSql(args);
     const caller = callerFrame();
     const promise2 = origQuery(...args);
     promise2.then(() => {
@@ -61365,14 +61365,14 @@ function initPoolInstrumentation(pool4, getRealPool) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: ms3 >= SLOW_QUERY_MS ? "slow" : "query",
         ms: ms3,
-        sql: sql12,
+        sql: sql11,
         caller,
         pool: poolSnapshot(pool4)
       };
       push(ev);
       if (ms3 >= SLOW_QUERY_MS) {
         console.warn(
-          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql12, caller, pool: ev.pool })
+          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql11, caller, pool: ev.pool })
         );
       }
     }).catch(() => {
@@ -61380,7 +61380,7 @@ function initPoolInstrumentation(pool4, getRealPool) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: "error",
         ms: Date.now() - start,
-        sql: sql12,
+        sql: sql11,
         caller,
         pool: poolSnapshot(pool4),
         detail: "query rejected"
@@ -112870,7 +112870,7 @@ var init_storage = __esm({
         return user;
       }
       async getFoundingMemberCount() {
-        const [row] = await db.select({ count: sql2`count(*)::int` }).from(usersTable).where(eq(usersTable.memberType, "founding"));
+        const [row] = await db.select({ count: sql`count(*)::int` }).from(usersTable).where(eq(usersTable.memberType, "founding"));
         return row?.count ?? 0;
       }
       async getProduct(productId) {
@@ -375728,13 +375728,13 @@ var require_yesql = __commonJS({
             sqls[sqls.length - 1] += "\n\n" + lines;
           }
           return sqls;
-        }, []).forEach((sql12) => {
-          if (sql12.trim().startsWith("--")) {
-            const sqlName = sql12.split("\n")[0].trim().substring(2).trim();
+        }, []).forEach((sql11) => {
+          if (sql11.trim().startsWith("--")) {
+            const sqlName = sql11.split("\n")[0].trim().substring(2).trim();
             if (acc[sqlName]) {
               throw new Error('Duplicate SQL query name "' + sqlName + '" found, please rename other one.');
             }
-            acc[sqlName] = options.type ? module.exports[options.type](sql12, options) : sql12;
+            acc[sqlName] = options.type ? module.exports[options.type](sql11, options) : sql11;
           }
         });
         return acc;
@@ -375779,7 +375779,7 @@ var require_yesql = __commonJS({
     var mysql = (query, options = {}) => {
       return (data = {}) => {
         const values = [];
-        const sql12 = query.split(matchQuoted).map((part) => {
+        const sql11 = query.split(matchQuoted).map((part) => {
           if (!part || matchQuoted.test(part)) {
             return part;
           } else {
@@ -375805,7 +375805,7 @@ var require_yesql = __commonJS({
           }
         }).join("").trim();
         return {
-          sql: sql12,
+          sql: sql11,
           values
         };
       };
@@ -376092,15 +376092,15 @@ var require_migration_file = __commonJS({
       try {
         const { id: id2, name: name3, type: type2 } = file_name_parser_1.parseFileName(fileName);
         const contents = await getFileContents(filePath);
-        const sql12 = getSqlStringLiteral(filePath, contents, type2);
-        const hash2 = hashString(fileName + sql12);
+        const sql11 = getSqlStringLiteral(filePath, contents, type2);
+        const hash2 = hashString(fileName + sql11);
         return {
           id: id2,
           name: name3,
           contents,
           fileName,
           hash: hash2,
-          sql: sql12
+          sql: sql11
         };
       } catch (err) {
         throw new Error(`${err.message} - Offending file: '${fileName}'.`);
@@ -376184,8 +376184,8 @@ var require_run_migration = __commonJS({
     };
     var insertMigration = async (migrationTableName = "migrations", migrationSchemaName = "public", client, migration, log2) => {
       log2(`Saving migration to '${migrationSchemaName}.${migrationTableName}': ${migration.id} | ${migration.name} | ${migration.hash}`);
-      const sql12 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
-      return client.query(sql12);
+      const sql11 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
+      return client.query(sql11);
     };
     var runMigration = (migrationTableName = "migrations", migrationSchemaName = "public", client, log2 = noop2) => async (migration) => {
       const inTransaction = migration.sql.includes("-- postgres-migrations disable-transaction") === false;
@@ -399263,7 +399263,7 @@ router4.get("/businesses", async (req, res) => {
           conditions.push(eq(businessesTable.blackOwned, true));
         } else {
           conditions.push(
-            sql2`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
+            sql`${businessesTable.ownershipDesignations} @> ${JSON.stringify([ownership])}::jsonb`
           );
         }
       }
@@ -399402,7 +399402,7 @@ router4.post("/businesses/search-inquiry", async (req, res) => {
 });
 router4.get("/businesses/founding/stats", async (req, res) => {
   try {
-    const [row] = await db.select({ count: sql2`count(*)::int` }).from(businessesTable).where(eq(businessesTable.foundingBusiness, true));
+    const [row] = await db.select({ count: sql`count(*)::int` }).from(businessesTable).where(eq(businessesTable.foundingBusiness, true));
     const count3 = row?.count ?? 0;
     const spots = 500;
     res.json({ count: count3, spots, remaining: Math.max(0, spots - count3), isFull: count3 >= spots });
@@ -399549,7 +399549,7 @@ router4.get("/admin/businesses/pending-photos", async (req, res) => {
     return;
   }
   try {
-    const businesses = await db.select({ id: businessesTable.id, name: businessesTable.name, pendingPhotos: businessesTable.pendingPhotos, blackOwned: businessesTable.blackOwned }).from(businessesTable).where(sql2`jsonb_array_length(pending_photos) > 0`);
+    const businesses = await db.select({ id: businessesTable.id, name: businessesTable.name, pendingPhotos: businessesTable.pendingPhotos, blackOwned: businessesTable.blackOwned }).from(businessesTable).where(sql`jsonb_array_length(pending_photos) > 0`);
     res.json({ businesses });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch pending photos");
@@ -400201,18 +400201,18 @@ router4.get("/businesses/:id/reference-analytics", async (req, res) => {
     }).from(referenceLinkClicksTable).where(
       and(
         eq(referenceLinkClicksTable.businessId, id2),
-        sql2`${referenceLinkClicksTable.referrerUserId} IS NOT NULL`
+        sql`${referenceLinkClicksTable.referrerUserId} IS NOT NULL`
       )
     ).groupBy(referenceLinkClicksTable.referrerUserId).orderBy(desc(count())).limit(5);
     const dailyTrend = await db.select({
-      day: sql2`DATE(${referenceLinkClicksTable.clickedAt})`.as("day"),
+      day: sql`DATE(${referenceLinkClicksTable.clickedAt})`.as("day"),
       total: count()
     }).from(referenceLinkClicksTable).where(
       and(
         eq(referenceLinkClicksTable.businessId, id2),
-        gt(referenceLinkClicksTable.clickedAt, sql2`NOW() - INTERVAL '30 days'`)
+        gt(referenceLinkClicksTable.clickedAt, sql`NOW() - INTERVAL '30 days'`)
       )
-    ).groupBy(sql2`DATE(${referenceLinkClicksTable.clickedAt})`).orderBy(sql2`DATE(${referenceLinkClicksTable.clickedAt})`);
+    ).groupBy(sql`DATE(${referenceLinkClicksTable.clickedAt})`).orderBy(sql`DATE(${referenceLinkClicksTable.clickedAt})`);
     res.json({
       totalViews: viewsRow?.total ?? 0,
       totalLinkClicks: clicksRow?.total ?? 0,
@@ -400350,7 +400350,7 @@ router4.patch("/admin/businesses/:id/founding-status", async (req, res) => {
     }
     let foundingNumber = null;
     if (founding) {
-      const [maxRow] = await db.select({ max: sql2`coalesce(max(founding_number), 0)::int` }).from(businessesTable);
+      const [maxRow] = await db.select({ max: sql`coalesce(max(founding_number), 0)::int` }).from(businessesTable);
       foundingNumber = (maxRow?.max ?? 0) + 1;
     }
     const [biz] = await db.update(businessesTable).set({
@@ -411867,8 +411867,8 @@ router11.get("/reviews/thumbs-up", async (req, res) => {
   try {
     const alerts = await db.select({
       businessName: businessesTable.name,
-      thumbsUpCount: sql2`count(*)::int`
-    }).from(reviewsTable).innerJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id)).innerJoin(usersTable, eq(reviewsTable.userId, usersTable.id)).where(and(eq(reviewsTable.wouldReturnAlone, true), eq(usersTable.approved, true))).groupBy(businessesTable.id, businessesTable.name).having(sql2`count(*) >= 3`).orderBy(sql2`count(*) desc`).limit(200);
+      thumbsUpCount: sql`count(*)::int`
+    }).from(reviewsTable).innerJoin(businessesTable, eq(reviewsTable.businessId, businessesTable.id)).innerJoin(usersTable, eq(reviewsTable.userId, usersTable.id)).where(and(eq(reviewsTable.wouldReturnAlone, true), eq(usersTable.approved, true))).groupBy(businessesTable.id, businessesTable.name).having(sql`count(*) >= 3`).orderBy(sql`count(*) desc`).limit(200);
     res.json({ alerts });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch thumbs-up alerts");
@@ -412031,7 +412031,7 @@ router11.post("/reviews", reviewLimiter, requireTrust, async (req, res) => {
   let riskResult = { score: 0, level: "low", reasons: [], verificationBadge: null };
   if (isMinorityOwned && typeof text5 === "string" && text5.trim().length > 0) {
     const [userRow2] = await db.select({ createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
-    const [countRow] = await db.select({ cnt: sql2`COUNT(*)` }).from(reviewsTable).where(eq(reviewsTable.userId, req.user.id));
+    const [countRow] = await db.select({ cnt: sql`COUNT(*)` }).from(reviewsTable).where(eq(reviewsTable.userId, req.user.id));
     const accountAgeDays = userRow2?.createdAt ? (Date.now() - new Date(userRow2.createdAt).getTime()) / 864e5 : 0;
     const priorReviewCount = parseInt(countRow?.cnt ?? "0", 10);
     riskResult = scoreReview({ text: text5.trim(), rating: ratingNum, accountAgeDays, priorReviewCount });
@@ -412123,8 +412123,8 @@ router11.post("/reviews", reviewLimiter, requireTrust, async (req, res) => {
     }
     const [biz] = await db.select({ submittedById: businessesTable.submittedById, name: businessesTable.name, rating: businessesTable.rating }).from(businessesTable).where(eq(businessesTable.id, businessId)).limit(1);
     const [aggRow] = await db.select({
-      avg: sql2`AVG(${reviewsTable.rating})`,
-      count: sql2`COUNT(*)`
+      avg: sql`AVG(${reviewsTable.rating})`,
+      count: sql`COUNT(*)`
     }).from(reviewsTable).where(eq(reviewsTable.businessId, businessId));
     if (aggRow) {
       const newAvg = parseFloat(aggRow.avg ?? "0");
@@ -412575,8 +412575,8 @@ async function upsertHashtags(tags) {
     await db.insert(hashtagsTable).values({ tag: bare, postCount: 1, weeklyPostCount: 1, lastPostAt: /* @__PURE__ */ new Date() }).onConflictDoUpdate({
       target: hashtagsTable.tag,
       set: {
-        postCount: sql2`${hashtagsTable.postCount} + 1`,
-        weeklyPostCount: sql2`${hashtagsTable.weeklyPostCount} + 1`,
+        postCount: sql`${hashtagsTable.postCount} + 1`,
+        weeklyPostCount: sql`${hashtagsTable.weeklyPostCount} + 1`,
         lastPostAt: /* @__PURE__ */ new Date()
       }
     });
@@ -413033,7 +413033,7 @@ router17.post("/community/posts", async (req, res) => {
         const existing = await db.select({ id: communityPlacesTable.id }).from(communityPlacesTable).where(eq(communityPlacesTable.name, locationTag.trim())).limit(1);
         if (existing[0]) {
           resolvedPlaceId = existing[0].id;
-          await db.update(communityPlacesTable).set({ postCount: sql2`${communityPlacesTable.postCount} + 1` }).where(eq(communityPlacesTable.id, existing[0].id));
+          await db.update(communityPlacesTable).set({ postCount: sql`${communityPlacesTable.postCount} + 1` }).where(eq(communityPlacesTable.id, existing[0].id));
         } else {
           const [newPlace] = await db.insert(communityPlacesTable).values({
             name: locationTag.trim(),
@@ -413065,7 +413065,7 @@ router17.post("/community/posts", async (req, res) => {
         const startOfMonth = /* @__PURE__ */ new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
-        const [{ count: count3 }] = await db.select({ count: sql2`count(*)::int` }).from(communityPostsTable).where(and(eq(communityPostsTable.authorId, req.user.id), gte(communityPostsTable.createdAt, startOfMonth)));
+        const [{ count: count3 }] = await db.select({ count: sql`count(*)::int` }).from(communityPostsTable).where(and(eq(communityPostsTable.authorId, req.user.id), gte(communityPostsTable.createdAt, startOfMonth)));
         if (count3 >= 5) {
           res.status(403).json({
             error: "Community Members can post up to 5 times per month. Upgrade to Explorer+ for unlimited posts.",
@@ -413096,7 +413096,7 @@ router17.post("/community/posts", async (req, res) => {
     const [userRow] = await db.select({ createdAt: usersTable.createdAt, memberType: usersTable.memberType, trustLevel: usersTable.trustLevel }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
     const accountCreatedAt = userRow?.createdAt ? new Date(userRow.createdAt) : /* @__PURE__ */ new Date();
     const accountAgeDays = (Date.now() - accountCreatedAt.getTime()) / (1e3 * 60 * 60 * 24);
-    const [totalPostsRow] = await db.select({ count: sql2`count(*)::int` }).from(communityPostsTable).where(eq(communityPostsTable.authorId, req.user.id));
+    const [totalPostsRow] = await db.select({ count: sql`count(*)::int` }).from(communityPostsTable).where(eq(communityPostsTable.authorId, req.user.id));
     const totalPosts = totalPostsRow?.count ?? 0;
     const isNewMember = accountAgeDays < 30 && totalPosts < 5;
     const TRUSTED_MEMBER_TYPES = ["navigator", "trailblazer", "legacy_member", "founding", "community_builder"];
@@ -413241,7 +413241,7 @@ router17.post("/community/posts", async (req, res) => {
       resolvedBusinessBlackOwned === null && (!!providedBusinessName || !!businessLink);
       const searchCity = resolvedBusinessCity ?? locationTag ?? null;
       if (isNonMinority && searchCity) {
-        const whereClause = resolvedBusinessCategory ? and(eq(businessesTable.blackOwned, true), sql2`lower(${businessesTable.city}) = lower(${searchCity})`, eq(businessesTable.category, resolvedBusinessCategory)) : and(eq(businessesTable.blackOwned, true), sql2`lower(${businessesTable.city}) = lower(${searchCity})`);
+        const whereClause = resolvedBusinessCategory ? and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`, eq(businessesTable.category, resolvedBusinessCategory)) : and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`);
         const alts = await db.select({
           id: businessesTable.id,
           name: businessesTable.name,
@@ -413250,7 +413250,7 @@ router17.post("/community/posts", async (req, res) => {
           rating: businessesTable.rating,
           imageUrl: businessesTable.imageUrl,
           description: businessesTable.description
-        }).from(businessesTable).where(whereClause).orderBy(sql2`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`).limit(3);
+        }).from(businessesTable).where(whereClause).orderBy(sql`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`).limit(3);
         if (alts.length === 0 && resolvedBusinessCategory) {
           const fallback = await db.select({
             id: businessesTable.id,
@@ -413260,7 +413260,7 @@ router17.post("/community/posts", async (req, res) => {
             rating: businessesTable.rating,
             imageUrl: businessesTable.imageUrl,
             description: businessesTable.description
-          }).from(businessesTable).where(and(eq(businessesTable.blackOwned, true), sql2`lower(${businessesTable.city}) = lower(${searchCity})`)).orderBy(sql2`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`).limit(3);
+          }).from(businessesTable).where(and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`)).orderBy(sql`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`).limit(3);
           kinfolkSuggestions = fallback;
         } else {
           kinfolkSuggestions = alts;
@@ -413390,7 +413390,7 @@ router17.post("/community/posts/:id/vote", async (req, res) => {
       return;
     }
     const col = direction === "up" ? communityPostsTable.upvotes : communityPostsTable.downvotes;
-    const [post] = await db.update(communityPostsTable).set({ [direction === "up" ? "upvotes" : "downvotes"]: sql2`${col} + 1` }).where(eq(communityPostsTable.id, id2)).returning();
+    const [post] = await db.update(communityPostsTable).set({ [direction === "up" ? "upvotes" : "downvotes"]: sql`${col} + 1` }).where(eq(communityPostsTable.id, id2)).returning();
     if (!post) {
       res.status(404).json({ error: "Post not found" });
       return;
@@ -413440,7 +413440,7 @@ router17.post("/community/posts/:id/comments", async (req, res) => {
     const { name: name3, initials, color } = await resolveAuthorInfo(req.user.id);
     const [[comment], [updatedPost]] = await Promise.all([
       db.insert(communityPostCommentsTable).values({ postId, authorId: req.user.id, authorName: name3, authorInitials: initials, authorColor: color, content: content.trim() }).returning(),
-      db.update(communityPostsTable).set({ commentsCount: sql2`${communityPostsTable.commentsCount} + 1` }).where(eq(communityPostsTable.id, postId)).returning({ authorId: communityPostsTable.authorId })
+      db.update(communityPostsTable).set({ commentsCount: sql`${communityPostsTable.commentsCount} + 1` }).where(eq(communityPostsTable.id, postId)).returning({ authorId: communityPostsTable.authorId })
     ]);
     if (updatedPost?.authorId && updatedPost.authorId !== req.user.id) {
       const preview = content.trim().length > 60 ? content.trim().slice(0, 60) + "\u2026" : content.trim();
@@ -413666,7 +413666,7 @@ router18.get("/users/search", async (req, res) => {
 router18.get("/conversations", async (req, res) => {
   try {
     if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
-    const convs = await db.select().from(conversations).where(sql2`${conversations.participantIds}::jsonb @> ${JSON.stringify([req.user.id])}::jsonb`).orderBy(desc(conversations.lastMessageAt)).limit(50);
+    const convs = await db.select().from(conversations).where(sql`${conversations.participantIds}::jsonb @> ${JSON.stringify([req.user.id])}::jsonb`).orderBy(desc(conversations.lastMessageAt)).limit(50);
     res.json({ conversations: convs });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch conversations");
@@ -413681,7 +413681,7 @@ router18.post("/conversations", async (req, res) => {
     const participantIds = [req.user.id, ...participantId ? [participantId] : []];
     if (convType === "dm" && participantId) {
       const existing = await db.select().from(conversations).where(
-        sql2`${conversations.type} = 'dm'
+        sql`${conversations.type} = 'dm'
             AND ${conversations.participantIds}::jsonb @> ${JSON.stringify([req.user.id])}::jsonb
             AND ${conversations.participantIds}::jsonb @> ${JSON.stringify([participantId])}::jsonb`
       ).limit(1);
@@ -415761,7 +415761,7 @@ async function runWeeklyNudge() {
     and(
       eq(waitlistTable.status, "pending"),
       isNotNull(waitlistTable.referralCode),
-      sql2`(${waitlistTable.lastNudgeSentAt} IS NULL OR ${waitlistTable.lastNudgeSentAt} < ${sixDaysAgo})`
+      sql`(${waitlistTable.lastNudgeSentAt} IS NULL OR ${waitlistTable.lastNudgeSentAt} < ${sixDaysAgo})`
     )
   ).orderBy(waitlistTable.createdAt);
   const [{ newSignupsThisWeek }] = await db.select({ newSignupsThisWeek: count() }).from(waitlistTable).where(gte(waitlistTable.createdAt, oneWeekAgo));
@@ -417149,7 +417149,7 @@ router21.post("/events", async (req, res) => {
       const startOfMonth = /* @__PURE__ */ new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-      const [{ count: count3 }] = await db.select({ count: sql2`count(*)::int` }).from(eventsTable).where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
+      const [{ count: count3 }] = await db.select({ count: sql`count(*)::int` }).from(eventsTable).where(and(eq(eventsTable.createdById, req.user.id), gte(eventsTable.createdAt, startOfMonth)));
       if (count3 >= 3) {
         res.status(403).json({
           error: "Explorer+ members can host up to 3 events per month. Upgrade to Navigator for unlimited events.",
@@ -417529,9 +417529,9 @@ router22.patch("/users/me/privacy", async (req, res) => {
       const pending = await db.select({ id: userFollowsTable.id, followerId: userFollowsTable.followerId }).from(userFollowsTable).where(and(eq(userFollowsTable.followingId, req.user.id), eq(userFollowsTable.status, "pending")));
       if (pending.length > 0) {
         await db.update(userFollowsTable).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(and(eq(userFollowsTable.followingId, req.user.id), eq(userFollowsTable.status, "pending")));
-        await db.update(usersTable).set({ followersCount: sql2`${usersTable.followersCount} + ${pending.length}` }).where(eq(usersTable.id, req.user.id));
+        await db.update(usersTable).set({ followersCount: sql`${usersTable.followersCount} + ${pending.length}` }).where(eq(usersTable.id, req.user.id));
         for (const p of pending) {
-          await db.update(usersTable).set({ followingCount: sql2`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, p.followerId));
+          await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, p.followerId));
         }
       }
     }
@@ -418043,7 +418043,7 @@ router23.post("/groups", async (req, res) => {
       return;
     }
     if (tier === "navigator") {
-      const [{ count: count3 }] = await db.select({ count: sql2`count(*)::int` }).from(groups).where(eq(groups.createdBy, userId));
+      const [{ count: count3 }] = await db.select({ count: sql`count(*)::int` }).from(groups).where(eq(groups.createdBy, userId));
       if (count3 >= 2) {
         res.status(403).json({
           error: "Explorer+ members can create up to 2 groups. Upgrade to Navigator for unlimited groups.",
@@ -418266,7 +418266,7 @@ router23.post("/groups/invites/:inviteId/respond", async (req, res) => {
       const [alreadyMember] = await db.select().from(groupMembers).where(and(eq(groupMembers.groupId, invite.groupId), eq(groupMembers.userId, userId))).limit(1);
       if (!alreadyMember) {
         await db.insert(groupMembers).values({ groupId: invite.groupId, userId, role: "member" });
-        await db.update(groups).set({ memberCount: sql2`${groups.memberCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, invite.groupId));
+        await db.update(groups).set({ memberCount: sql`${groups.memberCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, invite.groupId));
       }
     }
     res.json({ responded: true, action });
@@ -418432,7 +418432,7 @@ router23.post("/groups/:id/join", async (req, res) => {
     const joinTier = await getUserTier(userId);
     const joinLimit = { free: 5, navigator: 25 };
     if (joinTier in joinLimit) {
-      const [{ count: count3 }] = await db.select({ count: sql2`count(*)::int` }).from(groupMembers).where(eq(groupMembers.userId, userId));
+      const [{ count: count3 }] = await db.select({ count: sql`count(*)::int` }).from(groupMembers).where(eq(groupMembers.userId, userId));
       const limit2 = joinLimit[joinTier];
       if (count3 >= limit2) {
         const nextTier = joinTier === "free" ? "Explorer+" : "Navigator";
@@ -418467,7 +418467,7 @@ router23.post("/groups/:id/join", async (req, res) => {
       return;
     }
     await db.insert(groupMembers).values({ groupId, userId, role: "member" });
-    await db.update(groups).set({ memberCount: sql2`${groups.memberCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
+    await db.update(groups).set({ memberCount: sql`${groups.memberCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
     res.json({ joined: true, groupId });
   } catch (err) {
     req.log.error({ err }, "POST /api/groups/:id/join error");
@@ -418488,7 +418488,7 @@ router23.delete("/groups/:id/leave", async (req, res) => {
       res.status(404).json({ error: "Not a member" });
       return;
     }
-    await db.update(groups).set({ memberCount: sql2`greatest(${groups.memberCount} - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
+    await db.update(groups).set({ memberCount: sql`greatest(${groups.memberCount} - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
     res.json({ left: true, groupId });
   } catch (err) {
     req.log.error({ err }, "DELETE /api/groups/:id/leave error");
@@ -418541,7 +418541,7 @@ router23.post("/groups/:id/suggestions/:suggId/upvote", async (req, res) => {
       res.status(400).json({ error: "Invalid id" });
       return;
     }
-    const [updated] = await db.update(groupSuggestions).set({ upvotes: sql2`${groupSuggestions.upvotes} + 1` }).where(and(eq(groupSuggestions.id, suggId), eq(groupSuggestions.groupId, groupId))).returning();
+    const [updated] = await db.update(groupSuggestions).set({ upvotes: sql`${groupSuggestions.upvotes} + 1` }).where(and(eq(groupSuggestions.id, suggId), eq(groupSuggestions.groupId, groupId))).returning();
     if (!updated) {
       res.status(404).json({ error: "Suggestion not found" });
       return;
@@ -418595,7 +418595,7 @@ router23.delete("/groups/:id/members/:userId", async (req, res) => {
       return;
     }
     await db.delete(groupMembers).where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)));
-    await db.update(groups).set({ memberCount: sql2`greatest(${groups.memberCount} - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
+    await db.update(groups).set({ memberCount: sql`greatest(${groups.memberCount} - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(groups.id, groupId));
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "DELETE /api/groups/:id/members/:userId error");
@@ -419026,7 +419026,7 @@ router24.patch("/admin/members/:id", async (req, res) => {
     if (trialEndsAt !== void 0) setPayload.trialEndsAt = trialEndsAt ? new Date(trialEndsAt) : null;
     if (foundingMemberNumber !== void 0) setPayload.foundingMemberNumber = foundingMemberNumber;
     if (emailVerified !== void 0) setPayload.emailVerified = emailVerified;
-    const [updated] = await db.update(usersTable).set(setPayload).where(sql2`${usersTable.id} = ${req.params.id}`).returning();
+    const [updated] = await db.update(usersTable).set(setPayload).where(sql`${usersTable.id} = ${req.params.id}`).returning();
     if (!updated) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -419333,7 +419333,7 @@ router24.post("/admin/topics/seed", async (req, res) => {
     let inserted = 0;
     let skipped = 0;
     for (const t2 of SEED_TOPICS) {
-      const existing = await db.select({ id: knowledgeTopicsTable.id }).from(knowledgeTopicsTable).where(sql2`lower(${knowledgeTopicsTable.topicName}) = lower(${t2.topicName})`).limit(1);
+      const existing = await db.select({ id: knowledgeTopicsTable.id }).from(knowledgeTopicsTable).where(sql`lower(${knowledgeTopicsTable.topicName}) = lower(${t2.topicName})`).limit(1);
       if (existing.length > 0) {
         skipped++;
         continue;
@@ -419442,7 +419442,7 @@ router24.post("/admin/topics/issues/seed", async (req, res) => {
     let inserted = 0;
     let skipped = 0;
     for (const issue2 of SEED_ISSUES) {
-      const existing = await db.select({ id: topicIssuesTable.id }).from(topicIssuesTable).where(sql2`lower(${topicIssuesTable.name}) = lower(${issue2.name})`).limit(1);
+      const existing = await db.select({ id: topicIssuesTable.id }).from(topicIssuesTable).where(sql`lower(${topicIssuesTable.name}) = lower(${issue2.name})`).limit(1);
       if (existing.length > 0) {
         skipped++;
         continue;
@@ -432259,7 +432259,7 @@ init_drizzle_orm();
 var router33 = (0, import_express33.Router)();
 var JOB_TYPES = ["full_time", "part_time", "contract", "gig", "internship", "volunteer", "collaboration"];
 function haversineDistanceSql(lat, lng) {
-  return sql2`(
+  return sql`(
     6371 * acos(
       LEAST(1.0, cos(radians(${lat})) * cos(radians(CAST(${jobListingsTable.latitude} AS float)))
       * cos(radians(CAST(${jobListingsTable.longitude} AS float)) - radians(${lng}))
@@ -432285,14 +432285,14 @@ router33.get("/jobs", async (req, res) => {
     const limit2 = Math.min(parseInt(limitStr, 10) || 30, 60);
     const offset = parseInt(offsetStr, 10) || 0;
     const conditions = [];
-    conditions.push(sql2`${jobListingsTable.status} = ${status}`);
-    if (city) conditions.push(sql2`LOWER(${jobListingsTable.city}) LIKE ${"%" + city.toLowerCase() + "%"}`);
-    if (state) conditions.push(sql2`LOWER(${jobListingsTable.state}) LIKE ${"%" + state.toLowerCase() + "%"}`);
+    conditions.push(sql`${jobListingsTable.status} = ${status}`);
+    if (city) conditions.push(sql`LOWER(${jobListingsTable.city}) LIKE ${"%" + city.toLowerCase() + "%"}`);
+    if (state) conditions.push(sql`LOWER(${jobListingsTable.state}) LIKE ${"%" + state.toLowerCase() + "%"}`);
     if (type2 && JOB_TYPES.includes(type2)) {
-      conditions.push(sql2`${jobListingsTable.type} = ${type2}`);
+      conditions.push(sql`${jobListingsTable.type} = ${type2}`);
     }
-    if (isRemote === "true") conditions.push(sql2`${jobListingsTable.isRemote} = true`);
-    if (industry) conditions.push(sql2`LOWER(${jobListingsTable.industry}) LIKE ${"%" + industry.toLowerCase() + "%"}`);
+    if (isRemote === "true") conditions.push(sql`${jobListingsTable.isRemote} = true`);
+    if (industry) conditions.push(sql`LOWER(${jobListingsTable.industry}) LIKE ${"%" + industry.toLowerCase() + "%"}`);
     const useNearMe = !!(lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng)));
     const radiusKm = parseFloat(radius ?? "50");
     const latF = parseFloat(lat ?? "0");
@@ -432301,12 +432301,12 @@ router33.get("/jobs", async (req, res) => {
       const latDelta = radiusKm / 111;
       const lngDelta = radiusKm / (111 * Math.cos(latF * Math.PI / 180));
       conditions.push(
-        sql2`${jobListingsTable.latitude} IS NOT NULL`,
-        sql2`CAST(${jobListingsTable.latitude} AS float) BETWEEN ${latF - latDelta} AND ${latF + latDelta}`,
-        sql2`CAST(${jobListingsTable.longitude} AS float) BETWEEN ${lngF - lngDelta} AND ${lngF + lngDelta}`
+        sql`${jobListingsTable.latitude} IS NOT NULL`,
+        sql`CAST(${jobListingsTable.latitude} AS float) BETWEEN ${latF - latDelta} AND ${latF + latDelta}`,
+        sql`CAST(${jobListingsTable.longitude} AS float) BETWEEN ${lngF - lngDelta} AND ${lngF + lngDelta}`
       );
     }
-    const distanceCol = useNearMe ? haversineDistanceSql(latF, lngF) : sql2`0`;
+    const distanceCol = useNearMe ? haversineDistanceSql(latF, lngF) : sql`0`;
     const rows = await db.select({
       id: jobListingsTable.id,
       title: jobListingsTable.title,
@@ -433172,18 +433172,18 @@ router37.post("/cron/weekly-business-report", async (req, res) => {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1e3);
         const [peakDayRow, peakHourRow] = await Promise.all([
           db.select({
-            dow: sql2`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`,
+            dow: sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`,
             c: count()
-          }).from(businessProfileViewsTable).where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo))).groupBy(sql2`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`).orderBy(sql2`count(*) DESC`).limit(1),
+          }).from(businessProfileViewsTable).where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo))).groupBy(sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`).orderBy(sql`count(*) DESC`).limit(1),
           db.select({
-            hour: sql2`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`,
+            hour: sql`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`,
             c: count()
-          }).from(businessProfileViewsTable).where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo))).groupBy(sql2`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`).orderBy(sql2`count(*) DESC`).limit(1)
+          }).from(businessProfileViewsTable).where(and(eq(businessProfileViewsTable.businessId, owner.business_id), gte(businessProfileViewsTable.viewedAt, thirtyDaysAgo))).groupBy(sql`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`).orderBy(sql`count(*) DESC`).limit(1)
         ]);
         const peakDay = DAY_LABELS2[Number(peakDayRow[0]?.dow ?? 5)] ?? "Friday";
         const peakHour = HOUR_LABELS2[Number(peakHourRow[0]?.hour ?? 12)] ?? "noon";
         const [ratingRow] = await db.select({
-          avg: sql2`ROUND(AVG(${reviewsTable.rating})::numeric, 1)`
+          avg: sql`ROUND(AVG(${reviewsTable.rating})::numeric, 1)`
         }).from(reviewsTable).where(eq(reviewsTable.businessId, owner.business_id));
         const avgRating = ratingRow?.avg ? Number(ratingRow.avg) : null;
         let aiMarketingTip = `Post consistently around ${peakDay} ${peakHour} when your audience is most active \u2014 even one piece of content per week during your peak window can meaningfully lift visibility.`;
@@ -433721,7 +433721,7 @@ router38.post("/referrals/track", async (req, res) => {
       res.status(409).json({ error: "Referral cap reached for this code" });
       return;
     }
-    await db.update(usersTable).set({ referralCount: sql2`${usersTable.referralCount} + 1` }).where(eq(usersTable.id, referrer.id));
+    await db.update(usersTable).set({ referralCount: sql`${usersTable.referralCount} + 1` }).where(eq(usersTable.id, referrer.id));
     if (req.user?.id && req.user.id !== referrer.id) {
       await db.update(usersTable).set({ referredByCode: code.toUpperCase() }).where(eq(usersTable.id, req.user.id));
     }
@@ -433753,7 +433753,7 @@ router38.get("/r/:code", async (req, res) => {
   try {
     const [referrer] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.referralCode, code)).limit(1);
     if (referrer) {
-      await db.update(usersTable).set({ referralCount: sql2`${usersTable.referralCount} + 1` }).where(eq(usersTable.id, referrer.id));
+      await db.update(usersTable).set({ referralCount: sql`${usersTable.referralCount} + 1` }).where(eq(usersTable.id, referrer.id));
     }
     res.redirect(`/membership?ref=${code}`);
   } catch {
@@ -434317,22 +434317,22 @@ router44.get("/mentorship", async (req, res) => {
   const offset = parseInt(offsetStr, 10) || 0;
   try {
     const conditions = [
-      sql2`${mentorshipProfilesTable.available} = true`
+      sql`${mentorshipProfilesTable.available} = true`
     ];
     if (role && ["mentor", "mentee", "both"].includes(role)) {
-      conditions.push(sql2`${mentorshipProfilesTable.role} = ${role}`);
+      conditions.push(sql`${mentorshipProfilesTable.role} = ${role}`);
     }
     if (industry) {
-      conditions.push(sql2`LOWER(${mentorshipProfilesTable.industry}) LIKE ${"%" + industry.toLowerCase() + "%"}`);
+      conditions.push(sql`LOWER(${mentorshipProfilesTable.industry}) LIKE ${"%" + industry.toLowerCase() + "%"}`);
     }
     if (specialty) {
-      conditions.push(sql2`${mentorshipProfilesTable.specialties}::text ILIKE ${"%" + specialty + "%"}`);
+      conditions.push(sql`${mentorshipProfilesTable.specialties}::text ILIKE ${"%" + specialty + "%"}`);
     }
     if (city) {
-      conditions.push(sql2`LOWER(${mentorshipProfilesTable.city}) LIKE ${"%" + city.toLowerCase() + "%"}`);
+      conditions.push(sql`LOWER(${mentorshipProfilesTable.city}) LIKE ${"%" + city.toLowerCase() + "%"}`);
     }
     if (state) {
-      conditions.push(sql2`LOWER(${mentorshipProfilesTable.state}) LIKE ${"%" + state.toLowerCase() + "%"}`);
+      conditions.push(sql`LOWER(${mentorshipProfilesTable.state}) LIKE ${"%" + state.toLowerCase() + "%"}`);
     }
     const useNearMe = !!(lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng)));
     const radiusKm = parseFloat(radius ?? "80");
@@ -434342,12 +434342,12 @@ router44.get("/mentorship", async (req, res) => {
       const latDelta = radiusKm / 111;
       const lngDelta = radiusKm / (111 * Math.cos(latF * Math.PI / 180));
       conditions.push(
-        sql2`${mentorshipProfilesTable.latitude} IS NOT NULL`,
-        sql2`CAST(${mentorshipProfilesTable.latitude} AS float) BETWEEN ${latF - latDelta} AND ${latF + latDelta}`,
-        sql2`CAST(${mentorshipProfilesTable.longitude} AS float) BETWEEN ${lngF - lngDelta} AND ${lngF + lngDelta}`
+        sql`${mentorshipProfilesTable.latitude} IS NOT NULL`,
+        sql`CAST(${mentorshipProfilesTable.latitude} AS float) BETWEEN ${latF - latDelta} AND ${latF + latDelta}`,
+        sql`CAST(${mentorshipProfilesTable.longitude} AS float) BETWEEN ${lngF - lngDelta} AND ${lngF + lngDelta}`
       );
     }
-    const distanceCol = useNearMe ? sql2`(6371 * acos(LEAST(1.0, cos(radians(${latF})) * cos(radians(CAST(${mentorshipProfilesTable.latitude} AS float))) * cos(radians(CAST(${mentorshipProfilesTable.longitude} AS float)) - radians(${lngF})) + sin(radians(${latF})) * sin(radians(CAST(${mentorshipProfilesTable.latitude} AS float))))))` : sql2`0`;
+    const distanceCol = useNearMe ? sql`(6371 * acos(LEAST(1.0, cos(radians(${latF})) * cos(radians(CAST(${mentorshipProfilesTable.latitude} AS float))) * cos(radians(CAST(${mentorshipProfilesTable.longitude} AS float)) - radians(${lngF})) + sin(radians(${latF})) * sin(radians(CAST(${mentorshipProfilesTable.latitude} AS float))))))` : sql`0`;
     const profiles = await db.select({
       id: mentorshipProfilesTable.id,
       userId: mentorshipProfilesTable.userId,
@@ -435566,7 +435566,7 @@ router48.get("/family/mode/posts", async (req, res) => {
       and(
         eq(communityPostsTable.audienceRating, "everyone"),
         eq(communityPostsTable.visibility, "public"),
-        category && category !== "all" ? eq(communityPostsTable.category, category) : sql2`1=1`
+        category && category !== "all" ? eq(communityPostsTable.category, category) : sql`1=1`
       )
     ).orderBy(desc(communityPostsTable.createdAt)).limit(limit2).offset(offset);
     res.json({ posts });
@@ -436326,7 +436326,7 @@ router52.post("/safety-tips/:id/confirm", async (req, res) => {
       userLng: typeof userLng === "number" ? userLng : null
     });
     const [updated] = await db.update(safetyTipsTable).set({
-      confirmationCount: sql2`${safetyTipsTable.confirmationCount} + 1`,
+      confirmationCount: sql`${safetyTipsTable.confirmationCount} + 1`,
       status: tip.confirmationCount + 1 >= CONFIRMATION_THRESHOLD ? "confirmed" : tip.status
     }).where(eq(safetyTipsTable.id, id2)).returning();
     if (updated && updated.confirmationCount >= CONFIRMATION_THRESHOLD && tip.status !== "confirmed") {
@@ -436704,14 +436704,14 @@ router54.get(
       let trend;
       if (tier === "trailblazer") {
         const rows = await db.select({
-          day: sql2`DATE(${businessProfileViewsTable.viewedAt})`,
+          day: sql`DATE(${businessProfileViewsTable.viewedAt})`,
           count: count()
         }).from(businessProfileViewsTable).where(
           and(
             eq(businessProfileViewsTable.businessId, business.id),
             gt(businessProfileViewsTable.viewedAt, sevenDaysAgo)
           )
-        ).groupBy(sql2`DATE(${businessProfileViewsTable.viewedAt})`);
+        ).groupBy(sql`DATE(${businessProfileViewsTable.viewedAt})`);
         const trendMap = new Map(rows.map((r2) => [r2.day, r2.count]));
         trend = [];
         for (let i = 6; i >= 0; i--) {
@@ -437356,23 +437356,23 @@ router56.get("/businesses/mine/post-nudge", async (req, res) => {
     }
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1e3);
     const hourRows = await db.select({
-      hour: sql2`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`,
+      hour: sql`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`,
       count: count()
     }).from(businessProfileViewsTable).where(
       and(
         eq(businessProfileViewsTable.businessId, business.id),
         gt(businessProfileViewsTable.viewedAt, thirtyDaysAgo)
       )
-    ).groupBy(sql2`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`);
+    ).groupBy(sql`EXTRACT(HOUR FROM ${businessProfileViewsTable.viewedAt})`);
     const dayRows = await db.select({
-      dow: sql2`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`,
+      dow: sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`,
       count: count()
     }).from(businessProfileViewsTable).where(
       and(
         eq(businessProfileViewsTable.businessId, business.id),
         gt(businessProfileViewsTable.viewedAt, thirtyDaysAgo)
       )
-    ).groupBy(sql2`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`);
+    ).groupBy(sql`EXTRACT(DOW FROM ${businessProfileViewsTable.viewedAt})`);
     const totalViews = hourRows.reduce((s2, r2) => s2 + r2.count, 0);
     const sortedHours = [...hourRows].sort((a, b3) => b3.count - a.count);
     const peakHours = sortedHours.slice(0, 3).map((r2) => Number(r2.hour)).sort((a, b3) => a - b3);
@@ -437695,7 +437695,7 @@ router58.post("/space-reports", reportLimiter, requireTrust, async (req, res) =>
       description: description.trim().slice(0, 2e3),
       isAnonymous: isAnonymous !== false
     }).returning();
-    const countResult = await db.select({ count: sql2`count(*)::int` }).from(spaceReportsTable).where(sql2`lower(space_name) = lower(${spaceName.trim()}) and lower(city) = lower(${city.trim()}) and status != 'dismissed'`);
+    const countResult = await db.select({ count: sql`count(*)::int` }).from(spaceReportsTable).where(sql`lower(space_name) = lower(${spaceName.trim()}) and lower(city) = lower(${city.trim()}) and status != 'dismissed'`);
     const totalReports = countResult[0]?.count ?? 0;
     const hasWarning = totalReports >= WARNING_THRESHOLD;
     res.status(201).json({ report, hasWarning, totalReports });
@@ -437710,11 +437710,11 @@ router58.get("/space-reports/warnings", async (req, res) => {
       spaceName: spaceReportsTable.spaceName,
       city: spaceReportsTable.city,
       category: spaceReportsTable.category,
-      reportCount: sql2`count(*)::int`,
-      concernTypes: sql2`string_agg(concern_types, ',')`
-    }).from(spaceReportsTable).where(sql2`status != 'dismissed'`).groupBy(
-      sql2`lower(space_name), lower(city), space_name, city, category`
-    ).having(sql2`count(*) >= ${WARNING_THRESHOLD}`).orderBy(sql2`count(*) desc`).limit(100);
+      reportCount: sql`count(*)::int`,
+      concernTypes: sql`string_agg(concern_types, ',')`
+    }).from(spaceReportsTable).where(sql`status != 'dismissed'`).groupBy(
+      sql`lower(space_name), lower(city), space_name, city, category`
+    ).having(sql`count(*) >= ${WARNING_THRESHOLD}`).orderBy(sql`count(*) desc`).limit(100);
     res.json({ warnings });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch warnings" });
@@ -438577,7 +438577,7 @@ router66.post("/business-nominations", async (req, res) => {
       const startOfMonth = /* @__PURE__ */ new Date();
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
-      const [{ count: count3 }] = await db.select({ count: sql2`count(*)::int` }).from(businessNominationsTable).where(and(
+      const [{ count: count3 }] = await db.select({ count: sql`count(*)::int` }).from(businessNominationsTable).where(and(
         eq(businessNominationsTable.nominatedByUserId, userId),
         gte(businessNominationsTable.createdAt, startOfMonth)
       ));
@@ -439229,11 +439229,11 @@ router69.post("/health-hub/posts/:id/like", async (req, res) => {
   const [existing] = await db.select({ id: healthPostLikesTable.id }).from(healthPostLikesTable).where(and(eq(healthPostLikesTable.postId, postId), eq(healthPostLikesTable.userId, req.user.id))).limit(1);
   if (existing) {
     await db.delete(healthPostLikesTable).where(eq(healthPostLikesTable.id, existing.id));
-    await db.update(healthPostsTable).set({ likeCount: sql2`like_count - 1` }).where(eq(healthPostsTable.id, postId));
+    await db.update(healthPostsTable).set({ likeCount: sql`like_count - 1` }).where(eq(healthPostsTable.id, postId));
     res.json({ liked: false });
   } else {
     await db.insert(healthPostLikesTable).values({ postId, userId: req.user.id });
-    await db.update(healthPostsTable).set({ likeCount: sql2`like_count + 1` }).where(eq(healthPostsTable.id, postId));
+    await db.update(healthPostsTable).set({ likeCount: sql`like_count + 1` }).where(eq(healthPostsTable.id, postId));
     res.json({ liked: true });
   }
 });
@@ -439527,11 +439527,11 @@ router70.post("/journal-insights/:id/bookmark", async (req, res) => {
   )).limit(1);
   if (existing) {
     await db.delete(journalInsightBookmarksTable).where(eq(journalInsightBookmarksTable.id, existing.id));
-    await db.update(journalInsightsTable).set({ bookmarkCount: sql2`bookmark_count - 1` }).where(eq(journalInsightsTable.id, insightId));
+    await db.update(journalInsightsTable).set({ bookmarkCount: sql`bookmark_count - 1` }).where(eq(journalInsightsTable.id, insightId));
     res.json({ bookmarked: false });
   } else {
     await db.insert(journalInsightBookmarksTable).values({ insightId, userId: req.user.id });
-    await db.update(journalInsightsTable).set({ bookmarkCount: sql2`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
+    await db.update(journalInsightsTable).set({ bookmarkCount: sql`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
     res.json({ bookmarked: true });
   }
 });
@@ -439551,7 +439551,7 @@ router70.post("/journal-insights/:id/pin", async (req, res) => {
     res.json({ pinned: newPinned, bookmarked: true });
   } else {
     await db.insert(journalInsightBookmarksTable).values({ insightId, userId: req.user.id, pinned: true });
-    await db.update(journalInsightsTable).set({ bookmarkCount: sql2`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
+    await db.update(journalInsightsTable).set({ bookmarkCount: sql`bookmark_count + 1` }).where(eq(journalInsightsTable.id, insightId));
     res.json({ pinned: true, bookmarked: true });
   }
 });
@@ -440447,7 +440447,7 @@ router75.post("/knowledge/topics/search-or-create", async (req, res) => {
         if (user?.stripeSubscriptionId) {
           await db.insert(userTopicFollowsTable).values({ userId, topicId: topic.id });
         } else {
-          const [countRow] = await db.select({ count: sql2`COUNT(*)` }).from(userTopicFollowsTable).where(eq(userTopicFollowsTable.userId, userId));
+          const [countRow] = await db.select({ count: sql`COUNT(*)` }).from(userTopicFollowsTable).where(eq(userTopicFollowsTable.userId, userId));
           if (Number(countRow?.count ?? 0) < 10) {
             await db.insert(userTopicFollowsTable).values({ userId, topicId: topic.id });
           }
@@ -440605,11 +440605,11 @@ router75.post("/knowledge/experts/:id/follow", async (req, res) => {
     );
     if (existing) {
       await db.delete(expertFollowsTable).where(eq(expertFollowsTable.id, existing.id));
-      await db.update(expertProfilesTable).set({ followCount: sql2`GREATEST(0, COALESCE(follow_count, 0) - 1)` }).where(eq(expertProfilesTable.id, expertId));
+      await db.update(expertProfilesTable).set({ followCount: sql`GREATEST(0, COALESCE(follow_count, 0) - 1)` }).where(eq(expertProfilesTable.id, expertId));
       res.json({ following: false });
     } else {
       await db.insert(expertFollowsTable).values({ followerId: userId, expertId });
-      await db.update(expertProfilesTable).set({ followCount: sql2`COALESCE(follow_count, 0) + 1` }).where(eq(expertProfilesTable.id, expertId));
+      await db.update(expertProfilesTable).set({ followCount: sql`COALESCE(follow_count, 0) + 1` }).where(eq(expertProfilesTable.id, expertId));
       res.json({ following: true });
     }
   } catch {
@@ -440693,8 +440693,8 @@ router75.get("/knowledge/topics", async (req, res) => {
     const recentArticles = await db.select({ topicId: knowledgeArticlesTable.topicId, id: knowledgeArticlesTable.id }).from(knowledgeArticlesTable).where(
       and(
         eq(knowledgeArticlesTable.status, "published"),
-        sql2`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`,
-        sql2`${knowledgeArticlesTable.topicId} IS NOT NULL`
+        sql`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`,
+        sql`${knowledgeArticlesTable.topicId} IS NOT NULL`
       )
     );
     const newByTopic = /* @__PURE__ */ new Map();
@@ -440726,7 +440726,7 @@ router75.post("/knowledge/topics/:topicId/follow", async (req, res) => {
     }
     const [user] = await db.select({ stripeSubscriptionId: usersTable.stripeSubscriptionId }).from(usersTable).where(eq(usersTable.id, userId));
     if (!user?.stripeSubscriptionId) {
-      const [countRow] = await db.select({ count: sql2`COUNT(*)` }).from(userTopicFollowsTable).where(eq(userTopicFollowsTable.userId, userId));
+      const [countRow] = await db.select({ count: sql`COUNT(*)` }).from(userTopicFollowsTable).where(eq(userTopicFollowsTable.userId, userId));
       if (Number(countRow?.count ?? 0) >= 10) {
         res.status(403).json({ error: "FREE_LIMIT_REACHED", message: "Upgrade to follow unlimited topics" });
         return;
@@ -440793,7 +440793,7 @@ router75.get("/knowledge/feed", async (req, res) => {
       and(
         eq(knowledgeArticlesTable.status, "published"),
         inArray(knowledgeArticlesTable.topicId, topicIds),
-        sql2`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`
+        sql`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`
       )
     ).orderBy(desc(knowledgeArticlesTable.publishedAt));
     const feedArticles = articles.map((a) => ({ ...a, isRead: readIds.has(a.id) }));
@@ -440823,7 +440823,7 @@ router75.get("/knowledge/feed/count", async (req, res) => {
       and(
         eq(knowledgeArticlesTable.status, "published"),
         inArray(knowledgeArticlesTable.topicId, topicIds),
-        sql2`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`
+        sql`${knowledgeArticlesTable.publishedAt} > ${eightDaysAgo}`
       )
     );
     const count3 = articles.filter((a) => !readIds.has(a.id)).length;
@@ -440921,7 +440921,7 @@ router75.post("/knowledge/articles/:id/read", async (req, res) => {
     await db.insert(knowledgeArticleReadsTable).values({ userId, articleId, topicId: article?.topicId ?? null }).onConflictDoNothing();
     let suggestion = null;
     if (article?.topicId) {
-      const [countRow] = await db.select({ count: sql2`COUNT(*)` }).from(knowledgeArticleReadsTable).where(
+      const [countRow] = await db.select({ count: sql`COUNT(*)` }).from(knowledgeArticleReadsTable).where(
         and(
           eq(knowledgeArticleReadsTable.userId, userId),
           eq(knowledgeArticleReadsTable.topicId, article.topicId)
@@ -440937,7 +440937,7 @@ router75.post("/knowledge/articles/:id/read", async (req, res) => {
             and(
               eq(knowledgeTopicsTable.category, currentTopic.category),
               eq(knowledgeTopicsTable.enabled, true),
-              sql2`${knowledgeTopicsTable.id} != ${article.topicId}`
+              sql`${knowledgeTopicsTable.id} != ${article.topicId}`
             )
           ).limit(3);
           const unfollowed = related.filter((t2) => !followedSet.has(t2.id)).map((t2) => t2.topicName);
@@ -440963,7 +440963,7 @@ async function recalculateCredibility(topicId) {
       db.select().from(topicCredibilitySignalsTable).where(
         and(
           eq(topicCredibilitySignalsTable.topicId, topicId),
-          sql2`${topicCredibilitySignalsTable.createdAt} > ${cutoff}`
+          sql`${topicCredibilitySignalsTable.createdAt} > ${cutoff}`
         )
       )
     ]);
@@ -441019,7 +441019,7 @@ router75.get("/knowledge/topics/similar", async (req, res) => {
     if (ids.length > 0) {
       const rows = await db.select({
         topicId: userTopicFollowsTable.topicId,
-        cnt: sql2`COUNT(*)`
+        cnt: sql`COUNT(*)`
       }).from(userTopicFollowsTable).where(inArray(userTopicFollowsTable.topicId, ids)).groupBy(userTopicFollowsTable.topicId);
       memberCounts = Object.fromEntries(rows.map((r2) => [r2.topicId, Number(r2.cnt)]));
     }
@@ -441079,7 +441079,7 @@ router75.get("/knowledge/topics/:id/community-videos", async (req, res) => {
     }).from(communityPostsTable).where(
       and(
         eq(communityPostsTable.visibility, "public"),
-        sql2`${communityPostsTable.mediaUrls} IS NOT NULL`,
+        sql`${communityPostsTable.mediaUrls} IS NOT NULL`,
         or(
           ilike(communityPostsTable.topicTag, topic.topicName),
           ilike(communityPostsTable.topicTag, `%${topic.topicName}%`),
@@ -441465,7 +441465,7 @@ router77.get("/users/me/trust", async (req, res) => {
       user.trustLevel = computedLevel;
     }
     const progress = getTrustProgress({ ...user, trustLevel: computedLevel });
-    const pendingVerification = await db.select({ id: identityVerificationsTable.id, status: identityVerificationsTable.status, submittedAt: identityVerificationsTable.submittedAt }).from(identityVerificationsTable).where(eq(identityVerificationsTable.userId, req.user.id)).orderBy(sql2`${identityVerificationsTable.submittedAt} desc`).limit(1);
+    const pendingVerification = await db.select({ id: identityVerificationsTable.id, status: identityVerificationsTable.status, submittedAt: identityVerificationsTable.submittedAt }).from(identityVerificationsTable).where(eq(identityVerificationsTable.userId, req.user.id)).orderBy(sql`${identityVerificationsTable.submittedAt} desc`).limit(1);
     res.json({
       trustLevel: computedLevel,
       levelInfo: TRUST_LEVELS[computedLevel],
@@ -441495,7 +441495,7 @@ router77.post("/users/identity-verification", async (req, res) => {
   }
   const { selfieKey } = req.body;
   try {
-    const existing = await db.select({ id: identityVerificationsTable.id, status: identityVerificationsTable.status }).from(identityVerificationsTable).where(eq(identityVerificationsTable.userId, req.user.id)).orderBy(sql2`${identityVerificationsTable.submittedAt} desc`).limit(1);
+    const existing = await db.select({ id: identityVerificationsTable.id, status: identityVerificationsTable.status }).from(identityVerificationsTable).where(eq(identityVerificationsTable.userId, req.user.id)).orderBy(sql`${identityVerificationsTable.submittedAt} desc`).limit(1);
     if (existing[0]?.status === "pending") {
       res.status(409).json({ error: "A verification request is already pending.", code: "PENDING_EXISTS" });
       return;
@@ -441537,11 +441537,11 @@ router77.post("/reviews/:id/helpful", async (req, res) => {
       res.status(409).json({ error: "Already marked as helpful.", code: "ALREADY_VOTED" });
       return;
     }
-    const [updated] = await db.update(reviewsTable).set({ helpfulVotes: sql2`${reviewsTable.helpfulVotes} + 1` }).where(eq(reviewsTable.id, reviewId)).returning({ helpfulVotes: reviewsTable.helpfulVotes });
+    const [updated] = await db.update(reviewsTable).set({ helpfulVotes: sql`${reviewsTable.helpfulVotes} + 1` }).where(eq(reviewsTable.id, reviewId)).returning({ helpfulVotes: reviewsTable.helpfulVotes });
     if (review.userId) {
       await db.update(usersTable).set({
-        helpfulReviewsCount: sql2`${usersTable.helpfulReviewsCount} + 1`,
-        reputationScore: sql2`${usersTable.reputationScore} + 5`
+        helpfulReviewsCount: sql`${usersTable.helpfulReviewsCount} + 1`,
+        reputationScore: sql`${usersTable.reputationScore} + 5`
       }).where(eq(usersTable.id, review.userId));
       const [reviewer] = await db.select({ trustLevel: usersTable.trustLevel, reputationScore: usersTable.reputationScore, identityVerified: usersTable.identityVerified, identityVerifiedAt: usersTable.identityVerifiedAt, policyViolationsCount: usersTable.policyViolationsCount, helpfulReviewsCount: usersTable.helpfulReviewsCount, createdAt: usersTable.createdAt }).from(usersTable).where(eq(usersTable.id, review.userId)).limit(1);
       if (reviewer) {
@@ -441606,7 +441606,7 @@ router77.get("/admin/identity-verifications", async (req, res) => {
       firstName: usersTable.firstName,
       lastName: usersTable.lastName,
       email: usersTable.email
-    }).from(identityVerificationsTable).leftJoin(usersTable, eq(identityVerificationsTable.userId, usersTable.id)).orderBy(sql2`${identityVerificationsTable.submittedAt} desc`).limit(200);
+    }).from(identityVerificationsTable).leftJoin(usersTable, eq(identityVerificationsTable.userId, usersTable.id)).orderBy(sql`${identityVerificationsTable.submittedAt} desc`).limit(200);
     res.json({ verifications: rows });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch identity verifications");
@@ -441646,7 +441646,7 @@ router77.post("/admin/users/:id/ambassador", async (req, res) => {
   }
   const userId = String(req.params.id);
   try {
-    const [user] = await db.update(usersTable).set({ trustLevel: 4, reputationScore: sql2`GREATEST(${usersTable.reputationScore}, 500)` }).where(eq(usersTable.id, userId)).returning({ id: usersTable.id, trustLevel: usersTable.trustLevel });
+    const [user] = await db.update(usersTable).set({ trustLevel: 4, reputationScore: sql`GREATEST(${usersTable.reputationScore}, 500)` }).where(eq(usersTable.id, userId)).returning({ id: usersTable.id, trustLevel: usersTable.trustLevel });
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -441666,8 +441666,8 @@ router77.post("/admin/users/:id/policy-violation", async (req, res) => {
   const userId = String(req.params.id);
   try {
     const [user] = await db.update(usersTable).set({
-      policyViolationsCount: sql2`${usersTable.policyViolationsCount} + 1`,
-      reputationScore: sql2`GREATEST(0, ${usersTable.reputationScore} - 25)`
+      policyViolationsCount: sql`${usersTable.policyViolationsCount} + 1`,
+      reputationScore: sql`GREATEST(0, ${usersTable.reputationScore} - 25)`
     }).where(eq(usersTable.id, userId)).returning({ id: usersTable.id, policyViolationsCount: usersTable.policyViolationsCount, trustLevel: usersTable.trustLevel });
     if (!user) {
       res.status(404).json({ error: "User not found" });
@@ -442587,7 +442587,7 @@ router82.get("/cultural-sites", async (req, res) => {
       idx++;
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const sql12 = `
+    const sql11 = `
       SELECT id, name, description, category, heritage_category AS "heritageCategory",
              subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
              latitude, longitude, era, significance, image_url AS "imageUrl",
@@ -442613,7 +442613,7 @@ router82.get("/cultural-sites", async (req, res) => {
         name ASC
       LIMIT 500
     `;
-    const result = await pool.query(sql12, params);
+    const result = await pool.query(sql11, params);
     const sites = result.rows;
     const categorySummary = await pool.query(
       `SELECT heritage_category, COUNT(*) AS count FROM cultural_sites GROUP BY heritage_category ORDER BY count DESC`
@@ -444141,8 +444141,8 @@ router91.get("/captions/:businessId", async (req, res) => {
     const { businessId } = req.params;
     const rows = await db.select({
       caption: businessCaptionsTable.caption,
-      count: sql2`count(*)::int`
-    }).from(businessCaptionsTable).where(eq(businessCaptionsTable.businessId, businessId)).groupBy(businessCaptionsTable.caption).orderBy(sql2`count(*) desc`).limit(20);
+      count: sql`count(*)::int`
+    }).from(businessCaptionsTable).where(eq(businessCaptionsTable.businessId, businessId)).groupBy(businessCaptionsTable.caption).orderBy(sql`count(*) desc`).limit(20);
     res.json({ captions: rows });
   } catch {
     res.json({ captions: [] });
@@ -444158,8 +444158,8 @@ router91.get("/admin/captions", async (req, res) => {
       businessId: businessCaptionsTable.businessId,
       businessName: businessesTable.name,
       caption: businessCaptionsTable.caption,
-      count: sql2`count(*)::int`
-    }).from(businessCaptionsTable).leftJoin(businessesTable, eq(businessCaptionsTable.businessId, businessesTable.id)).groupBy(businessCaptionsTable.businessId, businessCaptionsTable.caption, businessesTable.name).orderBy(desc(sql2`count(*)`)).limit(200);
+      count: sql`count(*)::int`
+    }).from(businessCaptionsTable).leftJoin(businessesTable, eq(businessCaptionsTable.businessId, businessesTable.id)).groupBy(businessCaptionsTable.businessId, businessCaptionsTable.caption, businessesTable.name).orderBy(desc(sql`count(*)`)).limit(200);
     res.json({ captions: rows });
   } catch {
     res.json({ captions: [] });
@@ -444471,7 +444471,7 @@ router94.post("/business-improvement", async (req, res) => {
     const findProviders = async (ownershipFilter, extraCondition = "") => {
       const params = [businessCity.toLowerCase()];
       if (keywords.length > 0) params.push(...keywords.map((k3) => `%${k3}%`));
-      const sql12 = `
+      const sql11 = `
         SELECT b.id, b.name, b.category, b.description, b.city, b.state,
                b.phone, b.website, b.verified, b.black_owned,
                b.ownership_designations
@@ -444487,7 +444487,7 @@ router94.post("/business-improvement", async (req, res) => {
         ORDER BY b.verified DESC, b.confidence_score DESC
         LIMIT 12
       `;
-      return pool.query(sql12, params);
+      return pool.query(sql11, params);
     };
     const prefs = ownershipPreferences.filter((p) => p !== "no-preference" && p !== "local-only");
     const noPreference = ownershipPreferences.includes("no-preference") || ownershipPreferences.length === 0;
@@ -444914,7 +444914,7 @@ router96.get("/circles", async (req, res) => {
     const myIds = await db.select({ circleId: circleMembers.circleId }).from(circleMembers).where(eq(circleMembers.userId, uid(req)));
     const ids = myIds.map((r2) => r2.circleId);
     const circles = ids.length ? await db.select().from(kinfolkCircles).where(inArray(kinfolkCircles.id, ids)).orderBy(desc(kinfolkCircles.updatedAt)) : [];
-    const counts = await db.select({ circleId: circleMembers.circleId, count: sql2`count(*)`.mapWith(Number) }).from(circleMembers).where(inArray(circleMembers.circleId, ids.length ? ids : [-1])).groupBy(circleMembers.circleId);
+    const counts = await db.select({ circleId: circleMembers.circleId, count: sql`count(*)`.mapWith(Number) }).from(circleMembers).where(inArray(circleMembers.circleId, ids.length ? ids : [-1])).groupBy(circleMembers.circleId);
     const countMap = Object.fromEntries(counts.map((c3) => [c3.circleId, c3.count]));
     res.json({ circles: circles.map((c3) => ({ ...c3, memberCount: countMap[c3.id] ?? 1 })) });
   } catch (err) {
@@ -444962,7 +444962,7 @@ router96.post("/circles", async (req, res) => {
       return;
     }
     if (isFinite(limits.maxCircles)) {
-      const [{ count: count3 }] = await db.select({ count: sql2`count(*)`.mapWith(Number) }).from(kinfolkCircles).where(eq(kinfolkCircles.hostUserId, uid(req)));
+      const [{ count: count3 }] = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(kinfolkCircles).where(eq(kinfolkCircles.hostUserId, uid(req)));
       if (count3 >= limits.maxCircles) {
         res.status(403).json({
           error: `Explorer+ members can host up to ${limits.maxCircles} circle${limits.maxCircles === 1 ? "" : "s"}. Upgrade to Navigator for unlimited circles.`,
@@ -445124,7 +445124,7 @@ router96.post("/circles/:id/join", async (req, res) => {
       res.status(409).json({ error: "Already a member" });
       return;
     }
-    const memberCount = await db.select({ count: sql2`count(*)`.mapWith(Number) }).from(circleMembers).where(eq(circleMembers.circleId, circleId));
+    const memberCount = await db.select({ count: sql`count(*)`.mapWith(Number) }).from(circleMembers).where(eq(circleMembers.circleId, circleId));
     if ((memberCount[0]?.count ?? 0) >= circle.maxMembers) {
       res.status(409).json({ error: "Circle is full" });
       return;
@@ -445300,7 +445300,7 @@ router96.post("/circles/:id/suggestions/:sugId/upvote", async (req, res) => {
     return;
   }
   try {
-    await db.update(circleSuggestions).set({ upvotes: sql2`${circleSuggestions.upvotes} + 1` }).where(and(eq(circleSuggestions.id, sugId), eq(circleSuggestions.circleId, circleId)));
+    await db.update(circleSuggestions).set({ upvotes: sql`${circleSuggestions.upvotes} + 1` }).where(and(eq(circleSuggestions.id, sugId), eq(circleSuggestions.circleId, circleId)));
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "POST /circles/:id/suggestions/:sugId/upvote error");
@@ -445505,21 +445505,21 @@ router96.post("/circles/:id/plans/:planId/vote", async (req, res) => {
     if (existing) {
       const old = existing.vote;
       await db.update(circleVotes).set({ vote }).where(eq(circleVotes.id, existing.id));
-      const dec = (col) => sql2`GREATEST(0, ${col} - 1)`;
+      const dec = (col) => sql`GREATEST(0, ${col} - 1)`;
       const updates = {};
       if (old === "in") updates.inCount = dec(circlePlans.inCount);
       if (old === "maybe") updates.maybeCount = dec(circlePlans.maybeCount);
       if (old === "out") updates.outCount = dec(circlePlans.outCount);
-      if (vote === "in") updates.inCount = sql2`${circlePlans.inCount} + 1`;
-      if (vote === "maybe") updates.maybeCount = sql2`${circlePlans.maybeCount} + 1`;
-      if (vote === "out") updates.outCount = sql2`${circlePlans.outCount} + 1`;
+      if (vote === "in") updates.inCount = sql`${circlePlans.inCount} + 1`;
+      if (vote === "maybe") updates.maybeCount = sql`${circlePlans.maybeCount} + 1`;
+      if (vote === "out") updates.outCount = sql`${circlePlans.outCount} + 1`;
       await db.update(circlePlans).set(updates).where(eq(circlePlans.id, planId));
     } else {
       await db.insert(circleVotes).values({ planId, userId: uid(req), vote });
       const inc = {};
-      if (vote === "in") inc.inCount = sql2`${circlePlans.inCount} + 1`;
-      if (vote === "maybe") inc.maybeCount = sql2`${circlePlans.maybeCount} + 1`;
-      if (vote === "out") inc.outCount = sql2`${circlePlans.outCount} + 1`;
+      if (vote === "in") inc.inCount = sql`${circlePlans.inCount} + 1`;
+      if (vote === "maybe") inc.maybeCount = sql`${circlePlans.maybeCount} + 1`;
+      if (vote === "out") inc.outCount = sql`${circlePlans.outCount} + 1`;
       await db.update(circlePlans).set(inc).where(eq(circlePlans.id, planId));
     }
     const [updated] = await db.select().from(circlePlans).where(eq(circlePlans.id, planId)).limit(1);
@@ -445881,7 +445881,7 @@ router97.post("/community-requests/:id/upvote", async (req, res) => {
       return;
     }
     await db.insert(requestUpvotesTable).values({ requestId: id2, userId: user });
-    await db.update(communityRequestsTable).set({ upvotes: sql2`${communityRequestsTable.upvotes} + 1` }).where(eq(communityRequestsTable.id, id2));
+    await db.update(communityRequestsTable).set({ upvotes: sql`${communityRequestsTable.upvotes} + 1` }).where(eq(communityRequestsTable.id, id2));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to upvote request");
@@ -445907,7 +445907,7 @@ router97.post("/community-requests/:id/help", async (req, res) => {
       offerTypes,
       message: message?.trim() || null
     }).returning();
-    await db.update(communityRequestsTable).set({ helperCount: sql2`${communityRequestsTable.helperCount} + 1` }).where(eq(communityRequestsTable.id, id2));
+    await db.update(communityRequestsTable).set({ helperCount: sql`${communityRequestsTable.helperCount} + 1` }).where(eq(communityRequestsTable.id, id2));
     await db.insert(pointsLedgerTable).values({ userId: user, action: "help_offer", points: 15, entityId: offer.id });
     await awardAchievement(user, "first_helper");
     const [{ total }] = await db.select({ total: count() }).from(helpOffersTable).where(eq(helpOffersTable.userId, user));
@@ -446053,9 +446053,9 @@ router99.post("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql12 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql12`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql11`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to upvote love note");
@@ -446068,9 +446068,9 @@ router99.delete("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql12 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql12`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql11`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to remove upvote");
@@ -446154,7 +446154,7 @@ router100.post("/community-challenges/:id/progress", async (req, res) => {
       });
     }
     if (completed && !existing?.completedAt) {
-      await db.update(communityChallengesTable).set({ completionCount: sql2`${communityChallengesTable.completionCount} + 1` }).where(eq(communityChallengesTable.id, challengeId));
+      await db.update(communityChallengesTable).set({ completionCount: sql`${communityChallengesTable.completionCount} + 1` }).where(eq(communityChallengesTable.id, challengeId));
       await db.insert(pointsLedgerTable).values({ userId: user, action: "challenge_complete", points: challenge.pointsReward, entityId: challengeId });
       const [ach] = await db.select({ id: userAchievementsTable.id }).from(userAchievementsTable).where(and(eq(userAchievementsTable.userId, user), eq(userAchievementsTable.achievementType, "challenge_complete"))).limit(1);
       if (!ach) await db.insert(userAchievementsTable).values({ userId: user, achievementType: "challenge_complete" });
@@ -446266,8 +446266,8 @@ router101.post("/users/:id/follow", async (req, res) => {
     const [follower] = await db.select({ firstName: usersTable.firstName, username: usersTable.username }).from(usersTable).where(eq(usersTable.id, followerId)).limit(1);
     await db.insert(userFollowsTable).values({ followerId, followingId, status });
     if (status === "accepted") {
-      await db.update(usersTable).set({ followersCount: sql2`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, followingId));
-      await db.update(usersTable).set({ followingCount: sql2`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, followerId));
+      await db.update(usersTable).set({ followersCount: sql`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, followingId));
+      await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, followerId));
       const followerName = follower?.username ?? follower?.firstName ?? "Someone";
       sendPushToUser(followingId, {
         title: "New follower",
@@ -446319,8 +446319,8 @@ router101.delete("/users/:id/follow", async (req, res) => {
     }
     await db.delete(userFollowsTable).where(eq(userFollowsTable.id, existing.id));
     if (existing.status === "accepted") {
-      await db.update(usersTable).set({ followersCount: sql2`GREATEST(${usersTable.followersCount} - 1, 0)` }).where(eq(usersTable.id, followingId));
-      await db.update(usersTable).set({ followingCount: sql2`GREATEST(${usersTable.followingCount} - 1, 0)` }).where(eq(usersTable.id, followerId));
+      await db.update(usersTable).set({ followersCount: sql`GREATEST(${usersTable.followersCount} - 1, 0)` }).where(eq(usersTable.id, followingId));
+      await db.update(usersTable).set({ followingCount: sql`GREATEST(${usersTable.followingCount} - 1, 0)` }).where(eq(usersTable.id, followerId));
     }
     res.json({ message: "Unfollowed" });
   } catch (err) {
@@ -446432,8 +446432,8 @@ router101.post("/users/follow-requests/:id/accept", async (req, res) => {
       return;
     }
     await db.update(userFollowsTable).set({ status: "accepted", acceptedAt: /* @__PURE__ */ new Date() }).where(eq(userFollowsTable.id, requestId));
-    await db.update(usersTable).set({ followersCount: sql2`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, req.user.id));
-    await db.update(usersTable).set({ followingCount: sql2`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, row.followerId));
+    await db.update(usersTable).set({ followersCount: sql`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, req.user.id));
+    await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, row.followerId));
     res.json({ message: "Follow request accepted" });
   } catch (err) {
     req.log.error({ err }, "POST /users/follow-requests/:id/accept error");
@@ -447159,7 +447159,7 @@ router105.post("/knowledge/hubs/resolve", async (req, res) => {
     const orClauses = searchTerms.flatMap((t2) => [
       ilike(knowledgeTopicsTable.topicName, `%${t2}%`),
       ilike(knowledgeTopicsTable.canonicalName, `%${t2}%`),
-      sql2`${t2.toLowerCase()} = ANY(${knowledgeTopicsTable.synonyms})`
+      sql`${t2.toLowerCase()} = ANY(${knowledgeTopicsTable.synonyms})`
     ]);
     const existingTopics = await db.select({
       id: knowledgeTopicsTable.id,
@@ -447272,7 +447272,7 @@ router105.get("/knowledge/hubs/:topicId", async (req, res) => {
       topicTag: communityPostsTable.topicTag,
       upvotes: communityPostsTable.upvotes,
       commentsCount: communityPostsTable.commentsCount
-    }).from(communityPostsTable).where(and(eq(communityPostsTable.visibility, "public"), or(...postOrClauses))).orderBy(sql2`${communityPostsTable.createdAt} DESC`).limit(5);
+    }).from(communityPostsTable).where(and(eq(communityPostsTable.visibility, "public"), or(...postOrClauses))).orderBy(sql`${communityPostsTable.createdAt} DESC`).limit(5);
     const trustedSources = getSourcesForTopic(topic.category, topic.topicType, topic.topicName);
     res.json({
       topic,
@@ -448783,7 +448783,7 @@ router115.get("/knowledge/hubs/:topicId/experts", async (req, res) => {
       lastName: usersTable.lastName,
       avatarUrl: usersTable.profileImageUrl,
       city: usersTable.homeCity,
-      helpfulVotes: sql2`(
+      helpfulVotes: sql`(
           SELECT COUNT(*) FROM badge_helpful_votes WHERE badge_id = ${userBadgesTable.id}
         )`.mapWith(Number)
     }).from(userBadgesTable).innerJoin(usersTable, eq(userBadgesTable.userId, usersTable.id)).where(
@@ -448845,7 +448845,7 @@ router115.get("/users/:userId/badges", async (req, res) => {
       yearsOfExperience: userBadgesTable.yearsOfExperience,
       experienceNote: userBadgesTable.experienceNote,
       earnedAt: userBadgesTable.earnedAt,
-      helpfulVotes: sql2`(
+      helpfulVotes: sql`(
           SELECT COUNT(*) FROM badge_helpful_votes WHERE badge_id = ${userBadgesTable.id}
         )`.mapWith(Number)
     }).from(userBadgesTable).where(and(eq(userBadgesTable.userId, targetUserId), eq(userBadgesTable.isPublic, true))).orderBy(desc(userBadgesTable.earnedAt));
@@ -448983,7 +448983,7 @@ router116.post("/collections/:id/items", async (req, res) => {
       return;
     }
     const [item] = await db.insert(collectionItemsTable).values({ collectionId: id2, itemType, itemId, itemName, itemEmoji, note }).onConflictDoNothing().returning();
-    await db.update(collectionsTable).set({ itemCount: sql2`item_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(collectionsTable.id, id2));
+    await db.update(collectionsTable).set({ itemCount: sql`item_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(collectionsTable.id, id2));
     res.status(201).json({ item });
   } catch (err) {
     req.log.error({ err }, "add collection item error");
@@ -449005,7 +449005,7 @@ router116.delete("/collections/:id/items/:itemId", async (req, res) => {
       return;
     }
     await db.delete(collectionItemsTable).where(and(eq(collectionItemsTable.id, itemId), eq(collectionItemsTable.collectionId, id2)));
-    await db.update(collectionsTable).set({ itemCount: sql2`GREATEST(item_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(collectionsTable.id, id2));
+    await db.update(collectionsTable).set({ itemCount: sql`GREATEST(item_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(collectionsTable.id, id2));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "remove collection item error");
@@ -449021,7 +449021,7 @@ router116.post("/collections/:id/follow", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     await db.insert(collectionFollowsTable).values({ userId, collectionId: id2 }).onConflictDoNothing();
-    await db.update(collectionsTable).set({ followCount: sql2`follow_count + 1` }).where(eq(collectionsTable.id, id2));
+    await db.update(collectionsTable).set({ followCount: sql`follow_count + 1` }).where(eq(collectionsTable.id, id2));
     res.json({ following: true });
   } catch (err) {
     req.log.error({ err }, "follow collection error");
@@ -449037,7 +449037,7 @@ router116.delete("/collections/:id/follow", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     await db.delete(collectionFollowsTable).where(and(eq(collectionFollowsTable.userId, userId), eq(collectionFollowsTable.collectionId, id2)));
-    await db.update(collectionsTable).set({ followCount: sql2`GREATEST(follow_count - 1, 0)` }).where(eq(collectionsTable.id, id2));
+    await db.update(collectionsTable).set({ followCount: sql`GREATEST(follow_count - 1, 0)` }).where(eq(collectionsTable.id, id2));
     res.json({ following: false });
   } catch (err) {
     req.log.error({ err }, "unfollow collection error");
@@ -449320,7 +449320,7 @@ router118.get("/guides/:id", async (req, res) => {
     }
     const sections = await db.select().from(guideSectionsTable).where(eq(guideSectionsTable.guideId, id2)).orderBy(asc(guideSectionsTable.displayOrder));
     const items = await db.select().from(guideItemsTable).where(eq(guideItemsTable.guideId, id2)).orderBy(asc(guideItemsTable.sectionId), asc(guideItemsTable.displayOrder));
-    db.update(payItForwardGuidesTable).set({ viewCount: sql2`view_count + 1` }).where(eq(payItForwardGuidesTable.id, id2)).catch(() => void 0);
+    db.update(payItForwardGuidesTable).set({ viewCount: sql`view_count + 1` }).where(eq(payItForwardGuidesTable.id, id2)).catch(() => void 0);
     res.json({ guide, sections, items });
   } catch (err) {
     req.log.error({ err }, "get guide error");
@@ -449350,7 +449350,7 @@ router118.post("/guides/:id/sections", async (req, res) => {
       return;
     }
     const [section] = await db.insert(guideSectionsTable).values({ guideId: id2, title: title.trim(), sectionEmoji: sectionEmoji ?? "\u{1F4CC}", displayOrder: displayOrder ?? 0 }).returning();
-    await db.update(payItForwardGuidesTable).set({ sectionCount: sql2`section_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ sectionCount: sql`section_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
     res.status(201).json({ section });
   } catch (err) {
     req.log.error({ err }, "add guide section error");
@@ -449373,7 +449373,7 @@ router118.delete("/guides/:id/sections/:sectionId", async (req, res) => {
     }
     await db.delete(guideItemsTable).where(eq(guideItemsTable.sectionId, sectionId));
     await db.delete(guideSectionsTable).where(eq(guideSectionsTable.id, sectionId));
-    await db.update(payItForwardGuidesTable).set({ sectionCount: sql2`GREATEST(section_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ sectionCount: sql`GREATEST(section_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "delete guide section error");
@@ -449409,7 +449409,7 @@ router118.post("/guides/:id/items", async (req, res) => {
       externalLabel: externalLabel ?? null,
       displayOrder: displayOrder ?? 0
     }).returning();
-    await db.update(payItForwardGuidesTable).set({ itemCount: sql2`item_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ itemCount: sql`item_count + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
     res.status(201).json({ item });
   } catch (err) {
     req.log.error({ err }, "add guide item error");
@@ -449431,7 +449431,7 @@ router118.delete("/guides/:id/items/:itemId", async (req, res) => {
       return;
     }
     await db.delete(guideItemsTable).where(and(eq(guideItemsTable.id, itemId), eq(guideItemsTable.guideId, id2)));
-    await db.update(payItForwardGuidesTable).set({ itemCount: sql2`GREATEST(item_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ itemCount: sql`GREATEST(item_count - 1, 0)`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(payItForwardGuidesTable.id, id2));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "delete guide item error");
@@ -449447,7 +449447,7 @@ router118.post("/guides/:id/follow", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     await db.insert(guideFollowsTable).values({ userId, guideId: id2 }).onConflictDoNothing();
-    await db.update(payItForwardGuidesTable).set({ followCount: sql2`follow_count + 1` }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ followCount: sql`follow_count + 1` }).where(eq(payItForwardGuidesTable.id, id2));
     res.json({ following: true });
   } catch (err) {
     req.log.error({ err }, "follow guide error");
@@ -449463,7 +449463,7 @@ router118.delete("/guides/:id/follow", async (req, res) => {
   const id2 = String(req.params.id);
   try {
     await db.delete(guideFollowsTable).where(and(eq(guideFollowsTable.userId, userId), eq(guideFollowsTable.guideId, id2)));
-    await db.update(payItForwardGuidesTable).set({ followCount: sql2`GREATEST(follow_count - 1, 0)` }).where(eq(payItForwardGuidesTable.id, id2));
+    await db.update(payItForwardGuidesTable).set({ followCount: sql`GREATEST(follow_count - 1, 0)` }).where(eq(payItForwardGuidesTable.id, id2));
     res.json({ following: false });
   } catch (err) {
     req.log.error({ err }, "unfollow guide error");
@@ -449839,7 +449839,7 @@ router122.post("/archive/cities/:slug/contribute", async (req, res) => {
       neighborhood: neighborhood?.trim() || null,
       isApproved: false
     }).returning();
-    await db.update(cityArchivesTable).set({ nominationCount: sql2`${cityArchivesTable.nominationCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, city.id));
+    await db.update(cityArchivesTable).set({ nominationCount: sql`${cityArchivesTable.nominationCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, city.id));
     res.json({ contribution, message: "Thank you! Your contribution is under review and will appear in the archive soon." });
   } catch (err) {
     req.log.error(err, "archive: contribute");
@@ -449849,7 +449849,7 @@ router122.post("/archive/cities/:slug/contribute", async (req, res) => {
 router122.post("/archive/cities/:slug/contributions/:id/upvote", async (req, res) => {
   const { id: id2 } = req.params;
   try {
-    await db.update(archiveContributionsTable).set({ upvotes: sql2`${archiveContributionsTable.upvotes} + 1` }).where(eq(archiveContributionsTable.id, id2));
+    await db.update(archiveContributionsTable).set({ upvotes: sql`${archiveContributionsTable.upvotes} + 1` }).where(eq(archiveContributionsTable.id, id2));
     res.json({ ok: true });
   } catch (err) {
     req.log.error(err, "archive: upvote");
@@ -449866,7 +449866,7 @@ router122.post("/archive/nominate-city", async (req, res) => {
     const slug = `${city.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${(state ?? "us").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
     const [existing] = await db.select({ id: cityArchivesTable.id, nominationCount: cityArchivesTable.nominationCount }).from(cityArchivesTable).where(eq(cityArchivesTable.slug, slug)).limit(1);
     if (existing) {
-      await db.update(cityArchivesTable).set({ nominationCount: sql2`${cityArchivesTable.nominationCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, existing.id));
+      await db.update(cityArchivesTable).set({ nominationCount: sql`${cityArchivesTable.nominationCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, existing.id));
     } else {
       await db.insert(cityArchivesTable).values({
         city: city.trim(),
@@ -449896,7 +449896,7 @@ router122.patch("/archive/contributions/:id/approve", async (req, res) => {
   try {
     const [c3] = await db.update(archiveContributionsTable).set({ isApproved: true, isFeatured: isFeatured ?? false }).where(eq(archiveContributionsTable.id, id2)).returning();
     if (c3) {
-      await db.update(cityArchivesTable).set({ contributionCount: sql2`${cityArchivesTable.contributionCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, c3.archiveId));
+      await db.update(cityArchivesTable).set({ contributionCount: sql`${cityArchivesTable.contributionCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(cityArchivesTable.id, c3.archiveId));
     }
     res.json({ contribution: c3 });
   } catch (err) {
@@ -450609,13 +450609,13 @@ router125.get("/", async (req, res) => {
       gt(businessesTable.hiddenGemExpiresAt, now)
     ];
     if (city) {
-      conditions.push(sql2`LOWER(${businessesTable.city}) ILIKE ${`%${city.toLowerCase()}%`}`);
+      conditions.push(sql`LOWER(${businessesTable.city}) ILIKE ${`%${city.toLowerCase()}%`}`);
     }
     if (state) {
-      conditions.push(sql2`LOWER(${businessesTable.state}) ILIKE ${`%${state.toLowerCase()}%`}`);
+      conditions.push(sql`LOWER(${businessesTable.state}) ILIKE ${`%${state.toLowerCase()}%`}`);
     }
     if (category) {
-      conditions.push(sql2`LOWER(${businessesTable.hiddenGemCategory}) = ${category.toLowerCase()}`);
+      conditions.push(sql`LOWER(${businessesTable.hiddenGemCategory}) = ${category.toLowerCase()}`);
     }
     const gems = await db.select({
       id: businessesTable.id,
@@ -450637,7 +450637,7 @@ router125.get("/", async (req, res) => {
       priceRange: businessesTable.priceRange,
       description: businessesTable.description,
       confidenceScore: businessesTable.confidenceScore
-    }).from(businessesTable).where(and(...conditions)).orderBy(sql2`${businessesTable.hiddenGemNominations} DESC`).limit(limit2);
+    }).from(businessesTable).where(and(...conditions)).orderBy(sql`${businessesTable.hiddenGemNominations} DESC`).limit(limit2);
     res.json({ locked: false, gems });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch Hidden Gems");
@@ -450761,13 +450761,13 @@ router126.get("/resources", async (req, res) => {
           ilike(resourcesTable.title, term),
           ilike(resourcesTable.description, term),
           ilike(resourcesTable.organization, term),
-          sql2`${resourcesTable.keywords}::text ILIKE ${term}`
+          sql`${resourcesTable.keywords}::text ILIKE ${term}`
         )
       );
     }
     const [resources, countRow] = await Promise.all([
-      db.select().from(resourcesTable).where(and(...conditions)).orderBy(sql2`CASE ${resourcesTable.sourceTier} WHEN 'official' THEN 1 WHEN 'verified_org' THEN 2 WHEN 'community_confirmed' THEN 3 ELSE 4 END`, resourcesTable.title).limit(limit2).offset(offset),
-      db.select({ count: sql2`COUNT(*)` }).from(resourcesTable).where(and(...conditions))
+      db.select().from(resourcesTable).where(and(...conditions)).orderBy(sql`CASE ${resourcesTable.sourceTier} WHEN 'official' THEN 1 WHEN 'verified_org' THEN 2 WHEN 'community_confirmed' THEN 3 ELSE 4 END`, resourcesTable.title).limit(limit2).offset(offset),
+      db.select({ count: sql`COUNT(*)` }).from(resourcesTable).where(and(...conditions))
     ]);
     res.json({ resources, total: Number(countRow[0]?.count ?? 0), limit: limit2, offset });
   } catch (err) {
@@ -450796,7 +450796,7 @@ router126.post("/resources/:id/report", async (req, res) => {
   }
   const id2 = String(req.params.id);
   try {
-    await db.update(resourcesTable).set({ reportCount: sql2`${resourcesTable.reportCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(resourcesTable.id, id2));
+    await db.update(resourcesTable).set({ reportCount: sql`${resourcesTable.reportCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(resourcesTable.id, id2));
     res.json({ reported: true });
   } catch (err) {
     req.log.error({ err }, "Failed to report resource");
@@ -450826,7 +450826,7 @@ router126.get("/resources/opportunities", async (req, res) => {
     }
     const [opportunities, countRow] = await Promise.all([
       db.select().from(resourceOpportunitiesTable).where(and(...conditions)).orderBy(desc(resourceOpportunitiesTable.createdAt)).limit(limit2).offset(offset),
-      db.select({ count: sql2`COUNT(*)` }).from(resourceOpportunitiesTable).where(and(...conditions))
+      db.select({ count: sql`COUNT(*)` }).from(resourceOpportunitiesTable).where(and(...conditions))
     ]);
     res.json({ opportunities, total: Number(countRow[0]?.count ?? 0), limit: limit2, offset });
   } catch (err) {
@@ -450952,7 +450952,7 @@ router126.post("/resources/opportunities/:id/report", async (req, res) => {
   }
   const id2 = String(req.params.id);
   try {
-    await db.update(resourceOpportunitiesTable).set({ reportCount: sql2`${resourceOpportunitiesTable.reportCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(resourceOpportunitiesTable.id, id2));
+    await db.update(resourceOpportunitiesTable).set({ reportCount: sql`${resourceOpportunitiesTable.reportCount} + 1`, updatedAt: /* @__PURE__ */ new Date() }).where(eq(resourceOpportunitiesTable.id, id2));
     res.json({ reported: true });
   } catch (err) {
     req.log.error({ err }, "Failed to report opportunity");
@@ -451066,13 +451066,13 @@ Location: ${city}${state ? `, ${state}` : ""}` : ""}`
         (kw) => or(
           ilike(resourcesTable.title, `%${kw}%`),
           ilike(resourcesTable.description, `%${kw}%`),
-          sql2`${resourcesTable.keywords}::text ILIKE ${`%${kw}%`}`
+          sql`${resourcesTable.keywords}::text ILIKE ${`%${kw}%`}`
         )
       );
       dbConditions.push(or(...keywordConditions));
     }
     const resources = await db.select().from(resourcesTable).where(and(...dbConditions)).orderBy(
-      sql2`CASE ${resourcesTable.sourceTier} WHEN 'official' THEN 1 WHEN 'verified_org' THEN 2 WHEN 'community_confirmed' THEN 3 ELSE 4 END`,
+      sql`CASE ${resourcesTable.sourceTier} WHEN 'official' THEN 1 WHEN 'verified_org' THEN 2 WHEN 'community_confirmed' THEN 3 ELSE 4 END`,
       resourcesTable.title
     ).limit(12);
     const oppConditions = [eq(resourceOpportunitiesTable.status, "active")];
@@ -451170,7 +451170,7 @@ router127.get("/marketplace", async (req, res) => {
     }
     const [listings, countRow] = await Promise.all([
       db.select().from(communityListingsTable).where(and(...conds)).orderBy(desc(communityListingsTable.createdAt)).limit(limit2).offset(offset),
-      db.select({ count: sql2`COUNT(*)` }).from(communityListingsTable).where(and(...conds))
+      db.select({ count: sql`COUNT(*)` }).from(communityListingsTable).where(and(...conds))
     ]);
     const userIds = [...new Set(listings.map((l4) => l4.userId).filter(Boolean))];
     const trustData = userIds.length > 0 ? await db.select({
@@ -451241,7 +451241,7 @@ router127.get("/marketplace/:id", async (req, res) => {
       res.status(404).json({ error: "Listing not found" });
       return;
     }
-    await db.update(communityListingsTable).set({ viewCount: sql2`${communityListingsTable.viewCount} + 1` }).where(eq(communityListingsTable.id, listing.id));
+    await db.update(communityListingsTable).set({ viewCount: sql`${communityListingsTable.viewCount} + 1` }).where(eq(communityListingsTable.id, listing.id));
     const currentUserId = req.user?.id ?? null;
     let isSaved = false;
     if (currentUserId) {
@@ -451361,7 +451361,7 @@ router127.post("/marketplace/:id/save", async (req, res) => {
   const listingId = String(req.params.id);
   try {
     await db.insert(marketplaceSavedTable).values({ userId: req.user.id, listingId }).onConflictDoNothing();
-    await db.update(communityListingsTable).set({ savedCount: sql2`${communityListingsTable.savedCount} + 1` }).where(eq(communityListingsTable.id, listingId));
+    await db.update(communityListingsTable).set({ savedCount: sql`${communityListingsTable.savedCount} + 1` }).where(eq(communityListingsTable.id, listingId));
     res.json({ saved: true });
   } catch (err) {
     req.log.error({ err }, "Failed to save listing");
@@ -451376,7 +451376,7 @@ router127.delete("/marketplace/:id/save", async (req, res) => {
   const listingId = String(req.params.id);
   try {
     await db.delete(marketplaceSavedTable).where(and(eq(marketplaceSavedTable.userId, req.user.id), eq(marketplaceSavedTable.listingId, listingId)));
-    await db.update(communityListingsTable).set({ savedCount: sql2`GREATEST(${communityListingsTable.savedCount} - 1, 0)` }).where(eq(communityListingsTable.id, listingId));
+    await db.update(communityListingsTable).set({ savedCount: sql`GREATEST(${communityListingsTable.savedCount} - 1, 0)` }).where(eq(communityListingsTable.id, listingId));
     res.json({ saved: false });
   } catch (err) {
     req.log.error({ err }, "Failed to unsave listing");
@@ -451441,7 +451441,7 @@ router127.post("/marketplace/:id/report", async (req, res) => {
     return;
   }
   try {
-    await db.update(communityListingsTable).set({ reportCount: sql2`${communityListingsTable.reportCount} + 1` }).where(eq(communityListingsTable.id, String(req.params.id)));
+    await db.update(communityListingsTable).set({ reportCount: sql`${communityListingsTable.reportCount} + 1` }).where(eq(communityListingsTable.id, String(req.params.id)));
     res.json({ reported: true });
   } catch (err) {
     req.log.error({ err }, "Failed to report listing");
@@ -451586,7 +451586,7 @@ router128.patch("/wellness/goals/:id", async (req, res) => {
     await db.update(wellnessGoalsTable).set({
       ...currentValue !== void 0 ? { currentValue: String(currentValue) } : {},
       ...isActive !== void 0 ? { isActive: Boolean(isActive) } : {},
-      ...streakIncrement ? { streakCount: sql2`${wellnessGoalsTable.streakCount} + 1`, lastCompletedAt: /* @__PURE__ */ new Date() } : {},
+      ...streakIncrement ? { streakCount: sql`${wellnessGoalsTable.streakCount} + 1`, lastCompletedAt: /* @__PURE__ */ new Date() } : {},
       updatedAt: /* @__PURE__ */ new Date()
     }).where(eq(wellnessGoalsTable.id, id2));
     res.json({ updated: true });
@@ -452326,7 +452326,7 @@ router133.get("/vibes/search", async (req, res) => {
         WHERE sp.business_id = b.id AND sp.user_id = $${params.length}
       ) THEN 15 ELSE 0 END`;
     }
-    const sql12 = `
+    const sql11 = `
       SELECT
         b.id,
         b.name,
@@ -452416,7 +452416,7 @@ router133.get("/vibes/search", async (req, res) => {
       ORDER BY total_score DESC
       LIMIT 30
     `;
-    const result = await pool.query(sql12, params);
+    const result = await pool.query(sql11, params);
     res.json({
       businesses: result.rows.map((r2) => ({
         id: r2.id,
@@ -452647,7 +452647,7 @@ router134.get("/places", async (req, res) => {
     const rows = await db.select().from(communityPlacesTable).where(
       country ? ilike(communityPlacesTable.country, `%${country}%`) : city ? ilike(communityPlacesTable.city, `%${city}%`) : void 0
     ).orderBy(desc(communityPlacesTable.postCount)).limit(limit2).offset(offset);
-    const [{ total }] = await db.select({ total: sql2`count(*)::int` }).from(communityPlacesTable);
+    const [{ total }] = await db.select({ total: sql`count(*)::int` }).from(communityPlacesTable);
     res.json({ places: rows, total });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch places");
@@ -454863,8 +454863,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "f695a04a52e38ad264a61fe635ef80b122ba672b";
-var BUILD_AT = "2026-08-03T12:25:02.942Z";
+var BUILT_FROM_SHA = "be0d27dc3aa8e2a9279faa870e963d3aa7263933";
+var BUILD_AT = "2026-08-03T13:45:44.961Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
