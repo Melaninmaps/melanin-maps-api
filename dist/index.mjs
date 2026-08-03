@@ -452157,7 +452157,7 @@ router132.get("/preview/spotlight", async (_req, res) => {
     }).from(businessesTable).where(isNotNull(businessesTable.imageUrl)).orderBy(
       // Diverse/community-owned businesses surface first so the preview
       // reflects the platform's full breadth, not just the top-rated subset.
-      desc(sql`CASE WHEN array_length(${businessesTable.ownershipDesignations}, 1) > 0 THEN 1 ELSE 0 END`),
+      desc(sql`CASE WHEN jsonb_array_length(${businessesTable.ownershipDesignations}) > 0 THEN 1 ELSE 0 END`),
       desc(businessesTable.verified),
       desc(businessesTable.confidenceScore),
       desc(businessesTable.rating)
@@ -454863,8 +454863,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "be0d27dc3aa8e2a9279faa870e963d3aa7263933";
-var BUILD_AT = "2026-08-03T13:45:44.961Z";
+var BUILT_FROM_SHA = "2acea928f0b9feec3c808b2093514893eaf9d7f5";
+var BUILD_AT = "2026-08-03T13:49:16.748Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
