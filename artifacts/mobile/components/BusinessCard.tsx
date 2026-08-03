@@ -90,7 +90,10 @@ interface Props {
 
 export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false, warningCount = 0 }: Props) {
   const colors = useColors();
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  // Prefer the per-business image from the server; fall back to category stock art.
+  const img = business.imageUrl
+    ? { uri: business.imageUrl }
+    : (CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"]);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 

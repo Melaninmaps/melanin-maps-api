@@ -370,18 +370,15 @@ export function FullMapView() {
         } : {})}
         onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); }}
       >
-        {/* Business pins — gold */}
+        {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
         {mapped.map((biz) => (
           <Marker
             key={biz.id}
             coordinate={{ latitude: biz.latitude, longitude: biz.longitude }}
             onPress={() => { setSelectedBusiness(biz); setSelectedCulturalSite(null); }}
             tracksViewChanges={false}
-          >
-            <View style={s.bizMarker}>
-              <Feather name="briefcase" size={9} color="#fff" />
-            </View>
-          </Marker>
+            pinColor={GOLD}
+          />
         ))}
 
         {/* Safety heatmap circles */}
@@ -427,33 +424,8 @@ export function FullMapView() {
               }}
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={false}
-            >
-              {/* Marker isolation (VC71 → extended to iOS, Build 99): plain
-                  colored circle — no Feather/Text child inside the Marker.
-                  On Android Fabric, rendering a View containing a Text node
-                  (Feather icon) via view.draw(canvas) in an unattached-Window
-                  context corrupts the Marker's native touch descriptor,
-                  crashing the map on first interaction.
-
-                  iOS (Build 99 crash-blocker): Expo SDK 57 makes Fabric
-                  mandatory on BOTH platforms, and the same marker
-                  view-recycling crash class exists in AIRMap under Fabric —
-                  it is the prime suspect for the unidentified native iOS
-                  crash from the Build 98 tester reports (up to 250 markers
-                  with custom children mounting/recycling during pan/zoom).
-                  Until a TestFlight crash log rules it out, iOS gets the
-                  identical plain-circle isolation proven on Android.
-                  Selection remains indicated by size change + the selection
-                  card; icon restoration is gated on crash-logger evidence. */}
-              <View
-                pointerEvents="none"
-                style={[
-                  s.culturalMarker,
-                  { backgroundColor: cs.color },
-                  isSelected && s.culturalMarkerSelected,
-                ]}
-              />
-            </Marker>
+              pinColor={cs.color}
+            />
           );
         })}
       </MapView>

@@ -46,10 +46,14 @@ router.get("/preview/spotlight", async (_req: Request, res: Response) => {
         imageUrl: businessesTable.imageUrl,
         verified: businessesTable.verified,
         subcategory: businessesTable.subcategory,
+        ownershipDesignations: businessesTable.ownershipDesignations,
       })
       .from(businessesTable)
       .where(isNotNull(businessesTable.imageUrl))
       .orderBy(
+        // Diverse/community-owned businesses surface first so the preview
+        // reflects the platform's full breadth, not just the top-rated subset.
+        desc(sql`CASE WHEN array_length(${businessesTable.ownershipDesignations}, 1) > 0 THEN 1 ELSE 0 END`),
         desc(businessesTable.verified),
         desc(businessesTable.confidenceScore),
         desc(businessesTable.rating),

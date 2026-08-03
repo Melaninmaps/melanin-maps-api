@@ -82,6 +82,10 @@ export async function authMiddleware(
 
   const session = await getSession(sid);
   if (!session?.user?.id) {
+    req.log.warn(
+      { event: "SESSION_CLEARED_NO_USER", sidPrefix: sid.slice(0, 8) + "…", hasSession: !!session },
+      "clearing session: no user ID found in session data",
+    );
     await clearSession(res, sid);
     next();
     return;
@@ -89,6 +93,18 @@ export async function authMiddleware(
 
   const refreshed = await refreshIfExpired(sid, session);
   if (!refreshed) {
+    req.log.warn(
+      {
+        event: "SESSION_CLEARED_REFRESH_FAILED",
+        sidPrefix: sid.slice(0, 8) + "…",
+        userId: session.user.id,
+        hasExpiresAt: !!session.expires_at,
+        hasRefreshToken: !!session.refresh_token,
+        expiresAt: session.expires_at,
+        nowUnix: Math.floor(Date.now() / 1000),
+      },
+      "clearing session: OIDC token refresh failed",
+    );
     await clearSession(res, sid);
     next();
     return;
