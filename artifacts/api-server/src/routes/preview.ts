@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, businessesTable, communityPostsTable } from "@workspace/db";
-import { eq, desc, and, isNotNull } from "drizzle-orm";
+import { eq, desc, and, isNotNull, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -53,7 +53,7 @@ router.get("/preview/spotlight", async (_req: Request, res: Response) => {
       .orderBy(
         // Diverse/community-owned businesses surface first so the preview
         // reflects the platform's full breadth, not just the top-rated subset.
-        desc(sql`CASE WHEN array_length(${businessesTable.ownershipDesignations}, 1) > 0 THEN 1 ELSE 0 END`),
+        desc(sql`CASE WHEN jsonb_array_length(${businessesTable.ownershipDesignations}) > 0 THEN 1 ELSE 0 END`),
         desc(businessesTable.verified),
         desc(businessesTable.confidenceScore),
         desc(businessesTable.rating),
