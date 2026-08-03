@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable } from "@workspace/db";
+import { db, pool, usersTable, profileTagsTable, reviewsTable, memberConnections, userFollowsTable, userBlocksTable } from "@workspace/db";
 import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
@@ -654,5 +654,42 @@ router.put("/users/settings", async (req: Request, res: Response) => {
   }
 });
 
+
+// ─── Block / Unblock ────────────────────────────────────────────────────────
+
+// POST /api/users/:id/block — block a user (Guideline 1.2 UGC safety)
+router.post("/users/:id/block", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  const targetId = req.params.id;
+  if (targetId === req.user.id) { res.status(400).json({ error: "Cannot block yourself" }); return; }
+  try {
+    await db.insert(userBlocksTable).values({
+      blockerId: req.user.id,
+      blockedId: targetId,
+    }).onConflictDoNothing();
+    // Also unfollow if following
+    await db.delete(userFollowsTable).where(
+      and(eq(userFollowsTable.followerId, req.user.id), eq(userFollowsTable.followingId, targetId))
+    );
+    res.json({ ok: true, blocked: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/users/:id/block error");
+    res.status(500).json({ error: "Failed to block user" });
+  }
+});
+
+// DELETE /api/users/:id/block — unblock a user
+router.delete("/users/:id/block", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    await db.delete(userBlocksTable).where(
+      and(eq(userBlocksTable.blockerId, req.user.id), eq(userBlocksTable.blockedId, req.params.id))
+    );
+    res.json({ ok: true, blocked: false });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /api/users/:id/block error");
+    res.status(500).json({ error: "Failed to unblock user" });
+  }
+});
 
 export default router;

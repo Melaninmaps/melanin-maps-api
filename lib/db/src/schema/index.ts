@@ -41,6 +41,7 @@ export * from "./mentorship-profiles";
 export * from "./notifications";
 export * from "./travel";
 export * from "./connections";
+export * from "./user-blocks";
 export * from "./user-follows";
 export * from "./pinned-business-items";
 export * from "./family-safety";

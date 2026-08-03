@@ -77,6 +77,7 @@ export default function VisitorProfileScreen() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const loadProfile = useCallback(async () => {
     if (!id) return;
@@ -161,6 +162,66 @@ export default function VisitorProfileScreen() {
     });
   }, []);
 
+  const handleMoreMenu = () => {
+    if (!profile) return;
+    const name = profile.username ? `@${profile.username}` : "this user";
+    Alert.alert(name, undefined, [
+      {
+        text: isBlocked ? "Unblock User" : "Block User",
+        style: isBlocked ? "default" : "destructive",
+        onPress: async () => {
+          try {
+            const token = await SecureStore.getItemAsync("auth_session_token");
+            if (!token) { Alert.alert("Sign in required", "You need to be signed in."); return; }
+            const method = isBlocked ? "DELETE" : "POST";
+            const res = await fetch(`${getApiBase()}/api/users/${id}/block`, {
+              method,
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              setIsBlocked(!isBlocked);
+              if (!isBlocked) {
+                setFollowStatus("not_following");
+                Alert.alert("User blocked", `You won't see ${name}'s content.`);
+              }
+            }
+          } catch { /* ignore */ }
+        },
+      },
+      {
+        text: "Report User",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            "Report User",
+            "What's the issue with this account?",
+            [
+              { text: "Spam or fake account", onPress: () => submitReport("spam") },
+              { text: "Harassment or bullying", onPress: () => submitReport("harassment") },
+              { text: "Inappropriate content", onPress: () => submitReport("inappropriate") },
+              { text: "Other", onPress: () => submitReport("other") },
+              { text: "Cancel", style: "cancel" },
+            ],
+          );
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
+  const submitReport = async (reason: string) => {
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) return;
+      await fetch(`${getApiBase()}/api/content-reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ targetType: "user", targetId: id, reason }),
+      });
+      Alert.alert("Report submitted", "Our moderation team will review this account within 24 hours. Thank you for helping keep the community safe.");
+    } catch { /* ignore */ }
+  };
+
   const handleFollow = async () => {
     if (!id || !profile) return;
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -233,7 +294,18 @@ export default function VisitorProfileScreen() {
         <Text style={[s.navTitle, { color: colors.foreground }]} numberOfLines={1}>
           {displayName || "Profile"}
         </Text>
-        <View style={{ width: 38 }} />
+        {!isOwnProfile && profile ? (
+          <TouchableOpacity
+            style={[s.backBtn, { backgroundColor: colors.secondary }]}
+            onPress={handleMoreMenu}
+            activeOpacity={0.7}
+            accessibilityLabel="More options"
+          >
+            <Feather name="more-vertical" size={18} color={colors.foreground} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 38 }} />
+        )}
       </View>
 
       <ScrollView
