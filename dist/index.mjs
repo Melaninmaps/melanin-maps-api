@@ -390384,8 +390384,8 @@ var SPA_HTML = `<!DOCTYPE html>
         _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-CNK_C3iQ.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BxvtoaAa.css">
+    <script type="module" crossorigin src="/assets/index-CWObelCJ.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CcSUsfJF.css">
   </head>
   <body>
     <div id="root"></div>
@@ -454866,8 +454866,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "2d8e204fadfdbeb840612ca10ec4a0bf3bc95634";
-var BUILD_AT = "2026-08-04T22:34:21.072Z";
+var BUILT_FROM_SHA = "af402490dc31c24c34df4c1bea439561469e5cf1";
+var BUILD_AT = "2026-08-04T23:00:28.686Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
