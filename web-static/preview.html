@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Choose Your Preview — Mapping With Melanin</title>
+<meta name="description" content="Choose your preview and see how Mapping With Melanin is built for you."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brown:#2B1507;--surface:#3C1E0A;--gold:#CA922B;--gold-light:#E5B84A;
+  --cream:#F5F0E8;--muted:rgba(245,240,232,0.55);--danger:#ff5555;--safe:#50c878;
+}
+html,body{min-height:100vh;background:var(--brown);color:var(--cream);
+  font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Playfair Display',serif}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:none}
+input{font-family:'DM Sans',sans-serif}
+a{color:var(--gold);text-decoration:none}
+
+/* ── layout ── */
+.page{max-width:520px;margin:0 auto;padding:0 20px;position:relative}
+.glow{position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 50% -20%,rgba(202,146,43,.13) 0%,transparent 70%);pointer-events:none;z-index:0}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── logo ── */
+.logo{display:flex;justify-content:center;padding:48px 0 36px;gap:10px;align-items:center}
+.logo-text{font-size:13px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+
+/* ── selection ── */
+.sel-header{text-align:center;margin-bottom:40px}
+.sel-header h1{font-size:clamp(28px,7vw,40px);line-height:1.15;font-weight:700;margin-bottom:12px}
+.sel-header p{font-size:16px;color:var(--muted);line-height:1.6;max-width:360px;margin:0 auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
+.card{background:rgba(255,255,255,.04);border:1.5px solid rgba(202,146,43,.25);border-radius:16px;
+  padding:22px 18px;text-align:left;transition:all .22s ease;color:var(--cream)}
+.card:hover,.card:focus{background:rgba(202,146,43,.12);border-color:var(--gold);
+  transform:translateY(-2px);box-shadow:0 8px 32px rgba(202,146,43,.2);outline:none}
+.card-icon{margin-bottom:14px;display:block}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.25;margin-bottom:6px}
+.card-sub{font-size:12px;color:var(--muted);line-height:1.5}
+.bottom-note{text-align:center;font-size:13px;color:rgba(245,240,232,.3)}
+
+/* ── preview screen ── */
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--gold);font-size:13px;font-weight:600;padding:20px 0 0;background:none;border:none}
+.preview-label{text-align:center;padding:20px 0 0}
+.preview-label .eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.preview-label h2{font-size:clamp(22px,6vw,30px);font-weight:700;margin-bottom:6px}
+.preview-label .hook{font-size:14px;color:var(--muted);line-height:1.6;max-width:340px;margin:0 auto}
+/* phone frame */
+.phone{margin:24px 0;background:#111;border-radius:32px;padding:10px;
+  box-shadow:0 0 0 2px rgba(202,146,43,.35),0 24px 80px rgba(0,0,0,.6);overflow:hidden}
+.phone-notch{width:80px;height:22px;background:#111;border-radius:0 0 14px 14px;margin:0 auto 4px}
+.phone-screen{height:380px;border-radius:22px;overflow:hidden;position:relative}
+.phone-home{display:flex;justify-content:center;padding-top:10px}
+.phone-home-bar{width:100px;height:4px;background:rgba(255,255,255,.2);border-radius:2px}
+/* features list */
+.features{display:flex;flex-direction:column;gap:8px;padding-bottom:120px}
+.feature-item{display:flex;gap:10px;align-items:flex-start}
+.feature-check{color:var(--gold);font-size:14px;margin-top:1px;flex-shrink:0}
+.feature-text{font-size:13px;color:var(--muted);line-height:1.5}
+/* sticky CTA */
+.sticky-cta{position:fixed;bottom:0;left:0;right:0;padding:16px 20px 28px;
+  background:linear-gradient(to top,var(--brown) 70%,transparent);z-index:10;display:flex;justify-content:center}
+.cta-btn{width:100%;max-width:480px;padding:16px 28px;background:var(--gold);color:var(--brown);
+  border-radius:14px;font-size:16px;font-weight:700;font-family:'Playfair Display',serif;
+  box-shadow:0 4px 24px rgba(202,146,43,.4);letter-spacing:.01em;border:none;cursor:pointer}
+.cta-btn:hover{background:var(--gold-light)}
+
+/* ── signup ── */
+.signup-wrap{padding:32px 0 60px;max-width:480px;margin:0 auto;width:100%}
+.signup-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.signup-title{font-size:clamp(22px,6vw,28px);font-weight:700;line-height:1.2;margin-bottom:10px}
+.signup-sub{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:22px}
+.field{width:100%;padding:13px 16px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(202,146,43,.3);border-radius:10px;color:var(--cream);
+  font-size:15px;outline:none;display:block;margin-bottom:12px;transition:border .2s}
+.field:focus{border-color:var(--gold)}
+.field::placeholder{color:var(--muted)}
+.error-msg{font-size:13px;color:#ff8080;margin-bottom:10px}
+.submit-btn{width:100%;padding:15px 24px;background:var(--gold);color:var(--brown);
+  border-radius:12px;font-size:15px;font-weight:700;font-family:'Playfair Display',serif;
+  border:none;cursor:pointer;margin-top:4px;transition:background .2s}
+.submit-btn:hover:not(:disabled){background:var(--gold-light)}
+.submit-btn:disabled{background:rgba(202,146,43,.4);cursor:not-allowed}
+
+/* ── success ── */
+.success-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;text-align:center;padding:48px 24px}
+.success-seal{width:72px;height:72px;border-radius:50%;background:rgba(202,146,43,.15);
+  border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  margin:0 auto 28px;box-shadow:0 0 40px rgba(202,146,43,.3)}
+.success-title{font-size:32px;font-weight:700;margin-bottom:14px}
+.position-badge{display:inline-block;padding:6px 18px;background:rgba(202,146,43,.15);
+  border:1px solid rgba(202,146,43,.4);border-radius:24px;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:20px}
+.success-sub{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:32px;max-width:380px}
+.share-box{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.2);border-radius:14px;padding:18px 20px;text-align:left;width:100%;max-width:400px}
+.share-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.share-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+.share-btns{display:flex;gap:10px}
+.share-btn{flex:1;padding:9px 12px;background:rgba(202,146,43,.12);border:1px solid rgba(202,146,43,.3);
+  border-radius:10px;color:var(--gold);font-size:12px;font-weight:600;text-align:center;display:block}
+
+/* ── mockup: safety ── */
+.map-bg{width:100%;height:100%;background:#0f1923;position:relative;overflow:hidden}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(202,146,43,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(202,146,43,.06) 1px,transparent 1px);background-size:28px 28px}
+.zone{position:absolute;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 8px;font-size:10px;font-weight:600}
+.zone-danger{top:38%;left:15%;width:130px;height:90px;background:rgba(220,50,50,.18);border:1.5px solid rgba(220,50,50,.5);color:#ff8080}
+.zone-safe{top:30%;right:12%;width:110px;height:80px;background:rgba(50,180,100,.15);border:1.5px solid rgba(50,180,100,.45);color:#6ee7a0}
+.pin{position:absolute;width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+.pin-danger{background:#ff5555;box-shadow:0 2px 6px rgba(255,85,85,.5);top:52%;left:14%}
+.pin-safe{background:#50c878;box-shadow:0 2px 6px rgba(80,200,120,.5);top:22%;right:25%}
+.pin-gold{background:var(--gold);box-shadow:0 2px 6px rgba(202,146,43,.6);width:16px;height:16px;top:62%;right:18%}
+.notif{position:absolute;top:16px;left:16px;right:16px;background:rgba(20,12,6,.92);border:1px solid rgba(202,146,43,.35);border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px)}
+.notif-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.notif-icon{width:20px;height:20px;border-radius:6px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px}
+.notif-label{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:.04em}
+.notif-text{font-size:11.5px;color:var(--cream);line-height:1.45}
+.safe-card{position:absolute;bottom:16px;left:16px;right:16px;background:rgba(20,12,6,.88);border:1px solid rgba(80,200,120,.4);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.safe-dot{width:10px;height:10px;border-radius:50%;background:#50c878;flex-shrink:0;box-shadow:0 0 8px #50c878}
+.safe-info .safe-tag{font-size:11px;color:#6ee7a0;font-weight:600}
+.safe-info .safe-name{font-size:12px;color:var(--cream)}
+
+/* ── mockup: discovery ── */
+.disco-bg{width:100%;height:100%;background:#1a0d05;overflow:hidden;display:flex;flex-direction:column}
+.disco-search{padding:12px 12px 6px;flex-shrink:0}
+.search-bar{background:rgba(202,146,43,.1);border:1px solid rgba(202,146,43,.3);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.chips{display:flex;gap:6px;margin-top:6px;overflow:hidden}
+.chip{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.chip-active{background:var(--gold);color:var(--brown);border:1px solid var(--gold)}
+.chip-passive{background:rgba(202,146,43,.12);color:var(--gold);border:1px solid rgba(202,146,43,.25)}
+.biz-list{flex:1;padding:4px 12px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.biz-card{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.18);border-radius:12px;overflow:hidden;display:flex;height:72px;flex-shrink:0}
+.biz-img{width:72px;flex-shrink:0;overflow:hidden}
+.biz-img img{width:100%;height:100%;object-fit:cover;opacity:.9}
+.biz-info{flex:1;padding:7px 10px;display:flex;flex-direction:column;justify-content:space-between}
+.biz-name{font-size:12px;color:var(--cream);font-weight:600;line-height:1.2}
+.biz-meta{font-size:10px;color:var(--muted)}
+.biz-row{display:flex;align-items:center;gap:6px}
+.biz-stars{font-size:10px;color:var(--gold)}
+.biz-rating{font-size:10px;color:var(--muted)}
+.biz-badge{font-size:9px;padding:2px 6px;border-radius:10px;background:rgba(202,146,43,.15);color:var(--gold);border:1px solid rgba(202,146,43,.3);margin-left:auto}
+
+/* ── mockup: business ── */
+.dash-bg{width:100%;height:100%;background:#1a0d05;padding:14px;overflow:hidden;display:flex;flex-direction:column;gap:10px}
+.stat-row{display:flex;gap:8px;flex-shrink:0}
+.stat-box{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(202,146,43,.2);border-radius:12px;padding:9px 11px}
+.stat-label{font-size:9px;color:var(--muted);margin-bottom:4px}
+.stat-val{font-size:20px;color:var(--cream);font-weight:700;line-height:1}
+.stat-delta{font-size:9px;color:#6ee7a0;margin-top:3px}
+.chart-box{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.15);border-radius:12px;padding:10px 12px;flex-shrink:0}
+.chart-title{font-size:10px;color:var(--muted);font-weight:600;margin-bottom:8px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:52px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%}
+.bar{width:100%;border-radius:3px 3px 0 0}
+.bar-normal{background:rgba(202,146,43,.35)}
+.bar-peak{background:var(--gold);box-shadow:0 0 10px rgba(202,146,43,.4)}
+.bar-day{font-size:8px;color:var(--muted)}
+.deal-box{background:linear-gradient(135deg,rgba(202,146,43,.2),rgba(202,146,43,.08));border:1.5px solid rgba(202,146,43,.5);border-radius:12px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.deal-tag{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.05em;margin-bottom:2px}
+.deal-name{font-size:12px;color:var(--cream)}
+.deal-edit{font-size:9px;padding:4px 9px;background:var(--gold);color:var(--brown);border-radius:7px;font-weight:700}
+.feedback-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:9px 12px;flex-shrink:0}
+.feedback-label{font-size:9px;color:var(--muted);margin-bottom:5px}
+.feedback-text{font-size:11px;color:var(--cream);font-style:italic;line-height:1.5}
+.feedback-attr{font-size:9px;color:var(--gold);margin-top:3px}
+
+/* ── mockup: community ── */
+.comm-bg{width:100%;height:100%;background:#1a0d05;padding:12px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.post-card{background:rgba(255,255,255,.05);border:1px solid rgba(202,146,43,.18);border-radius:12px;padding:9px 11px;flex-shrink:0}
+.post-header{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);font-weight:700;flex-shrink:0}
+.post-author{font-size:11px;color:var(--cream);font-weight:600}
+.post-loc{font-size:9.5px;color:var(--muted)}
+.post-text{font-size:11.5px;color:var(--cream);line-height:1.45;margin-bottom:7px}
+.post-footer{display:flex;gap:10px;align-items:center}
+.post-reaction{font-size:10px;color:var(--muted)}
+.post-tag{font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(202,146,43,.12);color:var(--gold);margin-left:auto}
+.event-card{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.3);border-radius:12px;padding:9px 11px;display:flex;gap:10px;flex-shrink:0;align-items:center}
+.event-date{width:42px;text-align:center;background:rgba(202,146,43,.15);border-radius:8px;padding:5px 0;border:1px solid rgba(202,146,43,.3);flex-shrink:0}
+.event-month{font-size:8px;color:var(--gold);font-weight:700;letter-spacing:.05em}
+.event-day{font-size:17px;color:var(--cream);font-weight:700;line-height:1.1}
+.event-name{font-size:12px;color:var(--cream);font-weight:600}
+.event-venue{font-size:9.5px;color:var(--muted);margin-top:1px}
+.event-going{font-size:9px;color:var(--gold);margin-top:3px}
+.heritage-card{background:rgba(202,146,43,.08);border:1px solid rgba(202,146,43,.25);border-radius:12px;padding:9px 11px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+.heritage-icon{width:34px;height:34px;border-radius:8px;background:rgba(202,146,43,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.heritage-tag{font-size:9px;color:var(--gold);font-weight:700;letter-spacing:.04em}
+.heritage-name{font-size:12px;color:var(--cream);font-weight:600}
+.heritage-city{font-size:10px;color:var(--muted)}
+
+@media(max-width:360px){.grid{grid-template-columns:1fr}.card{padding:18px 14px}}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<!-- ════════════════ SELECTION SCREEN ════════════════ -->
+<div id="screen-selection" class="screen active">
+  <div class="page">
+    <div class="logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="#CA922B" stroke-width="1.5"/>
+        <path d="M8 18 C8 10 20 10 20 18" stroke="#CA922B" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="14" cy="11" r="2.5" fill="#CA922B"/>
+      </svg>
+      <span class="logo-text">Mapping With Melanin</span>
+    </div>
+    <div class="sel-header">
+      <h1>What brings you<br>to the map?</h1>
+      <p>Choose your preview and see how Mapping With Melanin is built for you.</p>
+    </div>
+    <div class="grid">
+      <button class="card" data-id="safety" onclick="selectCard('safety')">
+        <svg class="card-icon" width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <path d="M18 3L5 9v9c0 8.3 5.6 16 13 18 7.4-2 13-9.7 13-18V9L18 3z" stroke="#CA922B" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M12 18l4 4 8-8" stroke="#CA922B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="card-title">Keep My People Safe</div>
+        <div class="card-sub">Navigate with confidence and awareness.</div>
+      </button>
+      <button class="card" data-id="discovery" onclick="selectCard('discovery')">
+        <svg class="card-icon" width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <circle cx="16" cy="16" r="10" stroke="#CA922B" stroke-width="2"/>
+          <path d="M24 24l7 7" stroke="#CA922B" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M12 16h8M16 12v8" stroke="#CA922B" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="card-title">Find Trusted Businesses</div>
+        <div class="card-sub">Spend where you are celebrated.</div>
+      </button>
+      <button class="card" data-id="business" onclick="selectCard('business')">
+        <svg class="card-icon" width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect x="4" y="14" width="28" height="18" rx="2" stroke="#CA922B" stroke-width="2"/>
+          <path d="M12 14V9a6 6 0 0112 0v5" stroke="#CA922B" stroke-width="2" stroke-linecap="round"/>
+          <path d="M4 20h28" stroke="#CA922B" stroke-width="1.5" opacity=".5"/>
+          <circle cx="18" cy="23" r="2.5" stroke="#CA922B" stroke-width="1.5"/>
+        </svg>
+        <div class="card-title">I Own a Business</div>
+        <div class="card-sub">Grow your legacy with a loyal community.</div>
+      </button>
+      <button class="card" data-id="community" onclick="selectCard('community')">
+        <svg class="card-icon" width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <circle cx="18" cy="10" r="5" stroke="#CA922B" stroke-width="2"/>
+          <circle cx="7" cy="26" r="4" stroke="#CA922B" stroke-width="2"/>
+          <circle cx="29" cy="26" r="4" stroke="#CA922B" stroke-width="2"/>
+          <path d="M13 14.5C10.5 16 9 19 9 22" stroke="#CA922B" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M23 14.5C25.5 16 27 19 27 22" stroke="#CA922B" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M11 26h14" stroke="#CA922B" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="card-title">Connect With Community</div>
+        <div class="card-sub">Find your tribe, honor your roots.</div>
+      </button>
+    </div>
+    <p class="bottom-note">Built for us, by us. Free to explore.</p>
+  </div>
+</div>
+
+<!-- ════════════════ PREVIEW SCREEN ════════════════ -->
+<div id="screen-preview" class="screen">
+  <div class="page" style="flex:1">
+    <button class="back-btn" onclick="goBack('preview')">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="#CA922B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Choose a different preview
+    </button>
+    <div class="preview-label">
+      <div class="eyebrow">Your Preview</div>
+      <h2 id="preview-title"></h2>
+      <p class="hook" id="preview-hook"></p>
+    </div>
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen" id="phone-screen"></div>
+      <div class="phone-home"><div class="phone-home-bar"></div></div>
+    </div>
+    <div class="features" id="features-list"></div>
+  </div>
+  <div class="sticky-cta">
+    <button class="cta-btn" id="cta-preview" onclick="goToSignup()">I Need This Today — Join the Waitlist</button>
+  </div>
+</div>
+
+<!-- ════════════════ SIGNUP SCREEN ════════════════ -->
+<div id="screen-signup" class="screen">
+  <div class="page" style="flex:1">
+    <div class="signup-wrap">
+      <button class="back-btn" onclick="goBack('signup')" style="padding:0 0 24px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="#CA922B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to preview
+      </button>
+      <div class="signup-eyebrow" id="signup-eyebrow"></div>
+      <h2 class="signup-title">I Need This Today —<br>Join the Waitlist</h2>
+      <p class="signup-sub">We'll notify you the second your city goes live. No spam — just your community.</p>
+      <form id="signup-form" onsubmit="submitForm(event)">
+        <input class="field" type="email" id="field-email" placeholder="Your email address *" required autocomplete="email"/>
+        <input class="field" type="text" id="field-name" placeholder="First name (optional)" autocomplete="given-name"/>
+        <input class="field" type="text" id="field-city" placeholder="Your city (optional)" autocomplete="address-level2"/>
+        <div id="form-error" class="error-msg" style="display:none"></div>
+        <button type="submit" class="submit-btn" id="submit-btn">I Need This Today — Join the Waitlist</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SUCCESS SCREEN ════════════════ -->
+<div id="screen-success" class="screen">
+  <div class="success-wrap">
+    <div class="success-seal">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 16l7 7L26 9" stroke="#CA922B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h1 class="success-title">You're on the list, family.</h1>
+    <div class="position-badge" id="position-badge" style="display:none"></div>
+    <p class="success-sub">We're building this for us, by us. We'll notify you the second your city goes live. Until then, keep the community strong.</p>
+    <div class="share-box">
+      <div class="share-eyebrow">Spread the word</div>
+      <p class="share-sub">Know someone who needs this? Share the map.</p>
+      <div class="share-btns">
+        <a class="share-btn" id="share-x" href="#" target="_blank" rel="noopener">Share on X</a>
+        <a class="share-btn" href="https://www.mappingwithmelanin.com/preview" target="_blank" rel="noopener">Copy Link</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let selectedCard = null;
+const utmParams = {};
+(function(){
+  const p = new URLSearchParams(location.search);
+  if(p.get('utm_source')) utmParams.utmSource = p.get('utm_source');
+  if(p.get('utm_medium')) utmParams.utmMedium = p.get('utm_medium');
+  if(p.get('utm_campaign')) utmParams.utmCampaign = p.get('utm_campaign');
+})();
+
+// ── Card data ──────────────────────────────────────────────────────────────
+const CARDS = {
+  safety:{
+    title:'Keep My People Safe',
+    hook:'Because our peace of mind shouldn\'t be a luxury. Know before you go.',
+    cta:'I Need This Today — Join the Waitlist',
+    features:[
+      'Community-verified safe routes updated in real time',
+      'Historical sundown town data from documented records',
+      'Push alerts from people in the area right now'
+    ]
+  },
+  discovery:{
+    title:'Find Trusted Businesses',
+    hook:'Keep our dollars in our community. Discover the gems in your backyard.',
+    cta:'I Need This Today — Join the Waitlist',
+    features:[
+      'Verified ownership badges — Black-owned, Indigenous-owned, Immigrant-owned',
+      'Community reviews from people who look like you',
+      'Map clusters showing business density by neighborhood'
+    ]
+  },
+  business:{
+    title:'I Own a Business',
+    hook:'Stop fighting algorithms. Connect directly with the people looking for you.',
+    cta:'Claim My Business — Join the Waitlist',
+    features:[
+      'Real-time dashboard: views, saves, foot traffic trends',
+      'Flash deals to attract loyal community customers',
+      'Direct community feedback — no algorithm middleman'
+    ]
+  },
+  community:{
+    title:'Connect With Community',
+    hook:'More than a map—it\'s our digital village. Welcome home.',
+    cta:'I Need This Today — Join the Waitlist',
+    features:[
+      'Local events, cultural heritage sites, HBCU alumni networks',
+      'Community posts from people in your city — real voices',
+      'Curated cultural map layer — toggle anytime'
+    ]
+  }
+};
+
+// ── Mockup HTML ────────────────────────────────────────────────────────────
+const MOCKUPS = {
+  safety:`
+    <div class="map-bg">
+      <div class="map-grid"></div>
+      <div class="zone zone-danger">⚠ Historical Sundown Town</div>
+      <div class="zone zone-safe">✓ Community Safe Space</div>
+      <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 300 220" preserveAspectRatio="none">
+        <path d="M50 180 C70 160 90 140 130 120 C160 105 200 100 250 80" stroke="#CA922B" stroke-width="3" fill="none" stroke-dasharray="6 3" stroke-linecap="round"/>
+        <circle cx="50" cy="180" r="5" fill="#CA922B"/>
+        <circle cx="250" cy="80" r="5" fill="#CA922B"/>
+      </svg>
+      <div class="pin pin-danger"></div>
+      <div class="pin pin-safe"></div>
+      <div class="pin pin-gold"></div>
+      <div class="notif">
+        <div class="notif-head">
+          <div class="notif-icon">🗺</div>
+          <span class="notif-label">COMMUNITY ALERT</span>
+        </div>
+        <p class="notif-text">Heavy police presence near 4th &amp; Main. Community rerouting suggested.</p>
+      </div>
+      <div class="safe-card">
+        <div class="safe-dot"></div>
+        <div class="safe-info">
+          <div class="safe-tag">Verified Safe Space</div>
+          <div class="safe-name">The Book &amp; Bean Cafe · 0.3 mi</div>
+        </div>
+      </div>
+    </div>`,
+  discovery:`
+    <div class="disco-bg">
+      <div class="disco-search">
+        <div class="search-bar">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="#CA922B" stroke-width="1.8"/><path d="M14 14l4 4" stroke="#CA922B" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Search community businesses…
+        </div>
+        <div class="chips">
+          <span class="chip chip-active">All</span>
+          <span class="chip chip-passive">Food</span>
+          <span class="chip chip-passive">Wellness</span>
+          <span class="chip chip-passive">Legal</span>
+        </div>
+      </div>
+      <div class="biz-list">
+        <div class="biz-card">
+          <div class="biz-img"><img src="https://images.pexels.com/photos/3184187/pexels-photo-3184187.jpeg?w=144&auto=compress" alt="Treme Soul Kitchen" loading="lazy"/></div>
+          <div class="biz-info">
+            <div>
+              <div class="biz-name">Treme Soul Kitchen</div>
+              <div class="biz-meta">Soul Food · New Orleans, LA</div>
+            </div>
+            <div class="biz-row">
+              <span class="biz-stars">★★★★★</span>
+              <span class="biz-rating">4.9 (138)</span>
+              <span class="biz-badge">Black-Owned</span>
+            </div>
+          </div>
+        </div>
+        <div class="biz-card">
+          <div class="biz-img"><img src="https://images.pexels.com/photos/699953/pexels-photo-699953.jpeg?w=144&auto=compress" alt="Jefferson BBQ" loading="lazy"/></div>
+          <div class="biz-info">
+            <div>
+              <div class="biz-name">Jefferson Street BBQ</div>
+              <div class="biz-meta">Barbecue · Nashville, TN</div>
+            </div>
+            <div class="biz-row">
+              <span class="biz-stars">★★★★★</span>
+              <span class="biz-rating">4.9 (97)</span>
+              <span class="biz-badge">Black-Owned</span>
+            </div>
+          </div>
+        </div>
+        <div class="biz-card">
+          <div class="biz-img"><img src="https://images.pexels.com/photos/4553193/pexels-photo-4553193.jpeg?w=144&auto=compress" alt="Baba's Mediterranean" loading="lazy"/></div>
+          <div class="biz-info">
+            <div>
+              <div class="biz-name">Baba's Mediterranean</div>
+              <div class="biz-meta">Mediterranean · Birmingham, AL</div>
+            </div>
+            <div class="biz-row">
+              <span class="biz-stars">★★★★★</span>
+              <span class="biz-rating">4.8 (64)</span>
+              <span class="biz-badge">Immigrant-Owned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`,
+  business:`
+    <div class="dash-bg">
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-label">Profile Views</div>
+          <div class="stat-val">342</div>
+          <div class="stat-delta">↑ +28% this week</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Community Saves</div>
+          <div class="stat-val">47</div>
+          <div class="stat-delta">↑ +12% this week</div>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Weekly Foot Traffic</div>
+        <div class="bars">
+          <div class="bar-wrap"><div class="bar bar-normal" style="height:62%"></div><span class="bar-day">M</span></div>
+          <div class="bar-wrap"><div class="bar bar-normal" style="height:88%"></div><span class="bar-day">T</span></div>
+          <div class="bar-wrap"><div class="bar bar-normal" style="height:74%"></div><span class="bar-day">W</span></div>
+          <div class="bar-wrap"><div class="bar bar-peak" style="height:95%"></div><span class="bar-day">T</span></div>
+          <div class="bar-wrap"><div class="bar bar-normal" style="height:82%"></div><span class="bar-day">F</span></div>
+        </div>
+      </div>
+      <div class="deal-box">
+        <div>
+          <div class="deal-tag">⚡ FLASH DEAL ACTIVE</div>
+          <div class="deal-name">15% off — expires in 1h 42m</div>
+        </div>
+        <span class="deal-edit">Edit</span>
+      </div>
+      <div class="feedback-box">
+        <div class="feedback-label">Recent Community Feedback</div>
+        <div class="feedback-text">"So glad I found this place on the app. Felt welcomed immediately."</div>
+        <div class="feedback-attr">— Verified Member · ★★★★★</div>
+      </div>
+    </div>`,
+  community:`
+    <div class="comm-bg">
+      <div class="post-card">
+        <div class="post-header">
+          <div class="avatar" style="background:#7c3f1a">JW</div>
+          <div>
+            <div class="post-author">Jasmine W.</div>
+            <div class="post-loc">Washington, DC · 2h ago</div>
+          </div>
+        </div>
+        <p class="post-text">Just found the most beautiful community mural near U Street. This app keeps revealing hidden gems in my own city 🙌</p>
+        <div class="post-footer">
+          <span class="post-reaction">♡ 24</span>
+          <span class="post-reaction">💬 7</span>
+          <span class="post-tag">Discovery</span>
+        </div>
+      </div>
+      <div class="event-card">
+        <div class="event-date">
+          <div class="event-month">AUG</div>
+          <div class="event-day">15</div>
+        </div>
+        <div>
+          <div class="event-name">First Friday Black Art Walk</div>
+          <div class="event-venue">Shaw Cultural District · 7pm</div>
+          <div class="event-going">42 community members going</div>
+        </div>
+      </div>
+      <div class="heritage-card">
+        <div class="heritage-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M4 21V8l8-5 8 5v13" stroke="#CA922B" stroke-width="1.6" stroke-linejoin="round"/><rect x="9" y="13" width="6" height="8" stroke="#CA922B" stroke-width="1.4" rx="1"/></svg>
+        </div>
+        <div>
+          <div class="heritage-tag">HERITAGE SITE</div>
+          <div class="heritage-name">Madam C.J. Walker Building</div>
+          <div class="heritage-city">Indianapolis, IN</div>
+        </div>
+      </div>
+    </div>`
+};
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function selectCard(id){
+  selectedCard = id;
+  const data = CARDS[id];
+  document.getElementById('preview-title').textContent = data.title;
+  document.getElementById('preview-hook').textContent = data.hook;
+  document.getElementById('cta-preview').textContent = data.cta;
+  document.getElementById('phone-screen').innerHTML = MOCKUPS[id];
+  const fl = document.getElementById('features-list');
+  fl.innerHTML = data.features.map(f=>
+    `<div class="feature-item"><span class="feature-check">✓</span><span class="feature-text">${f}</span></div>`
+  ).join('');
+  show('preview');
+}
+
+function goBack(from){
+  if(from==='preview') show('selection');
+  else if(from==='signup') show('preview');
+}
+
+function goToSignup(){
+  const data = CARDS[selectedCard];
+  document.getElementById('signup-eyebrow').textContent = 'You chose: '+data.title;
+  document.getElementById('submit-btn').textContent = data.cta;
+  show('signup');
+}
+
+// ── Form submission ────────────────────────────────────────────────────────
+async function submitForm(e){
+  e.preventDefault();
+  const errEl = document.getElementById('form-error');
+  const btn = document.getElementById('submit-btn');
+  errEl.style.display='none';
+  const email = document.getElementById('field-email').value.trim();
+  const firstName = document.getElementById('field-name').value.trim();
+  const city = document.getElementById('field-city').value.trim();
+  if(!email){errEl.textContent='Email is required.';errEl.style.display='block';return;}
+  btn.disabled=true; btn.textContent='Joining…';
+  try{
+    const body = {email, previewChoice: selectedCard, ...utmParams};
+    if(firstName) body.firstName = firstName;
+    if(city) body.city = city;
+    const res = await fetch('/api/waitlist',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    if(!res.ok){errEl.textContent=data.error||'Something went wrong.';errEl.style.display='block';btn.disabled=false;btn.textContent=CARDS[selectedCard].cta;return;}
+    const pos = data.position||0;
+    const badge = document.getElementById('position-badge');
+    if(pos>0){badge.textContent='#'+pos.toLocaleString()+' in line';badge.style.display='inline-block';}
+    const shareText = 'I just joined the Mapping With Melanin waitlist — a community directory for finding trusted businesses and safe routes.';
+    document.getElementById('share-x').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(shareText)+'&url='+encodeURIComponent('https://www.mappingwithmelanin.com/preview');
+    show('success');
+  }catch(err){
+    errEl.textContent='Network error. Please try again.';errEl.style.display='block';
+    btn.disabled=false;btn.textContent=CARDS[selectedCard].cta;
+  }
+}
+</script>
+</body>
+</html>
