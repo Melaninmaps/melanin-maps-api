@@ -97,6 +97,7 @@
 - [Post-Build-95 Founder Priorities & Roadmap](post-build95-roadmap.md) — Release lock active; phase order: Android regression → language → HBCU → Android 67; HBCU map as flagship with horizontal strip + school colors/alumni/homecoming; full design pass intent; language rule is contextual not blanket.
 - [Android VC67 Build Content](android-vc67-build-content.md) — Authoritative VC67 inventory: auth fix, map fix, all post-VC66 changes, build gate checklist, pre-existing TS errors list.
 - [Launch Backlog](launch-backlog.md) — Prioritized deferred work: LC (launch-critical), PL (first post-launch), GR (growth roadmap). Status, dependencies, platform impact per item.
+- [Font Scaling Fix — pending post-approval OTA](font-scaling-fix.md) — 6-line global fix in _layout.tsx; deploy as FIRST solo OTA immediately after Apple approves Build 101. DO NOT deploy before approval.
 - [Replit UI — no file tree + file delivery](replit-ui-no-file-tree.md) — User has NO file tree sidebar ever. Never suggest it. Only working delivery: GitHub REST API Contents PUT → share github.com blob URLs.
 - [KinfolkAI excluded diaspora cohorts](kinfolk-excluded-diaspora-cohorts.md) — 7 deferred communities (South Asian, Filipino, Vietnamese, Korean, Chinese, Japanese, Jewish) with proposed city hubs per community; saved for future implementation phase.
 - [Map DEFAULT_REGION + auto-fit](map-default-region.md) — DEFAULT_REGION changed to US-wide (37.0,-95.0, delta 32/52); fitToCoordinates fires once on first businesses+mapReady; Null Island (lat/lng=0) excluded from mapped filter.
