@@ -217,7 +217,7 @@ app.use((req, res, next) => {
 });
 
 if (WEB_STATIC) {
-  app.use(express.static(WEB_STATIC));
+  app.use(express.static(WEB_STATIC, { extensions: ["html"] }));
   app.use((req, res) => { res.sendFile(path.join(WEB_STATIC, "index.html")); });
 } else {
   app.use((req, res) => { res.status(503).send(`Web app not found. Deploy with web-static/ present.`); });
