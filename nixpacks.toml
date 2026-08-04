@@ -1,7 +1,9 @@
 [phases.build]
 cmds = [
   # 1. Build the web Vite SPA — output → artifacts/web/dist/public/
-  "pnpm --filter @workspace/web run build",
+  #    Cache-bust token forces Docker layer cache miss so /preview route is included.
+  #    UPDATE THIS TOKEN whenever web routes or pages change.
+  "echo web-build-preview-route-a9f3c21e && pnpm --filter @workspace/web run build",
   # 2. Sync web output into api-server/web-static (what api-server build.mjs reads)
   "cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/ && find artifacts/api-server/web-static -name '*.zip' -o -name '*.ipa' -o -name '*.apk' -o -name '*.aab' | xargs rm -f 2>/dev/null || true",
   # 3. Build api-server — cache-bust token is IN this command so Docker layer cache
