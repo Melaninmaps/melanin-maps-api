@@ -57464,7 +57464,8 @@ var init_waitlist = __esm({
       approvedAt: timestamp("approved_at"),
       lastNudgeSentAt: timestamp("last_nudge_sent_at"),
       createdAt: timestamp("created_at").notNull().defaultNow(),
-      importBatchId: varchar("import_batch_id", { length: 100 })
+      importBatchId: varchar("import_batch_id", { length: 100 }),
+      previewChoice: varchar("preview_choice", { length: 20 })
     });
   }
 });
@@ -415838,7 +415839,7 @@ function startNudgeCronScheduler() {
 var router19 = (0, import_express19.Router)();
 router19.post("/waitlist", waitlistLimiter, async (req, res) => {
   try {
-    const { email: email3, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination } = req.body;
+    const { email: email3, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign } = req.body;
     const emailRegex2 = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email3 || !emailRegex2.test(email3)) {
       res.status(400).json({ error: "Valid email is required" });
@@ -415864,7 +415865,9 @@ router19.post("/waitlist", waitlistLimiter, async (req, res) => {
       referredBy: referredBy ?? null,
       status: "pending",
       familyGroupId,
-      cityNomination: cityNomination?.trim() || null
+      cityNomination: cityNomination?.trim() || null,
+      previewChoice: ["safety", "discovery", "business", "community"].includes(previewChoice ?? "") ? previewChoice : null,
+      notes: utmSource || utmMedium || utmCampaign ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null
     }).onConflictDoNothing();
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
@@ -454863,8 +454866,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "2acea928f0b9feec3c808b2093514893eaf9d7f5";
-var BUILD_AT = "2026-08-03T13:49:16.748Z";
+var BUILT_FROM_SHA = "2d8e204fadfdbeb840612ca10ec4a0bf3bc95634";
+var BUILD_AT = "2026-08-04T22:34:21.072Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";

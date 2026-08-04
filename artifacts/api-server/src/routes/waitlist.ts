@@ -12,7 +12,7 @@ const router: IRouter = Router();
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -24,6 +24,10 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       referredBy?: string;
       familyEmails?: string[];
       cityNomination?: string;
+      previewChoice?: string;
+      utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,6 +71,8 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         status: "pending",
         familyGroupId,
         cityNomination: cityNomination?.trim() || null,
+        previewChoice: ['safety', 'discovery', 'business', 'community'].includes(previewChoice ?? '') ? previewChoice : null,
+        notes: (utmSource || utmMedium || utmCampaign) ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null,
       })
       .onConflictDoNothing();
 

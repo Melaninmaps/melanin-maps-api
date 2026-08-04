@@ -27,6 +27,7 @@ import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
 import PendingApproval from "@/pages/pending-approval";
 import Waitlist from "@/pages/waitlist";
+import Preview from "@/pages/preview";
 import Travel from "@/pages/travel";
 import MapPage from "@/pages/map";
 import Events from "@/pages/events";
@@ -177,6 +178,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/signup" component={Signup} />
       <Route path="/waitlist" component={Waitlist} />
+      <Route path="/preview" component={Preview} />
       <Route path="/pending-approval" component={PendingApproval} />
       <Route path="/welcome" component={Welcome} />
       <Route path="/r/:code" component={ReferralRedirect} />

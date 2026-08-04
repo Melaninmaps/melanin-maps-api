@@ -23,6 +23,7 @@ export const waitlistTable = pgTable("waitlist_signups", {
   lastNudgeSentAt: timestamp("last_nudge_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   importBatchId: varchar("import_batch_id", { length: 100 }),
+  previewChoice: varchar("preview_choice", { length: 20 }),
 });
 
 export type WaitlistEntry = typeof waitlistTable.$inferSelect;
