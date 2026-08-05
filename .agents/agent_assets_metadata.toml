@@ -816,12 +816,12 @@ description = "Print-ready at 3.5\" × 2\" · 300 DPI · QR → mappingwithmelan
 id = "5zf73aHXiyGn4IWYFc9Vy"
 uri = "file://attached_assets/business-card-1-final.png"
 type = "image"
-title = "Business Card Design 1 — Final"
-description = "Dark brown/gold design. QR links to mappingwithmelanin.com/preview."
+title = "Business Card Design 1 — Print Ready"
+description = "Dark brown/gold. QR → mappingwithmelanin.com/preview. Clean single code, 300 DPI."
 
 [[outputs]]
 id = "xLN8x10xUCahST04cCQlZ"
 uri = "file://attached_assets/business-card-2-final.png"
 type = "image"
-title = "Business Card Design 2 — Final"
-description = "Cream/vintage design. QR links to mappingwithmelanin.com/preview."
+title = "Business Card Design 2 — Print Ready"
+description = "Cream/vintage. QR → mappingwithmelanin.com/preview. Clean single code, 300 DPI."
