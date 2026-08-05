@@ -29396,10 +29396,10 @@ var init_subquery = __esm({
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql11, fields, alias2, isWith = false, usedTables = []) {
+      constructor(sql10, fields, alias2, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql11,
+          sql: sql10,
           selectedFields: fields,
           alias: alias2,
           isWith,
@@ -43210,10 +43210,10 @@ var init_raw = __esm({
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql11, query, mapBatchResult) {
+      constructor(execute, sql10, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql11;
+        this.sql = sql10;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -43533,8 +43533,8 @@ var init_db = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql11, params) {
-  const dataToHash = `${sql11}-${JSON.stringify(params)}`;
+async function hashQuery(sql10, params) {
+  const dataToHash = `${sql10}-${JSON.stringify(params)}`;
   const encoder2 = new TextEncoder();
   const data = encoder2.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -57437,7 +57437,7 @@ var init_thread_reads = __esm({
 });
 
 // ../../lib/db/src/schema/waitlist.ts
-var waitlistTable;
+var waitlistTable, businessSuggestionsTable, waitlistSafetyReportsTable;
 var init_waitlist = __esm({
   "../../lib/db/src/schema/waitlist.ts"() {
     "use strict";
@@ -57465,7 +57465,29 @@ var init_waitlist = __esm({
       lastNudgeSentAt: timestamp("last_nudge_sent_at"),
       createdAt: timestamp("created_at").notNull().defaultNow(),
       importBatchId: varchar("import_batch_id", { length: 100 }),
-      previewChoice: varchar("preview_choice", { length: 20 })
+      previewChoice: varchar("preview_choice", { length: 50 }),
+      niche: varchar("niche", { length: 100 }),
+      platforms: text("platforms"),
+      safetyPriorities: text("safety_priorities")
+    });
+    businessSuggestionsTable = pgTable("business_suggestions", {
+      id: serial("id").primaryKey(),
+      waitlistId: varchar("waitlist_id", { length: 36 }).references(() => waitlistTable.id),
+      referralCode: varchar("referral_code", { length: 50 }),
+      businessName: varchar("business_name", { length: 255 }),
+      category: varchar("category", { length: 100 }),
+      city: varchar("city", { length: 100 }),
+      website: varchar("website", { length: 255 }),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
+    waitlistSafetyReportsTable = pgTable("waitlist_safety_reports", {
+      id: serial("id").primaryKey(),
+      waitlistId: varchar("waitlist_id", { length: 36 }).references(() => waitlistTable.id),
+      referralCode: varchar("referral_code", { length: 50 }),
+      concernType: varchar("concern_type", { length: 100 }),
+      description: text("description"),
+      city: varchar("city", { length: 100 }),
+      createdAt: timestamp("created_at").notNull().defaultNow()
     });
   }
 });
@@ -60932,6 +60954,7 @@ __export(schema_exports, {
   businessSearchInquiriesTable: () => businessSearchInquiriesTable,
   businessSkipFeedbackTable: () => businessSkipFeedbackTable,
   businessStoriesTable: () => businessStoriesTable,
+  businessSuggestionsTable: () => businessSuggestionsTable,
   businessVibeTagsTable: () => businessVibeTagsTable,
   businessesTable: () => businessesTable,
   categoryWaitlist: () => categoryWaitlist,
@@ -61174,6 +61197,7 @@ __export(schema_exports, {
   usersTable: () => usersTable,
   verificationRequestsTable: () => verificationRequestsTable,
   voiceUsageTable: () => voiceUsageTable,
+  waitlistSafetyReportsTable: () => waitlistSafetyReportsTable,
   waitlistTable: () => waitlistTable,
   wellnessCheckinsTable: () => wellnessCheckinsTable,
   wellnessGoalsTable: () => wellnessGoalsTable,
@@ -61357,7 +61381,7 @@ function initPoolInstrumentation(pool4, getRealPool) {
   const origQuery = pool4.query.bind(pool4);
   pool4.query = (...args) => {
     const start = Date.now();
-    const sql11 = extractSql(args);
+    const sql10 = extractSql(args);
     const caller = callerFrame();
     const promise2 = origQuery(...args);
     promise2.then(() => {
@@ -61366,14 +61390,14 @@ function initPoolInstrumentation(pool4, getRealPool) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: ms3 >= SLOW_QUERY_MS ? "slow" : "query",
         ms: ms3,
-        sql: sql11,
+        sql: sql10,
         caller,
         pool: poolSnapshot(pool4)
       };
       push(ev);
       if (ms3 >= SLOW_QUERY_MS) {
         console.warn(
-          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql11, caller, pool: ev.pool })
+          JSON.stringify({ level: "warn", event: "SLOW_QUERY", ms: ms3, sql: sql10, caller, pool: ev.pool })
         );
       }
     }).catch(() => {
@@ -61381,7 +61405,7 @@ function initPoolInstrumentation(pool4, getRealPool) {
         ts: (/* @__PURE__ */ new Date()).toISOString(),
         type: "error",
         ms: Date.now() - start,
-        sql: sql11,
+        sql: sql10,
         caller,
         pool: poolSnapshot(pool4),
         detail: "query rejected"
@@ -375729,13 +375753,13 @@ var require_yesql = __commonJS({
             sqls[sqls.length - 1] += "\n\n" + lines;
           }
           return sqls;
-        }, []).forEach((sql11) => {
-          if (sql11.trim().startsWith("--")) {
-            const sqlName = sql11.split("\n")[0].trim().substring(2).trim();
+        }, []).forEach((sql10) => {
+          if (sql10.trim().startsWith("--")) {
+            const sqlName = sql10.split("\n")[0].trim().substring(2).trim();
             if (acc[sqlName]) {
               throw new Error('Duplicate SQL query name "' + sqlName + '" found, please rename other one.');
             }
-            acc[sqlName] = options.type ? module.exports[options.type](sql11, options) : sql11;
+            acc[sqlName] = options.type ? module.exports[options.type](sql10, options) : sql10;
           }
         });
         return acc;
@@ -375780,7 +375804,7 @@ var require_yesql = __commonJS({
     var mysql = (query, options = {}) => {
       return (data = {}) => {
         const values = [];
-        const sql11 = query.split(matchQuoted).map((part) => {
+        const sql10 = query.split(matchQuoted).map((part) => {
           if (!part || matchQuoted.test(part)) {
             return part;
           } else {
@@ -375806,7 +375830,7 @@ var require_yesql = __commonJS({
           }
         }).join("").trim();
         return {
-          sql: sql11,
+          sql: sql10,
           values
         };
       };
@@ -376093,15 +376117,15 @@ var require_migration_file = __commonJS({
       try {
         const { id: id2, name: name3, type: type2 } = file_name_parser_1.parseFileName(fileName);
         const contents = await getFileContents(filePath);
-        const sql11 = getSqlStringLiteral(filePath, contents, type2);
-        const hash2 = hashString(fileName + sql11);
+        const sql10 = getSqlStringLiteral(filePath, contents, type2);
+        const hash2 = hashString(fileName + sql10);
         return {
           id: id2,
           name: name3,
           contents,
           fileName,
           hash: hash2,
-          sql: sql11
+          sql: sql10
         };
       } catch (err) {
         throw new Error(`${err.message} - Offending file: '${fileName}'.`);
@@ -376185,8 +376209,8 @@ var require_run_migration = __commonJS({
     };
     var insertMigration = async (migrationTableName = "migrations", migrationSchemaName = "public", client, migration, log2) => {
       log2(`Saving migration to '${migrationSchemaName}.${migrationTableName}': ${migration.id} | ${migration.name} | ${migration.hash}`);
-      const sql11 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
-      return client.query(sql11);
+      const sql10 = sql_template_strings_1.default`INSERT INTO `.append(`${migrationSchemaName}.${migrationTableName}`).append(sql_template_strings_1.default` ("id", "name", "hash") VALUES (${migration.id},${migration.name},${migration.hash})`);
+      return client.query(sql10);
     };
     var runMigration = (migrationTableName = "migrations", migrationSchemaName = "public", client, log2 = noop2) => async (migration) => {
       const inTransaction = migration.sql.includes("-- postgres-migrations disable-transaction") === false;
@@ -415839,7 +415863,7 @@ function startNudgeCronScheduler() {
 var router19 = (0, import_express19.Router)();
 router19.post("/waitlist", waitlistLimiter, async (req, res) => {
   try {
-    const { email: email3, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign } = req.body;
+    const { email: email3, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities } = req.body;
     const emailRegex2 = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email3 || !emailRegex2.test(email3)) {
       res.status(400).json({ error: "Valid email is required" });
@@ -415849,7 +415873,9 @@ router19.post("/waitlist", waitlistLimiter, async (req, res) => {
       res.status(400).json({ error: "Business owners must provide a website or social media link" });
       return;
     }
-    const code = referralCode ?? email3.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+    const namePrefix = firstName?.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8) || email3.split("@")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    const digits = Math.floor(1e3 + Math.random() * 9e3);
+    const code = referralCode ?? `MWM-${namePrefix}-${digits}`;
     const primaryEmail = email3.toLowerCase().trim();
     const validFamilyEmails = Array.isArray(familyEmails) ? familyEmails.map((e3) => String(e3).trim().toLowerCase()).filter((e3) => emailRegex2.test(e3) && e3 !== primaryEmail).slice(0, 6) : [];
     const familyGroupId = validFamilyEmails.length > 0 ? `fg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}` : null;
@@ -415866,11 +415892,16 @@ router19.post("/waitlist", waitlistLimiter, async (req, res) => {
       status: "pending",
       familyGroupId,
       cityNomination: cityNomination?.trim() || null,
-      previewChoice: ["safety", "discovery", "business", "community"].includes(previewChoice ?? "") ? previewChoice : null,
+      previewChoice: ["safety", "discovery", "business", "community", "ambassador"].includes(previewChoice ?? "") ? previewChoice : null,
+      niche: niche?.trim() || null,
+      platforms: platforms?.trim() || null,
+      safetyPriorities: safetyPriorities?.trim() || null,
       notes: utmSource || utmMedium || utmCampaign ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null
     }).onConflictDoNothing();
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
+    const [insertedEntry] = await db.select({ id: waitlistTable.id }).from(waitlistTable).where(eq(waitlistTable.email, primaryEmail)).limit(1);
+    const entryId = insertedEntry?.id ?? null;
     let familyAdded = 0;
     if (validFamilyEmails.length > 0 && familyGroupId) {
       for (const fe3 of validFamilyEmails) {
@@ -415922,7 +415953,7 @@ router19.post("/waitlist", waitlistLimiter, async (req, res) => {
         }
       })();
     }
-    res.status(201).json({ success: true, position, referralCode: code, familyAdded });
+    res.status(201).json({ success: true, position, referralCode: code, familyAdded, id: entryId });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");
     res.status(500).json({ error: "Failed to join waitlist" });
@@ -415969,6 +416000,165 @@ router19.get("/waitlist/referral-stats/:code", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch referral stats");
     res.status(500).json({ error: "Failed to fetch referral stats" });
+  }
+});
+router19.get("/waitlist/stats", async (req, res) => {
+  const city = String(req.query.city ?? "").trim();
+  const THRESHOLDS = {
+    "charlotte": 1e3,
+    "philadelphia": 1e3,
+    "atlanta": 1e3,
+    "houston": 1e3,
+    "washington": 1e3,
+    "chicago": 1e3,
+    "new york": 2e3,
+    "los angeles": 2e3,
+    "miami": 1e3
+  };
+  const cityKey = city.toLowerCase().split(",")[0].trim();
+  const threshold = THRESHOLDS[cityKey] ?? 1e3;
+  try {
+    const memberRows = city ? await db.select({ total: count() }).from(waitlistTable).where(ilike(waitlistTable.city, `%${city.split(",")[0].trim()}%`)) : await db.select({ total: count() }).from(waitlistTable);
+    const bizRows = city ? await db.select({ total: count() }).from(businessSuggestionsTable).where(ilike(businessSuggestionsTable.city, `%${city.split(",")[0].trim()}%`)) : await db.select({ total: count() }).from(businessSuggestionsTable);
+    const memberCount = Number(memberRows[0]?.total ?? 0);
+    const topReferrers = await db.select({ firstName: waitlistTable.firstName, referralCode: waitlistTable.referralCode, referrals: count() }).from(waitlistTable).where(city ? ilike(waitlistTable.city, `%${city.split(",")[0].trim()}%`) : sql`true`).groupBy(waitlistTable.firstName, waitlistTable.referralCode).orderBy(desc(count())).limit(10);
+    res.json({
+      city: city || null,
+      memberCount,
+      businessCount: Number(bizRows[0]?.total ?? 0),
+      threshold,
+      remaining: Math.max(0, threshold - memberCount),
+      topReferrers: topReferrers.map((r2) => ({ firstName: r2.firstName || "Member", referralCode: r2.referralCode, referrals: Number(r2.referrals) }))
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch waitlist stats");
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+router19.get("/waitlist/leaderboard", async (req, res) => {
+  const TOUR_STOPS = ["charlotte", "philadelphia", "atlanta", "houston", "washington", "chicago"];
+  const THRESHOLDS = {
+    "charlotte": 1e3,
+    "philadelphia": 1e3,
+    "atlanta": 1e3,
+    "houston": 1e3,
+    "washington": 1e3,
+    "chicago": 1e3,
+    "new york": 2e3,
+    "los angeles": 2e3,
+    "miami": 1e3
+  };
+  try {
+    const cityRows = await db.select({ city: waitlistTable.city, total: count() }).from(waitlistTable).where(isNotNull(waitlistTable.city)).groupBy(waitlistTable.city).orderBy(desc(count())).limit(20);
+    const cities = cityRows.filter((r2) => r2.city).map((r2) => {
+      const cityName = r2.city;
+      const cityKey = cityName.toLowerCase().split(",")[0].trim();
+      const threshold = THRESHOLDS[cityKey] ?? 1e3;
+      const memberCount = Number(r2.total);
+      return {
+        city: cityName,
+        count: memberCount,
+        threshold,
+        progress: Math.min(100, Math.round(memberCount / threshold * 100)),
+        isTourStop: TOUR_STOPS.includes(cityKey)
+      };
+    });
+    res.json({ cities });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch leaderboard");
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
+router19.get("/waitlist/me", async (req, res) => {
+  const code = String(req.query.ref ?? "").trim().toUpperCase();
+  if (!code) {
+    res.status(400).json({ error: "ref code required" });
+    return;
+  }
+  try {
+    const [entry] = await db.select().from(waitlistTable).where(eq(waitlistTable.referralCode, code)).limit(1);
+    if (!entry) {
+      res.status(404).json({ error: "Code not found" });
+      return;
+    }
+    const [{ referralCount }] = await db.select({ referralCount: count() }).from(waitlistTable).where(eq(waitlistTable.referredBy, code));
+    const cnt = Number(referralCount);
+    const tier = cnt >= 50 ? "Ambassador" : cnt >= 25 ? "Founding Member" : cnt >= 10 ? "City Champion" : cnt >= 3 ? "Community Builder" : "Member";
+    const nextTierAt = cnt < 3 ? 3 : cnt < 10 ? 10 : cnt < 25 ? 25 : cnt < 50 ? 50 : null;
+    const referred = await db.select({ firstName: waitlistTable.firstName, createdAt: waitlistTable.createdAt }).from(waitlistTable).where(eq(waitlistTable.referredBy, code)).orderBy(desc(waitlistTable.createdAt)).limit(20);
+    let cityRank = null;
+    if (entry.city) {
+      const prefix = entry.city.split(",")[0].trim();
+      const topReferrers = await db.select({ referralCode: waitlistTable.referralCode, referrals: count() }).from(waitlistTable).where(ilike(waitlistTable.city, `%${prefix}%`)).groupBy(waitlistTable.referralCode).orderBy(desc(count())).limit(100);
+      const idx = topReferrers.findIndex((r2) => r2.referralCode === code);
+      cityRank = idx >= 0 ? idx + 1 : null;
+    }
+    res.json({
+      code,
+      firstName: entry.firstName,
+      city: entry.city,
+      track: entry.previewChoice,
+      referralCount: cnt,
+      tier,
+      nextTierAt,
+      cityRank,
+      referredUsers: referred.map((r2) => ({ firstName: r2.firstName || "Friend", joinedAt: r2.createdAt })),
+      referralLink: `https://www.mappingwithmelanin.com/preview?ref=${code}`
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch referral stats");
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+router19.post("/waitlist/business-suggest", async (req, res) => {
+  const { businessName, category, city, website, referralCode: refCode } = req.body;
+  if (!businessName?.trim()) {
+    res.status(400).json({ error: "Business name required" });
+    return;
+  }
+  try {
+    let waitlistId = null;
+    if (refCode) {
+      const [e3] = await db.select({ id: waitlistTable.id }).from(waitlistTable).where(eq(waitlistTable.referralCode, refCode.toUpperCase())).limit(1);
+      waitlistId = e3?.id ?? null;
+    }
+    await db.insert(businessSuggestionsTable).values({
+      waitlistId,
+      referralCode: refCode?.toUpperCase() ?? null,
+      businessName: businessName.trim(),
+      category: category?.trim() ?? null,
+      city: city?.trim() ?? null,
+      website: website?.trim() ?? null
+    });
+    res.status(201).json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save business suggestion");
+    res.status(500).json({ error: "Failed to save suggestion" });
+  }
+});
+router19.post("/waitlist/safety-report", async (req, res) => {
+  const { concernType, description, city, referralCode: refCode } = req.body;
+  if (!concernType?.trim() && !description?.trim()) {
+    res.status(400).json({ error: "Concern type or description required" });
+    return;
+  }
+  try {
+    let waitlistId = null;
+    if (refCode) {
+      const [e3] = await db.select({ id: waitlistTable.id }).from(waitlistTable).where(eq(waitlistTable.referralCode, refCode.toUpperCase())).limit(1);
+      waitlistId = e3?.id ?? null;
+    }
+    await db.insert(waitlistSafetyReportsTable).values({
+      waitlistId,
+      referralCode: refCode?.toUpperCase() ?? null,
+      concernType: concernType?.trim() ?? null,
+      description: description?.trim() ?? null,
+      city: city?.trim() ?? null
+    });
+    res.status(201).json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save safety report");
+    res.status(500).json({ error: "Failed to save report" });
   }
 });
 router19.get("/admin/waitlist", async (req, res) => {
@@ -442590,7 +442780,7 @@ router82.get("/cultural-sites", async (req, res) => {
       idx++;
     }
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
-    const sql11 = `
+    const sql10 = `
       SELECT id, name, description, category, heritage_category AS "heritageCategory",
              subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
              latitude, longitude, era, significance, image_url AS "imageUrl",
@@ -442616,7 +442806,7 @@ router82.get("/cultural-sites", async (req, res) => {
         name ASC
       LIMIT 500
     `;
-    const result = await pool.query(sql11, params);
+    const result = await pool.query(sql10, params);
     const sites = result.rows;
     const categorySummary = await pool.query(
       `SELECT heritage_category, COUNT(*) AS count FROM cultural_sites GROUP BY heritage_category ORDER BY count DESC`
@@ -444474,7 +444664,7 @@ router94.post("/business-improvement", async (req, res) => {
     const findProviders = async (ownershipFilter, extraCondition = "") => {
       const params = [businessCity.toLowerCase()];
       if (keywords.length > 0) params.push(...keywords.map((k3) => `%${k3}%`));
-      const sql11 = `
+      const sql10 = `
         SELECT b.id, b.name, b.category, b.description, b.city, b.state,
                b.phone, b.website, b.verified, b.black_owned,
                b.ownership_designations
@@ -444490,7 +444680,7 @@ router94.post("/business-improvement", async (req, res) => {
         ORDER BY b.verified DESC, b.confidence_score DESC
         LIMIT 12
       `;
-      return pool.query(sql11, params);
+      return pool.query(sql10, params);
     };
     const prefs = ownershipPreferences.filter((p) => p !== "no-preference" && p !== "local-only");
     const noPreference = ownershipPreferences.includes("no-preference") || ownershipPreferences.length === 0;
@@ -446056,9 +446246,9 @@ router99.post("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql10 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql11`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql10`${loveNotesTable.upvotes} + 1` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to upvote love note");
@@ -446071,9 +446261,9 @@ router99.delete("/love-notes/:id/upvote", async (req, res) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { sql: sql11 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+  const { sql: sql10 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
   try {
-    await db.update(loveNotesTable).set({ upvotes: sql11`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
+    await db.update(loveNotesTable).set({ upvotes: sql10`GREATEST(${loveNotesTable.upvotes} - 1, 0)` }).where(eq(loveNotesTable.id, String(req.params.id)));
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to remove upvote");
@@ -452329,7 +452519,7 @@ router133.get("/vibes/search", async (req, res) => {
         WHERE sp.business_id = b.id AND sp.user_id = $${params.length}
       ) THEN 15 ELSE 0 END`;
     }
-    const sql11 = `
+    const sql10 = `
       SELECT
         b.id,
         b.name,
@@ -452419,7 +452609,7 @@ router133.get("/vibes/search", async (req, res) => {
       ORDER BY total_score DESC
       LIMIT 30
     `;
-    const result = await pool.query(sql11, params);
+    const result = await pool.query(sql10, params);
     res.json({
       businesses: result.rows.map((r2) => ({
         id: r2.id,
@@ -454866,8 +455056,8 @@ var WebhookHandlers = class {
 init_src();
 
 // src/generated/buildIdentity.ts
-var BUILT_FROM_SHA = "af402490dc31c24c34df4c1bea439561469e5cf1";
-var BUILD_AT = "2026-08-04T23:00:28.686Z";
+var BUILT_FROM_SHA = "cfecc74707d5adcf8256678618a4cade2fc8efa1";
+var BUILD_AT = "2026-08-05T04:43:39.744Z";
 
 // src/app.ts
 import { createHash as createHash10 } from "node:crypto";
@@ -455208,6 +455398,38 @@ var MIGRATIONS = [
         'bigdot6017@gmail.com',
         'kaylacardwell3@gmail.com'
       ) AND role != 'admin'`
+  },
+  {
+    name: "waitlist_referral_system_cols",
+    sql: `ALTER TABLE waitlist_signups
+      ADD COLUMN IF NOT EXISTS niche VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS platforms TEXT,
+      ADD COLUMN IF NOT EXISTS safety_priorities TEXT`
+  },
+  {
+    name: "business_suggestions_table",
+    sql: `CREATE TABLE IF NOT EXISTS business_suggestions (
+      id SERIAL PRIMARY KEY,
+      waitlist_id VARCHAR(36) REFERENCES waitlist_signups(id),
+      referral_code VARCHAR(50),
+      business_name VARCHAR(255),
+      category VARCHAR(100),
+      city VARCHAR(100),
+      website VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  },
+  {
+    name: "waitlist_safety_reports_table",
+    sql: `CREATE TABLE IF NOT EXISTS waitlist_safety_reports (
+      id SERIAL PRIMARY KEY,
+      waitlist_id VARCHAR(36) REFERENCES waitlist_signups(id),
+      referral_code VARCHAR(50),
+      concern_type VARCHAR(100),
+      description TEXT,
+      city VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
   },
   {
     name: "city_launches_seed",
