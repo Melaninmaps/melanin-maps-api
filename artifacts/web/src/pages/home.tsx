@@ -389,6 +389,20 @@ export default function Home() {
                 Most platforms tell you where to go. We help you understand what's really there — and direct your dollars to businesses that reflect your culture and community.
               </p>
 
+              {/* Choose Your Experience CTA */}
+              <div className="mb-8">
+                <a
+                  href="/preview"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-[#2B1507] text-lg shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ background: "linear-gradient(135deg,#CA922B,#daa83a)", boxShadow: "0 8px 32px rgba(202,146,43,.35)" }}
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Choose Your Experience
+                  <ArrowRight className="w-5 h-5" />
+                </a>
+                <p className="text-sm text-[#F5EBD8]/40 mt-3 ml-1">See what the app looks like for your role →</p>
+              </div>
+
               <div className="flex flex-wrap gap-3 mb-10">
                 {[
                   { label: "Find Businesses", href: "/businesses", icon: Search },

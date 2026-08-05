@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>City Leaderboard — Mapping With Melanin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--brown:#2B1507;--gold:#CA922B;--cream:#F5F0E8;--muted:rgba(245,240,232,.6)}
+body{background:var(--brown);color:var(--cream);font-family:'DM Sans',sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+/* Nav */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid rgba(202,146,43,.15)}
+.logo-text{font-family:'Playfair Display',serif;font-size:15px;color:var(--gold);font-weight:700;letter-spacing:.04em}
+.nav-link{font-size:13px;color:var(--muted);font-weight:500;transition:color .2s}
+.nav-link:hover{color:var(--cream)}
+
+/* Hero */
+.hero{text-align:center;padding:60px 20px 40px;max-width:680px;margin:0 auto}
+.hero-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,52px);font-weight:700;line-height:1.1;margin-bottom:16px}
+.hero-sub{font-size:16px;color:var(--muted);line-height:1.65;max-width:480px;margin:0 auto 32px}
+.total-badge{display:inline-block;background:rgba(202,146,43,.12);border:1px solid rgba(202,146,43,.3);border-radius:99px;padding:10px 24px;font-size:14px;font-weight:700;color:var(--gold);margin-bottom:48px}
+.total-num{font-size:24px;display:block;margin-bottom:2px}
+
+/* Cities grid */
+.cities-wrap{max-width:760px;margin:0 auto;padding:0 20px 80px}
+.city-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:24px;margin-bottom:16px;transition:border-color .2s}
+.city-card:hover{border-color:rgba(202,146,43,.3)}
+.city-card.tour-stop{border-color:rgba(202,146,43,.4);background:rgba(202,146,43,.05)}
+.city-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.city-rank{width:36px;height:36px;border-radius:50%;background:rgba(202,146,43,.15);border:1px solid rgba(202,146,43,.3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--gold);flex-shrink:0}
+.city-rank.gold-rank{background:rgba(202,146,43,.3);border-color:var(--gold)}
+.city-name-wrap{flex:1;padding:0 14px}
+.city-name{font-size:18px;font-weight:700}
+.tour-badge{display:inline-block;background:rgba(202,146,43,.2);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:2px 10px;margin-left:8px;vertical-align:middle}
+.city-count{font-size:22px;font-weight:700;color:var(--gold);text-align:right;white-space:nowrap}
+.city-count-sub{font-size:11px;color:var(--muted);font-weight:500;text-align:right}
+.progress-track{background:rgba(255,255,255,.08);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px}
+.progress-fill{background:linear-gradient(90deg,#CA922B,#daa83a);height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.progress-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.progress-pct{color:var(--gold);font-weight:700}
+
+/* Individual leaderboard */
+.section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:24px;text-align:center;padding-top:48px}
+.ref-card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:10px}
+.ref-rank{width:30px;height:30px;border-radius:50%;background:rgba(202,146,43,.12);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0}
+.ref-name{flex:1;font-size:15px;font-weight:600}
+.ref-count{font-size:15px;font-weight:700;color:var(--gold)}
+.ref-count-sub{font-size:11px;color:var(--muted)}
+
+/* CTA */
+.bottom-cta{text-align:center;padding:48px 20px 80px}
+.cta-btn{display:inline-block;background:var(--gold);color:var(--brown);font-weight:700;font-size:16px;padding:16px 40px;border-radius:16px;transition:background .2s;margin-bottom:12px}
+.cta-btn:hover{background:#daa83a}
+.cta-sub{font-size:13px;color:var(--muted);margin-top:10px}
+
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:40px 20px}
+.loading-pulse{animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+.filter-bar{display:flex;justify-content:center;gap:10px;margin-bottom:32px;flex-wrap:wrap}
+.filter-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:8px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{background:rgba(202,146,43,.15);border-color:rgba(202,146,43,.4);color:var(--gold)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="logo-text">Mapping With Melanin™</a>
+  <div style="display:flex;gap:20px;align-items:center">
+    <a href="/preview" class="nav-link">Choose Your Preview</a>
+    <a href="/preview" class="nav-link" style="background:var(--gold);color:#2B1507;padding:8px 18px;border-radius:99px;font-weight:700;font-size:12px">Join Waitlist</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">City Leaderboard</div>
+  <h1 class="hero-title">Which city launches<br><span style="color:var(--gold)">first?</span></h1>
+  <p class="hero-sub">We launch city by city based on community momentum. The more members in your city, the faster you go live.</p>
+  <div class="total-badge">
+    <span class="total-num" id="total-num" style="color:var(--gold)">—</span>
+    members across all cities
+  </div>
+</div>
+
+<div class="cities-wrap">
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterCities('all', this)">All Cities</button>
+    <button class="filter-btn" onclick="filterCities('tour', this)">🔥 Tour Stops</button>
+  </div>
+
+  <div id="cities-list">
+    <div class="empty loading-pulse">Loading leaderboard…</div>
+  </div>
+
+  <div id="top-referrers-section" style="display:none">
+    <div class="section-title">Top Referrers</div>
+    <div id="referrers-list"></div>
+  </div>
+</div>
+
+<div class="bottom-cta">
+  <a href="/preview" class="cta-btn">Join the Waitlist →</a>
+  <p class="cta-sub">Select your track and save your spot. Share your referral link to move your city up.</p>
+  <p class="cta-sub" style="margin-top:8px">
+    <a href="/my-referrals" style="color:var(--gold);font-weight:600">Track your own referrals →</a>
+  </p>
+</div>
+
+<script>
+var _allCities = [];
+var _currentFilter = 'all';
+
+function filterCities(type, btn) {
+  _currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  renderCities(_allCities);
+}
+
+function renderCities(cities) {
+  var filtered = _currentFilter === 'tour' ? cities.filter(function(c) { return c.isTourStop; }) : cities;
+  var list = document.getElementById('cities-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">No cities yet — join the waitlist to put yours on the map!</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(function(city, i) {
+    var rank = i + 1;
+    var isGold = rank <= 3;
+    return '<div class="city-card' + (city.isTourStop ? ' tour-stop' : '') + '">' +
+      '<div class="city-header">' +
+        '<div class="city-rank' + (isGold ? ' gold-rank' : '') + '">' + rank + '</div>' +
+        '<div class="city-name-wrap">' +
+          '<div class="city-name">' + city.city + (city.isTourStop ? '<span class="tour-badge">🔥 Tour Stop</span>' : '') + '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div class="city-count">' + city.count.toLocaleString() + '</div>' +
+          '<div class="city-count-sub">of ' + city.threshold.toLocaleString() + ' to launch</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + city.progress + '%"></div></div>' +
+      '<div class="progress-meta">' +
+        '<span>' + (city.progress >= 100 ? '🎉 Ready to launch!' : (city.threshold - city.count).toLocaleString() + ' more to launch') + '</span>' +
+        '<span class="progress-pct">' + city.progress + '%</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  // animate progress bars
+  setTimeout(function() {
+    document.querySelectorAll('.progress-fill').forEach(function(el) {
+      var w = el.style.width;
+      el.style.width = '0%';
+      setTimeout(function() { el.style.width = w; }, 50);
+    });
+  }, 100);
+}
+
+function loadLeaderboard() {
+  fetch('/api/waitlist/leaderboard')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _allCities = data.cities || [];
+      var total = _allCities.reduce(function(s, c) { return s + c.count; }, 0);
+      document.getElementById('total-num').textContent = total.toLocaleString();
+      renderCities(_allCities);
+
+      // Show top referrers from first tour stop city
+      var topCity = _allCities.find(function(c) { return c.isTourStop; }) || _allCities[0];
+      if (topCity) {
+        fetch('/api/waitlist/stats?city=' + encodeURIComponent(topCity.city.split(',')[0]))
+          .then(function(r) { return r.json(); })
+          .then(function(stats) {
+            if (!stats.topReferrers || !stats.topReferrers.length) return;
+            var section = document.getElementById('top-referrers-section');
+            section.style.display = 'block';
+            document.getElementById('referrers-list').innerHTML = stats.topReferrers
+              .filter(function(r) { return r.referrals > 0; })
+              .map(function(r, i) {
+                return '<div class="ref-card">' +
+                  '<div class="ref-rank">' + (i + 1) + '</div>' +
+                  '<div class="ref-name">' + (r.firstName || 'Member') + '</div>' +
+                  '<div><div class="ref-count">' + r.referrals + '</div><div class="ref-count-sub">referral' + (r.referrals !== 1 ? 's' : '') + '</div></div>' +
+                  '</div>';
+              }).join('');
+          }).catch(function() {});
+      }
+    })
+    .catch(function() {
+      document.getElementById('cities-list').innerHTML = '<div class="empty">Unable to load leaderboard right now. Try refreshing.</div>';
+    });
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>

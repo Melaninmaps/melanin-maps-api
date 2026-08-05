@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable } from "@workspace/db";
+import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable, businessSuggestionsTable, waitlistSafetyReportsTable } from "@workspace/db";
 import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
@@ -12,7 +12,7 @@ const router: IRouter = Router();
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -28,6 +28,9 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       utmSource?: string;
       utmMedium?: string;
       utmCampaign?: string;
+      niche?: string;
+      platforms?: string;
+      safetyPriorities?: string;
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,7 +44,10 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       return;
     }
 
-    const code = referralCode ?? email.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
+    const namePrefix = firstName?.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8)
+      || email.split("@")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+    const digits = Math.floor(1000 + Math.random() * 9000);
+    const code = referralCode ?? `MWM-${namePrefix}-${digits}`;
     const primaryEmail = email.toLowerCase().trim();
 
     // Validate and deduplicate family emails
@@ -71,13 +77,18 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
         status: "pending",
         familyGroupId,
         cityNomination: cityNomination?.trim() || null,
-        previewChoice: ['safety', 'discovery', 'business', 'community'].includes(previewChoice ?? '') ? previewChoice : null,
+        previewChoice: ['safety', 'discovery', 'business', 'community', 'ambassador'].includes(previewChoice ?? '') ? previewChoice : null,
+        niche: niche?.trim() || null,
+        platforms: platforms?.trim() || null,
+        safetyPriorities: safetyPriorities?.trim() || null,
         notes: (utmSource || utmMedium || utmCampaign) ? JSON.stringify({ utmSource, utmMedium, utmCampaign }) : null,
       })
       .onConflictDoNothing();
 
     const [{ total }] = await db.select({ total: count() }).from(waitlistTable);
     const position = Number(total);
+    const [insertedEntry] = await db.select({ id: waitlistTable.id }).from(waitlistTable).where(eq(waitlistTable.email, primaryEmail)).limit(1);
+    const entryId = insertedEntry?.id ?? null;
 
     // Register each family member as a separate waitlist entry, grouped by familyGroupId
     let familyAdded = 0;
@@ -152,7 +163,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       })();
     }
 
-    res.status(201).json({ success: true, position, referralCode: code, familyAdded });
+    res.status(201).json({ success: true, position, referralCode: code, familyAdded, id: entryId });
   } catch (err) {
     req.log.error({ err }, "Failed to join waitlist");
     res.status(500).json({ error: "Failed to join waitlist" });
@@ -218,6 +229,171 @@ router.get("/waitlist/referral-stats/:code", async (req: Request, res: Response)
   } catch (err) {
     req.log.error({ err }, "Failed to fetch referral stats");
     res.status(500).json({ error: "Failed to fetch referral stats" });
+  }
+});
+
+// ── Public: city stats ────────────────────────────────────────────────────────
+router.get("/waitlist/stats", async (req: Request, res: Response) => {
+  const city = String(req.query.city ?? "").trim();
+  const THRESHOLDS: Record<string, number> = {
+    "charlotte": 1000, "philadelphia": 1000, "atlanta": 1000,
+    "houston": 1000, "washington": 1000, "chicago": 1000,
+    "new york": 2000, "los angeles": 2000, "miami": 1000,
+  };
+  const cityKey = city.toLowerCase().split(",")[0].trim();
+  const threshold = THRESHOLDS[cityKey] ?? 1000;
+  try {
+    const memberRows = city
+      ? await db.select({ total: count() }).from(waitlistTable).where(ilike(waitlistTable.city, `%${city.split(",")[0].trim()}%`))
+      : await db.select({ total: count() }).from(waitlistTable);
+    const bizRows = city
+      ? await db.select({ total: count() }).from(businessSuggestionsTable).where(ilike(businessSuggestionsTable.city, `%${city.split(",")[0].trim()}%`))
+      : await db.select({ total: count() }).from(businessSuggestionsTable);
+    const memberCount = Number(memberRows[0]?.total ?? 0);
+    const topReferrers = await db
+      .select({ firstName: waitlistTable.firstName, referralCode: waitlistTable.referralCode, referrals: count() })
+      .from(waitlistTable)
+      .where(city ? ilike(waitlistTable.city, `%${city.split(",")[0].trim()}%`) : sql`true`)
+      .groupBy(waitlistTable.firstName, waitlistTable.referralCode)
+      .orderBy(desc(count()))
+      .limit(10);
+    res.json({
+      city: city || null, memberCount, businessCount: Number(bizRows[0]?.total ?? 0),
+      threshold, remaining: Math.max(0, threshold - memberCount),
+      topReferrers: topReferrers.map(r => ({ firstName: r.firstName || "Member", referralCode: r.referralCode, referrals: Number(r.referrals) })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch waitlist stats");
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+// ── Public: city leaderboard ──────────────────────────────────────────────────
+router.get("/waitlist/leaderboard", async (req: Request, res: Response) => {
+  const TOUR_STOPS = ["charlotte", "philadelphia", "atlanta", "houston", "washington", "chicago"];
+  const THRESHOLDS: Record<string, number> = {
+    "charlotte": 1000, "philadelphia": 1000, "atlanta": 1000,
+    "houston": 1000, "washington": 1000, "chicago": 1000,
+    "new york": 2000, "los angeles": 2000, "miami": 1000,
+  };
+  try {
+    const cityRows = await db
+      .select({ city: waitlistTable.city, total: count() })
+      .from(waitlistTable)
+      .where(isNotNull(waitlistTable.city))
+      .groupBy(waitlistTable.city)
+      .orderBy(desc(count()))
+      .limit(20);
+    const cities = cityRows.filter(r => r.city).map(r => {
+      const cityName = r.city as string;
+      const cityKey = cityName.toLowerCase().split(",")[0].trim();
+      const threshold = THRESHOLDS[cityKey] ?? 1000;
+      const memberCount = Number(r.total);
+      return {
+        city: cityName, count: memberCount, threshold,
+        progress: Math.min(100, Math.round((memberCount / threshold) * 100)),
+        isTourStop: TOUR_STOPS.includes(cityKey),
+      };
+    });
+    res.json({ cities });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch leaderboard");
+    res.status(500).json({ error: "Failed to fetch leaderboard" });
+  }
+});
+
+// ── Public: individual referral dashboard (no login required) ─────────────────
+router.get("/waitlist/me", async (req: Request, res: Response) => {
+  const code = String(req.query.ref ?? "").trim().toUpperCase();
+  if (!code) { res.status(400).json({ error: "ref code required" }); return; }
+  try {
+    const [entry] = await db.select().from(waitlistTable).where(eq(waitlistTable.referralCode, code)).limit(1);
+    if (!entry) { res.status(404).json({ error: "Code not found" }); return; }
+    const [{ referralCount }] = await db
+      .select({ referralCount: count() }).from(waitlistTable).where(eq(waitlistTable.referredBy, code));
+    const cnt = Number(referralCount);
+    const tier = cnt >= 50 ? "Ambassador" : cnt >= 25 ? "Founding Member" : cnt >= 10 ? "City Champion" : cnt >= 3 ? "Community Builder" : "Member";
+    const nextTierAt = cnt < 3 ? 3 : cnt < 10 ? 10 : cnt < 25 ? 25 : cnt < 50 ? 50 : null;
+    const referred = await db
+      .select({ firstName: waitlistTable.firstName, createdAt: waitlistTable.createdAt })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.referredBy, code))
+      .orderBy(desc(waitlistTable.createdAt))
+      .limit(20);
+    let cityRank: number | null = null;
+    if (entry.city) {
+      const prefix = entry.city.split(",")[0].trim();
+      const topReferrers = await db
+        .select({ referralCode: waitlistTable.referralCode, referrals: count() })
+        .from(waitlistTable)
+        .where(ilike(waitlistTable.city, `%${prefix}%`))
+        .groupBy(waitlistTable.referralCode)
+        .orderBy(desc(count()))
+        .limit(100);
+      const idx = topReferrers.findIndex(r => r.referralCode === code);
+      cityRank = idx >= 0 ? idx + 1 : null;
+    }
+    res.json({
+      code, firstName: entry.firstName, city: entry.city, track: entry.previewChoice,
+      referralCount: cnt, tier, nextTierAt, cityRank,
+      referredUsers: referred.map(r => ({ firstName: r.firstName || "Friend", joinedAt: r.createdAt })),
+      referralLink: `https://www.mappingwithmelanin.com/preview?ref=${code}`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch referral stats");
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
+// ── Public: submit a business suggestion ──────────────────────────────────────
+router.post("/waitlist/business-suggest", async (req: Request, res: Response) => {
+  const { businessName, category, city, website, referralCode: refCode } = req.body as {
+    businessName?: string; category?: string; city?: string; website?: string; referralCode?: string;
+  };
+  if (!businessName?.trim()) { res.status(400).json({ error: "Business name required" }); return; }
+  try {
+    let waitlistId: string | null = null;
+    if (refCode) {
+      const [e] = await db.select({ id: waitlistTable.id }).from(waitlistTable)
+        .where(eq(waitlistTable.referralCode, refCode.toUpperCase())).limit(1);
+      waitlistId = e?.id ?? null;
+    }
+    await db.insert(businessSuggestionsTable).values({
+      waitlistId, referralCode: refCode?.toUpperCase() ?? null,
+      businessName: businessName.trim(), category: category?.trim() ?? null,
+      city: city?.trim() ?? null, website: website?.trim() ?? null,
+    });
+    res.status(201).json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save business suggestion");
+    res.status(500).json({ error: "Failed to save suggestion" });
+  }
+});
+
+// ── Public: submit a pre-launch safety report ─────────────────────────────────
+router.post("/waitlist/safety-report", async (req: Request, res: Response) => {
+  const { concernType, description, city, referralCode: refCode } = req.body as {
+    concernType?: string; description?: string; city?: string; referralCode?: string;
+  };
+  if (!concernType?.trim() && !description?.trim()) {
+    res.status(400).json({ error: "Concern type or description required" }); return;
+  }
+  try {
+    let waitlistId: string | null = null;
+    if (refCode) {
+      const [e] = await db.select({ id: waitlistTable.id }).from(waitlistTable)
+        .where(eq(waitlistTable.referralCode, refCode.toUpperCase())).limit(1);
+      waitlistId = e?.id ?? null;
+    }
+    await db.insert(waitlistSafetyReportsTable).values({
+      waitlistId, referralCode: refCode?.toUpperCase() ?? null,
+      concernType: concernType?.trim() ?? null, description: description?.trim() ?? null,
+      city: city?.trim() ?? null,
+    });
+    res.status(201).json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save safety report");
+    res.status(500).json({ error: "Failed to save report" });
   }
 });
 

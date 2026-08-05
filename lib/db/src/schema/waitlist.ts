@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const waitlistTable = pgTable("waitlist_signups", {
@@ -23,7 +23,34 @@ export const waitlistTable = pgTable("waitlist_signups", {
   lastNudgeSentAt: timestamp("last_nudge_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   importBatchId: varchar("import_batch_id", { length: 100 }),
-  previewChoice: varchar("preview_choice", { length: 20 }),
+  previewChoice: varchar("preview_choice", { length: 50 }),
+  niche: varchar("niche", { length: 100 }),
+  platforms: text("platforms"),
+  safetyPriorities: text("safety_priorities"),
 });
 
 export type WaitlistEntry = typeof waitlistTable.$inferSelect;
+
+export const businessSuggestionsTable = pgTable("business_suggestions", {
+  id: serial("id").primaryKey(),
+  waitlistId: varchar("waitlist_id", { length: 36 }).references(() => waitlistTable.id),
+  referralCode: varchar("referral_code", { length: 50 }),
+  businessName: varchar("business_name", { length: 255 }),
+  category: varchar("category", { length: 100 }),
+  city: varchar("city", { length: 100 }),
+  website: varchar("website", { length: 255 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const waitlistSafetyReportsTable = pgTable("waitlist_safety_reports", {
+  id: serial("id").primaryKey(),
+  waitlistId: varchar("waitlist_id", { length: 36 }).references(() => waitlistTable.id),
+  referralCode: varchar("referral_code", { length: 50 }),
+  concernType: varchar("concern_type", { length: 100 }),
+  description: text("description"),
+  city: varchar("city", { length: 100 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type BusinessSuggestion = typeof businessSuggestionsTable.$inferSelect;
+export type WaitlistSafetyReport = typeof waitlistSafetyReportsTable.$inferSelect;

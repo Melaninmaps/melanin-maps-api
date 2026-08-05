@@ -396,9 +396,34 @@ a{color:var(--gold);text-decoration:none}
 .submit-btn:disabled{background:rgba(202,146,43,.4);cursor:not-allowed}
 
 /* ════════ Success section ════════ */
-.success-section{display:none;padding:80px 20px;text-align:center;max-width:480px;margin:0 auto}
+.success-section{display:none;padding:80px 20px;text-align:center;max-width:520px;margin:0 auto}
 .success-seal{width:72px;height:72px;border-radius:50%;background:rgba(202,146,43,.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 0 40px rgba(202,146,43,.3)}
-.success-title{font-size:32px;font-weight:700;margin-bottom:14px}
+.success-title{font-size:28px;font-weight:700;margin-bottom:14px;line-height:1.25}
+.referral-box{background:rgba(202,146,43,.08);border:1px solid rgba(202,146,43,.25);border-radius:16px;padding:20px;margin:24px 0;text-align:left}
+.referral-link-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.referral-link-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(202,146,43,.3);border-radius:10px;padding:10px 14px;color:#F5F0E8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.copy-btn{background:#CA922B;color:#2B1507;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;transition:background .2s}
+.copy-btn:hover{background:#daa83a}
+.referral-tiers{font-size:11px;color:rgba(245,240,232,.5);line-height:1.6;margin:0}
+.track-section{margin:24px 0;text-align:left}
+.track-action-title{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:12px;text-align:center}
+.track-sub-form{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px}
+.track-sub-label{font-size:13px;color:rgba(245,240,232,.7);margin-bottom:10px;line-height:1.5}
+.track-action-btn{width:100%;background:#CA922B;color:#2B1507;border:none;border-radius:12px;padding:14px;font-weight:700;font-size:15px;cursor:pointer;margin-top:12px;transition:background .2s}
+.track-action-btn:hover{background:#daa83a}
+.platform-checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.platform-checks label{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(245,240,232,.8);cursor:pointer}
+.platform-checks input[type=checkbox]{accent-color:#CA922B;width:16px;height:16px}
+.city-progress-wrap{background:rgba(202,146,43,.06);border:1px solid rgba(202,146,43,.2);border-radius:12px;padding:16px;margin-bottom:16px}
+.city-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.city-progress-name{font-size:13px;font-weight:700;color:#F5F0E8}
+.city-progress-count{font-size:12px;color:var(--gold)}
+.city-progress-track{background:rgba(255,255,255,.08);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px}
+.city-progress-fill{background:linear-gradient(90deg,#CA922B,#daa83a);height:100%;border-radius:99px;transition:width 1s ease}
+.city-remaining{font-size:12px;color:rgba(245,240,232,.5);text-align:center}
+.leaderboard-cta{display:block;text-align:center;color:var(--gold);font-size:13px;font-weight:700;text-decoration:none;margin-top:20px;letter-spacing:.04em;opacity:.8}
+.leaderboard-cta:hover{opacity:1}
+.field select,.field[type=text]{color:#F5F0E8}
 .position-badge{display:inline-block;padding:6px 18px;background:rgba(202,146,43,.15);border:1px solid rgba(202,146,43,.4);border-radius:24px;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:20px}
 .success-sub{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:32px}
 .share-box{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.2);border-radius:14px;padding:18px 20px;text-align:left}
@@ -866,21 +891,40 @@ a{color:var(--gold);text-decoration:none}
        SUCCESS
   ═══════════════════════════════════════════════════ -->
   <div class="success-section" id="success-section">
+    <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none"></canvas>
+
     <div class="success-seal">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
         <path d="M6 16l7 7L26 9" stroke="#CA922B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <h2 class="success-title">You're on the list, family.</h2>
     <div class="position-badge" id="position-badge" style="display:none"></div>
-    <p class="success-sub">We're building this for us, by us. We'll notify you the second your city goes live. Until then, keep the community strong.</p>
-    <div class="share-box">
+    <h2 class="success-title" id="success-title">You're on the list, family.</h2>
+    <p class="success-sub" id="success-sub">We're building this for us, by us. We'll notify you the second your city goes live.</p>
+
+    <!-- Referral link box (shown for all tracks) -->
+    <div class="referral-box" id="referral-box" style="display:none">
+      <div class="share-eyebrow" style="margin-bottom:10px">Your referral link</div>
+      <div class="referral-link-row">
+        <input type="text" id="referral-link-input" readonly class="referral-link-input"/>
+        <button onclick="copyReferralLink()" class="copy-btn" id="copy-btn">Copy</button>
+      </div>
+      <p class="referral-tiers">
+        3 referrals → Community Builder &nbsp;·&nbsp; 10 → City Champion &nbsp;·&nbsp; 25 → Founding Member &nbsp;·&nbsp; 50 → Ambassador
+      </p>
+    </div>
+
+    <!-- Track-specific content injected here -->
+    <div id="track-content"></div>
+
+    <!-- Share buttons -->
+    <div class="share-box" id="share-box">
       <div class="share-eyebrow">Spread the word</div>
-      <p class="share-sub">Know someone who needs this? Share the map.</p>
       <div class="share-btns">
         <a class="share-btn" id="share-x" href="#" target="_blank" rel="noopener">Share on X</a>
-        <a class="share-btn" href="https://www.mappingwithmelanin.com/preview" target="_blank" rel="noopener">Copy Link</a>
+        <button class="share-btn" onclick="copyShareText()" id="copy-share-btn">Copy Message</button>
       </div>
+      <a class="leaderboard-cta" href="/leaderboard">See city leaderboard →</a>
     </div>
   </div>
 
@@ -987,14 +1031,17 @@ a{color:var(--gold);text-decoration:none}
      FORM + SELECTION LOGIC
 ═══════════════════════════════════════════════════ -->
 <script>
-// ── UTM capture (preserved) ─────────────────────────────────────────────
+// ── UTM + ref capture ───────────────────────────────────────────────────
 var selectedCard = null;
 var utmParams = {};
+var referredByParam = null;
+var _shareTextGlobal = '';
 (function(){
   var p = new URLSearchParams(location.search);
   if(p.get('utm_source')) utmParams.utmSource = p.get('utm_source');
   if(p.get('utm_medium')) utmParams.utmMedium = p.get('utm_medium');
   if(p.get('utm_campaign')) utmParams.utmCampaign = p.get('utm_campaign');
+  if(p.get('ref')) referredByParam = p.get('ref');
 })();
 
 var CARD_LABELS = {
@@ -1043,6 +1090,7 @@ async function submitForm(e) {
     var body = Object.assign({ email: email, previewChoice: selectedCard || null }, utmParams);
     if (firstName) body.firstName = firstName;
     if (city) body.city = city;
+    if (referredByParam) body.referredBy = referredByParam;
     var res = await fetch('/api/waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1056,20 +1104,297 @@ async function submitForm(e) {
       btn.textContent = 'Save My Spot →';
       return;
     }
-    var pos = data.position || 0;
-    var posBadge = document.getElementById('position-badge');
-    if (pos > 0) { posBadge.textContent = '#' + pos.toLocaleString() + ' in line'; posBadge.style.display = 'inline-block'; }
-    var shareText = 'I just joined the Mapping With Melanin waitlist — a community directory for finding trusted businesses and safe routes.';
-    document.getElementById('share-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent('https://www.mappingwithmelanin.com/preview');
-    document.getElementById('form-section').style.display = 'none';
-    document.getElementById('success-section').style.display = 'block';
-    document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+    showTrackSuccess(data, selectedCard, firstName, city);
   } catch(err) {
     errEl.textContent = 'Network error. Please try again.';
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Save My Spot →';
   }
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     TRACK-SPECIFIC SUCCESS + REFERRAL SYSTEM
+═══════════════════════════════════════════════════ -->
+<script>
+var _myReferralCode = '';
+var _shareTextGlobal = '';
+
+function buildTrackContent(track, city, refCode) {
+  var cityHtml = '<div id="city-progress-wrap" class="city-progress-wrap" style="display:none">' +
+    '<div class="city-progress-header"><span class="city-progress-name" id="city-name-label">' + (city || 'Your City') + '</span>' +
+    '<span class="city-progress-count" id="city-count-label">— members</span></div>' +
+    '<div class="city-progress-track"><div class="city-progress-fill" id="city-progress-fill" style="width:0%"></div></div>' +
+    '<div class="city-remaining" id="city-remaining">Loading…</div></div>';
+
+  if (track === 'community') {
+    return '<div class="track-section">' + cityHtml +
+      '<div class="track-sub-form">' +
+      '<p class="track-sub-label">Know a business that should be on the map? Add them now — we\'ll reach out before launch.</p>' +
+      '<input type="text" id="sug-biz-name" class="field" placeholder="Business name *" style="margin-bottom:8px"/>' +
+      '<input type="text" id="sug-biz-city" class="field" placeholder="City" style="margin-bottom:8px"/>' +
+      '<button onclick="submitBusinessSuggest()" class="track-action-btn">Add Them to the Map →</button>' +
+      '<div id="sug-success" style="display:none;color:#CA922B;font-size:13px;margin-top:8px;text-align:center">✓ Added! Thank you for building the community.</div>' +
+      '</div></div>';
+  }
+  if (track === 'business') {
+    return '<div class="track-section">' + cityHtml +
+      '<div class="track-sub-form">' +
+      '<p class="track-sub-label">Claim your business profile early. We\'ll build demand for you before we even launch.</p>' +
+      '<input type="text" id="sug-biz-name" class="field" placeholder="Business name *" style="margin-bottom:8px"/>' +
+      '<input type="text" id="sug-biz-url" class="field" placeholder="Website or social media URL" style="margin-bottom:8px"/>' +
+      '<select id="sug-biz-cat" class="field" style="margin-bottom:8px;background:#2B1507;color:#F5F0E8">' +
+      '<option value="">Category (optional)</option>' +
+      '<option>Restaurant / Food &amp; Drink</option><option>Beauty &amp; Wellness</option>' +
+      '<option>Retail</option><option>Health &amp; Fitness</option>' +
+      '<option>Professional Services</option><option>Arts &amp; Culture</option>' +
+      '<option>Entertainment</option><option>Tech</option><option>Other</option>' +
+      '</select>' +
+      '<button onclick="submitBusinessSuggest()" class="track-action-btn">Claim My Spot →</button>' +
+      '<div id="sug-success" style="display:none;color:#CA922B;font-size:13px;margin-top:8px;text-align:center">✓ Saved! We\'ll reach out before launch.</div>' +
+      '</div></div>';
+  }
+  if (track === 'ambassador') {
+    return '<div class="track-section">' +
+      '<div class="track-sub-form">' +
+      '<p class="track-sub-label">Tell us your content niche so Kinfolk AI is ready to match your audience on day one.</p>' +
+      '<select id="amb-niche" class="field" style="margin-bottom:14px;background:#2B1507;color:#F5F0E8">' +
+      '<option value="">Select your content niche *</option>' +
+      '<option>Food &amp; Restaurants</option><option>Travel &amp; Adventure</option>' +
+      '<option>Luxury &amp; Lifestyle</option><option>Culture &amp; Heritage</option>' +
+      '<option>Beauty &amp; Wellness</option><option>Family &amp; Community</option>' +
+      '<option>Business &amp; Finance</option><option>Entertainment</option>' +
+      '<option>Fashion</option><option>Outdoor &amp; Fitness</option><option>Other</option>' +
+      '</select>' +
+      '<p class="track-sub-label">What platforms are you on?</p>' +
+      '<div class="platform-checks" style="margin-bottom:14px">' +
+      '<label><input type="checkbox" value="instagram" class="plt-check"/> Instagram</label>' +
+      '<label><input type="checkbox" value="tiktok" class="plt-check"/> TikTok</label>' +
+      '<label><input type="checkbox" value="youtube" class="plt-check"/> YouTube</label>' +
+      '<label><input type="checkbox" value="twitter" class="plt-check"/> X / Twitter</label>' +
+      '<label><input type="checkbox" value="facebook" class="plt-check"/> Facebook</label>' +
+      '<label><input type="checkbox" value="podcast" class="plt-check"/> Podcast</label>' +
+      '</div>' +
+      '<button onclick="submitAmbassadorProfile()" class="track-action-btn">Save My Ambassador Profile →</button>' +
+      '<div id="amb-success" style="display:none;color:#CA922B;font-size:13px;margin-top:8px;text-align:center">✓ Kinfolk AI will be ready for you on day one.</div>' +
+      '</div></div>';
+  }
+  if (track === 'safety') {
+    return '<div class="track-section">' +
+      '<div class="track-sub-form">' +
+      '<p class="track-sub-label">What\'s the first thing you\'d want an alert about? Help us prioritize.</p>' +
+      '<div class="platform-checks" style="margin-bottom:18px">' +
+      '<label><input type="checkbox" value="police_activity" class="sft-check"/> Police activity</label>' +
+      '<label><input type="checkbox" value="ice_activity" class="sft-check"/> ICE / immigration</label>' +
+      '<label><input type="checkbox" value="discrimination" class="sft-check"/> Discrimination reports</label>' +
+      '<label><input type="checkbox" value="unsafe_routes" class="sft-check"/> Unsafe routes</label>' +
+      '<label><input type="checkbox" value="weather" class="sft-check"/> Severe weather</label>' +
+      '<label><input type="checkbox" value="community_events" class="sft-check"/> Community alerts</label>' +
+      '</div>' +
+      '<p class="track-sub-label">Report a safety concern in your area now.</p>' +
+      '<select id="safety-type" class="field" style="margin-bottom:8px;background:#2B1507;color:#F5F0E8">' +
+      '<option value="">Type of concern (optional)</option>' +
+      '<option value="discrimination">Discrimination incident</option>' +
+      '<option value="unsafe_area">Unsafe area or route</option>' +
+      '<option value="police_activity">Police activity</option>' +
+      '<option value="ice_activity">ICE / immigration activity</option>' +
+      '<option value="business_report">Business conduct issue</option>' +
+      '<option value="other">Other concern</option>' +
+      '</select>' +
+      '<textarea id="safety-desc" class="field" placeholder="Describe the concern (optional)" style="margin-bottom:8px;min-height:80px;resize:vertical;background:rgba(255,255,255,.06);color:#F5F0E8"></textarea>' +
+      '<button onclick="submitSafetyReport()" class="track-action-btn">Submit Report →</button>' +
+      '<div id="safety-success" style="display:none;color:#CA922B;font-size:13px;margin-top:8px;text-align:center">✓ Reported. Your community thanks you.</div>' +
+      '</div></div>';
+  }
+  // default / discovery
+  return '<div class="track-section">' + cityHtml + '</div>';
+}
+
+function showTrackSuccess(data, track, firstName, city) {
+  var pos = data.position || 0;
+  var refCode = data.referralCode || '';
+  _myReferralCode = refCode;
+  var refLink = 'https://www.mappingwithmelanin.com/preview?ref=' + encodeURIComponent(refCode);
+
+  var posBadge = document.getElementById('position-badge');
+  if (pos > 0) { posBadge.textContent = '#' + pos.toLocaleString() + ' in line'; posBadge.style.display = 'inline-block'; }
+
+  var titles = {
+    community:  "You're in. Now help us launch YOUR city.",
+    business:   "We're building demand for you before we even launch.",
+    ambassador: "Your audience is waiting for this.",
+    safety:     "Your community needs you watching out.",
+    discovery:  "You'll find them before anyone else."
+  };
+  var subs = {
+    community:  "Refer 3 friends to move " + (city || "your city") + " up the launch list. The more members, the faster we launch.",
+    business:   "We notify businesses about community demand before we open the app. Claim your spot — you're first in line.",
+    ambassador: "Kinfolk AI matches what your audience needs with minority-owned businesses. It's ready for you on day one.",
+    safety:     "Every report you submit protects the community before the app even launches. Your city needs you.",
+    discovery:  "We'll notify you the moment your city goes live. Share the map with people who need it."
+  };
+  var t = track || 'discovery';
+  document.getElementById('success-title').textContent = titles[t] || titles.discovery;
+  document.getElementById('success-sub').textContent = subs[t] || subs.discovery;
+
+  if (refCode) {
+    var refBox = document.getElementById('referral-box');
+    refBox.style.display = 'block';
+    document.getElementById('referral-link-input').value = refLink;
+  }
+
+  document.getElementById('track-content').innerHTML = buildTrackContent(t, city, refCode);
+
+  var shareCopies = {
+    community:  (city || 'My city') + ' is on its way to launching @MappingWithMelanin — a community-built directory for trusted businesses, safety, and culture. Help us get there: ' + refLink,
+    business:   'I just claimed my business spot on @MappingWithMelanin — launching city by city for our community. Join the waitlist: ' + refLink,
+    ambassador: "I'm joining @MappingWithMelanin as a Cultural Ambassador. Kinfolk AI matches what my audience needs with minority-owned businesses. Join the waitlist: " + refLink,
+    safety:     'I just joined @MappingWithMelanin — an app that keeps our community safe and connected to businesses that reflect our culture. Join me: ' + refLink,
+    discovery:  'I just joined @MappingWithMelanin — an app that helps our community find trusted businesses, stay safe, and connect with culture. Join me: ' + refLink
+  };
+  _shareTextGlobal = shareCopies[t] || shareCopies.discovery;
+  document.getElementById('share-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(_shareTextGlobal);
+
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('success-section').style.display = 'block';
+  document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+
+  launchConfetti();
+
+  if (city) {
+    fetch('/api/waitlist/stats?city=' + encodeURIComponent(city.split(',')[0].trim()))
+      .then(function(r) { return r.json(); })
+      .then(function(stats) {
+        var pw = document.getElementById('city-progress-wrap');
+        if (!pw) return;
+        var el = function(id) { return document.getElementById(id); };
+        if (el('city-name-label')) el('city-name-label').textContent = stats.city || city;
+        if (el('city-count-label')) el('city-count-label').textContent = stats.memberCount.toLocaleString() + ' members';
+        if (el('city-progress-fill')) el('city-progress-fill').style.width = stats.progress + '%';
+        if (el('city-remaining')) el('city-remaining').textContent = stats.remaining > 0 ? stats.remaining.toLocaleString() + ' more to launch!' : 'Ready to launch! 🎉';
+        pw.style.display = 'block';
+      }).catch(function() {});
+  }
+}
+
+function copyReferralLink() {
+  var input = document.getElementById('referral-link-input');
+  if (!input) return;
+  navigator.clipboard.writeText(input.value).then(function() {
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  }).catch(function() {
+    input.select();
+    document.execCommand('copy');
+  });
+}
+
+function copyShareText() {
+  if (!_shareTextGlobal) return;
+  navigator.clipboard.writeText(_shareTextGlobal).then(function() {
+    var btn = document.getElementById('copy-share-btn');
+    if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy Message'; }, 2000); }
+  }).catch(function() {});
+}
+
+function submitBusinessSuggest() {
+  var nameEl = document.getElementById('sug-biz-name');
+  var cityEl = document.getElementById('sug-biz-city') || document.getElementById('sug-biz-city');
+  var urlEl = document.getElementById('sug-biz-url');
+  var catEl = document.getElementById('sug-biz-cat');
+  var bizName = nameEl ? nameEl.value.trim() : '';
+  if (!bizName) { if (nameEl) { nameEl.style.borderColor = '#CA922B'; } return; }
+  fetch('/api/waitlist/business-suggest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      businessName: bizName,
+      city: cityEl ? cityEl.value.trim() : (document.getElementById('field-city') ? document.getElementById('field-city').value.trim() : ''),
+      website: urlEl ? urlEl.value.trim() : '',
+      category: catEl ? catEl.value : '',
+      referralCode: _myReferralCode
+    })
+  }).then(function() {
+    var s = document.getElementById('sug-success');
+    if (s) s.style.display = 'block';
+    if (nameEl) nameEl.value = '';
+  }).catch(function() {});
+}
+
+function submitAmbassadorProfile() {
+  var nicheEl = document.getElementById('amb-niche');
+  var niche = nicheEl ? nicheEl.value : '';
+  var checks = document.querySelectorAll('.plt-check:checked');
+  var platforms = Array.prototype.map.call(checks, function(c) { return c.value; }).join(',');
+  fetch('/api/waitlist', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ referralCode: _myReferralCode, niche: niche, platforms: platforms })
+  }).catch(function() {});
+  var s = document.getElementById('amb-success');
+  if (s) s.style.display = 'block';
+}
+
+function submitSafetyReport() {
+  var typeEl = document.getElementById('safety-type');
+  var descEl = document.getElementById('safety-desc');
+  var checks = document.querySelectorAll('.sft-check:checked');
+  var priorities = Array.prototype.map.call(checks, function(c) { return c.value; }).join(',');
+  var concernType = (typeEl ? typeEl.value : '') || priorities;
+  var description = descEl ? descEl.value.trim() : '';
+  var city = document.getElementById('field-city') ? document.getElementById('field-city').value.trim() : '';
+  if (!concernType && !description) return;
+  fetch('/api/waitlist/safety-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ concernType: concernType, description: description, city: city, referralCode: _myReferralCode })
+  }).then(function() {
+    var s = document.getElementById('safety-success');
+    if (s) s.style.display = 'block';
+  }).catch(function() {});
+}
+
+// ── Gold confetti ──────────────────────────────────────────────────────────
+function launchConfetti() {
+  var canvas = document.getElementById('confetti-canvas');
+  if (!canvas) return;
+  canvas.style.display = 'block';
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  var COLORS = ['#CA922B','#daa83a','#F5F0E8','#8B4513','#ffffff'];
+  var particles = Array.from({ length: 120 }, function() {
+    return {
+      x: Math.random() * canvas.width, y: -10 - Math.random() * 100,
+      r: 4 + Math.random() * 6, color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      vy: 2 + Math.random() * 4, vx: (Math.random() - 0.5) * 3,
+      rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 8,
+      opacity: 1
+    };
+  });
+  var frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var alive = false;
+    particles.forEach(function(p) {
+      if (p.y < canvas.height + 20) { alive = true; }
+      p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
+      p.opacity = Math.max(0, 1 - (p.y / canvas.height) * 0.6);
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 200 && alive) { requestAnimationFrame(draw); }
+    else { canvas.style.display = 'none'; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+  draw();
 }
 </script>
 </body>
