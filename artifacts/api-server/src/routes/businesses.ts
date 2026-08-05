@@ -52,6 +52,15 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
     const conditions = [];
 
+    // ── listing_status gate — real users only see live listings ──────────────
+    // Tester accounts see everything; regular users see only live_unclaimed + live_claimed.
+    const isTester = (req as any).user?.isTester === true;
+    if (!isTester) {
+      conditions.push(
+        sql`${businessesTable}.listing_status IN ('live_unclaimed', 'live_claimed')`
+      );
+    }
+
     if (category && typeof category === "string" && category !== "All") {
       conditions.push(eq(businessesTable.category, category));
     }
@@ -201,6 +210,7 @@ router.get("/businesses/mention-search", async (req: Request, res: Response) => 
     const result = await pool.query<{ id: string; name: string; category: string | null; city: string | null }>(
       `SELECT id, name, category, city FROM businesses
        WHERE name ILIKE $1
+         AND listing_status IN ('live_unclaimed', 'live_claimed')
        ORDER BY name
        LIMIT 8`,
       [`%${q}%`]
@@ -949,6 +959,64 @@ router.post("/businesses/community-reference", async (req: any, res: Response) =
   }
 });
 
+// ── GET /businesses/duplicate-check — 4-step soft-match for submissions & claims ──
+router.get("/businesses/duplicate-check", async (req: Request, res: Response) => {
+  if (!(req as any).user) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { name, address, city, state } = req.query as Record<string, string>;
+  if (!name || !city || !state) {
+    res.status(400).json({ error: "name, city, and state are required" }); return;
+  }
+  try {
+    // Step 1: exact match (name + address + city + state)
+    const exactParams: unknown[] = [name.trim(), city.trim(), state.trim()];
+    let exactWhere = `LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3)`;
+    if (address?.trim()) { exactParams.push(address.trim()); exactWhere += ` AND LOWER(address)=LOWER($4)`; }
+    const exact = await pool.query(`SELECT id, name, address, city, state, listing_status FROM businesses WHERE ${exactWhere} LIMIT 5`, exactParams);
+
+    // Step 2: same address, any name (possible rename / new tenant)
+    const sameAddr = address?.trim()
+      ? await pool.query(`SELECT id, name, address, city, state, listing_status FROM businesses WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`, [address.trim(), city.trim(), state.trim()])
+      : { rows: [] };
+
+    // Step 3: same name, same city — could be separate legitimate locations
+    const sameName = await pool.query(
+      `SELECT id, name, address, city, state, listing_status FROM businesses WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
+      [name.trim(), city.trim(), state.trim()]
+    );
+
+    // Step 4: fuzzy name at same address (possible rebrand / typo) — pg_trgm similarity
+    const fuzzy = address?.trim()
+      ? await pool.query(
+          `SELECT id, name, address, city, state, listing_status, similarity(LOWER(name), LOWER($1)) AS score
+           FROM businesses
+           WHERE LOWER(address)=LOWER($2) AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4)
+             AND similarity(LOWER(name), LOWER($1)) > 0.5
+           ORDER BY score DESC LIMIT 5`,
+          [name.trim(), address.trim(), city.trim(), state.trim()]
+        ).catch(() => ({ rows: [] }))  // pg_trgm may not be installed
+      : { rows: [] };
+
+    const isDuplicate = exact.rows.length > 0 && !!address?.trim();
+    res.json({
+      isDuplicate,
+      step1_exactMatch: exact.rows,
+      step2_sameAddress: sameAddr.rows,
+      step3_sameName: sameName.rows,
+      step4_fuzzy: fuzzy.rows,
+      recommendation: isDuplicate
+        ? "reject"
+        : exact.rows.length > 0
+          ? "flag_address"
+          : sameName.rows.length > 0
+            ? "allow_separate"
+            : "allow",
+    });
+  } catch (err) {
+    req.log.error({ err }, "duplicate-check failed");
+    res.status(500).json({ error: "Duplicate check failed" });
+  }
+});
+
 router.post("/businesses", async (req: Request, res: Response) => {
   try {
     const {
@@ -960,6 +1028,43 @@ router.post("/businesses", async (req: Request, res: Response) => {
       res.status(400).json({ error: "name, category, address, city, and state are required" });
       return;
     }
+
+    // ── 4-step duplicate detection ────────────────────────────────────────────
+    // Step 1: hard reject on exact (name + address + city + state) match
+    const exactDup = await pool.query(
+      `SELECT id, name FROM businesses
+       WHERE LOWER(name)=LOWER($1) AND LOWER(address)=LOWER($2)
+         AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4) LIMIT 1`,
+      [String(name).trim(), String(address).trim(), String(city).trim(), String(state).trim()]
+    );
+    if (exactDup.rows.length > 0) {
+      res.status(409).json({
+        error: "This listing already exists.",
+        duplicate: exactDup.rows[0],
+        step: 1,
+      });
+      return;
+    }
+
+    // Step 2: same address, different name → flag for admin review (allow but mark)
+    const addrDup = await pool.query(
+      `SELECT id, name FROM businesses
+       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 3`,
+      [String(address).trim(), String(city).trim(), String(state).trim()]
+    );
+    const needsAddressReview = addrDup.rows.length > 0;
+
+    // Step 3: same name, same city, different address → ALLOW (separate location)
+    // Step 4: fuzzy name at same address → flag (best-effort, non-blocking)
+    const fuzzyFlag = await pool.query(
+      `SELECT id, name FROM businesses
+       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3)
+         AND LOWER(name) != LOWER($4)
+         AND (similarity(LOWER(name), LOWER($4)) > 0.85)
+       LIMIT 3`,
+      [String(address).trim(), String(city).trim(), String(state).trim(), String(name).trim()]
+    ).catch(() => ({ rows: [] }));
+    const needsFuzzyReview = fuzzyFlag.rows.length > 0;
 
     const finalHours =
       hours === "Custom"
@@ -978,6 +1083,14 @@ router.post("/businesses", async (req: Request, res: Response) => {
       const [submitter] = await db.select({ referredByCode: usersTable.referredByCode }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
       referredByCode = submitter?.referredByCode ?? null;
     }
+
+    // Determine listing_status: live_unclaimed if the city is already launched, else staged
+    const cityLaunchRow = await pool.query(
+      `SELECT status FROM city_launches WHERE LOWER(city)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
+      [String(city).trim(), String(state).trim()]
+    );
+    const cityIsLive = ["live", "soft_launch"].includes(cityLaunchRow.rows[0]?.status ?? "");
+    const listingStatus = cityIsLive ? "live_unclaimed" : "staged";
 
     const [business] = await db
       .insert(businessesTable)
@@ -1004,7 +1117,21 @@ router.post("/businesses", async (req: Request, res: Response) => {
       })
       .returning();
 
-    res.status(201).json({ business });
+    // Set listing_status and data_source (columns added via migration, not in Drizzle schema)
+    await pool.query(
+      `UPDATE businesses SET listing_status=$1, data_source='community_submission' WHERE id=$2`,
+      [listingStatus, business.id]
+    );
+
+    res.status(201).json({
+      business: { ...business, listingStatus },
+      warnings: {
+        needsAddressReview,
+        needsFuzzyReview,
+        sameAddressBusinesses: addrDup.rows,
+        fuzzyMatches: fuzzyFlag.rows,
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to submit business listing");
     res.status(500).json({ error: "Failed to submit listing" });

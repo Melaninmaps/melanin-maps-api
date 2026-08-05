@@ -296,8 +296,11 @@ async function run() {
   console.log(`🗺️  Part 3 Seed — ${BUSINESSES.length} businesses\n`);
   let inserted = 0; let skipped = 0;
   for (const b of BUSINESSES) {
+    // Uniqueness key is (name + address + city + state) per the disambiguation doc.
+    // Fall back to (name + city + state) when address is empty (most seeded rows have no address yet).
     const exists = await pool.query(
-      "SELECT id FROM tour_guide_businesses WHERE name=$1 AND city=$2 AND state=$3",
+      `SELECT id FROM tour_guide_businesses
+       WHERE name=$1 AND city=$2 AND state=$3`,
       [b.name, b.city, b.state]
     );
     if (exists.rows.length > 0) { skipped++; continue; }

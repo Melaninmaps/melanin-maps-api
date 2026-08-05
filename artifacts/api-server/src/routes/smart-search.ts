@@ -153,6 +153,7 @@ router.get("/search/intent", async (req: Request, res: Response) => {
         `SELECT id, name, category, city, verified, description
          FROM businesses
          WHERE status = 'active'
+           AND listing_status IN ('live_unclaimed', 'live_claimed')
            AND (name ILIKE $1 OR description ILIKE $1 OR tags::text ILIKE $1${whereExtra})
          ORDER BY ${boostIdx ? `CASE WHEN category = ANY($${boostIdx}) THEN 0 ELSE 1 END,` : ""} verified DESC, name ASC
          LIMIT ${lim}`,
@@ -225,7 +226,11 @@ router.get("/search/suggest", async (req: Request, res: Response) => {
     if (city) params.push(`%${city}%`);
 
     const rows = await pool.query<{ name: string; category: string }>(
-      `SELECT DISTINCT name, category FROM businesses WHERE status = 'active' AND name ILIKE $1 ${city ? "AND city ILIKE $2" : ""} ORDER BY name ASC LIMIT 8`,
+      `SELECT DISTINCT name, category FROM businesses
+       WHERE status = 'active'
+         AND listing_status IN ('live_unclaimed', 'live_claimed')
+         AND name ILIKE $1 ${city ? "AND city ILIKE $2" : ""}
+       ORDER BY name ASC LIMIT 8`,
       params,
     );
     res.json({ suggestions: rows.rows });

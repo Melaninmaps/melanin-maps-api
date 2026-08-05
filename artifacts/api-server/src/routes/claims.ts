@@ -1,9 +1,41 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessClaimsTable, businessesTable } from "@workspace/db";
+import { db, pool, businessClaimsTable, businessesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
 
 const router: IRouter = Router();
+
+// ── GET /businesses/claim-candidates?name=&city=&state= ───────────────────────
+// Step 3 of the disambiguation tree: show every listing with this name in this city
+// so the claimant can pick the right one by address.
+router.get("/businesses/claim-candidates", async (req: Request, res: Response) => {
+  if (!(req as any).user) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { name, city, state } = req.query as Record<string, string>;
+  if (!name || !city || !state) {
+    res.status(400).json({ error: "name, city, and state are required" }); return;
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name, address, city, state, listing_status, category, description, phone, website
+       FROM businesses
+       WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2) AND LOWER(state) = LOWER($3)
+       ORDER BY address ASC`,
+      [name.trim(), city.trim(), state.trim()]
+    );
+    res.json({
+      candidates: rows,
+      count: rows.length,
+      message: rows.length > 1
+        ? `Found ${rows.length} listings named "${name}" in ${city}. Please confirm which one is yours by matching the address.`
+        : rows.length === 1
+          ? `Found 1 listing. Please confirm this is your business before claiming.`
+          : `No listings found for "${name}" in ${city}, ${state}. If this is a new business, please submit it first.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "claim-candidates failed");
+    res.status(500).json({ error: "Failed to find claim candidates" });
+  }
+});
 
 router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
   const businessId = String(req.params.id);

@@ -37,7 +37,7 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
       `SELECT LOWER(TRIM(home_city)) as city, COUNT(*) as cnt FROM users WHERE approved = true AND home_city IS NOT NULL GROUP BY LOWER(TRIM(home_city))`
     );
     const { rows: bizStats } = await pool.query<{ city: string; cnt: string }>(
-      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM businesses WHERE status = 'active' GROUP BY LOWER(TRIM(city))`
+      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM businesses WHERE status = 'active' AND listing_status IN ('live_unclaimed', 'live_claimed') GROUP BY LOWER(TRIM(city))`
     );
     const { rows: eventStats } = await pool.query<{ city: string; cnt: string }>(
       `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM events WHERE city IS NOT NULL GROUP BY LOWER(TRIM(city))`
@@ -417,6 +417,99 @@ router.patch("/admin/city-launches/:slug/status", async (req: Request, res: Resp
   } catch (err) {
     req.log.error({ err }, "Failed to update city status");
     res.status(500).json({ error: "Failed to update city status" });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// POST /admin/city-launches/:slug/trigger-launch
+// One-click city launch:
+//   1. tour_guide_businesses staged → live_unclaimed  (real businesses go live)
+//   2. businesses demo → permanently_hidden           (dev seed disappears)
+//   3. city_launches status → live + launch_date = NOW()
+// Idempotent — re-running on an already-live city is a no-op.
+// ──────────────────────────────────────────────────────────────────────────────
+router.post("/admin/city-launches/:slug/trigger-launch", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const { slug } = req.params;
+
+  try {
+    // Resolve city + state from the slug
+    const { rows: cityRows } = await pool.query<{ city: string; state: string; status: string }>(
+      `SELECT city, state, status FROM city_launches WHERE slug = $1 LIMIT 1`,
+      [slug]
+    );
+    if (cityRows.length === 0) {
+      res.status(404).json({ error: `No city found with slug "${slug}"` }); return;
+    }
+    const { city, state, status: currentStatus } = cityRows[0];
+
+    if (currentStatus === "live") {
+      // Already live — return current counts without modifying anything
+      const { rows: liveCounts } = await pool.query(
+        `SELECT COUNT(*) FILTER (WHERE listing_status='live_unclaimed') AS unclaimed,
+                COUNT(*) FILTER (WHERE listing_status='live_claimed')   AS claimed
+         FROM tour_guide_businesses WHERE LOWER(city)=LOWER($1) AND LOWER(state)=LOWER($2)`,
+        [city, state]
+      );
+      res.json({
+        ok: true,
+        alreadyLive: true,
+        city, state,
+        counts: liveCounts[0],
+      });
+      return;
+    }
+
+    // Step 1 — promote staged real businesses → live_unclaimed
+    const { rowCount: promoted } = await pool.query(
+      `UPDATE tour_guide_businesses
+       SET listing_status = 'live_unclaimed', updated_at = NOW()
+       WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
+         AND listing_status = 'staged'`,
+      [city, state]
+    );
+
+    // Step 2 — hide demo seed data for this city
+    const { rowCount: hidden } = await pool.query(
+      `UPDATE businesses
+       SET listing_status = 'permanently_hidden', updated_at = NOW()
+       WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
+         AND listing_status = 'demo'`,
+      [city, state]
+    );
+
+    // Step 3 — mark city as live
+    await pool.query(
+      `UPDATE city_launches
+       SET status = 'live', launch_date = NOW(), updated_at = NOW()
+       WHERE slug = $1`,
+      [slug]
+    );
+
+    // Step 4 — count results
+    const { rows: finalCounts } = await pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE listing_status='live_unclaimed') AS live_unclaimed,
+         COUNT(*) FILTER (WHERE listing_status='live_claimed')   AS live_claimed,
+         COUNT(*) FILTER (WHERE listing_status='staged')         AS still_staged
+       FROM tour_guide_businesses
+       WHERE LOWER(city)=LOWER($1) AND LOWER(state)=LOWER($2)`,
+      [city, state]
+    );
+
+    res.json({
+      ok: true,
+      city,
+      state,
+      promoted: promoted ?? 0,
+      demoHidden: hidden ?? 0,
+      counts: finalCounts[0],
+      message: `🚀 ${city} is now live — ${promoted ?? 0} businesses promoted, ${hidden ?? 0} demo pins hidden`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "trigger-launch failed");
+    res.status(500).json({ error: "City launch failed" });
   }
 });
 
