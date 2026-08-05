@@ -1,0 +1,82 @@
+I've read the full Ecosystem Vision document. Here are my answers — in my own words, no copying from the document.
+
+1. ECOSYSTEM LOOP
+
+Tasha searches "Ethiopian restaurants" in Charlotte
+
+What Tasha gets (immediate): Results ranked not just by distance but by community safety ratings, community voice reviews from people who look like her, verified ownership badges, and cultural detail markers (e.g., "this dish is served during Timkat — here's what that means"). Kinfolk AI also notes the search in her profile — she's culturally curious, food-oriented, possibly a Heritage Seeker. The next time she opens the app, she may see "You loved Ethiopian food in Charlotte — Habesha Bakery in DC is 4 blocks from your hotel next month."
+
+What the Ethiopian restaurant owner gets: A real-time demand intelligence signal fires: "14 people searched for Ethiopian restaurants in your zip code this week — your profile views are up 23%." Kinfolk AI may also prompt them: "Authentic cuisine searches are surging — would you like to run a flash deal this weekend?" The search becomes predictive inventory for the business, not just a passive listing hit.
+
+What the food content creator gets: Kinfolk AI cross-references Tasha's search (and 13 others like it) against creator profiles. A creator who covers African cuisine and has followers who index heavily on Charlotte gets a prompt: "Authentic Ethiopian cuisine is being searched 200+ times in Charlotte with almost no creator coverage. Would you like to visit Selam Kitchen and create content?" The gap Tasha's search revealed becomes a commission for a creator.
+
+Data captured and where it goes:
+
+search_query: "Ethiopian restaurants", location: Charlotte, NC, timestamp, user_id → Kinfolk AI training data, business demand intelligence feed, creator opportunity matching engine
+Click-through on specific result → business profile view logged, signals quality
+Zero-result paths (if no listings exist) → city content gap queue, ambassador opportunity alerts
+Session context (time of day, day of week, device) → demand pattern modeling for businesses
+2. LIFE STAGE INTELLIGENCE
+
+User has a 17-year-old child + saved 3 HBCU heritage sites
+
+This combination tells Kinfolk AI one thing with high confidence: a college decision is 12 months away. Here's what the system should generate over the next 6 months:
+
+Prompt 1 — Triggered immediately after the 3rd HBCU heritage site save: "It looks like you're exploring HBCU history — is your family thinking about college? We can help you plan campus visit trips, find minority-owned accommodations near these schools, and surface scholarship deadline reminders." Why immediately: three saves of the same category is an intent signal, not casual browsing. The system shouldn't wait.
+
+Prompt 2 — Triggered ~3 months later, early November (application season): "Common App deadlines are coming up for many HBCUs — Howard's early decision closes Dec 1. Would you like a curated list of minority-owned shops near campus to share with your student for move-in season?" Why November: life-stage calendar awareness. The system knows application season without the user saying a word.
+
+Prompt 3 — Triggered if the user saves any business in a city with a major HBCU (e.g., Atlanta, Nashville, DC): "You're exploring businesses near [city] — Spelman and Morehouse are 4 miles away. Want to see dorms, dining options, and parent weekend spots near campus?" Why this trigger: geographic behavior cross-referenced with known HBCU locations turns a routine business save into a life-stage touchpoint.
+
+What makes this right: The system never says "We see you have a teenager." It acts on behavior — saves, searches, location — and surfaces guidance that feels like a knowledgeable friend, not a surveillance tool.
+
+3. SAFETY INTEGRATION
+
+Community member reports discrimination at a gas station
+
+Step 1 — The report is filed. The system captures: location (lat/lng), business ID, discrimination category, timestamp, user ID (anonymized in public display), and report text. This goes into the safety incident queue.
+
+Step 2 — Who gets notified. First, an admin flag is created for moderation review. The business's safety rating drops immediately into a "pending review" state — it doesn't disappear from results, but its community safety score is downweighted. If the report is verified (either by admin review or by a second corroborating report), a community alert is published: "Discrimination reported at [location] — community-verified."
+
+Step 3 — The recommendation engine changes. The business is deprioritized in search rankings for users who have indicated sensitivity to safety (i.e., users who have previously engaged with safety features, saved safe spaces, or whose Kinfolk AI profile shows they prioritize community safety). Critically, the system doesn't universally hide the business — it surfaces the warning badge ("⚠ Discrimination Reported") and the alternative recommendation ("Amara's Corner Store, 0.5 mi — Minority-owned, 4.9★") for those who encounter it.
+
+Step 4 — The next person on that route. If another user's navigation passes within 0.3 miles of the gas station, Kinfolk AI intercepts: "Community members have reported issues at [location]. A community-verified alternative is 0.5 miles ahead." They don't have to know to search for safety — the system brings safety to them.
+
+Step 5 — The nearby minority-owned store benefits. Amara's Corner Store gets a demand signal: "You've been recommended as an alternative to a flagged business 12 times this week — your profile views are up 40%." Kinfolk AI may also prompt them: "New customers are finding you through safety recommendations — would you like to add a flash deal to convert them?" The discrimination report at a competitor becomes a direct business development opportunity for a community-aligned business. The flywheel turns: one safety report improves safety outcomes AND drives economic activity to the right place.
+
+4. CULTURAL AMBASSADORS
+
+Four creators traveling to the same city
+
+The data that determines what each person sees: their past content categories and performance, their audience demographics (inferred from engagement patterns), their follower interest clusters, and their personal life-stage profile.
+
+Here's why four people in the same city see four completely different Kinfolk AI prompts:
+
+Creator 1 — Luxury travel content, audience skews 30s-40s professional: Kinfolk AI sees high-engagement content around upscale hotels, spas, fine dining. Prompt: "A Black-owned spa near Buckhead is offering exclusive access — your audience over-indexes on luxury wellness content. 1,200+ supporters have searched this category in Atlanta this month."
+
+Creator 2 — Adventure and outdoor experiences, audience skews 20s active: Kinfolk AI sees kayaking videos, hiking content, outdoor brand partnerships. Prompt: "Stone Mountain and the BeltLine trail system are highly searched by your demographic — a community-run outdoor gear shop near the trailhead is looking for creator partnerships."
+
+Creator 3 — Food and authentic cuisine, audience heavily food-curious: Kinfolk AI sees restaurant reviews, cooking content, African/Caribbean cuisine engagement. Prompt: "The Beautiful Restaurant in Atlanta's West End is a historic soul food institution with almost no recent creator coverage despite 900+ monthly searches. Your food audience is the right fit."
+
+Creator 4 — Culture and museums, audience interested in Black history: Kinfolk AI sees NMAAHC content, heritage site saves, history-forward engagement. Prompt: "The LGBTQIA+ History Museum and the National Center for Civil and Human Rights are in your city this week — your museum content drives 340% above-average engagement. Both have minority-owned bookshops nearby worth featuring."
+
+How their content feeds back into the system: When Creator 3 publishes the Beautiful Restaurant video, the system captures: content topic tags, restaurant business ID, engagement rate (views, saves, shares). This data does two things — it fills the content gap that triggered the prompt (reducing the "zero coverage" signal for future creators) AND it becomes a demand signal for the restaurant: "Your business was featured in creator content with 40K views — new customer searches are up 180% this week." The content performance also trains Kinfolk AI on what type of content actually converts community members into customers, improving future creator-to-business matching.
+
+5. DATA ARCHITECTURE
+
+When a user saves a business:
+
+Business ID, user ID, timestamp, location context (were they near the business or browsing remotely?), session context (what did they search before saving?), device type
+What consumes this: Business receives a "Saves This Week" metric in their dashboard. Kinfolk AI adds the business category to the user's taste profile and life-stage model. If enough users from a specific demographic save this business, it becomes a "Community Favorite" signal. If the user never visits after saving, the system learns the conversion gap and may prompt the business to offer a flash deal to saved-but-not-visited users.
+How it improves over time: As saves accumulate across users, the system builds neighborhood-level demand maps. "10 users in NoDa saved this Ethiopian restaurant in the last 3 days" becomes a signal that surfaces it more prominently in search results and triggers a creator opportunity alert.
+When a user leaves a review:
+
+Review text, star rating, business ID, user ID, timestamp, visit-verified flag (did they check in or just review remotely?), specific complaint or praise categories (parsed by Kinfolk AI from the text), any photos attached
+What consumes this: The review feeds the business's community safety score and star rating. Kinfolk AI parses the text for safety signals (mentions of being followed, ignored, or mistreated → routes to safety incident queue). Positive review text is chunked for training the business dashboard's "Recent Community Feedback" display. The Kinfolk AI review response tool uses the review text as input for generating brand-voice responses for the owner.
+How it improves over time: Patterns across reviews (multiple mentions of "long wait" on Saturdays) become predictive for the business's demand forecasting. The safety parsing becomes more accurate as more community-specific language is reviewed and categorized. Review velocity (sudden increase in negative reviews) triggers an admin alert before it becomes a reputation crisis.
+When a search returns zero results:
+
+Search query (exact text), location, timestamp, user ID, what category filters were applied, whether the user rephrased and searched again or left
+What consumes this: This is arguably the most valuable data in the system. Zero results feed directly into three places: (1) the city content gap queue — "Ethiopian restaurants searched 47 times in Raleigh this month with no listings" becomes a business recruitment target for the MWM team; (2) the creator opportunity matching engine — it becomes an ambassador prompt; (3) Kinfolk AI's community needs model — it learns what the community is looking for that the platform hasn't yet provided.
+How it improves over time: Zero-result searches are the platform's roadmap. As the database fills in, yesterday's zero-result query becomes tomorrow's top result — and the user who searched first may receive a push notification: "Remember when you searched for Ethiopian restaurants in Raleigh? We just added 3." That closes the loop, brings the user back, and demonstrates that the platform listens.
+I understand the ecosystem. Every feature is a node that feeds data into Kinfolk AI, which makes the next feature more valuable. I won't start building anything new until you've reviewed these answers with Manus and confirmed we're aligned.
