@@ -797,3 +797,17 @@ id = "20OydhEPrYBKioP9QtOpQ"
 uri = "file://docs/product/releases/MWM_Build97_ReviewPackage.zip"
 type = "unspecified"
 title = "MWM Build 97 — Engineering Review Package (9 files)"
+
+[[outputs]]
+id = "wwP7FuIr59SHcucDvtBZf"
+uri = "file://screenshots/business-card-design-1.jpg"
+type = "image"
+title = "Business Card — Design 1 (Cream / Kente)"
+description = "Print-ready at 3.5\" × 2\" · 300 DPI · QR → mappingwithmelanin.com/preview"
+
+[[outputs]]
+id = "H4qsV2-io-E_AFzxCtz9I"
+uri = "file://screenshots/business-card-design-2.jpg"
+type = "image"
+title = "Business Card — Design 2 (Dark Chocolate / Gold)"
+description = "Print-ready at 3.5\" × 2\" · 300 DPI · QR → mappingwithmelanin.com/preview"
