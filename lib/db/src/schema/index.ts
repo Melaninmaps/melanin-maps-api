@@ -129,3 +129,4 @@ export * from "./heritage-support-links";
 export * from "./external-click-events";
 export * from "./voice-usage";
 export * from "./member-agreements";
+export * from "./tour-guide";
