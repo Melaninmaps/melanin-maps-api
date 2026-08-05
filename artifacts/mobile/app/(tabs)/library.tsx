@@ -163,6 +163,102 @@ const HERITAGE_COLORS: Record<string, string> = {
   "Immigrant Heritage":        "#0F766E",
 };
 
+// ── CityStoriesStrip — horizontal scroll of Living Legacy city cards ──────────
+interface CityCard {
+  city: string;
+  state: string;
+  slug: string;
+  launch_status: string;
+  brief_context: string | null;
+  has_profile: boolean;
+  business_count: number;
+}
+
+function CityStoriesStrip() {
+  const colors = useColors();
+  const router = useRouter();
+  const [cities, setCities] = React.useState<CityCard[]>([]);
+
+  React.useEffect(() => {
+    fetch(`${getApiBase()}/api/cities`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.cities) setCities(d.cities.filter((c: CityCard) => c.has_profile)); })
+      .catch(() => {});
+  }, []);
+
+  if (cities.length === 0) return null;
+
+  return (
+    <View style={[csStyles.section, { paddingHorizontal: 0 }]}>
+      <View style={[csStyles.headerRow, { paddingHorizontal: 20 }]}>
+        <View>
+          <Text style={[csStyles.sectionTitle, { color: colors.foreground }]}>Living Legacy</Text>
+          <Text style={[csStyles.subtitle, { color: colors.mutedForeground }]}>The story behind each city</Text>
+        </View>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={csStyles.row}
+      >
+        {cities.map((c) => (
+          <TouchableOpacity
+            key={c.slug}
+            style={[csStyles.card, { backgroundColor: colors.card, borderColor: "#CA922B30" }]}
+            onPress={() => router.push({ pathname: "/city-story", params: { slug: c.slug } } as never)}
+            activeOpacity={0.8}
+          >
+            {/* Live dot */}
+            {c.launch_status === "live" && (
+              <View style={csStyles.liveRow}>
+                <View style={csStyles.liveDot} />
+                <Text style={csStyles.liveTxt}>LIVE</Text>
+              </View>
+            )}
+            <Text style={[csStyles.cityName, { color: colors.foreground }]}>{c.city}</Text>
+            <Text style={[csStyles.stateTxt, { color: "#CA922B" }]}>{c.state}</Text>
+            {c.brief_context && (
+              <Text style={[csStyles.preview, { color: colors.mutedForeground }]} numberOfLines={3}>
+                {c.brief_context}
+              </Text>
+            )}
+            <View style={csStyles.footer}>
+              {c.business_count > 0 && (
+                <Text style={[csStyles.bizCount, { color: colors.mutedForeground }]}>
+                  {c.business_count} {c.business_count === 1 ? "business" : "businesses"}
+                </Text>
+              )}
+              <Text style={[csStyles.readLink, { color: "#CA922B" }]}>Read Story →</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const csStyles = StyleSheet.create({
+  section: { paddingTop: 22 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 12 },
+  sectionTitle: { fontSize: 14, fontWeight: "700" },
+  subtitle: { fontSize: 11, marginTop: 2 },
+  row: { paddingHorizontal: 20, paddingBottom: 4, gap: 10 },
+  card: {
+    width: 200, borderRadius: 14, borderWidth: 1,
+    borderTopWidth: 3, borderTopColor: "#CA922B",
+    padding: 14, gap: 4, flexShrink: 0,
+  },
+  liveRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 2 },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#16A34A" },
+  liveTxt: { fontSize: 9, fontWeight: "800", color: "#16A34A", letterSpacing: 0.8 },
+  cityName: { fontSize: 16, fontWeight: "800" },
+  stateTxt: { fontSize: 11, fontWeight: "700", marginTop: 1 },
+  preview: { fontSize: 12, lineHeight: 17, marginTop: 6 },
+  footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
+  bizCount: { fontSize: 10 },
+  readLink: { fontSize: 12, fontWeight: "700" },
+});
+
 type Tab = "library" | "browse" | "happeningNow";
 
 export default function LibraryScreen() {
@@ -846,6 +942,9 @@ export default function LibraryScreen() {
                     })}
                   </View>
                 )}
+
+                {/* ── City Stories — Living Legacy ──────────────────────── */}
+                <CityStoriesStrip />
 
                 {/* Heritage Sites */}
                 <View style={[styles.section, { paddingHorizontal: 0 }]}>

@@ -710,6 +710,7 @@ function RootLayoutNav() {
       <Stack.Screen name="challenges" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="checkin" options={{ headerShown: false, presentation: "modal" }} />
       <Stack.Screen name="city-archive" options={{ headerShown: false, presentation: "card" }} />
+      <Stack.Screen name="city-story" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="community-hub" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="community-lists" options={{ headerShown: false, presentation: "card" }} />
       <Stack.Screen name="community-verified" options={{ headerShown: false, presentation: "card" }} />

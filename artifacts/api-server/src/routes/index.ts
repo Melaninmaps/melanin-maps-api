@@ -144,6 +144,7 @@ import poolStatsRouter from "./pool-stats";
 import membershipRouter from "./membership";
 import cityLaunchRouter from "./city-launch";
 import tourGuideAdminRouter from "./tour-guide-admin";
+import citiesRouter from "./cities";
 
 const router: IRouter = Router();
 
@@ -286,6 +287,7 @@ router.use(legalRouter);
 router.use(businessMembershipInfoRouter);
 router.use(cityLaunchRouter);
 router.use(tourGuideAdminRouter);
+router.use(citiesRouter);
 
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);

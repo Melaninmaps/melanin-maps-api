@@ -62,6 +62,10 @@ const INTENT_PATTERNS: Array<{ pattern: RegExp; intent: SearchIntent }> = [
     pattern: /\b(finance|money|budget|invest|financial|tax|account|credit|debt|loan)\b/i,
     intent: { type: "finance", categories: ["Finance", "Banking", "Legal", "Tax Preparation"], keywords: ["financial advisor", "accountant", "credit counselor"], includeTypes: ["business", "article", "event"], contextNote: "Showing financial professionals and money resources" },
   },
+  {
+    pattern: /\b(history|historic|heritage|legacy|culture|roots|ancestor|freedom|civil.rights|HBCU|underground.railroad|migration|diaspora|Black.history)\b/i,
+    intent: { type: "city_history", categories: ["History", "Culture", "Education"], keywords: [], includeTypes: ["business", "article"], contextNote: "Showing city history, cultural landmarks, and heritage sites" },
+  },
 ];
 
 function detectIntent(query: string): SearchIntent {

@@ -166,6 +166,34 @@ const MIGRATIONS: { name: string; sql: string }[] = [
         ('Houston', 'TX', 'houston', 9, 'planning', '{"pre_launch":{"businesses_seeded":false,"cultural_sites":false,"historical_sites":false,"community_resources":false,"events":false,"city_imagery":false,"moderation_review":false,"kinfolk_city_context":false,"search_validation":false,"map_validation":false,"analytics_enabled":false},"community":{"founding_members":false,"founding_businesses":false,"ambassadors":false,"creators":false,"volunteers":false,"local_organizations":false},"marketing":{"city_landing_page":false,"launch_announcement":false,"social_assets":false,"founder_interview_prompts":false,"local_press_checklist":false,"city_hashtags":false,"referral_campaign":false},"operations":{"feature_flags":false,"rollout_percentage":false,"monitoring":false,"crash_dashboard":false,"waitlist_activation":false,"rollback_plan":false}}')
       ON CONFLICT (slug) DO NOTHING`,
   },
+  {
+    name: "city_profiles_table",
+    sql: `CREATE TABLE IF NOT EXISTS city_profiles (
+      id SERIAL PRIMARY KEY,
+      city_slug VARCHAR(100) NOT NULL REFERENCES city_launches(slug) ON DELETE CASCADE,
+      historical_context TEXT NOT NULL,
+      brief_context TEXT NOT NULL,
+      why_mwm_here TEXT,
+      hero_image_url TEXT,
+      key_neighborhoods TEXT[] DEFAULT '{}',
+      key_figures TEXT[] DEFAULT '{}',
+      migration_era VARCHAR(100),
+      cultural_anchors TEXT[] DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(city_slug)
+    )`,
+  },
+  {
+    name: "user_city_welcome_dismissals_table",
+    sql: `CREATE TABLE IF NOT EXISTS user_city_welcome_dismissals (
+      id SERIAL PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      city_slug VARCHAR(100) NOT NULL,
+      dismissed_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, city_slug)
+    )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
