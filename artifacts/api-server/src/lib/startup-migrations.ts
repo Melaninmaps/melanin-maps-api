@@ -120,6 +120,38 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ) AND role != 'admin'`,
   },
   {
+    name: "waitlist_referral_system_cols",
+    sql: `ALTER TABLE waitlist_signups
+      ADD COLUMN IF NOT EXISTS niche VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS platforms TEXT,
+      ADD COLUMN IF NOT EXISTS safety_priorities TEXT`,
+  },
+  {
+    name: "business_suggestions_table",
+    sql: `CREATE TABLE IF NOT EXISTS business_suggestions (
+      id SERIAL PRIMARY KEY,
+      waitlist_id VARCHAR(36) REFERENCES waitlist_signups(id),
+      referral_code VARCHAR(50),
+      business_name VARCHAR(255),
+      category VARCHAR(100),
+      city VARCHAR(100),
+      website VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: "waitlist_safety_reports_table",
+    sql: `CREATE TABLE IF NOT EXISTS waitlist_safety_reports (
+      id SERIAL PRIMARY KEY,
+      waitlist_id VARCHAR(36) REFERENCES waitlist_signups(id),
+      referral_code VARCHAR(50),
+      concern_type VARCHAR(100),
+      description TEXT,
+      city VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
     name: "city_launches_seed",
     sql: `INSERT INTO city_launches (city, state, slug, sequence_order, status, checklist)
       VALUES
