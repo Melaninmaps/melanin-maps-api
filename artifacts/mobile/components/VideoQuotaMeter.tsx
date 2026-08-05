@@ -84,15 +84,7 @@ export function VideoQuotaMeter({ onUpgradePress, showTierTable = false }: Props
           <Text style={[s.title, { color: colors.foreground }]}>Videos This Month</Text>
           <Text style={[s.tierLabel, { color: colors.mutedForeground }]}>{quota.tierLabel} Plan</Text>
         </View>
-        {(isNearLimit || isAtLimit) && onUpgradePress && (
-          <TouchableOpacity
-            style={[s.upgradeBtn, { backgroundColor: colors.primary }]}
-            onPress={onUpgradePress}
-            activeOpacity={0.8}
-          >
-            <Text style={s.upgradeBtnText}>Upgrade</Text>
-          </TouchableOpacity>
-        )}
+        {/* Upgrade button removed for v1.0 free release */}
       </View>
 
       {/* Count display */}

@@ -141,13 +141,7 @@ const loader = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "rgba(251,247,240,0.9)" },
 });
 
-try {
-  initializeRevenueCat();
-} catch (err: any) {
-  if (__DEV__) {
-    console.warn("RevenueCat init skipped:", err?.message ?? "Unknown error");
-  }
-}
+// RevenueCat initialization disabled for v1.0 free release
 
 SplashScreen.preventAutoHideAsync();
 
@@ -809,7 +803,6 @@ function _RootLayout() {
       <ErrorBoundary onError={reportErrorBoundary}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <SubscriptionProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProviderWrapper>
                 <View style={{ flex: 1 }}>
@@ -827,7 +820,6 @@ function _RootLayout() {
                 </View>
               </KeyboardProviderWrapper>
             </GestureHandlerRootView>
-            </SubscriptionProvider>
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>

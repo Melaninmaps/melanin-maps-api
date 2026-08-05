@@ -56,13 +56,11 @@ const SETTINGS = [
   { icon: "settings" as const, label: "Settings", sub: "Account, notifications, privacy", route: "/settings" as const },
   { icon: "bell" as const, label: "Notifications", sub: "Manage alerts and updates", route: "/notifications-settings" as const },
   { icon: "shield" as const, label: "Privacy & Safety", sub: "Control your data and visibility", route: "/privacy" as const },
-  { icon: "award" as const, label: "Membership", sub: "Explore (Free) — upgrade anytime", route: "/membership" as const },
   { icon: "briefcase" as const, label: "Business Admin", sub: "Manage your listing, category & profile", route: "/business-owner" as const },
   { icon: "share-2" as const, label: "Referral Program", sub: "Invite friends, earn rewards", route: "/referral" as const },
   { icon: "plus-circle" as const, label: "Nominate a Business", sub: "Know a business making a positive impact? Add it to the map.", route: "/nominate-business" as const },
   { icon: "users" as const, label: "Mentorship Network", sub: "Connect with mentors & peers", route: "/mentorship" as const },
   { icon: "tag" as const, label: "Affiliate Partner Discounts", sub: "Hotels, flights & travel perks", route: "/affiliate" as const },
-  { icon: "credit-card" as const, label: "Billing & Invoices", sub: "Manage subscription & history", route: "/billing" as const },
 ];
 
 const INDUSTRIES = [
@@ -1400,34 +1398,6 @@ export default function ProfileScreen() {
           <Feather name="arrow-right" size={14} color="#FFFFFF" />
         </View>
       </TouchableOpacity>
-
-      {/* Premium trial countdown — shown while trial is active and user has no paid subscription */}
-      {isAuthenticated && !!(user as any)?.trialEndsAt && (() => {
-        const trialEnd = new Date((user as any).trialEndsAt as string);
-        const msLeft = trialEnd.getTime() - Date.now();
-        const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
-        if (daysLeft <= 0) return null;
-        return (
-          <TouchableOpacity
-            style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 14, backgroundColor: colors.primary + "12", borderWidth: 1, borderColor: colors.primary + "30", padding: 14, flexDirection: "row", alignItems: "center", gap: 12 }}
-            onPress={() => router.push("/membership")}
-            activeOpacity={0.85}
-          >
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary + "20", alignItems: "center", justifyContent: "center" }}>
-              <Feather name="zap" size={18} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.primary, marginBottom: 1 }}>
-                Premium Trial — {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
-              </Text>
-              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, lineHeight: 15 }}>
-                You're exploring all Premium features free. Tap to keep access after your trial.
-              </Text>
-            </View>
-            <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
-          </TouchableOpacity>
-        );
-      })()}
 
       {/* Messages shortcut */}
       <TouchableOpacity

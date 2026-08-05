@@ -600,32 +600,7 @@ export default function DiscoverScreen() {
                   title="Community Spotlights"
                   subtitle={gemsLocked ? "Places the community keeps nominating" : "Places the community keeps nominating"}
                 />
-                {gemsLocked ? (
-                  <TouchableOpacity
-                    onPress={() => router.push("/membership")}
-                    activeOpacity={0.85}
-                    style={[styles.gemsLockedCard, { backgroundColor: colors.card, borderColor: "#CA922B30" }]}
-                  >
-                    <View style={[styles.gemsLockedIcon, { backgroundColor: "#CA922B15" }]}>
-                      <Feather name="lock" size={22} color="#CA922B" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.gemsLockedTitle, { color: colors.foreground }]}>
-                        Explorer+ exclusive
-                      </Text>
-                      <Text style={[styles.gemsLockedBody, { color: colors.mutedForeground }]}>
-                        Community Spotlights are curated by members who nominated the most deserving spots. Upgrade to see them.
-                      </Text>
-                      <View style={[styles.gemsLockedBadge, { backgroundColor: "#CA922B15" }]}>
-                        <Feather name="star" size={11} color="#CA922B" />
-                        <Text style={[styles.gemsLockedBadgeText, { color: "#CA922B" }]}>
-                          Unlock with Explorer membership
-                        </Text>
-                        <Feather name="chevron-right" size={13} color="#CA922B" />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ) : (
+                {gemsLocked ? null : (
                   <FlatList
                     keyboardDismissMode="on-drag"
                     horizontal
