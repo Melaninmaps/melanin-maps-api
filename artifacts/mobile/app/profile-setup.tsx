@@ -77,6 +77,21 @@ export default function ProfileSetupScreen() {
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getApiBaseUrl();
+
+      // Bug 2 fix: retrieve heritage + ownership designations collected during pre-auth onboarding
+      let diasporaCountries: string[] = [];
+      let preferredOwnershipTypes: string[] = [];
+      try {
+        const pendingRaw = await AsyncStorage.getItem("@mwm_pending_ownership_prefs");
+        if (pendingRaw) {
+          const parsed = JSON.parse(pendingRaw) as { diasporaCountries?: string[]; designations?: string[] };
+          diasporaCountries = Array.isArray(parsed.diasporaCountries) ? parsed.diasporaCountries : [];
+          preferredOwnershipTypes = Array.isArray(parsed.designations) ? parsed.designations : [];
+        }
+      } catch {
+        // If AsyncStorage read fails, proceed without heritage data — non-fatal
+      }
+
       await fetch(`${base}/api/auth/user/setup`, {
         method: "PATCH",
         headers: {
@@ -92,8 +107,16 @@ export default function ProfileSetupScreen() {
           allowDm,
           showCity,
           profileSetupComplete: true,
+          // Bug 1 fix: include interests so they reach user_preferences.cultural_interests
+          culturalInterests: Array.from(selectedInterests),
+          // Bug 2 fix: forward heritage + designations to user_preferences
+          diasporaCountries,
+          preferredOwnershipTypes,
         }),
       });
+
+      // Bug 2 fix: clear pending prefs now that they've been persisted to the DB
+      await AsyncStorage.removeItem("@mwm_pending_ownership_prefs");
     } catch {
       // Non-fatal — proceed to app regardless
     } finally {

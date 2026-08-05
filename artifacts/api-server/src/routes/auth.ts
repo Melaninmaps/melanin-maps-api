@@ -8,7 +8,7 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, usersTable, getPoolStats, memberAgreementsTable, waitlistTable } from "@workspace/db";
+import { db, usersTable, getPoolStats, memberAgreementsTable, waitlistTable, userPreferencesTable } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
@@ -1117,6 +1117,11 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
       allowDm,
       showCity,
       profileSetupComplete,
+      // Bug 1 fix: interests collected in profile-setup Step 3
+      culturalInterests,
+      // Bug 2 fix: heritage + ownership designations forwarded from pre-auth AsyncStorage
+      diasporaCountries,
+      preferredOwnershipTypes,
     } = req.body as {
       homeCity?: string;
       isBusinessOwner?: boolean;
@@ -1125,8 +1130,12 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
       allowDm?: boolean;
       showCity?: boolean;
       profileSetupComplete?: boolean;
+      culturalInterests?: string[];
+      diasporaCountries?: string[];
+      preferredOwnershipTypes?: string[];
     };
 
+    // Update users table
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (homeCity !== undefined) updates.homeCity = homeCity.trim() || null;
     if (isBusinessOwner !== undefined) updates.isBusinessOwner = isBusinessOwner;
@@ -1137,6 +1146,34 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     if (profileSetupComplete !== undefined) updates.profileSetupComplete = profileSetupComplete;
 
     await db.update(usersTable).set(updates).where(eq(usersTable.id, userId));
+
+    // Upsert user_preferences with onboarding data (interests + heritage)
+    // Only write fields that were actually provided — don't overwrite existing prefs with empty arrays
+    const hasPrefsData =
+      (Array.isArray(culturalInterests) && culturalInterests.length > 0) ||
+      (Array.isArray(diasporaCountries) && diasporaCountries.length > 0) ||
+      (Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0);
+
+    if (hasPrefsData) {
+      await db
+        .insert(userPreferencesTable)
+        .values({
+          userId,
+          ...(Array.isArray(culturalInterests) && culturalInterests.length > 0 && { culturalInterests }),
+          ...(Array.isArray(diasporaCountries) && diasporaCountries.length > 0 && { diasporaCountries }),
+          ...(Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
+        })
+        .onConflictDoUpdate({
+          target: userPreferencesTable.userId,
+          set: {
+            ...(Array.isArray(culturalInterests) && culturalInterests.length > 0 && { culturalInterests }),
+            ...(Array.isArray(diasporaCountries) && diasporaCountries.length > 0 && { diasporaCountries }),
+            ...(Array.isArray(preferredOwnershipTypes) && preferredOwnershipTypes.length > 0 && { preferredOwnershipTypes }),
+            updatedAt: new Date(),
+          },
+        });
+    }
+
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "PATCH /api/auth/user/setup error");
