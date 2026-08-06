@@ -84,7 +84,7 @@ export default function OnboardingTravel() {
         </View>
         <Text style={styles.subtitle}>
           KinfolkAI™ builds personalized itineraries featuring culturally rich spots,
-          safe neighborhoods, cultural events, and community recommendations — all
+          welcoming neighborhoods, cultural events, and community recommendations — all
           tailored to your vibe, budget, and travel style.
         </Text>
 

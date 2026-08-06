@@ -245,7 +245,7 @@ export default function SpacesScreen() {
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
               <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Share a Space</Text>
               <Text style={[styles.sheetSub, { color: colors.mutedForeground }]}>
-                Tell the community about a great space in a safe neighborhood
+                Tell the community about a great space in a welcoming neighborhood
               </Text>
 
               <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Space Type</Text>

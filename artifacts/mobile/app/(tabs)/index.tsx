@@ -855,7 +855,7 @@ export default function DiscoverScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.spacesBannerTitle, { color: colors.foreground }]}>Community Spaces</Text>
-                  <Text style={[styles.spacesBannerSub, { color: colors.mutedForeground }]}>Spaces for rent, sale & business in safe neighborhoods</Text>
+                  <Text style={[styles.spacesBannerSub, { color: colors.mutedForeground }]}>Spaces for rent, sale & business in welcoming communities</Text>
                 </View>
                 <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
               </TouchableOpacity>

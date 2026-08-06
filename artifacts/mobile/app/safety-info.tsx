@@ -9,7 +9,7 @@ const PRINCIPLES = [
   {
     icon: "users" as const,
     title: "Community-Powered, Not Algorithm-Driven",
-    body: "Every safety score on Mapping with Melanin comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a Black person, in that space.",
+    body: "Every safety score on Mapping with Melanin comes from real people who visited real places. We don't infer safety from crime statistics, census data, or third-party databases — all of which carry systemic bias. Safety here means how it actually felt to be there, as a minority, in that space.",
     color: "#CA922B",
   },
   {

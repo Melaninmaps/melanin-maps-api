@@ -20,7 +20,7 @@ const FAQ_ITEMS = [
   { q: "Is my personal information safe?", a: "Absolutely. Your personal information is never sold to third parties. Reviews can be submitted under your name or anonymously, and all data is encrypted and securely stored." },
   { q: "How does Mapping with Melanin help travelers make informed decisions?", a: "We aggregate community safety scores, verified reviews, and local insights so you can research any neighborhood or business before you arrive — giving you the confidence to explore new places on your terms." },
   { q: "How is Mapping with Melanin different from Yelp or Google Reviews?", a: "We're built specifically for the Melanated community. Our safety scores reflect real experiences from people who share your background, not generic ratings. We surface culture-specific insights that mainstream platforms miss entirely." },
-  { q: "What cities have the highest safety scores for Melaninated travelers?", a: "Our top-rated cities include Atlanta, GA; Houston, TX; Chicago, IL; Miami, FL; and Washington, DC — all with strong Black business communities and high community safety scores from verified members." },
+  { q: "What cities have the highest safety scores for Melaninated travelers?", a: "Our top-rated cities include Atlanta, GA; Houston, TX; Chicago, IL; Miami, FL; and Washington, DC — all with strong minority business communities and high community safety scores from verified members." },
 ];
 
 export default function Safety() {
