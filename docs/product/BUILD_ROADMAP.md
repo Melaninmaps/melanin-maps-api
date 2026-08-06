@@ -48,8 +48,9 @@
 | 8 | Font scaling fix (text renders correctly on all device sizes) | UI | P1 | |
 | 9 | City boundary logic: map is radius-based, not city-gated (Option C) | Map | P1 | |
 | 10 | Home city determines Kinfolk personalization, not GPS (Option A) | Kinfolk | P1 | |
+| 11 | Inclusive language audit: replace all 323 generic "Black-owned" instances with "minority-owned" / "community" across web, mobile, and API — add regression prevention | Language | P0 | |
 
-*Verification: See `docs/product/MWM_Replit_Build_103_Complete_Instructions.md` for full checklist.*
+*Verification: See `docs/product/MWM_Replit_Build_103_Complete_Instructions.md` and `docs/product/MWM_Replit_Language_Audit_Fix.md` for full checklists.*
 
 ---
 
@@ -237,6 +238,7 @@ The app has a "solid foundation of tweaking, not building" when ALL of the follo
 | `MWM_Cultural_Phrases_By_City.md` | Regional slang, AAVE, cultural phrases for all cities |
 | `MWM_Community_Entrepreneur_Comprehension_Test.md` | 7-question test (Replit passed 7/7) |
 | `MWM_Post_Apple_Build_Plan.md` | Original post-approval plan (superseded by this roadmap) |
+| `MWM_Replit_Language_Audit_Fix.md` | 323-instance inclusive language regression — all fix locations, exceptions, regression prevention |
 
 ---
 
@@ -245,3 +247,4 @@ The app has a "solid foundation of tweaking, not building" when ALL of the follo
 | Date | Change | Authorized By |
 |---|---|---|
 | Aug 5, 2026 | Document created — Builds 102-111+ defined | Founder |
+| Aug 5, 2026 | Build 103 item 11 added: inclusive language audit (323 instances) | Founder |
