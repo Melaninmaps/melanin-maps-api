@@ -193,7 +193,7 @@ router.get("/recommend", async (req: Request, res: Response) => {
           if (fallback.length > 0) {
             actions.push({
               type: "business",
-              title: `Discover Black-owned businesses in ${userCity}`,
+              title: `Discover minority-owned businesses in ${userCity}`,
               reason: "Community-verified businesses in your area",
               cta: "Browse Businesses",
               icon: "🏪",
@@ -247,7 +247,7 @@ router.get("/recommend", async (req: Request, res: Response) => {
         if (localBiz.length > 0) {
           actions.push({
             type: "business",
-            title: `Black-owned businesses in ${city}`,
+            title: `minority-owned businesses in ${city}`,
             reason: "Community-verified and trusted by locals",
             cta: "Browse Businesses",
             icon: "🏪",

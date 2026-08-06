@@ -474,7 +474,7 @@ function getStoryTags(heritageCategory: string | null): TagGroup[] {
 
 function getRespectGuidance(heritageCategory: string | null): string[] {
   const base = [
-    "Support local Black-owned businesses nearby rather than national chains.",
+    "Support local minority-owned businesses nearby rather than national chains.",
     "Engage with curiosity, humility, and genuine respect.",
   ];
   if (heritageCategory === "HBCU") {

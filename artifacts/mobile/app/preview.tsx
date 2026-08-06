@@ -24,7 +24,7 @@ const VOICE_CARDS = [
   {
     id: "v1",
     quote:
-      "I broke down in rural Georgia on a road trip. Within 60 seconds I found a Black-owned mechanic 4 miles away. He got me back on the road and treated me like family. That doesn't happen by accident.",
+      "I broke down in rural Georgia on a road trip. Within 60 seconds I found a minority-owned mechanic 4 miles away. He got me back on the road and treated me like family. That doesn't happen by accident.",
     name: "Marcus T.",
     location: "Atlanta, GA",
     color: "#2D7A4F",

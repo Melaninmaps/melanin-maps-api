@@ -7,7 +7,7 @@ const SITE_URL = "https://mappingwithmelanin.com";
 
 const BENEFITS = [
   { icon: Shield, label: "Safety Intelligence", desc: "Community-powered neighborhood safety scores and verified reviews" },
-  { icon: MapPin, label: "2,400+ Businesses", desc: "Verified Black-owned businesses across 48 states" },
+  { icon: MapPin, label: "2,400+ Businesses", desc: "Verified minority-owned businesses across 48 states" },
   { icon: Users, label: "10K+ Members", desc: "A growing community of travelers, entrepreneurs, and creators" },
   { icon: Sparkles, label: "KinfolkAI™", desc: "AI travel planning that understands your culture and community" },
 ];
@@ -236,7 +236,7 @@ export default function WaitlistPage() {
                   >
                     <div className="text-left">
                       <p className="text-sm font-semibold text-[#3A1F0E]">I'm a business owner</p>
-                      <p className="text-xs text-[#3A1F0E]/50">Get listed as a Black-owned business</p>
+                      <p className="text-xs text-[#3A1F0E]/50">Get listed as a minority-owned business</p>
                     </div>
                     <div className={`w-10 h-6 rounded-full transition-colors flex items-center ${isBusinessOwner ? "bg-[#CA922B]" : "bg-[#3A1F0E]/20"}`}>
                       <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform mx-1 ${isBusinessOwner ? "translate-x-4" : "translate-x-0"}`} />

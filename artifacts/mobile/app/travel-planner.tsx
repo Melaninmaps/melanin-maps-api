@@ -219,7 +219,7 @@ export default function TravelPlannerScreen() {
             </TouchableOpacity>
 
             <Text style={[s.disclaimer, { color: colors.mutedForeground }]}>
-              KinfolkAI centers Black-owned businesses, historically Black neighborhoods, and culturally rich experiences in every itinerary.
+              KinfolkAI centers minority-owned businesses, historically Black neighborhoods, and culturally rich experiences in every itinerary.
             </Text>
           </ScrollView>
         </KeyboardAvoidingView>

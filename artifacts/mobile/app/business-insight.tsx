@@ -291,7 +291,7 @@ export default function BusinessInsightScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[s.ownerCardTitle, { color: colors.foreground }]}>Nominate a Black-Owned Business</Text>
-                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Add a Black-owned business to the Mapping With Melanin™ directory</Text>
+                <Text style={[s.ownerCardSub, { color: colors.mutedForeground }]}>Add a minority-owned business to the Mapping With Melanin™ directory</Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
@@ -370,11 +370,11 @@ export default function BusinessInsightScreen() {
             </View>
 
             <View style={s.qBlock}>
-              <Text style={[s.qLabel, { color: colors.foreground }]}>Is this a Black-owned business? <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>(optional)</Text></Text>
+              <Text style={[s.qLabel, { color: colors.foreground }]}>Is this a minority-owned business? <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }]}>(optional)</Text></Text>
               <Text style={[s.qHint, { color: colors.mutedForeground }]}>Non-minority businesses are never notified or contacted.</Text>
               <View style={{ gap: 8, marginTop: 4 }}>
-                <TriOption label="Yes — Black-owned" value="minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
-                <TriOption label="No — non-Black-owned 🏢" value="non-minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
+                <TriOption label="Yes — minority-owned" value="minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
+                <TriOption label="No — non-minority-owned 🏢" value="non-minority" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
                 <TriOption label="Not sure" value="unsure" current={ownershipType} onChange={(v) => setOwnershipType(v as any)} color={colors.primary} colors={colors} />
               </View>
             </View>

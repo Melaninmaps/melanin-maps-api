@@ -27,11 +27,16 @@ description: Contextual language rules for the platform — when to use "Black-o
 - "Black culture" (generic) → "melanated culture" or "minority culture"
 - "traveling while Black" → context-appropriate inclusive phrasing
 
-## Known Gap (July 2026 Audit)
+## ENFORCEMENT (Aug 5, 2026 — Founder escalation — PERMANENT)
 
-~14 mobile screens and ~8 API routes still use "Black-owned" as a generic default — not tied to verified identity or user preference. These are the targets for the post-review language cleanup phase. Files include: travel-planner.tsx, kinfolk-settings.tsx, melanin-passport.tsx, affiliate.tsx, challenges.tsx, create-list.tsx, cultural-preference.tsx, interests.tsx, itinerary-feedback.tsx, my-trips.tsx, neighborhood-survey.tsx, community-lists.tsx; and API: email.ts, recommend.ts, community-challenges-new.ts, web-ssr.ts, smart-search.ts, post-nudge.ts, topic-briefs.ts, knowledge-hubs.ts.
+This rule regressed on ~50% of builds. Full audit completed Aug 5, 2026. 174 generic instances fixed across 87 files. **0 generic instances remain.**
 
-**Why:** The decision to not remove "Black-owned" was explicit — specificity is celebrated when it is earned or chosen. The cleanup is replacing generic defaults only, not stripping cultural identity from the platform.
+**Remaining legitimate uses (5 total — DO NOT CHANGE):**
+- `identity.tsx` + `BusinessImprovementPlanModal.tsx`: filter option ID/label — user-chosen filter ✅
+- `kinfolk.ts` lines 170, 441, 460: Parrish St / Farish St / Black Wall Street historical references ✅
+- All `seed-tour-guide*.ts` + `seed-city-profiles.ts`: `culturalCommunity: 'Black-owned'` DB field values — specific verified businesses ✅
+
+**Regression prevention hook:** `.husky/pre-commit-language-check` — fires if non-seed "Black-owned" count exceeds 15. Run it before any commit touching copy, prompts, seeds, or onboarding.
 
 ## How to Apply
 

@@ -223,7 +223,7 @@ export function BusinessChallengeApplyModal({ visible, challengeId, challengeNam
               <View style={[styles.reviewNote, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                 <Feather name="shield" size={13} color={colors.primary} />
                 <Text style={[styles.reviewNoteTxt, { color: colors.mutedForeground }]}>
-                  Applications are reviewed by the Mapping with Melanin™ team. We verify that businesses are Black-owned before approval. This typically takes 2–3 business days.
+                  Applications are reviewed by the Mapping with Melanin™ team. We verify that businesses are minority-owned before approval. This typically takes 2–3 business days.
                 </Text>
               </View>
 

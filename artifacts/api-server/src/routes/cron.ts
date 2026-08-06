@@ -635,7 +635,7 @@ router.post("/cron/weekly-business-report", async (req, res): Promise<void> => {
 
         if (openai) {
           try {
-            const prompt = `You are a marketing advisor for "${owner.business_name}", a Black-owned ${owner.business_category} business${owner.business_city ? ` in ${owner.business_city}` : ""}.
+            const prompt = `You are a marketing advisor for "${owner.business_name}", a minority-owned ${owner.business_category} business${owner.business_city ? ` in ${owner.business_city}` : ""}.
 
 This week's performance:
 - Profile views: ${views} (${pctChange(views, prevViews) >= 0 ? "+" : ""}${pctChange(views, prevViews)}% vs last week)

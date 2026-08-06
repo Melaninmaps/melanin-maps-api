@@ -20,7 +20,7 @@ const CITIES = [
     name: "Houston",
     state: "TX",
     tagline: "Where Culture Runs Deep",
-    description: "The most diverse city in America, with one of the largest concentrations of Black-owned businesses in the country.",
+    description: "The most diverse city in America, with one of the largest concentrations of minority-owned businesses in the country.",
     safetyScore: 74,
     businesses: "900+",
     emoji: "🤠",
@@ -98,7 +98,7 @@ export default function Cities() {
             Find Your <span className="text-[#CA922B]">City.</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-xl max-w-2xl mx-auto font-light">
-            Curated guides to the best Black-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic cities.
+            Curated guides to the best minority-owned businesses, safest neighborhoods, and most vibrant cultural hubs across America's most iconic cities.
           </p>
         </div>
       </section>

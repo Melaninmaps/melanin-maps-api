@@ -12,7 +12,7 @@ const PARTNERS = [
     bg: "#2D7A4F0F",
     partners: [
       { name: "Salamander Collection", desc: "Luxury resorts and boutique hotels celebrating Minority excellence in hospitality", discount: "15% off rack rates", code: "MWM15" },
-      { name: "Afro-Luxe Hotels", desc: "Curated collection of Black-owned boutique properties across the US & Caribbean", discount: "10% off + free breakfast", code: "KINFOLK10" },
+      { name: "Afro-Luxe Hotels", desc: "Curated collection of minority-owned boutique properties across the US & Caribbean", discount: "10% off + free breakfast", code: "KINFOLK10" },
     ],
   },
   {
@@ -32,7 +32,7 @@ const PARTNERS = [
     bg: "#CA922B0F",
     partners: [
       { name: "Enterprise Rent-A-Car", desc: "Preferred rental partner with exclusive member rates at 8,500+ locations", discount: "20% off weekend rentals", code: "MWM20" },
-      { name: "Rideshare Connect", desc: "Black-owned rideshare network in select cities — support community drivers", discount: "First ride free", code: "KINFOLK1ST" },
+      { name: "Rideshare Connect", desc: "minority-owned rideshare network in select cities — support community drivers", discount: "First ride free", code: "KINFOLK1ST" },
     ],
   },
   {
@@ -69,7 +69,7 @@ export default function Affiliate() {
             <span className="text-[#CA922B]">Save More.</span>
           </h1>
           <p className="text-[#F5EBD8]/80 text-lg max-w-2xl mx-auto">
-            Exclusive discounts from Black-owned and community-friendly travel partners — hotels, flights, car rentals, and experiences curated for our community.
+            Exclusive discounts from minority-owned and community-friendly travel partners — hotels, flights, car rentals, and experiences curated for our community.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
             <Link href={`${BASE}membership`}>

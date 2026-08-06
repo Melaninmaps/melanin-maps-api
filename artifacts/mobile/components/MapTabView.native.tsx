@@ -953,7 +953,7 @@ export function MapTabView() {
           {alternatives.length > 0 && routeCoords.length === 0 && (
             <View style={[styles.altSection, { borderTopColor: colors.border }]}>
               <Text style={[styles.altTitle, { color: colors.foreground }]}>
-                ✨ Try a Black-owned alternative nearby
+                ✨ Try a minority-owned alternative nearby
               </Text>
               <ScrollView
         keyboardDismissMode="on-drag"
@@ -1083,7 +1083,7 @@ export function MapTabView() {
                 <View style={{ marginTop: 10 }}>
                   <Text style={[styles.navAltsTitle, { color: colors.foreground }]}>
                     {navHasSafetyConcern
-                      ? "Black-owned alternatives nearby:"
+                      ? "minority-owned alternatives nearby:"
                       : "Support the community — alternatives nearby:"}
                   </Text>
                   <ScrollView

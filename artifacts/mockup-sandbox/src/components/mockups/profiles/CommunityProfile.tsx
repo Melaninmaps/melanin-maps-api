@@ -91,7 +91,7 @@ export function CommunityProfile() {
           <div className="bg-[#231200] rounded-2xl border border-white/8 overflow-hidden">
             {[
               { text: "Just checked in at The Breakfast Club ATL — the chicken & waffles hit different on a Saturday 🧇🤎", privacy: "🌐", privacyLabel: "Public", ago: "2h ago", likes: 24, comments: 5 },
-              { text: "Found the most beautiful Black-owned bookshop in Inman Park today. Adding it to the map — go support them!", privacy: "👥", privacyLabel: "Followers", ago: "1d ago", likes: 38, comments: 9 },
+              { text: "Found the most beautiful minority-owned bookshop in Inman Park today. Adding it to the map — go support them!", privacy: "👥", privacyLabel: "Followers", ago: "1d ago", likes: 38, comments: 9 },
               { text: "Reminder to myself: keep showing up for the community even when it's hard. 💪🏾", privacy: "🔒", privacyLabel: "Only Me", ago: "3d ago", likes: 0, comments: 0 },
             ].map((post, i) => (
               <div key={i} className={`p-4 ${i < 2 ? "border-b border-white/8" : ""}`}>

@@ -788,7 +788,7 @@ export async function sendMissionWinBack(
               </td>
               <td style="padding:10px 0 10px 12px">
                 <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Business Grants</p>
-                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65">Direct support for verified Black-owned and minority-owned businesses in their first years.</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.65">Direct support for verified minority-owned and minority-owned businesses in their first years.</p>
               </td>
             </tr>
           </table>
@@ -2272,7 +2272,7 @@ export async function sendBetaAnnouncementBlast(
         <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
           In the meantime, we're looking for passionate community members to join our
           <strong style="color:#CA922B">beta testing program</strong> — get early access, help shape the experience,
-          and be among the very first to discover Black-owned businesses and community safety intel on the app.
+          and be among the very first to discover minority-owned businesses and community safety intel on the app.
         </p>
 
         <div style="background:#F5EBD8;border-radius:12px;padding:20px 24px;margin-bottom:28px">

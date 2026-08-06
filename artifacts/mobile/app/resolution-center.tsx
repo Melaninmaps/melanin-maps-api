@@ -62,7 +62,7 @@ const MOCK_RESOLUTIONS: Resolution[] = [
   },
   {
     id: "3",
-    videoTitle: "Hidden Black-owned gems in Salvador, Brazil 🇧🇷",
+    videoTitle: "Hidden minority-owned gems in Salvador, Brazil 🇧🇷",
     creator: "Yara Mensah",
     creatorHandle: "@yaratravels",
     date: "June 10, 2026",

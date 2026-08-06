@@ -908,7 +908,7 @@ export default function RelocationPlannerScreen() {
             </View>
             <View style={[s.loadingBubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <ActivityIndicator size="small" color={GOLD} />
-              <Text style={[s.loadingText, { color: colors.mutedForeground }]}>Finding Black-owned businesses…</Text>
+              <Text style={[s.loadingText, { color: colors.mutedForeground }]}>Finding minority-owned businesses…</Text>
             </View>
           </View>
         ) : null}
@@ -948,7 +948,7 @@ export default function RelocationPlannerScreen() {
           </View>
           <Text style={[s.teamSub, { color: colors.mutedForeground }]}>
             {team.length > 0
-              ? `${team.length} Black-owned business${team.length === 1 ? "" : "es"} saved to your team`
+              ? `${team.length} minority-owned business${team.length === 1 ? "" : "es"} saved to your team`
               : "Add businesses to build your relocation team"}
           </Text>
           <ScrollView

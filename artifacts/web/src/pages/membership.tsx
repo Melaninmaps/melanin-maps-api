@@ -45,7 +45,7 @@ const EXPLORER_FEATURES = [
   "View destination guides",
   "Save up to 10 favorite locations",
   "Follow destinations",
-  "Discover Black-owned businesses near you",
+  "Discover minority-owned businesses near you",
   "Basic recommendations",
 ];
 
@@ -333,7 +333,7 @@ export default function Membership() {
               </div>
               <h3 className="font-bold text-white mb-2">Business Grants</h3>
               <p className="text-white/55 text-sm leading-relaxed">
-                Direct financial support for verified Black-owned businesses in their critical first years — the years when most fail for lack of capital.
+                Direct financial support for verified minority-owned businesses in their critical first years — the years when most fail for lack of capital.
               </p>
             </div>
           </div>

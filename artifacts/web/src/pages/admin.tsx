@@ -1990,7 +1990,7 @@ export default function Admin() {
                               </td>
                               <td className="px-4 py-3 text-[#3A1F0E]/70 text-xs max-w-[140px]">
                                 <span className="font-medium">{review.businessName ?? review.businessId.slice(0, 8) + "…"}</span>
-                                <span className="block text-[#3A1F0E]/40 mt-0.5">Not Black-owned</span>
+                                <span className="block text-[#3A1F0E]/40 mt-0.5">Not minority-owned</span>
                               </td>
                               <td className="px-4 py-3">
                                 <span className="inline-flex items-center gap-0.5 font-bold text-red-500">

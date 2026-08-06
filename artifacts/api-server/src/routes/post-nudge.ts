@@ -283,7 +283,7 @@ router.get("/businesses/mine/post-nudge/captions", async (req: Request, res: Res
     const currentHour = new Date().getHours();
     const timeOfDay = currentHour < 12 ? "morning" : currentHour < 17 ? "afternoon" : "evening";
 
-    const prompt = `You are a creative social media manager for "${business.name}", a Black-owned ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
+    const prompt = `You are a creative social media manager for "${business.name}", a minority-owned ${business.category} business in ${business.city ?? "our city"}.${identityCtx}
 
 ${reviewSnippets ? `RECENT CUSTOMER FEEDBACK:\n${reviewSnippets}\n` : ""}
 Write 3 SHORT, engaging social media captions for a community post right now (${timeOfDay}). Each caption should:

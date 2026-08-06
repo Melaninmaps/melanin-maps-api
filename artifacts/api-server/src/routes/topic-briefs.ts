@@ -35,7 +35,7 @@ const TOPIC_PROFILES: Record<string, { label: string; domains: string; journalHi
   },
   "food & dining": {
     label: "Food & Dining",
-    domains: "Black-owned restaurants, soul food, African cuisine, Caribbean food, health-conscious eating, food culture",
+    domains: "minority-owned restaurants, soul food, African cuisine, Caribbean food, health-conscious eating, food culture",
   },
   "fashion & beauty": {
     label: "Fashion & Beauty",
@@ -76,7 +76,7 @@ function getTopicProfile(topicRaw: string) {
 function buildPrompt(topic: string, tier: string): { system: string; user: string } {
   const profile = getTopicProfile(topic);
 
-  const communityContext = `You serve the Mapping With Melanin community — a platform for melanated travelers, Black-owned business supporters, and the broader Black diaspora. Tailor all insights to be culturally relevant and empowering for this audience. Never be condescending or preachy.`;
+  const communityContext = `You serve the Mapping With Melanin community — a platform for melanated travelers, minority-owned business supporters, and the broader Black diaspora. Tailor all insights to be culturally relevant and empowering for this audience. Never be condescending or preachy.`;
 
   const sourceGuidance = profile.journalHint
     ? `Where relevant, reference or draw from sources like: ${profile.journalHint}.`

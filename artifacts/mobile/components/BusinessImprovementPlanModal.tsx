@@ -478,7 +478,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
                   {plan.expandedProviders.length > 0 && (
                     <View style={s.section}>
                       <Text style={[s.sectionTitle, { color: colors.foreground }]}>🔍 Expanded Search</Text>
-                      <Text style={[s.sectionSub, { color: colors.mutedForeground }]}>Other Black-owned businesses on our platform</Text>
+                      <Text style={[s.sectionSub, { color: colors.mutedForeground }]}>Other minority-owned businesses on our platform</Text>
                       {plan.expandedProviders.map((p) => (
                         <ProviderCard key={p.id} provider={p} amber={AMBER} cardBg={CARD_BG} colors={colors} isDark={isDark} />
                       ))}

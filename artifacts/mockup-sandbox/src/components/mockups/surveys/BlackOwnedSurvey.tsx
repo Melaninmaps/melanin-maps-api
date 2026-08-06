@@ -209,7 +209,7 @@ export function BlackOwnedSurvey() {
               )}
 
               <p style={{ color: MUTED, fontSize: 13, lineHeight: 1.6, margin: 0, maxWidth: 280 }}>
-                Your voice helps our community find, celebrate, and support Black-owned businesses. Every check-in matters.
+                Your voice helps our community find, celebrate, and support minority-owned businesses. Every check-in matters.
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, backgroundColor: PRIMARY + "15", border: `1px solid ${PRIMARY}30` }}>
                 <span style={{ fontSize: 14 }}>🏆</span>

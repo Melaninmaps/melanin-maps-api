@@ -40,11 +40,11 @@ const INTENT_PATTERNS: Array<{ pattern: RegExp; intent: SearchIntent }> = [
   },
   {
     pattern: /\b(eat|food|restaurant|cafe|coffee|brunch|dinner|lunch|takeout|delivery)\b/i,
-    intent: { type: "dining", categories: ["Restaurant", "Café", "Food", "Bakery", "Bar"], keywords: ["restaurant", "cafe", "food", "brunch"], includeTypes: ["business", "event"], contextNote: "Showing Black-owned restaurants and food spots" },
+    intent: { type: "dining", categories: ["Restaurant", "Café", "Food", "Bakery", "Bar"], keywords: ["restaurant", "cafe", "food", "brunch"], includeTypes: ["business", "event"], contextNote: "Showing minority-owned restaurants and food spots" },
   },
   {
     pattern: /\b(salon|hair|barber|grooming|nail|spa|beauty|skin)\b/i,
-    intent: { type: "beauty", categories: ["Salon", "Barbershop", "Beauty", "Nail Salon", "Spa", "Skincare"], keywords: ["salon", "barber", "beautician", "nail tech"], includeTypes: ["business"], contextNote: "Showing Black-owned salons, barbershops, and beauty services" },
+    intent: { type: "beauty", categories: ["Salon", "Barbershop", "Beauty", "Nail Salon", "Spa", "Skincare"], keywords: ["salon", "barber", "beautician", "nail tech"], includeTypes: ["business"], contextNote: "Showing minority-owned salons, barbershops, and beauty services" },
   },
   {
     pattern: /\b(event|festival|concert|networking|meet|conference|workshop|class)\b/i,

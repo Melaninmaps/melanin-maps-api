@@ -188,7 +188,7 @@ export function CommunityPage() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" opacity="0.3"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
             </div>
             <p className="text-white/85 text-xs leading-relaxed">
-              Found this gem in Inman Park yesterday — fully Black-owned, incredible espresso, and they actually know your name by the third visit. This is exactly what the map is for 🗺️🤎
+              Found this gem in Inman Park yesterday — fully minority-owned, incredible espresso, and they actually know your name by the third visit. This is exactly what the map is for 🗺️🤎
             </p>
             {/* Business card link */}
             <div className="mt-3 rounded-xl border border-[#CA922B]/25 overflow-hidden bg-[#2A1200]">
@@ -240,7 +240,7 @@ export function CommunityPage() {
               favicon="🎟️"
               domain="eventbrite.com"
               title="Black Entrepreneurs Market & Pop-Up — ATL Summer Edition"
-              description="50+ Black-owned vendors, live music, food trucks, and pitch competition. July 19 · Ponce City Market Rooftop, Atlanta GA"
+              description="50+ minority-owned vendors, live music, food trucks, and pitch competition. July 19 · Ponce City Market Rooftop, Atlanta GA"
               image="linear-gradient(135deg, #3B1F0E 0%, #CA922B22 100%)"
             />
             <PostActions likes={89} comments={22} />

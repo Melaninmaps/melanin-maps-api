@@ -256,7 +256,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>Your go-to services 💈</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                Tell me what you regularly use — I'll find Black-owned providers in every new city without you having to ask.
+                Tell me what you regularly use — I'll find minority-owned providers in every new city without you having to ask.
               </Text>
               <View style={[styles.serviceHint, { backgroundColor: GOLD + "14", borderColor: GOLD + "30" }]}>
                 <Ionicons name="sparkles" size={14} color={GOLD} />

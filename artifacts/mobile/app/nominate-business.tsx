@@ -185,7 +185,7 @@ export default function NominateBusinessScreen() {
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
               {isBlackOwned
                 ? `We'll reach out to ${form.businessName} about joining our community.`
-                : `${form.businessName} has been added to the Mapping With Melanin directory as a non-Black-owned business. The community can now find and save it.`}
+                : `${form.businessName} has been added to the Mapping With Melanin directory as a non-minority-owned business. The community can now find and save it.`}
             </Text>
 
             {isBlackOwned && !isAuthenticated && (
@@ -347,7 +347,7 @@ export default function NominateBusinessScreen() {
             <View style={[styles.nonMinorityNotice, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Feather name="info" size={14} color={colors.mutedForeground} />
               <Text style={[styles.noticeText, { color: colors.mutedForeground }]}>
-                Non-Black-owned businesses are clearly designated in the directory. They will never receive promotional placement, outreach, or contact from Mapping With Melanin.
+                Non-minority-owned businesses are clearly designated in the directory. They will never receive promotional placement, outreach, or contact from Mapping With Melanin.
               </Text>
             </View>
           )}

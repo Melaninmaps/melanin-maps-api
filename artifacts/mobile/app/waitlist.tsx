@@ -32,7 +32,7 @@ const SHARE_PLATFORMS = [
 const BENEFITS = [
   { icon: "zap", label: "Early Access", desc: "First to explore new cities and features" },
   { icon: "shield", label: "Safety Insights", desc: "Community-driven safety scores, verified reviews, and real-time insights" },
-  { icon: "map-pin", label: "48 States", desc: "2,400+ verified Black-owned businesses nationwide" },
+  { icon: "map-pin", label: "48 States", desc: "2,400+ verified minority-owned businesses nationwide" },
   { icon: "users", label: "10K+ Members", desc: "Join a global community of travelers, entrepreneurs, and creators" },
 ];
 
@@ -108,7 +108,7 @@ function RecommendModal({
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[s.modalTitle, { color: colors.foreground }]}>Help a Business Join 🤎</Text>
               <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
-                Know a Black-owned business you'd love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
+                Know a minority-owned business you'd love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
               </Text>
 
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Business Name <Text style={{ color: colors.destructive }}>*</Text></Text>
@@ -438,7 +438,7 @@ export default function WaitlistScreen() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.toggleLabel, { color: colors.foreground }]}>I'm a business owner</Text>
-                  <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Get listed as a Black-owned business</Text>
+                  <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Get listed as a minority-owned business</Text>
                 </View>
                 <View style={[styles.toggle, { backgroundColor: isBusinessOwner ? colors.primary : colors.muted }]}>
                   <View style={[styles.toggleThumb, { transform: [{ translateX: isBusinessOwner ? 18 : 2 }] }]} />

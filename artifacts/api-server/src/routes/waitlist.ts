@@ -1337,7 +1337,7 @@ router.post("/waitlist/social-refer", waitlistLimiter, async (req: Request, res:
   if (cleanType === "business") {
     copyMessage = `Hey! I wanted to invite ${cleanBiz ?? displayName} to join Mapping With Melanin™ — the app connecting people to trusted Black and minority-owned businesses, safety intel, and community. It's free to list and you get discovered by thousands. Join here: https://mappingwithmelanin.com/?ref=${cleanCode ?? "JOIN"}`;
   } else {
-    copyMessage = `Hey ${displayName}! You need to check out Mapping With Melanin™ — it's an app for discovering trusted Black-owned businesses, community safety insights, and cultural experiences. Join the community here: https://mappingwithmelanin.com/?ref=${cleanCode ?? "JOIN"}`;
+    copyMessage = `Hey ${displayName}! You need to check out Mapping With Melanin™ — it's an app for discovering trusted minority-owned businesses, community safety insights, and cultural experiences. Join the community here: https://mappingwithmelanin.com/?ref=${cleanCode ?? "JOIN"}`;
   }
 
   res.json({ success: true, copyMessage });

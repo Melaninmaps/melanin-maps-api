@@ -46,7 +46,7 @@ router.get("/web/businesses/:id", async (req: Request, res: Response) => {
     const description = escapeHtml(
       business.description
         ? business.description.slice(0, 200)
-        : `${business.category} in ${business.city}, ${business.state} — Black-owned business on Mapping With Melanin™`,
+        : `${business.category} in ${business.city}, ${business.state} — minority-owned business on Mapping With Melanin™`,
     );
     const ogImageUrl = `${BASE_DOMAIN}/api/og/business/${encodeURIComponent(id)}`;
     const canonicalUrl = `${BASE_DOMAIN}/web/businesses/${encodeURIComponent(id)}`;
@@ -79,7 +79,7 @@ router.get("/web/businesses/:id", async (req: Request, res: Response) => {
   <meta property="og:image" content="${escapeHtml(ogImageUrl)}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="${escapeHtml(`${business.name} — Black-owned ${business.category} in ${business.city}, ${business.state}`)}" />
+  <meta property="og:image:alt" content="${escapeHtml(`${business.name} — minority-owned ${business.category} in ${business.city}, ${business.state}`)}" />
   <meta property="og:locale" content="en_US" />
 
   <!-- Twitter / X Card -->

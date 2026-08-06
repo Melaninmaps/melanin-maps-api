@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Inclusive language regression check — added Aug 5, 2026
+# Rule: "Black-owned" is ONLY correct when describing a verified business's actual
+# ownership type, a historical reference (Parrish St, Farish St, Black Wall Street),
+# or a filter ID. Generic platform copy must use "minority-owned" or "community businesses".
+# See docs/product/MWM_Replit_Language_Audit_Fix.md for full rules.
+
+BLACKOWNED_COUNT=$(grep -rn "Black-owned" \
+  artifacts/web/src \
+  artifacts/mobile/app \
+  artifacts/mobile/components \
+  artifacts/api-server/src \
+  --include="*.tsx" --include="*.ts" \
+  2>/dev/null | \
+  grep -v "node_modules\|/dist/\|seed-tour-guide\|seed-city-profiles\|Parrish Street\|Farish Street\|Black Wall Street\|culturalCommunity:\|pinDesignations:" | \
+  wc -l | tr -d ' ')
+
+THRESHOLD=15
+
+if [ "$BLACKOWNED_COUNT" -gt "$THRESHOLD" ]; then
+  echo ""
+  echo "⚠️  INCLUSIVE LANGUAGE CHECK FAILED"
+  echo "   Found $BLACKOWNED_COUNT instances of generic 'Black-owned' (threshold: $THRESHOLD)"
+  echo "   Rule: generic copy must say 'minority-owned' or 'community businesses'."
+  echo "   'Black-owned' is only correct for verified owners, historical references, or filter IDs."
+  echo "   See docs/product/MWM_Replit_Language_Audit_Fix.md"
+  echo ""
+  grep -rn "Black-owned" \
+    artifacts/web/src artifacts/mobile/app artifacts/mobile/components artifacts/api-server/src \
+    --include="*.tsx" --include="*.ts" 2>/dev/null | \
+    grep -v "node_modules\|/dist/\|seed-tour-guide\|seed-city-profiles\|Parrish Street\|Farish Street\|Black Wall Street\|culturalCommunity:\|pinDesignations:" | \
+    sed 's|.*/workspace/||'
+  exit 1
+fi
+
+echo "✅ Inclusive language check passed ($BLACKOWNED_COUNT instances, threshold $THRESHOLD)"

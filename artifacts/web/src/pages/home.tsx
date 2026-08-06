@@ -595,7 +595,7 @@ export default function Home() {
                       >
                         <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isBusinessOwner ? "translate-x-5" : "translate-x-0"}`} />
                       </div>
-                      <span className="text-sm font-semibold text-[#F5EBD8]/80">I own or operate a Black-owned business</span>
+                      <span className="text-sm font-semibold text-[#F5EBD8]/80">I own or operate a minority-owned business</span>
                     </label>
                     <input type="text" placeholder="REFERRAL CODE (OPTIONAL)" value={referredBy} onChange={e => setReferredBy(e.target.value.toUpperCase())}
                       className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/50 text-sm uppercase tracking-widest" />
@@ -759,7 +759,7 @@ export default function Home() {
             </div>
             <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4">Everything You Need in One Place</h2>
             <p className="text-lg font-semibold text-[#F5EBD8]/70 max-w-2xl mx-auto">
-              Discover Black-owned businesses, travel with confidence, connect with community, and make decisions with real intelligence behind every choice.
+              Discover minority-owned businesses, travel with confidence, connect with community, and make decisions with real intelligence behind every choice.
             </p>
           </div>
 
@@ -769,7 +769,7 @@ export default function Home() {
                 icon: Search,
                 label: "Discover",
                 title: "Find Businesses & Places",
-                desc: "Community-verified Black-owned businesses, restaurants, hotels, cultural landmarks, and hidden gems — wherever you are.",
+                desc: "Community-verified minority-owned businesses, restaurants, hotels, cultural landmarks, and hidden gems — wherever you are.",
                 link: "/businesses",
                 cta: "Browse Businesses"
               },
@@ -1078,7 +1078,7 @@ export default function Home() {
                 img: "https://images.pexels.com/photos/4427622/pexels-photo-4427622.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
-                quote: "I've been looking for something like this for years. Being able to find Black-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
+                quote: "I've been looking for something like this for years. Being able to find minority-owned restaurants, hotels, and shops in cities I've never visited — and know they're community-verified — is a game changer.",
                 name: "Marcus J.", role: "Digital Nomad", loc: "Houston, TX",
                 img: "https://images.pexels.com/photos/1181391/pexels-photo-1181391.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
@@ -1088,7 +1088,7 @@ export default function Home() {
                 img: "https://images.pexels.com/photos/7446989/pexels-photo-7446989.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
               {
-                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified Black-owned businesses.",
+                quote: "As a business owner, being listed on this platform has been incredible. I've seen new customers specifically say they found me here because they wanted to support verified minority-owned businesses.",
                 name: "DeShawn M.", role: "Business Owner", loc: "New Orleans, LA",
                 img: "https://images.pexels.com/photos/9533888/pexels-photo-9533888.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               }
@@ -1182,7 +1182,7 @@ export default function Home() {
             ) : (
               <>
                 <h3 className="text-xl font-serif font-bold text-white mb-1">Recommend a Business</h3>
-                <p className="text-[#F5EBD8]/50 text-sm mb-5">Know a Black-owned business that should be on the map? Tell us about them.</p>
+                <p className="text-[#F5EBD8]/50 text-sm mb-5">Know a minority-owned business that should be on the map? Tell us about them.</p>
                 <form onSubmit={handleRecommend} className="flex flex-col gap-3">
                   <div>
                     <label className="text-xs font-bold text-[#F5EBD8]/50 uppercase tracking-wider mb-1 block">Business Name <span className="text-[#CA922B]">*</span></label>

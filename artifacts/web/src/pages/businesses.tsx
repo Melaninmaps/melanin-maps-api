@@ -97,7 +97,7 @@ export default function Businesses() {
           </h1>
           
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-4 font-light">
-            Connect with verified Black-owned businesses, service providers, and entrepreneurs while exploring new cities and communities.
+            Connect with verified minority-owned businesses, service providers, and entrepreneurs while exploring new cities and communities.
           </p>
           <p className="text-[#F5EBD8]/60 text-base max-w-2xl mb-10 font-light">
             Every listing is community-reviewed, authenticity-checked, and safety-scored by real members.
@@ -193,7 +193,7 @@ export default function Businesses() {
             </p>
             <div className="bg-[#CA922B]/10 border border-[#CA922B]/30 rounded-2xl px-5 py-4 mb-8">
               <p className="text-sm text-[#3A1F0E] leading-relaxed">
-                <span className="font-bold text-[#CA922B]">All Black-owned businesses are welcome.</span> We understand every business is at a different stage in its journey — you don't need to be established to join. When you're ready, apply for our special <span className="font-bold">Verified Badge</span> to earn even greater trust from the community.
+                <span className="font-bold text-[#CA922B]">All minority-owned businesses are welcome.</span> We understand every business is at a different stage in its journey — you don't need to be established to join. When you're ready, apply for our special <span className="font-bold">Verified Badge</span> to earn even greater trust from the community.
               </p>
             </div>
             <div className="flex flex-wrap gap-6 mb-8">
@@ -210,7 +210,7 @@ export default function Businesses() {
           <div className="w-full md:w-1/3 bg-white p-8 rounded-2xl shadow-lg border border-[#3A1F0E]/5 transform rotate-2">
              <div className="w-16 h-16 bg-[#2B1507] rounded-full mx-auto mb-6 flex items-center justify-center"><ShieldCheck className="w-8 h-8 text-[#CA922B]"/></div>
              <div className="text-center font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Get Verified</div>
-             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted Black-owned businesses today.</div>
+             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted minority-owned businesses today.</div>
           </div>
         </div>
         <p className="text-xs text-[#3A1F0E]/40 mt-8 text-center">* All figures marked with an asterisk are illustrative placeholders for visual purposes only and do not reflect actual data.</p>

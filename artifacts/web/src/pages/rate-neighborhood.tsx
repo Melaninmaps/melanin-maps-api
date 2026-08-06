@@ -382,7 +382,7 @@ export default function RateNeighborhood() {
                         value={businessSearch}
                         onChange={(e) => setBusinessSearch(e.target.value)}
                         onFocus={() => businessResults.length > 0 && setBusinessSearchOpen(true)}
-                        placeholder="Search for a Black-owned business…"
+                        placeholder="Search for a minority-owned business…"
                         className="w-full border border-[#3A1F0E]/15 rounded-xl pl-9 pr-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF]"
                       />
                     </div>

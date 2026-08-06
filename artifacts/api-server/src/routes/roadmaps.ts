@@ -61,7 +61,7 @@ Guidelines:
 - For relocation: Documents, Housing, Healthcare, Schools, Community, Logistics, Finances
 - For business: Research, Legal, Finances, Marketing, Operations, Community
 - Prioritize "high" for time-sensitive or legally required steps
-- Include culturally relevant resources when possible (Black-owned, HBCU, NAACP, etc.)`;
+- Include culturally relevant resources when possible (minority-owned, HBCU, NAACP, etc.)`;
 
     const aiResult = await openai.chat.completions.create({
       model: "gpt-4o-mini",

@@ -24,7 +24,7 @@ router.post("/travel-planner/generate", async (req: Request, res: Response) => {
   const interestList = (interests ?? []).join(", ") || "food, culture, history, music";
 
   try {
-    // Pull Black-owned businesses in or near the destination city
+    // Pull minority-owned businesses in or near the destination city
     const citySlug = destination.split(",")[0].trim();
     const localBusinesses = await db
       .select({
@@ -47,14 +47,14 @@ router.post("/travel-planner/generate", async (req: Request, res: Response) => {
       .limit(40);
 
     const bizContext = localBusinesses.length > 0
-      ? `\n\nBlack-owned businesses in the database for ${destination}:\n` +
+      ? `\n\nminority-owned businesses in the database for ${destination}:\n` +
         localBusinesses.map((b) => `- ${b.name} (${b.category ?? "Business"}): ${b.address ?? ""}`).join("\n")
       : "";
 
-    const systemPrompt = `You are KinfolkAI, the travel planning assistant for Mapping With Melanin — a platform celebrating Black culture and Black-owned businesses. You create itineraries that center Black culture, history, food, art, and community.
+    const systemPrompt = `You are KinfolkAI, the travel planning assistant for Mapping With Melanin — a platform celebrating Black culture and minority-owned businesses. You create itineraries that center Black culture, history, food, art, and community.
 
 Your itineraries:
-- Prioritize Black-owned restaurants, hotels, barbershops, spas, galleries, and experiences
+- Prioritize minority-owned restaurants, hotels, barbershops, spas, galleries, and experiences
 - Include culturally significant landmarks and historically Black neighborhoods
 - Note safety context naturally and respectfully (not fear-based)
 - Feel authentic, warm, and knowledgeable — like advice from a well-traveled friend
@@ -94,7 +94,7 @@ CRITICAL: Return ONLY valid JSON matching this exact structure, no extra text:
         { role: "system", content: systemPrompt },
         {
           role: "user",
-          content: `Plan a ${tripDays}-day ${travelStyle} trip to ${destination}. My interests: ${interestList}. Weave in as many Black-owned businesses and cultural experiences as possible. Make it feel like insider knowledge.`,
+          content: `Plan a ${tripDays}-day ${travelStyle} trip to ${destination}. My interests: ${interestList}. Weave in as many minority-owned businesses and cultural experiences as possible. Make it feel like insider knowledge.`,
         },
       ],
       response_format: { type: "json_object" },

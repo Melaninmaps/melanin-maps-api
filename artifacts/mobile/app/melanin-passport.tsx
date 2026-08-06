@@ -123,7 +123,7 @@ export default function MelaninPassportScreen() {
       `${passport.displayName} · ${passport.level}`,
       `Member since ${passport.memberSince}`,
       ``,
-      `${passport.stats.businessesSaved} Black-owned businesses saved`,
+      `${passport.stats.businessesSaved} minority-owned businesses saved`,
       `${passport.stats.citiesExplored} cities explored`,
       `${passport.stats.safetyReports} community safety reports`,
       `${passport.stats.communityPosts} community posts`,

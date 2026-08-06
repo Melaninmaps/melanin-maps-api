@@ -205,7 +205,7 @@ router.get("/knowledge/hubs/:topicId", async (req: Request, res: Response) => {
       creators = [...creators, ...extra.filter((c) => !existingIds.has(c.id))].slice(0, 5);
     }
 
-    // Related Black-owned businesses
+    // Related minority-owned businesses
     const topicTerms = [topic.topicName, ...(topic.synonyms ?? [])].slice(0, 3);
     let businesses: { id: string; name: string; category: string; city: string; state: string; blackOwned: boolean; verified: boolean }[] = [];
 

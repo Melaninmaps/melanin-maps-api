@@ -36,7 +36,7 @@ export default function PrivacyPolicy() {
           <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">3. How We Use Your Information</h2>
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>To provide, personalize, and improve our services</li>
-            <li>To connect you with relevant Black-owned businesses and community events</li>
+            <li>To connect you with relevant minority-owned businesses and community events</li>
             <li>To compute and display community safety insights</li>
             <li>To process membership payments and manage subscriptions</li>
             <li>To send platform updates, safety alerts, and community notifications (with your consent)</li>

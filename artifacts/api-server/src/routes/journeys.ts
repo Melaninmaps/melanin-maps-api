@@ -17,7 +17,7 @@ const JOURNEY_TEMPLATES: Record<string, { phases: Array<{ id: string; title: str
   moving: {
     phases: [
       { id: "neighborhoods", title: "Neighborhood Research", icon: "🏘️", description: "Find the right community for your lifestyle", categories: ["Real Estate", "Community"] },
-      { id: "realtors", title: "Find a Realtor", icon: "🏠", description: "Connect with Black-owned real estate agents", categories: ["Real Estate"] },
+      { id: "realtors", title: "Find a Realtor", icon: "🏠", description: "Connect with minority-owned real estate agents", categories: ["Real Estate"] },
       { id: "mortgage", title: "Mortgage & Financing", icon: "💰", description: "Get pre-approved with community lenders", categories: ["Finance", "Banking"] },
       { id: "movers", title: "Moving Companies", icon: "🚚", description: "Book trustworthy movers", categories: ["Moving", "Transportation"] },
       { id: "utilities", title: "Set Up Utilities", icon: "⚡", description: "Electricity, internet, and home services", categories: ["Home Services"] },
@@ -35,7 +35,7 @@ const JOURNEY_TEMPLATES: Record<string, { phases: Array<{ id: string; title: str
       { id: "healthcare", title: "OB-GYN & Midwife", icon: "👶🏾", description: "Find your birth team", categories: ["Healthcare", "OBGYN"] },
       { id: "pediatricians", title: "Pediatricians", icon: "🏥", description: "Choose your baby's doctor", categories: ["Healthcare", "Pediatrics"] },
       { id: "childcare", title: "Childcare & Daycare", icon: "🏫", description: "Find trusted childcare providers", categories: ["Childcare", "Daycare"] },
-      { id: "baby-stores", title: "Baby Essentials", icon: "🧸", description: "Black-owned baby boutiques and shops", categories: ["Baby", "Retail"] },
+      { id: "baby-stores", title: "Baby Essentials", icon: "🧸", description: "minority-owned baby boutiques and shops", categories: ["Baby", "Retail"] },
       { id: "community", title: "New Parent Groups", icon: "🤝🏾", description: "Connect with other parents", categories: ["Community", "Events"] },
       { id: "wellness", title: "Postpartum Wellness", icon: "💆🏾", description: "Mental health and body wellness support", categories: ["Healthcare", "Wellness", "Spa"] },
     ],
@@ -219,9 +219,9 @@ Use these phase IDs and titles (in order, mark first as "active", rest as "upcom
 ${template.phases.map((p) => `- id: "${p.id}", title: "${p.title}", icon: "${p.icon}"`).join("\n")}
 
 ${cityBizCatalog.length ? `MINORITY-OWNED BUSINESSES ON THE PLATFORM${location ? ` IN ${location.toUpperCase()}` : ""} — PRIORITIZE THESE IN YOUR SUGGESTIONS:
-Every time you recommend an action that requires hiring someone or finding a service provider, name a specific business from this list if one fits. Weave them into steps naturally — e.g. "Contact [Business Name] for..." or "Book [Business Name] to handle your...". These are real, verified Black-owned and minority-owned businesses that match this community. ${cityBizCatalog.map((b) => `${b.name} (${b.category}${b.verified ? " ✓ Verified" : ""}${b.phone ? ` · ${b.phone}` : ""})`).join(" | ")}` : "When recommending any service or hire, encourage them to search Mapping With Melanin™ for a Black-owned or minority-owned provider first."}
+Every time you recommend an action that requires hiring someone or finding a service provider, name a specific business from this list if one fits. Weave them into steps naturally — e.g. "Contact [Business Name] for..." or "Book [Business Name] to handle your...". These are real, verified minority-owned and minority-owned businesses that match this community. ${cityBizCatalog.map((b) => `${b.name} (${b.category}${b.verified ? " ✓ Verified" : ""}${b.phone ? ` · ${b.phone}` : ""})`).join(" | ")}` : "When recommending any service or hire, encourage them to search Mapping With Melanin™ for a minority-owned or minority-owned provider first."}
 
-Each phase should have 3-5 specific, actionable steps. When steps involve hiring, contracting, or finding a service — always name a minority-owned or Black-owned business to start with. The aiInsight should be warm, culturally aware, and feel like a trusted friend giving real advice.`;
+Each phase should have 3-5 specific, actionable steps. When steps involve hiring, contracting, or finding a service — always name a minority-owned or minority-owned business to start with. The aiInsight should be warm, culturally aware, and feel like a trusted friend giving real advice.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -486,7 +486,7 @@ function buildDefaultPhases(template: typeof JOURNEY_TEMPLATES[string]["phases"]
     status: i === 0 ? ("active" as const) : ("upcoming" as const),
     steps: [
       { id: "step1", label: `Research ${p.title.toLowerCase()} options`, completed: false },
-      { id: "step2", label: `Find Black-owned ${p.categories[0] ?? "businesses"} nearby`, completed: false },
+      { id: "step2", label: `Find minority-owned ${p.categories[0] ?? "businesses"} nearby`, completed: false },
       { id: "step3", label: `Book or contact your top choice`, completed: false },
     ],
   }));

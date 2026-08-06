@@ -595,7 +595,7 @@ export default function PreviewPage() {
               </div>
             ))}
             {selected === "discovery" && [
-              "Verified ownership badges — Black-owned, Indigenous-owned, Immigrant-owned",
+              "Verified ownership badges — minority-owned, Indigenous-owned, Immigrant-owned",
               "Community reviews from people who look like you",
               "Map clusters showing business density by neighborhood",
             ].map((f) => (

@@ -27,7 +27,7 @@ export const INTENTS: Array<{ id: IntentId; label: string; emoji: string; color:
   { id: "visiting",   label: "I'm visiting",                   emoji: "✈️", color: "#2563EB", description: "Local spots, restaurants & stays" },
   { id: "safety",     label: "Looking for safe spaces",        emoji: "🛡️", color: "#7C3AED", description: "Community safety & welcoming spaces" },
   { id: "trip",       label: "Planning a trip",                emoji: "🗺️", color: "#0891B2", description: "Itinerary planning & experiences" },
-  { id: "businesses", label: "Finding Black-owned businesses", emoji: "🏪", color: "#D97706", description: "Discover & support local businesses" },
+  { id: "businesses", label: "Finding minority-owned businesses", emoji: "🏪", color: "#D97706", description: "Discover & support local businesses" },
   { id: "community",  label: "Looking for community",          emoji: "👥", color: "#DC2626", description: "Groups, events & connections" },
   { id: "comparing",  label: "Comparing neighborhoods",        emoji: "⚖️", color: "#6B7280", description: "Side-by-side area comparison" },
   { id: "work",       label: "Looking for work",               emoji: "💼", color: "#059669", description: "Career resources & employers" },

@@ -295,7 +295,7 @@ export default function SignupScreen() {
           </Text>
           <Text style={[styles.sub, { color: c.mutedForeground }]}>
             {step === 0
-              ? "Join thousands discovering Black-owned businesses"
+              ? "Join thousands discovering minority-owned businesses"
               : step === 1
               ? "Your @handle is your public identity on the platform"
               : "Just a couple final details before you're in"}

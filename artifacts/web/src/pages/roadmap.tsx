@@ -65,7 +65,7 @@ export default function Roadmap() {
           
           <div className="space-y-6">
             {[
-              { s: "green", t: "Business Discovery Map", c: "Core", d: "Interactive map with Black-owned business pins, search, and city shortcuts." },
+              { s: "green", t: "Business Discovery Map", c: "Core", d: "Interactive map with minority-owned business pins, search, and city shortcuts." },
               { s: "green", t: "Community Safety Scores", c: "Core", d: "Real-time safety intelligence, neighborhood scores, and the 'Would Return Alone' metric." },
               { s: "green", t: "Explore & Search", c: "Core", d: "Real-time search with category filters, sort, and SPA navigation to business listings." },
               { s: "green", t: "Personalized For You Feed", c: "Core", d: "AI-curated picks and itinerary generator based on onboarding identity, interests, and goals." },
@@ -114,7 +114,7 @@ export default function Roadmap() {
               { s: "gray", t: "Community Forums & Groups", c: "Community", d: "City-based and interest-based community groups, discussion threads, and member directories." },
               { s: "gray", t: "Push Notifications", c: "Engagement", d: "Safety alerts, new business alerts in saved cities, and community activity notifications." },
               { s: "gray", t: "Saved Places & Collections", c: "UX", d: "Save businesses, create named collections, and share curated lists with the community." },
-              { s: "gray", t: "Destination Guides", c: "Content", d: "Expert-written city guides covering neighborhoods, safety, culture, and must-visit Black-owned spots." }
+              { s: "gray", t: "Destination Guides", c: "Content", d: "Expert-written city guides covering neighborhoods, safety, culture, and must-visit minority-owned spots." }
             ].map((i, idx) => (
               <div key={idx} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm flex items-start gap-4 opacity-80">
                 <div className={`w-3 h-3 rounded-full mt-1.5 shrink-0 ${i.s === 'amber' ? 'bg-amber-500' : 'bg-gray-400'}`} />
@@ -188,7 +188,7 @@ export default function Roadmap() {
               { s: "dark", t: "AI Travel Planner (KinfolkAI)", c: "AI", d: "Conversational AI for personalized trip planning, safety briefings, and discovery recommendations." },
               { s: "dark", t: "Enterprise Partnerships", c: "B2B", d: "Corporate travel programs, HR culture tools, and DEI employer visibility partnerships." },
               { s: "dark", t: "Global Expansion", c: "International", d: "Expand beyond the U.S. to cover Minority travel destinations across the African diaspora and global communities." },
-              { s: "dark", t: "Marketplace & Transactions", c: "Commerce", d: "In-platform booking, event ticketing, merchandise shops, and service marketplace for Black-owned businesses." },
+              { s: "dark", t: "Marketplace & Transactions", c: "Commerce", d: "In-platform booking, event ticketing, merchandise shops, and service marketplace for minority-owned businesses." },
               { s: "dark", t: "White Label Platform", c: "B2B", d: "Licensing the platform infrastructure to organizations, HBCUs, and community networks." }
             ].map((i, idx) => (
               <div key={idx} className="bg-[#FAF6EF] p-6 rounded-2xl border border-[#3A1F0E]/10 shadow-sm flex items-start gap-4 opacity-60">

@@ -620,7 +620,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       }
     }
 
-    // ── KinfolkAI: suggest Black-owned alternatives when post is negative + business is non-minority ──
+    // ── KinfolkAI: suggest minority-owned alternatives when post is negative + business is non-minority ──
     const NEGATIVE_KEYWORDS = [
       "racist", "racism", "discrimination", "discriminated", "profiled", "prejudice",
       "bias", "biased", "rude", "mistreated", "ignored", "disrespected", "unwelcoming",
