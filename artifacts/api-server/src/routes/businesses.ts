@@ -307,7 +307,7 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     "Automotive", "Professional Services", "Technology", "Creative Services",
     "Events & Entertainment", "Travel & Hospitality", "Family & Education",
     "Pet Services", "Community & Nonprofits", "Government & Public Resources",
-    "Black Professionals", "Online & Mobile Businesses",
+    "Online & Mobile Businesses",
     "Home Services", "Real Estate & Housing", "Community & Nonprofit",
   ];
 

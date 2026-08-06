@@ -82,21 +82,31 @@
 
 ## Build 105 — Business Profile Card & Content Hierarchy (Target: Aug 20–25)
 
-**Purpose:** Implement the 4-layer business profile card that makes the introduction before the transaction.
+**Purpose:** Implement the 4-layer business profile card that makes the introduction before the transaction. Also delivers the Dynamic Endorsement Tag System and Vibe/Cultural Endorsement architecture.
 
-| # | Item | Source Document |
-|---|---|---|
-| 1 | Layer 1: Business's own story (video upload, photos, description — uploaded to MWM) | Integrity Framework §9 |
-| 2 | Layer 2: Community voice ("1,001 people said this is the sharpest lineup in town" — aggregated endorsements) | Integrity Framework §9 |
-| 3 | Layer 3: Cultural Ambassador content (embedded creator videos about this business) | Integrity Framework §9 |
-| 4 | Layer 4: Outbound link ("Book a service" / "Visit their page" → business website/social media) | Integrity Framework §9 |
-| 5 | Tier-based content upload (what each tier can upload: videos, photos, story content) | Integrity Framework §9 |
-| 6 | Business story prompt at listing: "Tell your community why you do this" (video or text) | Integrity Framework §9 |
-| 7 | "Put your people on" endorsement flow (prominent on all business profiles) | Integrity Framework §9 |
-| 8 | Community endorsement count display ("1,001 people endorsed this") | Integrity Framework §9 |
-| 9 | Dual designation system: a business CAN be a cultural landmark (both badges shown) | City Data Instructions |
-| 10 | Description tab: shows research description until owner claims OR community adds insight | City Data Instructions |
-| 11 | URLs on business cards (where users can learn more — from cultural guide data) | City Data Instructions |
+| # | Item | Source Document | Status |
+|---|---|---|---|
+| 1 | Layer 1: Business's own story (video upload, photos, description — uploaded to MWM) | Integrity Framework §9 | PENDING |
+| 2 | Layer 2: Community voice ("1,001 people said this is the sharpest lineup in town" — aggregated endorsements) | Integrity Framework §9 | PENDING |
+| 3 | Layer 3: Cultural Ambassador content (embedded creator videos about this business) | Integrity Framework §9 | PENDING |
+| 4 | Layer 4: Outbound link ("Book a service" / "Visit their page" → business website/social media) | Integrity Framework §9 | PENDING |
+| 5 | Tier-based content upload (what each tier can upload: videos, photos, story content) | Integrity Framework §9 | PENDING |
+| 6 | Business story prompt at listing: "Tell your community why you do this" (video or text) | Integrity Framework §9 | PENDING |
+| 7 | "Put your people on" endorsement flow (prominent on all business profiles) | Integrity Framework §9 | PENDING |
+| 8 | Community endorsement count display ("1,001 people endorsed this") | Integrity Framework §9 | PENDING |
+| 9 | Dual designation system: a business CAN be a cultural landmark (both badges shown) | City Data Instructions | PENDING |
+| 10 | Description tab: shows research description until owner claims OR community adds insight | City Data Instructions | PENDING |
+| 11 | URLs on business cards (where users can learn more — from cultural guide data) | City Data Instructions | PENDING |
+| 12 | `businessType` field classification: `experience \| service \| retail \| community` — controls which discovery features apply | Vibe Categories Audit | PENDING |
+| 13 | Vibe tags restricted to `experience` + some `retail` businesses — never on `service` or `community` types | Vibe Categories Audit | PENDING |
+| 14 | Dynamic Endorsement Tag System: replace static 14-tag list with adaptive tags by businessType + culturalCommunity | Dynamic Endorsement Spec | PENDING |
+| 15 | "Home Cooking" tag family: Grandma Approved / Abuela Approved / Habesha Approved / Yard Approved / Naija Approved / Bà Nội's Pick / Halmeoni Approved / Aprovado pela Vovó — resolved by business culturalCommunity | Dynamic Endorsement Spec | PENDING |
+| 16 | "Excellence" tag family: Community Excellence (default) / Habesha Excellence (Ethiopian) / Orgullo Latino (Hispanic) — replaces "Black Excellence" | Dynamic Endorsement Spec | PENDING |
+| 17 | Cultural endorsement badges earned automatically: 10+ endorsements from matching community → badge appears | Vibe Categories Audit | PENDING |
+| 18 | Professional service endorsements (culture-neutral trust badges): "Community Trusted", "5-Star Professional", "No Judgment Zone", "They Get It", "Referred by Family" | Vibe Categories Audit | PENDING |
+| 19 | Top 3 endorsement tags displayed on business card Layer 2 by count | Dynamic Endorsement Spec | PENDING |
+| 20 | Remove "Black Professionals" from VALID_CATEGORIES — "Professional Services" already exists; ownership designation handles cultural identity | Vibe Categories Audit | ✅ COMPLETE Aug 5, 2026 |
+| 21 | Kinfolk uses cultural endorsement language in recommendations ("Habesha Approved with 47 endorsements") | Vibe Categories Audit | PENDING |
 
 ---
 
