@@ -261,6 +261,14 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE city_profiles ADD COLUMN IF NOT EXISTS city_name VARCHAR(200)`,
   },
   {
+    // Backfill: set Philadelphia businesses to live_unclaimed so they appear on /map
+    // The businesses query filters for live_unclaimed/live_claimed — staging hides them.
+    name: "businesses_philly_live_unclaimed",
+    sql: `UPDATE businesses SET listing_status = 'live_unclaimed'
+          WHERE city ILIKE '%Philadelphia%' AND state ILIKE '%PA%'
+          AND (listing_status IS NULL OR listing_status = 'staged')`,
+  },
+  {
     name: "user_city_welcome_dismissals_table",
     sql: `CREATE TABLE IF NOT EXISTS user_city_welcome_dismissals (
       id SERIAL PRIMARY KEY,
