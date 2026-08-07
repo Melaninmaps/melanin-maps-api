@@ -6,7 +6,8 @@ description: Current iOS buildNumber, Android versionCode, version string — ch
 **Current Build (as of Aug 7 2026):**
 - version: 1.1.5
 - iOS buildNumber: 102
-- Android versionCode: 77 (EAS build 853a927e, submission 13bc8a66)
+- Android versionCode: 77
+- **OTA update group:** 717d4197-3bd8-405e-a999-fb1b566ae429 (Aug 7 2026) — Emergency SOS button + report form GPS (EAS build 853a927e, submission 13bc8a66)
 - eas.json production profile: has `channel: "production"` field ✅
 - Android VC77 auto-submitted to Play Internal track; release notes: "All features free. In-App Purchases removed. Community platform update."
 
