@@ -46,9 +46,9 @@ function getCulturalPinColor(site: CulturalSiteWeb): string {
   if (pt === "farmers_market" || pt === "pop_up_market" || pt === "market") return "#16A34A";
   if (pt === "mural_or_public_art") return "#0891B2";
   if (pt === "community_org" || pt === "cultural_organization") return "#D97706";
-  if (pt === "festival_or_event" || pt === "community_event") return "#7C3AED";
+  if (pt === "festival_or_event" || pt === "community_event") return "#EA580C"; // orange — Events
   if (pt === "park_or_outdoor") return "#15803D";
-  if (hc === "HBCU") return "#7C3AED";
+  if (hc === "HBCU") return "#7C3AED";                  // purple — HBCUs only
   if (hc === "Civil Rights") return "#DC2626";
   if (hc === "Religious Heritage") return "#78716C";
   return "#92400E";
@@ -71,13 +71,15 @@ function getCulturalPinLabel(site: CulturalSiteWeb): string {
 function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
-  const isHbcuEvent = hc === "HBCU" || pt === "festival_or_event" || pt === "community_event";
+  const isHbcu   = hc === "HBCU";
+  const isEvent  = pt === "festival_or_event" || pt === "community_event";
   const isMarket = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
-  const isArt = pt === "mural_or_public_art";
-  if (filter === "hbcu") return isHbcuEvent;
-  if (filter === "market") return isMarket;
-  if (filter === "art") return isArt;
-  if (filter === "cultural") return !isHbcuEvent && !isMarket && !isArt;
+  const isArt    = pt === "mural_or_public_art";
+  if (filter === "hbcu")    return isHbcu;
+  if (filter === "events")  return isEvent;
+  if (filter === "market")  return isMarket;
+  if (filter === "art")     return isArt;
+  if (filter === "cultural") return !isHbcu && !isEvent && !isMarket && !isArt;
   return true;
 }
 
@@ -106,11 +108,12 @@ const BRAND_STYLE: object[] = [
 
 // Legend tile definitions
 const LEGEND_TILES = [
-  { key: "business",  color: "#CA922B", shape: "circle",  label: "Businesses" },
-  { key: "cultural",  color: "#92400E", shape: "diamond", label: "Cultural Sites" },
-  { key: "hbcu",      color: "#7C3AED", shape: "diamond", label: "HBCU / Events" },
-  { key: "market",    color: "#16A34A", shape: "diamond", label: "Markets" },
-  { key: "art",       color: "#0891B2", shape: "diamond", label: "Public Art" },
+  { key: "business", color: "#CA922B", shape: "circle",  label: "Businesses" },
+  { key: "cultural", color: "#92400E", shape: "diamond", label: "Cultural Sites" },
+  { key: "hbcu",     color: "#7C3AED", shape: "diamond", label: "HBCUs" },
+  { key: "events",   color: "#EA580C", shape: "diamond", label: "Events" },
+  { key: "market",   color: "#16A34A", shape: "diamond", label: "Markets" },
+  { key: "art",      color: "#0891B2", shape: "diamond", label: "Public Art" },
 ] as const;
 
 export default function MapPage() {

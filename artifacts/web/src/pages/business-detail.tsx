@@ -373,11 +373,7 @@ export default function BusinessDetail() {
                     Demo Listing
                   </span>
                 )}
-                {business.confidenceScore && (
-                  <span className="bg-[#FAF6EF] text-[#CA922B] text-xs font-bold px-3 py-1 rounded-full shadow-md border border-[#CA922B]/20">
-                    {business.confidenceScore}/100 Score
-                  </span>
-                )}
+                {/* confidenceScore is an internal metric — never shown; community builds scores */}
               </div>
               <h1 data-testid="business-name" className="text-5xl md:text-7xl font-serif font-bold leading-tight mb-2">{business.name}</h1>
               <div className="flex items-center gap-2 text-[#F5EBD8] text-lg">
@@ -697,7 +693,7 @@ export default function BusinessDetail() {
                   </div>
                 </div>
 
-                {((business as any).safetyRating != null || (business as any).wouldReturnAlone != null || (business as any).recommendationRate != null) && (
+                {parseInt((business as any).reportCount ?? "0") > 0 && ((business as any).safetyRating != null || (business as any).wouldReturnAlone != null || (business as any).recommendationRate != null) && (
                   <div className="pt-5 border-t border-[#2B1507]/10 space-y-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
