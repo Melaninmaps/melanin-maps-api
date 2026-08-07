@@ -2,7 +2,7 @@ import { useListBusinesses } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, Grid, Map as MapIcon, Star, X } from "lucide-react";
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const OWNERSHIP_OPTIONS = [
   { id: "black-owned", label: "Black-Owned", emoji: "✊🏾", color: "#CA922B" },
@@ -21,6 +21,7 @@ const CATEGORIES = ["All", "Restaurants & Nightlife", "Hotels & Stays", "Cultura
 
 export default function Explore() {
   const { data: apiBusinesses } = useListBusinesses({ limit: 6 });
+  const [, navigate] = useLocation();
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedOwnership, setSelectedOwnership] = useState<string[]>([]);
@@ -131,20 +132,23 @@ export default function Explore() {
     }
   ];
 
+  // Search box routes to /map — the real discovery experience.
+  // Static businesses here are showcase cards; filter only by category/ownership chips.
   const filtered = staticBusinesses.filter((b) => {
     const matchesCategory = activeCategory === "All" || b.category === activeCategory;
     const matchesOwnership =
       selectedOwnership.length === 0 ||
       selectedOwnership.some((t) => b.ownershipTags.includes(t));
-    const matchesSearch =
-      !searchQuery ||
-      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesOwnership && matchesSearch;
+    return matchesCategory && matchesOwnership;
   });
 
-  const hasFilters = selectedOwnership.length > 0 || activeCategory !== "All" || searchQuery;
+  const hasFilters = selectedOwnership.length > 0 || activeCategory !== "All";
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set("search", searchQuery.trim());
+    navigate(`/map${params.toString() ? "?" + params.toString() : ""}`);
+  };
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -172,11 +176,12 @@ export default function Explore() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Explore safety-first travel destinations"
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search city, business type, or destination…"
                 className="w-full bg-transparent border-none outline-none text-[#3A1F0E] placeholder:text-gray-400"
               />
             </div>
-            <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-10">Search</Button>
+            <Button onClick={handleSearch} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-10">Search</Button>
           </div>
         </div>
       </section>
@@ -246,7 +251,7 @@ export default function Explore() {
           </h2>
           <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
             <button className="p-2 bg-[#FAF6EF] text-[#3A1F0E] rounded-md"><Grid className="w-4 h-4" /></button>
-            <button className="p-2 text-gray-400 hover:text-[#3A1F0E]"><MapIcon className="w-4 h-4" /></button>
+            <button onClick={() => navigate("/map")} title="View on map" className="p-2 text-gray-400 hover:text-[#3A1F0E]"><MapIcon className="w-4 h-4" /></button>
           </div>
         </div>
 
@@ -343,8 +348,11 @@ export default function Explore() {
             <div className="text-4xl mb-4">🔍</div>
             <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">No results found</h3>
             <p className="text-[#3A1F0E]/60 mb-6 max-w-sm">Try adjusting your filters or search terms to find what you're looking for.</p>
-            <Button onClick={() => { setSelectedOwnership([]); setActiveCategory("All"); setSearchQuery(""); }} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B]">
+            <Button onClick={() => { setSelectedOwnership([]); setActiveCategory("All"); setSearchQuery(""); }} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] mr-2">
               Clear All Filters
+            </Button>
+            <Button onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">
+              View on Map
             </Button>
           </div>
         )}
