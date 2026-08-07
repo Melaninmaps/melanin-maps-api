@@ -707,3 +707,26 @@ These cannot be resolved without explicit founder decision:
     docs/trade-secrets/COMMUNITY_HEALTH_INTELLIGENCE_ENGINE.md
   Existing cultural sites architecture: artifacts/api-server/src/routes/cultural-sites.ts
   Existing reports architecture: artifacts/api-server/src/routes/reports.ts
+
+---
+
+## SECTION 13 — FOUNDER DECISIONS (LOCKED August 7, 2026)
+
+All six open questions resolved. No implementation until full instructions received.
+
+| # | Decision | Answer |
+|---|----------|--------|
+| Q1 | Confidence levels to display | **All three — Confirmed / Probable / Possible.** "Possible" shown with "Under historical research — not yet confirmed" label. |
+| Q2 | Geographic scope at launch | **Whole U.S.** — all ~7,000 records from the historical database at launch. |
+| Q3 | Min. reports before community trends appear | **3 independent moderated reports within 24 months.** Below threshold: "No recent Mapping With Melanin™ reports are available. This does not confirm the absence or presence of discrimination." |
+| Q4 | Directions route behavior | **Show both** — verified historical database records AND community reports (when above the 3-report threshold). |
+| Q5 | Layer default state | **ON by default.** ⚠️ Additional instructions pending — do not implement until received. |
+| Q6 | Disclaimer language | **Approved as written** in Section 4E. No changes. |
+
+### Remaining gates before implementation may begin
+
+- Gate 1: Confirm Scientific Data (2025) CC BY 4.0 license — founder to verify at nature.com/articles/s41597-025-04671-3
+- Gate 2: Tougaloo College outreach — founder to contact justice.tougaloo.edu for attribution confirmation
+- Gate 5: Confidence-status visual design (marker shapes/colors) — pending full instructions from founder
+
+**Implementation is BLOCKED until full instructions arrive.**
