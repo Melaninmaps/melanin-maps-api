@@ -170,7 +170,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!ready) return;
     const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/cultural-sites?city=Philadelphia`)
+    fetch(`${base}/api/cultural-sites`)
       .then((r) => r.json())
       .then((d: any) => { if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]); })
       .catch(() => {});

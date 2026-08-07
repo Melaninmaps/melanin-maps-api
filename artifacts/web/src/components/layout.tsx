@@ -30,9 +30,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return <Redirect to="/pending-approval" />;
   }
 
-  const navItems = [
+  const isMember = !!(auth?.user);
+
+  // Public nav — visible to everyone including waitlist visitors
+  const publicNavItems = [
     { href: "/about", label: "About" },
     { href: "/features", label: "Features" },
+    { href: "/for-business-owners", label: "For Business Owners", featured: true },
+    { href: "/contact", label: "Contact" },
+  ];
+
+  // Member-only nav — visible only to added members (approved, logged-in)
+  const memberNavItems = [
     { href: "/explore", label: "Explore" },
     { href: "/map", label: "Map" },
     { href: "/businesses", label: "Businesses" },
@@ -40,9 +49,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/safety", label: "Safety" },
     { href: "/travel", label: "KinfolkAI™" },
     { href: "/events", label: "Events" },
-    { href: "/for-business-owners", label: "For Business Owners", featured: true },
-    { href: "/contact", label: "Contact" },
   ];
+
+  const navItems = isMember
+    ? [...memberNavItems, ...publicNavItems]
+    : publicNavItems;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
@@ -175,20 +186,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Black-Owned Businesses</span></Link></li>
-                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
-                <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Hotels & Stays</span></Link></li>
+                {isMember ? (
+                  <>
+                    <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Businesses</span></Link></li>
+                    <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
+                    <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
+                  </>
+                ) : (
+                  <li><a href="/#waitlist-form"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Join to Explore →</span></a></li>
+                )}
                 <li><Link href="/cities"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">City Spotlights</span></Link></li>
-                <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
-                <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
-                <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
-                <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
+                {isMember ? (
+                  <>
+                    <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
+                    <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
+                    <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
+                    <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
+                  </>
+                ) : (
+                  <li><a href="/#waitlist-form"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Join to Participate →</span></a></li>
+                )}
                 <li><Link href="/resources"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Mental Health & Recovery</span></Link></li>
               </ul>
             </div>
@@ -226,8 +248,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget — hidden on auth/payment-critical pages or when dismissed */}
-      {!kinfolkDismissed && !["/login", "/signup", "/membership"].includes(location) && (
+      {/* KinfolkAI Widget — members only, hidden on auth/payment pages or when dismissed */}
+      {isMember && !kinfolkDismissed && !["/login", "/signup", "/membership"].includes(location) && (
         <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
           {/* Full widget on sm+ screens */}
           <div className="hidden sm:flex relative bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
