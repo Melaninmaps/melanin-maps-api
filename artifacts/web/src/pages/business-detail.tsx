@@ -368,6 +368,11 @@ export default function BusinessDetail() {
                 <span data-testid="business-category" className="bg-[#CA922B] text-white text-xs uppercase font-bold tracking-wider px-3 py-1 rounded-full">
                   {business.category}
                 </span>
+                {business.description?.startsWith("[DEMO]") && (
+                  <span className="bg-amber-100 text-amber-700 border border-amber-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                    Demo Listing
+                  </span>
+                )}
                 {business.confidenceScore && (
                   <span className="bg-[#FAF6EF] text-[#CA922B] text-xs font-bold px-3 py-1 rounded-full shadow-md border border-[#CA922B]/20">
                     {business.confidenceScore}/100 Score
