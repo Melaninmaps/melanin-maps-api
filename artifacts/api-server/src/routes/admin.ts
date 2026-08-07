@@ -1361,5 +1361,27 @@ router.post("/admin/seed-manus-cultural-sites", async (req: Request, res: Respon
   }
 });
 
+// POST /admin/seed-manus-cultural-sites-pass2
+// Seeds ~306 additional cultural sites and diaspora businesses from the three
+// Manus AI tour guide PDFs — second extraction pass.
+// Safe to run multiple times — upserts on LOWER(name)+LOWER(city).
+router.post("/admin/seed-manus-cultural-sites-pass2", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    // Ensure new columns exist (idempotent)
+    await pool.query(`ALTER TABLE cultural_sites
+      ADD COLUMN IF NOT EXISTS content_note TEXT,
+      ADD COLUMN IF NOT EXISTS practical_tips TEXT`);
+
+    const { seedManusEntitiesPass2 } = await import("../scripts/seed-manus-cultural-sites-pass2");
+    const result = await seedManusEntitiesPass2(pool);
+    req.log.info(result, "POST /admin/seed-manus-cultural-sites-pass2 completed");
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-manus-cultural-sites-pass2 error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
 export default router;
 

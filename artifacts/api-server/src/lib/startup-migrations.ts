@@ -58,6 +58,12 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`,
   },
   {
+    name: "cultural_sites_content_cols",
+    sql: `ALTER TABLE cultural_sites
+      ADD COLUMN IF NOT EXISTS content_note TEXT,
+      ADD COLUMN IF NOT EXISTS practical_tips TEXT`,
+  },
+  {
     name: "cultural_sites_lat_lng_nullable",
     sql: `ALTER TABLE cultural_sites
       ALTER COLUMN latitude DROP NOT NULL,
