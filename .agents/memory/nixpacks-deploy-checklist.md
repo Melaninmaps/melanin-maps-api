@@ -11,6 +11,36 @@ description: Every api-server push must follow this exact sequence or Railway wi
 
 2. **Cached nixpacks build layer** — Railway caches the build step by command string. If the echo token in `nixpacks.toml` doesn't change, Railway reuses the old compiled binary. Must update the token on every push that must deploy clean.
 
+## CRITICAL LESSON — Both web AND api tokens must change every push
+
+The **web build token** (`echo web-build-<token>`) must be updated on **every push that changes web source files**, not just api-server files. If the web token stays the same, Docker caches the web Vite build layer and Railway keeps serving the old bundle — even when the api-server token changes. This caused a React error #310 crash in production (Aug 7 2026): the old web bundle (`index-CWObelCJ.js`) tried to render data shapes from the updated API that it couldn't handle.
+
+**Rule: update BOTH tokens on every push, regardless of what changed.**
+
+## CRITICAL — THREE directories must all be synced on every web push
+
+`static-server.mjs` on Railway serves from ROOT `web-static/` (process.cwd()/web-static). There are THREE separate web-static locations that must all have the fresh build:
+
+1. `artifacts/web/dist/public/` — Vite output (source of truth)
+2. `artifacts/api-server/web-static/` — what api-server build.mjs embeds as SPA_HTML
+3. `web-static/` (repo root) — what static-server.mjs actually serves in production
+
+**All three must be in sync before committing. If any one is stale, Railway serves the wrong bundle.**
+
+## CRITICAL — web-static must be synced locally before api-server build
+
+Before running `pnpm --filter @workspace/api-server run build` locally, you MUST first copy the fresh web build output into api-server/web-static/:
+
+```bash
+pnpm --filter @workspace/web run build
+cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/
+pnpm --filter @workspace/api-server run build   # now embeds the correct SPA HTML
+```
+
+If you skip this step, the committed dist/index.mjs bakes the OLD web bundle hash into the SPA HTML. Railway will serve the stale web bundle even after deploying the latest commit. This caused React error #310 in production (Aug 7 2026) — old bundle tried to render data shapes the new API returned, old bundle didn't know how to handle them.
+
+nixpacks handles this correctly (step 2 copies web→api-server/web-static before step 3), but local builds must do it manually.
+
 ## Mandatory Checklist
 
 ```bash
