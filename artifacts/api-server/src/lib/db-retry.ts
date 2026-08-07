@@ -38,7 +38,7 @@ export function isTransientDbError(err: unknown): boolean {
 
   if (TRANSIENT_NODE_CODES.has(code)) return true;
   if (msg.includes("timeout exceeded when trying to connect")) return true;
-  if (msg.includes("Connection terminated unexpectedly")) return true;
+  if (msg.includes("Connection terminated")) return true;   // covers both "unexpectedly" and pool-reaper kills
   if (msg.includes("Client was closed and is not queryable")) return true;
   if (msg.includes("connect ECONNRESET")) return true;
   if (msg.includes("connect ETIMEDOUT")) return true;

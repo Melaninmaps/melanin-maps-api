@@ -85,6 +85,21 @@ function extractSql(args: unknown[]): string | undefined {
 let _initialized = false;
 
 /**
+ * Tracks the wall-clock creation time (Date.now()) for each pg PoolClient.
+ *
+ * Why a WeakMap: pg PoolClient objects are not retained by application code
+ * after they are released back to the pool, so a WeakMap lets GC reclaim them
+ * without any manual cleanup.
+ *
+ * Populated in the pool "connect" event handler below. The pool reaper reads
+ * this to compute true connection age. Without it, `client._createdAt` is
+ * undefined (not a real pg property), defaulting to 0 and making every
+ * connection appear ~56 years old — causing all connections to be reaped
+ * within 30 s of creation.
+ */
+const connectionCreatedAt = new WeakMap<PoolClient, number>();
+
+/**
  * Call once at server startup, after the pool singleton is created.
  * Safe to call multiple times — only attaches listeners once.
  */
@@ -93,7 +108,8 @@ export function initPoolInstrumentation(pool: Pool, getRealPool?: () => Pool): v
   _initialized = true;
 
   // ── Physical connection lifecycle ──────────────────────────────────────────
-  pool.on("connect", (_client: PoolClient) => {
+  pool.on("connect", (client: PoolClient) => {
+    connectionCreatedAt.set(client, Date.now());
     push({ ts: new Date().toISOString(), type: "connect", pool: poolSnapshot(pool) });
   });
 
@@ -222,7 +238,10 @@ export function initPoolInstrumentation(pool: Pool, getRealPool?: () => Pool): v
     const reaped: { ageMs: number }[] = [];
 
     clients.forEach((client: any) => {
-      const createdAt: number = client._createdAt ?? 0;
+      // Use the WeakMap for true creation time. Default to `now` so any
+      // connection whose creation was not observed (e.g. pre-instrumentation)
+      // is treated as brand-new and is NOT reaped.
+      const createdAt: number = connectionCreatedAt.get(client as PoolClient) ?? now;
       const ageMs = now - createdAt;
       if (ageMs <= MAX_CONNECTION_AGE_MS) return;
 
