@@ -1112,7 +1112,7 @@ export default function Admin() {
                 <div className="bg-red-900/30 rounded-xl px-3 py-2 border border-red-500/30">
                   <div className="text-xs font-bold text-red-400 mb-1">Errors ({nudgeDetails.errors.length})</div>
                   <ul className="text-xs text-red-300/80 space-y-0.5 max-h-24 overflow-y-auto">
-                    {nudgeDetails.errors.map((e, i) => <li key={i}>{e}</li>)}
+                    {nudgeDetails.errors.map((e, i) => <li key={i}>{typeof e === "object" ? JSON.stringify(e) : String(e ?? "")}</li>)}
                   </ul>
                 </div>
               )}
@@ -1398,7 +1398,7 @@ export default function Admin() {
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(auditData.usersOverview).map(([k, v]) => (
                         <span key={k} className="bg-white border border-blue-200 rounded-lg px-3 py-1 text-xs font-mono">
-                          <span className="font-bold text-blue-800">{v}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
+                          <span className="font-bold text-blue-800">{typeof v === "object" ? JSON.stringify(v) : String(v ?? "")}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
                         </span>
                       ))}
                     </div>
@@ -1410,7 +1410,7 @@ export default function Admin() {
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(auditData.contentCounts).map(([k, v]) => (
                         <span key={k} className="bg-white border border-blue-200 rounded-lg px-3 py-1 text-xs font-mono">
-                          <span className="font-bold text-blue-800">{v}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
+                          <span className="font-bold text-blue-800">{typeof v === "object" ? JSON.stringify(v) : String(v ?? "")}</span> <span className="text-blue-500">{k.replace(/_/g, " ")}</span>
                         </span>
                       ))}
                     </div>

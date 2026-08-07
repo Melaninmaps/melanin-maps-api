@@ -329,6 +329,16 @@ END $$`,
       )`,
   },
   {
+    // Tour unlock: make ALL businesses visible on the map (staged/pending → live_unclaimed).
+    // This lets testers across every East Coast city see real pins immediately.
+    // Safe to run repeatedly — only touches rows that are still staged/pending/null.
+    name: "businesses_all_live_unclaimed_tour",
+    sql: `UPDATE businesses
+          SET listing_status = 'live_unclaimed'
+          WHERE listing_status IS NULL
+             OR listing_status IN ('staged', 'pending')`,
+  },
+  {
     name: "user_city_welcome_dismissals_table",
     sql: `CREATE TABLE IF NOT EXISTS user_city_welcome_dismissals (
       id SERIAL PRIMARY KEY,
