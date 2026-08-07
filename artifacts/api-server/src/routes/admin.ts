@@ -1336,5 +1336,30 @@ router.post("/admin/set-user-tier", async (req: Request, res: Response) => {
   }
 });
 
+// ── Manus Tour Guide cultural sites seed ──────────────────────────────────────
+// POST /admin/seed-manus-cultural-sites
+// Seeds all 438 cultural sites from the three Manus AI guide PDFs.
+// Safe to run multiple times — dedup is on LOWER(name)+LOWER(city).
+router.post("/admin/seed-manus-cultural-sites", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    // Ensure new columns exist (idempotent)
+    await pool.query(`ALTER TABLE cultural_sites
+      ADD COLUMN IF NOT EXISTS pin_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS visit_tip TEXT,
+      ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'staged',
+      ADD COLUMN IF NOT EXISTS data_source VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`);
+
+    const { seedManusEntities } = await import("../scripts/seed-manus-cultural-sites");
+    const result = await seedManusEntities(pool);
+    req.log.info(result, "POST /admin/seed-manus-cultural-sites completed");
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-manus-cultural-sites error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
 export default router;
 
