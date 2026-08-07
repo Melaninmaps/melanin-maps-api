@@ -93,6 +93,19 @@ interface CulturalSite {
   culturalCommunity?: string | null;
 }
 
+interface MapEventItem {
+  id: string;
+  title: string;
+  city: string;
+  state: string;
+  latitude: string | null;
+  longitude: string | null;
+  category: string;
+  date?: string | null;
+  location?: string | null;
+  isFree?: boolean | null;
+}
+
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface CategoryStyle {
@@ -174,6 +187,11 @@ export function FullMapView() {
   const isFetchingCulturalSites = useRef(false);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
   const [activeCulturalCategory, setActiveCulturalCategory] = useState("");
+
+  const [showMapEvents, setShowMapEvents] = useState(true);
+  const [mapEvents, setMapEvents] = useState<MapEventItem[]>([]);
+  const [selectedMapEvent, setSelectedMapEvent] = useState<MapEventItem | null>(null);
+  const isFetchingMapEvents = useRef(false);
 
   const [mapReady, setMapReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -339,6 +357,26 @@ export function FullMapView() {
     return () => clearInterval(timer);
   }, [culturalSitesError, showCulturalSites, fetchCulturalSites]);
 
+  // ── Events fetch — loads once when map is ready, refreshes on focus ───────
+  useEffect(() => {
+    if (!mapReady || isFetchingMapEvents.current) return;
+    isFetchingMapEvents.current = true;
+    const base = getApiBase();
+    if (!base) { isFetchingMapEvents.current = false; return; }
+    fetch(`${base}/api/events`)
+      .then((r) => r.ok ? r.json() as Promise<{ events: MapEventItem[] }> : null)
+      .then((d) => {
+        if (d?.events) {
+          setMapEvents(
+            d.events.filter((e) => e.latitude != null && e.longitude != null),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => { isFetchingMapEvents.current = false; });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, isFocused]);
+
   const recenter = async () => {
     try {
       const loc = await Promise.race([
@@ -354,7 +392,7 @@ export function FullMapView() {
     } catch {}
   };
 
-  const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null;
+  const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null || selectedMapEvent !== null;
 
   return (
     <View
@@ -442,10 +480,31 @@ export function FullMapView() {
               onPress={() => {
                 setSelectedCulturalSite(site);
                 setSelectedBusiness(null);
+                setSelectedMapEvent(null);
               }}
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={false}
               pinColor={cs.color}
+            />
+          );
+        })}
+
+        {/* Community event pins — orange, plain pinColor (safe on Android Fabric) */}
+        {showMapEvents && mapEvents.map((evt) => {
+          const lat = parseFloat(evt.latitude ?? "");
+          const lng = parseFloat(evt.longitude ?? "");
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
+            <Marker
+              key={evt.id}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={() => {
+                setSelectedMapEvent(evt);
+                setSelectedBusiness(null);
+                setSelectedCulturalSite(null);
+              }}
+              tracksViewChanges={false}
+              pinColor="#EA580C"
             />
           );
         })}
@@ -584,6 +643,16 @@ export function FullMapView() {
               <Text style={[s.layerBtnTxt, { color: showCulturalSites ? "#fff" : GOLD }]}>Heritage</Text>
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            style={[s.layerBtn, showMapEvents && { backgroundColor: "#EA580C", borderColor: "transparent" }]}
+            onPress={() => { setShowMapEvents((v) => !v); setSelectedMapEvent(null); }}
+            activeOpacity={0.85}
+          >
+            <Feather name="calendar" size={12} color={showMapEvents ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showMapEvents ? "#fff" : GOLD }]}>
+              Events{mapEvents.length > 0 ? ` (${mapEvents.length})` : ""}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Heritage category filter chips — hidden until HERITAGE_SITES_ENABLED */}
@@ -805,8 +874,71 @@ export function FullMapView() {
         );
       })()}
 
+      {/* ── Event bottom card ── */}
+      {!selectedCulturalSite && !selectedBusiness && selectedMapEvent && (() => {
+        const evt = selectedMapEvent;
+        const dateStr = evt.date
+          ? new Date(evt.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : null;
+        return (
+          <View style={[s.card, { backgroundColor: colors.card, borderColor: "#EA580C40", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+            <View style={s.cardHandle} />
+            <TouchableOpacity style={s.cardClose} onPress={() => setSelectedMapEvent(null)}>
+              <Feather name="x" size={18} color={colors.mutedForeground} />
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+              <View style={[s.catPill, { backgroundColor: "#EA580C18" }]}>
+                <Feather name="calendar" size={11} color="#EA580C" />
+                <Text style={[s.catPillTxt, { color: "#EA580C" }]}>{evt.category}</Text>
+              </View>
+              {evt.isFree && (
+                <View style={[s.catPill, { backgroundColor: "#16A34A18" }]}>
+                  <Text style={[s.catPillTxt, { color: "#16A34A" }]}>Free</Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>
+              {evt.title}
+            </Text>
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
+              {evt.city}, {evt.state}
+            </Text>
+
+            {evt.location ? (
+              <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: -4, marginBottom: 6 }]}>
+                {evt.location}
+              </Text>
+            ) : null}
+            {dateStr ? (
+              <Text style={[s.catPillTxt, { color: "#EA580C", marginBottom: 12 }]}>{dateStr}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={[s.cardBtn, { backgroundColor: "#EA580C" }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                const lat = parseFloat(evt.latitude ?? "");
+                const lng = parseFloat(evt.longitude ?? "");
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  void Linking.openURL(
+                    Platform.OS === "ios"
+                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(evt.title)}`
+                      : `geo:${lat},${lng}?q=${encodeURIComponent(evt.title)}`
+                  );
+                }
+              }}
+            >
+              <Feather name="navigation" size={14} color="#fff" />
+              <Text style={s.cardBtnTxt}>Get Directions</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })()}
+
       {/* ── Business bottom card ── */}
-      {!selectedCulturalSite && selectedBusiness && (
+      {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && (
         <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border, paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
           <View style={s.cardHandle} />
           <TouchableOpacity style={s.cardClose} onPress={() => setSelectedBusiness(null)}>

@@ -39,7 +39,7 @@ router.get("/events", async (req: Request, res: Response) => {
       .from(eventsTable)
       .where(and(...conditions))
       .orderBy(desc(eventsTable.createdAt))
-      .limit(500);
+      .limit(600);
 
     // Personalize: score by user preferences if authenticated
     let events: Array<typeof rawEvents[0] & { relevanceScore: number }> =

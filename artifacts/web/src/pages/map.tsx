@@ -140,7 +140,7 @@ export default function MapPage() {
   type MapEvent = {
     id: string; title: string; city: string; state: string;
     latitude: string | null; longitude: string | null;
-    category: string; startDate?: string | null; location?: string | null;
+    category: string; date?: string | null; location?: string | null;
     isFree?: boolean | null;
   };
   const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
@@ -293,8 +293,8 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
-        const dateStr = evt.startDate
-          ? new Date(evt.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+        const dateStr = evt.date
+          ? new Date(evt.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
           : "";
         infoWindowRef.current?.setContent(
           `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
