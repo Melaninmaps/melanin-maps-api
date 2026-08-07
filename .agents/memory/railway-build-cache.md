@@ -1,49 +1,75 @@
 ---
-name: Railway nixpacks build cache — bypass pattern
-description: Railway persists its Docker layer cache across deploys; new source commits alone don't bust it. Documents the reliable bust pattern and direct-DB workaround.
+name: Railway nixpacks build cache — root cause and bypass pattern
+description: Railway caches the build layer per nixpacks echo token; the root dist/index.mjs (not artifacts/api-server/dist/) is what Railway actually serves. Documents the confirmed root causes and the mandatory update procedure.
 ---
 
-# Railway nixpacks build cache — bypass pattern
+# Railway nixpacks build cache — root cause and confirmed fix
 
-## The Problem
-Railway caches Docker build layers. Even when new source files are committed and pushed, Railway may serve an old cached `dist/index.mjs` bundle. Symptoms:
-- `/api/version` shows `railway_sha` = new commit, but `built_from_sha` = old commit
-- New admin endpoints return 404 even though code was committed
-- New routes don't appear despite a "SUCCESS" deployment
+## The Two Root Causes
 
-## Why It Happens
-nixpacks caches at the pnpm install layer. If `package.json` and `pnpm-lock.yaml` haven't changed, Railway reuses the cached layer (including the old built output).
+### 1. nixpacks.toml echo cache-bust token (MOST IMPORTANT)
+`nixpacks.toml` step 3 contains:
+```
+"echo <token> && pnpm --filter @workspace/api-server run build"
+```
+Railway caches Docker build layers based on the exact command string. If the echo token doesn't change, Railway reuses the cached build layer — meaning `pnpm run build` never runs again in Railway's environment.
 
-## Reliable Cache-Bust Methods (in order of preference)
-1. **Bump `artifacts/api-server/package.json` version** (e.g. 0.0.0 → 0.0.1) — forces pnpm install layer to rebuild, which invalidates all downstream layers including the build step.
-2. Touch `pnpm-lock.yaml` with a trivial dep addition/removal — same effect.
-3. Adding a `.railway-cache-bust` file with a timestamp does NOT work — Railway caches at the package layer, not file-content level.
+**The fix:** Change the echo token on every push that must deploy clean.
+Example: `build-city-profiles-kinfolk-aug7-2026` → `build-<feature>-<date>`
 
-## Direct-DB Workaround (for seeding when endpoint is unavailable)
-When Railway's cached build doesn't have a new admin endpoint, run seeds directly against Railway Postgres via the public proxy:
-- Get public URL from Railway API: `variables` query on Postgres service `7bb11d12`
-- Host: `tokaido.proxy.rlwy.net:10066`
-- Connection: `ssl: { rejectUnauthorized: false }`
-- Run tsx seed scripts from workspace root (not /tmp — needs pnpm packages)
-- The `"use impure"` pattern in CodeExecution can fetch Railway service vars and write URL to `/tmp/railway_db_url.txt`
+### 2. Root dist/index.mjs (not artifacts/api-server/dist/)
+Railway runs `node static-server.mjs` which spawns `dist/index.mjs` at the **repo root** — NOT `artifacts/api-server/dist/index.mjs`.
 
-**Why:** This failure pattern has appeared multiple times. The data seeding doesn't need to wait for Railway to fix its cache — seed directly and deploy the code change separately.
+`nixpacks.toml` step 4 syncs it:
+```
+cp artifacts/api-server/dist/index.mjs dist/index.mjs
+```
+But if the build layer is cached (root cause #1), this cp never runs.
+
+**The fix:** Always commit a fresh root `dist/index.mjs` alongside code changes:
+```bash
+cp artifacts/api-server/dist/index.mjs dist/index.mjs
+cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
+cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
+git add -f dist/index.mjs dist/index.mjs.map dist/BUILD_IDENTITY \
+           artifacts/api-server/dist/index.mjs artifacts/api-server/dist/index.mjs.map \
+           nixpacks.toml
+```
+
+## MANDATORY Deploy Checklist (every api-server push)
+
+1. Build: `pnpm --filter @workspace/api-server run build`
+2. Sync root dist:
+   ```bash
+   cp artifacts/api-server/dist/index.mjs dist/index.mjs
+   cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
+   cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
+   ```
+3. Update the echo token in `nixpacks.toml` line 14 to `build-<feature>-<mmdd>-<year>`
+4. Commit ALL of: root dist files + api-server dist files + nixpacks.toml + source
+5. Push to `github` remote (not `origin`)
+
+## What DOES NOT work
+- Bumping `package.json` version alone — only busts pnpm install layer, not build layer
+- Adding a new devDependency — same as above, build layer still cached
+- Railway "Redeploy" button — reuses same cached layers
+- Railway dashboard "Deployment successful" — do NOT trust this; always verify SHA
 
 ## Verification — the ONLY reliable test
-Railway shows "Deployment successful" even for cache-served deploys — do NOT trust the dashboard status.
-Probe an endpoint that only exists in commits *after* `c278b551` (the persistent stale baseline):
 ```bash
-# Returns 404 = old binary. Returns 401 = new code running.
+# 1. SHA check
+curl -s https://www.mappingwithmelanin.com/api/version | python3 -c \
+  "import sys,json; d=json.load(sys.stdin); print('built_from:', d['built_from_sha'][:12])"
+
+# 2. Endpoint existence probe (returns 401=new code, 404=old binary)
 curl -s -o /dev/null -w "%{http_code}" \
   https://www.mappingwithmelanin.com/api/admin/seed-manus-cultural-sites-pass2
 ```
-Also check `/api/version` — `built_from_sha` must match the commit that introduced the change.
+Both must pass. Dashboard status alone is not sufficient.
 
-## When version bump still doesn't work
-The package.json version bump only busts the pnpm install layer, not the compile layer.
-Railway can serve a "Deployment successful" from a cached compile even after a fresh install.
-The ONLY guaranteed fix is a manual dashboard action:
-- **Deployments → active deploy → Redeploy** with "Clear build cache" toggle ON
-- Or **Settings → Danger Zone → Delete and redeploy** (data-safe, forces full nixpacks recompile)
-
-Do NOT waste time on further commit-based workarounds once the dashboard action is available.
+## Direct-DB Workaround (when endpoint unavailable due to cached build)
+When Railway's cached binary doesn't have a new endpoint, seed directly via Railway Postgres public proxy:
+- Host: `tokaido.proxy.rlwy.net:10066`
+- Connection: `ssl: { rejectUnauthorized: false }`
+- Get URL via Railway API using `RAILWAY_ACCOUNT_TOKEN`, service `7bb11d12`
+- Run tsx scripts from workspace root
