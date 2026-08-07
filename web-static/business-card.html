@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Card — Teianna Lindsay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Page ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #2a2a2a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Montserrat', sans-serif;
+      gap: 48px;
+      padding: 48px 24px;
+    }
+
+    h2 {
+      color: #C9A252;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 400;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: -32px;
+    }
+
+    /* ── Card shell ── */
+    /* Standard business card: 3.5" × 2" → displayed at 3× = 1008 × 576px */
+    .card {
+      width: 1008px;
+      height: 576px;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,162,82,0.15);
+    }
+
+    /* ═══════════════════════════ FRONT ═══════════════════════════ */
+    .card-front {
+      background: #0f0f0f;
+    }
+
+    /* Gold top stripe */
+    .card-front::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #C9A252, #E8C97A, #C9A252);
+    }
+
+    /* Subtle texture overlay */
+    .card-front::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 85% 50%, rgba(201,162,82,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(201,162,82,0.03) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .card-front .content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      padding: 52px 64px 52px 64px;
+      z-index: 1;
+    }
+
+    /* Left column — identity */
+    .card-front .left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      padding-right: 48px;
+      border-right: 1px solid rgba(201,162,82,0.2);
+    }
+
+    .monogram {
+      width: 56px;
+      height: 56px;
+      border: 1.5px solid #C9A252;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #C9A252;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    .name-block {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: 0.5px;
+    }
+
+    .divider {
+      width: 36px;
+      height: 1.5px;
+      background: linear-gradient(90deg, #C9A252, transparent);
+    }
+
+    .title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: #C9A252;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .brand-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 9.5px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    /* Right column — contact */
+    .card-front .right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 22px;
+      padding-left: 48px;
+      min-width: 280px;
+    }
+
+    .contact-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .contact-label {
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #C9A252;
+      opacity: 0.7;
+    }
+
+    .contact-value {
+      font-size: 13px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.5px;
+    }
+
+    /* ═══════════════════════════ BACK ═══════════════════════════ */
+    .card-back {
+      background: #0f0f0f;
+    }
+
+    .card-back::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #C9A252, #E8C97A, #C9A252);
+    }
+
+    .card-back::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 70% at 50% 50%, rgba(201,162,82,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card-back .content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      z-index: 1;
+    }
+
+    .back-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-logo-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .back-logo-text span {
+      color: #C9A252;
+    }
+
+    .back-tagline {
+      font-size: 8.5px;
+      font-weight: 400;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: rgba(201,162,82,0.6);
+    }
+
+    .qr-wrapper {
+      padding: 12px;
+      background: #1a1a1a;
+      border: 1px solid rgba(201,162,82,0.25);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-wrapper img {
+      width: 160px;
+      height: 160px;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .back-url {
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ── Print controls ── */
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      background: transparent;
+      border: 1px solid rgba(201,162,82,0.4);
+      color: #C9A252;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 12px 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: rgba(201,162,82,0.08);
+      border-color: #C9A252;
+    }
+
+    .note {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1px;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.8;
+    }
+
+    /* ── Print media ── */
+    @media print {
+      body {
+        background: white;
+        gap: 0;
+        padding: 0;
+      }
+      h2, .controls, .note { display: none; }
+      .card {
+        border-radius: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      /* Scale to 3.5" × 2" at 96dpi */
+      @page { size: 3.5in 2in; margin: 0; }
+      .card { width: 3.5in; height: 2in; }
+      .card:last-child { page-break-after: avoid; }
+      .name { font-size: 13pt !important; }
+      .title { font-size: 5pt !important; }
+      .contact-value { font-size: 6pt !important; }
+      .back-logo-text { font-size: 11pt !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Front</h2>
+
+  <!-- ═══ FRONT ═══ -->
+  <div class="card card-front">
+    <div class="content">
+
+      <div class="left">
+        <div class="monogram">TL</div>
+
+        <div class="name-block">
+          <div class="name">Teianna<br/>Lindsay</div>
+          <div class="divider"></div>
+          <div class="title">Owner &amp; Founder</div>
+          <div class="brand-name">Mapping With Melanin™</div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="contact-item">
+          <span class="contact-label">Web</span>
+          <span class="contact-value">mappingwithmelanin.com</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Email</span>
+          <span class="contact-value">hello@mappingwithmelanin.com</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Phone</span>
+          <span class="contact-value">(267) 616-8258</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <h2>Back</h2>
+
+  <!-- ═══ BACK ═══ -->
+  <div class="card card-back">
+    <div class="content">
+
+      <div class="back-brand">
+        <div class="back-logo-text">Mapping With <span>Melanin™</span></div>
+        <div class="back-tagline">Discover · Connect · Belong</div>
+      </div>
+
+      <div class="qr-wrapper">
+        <!-- QR code generated via api.qrserver.com — dark background, gold dots -->
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=https%3A%2F%2Fwww.mappingwithmelanin.com&color=C9A252&bgcolor=1a1a1a&qzone=1&format=png"
+          alt="QR code — mappingwithmelanin.com"
+        />
+      </div>
+
+      <div class="back-url">www.mappingwithmelanin.com</div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <button onclick="copyInstructions()">Copy print instructions</button>
+  </div>
+
+  <p class="note">
+    Print at 3.5 × 2 inches on 16pt gloss cardstock for professional results.<br/>
+    Use "Print / Save as PDF" → set paper size to 3.5 × 2 in (or A4 with crop marks).
+  </p>
+
+  <script>
+    function copyInstructions() {
+      const txt = `Business Card Print Instructions
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Paper size:   3.5 × 2 inches (standard US business card)
+Stock:        16pt gloss or matte cardstock
+Bleed:        0.125 in on all sides recommended
+Resolution:   300 dpi minimum
+Color mode:   CMYK
+
+To export as PDF:
+1. Open business-card.html in Chrome
+2. File → Print (Cmd+P / Ctrl+P)
+3. Set destination to "Save as PDF"
+4. Set paper size to "Custom" → 3.5 × 2 in
+5. Set margins to "None"
+6. Save — send PDF to your print shop
+`;
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('Print instructions copied to clipboard.');
+      });
+    }
+  </script>
+
+</body>
+</html>
