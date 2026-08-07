@@ -1341,7 +1341,8 @@ router.post("/admin/set-user-tier", async (req: Request, res: Response) => {
 // Seeds all 438 cultural sites from the three Manus AI guide PDFs.
 // Safe to run multiple times — dedup is on LOWER(name)+LOWER(city).
 router.post("/admin/seed-manus-cultural-sites", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     // Ensure new columns exist (idempotent)
     await pool.query(`ALTER TABLE cultural_sites
@@ -1366,7 +1367,8 @@ router.post("/admin/seed-manus-cultural-sites", async (req: Request, res: Respon
 // Manus AI tour guide PDFs — second extraction pass.
 // Safe to run multiple times — upserts on LOWER(name)+LOWER(city).
 router.post("/admin/seed-manus-cultural-sites-pass2", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     // Ensure new columns exist (idempotent)
     await pool.query(`ALTER TABLE cultural_sites

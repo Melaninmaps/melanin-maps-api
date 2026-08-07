@@ -106,6 +106,17 @@ const BRAND_STYLE: object[] = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#8b6e4e" }] },
 ];
 
+// Haversine distance in km between two lat/lng points
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 // Legend tile definitions
 const LEGEND_TILES = [
   { key: "business", color: "#CA922B", shape: "circle",  label: "Businesses" },
@@ -146,6 +157,9 @@ export default function MapPage() {
   const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
   const eventMarkersRef = useRef<GMarker[]>([]);
 
+  // User's confirmed geolocation — set when browser grants permission
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
   // Sidebar + legend filter state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
@@ -167,13 +181,22 @@ export default function MapPage() {
     (b) => b.latitude && b.longitude
   );
 
-  const filtered = businesses.filter((b) => {
-    const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
-    const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
-    const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
-    const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
-    return matchSearch && matchCat;
-  });
+  const filtered = (() => {
+    const base = businesses.filter((b) => {
+      const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
+      const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
+      const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
+      const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
+      return matchSearch && matchCat;
+    });
+    // If we have the user's location, sort by proximity (closest first)
+    if (!userCoords) return base;
+    return [...base].sort((a, b) => {
+      const dA = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(a.latitude)), parseFloat(String(a.longitude)));
+      const dB = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
+      return dA - dB;
+    });
+  })();
 
   // Cultural sites for the active city (starts with Philadelphia; updates on legend filter)
   useEffect(() => {
@@ -392,9 +415,11 @@ export default function MapPage() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            // User granted — center on their actual location
+            // User granted — center on their actual location AND store coords
+            // so the sidebar can sort businesses by proximity.
             map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             map.setZoom(13);
+            setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           },
           () => {
             // Denied or unavailable — try their profile home city
@@ -755,6 +780,11 @@ export default function MapPage() {
                       <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
                         <MapPin className="w-3 h-3 shrink-0" />
                         {biz.city}, {biz.state}
+                        {userCoords && (() => {
+                          const dist = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(biz.latitude)), parseFloat(String(biz.longitude)));
+                          const label = dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
+                          return <span className="ml-1 text-[#CA922B] font-semibold">{label} away</span>;
+                        })()}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">

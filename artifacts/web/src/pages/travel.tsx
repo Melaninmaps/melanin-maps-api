@@ -65,18 +65,51 @@ export const kinfolkReturningWithContext = (firstName: string | null | undefined
     : `Hey! Last time we talked about "${topic}." Want to pick up where we left off, or something new?`;
 
 /**
- * Default quick-action chips — represent the FULL range of what Kinfolk can do.
- * Not travel-only. Updated to reflect Kinfolk as a community companion.
+ * Primary life-category chips — emoji + label + tap-to-send prompt.
+ * Mirrors the mobile LIFE_CHIPS. Not travel-only.
+ * PERMANENT — do not remove without founder authorization.
  */
-const KINFOLK_CHIPS_DEFAULT = [
-  "Find a business near me",
-  "Is this area welcoming?",
-  "Help me plan something",
-  "I need a recommendation",
-  "Tell me about this city",
-  "Where can I get my hair done?",
-  "What's the vibe here?",
-  "I don't feel safe — help me",
+const KINFOLK_LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
+  { emoji: "🏠", label: "I'm Moving",       prompt: "I'm thinking about relocating" },
+  { emoji: "✈️",  label: "I'm Traveling",   prompt: "I'm planning a trip" },
+  { emoji: "💼", label: "My Career",         prompt: "I need help with my career" },
+  { emoji: "🛍", label: "Find Businesses",  prompt: "Help me find minority-owned businesses near me" },
+  { emoji: "🤝", label: "Community",         prompt: "I want to connect with my community" },
+  { emoji: "🛡", label: "Stay Safe",         prompt: "I want to check safety info for my area" },
+  { emoji: "❤️", label: "Healthcare",        prompt: "I need healthcare recommendations" },
+  { emoji: "🎓", label: "Schools",           prompt: "I need help finding good schools" },
+];
+
+/**
+ * Secondary example-prompt chips shown under "Or try asking:".
+ * Mirrors the mobile WELCOME_CHIPS. PERMANENT.
+ */
+const KINFOLK_EXAMPLE_CHIPS = [
+  "Where's good to eat in Atlanta?",
+  "Best minority-owned hotels in Houston",
+  "What's the vibe in New Orleans?",
+  "Hidden gems in DC",
+  "Family spots in Chicago",
+  "Would my community like this city?",
+];
+
+/**
+ * Rotating welcome headlines for the empty state — one is picked randomly per mount.
+ * Mirrors the mobile WELCOME_HEADLINES. PERMANENT.
+ */
+const KINFOLK_WELCOME_HEADLINES = [
+  "What are you navigating today?",
+  "Looking for your next favorite place?",
+  "Planning a move?",
+  "Need a trusted recommendation?",
+  "Looking for community?",
+  "Tell me where you're headed.",
+  "Need help deciding?",
+  "Looking for hidden gems?",
+  "Let's map it out.",
+  "Ready for your next chapter?",
+  "What's on your mind?",
+  "How can I help today?",
 ];
 
 // ─── Chip toggle helper ───────────────────────────────────────────────────────
@@ -349,6 +382,10 @@ export default function Travel() {
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
+  // Pick one welcome headline per mount — stays stable for the session
+  const [kinfolkWelcomeHeadline] = useState(() =>
+    KINFOLK_WELCOME_HEADLINES[Math.floor(Math.random() * KINFOLK_WELCOME_HEADLINES.length)]
+  );
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -616,7 +653,7 @@ export default function Travel() {
                         ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}!`
                         : sessions.length > 0
                         ? "Welcome back!"
-                        : "Hey! I'm Kinfolk."}
+                        : kinfolkWelcomeHeadline}
                     </h2>
                     <p className="text-[#3A1F0E]/50 text-sm mb-4 max-w-md leading-relaxed">
                       {sessions.length > 0 && sessions[0]?.title
@@ -633,11 +670,23 @@ export default function Travel() {
                     {prefsLoaded && hasPrefs && (
                       <p className="mb-4 text-xs text-[#CA922B] font-medium">✓ Personalized based on your taste profile</p>
                     )}
-                    <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-                      {KINFOLK_CHIPS_DEFAULT.map(chip => (
+                    {/* Life-category chips — primary CTAs, mirrors mobile LIFE_CHIPS */}
+                    <div className="grid grid-cols-4 gap-2 max-w-lg mb-5 w-full">
+                      {KINFOLK_LIFE_CHIPS.map(chip => (
+                        <button key={chip.label} onClick={() => send(chip.prompt)}
+                          className="flex flex-col items-center gap-1.5 px-2 py-3 bg-white border border-[#3A1F0E]/10 rounded-2xl text-center hover:border-[#CA922B]/40 hover:bg-[#CA922B]/5 transition-colors shadow-sm">
+                          <span className="text-xl leading-none">{chip.emoji}</span>
+                          <span className="text-[10px] font-semibold text-[#3A1F0E]/60 leading-tight">{chip.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Example prompts — secondary, mirrors mobile WELCOME_CHIPS */}
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/30 mb-2 self-start ml-1">Or try asking:</div>
+                    <div className="flex flex-wrap gap-2 justify-start max-w-lg">
+                      {KINFOLK_EXAMPLE_CHIPS.map(chip => (
                         <button key={chip} onClick={() => send(chip)}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#3A1F0E]/10 rounded-full text-sm text-[#3A1F0E]/70 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors shadow-sm">
-                          <ChevronRight size={12} className="text-[#CA922B]" />{chip}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#3A1F0E]/10 rounded-full text-xs text-[#3A1F0E]/60 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors shadow-sm">
+                          <ChevronRight size={10} className="text-[#CA922B] shrink-0" />{chip}
                         </button>
                       ))}
                     </div>
