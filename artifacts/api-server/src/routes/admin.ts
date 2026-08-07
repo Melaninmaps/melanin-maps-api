@@ -5,6 +5,7 @@ import { eq, desc, sql, count, or } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
+import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -1381,6 +1382,66 @@ router.post("/admin/seed-manus-cultural-sites-pass2", async (req: Request, res: 
     res.json({ ok: true, ...result });
   } catch (err) {
     req.log.error({ err }, "POST /admin/seed-manus-cultural-sites-pass2 error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/seed-hbcu-complete ────────────────────────────────────────────
+// Seeds all 107 HBCUs into cultural_sites. Dedup-safe (name+state check).
+// CRON_SECRET bypass so it can be triggered without a web session.
+router.post("/admin/seed-hbcu-complete", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    let inserted = 0; let skipped = 0;
+    for (const h of HBCU_COMPLETE_SEED) {
+      const exists = await pool.query(
+        `SELECT id FROM cultural_sites
+         WHERE LOWER(name)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
+        [h.name, h.state]
+      );
+      if (exists.rows.length) { skipped++; continue; }
+
+      const era = `Founded ${h.founded}`;
+      const subcategory = h.control === "public" ? "Public HBCU" : "Private HBCU";
+
+      await pool.query(
+        `INSERT INTO cultural_sites
+          (id, name, description, category, heritage_category, subcategory,
+           ethnic_community, city, state, latitude, longitude, era,
+           significance, external_url, pin_type,
+           is_accessible, is_family_friendly, admission_free, is_verified,
+           verified_source, created_at)
+         VALUES
+          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+           true,true,true,true,$16,NOW())`,
+        [
+          randomUUID(),
+          h.name,
+          h.description,
+          "Historically Black College or University",
+          "HBCU",
+          subcategory,
+          "African American",
+          h.city,
+          h.state,
+          h.latitude,
+          h.longitude,
+          era,
+          h.significance,
+          h.externalUrl,
+          "hbcu",
+          "U.S. Dept. of Education HBCU List · thehundred-seven.org",
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "seed-hbcu-complete done");
+    res.json({ ok: true, inserted, skipped, total: HBCU_COMPLETE_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "seed-hbcu-complete error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });
