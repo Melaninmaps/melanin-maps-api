@@ -88,6 +88,56 @@ export const VIBE_LIST = [
     description: "Active, explorative, outdoors",
     priceHint: "$-$$",
   },
+  // Community endorsement vibes — used by the web business detail page
+  {
+    id: "hidden_gem",
+    label: "Hidden Gem",
+    icon: "gem",
+    description: "Underrated, secret, worth discovering",
+    priceHint: "$-$$$",
+  },
+  {
+    id: "community_staple",
+    label: "Community Staple",
+    icon: "home",
+    description: "A cornerstone of the neighborhood",
+    priceHint: "$-$$",
+  },
+  {
+    id: "grandma_approved",
+    label: "Grandma Approved",
+    icon: "heart",
+    description: "Authentic, time-tested, trusted by generations",
+    priceHint: "$-$$",
+  },
+  {
+    id: "worth_every_visit",
+    label: "Worth Every Visit",
+    icon: "star",
+    description: "Consistently excellent, never disappoints",
+    priceHint: "$-$$$",
+  },
+  {
+    id: "date_night",
+    label: "Date Night Worthy",
+    icon: "heart",
+    description: "Romantic, intimate, great for couples",
+    priceHint: "$$-$$$",
+  },
+  {
+    id: "family_friendly",
+    label: "Family Friendly",
+    icon: "smile",
+    description: "Welcoming to all ages, great for families",
+    priceHint: "$-$$",
+  },
+  {
+    id: "black_excellence",
+    label: "Black Excellence",
+    icon: "award",
+    description: "Exemplary Black-owned community business",
+    priceHint: "$-$$$",
+  },
 ];
 
 // GET /vibes/list — return canonical vibe list

@@ -148,10 +148,10 @@ export default function BusinessDetail() {
 
   useEffect(() => {
     if (!auth?.user || !id) return;
-    const apiBase = BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/vibes/my-tags?businessId=${id}`, { credentials: "include" })
+    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${apiBase}/api/vibes/businesses/${id}`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d?.vibes) setMyVibes(d.vibes.map((v: { vibe: string }) => v.vibe)); })
+      .then((d) => { if (Array.isArray(d?.myTags)) setMyVibes(d.myTags); })
       .catch(() => {});
   }, [auth?.user, id]);
 
