@@ -49,6 +49,21 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS quiet_hours_until VARCHAR(10) NOT NULL DEFAULT '8:00 AM'`,
   },
   {
+    name: "cultural_sites_tour_guide_cols",
+    sql: `ALTER TABLE cultural_sites
+      ADD COLUMN IF NOT EXISTS pin_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS visit_tip TEXT,
+      ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'staged',
+      ADD COLUMN IF NOT EXISTS data_source VARCHAR(100),
+      ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`,
+  },
+  {
+    name: "cultural_sites_lat_lng_nullable",
+    sql: `ALTER TABLE cultural_sites
+      ALTER COLUMN latitude DROP NOT NULL,
+      ALTER COLUMN longitude DROP NOT NULL`,
+  },
+  {
     name: "member_agreements_table",
     sql: `CREATE TABLE IF NOT EXISTS member_agreements (
       id VARCHAR(36) PRIMARY KEY,
