@@ -226,6 +226,31 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`,
   },
   {
+    // Backfill: Philadelphia sites go live_unclaimed so the unclaimed banner shows
+    name: "cultural_sites_philly_live_unclaimed",
+    sql: `UPDATE cultural_sites SET listing_status = 'live_unclaimed'
+          WHERE city ILIKE '%Philadelphia%'
+          AND (listing_status IS NULL OR listing_status = 'staged')`,
+  },
+  {
+    // Backfill: derive pin_type from heritage_category for legacy rows missing it
+    name: "cultural_sites_pin_type_backfill",
+    sql: `UPDATE cultural_sites
+          SET pin_type = CASE
+            WHEN heritage_category = 'HBCU'                      THEN 'HBCU'
+            WHEN heritage_category = 'Civil Rights'               THEN 'heritage_landmark'
+            WHEN heritage_category = 'African American Heritage'  THEN 'cultural_site'
+            WHEN heritage_category = 'Cultural Neighborhood'      THEN 'heritage_district'
+            WHEN heritage_category = 'Religious Heritage'         THEN 'cultural_site'
+            WHEN heritage_category IN ('Native American Heritage','Hispanic & Latino Heritage',
+                                       'LGBTQ+ History','Women''s History','Immigrant Heritage',
+                                       'Freedom Trail','Historical Sundown Town')
+                                                                  THEN 'cultural_site'
+            ELSE 'cultural_site'
+          END
+          WHERE pin_type IS NULL AND heritage_category IS NOT NULL`,
+  },
+  {
     // Drop FK so city_profiles can hold all 53+ cities, not just city_launches entries
     name: "city_profiles_drop_fk",
     sql: `ALTER TABLE city_profiles DROP CONSTRAINT IF EXISTS city_profiles_city_slug_fkey`,
