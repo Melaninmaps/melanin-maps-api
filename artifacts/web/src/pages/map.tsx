@@ -1,6 +1,6 @@
 import { useListBusinesses, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { Search, MapPin, X, SlidersHorizontal, Navigation, Navigation2 } from "lucide-react";
+import { Search, MapPin, X, Navigation, Navigation2 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -20,6 +20,7 @@ type BizWithCoords = {
   latitude?: string | number | null;
   longitude?: string | number | null;
   blackOwned?: boolean | null;
+  description?: string | null;
 };
 
 type CulturalSiteWeb = {
@@ -38,6 +39,7 @@ type CulturalSiteWeb = {
   externalUrl?: string | null;
 };
 
+// ── Pin colour helpers ──────────────────────────────────────────────────────
 function getCulturalPinColor(site: CulturalSiteWeb): string {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
@@ -49,7 +51,7 @@ function getCulturalPinColor(site: CulturalSiteWeb): string {
   if (hc === "HBCU") return "#7C3AED";
   if (hc === "Civil Rights") return "#DC2626";
   if (hc === "Religious Heritage") return "#78716C";
-  return "#92400E"; // heritage / cultural site default
+  return "#92400E";
 }
 
 function getCulturalPinLabel(site: CulturalSiteWeb): string {
@@ -65,11 +67,24 @@ function getCulturalPinLabel(site: CulturalSiteWeb): string {
   return hc || "Cultural Site";
 }
 
-type RouteInfo = {
-  distance: string;
-  duration: string;
-  bizName: string;
-};
+// Which cultural sites match the active legend filter?
+function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
+  const pt = site.pinType ?? "";
+  const hc = site.heritageCategory ?? "";
+  const isHbcuEvent = hc === "HBCU" || pt === "festival_or_event" || pt === "community_event";
+  const isMarket = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
+  const isArt = pt === "mural_or_public_art";
+  if (filter === "hbcu") return isHbcuEvent;
+  if (filter === "market") return isMarket;
+  if (filter === "art") return isArt;
+  if (filter === "cultural") return !isHbcuEvent && !isMarket && !isArt;
+  return true;
+}
+
+// Universal diamond pin path — 16 × 16 px (same visual size as business circle scale:8)
+const DIAMOND_PATH = "M 0,-8 8,0 0,8 -8,0 Z";
+
+type RouteInfo = { distance: string; duration: string; bizName: string };
 
 const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional"];
 
@@ -88,6 +103,15 @@ const BRAND_STYLE: object[] = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9b99a" }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#8b6e4e" }] },
 ];
+
+// Legend tile definitions
+const LEGEND_TILES = [
+  { key: "business",  color: "#CA922B", shape: "circle",  label: "Businesses" },
+  { key: "cultural",  color: "#92400E", shape: "diamond", label: "Cultural Sites" },
+  { key: "hbcu",      color: "#7C3AED", shape: "diamond", label: "HBCU / Events" },
+  { key: "market",    color: "#16A34A", shape: "diamond", label: "Markets" },
+  { key: "art",       color: "#0891B2", shape: "diamond", label: "Public Art" },
+] as const;
 
 export default function MapPage() {
   const { data, isLoading } = useListBusinesses({}, { query: { queryKey: ["businesses", "map-full"] } });
@@ -110,16 +134,18 @@ export default function MapPage() {
   const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
 
-  // Geocode the search string and pan the map to the result
+  // Sidebar + legend filter state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [legendFilter, setLegendFilter] = useState<string | null>(null);
+
+  // Geocode search string and pan map
   const geocodeAndPan = useCallback(() => {
     if (!mapRef.current || !search.trim()) return;
     const g = (window as any).google?.maps;
     if (!g) return;
-    const geocoder = new g.Geocoder();
-    geocoder.geocode({ address: search.trim() }, (results: any[], status: string) => {
+    new g.Geocoder().geocode({ address: search.trim() }, (results: any[], status: string) => {
       if (status === "OK" && results?.[0]?.geometry?.location) {
-        const loc = results[0].geometry.location;
-        mapRef.current.panTo(loc);
+        mapRef.current.panTo(results[0].geometry.location);
         mapRef.current.setZoom(13);
       }
     });
@@ -130,36 +156,27 @@ export default function MapPage() {
   );
 
   const filtered = businesses.filter((b) => {
-    // Tokenise by comma so "Philadelphia, PA" matches the city "Philadelphia"
-    // AND the state "PA" independently — users naturally type "City, ST".
     const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
     const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
-    const matchSearch =
-      tokens.length === 0 ||
-      tokens.every((token) => fields.some((f) => f.includes(token)));
-    const matchCat =
-      category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
+    const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
+    const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
     return matchSearch && matchCat;
   });
 
-  // Fetch Philadelphia cultural sites once map is ready
+  // Cultural sites for the active city (starts with Philadelphia; updates on legend filter)
   useEffect(() => {
     if (!ready) return;
     const base = BASE.replace(/\/$/, "");
     fetch(`${base}/api/cultural-sites?city=Philadelphia`)
       .then((r) => r.json())
-      .then((d: any) => {
-        if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]);
-      })
+      .then((d: any) => { if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]); })
       .catch(() => {});
   }, [ready]);
 
-  // Render cultural site markers whenever sites load and map is initialized
+  // Render cultural site markers whenever sites load
   useEffect(() => {
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current || culturalSites.length === 0) return;
-
-    // Clean up previous cultural markers
     culturalMarkersRef.current.forEach((m) => m.setMap(null));
     culturalMarkersRef.current = [];
 
@@ -171,13 +188,12 @@ export default function MapPage() {
       const color = getCulturalPinColor(site);
       const label = getCulturalPinLabel(site);
 
-      // Diamond shape SVG path for cultural sites — distinct from business circles
       const marker: GMarker = new g.Marker({
         position: { lat, lng },
         map: mapRef.current,
         title: site.name,
         icon: {
-          path: "M 0,-9 7,0 0,9 -7,0 Z",
+          path: DIAMOND_PATH,
           scale: 1,
           fillColor: color,
           fillOpacity: 0.92,
@@ -188,12 +204,7 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
-        const snippet = site.visitTip
-          ? site.visitTip.slice(0, 120) + (site.visitTip.length > 120 ? "…" : "")
-          : site.description
-          ? site.description.slice(0, 100) + (site.description.length > 100 ? "…" : "")
-          : "";
-
+        const snippet = (site.visitTip ?? site.description ?? "").slice(0, 120);
         infoWindowRef.current?.setContent(
           `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
@@ -201,13 +212,8 @@ export default function MapPage() {
             </div>
             <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.name}</div>
             <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
-            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}</div>` : ""}
-            ${site.listingStatus === "live_unclaimed"
-              ? `<div style="font-size:10px;color:#CA922B;margin-bottom:4px">Community Listed — not yet claimed</div>`
-              : ""}
-            ${site.externalUrl
-              ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block">Learn More →</a>`
-              : ""}
+            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
+            ${site.externalUrl ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block">Learn More →</a>` : ""}
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -218,21 +224,32 @@ export default function MapPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [culturalSites]);
 
-  // Check subscription status
+  // Cultural marker visibility — responds to legendFilter changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    culturalMarkersRef.current.forEach((marker, i) => {
+      const site = culturalSites[i];
+      if (!site) { marker.setMap(null); return; }
+      const visible =
+        legendFilter !== "business" &&
+        (legendFilter === null || siteMatchesFilter(site, legendFilter));
+      marker.setMap(visible ? mapRef.current : null);
+    });
+  }, [legendFilter, culturalSites]);
+
+  // Subscription check
   useEffect(() => {
     if (!authData?.user) return;
     const base = BASE.replace(/\/$/, "");
     fetch(`${base}/api/stripe/subscription`, { credentials: "include" })
       .then((r) => r.json())
       .then((d: any) => {
-        if (d.subscription && ["active", "trialing"].includes(d.subscription.status)) {
-          setIsPaidMember(true);
-        }
+        if (d.subscription && ["active", "trialing"].includes(d.subscription.status)) setIsPaidMember(true);
       })
       .catch(() => {});
   }, [authData?.user]);
 
-  // Load Google Maps JS API via the server-side key endpoint
+  // Load Google Maps JS
   useEffect(() => {
     if (ready) return;
     const base = BASE.replace(/\/$/, "");
@@ -253,16 +270,13 @@ export default function MapPage() {
       .catch(() => setApiKeyError(true));
   }, []);
 
-  // Initialize map once script + data are ready
+  // Initialize map
   useEffect(() => {
     if (!ready || !mapDivRef.current || isLoading) return;
     if (mapRef.current) return;
 
     const onGmError = (e: ErrorEvent) => {
-      if (
-        e.message?.toLowerCase().includes("invalidkey") ||
-        e.message?.toLowerCase().includes("google maps")
-      ) {
+      if (e.message?.toLowerCase().includes("invalidkey") || e.message?.toLowerCase().includes("google maps")) {
         setApiKeyError(true);
       }
     };
@@ -316,6 +330,8 @@ export default function MapPage() {
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
+    setSidebarOpen(true);
+    setLegendFilter(null); // switch sidebar to business view
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
 
@@ -324,14 +340,13 @@ export default function MapPage() {
 
     const lat = parseFloat(String(biz.latitude));
     const lng = parseFloat(String(biz.longitude));
-
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(14);
 
     markersRef.current.forEach((mk, mid) => {
       mk.setIcon({
         path: g.SymbolPath.CIRCLE,
-        scale: mid === id ? 12 : 8,
+        scale: mid === id ? 10 : 8,
         fillColor: mid === id ? "#2B1507" : "#CA922B",
         fillOpacity: 0.9,
         strokeColor: mid === id ? "#CA922B" : "#2B1507",
@@ -387,48 +402,30 @@ export default function MapPage() {
     const lng = parseFloat(String(biz.longitude));
 
     if (!isPaidMember) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
-        "_blank"
-      );
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, "_blank");
       return;
     }
 
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
-
     setRoutingBizId(biz.id);
 
-    const doRoute = (origin: { lat: number; lng: number } | any) => {
+    const doRoute = (origin: any) => {
       if (!directionsRendererRef.current) {
         directionsRendererRef.current = new g.DirectionsRenderer({
-          polylineOptions: {
-            strokeColor: "#CA922B",
-            strokeWeight: 5,
-            strokeOpacity: 0.85,
-          },
+          polylineOptions: { strokeColor: "#CA922B", strokeWeight: 5, strokeOpacity: 0.85 },
           suppressMarkers: false,
         });
       }
       directionsRendererRef.current.setMap(mapRef.current);
-
-      const service = new g.DirectionsService();
-      service.route(
-        {
-          origin,
-          destination: { lat, lng },
-          travelMode: g.TravelMode.DRIVING,
-        },
+      new g.DirectionsService().route(
+        { origin, destination: { lat, lng }, travelMode: g.TravelMode.DRIVING },
         (result: any, status: any) => {
           setRoutingBizId(null);
           if (status === "OK" && result) {
             directionsRendererRef.current.setDirections(result);
             const leg = result.routes?.[0]?.legs?.[0];
-            setRouteInfo({
-              distance: leg?.distance?.text ?? "",
-              duration: leg?.duration?.text ?? "",
-              bizName: biz.name ?? "",
-            });
+            setRouteInfo({ distance: leg?.distance?.text ?? "", duration: leg?.duration?.text ?? "", bizName: biz.name ?? "" });
             infoWindowRef.current?.close();
           }
         }
@@ -445,147 +442,232 @@ export default function MapPage() {
     }
   }, [isPaidMember]);
 
-  // Show/hide markers based on active filters
+  // Business marker visibility — respects legendFilter + search/category filter
   useEffect(() => {
     if (!mapRef.current) return;
+    const showBiz = !legendFilter || legendFilter === "business";
     const filteredIds = new Set(filtered.map((b) => b.id));
     markersRef.current.forEach((marker, id) => {
-      marker.setMap(filteredIds.has(id) ? mapRef.current : null);
+      marker.setMap(showBiz && filteredIds.has(id) ? mapRef.current : null);
     });
-  }, [filtered]);
+  }, [filtered, legendFilter]);
 
-  const renderSidebar = () => (
-    <div className="w-80 shrink-0 flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
-      <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
-        <h1 className="font-serif font-bold text-[#2B1507] text-lg mb-3">Explore the Map</h1>
-        <div className="relative mb-3">
-          <button
-            onClick={geocodeAndPan}
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:text-[#CA922B] transition-colors"
-            aria-label="Search"
-          >
-            <Search className="w-4 h-4 text-[#3A1F0E]/40" />
-          </button>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && geocodeAndPan()}
-            placeholder="Search city or business…"
-            className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
-          />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5">
-              <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
-            </button>
-          )}
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {CATEGORIES.map((cat) => (
+  // ── Sidebar ─────────────────────────────────────────────────────────────
+  const activeCulturalSites = legendFilter && legendFilter !== "business"
+    ? culturalSites.filter((s) => siteMatchesFilter(s, legendFilter))
+    : [];
+
+  const legendTileLabel = LEGEND_TILES.find((t) => t.key === legendFilter)?.label ?? "";
+
+  const renderSidebar = () => {
+    // Content when a cultural legend filter is active
+    const showingCultural = legendFilter && legendFilter !== "business";
+
+    return (
+      <div className="w-80 shrink-0 flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
+        {/* Header */}
+        <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="font-serif font-bold text-[#2B1507] text-lg">
+              {showingCultural ? legendTileLabel : "Explore the Map"}
+            </h1>
             <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${
-                category === cat
-                  ? "bg-[#2B1507] text-[#F5EBD8]"
-                  : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#3A1F0E]/8"
-              }`}
+              onClick={() => { setSidebarOpen(false); setLegendFilter(null); }}
+              className="w-7 h-7 rounded-full bg-[#3A1F0E]/6 flex items-center justify-center hover:bg-[#3A1F0E]/12 transition-colors"
+              aria-label="Close panel"
             >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="px-4 py-2 text-xs text-[#3A1F0E]/40 font-medium border-b border-[#3A1F0E]/6 shrink-0 flex items-center justify-between">
-        <span>{filtered.length} {filtered.length === 1 ? "location" : "locations"}</span>
-        {selected && (
-          <button onClick={resetView} className="text-[#CA922B] font-bold hover:underline">Reset view</button>
-        )}
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="p-4 border-b border-[#3A1F0E]/6 animate-pulse">
-              <div className="flex gap-3">
-                <div className="w-14 h-14 rounded-xl bg-[#3A1F0E]/8 shrink-0" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-4 bg-[#3A1F0E]/8 rounded w-3/4" />
-                  <div className="h-3 bg-[#3A1F0E]/6 rounded w-1/2" />
-                </div>
-              </div>
-            </div>
-          ))
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-center">
-            <SlidersHorizontal className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
-            <p className="text-sm text-[#3A1F0E]/50 mb-3">No businesses match your filters.</p>
-            <button
-              onClick={() => { setSearch(""); setCategory("All"); }}
-              className="text-xs font-bold text-[#CA922B] hover:underline"
-            >
-              Clear Filters
+              <X className="w-4 h-4 text-[#3A1F0E]/60" />
             </button>
           </div>
-        ) : (
-          filtered.map((biz) => {
-            const isRouting = routingBizId === biz.id;
-            return (
-              <div
-                key={biz.id}
-                onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
-                className={`p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 ${
-                  !apiKeyError ? "cursor-pointer" : ""
-                } ${selected === biz.id ? "bg-[#CA922B]/8 border-l-2 border-l-[#CA922B]" : "hover:bg-[#FAF6EF]"}`}
-              >
-                <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#3A1F0E]/8">
-                  {biz.imageUrl && (
-                    <img src={biz.imageUrl} alt={biz.name ?? ""} className="w-full h-full object-cover" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
-                  {biz.description?.startsWith("[DEMO]") && (
-                    <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 mb-0.5">
-                      Demo Listing
-                    </span>
-                  )}
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category}</div>
-                  <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    {biz.city}, {biz.state}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <Link
-                    href={`/businesses/${biz.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-[10px] font-bold text-[#CA922B] hover:underline"
-                  >
-                    View →
-                  </Link>
+
+          {/* Search — only shown in business view */}
+          {!showingCultural && (
+            <>
+              <div className="relative mb-3">
+                <button
+                  onClick={geocodeAndPan}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:text-[#CA922B] transition-colors"
+                  aria-label="Search"
+                >
+                  <Search className="w-4 h-4 text-[#3A1F0E]/40" />
+                </button>
+                <input
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); }}
+                  onKeyDown={(e) => e.key === "Enter" && geocodeAndPan()}
+                  placeholder="Search city or business…"
+                  className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5">
+                    <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {CATEGORIES.map((cat) => (
                   <button
-                    onClick={(e) => handleDirections(biz, e)}
-                    title={isPaidMember ? "Get in-app directions" : "Open in Google Maps"}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
-                      isRouting
-                        ? "bg-[#CA922B]/20 text-[#CA922B] animate-pulse"
-                        : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#CA922B]/15 hover:text-[#CA922B]"
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${
+                      category === cat
+                        ? "bg-[#2B1507] text-[#F5EBD8]"
+                        : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#3A1F0E]/8"
                     }`}
                   >
-                    {isRouting ? (
-                      <Navigation2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Navigation className="w-3 h-3" />
-                    )}
-                    {isPaidMember ? "Route" : "Directions"}
+                    {cat}
                   </button>
-                </div>
+                ))}
               </div>
-            );
-          })
-        )}
+            </>
+          )}
+        </div>
+
+        {/* Count row */}
+        <div className="px-4 py-2 text-xs text-[#3A1F0E]/40 font-medium border-b border-[#3A1F0E]/6 shrink-0 flex items-center justify-between">
+          <span>
+            {showingCultural
+              ? `${activeCulturalSites.length} ${activeCulturalSites.length === 1 ? "site" : "sites"}`
+              : `${filtered.length} ${filtered.length === 1 ? "location" : "locations"}`}
+          </span>
+          {selected && !showingCultural && (
+            <button onClick={resetView} className="text-[#CA922B] font-bold hover:underline">Reset view</button>
+          )}
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto">
+          {showingCultural ? (
+            // ── Cultural sites list ──
+            activeCulturalSites.length === 0 ? (
+              <div className="p-8 text-center">
+                <MapPin className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
+                <p className="text-sm text-[#3A1F0E]/50">No {legendTileLabel.toLowerCase()} found in this area.</p>
+              </div>
+            ) : (
+              activeCulturalSites.map((site) => {
+                const color = getCulturalPinColor(site);
+                const label = getCulturalPinLabel(site);
+                return (
+                  <div key={site.id} className="p-4 border-b border-[#3A1F0E]/6 hover:bg-[#FAF6EF] transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-3 h-3 rotate-45 shrink-0 mt-1.5"
+                        style={{ background: color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[#2B1507] text-sm leading-tight">{site.name}</div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color }}>{label}</div>
+                        <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 shrink-0" />
+                          {site.city}, {site.state}
+                        </div>
+                        {site.description && (
+                          <p className="text-xs text-[#3A1F0E]/60 mt-1 leading-relaxed line-clamp-2">
+                            {site.description.slice(0, 100)}{site.description.length > 100 ? "…" : ""}
+                          </p>
+                        )}
+                        {site.externalUrl && (
+                          <a
+                            href={site.externalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold mt-1 block hover:underline"
+                            style={{ color }}
+                          >
+                            Learn More →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )
+          ) : (
+            // ── Business list ──
+            isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-4 border-b border-[#3A1F0E]/6 animate-pulse">
+                  <div className="flex gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-[#3A1F0E]/8 shrink-0" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <div className="h-4 bg-[#3A1F0E]/8 rounded w-3/4" />
+                      <div className="h-3 bg-[#3A1F0E]/6 rounded w-1/2" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : filtered.length === 0 ? (
+              <div className="p-8 text-center">
+                <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
+                <p className="text-sm text-[#3A1F0E]/50 mb-3">No businesses match your filters.</p>
+                <button
+                  onClick={() => { setSearch(""); setCategory("All"); }}
+                  className="text-xs font-bold text-[#CA922B] hover:underline"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              filtered.map((biz) => {
+                const isRouting = routingBizId === biz.id;
+                return (
+                  <div
+                    key={biz.id}
+                    onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
+                    className={`p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 ${
+                      !apiKeyError ? "cursor-pointer" : ""
+                    } ${selected === biz.id ? "bg-[#CA922B]/8 border-l-2 border-l-[#CA922B]" : "hover:bg-[#FAF6EF]"}`}
+                  >
+                    <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-[#3A1F0E]/8">
+                      {biz.imageUrl && (
+                        <img src={biz.imageUrl} alt={biz.name ?? ""} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
+                      {biz.description?.startsWith("[DEMO]") && (
+                        <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 mb-0.5">
+                          Demo Listing
+                        </span>
+                      )}
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category}</div>
+                      <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        {biz.city}, {biz.state}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <Link
+                        href={`/businesses/${biz.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[10px] font-bold text-[#CA922B] hover:underline"
+                      >
+                        View →
+                      </Link>
+                      <button
+                        onClick={(e) => handleDirections(biz, e)}
+                        title={isPaidMember ? "Get in-app directions" : "Open in Google Maps"}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                          isRouting
+                            ? "bg-[#CA922B]/20 text-[#CA922B] animate-pulse"
+                            : "bg-[#FAF6EF] text-[#3A1F0E]/60 hover:bg-[#CA922B]/15 hover:text-[#CA922B]"
+                        }`}
+                      >
+                        {isRouting ? <Navigation2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+                        {isPaidMember ? "Route" : "Directions"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (apiKeyError) {
     return (
@@ -606,7 +688,8 @@ export default function MapPage() {
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
-      {renderSidebar()}
+      {/* Sidebar — only visible when open */}
+      {sidebarOpen && renderSidebar()}
 
       {/* ── Map ── */}
       <div className="flex-1 relative">
@@ -617,6 +700,17 @@ export default function MapPage() {
           </div>
         )}
         <div ref={mapDivRef} className="w-full h-full" />
+
+        {/* Floating search pill — shown when sidebar is closed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => { setSidebarOpen(true); setLegendFilter(null); }}
+            className="absolute top-4 left-4 z-10 bg-white shadow-lg rounded-2xl px-4 py-2.5 flex items-center gap-2.5 border border-[#3A1F0E]/10 hover:shadow-xl hover:border-[#CA922B]/30 transition-all"
+          >
+            <Search className="w-4 h-4 text-[#3A1F0E]/50" />
+            <span className="text-sm text-[#3A1F0E]/50 font-medium">Search businesses…</span>
+          </button>
+        )}
 
         {/* Active route info bar */}
         {routeInfo && (
@@ -635,32 +729,39 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-6 left-4 bg-white/92 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-4 gap-y-1.5 pointer-events-none max-w-[480px]">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#CA922B] border border-[#2B1507]/40" />
-            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Business</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rotate-45 bg-[#92400E]" />
-            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Cultural Site</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rotate-45 bg-[#7C3AED]" />
-            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">HBCU / Event</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rotate-45 bg-[#16A34A]" />
-            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Market</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rotate-45 bg-[#0891B2]" />
-            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Public Art</span>
-          </div>
+        {/* Interactive legend */}
+        <div className="absolute bottom-6 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1 max-w-[520px]">
+          {LEGEND_TILES.map(({ key, color, shape, label }) => {
+            const isActive = legendFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => {
+                  const next = isActive ? null : key;
+                  setLegendFilter(next);
+                  setSidebarOpen(next !== null);
+                }}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-left ${
+                  isActive
+                    ? "bg-[#3A1F0E]/10 ring-1 ring-[#3A1F0E]/20"
+                    : "hover:bg-[#3A1F0E]/5"
+                }`}
+              >
+                {shape === "circle" ? (
+                  <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
+                ) : (
+                  <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
+                )}
+                <span className={`text-[10px] font-semibold ${isActive ? "text-[#3A1F0E]" : "text-[#3A1F0E]/70"}`}>
+                  {label}
+                </span>
+              </button>
+            );
+          })}
           {isPaidMember && (
-            <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-4">
+            <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-3 ml-1">
               <Navigation className="w-3 h-3 text-[#CA922B]" />
-              <span className="text-xs font-semibold text-[#CA922B]">In-app routing active</span>
+              <span className="text-xs font-semibold text-[#CA922B]">Routing active</span>
             </div>
           )}
         </div>
