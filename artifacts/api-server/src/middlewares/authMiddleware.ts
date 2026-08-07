@@ -80,7 +80,21 @@ export async function authMiddleware(
     return;
   }
 
-  const session = await getSession(sid);
+  // Wrap DB read in try/catch so a transient pool error does NOT destroy the
+  // user's session cookie. On DB error we continue unauthenticated this request
+  // only — the cookie stays intact so the next request can succeed.
+  let session: SessionData | null = null;
+  try {
+    session = await getSession(sid);
+  } catch (err) {
+    req.log.warn(
+      { event: "SESSION_DB_READ_ERROR", sidPrefix: sid.slice(0, 8) + "…", err },
+      "DB error reading session — keeping cookie, continuing unauthenticated this request",
+    );
+    next();
+    return;
+  }
+
   if (!session?.user?.id) {
     req.log.warn(
       { event: "SESSION_CLEARED_NO_USER", sidPrefix: sid.slice(0, 8) + "…", hasSession: !!session },
