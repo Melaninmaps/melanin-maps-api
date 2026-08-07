@@ -446,6 +446,7 @@ export default function Admin() {
   const [selectedCity, setSelectedCity] = useState<CityLaunch | null>(null);
   const [checklistUpdating, setChecklistUpdating] = useState<string | null>(null);
   const [cityStatusUpdating, setCityStatusUpdating] = useState<string | null>(null);
+  const [triggerLaunching, setTriggerLaunching] = useState<string | null>(null);
   const [cityTrend, setCityTrend] = useState<CityTrendPoint[]>([]);
   const [cityTrendLoading, setCityTrendLoading] = useState(false);
   const [cityStatusBanner, setCityStatusBanner] = useState<{ message: string; newStatus: string } | null>(null);
@@ -2928,6 +2929,49 @@ export default function Admin() {
                   ))}
                 </div>
               </div>
+
+              {/* ── Go Live — promotes staged businesses, hides demo pins, marks city live ── */}
+              {selectedCity.status !== "live" && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center justify-between gap-4">
+                  <div>
+                    <div className="font-bold text-green-900 text-sm">Ready to go live?</div>
+                    <div className="text-green-700 text-xs mt-0.5">
+                      Promotes {selectedCity.city} staged businesses to live · hides demo pins · marks city as live
+                    </div>
+                  </div>
+                  <button
+                    disabled={triggerLaunching === selectedCity.slug}
+                    onClick={async () => {
+                      if (!confirm(`Launch ${selectedCity.city}, ${selectedCity.state}?\n\nThis will:\n• Promote all staged businesses to live\n• Hide demo/seed pins\n• Mark city as live\n\nThis cannot be undone.`)) return;
+                      setTriggerLaunching(selectedCity.slug);
+                      try {
+                        const r = await fetch(`${BASE}api/admin/city-launches/${selectedCity.slug}/trigger-launch`, {
+                          method: "POST", credentials: "include",
+                        });
+                        const data = await r.json();
+                        if (data.ok) {
+                          setCityStatusBanner({ message: data.message ?? `🚀 ${selectedCity.city} is now live!`, newStatus: "live" });
+                          await loadCityLaunches();
+                        } else {
+                          alert(data.error ?? "Launch failed — check the console.");
+                        }
+                      } finally {
+                        setTriggerLaunching(null);
+                      }
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors shrink-0"
+                  >
+                    {triggerLaunching === selectedCity.slug ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4.5 16.5c-1.5 1.5-1.5 3-1.5 3s1.5 0 3-1.5L20 4l-4-4z M12 8 8 12"/>
+                      </svg>
+                    )}
+                    {triggerLaunching === selectedCity.slug ? "Launching…" : "🚀 Go Live"}
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {[

@@ -172,7 +172,7 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
           ELSE 9
         END,
         name ASC
-      LIMIT 500
+      LIMIT 2500
     `;
 
     const result = await pool.query(sql, params);

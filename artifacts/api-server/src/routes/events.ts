@@ -6,10 +6,7 @@ import { getUserTier } from "../middleware/requireMembership";
 const router: IRouter = Router();
 
 router.get("/events", async (req: Request, res: Response) => {
-  if (!(req as any).user) {
-    res.status(401).json({ error: "Authentication required." });
-    return;
-  }
+  // Events are publicly browsable — auth is optional (personalization applies when authenticated)
   try {
     const { category, search, featured } = req.query;
 
@@ -34,18 +31,15 @@ router.get("/events", async (req: Request, res: Response) => {
       conditions.push(eq(eventsTable.featured, true));
     }
 
+    // Show all active events — including platform-seeded community events
     conditions.push(eq(eventsTable.status, "active"));
-    // Only surface events that have a member creator, owner claim, or endorsement.
-    // This ensures Apple's reviewer sees member-generated content, not platform-seeded
-    // catalog records — supporting the members-only argument under Guideline 5.1.1(v).
-    conditions.push(isNotNull(eventsTable.createdById));
 
     const rawEvents = await db
       .select()
       .from(eventsTable)
       .where(and(...conditions))
       .orderBy(desc(eventsTable.createdAt))
-      .limit(100);
+      .limit(500);
 
     // Personalize: score by user preferences if authenticated
     let events: Array<typeof rawEvents[0] & { relevanceScore: number }> =

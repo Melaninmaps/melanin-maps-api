@@ -137,6 +137,15 @@ export default function MapPage() {
   const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
 
+  type MapEvent = {
+    id: string; title: string; city: string; state: string;
+    latitude: string | null; longitude: string | null;
+    category: string; startDate?: string | null; location?: string | null;
+    isFree?: boolean | null;
+  };
+  const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
+  const eventMarkersRef = useRef<GMarker[]>([]);
+
   // Sidebar + legend filter state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
@@ -173,6 +182,21 @@ export default function MapPage() {
     fetch(`${base}/api/cultural-sites`)
       .then((r) => r.json())
       .then((d: any) => { if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]); })
+      .catch(() => {});
+  }, [ready]);
+
+  // Fetch active events with coordinates for map pins
+  useEffect(() => {
+    if (!ready) return;
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/events`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d: any) => {
+        const evts = (d.events ?? []).filter(
+          (e: any) => e.latitude != null && e.longitude != null,
+        );
+        setMapEvents(evts);
+      })
       .catch(() => {});
   }, [ready]);
 
@@ -239,6 +263,65 @@ export default function MapPage() {
       marker.setMap(visible ? mapRef.current : null);
     });
   }, [legendFilter, culturalSites]);
+
+  // Render event markers from the events table
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    if (!g || !mapRef.current || mapEvents.length === 0) return;
+    eventMarkersRef.current.forEach((m) => m.setMap(null));
+    eventMarkersRef.current = [];
+    const shouldShow = legendFilter === null || legendFilter === "events";
+
+    mapEvents.forEach((evt) => {
+      const lat = parseFloat(evt.latitude ?? "");
+      const lng = parseFloat(evt.longitude ?? "");
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const marker: GMarker = new g.Marker({
+        position: { lat, lng },
+        map: shouldShow ? mapRef.current : null,
+        title: evt.title,
+        icon: {
+          path: g.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#EA580C",
+          fillOpacity: 0.9,
+          strokeColor: "#fff",
+          strokeWeight: 1.5,
+        },
+        zIndex: 3,
+      });
+
+      marker.addListener("click", () => {
+        const dateStr = evt.startDate
+          ? new Date(evt.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "";
+        infoWindowRef.current?.setContent(
+          `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="background:#EA580C22;color:#EA580C;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${evt.category}</span>
+              ${evt.isFree ? '<span style="background:#16A34A22;color:#16A34A;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">Free</span>' : ""}
+            </div>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${evt.title}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${evt.city}, ${evt.state}</div>
+            ${evt.location ? `<div style="font-size:11px;color:#3A1F0E;margin-bottom:2px">${evt.location}</div>` : ""}
+            ${dateStr ? `<div style="font-size:11px;color:#EA580C;font-weight:600;margin-top:2px">${dateStr}</div>` : ""}
+          </div>`,
+        );
+        mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
+      });
+
+      eventMarkersRef.current.push(marker);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapEvents]);
+
+  // Event marker visibility — responds to legendFilter
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const visible = legendFilter === null || legendFilter === "events";
+    eventMarkersRef.current.forEach((m) => m.setMap(visible ? mapRef.current : null));
+  }, [legendFilter, mapEvents]);
 
   // Subscription check
   useEffect(() => {
