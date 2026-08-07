@@ -148,8 +148,17 @@ export default function Cities() {
                       <div className="text-sm text-[#3A1F0E]/60">
                         <span className="font-bold text-[#3A1F0E]">{city.businesses}</span> businesses
                       </div>
-                      <div className="flex items-center gap-1 text-[#CA922B] font-semibold text-sm group-hover:gap-2 transition-all">
-                        Explore <ArrowRight className="w-4 h-4" />
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/cities/${city.slug}/story`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-1 text-[#3A1F0E]/40 hover:text-[#CA922B] font-medium text-xs transition-colors"
+                        >
+                          <Landmark className="w-3.5 h-3.5" /> Living Legacy
+                        </Link>
+                        <div className="flex items-center gap-1 text-[#CA922B] font-semibold text-sm group-hover:gap-2 transition-all">
+                          Explore <ArrowRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
                   </div>

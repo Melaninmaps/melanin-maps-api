@@ -4,7 +4,8 @@ import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import * as Location from "expo-location";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -140,6 +141,26 @@ export default function ReportSafetyScreen() {
   const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [cityDetecting, setCityDetecting] = useState(false);
+
+  // Auto-detect city from GPS on mount — user can still edit
+  useEffect(() => {
+    setCityDetecting(true);
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return;
+        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const geo = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        const place = geo[0];
+        if (place?.city) {
+          const region = place.region ?? place.subregion ?? "";
+          setForm((f) => f.city.trim() ? f : { ...f, city: `${place.city}${region ? `, ${region}` : ""}` });
+        }
+      } catch { /* GPS unavailable */ }
+      finally { setCityDetecting(false); }
+    })();
+  }, []);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -213,7 +234,8 @@ export default function ReportSafetyScreen() {
   };
 
   const canProceed1 = form.reportType !== "" && form.severity !== "";
-  const canProceed2 = form.city.trim().length > 0 && form.description.trim().length > 10;
+  // City is required (auto-detected); description is optional — a chip selection alone is enough
+  const canProceed2 = form.city.trim().length > 0;
 
   const isSuccess = step === 3;
 
@@ -410,7 +432,10 @@ export default function ReportSafetyScreen() {
                   )}
 
                   <View style={styles.fieldWrap}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>City / Area *</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                      <Text style={[styles.fieldLabel, { color: colors.foreground, marginBottom: 0 }]}>City / Area *</Text>
+                      {cityDetecting && <Text style={[styles.fieldHint, { color: colors.primary, marginBottom: 0 }]}>Detecting…</Text>}
+                    </View>
                     <TextInput
                       value={form.city}
                       onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
@@ -445,14 +470,14 @@ export default function ReportSafetyScreen() {
                   </View>
 
                   <View style={styles.fieldWrap}>
-                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description *</Text>
+                    <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description</Text>
                     <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
-                      What happened? When? Any additional context the community should know.
+                      Optional — add context if you're comfortable. Your report submits without it.
                     </Text>
                     <TextInput
                       value={form.description}
                       onChangeText={(v) => setForm((f) => ({ ...f, description: v }))}
-                      placeholder="Describe what you witnessed or experienced..."
+                      placeholder="Add details if you're comfortable…"
                       placeholderTextColor={colors.mutedForeground}
                       multiline
                       numberOfLines={5}

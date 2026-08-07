@@ -36,6 +36,7 @@ import Terms from "@/pages/terms";
 import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
+import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
 import Billing from "@/pages/billing";
 import VerifyBusiness from "@/pages/verify-business";
@@ -143,6 +144,9 @@ function Router() {
       </Route>
       <Route path="/cities">
         <Layout><Cities /></Layout>
+      </Route>
+      <Route path="/cities/:slug/story">
+        <Layout><CityStoryPage /></Layout>
       </Route>
       <Route path="/cities/:city">
         <Layout><CitySpotlight /></Layout>

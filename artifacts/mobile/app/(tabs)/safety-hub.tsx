@@ -537,6 +537,53 @@ export default function SafetyHubTab() {
             </View>
           )}
 
+          {/* ── Emergency SOS — always at top, never reorderable ── */}
+          {!editMode && (
+            <View style={{ paddingHorizontal: 16, paddingBottom: 4 }}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  Alert.alert(
+                    "Emergency SOS",
+                    "Are you in immediate danger?\n\nThis will open your phone dialer to call 911.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Call 911 Now",
+                        style: "destructive",
+                        onPress: () => {
+                          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                          Linking.openURL("tel:911");
+                        },
+                      },
+                    ],
+                    { cancelable: true },
+                  );
+                }}
+                style={{
+                  backgroundColor: "#DC2626",
+                  borderRadius: 16,
+                  padding: 18,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 14,
+                }}
+              >
+                <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="phone-call" size={22} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 17, color: "#fff", letterSpacing: 0.3 }}>Emergency SOS</Text>
+                  <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>
+                    Tap to call 911 immediately
+                  </Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="rgba(255,255,255,0.7)" />
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Feature grid — normal mode */}
           {!editMode && (
             <View style={styles.section}>

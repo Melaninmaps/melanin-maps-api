@@ -132,6 +132,56 @@ export default function BusinessDetail() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [myVibes, setMyVibes] = useState<string[]>([]);
+  const [vibeLoading, setVibeLoading] = useState<string | null>(null);
+  const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
+
+  const COMMUNITY_VIBES = [
+    { id: "hidden_gem",        label: "Hidden Gem",        emoji: "💎" },
+    { id: "community_staple",  label: "Community Staple",  emoji: "🏛️" },
+    { id: "grandma_approved",  label: "Grandma Approved",  emoji: "🫶🏾" },
+    { id: "worth_every_visit", label: "Worth Every Visit", emoji: "✨" },
+    { id: "date_night",        label: "Date Night Worthy", emoji: "🌹" },
+    { id: "family_friendly",   label: "Family Friendly",   emoji: "👨‍👩‍👧" },
+    { id: "black_excellence",  label: "Black Excellence",  emoji: "✊🏾" },
+  ];
+
+  useEffect(() => {
+    if (!auth?.user || !id) return;
+    const apiBase = BASE_URL.replace(/\/$/, "");
+    fetch(`${apiBase}/api/vibes/my-tags?businessId=${id}`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.vibes) setMyVibes(d.vibes.map((v: { vibe: string }) => v.vibe)); })
+      .catch(() => {});
+  }, [auth?.user, id]);
+
+  async function handleVibe(vibe: string) {
+    if (!auth?.user) {
+      toast({ title: "Sign in to add a vibe", description: "Create a free account to interact with businesses." });
+      return;
+    }
+    if (vibeLoading) return;
+    const isActive = myVibes.includes(vibe);
+    setVibeLoading(vibe);
+    const apiBase = BASE_URL.replace(/\/$/, "");
+    try {
+      const res = await fetch(`${apiBase}/api/vibes/tag`, {
+        method: isActive ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ businessId: id, vibe }),
+      });
+      if (res.ok) {
+        setMyVibes((prev) => isActive ? prev.filter((v) => v !== vibe) : [...prev, vibe]);
+        if (!isActive) {
+          setVibeToasts((prev) => ({ ...prev, [vibe]: (prev[vibe] ?? 0) + 1 }));
+        }
+      }
+    } catch { /**/ }
+    finally { setVibeLoading(null); }
+  }
+
+  async function handleHiddenGem() { return handleVibe("hidden_gem"); }
 
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimName, setClaimName] = useState("");
@@ -483,6 +533,42 @@ export default function BusinessDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Community Vibes — web parity with mobile */}
+                <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Vibes</h3>
+                    <span className="text-xs text-[#3A1F0E]/40 font-medium">
+                      {auth?.user ? "Tap to tag your experience" : "Sign in to add vibes"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMUNITY_VIBES.map((v) => {
+                      const active = myVibes.includes(v.id);
+                      const loading = vibeLoading === v.id;
+                      return (
+                        <button
+                          key={v.id}
+                          onClick={() => handleVibe(v.id)}
+                          disabled={loading}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
+                            active
+                              ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
+                              : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/70 hover:border-[#CA922B] hover:text-[#CA922B]"
+                          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <span className="text-base leading-none">{v.emoji}</span>
+                          {v.label}
+                          {vibeToasts[v.id] ? (
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
+                              +{vibeToasts[v.id]}
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Flash Deals */}
                 {deals.length > 0 && (
