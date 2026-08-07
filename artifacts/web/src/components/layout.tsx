@@ -32,6 +32,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const isMember = !!(auth?.user);
 
+  // Contextual KinfolkAI bubble subtitle — changes based on current page
+  const kinfolkSubtitle = (() => {
+    if (location === "/" || location === "") return "What can I help with?";
+    if (location.startsWith("/map") || location.startsWith("/explore")) return "Need help finding something?";
+    if (location.startsWith("/businesses/")) return "Want to know what the community says?";
+    if (location.startsWith("/safety")) return "I'm here if you need me";
+    if (location.startsWith("/community")) return "Let's connect you";
+    if (location.startsWith("/profile")) return "How can I help today?";
+    return "Ask me anything";
+  })();
+
   // Public nav — visible to everyone including waitlist visitors
   const publicNavItems = [
     { href: "/about", label: "About" },
@@ -206,7 +217,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
                     <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
                     <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
-                    <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI Travel Planner</span></Link></li>
+                    <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI™</span></Link></li>
                   </>
                 ) : (
                   <li><a href="/#waitlist-form"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Join to Participate →</span></a></li>
@@ -248,8 +259,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget — members only, hidden on auth/payment pages or when dismissed */}
-      {isMember && !kinfolkDismissed && !["/login", "/signup", "/membership"].includes(location) && (
+      {/* KinfolkAI Widget — members only, hidden on auth/payment/kinfolk pages or when dismissed */}
+      {isMember && !kinfolkDismissed && !["/login", "/signup", "/membership", "/travel"].includes(location) && (
         <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
           {/* Full widget on sm+ screens */}
           <div className="hidden sm:flex relative bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
@@ -266,8 +277,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <MessageSquare className="w-5 h-5 text-[#CA922B]" />
                 </div>
                 <div>
-                  <div className="text-white font-bold text-sm">KinfolkAI</div>
-                  <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
+                  <div className="text-white font-bold text-sm">KinfolkAI™</div>
+                  <div className="text-[#F5EBD8]/70 text-xs">{kinfolkSubtitle}</div>
                 </div>
               </div>
             </Link>

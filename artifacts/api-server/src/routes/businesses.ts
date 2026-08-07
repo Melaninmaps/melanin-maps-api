@@ -45,7 +45,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
   // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
   try {
     await withDbRetry(async () => {
-    const { category, search, state, handle, culturalPreference, ownership } = req.query;
+    const { category, city, search, state, handle, culturalPreference, ownership } = req.query;
 
     const conditions = [];
 
@@ -83,6 +83,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
           ilike(businessesTable.description, `%${search}%`),
         ),
       );
+    }
+
+    if (city && typeof city === "string") {
+      conditions.push(ilike(businessesTable.city, `%${city}%`));
     }
 
     if (state && typeof state === "string") {

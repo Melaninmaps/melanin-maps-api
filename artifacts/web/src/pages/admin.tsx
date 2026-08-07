@@ -522,7 +522,13 @@ export default function Admin() {
     setMetricsLoading(true);
     return fetch(`${BASE}api/admin/metrics`, { credentials: "include" })
       .then((r) => r.json())
-      .then((data) => { setMetrics(data); setLastRefreshed(new Date()); })
+      .then((data) => {
+        // Only store valid metrics — reject error responses like { error: "Forbidden" }
+        if (typeof data?.total === "number") {
+          setMetrics(data);
+          setLastRefreshed(new Date());
+        }
+      })
       .finally(() => setMetricsLoading(false));
   }, []);
 
@@ -3542,7 +3548,9 @@ function MetricsTab({
   metrics: MetricsData | null;
   loading: boolean;
 }) {
-  if (loading || !metrics) {
+  // Guard against null AND against error-response objects (e.g. { error: "Forbidden" })
+  const isValid = metrics && typeof metrics.total === "number";
+  if (loading || !isValid) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />

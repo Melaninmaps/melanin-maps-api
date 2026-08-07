@@ -758,11 +758,11 @@ export default function Profile() {
               <form onSubmit={handleUpdate} className="space-y-5 text-left mt-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">First Name</label>
-                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B]" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={firstName} onChange={e => setFirstName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Last Name</label>
-                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B]" value={lastName} onChange={e => setLastName(e.target.value)} />
+                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={lastName} onChange={e => setLastName(e.target.value)} />
                 </div>
                 <Button type="submit" className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-4" disabled={updateProfile.isPending}>
                   <Save className="mr-2 h-4 w-4" /> Save Changes

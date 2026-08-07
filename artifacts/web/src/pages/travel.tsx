@@ -38,11 +38,45 @@ const AVOID_OPTS = ["Nightlife","Bars & Clubs","Loud venues","Crowded spaces","T
 const BUDGET_OPTS = [{ id: "budget", label: "Budget 💵" }, { id: "mid", label: "Mid-range 💳" }, { id: "luxury", label: "Luxury ✨" }, { id: "any", label: "No limit" }];
 const TRIP_STYLES = [{ id: "solo", label: "Solo" }, { id: "couple", label: "Couple" }, { id: "family", label: "Family" }, { id: "group", label: "Friend group" }, { id: "business", label: "Work trip" }, { id: "spiritual", label: "Spiritual" }];
 const COMPANIONS = [{ id: "solo", label: "Solo" }, { id: "partner", label: "Partner" }, { id: "family", label: "Family" }, { id: "friends", label: "Friends" }, { id: "colleagues", label: "Colleagues" }];
-const WELCOME_CHIPS = [
-  "Where's good to eat in Atlanta?", "Best minority-owned spots in Houston",
-  "What's the vibe in New Orleans?", "Hidden gems in DC",
-  "Family-friendly spots in Chicago", "Nightlife in Miami?",
-  "Tell me about Harlem", "Top spots in Philly",
+
+// ─── Kinfolk Identity Defaults ─────────────────────────────────────────────────
+// PERMANENT — Do not remove or edit without explicit founder authorization.
+// These are stored here so they are never lost between sessions or deploys.
+
+/** The standard Kinfolk greeting for a first-time or new-session user. */
+export const KINFOLK_DEFAULT_GREETING =
+  "Hey! I'm Kinfolk — your community companion. I can help you find trusted businesses, " +
+  "keep you safe in unfamiliar places, connect you with your community, or just talk. " +
+  "What's on your mind?";
+
+/** Body-only version (heading "Hey! I'm Kinfolk." is shown separately). */
+const KINFOLK_DEFAULT_GREETING_BODY =
+  "I can help you find trusted businesses, keep you safe in unfamiliar places, " +
+  "connect you with your community, or just talk. What's on your mind?";
+
+/** Greeting for a returning user with no specific context. */
+export const kinfolkReturningGreeting = (firstName: string | null | undefined) =>
+  firstName ? `Welcome back, ${firstName}! What can I help with today?` : "Welcome back! What can I help with today?";
+
+/** Greeting for a returning user whose last session topic is known. */
+export const kinfolkReturningWithContext = (firstName: string | null | undefined, topic: string) =>
+  firstName
+    ? `Hey ${firstName}! Last time we talked about "${topic}." Want to pick up where we left off, or is there something new on your mind?`
+    : `Hey! Last time we talked about "${topic}." Want to pick up where we left off, or something new?`;
+
+/**
+ * Default quick-action chips — represent the FULL range of what Kinfolk can do.
+ * Not travel-only. Updated to reflect Kinfolk as a community companion.
+ */
+const KINFOLK_CHIPS_DEFAULT = [
+  "Find a business near me",
+  "Is this area welcoming?",
+  "Help me plan something",
+  "I need a recommendation",
+  "Tell me about this city",
+  "Where can I get my hair done?",
+  "What's the vibe here?",
+  "I don't feel safe — help me",
 ];
 
 // ─── Chip toggle helper ───────────────────────────────────────────────────────
@@ -484,7 +518,7 @@ export default function Travel() {
           </div>
           <div>
             <div className="text-white font-serif font-bold text-base leading-tight">KinfolkAI™</div>
-            <div className="text-[#F5EBD8]/50 text-[10px] uppercase tracking-widest">Travel Companion</div>
+            <div className="text-[#F5EBD8]/50 text-[10px] uppercase tracking-widest">Your Community Companion</div>
           </div>
         </div>
         {isLoggedIn && (
@@ -522,7 +556,7 @@ export default function Travel() {
           transition-transform duration-300 shadow-xl md:shadow-none
         `}>
           <div className="px-3 py-3 border-b border-[#3A1F0E]/8 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40">Past Trips</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40">Past Conversations</span>
             <button onClick={newChat} className="flex items-center gap-1 text-[10px] text-[#CA922B] hover:text-[#B38024] font-bold">
               <Plus size={10} /> New
             </button>
@@ -530,7 +564,7 @@ export default function Travel() {
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
           ) : sessions.length === 0 ? (
-            <div className="px-3 py-6 text-center text-xs text-[#3A1F0E]/30">No trips yet — start a conversation!</div>
+            <div className="px-3 py-6 text-center text-xs text-[#3A1F0E]/30">Nothing yet — start a conversation!</div>
           ) : (
             <div className="py-1">
               {sessions.map(s => (
@@ -555,9 +589,9 @@ export default function Travel() {
                 <div className="w-14 h-14 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mx-auto mb-5">
                   <Lock className="w-6 h-6 text-[#CA922B]" />
                 </div>
-                <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-3">Sign in to chat with KinfolkAI</h2>
+                <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-3">Sign in to chat with KinfolkAI™</h2>
                 <p className="text-[#3A1F0E]/60 mb-8 text-sm leading-relaxed">
-                  Your AI travel companion for minority-owned spots, cultural gems, and trusted safety intel — personalized just for you.
+                  Your community companion — finding trusted businesses, keeping you safe, connecting you with your community, and so much more. Personalized just for you.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href={`${BASE}login`}><button className="bg-[#CA922B] hover:bg-[#B38024] text-white px-8 py-2.5 rounded-full font-semibold text-sm transition-colors">Sign In to Continue</button></Link>
@@ -576,20 +610,31 @@ export default function Travel() {
                     <div className="w-16 h-16 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mb-5">
                       <Sparkles className="w-7 h-7 text-[#CA922B]" />
                     </div>
-                    <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">Where are you headed?</h2>
-                    <p className="text-[#3A1F0E]/50 text-sm mb-2 max-w-sm">
-                      Ask me anything about traveling while Black — businesses, neighborhoods, safety, culture, events.
+                    {/* Contextual greeting — new user vs returning user vs returning with context */}
+                    <h2 className="text-2xl font-serif font-bold text-[#3A1F0E] mb-2">
+                      {sessions.length > 0 && (authData?.user as { firstName?: string })?.firstName
+                        ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}!`
+                        : sessions.length > 0
+                        ? "Welcome back!"
+                        : "Hey! I'm Kinfolk."}
+                    </h2>
+                    <p className="text-[#3A1F0E]/50 text-sm mb-4 max-w-md leading-relaxed">
+                      {sessions.length > 0 && sessions[0]?.title
+                        ? `Last time we talked about "${sessions[0].title}." Want to pick up where we left off, or is there something new on your mind?`
+                        : sessions.length > 0
+                        ? "What can I help with today?"
+                        : KINFOLK_DEFAULT_GREETING_BODY}
                     </p>
                     {prefsLoaded && !hasPrefs && (
-                      <button onClick={() => setShowPrefs(true)} className="mb-6 flex items-center gap-1.5 text-xs text-[#CA922B] font-semibold hover:underline">
+                      <button onClick={() => setShowPrefs(true)} className="mb-4 flex items-center gap-1.5 text-xs text-[#CA922B] font-semibold hover:underline">
                         <Settings size={12} /> Set your taste profile to get personalized picks →
                       </button>
                     )}
                     {prefsLoaded && hasPrefs && (
-                      <p className="mb-6 text-xs text-[#CA922B] font-medium">✓ Personalized based on your taste profile</p>
+                      <p className="mb-4 text-xs text-[#CA922B] font-medium">✓ Personalized based on your taste profile</p>
                     )}
                     <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-                      {WELCOME_CHIPS.map(chip => (
+                      {KINFOLK_CHIPS_DEFAULT.map(chip => (
                         <button key={chip} onClick={() => send(chip)}
                           className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#3A1F0E]/10 rounded-full text-sm text-[#3A1F0E]/70 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors shadow-sm">
                           <ChevronRight size={12} className="text-[#CA922B]" />{chip}
@@ -652,7 +697,7 @@ export default function Travel() {
                 <div className="flex items-end gap-3 max-w-3xl mx-auto">
                   <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ask me anything about traveling while Black…"
+                    placeholder="Ask Kinfolk anything — businesses, safety, community, recommendations…"
                     rows={1}
                     className="flex-1 resize-none bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/50 transition-colors"
                     style={{ maxHeight: "120px", overflowY: "auto" }}

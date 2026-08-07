@@ -65,7 +65,7 @@ router.get("/admin/city-launches", async (req: Request, res: Response) => {
 
     // Fetch aggregate metrics for all cities in one pass
     const { rows: waitlistStats } = await pool.query<{ city: string; cnt: string }>(
-      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM waitlist GROUP BY LOWER(TRIM(city))`
+      `SELECT LOWER(TRIM(city)) as city, COUNT(*) as cnt FROM waitlist_signups GROUP BY LOWER(TRIM(city))`
     );
     const { rows: userStats } = await pool.query<{ city: string; cnt: string }>(
       `SELECT LOWER(TRIM(home_city)) as city, COUNT(*) as cnt FROM users WHERE approved = true AND home_city IS NOT NULL GROUP BY LOWER(TRIM(home_city))`
@@ -226,7 +226,7 @@ router.get("/admin/city-launches/:slug/health", async (req: Request, res: Respon
       [cityName]
     );
     const { rows: w24h } = await pool.query<{ cnt: string }>(
-      `SELECT COUNT(*) as cnt FROM waitlist WHERE LOWER(TRIM(city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
+      `SELECT COUNT(*) as cnt FROM waitlist_signups WHERE LOWER(TRIM(city)) = $1 AND created_at > NOW() - INTERVAL '24 hours'`,
       [cityName]
     );
 
@@ -660,6 +660,22 @@ router.post("/admin/batch-launch-all", async (req: Request, res: Response) => {
          AND (status IS NULL OR status = 'active')
     `);
 
+    // ── 4b. Hide demo/seed businesses ────────────────────────────────────────
+    // Demo data is identified by: 555-XXXX phone numbers (never real) OR
+    // "[DEMO]" marker in the name or description (inserted by seed scripts).
+    // Mark all of these permanently hidden so they never surface to users.
+    const { rowCount: demoPhoneHidden } = await pool.query(`
+      UPDATE businesses
+         SET listing_status = 'permanently_hidden', updated_at = NOW()
+       WHERE (
+         phone LIKE '%555-%'
+         OR phone LIKE '%(555)%'
+         OR name LIKE '%[DEMO%'
+         OR description LIKE '%[DEMO%'
+       )
+       AND listing_status NOT IN ('permanently_hidden', 'live_claimed')
+    `);
+
     // ── 5. Copy live_unclaimed tour_guide_businesses → businesses if table exists
     let copied = 0;
     try {
@@ -727,6 +743,7 @@ router.post("/admin/batch-launch-all", async (req: Request, res: Response) => {
       ok: true,
       citiesLaunched: cityResults,
       bulkPromotedFromStaged: bulkPromoted ?? 0,
+      demoPhoneBusinessesHidden: demoPhoneHidden ?? 0,
       businessesCopiedFromGuide: copied,
       totals,
       message: `${cityResults.length} cities launched`,

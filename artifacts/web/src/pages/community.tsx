@@ -202,7 +202,7 @@ export default function Community() {
               </div>
               <div className="text-center">
                 <Link href="/travel">
-                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">Open KinfolkAI Travel Planner</Button>
+                  <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">Chat with KinfolkAI™</Button>
                 </Link>
               </div>
             </>
