@@ -3,11 +3,12 @@ name: Launch version state
 description: Current iOS buildNumber, Android versionCode, version string — check before any EAS build commands.
 ---
 
-**Current Build (as of July 30 2026):**
+**Current Build (as of Aug 7 2026):**
 - version: 1.1.5
-- iOS buildNumber: 101 (commit 0450c381)
-- Android versionCode: 76 (commit 0450c381)
+- iOS buildNumber: 102
+- Android versionCode: 77 (EAS build 853a927e, submission 13bc8a66)
 - eas.json production profile: has `channel: "production"` field ✅
+- Android VC77 auto-submitted to Play Internal track; release notes: "All features free. In-App Purchases removed. Community platform update."
 
 **Build 101 EAS submissions (July 30 2026) — SECOND ATTEMPT (first errored):**
 - iOS Build 101: 2f46adcc-fbac-47a5-b830-0d74a78fc940 — queued, auto-submit to TestFlight ✅
