@@ -339,9 +339,11 @@ export default function MapPage() {
       });
     });
 
+    const isDemo = biz.description?.startsWith("[DEMO]") ?? false;
     infoWindowRef.current?.setContent(
       `<div style="font-family:serif;padding:4px 2px;min-width:160px">
         <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px">${biz.name ?? ""}</div>
+        ${isDemo ? `<div style="display:inline-block;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;margin-bottom:4px">Demo Listing</div>` : ""}
         <div style="font-size:12px;color:#CA922B;font-weight:600;margin-bottom:2px">${biz.category ?? ""}</div>
         <div style="font-size:11px;color:#3A1F0E80">${biz.city ?? ""}, ${biz.state ?? ""}</div>
         <a href="/businesses/${biz.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;margin-top:4px;display:block">View Business →</a>
@@ -541,6 +543,11 @@ export default function MapPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
+                  {biz.description?.startsWith("[DEMO]") && (
+                    <span className="inline-block text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 border border-amber-300 rounded px-1.5 py-0.5 mb-0.5">
+                      Demo Listing
+                    </span>
+                  )}
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category}</div>
                   <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
                     <MapPin className="w-3 h-3 shrink-0" />
