@@ -131,8 +131,8 @@ export default function Businesses() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-gray-300">Submit a Business</Button></Link>
-            <Link href="/rate-neighborhood"><Button variant="outline" className="rounded-full border-gray-300">Rate a Neighborhood</Button></Link>
+            <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-[#3A1F0E]/30 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B]">Submit a Business</Button></Link>
+            <Link href="/rate-neighborhood"><Button variant="outline" className="rounded-full border-[#3A1F0E]/30 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B]">Rate a Neighborhood</Button></Link>
             <Link href="/map"><Button className="rounded-full bg-[#2B1507] text-white"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button></Link>
           </div>
         </div>

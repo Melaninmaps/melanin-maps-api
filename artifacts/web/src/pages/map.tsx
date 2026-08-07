@@ -115,9 +115,13 @@ export default function MapPage() {
   );
 
   const filtered = businesses.filter((b) => {
-    const q = search.toLowerCase();
+    // Tokenise by comma so "Philadelphia, PA" matches the city "Philadelphia"
+    // AND the state "PA" independently — users naturally type "City, ST".
+    const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
+    const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
     const matchSearch =
-      !q || [b.name, b.city, b.state, b.category].some((f) => f?.toLowerCase().includes(q));
+      tokens.length === 0 ||
+      tokens.every((token) => fields.some((f) => f.includes(token)));
     const matchCat =
       category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
     return matchSearch && matchCat;
