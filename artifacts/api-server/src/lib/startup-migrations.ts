@@ -206,6 +206,26 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     )`,
   },
   {
+    name: "cultural_sites_visit_tip_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS visit_tip TEXT`,
+  },
+  {
+    name: "cultural_sites_pin_type_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS pin_type VARCHAR(100)`,
+  },
+  {
+    name: "cultural_sites_listing_status_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'staged'`,
+  },
+  {
+    name: "cultural_sites_cultural_community_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS cultural_community VARCHAR(100)`,
+  },
+  {
+    name: "cultural_sites_approx_location_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`,
+  },
+  {
     // Drop FK so city_profiles can hold all 53+ cities, not just city_launches entries
     name: "city_profiles_drop_fk",
     sql: `ALTER TABLE city_profiles DROP CONSTRAINT IF EXISTS city_profiles_city_slug_fkey`,

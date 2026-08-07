@@ -86,6 +86,11 @@ interface CulturalSite {
   significance: string | null;
   externalUrl?: string | null;
   yearEstablished?: number | null;
+  visitTip?: string | null;
+  contentNote?: string | null;
+  pinType?: string | null;
+  listingStatus?: string | null;
+  culturalCommunity?: string | null;
 }
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
@@ -97,24 +102,40 @@ interface CategoryStyle {
 }
 
 const CATEGORY_STYLES: Record<string, CategoryStyle> = {
-  "HBCU":                    { color: "#7C3AED", icon: "book-open",  label: "HBCU" },
-  "Civil Rights":             { color: "#DC2626", icon: "flag",        label: "Civil Rights" },
-  "African American Heritage":{ color: "#CA922B", icon: "star",        label: "Heritage" },
-  "Native American Heritage": { color: "#065F46", icon: "globe",       label: "Native" },
-  "Hispanic & Latino Heritage":{ color: "#B45309", icon: "map-pin",   label: "Latino" },
-  "LGBTQ+ History":           { color: "#9D174D", icon: "heart",       label: "LGBTQ+" },
-  "Women's History":          { color: "#7E22CE", icon: "user",        label: "Women's" },
-  "Cultural Neighborhood":    { color: "#1D4ED8", icon: "home",        label: "Neighborhood" },
-  "Freedom Trail":            { color: "#92400E", icon: "compass",     label: "Freedom Trail" },
-  "Religious Heritage":       { color: "#4B5563", icon: "sun",         label: "Religious" },
-  "Immigrant Heritage":       { color: "#0F766E", icon: "anchor",      label: "Immigrant" },
+  // ── Heritage categories (heritageCategory field) ───────────────────────────
+  "HBCU":                      { color: "#7C3AED", icon: "book-open",    label: "HBCU" },
+  "Civil Rights":               { color: "#DC2626", icon: "flag",          label: "Civil Rights" },
+  "African American Heritage":  { color: "#92400E", icon: "star",          label: "Heritage" },
+  "Native American Heritage":   { color: "#065F46", icon: "globe",         label: "Native" },
+  "Hispanic & Latino Heritage": { color: "#B45309", icon: "map-pin",       label: "Latino" },
+  "LGBTQ+ History":             { color: "#9D174D", icon: "heart",         label: "LGBTQ+" },
+  "Women's History":            { color: "#7E22CE", icon: "user",          label: "Women's" },
+  "Cultural Neighborhood":      { color: "#1D4ED8", icon: "home",          label: "Neighborhood" },
+  "Freedom Trail":              { color: "#92400E", icon: "compass",       label: "Freedom Trail" },
+  "Religious Heritage":         { color: "#78716C", icon: "sun",           label: "Church/Religious" },
+  "Immigrant Heritage":         { color: "#0F766E", icon: "anchor",        label: "Immigrant" },
   // Archival color (warm stone) — no red/orange danger hue. Historical record only.
-  "Historical Sundown Town":  { color: "#44403C", icon: "book-open",   label: "Sundown Towns" },
+  "Historical Sundown Town":    { color: "#44403C", icon: "book-open",     label: "Sundown Towns" },
+  // ── Pin types (pinType field — takes priority over heritageCategory) ───────
+  "farmers_market":             { color: "#16A34A", icon: "shopping-bag",  label: "Farmers Market" },
+  "pop_up_market":              { color: "#16A34A", icon: "shopping-bag",  label: "Pop-up Market" },
+  "market":                     { color: "#16A34A", icon: "shopping-bag",  label: "Market" },
+  "mural_or_public_art":        { color: "#0891B2", icon: "edit-2",        label: "Public Art" },
+  "community_org":              { color: "#D97706", icon: "users",         label: "Community Org" },
+  "cultural_organization":      { color: "#D97706", icon: "users",         label: "Cultural Org" },
+  "festival_or_event":          { color: "#7C3AED", icon: "calendar",      label: "Festival/Event" },
+  "community_event":            { color: "#2563EB", icon: "calendar",      label: "Community Event" },
+  "park_or_outdoor":            { color: "#15803D", icon: "sun",           label: "Park/Outdoor" },
+  "heritage_district":          { color: "#B45309", icon: "map",           label: "Heritage District" },
+  "cultural_site":              { color: "#92400E", icon: "star",          label: "Cultural Site" },
+  "heritage_landmark":          { color: "#92400E", icon: "flag",          label: "Heritage Landmark" },
 };
 
 const DEFAULT_CATEGORY_STYLE: CategoryStyle = { color: "#6B7280", icon: "map-pin", label: "Site" };
 
-function getCategoryStyle(heritageCategory: string): CategoryStyle {
+/** pinType takes priority — it's more specific than heritageCategory */
+function getCategoryStyle(heritageCategory: string, pinType?: string | null): CategoryStyle {
+  if (pinType && CATEGORY_STYLES[pinType]) return CATEGORY_STYLES[pinType];
   return CATEGORY_STYLES[heritageCategory] ?? DEFAULT_CATEGORY_STYLE;
 }
 
@@ -412,7 +433,7 @@ export function FullMapView() {
           const lat = parseFloat(site.latitude);
           const lng = parseFloat(site.longitude);
           if (isNaN(lat) || isNaN(lng)) return null;
-          const cs = getCategoryStyle(site.heritageCategory);
+          const cs = getCategoryStyle(site.heritageCategory, site.pinType);
           const isSelected = selectedCulturalSite?.id === site.id;
           return (
             <Marker
@@ -659,9 +680,13 @@ export function FullMapView() {
         </TouchableOpacity>
       )}
 
-      {/* ── Cultural site bottom card — hidden until HERITAGE_SITES_ENABLED ── */}
+      {/* ── Cultural site bottom card ── */}
       {HERITAGE_SITES_ENABLED && selectedCulturalSite && (() => {
-        const cs = getCategoryStyle(selectedCulturalSite.heritageCategory);
+        const site = selectedCulturalSite;
+        const cs = getCategoryStyle(site.heritageCategory, site.pinType);
+        const isUnclaimed = site.listingStatus === "live_unclaimed";
+        const bodyText = site.description || site.significance || null;
+
         return (
           <View style={[s.card, { backgroundColor: colors.card, borderColor: cs.color + "40", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
             <View style={s.cardHandle} />
@@ -669,39 +694,66 @@ export function FullMapView() {
               <Feather name="x" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <View style={[s.catPill, { backgroundColor: cs.color + "18" }]}>
-                <Feather name={cs.icon} size={11} color={cs.color} />
-                <Text style={[s.catPillTxt, { color: cs.color }]}>{selectedCulturalSite.heritageCategory}</Text>
+            {/* Unclaimed banner */}
+            {isUnclaimed && (
+              <View style={[s.unclaimedBanner, { borderColor: GOLD + "50" }]}>
+                <Feather name="info" size={12} color={GOLD} />
+                <Text style={[s.unclaimedTxt, { color: GOLD }]} numberOfLines={2}>
+                  Community Listed — This place has not yet claimed its profile. Info provided by the MWM community.
+                </Text>
               </View>
-              {selectedCulturalSite.yearEstablished ? (
-                <Text style={[s.estTxt, { color: colors.mutedForeground }]}>Est. {selectedCulturalSite.yearEstablished}</Text>
-              ) : selectedCulturalSite.era ? (
-                <Text style={[s.estTxt, { color: colors.mutedForeground }]}>{selectedCulturalSite.era}</Text>
-              ) : null}
-            </View>
-
-            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>
-              {selectedCulturalSite.name}
-            </Text>
-            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
-              {selectedCulturalSite.city}, {selectedCulturalSite.state}
-            </Text>
-            {selectedCulturalSite.significance && (
-              <Text style={[s.culturalSig, { color: colors.foreground }]} numberOfLines={2}>
-                {selectedCulturalSite.significance}
-              </Text>
             )}
 
+            {/* Category pill + cultural community chip */}
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+              <View style={[s.catPill, { backgroundColor: cs.color + "18" }]}>
+                <Feather name={cs.icon} size={11} color={cs.color} />
+                <Text style={[s.catPillTxt, { color: cs.color }]}>{cs.label}</Text>
+              </View>
+              {site.culturalCommunity ? (
+                <View style={[s.catPill, { backgroundColor: colors.muted + "60", borderWidth: 1, borderColor: colors.border }]}>
+                  <Text style={[s.catPillTxt, { color: colors.mutedForeground }]}>{site.culturalCommunity}</Text>
+                </View>
+              ) : null}
+              {(site.yearEstablished || site.era) && (
+                <Text style={[s.estTxt, { color: colors.mutedForeground }]}>
+                  {site.yearEstablished ? `Est. ${site.yearEstablished}` : site.era}
+                </Text>
+              )}
+            </View>
+
+            {/* Name + city */}
+            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>
+              {site.name}
+            </Text>
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
+              {site.city}, {site.state}
+            </Text>
+
+            {/* Scrollable rich content */}
+            <ScrollView style={{ maxHeight: 120 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+              {bodyText ? (
+                <Text style={[s.culturalDesc, { color: colors.foreground }]}>{bodyText}</Text>
+              ) : null}
+              {site.visitTip ? (
+                <View style={[s.visitTipBox, { backgroundColor: cs.color + "10", borderLeftColor: cs.color }]}>
+                  <Text style={[s.visitTipTxt, { color: colors.foreground }]}>{site.visitTip}</Text>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            {/* Action buttons */}
             <View style={s.cardBtnRow}>
               <TouchableOpacity
                 style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: cs.color }]}
                 activeOpacity={0.85}
                 onPress={() => {
-                  const lat = parseFloat(selectedCulturalSite.latitude);
-                  const lng = parseFloat(selectedCulturalSite.longitude);
+                  const lat = parseFloat(site.latitude);
+                  const lng = parseFloat(site.longitude);
                   void Linking.openURL(
-                    `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedCulturalSite.name)}`
+                    Platform.OS === "ios"
+                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(site.name)}`
+                      : `geo:${lat},${lng}?q=${encodeURIComponent(site.name)}`
                   );
                 }}
               >
@@ -714,15 +766,39 @@ export function FullMapView() {
                 onPress={() =>
                   router.push({
                     pathname: "/cultural-heritage",
-                    params: {
-                      initialCategory: selectedCulturalSite.heritageCategory,
-                      siteId: selectedCulturalSite.id,
-                    },
+                    params: { initialCategory: site.heritageCategory, siteId: site.id },
                   })
                 }
               >
-                <Feather name={getCategoryStyle(selectedCulturalSite.heritageCategory).icon} size={14} color="#fff" />
+                <Feather name={cs.icon} size={14} color="#fff" />
                 <Text style={s.cardBtnTxt}>View Site</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Secondary links row */}
+            <View style={{ flexDirection: "row", gap: 16, marginTop: 8, paddingHorizontal: 2 }}>
+              {site.externalUrl ? (
+                <TouchableOpacity
+                  onPress={() => void Linking.openURL(site.externalUrl!)}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                >
+                  <Feather name="external-link" size={12} color={cs.color} />
+                  <Text style={[s.linkTxt, { color: cs.color }]}>Learn More</Text>
+                </TouchableOpacity>
+              ) : null}
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/cultural-heritage",
+                    params: { city: site.city },
+                  })
+                }
+                style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+              >
+                <Feather name="map" size={12} color={colors.mutedForeground} />
+                <Text style={[s.linkTxt, { color: colors.mutedForeground }]}>
+                  {site.city}&apos;s Living Legacy
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -874,6 +950,17 @@ const s = StyleSheet.create({
   catPillTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   estTxt:     { fontFamily: "Inter_400Regular", fontSize: 11 },
   culturalSig:{ fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginBottom: 10 },
+  culturalDesc:{ fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginBottom: 8 },
+  visitTipBox: { borderLeftWidth: 3, paddingLeft: 10, paddingVertical: 6, marginBottom: 8, borderRadius: 4 },
+  visitTipTxt: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, fontStyle: "italic" },
+  unclaimedBanner: {
+    flexDirection: "row", alignItems: "flex-start", gap: 6,
+    borderWidth: 1, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 7,
+    marginBottom: 10, backgroundColor: "rgba(202,146,43,0.08)",
+  },
+  unclaimedTxt: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
+  linkTxt: { fontFamily: "Inter_500Medium", fontSize: 12 },
 
   verifiedPill:{ flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#DCFCE7", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 },
   verifiedTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11, color: "#2D7A4F" },

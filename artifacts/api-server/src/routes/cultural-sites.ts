@@ -146,7 +146,11 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const sql = `
       SELECT id, name, description, category, heritage_category AS "heritageCategory",
-             subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
+             subcategory, ethnic_community AS "ethnicCommunity",
+             cultural_community AS "culturalCommunity",
+             visit_tip AS "visitTip", content_note AS "contentNote",
+             pin_type AS "pinType", listing_status AS "listingStatus",
+             city, state, address,
              latitude, longitude, era, significance, image_url AS "imageUrl",
              external_url AS "externalUrl", is_verified AS "isVerified",
              year_established AS "yearEstablished", is_accessible AS "isAccessible",
@@ -198,7 +202,11 @@ router.get("/cultural-sites/:id", async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
       `SELECT id, name, description, category, heritage_category AS "heritageCategory",
-              subcategory, ethnic_community AS "ethnicCommunity", city, state, address,
+              subcategory, ethnic_community AS "ethnicCommunity",
+              cultural_community AS "culturalCommunity",
+              visit_tip AS "visitTip", content_note AS "contentNote",
+              pin_type AS "pinType", listing_status AS "listingStatus",
+              city, state, address,
               latitude, longitude, era, significance, image_url AS "imageUrl",
               external_url AS "externalUrl", is_verified AS "isVerified",
               year_established AS "yearEstablished", is_accessible AS "isAccessible",

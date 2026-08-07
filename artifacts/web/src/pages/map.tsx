@@ -22,6 +22,49 @@ type BizWithCoords = {
   blackOwned?: boolean | null;
 };
 
+type CulturalSiteWeb = {
+  id: string;
+  name: string;
+  description?: string | null;
+  heritageCategory?: string | null;
+  pinType?: string | null;
+  listingStatus?: string | null;
+  culturalCommunity?: string | null;
+  visitTip?: string | null;
+  city: string;
+  state: string;
+  latitude: string;
+  longitude: string;
+  externalUrl?: string | null;
+};
+
+function getCulturalPinColor(site: CulturalSiteWeb): string {
+  const pt = site.pinType ?? "";
+  const hc = site.heritageCategory ?? "";
+  if (pt === "farmers_market" || pt === "pop_up_market" || pt === "market") return "#16A34A";
+  if (pt === "mural_or_public_art") return "#0891B2";
+  if (pt === "community_org" || pt === "cultural_organization") return "#D97706";
+  if (pt === "festival_or_event" || pt === "community_event") return "#7C3AED";
+  if (pt === "park_or_outdoor") return "#15803D";
+  if (hc === "HBCU") return "#7C3AED";
+  if (hc === "Civil Rights") return "#DC2626";
+  if (hc === "Religious Heritage") return "#78716C";
+  return "#92400E"; // heritage / cultural site default
+}
+
+function getCulturalPinLabel(site: CulturalSiteWeb): string {
+  const pt = site.pinType ?? "";
+  const hc = site.heritageCategory ?? "";
+  if (pt === "farmers_market" || pt === "pop_up_market") return "Farmers Market";
+  if (pt === "market") return "Market";
+  if (pt === "mural_or_public_art") return "Public Art";
+  if (pt === "community_org" || pt === "cultural_organization") return "Community Org";
+  if (pt === "festival_or_event" || pt === "community_event") return "Event";
+  if (hc === "HBCU") return "HBCU";
+  if (hc === "Civil Rights") return "Civil Rights";
+  return hc || "Cultural Site";
+}
+
 type RouteInfo = {
   distance: string;
   duration: string;
@@ -64,6 +107,8 @@ export default function MapPage() {
   const [isPaidMember, setIsPaidMember] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routingBizId, setRoutingBizId] = useState<string | null>(null);
+  const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
+  const culturalMarkersRef = useRef<GMarker[]>([]);
 
   const businesses = ((data?.businesses ?? []) as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
@@ -77,6 +122,82 @@ export default function MapPage() {
       category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
     return matchSearch && matchCat;
   });
+
+  // Fetch Philadelphia cultural sites once map is ready
+  useEffect(() => {
+    if (!ready) return;
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/cultural-sites?city=Philadelphia`)
+      .then((r) => r.json())
+      .then((d: any) => {
+        if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]);
+      })
+      .catch(() => {});
+  }, [ready]);
+
+  // Render cultural site markers whenever sites load and map is initialized
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    if (!g || !mapRef.current || culturalSites.length === 0) return;
+
+    // Clean up previous cultural markers
+    culturalMarkersRef.current.forEach((m) => m.setMap(null));
+    culturalMarkersRef.current = [];
+
+    culturalSites.forEach((site) => {
+      const lat = parseFloat(site.latitude);
+      const lng = parseFloat(site.longitude);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      const color = getCulturalPinColor(site);
+      const label = getCulturalPinLabel(site);
+
+      // Diamond shape SVG path for cultural sites — distinct from business circles
+      const marker: GMarker = new g.Marker({
+        position: { lat, lng },
+        map: mapRef.current,
+        title: site.name,
+        icon: {
+          path: "M 0,-9 7,0 0,9 -7,0 Z",
+          scale: 1,
+          fillColor: color,
+          fillOpacity: 0.92,
+          strokeColor: "#fff",
+          strokeWeight: 1.5,
+        },
+        zIndex: 2,
+      });
+
+      marker.addListener("click", () => {
+        const snippet = site.visitTip
+          ? site.visitTip.slice(0, 120) + (site.visitTip.length > 120 ? "…" : "")
+          : site.description
+          ? site.description.slice(0, 100) + (site.description.length > 100 ? "…" : "")
+          : "";
+
+        infoWindowRef.current?.setContent(
+          `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${label}</span>
+            </div>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.name}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
+            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}</div>` : ""}
+            ${site.listingStatus === "live_unclaimed"
+              ? `<div style="font-size:10px;color:#CA922B;margin-bottom:4px">Community Listed — not yet claimed</div>`
+              : ""}
+            ${site.externalUrl
+              ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block">Learn More →</a>`
+              : ""}
+          </div>`
+        );
+        mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
+      });
+
+      culturalMarkersRef.current.push(marker);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [culturalSites]);
 
   // Check subscription status
   useEffect(() => {
@@ -482,10 +603,26 @@ export default function MapPage() {
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-6 left-4 bg-white/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex items-center gap-4 pointer-events-none">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[#CA922B] border-2 border-[#2B1507]" />
-            <span className="text-xs font-semibold text-[#3A1F0E]/70">Community Business</span>
+        <div className="absolute bottom-6 left-4 bg-white/92 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-4 gap-y-1.5 pointer-events-none max-w-[480px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-[#CA922B] border border-[#2B1507]/40" />
+            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Business</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rotate-45 bg-[#92400E]" />
+            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Cultural Site</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rotate-45 bg-[#7C3AED]" />
+            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">HBCU / Event</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rotate-45 bg-[#16A34A]" />
+            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Market</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rotate-45 bg-[#0891B2]" />
+            <span className="text-[10px] font-semibold text-[#3A1F0E]/70">Public Art</span>
           </div>
           {isPaidMember && (
             <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-4">
