@@ -109,10 +109,9 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
     const { heritageCategory, category, search, state, city, accessible, admissionFree, limit: limitParam } =
       req.query as Record<string, string | undefined>;
 
-    // Default to 300 for unfiltered map requests — returning 2,200+ records in one
-    // shot causes a 20s+ timeout. City/category-filtered requests return far fewer rows
-    // so the default rarely matters when filters are active. Hard cap at 500.
-    const rowLimit = Math.min(parseInt(limitParam ?? "300", 10) || 300, 500);
+    // Default 2000 — returns all seeded records in one shot.
+    // Hard cap at 2000 to prevent accidental unbounded queries.
+    const rowLimit = Math.min(parseInt(limitParam ?? "2000", 10) || 2000, 2000);
 
     const conditions: string[] = [];
     const params: unknown[] = [];
