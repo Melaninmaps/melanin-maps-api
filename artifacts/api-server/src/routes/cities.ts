@@ -61,26 +61,30 @@ router.get("/cities/:slug/story", async (req: Request, res: Response) => {
 
     const row = rows[0];
 
+    const counts = {
+      businesses: Number(row.business_count ?? 0),
+      culturalSites: Number(row.cultural_site_count ?? 0),
+      communityStories: Number(row.community_story_count ?? 0),
+    };
+
     // Graceful fallback when no profile has been seeded yet
     if (!row.historical_context) {
       res.json({
         city: row.city,
         state: row.state,
         slug: row.slug,
-        launchStatus: row.launch_status,
+        status: row.launch_status,
         hasProfile: false,
-        brief_context: null,
-        historical_context: null,
-        why_mwm_here: null,
-        hero_image_url: null,
-        key_neighborhoods: [],
-        key_figures: [],
-        migration_era: null,
-        cultural_anchors: [],
-        business_count: Number(row.business_count ?? 0),
-        cultural_site_count: Number(row.cultural_site_count ?? 0),
-        community_story_count: Number(row.community_story_count ?? 0),
-        story_updated_at: null,
+        briefContext: null,
+        historicalContext: null,
+        whyMwmHere: null,
+        heroImageUrl: null,
+        keyNeighborhoods: [],
+        keyFigures: [],
+        migrationEra: null,
+        culturalAnchors: [],
+        counts,
+        storyUpdatedAt: null,
       });
       return;
     }
@@ -89,20 +93,18 @@ router.get("/cities/:slug/story", async (req: Request, res: Response) => {
       city: row.city,
       state: row.state,
       slug: row.slug,
-      launchStatus: row.launch_status,
+      status: row.launch_status,
       hasProfile: true,
-      brief_context: row.brief_context,
-      historical_context: row.historical_context,
-      why_mwm_here: row.why_mwm_here,
-      hero_image_url: row.hero_image_url,
-      key_neighborhoods: row.key_neighborhoods ?? [],
-      key_figures: row.key_figures ?? [],
-      migration_era: row.migration_era,
-      cultural_anchors: row.cultural_anchors ?? [],
-      business_count: Number(row.business_count ?? 0),
-      cultural_site_count: Number(row.cultural_site_count ?? 0),
-      community_story_count: Number(row.community_story_count ?? 0),
-      story_updated_at: row.story_updated_at,
+      briefContext: row.brief_context,
+      historicalContext: row.historical_context,
+      whyMwmHere: row.why_mwm_here,
+      heroImageUrl: row.hero_image_url,
+      keyNeighborhoods: row.key_neighborhoods ?? [],
+      keyFigures: row.key_figures ?? [],
+      migrationEra: row.migration_era,
+      culturalAnchors: row.cultural_anchors ?? [],
+      counts,
+      storyUpdatedAt: row.story_updated_at,
     });
   } catch (err) {
     req.log.error({ err }, "GET /cities/:slug/story failed");
