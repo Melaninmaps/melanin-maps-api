@@ -2,7 +2,7 @@ import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
 import { Menu, X, MessageSquare, Bell, Sun, Moon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
 
 const BASE = import.meta.env.BASE_URL;
@@ -19,6 +19,7 @@ function useRequireApproval() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const [kinfolkDismissed, setKinfolkDismissed] = useState(false);
   const [location] = useLocation();
   const { data: auth } = useGetCurrentAuthUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -225,13 +226,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget — hidden on auth/payment-critical pages */}
-      {!["/login", "/signup", "/membership"].includes(location) && (
-        <Link href="/travel">
-          <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
-            {/* Full widget on sm+ screens */}
-            <div className="hidden sm:flex bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 cursor-pointer hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
-              <div className="flex items-center gap-3">
+      {/* KinfolkAI Widget — hidden on auth/payment-critical pages or when dismissed */}
+      {!kinfolkDismissed && !["/login", "/signup", "/membership"].includes(location) && (
+        <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
+          {/* Full widget on sm+ screens */}
+          <div className="hidden sm:flex relative bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+            <button
+              onClick={() => setKinfolkDismissed(true)}
+              className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#3A1F0E] border border-[#CA922B]/40 flex items-center justify-center hover:bg-[#CA922B]/20 transition-colors"
+              aria-label="Dismiss KinfolkAI"
+            >
+              <X className="w-3 h-3 text-[#F5EBD8]/70" />
+            </button>
+            <Link href="/travel">
+              <div className="flex items-center gap-3 cursor-pointer">
                 <div className="w-10 h-10 rounded-full bg-[#CA922B]/20 flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-[#CA922B]" />
                 </div>
@@ -240,13 +248,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <div className="text-[#F5EBD8]/70 text-xs">Plan your next trip</div>
                 </div>
               </div>
-            </div>
-            {/* Compact icon-only button on mobile */}
-            <div className="sm:hidden w-12 h-12 rounded-full bg-[#2B1507] border border-[#CA922B]/40 shadow-xl flex items-center justify-center cursor-pointer">
-              <MessageSquare className="w-5 h-5 text-[#CA922B]" />
-            </div>
+            </Link>
           </div>
-        </Link>
+          {/* Compact icon-only button on mobile — tap to open, long-press dismiss not needed; just show X on tap */}
+          <div className="sm:hidden relative">
+            <Link href="/travel">
+              <div className="w-12 h-12 rounded-full bg-[#2B1507] border border-[#CA922B]/40 shadow-xl flex items-center justify-center cursor-pointer">
+                <MessageSquare className="w-5 h-5 text-[#CA922B]" />
+              </div>
+            </Link>
+            <button
+              onClick={() => setKinfolkDismissed(true)}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3A1F0E] border border-[#CA922B]/40 flex items-center justify-center"
+              aria-label="Dismiss"
+            >
+              <X className="w-2.5 h-2.5 text-[#F5EBD8]/70" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

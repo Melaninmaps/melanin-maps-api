@@ -110,6 +110,21 @@ export default function MapPage() {
   const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
 
+  // Geocode the search string and pan the map to the result
+  const geocodeAndPan = useCallback(() => {
+    if (!mapRef.current || !search.trim()) return;
+    const g = (window as any).google?.maps;
+    if (!g) return;
+    const geocoder = new g.Geocoder();
+    geocoder.geocode({ address: search.trim() }, (results: any[], status: string) => {
+      if (status === "OK" && results?.[0]?.geometry?.location) {
+        const loc = results[0].geometry.location;
+        mapRef.current.panTo(loc);
+        mapRef.current.setZoom(13);
+      }
+    });
+  }, [search]);
+
   const businesses = ((data?.businesses ?? []) as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
   );
@@ -442,11 +457,18 @@ export default function MapPage() {
       <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
         <h1 className="font-serif font-bold text-[#2B1507] text-lg mb-3">Explore the Map</h1>
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3A1F0E]/40" />
+          <button
+            onClick={geocodeAndPan}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:text-[#CA922B] transition-colors"
+            aria-label="Search"
+          >
+            <Search className="w-4 h-4 text-[#3A1F0E]/40" />
+          </button>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search businesses, cities…"
+            onKeyDown={(e) => e.key === "Enter" && geocodeAndPan()}
+            placeholder="Search city or business…"
             className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
           />
           {search && (

@@ -261,46 +261,72 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE city_profiles ADD COLUMN IF NOT EXISTS city_name VARCHAR(200)`,
   },
   {
-    // Seed 12 Philadelphia demo businesses so the map has pins from day one.
-    // ON CONFLICT (name, city) DO NOTHING makes this fully idempotent.
-    // listing_status is set to live_unclaimed so the map query includes them.
-    name: "demo_businesses_philly_seed",
-    sql: `
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.table_constraints
-          WHERE table_name='businesses' AND constraint_name='businesses_name_city_unique'
-        ) THEN
-          ALTER TABLE businesses ADD CONSTRAINT businesses_name_city_unique UNIQUE (name, city);
-        END IF;
-      END $$;
-
+    // Ensure listing_status column exists on businesses before seeding or updating it
+    name: "businesses_listing_status_col",
+    sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'staged'`,
+  },
+  {
+    // Seed 12 Philadelphia demo businesses so the map has gold pins from day one.
+    // Uses WHERE NOT EXISTS per row — no unique constraint needed, fully idempotent.
+    name: "demo_businesses_philly_seed_v2",
+    sql: `DO $$
+DECLARE biz RECORD;
+BEGIN
+  FOR biz IN SELECT * FROM (VALUES
+    ('Kinfolk Kitchen','[DEMO] A beloved gathering spot serving Southern and West African-inspired comfort food. Family recipes, community events, and a warm welcome for everyone.','Food','Restaurant','1400 South St','Philadelphia','PA','39.9416','-75.1650',true,'["black-owned"]','$$'),
+    ('Akosua''s Cloth & Culture','[DEMO] Handcrafted West African textiles, kente cloth, and contemporary Afro-diasporic fashion.','Retail','Fashion','3210 Girard Ave','Philadelphia','PA','39.9665','-75.1730',true,'["black-owned","african-diaspora-owned"]','$$'),
+    ('Yard Style Caribbean Grill','[DEMO] Jerk chicken, oxtail, and roti made from family recipes brought from Kingston and Port of Spain.','Food','Caribbean','5523 Germantown Ave','Philadelphia','PA','39.9980','-75.1720',true,'["black-owned","caribbean-owned"]','$'),
+    ('Casa Hernandez Panaderia','[DEMO] Mexican and Puerto Rican baked goods, pan dulce, and fresh empanadas. A community anchor for over a decade.','Food','Bakery','2812 N 5th St','Philadelphia','PA','39.9810','-75.1350',false,'["hispanic-owned","latino-owned"]','$'),
+    ('Lenape Roots Wellness','[DEMO] Holistic wellness rooted in Indigenous traditions — herbal medicine, mindfulness, and educational programs.','Health','Wellness','1200 E Columbia Ave','Philadelphia','PA','39.9740','-75.1210',false,'["indigenous-owned","native-american-owned"]','$$'),
+    ('Samira''s Moroccan Table','[DEMO] Slow-cooked tagines, fresh mint tea, and warm hospitality from a Casablanca native.','Food','Restaurant','734 S 9th St','Philadelphia','PA','39.9352','-75.1534',false,'["middle-eastern-owned","north-african-owned","immigrant-owned"]','$$'),
+    ('New Arrival Market','[DEMO] A multicultural grocery stocking ingredients from over 30 countries, founded by first-generation immigrants.','Retail','Grocery','1840 Point Breeze Ave','Philadelphia','PA','39.9291','-75.1720',false,'["immigrant-owned"]','$'),
+    ('Her Collective Studio','[DEMO] Women-owned beauty and wellness studio specializing in natural hair care, skincare, and holistic self-care.','Beauty','Salon','4512 Baltimore Ave','Philadelphia','PA','39.9447','-75.2045',false,'["women-owned"]','$$'),
+    ('Prism Books and Community Space','[DEMO] An LGBTQ+-owned independent bookstore, event venue, and safe space celebrating queer literature.','Retail','Bookstore','704 S 4th St','Philadelphia','PA','39.9418','-75.1480',false,'["lgbtq-owned"]','$$'),
+    ('Accessibility First Consulting','[DEMO] Disability-owned consulting firm specializing in ADA compliance, accessible design, and inclusive workplace strategy.','Services','Consulting','1500 Market St','Philadelphia','PA','39.9530','-75.1653',false,'["disability-owned"]','$$$'),
+    ('Honor Grounds Coffee','[DEMO] Veteran-owned coffee shop and community meeting space. Single-origin roasts and a standing welcome for all who have served.','Food','Cafe','1910 Passyunk Ave','Philadelphia','PA','39.9280','-75.1720',false,'["veteran-owned"]','$'),
+    ('The Gathering Place','[DEMO] A multicultural community restaurant co-owned by Black, LGBTQ+, and women founders. Food, art, and storytelling.','Food','Restaurant','2100 Fairmount Ave','Philadelphia','PA','39.9635','-75.1723',true,'["black-owned","women-owned","lgbtq-owned"]','$$')
+  ) AS t(name,description,category,subcategory,address,city,state,latitude,longitude,black_owned,ownership_designations,price_range)
+  LOOP
+    IF NOT EXISTS (SELECT 1 FROM businesses WHERE name = biz.name AND city = biz.city) THEN
       INSERT INTO businesses
         (id, name, description, category, subcategory, address, city, state,
          latitude, longitude, black_owned, ownership_designations,
          confidence_score, verified, price_range, business_status, listing_status)
-      VALUES
-        (gen_random_uuid(),'Kinfolk Kitchen','[DEMO] A beloved gathering spot serving Southern and West African–inspired comfort food. Family recipes, community events, and a warm welcome for everyone.','Food','Restaurant','1400 South St','Philadelphia','PA','39.9416','-75.1650',true,'["black-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Akosua''s Cloth & Culture','[DEMO] Handcrafted West African textiles, kente cloth, and contemporary Afro-diasporic fashion.','Retail','Fashion','3210 Girard Ave','Philadelphia','PA','39.9665','-75.1730',true,'["black-owned","african-diaspora-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Yard Style Caribbean Grill','[DEMO] Jerk chicken, oxtail, and roti made from family recipes brought from Kingston and Port of Spain.','Food','Caribbean','5523 Germantown Ave','Philadelphia','PA','39.9980','-75.1720',true,'["black-owned","caribbean-owned"]'::jsonb,75,false,'$','community','live_unclaimed'),
-        (gen_random_uuid(),'Casa Hernández Panadería','[DEMO] Mexican and Puerto Rican baked goods, pan dulce, and fresh empanadas. A community anchor for over a decade.','Food','Bakery','2812 N 5th St','Philadelphia','PA','39.9810','-75.1350',false,'["hispanic-owned","latino-owned"]'::jsonb,75,false,'$','community','live_unclaimed'),
-        (gen_random_uuid(),'Lenape Roots Wellness','[DEMO] Holistic wellness rooted in Indigenous traditions — herbal medicine, mindfulness practices, and educational programs.','Health','Wellness','1200 E Columbia Ave','Philadelphia','PA','39.9740','-75.1210',false,'["indigenous-owned","native-american-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Samira''s Moroccan Table','[DEMO] Slow-cooked tagines, fresh mint tea, and warm hospitality from a Casablanca native.','Food','Restaurant','734 S 9th St','Philadelphia','PA','39.9352','-75.1534',false,'["middle-eastern-owned","north-african-owned","immigrant-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'New Arrival Market','[DEMO] A multicultural grocery stocking ingredients from over 30 countries, founded by first-generation immigrants.','Retail','Grocery','1840 Point Breeze Ave','Philadelphia','PA','39.9291','-75.1720',false,'["immigrant-owned"]'::jsonb,75,false,'$','community','live_unclaimed'),
-        (gen_random_uuid(),'Her Collective Studio','[DEMO] Women-owned beauty and wellness studio specializing in natural hair care, skincare, and holistic self-care.','Beauty','Salon','4512 Baltimore Ave','Philadelphia','PA','39.9447','-75.2045',false,'["women-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Prism Books & Community Space','[DEMO] An LGBTQ+-owned independent bookstore, event venue, and safe space celebrating queer literature.','Retail','Bookstore','704 S 4th St','Philadelphia','PA','39.9418','-75.1480',false,'["lgbtq-owned"]'::jsonb,75,false,'$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Accessibility First Consulting','[DEMO] Disability-owned consulting firm specializing in ADA compliance, accessible design, and inclusive workplace strategy.','Services','Consulting','1500 Market St','Philadelphia','PA','39.9530','-75.1653',false,'["disability-owned"]'::jsonb,75,false,'$$$','community','live_unclaimed'),
-        (gen_random_uuid(),'Honor Grounds Coffee','[DEMO] Veteran-owned coffee shop and community meeting space. Single-origin roasts and a standing welcome for all who have served.','Food','Café','1910 Passyunk Ave','Philadelphia','PA','39.9280','-75.1720',false,'["veteran-owned"]'::jsonb,75,false,'$','community','live_unclaimed'),
-        (gen_random_uuid(),'The Gathering Place','[DEMO] A multicultural community restaurant co-owned by Black, LGBTQ+, and women founders. Food, art, and storytelling.','Food','Restaurant','2100 Fairmount Ave','Philadelphia','PA','39.9635','-75.1723',true,'["black-owned","women-owned","lgbtq-owned"]'::jsonb,75,false,'$$','community','live_unclaimed')
-      ON CONFLICT (name, city) DO NOTHING`,
+      VALUES (
+        gen_random_uuid(), biz.name, biz.description, biz.category, biz.subcategory,
+        biz.address, biz.city, biz.state, biz.latitude, biz.longitude,
+        biz.black_owned::boolean, biz.ownership_designations::jsonb,
+        75, false, biz.price_range, 'community', 'live_unclaimed'
+      );
+    END IF;
+  END LOOP;
+END $$`,
   },
   {
-    // Backfill: set any remaining staged Philadelphia businesses to live_unclaimed
+    // Backfill: any remaining staged/null Philadelphia businesses → live_unclaimed
     name: "businesses_philly_live_unclaimed",
     sql: `UPDATE businesses SET listing_status = 'live_unclaimed'
           WHERE city ILIKE '%Philadelphia%' AND state ILIKE '%PA%'
           AND (listing_status IS NULL OR listing_status = 'staged')`,
+  },
+  {
+    // Add Cheyney University — nearest HBCU to Philadelphia (~23 miles)
+    name: "cultural_sites_cheyney_university",
+    sql: `INSERT INTO cultural_sites
+        (id, name, description, city, state, latitude, longitude,
+         heritage_category, pin_type, listing_status, verified_source,
+         admission_free, is_family_friendly, is_accessible)
+      SELECT
+        gen_random_uuid(),
+        'Cheyney University of Pennsylvania',
+        'Founded in 1837, Cheyney University is the oldest HBCU in the United States. Originally established as the African Institute by Quaker philanthropist Richard Humphreys, it became a cornerstone of Black higher education in America. Located in Chester County just outside Philadelphia, Cheyney has educated generations of Black scholars, educators, and leaders.',
+        'Cheyney', 'PA', '39.9346', '-75.5188',
+        'HBCU', 'HBCU', 'live_unclaimed',
+        'Pennsylvania State System of Higher Education; HBCU history archives',
+        true, true, true
+      WHERE NOT EXISTS (
+        SELECT 1 FROM cultural_sites WHERE name = 'Cheyney University of Pennsylvania'
+      )`,
   },
   {
     name: "user_city_welcome_dismissals_table",
