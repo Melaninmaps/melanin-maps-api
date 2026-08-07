@@ -547,4 +547,194 @@ router.post("/admin/city-launches/:slug/trigger-launch", async (req: Request, re
   }
 });
 
+// ─── POST /admin/batch-launch-all ────────────────────────────────────────────
+// Protected by CRON_SECRET header.
+// 1. Fires trigger-launch for every city still in "planning" status.
+// 2. UPSERTs all resulting live_unclaimed tour_guide_businesses into the
+//    businesses table so they appear in GET /businesses.
+//
+// Safe to call multiple times — idempotent (NOT EXISTS guard + already-live check).
+// ─────────────────────────────────────────────────────────────────────────────
+router.post("/admin/batch-launch-all", async (req: Request, res: Response) => {
+  const secret =
+    (req.headers["x-cron-secret"] as string | undefined) ?? req.body?.secret;
+  if (!secret || secret !== process.env.CRON_SECRET) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  try {
+    // ── 1. Get all planning cities ────────────────────────────────────────────
+    const { rows: planningCities } = await pool.query<{
+      slug: string;
+      city: string;
+      state: string;
+    }>(
+      `SELECT slug, city, state FROM city_launches WHERE status = 'planning' ORDER BY sequence_order`
+    );
+
+    req.log.info({ count: planningCities.length }, "batch-launch-all: cities to promote");
+
+    const cityResults: Array<{
+      slug: string;
+      city: string;
+      state: string;
+      promoted: number;
+      demoHidden: number;
+    }> = [];
+
+    // ── 2. Fire trigger-launch logic for each planning city ───────────────────
+    for (const { slug, city, state } of planningCities) {
+      // Promote 'staged' businesses in the main businesses table → live_unclaimed
+      // (This is where staged real-data businesses live in prod;
+      //  tour_guide_businesses is an optional secondary table.)
+      const { rowCount: promoted } = await pool.query(
+        `UPDATE businesses
+           SET listing_status = 'live_unclaimed', updated_at = NOW()
+         WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
+           AND listing_status = 'staged'`,
+        [city, state]
+      );
+
+      // Also try tour_guide_businesses if the table exists
+      let tgbPromoted = 0;
+      try {
+        const { rows: tableCheck } = await pool.query(
+          `SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'tour_guide_businesses'`
+        );
+        if (tableCheck.length > 0) {
+          const { rowCount: tgb } = await pool.query(
+            `UPDATE tour_guide_businesses
+               SET listing_status = 'live_unclaimed', updated_at = NOW()
+             WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
+               AND listing_status = 'staged'`,
+            [city, state]
+          );
+          tgbPromoted = tgb ?? 0;
+        }
+      } catch { /* tour_guide_businesses not available — no-op */ }
+
+      const { rowCount: demoHidden } = await pool.query(
+        `UPDATE businesses
+           SET listing_status = 'permanently_hidden', updated_at = NOW()
+         WHERE LOWER(city) = LOWER($1) AND LOWER(state) = LOWER($2)
+           AND listing_status = 'demo'`,
+        [city, state]
+      );
+
+      await pool.query(
+        `UPDATE city_launches
+           SET status = 'live', launch_date = NOW(), updated_at = NOW()
+         WHERE slug = $1`,
+        [slug]
+      );
+
+      cityResults.push({
+        slug,
+        city,
+        state,
+        promoted: (promoted ?? 0) + tgbPromoted,
+        demoHidden: demoHidden ?? 0,
+      });
+    }
+
+    // ── 3. Promote any remaining 'staged' businesses for now-live cities ───────
+    // Catches any staged businesses not covered by the per-city loop above.
+    const { rowCount: bulkPromoted } = await pool.query(`
+      UPDATE businesses b
+         SET listing_status = 'live_unclaimed', updated_at = NOW()
+        FROM city_launches cl
+       WHERE LOWER(TRIM(b.city))  = LOWER(TRIM(cl.city))
+         AND LOWER(TRIM(b.state)) = LOWER(TRIM(cl.state))
+         AND cl.status = 'live'
+         AND b.listing_status = 'staged'
+    `);
+
+    // ── 4. Ensure businesses without listing_status are visible ───────────────
+    // Businesses added before listing_status column existed may have NULL status.
+    await pool.query(`
+      UPDATE businesses
+         SET listing_status = 'live_unclaimed'
+       WHERE listing_status IS NULL
+         AND (status IS NULL OR status = 'active')
+    `);
+
+    // ── 5. Copy live_unclaimed tour_guide_businesses → businesses if table exists
+    let copied = 0;
+    try {
+      const { rows: tCheck } = await pool.query(
+        `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'tour_guide_businesses'`
+      );
+      if (tCheck.length > 0) {
+        const { rowCount } = await pool.query(`
+          INSERT INTO businesses (
+            id, name, description, category, subcategory, address,
+            city, state, latitude, longitude,
+            black_owned, ownership_designations, confidence_score,
+            verified, listing_status, business_status
+          )
+          SELECT
+            gen_random_uuid(),
+            tgb.name,
+            COALESCE(NULLIF(TRIM(tgb.description), ''), 'A community business in ' || tgb.city),
+            COALESCE(NULLIF(TRIM(tgb.category), ''), 'Community Business'),
+            COALESCE(NULLIF(TRIM(tgb.business_type), ''), 'General'),
+            COALESCE(NULLIF(TRIM(tgb.address), ''), tgb.city || ', ' || tgb.state),
+            tgb.city,
+            tgb.state,
+            (CASE LOWER(TRIM(tgb.city))
+              WHEN 'philadelphia' THEN 39.9526 WHEN 'washington' THEN 38.9072
+              WHEN 'richmond'     THEN 37.5407 WHEN 'charlotte'  THEN 35.2271
+              WHEN 'columbia'     THEN 34.0007 WHEN 'atlanta'    THEN 33.7490
+              WHEN 'birmingham'   THEN 33.5186 WHEN 'new orleans' THEN 29.9511
+              WHEN 'houston'      THEN 29.7604 ELSE 38.9
+            END + (RANDOM() - 0.5) * 0.04)::numeric(10,7),
+            (CASE LOWER(TRIM(tgb.city))
+              WHEN 'philadelphia' THEN -75.1652 WHEN 'washington' THEN -77.0369
+              WHEN 'richmond'     THEN -77.4360 WHEN 'charlotte'  THEN -80.8431
+              WHEN 'columbia'     THEN -81.0348 WHEN 'atlanta'    THEN -84.3880
+              WHEN 'birmingham'   THEN -86.8104 WHEN 'new orleans' THEN -90.0715
+              WHEN 'houston'      THEN -95.3698 ELSE -77.0
+            END + (RANDOM() - 0.5) * 0.06)::numeric(10,7),
+            false, '[]'::jsonb, 50, false, 'live_unclaimed', 'community'
+          FROM tour_guide_businesses tgb
+          WHERE tgb.listing_status = 'live_unclaimed'
+            AND NOT EXISTS (
+              SELECT 1 FROM businesses b
+              WHERE LOWER(TRIM(b.name))  = LOWER(TRIM(tgb.name))
+                AND LOWER(TRIM(b.city))  = LOWER(TRIM(tgb.city))
+                AND LOWER(TRIM(b.state)) = LOWER(TRIM(tgb.state))
+            )
+        `);
+        copied = rowCount ?? 0;
+      }
+    } catch (copyErr) {
+      req.log.warn({ copyErr }, "tour_guide_businesses copy skipped");
+    }
+
+    // ── 6. Summary counts ─────────────────────────────────────────────────────
+    const { rows: totals } = await pool.query(`
+      SELECT city, state, listing_status, COUNT(*) AS count
+        FROM businesses
+       WHERE listing_status IN ('live_unclaimed','live_claimed')
+       GROUP BY city, state, listing_status
+       ORDER BY city
+    `);
+
+    res.json({
+      ok: true,
+      citiesLaunched: cityResults,
+      bulkPromotedFromStaged: bulkPromoted ?? 0,
+      businessesCopiedFromGuide: copied,
+      totals,
+      message: `${cityResults.length} cities launched`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "batch-launch-all failed");
+    res.status(500).json({ error: "Batch launch failed", detail: String(err) });
+  }
+});
+
 export default router;

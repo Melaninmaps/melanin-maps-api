@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
-import { db, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
+import { db, pool, reviewsTable, pointsLedgerTable, POINTS_VALUES, businessInvitesTable, businessesTable, usersTable, mentorshipProfilesTable } from "@workspace/db";
 import { computeTrustLevel, getReviewWeight, computeWeightedRating } from "@workspace/db/trust";
 import { eq, desc, and, ne, gte, sql, inArray } from "drizzle-orm";
 import { sendPushToUser, sendPushToUsersWithSavedBusiness, sendThreeStarAlert, sendBuzzAlert, sendNegativeReviewAlertIfThreshold } from "../lib/pushNotifications";
@@ -275,14 +275,24 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
     res.status(401).json({ error: "Authentication required" });
     return;
   }
-  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor, nowHiringUrl, photos } =
+  const { businessId, rating, text, wouldReturnAlone, socialHandle, socialPlatform, businessName, videoUrl, nonMinorityOwned, communitySupport, website, location, isAnonymous, recommendsAsEmployer, volunteerAsMentor, nowHiringUrl, photos, reviewBadge } =
     req.body as Record<string, unknown>;
 
   const ratingNum = Number(rating);
-  if (!businessId || !rating || isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
-    res.status(400).json({ error: "businessId required; rating must be a number 1–5" });
+  // reviewBadge alone is a complete, valid review — rating is derived from the badge.
+  const hasRating = rating != null && !isNaN(ratingNum) && ratingNum >= 1 && ratingNum <= 5;
+  const hasBadge = typeof reviewBadge === "string" && reviewBadge.trim().length > 0;
+  if (!businessId || (!hasRating && !hasBadge)) {
+    res.status(400).json({ error: "businessId required; provide rating (1–5) or a review badge" });
     return;
   }
+  // Derive rating from badge when not explicitly provided
+  const effectiveRating = hasRating ? ratingNum : (() => {
+    const b = String(reviewBadge);
+    if (["worth_every_visit","grandma_approved","felt_at_home","great_service","would_go_back"].includes(b)) return 5;
+    if (b === "mixed_feelings") return 3;
+    return 2;
+  })();
 
   const existing = await db
     .select({ id: reviewsTable.id })
@@ -334,7 +344,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
 
   const isMinorityOwned = bizRow?.blackOwned === true;
   const hasVideo = typeof videoUrl === "string" && videoUrl.trim().length > 0;
-  const isNegative = ratingNum <= 3;
+  const isNegative = effectiveRating <= 3;
 
   // ── Risk scoring (minority-owned businesses only) ────────────────────────
   // For non-minority businesses: always post immediately — delaying a safety
@@ -354,16 +364,16 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
       ? (Date.now() - new Date(userRow.createdAt).getTime()) / 86_400_000
       : 0;
     const priorReviewCount = parseInt(countRow?.cnt ?? "0", 10);
-    riskResult = scoreReview({ text: text.trim(), rating: ratingNum, accountAgeDays, priorReviewCount });
+    riskResult = scoreReview({ text: typeof text === "string" ? text.trim() : "", rating: effectiveRating, accountAgeDays, priorReviewCount });
   }
 
   function resolveStatus(): string {
     if (hasVideo) return "pending_video";
     // Non-minority-owned: always publish immediately (safety hazard to delay)
-    if (!isMinorityOwned) return isNegative ? "pending_review" : (ratingNum === 5 ? "auto_approved" : "posted");
+    if (!isMinorityOwned) return isNegative ? "pending_review" : (effectiveRating === 5 ? "auto_approved" : "posted");
     // Minority-owned: apply risk-based gating
     if (riskResult.level === "high") return "pending_verification";
-    if (ratingNum === 5) return "auto_approved";
+    if (effectiveRating === 5) return "auto_approved";
     return "posted";
   }
 
@@ -381,7 +391,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
             ? "Anonymous Community Member"
             : [req.user.firstName, req.user.lastName].filter(Boolean).join(" ") || "Community Member",
         isAnonymous: isAnonymous === true,
-        rating: ratingNum,
+        rating: effectiveRating,
         text: typeof text === "string" ? text : null,
         wouldReturnAlone: typeof wouldReturnAlone === "boolean" ? wouldReturnAlone : null,
         socialHandle: cleanHandle,
@@ -409,6 +419,14 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
       points: POINTS_VALUES.review,
       entityId: review.id,
     });
+
+    // Persist review_badge — not yet in Drizzle schema
+    if (hasBadge) {
+      await pool.query(
+        `UPDATE reviews SET review_badge = $1 WHERE id = $2`,
+        [String(reviewBadge), review.id]
+      );
+    }
 
     let invite = null;
     if (cleanHandle && cleanPlatform && nonMinorityOwned !== true) {
@@ -461,7 +479,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         reviewerName,
         reviewId: review.id,
         videoUrl: review.videoUrl,
-        rating: ratingNum,
+        rating: effectiveRating,
       }).catch((err) => {
         req.log.warn({ err }, "Failed to send video review notification email");
       });
@@ -502,7 +520,7 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
         sendBuzzAlert(businessId as string, biz.name, newCount).catch(() => {});
       }
       // Negative review threshold: 3 low-rated (≤3★) approved reviews in 30 days → saved user alert
-      if (ratingNum <= 3 && biz?.name) {
+      if (effectiveRating <= 3 && biz?.name) {
         sendNegativeReviewAlertIfThreshold(businessId as string, biz.name, req.user.id).catch(() => {});
       }
     }
@@ -510,10 +528,10 @@ router.post("/reviews", reviewLimiter, requireTrust, async (req: Request, res: R
     // Skip push notifications for held reviews — the review isn't live yet
     if (!isPendingVerification) {
       if (biz?.submittedById && biz.submittedById !== req.user.id) {
-        const ownerTitle = ratingNum === 5 ? "New 5-Star Review!" : "New Review";
-        const ownerBody = ratingNum === 5
+        const ownerTitle = effectiveRating === 5 ? "New 5-Star Review!" : "New Review";
+        const ownerBody = effectiveRating === 5
           ? `Your business received a perfect 5-star review on Mapping With Melanin!`
-          : `Someone left a ${ratingNum}-star review for ${biz.name ?? "your business"}.`;
+          : `Someone left a ${effectiveRating}-star review for ${biz.name ?? "your business"}.`;
         sendPushToUser(biz.submittedById, { title: ownerTitle, body: ownerBody, data: { screen: "business", id: businessId } }).catch(() => {});
       }
       sendPushToUsersWithSavedBusiness(businessId as string, { title: "New Review", body: `A new review was posted for ${biz?.name ?? "a saved business"}.`, data: { screen: "business", id: businessId } }).catch(() => {});
@@ -586,7 +604,7 @@ router.post("/reviews/:id/owner-response", async (req: Request, res: Response) =
 router.patch("/reviews/:id", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const reviewId = String(req.params.id);
-  const { text, rating } = req.body as { text?: string; rating?: number };
+  const { text, rating, reviewBadge } = req.body as { text?: string; rating?: number; reviewBadge?: string };
 
   try {
     const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.id, reviewId)).limit(1);
@@ -606,6 +624,15 @@ router.patch("/reviews/:id", async (req: Request, res: Response) => {
     }
 
     const [updated] = await db.update(reviewsTable).set(updates).where(eq(reviewsTable.id, reviewId)).returning();
+
+    // Persist review_badge separately (not in Drizzle schema yet)
+    if (typeof reviewBadge === "string" && reviewBadge.trim()) {
+      await pool.query(
+        `UPDATE reviews SET review_badge = $1 WHERE id = $2 AND user_id = $3`,
+        [reviewBadge.trim(), reviewId, req.user.id]
+      );
+    }
+
     res.json({ review: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to edit review");

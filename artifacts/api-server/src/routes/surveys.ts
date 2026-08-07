@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, neighborhoodSurveysTable } from "@workspace/db";
+import { db, pool, neighborhoodSurveysTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { surveyLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
@@ -132,6 +132,81 @@ router.get("/surveys", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch surveys");
     res.status(500).json({ error: "Failed to fetch surveys" });
+  }
+});
+
+// ─── POST /surveys/welcome ───────────────────────────────────────────────────
+// One-tap welcome rating (B4). welcome_rating alone is a complete, published record.
+router.post("/surveys/welcome", async (req: Request, res: Response) => {
+  const { welcomeRating, city, neighborhood, whatStoodOut, comments } = req.body as {
+    welcomeRating?: number;
+    city?: string;
+    neighborhood?: string;
+    whatStoodOut?: string[];
+    comments?: string;
+  };
+
+  if (!welcomeRating || welcomeRating < 1 || welcomeRating > 5) {
+    res.status(400).json({ error: "welcomeRating must be 1–5" });
+    return;
+  }
+
+  try {
+    // Map 1-5 welcome rating to community_score 0-100
+    const communityScore = Math.round(((welcomeRating - 1) / 4) * 100);
+
+    const [survey] = await db
+      .insert(neighborhoodSurveysTable)
+      .values({
+        userId: req.user?.id ?? null,
+        city: city ?? "Unknown",
+        neighborhood: neighborhood ?? null,
+        visitPurpose: "community_rating",
+        daytimeSafety: welcomeRating,
+        nighttimeSafety: welcomeRating,
+        atmosphere: welcomeRating >= 4 ? "very_welcoming" : welcomeRating === 3 ? "neutral" : "uncomfortable",
+        safetyScore: communityScore,
+        communityScore,
+        walkabilityScore: 0,
+        comments: comments ?? null,
+        accessibility: whatStoodOut ?? [],
+      })
+      .returning();
+
+    // Persist welcome_rating + what_stood_out in new columns
+    await pool.query(
+      `UPDATE neighborhood_surveys SET
+         welcome_rating = $1,
+         what_stood_out = $2::text[]
+       WHERE id = $3`,
+      [welcomeRating, whatStoodOut?.length ? whatStoodOut : null, survey.id]
+    );
+
+    res.status(201).json({ survey, communityScore });
+  } catch (err) {
+    req.log.error({ err }, "POST /surveys/welcome error");
+    res.status(500).json({ error: "Failed to submit rating" });
+  }
+});
+
+// ─── PATCH /surveys/:id ──────────────────────────────────────────────────────
+router.patch("/surveys/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { whatStoodOut, comments } = req.body as { whatStoodOut?: string[]; comments?: string };
+  try {
+    await pool.query(
+      `UPDATE neighborhood_surveys SET
+         what_stood_out = COALESCE($1::text[], what_stood_out),
+         comments       = COALESCE($2, comments)
+       WHERE id = $3 AND user_id = $4`,
+      [whatStoodOut?.length ? whatStoodOut : null, comments ?? null, id, req.user.id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /surveys/:id error");
+    res.status(500).json({ error: "Failed to update" });
   }
 });
 

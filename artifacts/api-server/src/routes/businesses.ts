@@ -41,11 +41,8 @@ function isAdmin(req: Request): boolean {
 }
 
 router.get("/businesses", async (req: Request, res: Response) => {
-  // Members-only: all discovery is gated behind authentication
-  if (!(req as any).user) {
-    res.status(401).json({ error: "Authentication required. Please sign in to browse businesses." });
-    return;
-  }
+  // Public browsing is allowed. Personalization (preferences, saved status) requires auth.
+  // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
   try {
     await withDbRetry(async () => {
     const { category, search, state, handle, culturalPreference, ownership } = req.query;

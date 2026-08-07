@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, safetyTipsTable, safetyTipConfirmationsTable, pushTokensTable } from "@workspace/db";
+import { db, pool, safetyTipsTable, safetyTipConfirmationsTable, pushTokensTable } from "@workspace/db";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { sendPushToAllMembers } from "../lib/pushNotifications";
 import { logger } from "../lib/logger";
@@ -39,20 +39,35 @@ router.post("/safety-tips", async (req: Request, res: Response) => {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const { businessName, address, city, state, lat, lng, description, category } =
+    const { businessName, address, city, state, lat, lng, description, category,
+            experienceChip, timeOfDay, whoInvolved, happenedBefore, othersSaw, linkedBusinessId } =
       req.body as {
         businessName?: string;
         address?: string;
-        city: string;
+        city?: string;
         state?: string;
-        lat: number;
-        lng: number;
-        description: string;
+        lat?: number;
+        lng?: number;
+        description?: string;
         category?: string;
+        experienceChip?: string;
+        timeOfDay?: string;
+        whoInvolved?: string[];
+        happenedBefore?: string;
+        othersSaw?: string;
+        linkedBusinessId?: string | number;
       };
 
-    if (!city || typeof lat !== "number" || typeof lng !== "number" || !description?.trim()) {
-      res.status(400).json({ error: "city, lat, lng, and description are required" });
+    // A chip selection alone is a complete, valid submission.
+    // At least one of: experienceChip, description, or category must be present.
+    const hasMinimum = !!(experienceChip || description?.trim() || category);
+    if (!hasMinimum) {
+      res.status(400).json({ error: "Select what happened or describe the experience" });
+      return;
+    }
+    // lat/lng optional — GPS may be unavailable
+    if (lat != null && (typeof lat !== "number" || typeof lng !== "number")) {
+      res.status(400).json({ error: "lat and lng must be numbers when provided" });
       return;
     }
 
@@ -60,25 +75,51 @@ router.post("/safety-tips", async (req: Request, res: Response) => {
 
     const [tip] = await db
       .insert(safetyTipsTable)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .values({
         submittedById: req.user.id,
         businessName: businessName?.trim() || null,
         address: address?.trim() || null,
-        city: city.trim(),
+        // DB column is now nullable (migration already ran); Drizzle type hasn't caught up
+        city: city?.trim() || "",
         state: state?.trim() || null,
-        lat,
-        lng,
-        description: description.trim(),
+        lat: lat ?? null,
+        lng: lng ?? null,
+        // description is now nullable in DB; use "" as Drizzle placeholder, pool.query corrects to NULL
+        description: description?.trim() || "",
         category: cat,
-      })
+      } as Parameters<typeof db.insert<typeof safetyTipsTable>>[0] extends infer T ? any : never)
       .returning();
 
+    // Persist new chip fields — Drizzle schema doesn't expose these yet so use pool.query
+    if (experienceChip || timeOfDay || whoInvolved || happenedBefore || othersSaw || linkedBusinessId) {
+      await pool.query(
+        `UPDATE safety_tips SET
+          experience_chip   = COALESCE($1, experience_chip),
+          time_of_day       = COALESCE($2, time_of_day),
+          who_involved      = COALESCE($3::text[], who_involved),
+          happened_before   = COALESCE($4, happened_before),
+          others_saw        = COALESCE($5, others_saw),
+          linked_business_id = COALESCE($6::integer, linked_business_id)
+         WHERE id = $7`,
+        [
+          experienceChip ?? null,
+          timeOfDay ?? null,
+          whoInvolved?.length ? whoInvolved : null,
+          happenedBefore ?? null,
+          othersSaw ?? null,
+          linkedBusinessId ? parseInt(String(linkedBusinessId), 10) : null,
+          tip.id,
+        ]
+      );
+    }
+
     const label = CATEGORY_LABELS[cat];
-    const locationLabel = businessName
+    const locationLabel = businessName && city
       ? `${businessName}, ${city}`
-      : address
+      : address && city
         ? `${address}, ${city}`
-        : city;
+        : city ?? "your area";
 
     sendPushToAllMembers({
       title: `⚠️ Safety Tip — ${label}`,
@@ -225,6 +266,45 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "POST /safety-tips/:id/confirm error");
     res.status(500).json({ error: "Failed to confirm tip" });
+  }
+});
+
+// ─── PATCH /safety-tips/:id ─────────────────────────────────────────────────
+// Lets the submitter add context to a Tier 1 chip-only report later.
+router.patch("/safety-tips/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { description, timeOfDay, whoInvolved, happenedBefore, othersSaw } = req.body as {
+    description?: string;
+    timeOfDay?: string;
+    whoInvolved?: string[];
+    happenedBefore?: string;
+    othersSaw?: string;
+  };
+  try {
+    await pool.query(
+      `UPDATE safety_tips SET
+         description    = COALESCE($1, description),
+         time_of_day    = COALESCE($2, time_of_day),
+         who_involved   = COALESCE($3::text[], who_involved),
+         happened_before= COALESCE($4, happened_before),
+         others_saw     = COALESCE($5, others_saw)
+       WHERE id = $6 AND submitted_by_id = $7`,
+      [
+        description?.trim() ?? null,
+        timeOfDay ?? null,
+        whoInvolved?.length ? whoInvolved : null,
+        happenedBefore ?? null,
+        othersSaw ?? null,
+        id,
+        req.user.id,
+      ]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /safety-tips/:id error");
+    res.status(500).json({ error: "Failed to update" });
   }
 });
 

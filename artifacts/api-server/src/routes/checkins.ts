@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { pool } from "@workspace/db";
 import { db, checkInsTable, pointsLedgerTable, POINTS_VALUES, businessesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 
@@ -121,6 +122,28 @@ router.get("/checkins/user", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch check-ins");
     res.status(500).json({ error: "Failed to fetch check-ins" });
+  }
+});
+
+// ─── PATCH /checkins/:id ─────────────────────────────────────────────────────
+// Add a note or badge to an existing check-in (B5 optional expansion).
+router.patch("/checkins/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const { note, reviewBadge } = req.body as { note?: string; reviewBadge?: string };
+  try {
+    await pool.query(
+      `UPDATE check_ins SET
+         note         = COALESCE($1, note),
+         review_badge = COALESCE($2, review_badge)
+       WHERE id = $3 AND user_id = $4`,
+      [note?.trim() ?? null, reviewBadge ?? null, id, req.user.id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /checkins/:id error");
+    res.status(500).json({ error: "Failed to update check-in" });
   }
 });
 
