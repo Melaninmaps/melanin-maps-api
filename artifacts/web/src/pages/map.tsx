@@ -86,6 +86,57 @@ function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
 // Universal diamond pin path — 16 × 16 px (same visual size as business circle scale:8)
 const DIAMOND_PATH = "M 0,-8 8,0 0,8 -8,0 Z";
 
+// Upward-pointing triangle — Historical Sundown Towns layer
+// Visually distinct from business circles and heritage diamonds (per Gate 5 spec)
+const TRIANGLE_PATH = "M 0,-10 L 9,7 L -9,7 Z";
+
+type SundownTown = {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  confidence_level: string; // confirmed | probable | possible
+  historical_evidence?: string | null;
+  time_period?: string | null;
+  excluded_population?: string | null;
+  source_organization?: string | null;
+  current_state: string;   // historical_neutral | historical_softened | historical_confirmed | current_active | current_escalated | current_faded
+  report_count: number;
+};
+
+// Sundown pin color — varies by state (NOT by confidence — confidence drives opacity/fill)
+function getSundownColor(state: string): string {
+  if (state === "historical_softened") return "#5B8A3C"; // green dot: 3+ positive reports
+  if (state === "historical_confirmed") return "#D4700A"; // warmer orange: 3+ negative
+  if (state === "current_active")       return "#EA580C"; // active present-day concern
+  if (state === "current_escalated")    return "#C2400B"; // escalated
+  return "#B8860B"; // historical_neutral or current_faded — amber (default)
+}
+
+// Fill opacity: confidence determines how "solid" the triangle is
+// Confirmed → solid; Probable → semi; Possible → outline only
+function getSundownFillOpacity(state: string, confidence: string): number {
+  if (state === "current_faded") return 0.15;
+  const base = state === "current_escalated" ? 1.0 : state === "current_active" ? 0.92 : 0.82;
+  if (confidence === "probable") return base * 0.55;
+  if (confidence === "possible") return 0; // outline only — under research
+  return base;
+}
+
+function getSundownScale(state: string): number {
+  if (state === "current_escalated") return 11;
+  if (state === "current_active")    return 10;
+  return 8;
+}
+
+function getConfidenceLabel(level: string): string {
+  if (level === "confirmed") return "Confirmed Historical Record";
+  if (level === "probable")  return "Probable Historical Record";
+  return "Under Historical Research";
+}
+
 type RouteInfo = { distance: string; duration: string; bizName: string };
 
 const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional"];
@@ -147,6 +198,10 @@ export default function MapPage() {
   const [routingBizId, setRoutingBizId] = useState<string | null>(null);
   const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
+
+  // Sundown towns — ALWAYS ON per Gate 5 Map UX Spec non-negotiable rule #2
+  const [sundownTowns, setSundownTowns] = useState<SundownTown[]>([]);
+  const sundownMarkersRef = useRef<GMarker[]>([]);
 
   type MapEvent = {
     id: string; title: string; city: string; state: string;
@@ -286,6 +341,80 @@ export default function MapPage() {
       marker.setMap(visible ? mapRef.current : null);
     });
   }, [legendFilter, culturalSites]);
+
+  // ── Historical Sundown Towns layer ──────────────────────────────────────────
+  // ALWAYS ON — layer is never hidden per Gate 5 Map UX Spec rule #2.
+  // Amber (#B8860B) upward triangles, confidence-classified shapes.
+
+  useEffect(() => {
+    if (!ready) return;
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/sundown-towns`)
+      .then((r) => r.json())
+      .then((d: any) => { if (Array.isArray(d.towns)) setSundownTowns(d.towns as SundownTown[]); })
+      .catch(() => {});
+  }, [ready]);
+
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    if (!g || !mapRef.current || sundownTowns.length === 0) return;
+
+    // Clear previous markers before re-rendering
+    sundownMarkersRef.current.forEach((m) => m.setMap(null));
+    sundownMarkersRef.current = [];
+
+    sundownTowns.forEach((town) => {
+      if (isNaN(town.latitude) || isNaN(town.longitude)) return;
+      const color = getSundownColor(town.current_state);
+      const fillOpacity = getSundownFillOpacity(town.current_state, town.confidence_level);
+      const scale = getSundownScale(town.current_state);
+      const isPossible = town.confidence_level === "possible";
+
+      const marker: GMarker = new g.Marker({
+        position: { lat: town.latitude, lng: town.longitude },
+        map: mapRef.current,
+        title: town.name,
+        icon: {
+          path: TRIANGLE_PATH,
+          scale,
+          fillColor: color,
+          fillOpacity,
+          strokeColor: color,
+          strokeWeight: isPossible ? 2 : 1.5,
+          strokeOpacity: town.current_state === "current_faded" ? 0.3 : 0.9,
+        },
+        zIndex: 1, // below business pins and heritage pins
+      });
+
+      marker.addListener("click", () => {
+        const confidenceLabel = getConfidenceLabel(town.confidence_level);
+        const evidence = town.historical_evidence
+          ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;margin-bottom:8px">${town.historical_evidence.slice(0, 200)}${town.historical_evidence.length > 200 ? "…" : ""}</div>`
+          : "";
+        const timePeriod = town.time_period
+          ? `<div style="font-size:10px;color:#92691E;font-weight:600;margin-bottom:6px">Era: ${town.time_period}</div>`
+          : "";
+
+        infoWindowRef.current?.setContent(
+          `<div style="font-family:serif;padding:6px 2px;min-width:220px;max-width:280px">
+            <div style="margin-bottom:5px">
+              <span style="background:#B8860B18;color:#92691E;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;font-family:sans-serif;letter-spacing:0.04em">▲ Historical Context</span>
+            </div>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${town.name}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:5px">${town.city}, ${town.state}</div>
+            <div style="display:inline-block;font-size:9px;font-weight:700;background:#B8860B12;color:#92691E;border:1px solid #B8860B30;border-radius:4px;padding:1px 6px;margin-bottom:8px">${confidenceLabel}</div>
+            <div style="font-size:11px;color:#3A1F0E;line-height:1.5;font-style:italic;margin-bottom:8px;padding:8px;background:#B8860B06;border-left:2px solid #B8860B50;border-radius:0 6px 6px 0">This location has a documented history of restricting the movement or residency of people of color. This indicator reflects historical practices and does not represent current conditions.</div>
+            ${timePeriod}${evidence}
+            <div style="font-size:9px;color:#3A1F0E40;border-top:1px solid #3A1F0E08;padding-top:6px;margin-top:2px;line-height:1.4">Source: Tougaloo College / Loewen (2005) · Rigby et al. (2025, Scientific Data)<br>This indicator reflects documented history, not a current safety rating.</div>
+          </div>`
+        );
+        mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
+      });
+
+      sundownMarkersRef.current.push(marker);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sundownTowns]);
 
   // Render event markers from the events table
   useEffect(() => {

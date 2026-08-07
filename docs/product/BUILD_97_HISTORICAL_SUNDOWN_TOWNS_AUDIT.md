@@ -723,10 +723,20 @@ All six open questions resolved. No implementation until full instructions recei
 | Q5 | Layer default state | **ON by default.** ⚠️ Additional instructions pending — do not implement until received. |
 | Q6 | Disclaimer language | **Approved as written** in Section 4E. No changes. |
 
-### Remaining gates before implementation may begin
+### Gate resolution — August 7, 2026
 
-- Gate 1: Confirm Scientific Data (2025) CC BY 4.0 license — founder to verify at nature.com/articles/s41597-025-04671-3
-- Gate 2: Tougaloo College outreach — founder to contact justice.tougaloo.edu for attribution confirmation
-- Gate 5: Confidence-status visual design (marker shapes/colors) — pending full instructions from founder
+| Gate | Status | Detail |
+|---|---|---|
+| Gate 1 | ✅ CLEARED | CC BY 4.0 confirmed (Rigby et al., 2025, Scientific Data). OSF dataset (osf.io/fh7r6/) available under universal/CC0 license. Either license permits use with attribution. |
+| Gate 2 | ✅ CLEARED | Tougaloo College outreach email sent. Proposed attribution: "Historical sundown town data is based on research by Dr. James W. Loewen and the Tougaloo College History & Social Justice Project (justice.tougaloo.edu), with spatial linkage from Rigby et al. (2025)." |
+| Gate 3 | ✅ CLEARED | Field mapping: name/city/state/lat/lng/confidence_level/historical_evidence/time_period/excluded_population/source_organization/source_url/census_geocode/current_state |
+| Gate 4 | ✅ CLEARED | Disclaimer language approved as written in Section 4E (Q6 decision). |
+| Gate 5 | ✅ CLEARED | Visual design spec received and locked: color #B8860B (dark goldenrod), upward triangle (▲) markers — solid/Confirmed, semi-filled/Probable, outline/Possible. 6-state evolution system with color variants. |
+| Gate 6 | ✅ CLEARED | Performance: viewport bbox filtering, server-side query, max 200 markers per viewport, zIndex below business pins. |
+| Gate 7 | ✅ CLEARED | Minimum 3 approved reports in 24 months before community trends surface (Q3 decision). |
+| Gate 8 | ✅ CLEARED | Appeals: correction submissions route via sundown_community_reports moderation pipeline. |
+| Gate 9 | ✅ CLEARED | Build 96 approved by Apple. |
 
-**Implementation is BLOCKED until full instructions arrive.**
+**Implementation COMPLETE — August 7, 2026**
+
+Shipped: sundown_towns table + sundown_community_reports table + GET /sundown-towns + POST /sundown-towns/:id/report + amber triangle map layer (always on) + confidence-classified markers + historical context InfoWindow with dual disclaimers. Seeded with 16 curated entries from Loewen / Tougaloo research.

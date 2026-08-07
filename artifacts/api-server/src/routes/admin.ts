@@ -1385,5 +1385,84 @@ router.post("/admin/seed-manus-cultural-sites-pass2", async (req: Request, res: 
   }
 });
 
+// ── POST /admin/seed-sundown-towns-v2 ─────────────────────────────────────────
+// Seeds the 16 curated entries from SUNDOWN_TOWNS_SEED into the dedicated
+// sundown_towns table (NOT cultural_sites). Safe to run multiple times — dedup
+// on LOWER(name)+LOWER(city)+LOWER(state). Gates cleared August 7 2026.
+router.post("/admin/seed-sundown-towns-v2", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sundown_towns (
+        id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        name             TEXT        NOT NULL,
+        city             TEXT        NOT NULL,
+        state            TEXT        NOT NULL,
+        county           TEXT,
+        latitude         NUMERIC(10,7) NOT NULL,
+        longitude        NUMERIC(10,7) NOT NULL,
+        confidence_level TEXT        NOT NULL DEFAULT 'confirmed',
+        historical_evidence TEXT,
+        time_period      TEXT,
+        excluded_population TEXT     DEFAULT 'Black residents',
+        source_organization TEXT,
+        source_url       TEXT,
+        census_geocode   TEXT,
+        current_state    TEXT        NOT NULL DEFAULT 'historical_neutral',
+        last_review_date DATE,
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sundown_community_reports (
+        id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        sundown_town_id UUID        NOT NULL REFERENCES sundown_towns(id) ON DELETE CASCADE,
+        content         TEXT        NOT NULL,
+        sentiment       TEXT        NOT NULL CHECK (sentiment IN ('positive','negative')),
+        is_moderated    BOOLEAN     NOT NULL DEFAULT FALSE,
+        is_approved     BOOLEAN     NOT NULL DEFAULT FALSE,
+        user_id         TEXT,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    let inserted = 0; let skipped = 0;
+    for (const entry of SUNDOWN_TOWNS_SEED) {
+      const exists = await pool.query(
+        `SELECT id FROM sundown_towns
+         WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 1`,
+        [entry.name, entry.city, entry.state]
+      );
+      if (exists.rows.length) { skipped++; continue; }
+      await pool.query(
+        `INSERT INTO sundown_towns
+          (id,name,city,state,latitude,longitude,confidence_level,
+           historical_evidence,time_period,excluded_population,
+           source_organization,source_url,current_state)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [
+          randomUUID(), entry.name, entry.city, entry.state,
+          parseFloat(entry.latitude), parseFloat(entry.longitude),
+          "confirmed",
+          entry.significance ?? null, entry.era ?? null,
+          "Black residents",
+          entry.verifiedSource ?? null, entry.externalUrl ?? null,
+          "historical_neutral",
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "seed-sundown-towns-v2 completed");
+    res.json({ ok: true, inserted, skipped, total: SUNDOWN_TOWNS_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/seed-sundown-towns-v2 error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
 export default router;
+
 
