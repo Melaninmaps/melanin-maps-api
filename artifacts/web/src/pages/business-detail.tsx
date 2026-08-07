@@ -473,7 +473,7 @@ export default function BusinessDetail() {
                 })()}
 
                 <div className="prose prose-lg text-[#3A1F0E]/80 font-light leading-relaxed">
-                  <p>{business.description || "Discover this exceptional business. They provide quality service and a welcoming environment for the community."}</p>
+                  <p>{(business.description?.replace(/^\[DEMO\]\s*/i, "") || "Discover this exceptional business. They provide quality service and a welcoming environment for the community.")}</p>
                 </div>
                 
                 {business.blackOwned && (
