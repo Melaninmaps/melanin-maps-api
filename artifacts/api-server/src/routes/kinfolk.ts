@@ -644,6 +644,7 @@ function buildSystemPrompt(opts: {
   tier?: string | null;
   twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
   topUserVibes?: string[];
+  cityContext?: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -808,6 +809,17 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
 
   const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
 
+  // ── City cultural intelligence ────────────────────────────────────────────
+  const cityContextSection = opts.cityContext ? `
+CITY CULTURAL INTELLIGENCE — ${opts.cityContext.city_name}:
+${opts.cityContext.brief_context}
+
+Key neighborhoods: ${opts.cityContext.key_neighborhoods.slice(0, 8).join(", ")}
+Cultural anchors: ${opts.cityContext.cultural_anchors.slice(0, 8).join(", ")}
+
+When the user asks about this city, let this cultural knowledge inform how you describe neighborhoods, history, and community life — weave it naturally, never recite it.
+` : "";
+
   // ── Lifestyle services & tier-based depth ──────────────────────────────────
   const lifestyleServices = (prefs?.lifestyleServices as string[] | null) ?? [];
   const lifestyleSection = lifestyleServices.length
@@ -868,7 +880,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${cityContextSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 OPERATING PHILOSOPHY — THE FOUNDATION OF EVERY RESPONSE:
 These three principles govern every answer Kinfolk gives. They are not guidelines — they are the standard.
 
@@ -1647,6 +1659,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     } catch { /* non-fatal */ }
 
+    // Fetch city cultural context for the destination (or user's first favourite city)
+    let cityContext: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null = null;
+    const cityLookup = destination ?? (prefs?.favoriteCities as string[] | null)?.[0] ?? null;
+    if (cityLookup) {
+      try {
+        const cpRes = await pool.query(
+          `SELECT cp.city_name, cp.brief_context, cp.key_neighborhoods, cp.cultural_anchors
+           FROM city_profiles cp
+           WHERE LOWER(cp.city_name) = LOWER($1)
+           LIMIT 1`,
+          [cityLookup],
+        );
+        if (cpRes.rows.length > 0) cityContext = cpRes.rows[0] as typeof cityContext;
+      } catch { /* non-fatal — city context is enrichment, not required */ }
+    }
+
     // Check if user owns a business and inject owner-mode context
     let ownerBusinessContext = "";
     if (req.user?.id) {
@@ -1665,7 +1693,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal */ }
     }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes }) + ownerBusinessContext;
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

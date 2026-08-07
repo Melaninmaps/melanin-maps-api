@@ -206,6 +206,16 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     )`,
   },
   {
+    // Drop FK so city_profiles can hold all 53+ cities, not just city_launches entries
+    name: "city_profiles_drop_fk",
+    sql: `ALTER TABLE city_profiles DROP CONSTRAINT IF EXISTS city_profiles_city_slug_fkey`,
+  },
+  {
+    // Add city_name column for direct lookup without joining city_launches
+    name: "city_profiles_add_city_name",
+    sql: `ALTER TABLE city_profiles ADD COLUMN IF NOT EXISTS city_name VARCHAR(200)`,
+  },
+  {
     name: "user_city_welcome_dismissals_table",
     sql: `CREATE TABLE IF NOT EXISTS user_city_welcome_dismissals (
       id SERIAL PRIMARY KEY,
