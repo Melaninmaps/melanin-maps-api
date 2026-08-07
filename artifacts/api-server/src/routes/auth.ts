@@ -133,7 +133,7 @@ router.get("/auth/user", async (req: Request, res: Response) => {
   // Return 401 (not 200) when unauthenticated so the mobile client's
   // fetchUser() immediately signs out instead of treating it as a transient
   // server error and retrying 3× (which caused a ~33s hang on the landing screen).
-  if (!req.isAuthenticated()) { res.status(401).json({ user: null }); return; }
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
   try {
     const [dbRow] = await db
       .select({

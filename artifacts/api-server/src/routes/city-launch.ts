@@ -6,6 +6,40 @@ import type { ChecklistSection } from "@workspace/db";
 const router: IRouter = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
+// GET /city-launches  (public — safe subset of fields, no admin metrics)
+// Used by the web and mobile map to know which cities are live or coming soon.
+// ──────────────────────────────────────────────────────────────────────────────
+router.get("/city-launches", async (_req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query<{
+      city: string;
+      state: string;
+      slug: string;
+      status: string;
+      launch_date: string | null;
+      sequence_order: number;
+    }>(
+      `SELECT city, state, slug, status, launch_date, sequence_order
+       FROM city_launches
+       ORDER BY sequence_order ASC`
+    );
+
+    const cities = rows.map(r => ({
+      city: r.city,
+      state: r.state,
+      slug: r.slug,
+      status: r.status,
+      launchDate: r.launch_date,
+      sequenceOrder: r.sequence_order,
+    }));
+
+    res.json({ cities });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load city launches" });
+  }
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
 // GET /admin/city-launches
 // List all founder-approved launch cities with live metrics
 // ──────────────────────────────────────────────────────────────────────────────

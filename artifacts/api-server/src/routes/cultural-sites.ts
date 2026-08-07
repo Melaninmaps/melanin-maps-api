@@ -106,8 +106,13 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
     // Seeding is handled at startup via POST /admin/seed-cultural-sites or the
     // initial deployment migration in static-server.mjs.
 
-    const { heritageCategory, category, search, state, city, accessible, admissionFree } =
+    const { heritageCategory, category, search, state, city, accessible, admissionFree, limit: limitParam } =
       req.query as Record<string, string | undefined>;
+
+    // Default to 300 for unfiltered map requests — returning 2,200+ records in one
+    // shot causes a 20s+ timeout. City/category-filtered requests return far fewer rows
+    // so the default rarely matters when filters are active. Hard cap at 500.
+    const rowLimit = Math.min(parseInt(limitParam ?? "300", 10) || 300, 500);
 
     const conditions: string[] = [];
     const params: unknown[] = [];
@@ -172,7 +177,7 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
           ELSE 9
         END,
         name ASC
-      LIMIT 2500
+      LIMIT ${rowLimit}
     `;
 
     const result = await pool.query(sql, params);
