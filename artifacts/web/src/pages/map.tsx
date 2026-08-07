@@ -43,12 +43,15 @@ type CulturalSiteWeb = {
 function getCulturalPinColor(site: CulturalSiteWeb): string {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
+  // Heritage festivals & cultural celebrations — warm gold, communicates reverence
+  if (pt === "heritage_festival" || pt === "cultural_celebration" || pt === "community_tradition") return "#C8960C";
   if (pt === "farmers_market" || pt === "pop_up_market" || pt === "market") return "#16A34A";
   if (pt === "mural_or_public_art") return "#0891B2";
   if (pt === "community_org" || pt === "cultural_organization") return "#D97706";
-  if (pt === "festival_or_event" || pt === "community_event") return "#EA580C"; // orange — Events
+  // community_event / festival_or_event = community-created pop-ups (not annual heritage events)
+  if (pt === "festival_or_event" || pt === "community_event") return "#EA580C";
   if (pt === "park_or_outdoor") return "#15803D";
-  if (hc === "HBCU") return "#7C3AED";                  // purple — HBCUs only
+  if (hc === "HBCU") return "#7C3AED";
   if (hc === "Civil Rights") return "#DC2626";
   if (hc === "Religious Heritage") return "#78716C";
   return "#92400E";
@@ -57,11 +60,14 @@ function getCulturalPinColor(site: CulturalSiteWeb): string {
 function getCulturalPinLabel(site: CulturalSiteWeb): string {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
+  if (pt === "heritage_festival")    return "Heritage Festival";
+  if (pt === "cultural_celebration") return "Cultural Celebration";
+  if (pt === "community_tradition")  return "Community Tradition";
   if (pt === "farmers_market" || pt === "pop_up_market") return "Farmers Market";
   if (pt === "market") return "Market";
   if (pt === "mural_or_public_art") return "Public Art";
   if (pt === "community_org" || pt === "cultural_organization") return "Community Org";
-  if (pt === "festival_or_event" || pt === "community_event") return "Event";
+  if (pt === "festival_or_event" || pt === "community_event") return "Community Event";
   if (hc === "HBCU") return "HBCU";
   if (hc === "Civil Rights") return "Civil Rights";
   return hc || "Cultural Site";
@@ -71,15 +77,17 @@ function getCulturalPinLabel(site: CulturalSiteWeb): string {
 function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
-  const isHbcu   = hc === "HBCU";
-  const isEvent  = pt === "festival_or_event" || pt === "community_event";
-  const isMarket = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
-  const isArt    = pt === "mural_or_public_art";
-  if (filter === "hbcu")    return isHbcu;
-  if (filter === "events")  return isEvent;
-  if (filter === "market")  return isMarket;
-  if (filter === "art")     return isArt;
-  if (filter === "cultural") return !isHbcu && !isEvent && !isMarket && !isArt;
+  const isHbcu     = hc === "HBCU";
+  const isFestival = pt === "heritage_festival" || pt === "cultural_celebration" || pt === "community_tradition";
+  const isEvent    = pt === "festival_or_event" || pt === "community_event";
+  const isMarket   = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
+  const isArt      = pt === "mural_or_public_art";
+  if (filter === "hbcu")     return isHbcu;
+  if (filter === "festival") return isFestival;
+  if (filter === "events")   return isEvent;
+  if (filter === "market")   return isMarket;
+  if (filter === "art")      return isArt;
+  if (filter === "cultural") return !isHbcu && !isFestival && !isEvent && !isMarket && !isArt;
   return true;
 }
 
@@ -173,7 +181,8 @@ const LEGEND_TILES = [
   { key: "business", color: "#CA922B", shape: "circle",  label: "Businesses" },
   { key: "cultural", color: "#92400E", shape: "diamond", label: "Cultural Sites" },
   { key: "hbcu",     color: "#7C3AED", shape: "diamond", label: "HBCUs" },
-  { key: "events",   color: "#EA580C", shape: "diamond", label: "Events" },
+  { key: "festival", color: "#C8960C", shape: "diamond", label: "Festivals" },
+  { key: "events",   color: "#EA580C", shape: "diamond", label: "Community Events" },
   { key: "market",   color: "#16A34A", shape: "diamond", label: "Markets" },
   { key: "art",      color: "#0891B2", shape: "diamond", label: "Public Art" },
 ] as const;

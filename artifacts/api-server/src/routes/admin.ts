@@ -6,6 +6,8 @@ import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
+import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
+import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
 import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -1520,6 +1522,164 @@ router.post("/admin/seed-sundown-towns-v2", async (req: Request, res: Response) 
     res.json({ ok: true, inserted, skipped, total: SUNDOWN_TOWNS_SEED.length });
   } catch (err) {
     req.log.error({ err }, "POST /admin/seed-sundown-towns-v2 error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/recategorize-festivals ────────────────────────────────────────
+// Upgrades existing cultural_sites with pin_type=festival_or_event to
+// heritage_festival so they get gold pins instead of orange "EVENT" pins.
+router.post("/admin/recategorize-festivals", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    const result = await pool.query(
+      `UPDATE cultural_sites
+       SET pin_type = 'heritage_festival'
+       WHERE pin_type = 'festival_or_event'
+         AND (
+           -- annual cultural events with heritage significance
+           LOWER(name) LIKE '%festival%'
+           OR LOWER(name) LIKE '%carnival%'
+           OR LOWER(name) LIKE '%celebration%'
+           OR LOWER(name) LIKE '%parade%'
+           OR LOWER(name) LIKE '%fiesta%'
+           OR LOWER(name) LIKE '%juneteenth%'
+           OR LOWER(name) LIKE '%mardi%'
+           OR LOWER(name) LIKE '%heritage%'
+           OR LOWER(name) LIKE '%pow%wow%'
+           OR LOWER(name) LIKE '%powwow%'
+         )
+       RETURNING id`
+    );
+    res.json({ ok: true, recategorized: result.rowCount ?? 0 });
+  } catch (err) {
+    req.log.error({ err }, "recategorize-festivals error");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// ── POST /admin/seed-national-festivals ───────────────────────────────────────
+// Seeds 120+ national heritage festivals with pin_type=heritage_festival (gold).
+// Dedup-safe: skips any name+state already in cultural_sites.
+router.post("/admin/seed-national-festivals", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    let inserted = 0; let skipped = 0;
+    for (const f of NATIONAL_FESTIVALS_SEED) {
+      const exists = await pool.query(
+        `SELECT id FROM cultural_sites
+         WHERE LOWER(name)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
+        [f.name, f.state]
+      );
+      if (exists.rows.length) { skipped++; continue; }
+      await pool.query(
+        `INSERT INTO cultural_sites
+          (id, name, description, category, heritage_category, subcategory,
+           ethnic_community, city, state, latitude, longitude, era,
+           significance, external_url, pin_type,
+           is_accessible, is_family_friendly, admission_free, is_verified,
+           verified_source, created_at)
+         VALUES
+          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+           true,true,true,true,$16,NOW())`,
+        [
+          randomUUID(),
+          f.name,
+          f.description,
+          "Cultural Celebration",
+          f.heritageCategory,
+          "Annual Festival",
+          f.ethnicCommunity ?? null,
+          f.city,
+          f.state,
+          f.latitude,
+          f.longitude,
+          f.typicalMonth,
+          f.significance,
+          f.externalUrl ?? null,
+          "heritage_festival",
+          "Community Knowledge",
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "seed-national-festivals done");
+    res.json({ ok: true, inserted, skipped, total: NATIONAL_FESTIVALS_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "seed-national-festivals error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/seed-sundown-towns-national ───────────────────────────────────
+// Seeds 60+ additional national sundown towns into the sundown_towns table.
+// Corrects the geographic bias toward the Southeast in the initial seed.
+// Dedup-safe: skips any name+state already in the table.
+router.post("/admin/seed-sundown-towns-national", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    // Ensure table exists (idempotent)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sundown_towns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        city TEXT,
+        state TEXT,
+        county TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        confidence_level TEXT DEFAULT 'possible',
+        historical_evidence TEXT,
+        time_period TEXT,
+        excluded_population TEXT DEFAULT 'Black residents',
+        source_organization TEXT,
+        source_url TEXT,
+        current_state TEXT DEFAULT 'historical_neutral',
+        report_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    let inserted = 0; let skipped = 0;
+    for (const t of NATIONAL_SUNDOWN_TOWNS_SEED) {
+      const exists = await pool.query(
+        `SELECT id FROM sundown_towns
+         WHERE LOWER(name)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
+        [t.name, t.state]
+      );
+      if (exists.rows.length) { skipped++; continue; }
+      await pool.query(
+        `INSERT INTO sundown_towns
+          (id,name,city,state,county,latitude,longitude,confidence_level,
+           historical_evidence,time_period,excluded_population,
+           source_organization,current_state)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [
+          randomUUID(),
+          t.name, t.city, t.state, t.county ?? null,
+          t.latitude, t.longitude,
+          t.confidence_level,
+          t.historical_evidence,
+          t.time_period,
+          t.excluded_population ?? "African American",
+          t.source_organization,
+          "historical_neutral",
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "seed-sundown-towns-national done");
+    res.json({ ok: true, inserted, skipped, total: NATIONAL_SUNDOWN_TOWNS_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "seed-sundown-towns-national error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });
