@@ -29,16 +29,16 @@ export interface DirectoryBusinessSeed {
 }
 
 /** Known city centroids for coordinate assignment */
-const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
-  "Philadelphia_PA": { lat: 39.9526, lng: -75.1652 },
-  "Darby_PA":        { lat: 39.9168, lng: -75.2593 },
-  "Silver Spring_MD":{ lat: 38.9907, lng: -77.0261 },
-  "Santa Clara_CA":  { lat: 37.3541, lng: -121.9552 },
-  "New York_NY":     { lat: 40.7128, lng: -74.0060  },
+const CITY_COORDS: Record<string, { latitude: number; longitude: number }> = {
+  "Philadelphia_PA": { latitude: 39.9526, longitude: -75.1652 },
+  "Darby_PA":        { latitude: 39.9168, longitude: -75.2593 },
+  "Silver Spring_MD":{ latitude: 38.9907, longitude: -77.0261 },
+  "Santa Clara_CA":  { latitude: 37.3541, longitude: -121.9552 },
+  "New York_NY":     { latitude: 40.7128, longitude: -74.0060  },
 };
 
 function coords(city: string, state: string) {
-  return CITY_COORDS[`${city}_${state}`] ?? { lat: 39.9526, lng: -75.1652 };
+  return CITY_COORDS[`${city}_${state}`] ?? { latitude: 39.9526, longitude: -75.1652 };
 }
 
 export const DIRECTORY_BUSINESSES_SEED: DirectoryBusinessSeed[] = [
