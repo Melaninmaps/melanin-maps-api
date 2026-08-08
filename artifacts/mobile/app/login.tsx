@@ -131,19 +131,33 @@ export default function LoginScreen() {
       });
       if (!credential.identityToken) throw new Error("No identity token from Apple");
       const base = getApiBaseUrl();
-      const res = await fetch(`${base}/api/auth/apple`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          identityToken: credential.identityToken,
-          nonce: rawNonce,
-          appleUserId: credential.user,
-          authorizationCode: credential.authorizationCode ?? undefined,
-          email: credential.email ?? undefined,
-          firstName: credential.fullName?.givenName ?? undefined,
-          lastName: credential.fullName?.familyName ?? undefined,
-        }),
-      });
+      const appleController = new AbortController();
+      const appleTimer = setTimeout(() => appleController.abort(), 12_000);
+      let res: Response;
+      try {
+        res = await fetch(`${base}/api/auth/apple`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            identityToken: credential.identityToken,
+            nonce: rawNonce,
+            appleUserId: credential.user,
+            authorizationCode: credential.authorizationCode ?? undefined,
+            email: credential.email ?? undefined,
+            firstName: credential.fullName?.givenName ?? undefined,
+            lastName: credential.fullName?.familyName ?? undefined,
+          }),
+          signal: appleController.signal,
+        });
+      } catch (fetchErr: unknown) {
+        clearTimeout(appleTimer);
+        const e = fetchErr as Error;
+        const isTimeout = e?.name === "AbortError";
+        setError(isTimeout ? "Connection timed out. Please check your network and try again." : "Could not reach the server. Check your connection and try again.");
+        return;
+      } finally {
+        clearTimeout(appleTimer);
+      }
       const data = await res.json() as { token?: string; error?: string; profileSetupComplete?: boolean };
       if (!res.ok || !data.token) {
         setError(data.error ?? "Apple Sign-In failed. Please try again.");

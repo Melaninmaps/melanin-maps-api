@@ -190,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithEmail = useCallback(async (email: string, password: string): Promise<{ error?: string; authenticated?: boolean; errorCode?: string }> => {
     const apiBase = getApiBaseUrl();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30_000);
+    const timer = setTimeout(() => controller.abort(), 12_000);
     let response: Response;
     try {
       response = await fetch(`${apiBase}/api/auth/login-email`, {
@@ -203,7 +203,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(timer);
       const e = fetchErr as Error;
       console.error("login fetch threw", { host: apiBase, errorName: e?.name, errorMessage: e?.message });
-      return { error: `Could not reach server (${e?.name ?? "network error"}). Check your connection.` };
+      const isTimeout = e?.name === "AbortError";
+      return { error: isTimeout ? "Connection timed out. Please check your network and try again." : `Could not reach the server. Check your connection and try again.` };
     } finally {
       clearTimeout(timer);
     }
