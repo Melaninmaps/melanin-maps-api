@@ -780,18 +780,20 @@ async function ensureKnowledgeTopics(
       return;
     }
 
-    // Single bulk INSERT for all missing topics (6 params per row)
+    // Single bulk INSERT for all missing topics (6 params per row).
+    // keywords is a text[] column — pass as a JS array (pg converts automatically).
+    // trusted_sources is jsonb — pass as JSON.stringify with ::jsonb cast.
     const COLS = 6;
     const placeholders = newTopics
-      .map((_, i) => `(gen_random_uuid(),$${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4}::jsonb,$${i*COLS+5},$${i*COLS+6}::jsonb,true,'free',NOW())`)
+      .map((_, i) => `(gen_random_uuid(),$${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4},$${i*COLS+5},$${i*COLS+6}::jsonb,true,'free',NOW())`)
       .join(",");
     const params = newTopics.flatMap((t) => [
       t.topicName,
       t.category,
       t.description,
-      JSON.stringify(t.keywords),
+      t.keywords,                       // text[] — pass array directly, no JSON.stringify
       t.notificationPriority,
-      JSON.stringify(t.trustedSources),
+      JSON.stringify(t.trustedSources), // jsonb — stringify required
     ]);
 
     await pool.query(
