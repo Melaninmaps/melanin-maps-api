@@ -124,3 +124,5 @@
 - [Knowledge Topics Schema — keywords type trap](knowledge-topics-schema.md) — keywords is text[] not jsonb; bulk INSERT silently fails with ::jsonb cast.
 - [Drizzle route catch blocks silently return fallback zeros](drizzle-silent-catch-pattern.md) — missing import returns 0/0/0/0 with no visible error; always verify non-zero returns against live endpoint.
 - [Web iOS parity — completed pages](web-ios-parity.md) — 7 pages added to close iOS/web gap; POOL_MAX raised to 35 for tour traffic; nav updated with Library, Circles, Guides, Marketplace, Connections.
+- [Tour businesses seed + city welcome system](tour-businesses-seed.md) — 556 tour businesses in data/tour-businesses-seed.ts; ensureTourBusinesses boot guard; city_profiles brief_context seeded for 30+ cities; welcome-once-per-user architecture already live.
+- [Tour Content Infrastructure](tour-content-infrastructure.md) — community_organizations (60), recurring_events (31), tour_cultural_sites (177), edit_suggestions tables + boot guards + API routes; neighborhood_timing col added but NOT yet populated (Task #145); cultural phrases glossary NOT yet built (Task #144).
