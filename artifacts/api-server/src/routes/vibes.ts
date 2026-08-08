@@ -477,15 +477,21 @@ router.get("/vibes/endorsements/:businessId", async (req, res) => {
     const { businessId } = req.params;
     const DISPLAY_THRESHOLD = 10;
 
+    // NOTE: endorsement_tags is not a DB table — labels come from the tag_key itself.
+    // We also check the_real_tags table (which IS seeded) for a friendly label,
+    // falling back to INITCAP(REPLACE(tag_key,'_',' ')) for endorsement tags.
     const result = await pool.query(
       `SELECT
          t.tag_key,
-         COALESCE(et.label, t.tag_key) AS label,
+         COALESCE(
+           rt.label,
+           INITCAP(REPLACE(t.tag_key, '_', ' '))
+         ) AS label,
          COUNT(*)::int AS count
        FROM business_endorsement_taps t
-       LEFT JOIN endorsement_tags et ON et.tag_key = t.tag_key
+       LEFT JOIN the_real_tags rt ON rt.tag_key = t.tag_key
        WHERE t.business_id = $1
-       GROUP BY t.tag_key, et.label
+       GROUP BY t.tag_key, rt.label
        HAVING COUNT(*) >= $2
        ORDER BY count DESC
        LIMIT 20`,
