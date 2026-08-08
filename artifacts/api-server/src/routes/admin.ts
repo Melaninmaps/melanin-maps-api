@@ -1734,7 +1734,6 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
     let totalSkipped = 0;
 
     for (const [bizName, tagKeys] of Object.entries(DEMO_TAPS)) {
-      // Look up the business ID
       const bizRow = await pool.query(
         `SELECT id FROM businesses WHERE name = $1 LIMIT 1`, [bizName]
       );
@@ -1744,22 +1743,24 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
       }
       const businessId = bizRow.rows[0].id;
 
+      // Build one VALUES list per tag batch — much faster than 1-row-at-a-time
       for (const tagKey of tagKeys) {
+        const values: string[] = [];
+        const params: string[] = [];
+        let p = 1;
         for (let i = 1; i <= DEMO_USER_COUNT; i++) {
           const demoUserId = `demo_tap_user_${String(i).padStart(2, "0")}`;
-          const id = `demo_${businessId}_${tagKey}_${demoUserId}`;
-          try {
-            await pool.query(
-              `INSERT INTO business_endorsement_taps (id, business_id, user_id, tag_key, created_at)
-               VALUES ($1, $2, $3, $4, NOW())
-               ON CONFLICT DO NOTHING`,
-              [id, businessId, demoUserId, tagKey]
-            );
-            totalInserted++;
-          } catch {
-            totalSkipped++;
-          }
+          const id = `demo_${businessId}_${tagKey}_u${i}`;
+          values.push(`($${p++},$${p++},$${p++},$${p++},NOW())`);
+          params.push(id, businessId, demoUserId, tagKey);
         }
+        const r = await pool.query(
+          `INSERT INTO business_endorsement_taps (id, business_id, user_id, tag_key, created_at)
+           VALUES ${values.join(",")}
+           ON CONFLICT DO NOTHING`,
+          params
+        );
+        totalInserted += r.rowCount ?? 0;
       }
     }
 
