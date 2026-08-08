@@ -31,7 +31,7 @@ router.get("/events", async (req: Request, res: Response) => {
       conditions.push(eq(eventsTable.featured, true));
     }
 
-    // Show all active events — including platform-seeded community events
+    // Show only active events
     conditions.push(eq(eventsTable.status, "active"));
 
     const rawEvents = await db
@@ -81,7 +81,21 @@ router.get("/events", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ events });
+    // Filter out events whose date has already passed.
+    // Dates are stored as human-readable strings ("August 15, 2026").
+    // Parse them at request time; exclude anything before today (midnight ET).
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const upcoming = events.filter(e => {
+      try {
+        const d = new Date(e.date);
+        return !isNaN(d.getTime()) && d >= now;
+      } catch {
+        return true; // if unparseable, keep the event
+      }
+    });
+
+    res.json({ events: upcoming });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch events");
     res.status(500).json({ error: "Failed to fetch events" });

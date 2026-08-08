@@ -367,6 +367,17 @@ END $seed$`,
           WHERE UPPER(COALESCE(category,'')) = 'HBCU'
              OR UPPER(COALESCE(heritage_category,'')) = 'HBCU'`,
   },
+  {
+    // Fix Smoke & Soul ownership designation — was stored as lowercase "black-owned"
+    // instead of the canonical enum value "Black / African American-Owned".
+    name: "normalize_smoke_and_soul_ownership",
+    sql: `UPDATE businesses
+          SET ownership_designations = '["Black / African American-Owned"]'::jsonb,
+              black_owned = true
+          WHERE LOWER(name) = 'smoke & soul'
+            AND ownership_designations::text ILIKE '%black-owned%'
+            AND NOT ownership_designations::text ILIKE '%Black / African American%'`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

@@ -6,13 +6,15 @@ const router = Router();
 
 router.get("/impact", async (req, res) => {
   try {
+    // Count only live businesses — staged/directory businesses are not visible to users
     const [bizStats] = await db
       .select({
         totalBusinesses: count(businessesTable.id),
         totalCities: countDistinct(businessesTable.city),
         totalReviews: sum(businessesTable.reviewCount),
       })
-      .from(businessesTable);
+      .from(businessesTable)
+      .where(sql`${businessesTable.listingStatus} IN ('live_unclaimed', 'live_claimed')`);
 
     const [userStats] = await db
       .select({ totalUsers: count(usersTable.id) })
