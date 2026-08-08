@@ -472,7 +472,7 @@ router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
 
 // GET /vibes/endorsements/:businessId — top endorsement tags for a business
 // Returns only tags that have reached the 10-tap display threshold.
-router.get("/endorsements/:businessId", async (req, res) => {
+router.get("/vibes/endorsements/:businessId", async (req, res) => {
   try {
     const { businessId } = req.params;
     const DISPLAY_THRESHOLD = 10;
