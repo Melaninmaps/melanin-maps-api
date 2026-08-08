@@ -1,7 +1,7 @@
 import { Link, useLocation, Redirect } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
-import { Menu, X, MessageSquare, Bell, Sun, Moon } from "lucide-react";
+import { Menu, X, MessageSquare, Bell, Sun, Moon, Compass, Map, Users, Shield, BookOpen, User } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
 
@@ -185,8 +185,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      {/* Main Content */}
-      <main id="main-content" className="flex-1 w-full flex flex-col" tabIndex={-1}>
+      {/* Main Content — add bottom padding on mobile for members (bottom nav) */}
+      <main id="main-content" className={`flex-1 w-full flex flex-col${isMember ? " pb-16 sm:pb-0" : ""}`} tabIndex={-1}>
         {children}
       </main>
 
@@ -259,11 +259,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
 
-      {/* KinfolkAI Widget — members only, hidden on auth/payment/kinfolk pages or when dismissed */}
+      {/* KinfolkAI Widget — members only, desktop/tablet only, hidden on auth/kinfolk pages or when dismissed */}
       {isMember && !kinfolkDismissed && !["/login", "/signup", "/membership", "/travel"].includes(location) && (
-        <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50">
-          {/* Full widget on sm+ screens */}
-          <div className="hidden sm:flex relative bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex-col gap-2 hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
+        <div className="hidden sm:block fixed bottom-6 right-6 z-50">
+          <div className="relative bg-[#2B1507] border border-[#CA922B]/30 shadow-2xl rounded-2xl p-4 flex flex-col gap-2 hover:shadow-[0_10px_40px_rgba(202,146,43,0.15)] transition-all">
             <button
               onClick={() => setKinfolkDismissed(true)}
               className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#3A1F0E] border border-[#CA922B]/40 flex items-center justify-center hover:bg-[#CA922B]/20 transition-colors"
@@ -283,22 +282,42 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
           </div>
-          {/* Compact icon-only button on mobile — tap to open, long-press dismiss not needed; just show X on tap */}
-          <div className="sm:hidden relative">
-            <Link href="/travel">
-              <div className="w-12 h-12 rounded-full bg-[#2B1507] border border-[#CA922B]/40 shadow-xl flex items-center justify-center cursor-pointer">
-                <MessageSquare className="w-5 h-5 text-[#CA922B]" />
-              </div>
-            </Link>
-            <button
-              onClick={() => setKinfolkDismissed(true)}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#3A1F0E] border border-[#CA922B]/40 flex items-center justify-center"
-              aria-label="Dismiss"
-            >
-              <X className="w-2.5 h-2.5 text-[#F5EBD8]/70" />
-            </button>
-          </div>
         </div>
+      )}
+
+      {/* ── Mobile Bottom Navigation — members only ─────────────────────────── */}
+      {isMember && (
+        <nav
+          aria-label="Mobile bottom navigation"
+          className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#2B1507] border-t border-white/10 flex items-stretch safe-bottom"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          {[
+            { href: "/explore",   Icon: Compass,  label: "Explore"    },
+            { href: "/map",       Icon: Map,      label: "Map"        },
+            { href: "/community", Icon: Users,    label: "Community"  },
+            { href: "/safety",    Icon: Shield,   label: "Safety"     },
+            { href: "/library",   Icon: BookOpen, label: "Library"    },
+            { href: "/profile",   Icon: User,     label: "Profile"    },
+          ].map(({ href, Icon, label }) => {
+            const active = location === href || (href !== "/explore" && location.startsWith(href));
+            return (
+              <Link key={href} href={href}>
+                <div
+                  className={`flex flex-col items-center justify-center gap-0.5 px-1 py-2 min-w-[52px] transition-colors cursor-pointer ${
+                    active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>
+                    {label}
+                  </span>
+                  {active && <div className="absolute bottom-0 w-6 h-0.5 bg-[#CA922B] rounded-full" />}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
       )}
     </div>
   );

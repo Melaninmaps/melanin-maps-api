@@ -1,265 +1,598 @@
-import { useState } from "react";
-import { useListSurveys, useCreateSurvey, useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DisclaimerBanner } from "@/components/DisclaimerBanner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { Shield, Search, Check, ChevronDown, ShieldCheck, Radio, Users } from "lucide-react";
+import {
+  Shield, AlertTriangle, Radio, Users, MapPin, Phone, ChevronRight,
+  X, CheckCircle, Loader2, Eye, EyeOff, Navigation, Flag, Building2,
+  Heart, BookOpen, AlertCircle, Star, Clock
+} from "lucide-react";
 
-const FAQ_ITEMS = [
-  { q: "How are safety scores calculated?", a: "Safety scores are calculated from community-submitted reports, verified member reviews, and real-time incident data. Each score reflects the collective experience of people who've actually been there and is updated continuously as new reports come in." },
-  { q: "Who can submit a review or report?", a: "Any verified Mapping with Melanin™ member can submit a safety review or incident report. We require authentication to maintain accountability and reduce fraudulent submissions." },
-  { q: "What happens when an incident is reported?", a: "Our moderation team reviews every incident report within 24 hours. Verified incidents are reflected in the safety score, and alerts are sent to nearby members when a situation warrants immediate attention." },
-  { q: "Can businesses respond to reviews?", a: "Yes. Verified business owners can respond publicly to reviews through their business dashboard. We encourage open dialogue between businesses and the community they serve." },
-  { q: "Are businesses able to dispute inaccurate reviews?", a: "Yes. Business owners can flag reviews they believe are inaccurate. Our team investigates disputes and removes content that violates our community guidelines." },
-  { q: "How are reviews moderated?", a: "All reviews go through automated screening for harmful content, followed by human review when flagged. Our team of community moderators ensures every review meets our standards for authenticity and respect." },
-  { q: "How do businesses become verified?", a: "All minority-owned businesses are welcome to join Mapping With Melanin — we understand that every business is at a different stage in its journey, and that's okay. Any minority-owned business can list on our platform. Businesses that want to take it a step further can apply for our special Verified Badge through our Business Verification program. We review documentation confirming ownership and business legitimacy before awarding verified status — it's an extra layer of trust, not a barrier to entry." },
-  { q: "Is my personal information safe?", a: "Absolutely. Your personal information is never sold to third parties. Reviews can be submitted under your name or anonymously, and all data is encrypted and securely stored." },
-  { q: "How does Mapping with Melanin help travelers make informed decisions?", a: "We aggregate community safety scores, verified reviews, and local insights so you can research any neighborhood or business before you arrive — giving you the confidence to explore new places on your terms." },
-  { q: "How is Mapping with Melanin different from Yelp or Google Reviews?", a: "We're built specifically for the Melanated community. Our safety scores reflect real experiences from people who share your background, not generic ratings. We surface culture-specific insights that mainstream platforms miss entirely." },
-  { q: "What cities have the highest safety scores for Melaninated travelers?", a: "Our top-rated cities include Atlanta, GA; Houston, TX; Chicago, IL; Miami, FL; and Washington, DC — all with strong minority business communities and high community safety scores from verified members." },
+const BASE = import.meta.env.BASE_URL;
+
+// ── Report Types ───────────────────────────────────────────────────────────
+type ReportSheet = "none" | "safety" | "police" | "space" | "experience";
+
+const SAFETY_TYPES = [
+  { value: "Safety Concern", label: "Safety Concern", desc: "Suspicious activity, threats, crime" },
+  { value: "Sundown Town Warning", label: "Sundown Town Warning", desc: "Historical or active restricted area" },
+  { value: "Discrimination", label: "Discrimination", desc: "Race-based discrimination or profiling" },
+  { value: "Business Update", label: "Business Update", desc: "Safety-related business change" },
+  { value: "Community Resource", label: "Community Resource", desc: "Share a helpful resource" },
+  { value: "Positive Safety Tip", label: "Positive Safety Tip", desc: "Share a welcoming place or experience" },
 ];
 
+const POLICE_TYPES = [
+  { value: "Police Stop/Questioning", label: "Police Stop / Questioning" },
+  { value: "ICE Activity", label: "ICE Activity" },
+  { value: "Racial Profiling", label: "Racial Profiling" },
+  { value: "Excessive Force/Misconduct", label: "Excessive Force / Misconduct" },
+  { value: "Checkpoint/Roadblock", label: "Checkpoint / Roadblock" },
+  { value: "Other Encounter", label: "Other Encounter" },
+];
+
+const SPACE_CATEGORIES = [
+  "Restaurant / Café", "Retail Store", "Venue / Club", "Entertainment", "Hotel / Stay", "Other",
+];
+
+const SPACE_CONCERNS = [
+  "Racial Profiling", "Hostile Staff", "Unsafe Environment", "Discrimination", "Price Gouging", "Other",
+];
+
+const EXPERIENCE_CHIPS = [
+  "I felt unsafe", "I was followed", "I was ignored or dismissed", "Staff was rude or hostile",
+  "I felt racially profiled", "I felt welcomed", "I felt seen and respected",
+  "The space felt inclusive", "I'd go back", "I'd warn others", "Something else happened",
+];
+
+const SEVERITY_OPTS = ["Low", "Medium", "High", "Critical"];
+
+// ── General Safety Report Form ─────────────────────────────────────────────
+function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [type, setType] = useState("");
+  const [severity, setSeverity] = useState("Medium");
+  const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [description, setDescription] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const submit = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/reports`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: type, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity }),
+      });
+      if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
+      else { toast({ title: "Could not submit", description: "Please try again.", variant: "destructive" }); }
+    } catch { toast({ title: "Network error", variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  if (success) return (
+    <div className="text-center py-8">
+      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+      <p className="font-bold text-[#2B1507] text-lg">Report submitted</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">Reviewed within 24 hours. Thank you for keeping the community safe.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      {step === 1 && (
+        <>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Report Type</p>
+            <div className="space-y-2">
+              {SAFETY_TYPES.map(t => (
+                <button key={t.value} onClick={() => setType(t.value)}
+                  className={`w-full text-left px-4 py-3 rounded-2xl border transition-colors ${
+                    type === t.value ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/30"
+                  }`}>
+                  <p className="font-bold text-sm text-[#2B1507]">{t.label}</p>
+                  <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{t.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <button disabled={!type} onClick={() => setStep(2)}
+            className="w-full py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] transition-colors">
+            Next
+          </button>
+        </>
+      )}
+      {step === 2 && (
+        <>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Severity</p>
+            <div className="grid grid-cols-4 gap-2">
+              {SEVERITY_OPTS.map(s => (
+                <button key={s} onClick={() => setSeverity(s)}
+                  className={`py-2 rounded-xl text-xs font-bold transition-colors border ${
+                    severity === s ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
+                  }`}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">City *</label>
+            <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State"
+              className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">Neighborhood (optional)</label>
+            <input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Neighborhood or street"
+              className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+          </div>
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">Description (optional)</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+              placeholder="Describe what happened..."
+              className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
+          </div>
+          <button onClick={() => setIsAnonymous(a => !a)}
+            className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl border transition-colors ${isAnonymous ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white"}`}>
+            {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
+            <div className="text-left">
+              <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous report"}</p>
+              <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Your identity is protected" : "Your name may be visible to moderators"}</p>
+            </div>
+          </button>
+          <div className="flex gap-3">
+            <button onClick={() => setStep(1)} className="flex-1 py-3 border border-[#3A1F0E]/10 rounded-2xl text-sm font-bold text-[#3A1F0E]/60 hover:bg-[#FAF6EF]">Back</button>
+            <button disabled={!city || submitting} onClick={submit}
+              className="flex-2 flex-1 py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+              Submit Report
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Police / ICE Encounter Form ────────────────────────────────────────────
+function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [encounterType, setEncounterType] = useState("");
+  const [severity, setSeverity] = useState("Medium");
+  const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [description, setDescription] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const submit = async () => {
+    if (!description || description.length < 10) { toast({ title: "Please provide a description (min 10 chars)", variant: "destructive" }); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/reports`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity }),
+      });
+      if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
+      else toast({ title: "Could not submit", variant: "destructive" });
+    } catch { toast({ title: "Network error", variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  if (success) return (
+    <div className="text-center py-8">
+      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+      <p className="font-bold text-[#2B1507] text-lg">Encounter reported</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">This helps the community stay informed. Your report is under review.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2">
+        <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+        <p className="text-xs text-amber-800">This information helps the community. All reports are reviewed within 24 hours.</p>
+      </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Encounter Type</p>
+        <div className="space-y-2">
+          {POLICE_TYPES.map(t => (
+            <button key={t.value} onClick={() => setEncounterType(t.value)}
+              className={`w-full text-left px-4 py-3 rounded-2xl border transition-colors ${encounterType === t.value ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/30"}`}>
+              <p className="font-bold text-sm text-[#2B1507]">{t.label}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {SEVERITY_OPTS.map(s => (
+          <button key={s} onClick={() => setSeverity(s)}
+            className={`py-2 rounded-xl text-xs font-bold border transition-colors ${severity === s ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10"}`}>{s}</button>
+        ))}
+      </div>
+      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State *"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <input value={neighborhood} onChange={e => setNeighborhood(e.target.value)} placeholder="Neighborhood or cross street (optional)"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <div>
+        <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 block mb-2">What happened? *</label>
+        <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+          placeholder="Describe the encounter in detail (min 10 characters)..."
+          className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
+        <p className="text-[10px] text-[#3A1F0E]/35 mt-1">{description.length} characters</p>
+      </div>
+      <button onClick={() => setIsAnonymous(a => !a)}
+        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl border ${isAnonymous ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white"}`}>
+        {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
+        <div className="text-left">
+          <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous"}</p>
+          <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Your identity is protected" : "Your name visible to moderators"}</p>
+        </div>
+      </button>
+      <button disabled={!encounterType || !city || description.length < 10 || submitting} onClick={submit}
+        className="w-full py-3 bg-[#DC2626] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-red-700 flex items-center justify-center gap-2">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
+        Submit Encounter Report
+      </button>
+    </div>
+  );
+}
+
+// ── Unsafe Space Form ──────────────────────────────────────────────────────
+function SpaceReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [spaceName, setSpaceName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [category, setCategory] = useState("");
+  const [concerns, setConcerns] = useState<string[]>([]);
+  const [description, setDescription] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const toggleConcern = (c: string) => setConcerns(cs => cs.includes(c) ? cs.filter(x => x !== c) : [...cs, c]);
+
+  const submit = async () => {
+    if (description.length < 10) { toast({ title: "Please describe what happened (min 10 chars)", variant: "destructive" }); return; }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/space-reports`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spaceName, address, city, category, concernTypes: concerns, description, isAnonymous }),
+      });
+      if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
+      else toast({ title: "Could not submit", variant: "destructive" });
+    } catch { toast({ title: "Network error", variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  if (success) return (
+    <div className="text-center py-8">
+      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+      <p className="font-bold text-[#2B1507] text-lg">Space reported</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">3 or more reports trigger a community warning. Thank you for keeping us safe.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Business or Venue Type</p>
+        <div className="grid grid-cols-2 gap-2">
+          {SPACE_CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={`py-2.5 px-3 rounded-xl text-xs font-bold text-left border transition-colors ${category === c ? "border-[#CA922B] bg-[#CA922B]/8 text-[#CA922B]" : "border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/60 hover:border-[#CA922B]/30"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <input value={spaceName} onChange={e => setSpaceName(e.target.value)} placeholder="Business or venue name *"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Address (optional)"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State *"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">What happened? (select all that apply)</p>
+        <div className="flex flex-wrap gap-2">
+          {SPACE_CONCERNS.map(c => (
+            <button key={c} onClick={() => toggleConcern(c)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${concerns.includes(c) ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+        placeholder="Describe what happened (min 10 characters) *"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
+      <button onClick={() => setIsAnonymous(a => !a)}
+        className={`flex items-center gap-3 w-full px-4 py-3 rounded-2xl border ${isAnonymous ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white"}`}>
+        {isAnonymous ? <EyeOff className="w-4 h-4 text-[#CA922B]" /> : <Eye className="w-4 h-4 text-[#3A1F0E]/40" />}
+        <p className="text-sm font-bold text-[#2B1507]">{isAnonymous ? "Anonymous report" : "Non-anonymous"}</p>
+      </button>
+      <button disabled={!spaceName || !city || description.length < 10 || submitting} onClick={submit}
+        className="w-full py-3 bg-[#DC2626] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-red-700 flex items-center justify-center gap-2">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+        Submit Space Report
+      </button>
+    </div>
+  );
+}
+
+// ── Unified Experience Form ────────────────────────────────────────────────
+function ExperienceReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [chip, setChip] = useState("");
+  const [description, setDescription] = useState("");
+  const [city, setCity] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const submit = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${BASE}api/safety-tips`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ experienceChip: chip, city, description: description || undefined }),
+      });
+      if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
+      else toast({ title: "Could not submit", variant: "destructive" });
+    } catch { toast({ title: "Network error", variant: "destructive" }); }
+    finally { setSubmitting(false); }
+  };
+
+  if (success) return (
+    <div className="text-center py-8">
+      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+      <p className="font-bold text-[#2B1507] text-lg">Experience shared</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">Thank you. Your experience helps others in the community.</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">What best describes your experience?</p>
+        <div className="flex flex-wrap gap-2">
+          {EXPERIENCE_CHIPS.map(c => (
+            <button key={c} onClick={() => setChip(c)}
+              className={`px-3 py-2 rounded-full text-xs font-semibold border transition-colors ${chip === c ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40 hover:text-[#CA922B]"}`}>
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State (optional)"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
+      <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
+        placeholder="Want to add more detail? (optional)"
+        className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF] resize-none" />
+      <p className="text-xs text-[#3A1F0E]/40">Your experience is submitted anonymously unless you've turned off anonymous mode in settings.</p>
+      <button disabled={!chip || submitting} onClick={submit}
+        className="w-full py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+        Share Experience
+      </button>
+    </div>
+  );
+}
+
+// ── Report Modal Wrapper ───────────────────────────────────────────────────
+function ReportModal({ sheet, onClose }: { sheet: ReportSheet; onClose: () => void }) {
+  const { toast } = useToast();
+  if (sheet === "none") return null;
+
+  const titles: Record<ReportSheet, string> = {
+    none: "",
+    safety: "Submit a Safety Report",
+    police: "Report Police / ICE Encounter",
+    space: "Report an Unsafe Space",
+    experience: "Share an Experience",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90dvh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#3A1F0E]/8 sticky top-0 bg-white rounded-t-3xl">
+          <h2 className="font-serif font-bold text-[#2B1507]">{titles[sheet]}</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#FAF6EF] flex items-center justify-center hover:bg-[#3A1F0E]/8">
+            <X className="w-4 h-4 text-[#3A1F0E]/60" />
+          </button>
+        </div>
+        <div className="p-5">
+          {sheet === "safety" && <SafetyReportForm onClose={onClose} onSuccess={() => toast({ title: "Report submitted. Thank you." })} />}
+          {sheet === "police" && <PoliceReportForm onClose={onClose} onSuccess={() => toast({ title: "Encounter reported. Thank you." })} />}
+          {sheet === "space" && <SpaceReportForm onClose={onClose} onSuccess={() => toast({ title: "Space report submitted." })} />}
+          {sheet === "experience" && <ExperienceReportForm onClose={onClose} onSuccess={() => toast({ title: "Experience shared. Thank you." })} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Safety Feature Cards ───────────────────────────────────────────────────
+type FeatureCard = { icon: React.ElementType; label: string; color: string; bg: string; action?: () => void; href?: string; external?: string };
+
+// ── Main Safety Hub ────────────────────────────────────────────────────────
 export default function Safety() {
   const { data: auth } = useGetCurrentAuthUser();
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  
+  const [activeSheet, setActiveSheet] = useState<ReportSheet>("none");
+  const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; city?:string; createdAt:string; confirmCount:number}>>([]);
+  const isAuthenticated = !!(auth?.user);
+
+  useEffect(() => {
+    fetch(`${BASE}api/community-alerts/nearby?lat=39.9526&lng=-75.1652&radius=50`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.alerts) setAlerts(d.alerts.slice(0, 5)); })
+      .catch(() => {});
+  }, []);
+
+  const FEATURE_CARDS: FeatureCard[] = [
+    { icon: Radio, label: "Community Intelligence", color: "#CA922B", bg: "#CA922B18", href: "#alerts" },
+    { icon: AlertCircle, label: "Submit Safety Tip", color: "#CA922B", bg: "#CA922B18", action: () => setActiveSheet("experience") },
+    { icon: Flag, label: "Anonymous Report", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("safety") },
+    { icon: Users, label: "Report Police / ICE", color: "#DC2626", bg: "#DC262618", action: () => setActiveSheet("police") },
+    { icon: Building2, label: "Report Unsafe Space", color: "#7C3AED", bg: "#7C3AED18", action: () => setActiveSheet("space") },
+    { icon: Star, label: "Share an Experience", color: "#059669", bg: "#05906918", action: () => setActiveSheet("experience") },
+    { icon: BookOpen, label: "Neighborhood Safety", color: "#0891B2", bg: "#0891B218", href: "/rate-neighborhood" },
+    { icon: Heart, label: "Mental Health Resources", color: "#EC4899", bg: "#EC489918", href: "/resources" },
+    { icon: Navigation, label: "Cultural Heritage Map", color: "#CA922B", bg: "#CA922B18", href: "/map" },
+    { icon: Clock, label: "Officer Watch", color: "#6B7280", bg: "#6B728018", href: "/map" },
+  ];
+
+  function timeAgo(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "Just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
-      {/* Dark Hero Header */}
-      <section className="bg-[#2B1507] py-24 relative overflow-hidden">
-        <img src={`${import.meta.env.BASE_URL}images/hero-safety-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-[#2B1507]/85 z-0" />
-        
-        <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
-            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">SAFETY FIRST</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight max-w-4xl">
-            Travel Smarter.<br />
-            <span className="text-[#CA922B]">Travel Informed.</span>
-          </h1>
-          
-          <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-16 font-light">
-            Community-driven safety scores, verified reviews, and real-time insights so you always know what to expect before you arrive.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-            <div className="text-center">
-              <div className="flex justify-center mb-2"><ShieldCheck className="w-8 h-8 text-[#CA922B]" /></div>
-              <div className="text-sm text-[#F5EBD8]/70">Community-Verified</div>
+    <div className="min-h-screen bg-[#FAF6EF]">
+      {/* Header */}
+      <div className="bg-[#2B1507] text-white px-4 pt-8 pb-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-red-600/20 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-red-400" />
             </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-2"><Radio className="w-8 h-8 text-[#CA922B]" /></div>
-              <div className="text-sm text-[#F5EBD8]/70">Real-Time Data</div>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-2"><Users className="w-8 h-8 text-[#CA922B]" /></div>
-              <div className="text-sm text-[#F5EBD8]/70">Your Voice Counts</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">HOW IT WORKS</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Your Safety, Powered by Community</h2>
-            <p className="text-lg text-[#3A1F0E]/70 max-w-3xl mx-auto">
-              Every feature is built around one goal — making sure you feel safe, welcomed, and informed wherever you travel.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { t: "Community Reviews", d: "Honest, first-hand accounts from Melaninated travelers who have been there. Real experiences, not curated marketing." },
-              { t: "Location Safety Scores", d: "Aggregated community ratings for neighborhoods, cities, and destinations — so you know before you go." },
-              { t: "Verified Member Program", d: "Verified member badges ensure the reviews and connections you trust come from real, authenticated accounts — backed by liveness checks and anti-fraud protection." },
-              { t: "Incident Reporting", d: "Community-powered reporting tools let members flag unsafe experiences and alert others in real time." },
-              { t: "Transparency Ratings", d: "Businesses and destinations are rated on inclusivity, service quality, and how welcoming they are to Minority guests." },
-              { t: "Trusted Network", d: "Connect with verified locals and experienced travelers who can give you the real picture before you arrive." }
-            ].map((f, i) => (
-              <div key={i} className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
-                <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-3">{f.t}</h3>
-                <p className="text-[#3A1F0E]/70 text-sm leading-relaxed">{f.d}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Destination Scores */}
-      <section className="py-24 bg-[#FAF6EF]">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">DESTINATION SCORES</span>
-              </div>
-              <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-2">Top-Rated Cities</h2>
-              <p className="text-[#3A1F0E]/70">Community safety scores for the most popular Minority travel destinations in the U.S.</p>
+              <h1 className="font-serif font-bold text-xl text-white">Safety Hub</h1>
+              <p className="text-[#F5EBD8]/60 text-xs">Community-powered, experience-based safety</p>
             </div>
-            <div className="flex items-center gap-4 text-sm text-[#3A1F0E]/60 bg-white px-4 py-2 rounded-full shadow-sm border border-[#3A1F0E]/5">
-              <span><strong className="text-green-600">9.0+</strong> Excellent</span>
-              <span><strong className="text-blue-600">8.0+</strong> Good</span>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { c: "Atlanta, GA", r: "1,240", s: 9.4, t: "↑ Improving", tags: ["Welcoming", "Black-Owned Hubs", "Cultural"] },
-              { c: "New Orleans, LA", r: "876", s: 8.9, t: "↑ Improving", tags: ["Historic", "Vibrant", "Community"] },
-              { c: "Harlem, NY", r: "2,103", s: 9.1, t: "→ Stable", tags: ["Cultural", "Arts", "Iconic"] },
-              { c: "Houston, TX", r: "954", s: 8.7, t: "↑ Improving", tags: ["Diverse", "Business", "Food"] },
-              { c: "Chicago, IL", r: "1,432", s: 8.5, t: "→ Stable", tags: ["Arts", "Nightlife", "Community"] },
-              { c: "Washington, D.C.", r: "1,788", s: 9.2, t: "↑ Improving", tags: ["Historic", "Political", "Cultural"] }
-            ].map((city, i) => (
-              <div key={i} className="bg-white p-6 rounded-2xl border border-[#3A1F0E]/5 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">{city.c}</h3>
-                    <div className="text-sm text-[#3A1F0E]/50">{city.r} reviews</div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <div className="text-3xl font-bold text-[#CA922B] leading-none mb-1">{city.s}</div>
-                    <div className={`text-xs font-bold ${city.t.includes('Improving') ? 'text-green-600' : 'text-blue-600'}`}>{city.t}</div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 pt-4 border-t border-[#3A1F0E]/5">
-                  {city.tags.map(tag => (
-                    <span key={tag} className="text-xs font-medium text-[#3A1F0E]/60 bg-[#FAF6EF] px-2 py-1 rounded-md">{tag}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/businesses">
-              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-12">
-                View All Destinations
-              </Button>
-            </Link>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Community Reviews & Alert Card */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-                <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">COMMUNITY REVIEWS</span>
-              </div>
-              <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-10">Real Experiences. Real Voices.</h2>
-              
-              <div className="space-y-6">
-                {[
-                  { n: "Keisha M.", c: "Atlanta, GA", d: "Jun 10, 2026", i: "K", q: "Felt completely at home the entire trip. The restaurant recommendations from the community were spot-on — every spot was welcoming and the food was incredible.", h: 42 },
-                  { n: "Darius P.", c: "New Orleans, LA", d: "Jun 5, 2026", i: "D", q: "Staying in the Tremé neighborhood was a transformative experience. The safety scores helped me choose the right area and I never felt out of place.", h: 38 },
-                  { n: "Simone A.", c: "Harlem, NY", d: "May 28, 2026", i: "S", q: "The community reviews were incredibly accurate. I knew exactly what to expect and felt confident navigating the city solo as a Minority woman.", h: 61 }
-                ].map((r, idx) => (
-                  <div key={idx} className="bg-[#FAF6EF] p-6 rounded-2xl border border-[#3A1F0E]/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#2B1507] text-[#F5EBD8] flex items-center justify-center font-bold font-serif">{r.i}</div>
-                        <div>
-                          <div className="font-bold text-[#3A1F0E]">{r.n}</div>
-                          <div className="text-xs text-[#3A1F0E]/50">{r.c} · {r.d}</div>
-                        </div>
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+        {/* Emergency SOS */}
+        <a href="tel:911"
+          className="flex items-center gap-4 bg-red-600 text-white rounded-2xl p-4 hover:bg-red-700 transition-colors active:scale-98">
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+            <Phone className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold">Emergency SOS</p>
+            <p className="text-xs text-white/70">Tap to call 911 immediately</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-white/60" />
+        </a>
+
+        {/* Quick Report Buttons */}
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Quick Report</p>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "Safety Report", desc: "Neighborhood or community concern", sheet: "safety" as ReportSheet, color: "#CA922B" },
+              { label: "Police / ICE Encounter", desc: "Report a stop, checkpoint, or encounter", sheet: "police" as ReportSheet, color: "#DC2626" },
+              { label: "Unsafe Business", desc: "Report discrimination or unsafe space", sheet: "space" as ReportSheet, color: "#7C3AED" },
+              { label: "Share an Experience", desc: "Good or bad — your voice matters", sheet: "experience" as ReportSheet, color: "#059669" },
+            ].map(btn => (
+              <button key={btn.sheet} onClick={() => setActiveSheet(btn.sheet)}
+                className="text-left bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 hover:shadow-sm transition-shadow active:scale-98">
+                <div className="w-8 h-8 rounded-xl mb-2 flex items-center justify-center" style={{ backgroundColor: `${btn.color}18` }}>
+                  <Flag className="w-4 h-4" style={{ color: btn.color }} />
+                </div>
+                <p className="font-bold text-sm text-[#2B1507]">{btn.label}</p>
+                <p className="text-[10px] text-[#3A1F0E]/50 mt-0.5 leading-snug">{btn.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Community Intelligence / Nearby Alerts */}
+        <div id="alerts">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Community Intelligence</p>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#CA922B]">
+              <Radio className="w-3 h-3" /> Live
+            </div>
+          </div>
+          {alerts.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
+              <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+              <p className="text-sm font-bold text-[#2B1507]">All clear nearby</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-1">No active community alerts in your area</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {alerts.map(alert => (
+                <div key={alert.id} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-sm text-[#2B1507] capitalize">{alert.type?.replace(/_/g, " ")}</p>
+                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${alert.confirmCount >= 3 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+                          {alert.confirmCount >= 3 ? "Confirmed" : "Possible"}
+                        </span>
                       </div>
-                      <div className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Verified Traveler
+                      {alert.description && <p className="text-xs text-[#3A1F0E]/60 mt-0.5 line-clamp-2">{alert.description}</p>}
+                      <div className="flex items-center gap-2 text-[10px] text-[#3A1F0E]/35 mt-1">
+                        <span>{timeAgo(alert.createdAt)}</span>
+                        {alert.city && <><span>·</span><span>{alert.city}</span></>}
+                        <span>· {alert.confirmCount} confirmed</span>
                       </div>
                     </div>
-                    <p className="text-[#3A1F0E]/80 italic mb-4">"{r.q}"</p>
-                    <div className="text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider cursor-pointer hover:text-[#CA922B]">Helpful ({r.h})</div>
                   </div>
-                ))}
-              </div>
-              <Button className="mt-8 rounded-full bg-[#2B1507] text-white hover:bg-[#1a0c04] px-8 h-12">Read All Reviews</Button>
-            </div>
-            
-            <div>
-              <div className="bg-[#2B1507] rounded-3xl p-8 text-white sticky top-24 shadow-xl">
-                <Shield className="w-12 h-12 text-[#CA922B] mb-6" />
-                <div className="text-2xl font-serif font-bold mb-2">Harlem, NY</div>
-                <div className="flex items-end gap-2 mb-6">
-                  <div className="text-5xl font-bold text-[#CA922B]">9.1</div>
-                  <div className="text-sm text-[#F5EBD8]/70 pb-1">Community Score</div>
                 </div>
-                <div className="text-sm text-[#F5EBD8]/70 mb-8 border-b border-white/10 pb-6">2,103 reviews</div>
-                
-                <div className="bg-white/10 rounded-xl p-4 border border-[#CA922B]/30 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 text-[#CA922B] font-bold text-sm mb-2">
-                    <Shield className="w-4 h-4" /> Community Alert
-                  </div>
-                  <div className="text-sm text-[#F5EBD8]">1 report in last 30 days</div>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="py-24 bg-[#FAF6EF]">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-[#3A1F0E]">Questions — How Safety Works</h2>
-          </div>
-          
-          <div className="space-y-3">
-            {FAQ_ITEMS.map((item, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl border border-[#3A1F0E]/5 hover:border-[#CA922B]/40 transition-colors overflow-hidden"
-              >
-                <button
-                  className="w-full p-6 flex justify-between items-center cursor-pointer text-left gap-4"
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                >
-                  <span className="font-medium text-[#3A1F0E]">{item.q}</span>
-                  <ChevronDown
-                    className={`w-5 h-5 text-[#CA922B] shrink-0 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-6 text-[#3A1F0E]/70 text-sm leading-relaxed border-t border-[#3A1F0E]/5 pt-4">
-                    {item.a}
+        {/* Safety Features Grid */}
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Safety Features</p>
+          <div className="grid grid-cols-2 gap-3">
+            {FEATURE_CARDS.map((card, i) => {
+              const Icon = card.icon;
+              const content = (
+                <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 hover:shadow-sm transition-shadow text-left">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" style={{ backgroundColor: card.bg }}>
+                    <Icon className="w-4 h-4" style={{ color: card.color }} />
                   </div>
-                )}
-              </div>
-            ))}
+                  <p className="font-bold text-xs text-[#2B1507] leading-snug">{card.label}</p>
+                </div>
+              );
+              if (card.action) return <button key={i} onClick={card.action}>{content}</button>;
+              if (card.href?.startsWith("http") || card.external) return <a key={i} href={card.external ?? card.href} target="_blank" rel="noopener noreferrer">{content}</a>;
+              return <Link key={i} href={card.href ?? "#"}><div className="cursor-pointer">{content}</div></Link>;
+            })}
           </div>
         </div>
-      </section>
 
-      {/* Disclaimers */}
-      <section className="py-8 bg-[#FAF6EF]">
-        <div className="container mx-auto px-4 max-w-4xl space-y-3">
-          <DisclaimerBanner type="safety" variant="bordered" />
-          <DisclaimerBanner type="emergency" variant="bordered" />
+        {/* Community pledge */}
+        <div className="bg-[#2B1507] rounded-2xl p-5 text-center">
+          <Shield className="w-8 h-8 text-[#CA922B] mx-auto mb-2" />
+          <p className="font-bold text-white text-sm mb-1">We look out for each other</p>
+          <p className="text-xs text-[#F5EBD8]/60 leading-relaxed">
+            Safety on this platform is community-powered. Every report, tip, and experience you share helps protect someone else.
+          </p>
         </div>
-      </section>
 
-      {/* CTA */}
-      <section className="py-24 bg-[#2B1507] text-center text-white">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">Travel With Confidence — Know Before You Go. Every Time.</h2>
-          <p className="text-lg text-[#F5EBD8]/70 mb-10">Get early access to community safety scores, verified reviews, and real-time alerts.</p>
-          <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-10 h-14 text-lg">Get Early Access</Button>
-        </div>
-      </section>
+        <p className="text-[10px] text-[#3A1F0E]/30 text-center pb-4">
+          In a life-threatening emergency, always call 911. Community safety data is experience-based and does not reflect current conditions or official crime statistics.
+        </p>
+      </div>
+
+      {/* Report Modals */}
+      <ReportModal sheet={activeSheet} onClose={() => setActiveSheet("none")} />
     </div>
   );
 }

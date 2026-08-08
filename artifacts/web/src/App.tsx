@@ -57,6 +57,7 @@ import ResetPassword from "@/pages/reset-password";
 import ForgotPassword from "@/pages/forgot-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
 import BusinessGrowthCenter from "@/pages/business-growth-center";
+import Library from "@/pages/library";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -257,6 +258,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/library">
+        <Layout><PreLaunchRoute><Library /></PreLaunchRoute></Layout>
       </Route>
 
       <Route component={NotFound} />

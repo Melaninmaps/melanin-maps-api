@@ -6,12 +6,14 @@ import {
   LogOut, Save, MapPin, Map, FlaskConical, Trophy, Star, Shield, Heart, Zap, Award,
   Crown, Search, Compass, Navigation, BadgeCheck, CheckCircle, Building2, Plane,
   Globe, Home, MessageCircle, Link2, Users, Hammer, Calendar, PartyPopper,
-  Flag, Gem, Lock, ChevronDown, ChevronUp, Footprints
+  Flag, Gem, Lock, ChevronDown, ChevronUp, Footprints, Camera, Loader2
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const BASE = import.meta.env.BASE_URL;
 
 // ─── Badge Definitions ──────────────────────────────────────────────────────
 
@@ -647,6 +649,32 @@ export default function Profile() {
   };
 
   const [signOutAllLoading, setSignOutAllLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { toast({ title: "Photo must be under 10MB", variant: "destructive" }); return; }
+    // Preview
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+    // Upload
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const res = await fetch(`${BASE}api/users/avatar`, { method: "POST", credentials: "include", body: formData });
+      if (res.ok) {
+        toast({ title: "Profile photo updated" });
+        queryClient.invalidateQueries({ queryKey: ["getMyProfile"] });
+        queryClient.invalidateQueries({ queryKey: ["getCurrentAuthUser"] });
+      } else { toast({ title: "Could not upload photo", variant: "destructive" }); setAvatarPreview(null); }
+    } catch { toast({ title: "Upload failed", variant: "destructive" }); setAvatarPreview(null); }
+    finally { setAvatarUploading(false); }
+  };
   const handleSignOutAll = async () => {
     if (!window.confirm("Sign out all devices?\n\nThis will immediately invalidate every active session across all your devices, including this one. You will need to sign in again everywhere.")) return;
     setSignOutAllLoading(true);
@@ -740,12 +768,32 @@ export default function Profile() {
           {/* Left column: profile card */}
           <div className="md:col-span-1">
             <div className="bg-white rounded-3xl p-8 border border-[#3A1F0E]/5 shadow-sm text-center relative mt-8 md:mt-0">
-              <div className="w-24 h-24 mx-auto rounded-full bg-[#FAF6EF] border-4 border-white shadow-lg flex items-center justify-center -mt-16 mb-4 text-[#CA922B] text-3xl font-serif font-bold overflow-hidden">
-                {profile?.profileImageUrl ? (
-                  <img src={profile.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  profile?.firstName?.[0] || profile?.email?.[0]?.toUpperCase() || "M"
-                )}
+              <div className="relative w-24 h-24 mx-auto -mt-16 mb-4">
+                <div className="w-24 h-24 rounded-full bg-[#FAF6EF] border-4 border-white shadow-lg flex items-center justify-center text-[#CA922B] text-3xl font-serif font-bold overflow-hidden">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                  ) : profile?.profileImageUrl ? (
+                    <img src={profile.profileImageUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.firstName?.[0] || profile?.email?.[0]?.toUpperCase() || "M"
+                  )}
+                </div>
+                {/* Upload button overlay */}
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarUploading}
+                  className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#CA922B] border-2 border-white shadow-lg flex items-center justify-center hover:bg-[#B38024] transition-colors disabled:opacity-60"
+                  title="Upload profile photo"
+                >
+                  {avatarUploading ? <Loader2 className="w-3.5 h-3.5 text-white animate-spin" /> : <Camera className="w-3.5 h-3.5 text-white" />}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">{profile?.firstName} {profile?.lastName}</h2>
               <p className="text-sm text-[#3A1F0E]/50 mb-3">{profile?.email}</p>
