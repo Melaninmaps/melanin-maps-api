@@ -114,3 +114,5 @@
 - [KinfolkAI pool exhaustion via unauthenticated monitor probe](kinfolk-pool-leak.md) — unauthenticated _post /kinfolk/chat probe triggered full OpenAI calls; 8s client timeout left orphaned server handlers whose post-OpenAI DB writes leaked 1 connection/cycle → exhaustion in ~30 min. Fix: auth gate on /kinfolk/chat + lightweight /kinfolk/health probe.
 - [Endorsement Tag System](endorsement-tag-system.md) — 340 tags, 132 cultural variants, 90 ownership designations, 131 vibes — all permanent version-controlled constants.
 - [THE REAL Tag System](the-real-tags-system.md) — 151 professional trust-signal tags across 9 categories; separate from The Vibe; display threshold 5 taps; seeded in Railway production Aug 8 2026.
+- [Three-Layer Tag Architecture v1.0](three-layer-architecture.md) — routing table for all 22 categories; 3 absolute rules; display threshold=10 ALL layers; THE REAL display string uses colon; 5 categories get neither layer.
+- [Business Placeholder Image System v1.0](placeholder-image-system.md) — HIGH priority; branded card+category SVG icon; has_owner_photo DB field; absolute rules against cultural stereotyping; 22 icon mappings.
