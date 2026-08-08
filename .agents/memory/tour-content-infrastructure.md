@@ -60,13 +60,37 @@ Sequential guard loop includes:
 
 All guards deduplicate by LOWER(name)|LOWER(city)|LOWER(state).
 
-## Content NOT yet extracted from PDFs
+## Content completed August 8, 2026 (Tasks 144/145/146)
 
-| Content | Status | Task |
-|---|---|---|
-| Cultural phrases glossary (30+ phrases, 8 groups) | ❌ Not built | Task #144 |
-| Neighborhood timing data (13 cities) | ❌ Column exists, data not seeded | Task #145 |
-| Content Opportunities | HIDDEN by design — never show to users |
+| Content | Status |
+|---|---|
+| Cultural phrases | ✅ cultural_phrases table + 46 phrases across 10 groups seeded via boot guard |
+| Neighborhood timing | ✅ 13 cities UPSERTed into city_profiles.neighborhood_timing JSONB |
+| Geocoding boot guard | ✅ Runs each boot, geocodes up to 60 tour_cultural_sites + community_orgs + recurring_events missing lat/lng via Google Maps API |
+| Mobile map layers | ✅ 3 new toggles (Orgs/purple, Gatherings/teal, Heritage/amber) + detail cards + edit-suggestion screen |
+| KinfolkAI cultural phrases | ✅ Injected into buildSystemPrompt as COMMUNITY LANGUAGE TOOLKIT block |
+| Cultural phrases API | ✅ GET /cultural-phrases, GET /cultural-phrases/groups, GET /cultural-phrases/sensitivity |
+
+## Geocoding architecture
+
+- Runs as async boot guard: `geocodeTourContent()` in startup-migrations.ts
+- Caps at 60 geocode calls per boot (100ms sleep between calls)
+- Priority: tour_cultural_sites → community_organizations → recurring_events
+- Items with no lat/lng are silently skipped by map layer fetch (filter: `o.latitude != null`)
+- Map pins populate automatically across reboots as geocoding runs
+
+## Map layer architecture (FullMapView.tsx)
+
+Three new opt-in layers (off by default):
+- `showCommunityOrgs` → purple `#7C3AED` pins → `selectedOrg` detail card
+- `showTourEvents` → teal `#0D9488` pins → `selectedTourEvent` detail card  
+- `showTourSites` → amber `#D97706` pins → `selectedTourSite` detail card
+
+Each card has a "Suggest Edit" button routing to `app/edit-suggestion.tsx` with `entityType`, `entityId`, `entityName` params.
+
+## Content Opportunities
+
+HIDDEN by design — never show to users
 
 ## Key architecture rules
 
