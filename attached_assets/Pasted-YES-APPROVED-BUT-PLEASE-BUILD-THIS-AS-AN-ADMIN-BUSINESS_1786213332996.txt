@@ -1,0 +1,354 @@
+YES — APPROVED, BUT PLEASE BUILD THIS AS AN ADMIN BUSINESS ENTRY TOOL USING THE EXISTING BUSINESS ARCHITECTURE.
+
+I want authorized admins to be able to add a business directly through the Mapping with Melanin™ web admin panel without needing to use the spreadsheet.
+
+This is important before the tour because I may meet a business in person and want to add or begin its listing directly from the website.
+
+However, do NOT create a completely separate or simplified business data model.
+
+The spreadsheet, business submission process, admin entry form, business profiles and API should ultimately feed the SAME canonical business record and vocabulary.
+
+## FIRST — AUDIT THE EXISTING BUSINESS SCHEMA
+
+Before building the form, inspect:
+
+* POST /api/businesses
+* businesses table/schema
+* business_identity and related tables
+* ownership designations
+* categories/subcategories
+* professional/service-provider terminology
+* community recognition/value fields
+* experience/vibe fields
+* discovery/search filters
+* Quick Review Preview vocabulary
+* verification fields/status
+* business contact information
+* social media fields
+* website
+* hours
+* location/geocoding
+* accessibility fields
+* business description
+* images/logo
+* claim/ownership status
+* featured/promoted/founding business fields
+* any existing business tags
+* any existing admin-only fields
+* any fields currently represented in our MASTER Business Directory spreadsheet that are not represented in the database
+
+I DO NOT want another disconnected hard-coded list created inside this form.
+
+Use the canonical vocabulary/data sources wherever they already exist.
+
+## ADMIN → ADD BUSINESS
+
+Add a clearly visible:
+
+* Add Business
+
+button inside:
+
+Admin → Businesses
+
+This must be ADMIN-ONLY.
+
+Normal members/testers should never gain access to this functionality simply because they can now log into the website.
+
+## FORM DESIGN
+
+I want this to be practical enough that I can use it while speaking with a business owner.
+
+Organize it into logical sections rather than one enormous form.
+
+For example:
+
+### BASIC INFORMATION
+
+* Business Name
+* Primary Category
+* Subcategory
+* Business Description
+* Phone
+* Email
+* Website
+* Address
+* City
+* State
+* ZIP
+* Hours
+
+### ONLINE / SOCIAL
+
+Include existing supported fields for:
+
+* Instagram
+* Facebook
+* TikTok
+* LinkedIn
+* YouTube
+* other supported social/profile links
+
+Do not create duplicate social fields if these already exist elsewhere in the business architecture.
+
+### BUSINESS IDENTITY
+
+Use our existing structured vocabulary and architecture.
+
+This should include applicable existing fields such as:
+
+* ownership designations
+* community recognition/values
+* applicable business identity information
+* verification status
+
+Do not automatically mark a business as verified merely because an admin entered it.
+
+"Added by admin" and "verified" are NOT the same thing.
+
+### DISCOVERY
+
+This is extremely important.
+
+Use the canonical discovery architecture we have already developed.
+
+A business should ultimately be discoverable by more than its category.
+
+Where applicable, the admin entry interface should allow the appropriate existing discovery attributes such as:
+
+* Vibes / experience
+* Occasion
+* Romantic / date night
+* Chill / relaxing
+* Turn up / nightlife
+* Family-friendly
+* Adult-oriented
+* Solo-friendly
+* Group-friendly
+* Adventurous
+* Price range
+* accessibility
+* and the other approved discovery/search criteria already stored in our canonical vocabulary
+
+DO NOT recreate these examples as a new hard-coded list.
+
+Find and use the actual existing canonical taxonomy.
+
+### PROFESSIONAL / SERVICE BUSINESSES
+
+Remember that professional/service businesses should NOT be forced into restaurant/hospitality-style "Vibes" when those descriptors do not make sense.
+
+Use the professional/service experience language and Quick Review Preview vocabulary already established in our business directory architecture.
+
+For example, professional experiences may eventually communicate things such as whether someone:
+
+* explained things clearly
+* listened
+* was responsive
+* made the customer feel respected
+* understood their needs
+
+Again: DO NOT create these five examples as a new taxonomy.
+
+Find the canonical professional/service-provider vocabulary we already established and wire the correct data source to the appropriate business categories.
+
+### QUICK REVIEW PREVIEW
+
+Audit the current Quick Review Preview architecture.
+
+If these descriptors are intended to be derived from community reviews rather than assigned by an admin, DO NOT let an admin manufacture community sentiment.
+
+Instead distinguish between:
+
+BUSINESS ATTRIBUTES
+
+and
+
+COMMUNITY-REPORTED EXPERIENCE.
+
+I should be able to enter factual business information.
+
+I should NOT be able to accidentally make it appear that the community has reviewed or endorsed a business when they have not.
+
+## TOUR / INCOMPLETE ENTRY MODE
+
+This is important.
+
+I may be standing in front of a business owner and only have:
+
+Business name
+City
+Category
+Instagram
+Phone number
+
+I do NOT want the form to require me to know everything before saving the business.
+
+Allow an authorized admin to save an incomplete record appropriately.
+
+Consider an existing status or, if necessary, a clearly defined administrative status such as:
+
+Draft
+Needs Information
+Ready for Review
+Published
+
+BUT FIRST check whether equivalent statuses already exist.
+
+Do not create duplicate status systems.
+
+An incomplete record should NOT accidentally appear publicly as a complete/verified business listing.
+
+## DUPLICATE DETECTION
+
+Use the duplicate detection already built into POST /api/businesses.
+
+Before creating a business, warn me if there is a likely match based on available information such as:
+
+* business name
+* address
+* phone
+* website
+* location
+
+Give me the opportunity to inspect the existing record rather than automatically creating another one.
+
+DO NOT automatically merge businesses.
+
+## BUSINESS CLAIMING
+
+Admin-created does not mean owner-claimed.
+
+Preserve the distinction between:
+
+* community-added
+* admin-added
+* business-owner submitted
+* owner claimed
+* verified
+
+where those distinctions already exist in our architecture.
+
+If I meet a business during the tour and add it myself, the owner should still eventually be able to claim/manage the correct listing through our established claim/verification process.
+
+## GEOCODING
+
+Reuse the existing geocoding functionality associated with POST /api/businesses.
+
+After entering an address, confirm that the business receives the appropriate coordinates required for map discovery.
+
+Do not require me to manually enter latitude/longitude.
+
+## EDITING
+
+This should not only solve ADDING businesses.
+
+Confirm that after I create the record I can:
+
+Open Business
+→ Edit Business
+→ update the same information later.
+
+If the existing admin edit interface does not support the fields being added through this form, identify that gap.
+
+I do not want information that can be entered once but never corrected through the admin UI.
+
+## SPREADSHEET IMPORT MUST CONTINUE TO WORK
+
+Do NOT remove or break the spreadsheet/CSV workflow.
+
+I want BOTH capabilities:
+
+BULK DATA:
+Spreadsheet / CSV → database
+
+INDIVIDUAL BUSINESS:
+Admin Web Form → database
+
+Both should ultimately create/update the SAME canonical business architecture.
+
+The spreadsheet remains useful when we are adding many businesses at once.
+
+The admin form becomes useful when I need to add or update individual businesses quickly.
+
+## VERY IMPORTANT — DATA CONSISTENCY
+
+Before implementation, compare the proposed form fields against the MASTER Business Directory structure we have been developing.
+
+If the spreadsheet contains important fields that the production database currently cannot store, identify those gaps.
+
+DO NOT silently discard spreadsheet fields.
+
+DO NOT create random JSON fields just to make the form appear complete.
+
+DO NOT create duplicate taxonomies.
+
+DO NOT hard-code another category list.
+
+DO NOT replace the canonical vocabulary.
+
+Report discrepancies to me.
+
+## SECURITY
+
+POST /api/businesses and the new admin UI must enforce authorization SERVER-SIDE.
+
+Do not rely only on hiding the "+ Add Business" button in the UI.
+
+Confirm that a normal authenticated user/tester cannot manually call the endpoint and create an admin business listing.
+
+This is required.
+
+## MOBILE BROWSER
+
+Because I may use this while traveling, make the Admin → Add Business form usable from:
+
+* desktop
+* iPhone/mobile Safari
+* Android/mobile Chrome
+
+I should reasonably be able to add a business from my phone while I am on the tour.
+
+## DO NOT OVERBUILD THIS
+
+The immediate need is:
+
+I meet a business
+→ open Mapping with Melanin admin
+→ Add Business
+→ enter what I know
+→ save
+→ database
+→ map/directory when appropriate
+→ finish/edit later.
+
+Reuse everything that already exists.
+
+Do not redesign the entire business architecture to accomplish this.
+
+## BEFORE IMPLEMENTING
+
+Because you just discovered that the API exists but the UI does not, first give me a SHORT assessment of:
+
+1. Which fields POST /api/businesses currently accepts.
+2. Which business fields currently exist in the production schema.
+3. Which fields from our current MASTER Business Directory are missing from the production schema.
+4. Where categories/subcategories currently come from.
+5. Where Vibes/discovery filters currently come from.
+6. Where professional/service-provider descriptors currently come from.
+7. How Quick Review Preview is currently stored/derived.
+8. Existing business publication/status options.
+9. Existing verification/claim statuses.
+10. Whether POST /api/businesses currently requires admin authorization server-side.
+11. Whether admin can currently edit all of these fields after creation.
+12. Your recommended MINIMUM implementation for the tour.
+
+STOP and show me that assessment before changing the business schema.
+
+If the existing schema already supports what we need, proceed with the UI using it.
+
+If there are material schema/taxonomy gaps, tell me before modifying the database.
+
+The objective is simple:
+
+I SHOULD BE ABLE TO ADD A BUSINESS DIRECTLY FROM MY ADMIN WEBSITE WITHOUT NEEDING A SPREADSHEET — while preserving the richer Mapping with Melanin business architecture we have already built.

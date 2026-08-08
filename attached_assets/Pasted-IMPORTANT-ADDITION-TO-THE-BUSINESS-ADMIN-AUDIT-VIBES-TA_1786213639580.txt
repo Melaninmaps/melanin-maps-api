@@ -1,0 +1,275 @@
+IMPORTANT ADDITION TO THE BUSINESS ADMIN AUDIT — VIBES, TAGS & EXISTING BUSINESSES
+
+Before implementing the new Admin → Add Business functionality, I need you to answer and account for the following.
+
+We have already uploaded businesses into the Mapping with Melanin™ database.
+
+Since those businesses were originally uploaded, we have continued developing and improving our business vocabulary, including categories, subcategories, Vibes, discovery criteria, professional/service descriptors and other tags.
+
+I need ADMINISTRATORS to be able to update these attributes on EXISTING businesses — not just businesses added after the new admin form is built.
+
+## FIRST — TELL ME WHAT EXISTS TODAY
+
+For an existing business already in the production database, can an admin currently open that business and manually:
+
+* Change its primary category?
+* Change its subcategory?
+* Add/remove Vibes?
+* Add/remove discovery/search tags?
+* Add/remove occasion/use-case attributes?
+* Change price range?
+* Change audience/context attributes where applicable?
+* Add/edit professional/service-provider attributes?
+* Add/edit other business tags?
+* Correct ownership designations?
+* Edit business identity information?
+
+For each one, tell me:
+
+DATABASE SUPPORT: YES/NO
+
+ADMIN UI SUPPORT: YES/NO
+
+If the database supports something but the Admin UI does not, identify that clearly as a UI gap.
+
+## EXISTING BUSINESSES MUST BE EDITABLE
+
+The new functionality should NOT apply only to newly created businesses.
+
+I need:
+
+Admin
+→ Businesses
+→ Select Existing Business
+→ Edit
+→ update its appropriate Category / Subcategory / Vibes / Tags / Discovery Attributes
+→ Save
+→ existing business record updates
+
+The business must retain the SAME business ID.
+
+Do NOT delete and recreate the business simply to update its taxonomy.
+
+That would risk breaking reviews, saves, claims, analytics, links and other relationships.
+
+## DO NOT USE THE OLD WORKBOOK AS THE FINAL VOCABULARY SOURCE
+
+IMPORTANT:
+
+The last spreadsheet/workbook upload is NOT necessarily the newest source of truth for our vocabulary.
+
+We have developed additional and improved vocabulary since that workbook was created.
+
+Do not automatically overwrite the newer platform vocabulary with whatever happens to exist in the last uploaded spreadsheet.
+
+Also do NOT replace our vocabulary with Manus-generated suggestions.
+
+The Mapping with Melanin vocabulary we have developed and approved should remain the source we reconcile against.
+
+## PRESERVE THE DIFFERENT TYPES OF LANGUAGE
+
+Do NOT put everything into one generic "Tags" field.
+
+We intentionally distinguish between different concepts.
+
+### 1. CATEGORY / SUBCATEGORY
+
+What the business IS.
+
+Examples:
+
+Restaurant
+Attorney
+Salon
+Museum
+Hotel
+etc.
+
+Use the actual canonical categories — these examples are illustrative only.
+
+### 2. VIBES / EXPERIENCE
+
+How an appropriate place or experience FEELS.
+
+These are especially relevant for restaurants, nightlife, entertainment, hospitality, travel and similar experiences.
+
+Do not force Vibes onto professional businesses when they do not make sense.
+
+### 3. DISCOVERY / INTENT FILTERS
+
+What someone is LOOKING FOR or WHY they are searching.
+
+For example, someone may be looking for:
+
+romantic/date night
+chill/relaxing
+turn up/nightlife
+family-friendly
+adult-oriented
+solo-friendly
+group-friendly
+adventurous
+etc.
+
+These examples are illustrative.
+
+Use the actual approved canonical vocabulary rather than creating another hard-coded list.
+
+These discovery filters are functionally different from expressive Vibes even when there is occasional overlap.
+
+### 4. PROFESSIONAL / SERVICE EXPERIENCE
+
+For professionals and service providers, we developed more appropriate language because calling an attorney, accountant, realtor, therapist, contractor, etc. a "Vibe" often does not make sense.
+
+These descriptors should communicate the kinds of things members actually want to know about working with that professional.
+
+Use the Mapping with Melanin professional/service vocabulary already approved or supplied to you.
+
+Do NOT substitute Manus suggestions.
+
+### 5. COMMUNITY-REPORTED EXPERIENCE / QUICK REVIEW PREVIEW
+
+Keep this separate from admin-assigned factual attributes.
+
+If something such as:
+
+"Explained everything clearly"
+
+is intended to represent what actual customers/community members reported through Quick Review, an ADMIN should NOT manually assign it in a way that makes it appear to be community sentiment.
+
+Clearly distinguish:
+
+ADMIN-EDITABLE BUSINESS/DISCOVERY ATTRIBUTES
+
+from
+
+COMMUNITY-GENERATED REVIEW SIGNALS.
+
+## MULTI-SELECT
+
+Where appropriate, Vibes and discovery attributes should be MULTI-SELECT.
+
+A business obviously may fit more than one context.
+
+For example, a restaurant could potentially be appropriate for both:
+
+Date Night
+Group Dining
+Celebrations
+Chill
+
+Those examples should NOT be hard-coded from this instruction.
+
+Use our canonical vocabulary.
+
+The admin should be able to:
+
+search/select
+→ add multiple
+→ remove one
+→ save
+
+without overwriting unrelated business data.
+
+## CATEGORY-AWARE OPTIONS
+
+Do not show every possible descriptor for every possible business.
+
+The interface should use the business category/subcategory to surface relevant options.
+
+For example:
+
+Restaurant → relevant dining/experience/discovery options
+
+Attorney → relevant professional/service options
+
+Hotel → hospitality/travel options
+
+Museum → cultural/heritage/visitor options
+
+Salon → beauty/service options
+
+etc.
+
+This should use the taxonomy relationships we have developed rather than creating another disconnected mapping.
+
+## EXISTING UPLOADED BUSINESSES
+
+Very important:
+
+I want to be able to go back through businesses that were already uploaded and enrich them with our newer vocabulary.
+
+Therefore, tell me whether we can safely perform:
+
+EXISTING BUSINESS
+→ ADMIN EDIT
+→ ADD NEW VIBES/TAGS/DISCOVERY DATA
+→ SAVE
+→ BUSINESS REMAINS SAME RECORD
+→ SEARCH/FILTERS IMMEDIATELY RECOGNIZE NEW ATTRIBUTES
+
+If not, tell me exactly what is missing.
+
+## BULK UPDATE LATER
+
+Do NOT build this yet unless it already exists.
+
+But tell me whether the architecture would later allow us to bulk-update existing businesses from an updated workbook without replacing the business records.
+
+Eventually I may want BOTH:
+
+INDIVIDUAL:
+Admin manually enriches one business.
+
+BULK:
+Updated spreadsheet enriches many existing businesses.
+
+Both should update canonical existing records rather than create duplicates.
+
+## SOURCE-OF-TRUTH CHECK
+
+Before changing anything, show me:
+
+1. Current category source
+2. Current subcategory source
+3. Current Vibes source
+4. Current discovery-filter source
+5. Current professional/service descriptor source
+6. Current Quick Review Preview source
+7. Any generic "tags" field currently being used
+8. Which of these are stored in the database
+9. Which are currently hard-coded in the UI
+10. Which are currently represented in the workbook
+11. Any conflicts or duplicate vocabularies you find
+
+I want to reconcile these BEFORE we add another version.
+
+DO NOT DELETE ANY EXISTING VOCABULARY YET.
+
+DO NOT REPLACE OUR VOCABULARY WITH MANUS SUGGESTIONS.
+
+DO NOT ALTER EXISTING BUSINESS RECORDS YET.
+
+DO NOT CREATE ANOTHER HARD-CODED LIST.
+
+First show me what exists so we can determine which Mapping with Melanin vocabulary should become canonical.
+
+The end state I want is:
+
+ONE CANONICAL BUSINESS VOCABULARY
+
+used by:
+
+Admin Add Business
+Admin Edit Business
+Business Owner Submission
+Business Profiles
+Search
+Filters
+KinfolkAI recommendations
+Quick Review where applicable
+Mobile
+Web
+Spreadsheet imports
+
+I want us to stop creating separate versions of the same vocabulary in different parts of the platform.

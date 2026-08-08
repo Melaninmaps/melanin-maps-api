@@ -1,0 +1,378 @@
+IMPORTANT ADDITION — ADMIN PHOTO/VIDEO UPLOAD + TOUR FIELD ENTRY
+
+Please include this in the current Admin → Add/Edit Business audit BEFORE implementation.
+
+I have begun making direct connections with businesses and organizations and have photos and videos from some of them.
+
+During the Mapping with Melanin™ tour, we will also be visiting businesses, museums, HBCUs, cultural/heritage locations and other places and gathering information, photos and video.
+
+I need the ADMIN website to support this workflow.
+
+The goal is:
+
+VISIT PLACE
+→ OPEN ADMIN ON PHONE
+→ ADD OR FIND BUSINESS/PLACE
+→ ENTER/UPDATE INFORMATION
+→ ADD PHOTOS/VIDEO
+→ PREVIEW
+→ SAVE
+→ CONTENT IS ATTACHED TO THE CORRECT RECORD
+
+I should not need Replit, a spreadsheet, storage URLs, database access or code to do this.
+
+## 1. FIRST CONFIRM CURRENT MEDIA CAPABILITIES
+
+Before building anything, audit and tell me:
+
+1. Can an admin currently upload an image to an existing business?
+2. Can an admin currently upload multiple images?
+3. Can an admin currently upload a video?
+4. Can an admin upload media while creating a NEW business/place?
+5. Can an admin add media later by editing an EXISTING business/place?
+6. Where are these files currently stored?
+7. Does this use our existing Replit Object Storage architecture?
+8. Are media records associated with the canonical business/place ID?
+9. What image file formats are currently supported?
+10. What video formats are currently supported?
+11. What maximum image file size exists?
+12. What maximum video file size/duration exists?
+13. Does the system currently compress/optimize images?
+14. Does the system currently create thumbnails/previews for videos?
+15. Can media be deleted/replaced by an admin?
+16. Can media order be changed so I can choose the primary/cover image?
+17. Is there currently any caption, alt text, credit/source or attribution capability?
+18. Are existing uploads private/public and how are their URLs secured?
+19. What authorization exists on upload/delete endpoints?
+20. Can all of this currently work from mobile Safari/Chrome?
+
+Do not create a second media-storage architecture if one already exists.
+
+Reuse the existing safe storage/upload system wherever possible.
+
+## 2. ADMIN ADD BUSINESS/PLACE — MEDIA
+
+If the existing architecture safely supports it, the new Admin Add/Edit interface should include:
+
+PHOTOS & VIDEO
+
+with simple controls such as:
+
+* Add Photo
+* Add Video
+
+I should be able to select media directly from:
+
+* my phone photo library
+* my phone's files
+* desktop files
+
+If safely supported by the browser/device, allowing me to take a photo or video from the phone during entry would also be useful.
+
+Do not make camera capture a blocker if normal file/photo-library upload already works.
+
+## 3. MULTIPLE PHOTOS
+
+A business/place should support multiple photos where our existing architecture permits it.
+
+I should be able to:
+
+* upload
+* preview
+* remove
+* replace
+* select/set a primary or cover image
+* reorder images if reasonably simple
+
+Do not overwrite an existing photo simply because another photo is added.
+
+## 4. VIDEO
+
+I also need to be able to add video.
+
+Before implementing video upload, tell me what our existing storage and delivery architecture can safely support.
+
+Do NOT simply allow unlimited raw video uploads.
+
+Recommend reasonable limits for:
+
+* file size
+* duration
+* file format
+* number of videos per listing
+
+The immediate tour use case is SHORT cultural/business/place video — not long-form video hosting.
+
+We need to avoid accidentally creating an expensive video-hosting platform during the tour.
+
+If direct video hosting requires substantial new infrastructure, storage cost, transcoding or streaming work, tell me BEFORE building it.
+
+In that case, prioritize:
+
+PHOTO UPLOAD + VIDEO LINK/EMBED
+
+as the immediate solution.
+
+## 5. SOCIAL MEDIA VIDEO / IMAGE
+
+I also want the ability to reference media that already exists on social media.
+
+However, DO NOT build functionality that downloads/copies media from Instagram, TikTok, YouTube, Facebook or another platform without confirming that the method complies with the platform's rules and our rights to display the media.
+
+For the immediate version, investigate whether we can safely support:
+
+"Add Social Media Link"
+
+The admin/user could paste the original URL from a supported platform.
+
+Examples might include:
+
+Instagram post/reel
+TikTok
+YouTube
+Facebook
+
+Use official/supported embedding or linking methods where appropriate.
+
+Do not scrape or re-host third-party social-media media simply because a URL was pasted.
+
+## 6. VERY IMPORTANT — MEDIA RIGHTS
+
+We need to distinguish between:
+
+MEDIA I OWN / HAVE PERMISSION TO USE
+
+and
+
+MEDIA HOSTED BY SOMEONE ELSE ON SOCIAL MEDIA.
+
+For uploaded media, include a simple acknowledgement such as:
+
+"By uploading this photo or video, you confirm that you own it or have permission to share it on Mapping with Melanin."
+
+Do not make this unnecessarily intimidating, but we need a clear rights acknowledgement.
+
+For linked social content, preserve the original source/creator/platform attribution where appropriate.
+
+## 7. SIMPLE USER INSTRUCTIONS
+
+I want the interface itself to teach people what to do.
+
+For PHOTO/VIDEO UPLOAD, include brief help text similar to:
+
+"Add your own photos or videos"
+
+"Upload photos or videos you created or have permission to share."
+
+For SOCIAL MEDIA, include:
+
+"Share from social media"
+
+"Paste the link to the original Instagram, TikTok, YouTube or supported social post. We'll link or display the original post when supported."
+
+And include a small:
+
+"How do I get the link?"
+
+help option.
+
+The instructions should be simple and conversational.
+
+For example:
+
+INSTAGRAM:
+Open the post or Reel → tap Share → Copy Link → return here → paste the link.
+
+TIKTOK:
+Open the video → tap Share → Copy Link → return here → paste the link.
+
+YOUTUBE:
+Open the video → tap Share → Copy Link → return here → paste the link.
+
+Do not hard-code instructions that are likely to become inaccurate without making them easy for us to update later.
+
+## 8. USER-GENERATED MEDIA VS. ADMIN MEDIA
+
+For NOW, my immediate priority is ADMIN functionality.
+
+Admin should be able to add media to businesses/places during the tour.
+
+Do NOT automatically open unrestricted public video uploads simply because admin upload is being implemented.
+
+However, build/reuse the architecture in a way that can eventually distinguish:
+
+ADMIN-ADDED MEDIA
+BUSINESS-OWNER MEDIA
+COMMUNITY/USER MEDIA
+LINKED SOCIAL MEDIA
+
+because those may eventually require different moderation, attribution and approval rules.
+
+## 9. MUSEUMS / HBCUs / HERITAGE PLACES
+
+This functionality cannot assume everything is a commercial business.
+
+We will use Mapping with Melanin to document culturally important places.
+
+During the tour, I may need to add:
+
+* Museums
+* HBCUs
+* Historic sites
+* Monuments
+* Cultural institutions
+* Community organizations
+* Heritage locations
+* Businesses
+* Other mapped places
+
+Before implementation, tell me whether these currently share the same canonical place/business architecture or use separate tables/models.
+
+DO NOT force a museum or HBCU into an inappropriate "business" identity simply because POST /api/businesses already exists.
+
+If our existing Heritage Map/place architecture already handles these records separately, preserve that distinction and tell me how the Admin entry experience should route them.
+
+## 10. TOUR ENTRY MODE
+
+The admin interface needs to work well from my PHONE.
+
+A realistic workflow is:
+
+I'm standing at a museum.
+
+I open Mapping with Melanin Admin.
+
+I select:
+
+* Add Place
+
+I choose the appropriate type.
+
+I enter:
+
+Name
+Category/type
+Location
+Short description
+Website/social information
+Relevant tags/discovery information
+
+I take/select several photos.
+
+I add a short video OR paste the institution's existing social/video link.
+
+I save.
+
+If I don't have all the information, I save it as an appropriate Draft/Needs Information state and finish it later.
+
+That is the experience I need.
+
+## 11. DESCRIPTION / STORY
+
+For museums, heritage locations, HBCUs and cultural places, make sure the architecture supports more than a business-style description.
+
+We need to be able to capture an appropriate short description/story explaining things such as:
+
+What is this place?
+Why does it matter?
+What should visitors know?
+What cultural/historical significance does it have?
+
+Do NOT require all of these as separate fields if our existing heritage architecture already handles this differently.
+
+Audit first.
+
+Eventually KinfolkAI should be able to use this structured information when helping someone discover and understand a place.
+
+## 12. ATTRIBUTION / CREDIT
+
+Where appropriate, media should be capable of storing:
+
+* Caption
+* Source
+* Creator/credit
+* Original social URL
+* Alt text/accessibility description
+
+Not every field must be required.
+
+For an admin photo I personally take, I should not have to complete a complicated rights form every time.
+
+Keep the workflow fast.
+
+## 13. PRESERVE FUTURE COMMUNITY VIDEO VISION
+
+We have discussed a future state where Mapping with Melanin makes cultural places feel alive through community video — including alumni stories, community voices, local history and other culturally relevant contributions.
+
+Do NOT attempt to build that entire future-state system right now.
+
+But do not create today's admin media architecture in a way that prevents us from later supporting:
+
+* community video submissions
+* alumni videos
+* cultural ambassador contributions
+* business-owner video
+* living histories / living memorial-type storytelling
+* moderation/approval
+* creator attribution
+* video attached to specific places
+* searchable cultural tags
+
+Record those as FUTURE STATE requirements.
+
+Immediate priority is ADMIN TOUR CAPTURE.
+
+## 14. SECURITY / MODERATION
+
+Confirm:
+
+* Only authorized admins can use the admin upload controls.
+* Upload endpoints verify authorization server-side.
+* File types are validated server-side.
+* File sizes are limited server-side.
+* Dangerous executable files cannot masquerade as photos/videos.
+* Media cannot be attached to another record simply by manipulating an ID.
+* Normal users cannot delete admin/business media.
+* Uploading media does not expose storage credentials.
+
+Do not rely solely on client-side restrictions.
+
+## 15. BEFORE IMPLEMENTATION — REPORT BACK
+
+Please add the following to the current audit and answer:
+
+1. What photo upload capability exists today?
+2. What video capability exists today?
+3. What social-link/embed capability exists today?
+4. Where media is currently stored.
+5. Current upload limits.
+6. Current media/database schema.
+7. Whether businesses already support multiple images.
+8. Whether businesses already support video.
+9. Whether heritage places/HBCUs/museums use the same or different data architecture.
+10. Whether admin can currently add/edit media.
+11. Whether admin media upload works from a phone.
+12. What existing components/APIs can be reused.
+13. What minimum work is required for TOUR ADMIN CAPTURE.
+14. What you recommend postponing until after the tour.
+15. Any storage, bandwidth, security, copyright or performance concern I need to know before authorizing implementation.
+
+Do NOT build a new video platform.
+
+Do NOT build public/community video uploads yet.
+
+Do NOT create another disconnected media system.
+
+Do NOT restructure working production data without approval.
+
+The immediate objective is:
+
+I VISIT A BUSINESS / MUSEUM / HBCU / CULTURAL PLACE
+→ ADD OR OPEN IT FROM MY PHONE
+→ ADD INFORMATION
+→ ADD MY PHOTOS
+→ ADD A SHORT VIDEO IF SAFELY SUPPORTED OR LINK TO EXISTING SOCIAL VIDEO
+→ SAVE
+→ FINISH/EDIT LATER
+
+I need Mapping with Melanin to become the tool I can actually use while we are on the road documenting these places.

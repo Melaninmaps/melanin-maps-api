@@ -1,0 +1,203 @@
+Yes — I understand the question now. And the distinction I raised about permissions **does not mean you need to abandon your model.** In fact, the model you're describing is exactly why embedding/linking is useful: **Mapping with Melanin can surface the creator/business's existing social post rather than asking them to upload it again and start over on another platform.** The original post remains on their platform/account.
+
+### First: what is the “original social media URL”?
+
+It's much simpler than it sounds. **It's just the link you get when you press “Copy link” on a post.**
+
+You do **not** need to find code. You do **not** need to know what an embed URL is. You do **not** need to download the video.
+
+For example, you're on your phone and find an amazing Reel from a museum that you want displayed on its Mapping with Melanin page.
+
+**Instagram:** Open the actual Reel/post → tap the **Share** icon (paper airplane) → tap **Copy link**. Instagram copies the address for you. Go back to Mapping with Melanin → Edit that museum/place → **Add Social Media Video/Post → Paste Link → Save.**
+
+**TikTok:** Open the video → tap **Share** → **Copy link** → return to Mapping with Melanin → paste it.
+
+**YouTube:** Open the video/Short → **Share → Copy link** → return → paste it.
+
+**Facebook:** Open the individual post/video → **Share → Copy link** (when available) → return → paste it.
+
+That's it. **“Copy link” gives you the URL Replit needs.**
+
+### What Mapping with Melanin should do with that link
+
+This is the part Replit should make easy for you and eventually for businesses/Cultural Ambassadors.
+
+You paste something that looks like:
+
+`instagram.com/reel/...`
+
+Mapping with Melanin recognizes:
+
+**This is Instagram → this is a Reel → store the original URL → display the supported Instagram embed/preview on this business/place profile.**
+
+You shouldn't have to choose “embed,” convert the URL, or do anything technical.
+
+I'd actually change the wording I previously gave Replit. **Don't call the field “Original Social Media Post URL.”** That's developer language.
+
+Call it:
+
+**Add from Social Media**
+
+Then underneath:
+
+> **Already posted it somewhere else? Paste the link here. No need to upload it again.**
+
+THAT sounds like Mapping with Melanin and communicates one of your selling points.
+
+### And your larger concept is important
+
+You're not trying to convince a creator:
+
+> “Stop posting on TikTok and upload all your videos to Mapping with Melanin.”
+
+Quite the opposite.
+
+A creator can continue building their Instagram/TikTok/YouTube presence. Mapping with Melanin becomes another **discovery layer** that helps people find that creator and their original work in a culturally relevant context.
+
+Someone looking at a museum could eventually see an alumnus's TikTok about the museum, a Cultural Ambassador's Instagram Reel, the museum's own YouTube video, etc. The original creator/platform relationship remains intact rather than you asking everyone to recreate their work inside your platform. That's a meaningful part of your proposition.
+
+### There is one limitation we should design around
+
+Not **every** social post can necessarily be embedded. A private account, deleted post, age/region-restricted content, or a platform's embedding rules can prevent it.
+
+So Mapping with Melanin needs graceful behavior:
+
+**Paste link → Can embed? → Show embedded post.**
+
+**Can't embed? → Preserve the link and show something like “View original post on Instagram.”**
+
+It should **never** just show a broken box.
+
+And I would have Replit preserve the **original URL regardless**, because that's your source and connection back to the creator.
+
+### What I would tell Replit now
+
+CLARIFICATION — SOCIAL MEDIA IS A CORE PART OF OUR MEDIA STRATEGY
+
+I want to clarify an important product requirement before you design the admin media functionality.
+
+One of the core Mapping with Melanin™ concepts is that businesses, Cultural Ambassadors and creators should NOT have to start over on another platform.
+
+If they already created a great Reel, TikTok, YouTube video or other social post, I want Mapping with Melanin to be capable of surfacing that ORIGINAL social content in the relevant cultural/business/place context whenever the originating platform technically permits it.
+
+We should therefore distinguish:
+
+1. UPLOAD MY OWN MEDIA
+2. ADD FROM SOCIAL MEDIA
+
+For "Add from Social Media," make this extremely easy.
+
+The user/admin should NOT need to understand URLs, embed codes or APIs.
+
+UI:
+
+ADD FROM SOCIAL MEDIA
+
+Help text:
+
+"Already posted it somewhere else? Paste the link here. No need to upload it again."
+
+[ Paste social media link ]
+
+[ Add ]
+
+The user obtains the link using the social platform's normal Share → Copy Link functionality.
+
+When a URL is pasted:
+
+1. Detect the supported platform.
+2. Validate the URL.
+3. Store the ORIGINAL social post URL.
+4. Determine whether that platform/post can be displayed using an official/supported embed mechanism.
+5. If supported, display the original social content within Mapping with Melanin.
+6. Preserve appropriate source/platform/creator attribution.
+7. Keep the original link associated with the record.
+8. Provide a way to open/view the original content on its originating platform.
+
+IMPORTANT:
+
+Do NOT download, scrape or re-host somebody else's social media video simply because we have its URL.
+
+The objective is to surface/link/embed the ORIGINAL creator's content.
+
+If a post cannot be embedded because of privacy settings, deletion, platform restrictions or another technical limitation:
+
+DO NOT show a broken media player.
+
+Gracefully fall back to:
+
+"View original post on [Platform]"
+
+using the stored original URL.
+
+## SIMPLE "HOW DO I GET THE LINK?" HELP
+
+Add a small:
+
+"How do I get the link?"
+
+option.
+
+The explanation should be simple:
+
+Instagram:
+Open the post or Reel → Share → Copy Link → return here and paste it.
+
+TikTok:
+Open the video → Share → Copy link → return here and paste it.
+
+YouTube:
+Open the video or Short → Share → Copy link → return here and paste it.
+
+Facebook:
+Open the post/video → Share → Copy link when available → return here and paste it.
+
+Keep these instructions configurable/easy to update because social platforms may change their interfaces.
+
+## ADMIN NOW — OTHER USERS LATER
+
+For the immediate tour implementation, ADMIN needs this functionality.
+
+However, preserve the architecture so that later the same capability can appropriately be offered to:
+
+* Business owners
+* Cultural Ambassadors
+* Community members
+* Creators
+
+with the appropriate permissions/moderation.
+
+Do not build all of those workflows now.
+
+## IMPORTANT DATA TO PRESERVE
+
+For linked social media, where technically available/appropriate, the data model should be capable of preserving:
+
+* Original URL
+* Platform
+* Original creator/account
+* Associated Mapping with Melanin business/place
+* Caption/description we add within Mapping with Melanin, if applicable
+* Date added to Mapping with Melanin
+* Who added it
+* Embed/display status
+* Attribution/source
+* Content status if the original becomes unavailable
+
+The ORIGINAL URL should remain the source reference.
+
+## IMPORTANT PRODUCT PRINCIPLE
+
+Mapping with Melanin is NOT asking creators and businesses to abandon the audiences and content they have already built elsewhere.
+
+We are creating another culturally relevant discovery path to that work.
+
+A creator should be able to continue creating on their existing social platform while Mapping with Melanin helps the right community discover that creator, business, place or experience.
+
+Build the immediate admin functionality with that future model in mind without overbuilding the future-state creator system today.
+
+Please include in your audit which platforms we can currently support safely through official embedding/linking methods and which should initially be link-out only.
+
+And **now I would actually make this little tutorial part of the interface**, not expect people to figure it out. You didn't know what I meant by “paste the original social URL,” and you're the founder. That's useful product feedback in itself. If the wording isn't immediately obvious to you, we shouldn't expect a business owner or Cultural Ambassador to understand it either.
+
+**“Already posted it somewhere else? Paste the link here. No need to upload it again.”** is much closer to what the product is trying to accomplish.
