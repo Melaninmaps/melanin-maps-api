@@ -2009,6 +2009,135 @@ router.post("/admin/businesses/:id/clear-dispute", async (req: Request, res: Res
   }
 });
 
+// ─── POST /admin/businesses/:id/photos/upload ────────────────────────────────
+// Admin-direct photo upload. Goes straight to photos[] (skips pending queue).
+// Accepts up to 10 files per request; enforces a total-photo limit of 20 per business.
+router.post("/admin/businesses/:id/photos/upload", photoUpload.array("photos", 10), async (req: any, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  const files = req.files as Express.Multer.File[] | undefined;
+  if (!files || files.length === 0) { res.status(400).json({ error: "No photos provided" }); return; }
+
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, id));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    if (currentPhotos.length + files.length > 20) {
+      res.status(400).json({ error: `This business already has ${currentPhotos.length} photos. Maximum is 20.` }); return;
+    }
+
+    const bucket = objectStorageClient.bucket(bucketId);
+    const uploadedUrls: string[] = [];
+
+    for (const file of files) {
+      const ext = file.originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+      const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
+      const objectKey = `business-photos/${id}/${randomUUID()}.${safeExt}`;
+      const gcsFile = bucket.file(objectKey);
+      await gcsFile.save(file.buffer, { contentType: file.mimetype });
+      await gcsFile.makePublic();
+      uploadedUrls.push(`https://storage.googleapis.com/${bucketId}/${objectKey}`);
+    }
+
+    const updatedPhotos = [...currentPhotos, ...uploadedUrls];
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ photos: updatedPhotos, imageUrl: updatedPhotos[0] ?? null, updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, photos: businessesTable.photos, imageUrl: businessesTable.imageUrl });
+
+    res.status(201).json({
+      uploaded: uploadedUrls,
+      photos: updated.photos,
+      imageUrl: updated.imageUrl,
+      message: `${uploadedUrls.length} photo${uploadedUrls.length !== 1 ? "s" : ""} added to business.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/businesses/:id/photos/upload error");
+    res.status(500).json({ error: "Photo upload failed. Please try again." });
+  }
+});
+
+// ─── POST /admin/businesses/:id/photos/delete ─────────────────────────────────
+// Remove a single photo from a business (by URL).
+router.post("/admin/businesses/:id/photos/delete", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  const { url } = req.body as { url?: string };
+  if (!url?.trim()) { res.status(400).json({ error: "url is required" }); return; }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, id));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    const updatedPhotos = currentPhotos.filter(p => p !== url);
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ photos: updatedPhotos, imageUrl: updatedPhotos[0] ?? null, updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, photos: businessesTable.photos });
+
+    res.json({ photos: updated.photos });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/businesses/:id/photos/delete error");
+    res.status(500).json({ error: "Could not remove photo." });
+  }
+});
+
+// ─── POST /admin/businesses/:id/social-link ──────────────────────────────────
+// Admin adds a social media post/video link to a business's videos[] array.
+// Accepts links from Instagram, TikTok, YouTube, Facebook, Pinterest, Vimeo.
+router.post("/admin/businesses/:id/social-link", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  const { url } = req.body as { url?: string };
+  if (!url?.trim()) { res.status(400).json({ error: "url is required" }); return; }
+
+  const ALLOWED = ["youtube.com", "youtu.be", "tiktok.com", "instagram.com", "facebook.com", "fb.watch", "vimeo.com", "pinterest.com"];
+  try {
+    const hostname = new URL(url.trim()).hostname.replace("www.", "");
+    if (!ALLOWED.some(h => hostname.includes(h))) {
+      res.status(400).json({ error: "Supported platforms: YouTube, TikTok, Instagram, Facebook, Pinterest, Vimeo." }); return;
+    }
+  } catch {
+    res.status(400).json({ error: "Invalid URL. Please paste the full link." }); return;
+  }
+
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, videos: businessesTable.videos })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, id));
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const current = (business.videos as string[]) ?? [];
+    if (current.includes(url.trim())) { res.status(409).json({ error: "This link is already added." }); return; }
+    if (current.length >= 10) { res.status(400).json({ error: "Maximum of 10 social media links per business." }); return; }
+
+    const [updated] = await db
+      .update(businessesTable)
+      .set({ videos: [...current, url.trim()], updatedAt: new Date() })
+      .where(eq(businessesTable.id, id))
+      .returning({ id: businessesTable.id, videos: businessesTable.videos });
+
+    res.status(201).json({ videos: updated.videos, message: "Social link added." });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/businesses/:id/social-link error");
+    res.status(500).json({ error: "Could not add social link." });
+  }
+});
+
 // ─── GET /admin/businesses/check-duplicate ───────────────────────────────────
 // Checks for possible duplicate businesses by name + city or address.
 router.get("/admin/businesses/check-duplicate", async (req: Request, res: Response): Promise<void> => {

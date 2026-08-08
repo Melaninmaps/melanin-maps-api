@@ -6,8 +6,9 @@
 import { useState, useEffect } from "react";
 import {
   X, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle,
-  Loader2, ExternalLink, Store, Share2, Award, Compass
+  Loader2, ExternalLink, Store
 } from "lucide-react";
+import { AdminBusinessMediaStep } from "./AdminBusinessMediaStep";
 import {
   BUSINESS_CATEGORY_TAXONOMY,
   VIBES_BY_CATEGORY,
@@ -29,8 +30,8 @@ const LISTING_STATUSES = [
   { value: "live_unclaimed", label: "Live — Unclaimed", desc: "Appears on the map immediately. Business owner has not yet claimed." },
 ];
 
-type Step = "basic" | "social" | "identity" | "discovery" | "review";
-const STEPS: Step[] = ["basic", "social", "identity", "discovery", "review"];
+type Step = "basic" | "social" | "identity" | "discovery" | "review" | "media";
+const FORM_STEPS: Step[] = ["basic", "social", "identity", "discovery", "review"];
 const STEP_LABELS: Record<Step, string> = {
   basic: "Basic Info",
   social: "Online Presence",
@@ -57,6 +58,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
   const [dupWarning, setDupWarning] = useState<DuplicateWarning | null>(null);
   const [error, setError] = useState("");
   const [forceProceed, setForceProceed] = useState(false);
+  const [savedBiz, setSavedBiz] = useState<{ id: string; name: string } | null>(null);
 
   // ── Form fields ──────────────────────────────────────────────────────────
   const [name, setName] = useState("");
@@ -91,6 +93,43 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
 
   // Reset subcategory when category changes
   useEffect(() => { setSubcategory(""); setSelectedVibes([]); }, [category]);
+
+  // After save — if in media step, show media uploader
+  if (step === "media" && savedBiz) {
+    return (
+      <div
+        className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white w-full sm:max-w-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[100dvh] sm:max-h-[90vh] overflow-hidden"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="bg-[#2B1507] px-6 py-5 shrink-0 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Store className="w-5 h-5 text-[#CA922B]" />
+              <div>
+                <h2 className="font-serif font-bold text-white text-lg">Add Photos & Social</h2>
+                <p className="text-[#F5EBD8]/50 text-xs">Optional — you can always add these later</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20">
+              <X className="w-4 h-4 text-[#F5EBD8]" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <AdminBusinessMediaStep
+              businessId={savedBiz.id}
+              businessName={savedBiz.name}
+              onDone={() => { onSuccess(savedBiz.id, savedBiz.name); }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const STEPS = FORM_STEPS;
 
   function toggleOwnership(d: string) {
     setOwnershipDesignations(prev =>
@@ -201,7 +240,9 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
         setError(data.error ?? "Failed to create business.");
         return;
       }
-      onSuccess(data.business!.id, data.business!.name);
+      // Go to media step (photo upload + social links) instead of closing immediately
+      setSavedBiz({ id: data.business!.id, name: data.business!.name });
+      setStep("media");
     } catch {
       setError("Network error. Check your connection and try again.");
     } finally {
