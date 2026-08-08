@@ -1782,6 +1782,38 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
   }
 });
 
+// ── POST /admin/patch-business-coordinates ────────────────────────────────────
+// Patches real geocoded coordinates for seeded businesses that got city-centroid defaults.
+// Body: { businesses: [{ name: string, latitude: number, longitude: number }] }
+router.post("/admin/patch-business-coordinates", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    const { businesses: patches } = req.body as {
+      businesses: Array<{ name: string; latitude: number; longitude: number; approximate?: boolean }>;
+    };
+    if (!Array.isArray(patches) || patches.length === 0) {
+      res.status(400).json({ error: "businesses array required" }); return;
+    }
+    const results: Array<{ name: string; updated: number }> = [];
+    for (const p of patches) {
+      const r = await pool.query(
+        `UPDATE businesses
+         SET latitude = $1, longitude = $2
+         WHERE LOWER(name) = LOWER($3)`,
+        [p.latitude, p.longitude, p.name]
+      );
+      results.push({ name: p.name, updated: r.rowCount ?? 0 });
+    }
+    res.json({ ok: true, results });
+  } catch (err) {
+    req.log.error({ err }, "patch-business-coordinates error");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // ── POST /admin/patch-listing-status ─────────────────────────────────────────
 // One-time fix: set listing_status='live_unclaimed' on all businesses that
 // have profile_status='community_listed' but listing_status IS NULL.

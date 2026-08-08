@@ -830,8 +830,22 @@ export default function MapPage() {
               activeCulturalSites.map((site) => {
                 const color = getCulturalPinColor(site);
                 const label = getCulturalPinLabel(site);
+                const siteLat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude as number);
+                const siteLng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude as number);
+                const canFly = mapRef.current && !isNaN(siteLat) && !isNaN(siteLng) && (siteLat !== 0 || siteLng !== 0);
                 return (
-                  <div key={site.id} className="p-4 border-b border-[#3A1F0E]/6 hover:bg-[#FAF6EF] transition-colors">
+                  <div
+                    key={site.id}
+                    className={`p-4 border-b border-[#3A1F0E]/6 hover:bg-[#FAF6EF] transition-colors ${canFly ? "cursor-pointer" : ""}`}
+                    onClick={() => {
+                      if (!canFly) return;
+                      mapRef.current!.panTo({ lat: siteLat, lng: siteLng });
+                      // HBCUs and cultural heritage use city-level zoom; specific addresses use street level
+                      mapRef.current!.setZoom(site.siteType === "hbcu" || !site.address ? 14 : 16);
+                      setSidebarOpen(false);
+                    }}
+                    title={canFly ? `Fly to ${site.name}` : undefined}
+                  >
                     <div className="flex items-start gap-3">
                       <div
                         className="w-3 h-3 rotate-45 shrink-0 mt-1.5"

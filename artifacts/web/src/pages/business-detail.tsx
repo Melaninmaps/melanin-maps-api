@@ -137,15 +137,75 @@ export default function BusinessDetail() {
   const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
   const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
 
+  // Categories that use THE REAL (professional trust tags) instead of Community Vibes.
+  // Per the Master Directory and Three-Layer Architecture spec.
+  const NO_VIBE_CATEGORIES = new Set([
+    "Professional Services",
+    "Home & Property Services",
+    "Automotive & Transportation",
+    "Pets & Animal Services",
+    "Technology & Digital Services",
+    "Financial & Business Services",
+    "Legal & Government Services",
+    "Other Services",
+  ]);
+
+  // Community Vibes — only tags that exist in the approved vibe taxonomy.
+  // "Worth Every Visit", "Community Staple", "Black Excellence", "Date Night Worthy"
+  // were removed — they do not exist in the master directory or belong only to
+  // endorsement tags (earned via 10+ taps), not pre-available vibes.
   const COMMUNITY_VIBES = [
-    { id: "hidden_gem",        label: "Hidden Gem",        emoji: "💎" },
-    { id: "community_staple",  label: "Community Staple",  emoji: "🏛️" },
-    { id: "grandma_approved",  label: "Grandma Approved",  emoji: "🫶🏾" },
-    { id: "worth_every_visit", label: "Worth Every Visit", emoji: "✨" },
-    { id: "date_night",        label: "Date Night Worthy", emoji: "🌹" },
-    { id: "family_friendly",   label: "Family Friendly",   emoji: "👨‍👩‍👧" },
-    { id: "black_excellence",  label: "Black Excellence",  emoji: "✊🏾" },
+    { id: "hidden_gem",       label: "Hidden Gem",       emoji: "💎" },
+    { id: "grandma_approved", label: "Grandma Approved", emoji: "🫶🏾" },
+    { id: "date_night",       label: "Date Night",       emoji: "🌹" },
+    { id: "family_friendly",  label: "Family Friendly",  emoji: "👨‍👩‍👧" },
+    { id: "locals_know",      label: "Locals Know",      emoji: "📍" },
+    { id: "for_the_culture",  label: "For The Culture",  emoji: "✊🏾" },
+    { id: "auntie_energy",    label: "Auntie Energy",    emoji: "🤎" },
   ];
+
+  // Category-appropriate vibes (shown instead of the full list for relevant categories)
+  const categoryVibes: Record<string, { id: string; label: string; emoji: string }[]> = {
+    "Food & Drink": [
+      { id: "grandma_approved",    label: "Grandma Approved",     emoji: "🫶🏾" },
+      { id: "date_night",          label: "Date Night",           emoji: "🌹" },
+      { id: "family_friendly",     label: "Family Friendly",      emoji: "👨‍👩‍👧" },
+      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
+      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
+      { id: "auntie_energy",       label: "Auntie Energy",        emoji: "🤎" },
+      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
+    ],
+    "Beauty & Personal Care": [
+      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
+      { id: "auntie_energy",       label: "Auntie Energy",        emoji: "🤎" },
+      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
+      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
+      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
+      { id: "chill_and_restore",   label: "Chill & Restore",      emoji: "🧘🏾" },
+      { id: "come_as_you_are",     label: "Come As You Are",      emoji: "🤗" },
+    ],
+    "Travel & Hospitality": [
+      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
+      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
+      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
+      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
+      { id: "family_friendly",     label: "Family Friendly",      emoji: "👨‍👩‍👧" },
+    ],
+    "Arts, Culture & Entertainment": [
+      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
+      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
+      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
+      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
+      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
+    ],
+    "Shopping & Retail": [
+      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
+      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
+      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
+      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
+      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
+    ],
+  };
 
   useEffect(() => {
     if (!auth?.user || !id) return;
@@ -532,53 +592,75 @@ export default function BusinessDetail() {
                   <p>{(business.description?.replace(/^\[DEMO\]\s*/i, "") || "Discover this exceptional business. They provide quality service and a welcoming environment for the community.")}</p>
                 </div>
                 
-                {business.blackOwned && (
-                  <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#CA922B]/10 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="text-[#CA922B] w-6 h-6" />
+                {/* Ownership designation — shows self-identified designation, not "Verified Black-Owned"
+                    Per Map Pin & Living Pages Fix spec: "Verified" should refer to the business being
+                    real, NOT to the owner's race/ethnicity being verified. */}
+                {(() => {
+                  const designations: string[] = (business as any).ownershipDesignations ?? [];
+                  const primaryDesignation = designations[0] ?? (business.blackOwned ? "Black / African American-Owned" : null);
+                  if (!primaryDesignation) return null;
+                  return (
+                    <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-full bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="text-[#CA922B] w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">{primaryDesignation}</h3>
+                        {designations.length > 1 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {designations.slice(1).map((d: string) => (
+                              <span key={d} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/20">{d}</span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-[#3A1F0E]/70 text-sm">Ownership self-identified by this business. Supporting minority-owned enterprises strengthens the whole community.</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">Verified Black-Owned</h3>
-                      <p className="text-[#3A1F0E]/70 text-sm">This business is part of our verified network of minority-owned enterprises, supporting economic empowerment.</p>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
-                {/* Community Vibes — web parity with mobile */}
-                <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Vibes</h3>
-                    <span className="text-xs text-[#3A1F0E]/40 font-medium">
-                      {auth?.user ? "Tap to tag your experience" : "Sign in to add vibes"}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {COMMUNITY_VIBES.map((v) => {
-                      const active = myVibes.includes(v.id);
-                      const loading = vibeLoading === v.id;
-                      return (
-                        <button
-                          key={v.id}
-                          onClick={() => handleVibe(v.id)}
-                          disabled={loading}
-                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
-                            active
-                              ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
-                              : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/70 hover:border-[#CA922B] hover:text-[#CA922B]"
-                          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                        >
-                          <span className="text-base leading-none">{v.emoji}</span>
-                          {v.label}
-                          {vibeToasts[v.id] ? (
-                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
-                              +{vibeToasts[v.id]}
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* Community Vibes — hidden for professional/service categories that use THE REAL instead.
+                    Per Master Directory: Professional Services, Home & Property, Automotive, etc. use
+                    endorsement tags only. Vibes are for experience-based categories. */}
+                {!NO_VIBE_CATEGORIES.has(business.category ?? "") && (() => {
+                  const vibesForCategory = categoryVibes[business.category ?? ""] ?? COMMUNITY_VIBES;
+                  return (
+                    <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Vibes</h3>
+                        <span className="text-xs text-[#3A1F0E]/40 font-medium">
+                          {auth?.user ? "Tap to tag your experience" : "Sign in to add vibes"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {vibesForCategory.map((v) => {
+                          const active = myVibes.includes(v.id);
+                          const loading = vibeLoading === v.id;
+                          return (
+                            <button
+                              key={v.id}
+                              onClick={() => handleVibe(v.id)}
+                              disabled={loading}
+                              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
+                                active
+                                  ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
+                                  : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/70 hover:border-[#CA922B] hover:text-[#CA922B]"
+                              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            >
+                              <span className="text-base leading-none">{v.emoji}</span>
+                              {v.label}
+                              {vibeToasts[v.id] ? (
+                                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
+                                  +{vibeToasts[v.id]}
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* What The Community Said — Endorsement Tags */}
                 {endorsementTags.length > 0 && (
