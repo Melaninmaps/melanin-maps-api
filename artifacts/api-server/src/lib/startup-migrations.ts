@@ -18,6 +18,8 @@ import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
+import { COMMUNITY_ORGANIZATIONS_SEED } from "../data/community-organizations-seed";
+import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -347,6 +349,107 @@ END $seed$`,
           WHERE listing_status IS NULL
              OR listing_status IN ('staged', 'pending')`,
   },
+  // ── Community Organizations ─────────────────────────────────────────────
+  {
+    name: "community_organizations_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_organizations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      city TEXT NOT NULL,
+      state VARCHAR(2) NOT NULL,
+      category TEXT NOT NULL DEFAULT 'other',
+      mission TEXT,
+      website TEXT,
+      instagram TEXT,
+      facebook TEXT,
+      phone TEXT,
+      address TEXT,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      has_pending_edit BOOLEAN NOT NULL DEFAULT false,
+      tour_source BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "community_organizations_indexes_v1",
+    sql: `CREATE INDEX IF NOT EXISTS idx_community_orgs_city_state
+          ON community_organizations (LOWER(city), LOWER(state))
+          WHERE is_active = true`,
+  },
+  // ── Recurring Events ────────────────────────────────────────────────────
+  {
+    name: "recurring_events_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS recurring_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      city TEXT NOT NULL,
+      state VARCHAR(2) NOT NULL,
+      venue TEXT,
+      address TEXT,
+      description TEXT,
+      frequency TEXT NOT NULL DEFAULT 'weekly',
+      day_of_week TEXT,
+      start_time TEXT,
+      end_time TEXT,
+      category TEXT NOT NULL DEFAULT 'other',
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      has_pending_edit BOOLEAN NOT NULL DEFAULT false,
+      tour_source BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "recurring_events_indexes_v1",
+    sql: `CREATE INDEX IF NOT EXISTS idx_recurring_events_city_state
+          ON recurring_events (LOWER(city), LOWER(state))
+          WHERE is_active = true`,
+  },
+  // ── Edit Suggestions ────────────────────────────────────────────────────
+  {
+    name: "edit_suggestions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS edit_suggestions (
+      id SERIAL PRIMARY KEY,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      entity_name TEXT,
+      field_name TEXT NOT NULL,
+      current_value TEXT,
+      suggested_value TEXT NOT NULL,
+      reason TEXT,
+      user_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_notes TEXT,
+      reviewed_by TEXT,
+      reviewed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "edit_suggestions_indexes_v1",
+    sql: `CREATE INDEX IF NOT EXISTS idx_edit_suggestions_status ON edit_suggestions (status);
+          CREATE INDEX IF NOT EXISTS idx_edit_suggestions_entity ON edit_suggestions (entity_type, entity_id);
+          CREATE INDEX IF NOT EXISTS idx_edit_suggestions_user ON edit_suggestions (user_id)`,
+  },
+  // ── has_pending_edit on cultural_sites ────────────────────────────────
+  {
+    name: "cultural_sites_has_pending_edit_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN NOT NULL DEFAULT false`,
+  },
+  // ── neighborhood_timing on city_profiles ──────────────────────────────
+  {
+    name: "city_profiles_neighborhood_timing_col",
+    sql: `ALTER TABLE city_profiles ADD COLUMN IF NOT EXISTS neighborhood_timing JSONB DEFAULT '[]'::jsonb`,
+  },
+  {
+    name: "city_profiles_has_pending_edit_col",
+    sql: `ALTER TABLE city_profiles ADD COLUMN IF NOT EXISTS has_pending_edit BOOLEAN NOT NULL DEFAULT false`,
+  },
   {
     name: "user_city_welcome_dismissals_table",
     sql: `CREATE TABLE IF NOT EXISTS user_city_welcome_dismissals (
@@ -544,6 +647,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["sundown towns",     () => ensureSundownTowns(log, warn)],
     ["dir. businesses",   () => ensureDirectoryBusinesses(log, warn)],
     ["tour businesses",   () => ensureTourBusinesses(log, warn)],
+    ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
+    ["recurring events",  () => ensureRecurringEvents(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
@@ -960,6 +1065,79 @@ async function ensureTourBusinesses(
     log(`Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`);
   } catch (err: unknown) {
     warn(`Tour businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Community Organizations guard ─────────────────────────────────────────────
+async function ensureCommunityOrganizations(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM community_organizations`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0, skipped = 0;
+
+    for (const o of COMMUNITY_ORGANIZATIONS_SEED) {
+      const key = `${o.name.toLowerCase()}|${o.city.toLowerCase()}|${o.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO community_organizations
+            (name, city, state, category, mission, website, instagram, facebook, phone, address,
+             is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true, true, NOW(), NOW())`,
+          [o.name, o.city, o.state, o.category, o.mission,
+           o.website, o.instagram, o.facebook, o.phone, o.address]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`Community orgs guard: failed to insert ${o.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Community orgs guard: ${inserted} inserted, ${skipped} already present (seed: ${COMMUNITY_ORGANIZATIONS_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Community organizations guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Recurring Events guard ────────────────────────────────────────────────────
+async function ensureRecurringEvents(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM recurring_events`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0, skipped = 0;
+
+    for (const e of RECURRING_EVENTS_SEED) {
+      const key = `${e.name.toLowerCase()}|${e.city.toLowerCase()}|${e.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO recurring_events
+            (name, city, state, venue, address, description,
+             frequency, day_of_week, start_time, end_time, category,
+             is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, true, true, NOW(), NOW())`,
+          [e.name, e.city, e.state, e.venue, e.address, e.description,
+           e.frequency, e.day_of_week, e.start_time, e.end_time, e.category]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`Recurring events guard: failed to insert ${e.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Recurring events guard: ${inserted} inserted, ${skipped} already present (seed: ${RECURRING_EVENTS_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Recurring events guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
