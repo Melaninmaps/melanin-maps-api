@@ -133,9 +133,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               </>
             ) : (
-              <a href="/#waitlist-form">
-                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 font-semibold">Join the Waitlist</Button>
-              </a>
+              <div className="flex items-center gap-3">
+                <Link href="/login">
+                  <span className="text-sm font-medium text-[#F5EBD8]/80 hover:text-[#CA922B] transition-colors cursor-pointer">Log In</span>
+                </Link>
+                <a href="/#waitlist-form">
+                  <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 font-semibold">Join the Waitlist</Button>
+                </a>
+              </div>
             )}
           </div>
 
@@ -179,11 +184,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
                 </Link>
               ) : (
-                <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold py-3 text-base">
-                    Join the Waitlist
-                  </Button>
-                </a>
+                <div className="flex flex-col gap-2">
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <span className="block text-center text-[15px] font-medium text-[#F5EBD8]/80 cursor-pointer py-2 border border-white/20 rounded-full hover:border-[#CA922B]/50">Log In</span>
+                  </Link>
+                  <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold py-3 text-base">
+                      Join the Waitlist
+                    </Button>
+                  </a>
+                </div>
               )}
             </div>
           </div>

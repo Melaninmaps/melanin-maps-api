@@ -729,7 +729,7 @@ export default function BusinessDetail() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-2">Community Voices</h3>
-                    <p className="text-[#3A1F0E]/70 text-sm">Read what the Melanin Maps community has to say about their experience.</p>
+                    <p className="text-[#3A1F0E]/70 text-sm">Read what the Mapping With Melanin™ community has to say about their experience.</p>
                   </div>
                 </div>
 

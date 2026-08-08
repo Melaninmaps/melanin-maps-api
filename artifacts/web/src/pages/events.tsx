@@ -121,7 +121,7 @@ export default function Events() {
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/70">
                       <MapPin size={14} className="text-[#CA922B] shrink-0" />
-                      <span className="truncate">{event.venue}, {event.city}</span>
+                      <span className="truncate">{event.venue ? `${event.venue}, ` : ""}{event.city}</span>
                     </div>
                     {event.startDate && (
                       <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/70">
@@ -138,7 +138,7 @@ export default function Events() {
                   <div className="mt-auto pt-4 border-t border-[#2B1507]/10 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">
                       <Users size={14} className="text-[#CA922B]" />
-                      <span>{event.rsvpCount || 0} Attending</span>
+                      <span>{(event as any).attendees ?? event.rsvpCount ?? 0} Attending</span>
                     </div>
                     <Button 
                       onClick={() => handleRsvp(event.id)}

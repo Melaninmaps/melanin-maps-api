@@ -1,8 +1,9 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { MapPin, ArrowRight, Shield, Search, Sparkles, Users, Building2, Globe, BookOpen, Facebook, Linkedin, Instagram, Link2, UserPlus, Trophy, Mail, Send, Store } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
@@ -186,6 +187,16 @@ function LeaderboardSection() {
 }
 
 export default function Home() {
+  const { data: auth } = useGetCurrentAuthUser();
+  const [, navigate] = useLocation();
+
+  // Authenticated members belong on the map, not the marketing homepage
+  useEffect(() => {
+    if (auth?.user) {
+      navigate("/map", { replace: true });
+    }
+  }, [auth?.user, navigate]);
+
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");

@@ -580,12 +580,12 @@ export default function MapPage() {
     if (!g) { setApiKeyError(true); return; }
 
     try {
-      // Philadelphia is the live city — default to it so users see real pins, not a continent view.
-      // Geolocation request immediately after init will override this if the user allows it.
-      const PHILLY = { lat: 39.9526, lng: -75.1652 };
+      // Start at US center so no city feels "default". We'll immediately move to
+      // homeCity from the user's profile, and geolocation can override that.
+      const US_CENTER = { lat: 38.5, lng: -96.5 };
       const map: GMap = new g.Map(mapDivRef.current, {
-        center: PHILLY,
-        zoom: 12,
+        center: US_CENTER,
+        zoom: 4,
         styles: BRAND_STYLE,
         mapTypeControl: false,
         streetViewControl: false,
@@ -595,34 +595,30 @@ export default function MapPage() {
       mapRef.current = map;
       infoWindowRef.current = new g.InfoWindow();
 
-      // ── Location permission → center the map on the user ──────────────────
-      // Priority: (1) GPS if granted, (2) homeCity from profile, (3) Philadelphia
+      // ── Location priority: (1) profile homeCity, then (2) GPS override ─────
+      // Start by centering on the user's home city immediately from their profile.
+      const homeCity = (authData?.user as any)?.homeCity as string | null | undefined;
+      if (homeCity) {
+        new g.Geocoder().geocode(
+          { address: homeCity },
+          (results: any[], status: string) => {
+            if (status === "OK" && results?.[0]?.geometry?.location) {
+              map.setCenter(results[0].geometry.location);
+              map.setZoom(12);
+            }
+          },
+        );
+      }
+
+      // Geolocation can further refine to the user's exact position if allowed.
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            // User granted — center on their actual location AND store coords
-            // so the sidebar can sort businesses by proximity.
             map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             map.setZoom(13);
             setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           },
-          () => {
-            // Denied or unavailable — try their profile home city
-            const homeCity = (authData?.user as any)?.homeCity as string | null | undefined;
-            if (homeCity) {
-              new g.Geocoder().geocode(
-                { address: homeCity },
-                (results: any[], status: string) => {
-                  if (status === "OK" && results?.[0]?.geometry?.location) {
-                    map.setCenter(results[0].geometry.location);
-                    map.setZoom(12);
-                  }
-                  // else stay at Philadelphia — already the default
-                },
-              );
-            }
-            // else stay at Philadelphia — already the default
-          },
+          () => { /* geolocation denied — homeCity is already the center */ },
           { timeout: 6_000, maximumAge: 120_000 },
         );
       }
