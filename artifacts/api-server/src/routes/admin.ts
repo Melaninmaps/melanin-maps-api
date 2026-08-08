@@ -1730,6 +1730,19 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
 
     const DEMO_USER_COUNT = 12; // above 10-tap threshold
 
+    // Step 1: Create 12 predictable demo users in the users table (if not exist).
+    // These are identifiable system accounts, not real community members.
+    const DEMO_USER_IDS = Array.from({ length: DEMO_USER_COUNT }, (_, i) =>
+      `00000000-0000-0000-0000-${String(i + 1).padStart(12, "0")}`
+    );
+
+    // Build batch INSERT for demo users
+    const userValues = DEMO_USER_IDS.map((_, i) => `($${i + 1},'Demo Tap User ${i + 1}','system')`).join(",");
+    await pool.query(
+      `INSERT INTO users (id, first_name, role) VALUES ${userValues} ON CONFLICT (id) DO NOTHING`,
+      DEMO_USER_IDS
+    );
+
     let totalInserted = 0;
     let totalSkipped = 0;
 
@@ -1743,14 +1756,12 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
       }
       const businessId = bizRow.rows[0].id;
 
-      // Build one VALUES list per tag batch — much faster than 1-row-at-a-time
-      // id is serial (auto-generated), so omit it from INSERT
+      // Batch INSERT all taps for this tag — one round-trip per tag
       for (const tagKey of tagKeys) {
         const values: string[] = [];
         const params: string[] = [];
         let p = 1;
-        for (let i = 1; i <= DEMO_USER_COUNT; i++) {
-          const demoUserId = `demo_tap_user_${String(i).padStart(2, "0")}`;
+        for (const demoUserId of DEMO_USER_IDS) {
           values.push(`($${p++},$${p++},$${p++},NOW())`);
           params.push(businessId, demoUserId, tagKey);
         }
@@ -1764,7 +1775,7 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
       }
     }
 
-    res.json({ ok: true, inserted: totalInserted, skipped: totalSkipped });
+    res.json({ ok: true, inserted: totalInserted, skipped: totalSkipped, demoUsers: DEMO_USER_COUNT });
   } catch (err) {
     req.log.error({ err }, "seed-demo-taps error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
