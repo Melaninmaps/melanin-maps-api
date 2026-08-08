@@ -1687,6 +1687,28 @@ router.post("/admin/seed-sundown-towns-national", async (req: Request, res: Resp
   }
 });
 
+// ── POST /admin/patch-listing-status ─────────────────────────────────────────
+// One-time fix: set listing_status='live_unclaimed' on all businesses that
+// have profile_status='community_listed' but listing_status IS NULL.
+router.post("/admin/patch-listing-status", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    const r = await pool.query(
+      `UPDATE businesses
+       SET listing_status = 'live_unclaimed'
+       WHERE profile_status = 'community_listed'
+         AND (listing_status IS NULL OR listing_status = '')`
+    );
+    res.json({ ok: true, updated: r.rowCount });
+  } catch (err) {
+    req.log.error({ err }, "patch-listing-status error");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 // ── POST /admin/seed-directory-businesses ─────────────────────────────────────
 // Seeds the 6 businesses from the MASTER Business Directory Excel file.
 // Sets listing_status = community_listed (unclaimed). Dedup by name+city+state.
@@ -1716,7 +1738,8 @@ router.post("/admin/seed-directory-businesses", async (req: Request, res: Respon
            description, website, instagram, tiktok, primary_social_platform,
            ownership_designations, vibes, black_owned,
            latitude, longitude,
-           profile_status, status, rating, review_count, verified, featured,
+           listing_status, profile_status, status,
+           rating, review_count, verified, featured,
            confidence_score, tags, photos, pending_photos, videos,
            trust_badges, flag_count, flag_status, hidden_gem_nominations,
            marketplace_tier, business_status, marketplace_fee_locked,
@@ -1728,7 +1751,8 @@ router.post("/admin/seed-directory-businesses", async (req: Request, res: Respon
            $8,$9,$10,$11,$12,
            $13,$14,$15,
            $16,$17,
-           'community_listed','active',0,0,false,false,
+           'live_unclaimed','community_listed','active',
+           0,0,false,false,
            0,'[]','[]','[]','[]',
            '[]',0,'none',0,
            'free','community',false,

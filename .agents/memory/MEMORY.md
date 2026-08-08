@@ -112,3 +112,4 @@
 - [Map DEFAULT_REGION + auto-fit](map-default-region.md) — DEFAULT_REGION changed to US-wide (37.0,-95.0, delta 32/52); fitToCoordinates fires once on first businesses+mapReady; Null Island (lat/lng=0) excluded from mapped filter.
 - [Monitor readyz race fix](monitor-readyz-race.md) — /api/readyz HTTP check removed from monitor; readyz now derived from internal DB probe result to avoid concurrent pool saturation.
 - [KinfolkAI pool exhaustion via unauthenticated monitor probe](kinfolk-pool-leak.md) — unauthenticated _post /kinfolk/chat probe triggered full OpenAI calls; 8s client timeout left orphaned server handlers whose post-OpenAI DB writes leaked 1 connection/cycle → exhaustion in ~30 min. Fix: auth gate on /kinfolk/chat + lightweight /kinfolk/health probe.
+- [Endorsement Tag System](endorsement-tag-system.md) — 340 tags, 132 cultural variants, 90 ownership designations, 131 vibes — all permanent version-controlled constants.
