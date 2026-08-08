@@ -1757,7 +1757,7 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
         const r = await pool.query(
           `INSERT INTO business_endorsement_taps (business_id, user_id, tag_key, created_at)
            VALUES ${values.join(",")}
-           ON CONFLICT ON CONSTRAINT business_endorsement_taps_business_id_user_id_tag_key_key DO NOTHING`,
+           ON CONFLICT (business_id, user_id, tag_key) DO NOTHING`,
           params
         );
         totalInserted += r.rowCount ?? 0;
