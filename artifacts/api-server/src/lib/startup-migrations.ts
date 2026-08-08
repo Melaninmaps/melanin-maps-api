@@ -398,18 +398,27 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   );
 
   // ── Seed Data Integrity Guards ────────────────────────────────────────────
-  // Each guard runs async, non-blocking to each other. Any failure is logged
-  // and skipped — it never crashes the server. These are PERMANENT fixtures.
-  // The order here matches importance: HBCUs first, then cultural sites,
-  // festivals, sundown towns, directory businesses.
-  await Promise.allSettled([
-    ensureAllHBCUs(log, warn),
-    ensureCulturalSites(log, warn),
-    ensureNationalFestivals(log, warn),
-    ensureSundownTowns(log, warn),
-    ensureDirectoryBusinesses(log, warn),
-    ensureKnowledgeTopics(log, warn),
-  ]);
+  // IMPORTANT: Run guards SEQUENTIALLY, not in parallel.
+  // Each guard does its own pool.query calls. Running them concurrently via
+  // Promise.allSettled created 6 simultaneous query streams that exhausted
+  // the pool (max:20) on first boot when many records needed inserting.
+  // Sequential execution means at most 1 active query at any time here.
+  // Each guard uses a single bulk INSERT (not N individual INSERTs) to further
+  // reduce round-trips. Any failure is caught and logged — never crashes the server.
+  for (const [name, fn] of [
+    ["HBCUs",             () => ensureAllHBCUs(log, warn)],
+    ["cultural sites",    () => ensureCulturalSites(log, warn)],
+    ["festivals",         () => ensureNationalFestivals(log, warn)],
+    ["sundown towns",     () => ensureSundownTowns(log, warn)],
+    ["dir. businesses",   () => ensureDirectoryBusinesses(log, warn)],
+    ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
+  ] as [string, () => Promise<void>][]) {
+    try {
+      await fn();
+    } catch (err: unknown) {
+      warn(`Seed guard "${name}" threw unexpectedly: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 }
 
 // ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────
@@ -435,38 +444,44 @@ async function ensureAllHBCUs(
 ): Promise<void> {
   try {
     const existing = await loadCulturalSiteKeys();
-    let inserted = 0;
-    let skipped = 0;
 
-    for (const h of HBCU_COMPLETE_SEED) {
-      const key = `${h.name.toLowerCase()}|${h.state.toLowerCase()}`;
-      if (existing.has(key)) { skipped++; continue; }
-      try {
-        const subcategory = h.control === "public" ? "Public HBCU" : "Private HBCU";
-        await pool.query(
-          `INSERT INTO cultural_sites
-            (name, city, state, latitude, longitude, description, significance,
-             category, subcategory, heritage_category, pin_type,
-             external_url, founded_year, status, source, is_featured)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
-          [
-            h.name, h.city, h.state,
-            h.latitude, h.longitude,
-            h.description, h.significance,
-            "HBCU", subcategory, "HBCU", "hbcu",
-            h.externalUrl, h.founded,
-            "live_unclaimed",
-            "U.S. Dept. of Education HBCU List · thehundred-seven.org",
-            false,
-          ]
-        );
-        existing.add(key);
-        inserted++;
-      } catch (err: unknown) {
-        warn(`  HBCU guard: failed to insert ${h.name}: ${err instanceof Error ? err.message : String(err)}`);
-      }
+    const newHBCUs = HBCU_COMPLETE_SEED.filter(
+      (h) => !existing.has(`${h.name.toLowerCase()}|${h.state.toLowerCase()}`)
+    );
+
+    if (newHBCUs.length === 0) {
+      log(`HBCU integrity guard: 0 inserted, ${HBCU_COMPLETE_SEED.length} already present`);
+      return;
     }
-    log(`HBCU integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${HBCU_COMPLETE_SEED.length})`);
+
+    // Single bulk INSERT for all missing HBCUs (16 params per row)
+    const COLS = 16;
+    const placeholders = newHBCUs
+      .map((_, i) => `($${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4},$${i*COLS+5},$${i*COLS+6},$${i*COLS+7},$${i*COLS+8},$${i*COLS+9},$${i*COLS+10},$${i*COLS+11},$${i*COLS+12},$${i*COLS+13},$${i*COLS+14},$${i*COLS+15},$${i*COLS+16})`)
+      .join(",");
+    const params = newHBCUs.flatMap((h) => [
+      h.name, h.city, h.state,
+      h.latitude, h.longitude,
+      h.description, h.significance,
+      "HBCU",
+      h.control === "public" ? "Public HBCU" : "Private HBCU",
+      "HBCU", "hbcu",
+      h.externalUrl, h.founded,
+      "live_unclaimed",
+      "U.S. Dept. of Education HBCU List · thehundred-seven.org",
+      false,
+    ]);
+
+    await pool.query(
+      `INSERT INTO cultural_sites
+         (name, city, state, latitude, longitude, description, significance,
+          category, subcategory, heritage_category, pin_type,
+          external_url, founded_year, status, source, is_featured)
+       VALUES ${placeholders}`,
+      params
+    );
+
+    log(`HBCU integrity guard: ${newHBCUs.length} inserted, ${existing.size} already present (seed: ${HBCU_COMPLETE_SEED.length})`);
   } catch (err: unknown) {
     warn(`HBCU integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -742,38 +757,41 @@ async function ensureKnowledgeTopics(
   warn: (msg: string) => void
 ): Promise<void> {
   try {
-    // One query to load all existing names
     const r = await pool.query(`SELECT LOWER(topic_name) AS n FROM knowledge_topics`);
     const existing = new Set(r.rows.map((row: { n: string }) => row.n));
 
-    let inserted = 0;
-    let skipped = 0;
+    const newTopics = KNOWLEDGE_LIBRARY_SEED.filter(
+      (t) => !existing.has(t.topicName.toLowerCase())
+    );
 
-    for (const t of KNOWLEDGE_LIBRARY_SEED) {
-      if (existing.has(t.topicName.toLowerCase())) { skipped++; continue; }
-      try {
-        await pool.query(
-          `INSERT INTO knowledge_topics
-             (id, topic_name, category, description, keywords,
-              notification_priority, trusted_sources, enabled, tier, created_at)
-           VALUES
-             (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5, $6::jsonb, true, 'free', NOW())`,
-          [
-            t.topicName,
-            t.category,
-            t.description,
-            JSON.stringify(t.keywords),
-            t.notificationPriority,
-            JSON.stringify(t.trustedSources),
-          ]
-        );
-        existing.add(t.topicName.toLowerCase());
-        inserted++;
-      } catch (err: unknown) {
-        warn(`  Knowledge topics guard: failed to insert "${t.topicName}": ${err instanceof Error ? err.message : String(err)}`);
-      }
+    if (newTopics.length === 0) {
+      log(`Knowledge topics integrity guard: 0 inserted, ${KNOWLEDGE_LIBRARY_SEED.length} already present`);
+      return;
     }
-    log(`Knowledge topics integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`);
+
+    // Single bulk INSERT for all missing topics (6 params per row)
+    const COLS = 6;
+    const placeholders = newTopics
+      .map((_, i) => `(gen_random_uuid(),$${i*COLS+1},$${i*COLS+2},$${i*COLS+3},$${i*COLS+4}::jsonb,$${i*COLS+5},$${i*COLS+6}::jsonb,true,'free',NOW())`)
+      .join(",");
+    const params = newTopics.flatMap((t) => [
+      t.topicName,
+      t.category,
+      t.description,
+      JSON.stringify(t.keywords),
+      t.notificationPriority,
+      JSON.stringify(t.trustedSources),
+    ]);
+
+    await pool.query(
+      `INSERT INTO knowledge_topics
+         (id, topic_name, category, description, keywords,
+          notification_priority, trusted_sources, enabled, tier, created_at)
+       VALUES ${placeholders}`,
+      params
+    );
+
+    log(`Knowledge topics integrity guard: ${newTopics.length} inserted, ${existing.size} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`);
   } catch (err: unknown) {
     warn(`Knowledge topics integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
