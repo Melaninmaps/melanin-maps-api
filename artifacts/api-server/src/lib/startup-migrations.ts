@@ -7,9 +7,15 @@
  * the server starts and existing functionality continues; only the new columns
  * would be absent.
  */
+import { randomUUID } from "crypto";
 import { pool } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
+import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
+import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
+import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
+import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
+import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -379,11 +385,30 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`
   );
 
-  // ── HBCU Data Integrity Guard ──────────────────────────────────────────────
-  // All 107 HBCUs must always be in cultural_sites. This runs on every boot
-  // and inserts any that are missing. Dedup-safe: checks name + state first.
-  // This is a PERMANENT fixture — never remove it.
-  await ensureAllHBCUs(log, warn);
+  // ── Seed Data Integrity Guards ────────────────────────────────────────────
+  // Each guard runs async, non-blocking to each other. Any failure is logged
+  // and skipped — it never crashes the server. These are PERMANENT fixtures.
+  // The order here matches importance: HBCUs first, then cultural sites,
+  // festivals, sundown towns, directory businesses.
+  await Promise.allSettled([
+    ensureAllHBCUs(log, warn),
+    ensureCulturalSites(log, warn),
+    ensureNationalFestivals(log, warn),
+    ensureSundownTowns(log, warn),
+    ensureDirectoryBusinesses(log, warn),
+  ]);
+}
+
+// ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────
+async function loadCulturalSiteKeys(): Promise<Set<string>> {
+  const r = await pool.query(`SELECT LOWER(name)||'|'||LOWER(state) AS k FROM cultural_sites`);
+  return new Set(r.rows.map((row: { k: string }) => row.k));
+}
+
+// ── Helper: bulk dedup key set from sundown_towns (name|state) ───────────────
+async function loadSundownTownKeys(): Promise<Set<string>> {
+  const r = await pool.query(`SELECT LOWER(name)||'|'||LOWER(state) AS k FROM sundown_towns`);
+  return new Set(r.rows.map((row: { k: string }) => row.k));
 }
 
 /**
@@ -396,24 +421,15 @@ async function ensureAllHBCUs(
   warn: (msg: string) => void
 ): Promise<void> {
   try {
+    const existing = await loadCulturalSiteKeys();
     let inserted = 0;
     let skipped = 0;
 
     for (const h of HBCU_COMPLETE_SEED) {
+      const key = `${h.name.toLowerCase()}|${h.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
       try {
-        // Check if this HBCU already exists (name + state, case-insensitive)
-        const existing = await pool.query(
-          `SELECT id FROM cultural_sites WHERE LOWER(name) = LOWER($1) AND LOWER(state) = LOWER($2) LIMIT 1`,
-          [h.name, h.state]
-        );
-
-        if (existing.rows.length > 0) {
-          skipped++;
-          continue;
-        }
-
         const subcategory = h.control === "public" ? "Public HBCU" : "Private HBCU";
-
         await pool.query(
           `INSERT INTO cultural_sites
             (name, city, state, latitude, longitude, description, significance,
@@ -431,18 +447,275 @@ async function ensureAllHBCUs(
             false,
           ]
         );
+        existing.add(key);
         inserted++;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        warn(`  HBCU guard: failed to insert ${h.name}: ${msg}`);
+        warn(`  HBCU guard: failed to insert ${h.name}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
-
-    log(
-      `HBCU integrity guard: ${inserted} inserted, ${skipped} already present. Total in seed: ${HBCU_COMPLETE_SEED.length}`
-    );
+    log(`HBCU integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${HBCU_COMPLETE_SEED.length})`);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    warn(`HBCU integrity guard failed: ${msg}`);
+    warn(`HBCU integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * Ensures all civil-rights landmarks, museums, and cultural sites from the
+ * curated CULTURAL_SITES_SEED exist in cultural_sites. Dedup by name+state.
+ */
+async function ensureCulturalSites(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const existing = await loadCulturalSiteKeys();
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const s of CULTURAL_SITES_SEED) {
+      const key = `${s.name.toLowerCase()}|${s.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO cultural_sites
+            (id, name, city, state, latitude, longitude, description, significance,
+             category, subcategory, heritage_category, pin_type,
+             external_url, founded_year, status, source,
+             is_accessible, is_family_friendly, admission_free, is_featured)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,false)`,
+          [
+            randomUUID(),
+            s.name, s.city, s.state,
+            parseFloat(s.latitude), parseFloat(s.longitude),
+            s.description, s.significance ?? null,
+            s.category, s.subcategory ?? null, s.heritageCategory,
+            s.heritageCategory === "HBCU" ? "hbcu" : "heritage_site",
+            s.externalUrl ?? null,
+            s.yearEstablished ?? null,
+            "live_unclaimed",
+            s.verifiedSource ?? "MWM Cultural Research",
+            s.isAccessible ?? false,
+            s.isFamilyFriendly ?? false,
+            s.admissionFree ?? false,
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Cultural sites integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_SITES_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Cultural sites integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * Ensures all national heritage festivals from NATIONAL_FESTIVALS_SEED exist
+ * in cultural_sites with pin_type=heritage_festival. Dedup by name+state.
+ */
+async function ensureNationalFestivals(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const existing = await loadCulturalSiteKeys();
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const f of NATIONAL_FESTIVALS_SEED) {
+      const key = `${f.name.toLowerCase()}|${f.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO cultural_sites
+            (id, name, description, category, heritage_category, subcategory,
+             ethnic_community, city, state, latitude, longitude, era,
+             significance, external_url, pin_type,
+             is_accessible, is_family_friendly, admission_free, is_verified,
+             verified_source, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+                   true,true,true,true,$16,NOW())`,
+          [
+            randomUUID(),
+            f.name, f.description,
+            "Cultural Celebration", f.heritageCategory, "Annual Festival",
+            (f as any).ethnicCommunity ?? null,
+            f.city, f.state, f.latitude, f.longitude,
+            (f as any).typicalMonth ?? null,
+            f.significance, (f as any).externalUrl ?? null,
+            "heritage_festival",
+            "Community Knowledge",
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Festivals guard: failed to insert ${f.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Festivals integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${NATIONAL_FESTIVALS_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Festivals integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * Ensures all historical sundown towns from both seed files exist in the
+ * sundown_towns table. Dedup by name+state. Creates the table if missing.
+ */
+async function ensureSundownTowns(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Ensure table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sundown_towns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        city TEXT,
+        state TEXT,
+        county TEXT,
+        latitude DOUBLE PRECISION,
+        longitude DOUBLE PRECISION,
+        confidence_level TEXT DEFAULT 'possible',
+        historical_evidence TEXT,
+        time_period TEXT,
+        excluded_population TEXT DEFAULT 'Black residents',
+        source_organization TEXT,
+        source_url TEXT,
+        current_state TEXT DEFAULT 'historical_neutral',
+        report_count INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    const existing = await loadSundownTownKeys();
+    let inserted = 0;
+    let skipped = 0;
+
+    // Combine both seed lists — national entries + original curated list
+    const allSundown = [
+      ...NATIONAL_SUNDOWN_TOWNS_SEED,
+      // SUNDOWN_TOWNS_SEED targets cultural_sites not sundown_towns table
+      // so we only use the national seed for sundown_towns table
+    ];
+
+    for (const t of allSundown) {
+      const key = `${t.name.toLowerCase()}|${t.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO sundown_towns
+            (id,name,city,state,county,latitude,longitude,confidence_level,
+             historical_evidence,time_period,excluded_population,
+             source_organization,current_state)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+          [
+            randomUUID(),
+            t.name, t.city, t.state,
+            (t as any).county ?? null,
+            t.latitude, t.longitude,
+            t.confidence_level,
+            t.historical_evidence,
+            t.time_period,
+            (t as any).excluded_population ?? "African American",
+            t.source_organization,
+            "historical_neutral",
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Sundown towns guard: failed to insert ${t.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Sundown towns integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${allSundown.length})`);
+  } catch (err: unknown) {
+    warn(`Sundown towns integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * Ensures all directory businesses from DIRECTORY_BUSINESSES_SEED exist in
+ * the businesses table. Dedup by name+city+state.
+ */
+async function ensureDirectoryBusinesses(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Load existing keys (name|city|state)
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of DIRECTORY_BUSINESSES_SEED) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        const isBlack = b.ownershipDesignations.some((d: string) =>
+          ["Black / African American-Owned","African-Owned","West African-Owned",
+           "Nigerian-Owned","Ghanaian-Owned","Liberian-Owned","Ethiopian-Owned",
+           "Somali-Owned","East African-Owned","Caribbean / West Indian-Owned",
+           "Afro-Caribbean-Owned","Jamaican-Owned","Haitian-Owned",
+           "Trinidadian & Tobagonian-Owned","Afro-Latino-Owned"].includes(d)
+        );
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state,
+             description, website, instagram, tiktok, primary_social_platform,
+             ownership_designations, vibes, black_owned,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,
+             $8,$9,$10,$11,$12,
+             $13,$14,$15,
+             $16,$17,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, (b as any).subcategory ?? null,
+            (b as any).address ?? `${b.city}, ${b.state}`,
+            b.city, b.state,
+            (b as any).description ?? `${b.name} — community-listed business in ${b.city}, ${b.state}.`,
+            (b as any).website ?? null, (b as any).instagram ?? null, (b as any).tiktok ?? null,
+            (b as any).primarySocialPlatform ?? null,
+            JSON.stringify(b.ownershipDesignations),
+            JSON.stringify((b as any).vibes ?? []),
+            isBlack,
+            (b as any).latitude ?? null, (b as any).longitude ?? null,
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Directory businesses guard: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Directory businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${DIRECTORY_BUSINESSES_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Directory businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
