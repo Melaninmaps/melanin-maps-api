@@ -35,9 +35,11 @@ interface Props {
   businessId: string;
   businessName: string;
   onDone: () => void;
+  /** Set false when embedding inside edit modal (success banner already shown by parent) */
+  showSuccessBanner?: boolean;
 }
 
-export function AdminBusinessMediaStep({ businessId, businessName, onDone }: Props) {
+export function AdminBusinessMediaStep({ businessId, businessName, onDone, showSuccessBanner = true }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,8 +117,8 @@ export function AdminBusinessMediaStep({ businessId, businessName, onDone }: Pro
 
   return (
     <div className="space-y-8">
-      {/* Success header */}
-      <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+      {/* Success header — only shown when used as standalone post-save step */}
+      {showSuccessBanner && <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
         <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
         <div>
           <p className="font-bold text-green-800">"{businessName}" saved</p>
@@ -124,7 +126,7 @@ export function AdminBusinessMediaStep({ businessId, businessName, onDone }: Pro
             Add photos and social links now, or skip and come back later from the Businesses tab.
           </p>
         </div>
-      </div>
+      </div>}
 
       {/* ── Photos ────────────────────────────────────────────────────────── */}
       <div>

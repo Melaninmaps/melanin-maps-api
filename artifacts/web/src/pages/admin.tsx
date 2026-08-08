@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
 import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity, MessageSquarePlus, PlusCircle, CheckCircle } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
+import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
@@ -509,6 +510,7 @@ export default function Admin() {
   const [cityLaunchesLoading, setCityLaunchesLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<CityLaunch | null>(null);
   const [showAddBusiness, setShowAddBusiness] = useState(false);
+  const [editingBiz, setEditingBiz] = useState<{ id: string; name: string } | null>(null);
   const [addBizSuccess, setAddBizSuccess] = useState<{ id: string; name: string } | null>(null);
   const [checklistUpdating, setChecklistUpdating] = useState<string | null>(null);
   const [cityStatusUpdating, setCityStatusUpdating] = useState<string | null>(null);
@@ -1968,6 +1970,7 @@ export default function Admin() {
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Tags</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Contact</th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Outreach</th>
+                      <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Edit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2000,6 +2003,14 @@ export default function Admin() {
                         </td>
                         <td className="px-4 py-4">
                           <OutreachCell business={biz} onSent={loadBusinesses} />
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setEditingBiz({ id: biz.id, name: biz.name })}
+                            className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                          >
+                            ✏️ Edit
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -3303,6 +3314,16 @@ export default function Admin() {
         <div className="p-6">
           <AdminFeedbackTab />
         </div>
+      )}
+
+      {/* Edit Business modal */}
+      {editingBiz && (
+        <AdminEditBusiness
+          businessId={editingBiz.id}
+          businessName={editingBiz.name}
+          onClose={() => setEditingBiz(null)}
+          onSaved={() => { void loadBusinesses(); }}
+        />
       )}
 
       {/* Add Business modal */}
