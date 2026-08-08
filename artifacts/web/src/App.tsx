@@ -213,25 +213,38 @@ function Router() {
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
       <Route path="/admin" component={Admin} />
 
-      {/* ── Pre-launch gated: requires approved account ─────────────────────── */}
+      {/* ── Open to everyone — no account needed ────────────────────────────── */}
+      {/* Browse, explore, and report concerns without creating an account.      */}
+      {/* Write actions (save, review, vibe) prompt sign-in inline.              */}
       <Route path="/explore">
-        <Layout><PreLaunchRoute><Explore /></PreLaunchRoute></Layout>
+        <Layout><Explore /></Layout>
       </Route>
       <Route path="/discover">
-        <Layout><PreLaunchRoute><Discover /></PreLaunchRoute></Layout>
+        <Layout><Discover /></Layout>
       </Route>
       <Route path="/businesses">
-        <Layout><PreLaunchRoute><Businesses /></PreLaunchRoute></Layout>
+        <Layout><Businesses /></Layout>
       </Route>
       <Route path="/businesses/:id">
-        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
+        <Layout><BusinessDetail /></Layout>
       </Route>
       <Route path="/business/:id">
-        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
+        <Layout><BusinessDetail /></Layout>
       </Route>
       <Route path="/safety">
-        <Layout><PreLaunchRoute><Safety /></PreLaunchRoute></Layout>
+        <Layout><Safety /></Layout>
       </Route>
+      <Route path="/map">
+        <Layout><MapPage /></Layout>
+      </Route>
+      <Route path="/rate-neighborhood">
+        <Layout><RateNeighborhood /></Layout>
+      </Route>
+      <Route path="/global-recommendations">
+        <Layout><GlobalRecommendations /></Layout>
+      </Route>
+
+      {/* ── Account required — identity makes these features meaningful ──────── */}
       <Route path="/community">
         <Layout><PreLaunchRoute><Community /></PreLaunchRoute></Layout>
       </Route>
@@ -240,15 +253,6 @@ function Router() {
       </Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
-      </Route>
-      <Route path="/map">
-        <Layout><PreLaunchRoute><MapPage /></PreLaunchRoute></Layout>
-      </Route>
-      <Route path="/global-recommendations">
-        <Layout><PreLaunchRoute><GlobalRecommendations /></PreLaunchRoute></Layout>
-      </Route>
-      <Route path="/rate-neighborhood">
-        <Layout><PreLaunchRoute><RateNeighborhood /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/resources">
         <Layout><PreLaunchRoute><Resources /></PreLaunchRoute></Layout>

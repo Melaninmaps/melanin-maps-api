@@ -877,10 +877,8 @@ router.patch("/businesses/mine/weekly-schedule", async (req: any, res: Response)
 });
 
 router.get("/businesses/:id", async (req: Request, res: Response) => {
-  if (!(req as any).user) {
-    res.status(401).json({ error: "Authentication required." });
-    return;
-  }
+  // Public read — guests can view business details.
+  // Write interactions (save, vibe, review) check auth individually at point of use.
   try {
     const id = String(req.params.id);
     const [business] = await db

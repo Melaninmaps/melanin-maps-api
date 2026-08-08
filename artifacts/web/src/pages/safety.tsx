@@ -474,6 +474,15 @@ export default function Safety() {
               <p className="text-[#F5EBD8]/60 text-xs">Community-powered, experience-based safety</p>
             </div>
           </div>
+          {!isAuthenticated && (
+            <div className="mt-4 bg-white/10 rounded-2xl px-4 py-3 flex items-start gap-3">
+              <Eye className="w-4 h-4 text-[#CA922B] shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-bold text-white">No account needed to report</p>
+                <p className="text-xs text-[#F5EBD8]/70 mt-0.5">Every report below is fully anonymous. No sign-in required. Just submit and go.</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

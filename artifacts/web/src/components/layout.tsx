@@ -43,22 +43,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
     return "Ask me anything";
   })();
 
-  // Public nav — visible to everyone including waitlist visitors
-  const publicNavItems = [
-    { href: "/about", label: "About" },
-    { href: "/features", label: "Features" },
-    { href: "/for-business-owners", label: "For Business Owners", featured: true },
-    { href: "/contact", label: "Contact" },
-  ];
+  type NavItem = { href: string; label: string; featured?: boolean };
 
-  // Member-only nav — visible only to added members (approved, logged-in)
-  const memberNavItems = [
-    { href: "/explore", label: "Explore" },
+  // Always-visible nav — no account needed
+  const publicNavItems: NavItem[] = [
     { href: "/map", label: "Map" },
     { href: "/businesses", label: "Businesses" },
+    { href: "/safety", label: "Safety" },
+    { href: "/for-business-owners", label: "For Business Owners", featured: true },
+  ];
+
+  // Additional nav items shown only to approved members
+  const memberOnlyNavItems: NavItem[] = [
+    { href: "/explore", label: "Explore" },
     { href: "/community", label: "Community" },
     { href: "/library", label: "Library" },
-    { href: "/safety", label: "Safety" },
     { href: "/travel", label: "KinfolkAI™" },
     { href: "/events", label: "Events" },
     { href: "/circles", label: "Circles" },
@@ -67,8 +66,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/connections", label: "Connections" },
   ];
 
-  const navItems = isMember
-    ? [...memberNavItems, ...publicNavItems]
+  const navItems: NavItem[] = isMember
+    ? [...publicNavItems, ...memberOnlyNavItems]
     : publicNavItems;
 
   return (
@@ -200,8 +199,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
-      {/* Main Content — add bottom padding on mobile for members (bottom nav) */}
-      <main id="main-content" className={`flex-1 w-full flex flex-col${isMember ? " pb-16 sm:pb-0" : ""}`} tabIndex={-1}>
+      {/* Main Content — bottom padding for mobile nav (members and guests both get it) */}
+      <main id="main-content" className="flex-1 w-full flex flex-col pb-16 sm:pb-0" tabIndex={-1}>
         {children}
       </main>
 
@@ -212,21 +211,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                {isMember ? (
-                  <>
-                    <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Businesses</span></Link></li>
-                    <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
-                    <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
-                  </>
-                ) : (
-                  <li><a href="/#waitlist-form"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Join to Explore →</span></a></li>
-                )}
+                <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Businesses</span></Link></li>
+                <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
                 <li><Link href="/cities"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">City Spotlights</span></Link></li>
+                {isMember && (
+                  <li><Link href="/explore"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Restaurants & Nightlife</span></Link></li>
+                )}
               </ul>
             </div>
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
+                <li><Link href="/safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Safety Hub</span></Link></li>
                 {isMember ? (
                   <>
                     <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>
@@ -235,9 +231,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI™</span></Link></li>
                   </>
                 ) : (
-                  <li><a href="/#waitlist-form"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Join to Participate →</span></a></li>
+                  <li><Link href="/membership"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Create an Account →</span></Link></li>
                 )}
-                <li><Link href="/resources"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Mental Health & Recovery</span></Link></li>
               </ul>
             </div>
             <div>
@@ -300,14 +295,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* ── Mobile Bottom Navigation — members only ─────────────────────────── */}
-      {isMember && (
-        <nav
-          aria-label="Mobile bottom navigation"
-          className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#2B1507] border-t border-white/10 flex items-stretch safe-bottom"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
-          {[
+      {/* ── Mobile Bottom Navigation ─────────────────────────────────────────── */}
+      {/* Members get the full 6-tab bar; guests get Map / Businesses / Safety / Sign In */}
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#2B1507] border-t border-white/10 flex items-stretch"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {isMember ? (
+          [
             { href: "/explore",   Icon: Compass,  label: "Explore"    },
             { href: "/map",       Icon: Map,      label: "Map"        },
             { href: "/community", Icon: Users,    label: "Community"  },
@@ -317,23 +313,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ].map(({ href, Icon, label }) => {
             const active = location === href || (href !== "/explore" && location.startsWith(href));
             return (
-              <Link key={href} href={href}>
-                <div
-                  className={`flex flex-col items-center justify-center gap-0.5 px-1 py-2 min-w-[52px] transition-colors cursor-pointer ${
-                    active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"
-                  }`}
-                >
+              <Link key={href} href={href} className="flex-1">
+                <div className={`flex flex-col items-center justify-center gap-0.5 py-2 w-full transition-colors cursor-pointer ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"}`}>
                   <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
-                  <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>
-                    {label}
-                  </span>
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>{label}</span>
                   {active && <div className="absolute bottom-0 w-6 h-0.5 bg-[#CA922B] rounded-full" />}
                 </div>
               </Link>
             );
-          })}
-        </nav>
-      )}
+          })
+        ) : (
+          [
+            { href: "/map",        Icon: Map,    label: "Map"       },
+            { href: "/businesses", Icon: Compass, label: "Businesses" },
+            { href: "/safety",     Icon: Shield,  label: "Safety"    },
+            { href: "/login",      Icon: User,    label: "Sign In"   },
+          ].map(({ href, Icon, label }) => {
+            const active = location === href || (href !== "/login" && location.startsWith(href));
+            return (
+              <Link key={href} href={href} className="flex-1">
+                <div className={`flex flex-col items-center justify-center gap-0.5 py-2 w-full transition-colors cursor-pointer ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"}`}>
+                  <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
+                  <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>{label}</span>
+                </div>
+              </Link>
+            );
+          })
+        )}
+      </nav>
     </div>
   );
 }
