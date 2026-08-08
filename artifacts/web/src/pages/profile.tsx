@@ -625,6 +625,22 @@ export default function Profile() {
     }
   }, [profile]);
 
+  // ── All hooks must be declared before any early return ─────────────────
+  // React rule: hooks must run on every render in the same order.
+  const [signOutAllLoading, setSignOutAllLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
+  useEffect(() => {
+    if (!auth?.user) return;
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${base}/api/points`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setKinfolkPoints(d.total ?? 0); })
+      .catch(() => {});
+  }, [auth?.user]);
+
   if (authLoading) return <div className="p-10 bg-[#FAF6EF] min-h-screen"><Skeleton className="h-64 w-full rounded-3xl" /></div>;
 
   if (!auth?.user) {
@@ -651,11 +667,6 @@ export default function Profile() {
     queryClient.clear();
     window.location.replace("/");
   };
-
-  const [signOutAllLoading, setSignOutAllLoading] = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -704,16 +715,6 @@ export default function Profile() {
   const savedCount = savedPlaces?.businessIds?.length ?? 0;
   const isEarlyTester = (auth?.user as any)?.role === "tester";
   const isAdminUser = (auth?.user as any)?.role === "admin";
-
-  const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
-  useEffect(() => {
-    if (!auth?.user) return;
-    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${base}/api/points`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setKinfolkPoints(d.total ?? 0); })
-      .catch(() => {});
-  }, [auth?.user]);
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">

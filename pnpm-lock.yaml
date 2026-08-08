@@ -982,6 +982,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/constants':
+        specifier: workspace:*
+        version: link:../../lib/constants
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
@@ -1075,6 +1078,8 @@ importers:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
+
+  lib/constants: {}
 
   lib/db:
     dependencies:

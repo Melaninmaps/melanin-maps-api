@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { VIBES_BY_CATEGORY } from "@workspace/db";
+import { VIBES_BY_CATEGORY } from "@workspace/constants";
 import { 
   useGetBusiness, 
   useListReviews, 

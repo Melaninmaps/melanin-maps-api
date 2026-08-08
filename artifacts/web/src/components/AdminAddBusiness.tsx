@@ -14,7 +14,7 @@ import {
   VIBES_BY_CATEGORY,
   VIBE_ELIGIBLE_CATEGORIES,
   OWNERSHIP_DESIGNATIONS,
-} from "@workspace/db";
+} from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 

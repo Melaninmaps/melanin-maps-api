@@ -197,6 +197,9 @@ export const db: ReturnType<typeof drizzle<typeof schema>> = new Proxy(
 export * from "./schema";
 export { initPoolInstrumentation, getPoolAuditLog, getPoolAuditSummary } from "./pool-instrumentation";
 export type { PoolEvent } from "./pool-instrumentation";
+// ── Platform constants (browser-safe data — no Node.js deps) ───────────────
+// Also exported from @workspace/constants for web bundles.
+// API server and mobile consumers use @workspace/db (this package).
 export {
   BUSINESS_CATEGORY_TAXONOMY,
   MAIN_CATEGORY_NAMES,
