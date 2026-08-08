@@ -25,6 +25,12 @@ import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "businesses_email_zip_cols",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS zip VARCHAR(20)`,
+  },
+  {
     name: "create_tester_feedback_table",
     sql: `CREATE TABLE IF NOT EXISTS tester_feedback (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,

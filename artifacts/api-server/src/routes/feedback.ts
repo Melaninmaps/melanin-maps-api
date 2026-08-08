@@ -121,4 +121,31 @@ router.get("/admin/feedback", async (req: Request, res: Response) => {
   }
 });
 
+// ── PATCH /admin/feedback/:id/status ─────────────────────────────────────────
+router.patch("/admin/feedback/:id/status", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const { id } = req.params;
+  const { status } = req.body as { status?: string };
+
+  if (!status || !["open", "resolved"].includes(status)) {
+    res.status(400).json({ error: "status must be 'open' or 'resolved'." });
+    return;
+  }
+
+  try {
+    const [updated] = await db
+      .update(testerFeedbackTable)
+      .set({ status } as any)
+      .where(eq(testerFeedbackTable.id, id))
+      .returning({ id: testerFeedbackTable.id });
+
+    if (!updated) { res.status(404).json({ error: "Feedback not found." }); return; }
+    res.json({ ok: true, status });
+  } catch (err) {
+    req.log?.error({ err }, "PATCH /admin/feedback/:id/status error");
+    res.status(500).json({ error: "Could not update feedback status." });
+  }
+});
+
 export default router;

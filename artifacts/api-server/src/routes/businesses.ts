@@ -2009,6 +2009,172 @@ router.post("/admin/businesses/:id/clear-dispute", async (req: Request, res: Res
   }
 });
 
+// ─── GET /admin/businesses/check-duplicate ───────────────────────────────────
+// Checks for possible duplicate businesses by name + city or address.
+router.get("/admin/businesses/check-duplicate", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const name = (req.query.name as string | undefined)?.trim().toLowerCase();
+  const city = (req.query.city as string | undefined)?.trim().toLowerCase();
+  const state = (req.query.state as string | undefined)?.trim().toLowerCase();
+  const address = (req.query.address as string | undefined)?.trim().toLowerCase();
+
+  if (!name && !address) { res.json({ duplicates: [] }); return; }
+
+  try {
+    const rows = await pool.query<{ id: string; name: string; city: string | null; state: string | null; address: string | null }>(
+      `SELECT id, name, city, state, address FROM businesses
+       WHERE status != 'deleted'
+         AND (
+           (lower(name) % $1 AND (city IS NULL OR lower(city) = $2))
+           OR (address IS NOT NULL AND lower(address) % $3)
+         )
+       LIMIT 5`,
+      [name ?? "", city ?? "", address ?? ""]
+    );
+
+    if (rows.rows.length === 0) { res.json({ duplicates: [] }); return; }
+    res.json({
+      duplicates: rows.rows,
+      warning: `Found ${rows.rows.length} possible match${rows.rows.length !== 1 ? "es" : ""} — review before adding.`,
+    });
+  } catch {
+    // pg_trgm similarity % may not be available — fall back to ILIKE
+    try {
+      const rows = await pool.query<{ id: string; name: string }>(
+        `SELECT id, name FROM businesses
+         WHERE status != 'deleted' AND lower(name) ILIKE $1
+         LIMIT 5`,
+        [`%${(name ?? "").replace(/%/g, "")}%`]
+      );
+      res.json({
+        duplicates: rows.rows,
+        warning: rows.rows.length > 0
+          ? `Found ${rows.rows.length} possible match${rows.rows.length !== 1 ? "es" : ""} — review before adding.`
+          : undefined,
+      });
+    } catch (err) {
+      res.json({ duplicates: [] }); // Non-blocking
+    }
+  }
+});
+
+// ─── POST /admin/businesses ──────────────────────────────────────────────────
+// Admin-only business creation. Saves with data_source='admin_entry'.
+// Status defaults to 'active'. Listing status defaults to 'staged' (not public).
+// Auto-geocodes the address if a street address + city + state are provided.
+router.post("/admin/businesses", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+
+  const {
+    name, category, subcategory, description,
+    address, city, state, zip, phone, email, website,
+    hours, priceRange,
+    instagram, facebook, tiktok, twitter, youtube, pinterest,
+    ownershipDesignations, blackOwned, vibes, tags,
+    adminNotes, listingStatus,
+  } = req.body as {
+    name?: string; category?: string; subcategory?: string; description?: string;
+    address?: string; city?: string; state?: string; zip?: string;
+    phone?: string; email?: string; website?: string;
+    hours?: string; priceRange?: string;
+    instagram?: string; facebook?: string; tiktok?: string;
+    twitter?: string; youtube?: string; pinterest?: string;
+    ownershipDesignations?: string[]; blackOwned?: boolean;
+    vibes?: string[]; tags?: string[]; adminNotes?: string;
+    listingStatus?: string;
+  };
+
+  if (!name?.trim()) { res.status(400).json({ error: "Business name is required." }); return; }
+  if (!category?.trim()) { res.status(400).json({ error: "Category is required." }); return; }
+  if (!city?.trim()) { res.status(400).json({ error: "City is required." }); return; }
+
+  const VALID_LISTING_STATUSES = ["staged", "live_unclaimed", "live_claimed"];
+  const finalListingStatus = VALID_LISTING_STATUSES.includes(listingStatus ?? "") ? listingStatus! : "staged";
+
+  const id = randomUUID();
+
+  // Auto-geocode if address provided
+  let lat = "0";
+  let lng = "0";
+  const geoApiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (geoApiKey && address?.trim() && city?.trim()) {
+    try {
+      const geoAddr = encodeURIComponent([address.trim(), city.trim(), state?.trim()].filter(Boolean).join(", "));
+      const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${geoAddr}&key=${geoApiKey}`;
+      const geoResp = await fetch(geoUrl);
+      const geoData = await geoResp.json() as { results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }> };
+      const loc = geoData.results?.[0]?.geometry?.location;
+      if (loc) { lat = String(loc.lat); lng = String(loc.lng); }
+    } catch {
+      // Non-fatal — business saved with lat/lng=0; admin can geocode later
+    }
+  }
+
+  try {
+    // Use raw SQL so we can write email, zip, listing_status, data_source —
+    // columns added via startup migration that are not yet in the Drizzle schema.
+    await pool.query(
+      `INSERT INTO businesses (
+        id, name, category, subcategory, description,
+        address, city, state, latitude, longitude,
+        phone, website, hours, price_range,
+        instagram, facebook, tiktok, twitter, youtube, pinterest,
+        ownership_designations, black_owned, vibes, tags,
+        status, submitted_by_id,
+        email, zip, listing_status, data_source
+      ) VALUES (
+        $1, $2, $3, $4, $5,
+        $6, $7, $8, $9, $10,
+        $11, $12, $13, $14,
+        $15, $16, $17, $18, $19, $20,
+        $21::text[], $22, $23::text[], $24::text[],
+        'active', NULL,
+        $25, $26, $27, 'admin_entry'
+      )`,
+      [
+        id, name.trim(), category.trim(), (subcategory ?? category).trim(), description?.trim() || "",
+        address?.trim() || "", city.trim(), state?.trim() || "", lat, lng,
+        phone?.trim() || null, website?.trim() || null, hours?.trim() || null, priceRange || null,
+        instagram?.trim() || null, facebook?.trim() || null, tiktok?.trim() || null,
+        twitter?.trim() || null, youtube?.trim() || null, pinterest?.trim() || null,
+        ownershipDesignations ?? [],
+        blackOwned ?? false,
+        vibes ?? [],
+        tags ?? [],
+        email?.trim() || null, zip?.trim() || null, finalListingStatus,
+      ]
+    );
+
+    // Create business_identity row so the business is fully structured
+    await pool.query(
+      `INSERT INTO business_identity (business_id, community_values, audiences_served, environment_tags, amenity_tags, accessibility_features)
+       VALUES ($1, '{}'::text[], '{}'::text[], '{}'::text[], '{}'::text[], '{}'::text[])
+       ON CONFLICT (business_id) DO NOTHING`,
+      [id]
+    );
+
+    // Store admin note appended to description if provided
+    if (adminNotes?.trim()) {
+      try {
+        await pool.query(
+          `UPDATE businesses SET description =
+            CASE WHEN description = '' OR description IS NULL THEN $1
+                 ELSE description || E'\n\n[Admin note: ' || $1 || ']'
+            END WHERE id = $2`,
+          [adminNotes.trim(), id]
+        );
+      } catch { /* Non-fatal */ }
+    }
+
+    res.status(201).json({
+      business: { id, name: name.trim(), listingStatus: finalListingStatus },
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/businesses error");
+    res.status(500).json({ error: "Failed to create business. Please try again." });
+  }
+});
+
 // POST /admin/businesses/:id/confirm-fake — admin confirms the business is fake
 router.post("/admin/businesses/:id/confirm-fake", async (req: Request, res: Response): Promise<void> => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }

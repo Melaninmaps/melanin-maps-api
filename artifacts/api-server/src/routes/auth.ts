@@ -762,6 +762,10 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     };
     const sid = await createSession(sessionData);
     req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
+    // Set HttpOnly session cookie so web clients authenticate automatically
+    // without needing to read the token from localStorage. Mobile clients continue
+    // to use the token returned in the JSON body (Bearer header).
+    setSessionCookie(res, sid);
     res.json({ token: sid });
     }, req.log, "POST /auth/login-email");
   } catch (err) {

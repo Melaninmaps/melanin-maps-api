@@ -3,7 +3,9 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity, MessageSquarePlus, PlusCircle, CheckCircle } from "lucide-react";
+import { AdminAddBusiness } from "@/components/AdminAddBusiness";
+import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from "recharts";
@@ -168,7 +170,7 @@ type MetricsData = {
   };
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -506,6 +508,8 @@ export default function Admin() {
   const [cityLaunches, setCityLaunches] = useState<CityLaunch[]>([]);
   const [cityLaunchesLoading, setCityLaunchesLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<CityLaunch | null>(null);
+  const [showAddBusiness, setShowAddBusiness] = useState(false);
+  const [addBizSuccess, setAddBizSuccess] = useState<{ id: string; name: string } | null>(null);
   const [checklistUpdating, setChecklistUpdating] = useState<string | null>(null);
   const [cityStatusUpdating, setCityStatusUpdating] = useState<string | null>(null);
   const [triggerLaunching, setTriggerLaunching] = useState<string | null>(null);
@@ -1053,6 +1057,7 @@ export default function Admin() {
     { id: "global-recs", label: "Global Recs", icon: <Globe className="w-4 h-4" />, badge: pendingGlobalRecs.filter(r => r.status === "pending").length || undefined },
     { id: "health", label: "Production Health", icon: <Activity className="w-4 h-4" /> },
     { id: "cities", label: "City Launches", icon: <MapPin className="w-4 h-4" /> },
+    { id: "feedback", label: "Beta Feedback", icon: <MessageSquarePlus className="w-4 h-4" />, badge: undefined },
   ];
 
   return (
@@ -1296,13 +1301,21 @@ export default function Admin() {
               </div>
             )}
             {tab === "businesses" && (
-              <a
-                href={`${BASE}api/admin/businesses/export-csv`}
-                download
-                className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
-              >
-                <Download className="w-3.5 h-3.5" /> Export Leads CSV ({businesses.length})
-              </a>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => { setShowAddBusiness(true); setAddBizSuccess(null); }}
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> Add Business
+                </button>
+                <a
+                  href={`${BASE}api/admin/businesses/export-csv`}
+                  download
+                  className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] transition-colors py-1 px-3 rounded-lg border border-[#CA922B]/30 hover:bg-[#CA922B]/5"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Leads CSV ({businesses.length})
+                </a>
+              </div>
             )}
           </div>
         </div>
@@ -3283,6 +3296,50 @@ export default function Admin() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {tab === "feedback" && (
+        <div className="p-6">
+          <AdminFeedbackTab />
+        </div>
+      )}
+
+      {/* Add Business modal */}
+      {showAddBusiness && (
+        <AdminAddBusiness
+          onClose={() => setShowAddBusiness(false)}
+          onSuccess={(bizId, bizName) => {
+            setShowAddBusiness(false);
+            setAddBizSuccess({ id: bizId, name: bizName });
+            void loadBusinesses();
+            setTimeout(() => setAddBizSuccess(null), 8000);
+          }}
+        />
+      )}
+
+      {/* Add Business success toast */}
+      {addBizSuccess && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#2B1507] text-[#F5EBD8] rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-3 max-w-sm w-full mx-4">
+          <CheckCircle className="w-5 h-5 text-[#CA922B] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm truncate">"{addBizSuccess.name}" saved</p>
+            <p className="text-xs text-[#F5EBD8]/50 mt-0.5">Listed under Businesses tab · staged</p>
+          </div>
+          <a
+            href={`${BASE}businesses/${addBizSuccess.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-xs font-bold text-[#CA922B] underline hover:text-amber-300"
+          >
+            View
+          </a>
+          <button
+            onClick={() => setAddBizSuccess(null)}
+            className="shrink-0 text-[#F5EBD8]/40 hover:text-[#F5EBD8]/80"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>
