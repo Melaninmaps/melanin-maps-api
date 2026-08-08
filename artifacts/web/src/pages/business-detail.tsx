@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2 } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -891,6 +891,92 @@ export default function BusinessDetail() {
                     <p className="text-[10px] text-[#3A1F0E]/40 leading-relaxed">Safety stats from community surveys. "Alone" = % who would return solo.</p>
                   </div>
                 )}
+
+                {/* ── Find Us Online ── social handles + linked posts ──── */}
+                {(() => {
+                  const b = business as any;
+
+                  // Build handle links from individual social fields
+                  const handleLinks: { platform: string; url: string }[] = [];
+                  if (b.instagram) handleLinks.push({ platform: "Instagram", url: `https://www.instagram.com/${b.instagram.replace("@", "")}` });
+                  if (b.tiktok)    handleLinks.push({ platform: "TikTok",    url: `https://www.tiktok.com/@${b.tiktok.replace("@", "")}` });
+                  if (b.facebook)  handleLinks.push({ platform: "Facebook",  url: b.facebook.startsWith("http") ? b.facebook : `https://www.facebook.com/${b.facebook.replace("@", "")}` });
+                  if (b.twitter)   handleLinks.push({ platform: "X / Twitter", url: `https://twitter.com/${b.twitter.replace("@", "")}` });
+                  if (b.youtube)   handleLinks.push({ platform: "YouTube",   url: b.youtube.startsWith("http") ? b.youtube : `https://www.youtube.com/@${b.youtube.replace("@", "")}` });
+                  if (b.pinterest) handleLinks.push({ platform: "Pinterest", url: `https://www.pinterest.com/${b.pinterest.replace("@", "")}` });
+
+                  // Linked social posts / videos added by admin
+                  const linkedPosts: string[] = Array.isArray(b.videos) ? b.videos.filter((v: string) => v.startsWith("http")) : [];
+
+                  function detectPlatform(url: string): string {
+                    try {
+                      const host = new URL(url).hostname.replace("www.", "");
+                      if (host.includes("youtube") || host.includes("youtu.be")) return "YouTube";
+                      if (host.includes("tiktok")) return "TikTok";
+                      if (host.includes("instagram")) return "Instagram";
+                      if (host.includes("facebook") || host.includes("fb.watch")) return "Facebook";
+                      if (host.includes("pinterest")) return "Pinterest";
+                      if (host.includes("vimeo")) return "Vimeo";
+                    } catch { /* ignore */ }
+                    return "Social";
+                  }
+
+                  if (handleLinks.length === 0 && linkedPosts.length === 0) return null;
+
+                  return (
+                    <div className="pt-5 border-t border-[#2B1507]/10 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Share2 className="w-4 h-4 text-[#CA922B]" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Find Us Online</span>
+                      </div>
+
+                      {/* Social profile handles */}
+                      {handleLinks.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {handleLinks.map(({ platform, url }) => (
+                            <a
+                              key={platform}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#2B1507]/10 text-xs font-bold text-[#3A1F0E] hover:border-[#CA922B]/50 hover:text-[#CA922B] transition-colors"
+                            >
+                              {platform}
+                              <ExternalLink className="w-3 h-3 opacity-50" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Admin-linked social posts */}
+                      {linkedPosts.length > 0 && (
+                        <div className="space-y-2">
+                          {linkedPosts.map(url => {
+                            const platform = detectPlatform(url);
+                            return (
+                              <a
+                                key={url}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 hover:border-[#CA922B]/40 transition-colors group"
+                              >
+                                <span className="text-[10px] font-bold text-[#CA922B] bg-[#CA922B]/10 rounded-full px-2 py-0.5 shrink-0">
+                                  {platform}
+                                </span>
+                                <span className="text-xs text-[#3A1F0E]/60 truncate flex-1">
+                                  View original post
+                                </span>
+                                <ExternalLink className="w-3.5 h-3.5 text-[#3A1F0E]/30 group-hover:text-[#CA922B] shrink-0 transition-colors" />
+                              </a>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
               </div>
             </div>
           </div>
