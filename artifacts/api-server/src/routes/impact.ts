@@ -6,7 +6,7 @@ const router = Router();
 
 router.get("/impact", async (req, res) => {
   try {
-    // Count only live businesses — staged/directory businesses are not visible to users
+    // Count only active businesses — pending/inactive entries are not visible to users
     const [bizStats] = await db
       .select({
         totalBusinesses: count(businessesTable.id),
@@ -14,7 +14,7 @@ router.get("/impact", async (req, res) => {
         totalReviews: sum(businessesTable.reviewCount),
       })
       .from(businessesTable)
-      .where(sql`${businessesTable.listingStatus} IN ('live_unclaimed', 'live_claimed')`);
+      .where(eq(businessesTable.status, "active"));
 
     const [userStats] = await db
       .select({ totalUsers: count(usersTable.id) })
