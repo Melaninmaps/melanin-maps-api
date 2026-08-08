@@ -1083,7 +1083,7 @@ async function ensureTourBusinesses(
              NOW(),NOW())`,
           [
             randomUUID(),
-            b.name, b.category, b.subcategory ?? null,
+            b.name, b.category, b.subcategory ?? b.category,
             b.address, b.city, b.state,
             b.description,
             JSON.stringify(b.ownershipDesignations),
@@ -1099,16 +1099,17 @@ async function ensureTourBusinesses(
     }
 
     // Also promote any tour businesses that landed as staged → live_unclaimed
-    await pool.query(
-      `UPDATE businesses SET listing_status = 'live_unclaimed'
-       WHERE listing_status IN ('staged','pending')
-         AND id IN (
-           SELECT b.id FROM businesses b
-           JOIN (SELECT LOWER(name) AS n, LOWER(city) AS c, LOWER(state) AS s FROM (VALUES ${
-             TOUR_BUSINESSES_SEED.slice(0,50).map(b => `('${b.name.replace(/'/g,"''")}','${b.city.replace(/'/g,"''")}','${b.state}')`).join(',')
-           }) AS t(n,c,s) ON LOWER(b.name)=t.n AND LOWER(b.city)=t.c AND LOWER(b.state)=t.s
-         )`
-    );
+    // (safe no-op if the update applies to 0 rows)
+    try {
+      await pool.query(
+        `UPDATE businesses SET listing_status = 'live_unclaimed'
+         WHERE listing_status IN ('staged','pending')
+           AND LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) = ANY($1::text[])`,
+        [TOUR_BUSINESSES_SEED.slice(0, 200).map(b =>
+          `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`
+        )]
+      );
+    } catch { /* non-fatal */ }
 
     log(`Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`);
   } catch (err: unknown) {
