@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./tester-feedback";
 export * from "./city-archives";
 export * from "./city-launches";
 export * from "./family-circles";

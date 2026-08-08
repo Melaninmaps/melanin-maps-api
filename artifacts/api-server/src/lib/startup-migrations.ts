@@ -25,6 +25,22 @@ import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "create_tester_feedback_table",
+    sql: `CREATE TABLE IF NOT EXISTS tester_feedback (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+      type VARCHAR(50) NOT NULL,
+      description TEXT NOT NULL,
+      expected TEXT,
+      page VARCHAR(500),
+      user_agent VARCHAR(500),
+      build_sha VARCHAR(100),
+      platform VARCHAR(50) DEFAULT 'web',
+      status VARCHAR(50) DEFAULT 'open',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
     name: "users_trial_reminder_cols",
     sql: `ALTER TABLE users
       ADD COLUMN IF NOT EXISTS trial_reminder_3day_sent_at TIMESTAMPTZ,

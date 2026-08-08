@@ -98,6 +98,7 @@ export default function Login() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setRegError("");
+    // Note: duplicate-account warning is shown in the tab UI below
     if (!regFirst.trim() || !regLast.trim() || !regEmail.trim() || !regUsername.trim() || !regPassword) {
       setRegError("All fields except date of birth are required.");
       return;
@@ -188,6 +189,20 @@ export default function Login() {
 
           <div className="px-8 py-7">
             {tab === "signin" ? (
+              /* ── Sign In Tab ──────────────────────────────────────────────── */
+              <>
+                {/* Apple account guidance */}
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 flex items-start gap-2.5">
+                  <AlertCircle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-800 leading-relaxed">
+                    <p className="font-semibold mb-0.5">Signed up with Apple?</p>
+                    <p>
+                      If you created your account using <strong>Sign in with Apple</strong> on iPhone or iPad, use{" "}
+                      <button type="button" onClick={() => { setTab("register"); }} className="underline font-medium">Forgot password?</button>{" "}
+                      below to set a password, then sign in here. This connects you to your existing account — no new account is created.
+                    </p>
+                  </div>
+                </div>
               <form onSubmit={handleSignin} className="space-y-4" noValidate>
                 <div>
                   <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-1.5">Email</label>
@@ -258,7 +273,32 @@ export default function Login() {
                   </button>
                 </p>
               </form>
+              </>
             ) : (
+              /* ── Create Account Tab ───────────────────────────────────────── */
+              <>
+                {/* Existing account warning — prevent accidental duplicates */}
+                <div className="bg-[#CA922B]/8 border border-[#CA922B]/25 rounded-xl px-4 py-3.5 mb-5">
+                  <p className="text-xs font-bold text-[#2B1507] mb-1">Already have a Mapping With Melanin account?</p>
+                  <p className="text-xs text-[#3A1F0E]/70 leading-relaxed">
+                    Sign in to your existing account so your profile, saves, and activity stay connected.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setTab("signin")}
+                      className="text-[#CA922B] font-semibold underline"
+                    >
+                      Sign In instead →
+                    </button>
+                  </p>
+                  <p className="text-xs text-[#3A1F0E]/55 mt-2 leading-relaxed">
+                    If you signed up using <strong>Sign in with Apple</strong>, use{" "}
+                    <Link href="/forgot-password">
+                      <span className="text-[#CA922B] underline cursor-pointer">Forgot Password</span>
+                    </Link>{" "}
+                    on the Sign In tab to set a password for your existing account.
+                    Creating a new account here will not connect to your Apple account.
+                  </p>
+                </div>
               <form onSubmit={handleRegister} className="space-y-3.5" noValidate>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -368,6 +408,7 @@ export default function Login() {
                   </button>
                 </p>
               </form>
+              </>
             )}
           </div>
         </div>

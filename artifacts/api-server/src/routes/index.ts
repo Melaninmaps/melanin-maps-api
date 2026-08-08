@@ -150,6 +150,7 @@ import membershipRouter from "./membership";
 import cityLaunchRouter from "./city-launch";
 import tourGuideAdminRouter from "./tour-guide-admin";
 import citiesRouter from "./cities";
+import feedbackRouter from "./feedback";
 
 const router: IRouter = Router();
 
@@ -305,6 +306,6 @@ router.use(sundownTownsRouter);
 router.use(externalClicksRouter);
 router.use(monitorBuild97Router);
 router.use(crashReportsRouter);
-
+router.use(feedbackRouter);
 
 export default router;
