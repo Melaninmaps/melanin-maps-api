@@ -16,6 +16,7 @@ import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
 import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
+import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -407,6 +408,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ensureNationalFestivals(log, warn),
     ensureSundownTowns(log, warn),
     ensureDirectoryBusinesses(log, warn),
+    ensureKnowledgeTopics(log, warn),
   ]);
 }
 
@@ -728,5 +730,51 @@ async function ensureDirectoryBusinesses(
     log(`Directory businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${DIRECTORY_BUSINESSES_SEED.length})`);
   } catch (err: unknown) {
     warn(`Directory businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Knowledge Library topic guard ─────────────────────────────────────────────
+// Ensures every topic in KNOWLEDGE_LIBRARY_SEED exists in knowledge_topics.
+// Deduplication is by lower-cased topic name (same logic as the admin seed endpoint).
+
+async function ensureKnowledgeTopics(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // One query to load all existing names
+    const r = await pool.query(`SELECT LOWER(topic_name) AS n FROM knowledge_topics`);
+    const existing = new Set(r.rows.map((row: { n: string }) => row.n));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const t of KNOWLEDGE_LIBRARY_SEED) {
+      if (existing.has(t.topicName.toLowerCase())) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO knowledge_topics
+             (id, topic_name, category, description, keywords,
+              notification_priority, trusted_sources, enabled, tier, created_at)
+           VALUES
+             (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5, $6::jsonb, true, 'free', NOW())`,
+          [
+            t.topicName,
+            t.category,
+            t.description,
+            JSON.stringify(t.keywords),
+            t.notificationPriority,
+            JSON.stringify(t.trustedSources),
+          ]
+        );
+        existing.add(t.topicName.toLowerCase());
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Knowledge topics guard: failed to insert "${t.topicName}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Knowledge topics integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Knowledge topics integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
