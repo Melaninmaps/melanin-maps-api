@@ -1,4 +1,5 @@
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
+import { VIBES_BY_CATEGORY } from "@workspace/db";
 import { 
   useGetBusiness, 
   useListReviews, 
@@ -150,61 +151,26 @@ export default function BusinessDetail() {
     "Other Services",
   ]);
 
-  // Community Vibes — only tags that exist in the approved vibe taxonomy.
-  // "Worth Every Visit", "Community Staple", "Black Excellence", "Date Night Worthy"
-  // were removed — they do not exist in the master directory or belong only to
-  // endorsement tags (earned via 10+ taps), not pre-available vibes.
-  const COMMUNITY_VIBES = [
-    { id: "hidden_gem",       label: "Hidden Gem",       emoji: "💎" },
-    { id: "grandma_approved", label: "Grandma Approved", emoji: "🫶🏾" },
-    { id: "date_night",       label: "Date Night",       emoji: "🌹" },
-    { id: "family_friendly",  label: "Family Friendly",  emoji: "👨‍👩‍👧" },
-    { id: "locals_know",      label: "Locals Know",      emoji: "📍" },
-    { id: "for_the_culture",  label: "For The Culture",  emoji: "✊🏾" },
-    { id: "auntie_energy",    label: "Auntie Energy",    emoji: "🤎" },
-  ];
+  // Converts a canonical vibe label to a DB-safe id key.
+  // "Hood Classic" → "hood_classic", "Grown & Sexy" → "grown_sexy"
+  const toVibeId = (label: string) =>
+    label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
-  // Category-appropriate vibes (shown instead of the full list for relevant categories)
-  const categoryVibes: Record<string, { id: string; label: string; emoji: string }[]> = {
-    "Food & Drink": [
-      { id: "grandma_approved",    label: "Grandma Approved",     emoji: "🫶🏾" },
-      { id: "date_night",          label: "Date Night",           emoji: "🌹" },
-      { id: "family_friendly",     label: "Family Friendly",      emoji: "👨‍👩‍👧" },
-      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
-      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
-      { id: "auntie_energy",       label: "Auntie Energy",        emoji: "🤎" },
-      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
-    ],
-    "Beauty & Personal Care": [
-      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
-      { id: "auntie_energy",       label: "Auntie Energy",        emoji: "🤎" },
-      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
-      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
-      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
-      { id: "chill_and_restore",   label: "Chill & Restore",      emoji: "🧘🏾" },
-      { id: "come_as_you_are",     label: "Come As You Are",      emoji: "🤗" },
-    ],
-    "Travel & Hospitality": [
-      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
-      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
-      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
-      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
-      { id: "family_friendly",     label: "Family Friendly",      emoji: "👨‍👩‍👧" },
-    ],
-    "Arts, Culture & Entertainment": [
-      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
-      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
-      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
-      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
-      { id: "locals_know",         label: "Locals Know",          emoji: "📍" },
-    ],
-    "Shopping & Retail": [
-      { id: "hidden_gem",          label: "Hidden Gem",           emoji: "💎" },
-      { id: "for_the_culture",     label: "For The Culture",      emoji: "✊🏾" },
-      { id: "neighborhood_love",   label: "Neighborhood Love",    emoji: "🏘️" },
-      { id: "main_character",      label: "Main Character Energy",emoji: "👑" },
-      { id: "soft_life",           label: "Soft Life",            emoji: "✨" },
-    ],
+  // Pull vibes for a given business category from the master canonical source (@workspace/db).
+  // Falls back to a curated cross-category set so every eligible business has vibes.
+  const FALLBACK_VIBES = [
+    "Locals Know", "Auntie Energy", "Hood Classic", "Soft Life",
+    "Neighborhood Love", "History Lives Here", "Sunday Best", "Take Somebody From Out of Town",
+  ];
+  const getVibesForCat = (cat: string): { id: string; label: string; helperText: string }[] => {
+    const canonical = VIBES_BY_CATEGORY[cat];
+    if (canonical && canonical.length > 0) {
+      return canonical.map((v) => ({ id: toVibeId(v.label), label: v.label, helperText: v.helperText }));
+    }
+    return FALLBACK_VIBES.map((label) => {
+      const found = Object.values(VIBES_BY_CATEGORY).flat().find((v) => v.label === label);
+      return { id: toVibeId(label), label, helperText: found?.helperText ?? "" };
+    });
   };
 
   useEffect(() => {
@@ -623,7 +589,7 @@ export default function BusinessDetail() {
                     Per Master Directory: Professional Services, Home & Property, Automotive, etc. use
                     endorsement tags only. Vibes are for experience-based categories. */}
                 {!NO_VIBE_CATEGORIES.has(business.category ?? "") && (() => {
-                  const vibesForCategory = categoryVibes[business.category ?? ""] ?? COMMUNITY_VIBES;
+                  const vibesForCategory = getVibesForCat(business.category ?? "");
                   return (
                     <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
                       <div className="flex items-center justify-between mb-4">
@@ -641,13 +607,13 @@ export default function BusinessDetail() {
                               key={v.id}
                               onClick={() => handleVibe(v.id)}
                               disabled={loading}
+                              title={v.helperText}
                               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
                                 active
                                   ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
                                   : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/70 hover:border-[#CA922B] hover:text-[#CA922B]"
                               } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
-                              <span className="text-base leading-none">{v.emoji}</span>
                               {v.label}
                               {vibeToasts[v.id] ? (
                                 <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>

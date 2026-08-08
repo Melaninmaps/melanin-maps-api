@@ -2063,6 +2063,50 @@ router.post("/admin/seed-the-real-tags", async (req: Request, res: Response) => 
   }
 });
 
+// ── POST /admin/geocode-business ──────────────────────────────────────────────
+// Auto-geocodes a business by name + address using Google Maps Geocoding API.
+// Body: { name: string, address: string, city: string, state: string }
+// Updates the business row with the geocoded lat/lng.
+router.post("/admin/geocode-business", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    const { name, address, city, state } = req.body as {
+      name?: string; address?: string; city?: string; state?: string;
+    };
+    if (!name || !city || !state) {
+      res.status(400).json({ error: "name, city, and state are required" }); return;
+    }
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) { res.status(500).json({ error: "GOOGLE_MAPS_API_KEY not configured" }); return; }
+
+    const query = encodeURIComponent([address, city, state].filter(Boolean).join(", "));
+    const geoRes = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${apiKey}`,
+    );
+    const geoData = await geoRes.json() as any;
+
+    if (geoData.status !== "OK" || !geoData.results?.[0]?.geometry?.location) {
+      res.status(422).json({ error: "Geocoding failed", status: geoData.status }); return;
+    }
+
+    const { lat, lng } = geoData.results[0].geometry.location as { lat: number; lng: number };
+    const formattedAddress = geoData.results[0].formatted_address as string;
+
+    const r = await pool.query(
+      `UPDATE businesses SET latitude = $1, longitude = $2 WHERE LOWER(name) = LOWER($3)`,
+      [lat, lng, name],
+    );
+
+    res.json({ ok: true, lat, lng, formattedAddress, updated: r.rowCount ?? 0 });
+  } catch (err) {
+    req.log.error({ err }, "geocode-business error");
+    res.status(500).json({ error: String(err) });
+  }
+});
+
 export default router;
 
 

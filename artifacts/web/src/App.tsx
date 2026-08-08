@@ -36,6 +36,7 @@ import Terms from "@/pages/terms";
 import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
+import CulturalSiteDetail from "@/pages/cultural-site-detail";
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
 import Billing from "@/pages/billing";
@@ -174,6 +175,10 @@ function Router() {
       </Route>
       <Route path="/trust-and-safety">
         <Layout><TrustAndSafety /></Layout>
+      </Route>
+      {/* Cultural site living pages — public, no auth required */}
+      <Route path="/sites/:id">
+        <Layout><CulturalSiteDetail /></Layout>
       </Route>
 
       {/* ── Auth pages ──────────────────────────────────────────────────────── */}

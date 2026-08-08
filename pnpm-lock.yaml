@@ -979,6 +979,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../../lib/db
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

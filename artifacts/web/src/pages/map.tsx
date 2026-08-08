@@ -77,7 +77,7 @@ function getCulturalPinLabel(site: CulturalSiteWeb): string {
 function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
   const pt = site.pinType ?? "";
   const hc = site.heritageCategory ?? "";
-  const isHbcu     = hc === "HBCU";
+  const isHbcu     = hc.toUpperCase() === "HBCU";
   const isFestival = pt === "heritage_festival" || pt === "cultural_celebration" || pt === "community_tradition";
   const isEvent    = pt === "festival_or_event" || pt === "community_event";
   const isMarket   = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
@@ -327,7 +327,8 @@ export default function MapPage() {
             <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.name}</div>
             <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
             ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
-            ${site.externalUrl ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block">Learn More →</a>` : ""}
+            ${site.externalUrl ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block;margin-bottom:4px">Learn More →</a>` : ""}
+            <a href="${BASE}sites/${site.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">View Full Page →</a>
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -841,7 +842,7 @@ export default function MapPage() {
                       if (!canFly) return;
                       mapRef.current!.panTo({ lat: siteLat, lng: siteLng });
                       // HBCUs and cultural heritage use city-level zoom; specific addresses use street level
-                      mapRef.current!.setZoom(site.siteType === "hbcu" || !site.address ? 14 : 16);
+                      mapRef.current!.setZoom((site.heritageCategory ?? "").toUpperCase() === "HBCU" || !site.address ? 14 : 16);
                       setSidebarOpen(false);
                     }}
                     title={canFly ? `Fly to ${site.name}` : undefined}
@@ -870,10 +871,18 @@ export default function MapPage() {
                             rel="noopener noreferrer"
                             className="text-[10px] font-bold mt-1 block hover:underline"
                             style={{ color }}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             Learn More →
                           </a>
                         )}
+                        <a
+                          href={`${BASE}sites/${site.id}`}
+                          className="text-[10px] font-bold mt-0.5 block hover:underline text-[#CA922B]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View Full Page →
+                        </a>
                       </div>
                     </div>
                   </div>
