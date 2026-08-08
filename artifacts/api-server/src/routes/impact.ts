@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, businessesTable, usersTable } from "@workspace/db";
-import { count, countDistinct, sum, sql } from "drizzle-orm";
+import { count, countDistinct, eq, sum, sql } from "drizzle-orm";
 
 const router = Router();
 
