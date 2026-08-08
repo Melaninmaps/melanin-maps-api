@@ -1744,20 +1744,20 @@ router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
       const businessId = bizRow.rows[0].id;
 
       // Build one VALUES list per tag batch — much faster than 1-row-at-a-time
+      // id is serial (auto-generated), so omit it from INSERT
       for (const tagKey of tagKeys) {
         const values: string[] = [];
         const params: string[] = [];
         let p = 1;
         for (let i = 1; i <= DEMO_USER_COUNT; i++) {
           const demoUserId = `demo_tap_user_${String(i).padStart(2, "0")}`;
-          const id = `demo_${businessId}_${tagKey}_u${i}`;
-          values.push(`($${p++},$${p++},$${p++},$${p++},NOW())`);
-          params.push(id, businessId, demoUserId, tagKey);
+          values.push(`($${p++},$${p++},$${p++},NOW())`);
+          params.push(businessId, demoUserId, tagKey);
         }
         const r = await pool.query(
-          `INSERT INTO business_endorsement_taps (id, business_id, user_id, tag_key, created_at)
+          `INSERT INTO business_endorsement_taps (business_id, user_id, tag_key, created_at)
            VALUES ${values.join(",")}
-           ON CONFLICT DO NOTHING`,
+           ON CONFLICT ON CONSTRAINT business_endorsement_taps_business_id_user_id_tag_key_key DO NOTHING`,
           params
         );
         totalInserted += r.rowCount ?? 0;
