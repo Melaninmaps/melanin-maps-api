@@ -1481,34 +1481,40 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Detect destination from message or session
     const destination = currentSession?.destination ?? null;
 
-    // Fetch platform business catalog for this destination (with identity enrichment)
+    // Fetch platform business catalog — destination first, then fall back to user's home city.
+    // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
+    // not just when a travel destination has been set.
     let businessCatalog: BusinessCatalogEntry[] = [];
+
+    // Shared select shape reused for both destination and home-city queries
+    const bizSelectShape = {
+      name: businessesTable.name,
+      category: businessesTable.category,
+      city: businessesTable.city,
+      description: businessesTable.description,
+      verified: businessesTable.verified,
+      tags: businessesTable.tags,
+      story: businessIdentityTable.businessStory,
+      missionStatement: businessIdentityTable.missionStatement,
+      whyStarted: businessIdentityTable.whyStarted,
+      whatCustomersShouldKnow: businessIdentityTable.whatCustomersShouldKnow,
+      ownershipBadges: businessIdentityTable.ownershipBadges,
+      communityValues: businessIdentityTable.communityValues,
+      audiencesServed: businessIdentityTable.audiencesServed,
+      vibes: businessIdentityTable.vibes,
+      accessibilityFeatures: businessIdentityTable.accessibilityFeatures,
+      communityInitiatives: businessIdentityTable.communityInitiatives,
+      growthGoals: businessIdentityTable.growthGoals,
+      audienceType: businessIdentityTable.audienceType,
+      environmentTags: businessIdentityTable.environmentTags,
+      amenityTags: businessIdentityTable.amenityTags,
+      profileStatus: businessesTable.profileStatus,
+    } as const;
+
     if (destination) {
       try {
         const bizRows = await db
-          .select({
-            name: businessesTable.name,
-            category: businessesTable.category,
-            city: businessesTable.city,
-            description: businessesTable.description,
-            verified: businessesTable.verified,
-            tags: businessesTable.tags,
-            story: businessIdentityTable.businessStory,
-            missionStatement: businessIdentityTable.missionStatement,
-            whyStarted: businessIdentityTable.whyStarted,
-            whatCustomersShouldKnow: businessIdentityTable.whatCustomersShouldKnow,
-            ownershipBadges: businessIdentityTable.ownershipBadges,
-            communityValues: businessIdentityTable.communityValues,
-            audiencesServed: businessIdentityTable.audiencesServed,
-            vibes: businessIdentityTable.vibes,
-            accessibilityFeatures: businessIdentityTable.accessibilityFeatures,
-            communityInitiatives: businessIdentityTable.communityInitiatives,
-            growthGoals: businessIdentityTable.growthGoals,
-            audienceType: businessIdentityTable.audienceType,
-            environmentTags: businessIdentityTable.environmentTags,
-            amenityTags: businessIdentityTable.amenityTags,
-            profileStatus: businessesTable.profileStatus,
-          })
+          .select(bizSelectShape)
           .from(businessesTable)
           .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))
           .where(and(
@@ -1517,6 +1523,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ))
           .limit(25);
         businessCatalog = bizRows;
+      } catch { /* non-critical — proceed without catalog */ }
+    }
+
+    // No destination or destination yielded no listings — load from user's home city so
+    // Kinfolk can always recommend real MWM businesses for local queries ("find me somewhere
+    // near me", "where can we go tonight", etc.)
+    if (!businessCatalog.length && req.user?.id) {
+      try {
+        const [userRow] = await db
+          .select({ homeCity: usersTable.homeCity })
+          .from(usersTable)
+          .where(eq(usersTable.id, req.user.id))
+          .limit(1);
+        const homeCity = userRow?.homeCity;
+        if (homeCity) {
+          const homeBizRows = await db
+            .select(bizSelectShape)
+            .from(businessesTable)
+            .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))
+            .where(and(
+              ilike(businessesTable.city, `%${homeCity}%`),
+              eq(businessesTable.status, "active"),
+            ))
+            .limit(20);
+          businessCatalog = homeBizRows;
+        }
       } catch { /* non-critical — proceed without catalog */ }
     }
 

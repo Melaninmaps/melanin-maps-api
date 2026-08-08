@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation, useRoute } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -111,6 +111,12 @@ const queryClient = new QueryClient({
   },
 });
 
+/** Redirects legacy /cultural-sites/:id URLs to the canonical /sites/:id route */
+function CulturalSiteRedirect() {
+  const [, params] = useRoute("/cultural-sites/:id");
+  return <Redirect to={`/sites/${params?.id ?? ""}`} />;
+}
+
 function OgRedirectHandler() {
   const [, navigate] = useLocation();
   useEffect(() => {
@@ -187,6 +193,10 @@ function Router() {
       {/* Cultural site living pages — public, no auth required */}
       <Route path="/sites/:id">
         <Layout><CulturalSiteDetail /></Layout>
+      </Route>
+      {/* Legacy URL alias — redirect /cultural-sites/:id to /sites/:id */}
+      <Route path="/cultural-sites/:id">
+        <CulturalSiteRedirect />
       </Route>
 
       {/* ── Auth pages ──────────────────────────────────────────────────────── */}
