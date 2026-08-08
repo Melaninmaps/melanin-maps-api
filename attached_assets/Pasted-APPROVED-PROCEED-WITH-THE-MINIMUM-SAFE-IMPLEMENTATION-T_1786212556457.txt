@@ -1,0 +1,293 @@
+APPROVED — PROCEED WITH THE MINIMUM SAFE IMPLEMENTATION
+
+Thank you. This audit confirms that the cross-platform architecture I wanted already exists:
+
+ONE USER → ONE USER ID → ONE PRODUCTION DATABASE → iOS / Android / Web
+
+That is the architecture I want preserved.
+
+We are under a significant time constraint before the Mapping with Melanin™ tour, so DO NOT redesign authentication, migrate the database, refactor working mobile authentication, or introduce unnecessary infrastructure.
+
+Please proceed as follows.
+
+## 1. ADD THE WEB LOG IN BUTTON NOW — APPROVED
+
+YES.
+
+Add a clearly visible "Log In" button to the public-facing Mapping with Melanin™ web navigation.
+
+It should route to the existing:
+
+/login
+
+Use the existing functional email/password login flow.
+
+Do not change:
+
+* POST /api/auth/login-email
+* mobile authentication
+* session architecture
+* user IDs
+* users table
+* Railway production database
+* existing mobile SecureStore behavior
+
+Make this a minimal UI change.
+
+Also confirm the Log In entry point is appropriately accessible in both desktop and mobile-browser navigation, including the hamburger/mobile menu if applicable.
+
+If the user is already authenticated, do not continue displaying "Log In" as though they are logged out. Use the appropriate existing authenticated navigation/account behavior.
+
+## 2. APPLE-ONLY USERS — DO NOT BUILD APPLE WEB SIGN-IN YET
+
+Do NOT build the new Apple web authentication system yet.
+
+Do NOT configure a new Apple Service ID yet.
+
+Do NOT modify the existing mobile Apple Sign-In route.
+
+Before we decide whether that additional work is necessary, investigate whether an Apple-only user can safely establish a password for their EXISTING Mapping with Melanin account.
+
+Specifically test the existing forgot-password/reset-password architecture against:
+
+A. Apple account using a normal email address
+
+B. Apple account using an @privaterelay.appleid.com address
+
+C. Apple account where passwordHash is currently null
+
+The critical requirement is:
+
+APPLE MOBILE USER
+→ establishes password if safely supported
+→ logs into web
+→ SAME users.id
+→ SAME profile/data/membership/activity
+
+NOT:
+
+APPLE MOBILE USER
+→ web password/signup
+→ SECOND ACCOUNT
+
+Do not make production changes for this investigation.
+
+Report whether the existing password reset flow can safely accomplish this and whether reset emails can successfully reach Apple private relay addresses under our existing email configuration.
+
+If it cannot be proven safe, Apple-only users will remain mobile-only temporarily and we will implement proper Apple web Sign-In separately.
+
+Under NO circumstances tell an Apple tester to create another account.
+
+## 3. PREVENT ACCIDENTAL DUPLICATE ACCOUNTS
+
+Because the current /login page includes a "Create Account" tab, review the user experience for existing testers.
+
+We do not want an Apple tester who cannot log in to assume they need to register again.
+
+Without changing the underlying registration architecture unnecessarily, add clear language near login/create-account such as:
+
+"Already have a Mapping with Melanin account? Sign in to your existing account so your profile, saves and activity stay connected."
+
+For users who originally used Sign in with Apple, provide appropriate guidance based ONLY on what you verify in Step 2.
+
+Do not tell them to use their personal email if the account may actually be registered under Apple's private relay address.
+
+## 4. BUILD A LIGHTWEIGHT TESTER FEEDBACK TOOL — APPROVED
+
+YES. I want a lightweight authenticated feedback mechanism built into the web application.
+
+This is specifically to gather as much useful tester feedback as possible before and during the tour.
+
+Keep it SIMPLE.
+
+I do not want a large new feedback platform.
+
+Add an easy-to-find:
+
+"Send Feedback"
+
+or
+
+"Beta Feedback"
+
+entry point for authenticated testers.
+
+Use whichever wording fits our existing Mapping with Melanin UI best.
+
+It can be a floating button or persistent accessible navigation item, but it must work well on desktop and mobile browsers and should not obstruct important interface elements.
+
+### Feedback categories
+
+Allow the tester to choose:
+
+* Something isn't working / Bug
+* Something is confusing
+* Feature suggestion
+* Missing business or place
+* Incorrect information
+* Something I love
+* General feedback
+
+If "Missing business or place" or "Incorrect information" should route into our existing edit-suggestion architecture rather than creating duplicate functionality, reuse the existing system where appropriate.
+
+Do not unnecessarily duplicate existing reporting systems.
+
+### Feedback form
+
+Keep the form short.
+
+Include:
+
+Feedback Type
+
+"What happened / What would you like us to know?"
+
+Optional:
+"What did you expect to happen?"
+
+Allow enough text for a meaningful explanation without creating a burdensome form.
+
+### Automatically capture useful context
+
+Because the tester is authenticated, automatically associate appropriate technical context where safely available:
+
+* user ID
+* timestamp
+* current page/route
+* platform: web
+* browser/device information sufficient for debugging
+* app/web version or deployment/build identifier if available
+
+Do NOT ask the tester to manually enter information the system already knows.
+
+Do NOT collect passwords, authentication tokens, session IDs, secrets or unnecessary sensitive information.
+
+### Screenshot
+
+If adding an OPTIONAL screenshot attachment is simple and can reuse our existing safe upload/storage architecture, include it.
+
+If screenshot upload requires a significant new storage implementation, STOP and tell me rather than expanding scope.
+
+### Storage
+
+Feedback must be stored server-side in the production database and available to admins.
+
+Do not send feedback only to browser localStorage.
+
+Do not create a system where feedback can disappear when the browser closes.
+
+Create the minimum necessary schema/API/admin access required to make feedback persistent and reviewable.
+
+Before making a database schema change, confirm what table/schema approach you intend to use.
+
+If an existing table can safely and logically support general beta feedback without mixing unrelated report types, explain that option first.
+
+### Confirmation
+
+After submission, give the tester a simple confirmation such as:
+
+"Thank you — your feedback was received."
+
+Do not create a complicated ticketing system right now.
+
+## 5. DO NOT CHANGE THE CURRENT SESSION ARCHITECTURE TODAY
+
+Your audit identified that web currently stores the SID in localStorage and mirrors it to a JavaScript-set sid cookie.
+
+DO NOT refactor this during this implementation.
+
+I do, however, want this recorded as a POST-TOUR SECURITY REVIEW ITEM:
+
+Review whether web authentication should move from JavaScript-accessible session storage to an appropriately configured server-issued HttpOnly, Secure, SameSite cookie architecture.
+
+This is NOT authorization to change the existing working session system now.
+
+I do not want an authentication/security refactor immediately before testing and the tour.
+
+## 6. VERIFY THE WEB EXPERIENCE AFTER THE LOGIN BUTTON IS ADDED
+
+Do not call this complete merely because the button appears.
+
+Test in PRODUCTION:
+
+Public website
+→ Log In
+→ existing tester credentials
+→ successful authentication
+→ same production user ID
+→ authenticated web experience
+
+Then verify at minimum:
+
+* Existing profile appears
+* Existing membership/account status appears
+* Existing saves appear
+* Existing preferences appear
+* Existing community activity appears where supported
+* New web save persists
+* Mobile subsequently retrieves that save
+* Logout works
+* Login again works
+* Browser refresh maintains the valid session appropriately
+* Logged-out user cannot access protected account information
+* User A cannot access User B's private data
+
+Also test the website on:
+
+* Desktop browser
+* Mobile Safari
+* Mobile Chrome
+
+The website is going to be used as an immediate testing surface, so responsive browser behavior matters.
+
+## 7. DO NOT TRY TO FORCE FEATURE PARITY
+
+The web version currently contains newer functionality than the mobile builds.
+
+That is intentional for this testing period.
+
+Do not remove newer web features to make web match the current Apple or Android builds.
+
+Instead:
+
+Web = newest testable experience
+
+Mobile = current approved/testing builds
+
+Production database = shared source of truth
+
+As mobile builds are updated later, those experiences can converge.
+
+## 8. GIVE ME A SHORT COMPLETION REPORT
+
+After the approved work is complete, report:
+
+1. Log In button added — YES/NO
+2. Production login tested — YES/NO
+3. Existing mobile account resolved to same users.id on web — YES/NO + proof without exposing sensitive data
+4. Cross-platform data persistence tested — YES/NO
+5. Apple password-path investigation result
+6. Risk of Apple duplicate accounts after changes
+7. Feedback tool implemented — YES/NO
+8. Where feedback is stored
+9. Where I review tester feedback as admin
+10. Screenshot support — YES/NO
+11. Desktop tested — YES/NO
+12. Mobile Safari tested — YES/NO
+13. Mobile Chrome tested — YES/NO
+14. Any failures or remaining blockers
+
+Do not hide failed tests.
+
+If something does not work, report it as a blocker rather than changing unrelated systems trying to make the test pass.
+
+PRIORITY ORDER:
+
+1. GET THE LOG IN BUTTON LIVE.
+2. PROVE AN EXISTING EMAIL/PASSWORD MOBILE TESTER CAN ACCESS THE SAME ACCOUNT ON WEB.
+3. PROVE THEIR SERVER-SIDE DATA FOLLOWS THEM.
+4. ADD THE SIMPLE TESTER FEEDBACK PATH.
+5. INVESTIGATE THE SAFE APPLE ACCOUNT PASSWORD OPTION.
+6. STOP.
+
+We need working tester access and feedback before the tour — not architectural perfection.
