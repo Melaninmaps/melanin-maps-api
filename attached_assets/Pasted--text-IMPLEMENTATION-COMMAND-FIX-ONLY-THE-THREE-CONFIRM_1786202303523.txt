@@ -1,0 +1,136 @@
+```text
+IMPLEMENTATION COMMAND — FIX ONLY THE THREE CONFIRMED OPEN AUDIT ITEMS
+
+Proceed with implementation now.
+
+The following audit findings have already been reviewed and confirmed. Do NOT re-audit or modify the items that were determined to already be correct.
+
+LEAVE UNCHANGED:
+- Safety page — current functional reporting hub is correct. Do not add or restore fake city scores.
+- Community groups — current /api/groups implementation is correct. Do not revert to hardcoded groups or the old Join Group → /login behavior.
+
+FIX THE FOLLOWING THREE CONFIRMED ISSUES:
+
+1. HBCU / CULTURAL SITE DETAIL PAGES — FIX 404
+
+Current problem:
+`/cultural-sites/:id` returns 404.
+
+Existing task:
+#134
+
+Implement the existing intended cultural-site detail-page functionality.
+
+Requirements:
+- `/cultural-sites/:id` must resolve to a functional detail page for valid cultural-site records.
+- It must use the existing cultural-site database/data source rather than hardcoded duplicate data.
+- Support HBCUs, historic sites, museums, landmarks, cultural institutions, and other existing cultural-site types.
+- Display all existing available record data cleanly.
+- Do not fabricate missing information.
+- Preserve existing cultural-site/map functionality.
+- Preserve future-state hooks where already present.
+- Handle nonexistent IDs gracefully with a legitimate Not Found state rather than a broken route.
+- Verify that clicking a cultural/HBCU site from every current entry point opens the correct detail page.
+- Fix route/API/data-loading issues necessary to make this work end-to-end.
+- Do not create a parallel cultural-sites system if one already exists.
+
+2. KINFOLKAI → MWM BUSINESS RECOMMENDATIONS
+
+Current problem:
+KinfolkAI does not currently recommend Mapping With Melanin's own businesses.
+
+Implement grounding so Kinfolk can search and recommend eligible businesses from MWM's existing business database when the user's request calls for a business/place recommendation.
+
+CRITICAL:
+MWM's own structured business data should be a primary internal source for relevant recommendations rather than Kinfolk behaving like a generic web assistant.
+
+Requirements:
+- Connect Kinfolk's recommendation/search layer to the existing Businesses data/API.
+- Use existing structured fields wherever available, including:
+  category/subcategory,
+  location,
+  ownership/verification,
+  safety information,
+  ratings/endorsements,
+  Vibes,
+  Audience,
+  price range,
+  discovery intent,
+  atmosphere,
+  accessibility,
+  hours,
+  and other approved discovery metadata.
+- Only use fields that actually exist today; gracefully support fields added later.
+- Never invent business attributes.
+- Never invent businesses.
+- If insufficient MWM results exist, Kinfolk may say so rather than fabricate matches.
+- Preserve the approved future architecture for natural-language intent.
+
+Examples Kinfolk should eventually be able to resolve against MWM data:
+“Find me a romantic Black-owned restaurant near me.”
+“I want somewhere grown folks can go tonight.”
+“Show me a family-friendly cultural place.”
+“I want somewhere chill under $$.”
+“Where can we go for our anniversary?”
+“Find an HBCU or cultural landmark near me.”
+
+For this implementation, build the grounding/retrieval foundation required for Kinfolk to query and rank MWM businesses safely.
+
+Do NOT create fake recommendation responses just to make tests pass.
+
+3. HOMEPAGE IMPACT COUNTER — REMOVE FABRICATED STATISTICS
+
+Current problem:
+Homepage currently displays figures such as:
+- 124+ businesses
+- 22,846+ reviews
+
+`ImpactCounter` fetches from:
+`/api/impact`
+
+Fix `/api/impact` so ALL displayed impact statistics come from real production-backed database counts.
+
+Requirements:
+- Remove all hardcoded/fabricated fallback statistics.
+- Query actual existing records for each displayed metric.
+- Businesses count must reflect real eligible business records.
+- Reviews count must reflect actual reviews.
+- Any users, cities, reports, community members, events, or other impact statistics displayed must likewise use real data.
+- Never substitute impressive-looking fallback numbers when data is zero.
+- If the real count is 0, display 0 or hide that metric according to the existing UI design — never fabricate a count.
+- Do not use seeded/test/demo records in production-facing impact statistics if they can be identified as such.
+- Confirm the frontend `ImpactCounter` renders the real API values.
+- Ensure API failure does NOT trigger fabricated values.
+- A temporary neutral unavailable state is preferable to false statistics.
+
+IMPLEMENTATION SAFETY RULES
+
+- Work against the existing architecture.
+- Do not rebuild working systems unnecessarily.
+- Do not rename unrelated routes, tables, schemas, or components.
+- Do not delete existing data.
+- Do not change Safety or Community Groups.
+- Preserve authentication, maps, business directory, cultural-site data, admin functionality, and existing production behavior.
+- Do not introduce mock data.
+- Do not introduce placeholder data presented as real.
+- Reuse existing APIs/services/models where possible.
+- Make the smallest production-safe changes necessary.
+
+AFTER IMPLEMENTATION, RUN VERIFICATION.
+
+Return a concise completion report containing:
+
+1. Files changed.
+2. Routes/APIs changed.
+3. Database queries/data sources used.
+4. Proof `/cultural-sites/:id` works with at least one real existing HBCU/cultural-site record.
+5. Proof Kinfolk can retrieve at least one real MWM business through its grounding layer.
+6. Actual response from `/api/impact`.
+7. Confirmation that no fabricated impact-number fallback remains.
+8. Tests/build/typecheck results.
+9. Any issue that remains genuinely blocked.
+
+Do not merely describe how these could be fixed.
+
+IMPLEMENT AND VERIFY THEM.
+```
