@@ -210,8 +210,24 @@ app.use((req, res, next) => {
 });
 
 if (WEB_STATIC) {
-  app.use(express.static(WEB_STATIC, { extensions: ["html"] }));
-  app.use((req, res) => { res.sendFile(path.join(WEB_STATIC, "index.html")); });
+  // Assets (JS/CSS) get long-lived cache; HTML is always revalidated so users
+  // never need to manually clear their browser cache to see a new deploy.
+  app.use(express.static(WEB_STATIC, {
+    extensions: ["html"],
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html") || !filePath.includes(".")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+      }
+    },
+  }));
+  app.use((req, res) => {
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.sendFile(path.join(WEB_STATIC, "index.html"));
+  });
 } else {
   app.use((req, res) => { res.status(503).send(`Web app not found. Deploy with web-static/ present.`); });
 }

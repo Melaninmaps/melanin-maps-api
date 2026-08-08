@@ -355,6 +355,17 @@ END $seed$`,
       UNIQUE(user_id, city_slug)
     )`,
   },
+  {
+    // Normalize HBCU category casing — all HBCU records should use uppercase
+    // "HBCU" so map/library filters work consistently regardless of query casing.
+    // Safe to run repeatedly (UPDATE with explicit value is idempotent).
+    name: "cultural_sites_hbcu_category_normalize",
+    sql: `UPDATE cultural_sites
+          SET category        = 'HBCU',
+              heritage_category = 'HBCU'
+          WHERE UPPER(COALESCE(category,'')) = 'HBCU'
+             OR UPPER(COALESCE(heritage_category,'')) = 'HBCU'`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

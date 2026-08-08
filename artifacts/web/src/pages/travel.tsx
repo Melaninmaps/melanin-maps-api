@@ -29,9 +29,15 @@ interface Prefs {
   favoriteCategories: string[]; favoriteCities: string[];
   avoidCategories: string[]; budgetRange: string;
   tripStyle: string[]; travelCompanion: string; dietaryNotes: string | null;
+  // Kinfolk personalization — what I care about, used to promote the right businesses
+  ownershipTypes: string[]; lifestyleServices: string[];
 }
 
-const DEFAULT_PREFS: Prefs = { favoriteCategories: [], favoriteCities: [], avoidCategories: [], budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null };
+const DEFAULT_PREFS: Prefs = {
+  favoriteCategories: [], favoriteCities: [], avoidCategories: [],
+  budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
+  ownershipTypes: [], lifestyleServices: [],
+};
 
 const ALL_CATEGORIES = ["Food & Drink","Nightlife","Culture & Art","Music & Live Events","Beauty & Wellness","History","Outdoors","Family-Friendly","Shopping","Coffee","Spiritual","Sports"];
 const AVOID_OPTS = ["Nightlife","Bars & Clubs","Loud venues","Crowded spaces","Tourist spots","Chains","Expensive dining"];
@@ -227,6 +233,34 @@ function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onC
               placeholder="e.g. vegan, halal, gluten-free…"
               className="w-full h-10 px-3 text-xs bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/40" />
           </div>
+
+          {/* ── Community identity — what KinfolkAI uses to promote the right businesses ── */}
+          <div className="pt-2 border-t border-[#3A1F0E]/8">
+            <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">Who I Love to Support</div>
+            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">KinfolkAI uses this to prioritize businesses that match your values — not just your location.</div>
+            <ChipSet
+              label="Businesses I prioritize"
+              options={[
+                "Black-owned", "Women-owned", "Veteran-owned",
+                "Immigrant-owned", "LGBTQ+-owned", "Indigenous-owned",
+                "Latino-owned", "Disability-owned", "Family-owned",
+              ]}
+              selected={local.ownershipTypes}
+              onChange={v => setLocal(p => ({ ...p, ownershipTypes: v }))}
+            />
+          </div>
+
+          <ChipSet
+            label="Lifestyle services I use regularly"
+            options={[
+              "Hair salon", "Barbershop", "Nail salon", "Spa & massage",
+              "Personal trainer", "Yoga & fitness", "Therapy & counseling",
+              "Tax prep", "Legal services", "Financial advisor",
+              "Tutoring", "Childcare", "Home cleaning", "Auto repair",
+            ]}
+            selected={local.lifestyleServices}
+            onChange={v => setLocal(p => ({ ...p, lifestyleServices: v }))}
+          />
         </div>
 
         <div className="px-5 py-4 border-t border-[#3A1F0E]/8 shrink-0">

@@ -635,10 +635,14 @@ export default function Profile() {
     e.preventDefault();
     updateProfile.mutate({ data: { firstName, lastName } }, {
       onSuccess: () => {
-        toast({ title: "Profile updated" });
+        toast({ title: "Profile updated", description: "Your name has been saved." });
         queryClient.invalidateQueries({ queryKey: ["getMyProfile"] });
         queryClient.invalidateQueries({ queryKey: ["getCurrentAuthUser"] });
-      }
+      },
+      onError: (err: unknown) => {
+        const msg = (err as any)?.message ?? "Could not save — please try again";
+        toast({ title: "Update failed", description: msg, variant: "destructive" });
+      },
     });
   };
 
