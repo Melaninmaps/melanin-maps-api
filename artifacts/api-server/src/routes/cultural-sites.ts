@@ -106,7 +106,7 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
     // Seeding is handled at startup via POST /admin/seed-cultural-sites or the
     // initial deployment migration in static-server.mjs.
 
-    const { heritageCategory, category, search, state, city, accessible, admissionFree, limit: limitParam } =
+    const { heritageCategory, category, site_type: siteType, search, state, city, accessible, admissionFree, limit: limitParam } =
       req.query as Record<string, string | undefined>;
 
     // Default 2000 — returns all seeded records in one shot.
@@ -124,6 +124,11 @@ router.get("/cultural-sites", async (req: Request, res: Response) => {
     if (category) {
       conditions.push(`category = $${idx++}`);
       params.push(category);
+    }
+    // site_type is the canonical client-facing alias — maps to the category column
+    if (siteType) {
+      conditions.push(`category = $${idx++}`);
+      params.push(siteType);
     }
     if (state) {
       conditions.push(`state = $${idx++}`);
