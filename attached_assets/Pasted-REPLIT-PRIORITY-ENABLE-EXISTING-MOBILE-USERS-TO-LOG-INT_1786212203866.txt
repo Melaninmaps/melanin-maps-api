@@ -1,0 +1,315 @@
+REPLIT — PRIORITY: ENABLE EXISTING MOBILE USERS TO LOG INTO THE PRODUCTION WEB APP
+
+This is launch/tour-critical work.
+
+The Mapping with Melanin™ web application is currently the most up-to-date version of the platform. I need our existing Apple/iOS and Android testers to be able to log into the website using the SAME Mapping with Melanin account they already created in the mobile app.
+
+IMPORTANT: I am NOT asking you to create a separate web authentication system or a separate class of web users.
+
+The goal is ONE Mapping with Melanin account that follows the user across iOS, Android and web.
+
+Before making changes, inspect the existing authentication, production database, session handling and user data architecture and confirm how this currently works.
+
+Do not create duplicate authentication systems, duplicate users, duplicate profiles or a separate web database.
+
+## REQUIRED USER EXPERIENCE
+
+Add a clearly visible:
+
+LOG IN
+
+button to the public Mapping with Melanin website.
+
+An existing tester/member who created their account through the iOS or Android app should be able to:
+
+1. Open the Mapping with Melanin website.
+2. Select Log In.
+3. Authenticate using the appropriate existing account/login method.
+4. Be recognized as the SAME user already stored in production.
+5. Enter the authenticated web version of Mapping with Melanin.
+6. See the data associated with their existing account.
+
+The web application should NOT treat them as a new user simply because they are accessing the platform from a browser.
+
+## ONE ACCOUNT ACROSS ALL PLATFORMS
+
+The architecture should follow this principle:
+
+ONE USER
+ONE ACCOUNT
+ONE USER ID
+ONE PRODUCTION DATA SOURCE
+MULTIPLE ACCESS POINTS
+
+iOS ↔ Android ↔ Web
+
+The user's identity and server-side data should follow them regardless of which supported platform they use.
+
+Please determine what already exists before changing anything.
+
+## AUTHENTICATION AUDIT FIRST
+
+Before implementation, identify:
+
+* What authentication system mobile currently uses.
+* What authentication system web currently uses.
+* Whether mobile and web already point to the same production API/authentication service.
+* Whether they use the same production user database.
+* How users are uniquely identified.
+* Whether email/password accounts can already authenticate on web.
+* How Sign in with Apple accounts are stored.
+* How Google/Android authentication is stored.
+* Whether provider-specific identifiers are correctly linked to the same underlying Mapping with Melanin user.
+* Whether any current configuration could create duplicate accounts.
+* Whether production redirect URLs/callback URLs need to be updated for web authentication.
+* Whether any cookie, CORS, CSRF, session, token or domain configuration prevents web login.
+* Whether [www.mappingwithmelanin.com](http://www.mappingwithmelanin.com) and mappingwithmelanin.com are configured consistently for authentication.
+
+Do NOT change the identity model unless necessary.
+
+Reuse the existing production authentication architecture wherever possible.
+
+## IMPORTANT — SIGN IN WITH APPLE
+
+Pay particular attention to Apple accounts.
+
+Determine whether testers who used Sign in with Apple can authenticate through the website without creating a second Mapping with Melanin account.
+
+Account for Apple's Hide My Email/private relay functionality.
+
+Do not assume an Apple user's visible personal email will match the email stored in our system.
+
+Existing Apple users must map back to their existing Mapping with Melanin user record whenever technically possible.
+
+## DATA CONTINUITY
+
+After login, existing server-side user information should be available on web wherever the corresponding web feature exists.
+
+Audit at minimum:
+
+* Profile
+* Display name
+* Profile image/avatar
+* Membership/tier
+* Account verification/status
+* Saved businesses
+* Saved places
+* Favorites
+* Reviews
+* Safety submissions
+* Community activity/posts
+* Groups
+* Event RSVPs
+* Messages/conversations
+* Points/rewards
+* Business ownership/claimed businesses
+* Business profile information
+* Waitlist/founding status if attached to the account
+* User preferences
+* Any other account-linked production data currently stored
+
+Do not invent data and do not migrate data blindly.
+
+First determine which of these are already stored server-side in production versus stored locally on a device.
+
+If something currently exists ONLY in local mobile storage, identify it clearly before attempting migration because we need a safe migration strategy that does not overwrite production data.
+
+## CROSS-PLATFORM SYNC
+
+Going forward, server-side user actions should follow the account across platforms.
+
+Example:
+
+A user saves a business on Android.
+
+They later log into the website.
+
+That saved business should appear there.
+
+If they save another business on the website and later open the mobile app, that save should also appear in their account.
+
+The production backend/database should be the source of truth — not an individual device.
+
+Do not build unnecessary real-time synchronization if the existing API/data architecture already supports account-level persistence. Use the simplest reliable implementation.
+
+## FEATURE DIFFERENCES BETWEEN MOBILE AND WEB
+
+The web application may currently contain newer functionality than the mobile builds.
+
+DO NOT remove, downgrade or hide newer web functionality merely to make web match mobile.
+
+The purpose of giving testers web access is specifically to allow them to test the newest functionality before the tour.
+
+If a feature exists on web but not yet in the mobile build, testers should still be able to use it on web if it is production-safe.
+
+If a feature cannot safely work cross-platform yet, identify it rather than silently changing it.
+
+## TESTER FEEDBACK
+
+Because the purpose of this release is to gather as much feedback as possible before the tour, also inspect whether we already have an authenticated feedback/reporting mechanism.
+
+If one already exists, make it easy for logged-in web testers to access.
+
+If one does NOT exist, STOP and tell me before building a large new feedback system.
+
+At minimum, I need testers to have an obvious way to report:
+
+* Bugs
+* Something that does not work
+* Something confusing
+* Feature suggestions
+* Missing businesses/places/information
+* General feedback
+
+Feedback should identify the authenticated user when appropriate and should include enough technical context to help diagnose issues, without collecting unnecessary sensitive information.
+
+## SECURITY REQUIREMENTS
+
+Do not weaken authentication simply because this is for testers.
+
+Do not expose production database credentials, secrets, API keys, session tokens or authentication secrets to the browser.
+
+Do not create a shared tester password.
+
+Do not bypass existing account verification/security controls.
+
+Do not create development users inside production.
+
+Do not reset existing user passwords.
+
+Do not alter existing Apple/Android accounts unnecessarily.
+
+Do not overwrite production user data.
+
+Do not expose admin functionality to normal users.
+
+Preserve existing role and permission controls.
+
+## EXISTING USERS VS. NEW USERS
+
+The immediate priority is EXISTING testers.
+
+Existing mobile users must be able to log in.
+
+If web registration already exists and safely creates accounts in the same production identity system, preserve it.
+
+If web registration does NOT currently exist, do not automatically build a second registration flow simply because login is being added.
+
+Tell me what exists and recommend the safest approach.
+
+## PASSWORD RESET / ACCOUNT RECOVERY
+
+Confirm that account recovery works appropriately from web.
+
+If an email/password user forgets their password, they should have a safe recovery path.
+
+For Apple/Google/provider-authenticated accounts, do not incorrectly offer password reset if that account does not have a Mapping with Melanin password.
+
+## LOGOUT AND SESSION HANDLING
+
+Confirm:
+
+* Login persists appropriately across page refreshes.
+* Logout actually terminates the appropriate session.
+* Expired sessions are handled correctly.
+* Protected pages cannot be accessed after logout.
+* Users cannot access another user's account data.
+* Mobile authentication is not broken by the web implementation.
+
+## PRODUCTION VS. DEVELOPMENT
+
+Be extremely careful about environment separation.
+
+We have previously had differences between development and Railway production data.
+
+Do not prove this functionality using only the Replit development database.
+
+The final validation must demonstrate that the production web application and production mobile users are resolving against the intended production backend/data source.
+
+Do not copy development/test records into production simply to make the test pass.
+
+## DO NOT REBUILD WORKING SYSTEMS
+
+Before implementing anything:
+
+1. Audit what exists.
+2. Identify what can be reused.
+3. Identify the smallest required changes.
+4. Check for risk to current iOS/Android authentication.
+5. Then implement only what is necessary.
+
+We are under a significant time constraint.
+
+This is NOT the time for an authentication rewrite, database migration, framework replacement or broad refactor unless you identify a genuine blocker and explain it to me first.
+
+## REQUIRED TEST MATRIX
+
+Before calling this complete, test:
+
+Existing iOS account → Web login → SAME USER
+
+Existing Android account → Web login → SAME USER
+
+Email/password account → Web login → SAME USER
+
+Sign in with Apple account → Web login → SAME USER, if supported by our existing architecture
+
+Google-authenticated account → Web login → SAME USER, if supported by our existing architecture
+
+Web logout → protected account data inaccessible
+
+Web login again → account data still present
+
+Mobile save → visible on web
+
+Web save → visible on mobile
+
+Existing profile → same profile on web
+
+Membership/status → same status on web
+
+User A → cannot see User B private/account data
+
+Invalid credentials → safe error message
+
+Expired session → safe reauthentication
+
+Refresh browser → valid authenticated session behaves correctly
+
+## DO NOT DECLARE SUCCESS BASED ONLY ON THE LOGIN SCREEN
+
+A visible Log In button is NOT completion.
+
+A successful authentication response by itself is NOT completion.
+
+Completion means an existing real tester can log into the production website and the system resolves them to the same production Mapping with Melanin account/user record without duplicating the account.
+
+## BEFORE IMPLEMENTATION — REPORT BACK
+
+First give me a concise read-only assessment containing:
+
+1. Current mobile authentication architecture
+2. Current web authentication architecture
+3. Production identity/database source of truth
+4. Whether mobile and web already share user IDs/data
+5. Existing login providers
+6. Whether existing iOS users can authenticate on web as-is
+7. Whether existing Android users can authenticate on web as-is
+8. Any risk of duplicate accounts
+9. Any data currently stored only on-device
+10. Exact changes required
+11. Files/components/routes/configuration that would need modification
+12. Any required Apple/Google/auth-provider configuration changes
+13. Any required Railway/domain/environment changes
+14. Risks to the currently working mobile builds
+15. Estimated minimum implementation path
+
+STOP after this assessment and show it to me.
+
+Do not begin a broad authentication rewrite without my approval.
+
+Our immediate objective is:
+
+EXISTING TESTER → WEBSITE → LOGIN → SAME ACCOUNT → NEWEST WEB FEATURES → FEEDBACK
+
+We need the fastest SAFE path to accomplish that before the tour.
