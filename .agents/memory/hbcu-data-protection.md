@@ -12,34 +12,29 @@ description: Permanent rule — HBCU count floor is 107. No deploy may reduce th
 
 ## Current State (confirmed Aug 8 2026)
 - Seed file: `artifacts/api-server/src/data/hbcu-complete-seed.ts` — 107 HBCUs
-- Production DB: 101 HBCUs (74 labeled "HBCU" + 27 labeled "hbcu" — case inconsistency)
-- Gap: ~6 missing entries (exact list determined by audit)
-- Admin endpoint to reseed (dedup-safe): `POST /admin/seed-hbcu-complete`
+- Production DB before fix: 83 unique HBCU sites (74 labeled "HBCU" + 27 "hbcu" — case inconsistency, overlapping)
+- 20 confirmed missing before fix: Fisk, Howard, Johnson C. Smith, LeMoyne-Owen, Miles, Morehouse College, Morehouse School of Medicine, Morgan State, Norfolk State, NC Central, Paul Quinn, Savannah State, Shaw, Southern U and A&M, Spelman, Texas Southern, Tougaloo, Tuskegee, Virginia Union, Xavier
+- **Self-healing fix deployed Aug 8 2026**: `runStartupMigrations()` in startup-migrations.ts now calls `ensureAllHBCUs()` on every boot — inserts any missing schools automatically, dedup-safe by name+state
 
-## Known Data Issue
-- Category stored as both "HBCU" (uppercase) and "hbcu" (lowercase) — causes API filter `?category=hbcu` to miss the uppercase ones
-- Fix: Normalize all HBCU category values to uppercase "HBCU" in a one-time migration
+## Self-Healing Architecture (PERMANENT)
+`artifacts/api-server/src/lib/startup-migrations.ts` — `ensureAllHBCUs()` function runs on every server boot:
+- Loops all 107 entries in HBCU_COMPLETE_SEED
+- Checks `WHERE LOWER(name)=LOWER($1) AND LOWER(state)=LOWER($2)` — skips existing
+- Inserts missing entries with category="HBCU", heritage_category="HBCU", pin_type="hbcu"
+- Logs: "HBCU integrity guard: X inserted, Y already present. Total in seed: 107"
+- **Never remove this function** — it's the permanent protection layer
 
-## How to Audit (run after any deploy that touches cultural_sites)
+## How to Audit After Any Deploy
 ```sql
 SELECT COUNT(*) FROM cultural_sites 
 WHERE UPPER(category) = 'HBCU' 
    OR UPPER(pin_type) = 'HBCU' 
    OR UPPER(heritage_category) = 'HBCU';
 ```
-Expected result: **≥ 107**
+Expected result: **≥ 107**. If below, check Railway logs for "HBCU integrity guard" — if that line shows 0 inserted AND count is below 107, there is a deletion bug that must be found immediately.
 
-## How to Reseed Missing HBCUs
-1. Log in to the admin panel as admin
-2. Go to Admin → Cultural Sites → Seed HBCUs (runs `POST /admin/seed-hbcu-complete`)
-3. The endpoint is dedup-safe — it checks name+state before inserting, so running it twice is safe
-4. Re-run the audit query to confirm count = 107
-
-## Pre-Deploy Gate
-Before every build that modifies cultural_sites table, routes, or seed data:
-1. Run the audit query above on production
-2. Confirm count ≥ 107
-3. If below 107, run the reseed endpoint BEFORE pushing new code
+## Manual Reseed (if needed — e.g., table truncated)
+Admin panel → POST `/admin/seed-hbcu-complete` — dedup-safe, can run multiple times
 
 ## The 107 Schools (Complete List — Source of Truth)
 Alabama A&M, Alabama State, Albany State, Alcorn State, Allen, American Baptist College,
