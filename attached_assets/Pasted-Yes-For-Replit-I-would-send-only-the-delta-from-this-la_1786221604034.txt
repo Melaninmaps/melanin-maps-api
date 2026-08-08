@@ -1,0 +1,106 @@
+Yes. For Replit, I would send **only the delta from this last round**, so it can confirm these additions before you upload the businesses and we avoid it “helpfully” rebuilding or renaming anything.
+
+The heart behind this is important: **Mapping With Melanin should sound like the communities using it, not like a generic review platform.** We are not just collecting whether someone “liked” a business. We are capturing the things people actually tell their cousin, their group chat, their auntie, their neighbor, or someone who just moved to town: *Did they listen? Was it worth the money? Did they understand our hair? Would you trust them with your mother? Did they explain the paperwork? What should I order?* The structured taps make that knowledge searchable without requiring everyone to become a review writer.
+
+### Paste this into Replit
+
+> **READ-ONLY CONFIRMATION — V5 DELTA ONLY**
+>
+> Before the upcoming bulk business upload, confirm that the following additions from the latest Mapping With Melanin™ master workbook are present and understood.
+>
+> **DO NOT implement, rename, merge, simplify, delete, reclassify, or generate replacements during this confirmation.**
+>
+> Treat the attached workbook as the source of truth. I need a line-by-line confirmation of the following NEW additions only:
+>
+> * **Business taxonomy additions — Beauty & Personal Care:** `Tattoo Artists & Studios`; `Piercing Studios`; `Permanent Makeup & Cosmetic Tattooing`.
+> * **Professional/specialty subcategories retained/expanded:** OB-GYN & Women's Health; Pediatrics; Dermatology; Cardiology; Maternal-Fetal Medicine; Midwifery; Fertility & Reproductive Health; Urgent Care; Specialist Physicians; Immigration Attorneys; Family Law; Criminal Defense; Civil Rights; Employment Law; Housing & Tenant Law; Estate Planning & Probate; Personal Injury; Business Law; Small Business Banking; Community Development Financial Institutions (CDFIs); SBA & Business Loan Services; Career Coaching; Executive Coaching; Grant Writing; Procurement & Government Contracting; Housing Counselors; Mortgage & Homebuyer Counseling.
+> * **New/expanded culturally resonant Vibe language:** Feels Like Home; Auntie Energy; Tía Energy; Abuela Approved Energy; Old School Done Right; Generational Gem; Bring The Family; Bring Your People; Good Music, Good Energy; Chill Spot; Stay Awhile; Tourist Who?; Locals Know; Take Somebody From Out of Town; Passport Energy; Authentically Us; You Had To Grow Up Around It; Soft Life; Luxury Without The Attitude; Main Character Energy; They Get It; Creative Energy; Culture On The Walls; History Lives Here; Teach The Kids; Girls' Day; Guys' Night; Neighborhood Love; Everybody Knows Somebody; Adventure Ready.
+> * **Food & Drink / community one-tap additions:** Food Was Worth It; Service Was On Point; Portions Were Generous; I'd Bring The Family; Worth Every Visit; Order What I Ordered; I Found My New Spot; This Is The One; Put Everybody On; Worth The Wait; Don't Gatekeep This One.
+> * **Beauty additions:** Listened To What I Asked For; Healthy Hair First; I'd Book Again; Book Now.
+> * **Tattoo/Piercing/Permanent Makeup one-taps:** Clean & Sterile; Artist Listened; Lines Are Clean; Color Healed Beautifully; Made Me Feel Comfortable; Explained Aftercare; Respected My Skin Tone; Great With First-Timers; Piercing Placement Was Perfect; Jewelry Quality Was Good; Healed Well; Book Them.
+> * **Travel/community recommendation language:** Add It To The List; I'm Coming Back; Already Told My People.
+> * **Shopping language:** Take My Money; Don't Leave Without It; I Sent The Group Chat.
+> * **Additional broad positive taps where appropriate:** Felt At Home; Great Service; Would Go Back.
+> * **Health & Wellness ordinary “What Stands Out?” additions for clinical businesses:** Friendly Staff; Easy Scheduling; Short Wait; Clean & Comfortable; Easy Parking; Responsive Office. These remain separate from THE REAL.
+> * **Realtor/Home & Property THE REAL additions:** Didn't Steer Me; Explained Every Document; Fought For My Offer; Didn't Judge My Budget; Knew The Neighborhood; Made Me Feel Like My Business Mattered.
+> * **Legal/Immigration THE REAL additions:** Explained Every Step; Didn't Talk Down To Me; Protected My Privacy; Made Sure I Understood Before I Signed; Didn't Make Promises They Couldn't Keep; Treated My Family With Dignity.
+> * **Professional Services THE REAL addition:** Explained Everything Perfectly.
+> * **State/Territory standardized dropdown:** all 50 states plus DC, Puerto Rico, U.S. Virgin Islands, Guam, American Samoa, and Northern Mariana Islands. Existing records use postal abbreviations.
+> * **Member feedback UX rule:** members are shown predefined tap choices first. Free text is optional afterward under **“Want to say more?”**
+> * **Negative-experience UX rule:** a separate **“Something wasn't right”** path handles service concerns, safety, discrimination, accessibility, billing/pricing concerns, and other issues. Do not create public negative THE REAL tags.
+> * **Architecture rule:** Category + Subcategory determine eligible choices. The Vibe and THE REAL never co-render. `What Stands Out?` remains universal. Ownership remains separate and supports up to two self-identified/documented designations.
+> * **Bulk-upload rule:** the three Vibe/THE REAL/What Stands Out fields in the spreadsheet are founder preview/curation fields. They do **not** mean the app should limit members to three choices. The app should use the complete eligible source lists.
+>
+> **RESPONSE REQUIRED BEFORE BULK UPLOAD**
+>
+> Return a table with: `Item / Located in workbook? / Current code or database support? / Exact destination table or file / Conflict? / Action needed`.
+>
+> Then explicitly answer:
+>
+> **1. Can this workbook be bulk uploaded without losing any of these values?**
+> **2. Will existing category/subcategory mappings be preserved?**
+> **3. Will unknown/new values be rejected and reported rather than silently remapped?**
+> **4. Will original submitted values remain preserved for audit history?**
+> **5. Will the upload leave existing THE REAL, Vibe, endorsement and historical tap counts untouched?**
+>
+> **Do not begin the bulk import until I approve your confirmation.**
+
+## And yes — I strongly like your Philly “jawn” idea
+
+But I would make this **another localization layer**, not allow Kinfolk to freely rewrite your master tags.
+
+I would call the user-facing section something like **“What Locals Are Saying”**.
+
+That gives Kinfolk freedom to sound local without corrupting the structured data underneath.
+
+For example, the underlying structured endorsement could remain:
+
+**Ask For The Special**
+
+But in Philadelphia, an approved local expression might surface alongside it:
+
+> **Philly:** “Order the special — you won't regret that jawn.”
+
+The database still understands **Ask For The Special**. The local phrase is presentation/community flavor.
+
+That distinction is crucial.
+
+Kinfolk should **learn local language from community contributions and approved language patterns**, not simply decide that everyone in Philadelphia says *jawn*. There is a difference between sounding culturally aware and turning a community into a caricature.
+
+So I would establish a model like:
+
+**Core tag:** `worth_the_drive`
+**Standard label:** Worth The Drive
+**Philadelphia local expression:** “Yeah, make that drive.”
+**Community/local attribution:** Philly locals
+**Status:** community-approved
+**Minimum usage/approval threshold:** whatever we establish
+**Meaning stays identical:** worth making the trip
+
+And another:
+
+**Core tag:** `ask_for_the_special`
+**Standard:** Ask For The Special
+**Philadelphia:** “Get the special. Trust me, that jawn hits.”
+
+Miami might develop completely different phrasing. New Orleans would have its own language. Houston could have its own. New York absolutely would. The Caribbean diaspora within New York could develop variations that differ from Black American New York language.
+
+That becomes incredibly interesting because Kinfolk could eventually say:
+
+> **What locals are saying:** “Don't leave without the oxtail. That jawn sells out.”
+
+rather than presenting that as an official business claim.
+
+### I would put four guardrails around Kinfolk's local language
+
+**First, locality is not identity.** Kinfolk can know a business is in Philadelphia. It cannot conclude that a particular user is Black, Puerto Rican, Dominican, etc. because they're standing in Philadelphia.
+
+**Second, community language should be learned, not fabricated.** Let members submit phrases through something like **“How would you say it?”** Kinfolk can cluster similar submissions and suggest a local rendering after sufficient community use.
+
+**Third, the structured meaning never changes.** `worth_the_drive` stays `worth_the_drive`, whether the UI says *Worth The Drive*, *Make that drive*, or eventually a community-approved local expression.
+
+**Fourth, Kinfolk can suggest; the community validates.** For a new city with limited data, Kinfolk could generate a **candidate** local phrase, but it should not become an official “locals say” phrase until people from that market approve/use it.
+
+That could become another real moat for the platform: **Google can tell you a restaurant has 4.7 stars. Mapping With Melanin could eventually tell you what people praise, why they trust it, what kind of night it is, and how the neighborhood itself talks about it.**
+
+And I especially like the label **“What Locals Are Saying”** because it makes clear that this isn't Kinfolk pretending to speak for Philadelphia. **Kinfolk is organizing and surfacing the language Philadelphia actually gave us.**
