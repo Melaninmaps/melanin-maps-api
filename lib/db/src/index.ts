@@ -206,3 +206,32 @@ export {
   ALL_VALID_CATEGORY_NAMES,
 } from "./constants/business-categories";
 export type { BusinessCategory } from "./constants/business-categories";
+
+export {
+  OWNERSHIP_DESIGNATIONS,
+  BLACK_OWNED_DESIGNATIONS,
+  isBlackOwned,
+} from "./constants/ownership-designations";
+export type { OwnershipDesignation } from "./constants/ownership-designations";
+
+export {
+  VIBES_BY_CATEGORY,
+  ALL_VIBE_LABELS,
+  VIBE_ELIGIBLE_CATEGORIES,
+  isVibeEligible,
+} from "./constants/vibe-labels";
+export type { VibeLabel } from "./constants/vibe-labels";
+
+export {
+  ENDORSEMENT_TAGS,
+  ENDORSEMENT_CATEGORY_MAP,
+  ENDORSEMENT_DISPLAY_THRESHOLD,
+  getTagsForCategory,
+} from "./constants/endorsement-tags";
+export type { EndorsementTagDef } from "./constants/endorsement-tags";
+
+export {
+  ENDORSEMENT_TAG_VARIANTS,
+  COMMUNITY_CODES,
+} from "./constants/endorsement-tag-variants";
+export type { EndorsementTagVariantDef, CommunityCode } from "./constants/endorsement-tag-variants";

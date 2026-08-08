@@ -8,6 +8,9 @@ import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
 import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed";
+import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
+import { ENDORSEMENT_TAGS } from "@workspace/db";
+import { ENDORSEMENT_TAG_VARIANTS } from "@workspace/db";
 import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -1680,6 +1683,168 @@ router.post("/admin/seed-sundown-towns-national", async (req: Request, res: Resp
     res.json({ ok: true, inserted, skipped, total: NATIONAL_SUNDOWN_TOWNS_SEED.length });
   } catch (err) {
     req.log.error({ err }, "seed-sundown-towns-national error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/seed-directory-businesses ─────────────────────────────────────
+// Seeds the 6 businesses from the MASTER Business Directory Excel file.
+// Sets listing_status = community_listed (unclaimed). Dedup by name+city+state.
+router.post("/admin/seed-directory-businesses", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    let inserted = 0; let skipped = 0;
+    for (const b of DIRECTORY_BUSINESSES_SEED) {
+      const exists = await pool.query(
+        `SELECT id FROM businesses WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 1`,
+        [b.name, b.city, b.state]
+      );
+      if (exists.rows.length) { skipped++; continue; }
+      const isBlack = b.ownershipDesignations.some((d) =>
+        ["Black / African American-Owned", "African-Owned", "West African-Owned",
+         "Nigerian-Owned", "Ghanaian-Owned", "Liberian-Owned", "Ethiopian-Owned",
+         "Somali-Owned", "East African-Owned", "Caribbean / West Indian-Owned",
+         "Afro-Caribbean-Owned", "Jamaican-Owned", "Haitian-Owned",
+         "Trinidadian & Tobagonian-Owned", "Afro-Latino-Owned"].includes(d)
+      );
+      await pool.query(
+        `INSERT INTO businesses
+          (id, name, category, subcategory, address, city, state,
+           description, website, instagram, tiktok, primary_social_platform,
+           ownership_designations, vibes, black_owned,
+           latitude, longitude,
+           profile_status, status, rating, review_count, verified, featured,
+           confidence_score, tags, photos, pending_photos, videos,
+           trust_badges, flag_count, flag_status, hidden_gem_nominations,
+           marketplace_tier, business_status, marketplace_fee_locked,
+           promotion_eligible, feedback_opt_in, show_availability,
+           community_audience_type, is_reference_only,
+           created_at, updated_at)
+         VALUES
+          ($1,$2,$3,$4,$5,$6,$7,
+           $8,$9,$10,$11,$12,
+           $13,$14,$15,
+           $16,$17,
+           'community_listed','active',0,0,false,false,
+           0,'[]','[]','[]','[]',
+           '[]',0,'none',0,
+           'free','community',false,
+           true,false,false,
+           'unknown',false,
+           NOW(),NOW())`,
+        [
+          randomUUID(),
+          b.name, b.category, b.subcategory,
+          b.address ?? `${b.city}, ${b.state}`,
+          b.city, b.state,
+          b.description ?? `${b.name} — community-listed business in ${b.city}, ${b.state}.`,
+          b.website ?? null, b.instagram ?? null, b.tiktok ?? null,
+          b.primarySocialPlatform ?? null,
+          JSON.stringify(b.ownershipDesignations),
+          JSON.stringify(b.vibes ?? []),
+          isBlack,
+          b.latitude, b.longitude,
+        ]
+      );
+      inserted++;
+    }
+    req.log.info({ inserted, skipped }, "seed-directory-businesses done");
+    res.json({ ok: true, inserted, skipped, total: DIRECTORY_BUSINESSES_SEED.length });
+  } catch (err) {
+    req.log.error({ err }, "seed-directory-businesses error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/seed-endorsement-tags ────────────────────────────────────────
+// Seeds the endorsement_tags and endorsement_tag_variants tables.
+// Creates tables if they don't exist (idempotent). Skips existing keys.
+router.post("/admin/seed-endorsement-tags", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    // Create tables if not exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS endorsement_tags (
+        id SERIAL PRIMARY KEY,
+        tag_key VARCHAR(100) NOT NULL UNIQUE,
+        tag_family VARCHAR(100),
+        tag_type VARCHAR(20) NOT NULL,
+        default_label VARCHAR(200) NOT NULL,
+        helper_text TEXT,
+        category_ids JSONB NOT NULL DEFAULT '[]',
+        subcategory_keys JSONB NOT NULL DEFAULT '[]',
+        sort_weight INTEGER NOT NULL DEFAULT 50,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS endorsement_tag_variants (
+        id SERIAL PRIMARY KEY,
+        tag_family VARCHAR(100) NOT NULL,
+        community_code VARCHAR(50) NOT NULL,
+        display_label VARCHAR(200) NOT NULL,
+        said_verb VARCHAR(50) NOT NULL DEFAULT 'said',
+        subcategory_key VARCHAR(100),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(tag_family, community_code, subcategory_key)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_endorsement_taps (
+        id SERIAL PRIMARY KEY,
+        business_id VARCHAR NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        tag_key VARCHAR(100) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(business_id, user_id, tag_key)
+      )
+    `);
+
+    // Seed endorsement_tags
+    let tagsInserted = 0; let tagsSkipped = 0;
+    for (const t of ENDORSEMENT_TAGS) {
+      const exists = await pool.query(`SELECT id FROM endorsement_tags WHERE tag_key=$1 LIMIT 1`, [t.tag_key]);
+      if (exists.rows.length) { tagsSkipped++; continue; }
+      await pool.query(
+        `INSERT INTO endorsement_tags (tag_key, tag_family, tag_type, default_label, helper_text, category_ids, subcategory_keys, sort_weight)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [t.tag_key, t.tag_family, t.tag_type, t.default_label, t.helper_text,
+         JSON.stringify(t.category_ids), JSON.stringify(t.subcategory_keys), t.sort_weight]
+      );
+      tagsInserted++;
+    }
+
+    // Seed endorsement_tag_variants
+    let varInserted = 0; let varSkipped = 0;
+    for (const v of ENDORSEMENT_TAG_VARIANTS) {
+      const subKey = v.subcategory_key ?? null;
+      const exists = await pool.query(
+        `SELECT id FROM endorsement_tag_variants WHERE tag_family=$1 AND community_code=$2 AND (subcategory_key=$3 OR (subcategory_key IS NULL AND $3 IS NULL)) LIMIT 1`,
+        [v.tag_family, v.community_code, subKey]
+      );
+      if (exists.rows.length) { varSkipped++; continue; }
+      await pool.query(
+        `INSERT INTO endorsement_tag_variants (tag_family, community_code, display_label, said_verb, subcategory_key)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [v.tag_family, v.community_code, v.display_label, v.said_verb, subKey]
+      );
+      varInserted++;
+    }
+
+    req.log.info({ tagsInserted, tagsSkipped, varInserted, varSkipped }, "seed-endorsement-tags done");
+    res.json({
+      ok: true,
+      tags: { inserted: tagsInserted, skipped: tagsSkipped, total: ENDORSEMENT_TAGS.length },
+      variants: { inserted: varInserted, skipped: varSkipped, total: ENDORSEMENT_TAG_VARIANTS.length },
+    });
+  } catch (err) {
+    req.log.error({ err }, "seed-endorsement-tags error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });
