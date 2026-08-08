@@ -379,6 +379,12 @@ END $seed$`,
             AND NOT ownership_designations::text ILIKE '%Black / African American%'`,
   },
   {
+    // Enable pg_trgm for fuzzy name matching (e.g. "Hakeem's book store" → "Hakim's Bookstore").
+    // Safe to run on any Postgres version — CREATE EXTENSION IF NOT EXISTS is a no-op if present.
+    name: "enable_pg_trgm_extension",
+    sql: `CREATE EXTENSION IF NOT EXISTS pg_trgm`,
+  },
+  {
     // Seed two well-known Black-owned community businesses: Mama J's Kitchen (Richmond, VA)
     // and Hakim's Bookstore (Philadelphia, PA). Both go in as live_unclaimed so the
     // community can immediately find, vibe-tag, and add social handles without a claim.
