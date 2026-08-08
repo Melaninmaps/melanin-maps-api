@@ -13,7 +13,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/contexts/ThemeContext";
-import { getApiBase } from "@/utils/apiBase";
+import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
 const FIELD_LABELS: Record<string, string> = {
