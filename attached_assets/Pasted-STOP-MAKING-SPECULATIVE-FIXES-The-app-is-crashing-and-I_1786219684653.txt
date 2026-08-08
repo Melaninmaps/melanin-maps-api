@@ -1,0 +1,286 @@
+STOP MAKING SPECULATIVE FIXES.
+
+The app is crashing and I need a DIAGNOSIS-FIRST workflow.
+
+Do not guess.
+Do not throw multiple fixes at the problem.
+Do not refactor unrelated code.
+Do not change dependencies unless the evidence points to a dependency problem.
+Do not make production changes until you can show me the failure and the likely root cause.
+
+I want you to work like this:
+
+1. REPRODUCE THE CRASH
+
+First, reproduce the exact crash.
+
+Tell me:
+
+* Which environment crashes: web, iOS, Android, or more than one
+* Exact route/screen/action that triggers it
+* Whether it happens every time or intermittently
+* Whether it affects all users or only certain accounts
+* Whether it happens before login, after login, or on a specific feature
+* The exact build/deployment/version being tested
+
+Do not proceed until you have a reproducible case or you clearly state that you cannot reproduce it.
+
+2. CAPTURE THE ACTUAL ERROR
+
+Collect the real evidence from the failing run.
+
+I want:
+
+* full error message
+* stack trace
+* browser console error if web
+* server/API logs
+* Railway production logs if production is affected
+* mobile runtime/crash logs if mobile is affected
+* network request that failed, including status code and endpoint
+* timestamp of the failure
+* the first error that appears, not only secondary errors caused afterward
+
+Do not summarize away the important details.
+
+Show me the exact relevant error output.
+
+3. IDENTIFY THE FIRST FAILURE
+
+Trace the crash backward to the FIRST failing component.
+
+Tell me:
+
+* exact file
+* exact function/component/route
+* exact line if available
+* what input/state/request triggered it
+* what the code expected
+* what it actually received
+
+Separate ROOT CAUSE from DOWNSTREAM SYMPTOMS.
+
+Example:
+
+Root cause:
+X returned null where Y expected an object.
+
+Downstream symptoms:
+render crash
+API retry
+session warning
+
+Do not treat downstream symptoms as separate problems unless proven.
+
+4. CHECK RECENT CHANGES
+
+Compare the current crashing version against the last known working version.
+
+Identify:
+
+* recent commits/changes
+* files changed
+* auth changes
+* navigation changes
+* schema/API changes
+* environment variable changes
+* package/dependency changes
+* build config changes
+
+Tell me which recent change is most likely related and WHY.
+
+Do not revert or modify anything yet.
+
+5. FORM A HYPOTHESIS
+
+Before touching code, give me:
+
+HYPOTHESIS:
+The crash is caused by ______.
+
+EVIDENCE:
+
+* ---
+* ---
+* ---
+
+CONFIDENCE:
+High / Medium / Low
+
+WHAT WOULD PROVE IT:
+______.
+
+If confidence is LOW, gather more evidence.
+
+Do not patch a low-confidence hypothesis.
+
+6. RUN A TARGETED TEST
+
+Use the smallest possible test to prove or disprove the hypothesis.
+
+Examples:
+
+* call the failing endpoint directly
+* render the failing component with the same data
+* inspect the exact database record
+* test the specific auth/session state
+* compare production vs development response
+* reproduce using the same user/account state
+
+Report the result.
+
+7. ONLY THEN PROPOSE A FIX
+
+Once the root cause is supported by evidence, tell me:
+
+ROOT CAUSE:
+
+---
+
+MINIMUM FIX:
+
+---
+
+FILES TO CHANGE:
+
+---
+
+WHY THIS FIX ADDRESSES THE ROOT CAUSE:
+
+---
+
+RISK:
+Low / Medium / High
+
+WHAT COULD THIS BREAK:
+
+---
+
+ROLLBACK:
+
+---
+
+Do not implement yet if the fix changes authentication, database schema, production configuration, or multiple unrelated files.
+
+Show me first.
+
+8. AFTER APPROVAL / SAFE MINIMUM FIX
+
+If the fix is clearly isolated and low-risk, make the smallest possible change.
+
+Do not add unrelated cleanup.
+Do not refactor while fixing.
+Do not upgrade packages “while you're there.”
+Do not rewrite working systems.
+
+9. PROVE THE FIX
+
+After the change, repeat the SAME steps that caused the crash.
+
+Show:
+
+* crash no longer occurs
+* original error no longer appears
+* no new errors introduced
+* affected feature works
+* adjacent critical paths still work
+
+At minimum check:
+
+* login/auth if relevant
+* navigation
+* API response
+* save/load behavior
+* affected screen
+* logout/session if auth-related
+
+10. PRODUCTION VS DEVELOPMENT
+
+Do not tell me something is fixed because it works only in Replit development.
+
+If the crash is in production, validate against production.
+
+Clearly label every piece of evidence:
+
+DEV
+STAGING
+PRODUCTION
+
+Do not mix them.
+
+11. DO NOT USE “TRY THIS” TROUBLESHOOTING
+
+I do not want:
+
+“Maybe it is X.”
+“Let's try changing Y.”
+“Could be Z.”
+“I updated several things.”
+
+I want:
+
+OBSERVED
+→ TRACED
+→ PROVEN
+→ FIXED
+→ RETESTED
+
+12. RESPONSE FORMAT
+
+Reply to me using this exact structure:
+
+CRASH REPRODUCED:
+Yes/No
+
+ENVIRONMENT:
+
+---
+
+TRIGGER:
+
+---
+
+EXACT ERROR:
+
+---
+
+FIRST FAILING COMPONENT:
+
+---
+
+ROOT CAUSE:
+
+---
+
+EVIDENCE:
+1.
+2.
+3.
+
+CONFIDENCE:
+High/Medium/Low
+
+RECENT CHANGE MOST LIKELY RELATED:
+
+---
+
+PROPOSED MINIMUM FIX:
+
+---
+
+FILES THAT WOULD CHANGE:
+
+---
+
+RISK:
+
+---
+
+DO YOU NEED MY APPROVAL BEFORE IMPLEMENTING:
+Yes/No
+
+Do not make additional fixes until this diagnosis is complete.
+
+The priority is not speed by guessing.
+
+The priority is identifying the actual cause so we stop creating new problems while trying to solve the original one.
