@@ -378,6 +378,61 @@ END $seed$`,
             AND ownership_designations::text ILIKE '%black-owned%'
             AND NOT ownership_designations::text ILIKE '%Black / African American%'`,
   },
+  {
+    // Seed two well-known Black-owned community businesses: Mama J's Kitchen (Richmond, VA)
+    // and Hakim's Bookstore (Philadelphia, PA). Both go in as live_unclaimed so the
+    // community can immediately find, vibe-tag, and add social handles without a claim.
+    // Also ensures any previously inserted staged copies are promoted to live_unclaimed.
+    name: "seed_mama_js_and_hakims_bookstore_v1",
+    sql: `DO $seed$
+DECLARE biz RECORD;
+BEGIN
+  FOR biz IN SELECT * FROM (VALUES
+    ('Mama J''s Kitchen',
+     'A Richmond institution serving classic soul food — fried chicken, catfish, smothered pork chops, and hand-rolled biscuits — in a warm, family-style setting that has anchored the community for over a decade.',
+     'Restaurant','Soul Food','415 N 1st St','Richmond','VA','37.5452','-77.4388',
+     true,'["black-owned"]','$$','mamajskitchenrva','https://mamajskitchen.net','(804) 225-7449'),
+    ('Hakim''s Bookstore',
+     'Philadelphia''s beloved Black-owned bookstore serving the community since 1959, stocking an unmatched selection of African American literature, history, culture, and children''s books.',
+     'Retail','Bookstore','210 W Girard Ave','Philadelphia','PA','39.9682','-75.1480',
+     true,'["black-owned"]','$$',NULL,'https://hakimsbookstore.com',NULL)
+  ) AS t(name,description,category,subcategory,address,city,state,latitude,longitude,
+         black_owned,ownership_designations,price_range,instagram,website,phone)
+  LOOP
+    -- Promote any previously staged copy to live_unclaimed first
+    UPDATE businesses
+      SET listing_status = 'live_unclaimed'
+      WHERE LOWER(name) = LOWER(biz.name)
+        AND LOWER(city) = LOWER(biz.city)
+        AND (listing_status IS NULL OR listing_status = 'staged');
+
+    -- Insert if truly missing
+    IF NOT EXISTS (SELECT 1 FROM businesses WHERE LOWER(name) = LOWER(biz.name) AND LOWER(city) = LOWER(biz.city)) THEN
+      INSERT INTO businesses
+        (id, name, description, category, subcategory, address, city, state,
+         latitude, longitude, black_owned, ownership_designations,
+         price_range, instagram, website, phone,
+         confidence_score, verified, business_status, listing_status,
+         rating, review_count, vibes, reviews, photos, pending_photos, videos,
+         trust_badges, verified_designations, tags,
+         flag_count, flag_status, marketplace_tier, show_availability, feedback_opt_in)
+      VALUES (
+        gen_random_uuid(),
+        biz.name, biz.description, biz.category, biz.subcategory,
+        biz.address, biz.city, biz.state,
+        biz.latitude::numeric, biz.longitude::numeric,
+        biz.black_owned::boolean, biz.ownership_designations::jsonb,
+        biz.price_range, biz.instagram, biz.website, biz.phone,
+        70, false, 'community', 'live_unclaimed',
+        0, 0,
+        '[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+        '[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+        0,'none','free',false,false
+      );
+    END IF;
+  END LOOP;
+END $seed$`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
