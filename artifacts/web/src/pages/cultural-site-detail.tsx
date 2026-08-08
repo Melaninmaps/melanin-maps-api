@@ -22,6 +22,133 @@ const HERITAGE_COLORS: Record<string, string> = {
   "Caribbean Heritage": "#059669",
 };
 
+// ─── Heritage category SVG banners ───────────────────────────────────────────
+// Shown when a site has no imageUrl. Each banner uses the heritage accent color,
+// a subtle geometric pattern, and a category-specific line-art icon.
+
+const HERITAGE_ICONS: Record<string, React.ReactNode> = {
+  HBCU: (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="20" y="44" width="40" height="26" rx="2" />
+      <path d="M14 44 L40 28 L66 44" />
+      <rect x="33" y="54" width="14" height="16" rx="1" />
+      <circle cx="40" cy="22" r="6" />
+      <path d="M34 22 Q40 16 46 22" />
+    </svg>
+  ),
+  "African American Heritage": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="40" cy="40" r="22" />
+      <path d="M40 18 L40 62M18 40 L62 40" />
+      <path d="M24 24 L56 56M56 24 L24 56" strokeOpacity="0.4" />
+      <circle cx="40" cy="40" r="6" fill="currentColor" fillOpacity="0.3" />
+    </svg>
+  ),
+  "Civil Rights": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M28 60 C28 60 28 40 40 32 C52 24 52 12 52 12" />
+      <path d="M52 12 L68 28 M52 12 L36 28" />
+      <circle cx="28" cy="64" r="4" fill="currentColor" fillOpacity="0.4" />
+      <path d="M20 72 L80 72" strokeOpacity="0.3" />
+    </svg>
+  ),
+  "Native American Heritage": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="40" cy="40" r="20" />
+      <circle cx="40" cy="40" r="8" />
+      <path d="M40 20 L40 12M40 68 L40 60M20 40 L12 40M68 40 L60 40" />
+      <path d="M26 26 L20 20M54 54 L60 60M54 26 L60 20M26 54 L20 60" strokeOpacity="0.5" />
+    </svg>
+  ),
+  "Hispanic & Latino Heritage": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 60 L40 20 L60 60 Z" />
+      <path d="M28 48 L52 48" />
+      <circle cx="40" cy="36" r="4" fill="currentColor" fillOpacity="0.3" />
+      <path d="M12 68 L68 68M16 64 L64 64" strokeOpacity="0.3" />
+    </svg>
+  ),
+  "LGBTQ+ History": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M40 64 C40 64 16 48 16 32 C16 22 24 16 32 20 C36 22 38 26 40 28 C42 26 44 22 48 20 C56 16 64 22 64 32 C64 48 40 64 40 64Z" />
+      <path d="M32 36 L36 40 L48 28" strokeOpacity="0.7" />
+    </svg>
+  ),
+  "Women's History": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="40" cy="32" r="18" />
+      <path d="M40 50 L40 68M30 60 L50 60" />
+      <path d="M30 28 L40 20 L50 28" strokeOpacity="0.6" />
+    </svg>
+  ),
+  "Cultural Neighborhood": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 64 L10 38 L28 26 L28 64M28 64 L52 64 L52 34 L40 22 L28 34M52 64 L70 64 L70 44 L61 36 L52 44" />
+      <rect x="34" y="48" width="12" height="16" />
+    </svg>
+  ),
+  "Immigrant Heritage": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="40" cy="40" rx="22" ry="16" />
+      <ellipse cx="40" cy="40" rx="10" ry="16" />
+      <path d="M18 40 L62 40M40 24 L40 56" />
+      <ellipse cx="40" cy="40" rx="22" ry="16" strokeOpacity="0.3" strokeDasharray="4 4" />
+    </svg>
+  ),
+  "Caribbean Heritage": (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M40 16 Q52 28 52 40 Q52 56 40 64 Q28 56 28 40 Q28 28 40 16Z" />
+      <path d="M20 52 Q32 44 40 40 Q48 44 60 52" />
+      <path d="M20 28 Q32 36 40 40 Q48 36 60 28" strokeOpacity="0.5" />
+    </svg>
+  ),
+};
+
+function HeritageBanner({ category, color, name }: { category: string; color: string; name: string }) {
+  const icon = HERITAGE_ICONS[category] ?? (
+    <svg viewBox="0 0 80 80" fill="none" className="w-20 h-20 opacity-80" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M40 16 L44 30 L58 30 L46 38 L50 52 L40 44 L30 52 L34 38 L22 30 L36 30 Z" />
+      <circle cx="40" cy="40" r="28" strokeOpacity="0.25" />
+    </svg>
+  );
+
+  return (
+    <div
+      className="w-full h-52 relative overflow-hidden flex items-center justify-center"
+      style={{ background: `linear-gradient(135deg, ${color}22 0%, ${color}10 50%, ${color}1a 100%)` }}
+      aria-label={`${category} site`}
+    >
+      {/* Subtle geometric background rings */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `radial-gradient(circle at 80% 20%, ${color}18 0%, transparent 50%),
+                            radial-gradient(circle at 20% 80%, ${color}12 0%, transparent 40%)`,
+        }}
+      />
+      {/* Faint grid pattern */}
+      <svg className="absolute inset-0 w-full h-full opacity-5" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id={`grid-${category.replace(/\s+/g, "")}`} x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+            <path d="M 24 0 L 0 0 0 24" fill="none" stroke={color} strokeWidth="0.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#grid-${category.replace(/\s+/g, "")})`} />
+      </svg>
+      {/* Icon */}
+      <div className="relative z-10 flex flex-col items-center gap-3" style={{ color }}>
+        {icon}
+        <span
+          className="text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border"
+          style={{ borderColor: `${color}40`, background: `${color}15`, color }}
+        >
+          {category}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const RELATIONSHIP_TYPES = [
   { value: "alumnus", label: "Alumnus / Alumna" },
   { value: "student", label: "Current Student" },
@@ -186,12 +313,14 @@ export default function CulturalSiteDetail() {
 
         {/* Header card */}
         <div className="bg-white rounded-2xl overflow-hidden border border-[#2B1507]/5 shadow-sm">
-          {site.imageUrl && (
+          {site.imageUrl ? (
             <img
               src={site.imageUrl}
               alt={site.name}
               className="w-full h-52 object-cover"
             />
+          ) : (
+            <HeritageBanner category={site.heritageCategory ?? site.category} color={accentColor} name={site.name} />
           )}
           <div className="p-6">
             <div className="flex flex-wrap gap-2 mb-3">

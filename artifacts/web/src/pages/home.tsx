@@ -32,7 +32,7 @@ function openShare(platform: string) {
   }
 }
 
-interface ImpactStats { businesses: number; cities: number; reviews: number; community: number; }
+interface ImpactStats { businesses: number | null; cities: number | null; culturalSites: number | null; community: number | null; }
 
 function ImpactCounter() {
   const [stats, setStats] = useState<ImpactStats | null>(null);
@@ -42,7 +42,7 @@ function ImpactCounter() {
   const items = [
     { icon: Building2, label: "Businesses Listed", value: stats?.businesses ?? 0, suffix: "+" },
     { icon: Globe, label: "Cities Covered", value: stats?.cities ?? 0, suffix: "" },
-    { icon: BookOpen, label: "Community Reviews", value: stats?.reviews ?? 0, suffix: "+" },
+    { icon: BookOpen, label: "Cultural Heritage Sites", value: stats?.culturalSites ?? 0, suffix: "+" },
     { icon: Users, label: "Community Members", value: stats?.community ?? 0, suffix: "+" },
   ];
   return (
