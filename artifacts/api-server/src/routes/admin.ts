@@ -2107,6 +2107,44 @@ router.post("/admin/geocode-business", async (req: Request, res: Response) => {
   }
 });
 
+// ── POST /admin/set-user-password ────────────────────────────────────────────
+// CRON_SECRET only. Force-sets a user's password hash by email.
+// Used for review account setup — sets password without email verification.
+// Body: { email: string, password: string }
+router.post("/admin/set-user-password", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const cronHeader = req.headers["x-cron-secret"];
+  if (!cronSecret || cronHeader !== cronSecret) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const { email, password } = req.body as { email?: string; password?: string };
+  if (!email || !password || password.length < 8) {
+    res.status(400).json({ error: "email and password (min 8 chars) required" });
+    return;
+  }
+  try {
+    const bcrypt = await import("bcryptjs");
+    const hash = await bcrypt.hash(password, 8);
+    const r = await pool.query(
+      `UPDATE users SET password_hash = $1, email_verified = true,
+        email_verification_token = NULL, email_verification_expires = NULL,
+        failed_login_attempts = 0, locked_until = NULL
+       WHERE LOWER(email) = LOWER($2)
+       RETURNING id, email, member_type, approved`,
+      [hash, email.trim()]
+    );
+    if ((r.rowCount ?? 0) === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ ok: true, user: r.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/set-user-password error");
+    res.status(500).json({ error: "Failed", detail: String(err) });
+  }
+});
+
 export default router;
 
 
