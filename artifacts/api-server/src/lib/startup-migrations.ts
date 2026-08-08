@@ -21,6 +21,7 @@ import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
 import { COMMUNITY_ORGANIZATIONS_SEED } from "../data/community-organizations-seed";
 import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
+import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -437,6 +438,23 @@ END $seed$`,
           CREATE INDEX IF NOT EXISTS idx_edit_suggestions_entity ON edit_suggestions (entity_type, entity_id);
           CREATE INDEX IF NOT EXISTS idx_edit_suggestions_user ON edit_suggestions (user_id)`,
   },
+  // ── Cultural Phrases table ────────────────────────────────────────────
+  {
+    name: "cultural_phrases_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS cultural_phrases (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      group_name TEXT NOT NULL,
+      phrase TEXT NOT NULL,
+      english_gloss TEXT NOT NULL,
+      is_sensitive BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "cultural_phrases_unique_idx",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_cultural_phrases_unique
+          ON cultural_phrases (LOWER(group_name), LOWER(phrase))`,
+  },
   // ── Tour Cultural Sites table ─────────────────────────────────────────
   {
     name: "tour_cultural_sites_table_v1",
@@ -676,6 +694,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
     ["recurring events",  () => ensureRecurringEvents(log, warn)],
     ["tour cultural sites", () => ensureTourCulturalSites(log, warn)],
+    ["cultural phrases",  () => ensureCulturalPhrases(log, warn)],
+    ["neighborhood timing", () => ensureNeighborhoodTiming(log, warn)],
+    ["geocode tour content", () => geocodeTourContent(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
@@ -1092,6 +1113,231 @@ async function ensureTourBusinesses(
     log(`Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`);
   } catch (err: unknown) {
     warn(`Tour businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Cultural Phrases guard ────────────────────────────────────────────────────
+async function ensureCulturalPhrases(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(group_name)||'|'||LOWER(phrase) AS k FROM cultural_phrases`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0, skipped = 0;
+    for (const p of CULTURAL_PHRASES_SEED) {
+      const key = `${p.group_name.toLowerCase()}|${p.phrase.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO cultural_phrases (group_name, phrase, english_gloss, is_sensitive)
+           VALUES ($1,$2,$3,$4)`,
+          [p.group_name, p.phrase, p.english_gloss, p.is_sensitive]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`Cultural phrases guard: failed to insert "${p.phrase}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Cultural phrases guard: ${inserted} inserted, ${skipped} already present (seed: ${CULTURAL_PHRASES_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Cultural phrases guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Neighborhood Timing UPSERT ────────────────────────────────────────────────
+// Populates city_profiles.neighborhood_timing with per-city district timing data.
+// Only sets if the column is currently NULL/empty — never overwrites edited data.
+async function ensureNeighborhoodTiming(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const TIMING: Record<string, object[]> = {
+    "philadelphia": [
+      { neighborhood: "West Philadelphia / University City", best_days: ["Saturday", "Sunday"], best_times: "Morning to afternoon", notes: "Highly active on weekends due to farmers markets and the African American Market at FDR Park (Saturdays 10am–5pm). Weekdays better for museum visits and interviews." },
+      { neighborhood: "Northern Liberties / Fishtown", best_days: ["Friday", "Saturday"], best_times: "Evening", notes: "Weekend evenings most vibrant for dining, galleries, and nightlife." },
+      { neighborhood: "South Street", best_days: ["Saturday", "Sunday"], best_times: "Daytime", notes: "Weekend daytime for shopping, murals, and community energy." },
+      { neighborhood: "North Philly / El Centro de Oro", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Afternoon", notes: "Weekday afternoons best for connecting with community organizations and cultural centers." },
+    ],
+    "washington-dc": [
+      { neighborhood: "U Street Corridor (Black Broadway)", best_days: ["Saturday","Friday"], best_times: "Friday/Saturday evenings for nightlife; weekdays for historical sites and daytime interviews", notes: "Weekdays: relaxed, good for capturing murals and interviewing business owners. Weekends: transforms into vibrant hub of live music, dining, and community culture." },
+      { neighborhood: "Anacostia", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Best visited during the day for historical tours and the Anacostia Arts Center. Weekdays are quieter and better for community connections." },
+      { neighborhood: "H Street NE", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for nightlife and dining energy." },
+      { neighborhood: "Adams Morgan", best_days: ["Saturday","Sunday"], best_times: "Afternoon to evening", notes: "Weekend afternoons for multicultural food scene and community energy." },
+    ],
+    "richmond": [
+      { neighborhood: "Arts District / Downtown", best_days: ["Friday"], best_times: "6pm–9pm", notes: "First Friday of every month: RVA First Fridays art walk (6pm–9pm) with gallery openings and pop-up markets. Saturdays also highly active with multiple markets." },
+      { neighborhood: "Scott's Addition", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for breweries and dining." },
+      { neighborhood: "Church Hill", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for historical site visits and photographing the neighborhood." },
+    ],
+    "raleigh": [
+      { neighborhood: "Downtown Raleigh", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Saturdays and Sundays most active — Raleigh Market and Black Farmers Market (Sundays). Weekdays better for scheduling interviews with chamber representatives." },
+      { neighborhood: "Five Points / Glenwood South", best_days: ["Friday"], best_times: "Evening", notes: "Friday evenings for dining and local scene energy." },
+      { neighborhood: "Hayti Heritage / Fayetteville St (Durham)", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime for museums, cultural centers, and organizational visits." },
+    ],
+    "charlotte": [
+      { neighborhood: "South End / NoDa (North Davidson)", best_days: ["Saturday","Sunday"], best_times: "Morning to evening", notes: "Weekends most vibrant. Farmers markets (Regional Market, Matthews Market) on Saturday mornings. Festivals and large events almost exclusively on weekends." },
+      { neighborhood: "Uptown Charlotte", best_days: ["Saturday","Sunday"], best_times: "Daytime", notes: "Museums (Gantt Center) accessible weekdays; weekend events most active." },
+      { neighborhood: "West End (Historic Greenville)", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday visits best for connecting with community organizations and historical sites." },
+    ],
+    "columbia-sc": [
+      { neighborhood: "Main Street", best_days: ["Saturday"], best_times: "9am–1pm", notes: "Saturday mornings highly recommended — Soda City Market (9am–1pm) is a prime community gathering with local vendors. First Thursdays on Main is monthly." },
+      { neighborhood: "Meeting Street / West Columbia", best_days: ["Saturday"], best_times: "11am–3pm", notes: "Meeting Street Artisan Market on Saturdays (11am–3pm) makes this area particularly active." },
+      { neighborhood: "Five Points", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Friday–Saturday evenings for dining and nightlife." },
+    ],
+    "atlanta": [
+      { neighborhood: "Sweet Auburn / MLK Historic District", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for historical touring: MLK National Historic Park, Ebenezer Baptist Church, APEX Museum. Less crowded on weekdays." },
+      { neighborhood: "Midtown", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Weekends for markets and festivals. Midtown Farmers Market active Saturdays. Parking is free after 6pm on weekends in most areas." },
+      { neighborhood: "West Atlanta / West End", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for community organizations, cultural centers, and the HBCU cluster." },
+      { neighborhood: "Decatur", best_days: ["Saturday"], best_times: "Morning", notes: "Saturday morning farmers markets and community gathering." },
+    ],
+    "montgomery": [
+      { neighborhood: "Downtown Civil Rights District", best_days: ["Monday","Tuesday","Wednesday","Thursday","Friday"], best_times: "Daytime", notes: "Weekdays best for Legacy Museum, EJI National Memorial, Rosa Parks Museum — all have structured visiting hours. Less crowded than weekends." },
+      { neighborhood: "Dexter Avenue Historic District", best_days: ["Saturday","Sunday"], best_times: "Daytime to afternoon", notes: "Weekend community events and church services draw community together." },
+    ],
+    "birmingham": [
+      { neighborhood: "Civil Rights District (4th Ave N)", best_days: ["Monday","Tuesday","Wednesday","Thursday","Friday"], best_times: "Daytime", notes: "Weekdays for Birmingham Civil Rights Institute, 16th Street Baptist Church, Kelly Ingram Park — structured museum hours work best on weekdays." },
+      { neighborhood: "Pepper Place / Lakeview", best_days: ["Saturday"], best_times: "Morning to afternoon", notes: "Pepper Place Market on Saturday mornings — a key community gathering point." },
+      { neighborhood: "Southside", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Weekend evenings for dining and nightlife." },
+    ],
+    "mobile": [
+      { neighborhood: "Downtown Mobile (LODA)", best_days: ["Second Friday","Second Saturday"], best_times: "Friday 6pm–9pm; Saturday events", notes: "Every second weekend of the month is particularly active: LODA ArtWalk (Friday 6–9pm), Saturday community events. Downtown comes alive as a cultural hub." },
+      { neighborhood: "Africatown", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekday daytime best for visiting Africatown Heritage House and connecting with community members." },
+      { neighborhood: "Spring Hill / West Mobile", best_days: ["Saturday"], best_times: "Morning to afternoon", notes: "Saturday mornings for community engagement and local markets." },
+    ],
+    "baton-rouge": [
+      { neighborhood: "Downtown / Spanish Town", best_days: ["Saturday"], best_times: "Morning", notes: "Saturdays highly recommended: Red Stick Farmers Market (every Saturday morning) + Baton Rouge Arts Market (first Saturday) make downtown vibrant." },
+      { neighborhood: "Mid-City", best_days: ["Saturday"], best_times: "Afternoon", notes: "Last Saturday of month for the Local Pop-Up. Also active during the Red Stick Farmers Market cycle." },
+      { neighborhood: "North Baton Rouge", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for community organizations, the 1953 Bus Boycott Marker, and historical cultural visits." },
+    ],
+    "new-orleans": [
+      { neighborhood: "Tremé", best_days: ["Sunday"], best_times: "Morning to afternoon", notes: "Sunday mornings are significant for church services, often followed by traditional second-line parades in the afternoon. Daytime best for Backstreet Cultural Museum and historical tours." },
+      { neighborhood: "Central City / Broadmoor", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays ideal for visiting Ashé Cultural Arts Center and Black-owned businesses. Weekends host community events." },
+      { neighborhood: "Bywater / Marigny", best_days: ["Saturday","Sunday"], best_times: "Afternoon", notes: "Weekend afternoons for pop-up markets, street art, and eclectic vendors." },
+      { neighborhood: "French Quarter / Tremé adjacent", best_days: ["Friday","Saturday"], best_times: "Evening to late night", notes: "Late evenings for the full cultural fabric of music and community nightlife." },
+    ],
+    "houston": [
+      { neighborhood: "Third Ward / Emancipation Park", best_days: ["Monday","Tuesday","Wednesday","Thursday"], best_times: "Daytime", notes: "Weekdays for historical sites, community organizations, and Emancipation Park visits." },
+      { neighborhood: "Midtown / Museum District", best_days: ["Saturday","Sunday"], best_times: "Morning to afternoon", notes: "Weekends for farmers markets and pop-up markets. Houston Farmers Market open daily but busiest on Saturdays." },
+      { neighborhood: "Discovery Green / Downtown", best_days: ["Friday","Saturday"], best_times: "Evening", notes: "Evening events: Flea by Night at Discovery Green and M-K-T Sunset Market best in late afternoon to evening." },
+    ],
+  };
+
+  try {
+    let updated = 0;
+    for (const [slug, timing] of Object.entries(TIMING)) {
+      try {
+        const r = await pool.query(
+          `UPDATE city_profiles
+           SET neighborhood_timing = $1::jsonb
+           WHERE city_slug = $2
+             AND (neighborhood_timing IS NULL OR neighborhood_timing = '[]'::jsonb)
+           RETURNING city_slug`,
+          [JSON.stringify(timing), slug]
+        );
+        if (r.rowCount && r.rowCount > 0) updated++;
+      } catch (err: unknown) {
+        warn(`Neighborhood timing: failed for ${slug}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Neighborhood timing guard: ${updated} cities updated (${Object.keys(TIMING).length} in seed)`);
+  } catch (err: unknown) {
+    warn(`Neighborhood timing guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Geocode Tour Content ──────────────────────────────────────────────────────
+// Batch-geocodes tour_cultural_sites, community_organizations, recurring_events
+// that are missing lat/lng using Google Maps Geocoding API.
+// Capped at 60 items per boot to keep startup fast — runs idempotently.
+async function geocodeTourContent(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) { warn("Geocode tour content: GOOGLE_MAPS_API_KEY not set — skipping"); return; }
+
+  async function geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
+    const query = [address, city, state].filter(Boolean).join(", ");
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json() as { status: string; results: { geometry: { location: { lat: number; lng: number } } }[] };
+      if (data.status === "OK" && data.results[0]) {
+        return data.results[0].geometry.location;
+      }
+    } catch { /* silent */ }
+    return null;
+  }
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  let geocoded = 0;
+  const CAP = 60;
+
+  try {
+    // Cultural sites with address but no lat/lng
+    const sites = await pool.query(
+      `SELECT id, name, address, city, state FROM tour_cultural_sites
+       WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
+       LIMIT $1`,
+      [CAP]
+    );
+    for (const s of sites.rows) {
+      if (geocoded >= CAP) break;
+      const coords = await geocodeAddress(s.address, s.city, s.state);
+      if (coords) {
+        await pool.query(`UPDATE tour_cultural_sites SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, s.id]);
+        geocoded++;
+      }
+      await sleep(100);
+    }
+
+    // Community orgs with address but no lat/lng
+    if (geocoded < CAP) {
+      const orgs = await pool.query(
+        `SELECT id, name, address, city, state FROM community_organizations
+         WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
+         LIMIT $1`,
+        [CAP - geocoded]
+      );
+      for (const o of orgs.rows) {
+        if (geocoded >= CAP) break;
+        const coords = await geocodeAddress(o.address, o.city, o.state);
+        if (coords) {
+          await pool.query(`UPDATE community_organizations SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, o.id]);
+          geocoded++;
+        }
+        await sleep(100);
+      }
+    }
+
+    // Recurring events with venue + address but no lat/lng
+    if (geocoded < CAP) {
+      const evts = await pool.query(
+        `SELECT id, name, venue, address, city, state FROM recurring_events
+         WHERE (address IS NOT NULL OR venue IS NOT NULL) AND (latitude IS NULL OR longitude IS NULL)
+         LIMIT $1`,
+        [CAP - geocoded]
+      );
+      for (const e of evts.rows) {
+        if (geocoded >= CAP) break;
+        const addrQuery = e.address || e.venue || "";
+        const coords = await geocodeAddress(addrQuery, e.city, e.state);
+        if (coords) {
+          await pool.query(`UPDATE recurring_events SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, e.id]);
+          geocoded++;
+        }
+        await sleep(100);
+      }
+    }
+
+    log(`Geocode tour content: ${geocoded} items geocoded this boot`);
+  } catch (err: unknown) {
+    warn(`Geocode tour content failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

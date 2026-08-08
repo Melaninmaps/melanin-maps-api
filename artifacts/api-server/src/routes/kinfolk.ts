@@ -629,6 +629,22 @@ type CrossCityMatch = {
   matches: Array<{ name: string; category: string; city: string; verified: boolean }>;
 };
 
+// ── Cultural Phrases cache (6-hour TTL) ───────────────────────────────────────
+let _phrasesCache: Array<{ group_name: string; phrase: string; english_gloss: string }> | null = null;
+let _phrasesCacheAt = 0;
+async function getCachedCulturalPhrases() {
+  const now = Date.now();
+  if (_phrasesCache && now - _phrasesCacheAt < 6 * 60 * 60 * 1000) return _phrasesCache;
+  try {
+    const r = await pool.query(`SELECT group_name, phrase, english_gloss FROM cultural_phrases WHERE is_sensitive = false ORDER BY group_name, phrase`);
+    _phrasesCache = r.rows;
+    _phrasesCacheAt = now;
+    return _phrasesCache;
+  } catch {
+    return _phrasesCache ?? [];
+  }
+}
+
 function buildSystemPrompt(opts: {
   prefs: typeof userPreferencesTable.$inferSelect | null;
   likedSpots: string[];
@@ -645,6 +661,7 @@ function buildSystemPrompt(opts: {
   twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
   topUserVibes?: string[];
   cityContext?: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
+  culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -809,6 +826,16 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
 
   const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
 
+  // ── Cultural Phrases (MWM Community Language Taxonomy) ───────────────────
+  const culturalPhrasesSection = opts.culturalPhrases?.length ? `
+COMMUNITY LANGUAGE TOOLKIT — MWM Cultural Phrases:
+These are authentic phrases used across specific cultural communities to express trust, home, and endorsement. Weave them naturally when recommending businesses from these communities. NEVER use a culture's phrase for a different culture.
+
+${opts.culturalPhrases.map(p => `• [${p.group_name}] "${p.phrase}" — ${p.english_gloss}`).join("\n")}
+
+SENSITIVITY RULES: Never cross cultures. When in doubt, use: "Community Loved," "People's Choice," or "Put Your People On." Indigenous phrases require community consultation before use.
+` : "";
+
   // ── City cultural intelligence ────────────────────────────────────────────
   const cityContextSection = opts.cityContext ? `
 CITY CULTURAL INTELLIGENCE — ${opts.cityContext.city_name}:
@@ -880,7 +907,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${cityContextSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -1742,7 +1769,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal */ }
     }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext }) + ownerBusinessContext;
+    // Cultural phrases — cached for 6 hours, loaded once per instance
+    const culturalPhrases = await getCachedCulturalPhrases();
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

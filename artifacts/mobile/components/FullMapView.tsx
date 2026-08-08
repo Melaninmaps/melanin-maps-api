@@ -106,6 +106,49 @@ interface MapEventItem {
   isFree?: boolean | null;
 }
 
+interface TourCommunityOrg {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  category: string;
+  mission: string | null;
+  address: string | null;
+  website: string | null;
+  instagram: string | null;
+  phone: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+}
+
+interface TourRecurringEvent {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  venue: string | null;
+  address: string | null;
+  description: string | null;
+  frequency: string;
+  day_of_week: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  category: string;
+  latitude: string | number | null;
+  longitude: string | number | null;
+}
+
+interface TourHeritageSite {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  address: string | null;
+  description: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+}
+
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
 
 interface CategoryStyle {
@@ -192,6 +235,22 @@ export function FullMapView() {
   const [mapEvents, setMapEvents] = useState<MapEventItem[]>([]);
   const [selectedMapEvent, setSelectedMapEvent] = useState<MapEventItem | null>(null);
   const isFetchingMapEvents = useRef(false);
+
+  // ── Tour community layers ────────────────────────────────────────────────
+  const [showCommunityOrgs, setShowCommunityOrgs] = useState(false);
+  const [communityOrgs, setCommunityOrgs] = useState<TourCommunityOrg[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<TourCommunityOrg | null>(null);
+  const isFetchingOrgs = useRef(false);
+
+  const [showTourEvents, setShowTourEvents] = useState(false);
+  const [tourEvents, setTourEvents] = useState<TourRecurringEvent[]>([]);
+  const [selectedTourEvent, setSelectedTourEvent] = useState<TourRecurringEvent | null>(null);
+  const isFetchingTourEvents = useRef(false);
+
+  const [showTourSites, setShowTourSites] = useState(false);
+  const [tourSites, setTourSites] = useState<TourHeritageSite[]>([]);
+  const [selectedTourSite, setSelectedTourSite] = useState<TourHeritageSite | null>(null);
+  const isFetchingTourSites = useRef(false);
 
   const [mapReady, setMapReady] = useState(false);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -357,6 +416,43 @@ export function FullMapView() {
     return () => clearInterval(timer);
   }, [culturalSitesError, showCulturalSites, fetchCulturalSites]);
 
+  // ── Tour community layer fetches ──────────────────────────────────────────
+  useEffect(() => {
+    if (!showCommunityOrgs || communityOrgs.length > 0 || isFetchingOrgs.current || !mapReady) return;
+    isFetchingOrgs.current = true;
+    const base = getApiBase();
+    if (!base) { isFetchingOrgs.current = false; return; }
+    fetch(`${base}/api/community-orgs?limit=200`)
+      .then((r) => r.ok ? r.json() as Promise<{ organizations: TourCommunityOrg[] }> : null)
+      .then((d) => { if (d?.organizations) setCommunityOrgs(d.organizations.filter(o => o.latitude != null && o.longitude != null)); })
+      .catch(() => {})
+      .finally(() => { isFetchingOrgs.current = false; });
+  }, [showCommunityOrgs, mapReady, communityOrgs.length]);
+
+  useEffect(() => {
+    if (!showTourEvents || tourEvents.length > 0 || isFetchingTourEvents.current || !mapReady) return;
+    isFetchingTourEvents.current = true;
+    const base = getApiBase();
+    if (!base) { isFetchingTourEvents.current = false; return; }
+    fetch(`${base}/api/recurring-events?limit=200`)
+      .then((r) => r.ok ? r.json() as Promise<{ events: TourRecurringEvent[] }> : null)
+      .then((d) => { if (d?.events) setTourEvents(d.events.filter(e => e.latitude != null && e.longitude != null)); })
+      .catch(() => {})
+      .finally(() => { isFetchingTourEvents.current = false; });
+  }, [showTourEvents, mapReady, tourEvents.length]);
+
+  useEffect(() => {
+    if (!showTourSites || tourSites.length > 0 || isFetchingTourSites.current || !mapReady) return;
+    isFetchingTourSites.current = true;
+    const base = getApiBase();
+    if (!base) { isFetchingTourSites.current = false; return; }
+    fetch(`${base}/api/tour-cultural-sites?limit=300`)
+      .then((r) => r.ok ? r.json() as Promise<{ sites: TourHeritageSite[] }> : null)
+      .then((d) => { if (d?.sites) setTourSites(d.sites.filter(s => s.latitude != null && s.longitude != null)); })
+      .catch(() => {})
+      .finally(() => { isFetchingTourSites.current = false; });
+  }, [showTourSites, mapReady, tourSites.length]);
+
   // ── Events fetch — loads once when map is ready, refreshes on focus ───────
   useEffect(() => {
     if (!mapReady || isFetchingMapEvents.current) return;
@@ -392,7 +488,8 @@ export function FullMapView() {
     } catch {}
   };
 
-  const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null || selectedMapEvent !== null;
+  const anyCardVisible = selectedBusiness !== null || selectedCulturalSite !== null || selectedMapEvent !== null
+    || selectedOrg !== null || selectedTourEvent !== null || selectedTourSite !== null;
 
   return (
     <View
@@ -427,7 +524,7 @@ export function FullMapView() {
             "postOffice", "restroom",
           ],
         } : {})}
-        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); }}
+        onPress={() => { setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedOrg(null); setSelectedTourEvent(null); setSelectedTourSite(null); }}
       >
         {/* Business pins — gold native platform pin (no custom children = no Fabric crash risk) */}
         {mapped.map((biz) => (
@@ -485,6 +582,54 @@ export function FullMapView() {
               zIndex={isSelected ? 10 : 1}
               tracksViewChanges={false}
               pinColor={cs.color}
+            />
+          );
+        })}
+
+        {/* Community org pins — purple */}
+        {showCommunityOrgs && communityOrgs.map((org) => {
+          const lat = typeof org.latitude === "string" ? parseFloat(org.latitude) : (org.latitude ?? NaN);
+          const lng = typeof org.longitude === "string" ? parseFloat(org.longitude) : (org.longitude ?? NaN);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
+            <Marker
+              key={`org-${org.id}`}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={() => { setSelectedOrg(org); setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedMapEvent(null); setSelectedTourEvent(null); setSelectedTourSite(null); }}
+              tracksViewChanges={false}
+              pinColor="#7C3AED"
+            />
+          );
+        })}
+
+        {/* Recurring event pins — teal */}
+        {showTourEvents && tourEvents.map((evt) => {
+          const lat = typeof evt.latitude === "string" ? parseFloat(evt.latitude) : (evt.latitude ?? NaN);
+          const lng = typeof evt.longitude === "string" ? parseFloat(evt.longitude) : (evt.longitude ?? NaN);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
+            <Marker
+              key={`tevt-${evt.id}`}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={() => { setSelectedTourEvent(evt); setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedMapEvent(null); setSelectedOrg(null); setSelectedTourSite(null); }}
+              tracksViewChanges={false}
+              pinColor="#0D9488"
+            />
+          );
+        })}
+
+        {/* Tour heritage site pins — amber */}
+        {showTourSites && tourSites.map((site) => {
+          const lat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude ?? NaN);
+          const lng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude ?? NaN);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          return (
+            <Marker
+              key={`tsite-${site.id}`}
+              coordinate={{ latitude: lat, longitude: lng }}
+              onPress={() => { setSelectedTourSite(site); setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedMapEvent(null); setSelectedOrg(null); setSelectedTourEvent(null); }}
+              tracksViewChanges={false}
+              pinColor="#D97706"
             />
           );
         })}
@@ -652,6 +797,30 @@ export function FullMapView() {
             <Text style={[s.layerBtnTxt, { color: showMapEvents ? "#fff" : GOLD }]}>
               Events{mapEvents.length > 0 ? ` (${mapEvents.length})` : ""}
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.layerBtn, showCommunityOrgs && { backgroundColor: "#7C3AED", borderColor: "transparent" }]}
+            onPress={() => { setShowCommunityOrgs((v) => !v); setSelectedOrg(null); }}
+            activeOpacity={0.85}
+          >
+            <Feather name="users" size={12} color={showCommunityOrgs ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showCommunityOrgs ? "#fff" : GOLD }]}>Orgs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.layerBtn, showTourEvents && { backgroundColor: "#0D9488", borderColor: "transparent" }]}
+            onPress={() => { setShowTourEvents((v) => !v); setSelectedTourEvent(null); }}
+            activeOpacity={0.85}
+          >
+            <Feather name="repeat" size={12} color={showTourEvents ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showTourEvents ? "#fff" : GOLD }]}>Gatherings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.layerBtn, showTourSites && { backgroundColor: "#D97706", borderColor: "transparent" }]}
+            onPress={() => { setShowTourSites((v) => !v); setSelectedTourSite(null); }}
+            activeOpacity={0.85}
+          >
+            <Feather name="flag" size={12} color={showTourSites ? "#fff" : GOLD} />
+            <Text style={[s.layerBtnTxt, { color: showTourSites ? "#fff" : GOLD }]}>Heritage</Text>
           </TouchableOpacity>
         </View>
 
@@ -936,6 +1105,141 @@ export function FullMapView() {
           </View>
         );
       })()}
+
+      {/* ── Community Org card ── */}
+      {selectedOrg && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedTourEvent && !selectedTourSite && (
+        <View style={[s.card, { backgroundColor: colors.card, borderColor: "#7C3AED40", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+          <View style={s.cardHandle} />
+          <TouchableOpacity style={s.cardClose} onPress={() => setSelectedOrg(null)}>
+            <Feather name="x" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <View style={[s.catPill, { backgroundColor: "#7C3AED18", marginBottom: 8, alignSelf: "flex-start" }]}>
+            <Feather name="users" size={11} color="#7C3AED" />
+            <Text style={[s.catPillTxt, { color: "#7C3AED" }]}>{selectedOrg.category.replace(/_/g, " ")}</Text>
+          </View>
+          <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{selectedOrg.name}</Text>
+          <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedOrg.city}, {selectedOrg.state}</Text>
+          {selectedOrg.mission ? (
+            <Text style={[s.culturalDesc, { color: colors.foreground }]} numberOfLines={3}>{selectedOrg.mission}</Text>
+          ) : null}
+          {selectedOrg.address ? (
+            <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: -4 }]}>{selectedOrg.address}</Text>
+          ) : null}
+          <View style={[s.cardBtnRow, { marginTop: 10 }]}>
+            {selectedOrg.website ? (
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#7C3AED" }]}
+                activeOpacity={0.85}
+                onPress={() => void Linking.openURL(selectedOrg.website!)}
+              >
+                <Feather name="external-link" size={14} color="#7C3AED" />
+                <Text style={[s.cardBtnTxt, { color: "#7C3AED" }]}>Website</Text>
+              </TouchableOpacity>
+            ) : null}
+            <TouchableOpacity
+              style={[s.cardBtnHalf, { backgroundColor: "#7C3AED" }]}
+              activeOpacity={0.85}
+              onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "community_org", entityId: selectedOrg.id, entityName: selectedOrg.name } })}
+            >
+              <Feather name="edit-2" size={14} color="#fff" />
+              <Text style={s.cardBtnTxt}>Suggest Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* ── Recurring Event card ── */}
+      {selectedTourEvent && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedOrg && !selectedTourSite && (
+        <View style={[s.card, { backgroundColor: colors.card, borderColor: "#0D948840", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+          <View style={s.cardHandle} />
+          <TouchableOpacity style={s.cardClose} onPress={() => setSelectedTourEvent(null)}>
+            <Feather name="x" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+            <View style={[s.catPill, { backgroundColor: "#0D948818" }]}>
+              <Feather name="repeat" size={11} color="#0D9488" />
+              <Text style={[s.catPillTxt, { color: "#0D9488" }]}>{selectedTourEvent.frequency}</Text>
+            </View>
+            {selectedTourEvent.day_of_week ? (
+              <View style={[s.catPill, { backgroundColor: colors.muted + "60", borderWidth: 1, borderColor: colors.border }]}>
+                <Text style={[s.catPillTxt, { color: colors.mutedForeground }]}>{selectedTourEvent.day_of_week}</Text>
+              </View>
+            ) : null}
+            {selectedTourEvent.start_time ? (
+              <Text style={[s.catPillTxt, { color: "#0D9488" }]}>{selectedTourEvent.start_time}{selectedTourEvent.end_time ? ` – ${selectedTourEvent.end_time}` : ""}</Text>
+            ) : null}
+          </View>
+          <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{selectedTourEvent.name}</Text>
+          {selectedTourEvent.venue ? (
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedTourEvent.venue} · {selectedTourEvent.city}, {selectedTourEvent.state}</Text>
+          ) : (
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedTourEvent.city}, {selectedTourEvent.state}</Text>
+          )}
+          {selectedTourEvent.description ? (
+            <Text style={[s.culturalDesc, { color: colors.foreground }]} numberOfLines={3}>{selectedTourEvent.description}</Text>
+          ) : null}
+          <TouchableOpacity
+            style={[s.cardBtn, { backgroundColor: "#0D9488", marginTop: 8 }]}
+            activeOpacity={0.85}
+            onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "recurring_event", entityId: selectedTourEvent.id, entityName: selectedTourEvent.name } })}
+          >
+            <Feather name="edit-2" size={14} color="#fff" />
+            <Text style={s.cardBtnTxt}>Suggest an Edit</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── Tour Heritage Site card ── */}
+      {selectedTourSite && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedOrg && !selectedTourEvent && (
+        <View style={[s.card, { backgroundColor: colors.card, borderColor: "#D9770640", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+          <View style={s.cardHandle} />
+          <TouchableOpacity style={s.cardClose} onPress={() => setSelectedTourSite(null)}>
+            <Feather name="x" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <View style={[s.catPill, { backgroundColor: "#D9770618", marginBottom: 8, alignSelf: "flex-start" }]}>
+            <Feather name="flag" size={11} color="#D97706" />
+            <Text style={[s.catPillTxt, { color: "#D97706" }]}>Heritage Site</Text>
+          </View>
+          <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{selectedTourSite.name}</Text>
+          <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedTourSite.city}, {selectedTourSite.state}</Text>
+          {selectedTourSite.address ? (
+            <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: -4, marginBottom: 6 }]}>{selectedTourSite.address}</Text>
+          ) : null}
+          {selectedTourSite.description ? (
+            <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+              <Text style={[s.culturalDesc, { color: colors.foreground }]}>{selectedTourSite.description}</Text>
+            </ScrollView>
+          ) : null}
+          <View style={[s.cardBtnRow, { marginTop: 10 }]}>
+            <TouchableOpacity
+              style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#D97706" }]}
+              activeOpacity={0.85}
+              onPress={() => {
+                const lat = typeof selectedTourSite.latitude === "string" ? parseFloat(selectedTourSite.latitude) : (selectedTourSite.latitude ?? NaN);
+                const lng = typeof selectedTourSite.longitude === "string" ? parseFloat(selectedTourSite.longitude) : (selectedTourSite.longitude ?? NaN);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  void Linking.openURL(
+                    Platform.OS === "ios"
+                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
+                      : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
+                  );
+                }
+              }}
+            >
+              <Feather name="navigation" size={14} color="#D97706" />
+              <Text style={[s.cardBtnTxt, { color: "#D97706" }]}>Directions</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.cardBtnHalf, { backgroundColor: "#D97706" }]}
+              activeOpacity={0.85}
+              onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "cultural_site", entityId: selectedTourSite.id, entityName: selectedTourSite.name } })}
+            >
+              <Feather name="edit-2" size={14} color="#fff" />
+              <Text style={s.cardBtnTxt}>Suggest Edit</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* ── Business bottom card ── */}
       {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && (
