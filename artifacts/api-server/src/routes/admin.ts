@@ -1688,6 +1688,88 @@ router.post("/admin/seed-sundown-towns-national", async (req: Request, res: Resp
   }
 });
 
+// ── POST /admin/seed-demo-taps ────────────────────────────────────────────────
+// Seeds demonstration endorsement taps so tags are visible above the 10-tap
+// threshold. Uses deterministic demo user IDs (demo_tap_user_01..15) so they
+// are distinguishable from real community taps and can be cleaned up later.
+// Each call is fully idempotent — ON CONFLICT DO NOTHING.
+router.post("/admin/seed-demo-taps", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    // Map: businessName → tag_keys to demo-seed
+    const DEMO_TAPS: Record<string, string[]> = {
+      // ── Philly Barber Studios ─────────────────────────────────────────────
+      "Philly Barber Studios": [
+        "patient_with_kids", "sharpest_lineup", "on_time_every_time",
+        "worth_the_price", "blessed_hands",
+      ],
+      // ── AMINA ─────────────────────────────────────────────────────────────
+      "AMINA": [
+        "cooks_like_home", "seasoned_right", "grandma_approved",
+        "portions_with_love", "worth_the_drive", "i_sent_the_group_chat",
+      ],
+      // ── SOUTH ─────────────────────────────────────────────────────────────
+      "SOUTH": [
+        "book_this_table", "don_t_sleep_on_this_one", "date_night",
+        "cooks_like_home", "seasoned_right",
+      ],
+      // ── The Nail Jawns ────────────────────────────────────────────────────
+      "The Nail Jawns": [
+        "style_lasted", "book_now", "worth_the_price",
+        "on_time_every_time", "blessed_hands",
+      ],
+      // ── Angie's Eats ──────────────────────────────────────────────────────
+      "Angie's Eats": [
+        "portions_with_love", "seasoned_right", "i_sent_the_group_chat",
+        "cooks_like_home", "fresh_not_frozen",
+      ],
+    };
+
+    const DEMO_USER_COUNT = 12; // above 10-tap threshold
+
+    let totalInserted = 0;
+    let totalSkipped = 0;
+
+    for (const [bizName, tagKeys] of Object.entries(DEMO_TAPS)) {
+      // Look up the business ID
+      const bizRow = await pool.query(
+        `SELECT id FROM businesses WHERE name = $1 LIMIT 1`, [bizName]
+      );
+      if (bizRow.rows.length === 0) {
+        req.log.warn({ bizName }, "demo-taps: business not found, skipping");
+        continue;
+      }
+      const businessId = bizRow.rows[0].id;
+
+      for (const tagKey of tagKeys) {
+        for (let i = 1; i <= DEMO_USER_COUNT; i++) {
+          const demoUserId = `demo_tap_user_${String(i).padStart(2, "0")}`;
+          const id = `demo_${businessId}_${tagKey}_${demoUserId}`;
+          try {
+            await pool.query(
+              `INSERT INTO business_endorsement_taps (id, business_id, user_id, tag_key, created_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               ON CONFLICT DO NOTHING`,
+              [id, businessId, demoUserId, tagKey]
+            );
+            totalInserted++;
+          } catch {
+            totalSkipped++;
+          }
+        }
+      }
+    }
+
+    res.json({ ok: true, inserted: totalInserted, skipped: totalSkipped });
+  } catch (err) {
+    req.log.error({ err }, "seed-demo-taps error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
 // ── POST /admin/patch-listing-status ─────────────────────────────────────────
 // One-time fix: set listing_status='live_unclaimed' on all businesses that
 // have profile_status='community_listed' but listing_status IS NULL.
