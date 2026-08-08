@@ -1931,41 +1931,45 @@ router.post("/admin/seed-known-businesses", async (req: Request, res: Response) 
         "SELECT id FROM businesses WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2) LIMIT 1",
         [biz.name, biz.city],
       );
-      if (existing.rows.length > 0) { skipped.push(biz.name); continue; }
+      if (existing.rows.length > 0) {
+        // Already exists — ensure listing_status is live_unclaimed so it appears in search
+        await pool.query(
+          "UPDATE businesses SET listing_status = 'live_unclaimed' WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2)",
+          [biz.name, biz.city],
+        );
+        skipped.push(biz.name);
+        continue;
+      }
 
       const newId = randomUUID();
-      await db.insert(businessesTable).values({
-        id: newId,
-        name: biz.name,
-        category: biz.category,
-        subcategory: biz.subcategory,
-        address: biz.address,
-        city: biz.city,
-        state: biz.state,
-        latitude: biz.latitude as unknown as number,
-        longitude: biz.longitude as unknown as number,
-        description: biz.description,
-        phone: biz.phone ?? null,
-        website: biz.website ?? null,
-        instagram: biz.instagram ?? null,
-        blackOwned: biz.blackOwned,
-        ownershipDesignations: biz.ownershipDesignations,
-        tags: biz.tags,
-        priceRange: biz.priceRange ?? null,
-        status: "active",
-        verified: false,
-        featured: false,
-        rating: "0" as unknown as number,
-        reviewCount: 0,
-        confidenceScore: 60,
-        vibes: [],
-        reviews: [],
-        photos: [],
-        pendingPhotos: [],
-        videos: [],
-        trustBadges: [],
-        verifiedDesignations: [],
-      });
+      await pool.query(
+        `INSERT INTO businesses
+           (id, name, category, subcategory, address, city, state,
+            latitude, longitude, description, phone, website, instagram,
+            black_owned, ownership_designations, tags, price_range,
+            status, listing_status, verified, featured,
+            rating, review_count, confidence_score,
+            vibes, reviews, photos, pending_photos, videos,
+            trust_badges, verified_designations,
+            business_status, flag_count, flag_status,
+            marketplace_tier, show_availability, feedback_opt_in)
+         VALUES
+           ($1,$2,$3,$4,$5,$6,$7,
+            $8,$9,$10,$11,$12,$13,
+            $14,$15::jsonb,$16::jsonb,$17,
+            'active','live_unclaimed',false,false,
+            0,0,60,
+            '[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+            '[]'::jsonb,'[]'::jsonb,
+            'community',0,'none',
+            'free',false,false)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          newId, biz.name, biz.category, biz.subcategory, biz.address, biz.city, biz.state,
+          biz.latitude, biz.longitude, biz.description, biz.phone ?? null, biz.website ?? null, biz.instagram ?? null,
+          biz.blackOwned, JSON.stringify(biz.ownershipDesignations), JSON.stringify(biz.tags), biz.priceRange ?? null,
+        ],
+      );
       inserted.push(biz.name);
     } catch (err) {
       req.log.error({ err, biz: biz.name }, "Failed to seed known business");
