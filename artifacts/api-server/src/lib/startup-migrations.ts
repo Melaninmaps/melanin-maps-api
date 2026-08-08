@@ -9,6 +9,7 @@
  */
 import { pool } from "@workspace/db";
 import type { Logger } from "pino";
+import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -377,4 +378,71 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   log(
     `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`
   );
+
+  // ── HBCU Data Integrity Guard ──────────────────────────────────────────────
+  // All 107 HBCUs must always be in cultural_sites. This runs on every boot
+  // and inserts any that are missing. Dedup-safe: checks name + state first.
+  // This is a PERMANENT fixture — never remove it.
+  await ensureAllHBCUs(log, warn);
+}
+
+/**
+ * Ensures all 107 U.S. Dept. of Education recognized HBCUs exist in cultural_sites.
+ * Safe to run on every boot — skips any that already exist (matched by name + state).
+ * Any regression in HBCU data is self-healed on next deploy.
+ */
+async function ensureAllHBCUs(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const h of HBCU_COMPLETE_SEED) {
+      try {
+        // Check if this HBCU already exists (name + state, case-insensitive)
+        const existing = await pool.query(
+          `SELECT id FROM cultural_sites WHERE LOWER(name) = LOWER($1) AND LOWER(state) = LOWER($2) LIMIT 1`,
+          [h.name, h.state]
+        );
+
+        if (existing.rows.length > 0) {
+          skipped++;
+          continue;
+        }
+
+        const subcategory = h.control === "public" ? "Public HBCU" : "Private HBCU";
+
+        await pool.query(
+          `INSERT INTO cultural_sites
+            (name, city, state, latitude, longitude, description, significance,
+             category, subcategory, heritage_category, pin_type,
+             external_url, founded_year, status, source, is_featured)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+          [
+            h.name, h.city, h.state,
+            h.latitude, h.longitude,
+            h.description, h.significance,
+            "HBCU", subcategory, "HBCU", "hbcu",
+            h.externalUrl, h.founded,
+            "live_unclaimed",
+            "U.S. Dept. of Education HBCU List · thehundred-seven.org",
+            false,
+          ]
+        );
+        inserted++;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        warn(`  HBCU guard: failed to insert ${h.name}: ${msg}`);
+      }
+    }
+
+    log(
+      `HBCU integrity guard: ${inserted} inserted, ${skipped} already present. Total in seed: ${HBCU_COMPLETE_SEED.length}`
+    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    warn(`HBCU integrity guard failed: ${msg}`);
+  }
 }
