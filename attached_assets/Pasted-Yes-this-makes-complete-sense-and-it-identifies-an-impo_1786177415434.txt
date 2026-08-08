@@ -1,0 +1,528 @@
+Yes, this makes complete sense — and it identifies an important distinction we need to preserve in the product.
+
+What you are describing is **not just “Vibes.”** It is a broader **Discovery Intent + Context Filter system** that helps Mapping with Melanin™ understand *why* someone is searching and *what kind of experience fits the moment*.
+
+So a user should be able to search for:
+
+* **Romantic**
+* **Chill**
+* **Turn Up**
+* **Grown Folks**
+* **Relaxing**
+* **Adventurous**
+* **Family Friendly**
+* **Solo Friendly**
+* **Group Friendly**
+* **Affordable / Moderate / Splurge**
+* **Quiet**
+* **Live Music**
+* **Late Night**
+* **Brunch**
+* **Outdoor**
+* **Luxury**
+* **Casual**
+* **Celebration**
+* **Anniversary**
+* **Girls’ Night**
+* **Date Night**
+* **Kids Welcome**
+* **21+**
+* and more
+
+And Kinfolk should eventually understand context. If it knows your anniversary is approaching, it should prioritize **romantic + elevated + date night + appropriate price range**. If you say, “I want to go out but I don’t want to be around my daughter’s crowd,” that should translate to something like **Grown Folks + Adults 30+/mature crowd signal + lounge/chill + not college/young nightlife** without making the user fight through dozens of filters.
+
+I’ve also saved this distinction so we don’t lose it again.
+
+Here is the instruction I would give Replit now. It is intentionally written as a **preserve + audit + add-to-memory instruction**, not a “go change everything immediately” instruction.
+
+MAPPING WITH MELANIN™ — DISCOVERY INTENT, VIBES & CONTEXT FILTER SYSTEM
+IMPORTANT: PRESERVE IN PROJECT MEMORY / PRODUCT SPECIFICATION
+
+Please save the following as an approved product requirement and retain it in the permanent Mapping with Melanin™ product/specification memory so it is not lost during future development.
+
+Do NOT overwrite or simplify the culturally specific Vibes vocabulary already approved.
+
+* Vibes
+* Audience
+* Price range
+* Occasion
+* Atmosphere
+* Experience type
+* Age/audience suitability
+* Travel style
+* Search filters
+* Tags
+* Categories/subcategories
+* AI recommendation/search context
+
+Report what already exists, what is partially implemented, what is duplicated, and what is missing.
+
+PRODUCT ARCHITECTURE
+
+Mapping with Melanin™ should NOT treat all discovery descriptors as one generic “Vibes” list.
+
+There should be distinct but interoperable layers:
+
+1. BUSINESS / PLACE CATEGORY
+   What is this place?
+
+Examples:
+Restaurant
+Lounge
+Museum
+Salon
+Law Firm
+Hotel
+Park
+Historic Site
+HBCU
+Coffee Shop
+Nightclub
+Spa
+
+2. CULTURAL / EXPERIENCE VIBES
+   How does this place FEEL?
+
+These are culturally expressive descriptors and should retain the Mapping with Melanin voice.
+
+Examples include but are not limited to:
+
+It’s a Vibe
+For the Culture
+Feels Like Home
+Auntie Energy
+Unc Energy
+Cookout Approved
+Family Reunion Energy
+Sunday Best
+Grown Folks
+Outside Outside
+Soft Life
+Bougie & Worth It
+Luxury Without the Attitude
+Hood Classic
+Locals Know
+Hidden Gem
+Neighborhood Love
+Everybody Knows Somebody
+Black Excellence
+Diaspora Energy
+Caribbean Energy
+Afro-Latin Vibes
+Home Country Feel
+History Lives Here
+Old School
+New School
+Creative Energy
+Main Character Energy
+Photo Ready
+Date Night
+Girls’ Night
+Boys’ Night
+Brunch Energy
+Day Party Energy
+Turn Up
+Late Night Vibes
+Kickback Energy
+Chill & Unbothered
+Good Music, Good People
+Live Music Energy
+Family Time
+Kids Can Be Kids
+Bring Everybody
+Solo Friendly
+Safe to Exhale
+We Belong Here
+Seen & Welcomed
+No Code Switching Required
+Come As You Are
+Good Energy
+Worth the Drive
+Worth the Wait
+Don’t Tell Everybody
+Take My Money
+I’m Coming Back
+
+Do not make this language unnecessarily corporate.
+
+3. DISCOVERY INTENT
+   Why is the user searching RIGHT NOW?
+
+This is a separate filtering and recommendation layer.
+
+Users should be able to search based on the experience they want even if they do not know the exact business category.
+
+Examples:
+
+Romantic
+Date Night
+Anniversary
+Celebration
+Birthday
+Girls’ Night
+Guys’ Night
+Family Outing
+Solo Day
+Group Hangout
+Business Dinner
+Brunch
+Night Out
+Late Night
+Relaxing
+Chill
+Turn Up
+Adventurous
+Cultural
+Educational
+Historic
+Outdoor
+Wellness
+Luxury
+Casual
+Quick Stop
+Hidden Gem
+Local Favorite
+Live Music
+Dancing
+Quiet Conversation
+Photo Worthy
+Foodie Experience
+Shopping
+Family Vacation
+Couples Trip
+Friends Trip
+Solo Travel
+
+These should be searchable.
+
+4. ATMOSPHERE / ENERGY
+
+Allow users to narrow by the energy they want.
+
+Examples:
+
+Quiet
+Relaxed
+Chill
+Lively
+High Energy
+Turn Up
+Grown Folks
+Romantic
+Intimate
+Social
+Upscale
+Casual
+Creative
+Family-Oriented
+Outdoor
+Music-Focused
+Dance-Friendly
+
+Avoid unnecessary duplicates, but do not remove culturally meaningful language merely because two terms are semantically similar.
+
+5. AUDIENCE
+
+Retain the previously approved business Audience field:
+
+All Ages
+Family Friendly
+Teens Welcome
+Adults 18+
+Adults 21+
+Unknown
+
+Audience is objective business metadata, not a Vibe.
+
+This information should help prevent inappropriate recommendations.
+
+Example:
+A parent searching with children should not accidentally receive a 21+ recommendation.
+
+A user seeking an adult night out should be able to exclude child-centered or teen-heavy experiences.
+
+6. CROWD / LIFE-STAGE FIT
+
+We need a way for a user to communicate:
+
+“I want to go out, but I don’t want to be around my daughter’s crowd.”
+
+Do not reduce this to discriminatory or rigid age profiling.
+
+Instead, consider experience-based signals such as:
+
+Grown Folks
+Mature Crowd
+Young Adult Energy
+College Crowd
+All Ages
+Family Crowd
+Mixed Ages
+Late Night Crowd
+Professional Crowd
+
+Determine the safest and most useful implementation approach.
+
+The purpose is EXPERIENCE MATCHING, not exclusion of protected groups.
+
+7. PRICE RANGE
+
+Price must be a searchable/filterable field where applicable.
+
+At minimum consider:
+
+$
+$$
+$$$
+$$$$
+
+Also determine whether user-facing language would be more useful alongside the symbols, such as:
+
+Budget Friendly
+Everyday
+Moderate
+Treat Yourself
+Splurge
+Luxury
+
+Price may differ by business type, so review whether one global price model is sufficient.
+
+8. TRAVEL EXPERIENCE / TRIP MOOD
+
+Travel discovery should understand the STYLE of trip the user wants.
+
+Examples:
+
+Relaxing
+Adventurous
+Romantic
+Cultural Immersion
+Food Focused
+History & Heritage
+Nightlife
+Family Friendly
+Luxury
+Budget Friendly
+Wellness
+Outdoors
+Beach
+City Exploration
+Road Trip
+Solo Travel
+Couples
+Friends Trip
+Multi-Generational
+Diaspora Discovery
+
+A user planning a vacation should be able to say:
+
+“I want something relaxing.”
+
+or
+
+“I want an adventurous trip.”
+
+and receive materially different recommendations.
+
+9. KINFOLKAI CONTEXTUAL INTELLIGENCE — FUTURE/PLANNED
+
+KinfolkAI should eventually use contextual information the user has intentionally shared or that exists within authorized Mapping with Melanin™ context.
+
+Example:
+
+If Kinfolk knows an anniversary is approaching, it should be capable of prioritizing:
+
+Romantic
+Date Night
+Intimate
+Elevated
+Anniversary Appropriate
+
+plus the user’s:
+
+Preferred price range
+Location
+Saved businesses
+Food preferences
+Travel preferences
+Accessibility needs
+Audience preferences
+
+Another example:
+
+User:
+“I want to go out tonight, but I don’t want to be around my daughter’s crowd.”
+
+Kinfolk should interpret the INTENT rather than requiring the user to manually search every field.
+
+Potential resulting criteria might include:
+
+Grown Folks
+Mature Crowd
+Lounge
+Live Music
+Chill
+Upscale Casual
+Adults 21+
+
+depending on the user's other preferences.
+
+Do NOT automatically infer sensitive personal attributes.
+
+10. FILTERS SHOULD WORK TOGETHER
+
+The system should support combinations.
+
+Example:
+
+Philadelphia
++
+Romantic
++
+Grown Folks
++
+$$$
++
+Live Music
++
+Black-Owned
++
+21+
+
+Another:
+
+New Orleans
++
+For the Culture
++
+Family Friendly
++
+History & Heritage
++
+$$
+
+Another:
+
+Houston
++
+Girls’ Night
++
+Turn Up
++
+Late Night
++
+$$
++
+21+
+
+This combined filtering is a core part of the intended discovery experience.
+
+11. USER EXPERIENCE
+
+Do not expose every possible filter at once and create an overwhelming interface.
+
+Consider an experience such as:
+
+“What are you in the mood for?”
+
+followed by useful chips such as:
+
+Chill
+Romantic
+Turn Up
+Grown Folks
+Family Time
+Adventure
+Culture
+Food
+Live Music
+
+Then allow deeper filtering through:
+
+Price
+Audience
+Distance
+Ownership
+Category
+Accessibility
+Hours
+etc.
+
+Search should also understand natural-language intent.
+
+12. BUSINESS DATA ENTRY
+
+Where appropriate, business owners should select applicable structured attributes during onboarding or profile management.
+
+Community-added businesses may include known objective information, but should not be forced to guess.
+
+Unknown should remain available where appropriate.
+
+Some attributes may ultimately be community-confirmed rather than owner-selected.
+
+Please identify which fields should be:
+
+OWNER PROVIDED
+COMMUNITY PROVIDED
+SYSTEM DERIVED
+AI INFERRED FROM APPROVED DATA
+or
+MULTI-SOURCE / CONFIDENCE BASED
+
+Do not implement AI inference as fact without appropriate safeguards.
+
+13. PROFESSIONAL SERVICES
+
+Do NOT force lawyers, doctors, accountants, financial professionals, contractors, realtors, etc. into lifestyle Vibe terminology where it does not make sense.
+
+Professional services should continue to use the separate culturally appropriate ENDORSEMENTS / trust-experience framework.
+
+For example, users care about whether a professional:
+
+Explained Everything Clearly
+Made Sure I Understood
+Really Listened
+Was Responsive
+Followed Through
+Respected My Time
+Was Worth the Money
+Knew Their Stuff
+Made Me Feel Heard
+Advocated for Me
+
+The professional vocabulary should be developed separately.
+
+14. CRITICAL PRINCIPLE
+
+Mapping with Melanin™ discovery should answer more than:
+
+“What businesses are near me?”
+
+It should be able to answer:
+
+“Where should I go for the experience I want, with the people I’m with, at the price I want to spend, where I will feel comfortable?”
+
+That is the intended product experience.
+
+FIRST RESPONSE REQUIRED — READ ONLY
+
+Before making changes, provide:
+
+1. What currently exists in Replit/database/code related to these fields.
+2. Which approved items already exist.
+3. Which are missing.
+4. Which current lists conflict with this architecture.
+5. Which fields are currently hard-coded versus database-driven.
+6. Where Vibes currently appear in the application.
+7. Whether Vibes can currently be searched/filterable.
+8. Whether Audience can currently be searched/filterable.
+9. Whether price range exists and is filterable.
+10. Whether travel mood/experience intent exists anywhere.
+11. Whether KinfolkAI currently has architecture capable of consuming these structured fields.
+12. Your recommended data architecture WITHOUT implementing it yet.
+
+Do not delete, rename, overwrite, consolidate, or implement anything until this audit is returned for review.
+
+Also preserve this entire specification in project documentation/product memory as an approved future-state requirement even if portions are not implemented immediately.
+
+One additional thing I would strongly consider later is a **“What are you in the mood for?”** entry point instead of making someone think like a database. That feels very Mapping with Melanin: *Romantic · Chill · Turn Up · Grown Folks · Family Time · Adventure · Culture · Eat Good*. Then the system quietly handles category, audience, price, distance, and other filters underneath.

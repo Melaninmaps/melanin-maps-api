@@ -149,6 +149,50 @@ type RouteInfo = { distance: string; duration: string; bizName: string };
 
 const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional"];
 
+// ── "What are you in the mood for?" discovery intent chips ─────────────────
+type MoodChip = { id: string; label: string };
+const MOOD_CHIPS: MoodChip[] = [
+  { id: "romantic",    label: "Romantic"    },
+  { id: "chill",       label: "Chill"       },
+  { id: "turn-up",     label: "Turn Up"     },
+  { id: "grown-folks", label: "Grown Folks" },
+  { id: "family",      label: "Family Time" },
+  { id: "culture",     label: "Culture"     },
+  { id: "live-music",  label: "Live Music"  },
+  { id: "eat-good",    label: "Eat Good"    },
+];
+
+function matchesMood(biz: BizWithCoords, moodId: string): boolean {
+  const cat  = (biz.category    ?? "").toLowerCase();
+  const name = (biz.name        ?? "").toLowerCase();
+  const desc = (biz.description ?? "").toLowerCase();
+  const text = `${name} ${desc}`;
+  switch (moodId) {
+    case "romantic":
+      return cat.includes("food") || cat.includes("wellness") ||
+        ["wine", "fine dining", "upscale", "steakhouse", "intimate", "rooftop", "date night"].some((k) => text.includes(k));
+    case "chill":
+      return ["coffee", "cafe", "café", "tea", "lounge", "bookstore", "bakery", "brunch", "smoothie", "chill", "relaxed"].some((k) => text.includes(k)) ||
+        cat.includes("wellness");
+    case "turn-up":
+      return ["bar", "club", "nightlife", "nightclub", "party", "rooftop", "hookah", "dance", "dj", "brunch", "day party"].some((k) => text.includes(k));
+    case "grown-folks":
+      return ["lounge", "wine bar", "jazz", "speakeasy", "cocktail", "steakhouse", "fine dining", "cigar", "whiskey", "bourbon", "spirits", "grown"].some((k) => text.includes(k));
+    case "family":
+      return (cat.includes("food") || cat.includes("retail") || cat.includes("cultural")) ||
+        ["family", "kids", "children", "ice cream", "pizza", "diner", "friendly"].some((k) => text.includes(k));
+    case "culture":
+      return cat.includes("cultural") ||
+        ["museum", "gallery", "heritage", "history", "art", "historic", "hbcu", "monument", "landmark"].some((k) => text.includes(k));
+    case "live-music":
+      return ["live music", "jazz", "blues", "open mic", "music venue", "concert", "band", "soul", "gospel", "hip-hop", "hip hop"].some((k) => text.includes(k));
+    case "eat-good":
+      return cat.includes("food");
+    default:
+      return true;
+  }
+}
+
 const BRAND_STYLE: object[] = [
   { elementType: "geometry", stylers: [{ color: "#f5ede0" }] },
   { elementType: "labels.text.fill", stylers: [{ color: "#3a1f0e" }] },
@@ -227,6 +271,7 @@ export default function MapPage() {
   // Sidebar + legend filter state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
+  const [mood, setMood] = useState<string | null>(null);
 
   // Geocode search string and pan map
   const geocodeAndPan = useCallback(() => {
@@ -251,7 +296,8 @@ export default function MapPage() {
       const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
       const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
       const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
-      return matchSearch && matchCat;
+      const matchMood = mood === null || matchesMood(b, mood);
+      return matchSearch && matchCat && matchMood;
     });
     // If we have the user's location, sort by proximity (closest first)
     if (!userCoords) return base;
@@ -787,6 +833,37 @@ export default function MapPage() {
                   </button>
                 )}
               </div>
+              {/* Mood / discovery intent */}
+              <div className="mb-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-2">
+                  What are you in the mood for?
+                </p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {MOOD_CHIPS.map((m) => (
+                    <button
+                      key={m.id}
+                      onClick={() => setMood(mood === m.id ? null : m.id)}
+                      className={`text-[10px] font-semibold px-2.5 py-1 rounded-full transition-colors border ${
+                        mood === m.id
+                          ? "bg-[#CA922B] text-white border-[#CA922B]"
+                          : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/12 hover:border-[#CA922B]/50 hover:text-[#CA922B]"
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                  {mood !== null && (
+                    <button
+                      onClick={() => setMood(null)}
+                      className="text-[10px] font-semibold px-2 py-1 rounded-full text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors flex items-center gap-0.5"
+                    >
+                      <X className="w-3 h-3" /> Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category filter */}
               <div className="flex gap-1.5 flex-wrap">
                 {CATEGORIES.map((cat) => (
                   <button
