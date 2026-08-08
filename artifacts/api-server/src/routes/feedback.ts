@@ -81,7 +81,7 @@ router.post("/feedback", async (req: Request, res: Response) => {
 // Admins retrieve all tester feedback, newest first.
 router.get("/admin/feedback", async (req: Request, res: Response) => {
   const user = (req as any).user;
-  if (!user || !isAdmin(user)) {
+  if (!user || !isAdmin(req)) {
     res.status(403).json({ error: "Admin access required." });
     return;
   }
