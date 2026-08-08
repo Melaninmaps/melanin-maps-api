@@ -55,7 +55,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
   // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
   try {
     await withDbRetry(async () => {
-    const { category, city, search, state, handle, culturalPreference, ownership } = req.query;
+    const { category, city, search, state, handle, culturalPreference, ownership, offset: offsetParam, limit: limitParam } = req.query;
+    const offset = Math.max(0, parseInt((offsetParam as string) ?? "0", 10) || 0);
+    const pageLimit = Math.min(200, Math.max(1, parseInt((limitParam as string) ?? "200", 10) || 200));
 
     const conditions = [];
 
@@ -115,6 +117,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
       );
     }
 
+    // True total count for pagination UI
+    const [{ total: totalCount }] = await db
+      .select({ total: count() })
+      .from(businessesTable)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
     const businesses = await db
       .select()
       .from(businessesTable)
@@ -123,7 +131,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
         desc(businessesTable.foundingBusiness),
         desc(businessesTable.confidenceScore),
       )
-      .limit(200);
+      .limit(pageLimit)
+      .offset(offset);
 
     // Annotate businesses that have active growth-tool promotions as featured.
     // Only businesses that already matched the search criteria are promoted —
@@ -235,7 +244,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
       } catch { /* pg_trgm not available — fine */ }
     }
 
-    res.json({ businesses: finalResults, total: finalResults.length, featuredCount: finalResults.filter((b: any) => b.featured).length });
+    res.json({ businesses: finalResults, total: Number(totalCount), page: { offset, limit: pageLimit }, featuredCount: finalResults.filter((b: any) => b.featured).length });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
