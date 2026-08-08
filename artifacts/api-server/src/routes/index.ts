@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import communityOrgsRouter from "./community-orgs";
 import recurringEventsRouter from "./recurring-events-route";
 import editSuggestionsRouter from "./edit-suggestions";
+import tourCulturalSitesRouter from "./tour-cultural-sites";
 import healthRouter from "./health";
 import authRouter from "./auth";
 import phoneAuthRouter from "./phone-auth";
@@ -293,6 +294,7 @@ router.use(citiesRouter);
 router.use(communityOrgsRouter);
 router.use(recurringEventsRouter);
 router.use(editSuggestionsRouter);
+router.use(tourCulturalSitesRouter);
 
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);

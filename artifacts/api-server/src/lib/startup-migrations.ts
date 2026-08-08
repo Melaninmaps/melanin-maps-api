@@ -20,6 +20,7 @@ import { KNOWLEDGE_LIBRARY_SEED } from "../data/knowledge-library-seed";
 import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
 import { COMMUNITY_ORGANIZATIONS_SEED } from "../data/community-organizations-seed";
 import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
+import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -436,6 +437,31 @@ END $seed$`,
           CREATE INDEX IF NOT EXISTS idx_edit_suggestions_entity ON edit_suggestions (entity_type, entity_id);
           CREATE INDEX IF NOT EXISTS idx_edit_suggestions_user ON edit_suggestions (user_id)`,
   },
+  // ── Tour Cultural Sites table ─────────────────────────────────────────
+  {
+    name: "tour_cultural_sites_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS tour_cultural_sites (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      city TEXT NOT NULL,
+      state VARCHAR(2) NOT NULL,
+      address TEXT,
+      description TEXT,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      has_pending_edit BOOLEAN NOT NULL DEFAULT false,
+      tour_source BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "tour_cultural_sites_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS idx_tour_cultural_sites_city_state
+          ON tour_cultural_sites (LOWER(city), LOWER(state))
+          WHERE is_active = true`,
+  },
   // ── has_pending_edit on cultural_sites ────────────────────────────────
   {
     name: "cultural_sites_has_pending_edit_col",
@@ -649,6 +675,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["tour businesses",   () => ensureTourBusinesses(log, warn)],
     ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
     ["recurring events",  () => ensureRecurringEvents(log, warn)],
+    ["tour cultural sites", () => ensureTourCulturalSites(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
@@ -1065,6 +1092,40 @@ async function ensureTourBusinesses(
     log(`Tour businesses integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_BUSINESSES_SEED.length})`);
   } catch (err: unknown) {
     warn(`Tour businesses integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Tour Cultural Sites guard ─────────────────────────────────────────────────
+async function ensureTourCulturalSites(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM tour_cultural_sites`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0, skipped = 0;
+
+    for (const s of TOUR_CULTURAL_SITES_SEED) {
+      const key = `${s.name.toLowerCase()}|${s.city.toLowerCase()}|${s.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO tour_cultural_sites
+            (name, city, state, address, description, is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5, true, true, NOW(), NOW())`,
+          [s.name, s.city, s.state, s.address, s.description]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`Tour cultural sites guard: failed to insert ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Tour cultural sites guard: ${inserted} inserted, ${skipped} already present (seed: ${TOUR_CULTURAL_SITES_SEED.length})`);
+  } catch (err: unknown) {
+    warn(`Tour cultural sites guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
