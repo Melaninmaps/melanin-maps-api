@@ -113,3 +113,4 @@
 - [Monitor readyz race fix](monitor-readyz-race.md) — /api/readyz HTTP check removed from monitor; readyz now derived from internal DB probe result to avoid concurrent pool saturation.
 - [KinfolkAI pool exhaustion via unauthenticated monitor probe](kinfolk-pool-leak.md) — unauthenticated _post /kinfolk/chat probe triggered full OpenAI calls; 8s client timeout left orphaned server handlers whose post-OpenAI DB writes leaked 1 connection/cycle → exhaustion in ~30 min. Fix: auth gate on /kinfolk/chat + lightweight /kinfolk/health probe.
 - [Endorsement Tag System](endorsement-tag-system.md) — 340 tags, 132 cultural variants, 90 ownership designations, 131 vibes — all permanent version-controlled constants.
+- [THE REAL Tag System](the-real-tags-system.md) — 151 professional trust-signal tags across 9 categories; separate from The Vibe; display threshold 5 taps; seeded in Railway production Aug 8 2026.
