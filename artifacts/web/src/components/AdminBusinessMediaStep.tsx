@@ -225,9 +225,11 @@ export function AdminBusinessMediaStep({ businessId, businessName, onDone }: Pro
 
       {/* ── Social Media Links ──────────────────────────────────────────── */}
       <div>
-        <h3 className="font-serif font-bold text-[#3A1F0E] text-base mb-1">Add from Social Media</h3>
-        <p className="text-xs text-[#3A1F0E]/50 mb-4">
-          Already posted it somewhere else? Paste the link here. No need to upload it again.
+        <h3 className="font-serif font-bold text-[#3A1F0E] text-base mb-0.5">
+          Already posted it somewhere else?
+        </h3>
+        <p className="text-sm text-[#3A1F0E]/70 mb-1">Paste the link here. No need to upload it again.</p>
+        <p className="text-xs text-[#3A1F0E]/40 mb-4">
           Supports YouTube, TikTok, Instagram, Facebook, Pinterest, and Vimeo.
         </p>
 
