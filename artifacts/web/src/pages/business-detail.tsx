@@ -135,6 +135,7 @@ export default function BusinessDetail() {
   const [myVibes, setMyVibes] = useState<string[]>([]);
   const [vibeLoading, setVibeLoading] = useState<string | null>(null);
   const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
+  const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
 
   const COMMUNITY_VIBES = [
     { id: "hidden_gem",        label: "Hidden Gem",        emoji: "💎" },
@@ -154,6 +155,15 @@ export default function BusinessDetail() {
       .then((d) => { if (Array.isArray(d?.myTags)) setMyVibes(d.myTags); })
       .catch(() => {});
   }, [auth?.user, id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${apiBase}/api/vibes/endorsements/${id}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (Array.isArray(d?.tags)) setEndorsementTags(d.tags); })
+      .catch(() => {});
+  }, [id]);
 
   async function handleVibe(vibe: string) {
     if (!auth?.user) {
@@ -569,6 +579,31 @@ export default function BusinessDetail() {
                     })}
                   </div>
                 </div>
+
+                {/* What The Community Said — Endorsement Tags */}
+                {endorsementTags.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">What The Community Said</h3>
+                        <p className="text-xs text-[#3A1F0E]/40 mt-0.5">Tags added by community members who've visited</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {endorsementTags.map((tag) => (
+                        <div
+                          key={tag.tagKey}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E]/80"
+                        >
+                          <span>{tag.label}</span>
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B]">
+                            {tag.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Flash Deals */}
                 {deals.length > 0 && (

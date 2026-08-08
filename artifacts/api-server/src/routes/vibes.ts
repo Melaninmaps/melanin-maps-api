@@ -470,6 +470,38 @@ router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
   }
 });
 
+// GET /vibes/endorsements/:businessId — top endorsement tags for a business
+// Returns only tags that have reached the 10-tap display threshold.
+router.get("/endorsements/:businessId", async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const DISPLAY_THRESHOLD = 10;
+
+    const result = await pool.query(
+      `SELECT
+         t.tag_key,
+         COALESCE(et.label, t.tag_key) AS label,
+         COUNT(*)::int AS count
+       FROM business_endorsement_taps t
+       LEFT JOIN endorsement_tags et ON et.tag_key = t.tag_key
+       WHERE t.business_id = $1
+       GROUP BY t.tag_key, et.label
+       HAVING COUNT(*) >= $2
+       ORDER BY count DESC
+       LIMIT 20`,
+      [businessId, DISPLAY_THRESHOLD]
+    );
+
+    res.json({
+      tags: result.rows.map((r) => ({ tagKey: r.tag_key, label: r.label, count: r.count })),
+      threshold: DISPLAY_THRESHOLD,
+    });
+  } catch (err) {
+    req.log.error({ err }, "get endorsement counts error");
+    res.status(500).json({ error: "Failed to load endorsement data" });
+  }
+});
+
 // GET /vibes/my-tags — user's top vibes from their tagging behavior (for Kinfolk AI)
 router.get("/vibes/my-tags", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
