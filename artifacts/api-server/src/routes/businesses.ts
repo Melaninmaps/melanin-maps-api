@@ -205,7 +205,37 @@ router.get("/businesses", async (req: Request, res: Response) => {
     }
     const withCaptions = annotated.map((b) => ({ ...b, topCaptions: captionMap.get(b.id) ?? [] }));
 
-    res.json({ businesses: withCaptions, total: withCaptions.length, featuredCount });
+    // ── Fuzzy name fallback — trigram similarity via pg_trgm ─────────────────
+    // When a name search returns zero results (e.g. "Hakeem's book store" vs
+    // "Hakim's Bookstore"), run a similarity query so close-enough spellings
+    // still surface the right business. Falls back silently if pg_trgm is absent.
+    let finalResults = withCaptions;
+    if (search && typeof search === "string" && withCaptions.length === 0) {
+      try {
+        const cleanSearch = search.replace(/[^\w\s'-]/gi, " ").trim();
+        const fuzzyRes = await pool.query<Record<string, unknown>>(
+          `SELECT b.*,
+                  similarity(LOWER(b.name), LOWER($1)) AS _sim_score
+           FROM businesses b
+           WHERE b.status = 'active'
+             AND similarity(LOWER(b.name), LOWER($1)) > 0.22
+           ORDER BY _sim_score DESC
+           LIMIT 15`,
+          [cleanSearch],
+        );
+        if (fuzzyRes.rows.length > 0) {
+          finalResults = fuzzyRes.rows.map((r) => ({
+            ...r,
+            topCaptions: [],
+            featured: false,
+            promotionType: null,
+            culturalMatch: false,
+          })) as typeof withCaptions;
+        }
+      } catch { /* pg_trgm not available — fine */ }
+    }
+
+    res.json({ businesses: finalResults, total: finalResults.length, featuredCount: finalResults.filter((b: any) => b.featured).length });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
@@ -1768,6 +1798,181 @@ router.get("/admin/businesses/disputed", async (req: Request, res: Response): Pr
     req.log.error({ err }, "Failed to fetch disputed businesses");
     res.status(500).json({ error: "Failed to fetch disputed businesses" });
   }
+});
+
+// ─── PATCH /admin/businesses/:id/profile ─────────────────────────────────────
+// Admin-only: update any field on any business — including social media handles,
+// ownership designations, vibes, description, and contact info — regardless of
+// whether the business has been claimed by an owner.
+router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  try {
+    const {
+      name, description, address, city, state, latitude, longitude,
+      phone, website, hours, priceRange,
+      instagram, tiktok, facebook, twitter, youtube, pinterest, primarySocialPlatform,
+      ownerName, businessTagline, ownerBio, ownerStory,
+      ownershipDesignations, blackOwned, vibes, tags, category, subcategory,
+    } = req.body as Record<string, unknown>;
+
+    // Only include keys explicitly provided in the request body (no accidental nulling)
+    const patch: Record<string, unknown> = { updatedAt: new Date() };
+    if (name !== undefined) patch.name = name;
+    if (description !== undefined) patch.description = description;
+    if (address !== undefined) patch.address = address;
+    if (city !== undefined) patch.city = city;
+    if (state !== undefined) patch.state = state;
+    if (latitude !== undefined) patch.latitude = latitude;
+    if (longitude !== undefined) patch.longitude = longitude;
+    if (phone !== undefined) patch.phone = phone;
+    if (website !== undefined) patch.website = website;
+    if (hours !== undefined) patch.hours = hours;
+    if (priceRange !== undefined) patch.priceRange = priceRange;
+    if (instagram !== undefined) patch.instagram = instagram;
+    if (tiktok !== undefined) patch.tiktok = tiktok;
+    if (facebook !== undefined) patch.facebook = facebook;
+    if (twitter !== undefined) patch.twitter = twitter;
+    if (youtube !== undefined) patch.youtube = youtube;
+    if (pinterest !== undefined) patch.pinterest = pinterest;
+    if (primarySocialPlatform !== undefined) patch.primarySocialPlatform = primarySocialPlatform;
+    if (ownerName !== undefined) patch.ownerName = ownerName;
+    if (businessTagline !== undefined) patch.businessTagline = businessTagline;
+    if (ownerBio !== undefined) patch.ownerBio = ownerBio;
+    if (ownerStory !== undefined) patch.ownerStory = ownerStory;
+    if (ownershipDesignations !== undefined) patch.ownershipDesignations = ownershipDesignations;
+    if (blackOwned !== undefined) patch.blackOwned = blackOwned;
+    if (vibes !== undefined) patch.vibes = vibes;
+    if (tags !== undefined) patch.tags = tags;
+    if (category !== undefined) patch.category = category;
+    if (subcategory !== undefined) patch.subcategory = subcategory;
+
+    if (Object.keys(patch).length === 1) {
+      res.status(400).json({ error: "No updatable fields provided" }); return;
+    }
+
+    const [biz] = await db
+      .update(businessesTable)
+      .set(patch as Parameters<ReturnType<typeof db.update>["set"]>[0])
+      .where(eq(businessesTable.id, id))
+      .returning({
+        id: businessesTable.id, name: businessesTable.name, instagram: businessesTable.instagram,
+        tiktok: businessesTable.tiktok, facebook: businessesTable.facebook, twitter: businessesTable.twitter,
+        youtube: businessesTable.youtube, pinterest: businessesTable.pinterest,
+        ownershipDesignations: businessesTable.ownershipDesignations, blackOwned: businessesTable.blackOwned,
+        vibes: businessesTable.vibes, status: businessesTable.status,
+      });
+
+    if (!biz) { res.status(404).json({ error: "Business not found" }); return; }
+    res.json({ business: biz });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update business profile");
+    res.status(500).json({ error: "Failed to update business profile" });
+  }
+});
+
+// ─── POST /admin/seed-known-businesses ────────────────────────────────────────
+// Idempotent: inserts well-known community businesses that are not yet in the DB.
+// Protected by admin session OR CRON_SECRET header.
+// Any business listed here goes in as active + unclaimed (submittedById = null).
+router.post("/admin/seed-known-businesses", async (req: Request, res: Response) => {
+  const cronOk = req.headers["x-cron-secret"] === process.env.CRON_SECRET;
+  if (!isAdmin(req) && !cronOk) { res.status(403).json({ error: "Admin required" }); return; }
+
+  const KNOWN: Array<{
+    name: string; category: string; subcategory: string; address: string; city: string; state: string;
+    latitude: string; longitude: string; description: string; phone?: string; website?: string;
+    instagram?: string; blackOwned: boolean; ownershipDesignations: string[]; tags: string[];
+    priceRange?: string;
+  }> = [
+    {
+      name: "Mama J's Kitchen",
+      category: "Restaurant",
+      subcategory: "Soul Food",
+      address: "415 N 1st St",
+      city: "Richmond",
+      state: "VA",
+      latitude: "37.5452",
+      longitude: "-77.4388",
+      description: "A Richmond institution serving classic soul food — fried chicken, catfish, smothered pork chops, and hand-rolled biscuits — in a warm, family-style setting that has anchored the community for over a decade.",
+      phone: "(804) 225-7449",
+      website: "https://mamajskitchen.net",
+      instagram: "mamajskitchenrva",
+      blackOwned: true,
+      ownershipDesignations: ["black-owned"],
+      tags: ["Soul Food", "Comfort Food", "Family Friendly", "Dine In", "Takeout", "Richmond Classic"],
+      priceRange: "$$",
+    },
+    {
+      name: "Hakim's Bookstore",
+      category: "Retail",
+      subcategory: "Bookstore",
+      address: "210 W Girard Ave",
+      city: "Philadelphia",
+      state: "PA",
+      latitude: "39.9682",
+      longitude: "-75.1480",
+      description: "Philadelphia's beloved Black-owned bookstore serving the community since 1959, stocking an unmatched selection of African American literature, history, culture, and children's books — operated by Mr. Hakim Rasul, a community institution in his own right.",
+      website: "https://hakimsbookstore.com",
+      blackOwned: true,
+      ownershipDesignations: ["black-owned"],
+      tags: ["Books", "African American Literature", "History", "Community", "Gifts", "Cultural"],
+      priceRange: "$$",
+    },
+  ];
+
+  const inserted: string[] = [];
+  const skipped: string[] = [];
+
+  for (const biz of KNOWN) {
+    try {
+      // Check if already exists by name + city (case-insensitive)
+      const existing = await pool.query(
+        "SELECT id FROM businesses WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2) LIMIT 1",
+        [biz.name, biz.city],
+      );
+      if (existing.rows.length > 0) { skipped.push(biz.name); continue; }
+
+      const newId = randomUUID();
+      await db.insert(businessesTable).values({
+        id: newId,
+        name: biz.name,
+        category: biz.category,
+        subcategory: biz.subcategory,
+        address: biz.address,
+        city: biz.city,
+        state: biz.state,
+        latitude: biz.latitude as unknown as number,
+        longitude: biz.longitude as unknown as number,
+        description: biz.description,
+        phone: biz.phone ?? null,
+        website: biz.website ?? null,
+        instagram: biz.instagram ?? null,
+        blackOwned: biz.blackOwned,
+        ownershipDesignations: biz.ownershipDesignations,
+        tags: biz.tags,
+        priceRange: biz.priceRange ?? null,
+        status: "active",
+        verified: false,
+        featured: false,
+        rating: "0" as unknown as number,
+        reviewCount: 0,
+        confidenceScore: 60,
+        vibes: [],
+        reviews: [],
+        photos: [],
+        pendingPhotos: [],
+        videos: [],
+        trustBadges: [],
+        verifiedDesignations: [],
+      });
+      inserted.push(biz.name);
+    } catch (err) {
+      req.log.error({ err, biz: biz.name }, "Failed to seed known business");
+    }
+  }
+
+  res.json({ inserted, skipped, total: KNOWN.length });
 });
 
 // POST /admin/businesses/:id/clear-dispute — admin clears the dispute flag
