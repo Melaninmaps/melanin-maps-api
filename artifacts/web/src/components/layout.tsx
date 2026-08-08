@@ -57,9 +57,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/map", label: "Map" },
     { href: "/businesses", label: "Businesses" },
     { href: "/community", label: "Community" },
+    { href: "/library", label: "Library" },
     { href: "/safety", label: "Safety" },
     { href: "/travel", label: "KinfolkAI™" },
     { href: "/events", label: "Events" },
+    { href: "/circles", label: "Circles" },
+    { href: "/guides", label: "Guides" },
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/connections", label: "Connections" },
   ];
 
   const navItems = isMember

@@ -121,3 +121,6 @@
 - [THE REAL Tag System](the-real-tags-system.md) — 151 professional trust-signal tags across 9 categories; separate from The Vibe; display threshold 5 taps; seeded in Railway production Aug 8 2026.
 - [Three-Layer Tag Architecture v1.0](three-layer-architecture.md) — routing table for all 22 categories; 3 absolute rules; display threshold=10 ALL layers; THE REAL display string uses colon; 5 categories get neither layer.
 - [Business Placeholder Image System v1.0](placeholder-image-system.md) — HIGH priority; branded card+category SVG icon; has_owner_photo DB field; absolute rules against cultural stereotyping; 22 icon mappings.
+- [Knowledge Topics Schema — keywords type trap](knowledge-topics-schema.md) — keywords is text[] not jsonb; bulk INSERT silently fails with ::jsonb cast.
+- [Drizzle route catch blocks silently return fallback zeros](drizzle-silent-catch-pattern.md) — missing import returns 0/0/0/0 with no visible error; always verify non-zero returns against live endpoint.
+- [Web iOS parity — completed pages](web-ios-parity.md) — 7 pages added to close iOS/web gap; POOL_MAX raised to 35 for tour traffic; nav updated with Library, Circles, Guides, Marketplace, Connections.

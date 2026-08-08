@@ -58,6 +58,13 @@ import ForgotPassword from "@/pages/forgot-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
 import BusinessGrowthCenter from "@/pages/business-growth-center";
 import Library from "@/pages/library";
+import Circles from "@/pages/circles";
+import Collections from "@/pages/collections";
+import FinancialHub from "@/pages/financial-hub";
+import Marketplace from "@/pages/marketplace";
+import Wellness from "@/pages/wellness";
+import Connections from "@/pages/connections";
+import Guides from "@/pages/guides";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -261,6 +268,27 @@ function Router() {
       </Route>
       <Route path="/library">
         <Layout><PreLaunchRoute><Library /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/circles">
+        <Layout><ProtectedRoute><Circles /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/collections">
+        <Layout><ProtectedRoute><Collections /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/financial-hub">
+        <Layout><ProtectedRoute><FinancialHub /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/marketplace">
+        <Layout><ProtectedRoute><Marketplace /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/wellness">
+        <Layout><ProtectedRoute><Wellness /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/connections">
+        <Layout><ProtectedRoute><Connections /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/guides">
+        <Layout><ProtectedRoute><Guides /></ProtectedRoute></Layout>
       </Route>
 
       <Route component={NotFound} />
