@@ -11,6 +11,7 @@ import { NATIONAL_SUNDOWN_TOWNS_SEED } from "../data/national-sundown-towns-seed
 import { DIRECTORY_BUSINESSES_SEED } from "../data/directory-businesses-seed";
 import { ENDORSEMENT_TAGS } from "@workspace/db";
 import { ENDORSEMENT_TAG_VARIANTS } from "@workspace/db";
+import { THE_REAL_TAGS } from "@workspace/db";
 import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -1869,6 +1870,69 @@ router.post("/admin/seed-endorsement-tags", async (req: Request, res: Response) 
     });
   } catch (err) {
     req.log.error({ err }, "seed-endorsement-tags error");
+    res.status(500).json({ error: "Seed failed", detail: String(err) });
+  }
+});
+
+// ── POST /admin/seed-the-real-tags ───────────────────────────────────────────
+// Idempotent seed of all 151 THE REAL professional trust-signal tags.
+// Creates the the_real_tags and the_real_taps tables if missing, then inserts
+// all tags from the permanent constants, skipping any that already exist.
+router.post("/admin/seed-the-real-tags", async (req: Request, res: Response) => {
+  const _cs = process.env.CRON_SECRET;
+  if (!isAdmin(req) && !(_cs && req.headers["x-cron-secret"] === _cs)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  try {
+    // Create tables if missing
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS the_real_tags (
+        tag_key          TEXT PRIMARY KEY,
+        label            TEXT NOT NULL,
+        category         TEXT NOT NULL,
+        type             TEXT NOT NULL DEFAULT 'real-specific',
+        adaptive_family  TEXT,
+        subcategory_scope TEXT NOT NULL DEFAULT 'all',
+        helper_text      TEXT NOT NULL DEFAULT '',
+        sort_weight      INTEGER NOT NULL DEFAULT 0,
+        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS the_real_taps (
+        id          TEXT PRIMARY KEY,
+        business_id TEXT NOT NULL,
+        user_id     TEXT NOT NULL,
+        tag_key     TEXT NOT NULL,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT the_real_taps_business_user_tag UNIQUE (business_id, user_id, tag_key)
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS the_real_taps_business_idx ON the_real_taps (business_id)
+    `);
+
+    let inserted = 0, skipped = 0;
+    for (const t of THE_REAL_TAGS) {
+      const existing = await pool.query(
+        `SELECT tag_key FROM the_real_tags WHERE tag_key = $1`,
+        [t.tag_key]
+      );
+      if (existing.rows.length > 0) { skipped++; continue; }
+      await pool.query(
+        `INSERT INTO the_real_tags
+           (tag_key, label, category, type, adaptive_family, subcategory_scope, helper_text)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [t.tag_key, t.label, t.category, t.type, t.adaptive_family ?? null,
+         t.subcategory_scope, t.helper_text]
+      );
+      inserted++;
+    }
+
+    req.log.info({ inserted, skipped }, "seed-the-real-tags done");
+    res.json({ ok: true, inserted, skipped, total: THE_REAL_TAGS.length });
+  } catch (err) {
+    req.log.error({ err }, "seed-the-real-tags error");
     res.status(500).json({ error: "Seed failed", detail: String(err) });
   }
 });

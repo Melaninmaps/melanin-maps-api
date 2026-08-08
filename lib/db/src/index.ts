@@ -235,3 +235,14 @@ export {
   COMMUNITY_CODES,
 } from "./constants/endorsement-tag-variants";
 export type { EndorsementTagVariantDef, CommunityCode } from "./constants/endorsement-tag-variants";
+
+export {
+  THE_REAL_TAGS,
+  THE_REAL_CATEGORY_MAP,
+  THE_REAL_CATEGORIES,
+  THE_REAL_DISPLAY_THRESHOLD,
+  HEALTH_VIBE_SUBCATEGORIES,
+  usesTheReal,
+  getTheRealTagsForCategory,
+} from "./constants/the-real-tags";
+export type { TheRealTag, TheRealTagType } from "./constants/the-real-tags";
