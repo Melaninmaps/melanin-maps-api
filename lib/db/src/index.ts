@@ -43,7 +43,7 @@ export function setDbLogger(logger: DbLogger): void {
  * 20 provides headroom for: production traffic + Railway healthchecks +
  * healthMonitor probe + any background jobs, without saturation.
  */
-export const POOL_MAX = 20;
+export const POOL_MAX = 35;
 
 let _pool: pg.Pool | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;
