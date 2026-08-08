@@ -76,6 +76,7 @@
     "zod": "^3.25.76"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "posthog-js": "^1.391.2"
   }
 }

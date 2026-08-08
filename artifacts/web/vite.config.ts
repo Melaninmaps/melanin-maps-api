@@ -40,6 +40,9 @@ export default defineConfig(async ({ command }) => {
           ]
         : []),
     ],
+    optimizeDeps: {
+      include: ["buffer"],
+    },
     resolve: {
       alias: {
         "@": path.resolve(import.meta.dirname, "src"),

@@ -1,3 +1,4 @@
+import "./lib/polyfills"; // MUST be first — sets globalThis.Buffer before pg loads
 import { createRoot } from "react-dom/client";
 import posthog from "posthog-js";
 import { Component, type ReactNode, type ErrorInfo } from "react";
