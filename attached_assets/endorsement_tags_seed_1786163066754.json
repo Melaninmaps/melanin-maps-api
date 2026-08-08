@@ -1,0 +1,4817 @@
+{
+  "version": "1.0",
+  "note": "Endorsement + vibe tag definitions for Mapping With Melanin. Tags are earned by community taps only; never self-assigned. Display threshold = 10 taps. Display format = '{count} {said_verb} {label}'. Adaptive tags resolve labels via endorsement_tag_variants_seed.json by tag_family.",
+  "display_threshold": 10,
+  "display_format": "{count} {said_verb} {label}",
+  "vibe_enabled_categories": [
+    1,
+    5,
+    6,
+    10,
+    12,
+    14,
+    16,
+    21
+  ],
+  "categories": {
+    "1": "Food & Drink",
+    "2": "Beauty & Personal Care",
+    "3": "Health & Wellness",
+    "4": "Shopping & Retail",
+    "5": "Travel & Hospitality",
+    "6": "Arts, Culture & Entertainment",
+    "7": "Professional Services",
+    "8": "Home & Property Services",
+    "9": "Automotive & Transportation",
+    "10": "Events & Celebrations",
+    "11": "Education & Learning",
+    "12": "Children & Family",
+    "13": "Community & Nonprofit",
+    "14": "Faith & Spirituality",
+    "15": "Media & Creative Services",
+    "16": "Sports & Recreation",
+    "17": "Pets & Animal Services",
+    "18": "Technology & Digital Services",
+    "19": "Financial & Business Services",
+    "20": "Legal & Government Services",
+    "21": "Agriculture & Specialty Producers",
+    "22": "Other Services"
+  },
+  "tags": [
+    {
+      "tag_key": "food_worth_the_drive",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth The Drive",
+      "helper_text": "You'd cross town for this",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "food_portions_with_love",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Portions With Love",
+      "helper_text": "They didn't skimp",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "food_clean_and_cared_for",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Clean & Cared For",
+      "helper_text": "The space is kept right",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 65
+    },
+    {
+      "tag_key": "food_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "She would approve of this food",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 10
+    },
+    {
+      "tag_key": "food_cooks_like_home",
+      "tag_family": "cooks_like_home",
+      "tag_type": "adaptive",
+      "default_label": "Cooks Like Home",
+      "helper_text": "Tastes like somebody's kitchen",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "catering",
+        "private_chefs",
+        "meal_prep",
+        "specialty_foods",
+        "food_trucks"
+      ],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "food_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "You can order comfortably",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "food_seasoned_right",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Seasoned Right",
+      "helper_text": "No bland plates here",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "food_trucks",
+        "catering",
+        "meal_prep",
+        "private_chefs"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "food_plate_came_correct",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Plate Came Correct",
+      "helper_text": "Looked and tasted like the picture",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "food_trucks"
+      ],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "food_dont_rush_recipe",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "They Don't Rush The Recipe",
+      "helper_text": "Slow-cooked, done properly",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "bakeries",
+        "specialty_foods",
+        "catering"
+      ],
+      "sort_weight": 35
+    },
+    {
+      "tag_key": "food_ask_for_the_special",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Ask For The Special",
+      "helper_text": "The off-menu move is the move",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "food_trucks",
+        "bars_lounges"
+      ],
+      "sort_weight": 40
+    },
+    {
+      "tag_key": "food_recipe_from_home",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Recipe From The Motherland",
+      "helper_text": "Traditional, not watered down",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "restaurants",
+        "bakeries",
+        "specialty_foods",
+        "grocery_markets",
+        "desserts"
+      ],
+      "sort_weight": 32
+    },
+    {
+      "tag_key": "food_fresh_not_frozen",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fresh, Not Frozen",
+      "helper_text": "Made today, not reheated",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 45
+    },
+    {
+      "tag_key": "food_bartender_knows",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Bartender Knows What They're Doing",
+      "helper_text": "Drinks are built, not poured",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "bars_lounges",
+        "juice_smoothies"
+      ],
+      "sort_weight": 42
+    },
+    {
+      "tag_key": "food_sweet_not_too_sweet",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sweet, Not Too Sweet",
+      "helper_text": "Balanced, grown-folks sweet",
+      "category_ids": [
+        1
+      ],
+      "subcategory_keys": [
+        "bakeries",
+        "desserts",
+        "juice_smoothies"
+      ],
+      "sort_weight": 44
+    },
+    {
+      "tag_key": "beauty_on_time",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "On Time, Every Time",
+      "helper_text": "Your appointment means something",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "beauty_clean_station",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Clean Station",
+      "helper_text": "Tools and space are sanitary",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 62
+    },
+    {
+      "tag_key": "beauty_worth_the_price",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth The Price",
+      "helper_text": "You got what you paid for",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 64
+    },
+    {
+      "tag_key": "beauty_blessed_hands",
+      "tag_family": "blessed_hands",
+      "tag_type": "adaptive",
+      "default_label": "Blessed Hands",
+      "helper_text": "This is a gift, not just a skill",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 10
+    },
+    {
+      "tag_key": "beauty_knows_our_hair",
+      "tag_family": "knows_our_hair",
+      "tag_type": "adaptive",
+      "default_label": "They Know Our Hair",
+      "helper_text": "They understand your texture",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "hair_salons",
+        "barbershops",
+        "braiders_natural_hair",
+        "mobile_beauty"
+      ],
+      "sort_weight": 12
+    },
+    {
+      "tag_key": "beauty_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "She'd send you here",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "beauty_sharpest_lineup",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sharpest Lineup",
+      "helper_text": "The edge-up is crisp",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "barbershops"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "beauty_braids_didnt_hurt",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Braids Didn't Hurt",
+      "helper_text": "No tension, no headache",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "braiders_natural_hair",
+        "hair_salons"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "beauty_edges_respected",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Edges Respected",
+      "helper_text": "They protected your hairline",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "braiders_natural_hair",
+        "hair_salons",
+        "lashes_brows"
+      ],
+      "sort_weight": 27
+    },
+    {
+      "tag_key": "beauty_style_lasted",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Style Lasted",
+      "helper_text": "Still looked good weeks later",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "hair_salons",
+        "braiders_natural_hair",
+        "nail_salons",
+        "lashes_brows"
+      ],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "beauty_my_shade_was_there",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "My Shade Was There",
+      "helper_text": "Deep shades actually stocked",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "makeup_artists",
+        "cosmetics_beauty_brands",
+        "beauty_supply"
+      ],
+      "sort_weight": 29
+    },
+    {
+      "tag_key": "beauty_skin_cleared_up",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Skin Cleared Up",
+      "helper_text": "Real results, no irritation",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "estheticians_skincare",
+        "spas"
+      ],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "beauty_didnt_overbook",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Overbook Me",
+      "helper_text": "You weren't waiting three hours",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 35
+    },
+    {
+      "tag_key": "beauty_kids_chair_patience",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Patient With Kids",
+      "helper_text": "First haircuts handled gently",
+      "category_ids": [
+        2
+      ],
+      "subcategory_keys": [
+        "barbershops",
+        "hair_salons",
+        "braiders_natural_hair"
+      ],
+      "sort_weight": 36
+    },
+    {
+      "tag_key": "health_didnt_rush_me",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Didn't Rush Me",
+      "helper_text": "You got real time in the room",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "health_took_time_explain",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Took Time To Explain",
+      "helper_text": "You left understanding your care",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "health_made_me_feel_heard",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Made Me Feel Heard",
+      "helper_text": "You weren't dismissed",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "health_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Warmth, not just service",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "health_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Care in your language",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "health_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Trusts Them",
+      "helper_text": "Safe enough for your elders",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "health_doctor_listens",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "This Doctor Listens",
+      "helper_text": "They asked and they waited for the answer",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "primary_care",
+        "dental",
+        "physical_therapy",
+        "chiropractic",
+        "holistic_wellness",
+        "nutrition_dietitians"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "health_believed_my_pain",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Believed My Pain",
+      "helper_text": "No minimizing, no doubting",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "primary_care",
+        "dental",
+        "physical_therapy",
+        "chiropractic",
+        "doula_birth"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "health_culturally_competent",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Culturally Competent Care",
+      "helper_text": "They understand where you come from",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "health_understands_my_skin",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Understands My Skin",
+      "helper_text": "Trained on melanated skin",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "primary_care",
+        "wellness_centers",
+        "holistic_wellness"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "health_understands_my_hair",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Understands My Hair",
+      "helper_text": "Knows textured hair and scalp",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "primary_care",
+        "wellness_centers"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "health_fought_for_coverage",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fought For My Coverage",
+      "helper_text": "They pushed insurance for you",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "health_front_desk_kind",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Front Desk Was Kind",
+      "helper_text": "The welcome starts at the window",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 32
+    },
+    {
+      "tag_key": "health_therapist_gets_culture",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Therapist Gets The Culture",
+      "helper_text": "No explaining your whole life first",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "mental_wellness_therapy"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "health_doula_held_me_down",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Doula Held Me Down",
+      "helper_text": "Advocated for you when it counted",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "doula_birth"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "health_prices_clear_upfront",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Prices Were Clear Up Front",
+      "helper_text": "No surprise bill later",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 34
+    },
+    {
+      "tag_key": "health_no_judgment_body",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Judgment About My Body",
+      "helper_text": "You were met where you are",
+      "category_ids": [
+        3
+      ],
+      "subcategory_keys": [
+        "fitness_gyms",
+        "personal_trainers",
+        "yoga_pilates",
+        "nutrition_dietitians"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "retail_quality_held_up",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Quality Held Up",
+      "helper_text": "It lasted past the first wear",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "retail_fair_prices",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Prices",
+      "helper_text": "Priced honestly",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 62
+    },
+    {
+      "tag_key": "retail_no_follow_around",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "No Follow-Around",
+      "helper_text": "You shopped in peace, not under watch",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "retail_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "She'd shop here too",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "retail_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They invest back in us",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "retail_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Warm from hello to checkout",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "retail_found_my_size",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Found My Size",
+      "helper_text": "Real sizes actually in stock",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [
+        "clothing_fashion",
+        "shoes_accessories",
+        "childrens_retail"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "retail_found_my_shade",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Found My Shade",
+      "helper_text": "Made for our skin tones",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [
+        "clothing_fashion",
+        "specialty_retail",
+        "gifts"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "retail_owner_remembers_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Owner Remembers Me",
+      "helper_text": "You're a name, not a transaction",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "retail_shelves_reflect_us",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Shelves Reflect Us",
+      "helper_text": "Our stories and faces stocked",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [
+        "books_bookstores",
+        "art_collectibles",
+        "gifts",
+        "home_decor",
+        "childrens_retail"
+      ],
+      "sort_weight": 27
+    },
+    {
+      "tag_key": "retail_wrapped_with_care",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Wrapped With Care",
+      "helper_text": "Packaging showed pride",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [
+        "gifts",
+        "jewelry",
+        "online_shops"
+      ],
+      "sort_weight": 32
+    },
+    {
+      "tag_key": "retail_supports_local_makers",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Supports Local Makers",
+      "helper_text": "Shelf space goes to our people",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 33
+    },
+    {
+      "tag_key": "retail_shipped_fast",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Shipped Fast & Right",
+      "helper_text": "Arrived quick and correct",
+      "category_ids": [
+        4
+      ],
+      "subcategory_keys": [
+        "online_shops"
+      ],
+      "sort_weight": 34
+    },
+    {
+      "tag_key": "travel_exactly_as_pictured",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Exactly As Pictured",
+      "helper_text": "No bait-and-switch",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts",
+        "vacation_rentals",
+        "travel_experiences"
+      ],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "travel_spotless",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Spotless",
+      "helper_text": "Clean top to bottom",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts",
+        "vacation_rentals"
+      ],
+      "sort_weight": 62
+    },
+    {
+      "tag_key": "travel_worth_the_stay",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth The Stay",
+      "helper_text": "You'd book it again",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 64
+    },
+    {
+      "tag_key": "travel_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Host warmth, not front-desk script",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "travel_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Communication was easy",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "travel_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They center our history and people",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "tour_operators",
+        "tour_guides",
+        "travel_experiences",
+        "travel_agencies"
+      ],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "travel_felt_safe_whole_time",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Felt Safe The Whole Time",
+      "helper_text": "Community-reported comfort and welcome",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "travel_host_checked_on_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Host Checked On Me",
+      "helper_text": "Someone actually cared how it was going",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "bed_breakfasts",
+        "vacation_rentals",
+        "hotels_resorts"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "travel_real_local_recs",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Real Local Recommendations",
+      "helper_text": "Not the tourist trap list",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts",
+        "tour_guides",
+        "travel_agencies"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "travel_hair_friendly",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Hair-Friendly Water & Towels",
+      "helper_text": "Soft water, dark towels, satin available",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts",
+        "vacation_rentals"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "travel_breakfast_hit",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Breakfast Hit",
+      "helper_text": "Worth waking up for",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts"
+      ],
+      "sort_weight": 32
+    },
+    {
+      "tag_key": "travel_no_sideeye_checkin",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Side-Eye At Check-In",
+      "helper_text": "Respect from the first minute",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "hotels_resorts",
+        "bed_breakfasts",
+        "vacation_rentals"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "travel_took_us_real_places",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Took Us To The Real Places",
+      "helper_text": "Beyond the postcard route",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "tour_operators",
+        "tour_guides",
+        "travel_experiences"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "travel_driver_was_solid",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Driver Was Solid",
+      "helper_text": "On time, safe, respectful",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [
+        "transportation_services"
+      ],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "arts_worth_the_ticket",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth The Ticket",
+      "helper_text": "The price matched the experience",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "arts_staff_welcoming",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Staff Was Welcoming",
+      "helper_text": "Greeted, not surveilled",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "arts_bring_a_friend",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Bring A Friend",
+      "helper_text": "Better with somebody you love",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 65
+    },
+    {
+      "tag_key": "arts_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "This exists for us",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 10
+    },
+    {
+      "tag_key": "arts_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Multi-generation friendly",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "museums",
+        "cultural_centers",
+        "performing_arts",
+        "theaters",
+        "festivals"
+      ],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "arts_dressed_up_ready",
+      "tag_family": "dressed_up_ready",
+      "tag_type": "adaptive",
+      "default_label": "Sunday Best Ready",
+      "helper_text": "Worth getting dressed for",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "theaters",
+        "performing_arts",
+        "nightlife",
+        "entertainment_venues"
+      ],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "arts_our_story_told_right",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Our Story Told Right",
+      "helper_text": "Accurate, respectful, ours",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "museums",
+        "galleries",
+        "cultural_centers",
+        "performing_arts",
+        "theaters"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "arts_dj_read_the_room",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "DJ Read The Room",
+      "helper_text": "Kept the floor moving",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "djs",
+        "nightlife",
+        "entertainment_venues",
+        "music_live_entertainment"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "arts_artists_paid_fairly",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Artists Paid Fairly",
+      "helper_text": "Creators got their money",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "galleries",
+        "entertainment_venues",
+        "festivals",
+        "music_live_entertainment"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "arts_kids_left_inspired",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Kids Left Inspired",
+      "helper_text": "Your child saw a future",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "museums",
+        "cultural_centers",
+        "attractions",
+        "galleries"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "arts_free_day_is_real",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Free Day Is Real",
+      "helper_text": "Community access isn't a gimmick",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "museums",
+        "galleries",
+        "cultural_centers",
+        "attractions"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "arts_no_bag_check_attitude",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Bag Check Attitude",
+      "helper_text": "Security treated you like a guest",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "museums",
+        "entertainment_venues",
+        "nightlife",
+        "attractions",
+        "theaters"
+      ],
+      "sort_weight": 27
+    },
+    {
+      "tag_key": "arts_sound_was_clean",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sound Was Clean",
+      "helper_text": "You could actually hear it",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "entertainment_venues",
+        "music_live_entertainment",
+        "theaters",
+        "performing_arts"
+      ],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "arts_got_my_angles",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Got My Angles",
+      "helper_text": "Lit and framed you beautifully",
+      "category_ids": [
+        6
+      ],
+      "subcategory_keys": [
+        "photography",
+        "videography"
+      ],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "pro_straight_with_me",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Straight With Me",
+      "helper_text": "Honest, even when it wasn't easy",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "pro_delivered_on_time",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Delivered On Time",
+      "helper_text": "Deadlines respected",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "pro_answered_the_phone",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Answered The Phone",
+      "helper_text": "You could actually reach them",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "pro_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Personal, not transactional",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "pro_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Served in your language",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "pro_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They lift our businesses up",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "pro_explained_it_plain",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Explained It Plain",
+      "helper_text": "No jargon, no confusion",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "pro_no_surprise_fees",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Surprise Fees",
+      "helper_text": "The invoice matched the quote",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "pro_fought_for_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fought For Me",
+      "helper_text": "Went to bat on your behalf",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [
+        "legal_services",
+        "insurance",
+        "staffing_recruiting",
+        "accounting_tax"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "pro_saved_me_money",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Saved Me Money",
+      "helper_text": "Found what you were owed",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [
+        "accounting_tax",
+        "insurance",
+        "financial_services",
+        "business_consulting"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "pro_took_small_business_serious",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Took My Small Business Seriously",
+      "helper_text": "No minimum to be respected",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "pro_taught_me_while_working",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Taught Me While They Worked",
+      "helper_text": "You learned, not just received",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [
+        "business_consulting",
+        "marketing_advertising",
+        "graphic_design_branding",
+        "web_app_development",
+        "it_technology"
+      ],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "pro_kept_me_in_the_loop",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Kept Me In The Loop",
+      "helper_text": "Updates without you chasing",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 30
+    },
+    {
+      "tag_key": "pro_didnt_talk_down",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Talk Down To Me",
+      "helper_text": "Respect regardless of what you knew",
+      "category_ids": [
+        7
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "home_showed_up_on_time",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Showed Up When They Said",
+      "helper_text": "The window was honored",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "home_cleaned_up_after",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Cleaned Up After",
+      "helper_text": "Left it better than they found it",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "home_quote_matched_bill",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Quote Matched The Bill",
+      "helper_text": "No creeping charges",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "home_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Care like it was their own house",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "home_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Trustworthy in your mother's home",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "home_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Clear communication throughout",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "home_didnt_talk_down",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Talk Down To Me",
+      "helper_text": "Explained without condescension",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "home_fixed_right_first_time",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fixed It Right The First Time",
+      "helper_text": "No second call needed",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "contractors",
+        "electricians",
+        "plumbing",
+        "hvac",
+        "roofing",
+        "handyman",
+        "pest_control"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "home_respected_my_home",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Respected My Home",
+      "helper_text": "Shoes off, drop cloths, care taken",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "home_honest_about_not_needed",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Honest About What I Didn't Need",
+      "helper_text": "Talked you out of spending",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "contractors",
+        "electricians",
+        "plumbing",
+        "hvac",
+        "roofing",
+        "home_inspection",
+        "pest_control"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "home_warranty_was_real",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Warranty Was Real",
+      "helper_text": "They came back and honored it",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "contractors",
+        "construction",
+        "roofing",
+        "hvac",
+        "pest_control"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "home_good_with_elders",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Good With My Elders",
+      "helper_text": "Patient and safe with seniors",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 27
+    },
+    {
+      "tag_key": "home_emergency_they_came",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Emergency And They Came",
+      "helper_text": "Middle of the night, they showed",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "plumbing",
+        "electricians",
+        "hvac",
+        "roofing",
+        "handyman",
+        "property_management"
+      ],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "home_helped_me_buy_first",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Helped Me Buy My First Home",
+      "helper_text": "Guided you through the whole thing",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "real_estate_agents_brokers"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "home_landlord_actually_fixes",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Actually Fixes Things",
+      "helper_text": "Repairs happen without a fight",
+      "category_ids": [
+        8
+      ],
+      "subcategory_keys": [
+        "property_management"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "auto_fair_price",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Price",
+      "helper_text": "Priced like they wanted you back",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "auto_fast_turnaround",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fast Turnaround",
+      "helper_text": "Got you rolling quickly",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "auto_explained_the_repair",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Explained The Repair",
+      "helper_text": "You understood the work",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_repair",
+        "auto_body_collision",
+        "tire_services",
+        "auto_dealers"
+      ],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "auto_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Unc Trusts This Shop",
+      "helper_text": "The family mechanic standard",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "auto_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Looked out for you",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "auto_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Served in your language",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "auto_didnt_upsell",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Upsell Me",
+      "helper_text": "Only what the car needed",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_repair",
+        "tire_services",
+        "auto_dealers",
+        "auto_body_collision"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "auto_showed_me_old_part",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Showed Me The Old Part",
+      "helper_text": "Proof the work was done",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_repair",
+        "tire_services",
+        "auto_body_collision"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "auto_safe_for_women_alone",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Safe For Women Coming Alone",
+      "helper_text": "Respectful, no pressure, no creeping",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "auto_ride_home_offered",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Loaner Or Ride Home Offered",
+      "helper_text": "They thought about how you'd get back",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_repair",
+        "auto_body_collision",
+        "auto_dealers"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "auto_detail_immaculate",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Detail Was Immaculate",
+      "helper_text": "Interior and exterior flawless",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_detailing",
+        "car_wash"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "auto_towed_with_care",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Towed Me With Care",
+      "helper_text": "No damage, no attitude",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "towing_roadside"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "auto_financing_was_honest",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Financing Was Honest",
+      "helper_text": "No predatory paperwork",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "auto_dealers"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "auto_driver_was_professional",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Driver Was Professional",
+      "helper_text": "On time, clean car, respectful",
+      "category_ids": [
+        9
+      ],
+      "subcategory_keys": [
+        "chauffeur_private_driver",
+        "transportation_companies",
+        "car_rental"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "event_delivered_what_i_asked",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Delivered Exactly What I Asked",
+      "helper_text": "The vision came to life",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "event_on_time_setup",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "On Time Setup",
+      "helper_text": "Ready before guests arrived",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "event_worth_every_dollar",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth Every Dollar",
+      "helper_text": "The budget was respected",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "event_dressed_up_ready",
+      "tag_family": "dressed_up_ready",
+      "tag_type": "adaptive",
+      "default_label": "Sunday Best Ready",
+      "helper_text": "Built for the big occasion",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "event_venues",
+        "event_planning",
+        "wedding_planning",
+        "decorators",
+        "photographers"
+      ],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "event_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Your day mattered to them",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "event_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They know our celebrations",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "event_handled_my_whole_day",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Handled My Whole Day",
+      "helper_text": "You got to be a guest at your own event",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "event_planning",
+        "wedding_planning",
+        "event_venues"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "event_vendor_team_smooth",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Vendor Team Was Smooth",
+      "helper_text": "Everybody worked together",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "event_planning",
+        "wedding_planning",
+        "event_venues"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "event_florals_were_fresh",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Florals Were Fresh",
+      "helper_text": "Still beautiful at the end of the night",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "florists",
+        "decorators"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "event_cake_tasted_as_good",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Cake Tasted As Good As It Looked",
+      "helper_text": "Beautiful and delicious",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "cakes_desserts",
+        "caterers"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "event_captured_real_moments",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Captured The Real Moments",
+      "helper_text": "Not just posed shots",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "photographers",
+        "videographers",
+        "photo_booths"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "event_grandma_had_seat_shade",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Grandma Had A Seat & Shade",
+      "helper_text": "Elders were considered",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [
+        "event_venues",
+        "event_planning",
+        "party_rentals"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "event_honored_our_traditions",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Honored Our Traditions",
+      "helper_text": "Jumping the broom, tea ceremony, whatever it was, they got it right",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "event_no_dayof_drama",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Day-Of Drama",
+      "helper_text": "Calm, professional, handled",
+      "category_ids": [
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "edu_my_child_improved",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "My Child Improved",
+      "helper_text": "Real, measurable progress",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "childcare_daycare",
+        "preschools",
+        "tutoring",
+        "test_preparation",
+        "music_lessons",
+        "dance_schools",
+        "art_classes",
+        "educational_programs"
+      ],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "edu_teachers_actually_care",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Teachers Actually Care",
+      "helper_text": "They know your student",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "edu_communication_clear",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Communication Was Clear",
+      "helper_text": "You always knew what was happening",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "edu_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "She'd send her grandbaby here",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "edu_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Our history and future are centered",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "edu_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Family communication in your language",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "edu_my_kids_see_themselves",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "My Kids See Themselves",
+      "helper_text": "Staff, books, and walls reflect them",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "edu_taught_our_history_right",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Taught Our History Right",
+      "helper_text": "Full truth, not a footnote",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "edu_didnt_give_up_on_my_child",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Give Up On My Child",
+      "helper_text": "Stayed with them through the hard part",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "tutoring",
+        "test_preparation",
+        "preschools",
+        "educational_programs",
+        "trade_vocational_schools"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "edu_discipline_without_disrespect",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Discipline Without Disrespect",
+      "helper_text": "Corrected with dignity, never criminalized",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "childcare_daycare",
+        "preschools",
+        "dance_schools",
+        "educational_programs"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "edu_financial_aid_help_real",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Financial Aid Help Was Real",
+      "helper_text": "Someone actually walked you through it",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "colleges_universities",
+        "hbcus",
+        "trade_vocational_schools",
+        "professional_training"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "edu_job_ready_after",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Job Ready After",
+      "helper_text": "The credential led to work",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "trade_vocational_schools",
+        "professional_training",
+        "test_preparation"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "edu_small_enough_to_be_seen",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Small Enough To Be Seen",
+      "helper_text": "Not lost in the crowd",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [
+        "colleges_universities",
+        "hbcus",
+        "tutoring",
+        "art_classes"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "edu_culturally_affirming_curriculum",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Culturally Affirming Curriculum",
+      "helper_text": "The material honors who your child is",
+      "category_ids": [
+        11
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "kids_clean_and_safe",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Clean & Safe",
+      "helper_text": "You could relax about the space",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "kids_staff_was_patient",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Staff Was Patient",
+      "helper_text": "Gentle with little ones",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "kids_fair_price_families",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Price For Families",
+      "helper_text": "Affordable for more than one child",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "kids_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Good enough for the whole family",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "kids_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Built with our children in mind",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "kids_knows_our_hair",
+      "tag_family": "knows_our_hair",
+      "tag_type": "adaptive",
+      "default_label": "They Get Our Hair",
+      "helper_text": "Won't ruin or mishandle your child's hair",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [
+        "childcare",
+        "camps",
+        "indoor_play",
+        "childrens_activities",
+        "childrens_retail"
+      ],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "kids_my_kids_see_themselves",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "My Kids See Themselves",
+      "helper_text": "Faces, books, toys, and staff look like them",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "kids_culturally_affirming",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Culturally Affirming",
+      "helper_text": "Their identity is celebrated here",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "kids_safe_for_my_baby",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Safe For My Baby",
+      "helper_text": "Infant care done right",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [
+        "childcare",
+        "maternity_baby_services",
+        "indoor_play"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "kids_diverse_staff",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Diverse Staff",
+      "helper_text": "The team reflects the community",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "kids_wants_to_go_back",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "My Child Wants To Go Back",
+      "helper_text": "The real review is the child's excitement",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "kids_meals_real_food",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Meals Were Real Food",
+      "helper_text": "Nutritious, not just cheap",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [
+        "childcare",
+        "camps",
+        "youth_programs"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "kids_told_me_truth",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "They Told Me The Truth About My Kid",
+      "helper_text": "Honest partnership with parents",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [
+        "childcare",
+        "youth_programs",
+        "parenting_services"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "kids_no_pushout",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Never Pushed My Child Out",
+      "helper_text": "No suspensions over being a kid",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [
+        "childcare",
+        "youth_programs",
+        "camps"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "comm_help_was_real",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Help Was Real",
+      "helper_text": "You actually received something",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "comm_no_judgment",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "No Judgment",
+      "helper_text": "Dignity intact from start to finish",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "comm_answered_when_i_called",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Answered When I Called",
+      "helper_text": "A human picked up",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "comm_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Welcomed, not processed",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "comm_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Rooted in our community",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "comm_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Elders Are Honored",
+      "helper_text": "Seniors are respected here",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "comm_showed_up_for_the_block",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Showed Up For The Block",
+      "helper_text": "Present before the cameras came",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "comm_hires_from_neighborhood",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Hires From The Neighborhood",
+      "helper_text": "Jobs go to the people served",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "comm_no_hoops",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Hoops To Jump Through",
+      "helper_text": "Help without humiliation",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [
+        "mutual_aid",
+        "nonprofits",
+        "senior_services",
+        "community_centers"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "comm_youth_are_valued",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Youth Are Valued",
+      "helper_text": "Young people lead, not just attend",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [
+        "youth_organizations",
+        "community_centers",
+        "cultural_organizations",
+        "nonprofits"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "comm_money_reached_the_people",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Money Reached The People",
+      "helper_text": "Funds landed where promised",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [
+        "nonprofits",
+        "foundations",
+        "mutual_aid",
+        "advocacy_organizations"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "comm_volunteers_treated_well",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Volunteers Treated Well",
+      "helper_text": "Time was respected",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "comm_doors_actually_open",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Doors Actually Open",
+      "helper_text": "The posted hours are real",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [
+        "community_centers",
+        "senior_services",
+        "cultural_organizations"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "comm_advocated_at_city_hall",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Advocated At City Hall",
+      "helper_text": "Fought where decisions get made",
+      "category_ids": [
+        13
+      ],
+      "subcategory_keys": [
+        "advocacy_organizations",
+        "chambers_business_organizations",
+        "professional_associations"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "faith_all_are_welcome",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "All Are Welcome (And Mean It)",
+      "helper_text": "Welcome that holds up in practice",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 50
+    },
+    {
+      "tag_key": "faith_visitors_feel_home",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Visitors Feel At Home",
+      "helper_text": "First time and you weren't a stranger",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 52
+    },
+    {
+      "tag_key": "faith_no_pressure_just_peace",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "No Pressure, Just Peace",
+      "helper_text": "No guilt, no hustle for your wallet",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "faith_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Mothers Of The Church Approve",
+      "helper_text": "The elders vouch for this house",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "faith_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Worship or study in your language",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "faith_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Faith that honors who we are",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "faith_spirit_lives_here",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "The Spirit Lives Here",
+      "helper_text": "You felt it in the room",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [
+        "churches",
+        "spiritual_centers",
+        "temples",
+        "faith_based_organizations"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "faith_felt_the_ancestors",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Felt The Ancestors",
+      "helper_text": "Lineage present in the worship",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [
+        "churches",
+        "spiritual_centers",
+        "temples",
+        "faith_based_community_services"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "faith_community_not_congregation",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Community Not Just Congregation",
+      "helper_text": "They know each other beyond service",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "faith_leader_knows_your_name",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Pastor Knows Your Name",
+      "helper_text": "Leadership sees you as a person",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "faith_youth_are_valued",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Youth Are Valued",
+      "helper_text": "Young people have a real place",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "faith_fed_the_neighborhood",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fed The Neighborhood",
+      "helper_text": "Service beyond the sanctuary",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "faith_sermon_met_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sermon Met Me Where I Was",
+      "helper_text": "The word landed on your life",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [
+        "churches",
+        "spiritual_centers"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "faith_choir_sent_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Choir Sent Me",
+      "helper_text": "The music carried you",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [
+        "churches"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "faith_prayer_answered_here",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Prayer Answered Here",
+      "helper_text": "Testimony lives in this place",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "faith_leader_made_time",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Leader Made Time For Me",
+      "helper_text": "Counsel was available when needed",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 27
+    },
+    {
+      "tag_key": "media_delivered_on_deadline",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Delivered On Deadline",
+      "helper_text": "Files arrived when promised",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "media_easy_to_work_with",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Easy To Work With",
+      "helper_text": "Smooth from booking to delivery",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "media_worth_the_investment",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Worth The Investment",
+      "helper_text": "The work paid for itself",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "media_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Storytelling that serves us",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "media_blessed_hands",
+      "tag_family": "blessed_hands",
+      "tag_type": "adaptive",
+      "default_label": "Blessed Hands",
+      "helper_text": "Real talent, God-given",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "photography",
+        "videography",
+        "music_production",
+        "recording_studios",
+        "creative_studios"
+      ],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "media_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Comfortable and cared for",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "media_told_my_story_right",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Told My Story Right",
+      "helper_text": "Accurate and dignified",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "content_creators",
+        "podcasts",
+        "radio",
+        "publications_magazines",
+        "writers_authors",
+        "production_companies"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "media_lit_my_skin_correctly",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Lit My Skin Correctly",
+      "helper_text": "Melanated skin lit properly",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "photography",
+        "videography",
+        "production_companies",
+        "creative_studios"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "media_sound_was_crisp",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sound Was Crisp",
+      "helper_text": "Clean audio, no muddiness",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "podcasts",
+        "radio",
+        "recording_studios",
+        "music_production",
+        "videography"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "media_didnt_steal_my_vision",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Steal My Vision",
+      "helper_text": "Your ideas stayed yours",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "media_paid_their_team",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Paid Their Team",
+      "helper_text": "Crew and collaborators compensated",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "production_companies",
+        "creative_studios",
+        "music_production"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "media_gave_me_raw_files",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Gave Me The Raw Files",
+      "helper_text": "Ownership handed over",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "photography",
+        "videography",
+        "recording_studios",
+        "music_production"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "media_booth_time_respected",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Booth Time Was Respected",
+      "helper_text": "You got the hours you paid for",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "recording_studios",
+        "music_production",
+        "podcasts"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "media_made_me_look_like_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Made Me Look Like Me",
+      "helper_text": "No filtering away your features",
+      "category_ids": [
+        15
+      ],
+      "subcategory_keys": [
+        "photography",
+        "videography",
+        "content_creators",
+        "creative_studios"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "sport_well_kept_facility",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Well Kept Facility",
+      "helper_text": "Clean, maintained, functional",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "sport_coaches_show_up",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Coaches Show Up",
+      "helper_text": "Consistent and present",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "coaches_training",
+        "youth_sports",
+        "sports_clubs",
+        "martial_arts",
+        "dance_movement"
+      ],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "sport_fair_fees",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Fees",
+      "helper_text": "Families can actually afford it",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "sport_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Built for our young people",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "sport_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Trusted with your child",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "sport_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "A team, not a customer list",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "sport_coach_builds_character",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Coach Builds Character",
+      "helper_text": "More than wins",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "coaches_training",
+        "youth_sports",
+        "martial_arts",
+        "sports_clubs"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "sport_every_kid_plays",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Every Kid Plays",
+      "helper_text": "No child benched all season",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "youth_sports",
+        "sports_clubs",
+        "recreational_centers"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "sport_safe_space_for_girls",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Safe Space For Girls",
+      "helper_text": "Community-reported comfort and respect for girls and women",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "sport_beginners_welcome",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Beginners Welcome",
+      "helper_text": "No shame in starting late",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "sport_no_ego_in_here",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Ego In Here",
+      "helper_text": "Humble room, real instruction",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "martial_arts",
+        "dance_movement",
+        "recreational_centers",
+        "golf",
+        "swimming"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "sport_scholarships_are_real",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Scholarships Are Real",
+      "helper_text": "Money is available if you ask",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "youth_sports",
+        "sports_clubs",
+        "coaches_training",
+        "swimming"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "sport_water_and_shade",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Water & Shade Provided",
+      "helper_text": "Basic care for bodies in the heat",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "youth_sports",
+        "outdoor_recreation",
+        "adventure_experiences",
+        "golf"
+      ],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "sport_discipline_with_love",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Discipline With Love",
+      "helper_text": "Firm but never degrading",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "youth_sports",
+        "martial_arts",
+        "coaches_training",
+        "dance_movement"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "sport_taught_me_to_swim",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Taught Me To Swim At Any Age",
+      "helper_text": "Adults welcome, no judgment",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [
+        "swimming"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "pet_gentle_hands",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Gentle Hands",
+      "helper_text": "Kind with animals",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "pet_fair_price",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Price",
+      "helper_text": "Honest cost of care",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "pet_clean_facility",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Clean Facility",
+      "helper_text": "Well kept and safe",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians",
+        "pet_grooming",
+        "pet_boarding",
+        "pet_daycare",
+        "pet_stores_supplies"
+      ],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "pet_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "You and your pet both cared for",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "pet_blessed_hands",
+      "tag_family": "blessed_hands",
+      "tag_type": "adaptive",
+      "default_label": "Blessed Hands",
+      "helper_text": "A gift with animals",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians",
+        "pet_grooming",
+        "pet_training"
+      ],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "pet_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Clear communication about care",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "pet_dog_wasnt_scared",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "My Dog Wasn't Scared",
+      "helper_text": "Calm, not traumatized",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians",
+        "pet_grooming",
+        "pet_boarding",
+        "pet_daycare",
+        "pet_training"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "pet_honest_about_cost",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Honest About Treatment Cost",
+      "helper_text": "No fear-based upselling",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians",
+        "pet_training"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "pet_payment_plan_offered",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Payment Plan Offered",
+      "helper_text": "Care wasn't held hostage by cash",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "pet_groom_exactly_right",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Groom Was Exactly Right",
+      "helper_text": "The cut matched the request",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "pet_grooming"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "pet_sent_photos",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Sent Photos While I Was Gone",
+      "helper_text": "Peace of mind, unprompted",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "pet_boarding",
+        "dog_walking_pet_sitting",
+        "pet_daycare"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "pet_stayed_late",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Emergency And They Stayed",
+      "helper_text": "They didn't close the door on you",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [
+        "veterinarians"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "pet_no_breed_judgment",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Breed Judgment",
+      "helper_text": "Pit bulls and big dogs treated fairly",
+      "category_ids": [
+        17
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "tech_delivered_what_promised",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Delivered What Was Promised",
+      "helper_text": "The build matched the scope",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "tech_responsive",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Responsive",
+      "helper_text": "Replies came fast",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "tech_fair_scope_and_price",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Scope & Price",
+      "helper_text": "No scope games, no padding",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "tech_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They build for our community",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "tech_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Patient partnership",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "tech_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Support in your language",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "tech_no_jargon",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Explained It Without The Jargon",
+      "helper_text": "Plain English throughout",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "tech_didnt_talk_down",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Talk Down To Me",
+      "helper_text": "Respect regardless of tech level",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "tech_handed_over_passwords",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Handed Over The Passwords",
+      "helper_text": "You own your accounts and domains",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [
+        "web_developers",
+        "app_developers",
+        "it_support",
+        "saas"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "tech_site_loads_fast",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Site Actually Loads Fast",
+      "helper_text": "Performance done right",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [
+        "web_developers",
+        "app_developers",
+        "digital_products"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "tech_fixed_same_day",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fixed It Same Day",
+      "helper_text": "Urgent meant urgent",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [
+        "it_support",
+        "cybersecurity",
+        "web_developers",
+        "saas"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "tech_taught_my_team",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Taught My Team",
+      "helper_text": "You weren't left dependent",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [
+        "technology_consulting",
+        "it_support",
+        "saas",
+        "ai_automation"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "tech_built_for_our_community",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Built For Our Community",
+      "helper_text": "Designed with us in mind, not retrofitted",
+      "category_ids": [
+        18
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "fin_straight_with_me",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Straight With Me",
+      "helper_text": "Honest numbers, honest odds",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "fin_no_hidden_fees",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "No Hidden Fees",
+      "helper_text": "Everything disclosed up front",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "fin_answered_the_phone",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Answered The Phone",
+      "helper_text": "A real person, not a portal",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "fin_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Trusts Them",
+      "helper_text": "Safe with your family's money",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "fin_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Personal, patient service",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "fin_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Financial guidance in your language",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "fin_said_yes_when_others_said_no",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Said Yes When Others Said No",
+      "helper_text": "Looked past the algorithm",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "lending_financing",
+        "mortgage_services",
+        "credit_services",
+        "business_funding"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "fin_explained_credit_plain",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Explained My Credit Plain",
+      "helper_text": "You finally understood your report",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "credit_services",
+        "lending_financing",
+        "mortgage_services",
+        "financial_advisors",
+        "banks_credit_unions"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "fin_no_predatory_terms",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "No Predatory Terms",
+      "helper_text": "Fair rates, no traps",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "lending_financing",
+        "credit_services",
+        "business_funding",
+        "mortgage_services"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "fin_got_me_funded",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Got Me Funded",
+      "helper_text": "The capital actually came through",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "business_funding",
+        "lending_financing",
+        "mortgage_services"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "fin_taught_me_wealth",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Taught Me To Build Wealth",
+      "helper_text": "Education, not just transactions",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "financial_advisors",
+        "investment_services",
+        "banks_credit_unions"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "fin_respected_my_small_numbers",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Respected My Small Numbers",
+      "helper_text": "No minimum balance to be treated well",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "fin_walked_me_through_paperwork",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Walked Me Through The Paperwork",
+      "helper_text": "Nobody left you guessing",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "fin_free_consult_was_free",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Free Consult Was Actually Free",
+      "helper_text": "No bait, no surprise invoice",
+      "category_ids": [
+        19
+      ],
+      "subcategory_keys": [
+        "financial_advisors",
+        "tax_preparation",
+        "bookkeeping",
+        "business_funding"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "legal_answered_the_phone",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Answered The Phone",
+      "helper_text": "You could reach a human",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "legal_clear_about_cost",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Clear About Cost",
+      "helper_text": "You knew the price before starting",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "mediation",
+        "notary_services",
+        "immigration_services",
+        "legal_document_services"
+      ],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "legal_on_time_for_court",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "On Time & Prepared",
+      "helper_text": "Ready when it counted",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "mediation",
+        "immigration_services"
+      ],
+      "sort_weight": 54
+    },
+    {
+      "tag_key": "legal_speaks_my_language",
+      "tag_family": "speaks_my_language",
+      "tag_type": "adaptive",
+      "default_label": "They Speak My Language",
+      "helper_text": "Representation in your language",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "legal_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "You weren't just a case number",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "legal_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "They serve our community on purpose",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "legal_fought_for_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Fought For Me",
+      "helper_text": "Genuine advocacy",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "mediation",
+        "immigration_services",
+        "public_services"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "legal_explained_my_rights",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Explained My Rights",
+      "helper_text": "You learned what you were entitled to",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "legal_didnt_ghost_me",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Didn't Take My Money And Ghost",
+      "helper_text": "Communication stayed consistent",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "immigration_services",
+        "legal_document_services"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "legal_payment_plan_offered",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Payment Plan Offered",
+      "helper_text": "Access without a lump sum",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "immigration_services",
+        "mediation",
+        "legal_document_services"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "legal_immigration_with_care",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Handled My Immigration Case With Care",
+      "helper_text": "Trust with the highest stakes",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "immigration_services",
+        "attorneys_law_firms"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "legal_treated_with_dignity",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Treated Me With Dignity",
+      "helper_text": "No dismissiveness at the counter",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "legal_same_day_notary",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Same-Day Notary",
+      "helper_text": "Fast when you needed it",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "notary_services",
+        "legal_document_services"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "legal_kept_my_family_together",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Kept My Family Together",
+      "helper_text": "The outcome that mattered most",
+      "category_ids": [
+        20
+      ],
+      "subcategory_keys": [
+        "attorneys_law_firms",
+        "immigration_services",
+        "mediation"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "ag_fresh_and_honest",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fresh & Honest",
+      "helper_text": "What they say is what it is",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "ag_fair_prices",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Prices",
+      "helper_text": "Priced for the neighborhood",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "ag_friendly_growers",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Friendly Growers",
+      "helper_text": "They love to talk about the work",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farms",
+        "farmers_markets",
+        "urban_farms",
+        "specialty_growers"
+      ],
+      "sort_weight": 60
+    },
+    {
+      "tag_key": "ag_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Quality she'd recognize",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "ag_cooks_like_home",
+      "tag_family": "cooks_like_home",
+      "tag_type": "adaptive",
+      "default_label": "Grows What We Cook",
+      "helper_text": "Callaloo, collards, injera grain, yuca, whatever home needs",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farms",
+        "farmers_markets",
+        "urban_farms",
+        "specialty_growers",
+        "food_producers"
+      ],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "ag_for_the_culture",
+      "tag_family": "for_the_culture",
+      "tag_type": "adaptive",
+      "default_label": "For The Culture",
+      "helper_text": "Farming as community work",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "ag_picked_this_morning",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Picked This Morning",
+      "helper_text": "Same-day fresh",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farms",
+        "farmers_markets",
+        "urban_farms",
+        "specialty_growers"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "ag_seeds_from_home",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Seeds From Home",
+      "helper_text": "Heritage varieties grown here",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farms",
+        "urban_farms",
+        "specialty_growers",
+        "floriculture"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "ag_takes_ebt",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Takes EBT / SNAP",
+      "helper_text": "Accessible to everybody",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farmers_markets",
+        "farms",
+        "urban_farms",
+        "food_producers"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "ag_land_back_in_our_hands",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Land Back In Our Hands",
+      "helper_text": "Ownership that means something",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farms",
+        "urban_farms",
+        "agricultural_products"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "ag_teaches_while_selling",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Teaches While Selling",
+      "helper_text": "You leave knowing how to grow it",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "farmers_markets",
+        "urban_farms",
+        "specialty_growers"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "ag_chemical_free_and_says_so",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Chemical-Free & Says So",
+      "helper_text": "Transparent growing practices",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "ag_feeds_the_block",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Feeds The Block",
+      "helper_text": "Donations and free boxes are real",
+      "category_ids": [
+        21
+      ],
+      "subcategory_keys": [
+        "urban_farms",
+        "farms",
+        "farmers_markets",
+        "food_producers"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "other_fast_and_reliable",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fast & Reliable",
+      "helper_text": "Done when they said",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 55
+    },
+    {
+      "tag_key": "other_fair_price",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Fair Price",
+      "helper_text": "Honest rates",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 58
+    },
+    {
+      "tag_key": "other_careful_with_my_things",
+      "tag_family": null,
+      "tag_type": "universal",
+      "default_label": "Careful With My Things",
+      "helper_text": "Your belongings respected",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 56
+    },
+    {
+      "tag_key": "other_treated_like_family",
+      "tag_family": "treated_like_family",
+      "tag_type": "adaptive",
+      "default_label": "Treated Me Like Family",
+      "helper_text": "Kindness with the transaction",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "other_elder_approved",
+      "tag_family": "elder_approved",
+      "tag_type": "adaptive",
+      "default_label": "Grandma Approved",
+      "helper_text": "Old-school standards",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "other_blessed_hands",
+      "tag_family": "blessed_hands",
+      "tag_type": "adaptive",
+      "default_label": "Blessed Hands",
+      "helper_text": "Craftsmanship you can see",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "tailoring_alterations",
+        "shoe_repair"
+      ],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "other_nothing_lost_or_damaged",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Nothing Lost, Nothing Damaged",
+      "helper_text": "Everything came back right",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "laundry_dry_cleaning",
+        "shipping_mailing",
+        "storage"
+      ],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "other_alterations_perfect",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Alterations Were Perfect",
+      "helper_text": "Fit like it was made for you",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "tailoring_alterations"
+      ],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "other_brought_shoes_back",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Brought My Shoes Back To Life",
+      "helper_text": "Saved a pair you loved",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "shoe_repair"
+      ],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "other_came_out_at_2am",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Came Out At 2AM",
+      "helper_text": "Emergency service that showed up",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "locksmiths",
+        "personal_concierge"
+      ],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "other_handled_our_loss_with_grace",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Handled Our Loss With Grace",
+      "helper_text": "Dignity for your family in grief",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "funeral_memorial_services"
+      ],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "other_honored_our_traditions",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Honored Our Traditions",
+      "helper_text": "Homegoing done our way",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "funeral_memorial_services"
+      ],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "other_same_day_when_needed",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Same-Day When I Needed It",
+      "helper_text": "Rush work handled",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "laundry_dry_cleaning",
+        "tailoring_alterations",
+        "shipping_mailing",
+        "personal_concierge"
+      ],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "other_storage_dry_and_secure",
+      "tag_family": null,
+      "tag_type": "specific",
+      "default_label": "Dry & Secure",
+      "helper_text": "Nothing ruined, nothing stolen",
+      "category_ids": [
+        22
+      ],
+      "subcategory_keys": [
+        "storage"
+      ],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "vibe_date_night",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Date Night",
+      "helper_text": "Worth getting cute for",
+      "category_ids": [
+        1,
+        6
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 10
+    },
+    {
+      "tag_key": "vibe_hood_classic",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Hood Classic",
+      "helper_text": "Been here forever, still hits",
+      "category_ids": [
+        1,
+        6,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 12
+    },
+    {
+      "tag_key": "vibe_bougie_treat",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Bougie Treat",
+      "helper_text": "Payday spot",
+      "category_ids": [
+        1,
+        5,
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 14
+    },
+    {
+      "tag_key": "vibe_family_reunion_energy",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Family Reunion Energy",
+      "helper_text": "Loud, warm, everybody's welcome",
+      "category_ids": [
+        1,
+        5,
+        6,
+        10,
+        12,
+        16,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "vibe_sunday_best",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Sunday Best",
+      "helper_text": "Dress-up occasion",
+      "category_ids": [
+        1,
+        6,
+        10,
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "vibe_late_night_vibes",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Late Night Vibes",
+      "helper_text": "Open when you need it",
+      "category_ids": [
+        1,
+        6,
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "vibe_turn_up",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Turn Up",
+      "helper_text": "Music up, energy high",
+      "category_ids": [
+        1,
+        6,
+        10,
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 22
+    },
+    {
+      "tag_key": "vibe_cookout_approved",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Cookout Approved",
+      "helper_text": "Passes the family test",
+      "category_ids": [
+        1,
+        10,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 24
+    },
+    {
+      "tag_key": "vibe_romantic_escape",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Romantic Escape",
+      "helper_text": "Just the two of you",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 11
+    },
+    {
+      "tag_key": "vibe_solo_traveler_safe",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Solo Traveler Comfortable",
+      "helper_text": "Community-reported ease traveling alone",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 13
+    },
+    {
+      "tag_key": "vibe_chill_and_restore",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Chill & Restore",
+      "helper_text": "You came back rested",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "vibe_girls_trip_ready",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Girls Trip Ready",
+      "helper_text": "Built for the group chat",
+      "category_ids": [
+        5
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "vibe_grand_rising",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Grand Rising",
+      "helper_text": "Mornings here are beautiful",
+      "category_ids": [
+        5,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    },
+    {
+      "tag_key": "vibe_bring_the_cousins",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Bring The Cousins",
+      "helper_text": "Room for the whole crew",
+      "category_ids": [
+        5,
+        12,
+        16,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 21
+    },
+    {
+      "tag_key": "vibe_grown_and_sexy",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Grown & Sexy",
+      "helper_text": "Adults, no chaos",
+      "category_ids": [
+        6,
+        10
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 23
+    },
+    {
+      "tag_key": "vibe_chill_and_create",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Chill & Create",
+      "helper_text": "You can think and make here",
+      "category_ids": [
+        6,
+        21
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 25
+    },
+    {
+      "tag_key": "vibe_kid_chaos_friendly",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Kid Chaos Friendly",
+      "helper_text": "Nobody side-eyes a loud toddler",
+      "category_ids": [
+        10,
+        12,
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 10
+    },
+    {
+      "tag_key": "vibe_rainy_day_rescue",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Rainy Day Rescue",
+      "helper_text": "Saves the whole afternoon",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 12
+    },
+    {
+      "tag_key": "vibe_toddler_safe",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Toddler Safe",
+      "helper_text": "Soft, gated, watched",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 14
+    },
+    {
+      "tag_key": "vibe_big_kid_approved",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Big Kid Approved",
+      "helper_text": "Tweens actually enjoy it",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 16
+    },
+    {
+      "tag_key": "vibe_parents_can_breathe",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Parents Can Breathe",
+      "helper_text": "You get to sit down",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 18
+    },
+    {
+      "tag_key": "vibe_birthday_party_ready",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Birthday Party Ready",
+      "helper_text": "Celebration-friendly",
+      "category_ids": [
+        12
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 20
+    },
+    {
+      "tag_key": "vibe_chill_and_move",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Chill & Move",
+      "helper_text": "Low pressure movement",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 26
+    },
+    {
+      "tag_key": "vibe_early_bird_energy",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Early Bird Energy",
+      "helper_text": "Morning crowd is right",
+      "category_ids": [
+        16
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 28
+    },
+    {
+      "tag_key": "vibe_come_as_you_are",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Come As You Are",
+      "helper_text": "Jeans are fine",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 11
+    },
+    {
+      "tag_key": "vibe_quiet_and_prayerful",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Quiet & Prayerful",
+      "helper_text": "Stillness is kept",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 13
+    },
+    {
+      "tag_key": "vibe_praise_break_energy",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Praise Break Energy",
+      "helper_text": "Expressive worship",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [
+        "churches",
+        "spiritual_centers"
+      ],
+      "sort_weight": 15
+    },
+    {
+      "tag_key": "vibe_family_worship",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Family Worship",
+      "helper_text": "Children in the room, welcomed",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 17
+    },
+    {
+      "tag_key": "vibe_young_adult_friendly",
+      "tag_family": null,
+      "tag_type": "vibe",
+      "default_label": "Young Adult Friendly",
+      "helper_text": "Twenties and thirties are present",
+      "category_ids": [
+        14
+      ],
+      "subcategory_keys": [],
+      "sort_weight": 19
+    }
+  ]
+}

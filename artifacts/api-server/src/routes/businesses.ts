@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable } from "@workspace/db";
+import { db, pool, businessesTable, businessIdentityTable, businessProfileViewsTable, userSettingsTable, usersTable, docusignEnvelopesTable, businessPromotionsTable, businessSearchInquiriesTable, userPreferencesTable, businessClickEventsTable, businessCaptionsTable, contentReportsTable, referenceLinkClicksTable, BUSINESS_CATEGORY_TAXONOMY, ALL_VALID_CATEGORY_NAMES } from "@workspace/db";
 import { eq, and, or, ilike, desc, sql, gt, count, inArray, ne } from "drizzle-orm";
 import { withDbRetry } from "../lib/db-retry";
 import { sendAddressUpdateNotifications } from "../lib/pushNotifications";
@@ -39,6 +39,16 @@ function isAdmin(req: Request): boolean {
   if (!user?.email) return false;
   return ADMIN_EMAILS.includes(user.email);
 }
+
+// ── GET /businesses/categories ── master taxonomy (single source of truth) ────
+// Returns the full 22-category taxonomy with subcategories.
+// Used by web dropdowns, mobile filters, business onboarding, and Excel sheets.
+router.get("/businesses/categories", (_req: Request, res: Response) => {
+  res.json({
+    categories: BUSINESS_CATEGORY_TAXONOMY,
+    mainCategories: BUSINESS_CATEGORY_TAXONOMY.map((c) => c.name),
+  });
+});
 
 router.get("/businesses", async (req: Request, res: Response) => {
   // Public browsing is allowed. Personalization (preferences, saved status) requires auth.
@@ -302,15 +312,7 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   const userId = req.user?.id;
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const VALID_CATEGORIES = [
-    "Food & Beverage", "Shopping & Retail", "Beauty & Personal Care",
-    "Health & Wellness", "Home & Real Estate", "Home Improvement",
-    "Automotive", "Professional Services", "Technology", "Creative Services",
-    "Events & Entertainment", "Travel & Hospitality", "Family & Education",
-    "Pet Services", "Community & Nonprofits", "Government & Public Resources",
-    "Online & Mobile Businesses",
-    "Home Services", "Real Estate & Housing", "Community & Nonprofit",
-  ];
+  const VALID_CATEGORIES = ALL_VALID_CATEGORY_NAMES;
 
   const { name, category, subcategory, description, phone, website, hours, instagram, tiktok, facebook, twitter, youtube, pinterest, primarySocialPlatform, businessTagline, ownerName, ownerBio, ownerStory } = req.body as {
     name?: string; category?: string; subcategory?: string; description?: string;

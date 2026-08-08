@@ -6,18 +6,28 @@ import { Check } from "lucide-react";
 const BASE = import.meta.env.BASE_URL;
 
 const CATEGORIES = [
-  "Restaurant & Food",
-  "Retail & Shopping",
-  "Health & Wellness",
+  "Food & Drink",
   "Beauty & Personal Care",
+  "Health & Wellness",
+  "Shopping & Retail",
+  "Travel & Hospitality",
+  "Arts, Culture & Entertainment",
   "Professional Services",
-  "Technology",
-  "Real Estate",
-  "Events & Entertainment",
-  "Education & Coaching",
-  "Hospitality & Travel",
-  "Arts & Culture",
-  "Other",
+  "Home & Property Services",
+  "Automotive & Transportation",
+  "Events & Celebrations",
+  "Education & Learning",
+  "Children & Family",
+  "Community & Nonprofit",
+  "Faith & Spirituality",
+  "Media & Creative Services",
+  "Sports & Recreation",
+  "Pets & Animal Services",
+  "Technology & Digital Services",
+  "Financial & Business Services",
+  "Legal & Government Services",
+  "Agriculture & Specialty Producers",
+  "Other Services",
 ];
 
 export default function ForBusinessOwners() {

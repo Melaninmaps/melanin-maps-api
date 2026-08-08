@@ -1,0 +1,26 @@
+es. I’d recommend establishing one master taxonomy now so the Excel business list, app filters, map, business onboarding, and future search all use the same language.
+I can also build the Excel file with the dependent dropdowns for you if you want. But here is the taxonomy I would use as the starting point.
+Mapping With Melanin™ Business Categories
+Main Category	Subcategories
+Food & Drink	Restaurants; Cafés & Coffee; Bakeries; Desserts & Sweets; Food Trucks & Mobile Food; Catering; Bars & Lounges; Juice & Smoothies; Specialty Foods; Meal Prep; Grocery & Markets; Private Chefs
+Beauty & Personal Care	Hair Salons; Barbershops; Braiders & Natural Hair; Nail Salons & Nail Artists; Makeup Artists; Estheticians & Skincare; Spas; Massage; Lashes & Brows; Beauty Supply; Cosmetics & Beauty Brands; Mobile Beauty Services
+Health & Wellness	Primary Care & Medical Practices; Dental; Mental Wellness & Therapy; Physical Therapy; Chiropractic; Nutrition & Dietitians; Fitness & Gyms; Personal Trainers; Yoga & Pilates; Wellness Centers; Doula & Birth Services; Holistic Wellness; Pharmacies; Home Health & Caregiving
+Shopping & Retail	Clothing & Fashion; Shoes & Accessories; Jewelry; Gifts; Home Décor; Furniture; Books & Bookstores; Art & Collectibles; Specialty Retail; Children's Retail; Pet Products; Online Shops
+Travel & Hospitality	Hotels & Resorts; Bed & Breakfasts; Vacation Rentals; Travel Agencies & Advisors; Tour Operators; Tour Guides; Transportation Services; Luggage & Travel Products; Travel Experiences
+Arts, Culture & Entertainment	Museums; Galleries; Cultural Centers; Performing Arts; Theaters; Music & Live Entertainment; DJs; Entertainment Venues; Nightlife; Festivals; Attractions; Gaming & Recreation; Photography; Videography
+Professional Services	Accounting & Tax; Legal Services; Insurance; Financial Services; Business Consulting; Marketing & Advertising; Public Relations; Graphic Design & Branding; Web & App Development; IT & Technology Services; Printing; Translation & Language Services; Staffing & Recruiting; Virtual Assistants
+Home & Property Services	Real Estate Agents & Brokers; Property Management; Contractors; Construction; Electricians; Plumbing; HVAC; Landscaping & Lawn Care; Cleaning Services; Interior Design; Moving Services; Handyman Services; Home Inspection; Roofing; Pest Control
+Automotive & Transportation	Auto Repair; Auto Detailing; Car Wash; Tire Services; Auto Dealers; Auto Body & Collision; Towing & Roadside Assistance; Car Rental; Chauffeur & Private Driver; Transportation Companies
+Events & Celebrations	Event Planning; Wedding Planning; Event Venues; Party Rentals; Decorators; Florists; Balloon Artists; DJs & Entertainment; Photographers; Videographers; Caterers; Cakes & Desserts; Invitations & Stationery; Photo Booths
+Education & Learning	Childcare & Daycare; Preschools; Tutoring; Test Preparation; Colleges & Universities; HBCUs; Trade & Vocational Schools; Professional Training; Music Lessons; Dance Schools; Art Classes; Language Instruction; Educational Programs
+Children & Family	Childcare; Children's Activities; Indoor Play; Camps; Family Entertainment; Parenting Services; Children's Parties; Youth Programs; Children's Retail; Maternity & Baby Services
+Community & Nonprofit	Nonprofits; Community Organizations; Foundations; Mutual Aid; Advocacy Organizations; Youth Organizations; Senior Services; Community Centers; Cultural Organizations; Professional Associations; Chambers & Business Organizations
+Faith & Spirituality	Churches; Mosques; Synagogues; Temples; Spiritual Centers; Faith-Based Organizations; Religious Bookstores & Retail; Faith-Based Community Services
+Media & Creative Services	Content Creators; Influencers / Cultural Ambassadors; Podcasts; Radio; Publications & Magazines; Writers & Authors; Photography; Videography; Production Companies; Recording Studios; Music Production; Creative Studios
+Sports & Recreation	Sports Clubs; Recreational Centers; Coaches & Training; Youth Sports; Golf; Swimming; Martial Arts; Dance & Movement; Outdoor Recreation; Adventure Experiences
+Pets & Animal Services	Veterinarians; Pet Grooming; Pet Boarding; Dog Walking & Pet Sitting; Pet Training; Pet Daycare; Pet Stores & Supplies
+Technology & Digital Services	Software Companies; App Developers; Web Developers; IT Support; Cybersecurity; AI & Automation; SaaS; Digital Products; Technology Consulting
+Financial & Business Services	Banks & Credit Unions; Financial Advisors; Bookkeeping; Tax Preparation; Lending & Financing; Mortgage Services; Credit Services; Business Funding; Investment Services
+Legal & Government Services	Attorneys & Law Firms; Mediation; Notary Services; Immigration Services; Legal Document Services; Government Offices; Public Services
+Agriculture & Specialty Producers	Farms; Farmers Markets; Urban Farms; Specialty Growers; Floriculture; Food Producers; Beverage Producers; Agricultural Products
+Other Services	Laundry & Dry Cleaning; Tailoring & Alterations; Shoe Repair; Locksmiths; Shipping & Mailing; Storage; Funeral & Memorial Services; Personal Concierge; Other

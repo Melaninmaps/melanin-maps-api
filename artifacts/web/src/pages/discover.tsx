@@ -52,17 +52,28 @@ function isOpenNow(hours: string | null | undefined): boolean {
 // ─── Submit a Business Modal ─────────────────────────────────────────────────
 
 const BUSINESS_CATEGORIES = [
-  "Restaurants & Nightlife",
-  "Hotels & Stays",
-  "Cultural Landmarks",
-  "Professional Services",
-  "Retail & Shopping",
+  "Food & Drink",
+  "Beauty & Personal Care",
   "Health & Wellness",
-  "Beauty & Grooming",
-  "Arts & Entertainment",
-  "Education & Childcare",
-  "Community Events",
-  "Other",
+  "Shopping & Retail",
+  "Travel & Hospitality",
+  "Arts, Culture & Entertainment",
+  "Professional Services",
+  "Home & Property Services",
+  "Automotive & Transportation",
+  "Events & Celebrations",
+  "Education & Learning",
+  "Children & Family",
+  "Community & Nonprofit",
+  "Faith & Spirituality",
+  "Media & Creative Services",
+  "Sports & Recreation",
+  "Pets & Animal Services",
+  "Technology & Digital Services",
+  "Financial & Business Services",
+  "Legal & Government Services",
+  "Agriculture & Specialty Producers",
+  "Other Services",
 ];
 
 function SubmitBusinessModal({ onClose }: { onClose: () => void }) {

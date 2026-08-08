@@ -7,7 +7,15 @@ import { RotatingQuoteBanner } from "@/components/RotatingQuoteBanner";
 const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
 const SHARE_TEXT = encodeURIComponent("Join Mapping with Melanin — discover trusted businesses, travel safely, and connect with the community. 🌍✊🏾");
-const BIZ_CATEGORIES = ["Restaurant", "Café", "Retail", "Beauty & Wellness", "Health & Fitness", "Arts & Culture", "Entertainment", "Professional Services", "Tech", "Home Services", "Food & Beverage", "Other"];
+const BIZ_CATEGORIES = [
+  "Food & Drink", "Beauty & Personal Care", "Health & Wellness", "Shopping & Retail",
+  "Travel & Hospitality", "Arts, Culture & Entertainment", "Professional Services",
+  "Home & Property Services", "Automotive & Transportation", "Events & Celebrations",
+  "Education & Learning", "Children & Family", "Community & Nonprofit", "Faith & Spirituality",
+  "Media & Creative Services", "Sports & Recreation", "Pets & Animal Services",
+  "Technology & Digital Services", "Financial & Business Services", "Legal & Government Services",
+  "Agriculture & Specialty Producers", "Other Services",
+];
 
 function openShare(platform: string) {
   const url = encodeURIComponent(SITE_URL);

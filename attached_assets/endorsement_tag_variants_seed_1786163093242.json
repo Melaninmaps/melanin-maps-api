@@ -1,0 +1,943 @@
+{
+  "version": "1.0",
+  "note": "Variant labels for adaptive endorsement tag families. All variants of a family aggregate to a single count. Resolution order: (family, community, subcategory) -> (family, community, NULL) -> (family, 'default', NULL) -> tag default_label.",
+  "communities": [
+    "default",
+    "hispanic",
+    "ethiopian",
+    "caribbean",
+    "west_african",
+    "vietnamese",
+    "korean",
+    "brazilian",
+    "indigenous",
+    "somali",
+    "arabic"
+  ],
+  "variants": [
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Grandma Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "hispanic",
+      "display_label": "Abuela Approved",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "ethiopian",
+      "display_label": "Emaye Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "caribbean",
+      "display_label": "Granny Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "west_african",
+      "display_label": "Mama Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "vietnamese",
+      "display_label": "Bà Ngoại Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "korean",
+      "display_label": "Halmeoni Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "brazilian",
+      "display_label": "Vovó Approved",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "indigenous",
+      "display_label": "Elders Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "somali",
+      "display_label": "Ayeeyo Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "arabic",
+      "display_label": "Sitti Approved",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "default",
+      "display_label": "Cooks Like Home",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "hispanic",
+      "display_label": "Como En Casa",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "ethiopian",
+      "display_label": "Tastes Like Enat's Kitchen",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "caribbean",
+      "display_label": "Taste Like Yaad",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "west_african",
+      "display_label": "Village Kitchen Taste",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "vietnamese",
+      "display_label": "Cơm Nhà Good",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "korean",
+      "display_label": "Jip-bap Good",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "brazilian",
+      "display_label": "Comida De Mãe",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "indigenous",
+      "display_label": "Cooked The Old Way",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "somali",
+      "display_label": "Cunto Guri",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "arabic",
+      "display_label": "Akl Beiti",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "default",
+      "display_label": "Treated Me Like Family",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "hispanic",
+      "display_label": "Me Trataron Como Familia",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "ethiopian",
+      "display_label": "Treated Me Like Zemed",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "caribbean",
+      "display_label": "Treat Mi Like Fam",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "west_african",
+      "display_label": "Treated Me Like Blood",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "vietnamese",
+      "display_label": "Treated Me Like Gia Đình",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "korean",
+      "display_label": "Treated Me Like Gajok",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "brazilian",
+      "display_label": "Me Tratou Como Família",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "indigenous",
+      "display_label": "Treated Me Like Relatives",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "somali",
+      "display_label": "Treated Me Like Qoys",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "treated_like_family",
+      "community_code": "arabic",
+      "display_label": "Treated Me Like Ahl",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "default",
+      "display_label": "They Speak My Language",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "hispanic",
+      "display_label": "Se Habla Español (De Verdad)",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "ethiopian",
+      "display_label": "Amharic Spoken Here",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "caribbean",
+      "display_label": "Patois Welcome",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "west_african",
+      "display_label": "Pidgin Spoken Here",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "vietnamese",
+      "display_label": "Nói Tiếng Việt",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "korean",
+      "display_label": "Hangugeo OK",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "brazilian",
+      "display_label": "Fala Português",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "indigenous",
+      "display_label": "Our Language Honored",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "somali",
+      "display_label": "Af-Soomaali Laga Hadlaa",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "arabic",
+      "display_label": "Arabic Spoken Here",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "default",
+      "display_label": "Black-Owned & Proud",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "hispanic",
+      "display_label": "Orgullo Latino",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "ethiopian",
+      "display_label": "Habesha-Owned",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "caribbean",
+      "display_label": "Yaad-Owned",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "west_african",
+      "display_label": "Naija-Owned",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "vietnamese",
+      "display_label": "Người Việt Làm Chủ",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "korean",
+      "display_label": "Uri Gage (Our Store)",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "brazilian",
+      "display_label": "Orgulho Brasileiro",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "indigenous",
+      "display_label": "Native-Owned",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "somali",
+      "display_label": "Somali-Owned",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "owned_by_us",
+      "community_code": "arabic",
+      "display_label": "Arab-Owned & Proud",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "default",
+      "display_label": "Sunday Best Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "hispanic",
+      "display_label": "Quinceañera Ready",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "ethiopian",
+      "display_label": "Beal Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "caribbean",
+      "display_label": "Sunday Dinner Sharp",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "west_african",
+      "display_label": "Owambe Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "vietnamese",
+      "display_label": "Tết Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "korean",
+      "display_label": "Chuseok Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "brazilian",
+      "display_label": "Festa Ready",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "indigenous",
+      "display_label": "Powwow Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "somali",
+      "display_label": "Eid Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "dressed_up_ready",
+      "community_code": "arabic",
+      "display_label": "Eid Ready",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "default",
+      "display_label": "Auntie Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "hispanic",
+      "display_label": "Tía Energy",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "ethiopian",
+      "display_label": "Habesha Auntie Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "caribbean",
+      "display_label": "Tantie Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "west_african",
+      "display_label": "Anty Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "vietnamese",
+      "display_label": "Cô Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "korean",
+      "display_label": "Imo Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "brazilian",
+      "display_label": "Tia Energy",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "indigenous",
+      "display_label": "Auntie Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "somali",
+      "display_label": "Eedo Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "auntie_energy",
+      "community_code": "arabic",
+      "display_label": "Khalto Energy",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "default",
+      "display_label": "Blessed Hands",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "hispanic",
+      "display_label": "Manos Benditas",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "ethiopian",
+      "display_label": "Blessed Hands (Bruk Ej)",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "caribbean",
+      "display_label": "Blessed Hands",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "west_african",
+      "display_label": "God-Given Hands",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "vietnamese",
+      "display_label": "Tay Vàng (Golden Hands)",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "korean",
+      "display_label": "Geumson (Golden Hands)",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "brazilian",
+      "display_label": "Mãos Abençoadas",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "indigenous",
+      "display_label": "Good Hands, Good Medicine",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "somali",
+      "display_label": "Gacmo Barakaysan",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "blessed_hands",
+      "community_code": "arabic",
+      "display_label": "Yadayn Mubaraka",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "default",
+      "display_label": "For The Culture",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "hispanic",
+      "display_label": "Por La Cultura",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "ethiopian",
+      "display_label": "For Habesha",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "caribbean",
+      "display_label": "Fi Wi Culture",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "west_african",
+      "display_label": "For The Motherland",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "vietnamese",
+      "display_label": "Cho Cộng Đồng",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "korean",
+      "display_label": "For Our People",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "brazilian",
+      "display_label": "Pela Cultura",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "indigenous",
+      "display_label": "For The People",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "somali",
+      "display_label": "Dhaqanka Ayaa Loo Taagan",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "for_the_culture",
+      "community_code": "arabic",
+      "display_label": "Min Ajl Al-Thaqafa",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "default",
+      "display_label": "They Know Our Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "hispanic",
+      "display_label": "Saben De Rizos",
+      "said_verb": "dijeron",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "ethiopian",
+      "display_label": "Knows Habesha Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "caribbean",
+      "display_label": "Know Fi Wi Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "west_african",
+      "display_label": "Knows African Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "vietnamese",
+      "display_label": "Knows Fine Straight Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "korean",
+      "display_label": "Knows Our Hair Texture",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "brazilian",
+      "display_label": "Sabe Cuidar De Cacheado",
+      "said_verb": "disseram",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "indigenous",
+      "display_label": "Respects Long Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "somali",
+      "display_label": "Waa Garanayaan Timaha",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "arabic",
+      "display_label": "Knows Textured & Covered Hair",
+      "said_verb": "said",
+      "subcategory_key": null
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "caribbean",
+      "display_label": "Granmè Approved",
+      "said_verb": "said",
+      "subcategory_key": "haitian_creole_pref"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "west_african",
+      "display_label": "Iya Approved",
+      "said_verb": "said",
+      "subcategory_key": "yoruba_pref"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "arabic",
+      "display_label": "Teta Approved",
+      "said_verb": "said",
+      "subcategory_key": "levantine_pref"
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "caribbean",
+      "display_label": "Kreyòl Pale Isit",
+      "said_verb": "said",
+      "subcategory_key": "haitian_creole_pref"
+    },
+    {
+      "tag_family": "speaks_my_language",
+      "community_code": "west_african",
+      "display_label": "Yoruba Spoken Here",
+      "said_verb": "said",
+      "subcategory_key": "yoruba_pref"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Grandma Trusts Them",
+      "said_verb": "said",
+      "subcategory_key": "health_all"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Grandma Trusts Them",
+      "said_verb": "said",
+      "subcategory_key": "financial_all"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Unc Trusts This Shop",
+      "said_verb": "said",
+      "subcategory_key": "auto_all"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Elders Are Honored",
+      "said_verb": "said",
+      "subcategory_key": "community_all"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Grandma Approved",
+      "said_verb": "said",
+      "subcategory_key": "agriculture_all"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "Mothers Of The Church Approve",
+      "said_verb": "said",
+      "subcategory_key": "churches"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "The Aunties Vouch For This Masjid",
+      "said_verb": "said",
+      "subcategory_key": "mosques"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "The Bubbes Approve",
+      "said_verb": "said",
+      "subcategory_key": "synagogues"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "The Elders Approve",
+      "said_verb": "said",
+      "subcategory_key": "temples"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "The Elders Vouch For This House",
+      "said_verb": "said",
+      "subcategory_key": "spiritual_centers"
+    },
+    {
+      "tag_family": "elder_approved",
+      "community_code": "default",
+      "display_label": "The Elders Vouch For This House",
+      "said_verb": "said",
+      "subcategory_key": "faith_based_organizations"
+    },
+    {
+      "tag_family": "knows_our_hair",
+      "community_code": "default",
+      "display_label": "They Get Our Hair",
+      "said_verb": "said",
+      "subcategory_key": "children_family_all"
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "default",
+      "display_label": "Grows What We Cook",
+      "said_verb": "said",
+      "subcategory_key": "agriculture_all"
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "hispanic",
+      "display_label": "Cultivan Lo Que Cocinamos",
+      "said_verb": "dijeron",
+      "subcategory_key": "agriculture_all"
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "caribbean",
+      "display_label": "Grow Wah Wi Cook",
+      "said_verb": "said",
+      "subcategory_key": "agriculture_all"
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "west_african",
+      "display_label": "Grows Our Village Food",
+      "said_verb": "said",
+      "subcategory_key": "agriculture_all"
+    },
+    {
+      "tag_family": "cooks_like_home",
+      "community_code": "ethiopian",
+      "display_label": "Grows What Habesha Cooks",
+      "said_verb": "said",
+      "subcategory_key": "agriculture_all"
+    }
+  ]
+}

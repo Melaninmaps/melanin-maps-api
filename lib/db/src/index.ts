@@ -197,3 +197,12 @@ export const db: ReturnType<typeof drizzle<typeof schema>> = new Proxy(
 export * from "./schema";
 export { initPoolInstrumentation, getPoolAuditLog, getPoolAuditSummary } from "./pool-instrumentation";
 export type { PoolEvent } from "./pool-instrumentation";
+export {
+  BUSINESS_CATEGORY_TAXONOMY,
+  MAIN_CATEGORY_NAMES,
+  SUBCATEGORY_MAP,
+  ALL_SUBCATEGORY_NAMES,
+  LEGACY_CATEGORY_NAMES,
+  ALL_VALID_CATEGORY_NAMES,
+} from "./constants/business-categories";
+export type { BusinessCategory } from "./constants/business-categories";
