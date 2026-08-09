@@ -1,0 +1,318 @@
+Yes. I understand the problem, and **I would not let Replit “fix” this by changing your account again yet.**
+
+The screenshot actually gives us an important clue: Replit added special handling for Apple-created accounts, but your situation is different. **Your same Mapping With Melanin account needs to support more than one authentication method.** Your Android/email-password login should not have been sacrificed simply because Apple Sign In was added.
+
+What we need first is a forensic comparison of what changed during the Apple-auth work.
+
+Send Replit this exactly:
+
+```text
+URGENT AUTHENTICATION REGRESSION — DIAGNOSE BEFORE CHANGING ANYTHING
+
+DO NOT RESET MY PASSWORD.
+DO NOT CREATE ANOTHER ACCOUNT.
+DO NOT CHANGE MY EMAIL.
+DO NOT MODIFY MY USER ROW.
+DO NOT MERGE OR UNLINK ACCOUNTS YET.
+DO NOT GUESS AT A FIX.
+
+We introduced this regression while making changes for Apple Sign In / Apple App Review.
+
+Before those changes, I could authenticate using my normal email/password account, which is also the account I use for Android.
+
+I now receive:
+
+"Login failed. Please try again."
+
+when attempting normal email/password authentication.
+
+The login screen now also contains special Apple-account instructions telling Apple-created users to use Forgot Password to establish a password.
+
+My account situation is important:
+
+I need ONE Mapping With Melanin user identity that can appropriately support the authentication methods linked to that account.
+
+Apple authentication should NOT break or replace an existing email/password credential.
+
+Android/email-password authentication must continue working independently of Apple Sign In.
+
+==================================================
+PHASE 1 — READ-ONLY FORENSIC AUTH AUDIT
+==================================================
+
+STOP BEFORE MAKING CHANGES.
+
+Trace the authentication changes made while implementing/fixing Sign in with Apple for Apple review.
+
+Compare:
+
+LAST KNOWN WORKING AUTH VERSION
+vs.
+CURRENT PRODUCTION AUTH VERSION
+
+Identify every relevant change involving:
+
+- email/password login
+- password hashes
+- credential/account tables
+- Apple Sign In
+- Apple subject identifiers
+- provider linking
+- account linking
+- account lookup by email
+- Better Auth/authentication provider configuration
+- password reset
+- login endpoints
+- session creation
+- OAuth/OIDC handling
+- registration
+- duplicate-account prevention
+- email normalization
+- any migration affecting authentication records
+
+I specifically want to know:
+
+WHAT CHANGED THAT COULD HAVE CAUSED AN EXISTING EMAIL/PASSWORD ACCOUNT TO STOP AUTHENTICATING?
+
+Do not assume the password is wrong merely because authentication fails.
+
+==================================================
+PHASE 2 — INSPECT MY PRODUCTION AUTH RECORD
+==================================================
+
+READ ONLY.
+
+Locate the existing production user for:
+
+tlindsay428@yahoo.com
+
+Report WITHOUT exposing password hashes, tokens, secrets, session tokens, Apple private identifiers, or credentials:
+
+User exists: YES/NO
+User ID: [safe internal ID if appropriate]
+Normalized email:
+memberType:
+role:
+Account creation date:
+Authentication providers currently linked:
+Email/password credential present: YES/NO
+Password credential/hash record present: YES/NO
+Apple provider linked: YES/NO
+Google/OIDC provider linked: YES/NO
+Number of auth/account-provider records attached to this user:
+Duplicate user records for normalized email: YES/NO
+Account disabled/locked: YES/NO
+Email verified status:
+Any field currently forcing Apple-only authentication:
+Any migration/change affecting this account during Apple Sign In work:
+
+DO NOT print the password hash itself.
+
+==================================================
+PHASE 3 — TRACE THE FAILED LOGIN
+==================================================
+
+Reproduce/trace the email/password login request safely without changing credentials.
+
+Determine EXACTLY where it fails:
+
+1. frontend submits credentials
+2. API receives request
+3. normalized email lookup
+4. user lookup
+5. credential/provider lookup
+6. password verification
+7. authentication success/failure
+8. session creation
+9. session cookie/token returned
+10. frontend handles response
+
+Report:
+
+HTTP status:
+Backend error/event:
+Exact stage that fails:
+Whether password verification is actually reached:
+Whether user lookup succeeds:
+Whether credential lookup succeeds:
+Whether session creation is attempted:
+
+The frontend currently reduces everything to:
+
+"Login failed. Please try again."
+
+That message is NOT sufficient diagnosis.
+
+==================================================
+PHASE 4 — CHECK ACCOUNT-LINKING ARCHITECTURE
+==================================================
+
+Confirm whether the current architecture supports:
+
+ONE USER
+    ├── email/password
+    ├── Apple Sign In
+    └── other supported authentication providers
+
+rather than creating separate Mapping With Melanin user identities for each login provider.
+
+Authentication method and Mapping With Melanin membership identity must remain separate concepts.
+
+A user's:
+
+profile
+membership
+tester entitlement
+saves
+reviews
+community history
+Kinfolk history/context
+business interactions
+points
+messages
+safety activity
+
+must belong to the Mapping With Melanin USER — not separately to an Apple login, Android login, or email/password login.
+
+==================================================
+CRITICAL ACCOUNT-LINKING SAFETY RULE
+==================================================
+
+DO NOT blindly link accounts merely because two providers return the same visible email address.
+
+Apple users may use Hide My Email/private relay addresses, and provider identity must be handled securely.
+
+Report how the current system determines that an Apple identity belongs to an existing Mapping With Melanin account.
+
+Also determine what happens when:
+
+A. Existing email/password user later uses Apple Sign In.
+
+B. Existing Apple user later establishes email/password authentication.
+
+C. Apple returns the user's normal email.
+
+D. Apple returns a private relay email.
+
+E. Existing user signs in from Android using email/password.
+
+F. Existing user signs in from web using email/password.
+
+We need secure provider linking WITHOUT duplicate Mapping With Melanin identities and WITHOUT accidentally linking two different people.
+
+==================================================
+PHASE 5 — INVESTIGATE THE NEW "FORGOT PASSWORD" APPLE FLOW
+==================================================
+
+The current screen says:
+
+"If you created your account using Sign in with Apple on iPhone or iPad, use Forgot Password below to set a password, then sign in here. This connects you to your existing account — no new account is created."
+
+VERIFY THIS CLAIM AGAINST THE ACTUAL PRODUCTION CODE.
+
+Do not assume the UI text accurately describes the implementation.
+
+Tell me:
+
+1. Does Forgot Password actually ADD an email/password credential to the SAME existing user?
+
+2. Or does it replace/change the authentication method?
+
+3. What happens for an Apple private-relay email?
+
+4. Could this implementation have altered existing email/password users?
+
+5. Was this functionality added specifically during the Apple review/authentication changes?
+
+==================================================
+PHASE 6 — REPORT BEFORE FIX
+==================================================
+
+Return:
+
+ROOT CAUSE:
+
+LAST WORKING BEHAVIOR:
+
+CHANGE THAT INTRODUCED REGRESSION:
+
+CURRENT DATABASE STATE:
+
+CURRENT AUTH PROVIDERS FOR FOUNDER ACCOUNT:
+
+EMAIL/PASSWORD CREDENTIAL INTACT: YES/NO
+
+APPLE AUTH LINKAGE INTACT: YES/NO
+
+DUPLICATE ACCOUNT: YES/NO
+
+DATA AT RISK: YES/NO
+
+RECOMMENDED MINIMUM FIX:
+
+FILES THAT WOULD CHANGE:
+
+DATABASE CHANGE REQUIRED: YES/NO
+
+RISK TO APPLE SIGN IN:
+
+RISK TO ANDROID LOGIN:
+
+RISK TO EXISTING USERS:
+
+ROLLBACK PLAN:
+
+Then STOP.
+
+I will authorize the repair after seeing the diagnosis.
+
+==================================================
+ACCEPTANCE REQUIREMENTS AFTER AUTHORIZED FIX
+==================================================
+
+Do not declare this fixed based on unit tests or simulation alone.
+
+We must production-test the actual authentication journeys.
+
+At minimum verify:
+
+WEB:
+existing email/password account → successful login
+
+ANDROID:
+existing email/password account → successful login
+
+APPLE:
+Sign in with Apple → successful login
+
+LINKED FOUNDER ACCOUNT:
+appropriate supported authentication methods → SAME Mapping With Melanin user ID
+
+PASSWORD RESET:
+reset → login → SAME user account/data
+
+DATA:
+profile/saves/history/membership/tester entitlement/Kinfolk data remain attached to the same user
+
+PRODUCTION:
+visually verify the actual website after deployment.
+
+Do not say "authentication is fixed" until the production journeys that can be tested have actually been tested.
+```
+
+### One thing I am adding to the requirement
+
+**My recommendation:** Do **not** treat “Apple user,” “Android user,” and “website user” as three kinds of members.
+
+They are authentication paths into **one identity**:
+
+**Teianna's Mapping With Melanin account**
+→ email/password credential
+→ Apple credential
+→ potentially Google credential later
+
+Your membership, founder status, tester status, Kinfolk history, saves, reviews, etc. sit **above authentication**.
+
+That architecture matters far beyond today's login problem. Otherwise, eventually someone signs in with Apple on Tuesday and Android on Wednesday and Mapping With Melanin thinks they're two different people—or, worse, their history appears to disappear.
+
+Also, **don't use Forgot Password yet just because that yellow box tells you to.** We first want Replit to establish whether your original password credential still exists and exactly why the authentication request is failing. That preserves the evidence from the regression rather than changing the account while they're diagnosing it.

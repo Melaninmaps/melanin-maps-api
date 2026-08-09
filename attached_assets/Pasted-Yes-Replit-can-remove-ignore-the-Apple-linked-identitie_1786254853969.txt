@@ -1,0 +1,58 @@
+Yes — **Replit can remove/ignore the Apple-linked identities**, but I would not have them blindly delete anything.
+
+Because your app is still going through Apple review and you use third-party/social login, Apple’s current review rules can still require an equivalent privacy-preserving login option such as Sign in with Apple. ([Apple Developer][1]) So the safer move is:
+
+**keep Sign in with Apple available for Apple review/new Apple users, but stop treating Apple as the master identity and unlink/retire the accidental Apple associations that are breaking your existing email-password account.**
+
+For your specific situation, I would tell Replit:
+
+```text
+AUTH CLEANUP REQUEST — APPLE LINKAGES ONLY
+
+I want to return authentication to the original Mapping With Melanin account model:
+
+ONE Mapping With Melanin user account
+with email/password authentication remaining primary and fully functional.
+
+Do NOT delete user profiles, membership data, tester entitlements, saves, reviews, Kinfolk history, community activity, points, messages, or any other platform data.
+
+Please perform a READ-ONLY audit first of all Apple authentication/provider records currently attached to production users.
+
+For each Apple-linked account/provider record, return:
+
+User email
+Mapping With Melanin user ID
+Apple provider linked: YES/NO
+Email/password credential also exists: YES/NO
+Apple-created duplicate user exists: YES/NO
+Private Relay email involved: YES/NO
+Data exists only on Apple-linked duplicate: YES/NO
+Safe to unlink Apple provider without data loss: YES/NO
+
+My desired outcome is:
+
+1. Existing email/password users keep their original Mapping With Melanin user ID and all data.
+
+2. Email/password login works again independently of Apple.
+
+3. Any accidental Apple provider linkage created during Apple review work is removed only after confirming no unique user data depends on it.
+
+4. Duplicate Apple-created Mapping With Melanin accounts, if any, must NOT simply be deleted. First identify whether they contain saves, profiles, community activity, tester status, Kinfolk history, or other data that must be preserved/merged.
+
+5. Sign in with Apple may remain available as an authentication OPTION where required for the iOS app, but it must not replace or disable an existing email/password credential.
+
+6. Do not force existing email/password users to use Forgot Password merely because Apple Sign In was added.
+
+7. Do not automatically link Apple accounts by matching visible email alone, especially when Apple Private Relay is involved.
+
+8. After the audit, tell me exactly which Apple provider records you recommend unlinking and why.
+
+STOP FOR APPROVAL BEFORE MAKING PRODUCTION AUTH CHANGES.
+```
+
+One other caution: if Replit literally deletes Apple credentials/tokens for users who intentionally use Sign in with Apple, Apple has specific token-revocation/account-management expectations. ([Apple Developer][2]) That is another reason I would use **unlink after audit**, not “wipe every Apple ID.”
+
+So the short version is: **yes, we can effectively forget the problematic Apple linkages — but preserve Sign in with Apple as an optional login path if Apple still requires it, and preserve your original email/password identity as the actual Mapping With Melanin account.**
+
+[1]: https://developer.apple.com/app-store/review/guidelines/?utm_source=chatgpt.com "App Review Guidelines"
+[2]: https://developer.apple.com/documentation/technotes/tn3194-handling-account-deletions-and-revoking-tokens-for-sign-in-with-apple?utm_source=chatgpt.com "Handling account deletions and revoking tokens for Sign in ..."
