@@ -1,0 +1,94 @@
+Yes — **the business search field on the Map should become one of the main universal-search entry points**, but I would **stop labeling it in a way that implies users can only search businesses.**
+
+The user should not have to decide, “Am I searching for a business, a food, an experience, a cultural site, or a service?” **They should just search.**
+
+So on the Map, instead of something like:
+
+> **Search businesses**
+
+I would use:
+
+> **Search places, food, experiences & more…**
+
+Or even simpler:
+
+> **What are you looking for?**
+
+Then the same field can accept:
+
+**“Fruity Pebble waffles”** → map searches the area and surfaces relevant brunch/waffle businesses.
+
+**“Tea party”** → relevant tea rooms, restaurants, events, businesses, perhaps community recommendations.
+
+**“Black-owned bookstore”** → businesses.
+
+**“HBCU”** → HBCUs.
+
+**“Underground Railroad”** → heritage locations.
+
+**“Ethiopian restaurant”** → restaurants.
+
+**“Jazz tonight”** → businesses + events.
+
+**“Wheelchair accessible brunch”** → businesses filtered using accessibility/community information.
+
+**“Safe place to stop”** → businesses + relevant safety/community information.
+
+**“Kenya”** → this is where it gets interesting. The map shouldn't try to force Kenya into a local-business result. It can recognize this as a broader topic and offer **Kenya in the Library**, travel information, businesses, Cultural Ambassador media, etc.
+
+### But I would NOT make the Map the only place to search
+
+That's important.
+
+You already have **Explore**, and I think Explore should ultimately become the most obvious home for broad discovery.
+
+Think of it this way:
+
+**MAP SEARCH = “Show me where.”**
+
+**EXPLORE SEARCH = “Help me find.”**
+
+**LIBRARY SEARCH = “Help me learn.”**
+
+**KINFOLK = “Help me figure it out.”**
+
+But underneath, they should eventually use the **same search intelligence**.
+
+So if I type **“Fruity Pebble waffles”** into Explore, I might get businesses, videos, community posts and recommendations.
+
+If I type it into Map, I primarily get **pins**.
+
+If I type **“Kenya”** into Library, I get the Kenya book/volume.
+
+If I tell Kinfolk, **“I'm going to Atlanta with my daughter and want a grown-up brunch away from the younger party crowd,”** Kinfolk can translate that into the same searchable criteria.
+
+That's one system with different doors into it.
+
+### And I see something else we should protect
+
+Do **not** have Replit simply rename the existing Business search box and call this finished.
+
+We need them first to determine what that box currently queries.
+
+If it currently does:
+
+`business.name`
+`business.category`
+
+changing the placeholder to “What are you looking for?” accomplishes nothing.
+
+We need the architecture audit from my previous prompt to determine whether that field can eventually query **businesses + specialties + experiences + Vibes + THE REAL + reviews + community language + events + heritage + Library + media**.
+
+So I would add this clarification to the Replit audit:
+
+> **The existing Map business-search field is intended to become a primary Universal Search entry point. DO NOT simply rename the field. Audit what it currently searches and what would be required for a query such as “Fruity Pebble waffles” to produce meaningful map results. Explore should also have Universal Search, using the same underlying search intelligence but presenting broader results.**
+
+And one last UX detail: **keep the map filters.** Universal search doesn't replace Cultural Sites, HBCUs, Festivals, Sundown Town History, businesses, etc. Those are useful ways to browse when the user *doesn't know exactly what they're looking for.*
+
+Search answers **“I know what I want.”**
+
+Filters answer **“Show me what's around here.”**
+
+Kinfolk answers **“I'm not exactly sure what I want—help me figure it out.”**
+
+Those three behaviors together are much closer to the experience you've been describing.

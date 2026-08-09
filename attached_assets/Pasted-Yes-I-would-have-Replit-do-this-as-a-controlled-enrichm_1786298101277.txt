@@ -1,0 +1,583 @@
+Yes. I would have Replit do this as a **controlled enrichment audit**, not simply “Google every business and paste the first URL.” The goal should be to improve every legitimate business record while protecting what you already entered.
+
+One adjustment: because some of these businesses are historic, legacy, very small, or community institutions, a few genuinely may **not** maintain their own website. In those cases we should preserve the business and identify the strongest authoritative online presence instead of inventing a website.
+
+I would send Replit this:
+
+```text
+MAPPING WITH MELANIN™
+FULL PRODUCTION BUSINESS WEBSITE + DIGITAL PRESENCE AUDIT
+
+IMPORTANT:
+This is a DATA ENRICHMENT AUDIT of our REAL business directory.
+
+Do NOT delete businesses.
+Do NOT overwrite good existing data without evidence.
+Do NOT modify TEST/demo businesses.
+Do NOT invent websites.
+Do NOT create duplicate businesses.
+Do NOT mark a business closed solely because a website cannot be found.
+
+The founder wants EVERY legitimate business currently represented in our
+database reviewed, including the businesses contained in our TOUR GUIDES.
+
+You know what "Tour Guides" refers to in this project.
+
+=========================================================
+1. IDENTIFY THE COMPLETE REAL-BUSINESS INVENTORY
+=========================================================
+
+First determine the complete set of non-test businesses.
+
+Include:
+
+- businesses in the primary businesses table
+- businesses referenced by Tour Guides
+- businesses referenced in city guides
+- businesses referenced by Kinfolk recommendations if backed by real records
+- businesses connected to map pins
+- businesses added/admin-seeded during the current tour preparation
+- unclaimed legitimate businesses
+
+Exclude:
+
+- obvious demo businesses
+- QA records
+- Apple reviewer businesses
+- test businesses
+- synthetic/sample businesses
+- records explicitly marked test/demo
+
+DO NOT assume a strange-looking name is fake.
+
+If uncertain:
+classify it as REVIEW REQUIRED rather than excluding it.
+
+Return initial counts:
+
+Total business records:
+Probable real businesses:
+Test/demo businesses:
+Uncertain records:
+Tour Guide businesses:
+Duplicate candidates:
+
+=========================================================
+2. AUDIT TOUR GUIDE BUSINESS REFERENCES
+=========================================================
+
+Specifically inspect every business referenced by our Tour Guides.
+
+For each Tour Guide business determine:
+
+- Does a canonical businesses-table record exist?
+- Does the Tour Guide point to the correct business_id?
+- Is the business duplicated elsewhere?
+- Does the business have a usable website?
+- Does it have verified social media?
+- Does it have a physical location?
+- Is the location still operating?
+- Is the business name current?
+
+Do NOT create duplicates merely because the Tour Guide spelling differs.
+
+Resolve aliases such as:
+
+business legal name
+DBA name
+nickname
+abbreviation
+punctuation differences
+"Restaurant" vs no "Restaurant"
+"&" vs "and"
+
+=========================================================
+3. WEBSITE DISCOVERY — SOURCE PRIORITY
+=========================================================
+
+For every legitimate business, try to locate a CURRENT valid digital presence.
+
+Use this priority:
+
+LEVEL 1 — OFFICIAL WEBSITE
+Business-owned official website/domain.
+
+LEVEL 2 — OFFICIAL BUSINESS SOCIAL PROFILE
+Official:
+Instagram
+Facebook
+TikTok
+YouTube
+LinkedIn
+other legitimate official social presence
+
+LEVEL 3 — AUTHORITATIVE ORGANIZATION PAGE
+Examples:
+museum website
+university page
+historic site organization
+nonprofit/church official page
+official destination page
+parent organization
+
+LEVEL 4 — GOVERNMENT / TOURISM / HISTORIC SOURCE
+Examples:
+National Park Service
+state historic preservation agency
+city tourism authority
+state tourism authority
+official historic register
+local government
+recognized museum/cultural institution
+
+LEVEL 5 — REPUTABLE THIRD-PARTY DIRECTORY
+Only if needed to establish that the business/location still exists.
+
+Do NOT treat:
+random scraped directory
+SEO spam page
+AI-generated directory
+unverified blog
+coupon site
+
+as the business's official website.
+
+=========================================================
+4. VALIDATE EVERY WEBSITE
+=========================================================
+
+Do not merely find a URL.
+
+Validate:
+
+HTTP/HTTPS response
+redirect behavior
+final URL
+domain matches business
+site appears operational
+business name/location matches
+not parked
+not for sale
+not malware/spam
+not an unrelated business with the same name
+
+Record:
+
+website_url
+website_status
+
+Suggested statuses:
+
+verified_official
+official_social_only
+authoritative_external_page
+redirected_valid
+temporarily_unavailable
+domain_parked
+wrong_business
+not_found
+needs_review
+
+=========================================================
+5. LOCATION MATCHING IS REQUIRED
+=========================================================
+
+A name match alone is NOT enough.
+
+Confirm using as many of these as available:
+
+business name
+city
+state
+street address
+telephone number
+owner/founder
+business category
+social handles
+logo/branding
+historic description
+
+Example:
+
+If there are six businesses named "Allure Hair,"
+do not assign a website until the location/business identity matches.
+
+=========================================================
+6. HISTORICAL / CULTURAL BUSINESSES
+=========================================================
+
+Many Tour Guide businesses and places have historical/cultural significance.
+
+If the original business no longer operates:
+
+DO NOT DELETE IT.
+
+Determine whether it should remain classified as:
+
+historic business
+legacy business
+historic site
+former business
+museum/cultural site
+closed historic location
+
+Preserve its history.
+
+For a closed historic business, the best URL may be:
+
+official history page
+museum archive
+historic preservation page
+NPS page
+local historical society
+official tourism/history source
+
+Do not falsely imply the business is currently operating.
+
+=========================================================
+7. BUSINESS OPERATING STATUS
+=========================================================
+
+Where reliable evidence exists, capture:
+
+operating
+temporarily_closed
+seasonal
+relocated
+closed
+historic_only
+unknown
+
+Do not mark CLOSED from a single weak source.
+
+Use corroboration.
+
+If a business relocated:
+preserve the history and update/current-location relationship carefully.
+
+=========================================================
+8. SOCIAL MEDIA
+=========================================================
+
+Locate official public profiles where available:
+
+Instagram
+TikTok
+Facebook
+YouTube
+LinkedIn
+
+Store separately.
+
+Do NOT put an Instagram URL into website_url merely because no website exists.
+
+Use:
+
+website_url
+instagram_url
+tiktok_url
+facebook_url
+youtube_url
+linkedin_url
+
+or the equivalent existing schema.
+
+If schema differs, report it before adding new columns.
+
+=========================================================
+9. MEDIA OPPORTUNITY
+=========================================================
+
+Because Mapping With Melanin supports real-world community media:
+
+For official social profiles, also identify whether the business has usable public:
+
+Reels
+TikToks
+YouTube videos
+photo posts
+
+DO NOT copy/download them.
+
+Only capture the official account/profile URL during this audit unless an
+existing approved field already supports individual media URLs.
+
+This creates the source foundation for future "Show Me the Vibe" media.
+
+=========================================================
+10. OWNERSHIP DATA — DO NOT GUESS
+=========================================================
+
+Do not infer ownership identity from:
+
+photos
+names
+neighborhood
+cuisine
+language
+appearance
+
+Existing ownership designations must remain unless reliable evidence supports correction.
+
+Website research may provide ownership evidence.
+
+Capture source/provenance when it does.
+
+Do not silently change ownership.
+
+=========================================================
+11. DUPLICATE DETECTION
+=========================================================
+
+Before updating anything, identify likely duplicate businesses using:
+
+normalized name
+address
+phone
+website domain
+social handles
+coordinates
+
+Return duplicate candidates separately.
+
+Do NOT merge automatically.
+
+Example:
+
+Hakim's Bookstore
+Hakim's Bookstore & Gift Shop
+
+may or may not represent the same canonical business.
+
+Founder review is required before merges.
+
+=========================================================
+12. CLAIM STATUS
+=========================================================
+
+Website discovery must NOT change:
+
+claimed/unclaimed
+verified ownership
+Community Verified
+safety status
+community trust
+
+Finding an official website means:
+
+DIGITAL PRESENCE CONFIRMED
+
+It does NOT mean:
+
+BUSINESS CLAIMED
+OWNERSHIP VERIFIED
+SAFE
+MWM RECOMMENDED
+
+Keep these concepts separate.
+
+=========================================================
+13. SOURCE PROVENANCE
+=========================================================
+
+For every changed/enriched field retain enough provenance to answer:
+
+Where did this information come from?
+
+For each researched business record capture internally where architecture allows:
+
+source_url
+source_type
+verified_at
+verification_method
+
+If there is no existing provenance architecture:
+report the gap before inventing a new structure.
+
+=========================================================
+14. DO NOT LOSE EXISTING DATA
+=========================================================
+
+Before modifying any business:
+
+compare existing value to proposed value.
+
+Never replace:
+
+working official website
+
+with:
+
+social page
+directory
+less-authoritative source
+
+Never replace populated fields with NULL because research failed.
+
+The workflow should be:
+
+KEEP
+UPDATE
+ADD
+FLAG
+
+not destructive replacement.
+
+=========================================================
+15. RESEARCH OUTPUT
+=========================================================
+
+Create a full audit report with one row per real business:
+
+Business ID
+Business Name
+City
+State
+Country
+Tour Guide? Y/N
+Current Website
+Website Status
+Proposed Official Website
+Instagram
+TikTok
+Facebook
+YouTube
+Operating Status
+Location Match Confidence
+Duplicate Candidate?
+Historic/Legacy?
+Source Used
+Action
+Notes
+
+ACTION must be one of:
+
+KEEP
+ADD WEBSITE
+UPDATE WEBSITE
+ADD SOCIALS
+FLAG FOR REVIEW
+POSSIBLE DUPLICATE
+HISTORIC/CLOSED — PRESERVE
+NO DIGITAL PRESENCE FOUND
+
+=========================================================
+16. CONFIDENCE
+=========================================================
+
+Use:
+
+HIGH
+MEDIUM
+LOW
+
+HIGH:
+official source + identity/location match
+
+MEDIUM:
+strong authoritative evidence but no business-owned site
+
+LOW:
+potential match requiring founder review
+
+Only HIGH-confidence website additions may be candidates for automatic update.
+
+Do not automatically modify LOW-confidence records.
+
+=========================================================
+17. PHASED EXECUTION
+=========================================================
+
+Because this may involve hundreds of businesses:
+
+PHASE 1
+Inventory and classify every real business.
+
+PHASE 2
+Research/validate websites and official digital presence.
+
+PHASE 3
+Produce proposed update table.
+
+STOP.
+
+FOUNDER REVIEWS RESULTS.
+
+PHASE 4
+Only after authorization:
+perform controlled bulk update.
+
+PHASE 5
+Run post-update verification.
+
+Do NOT jump directly from discovery to database modification.
+
+=========================================================
+18. POST-UPDATE VERIFICATION — LATER
+=========================================================
+
+When eventually authorized to update:
+
+Verify every changed record through:
+
+business directory
+business detail page
+map
+Tour Guide
+Kinfolk retrieval
+
+Confirm the same canonical business_id is used throughout.
+
+=========================================================
+19. IMPORTANT KINFOLK CONNECTION
+=========================================================
+
+Capture as part of the audit:
+
+Can Kinfolk currently use:
+
+business website
+official social profiles
+business description
+category/subcategory
+specialties
+ownership
+Vibes
+THE REAL
+location
+Tour Guide relationships
+
+when returning a business recommendation?
+
+Do not change Kinfolk during this task.
+
+Report whether those fields are currently available to its retrieval layer.
+
+=========================================================
+20. FINAL NUMBERS
+=========================================================
+
+At completion report:
+
+Total legitimate businesses audited:
+Tour Guide businesses audited:
+Official websites already valid:
+Official websites newly found:
+Broken existing websites:
+Official social-only businesses:
+Historic/closed businesses:
+No digital presence found:
+Possible duplicates:
+Low-confidence records requiring founder review:
+Test/demo businesses excluded:
+
+STOP BEFORE DATABASE UPDATE.
+```
+
+And I would make **one addition to the philosophy** behind this audit: a website is not just something we want because the directory looks complete. It becomes part of the business's **identity evidence and provenance**.
+
+For example, if AMINA has an official site showing its address, cuisine, owners and current operations, that source can help corroborate several pieces of the listing. But it still does not give MWM permission to label it “Community Trusted,” “safe,” etc. Those remain community-derived concepts.
+
+Also, for the historical businesses in your Tour Guides, I would not consider **“no independent website” a failure**. A 70-year-old institution may have a modest Facebook page but be documented by a city tourism authority, historical society, NPS, museum or reputable cultural institution. In that situation, I would rather MWM link to a **credible historical source** than attach the wrong commercial website just so every database row has a URL.
+
+And this audit will give us something else valuable: a clean list of official social accounts. That eventually makes your **Show Me the Vibe / social-video connection** much easier because we'll already know which Instagram/TikTok/YouTube accounts actually belong to each business.
