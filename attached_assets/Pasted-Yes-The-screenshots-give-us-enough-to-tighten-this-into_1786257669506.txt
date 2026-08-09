@@ -1,0 +1,964 @@
+Yes. The screenshots give us enough to tighten this into **one controlled production-readiness pass** instead of continuing with piecemeal fixes.
+
+A few things are clearly wrong in the current experience:
+
+* Kinfolk is responding, but **not actually returning the Philadelphia restaurant records that already exist**. “I found some great spots…” without naming the spots is not a recommendation.
+* The Kinfolk Preferences panel is still incomplete and redundant in places: **“How you travel” and “Who you travel with” overlap**, while the diaspora/community discovery options we've built are not represented.
+* Map business search is still effectively global: searching “barber” from Pennsylvania returns **Silver Spring at 217.8 km and Montgomery, Alabama at 1,332.5 km**.
+* Sundown towns may exist in the API, but **they are not visibly represented in the legend as their own map/safety layer**.
+* Event selection is acting like a directory list rather than geographic discovery. Clicking **Adams Morgan Day** should recenter the map to Washington, DC, and ideally its exact event coordinates.
+* Business pages still show the old **five-star review** architecture rather than the richer system we've spent the day defining.
+* I do not see a contributor/admin workflow to attach **photo/video/social-post URLs** to the business listing.
+* The two safety-report forms overlap, and **Low / Medium / High / Critical** forces the member to interpret severity instead of simply telling us what happened.
+* “All reports are reviewed within 24 hours” is too absolute and particularly inappropriate for something like excessive force or immediate danger.
+
+Below is the consolidated instruction I would send Replit now.
+
+---
+
+# COPY/PASTE TO REPLIT — PRODUCTION DISCOVERY + SAFETY CORRECTION PASS
+
+```text
+MAPPING WITH MELANIN™
+CONTROLLED DISCOVERY + SAFETY UX CORRECTION PASS
+
+IMPORTANT:
+Do not push immediately.
+
+We are now correcting several connected production UX issues discovered through actual founder testing.
+
+WORK IN THIS ORDER:
+
+1. READ-ONLY TRACE
+2. REPORT CURRENT BEHAVIOR
+3. IMPLEMENT ONLY THE APPROVED REQUIREMENTS BELOW
+4. TEST LOCALLY / BUILD
+5. VISUALLY VERIFY THE REAL PRODUCTION BUILD CANDIDATE
+6. RETURN PROOF
+7. STOP FOR FOUNDER AUTHORIZATION
+8. THEN follow the documented production push procedure
+
+Do not call an API response, unit test, build success, or simulation "done."
+
+=========================================================
+1. KINFOLK SEARCH MUST RETURN ACTUAL PLATFORM RESULTS
+=========================================================
+
+ACTUAL PRODUCTION TEST:
+
+User asked:
+"Restaurants in Philly"
+
+Kinfolk replied with language such as:
+
+"I found some great spots in Philly..."
+
+but did not actually identify the restaurants.
+
+The Mapping With Melanin database already contains Philadelphia restaurants.
+
+This is not an acceptable recommendation result.
+
+READ-ONLY TRACE FIRST:
+
+Trace:
+
+Kinfolk question
+→ intent extraction
+→ city extraction
+→ business/database retrieval
+→ ranking
+→ prompt/context assembly
+→ model response
+→ frontend rendering
+
+Report:
+
+- Did Kinfolk query Mapping With Melanin business data?
+- Exact internal query used
+- Number of Philadelphia restaurant records returned
+- Which records were eligible
+- Which records were sent to the model
+- Why business names/details were omitted from the final answer
+- Whether generic AI prose is being generated when platform data exists
+
+REQUIRED BEHAVIOR:
+
+If Mapping With Melanin has matching records, Kinfolk should use them.
+
+For example:
+
+"Restaurants in Philadelphia"
+
+should return actual platform businesses with useful context such as:
+
+Business name
+category/subcategory
+distance where available
+ownership designation where appropriate
+Vibe / THE REAL as appropriate
+What Stands Out/community intelligence when available
+short reason for recommendation
+
+DO NOT invent businesses.
+
+When Mapping With Melanin has insufficient data, Kinfolk may say so and optionally ask whether the member wants the search expanded.
+
+PLATFORM DATA SHOULD BE PREFERRED OVER GENERIC MODEL KNOWLEDGE FOR PLATFORM BUSINESS RECOMMENDATIONS.
+
+=========================================================
+2. ADD DIASPORA / COMMUNITY DISCOVERY TO KINFOLK + SEARCH
+=========================================================
+
+The search architecture must support the ownership/community designations from our approved taxonomy.
+
+Users may affirmatively search for communities they want to support.
+
+Examples:
+
+Ethiopian-owned
+Black-owned
+Dominican-owned
+Haitian-owned
+Puerto Rican-owned
+Cuban-owned
+Jamaican-owned
+Caribbean-owned
+Latino/Hispanic-owned
+Indigenous-owned
+Immigrant-owned
+Women-owned
+LGBTQIA+-owned
+and the other approved ownership/community designations already stored in our master taxonomy.
+
+IMPORTANT:
+
+This is affirmative discovery:
+
+"Show me Ethiopian-owned restaurants"
+
+not hostile exclusion logic.
+
+Use the approved Ownership Reference/source-of-truth rather than inventing a new shortened list.
+
+Kinfolk Preferences currently displays a very incomplete ownership list.
+
+Audit the current preference values against the approved ownership taxonomy.
+
+Report missing designations before changing the UI.
+
+=========================================================
+3. KINFOLK PREFERENCE PANEL — REMOVE REDUNDANCY
+=========================================================
+
+Current screenshots show both:
+
+HOW YOU TRAVEL
+Solo / Couple / Family / Friend group / Work trip / Spiritual
+
+and:
+
+WHO YOU TRAVEL WITH
+Solo / Partner / Family / Friends / Colleagues
+
+These overlap.
+
+Do not maintain redundant preference concepts.
+
+Recommended distinction:
+
+TRIP TYPE / OCCASION:
+Solo getaway
+Couples getaway
+Family trip
+Friends trip
+Work/business trip
+Spiritual/faith travel
+Group travel
+Adventure trip
+Relaxing getaway
+Celebration
+Other approved contextual intents
+
+TRAVEL COMPANIONS:
+Solo
+Partner
+Children
+Family
+Friends
+Colleagues
+Elders
+Group
+
+These are different signals.
+
+Audit how both current fields are stored before migration.
+Do not discard existing user selections.
+
+Any migration must preserve the historical selections and map them safely to the new meaning.
+
+=========================================================
+4. MAP BUSINESS SEARCH — GEO-FIRST RESULTS
+=========================================================
+
+ACTUAL PRODUCTION FAILURE:
+
+Founder searched:
+"barber"
+
+Current location/map context is Pennsylvania.
+
+Results included:
+
+Philadelphia — 22.3 km
+Silver Spring, MD — 217.8 km
+Montgomery, AL — 1,332.5 km
+
+This is exactly the overload/problem previously identified.
+
+SEARCH SHOULD NOT DEFAULT TO THE ENTIRE DIRECTORY.
+
+REQUIRED SEARCH FLOW:
+
+User enters:
+
+business name
+category
+subcategory
+specialty
+service
+ownership/community designation
+Vibe
+THE REAL
+What Stands Out
+natural-language business need
+
+Then user can press:
+
+ENTER
+
+or click search.
+
+Search should resolve the query and then reveal relevant refinements.
+
+Example:
+
+"barber"
+
+→ Beauty & Personal Care
+→ Barbershops
+
+Then offer contextually appropriate filters:
+
+Near Me
+distance
+specialty
+price
+ownership/community designation
+Vibe
+What Stands Out
+open now when data exists
+accessibility when data exists
+
+For professional/high-trust categories:
+
+THE REAL replaces Vibe where appropriate.
+
+Do NOT show Vibe and THE REAL simultaneously.
+
+INITIAL GEO BEHAVIOR:
+
+Search nearby first.
+
+Recommended presentation logic:
+
+0–5 miles
+then 10
+then 25
+then 50
+
+Do not automatically jump hundreds of miles merely because another record exists.
+
+If no good result exists within the initial range:
+
+"Nothing else matched nearby. Expand search to 10 miles?"
+
+then:
+
+25 miles
+50 miles
+broader city/region
+
+Exact named-business searches are an exception:
+If a user specifically searches for "AMINA", return AMINA even if farther away.
+
+SPECIALTY searches may also justify broader distances, but tell the member.
+
+Example:
+
+"Only 2 alopecia specialists matched within 25 miles. Expand search?"
+
+DO NOT DELETE OR HIDE THE FULL DIRECTORY.
+This is ranking/presentation logic only.
+
+=========================================================
+5. MAP RESULTS MUST MOVE THE MAP
+=========================================================
+
+The map is geographic discovery.
+
+When a user selects an event, business, cultural site, HBCU, festival, market, public-art site, sundown-town marker, etc., the map should respond geographically.
+
+Example:
+
+Adams Morgan Day
+Washington, DC
+
+Clicking that result should:
+
+1. determine event coordinates if stored
+2. recenter/fit the map to those coordinates
+3. display/select the marker
+4. show the concise result preview
+
+If exact coordinates do not exist but city/location does:
+
+geocode/use stored city coordinates
+and center at an appropriate city/neighborhood level.
+
+Do not leave the user looking at Pennsylvania while displaying a Washington, DC event.
+
+Audit every map-result type for:
+
+coordinate storage
+marker creation
+click behavior
+map recentering
+preview behavior
+
+=========================================================
+6. MAP RESULT LISTS SHOULD BE MANAGEABLE
+=========================================================
+
+The screenshot currently shows:
+
+Community Events
+60 sites
+
+and a long directory-style list.
+
+The map should not function as the entire Library.
+
+MAP = spatial discovery
+
+EXPLORE / LIBRARY = complete browsing
+
+KINFOLK = personalized decision support
+
+Map results should prioritize:
+
+current viewport
+nearby radius
+selected category/search
+relevance
+
+and initially surface a manageable set.
+
+Do not display the entire national event/business dataset simply because a layer was selected.
+
+Add:
+
+Search This Area
+
+when the user pans/zooms.
+
+Do not automatically refetch hundreds of records during every map movement.
+
+=========================================================
+7. SUNDOWN TOWNS MUST HAVE A VISIBLE SAFETY LAYER
+=========================================================
+
+We already confirmed:
+
+production sundown_towns table exists
+/api/sundown-towns returns records
+current production bundle calls the endpoint
+
+BUT THE FOUNDER'S ACTUAL MAP DOES NOT DISPLAY A SUNDOWN-TOWN LEGEND OPTION LIKE:
+
+Festivals
+Markets
+HBCUs
+Cultural Sites
+Community Events
+
+This remains a user-facing defect.
+
+Sundown Town History must be visibly available as a MAP SAFETY LAYER.
+
+Recommended label:
+
+Sundown Town History
+
+with a clearly distinct icon/color/marker from ordinary cultural discovery.
+
+DO NOT treat this as an ordinary business/cultural-site category.
+
+Trace and prove:
+
+API records received
+records with coordinates
+markers created
+legend/toggle generated
+markers rendered
+viewport behavior
+click behavior
+
+Tapping a sundown-town marker should eventually show:
+
+town/city
+state
+historical context
+source/provenance
+relevant community context
+appropriate disclaimer that historical designation does not automatically describe present-day conditions
+
+Do not recreate or reseed the dataset.
+
+=========================================================
+8. BUSINESS MEDIA — PHOTO / VIDEO / SOCIAL POST URL
+=========================================================
+
+Previous audit only proved that business-detail.tsx can READ:
+
+photos[]
+videos[]
+instagram
+tiktok
+youtube
+
+That does NOT prove users/admins can ADD media.
+
+We need an actual contribution workflow.
+
+Audit before implementation:
+
+Can these users currently add media to a business?
+
+Admin
+business owner
+Premium member
+tester
+free member
+other tier types
+
+Report current permissions.
+
+REQUIRED FUTURE BEHAVIOR:
+
+Every legitimate business listing, INCLUDING UNCLAIMED BUSINESSES, should be capable of receiving moderated community/admin media submissions.
+
+The business does not need to be claimed for community knowledge to make the listing useful.
+
+Primary media contribution model:
+
+original social-media URL
++
+platform
++
+business ID
++
+contributor
++
+submission date
++
+moderation status
++
+caption/context where allowed
+
+Supported sources where technically/legal/platform-policy appropriate may include:
+
+Instagram
+TikTok
+YouTube
+Facebook
+business website
+other approved sources
+
+We primarily want to preserve the ORIGINAL social post / creator traffic rather than force creators to re-upload their work.
+
+Audit whether direct upload is also supported by any membership tier and report it separately.
+
+IMPORTANT:
+Business CLAIM controls business-owner management rights.
+
+It must not automatically prevent community/admin media contribution.
+
+TIER MODEL:
+
+Compare media permissions against the existing approved membership-tier architecture.
+
+Return:
+
+Account type
+Can submit photo URL?
+Can submit video URL?
+Can directly upload image?
+Can directly upload video?
+Requires moderation?
+Limit?
+Current implementation?
+Gap?
+
+Do not invent new paid limits without founder approval.
+
+=========================================================
+9. BUSINESS PROFILE CURRENTLY STILL SHOWS OLD 5-STAR REVIEW
+=========================================================
+
+Production screenshot still displays:
+
+Community Voices
+0 Reviews
+five empty stars
+Leave a Review
+five-star Rating selector
+free-text review box
+
+This is not the complete experience we designed.
+
+DO NOT remove the old system blindly.
+
+Audit how current reviews are stored first.
+
+Future target architecture is:
+
+THE VIBE
+OR
+THE REAL
+
++
+
+WHAT STANDS OUT?
+
++
+
+Want to say more? [optional]
+
++
+
+Something wasn't right [separate concern/report path]
+
+Preserve historical review data.
+
+Report migration/gap plan before replacing anything.
+
+=========================================================
+10. SAFETY REPORTING — CURRENT FORMS ARE REDUNDANT
+=========================================================
+
+Current screenshots show separate flows:
+
+A. Report Police / ICE Encounter
+
+with:
+Police Stop / Questioning
+ICE Activity
+Racial Profiling
+Excessive Force / Misconduct
+Checkpoint / Roadblock
+Other Encounter
+
+and then:
+Low / Medium / High / Critical
+
+B. Submit a Safety Report
+
+with:
+Low / Medium / High / Critical
+City
+Neighborhood
+Description
+Anonymous report
+
+This requires members to translate their lived experience into OUR severity terminology.
+
+That is unnecessary.
+
+PEOPLE SHOULD TELL US WHAT HAPPENED.
+THE SYSTEM/MODERATOR CAN DERIVE PRIORITY.
+
+DO NOT use generic:
+
+Low
+Medium
+High
+Critical
+
+as the primary user-facing choice.
+
+=========================================================
+11. CONTEXT-SPECIFIC SAFETY LANGUAGE
+=========================================================
+
+Keep one common backend priority/severity model if technically useful.
+
+BUT the USER-FACING language should change according to what the member is reporting.
+
+MY RECOMMENDATION — GENERAL PLACE / RESTAURANT / BUSINESS:
+
+1. "Something felt off"
+   Examples:
+   uncomfortable
+   unwelcome
+   suspicious treatment
+   concerning interaction
+   wanted the community to know
+
+2. "I felt unsafe"
+   Examples:
+   threatening behavior
+   harassment
+   discriminatory treatment
+   unsafe environment
+   felt I needed to leave
+
+3. "I needed to leave or get help"
+   Examples:
+   escalating threat
+   followed/targeted
+   serious harassment
+   physical confrontation
+   needed assistance
+
+4. "Someone could be in immediate danger"
+   Examples:
+   active threat
+   violence
+   weapon
+   serious emergency
+   urgent danger to others
+
+MY RECOMMENDATION — POLICE / ICE:
+
+1. "The interaction concerned me"
+   Examples:
+   inappropriate questioning
+   unusual stop
+   troubling behavior
+   something the community should know
+
+2. "I felt targeted or unsafe"
+   Examples:
+   racial profiling
+   discriminatory questioning
+   intimidation
+   threatening conduct
+
+3. "Force, detention, or serious misconduct occurred"
+   Examples:
+   excessive force
+   unlawful/extended detention concern
+   physical misconduct
+   serious rights/safety concern
+
+4. "There is an immediate safety threat"
+   Examples:
+   active dangerous encounter
+   someone may be seriously harmed
+   urgent community safety information
+
+IMPORTANT:
+
+Selecting:
+
+Excessive Force / Misconduct
+
+should automatically place the report into a PRIORITY moderation queue.
+
+Do NOT tell the member:
+"Reviewed within 24 hours"
+
+for something that may require immediate review.
+
+=========================================================
+12. SUNDOWN-TOWN / TRAVEL SAFETY LANGUAGE
+=========================================================
+
+Sundown-town/community travel safety should not use the exact same prompts as a restaurant.
+
+MY RECOMMENDATION:
+
+1. "Sharing historical or local context"
+   User is contributing history/context, not reporting an immediate incident.
+
+2. "Recent experiences made me concerned"
+   Recent community experiences or patterns worth reviewing.
+
+3. "I felt targeted or unsafe here"
+   Personal/witnessed incident involving fear, discrimination, harassment, threats, etc.
+
+4. "There may be an immediate danger"
+   Active/recent threat requiring urgent review.
+
+Again:
+backend may map these to priority levels,
+but the member should not have to choose "Medium" or "Critical."
+
+=========================================================
+13. REMOVE THE ABSOLUTE "REVIEWED WITHIN 24 HOURS" CLAIM
+=========================================================
+
+Current UI says:
+
+"All reports are reviewed within 24 hours."
+
+Audit whether this is actually an enforceable operational SLA.
+
+If not, remove the absolute promise.
+
+MY RECOMMENDATION for standard reports:
+
+"Your report helps protect the community. Reports are reviewed based on urgency and potential safety impact."
+
+For priority reports:
+
+"This report may involve an urgent safety concern and will be prioritized for review."
+
+For immediate danger:
+
+The app must not imply that submitting a report replaces emergency assistance.
+
+Use the existing approved emergency/safety language and escalation pathways.
+
+=========================================================
+14. CONFIRM ALL INCIDENT ENTRY POINTS
+=========================================================
+
+We need to verify that Police / ICE is NOT the only meaningful incident-reporting flow.
+
+READ-ONLY INVENTORY:
+
+Where can a member currently report:
+
+business discrimination
+business safety concern
+neighborhood safety concern
+police encounter
+ICE encounter
+community-post violation
+group violation
+harassment
+threat
+hate / identity-based targeting
+accessibility issue
+scam/fraud
+general safety incident
+map/location incident
+
+Return:
+
+Incident type
+Current entry point
+Current table/API
+Anonymous available?
+Moderation queue?
+Priority handling?
+Public/private result?
+Missing?
+
+Do not consolidate all reporting into one table without approval.
+
+=========================================================
+15. FUTURE ROUTE SAFETY + COMMUNITY COMMERCE — CAPTURE NOW, DO NOT BUILD IN THIS PASS
+=========================================================
+
+THIS IS A DOCUMENTED FUTURE REQUIREMENT.
+
+When Mapping With Melanin eventually provides route-aware navigation/directions, routing intelligence should be able to consider:
+
+community safety information
+verified/reviewed incident signals
+sundown-town historical context
+business/community recommendations
+alternative businesses along route
+
+Example:
+
+User needs gas.
+
+There is a nearby location with meaningful safety/community concerns.
+
+A safer/recommended minority-owned gas station exists within a reasonable additional distance.
+
+Kinfolk/navigation might say:
+
+"There have been community safety concerns reported near this location. There's another recommended option 4 miles ahead. Would you like to route there instead?"
+
+IMPORTANT:
+
+Do not automatically make factual danger claims from one unverified report.
+
+Use verified/pattern-based safety intelligence.
+
+COMMUNITY COMMERCE PRINCIPLE:
+
+If no qualifying minority-owned option exists within the current practical range:
+
+FIRST:
+"Would you like me to expand the search?"
+
+If user declines or none exists:
+show appropriate non-minority alternatives.
+
+Do not leave someone without a necessary service merely to enforce ownership preference.
+
+Safety and practical need come first.
+
+Capture this in the future route/safety specification.
+DO NOT implement route logic in this current production pass.
+
+=========================================================
+16. EVENT / CULTURAL STORY MEDIA
+=========================================================
+
+The HBCU/cultural-site Story form shown in production currently includes:
+
+relationship
+story text
+
+Confirm whether community members can also contribute:
+
+photo/social photo URL
+video/social video URL
+historical media/link
+alumni video
+story source/context
+
+This should follow moderation and attribution rules.
+
+Do not implement unless already in the approved future-state specification; report current capability and gap.
+
+=========================================================
+17. PROOF BEFORE PUSH
+=========================================================
+
+After fixes are complete:
+
+DO NOT PUSH YET.
+
+Return visual/test proof for each item.
+
+KINFOLK:
+[ ] "Restaurants in Philly" returns ACTUAL Mapping With Melanin business names
+[ ] No generic empty recommendation response
+[ ] Follow-up retains conversational context
+
+MAP BUSINESS SEARCH:
+[ ] "barber" from founder's current PA context initially returns sensible nearby results
+[ ] Montgomery, Alabama is NOT presented as an initial nearby result
+[ ] pressing Enter works
+[ ] category/subcategory recognized
+[ ] appropriate filters appear
+[ ] Vibe OR THE REAL appears correctly
+[ ] distance expansion is explicit
+
+MAP EVENT:
+[ ] Adams Morgan Day selection moves/centers map to Washington, DC or exact stored location
+[ ] marker/preview selected
+
+SUNDOWN TOWNS:
+[ ] dedicated Sundown Town History legend/control visible
+[ ] marker actually visible
+[ ] tapping it works
+[ ] API record count documented
+
+MEDIA:
+[ ] admin capability documented/tested
+[ ] claimed business capability documented/tested
+[ ] unclaimed-business submission capability documented/tested
+[ ] account/tier permission matrix supplied
+
+SAFETY:
+[ ] Low/Medium/High/Critical removed from member-facing primary choice
+[ ] context-specific spoken-language choices shown
+[ ] Excessive Force / Misconduct routes to priority
+[ ] "all reports within 24 hours" absolute claim removed/replaced
+[ ] incident entry-point inventory supplied
+
+BUSINESS PROFILE:
+[ ] current 5-star implementation documented
+[ ] migration plan toward Vibe/THE REAL/What Stands Out supplied
+[ ] NO historical review data deleted
+
+=========================================================
+18. FINAL PRE-PUSH REPORT
+=========================================================
+
+Return one table:
+
+Requirement
+Root cause/current state
+Files changed
+Database changed?
+Test performed
+Visual proof
+Pass/Fail
+Remaining issue
+
+Then provide:
+
+Build status:
+Production candidate SHA:
+Production candidate bundle:
+Database migration required:
+Rollback version:
+Unresolved issues:
+
+STOP.
+
+DO NOT PUSH UNTIL FOUNDER AUTHORIZES.
+
+Once founder authorizes:
+follow the existing documented production deployment procedure exactly.
+
+Then repeat visual validation against the ACTUAL PUBLIC PRODUCTION URL.
+```
+
+## The four safety tiers
+
+I particularly want to lock this piece because I think your instinct is right: **people should not be deciding whether their lived experience was “Medium” or “High.”**
+
+My recommendation is to keep a normalized internal severity/priority field for analytics and moderation, but let the user choose **spoken experiences**.
+
+The strongest general-purpose progression is:
+
+**Something felt off → I felt unsafe → I needed to leave or get help → Someone could be in immediate danger**
+
+That language tells us much more than `Low / Medium / High / Critical`.
+
+And then we customize the language based on where they entered the report.
+
+For police/ICE:
+
+**The interaction concerned me → I felt targeted or unsafe → Force, detention, or serious misconduct occurred → There is an immediate safety threat**
+
+For travel/sundown-town context:
+
+**Sharing historical or local context → Recent experiences made me concerned → I felt targeted or unsafe here → There may be an immediate danger**
+
+For restaurants/businesses:
+
+**Something felt off → I felt unsafe or unwelcome → I needed to leave/get help → Someone could be in immediate danger**
+
+The backend can still translate those into something like:
+
+`priority_1 / priority_2 / priority_3 / priority_4`
+
+without ever making the member understand our internal severity model.
+
+And **Excessive Force/Misconduct should itself elevate priority**. Someone should not have to tap “Excessive Force” and then wonder whether that counts as Medium or High.
+
+One more distinction I added intentionally: **historical sundown-town information is not itself an incident report.** Someone should be able to contribute local/historical context without implying they personally experienced current danger. That will help protect both the integrity of your safety feature and the communities being described.
+
+This gives Replit a finite correction pass with proof gates. After they return the read-only findings and implementation proof, we can review it once, authorize the push, and stop allowing “the endpoint exists” to substitute for **the member can actually see and use the feature.**

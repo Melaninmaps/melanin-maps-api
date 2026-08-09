@@ -69,10 +69,10 @@ const ENCOUNTER_TYPES = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { id: "low", label: "Low", sub: "Informational", color: "#2D7A4F", bg: "#2D7A4F15" },
-  { id: "medium", label: "Medium", sub: "Use caution", color: "#C9922B", bg: "#C9922B15" },
-  { id: "high", label: "High", sub: "Avoid area", color: "#DC2626", bg: "#DC262615" },
-  { id: "critical", label: "Critical", sub: "Active danger", color: "#7C2D12", bg: "#7C2D1215" },
+  { id: "low", label: "The interaction concerned me", sub: "Inappropriate questioning, unusual stop, or troubling officer behavior", color: "#2D7A4F", bg: "#2D7A4F15" },
+  { id: "medium", label: "I felt targeted or unsafe", sub: "Racial profiling, discriminatory questioning, or intimidation", color: "#C9922B", bg: "#C9922B15" },
+  { id: "high", label: "Force, detention, or serious misconduct occurred", sub: "Excessive force, unlawful detention, physical misconduct, or serious rights violation", color: "#DC2626", bg: "#DC262615" },
+  { id: "critical", label: "There is an immediate safety threat", sub: "Active dangerous encounter; someone may be seriously harmed", color: "#7C2D12", bg: "#7C2D1215" },
 ];
 
 interface ReportForm {
@@ -266,8 +266,7 @@ export default function ReportPoliceScreen() {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Report Received — Community Alerted</Text>
               <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our team reviews every report within{" "}
-                <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>24 hours</Text>. Verified reports are posted as real-time alerts to nearby community members.
+                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews reports and verified alerts are posted as real-time notifications to nearby community members.
               </Text>
             </View>
 

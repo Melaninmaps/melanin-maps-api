@@ -45,14 +45,34 @@ const EXPERIENCE_CHIPS = [
   "The space felt inclusive", "I'd go back", "I'd warn others", "Something else happened",
 ];
 
-const SEVERITY_OPTS = ["Low", "Medium", "High", "Critical"];
+// Context-specific spoken severity options — map to internal API severity values
+const SEVERITY_GENERAL = [
+  { label: "Something felt off", desc: "Uncomfortable, suspicious, or something the community should know", value: "low" },
+  { label: "I felt unsafe", desc: "Threatening behavior, harassment, or discriminatory treatment", value: "medium" },
+  { label: "I needed to leave or get help", desc: "Escalating threat, followed, physical confrontation, or needed assistance", value: "high" },
+  { label: "Someone could be in immediate danger", desc: "Active threat, violence, weapon, or urgent danger to others", value: "critical" },
+];
+
+const SEVERITY_SUNDOWN = [
+  { label: "Sharing historical or local context", desc: "Contributing history or local knowledge, not a current incident", value: "low" },
+  { label: "Recent experiences made me concerned", desc: "Recent community experiences or patterns worth reviewing", value: "medium" },
+  { label: "I felt targeted or unsafe here", desc: "Personal or witnessed incident involving fear, discrimination, or threats", value: "high" },
+  { label: "There may be an immediate danger", desc: "Active or recent threat requiring urgent review", value: "critical" },
+];
+
+const SEVERITY_POLICE = [
+  { label: "The interaction concerned me", desc: "Inappropriate questioning, unusual stop, or troubling officer behavior", value: "low" },
+  { label: "I felt targeted or unsafe", desc: "Racial profiling, discriminatory questioning, or intimidation", value: "medium" },
+  { label: "Force, detention, or serious misconduct occurred", desc: "Excessive force, unlawful detention, physical misconduct, or serious rights violation — routed to priority review", value: "high" },
+  { label: "There is an immediate safety threat", desc: "Active dangerous encounter; someone may be seriously harmed", value: "critical" },
+];
 
 // ── General Safety Report Form ─────────────────────────────────────────────
 function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [type, setType] = useState("");
-  const [severity, setSeverity] = useState("Medium");
+  const [severity, setSeverity] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [description, setDescription] = useState("");
@@ -66,7 +86,7 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
       const res = await fetch(`${BASE}api/reports`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: type, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity }),
+        body: JSON.stringify({ category: type, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium" }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else { toast({ title: "Could not submit", description: "Please try again.", variant: "destructive" }); }
@@ -78,7 +98,7 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
     <div className="text-center py-8">
       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
       <p className="font-bold text-[#2B1507] text-lg">Report submitted</p>
-      <p className="text-sm text-[#3A1F0E]/60 mt-1">Reviewed within 24 hours. Thank you for keeping the community safe.</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">Your report is under review. Thank you for keeping the community informed.</p>
     </div>
   );
 
@@ -109,13 +129,16 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
       {step === 2 && (
         <>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Severity</p>
-            <div className="grid grid-cols-4 gap-2">
-              {SEVERITY_OPTS.map(s => (
-                <button key={s} onClick={() => setSeverity(s)}
-                  className={`py-2 rounded-xl text-xs font-bold transition-colors border ${
-                    severity === s ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
-                  }`}>{s}</button>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">How serious is this?</p>
+            <div className="space-y-2">
+              {(type === "Sundown Town Warning" ? SEVERITY_SUNDOWN : SEVERITY_GENERAL).map(opt => (
+                <button key={opt.value} onClick={() => setSeverity(opt.value)}
+                  className={`w-full text-left px-4 py-3 rounded-2xl border transition-colors ${
+                    severity === opt.value ? "border-[#CA922B] bg-[#CA922B]/8" : "border-[#3A1F0E]/10 bg-white hover:border-[#CA922B]/30"
+                  }`}>
+                  <p className="font-bold text-sm text-[#2B1507]">{opt.label}</p>
+                  <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{opt.desc}</p>
+                </button>
               ))}
             </div>
           </div>
@@ -145,7 +168,7 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
           </button>
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="flex-1 py-3 border border-[#3A1F0E]/10 rounded-2xl text-sm font-bold text-[#3A1F0E]/60 hover:bg-[#FAF6EF]">Back</button>
-            <button disabled={!city || submitting} onClick={submit}
+            <button disabled={!city || !severity || submitting} onClick={submit}
               className="flex-2 flex-1 py-3 bg-[#CA922B] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-[#B38024] flex items-center justify-center gap-2">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
               Submit Report
@@ -161,7 +184,7 @@ function SafetyReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
 function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const { toast } = useToast();
   const [encounterType, setEncounterType] = useState("");
-  const [severity, setSeverity] = useState("Medium");
+  const [severity, setSeverity] = useState("");
   const [city, setCity] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [description, setDescription] = useState("");
@@ -176,7 +199,7 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
       const res = await fetch(`${BASE}api/reports`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity }),
+        body: JSON.stringify({ category: "police", encounterType, targetType: "neighborhood", targetName: `${neighborhood ? neighborhood + ", " : ""}${city}`, description, severity: severity || "medium" }),
       });
       if (res.ok) { setSuccess(true); setTimeout(() => { onSuccess(); onClose(); }, 2000); }
       else toast({ title: "Could not submit", variant: "destructive" });
@@ -188,7 +211,7 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
     <div className="text-center py-8">
       <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
       <p className="font-bold text-[#2B1507] text-lg">Encounter reported</p>
-      <p className="text-sm text-[#3A1F0E]/60 mt-1">This helps the community stay informed. Your report is under review.</p>
+      <p className="text-sm text-[#3A1F0E]/60 mt-1">This helps the community stay informed and protected. Your report has been received.</p>
     </div>
   );
 
@@ -196,7 +219,7 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
     <div className="space-y-5">
       <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-        <p className="text-xs text-amber-800">This information helps the community. All reports are reviewed within 24 hours.</p>
+        <p className="text-xs text-amber-800">This information helps keep the community informed. Reports are reviewed by our moderation team.</p>
       </div>
       <div>
         <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Encounter Type</p>
@@ -209,11 +232,19 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {SEVERITY_OPTS.map(s => (
-          <button key={s} onClick={() => setSeverity(s)}
-            className={`py-2 rounded-xl text-xs font-bold border transition-colors ${severity === s ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10"}`}>{s}</button>
-        ))}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">How serious is this?</p>
+        <div className="space-y-2">
+          {SEVERITY_POLICE.map(opt => (
+            <button key={opt.value} onClick={() => setSeverity(opt.value)}
+              className={`w-full text-left px-4 py-3 rounded-2xl border transition-colors ${
+                severity === opt.value ? "border-[#DC2626] bg-[#DC2626]/5" : "border-[#3A1F0E]/10 bg-white hover:border-[#DC2626]/30"
+              }`}>
+              <p className="font-bold text-sm text-[#2B1507]">{opt.label}</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
       <input value={city} onChange={e => setCity(e.target.value)} placeholder="City, State *"
         className="w-full border border-[#3A1F0E]/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-[#CA922B]/50 bg-[#FAF6EF]" />
@@ -234,7 +265,7 @@ function PoliceReportForm({ onClose, onSuccess }: { onClose: () => void; onSucce
           <p className="text-xs text-[#3A1F0E]/50">{isAnonymous ? "Your identity is protected" : "Your name visible to moderators"}</p>
         </div>
       </button>
-      <button disabled={!encounterType || !city || description.length < 10 || submitting} onClick={submit}
+      <button disabled={!encounterType || !city || !severity || description.length < 10 || submitting} onClick={submit}
         className="w-full py-3 bg-[#DC2626] text-white rounded-2xl font-bold disabled:opacity-40 hover:bg-red-700 flex items-center justify-center gap-2">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
         Submit Encounter Report

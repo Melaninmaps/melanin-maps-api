@@ -8,8 +8,27 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive"] as const;
+const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"] as const;
 const VALID_SEVERITIES = ["low", "medium", "high", "critical"] as const;
+
+// Spoken severity labels from the UI → internal severity values
+const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
+  // General / business
+  "Something felt off": "low",
+  "I felt unsafe": "medium",
+  "I needed to leave or get help": "high",
+  "Someone could be in immediate danger": "critical",
+  // Police / ICE
+  "The interaction concerned me": "low",
+  "I felt targeted or unsafe": "medium",
+  "Force, detention, or serious misconduct occurred": "high",
+  "There is an immediate safety threat": "critical",
+  // Sundown / travel
+  "Sharing historical or local context": "low",
+  "Recent experiences made me concerned": "medium",
+  "I felt targeted or unsafe here": "high",
+  "There may be an immediate danger": "critical",
+};
 const VALID_TARGET_TYPES = ["neighborhood", "business", "area"] as const;
 
 const INCIDENT_THRESHOLD = 3;
@@ -154,6 +173,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     incidentSeverity,
     incidentDescription,
     evidenceLinks,
+    encounterType,  // police/ICE sub-type (e.g. "Excessive Force/Misconduct")
   } = req.body as Record<string, unknown>;
 
   if (!category || !VALID_CATEGORIES.includes(category as typeof VALID_CATEGORIES[number])) {
@@ -166,10 +186,13 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     return;
   }
 
-  const resolvedSeverity =
+  // Accept internal severity values OR spoken-language labels from the UI
+  const resolvedSeverity: typeof VALID_SEVERITIES[number] =
     typeof severity === "string" && VALID_SEVERITIES.includes(severity as typeof VALID_SEVERITIES[number])
       ? (severity as typeof VALID_SEVERITIES[number])
-      : "medium";
+      : typeof severity === "string" && SPOKEN_SEVERITY_MAP[severity]
+        ? SPOKEN_SEVERITY_MAP[severity]
+        : "medium";
 
   const resolvedTargetType =
     typeof targetType === "string" && VALID_TARGET_TYPES.includes(targetType as typeof VALID_TARGET_TYPES[number])
@@ -194,9 +217,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         targetName: (targetName as string).trim(),
         description: typeof description === "string" ? description.slice(0, 2000) : null,
         severity: resolvedSeverity,
-        routingType: (category === "safety" || category === "discrimination" || category === "sundown")
-          ? "priority"
-          : businessResponseRequested === true ? "private" : "moderation",
+        routingType:
+          // Always priority: safety concern, discrimination, sundown, and police/ICE encounters
+          (category === "safety" || category === "discrimination" || category === "sundown" || category === "police")
+            ? "priority"
+            // Excessive force is doubly prioritized — already covered by police category above
+            : businessResponseRequested === true ? "private" : "moderation",
         businessResponseRequested: businessResponseRequested === true,
         businessResponseDeadline: businessResponseRequested === true
           ? new Date(Date.now() + 72 * 60 * 60 * 1000)

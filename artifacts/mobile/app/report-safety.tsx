@@ -70,10 +70,10 @@ const REPORT_TYPES = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { id: "low", label: "Low", sub: "Minor concern", color: "#2D7A4F", bg: "#2D7A4F15" },
-  { id: "medium", label: "Medium", sub: "Use caution", color: "#C9922B", bg: "#C9922B15" },
-  { id: "high", label: "High", sub: "Avoid area", color: "#DC2626", bg: "#DC262615" },
-  { id: "critical", label: "Critical", sub: "Immediate danger", color: "#7C2D12", bg: "#7C2D1215" },
+  { id: "low", label: "Something felt off", sub: "Uncomfortable, suspicious, or something the community should know", color: "#2D7A4F", bg: "#2D7A4F15" },
+  { id: "medium", label: "I felt unsafe", sub: "Threatening behavior, harassment, or discriminatory treatment", color: "#C9922B", bg: "#C9922B15" },
+  { id: "high", label: "I needed to leave or get help", sub: "Escalating threat, followed, physical confrontation, or needed assistance", color: "#DC2626", bg: "#DC262615" },
+  { id: "critical", label: "Someone could be in immediate danger", sub: "Active threat, violence, weapon, or urgent danger to others", color: "#7C2D12", bg: "#7C2D1215" },
 ];
 
 interface FormData {
@@ -281,8 +281,7 @@ export default function ReportSafetyScreen() {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank You for Keeping the Community Safe</Text>
               <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews every report within{" "}
-                <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>24 hours</Text>. Verified reports are posted as real-time alerts to the community.
+                Your report has been submitted{form.isAnonymous ? " anonymously" : ""}. Our moderation team reviews reports and verified alerts are posted to the community.
               </Text>
             </View>
 

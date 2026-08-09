@@ -222,13 +222,14 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 // Legend tile definitions
 const LEGEND_TILES = [
-  { key: "business", color: "#CA922B", shape: "circle",  label: "Businesses" },
-  { key: "cultural", color: "#92400E", shape: "diamond", label: "Cultural Sites" },
-  { key: "hbcu",     color: "#7C3AED", shape: "diamond", label: "HBCUs" },
-  { key: "festival", color: "#C8960C", shape: "diamond", label: "Festivals" },
-  { key: "events",   color: "#EA580C", shape: "diamond", label: "Community Events" },
-  { key: "market",   color: "#16A34A", shape: "diamond", label: "Markets" },
-  { key: "art",      color: "#0891B2", shape: "diamond", label: "Public Art" },
+  { key: "business", color: "#CA922B", shape: "circle",   label: "Businesses" },
+  { key: "cultural", color: "#92400E", shape: "diamond",  label: "Cultural Sites" },
+  { key: "hbcu",     color: "#7C3AED", shape: "diamond",  label: "HBCUs" },
+  { key: "festival", color: "#C8960C", shape: "diamond",  label: "Festivals" },
+  { key: "events",   color: "#EA580C", shape: "diamond",  label: "Community Events" },
+  { key: "market",   color: "#16A34A", shape: "diamond",  label: "Markets" },
+  { key: "art",      color: "#0891B2", shape: "diamond",  label: "Public Art" },
+  { key: "sundown",  color: "#7F1D1D", shape: "triangle", label: "Sundown Town History" },
 ] as const;
 
 export default function MapPage() {
@@ -501,6 +502,11 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
+        // Recenter map to event location so user sees it in context
+        if (mapRef.current && evt.latitude && evt.longitude) {
+          mapRef.current.panTo({ lat: parseFloat(String(evt.latitude)), lng: parseFloat(String(evt.longitude)) });
+          mapRef.current.setZoom(14);
+        }
         const dateStr = evt.date
           ? new Date(evt.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
           : "";
@@ -530,6 +536,13 @@ export default function MapPage() {
     const visible = legendFilter === null || legendFilter === "events";
     eventMarkersRef.current.forEach((m) => m.setMap(visible ? mapRef.current : null));
   }, [legendFilter, mapEvents]);
+
+  // Sundown town marker visibility — responds to legendFilter (on by default, toggleable)
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const visible = legendFilter === null || legendFilter === "sundown";
+    sundownMarkersRef.current.forEach((m) => m.setMap(visible ? mapRef.current : null));
+  }, [legendFilter, sundownTowns]);
 
   // Subscription check
   useEffect(() => {
@@ -1132,6 +1145,10 @@ export default function MapPage() {
               >
                 {shape === "circle" ? (
                   <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
+                ) : shape === "triangle" ? (
+                  <svg width="12" height="12" viewBox="0 0 12 12" className="shrink-0">
+                    <polygon points="6,1 11,11 1,11" fill={color} opacity="0.85" />
+                  </svg>
                 ) : (
                   <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
                 )}

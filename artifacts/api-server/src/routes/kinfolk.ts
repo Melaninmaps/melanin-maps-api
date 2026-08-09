@@ -139,6 +139,56 @@ function isWeatherQuery(msg: string): boolean {
   return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(msg);
 }
 
+// ─── City extraction from user message ────────────────────────────────────────
+// Aliases and shorthand that the platform's community commonly uses
+const CITY_ALIASES: Record<string, string> = {
+  "philly": "Philadelphia", "the city of brotherly love": "Philadelphia",
+  "nyc": "New York", "new york city": "New York", "the big apple": "New York", "brooklyn": "New York", "manhattan": "New York", "the bronx": "New York",
+  "atl": "Atlanta", "the a": "Atlanta", "hotlanta": "Atlanta",
+  "dc": "Washington", "d.c.": "Washington", "washington dc": "Washington", "dmv": "Washington",
+  "la": "Los Angeles", "l.a.": "Los Angeles", "lax": "Los Angeles", "south central": "Los Angeles", "compton": "Los Angeles", "inglewood": "Los Angeles",
+  "chi": "Chicago", "the chi": "Chicago", "chitown": "Chicago", "chi-town": "Chicago",
+  "h-town": "Houston", "space city": "Houston", "bayou city": "Houston",
+  "nola": "New Orleans", "the crescent city": "New Orleans", "the big easy": "New Orleans",
+  "bmore": "Baltimore", "charm city": "Baltimore",
+  "detroit": "Detroit", "the d": "Detroit", "motor city": "Detroit",
+  "oak": "Oakland", "the town": "Oakland",
+  "nashville": "Nashville", "nash vegas": "Nashville", "music city": "Nashville",
+  "memphis": "Memphis", "bluff city": "Memphis",
+  "jackson": "Jackson",
+  "richmond": "Richmond", "rva": "Richmond",
+  "charlotte": "Charlotte", "the queen city": "Charlotte",
+  "birmingham": "Birmingham", "the magic city": "Birmingham",
+  "no": "New Orleans", // texting shorthand
+};
+
+/**
+ * Extract a city name from free-form user text.
+ * Checks common aliases first, then looks for "in/to/visiting [City]" patterns
+ * against the platform's known city list.
+ */
+function extractCityFromUserMessage(msg: string): string | null {
+  const lower = msg.toLowerCase().trim();
+
+  // 1. Alias lookup (exact substring match)
+  for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+    if (lower.includes(alias.toLowerCase())) return canonical;
+  }
+
+  // 2. Pattern match: "in/to/at/around/visiting [City Name]"
+  //    Require at least 3 chars, stop at punctuation or common sentence endings
+  const patterns = [
+    /\b(?:in|to|at|around|visiting|headed to|going to|travelling to|traveling to|moving to|near)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\b/,
+    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:restaurants|food|spots|places|businesses|things to do|events|bars|brunch|coffee|barbershop|barbers|salons|vibes)\b/i,
+  ];
+  for (const p of patterns) {
+    const m = msg.match(p);
+    if (m?.[1]?.trim() && m[1].trim().length >= 3) return m[1].trim();
+  }
+
+  return null;
+}
+
 // ─── City Voice System (copied + shared from travel.ts) ───────────────────────
 type CityVoice = { slang: string[]; phrases: string[]; culturalTouchstones: string[]; writingGuidance: string };
 
@@ -1538,8 +1588,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     const existingMessages: SessionMessage[] = currentSession?.messages ?? [];
 
-    // Detect destination from message or session
-    const destination = currentSession?.destination ?? null;
+    // Detect destination — session first, then extract from the current user message.
+    // This ensures the business catalog is populated even on the first message
+    // ("Best restaurants in Philly" should immediately surface Philly listings).
+    const sessionDestination = currentSession?.destination ?? null;
+    const messageDestination = sessionDestination ? null : extractCityFromUserMessage(userMessage);
+    const destination = sessionDestination ?? messageDestination;
 
     // Fetch platform business catalog — destination first, then fall back to user's home city.
     // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
