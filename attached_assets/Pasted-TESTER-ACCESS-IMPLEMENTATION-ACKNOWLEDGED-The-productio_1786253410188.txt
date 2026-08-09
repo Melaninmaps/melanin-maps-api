@@ -1,0 +1,62 @@
+TESTER ACCESS IMPLEMENTATION — ACKNOWLEDGED
+
+The production tester-entitlement architecture described for SHA 35e15847 is aligned with the approved direction.
+
+Please preserve the following as permanent rules:
+
+1. Tester access is an ENTITLEMENT / ACCESS STATUS, not a permanent paid membership tier.
+
+2. `tester_status = 'active'` may grant Premium testing access, including unrestricted Kinfolk testing, without changing:
+   - memberType
+   - Stripe subscription
+   - permanent membership history
+
+3. Pre-approved tester emails must automatically attach their testing entitlement when they register through:
+   - email/password
+   - Apple Sign-In
+   - OIDC / supported Android or Google authentication
+
+4. Existing accounts must be updated rather than duplicated.
+
+5. Pending tester emails must remain available for people who have been approved before they create their account.
+
+6. Tester entitlement must preserve:
+   - tester_status
+   - tester_access_source
+   - tester_granted_at
+   - tester_granted_by
+   - testing_entitlement_ends_at
+
+7. Supported access sources should include:
+   - testflight
+   - android_test
+   - admin_invite
+   - website_test
+
+8. Revoking tester entitlement must return the user to their normal underlying membership state without deleting:
+   - account
+   - profile
+   - saves
+   - reviews/community activity
+   - Kinfolk history/context
+   - any other user data
+
+9. Tester quota bypass is for the testing entitlement period only and should not permanently convert the user into an unlimited paid tier.
+
+10. Before I provide the first tester batch, use the documented DRY RUN procedure and return:
+
+Email
+Existing account?
+Current role
+Current memberType
+Current tester entitlement
+Proposed tester access source
+Proposed change
+Conflict / duplicate?
+Action required
+
+Do not apply the tester list until I approve the dry-run results.
+
+Also confirm that the administrative tester endpoints are protected by administrator authorization and cannot be called by a normal authenticated user.
+
+I will provide the approved tester email list separately.
