@@ -1,0 +1,425 @@
+Yes. Both points make sense, and they should become explicit architecture rules now.
+
+On the first issue: **we should never treat “Replit cannot find the profile” as proof the user or their content does not exist.** A user account, their profile, their comments, uploads, saves, reviews, check-ins, community posts, media contributions, and future Kinfolk context should all be linked through durable IDs so that a login problem does not equal data loss.
+
+What we can guarantee architecturally is not “nothing can ever go wrong,” but this:
+
+**Authentication failure must never delete user data. Account recovery must reconnect the person to the same user identity and historical data.**
+
+That means we need Replit to prove that comments and media are tied to canonical `user_id` values rather than only email, username, device, or session. If you and your son both created profiles with photos and community comments, we need a read-only identity/content reconciliation before anyone resets anything.
+
+I would make this a hard rule:
+
+> **Recover identity; do not recreate history.**
+
+If a user cannot log in, the recovery process should find the existing user row and reconnect credentials to that same user ID. We should not create a new blank account and then abandon the old one.
+
+And yes, your second change also makes sense:
+
+**Members should be able to contribute as much community media as they want, subject to moderation/storage/security rules. The distinction should be in access to analytics and business/creator tools, not whether ordinary members are allowed to participate.**
+
+So I would separate:
+
+**Community participation rights**
+from
+**professional analytics/monetization privileges.**
+
+A regular member can post photos, videos, social links, reviews, comments, stories, business media, etc.
+
+A **Business** or **Cultural Ambassador** gets the analytical layer behind that activity: reach, saves, impressions, audience patterns, click-throughs, engagement trends, referral impact, content performance, community response, etc.
+
+That is cleaner than restricting ordinary users to one photo/video just because they are not a business.
+
+Here is the exact addendum I would send Replit:
+
+```text
+MAPPING WITH MELANIN™
+USER DATA PRESERVATION + COMMUNITY MEDIA ENTITLEMENT ADDENDUM
+
+DO NOT IMPLEMENT YET.
+
+READ-ONLY AUDIT FIRST.
+
+==================================================
+1. USER DATA PRESERVATION — CORE RULE
+==================================================
+
+A login problem must NEVER mean the user's history is lost.
+
+Canonical principle:
+
+RECOVER IDENTITY — DO NOT RECREATE HISTORY.
+
+A user may lose access credentials, change email, use Apple/Google/email login, reset a password, or experience auth route failure.
+
+Their underlying Mapping With Melanin identity and content must remain attached to the same durable user identity.
+
+==================================================
+2. AUDIT ALL USER-CREATED DATA RELATIONSHIPS
+==================================================
+
+For every user-generated content type, report what key it uses:
+
+Profile
+Profile photo/avatar
+Community posts
+Community comments
+Replies
+Reviews
+Check-ins
+Vibes
+THE REAL
+Community Says
+Community Comments
+Safety reports
+Business media contributions
+Library saves
+Library follows
+Stories
+Messages
+Marketplace listings
+Event activity
+Kinfolk history/preferences
+Any other user-generated record
+
+For each return:
+
+TABLE
+PRIMARY KEY
+USER FOREIGN KEY
+EMAIL STORED?
+USERNAME STORED?
+SESSION ID STORED?
+DEVICE ID STORED?
+CAN RECORD SURVIVE PASSWORD RESET?
+CAN RECORD SURVIVE EMAIL CHANGE?
+CAN RECORD SURVIVE APPLE/GOOGLE LINK CHANGE?
+CAN RECORD BE REATTACHED TO SAME USER_ID?
+
+The expected architecture is:
+
+content → canonical user_id
+
+NOT:
+
+content → email only
+content → username only
+content → session only
+
+==================================================
+3. FOUNDER + SON IDENTITY RECONCILIATION
+==================================================
+
+READ ONLY.
+
+The founder and her son both previously created profiles with:
+
+- profile photos
+- community feed participation/comments
+- identifiable profile state
+
+Replit has since reported that some profiles "do not exist."
+
+Do NOT create new accounts yet.
+
+Search for all records that could belong to those historical profiles using:
+
+email(s)
+username/display name
+legacy profile ID
+community post author IDs
+comment author IDs
+profile photo references
+auth identities
+device-linked account metadata where appropriate
+Apple/Google/OIDC identities
+legacy user/profile tables
+
+Return for each person:
+
+Canonical user_id found:
+Profile row found:
+Auth record found:
+Community posts found:
+Comments found:
+Reviews found:
+Media found:
+Profile image found:
+Duplicate user IDs found:
+Orphaned content found:
+Possible legacy identity found:
+Data loss proven: YES/NO/UNKNOWN
+
+If content exists under an orphaned or legacy user ID, DO NOT move it yet.
+
+Report the reconciliation path first.
+
+==================================================
+4. ACCOUNT RECOVERY GUARANTEE
+==================================================
+
+Future account recovery must:
+
+1. find the existing canonical user
+2. reconnect the new credential/auth method
+3. preserve the same user_id
+4. preserve all historical content
+5. preserve profile history
+6. preserve saved data
+7. preserve contribution history
+8. preserve business/community reputation data
+9. preserve Kinfolk history according to privacy settings
+
+Password reset must NOT create a new user.
+
+Email change must NOT create a new user.
+
+Apple/Google linking must NOT create a second user when the account can be safely matched.
+
+==================================================
+5. DUPLICATE ACCOUNT PROTECTION
+==================================================
+
+Before creating a new account, check for:
+
+normalized email
+verified identity provider linkage
+existing pending tester email
+existing business owner relationship
+known prior account linkage
+
+Do not merge accounts automatically if identity is uncertain.
+
+Flag for reconciliation.
+
+==================================================
+6. DELETION / DATA LOSS PROTECTION
+==================================================
+
+User data should never be hard-deleted because of:
+
+failed login
+account lockout
+password reset
+OAuth relink
+role change
+membership tier change
+tester expiration
+business claim status
+app reinstall
+device change
+
+Hard deletion should require an explicit approved deletion workflow.
+
+==================================================
+7. BACKUP / RESTORE AUDIT
+==================================================
+
+Return:
+
+Production DB backup method:
+Backup frequency:
+Retention:
+Point-in-time recovery available: YES/NO
+Who can restore:
+Last successful backup:
+Media backup strategy:
+Object/media provider:
+Media retention:
+Deletion policy:
+Orphan cleanup policy:
+
+Do not claim "nothing can be lost" unless backup/restore is actually proven.
+
+==================================================
+8. COMMUNITY MEDIA — UPDATED FOUNDER DECISION
+==================================================
+
+Regular members should be able to contribute unlimited community media in principle.
+
+This includes:
+
+photos
+videos
+social media URLs
+business media
+community posts
+stories
+reviews
+travel content
+event content
+heritage/cultural content
+
+The platform may still enforce:
+
+file-size limits
+format limits
+rate limits
+moderation rules
+abuse prevention
+copyright/source rules
+reasonable storage safeguards
+
+But membership tier should NOT artificially restrict ordinary community participation to one or a tiny fixed number of photos/videos.
+
+==================================================
+9. PREFERRED MEDIA MODEL
+==================================================
+
+Where possible, encourage:
+
+ORIGINAL SOCIAL URL / EMBED
++
+ATTRIBUTION
+
+Examples:
+
+Instagram
+TikTok
+YouTube
+other approved public platforms
+
+This preserves:
+
+creator attribution
+traffic back to original platform
+reduced duplicate storage
+content freshness
+
+Direct upload should also remain available where appropriate.
+
+==================================================
+10. BUSINESS / CULTURAL AMBASSADOR DISTINCTION
+==================================================
+
+The key privilege difference is not:
+
+"Who is allowed to contribute media?"
+
+It is:
+
+"Who receives professional analytics and account tools?"
+
+REGULAR MEMBER:
+
+Can contribute media
+Can tag businesses
+Can create stories/posts
+Can review/check in
+Can add community photos/video/social links
+Can participate in community discovery
+
+BUSINESS ACCOUNT:
+
+All appropriate community capabilities
+PLUS business management tools
+PLUS business analytics
+PLUS profile claim/official updates
+PLUS engagement insights
+PLUS campaign/offer tools where applicable
+
+CULTURAL AMBASSADOR:
+
+All appropriate community capabilities
+PLUS creator/ambassador analytics
+PLUS content reach/performance
+PLUS referral/engagement insights
+PLUS audience/community analytics
+PLUS partnership tools where applicable
+
+Do not expose private individual-user identity unnecessarily in analytics.
+
+==================================================
+11. ANALYTICS ENTITLEMENT
+==================================================
+
+Professional analytics may include:
+
+impressions
+profile views
+content views
+saves
+shares
+click-throughs
+website/social clicks
+directions requests
+check-ins
+community engagement
+audience geography at safe aggregate level
+Vibe/THE REAL trends
+recommendation activity
+Kinfolk referral attribution where appropriate
+campaign/offer performance
+
+Regular users do not need this professional analytics dashboard merely because they contributed content.
+
+==================================================
+12. MEDIA OWNERSHIP / ATTRIBUTION
+==================================================
+
+Every media record should retain:
+
+media_id
+contributor_user_id
+business/place/event linkage
+original_source_url
+platform
+creator/source
+uploaded_at
+moderation_status
+claim/business ownership relationship
+media_type
+storage URL if directly uploaded
+copyright/source metadata where applicable
+
+Do not lose contributor attribution if a business later claims the page.
+
+==================================================
+13. BUSINESS CLAIM DOES NOT ERASE COMMUNITY CONTENT
+==================================================
+
+If an unclaimed business later becomes claimed:
+
+existing community photos
+videos
+reviews
+comments
+Vibes
+THE REAL
+stories
+
+must remain part of the historical community record unless removed through moderation/policy.
+
+Claiming the business must not wipe or replace community history.
+
+==================================================
+14. FINAL AUDIT REPORT
+==================================================
+
+Return:
+
+A. User-data relationship matrix
+B. Founder identity/content reconciliation
+C. Son identity/content reconciliation
+D. Orphaned content found
+E. Duplicate-account risk
+F. Backup/restore proof
+G. Media entitlement matrix
+H. Business analytics entitlement
+I. Cultural Ambassador analytics entitlement
+J. Risks before any account reset
+
+Do not implement.
+
+STOP for founder review.
+```
+
+The most important principle I would preserve is:
+
+> **A user's login is not their identity. Their `user_id` is.**
+
+And for media:
+
+> **Participation should be broad. Analytics should be earned by role/account type.**
+
+That gives you a healthier community model: people can contribute freely without turning every ordinary member into a business dashboard user, while businesses and Cultural Ambassadors get the deeper intelligence that justifies their professional account type.

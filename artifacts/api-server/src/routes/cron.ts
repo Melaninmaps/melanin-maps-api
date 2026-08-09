@@ -1143,5 +1143,87 @@ router.post("/cron/seed-reviewer", async (req: any, res: any): Promise<void> => 
   }
 });
 
+// ── POST /cron/grant-admin-tester-roles ───────────────────────────────────────
+// One-shot CRON_SECRET-protected endpoint.
+// Creates pending_tester_emails table if missing, grants admin to founder
+// accounts, grants tester to all known testers. Safe to call multiple times.
+router.post("/cron/grant-admin-tester-roles", async (req: any, res: any): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  const results: string[] = [];
+  try {
+    // 1. Create pending_tester_emails table if it doesn't exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pending_tester_emails (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+        email varchar NOT NULL UNIQUE,
+        tester_access_source varchar NOT NULL DEFAULT 'admin_invite',
+        granted_by varchar,
+        granted_at timestamptz NOT NULL DEFAULT NOW(),
+        entitlement_ends_at timestamptz,
+        applied_at timestamptz,
+        applied_to_user_id varchar
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS "IDX_pending_tester_emails_email" ON pending_tester_emails(email)`);
+    results.push("table: pending_tester_emails ensured");
+
+    // 2. Grant admin to all founder accounts
+    const adminEmails = [
+      "tlindsay428@yahoo.com",
+      "tlindsay428@gmail.com",
+      "tlindsay428@aol.com",
+    ];
+    const adminResult = await pool.query(
+      `UPDATE users SET role='admin', updated_at=NOW()
+       WHERE LOWER(TRIM(email))=ANY($1) AND role!='admin'
+       RETURNING email`,
+      [adminEmails]
+    );
+    results.push(`admin granted: [${adminResult.rows.map((r: any) => r.email).join(", ") || "already set"}]`);
+
+    // 3. Grant tester to all known testers (never demotes admins)
+    const testerEmails = [
+      "cardwellkayla219@gmail.com","kcardwell17@yahoo.com","kaylacardwell3@gmail.com",
+      "taleisham.saunders@gmail.com","trinalindsayhairston@gmail.com","trinalindsayhairston@gmail..com",
+      "bigdot6017@gmail.com","zykiral.morton@yahoo.com","kyleisha.m.morton@gmail.com",
+      "kyleisha.m.fisher@gmail.com","taleisha.fisher@gmail.com","lilanarich@gmail.com",
+      "jordanwtester@gmail.com","joshuabierd99@gmail.com",
+    ];
+    const testerResult = await pool.query(
+      `UPDATE users SET role='tester', updated_at=NOW()
+       WHERE LOWER(TRIM(email))=ANY($1) AND role='user'
+       RETURNING email`,
+      [testerEmails]
+    );
+    results.push(`tester granted: [${testerResult.rows.map((r: any) => r.email).join(", ") || "already set"}]`);
+
+    // 4. Seed pre-approved tester emails
+    const preApproved = [
+      "zykiral.morton@yahoo.com","kyleisha.m.morton@gmail.com","kyleisha.m.fisher@gmail.com",
+      "taleisha.fisher@gmail.com","lilanarich@gmail.com","jordanwtester@gmail.com",
+      "joshuabierd99@gmail.com","kaylacardwelltester@gmail.com","kevinctester@gmail.com",
+      "kevkaytester@gmail.com","teiannaltester@gmail.com","trinalindsaytester@gmail.com",
+      "jross215@gmail.com","kaylathomas20011@gmail.com","kansesdwilliams@gmail.com",
+      "fatimccoy@icloud.com","jordanwyatt117@icloud.com","nydiahholly12@gmail.com",
+      "meaparks@gmail.com","melody.brown1988@gmail.com","owcforyouth@gmail.com",
+    ];
+    let seeded = 0;
+    for (const email of preApproved) {
+      const r = await pool.query(
+        `INSERT INTO pending_tester_emails (id, email, tester_access_source)
+         VALUES (gen_random_uuid(),$1,'website_test') ON CONFLICT(email) DO NOTHING RETURNING id`,
+        [email.toLowerCase().trim()]
+      );
+      if (r.rowCount && r.rowCount > 0) seeded++;
+    }
+    results.push(`pending_tester_emails seeded: ${seeded} new`);
+
+    res.json({ ok: true, results });
+  } catch (err: any) {
+    logger.error({ err }, "grant-admin-tester-roles failed");
+    res.status(500).json({ error: err?.message ?? "Failed", results });
+  }
+});
+
 export default router;
 
