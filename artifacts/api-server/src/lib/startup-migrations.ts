@@ -22,6 +22,7 @@ import { COMMUNITY_ORGANIZATIONS_SEED } from "../data/community-organizations-se
 import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
+import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -749,6 +750,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["sundown towns",     () => ensureSundownTowns(log, warn)],
     ["dir. businesses",   () => ensureDirectoryBusinesses(log, warn)],
     ["tour businesses",   () => ensureTourBusinesses(log, warn)],
+    ["curated businesses", () => ensureFounderCuratedBusinesses(log, warn)],
     ["community orgs",    () => ensureCommunityOrganizations(log, warn)],
     ["recurring events",  () => ensureRecurringEvents(log, warn)],
     ["tour cultural sites", () => ensureTourCulturalSites(log, warn)],
@@ -1592,5 +1594,73 @@ async function ensureKnowledgeTopics(
     log(`Knowledge topics integrity guard: ${newTopics.length} inserted, ${existing.size} already present (seed: ${KNOWLEDGE_LIBRARY_SEED.length})`);
   } catch (err: unknown) {
     warn(`Knowledge topics integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Founder-Curated Businesses ─────────────────────────────────────────────
+// Businesses hand-selected from the founder's master spreadsheet.
+// Deduplicates by lower(name)|lower(city)|lower(state) — safe to run on every boot.
+async function ensureFounderCuratedBusinesses(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(state) AS k FROM businesses`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of FOUNDER_CURATED_BUSINESSES_SEED) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.state.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state,
+             description, ownership_designations, black_owned,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,
+             $8,$9,$10,
+             $11,$12,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory ?? b.category,
+            b.address, b.city, b.state,
+            b.description,
+            JSON.stringify(b.ownershipDesignations),
+            b.blackOwned,
+            b.latitude ?? null, b.longitude ?? null,
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Curated businesses guard: failed to insert ${b.name} (${b.city}): ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Founder-curated businesses guard: ${inserted} inserted, ${skipped} already present`);
+  } catch (err: unknown) {
+    warn(`Founder-curated businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
