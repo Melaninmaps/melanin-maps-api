@@ -1192,63 +1192,64 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Interactive legend */}
-        <div className="absolute bottom-6 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1 max-w-[560px]">
-          {/* Standard legend tiles — single-select filter for cultural/heritage layers */}
-          {LEGEND_TILES.filter(t => t.key !== "sundown").map(({ key, color, shape, label }) => {
-            const isActive = legendFilter === key;
-            return (
-              <button
-                key={key}
-                onClick={() => {
-                  const next = isActive ? null : key;
-                  setLegendFilter(next);
-                  setSidebarOpen(next !== null);
-                }}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-left ${
-                  isActive
-                    ? "bg-[#3A1F0E]/10 ring-1 ring-[#3A1F0E]/20"
-                    : "hover:bg-[#3A1F0E]/5"
-                }`}
-              >
-                {shape === "circle" ? (
-                  <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
-                ) : (
-                  <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
-                )}
-                <span className={`text-[10px] font-semibold ${isActive ? "text-[#3A1F0E]" : "text-[#3A1F0E]/70"}`}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
+        {/* Interactive legend — two rows so Sundown toggle is always visible */}
+        <div className="absolute bottom-6 left-4 flex flex-col gap-1.5">
+          {/* Row 1: Cultural / heritage layer filters */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1">
+            {LEGEND_TILES.filter(t => t.key !== "sundown").map(({ key, color, shape, label }) => {
+              const isActive = legendFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    const next = isActive ? null : key;
+                    setLegendFilter(next);
+                    setSidebarOpen(next !== null);
+                  }}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all text-left ${
+                    isActive
+                      ? "bg-[#3A1F0E]/10 ring-1 ring-[#3A1F0E]/20"
+                      : "hover:bg-[#3A1F0E]/5"
+                  }`}
+                >
+                  {shape === "circle" ? (
+                    <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
+                  ) : (
+                    <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
+                  )}
+                  <span className={`text-[10px] font-semibold ${isActive ? "text-[#3A1F0E]" : "text-[#3A1F0E]/70"}`}>
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+            {isPaidMember && (
+              <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-3 ml-1">
+                <Navigation className="w-3 h-3 text-[#CA922B]" />
+                <span className="text-xs font-semibold text-[#CA922B]">Routing active</span>
+              </div>
+            )}
+          </div>
 
-          {/* Sundown Town History — independent toggle, always available regardless of other filters */}
-          <div className="border-l border-[#3A1F0E]/10 pl-2 ml-0.5">
+          {/* Row 2: Sundown Town History — always its own row, never overflows */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg border border-[#3A1F0E]/8 w-fit">
             <button
               onClick={() => setShowSundownLayer(v => !v)}
               title={showSundownLayer ? "Hide Sundown Town History layer" : "Show Sundown Town History layer"}
-              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
+              className={`flex items-center gap-2 px-1 py-0.5 rounded-lg transition-all ${
                 showSundownLayer
-                  ? "bg-[#7F1D1D]/10 ring-1 ring-[#7F1D1D]/25"
-                  : "opacity-50 hover:opacity-80 hover:bg-[#3A1F0E]/5"
+                  ? "opacity-100"
+                  : "opacity-45 hover:opacity-70"
               }`}
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" className="shrink-0">
-                <polygon points="6,1 11,11 1,11" fill="#7F1D1D" opacity={showSundownLayer ? "0.85" : "0.4"} />
+              <svg width="11" height="11" viewBox="0 0 12 12" className="shrink-0">
+                <polygon points="6,1 11,11 1,11" fill="#7F1D1D" opacity={showSundownLayer ? "0.85" : "0.35"} />
               </svg>
-              <span className={`text-[10px] font-semibold ${showSundownLayer ? "text-[#7F1D1D]" : "text-[#3A1F0E]/50"}`}>
-                Sundown Town History
+              <span className={`text-[10px] font-semibold ${showSundownLayer ? "text-[#7F1D1D]" : "text-[#3A1F0E]/45"}`}>
+                {showSundownLayer ? "Sundown Town History — ON" : "Sundown Town History — OFF"}
               </span>
             </button>
           </div>
-
-          {isPaidMember && (
-            <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-3 ml-1">
-              <Navigation className="w-3 h-3 text-[#CA922B]" />
-              <span className="text-xs font-semibold text-[#CA922B]">Routing active</span>
-            </div>
-          )}
         </div>
       </div>
     </div>
