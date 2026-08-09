@@ -1,0 +1,140 @@
+Yes. I would **separate “this place appears to exist” from “our community has evidence about this place.”** That distinction becomes especially important internationally.
+
+A business being on Mapping with Melanin™ should never automatically communicate endorsement, verification, or safety.
+
+### I recommend a layered trust model
+
+A listing could progress through statuses such as:
+
+| Status                | What it actually means                                                                                 | What the user sees                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| **Listed**            | We have evidence the business/place exists                                                             | **Listed — Not Yet Community Verified** |
+| **Business Verified** | Business identity/existence has been independently confirmed                                           | **Business Verified ✓**                 |
+| **Community Visited** | At least one verified member reports actually visiting                                                 | **Community Visit Confirmed**           |
+| **Community Trusted** | Enough independent, credible member experiences exist to calculate meaningful trust/safety information | **Community Trusted**                   |
+| **Safety Concern**    | Credible reports indicate a potential concern                                                          | **Community Safety Concern**            |
+
+Crucially, **Business Verified must not mean Safe.** It only means, essentially, *we have enough evidence to believe this is a real operating business.*
+
+### International business verification
+
+For a business somebody finds on Instagram, TikTok, Facebook, etc., I would allow it to be added, but initially classify it as **Listed / Unverified**.
+
+The system could verify existence using multiple signals rather than one source: official website/domain, active social account with meaningful history, physical address, mapping/location data, local business registry where available, tourism-board or chamber listings, recent customer activity, phone/contact information, booking platform presence, and eventually owner verification.
+
+You don't necessarily need every item. You need enough independent signals to establish **existence**, while being very clear that this isn't a safety certification.
+
+### Don't let one member turn a business “safe”
+
+I strongly agree with you here.
+
+A Level 1 verified member saying:
+
+> “I went there. They were wonderful.”
+
+is valuable evidence, but it should remain **one confirmed experience**.
+
+Don't turn that into a green “Safe” badge.
+
+Instead, display something like:
+
+**Community Experience**
+
+* 1 verified visit
+* Positive experience reported
+* Limited community data
+
+As additional independent reports accumulate, confidence increases.
+
+And weight the **evidence**, not merely the member's status. A longtime member shouldn't be able to single-handedly certify a location either.
+
+For example, confidence could consider confirmed visit/check-in, account trust/history, recency, number of independent reporters, consistency between reports, whether reports contain corroborating information, and whether reports come from unrelated accounts.
+
+I would also avoid publishing the underlying mathematical “trust score” as though safety can be reduced to 87/100. Internally, absolutely use confidence scoring. Externally, translate it into understandable language.
+
+### This is especially important across identities
+
+There is another issue that your platform is uniquely positioned to capture:
+
+**“Safe” isn't universal.**
+
+A Black American woman, gay Latino man, Muslim woman wearing hijab, transgender traveler, disabled traveler, Afro-Latina traveler, or interracial couple can have very different experiences at the exact same establishment.
+
+So reports should optionally capture:
+
+**“Is there anything about your experience that may be especially helpful to another traveler?”**
+
+Then people can voluntarily select relevant context without being required to disclose identity.
+
+Eventually you can say:
+
+> **Limited community evidence**
+>
+> 6 verified community visits have been reported. Experiences have been mostly positive, but we don't yet have enough information to characterize this location broadly.
+
+That's much more responsible than **SAFE ✓**.
+
+### And for your Puerto Rico/Paris example — Kinfolk needs the same restraint
+
+Suppose someone asks:
+
+> “Kinfolk, find me a Black-owned restaurant near my hotel in San Juan.”
+
+Kinfolk finds one in the database but there are zero verified community experiences.
+
+It can recommend its **existence**, but should communicate the evidence level:
+
+> **I found this option nearby. The business appears to be operating, but Mapping with Melanin doesn't yet have enough verified community experiences to speak confidently about what your experience may be like. Want me to also show you options with stronger community feedback?**
+
+That's the distinction.
+
+Not:
+
+> “This restaurant is safe.”
+
+And not a scary:
+
+> ⚠️ **WARNING: We cannot guarantee your safety.**
+
+You don't want every international discovery to feel dangerous merely because your community hasn't reached it yet.
+
+### The strongest policy language
+
+I would establish this as part of the **Community Governance & Moderation Specification** we are building:
+
+> **Mapping with Melanin™ distinguishes business existence, business verification, community experience, and community safety confidence. These are not interchangeable.**
+>
+> A verified business is not automatically a safe business. A positive member report does not constitute a safety certification. Community confidence develops through multiple independent experiences and other reliable evidence over time.
+>
+> Where community evidence is limited, Mapping with Melanin™ will clearly communicate that limitation rather than characterize a business or location as safe or unsafe.
+>
+> Safety information reflects reported experiences and available information and cannot guarantee how another individual will be treated or what conditions they will encounter.
+
+### One additional feature I would add
+
+For travel, give users a **“Know Before You Go”** indicator.
+
+Instead of trying to certify the world:
+
+**KNOW BEFORE YOU GO**
+
+**Strong Community Insight**
+Plenty of recent community evidence.
+
+**Growing Community Insight**
+Some verified experiences; still building confidence.
+
+**Limited Community Insight**
+We know the place exists, but don't yet have enough community experience.
+
+**Community Concern Reported**
+Credible concerns have been reported. Tap to understand what was reported.
+
+**Official / Elevated Safety Advisory**
+Relevant credible external safety information exists.
+
+That last category should be fundamentally different from user reviews. If a government, recognized human-rights organization, reputable news organization, tourism authority, or other credible source documents something significant, the platform shouldn't have to wait for five Mapping with Melanin members to experience it themselves.
+
+And this connects beautifully to the diaspora expansion you're building: **community verification can travel with the community without pretending that community knowledge is universal or complete.**
+
+I would have Replit preserve **existence verification, ownership/business verification, visit verification, community confidence, and safety evidence as separate database concepts**. Combining them into one `verified=true` field now would create a major architectural problem later.

@@ -189,6 +189,54 @@ function extractCityFromUserMessage(msg: string): string | null {
   return null;
 }
 
+// ─── Cultural Identity Detection ─────────────────────────────────────────────
+// Pattern-matches statements like "I'm Ethiopian", "My family is from Jamaica",
+// "I'm Puerto Rican and Dominican", "I want to reconnect with my Nigerian roots".
+// Returns the detected country/community name(s) or null if none found.
+// IMPORTANT: only acts on explicit statements — never infers from searches or behavior.
+const IDENTITY_PATTERNS = [
+  /\bi(?:'m| am)\s+(?:a\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/,                   // "I'm Ethiopian", "I'm Afro-Cuban"
+  /\bmy\s+(?:family\s+is|parents?\s+are|grandparents?\s+are|ancestors?\s+are|roots?\s+are)\s+from\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i, // "my family is from Ghana"
+  /\bmy\s+(?:family|heritage|roots?|background|culture)\s+is\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
+  /\bi\s+(?:grew up|was born|was raised)\s+(?:in\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
+  /\bmy\s+(?:culture|community|people)\s+(?:is|are)\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\b/i,
+  /\breconnect\s+with\s+my\s+([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\s+roots?\b/i,        // "reconnect with my Nigerian roots"
+  /\blearn\s+(?:more\s+)?about\s+(?:my\s+)?([A-Z][a-zA-Z]+(?:[- ][A-Z][a-zA-Z]+)?)\s+(?:roots?|heritage|culture|community)\b/i,
+];
+
+// Countries/communities valid to save — prevents saving random nouns like "New" or "York"
+// This is a representative subset; the full canonical list comes from the spec
+const VALID_COMMUNITY_NAMES = new Set([
+  "Ethiopian","Eritrean","Nigerian","Ghanaian","Kenyan","Ugandan","Rwandan","Senegalese","Guinean",
+  "Congolese","Cameroonian","Malian","Ivorian","Togolese","Beninese","Burundian","Zambian","Zimbabwean",
+  "South African","Mozambican","Angolan","Namibian","Botswanan","Tanzanian","Somali","Sudanese",
+  "Jamaican","Haitian","Trinidadian","Barbadian","Bahamian","Grenadian","Dominican","Cuban","Puerto Rican",
+  "Afro-Caribbean","Indo-Caribbean","West Indian",
+  "Mexican","Colombian","Venezuelan","Ecuadorian","Peruvian","Brazilian","Chilean","Bolivian","Uruguayan",
+  "Argentinian","Guatemalan","Salvadoran","Honduran","Nicaraguan","Costa Rican","Panamanian","Belizean",
+  "Afro-Latino","Afro-Latina","Afro-Cuban",
+  "Indian","Pakistani","Bangladeshi","Sri Lankan","Nepali","Filipino","Indonesian","Vietnamese","Thai",
+  "Cambodian","Laotian","Burmese","Malaysian","Singaporean","Chinese","Japanese","Korean","Taiwanese",
+  "Lebanese","Palestinian","Syrian","Jordanian","Egyptian","Moroccan","Algerian","Tunisian","Iranian","Persian",
+  "Iraqi","Yemeni","Turkish","Emirati","Saudi","Kuwaiti",
+  "Gullah","Geechee","Gullah Geechee","Creole","Cajun","Afro-American","African American","Black American",
+  "Indigenous","Native American","Cherokee","Navajo","Lakota","Hawaiian","Samoan","Tongan","Chamorro",
+]);
+
+function detectCulturalIdentity(msg: string): string | null {
+  for (const pattern of IDENTITY_PATTERNS) {
+    const match = msg.match(pattern);
+    if (match?.[1]) {
+      const candidate = match[1].trim();
+      // Validate against known community names or check length/capitalization
+      if (VALID_COMMUNITY_NAMES.has(candidate) || (candidate.length >= 4 && /^[A-Z]/.test(candidate) && !/^(New|Los|San|Saint|East|West|North|South|Port|Fort|Lake|Mount)$/.test(candidate))) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
 // ─── City Voice System (copied + shared from travel.ts) ───────────────────────
 type CityVoice = { slang: string[]; phrases: string[]; culturalTouchstones: string[]; writingGuidance: string };
 
@@ -1593,6 +1641,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ("Best restaurants in Philly" should immediately surface Philly listings).
     const sessionDestination = currentSession?.destination ?? null;
     const messageDestination = sessionDestination ? null : extractCityFromUserMessage(userMessage);
+
+    // Detect explicit cultural identity statements ("I'm Ethiopian", "my family is from Ghana")
+    // Only fires on clear first-person declarations — never infers from searches or behavior.
+    const detectedCulture = detectCulturalIdentity(userMessage);
     const destination = sessionDestination ?? messageDestination;
 
     // Fetch platform business catalog — destination first, then fall back to user's home city.
@@ -1985,6 +2037,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       followUpSuggestions,
       smartPromotion,
       taskAction,
+      // Cultural identity detected in this message — offer member the chance to save
+      // to their roots (diasporaCountries) with explicit consent. Never auto-saved.
+      ...(detectedCulture && {
+        cultureAction: { type: "save_roots", detectedCommunity: detectedCulture },
+      }),
       ...(queriesUsedThisCall !== null && {
         queriesUsed: queriesUsedThisCall,
         queriesLimit: FREE_MONTHLY_LIMIT,
@@ -2674,6 +2731,42 @@ router.get("/kinfolk/memory-summary", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch memory summary");
     res.status(500).json({ error: "Failed to fetch memory summary" });
+  }
+});
+
+// ─── POST /api/kinfolk/roots — save or remove a cultural community root ────────
+// Writes to the existing diasporaCountries JSONB array on user_preferences.
+// CRITICAL: this endpoint ONLY runs on explicit member consent — never call it
+// automatically. The cultureAction in the chat response triggers a consent prompt;
+// this endpoint only fires when the member clicks "Yes, use when relevant".
+router.post("/kinfolk/roots", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { community, action } = req.body as { community?: string; action?: string };
+  if (!community || !["add", "remove"].includes(action ?? "")) {
+    res.status(400).json({ error: "community and action (add|remove) required" });
+    return;
+  }
+  try {
+    const [existing] = await db
+      .select({ diasporaCountries: userPreferencesTable.diasporaCountries })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    const current = (existing?.diasporaCountries as string[] | null) ?? [];
+    const updated = action === "add"
+      ? [...new Set([...current, community])]
+      : current.filter((c: string) => c !== community);
+    await db
+      .insert(userPreferencesTable)
+      .values({ userId: req.user.id, diasporaCountries: updated })
+      .onConflictDoUpdate({
+        target: userPreferencesTable.userId,
+        set: { diasporaCountries: updated, updatedAt: new Date() },
+      });
+    res.json({ ok: true, diasporaCountries: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save culture roots");
+    res.status(500).json({ error: "Failed to save roots" });
   }
 });
 

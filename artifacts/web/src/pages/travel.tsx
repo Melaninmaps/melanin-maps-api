@@ -19,10 +19,12 @@ interface Recommendations {
   businesses: Business[]; neighborhoods: Neighborhood[];
   events: Event[]; safetyTips: string[]; localInsights: string[];
 }
+interface CultureAction { type: "save_roots"; detectedCommunity: string }
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
   followUpSuggestions?: string[]; timestamp: string;
+  cultureAction?: CultureAction | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -552,7 +554,7 @@ function TravelPage() {
         return;
       }
 
-      const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[] };
+      const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[]; cultureAction?: CultureAction | null };
 
       // Guard: if reply is somehow missing, show a recoverable message rather than blank
       const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
@@ -562,6 +564,7 @@ function TravelPage() {
         id: crypto.randomUUID(), role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
+        cultureAction: data.cultureAction ?? null,
       }]);
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "AbortError";
@@ -586,6 +589,23 @@ function TravelPage() {
   }, []);
 
   const newChat = () => { setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); };
+
+  // Culture & Roots — track which community prompts the member has already responded to
+  const [respondedRoots, setRespondedRoots] = useState<Set<string>>(new Set());
+
+  const saveRoots = useCallback(async (community: string, choice: "yes" | "notNow" | "no") => {
+    // Mark this prompt as responded regardless of choice so it disappears
+    setRespondedRoots(prev => new Set([...prev, community]));
+    // Only "yes" saves to the DB — not_now and no are private, nothing is written
+    if (choice !== "yes") return;
+    try {
+      await fetch(`${BASE}api/kinfolk/roots`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ community, action: "add" }),
+      });
+    } catch { /* non-critical — the member can always update preferences later */ }
+  }, []);
 
   const handleFeedback = async (name: string, cat: string, reaction: "like" | "dislike") => {
     setFeedback(prev => ({ ...prev, [name]: reaction }));
@@ -846,6 +866,36 @@ function TravelPage() {
                               <MessageSquare size={10} className="text-[#CA922B]" />{s}
                             </button>
                           ))}
+                        </div>
+                      )}
+                      {/* Culture & Roots consent prompt — only for assistant messages with a detected community */}
+                      {msg.role === "assistant" && msg.cultureAction && !respondedRoots.has(msg.cultureAction.detectedCommunity) && (
+                        <div className="mt-3 bg-[#FAF6EF] border border-[#CA922B]/20 rounded-2xl px-4 py-3">
+                          <p className="text-xs text-[#3A1F0E]/70 leading-relaxed mb-2">
+                            Would you like Kinfolk to remember that{" "}
+                            <span className="font-semibold text-[#2B1507]">{msg.cultureAction.detectedCommunity}</span>{" "}
+                            matters to you?
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "yes")}
+                              className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-[#CA922B] text-white hover:bg-[#B38024] transition-colors"
+                            >
+                              Yes, when relevant
+                            </button>
+                            <button
+                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "notNow")}
+                              className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#3A1F0E]/12 text-[#3A1F0E]/60 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors"
+                            >
+                              Only when I mention it
+                            </button>
+                            <button
+                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "no")}
+                              className="text-[10px] font-semibold px-3 py-1.5 rounded-full text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors"
+                            >
+                              No, keep this private
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

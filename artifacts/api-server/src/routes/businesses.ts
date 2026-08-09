@@ -55,9 +55,15 @@ router.get("/businesses", async (req: Request, res: Response) => {
   // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
   try {
     await withDbRetry(async () => {
-    const { category, city, search, state, handle, culturalPreference, ownership, offset: offsetParam, limit: limitParam } = req.query;
+    const { category, city, search, state, handle, culturalPreference, ownership, offset: offsetParam, limit: limitParam, lat: latParam, lng: lngParam, radius: radiusParam } = req.query;
     const offset = Math.max(0, parseInt((offsetParam as string) ?? "0", 10) || 0);
     const pageLimit = Math.min(200, Math.max(1, parseInt((limitParam as string) ?? "200", 10) || 200));
+
+    // Parse optional geo-filter params (lat/lng in decimal degrees, radius in miles)
+    const geoLat = latParam ? parseFloat(latParam as string) : null;
+    const geoLng = lngParam ? parseFloat(lngParam as string) : null;
+    const geoRadiusMi = radiusParam ? parseFloat(radiusParam as string) : 25;
+    const hasGeoFilter = geoLat !== null && geoLng !== null && !isNaN(geoLat) && !isNaN(geoLng);
 
     const conditions = [];
 
@@ -114,6 +120,21 @@ router.get("/businesses", async (req: Request, res: Response) => {
           ilike(businessesTable.twitter, `%${h}%`),
           ilike(businessesTable.facebook, `%${h}%`),
         ),
+      );
+    }
+
+    // Geo-proximity filter — Haversine great-circle distance (server-side, miles)
+    // Only applied when lat + lng are both provided; radius defaults to 25 miles.
+    if (hasGeoFilter) {
+      const radiusKm = geoRadiusMi * 1.60934;
+      conditions.push(
+        sql`(
+          6371.0 * 2.0 * ASIN(SQRT(
+            POWER(SIN((RADIANS(${businessesTable.latitude}::float) - RADIANS(${geoLat})) / 2.0), 2) +
+            COS(RADIANS(${geoLat})) * COS(RADIANS(${businessesTable.latitude}::float)) *
+            POWER(SIN((RADIANS(${businessesTable.longitude}::float) - RADIANS(${geoLng})) / 2.0), 2)
+          ))
+        ) <= ${radiusKm}`,
       );
     }
 
@@ -244,7 +265,24 @@ router.get("/businesses", async (req: Request, res: Response) => {
       } catch { /* pg_trgm not available — fine */ }
     }
 
-    res.json({ businesses: finalResults, total: Number(totalCount), page: { offset, limit: pageLimit }, featuredCount: finalResults.filter((b: any) => b.featured).length });
+    // When a geo filter was applied, annotate each result with its distance in miles
+    const withDistance = hasGeoFilter
+      ? finalResults.map((b) => {
+          const bLat = parseFloat(String((b as any).latitude ?? "0"));
+          const bLng = parseFloat(String((b as any).longitude ?? "0"));
+          if (isNaN(bLat) || isNaN(bLng)) return { ...b, distanceMi: null };
+          const R = 3958.8; // Earth radius in miles
+          const dLat = (bLat - geoLat!) * Math.PI / 180;
+          const dLng = (bLng - geoLng!) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(geoLat! * Math.PI / 180) * Math.cos(bLat * Math.PI / 180) *
+            Math.sin(dLng / 2) ** 2;
+          const distanceMi = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return { ...b, distanceMi: Math.round(distanceMi * 10) / 10 };
+        })
+      : finalResults;
+
+    res.json({ businesses: withDistance, total: Number(totalCount), page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");

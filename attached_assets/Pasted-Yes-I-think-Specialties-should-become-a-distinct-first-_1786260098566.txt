@@ -1,0 +1,145 @@
+Yes. I think **Specialties should become a distinct, first-class field in the business profile**, and I prefer it to burying everything as more subcategories.
+
+The clean hierarchy is:
+
+**Category → Subcategory → Specialties**
+
+That solves exactly the problem you're describing.
+
+For example:
+
+| Category                      | Subcategory                     | Specialties                                                                     |
+| ----------------------------- | ------------------------------- | ------------------------------------------------------------------------------- |
+| Legal & Government Services   | Attorneys & Law Firms           | Tax Law, Estate Planning, Immigration, Family Law, Criminal Defense             |
+| Beauty & Personal Care        | Hair Salons / Stylists          | Alopecia Care, Natural Hair, Silk Press, Locs, Protective Styles                |
+| Beauty & Personal Care        | Tattoo Artists & Studios        | Cover-Ups, Fine Line, Black & Grey, Color, Dark-Skin Tattooing, Scar Camouflage |
+| Health & Wellness             | OB-GYN & Women's Health         | Fibroids, Endometriosis, High-Risk Pregnancy, Menopause, Fertility              |
+| Financial & Business Services | Accountants & Tax Professionals | Small Business Tax, Personal Tax, Tax Resolution, Nonprofit Accounting          |
+| Home & Property Services      | Real Estate Agents & Brokers    | First-Time Buyers, Investment Properties, Relocation, Luxury, VA Buyers         |
+
+And I think this actually improves something in the taxonomy we've been building.
+
+### Subcategory answers **“What are you?”**
+
+A business chooses its primary business type.
+
+**Beauty & Personal Care → Hair Salons & Stylists**
+
+### Specialties answer **“What are you particularly good at?”**
+
+They should be searchable and displayed prominently.
+
+**Specializes in:**
+Alopecia Care · Natural Hair · Protective Styles · Silk Press
+
+### Vibes answer **“What does being there feel like?”**
+
+Come As You Are · Auntie Energy · Soft Life · For Us, For Real
+
+### What Stands Out answers **“What did Kinfolk consistently notice?”**
+
+They Know Our Hair · Healthy Hair First · Listened To What I Asked For · I'd Book Again
+
+### THE REAL answers **“What does the community trust them for?”**
+
+For professional/high-trust services, this gets deeper:
+
+**Tax Attorney**
+
+Specialties: Tax Controversy · IRS Audits · Business Tax · Tax Debt
+
+THE REAL:
+Explained Every Step · Didn't Talk Down To Me · Made Sure I Understood Before I Signed · Didn't Make Promises They Couldn't Keep
+
+That separation is excellent because **Specialties come primarily from the business; THE REAL comes from the community.** A lawyer can tell us they specialize in tax law. They cannot award themselves *“Explained Everything Perfectly.”*
+
+## I would make Specialties searchable
+
+This is where your approach can become much easier than traditional directories.
+
+Someone shouldn't have to know the exact category hierarchy. They could search:
+
+**“alopecia”**
+
+and receive stylists whose profiles include **Alopecia Care**.
+
+Or:
+
+**“cover up tattoo”**
+
+→ Tattoo Artists & Studios
+→ Specialty: Cover-Ups
+
+Or:
+
+**“tax attorney”**
+
+→ Attorneys & Law Firms
+→ Specialty: Tax Law
+
+Or eventually ask Kinfolk:
+
+**“I need a Black hairstylist who works with alopecia.”**
+
+Now we can combine:
+
+**service + specialty + ownership + location + community experience**
+
+instead of making the person hunt through hundreds of salon listings.
+
+That is much more powerful.
+
+## One important rule: don't let Specialties become uncontrolled free text
+
+I would give businesses a curated, **subcategory-specific specialty list**, while allowing:
+
+**+ Add a specialty we missed**
+
+That suggestion should go into an admin review queue rather than immediately creating a new system-wide specialty.
+
+Otherwise we will eventually get:
+
+`Tax Attorney`
+`Tax Law`
+`Taxes`
+`Tax Lawyer`
+`IRS Attorney`
+
+all meaning approximately the same thing and search becomes messy.
+
+And I'd allow businesses to select **multiple specialties**, probably up to **5–8 initially**, rather than forcing only one.
+
+### There's another field I think we just uncovered: **Services**
+
+We should distinguish:
+
+**Specialty:** Alopecia Care
+**Services:** Silk Press · Trim · Wash & Go · Braids
+
+Or:
+
+**Specialty:** Cover-Up Tattoos
+**Services:** Consultations · Custom Tattoos · Touch-Ups
+
+Or:
+
+**Specialty:** Tax Controversy
+**Services:** IRS Audit Representation · Tax Debt Resolution · Appeals
+
+That's valuable because **specialty means expertise**, while **service means something I can actually book/hire them to do**.
+
+So I would now make the searchable business architecture:
+
+**Category → Subcategory → Specialties → Services**
+
+Then layer the community intelligence on top:
+
+**Ownership / Identity**
+**The Vibe OR THE REAL**
+**What Stands Out?**
+**What Locals Are Saying**
+**Written Community Context**
+
+That is a very clean system.
+
+And let's **add Specialties + Services to our pending master-update list but not touch the spreadsheet yet**. As we go through Beauty Supply, tattoo artists, salons, attorneys, physicians, restaurants, etc., we can build the appropriate specialty/service vocabulary. Then I'll make the single consolidated workbook update and Replit handoff you wanted.

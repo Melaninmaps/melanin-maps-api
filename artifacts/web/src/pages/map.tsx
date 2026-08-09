@@ -274,6 +274,9 @@ export default function MapPage() {
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
   const [mood, setMood] = useState<string | null>(null);
 
+  // Near Me mode — radius in miles (null = show all, number = geo-filtered)
+  const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
+
   // Geocode search string and pan map
   const geocodeAndPan = useCallback(() => {
     if (!mapRef.current || !search.trim()) return;
@@ -298,7 +301,12 @@ export default function MapPage() {
       const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
       const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
       const matchMood = mood === null || matchesMood(b, mood);
-      return matchSearch && matchCat && matchMood;
+      // Near Me radius filter — only applied when GPS is available and mode is active
+      const matchNear = nearMeRadius === null || !userCoords || (() => {
+        const distKm = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(b.latitude)), parseFloat(String(b.longitude)));
+        return distKm <= nearMeRadius * 1.60934; // convert miles → km
+      })();
+      return matchSearch && matchCat && matchMood && matchNear;
     });
     // If we have the user's location, sort by proximity (closest first)
     if (!userCoords) return base;
@@ -892,12 +900,43 @@ export default function MapPage() {
           )}
         </div>
 
+        {/* Near Me toggle — only shown in business view when GPS is available */}
+        {!showingCultural && userCoords && (
+          <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0 flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Near Me</span>
+            {[5, 10, 25].map((r) => (
+              <button
+                key={r}
+                onClick={() => setNearMeRadius(nearMeRadius === r ? null : r)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
+                  nearMeRadius === r
+                    ? "bg-[#CA922B] text-white border-[#CA922B]"
+                    : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/12 hover:border-[#CA922B]/50 hover:text-[#CA922B]"
+                }`}
+              >
+                {r} mi
+              </button>
+            ))}
+            {nearMeRadius !== null && (
+              <button
+                onClick={() => setNearMeRadius(null)}
+                className="text-[10px] text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 font-semibold"
+              >
+                ✕ All
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Count row */}
         <div className="px-4 py-2 text-xs text-[#3A1F0E]/40 font-medium border-b border-[#3A1F0E]/6 shrink-0 flex items-center justify-between">
           <span>
             {showingCultural
               ? `${activeCulturalSites.length} ${activeCulturalSites.length === 1 ? "site" : "sites"}`
               : `${filtered.length} ${filtered.length === 1 ? "location" : "locations"}`}
+            {nearMeRadius !== null && !showingCultural && (
+              <span className="ml-1.5 text-[#CA922B] font-bold">within {nearMeRadius} mi</span>
+            )}
           </span>
           {selected && !showingCultural && (
             <button onClick={resetView} className="text-[#CA922B] font-bold hover:underline">Reset view</button>
