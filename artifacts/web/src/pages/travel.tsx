@@ -455,7 +455,7 @@ function TravelPage() {
     KINFOLK_WELCOME_HEADLINES[Math.floor(Math.random() * KINFOLK_WELCOME_HEADLINES.length)]
   );
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const msgContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Load preferences — always merge with DEFAULT_PREFS so every array field is
@@ -503,7 +503,15 @@ function TravelPage() {
   }, [isLoggedIn]);
 
   useEffect(() => { loadSessions(); loadPrefs(); }, [loadSessions, loadPrefs]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
+
+  // Scroll the message container — not the window — when messages or sending
+  // state change. Using scrollTop directly on the container ref prevents
+  // scrollIntoView from escalating past the container to the browser window,
+  // which was exposing the global site footer on every message send.
+  useEffect(() => {
+    const el = msgContainerRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, sending]);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -760,7 +768,7 @@ function TravelPage() {
           {/* Chat */}
           {isLoggedIn && (
             <>
-              <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+              <div ref={msgContainerRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
                 {isEmpty && (
                   <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
                     <div className="w-16 h-16 rounded-2xl bg-[#CA922B]/10 flex items-center justify-center mb-5">
@@ -857,7 +865,6 @@ function TravelPage() {
                     </div>
                   </div>
                 )}
-                <div ref={bottomRef} />
               </div>
 
               {/* Input bar */}

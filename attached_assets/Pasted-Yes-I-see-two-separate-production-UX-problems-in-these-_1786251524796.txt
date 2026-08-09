@@ -1,0 +1,232 @@
+Yes — I see **two separate production UX problems** in these screenshots, and both need to be fixed before Kinfolk feels usable.
+
+The first is the one you called out: **the page jumps/scrolls to the bottom when the user submits a message**, so the footer and input area take over the screen and the user has to scroll back up to find Kinfolk’s response. That is confusing and makes the chat feel broken even when it technically responds.
+
+The second is the message:
+
+> **“Your KinfolkAI pool of 0 requests has been used for August. Upgrade your plan or wait until next month.”**
+
+That is also wrong. A pool of **0** means the user effectively never had an allowance in the first place. Replit needs to diagnose whether your membership/quota configuration is missing, whether this account has the wrong tier, or whether the frontend is interpreting an undefined allowance as zero.
+
+I would send Replit this:
+
+> # KINFOLK PRODUCTION UX + QUOTA INCIDENT — DIAGNOSE FIRST
+>
+> I completed another authenticated production test and found **two separate problems**.
+>
+> Do not make speculative UI changes. Diagnose the exact causes first.
+>
+> ---
+>
+> ## ISSUE 1 — CHAT VIEW JUMPS TO THE BOTTOM / FOOTER
+>
+> When I send a Kinfolk message, the page scroll position changes and exposes the entire website footer.
+>
+> The member then has to manually scroll upward to find Kinfolk's response.
+>
+> This is confusing and is not acceptable chat behavior.
+>
+> ### Expected behavior
+>
+> Kinfolk should behave like a persistent chat interface.
+>
+> When a member submits a message:
+>
+> * the conversation remains visible
+> * the newest user message is visible
+> * the loading state appears immediately below it
+> * the Kinfolk response appears immediately below that
+> * the viewport follows the conversation, not the website footer
+> * the message composer remains accessible
+> * the global site footer should not become part of the active chat experience
+>
+> ### READ-ONLY DIAGNOSIS
+>
+> Identify:
+>
+> **1. What element currently owns scrolling?**
+>
+> Is it:
+>
+> * `window/document`
+> * the Kinfolk conversation pane
+> * another parent container
+>
+> **2. What runs after message submission?**
+>
+> Search for:
+>
+> * `scrollIntoView`
+> * `scrollTo`
+> * anchor/hash navigation
+> * focus behavior
+> * form submission
+> * React effects watching messages
+> * refs attached to the composer or message bottom
+>
+> **3. Why does the document scroll far enough that the global footer becomes visible?**
+>
+> Report exact:
+>
+> * source file
+> * component
+> * function/effect
+> * element being scrolled
+> * current CSS height/overflow behavior
+>
+> ### DESIRED ARCHITECTURE
+>
+> The Kinfolk page should have a **dedicated conversation viewport**.
+>
+> Desktop concept:
+>
+> `Kinfolk header`
+>
+> `Past conversations | Active conversation`
+>
+> `Scrollable message history`
+>
+> `Persistent composer`
+>
+> The **message-history area**, not the entire webpage, should scroll as conversations grow.
+>
+> The composer should remain accessible at the bottom of the Kinfolk workspace.
+>
+> The global Mapping With Melanin footer should remain outside the normal active conversation viewport and should not appear simply because a user sends a message.
+>
+> ### MESSAGE AUTO-SCROLL
+>
+> On submission:
+>
+> scroll only enough to reveal the newest message/loading indicator.
+>
+> On response:
+>
+> scroll only the Kinfolk conversation pane to show the response.
+>
+> Do not force the entire browser window to the bottom of the document.
+>
+> If the member has manually scrolled upward to read an older response, do not aggressively yank them back down unless they send a new message.
+>
+> ---
+>
+> # ISSUE 2 — “POOL OF 0 REQUESTS”
+>
+> The authenticated production account received:
+>
+> `Your KinfolkAI pool of 0 requests has been used for August. Upgrade your plan or wait until next month.`
+>
+> This needs diagnosis.
+>
+> **A limit of zero is not a meaningful user allowance.**
+>
+> Do not simply change the displayed number.
+>
+> Trace:
+>
+> `authenticated user → membership/tier → Kinfolk quota config → monthly allowance → usage count → remaining count → API decision → frontend message`
+>
+> Report:
+>
+> **User membership/tier:**
+> **Configured monthly Kinfolk allowance:**
+> **Requests used this month:**
+> **Requests remaining:**
+> **Database fields involved:**
+> **Default allowance when field is null/missing:**
+> **Why API calculated pool = 0:**
+> **Whether production and development configs differ:**
+>
+> Check specifically for:
+>
+> * `undefined → 0`
+> * `null → 0`
+> * missing membership configuration
+> * new tier not included in quota mapping
+> * founder/admin/test account being treated as free/no-access
+> * mismatched Stripe/app membership name
+> * monthly reset problem
+> * incorrect August usage record
+>
+> Do not change production quota data until the root cause is reported.
+>
+> ---
+>
+> ## QUOTA UX ALSO NEEDS IMPROVEMENT
+>
+> Once the configuration is correct, Kinfolk should not surprise a member only after they type a question.
+>
+> If plans have usage limits, the interface should eventually show something like:
+>
+> **Kinfolk requests remaining: 18**
+>
+> or an unobtrusive usage indicator in Preferences/profile.
+>
+> When someone is actually near their limit:
+>
+> **3 Kinfolk conversations left this month**
+>
+> not an unexpected hard-stop after submission.
+>
+> The wording should also reflect whatever unit we actually charge/count:
+>
+> * messages
+> * requests
+> * conversations
+> * AI interactions
+>
+> Do not use these interchangeably until the product rule is confirmed.
+>
+> ---
+>
+> # REQUIRED REPORT BEFORE IMPLEMENTATION
+>
+> Return:
+>
+> ### Scroll issue
+>
+> Exact source file:
+> Exact component:
+> Current scroll owner:
+> Why footer becomes visible:
+> Smallest safe fix:
+>
+> ### Quota issue
+>
+> Current user's tier:
+> Expected Kinfolk allowance:
+> Actual allowance returned:
+> Usage count:
+> Why it became `0`:
+> Smallest safe fix:
+>
+> Do not implement until both root causes are identified.
+>
+> ---
+>
+> # AFTER FIX
+>
+> Follow the documented production push procedure.
+>
+> Then visually test the actual authenticated production site.
+>
+> Required E2E:
+>
+> 1. Open Kinfolk.
+> 2. Send `What are some restaurants in Philadelphia?`
+> 3. User message stays visible.
+> 4. Kinfolk answer appears directly below it without exposing the site footer.
+> 5. Send `Which of those would be good for a date night?`
+> 6. Kinfolk retains the first-message context.
+> 7. Composer remains usable.
+> 8. No false zero-quota message.
+> 9. No global error screen.
+> 10. No indefinite spinner.
+>
+> Provide visual production proof after deployment.
+
+And there is a design point I would make now: **Kinfolk should visually feel like its own workspace, not a long webpage with a chat inserted into it.**
+
+Your screenshot makes that very clear. The site footer is useful on ordinary pages, but once I'm actively talking to Kinfolk, I shouldn't suddenly be staring at **Discover / Community / Platform / About Us** because a message was sent. The conversation should own that viewport.
+
+I would also have Replit hold off on deciding that “requests” are the right quota unit. Given how conversational Kinfolk is supposed to become, charging/counting every follow-up as a standalone “request” may feel punitive. We should separately review whether your membership tiers should measure **messages, conversations/sessions, generous monthly AI usage, or some hybrid** before they lock the quota UX in.

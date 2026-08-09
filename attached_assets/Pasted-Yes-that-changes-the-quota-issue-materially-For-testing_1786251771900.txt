@@ -1,0 +1,117 @@
+Yes — that changes the quota issue materially.
+
+For **testing**, Kinfolk should not be treating any approved tester like a normal limited-plan customer. If someone has valid test access, they should receive the agreed **premium testing entitlement**, regardless of whether they came in through TestFlight, Android testing, or an admin-created temporary-login path.
+
+I would send Replit this addition to the quota audit:
+
+> **IMPORTANT TESTER ENTITLEMENT RULE — INCLUDE IN QUOTA DIAGNOSIS**
+>
+> We already established that approved testers receive **Premium access during testing**.
+>
+> A tester should qualify through any approved access path:
+>
+> * invited/approved through **Apple TestFlight**
+> * added to the approved **Android testing cohort**
+> * manually granted test access by an administrator
+> * admin-created login using a **temporary password**, followed by required password change on first login
+>
+> These users should not be blocked by normal Kinfolk consumer quotas during the testing period unless I explicitly change that policy.
+>
+> Therefore, when diagnosing the current:
+>
+> `Your KinfolkAI pool of 0 requests has been used for August`
+>
+> error, check whether the authenticated account is correctly recognized as an **active tester / premium-testing user** before evaluating normal membership quotas.
+>
+> ## READ-ONLY TESTER ACCESS AUDIT
+>
+> Report:
+>
+> **Current user tester status:**
+> **How tester status is stored:**
+> **Source of tester entitlement:** TestFlight / Android / Admin / Other
+> **Premium-testing entitlement active:** YES/NO
+> **Kinfolk quota bypass or premium allowance applied:** YES/NO
+> **Why this account received pool = 0:**
+>
+> Also audit whether all existing approved testers are being mapped consistently across the three approved access methods.
+>
+> ### REQUIRED TESTER BEHAVIOR
+>
+> During testing:
+>
+> **Approved tester → Premium testing entitlement → Kinfolk usable**
+>
+> Do not require an active paid Stripe subscription for approved testers.
+>
+> Do not downgrade a tester simply because their account was created manually.
+>
+> Do not make Apple testers, Android testers, and admin-added testers behave differently once authenticated.
+>
+> ## ADMIN-CREATED TEST ACCOUNT FLOW
+>
+> Confirm whether the following workflow currently exists:
+>
+> 1. Admin creates or enables a tester account.
+> 2. Admin assigns approved tester / Premium-testing access.
+> 3. Admin provides a temporary password.
+> 4. Tester signs in.
+> 5. On first successful login, tester is immediately required to create a new password.
+> 6. Temporary password can no longer be used afterward.
+> 7. Tester retains Premium-testing entitlement after changing password.
+>
+> If any part does not exist, **report the gap before implementing it.**
+>
+> Temporary passwords must not be stored or exposed in plaintext after creation.
+>
+> ## ACCESS SOURCE / AUDITABILITY
+>
+> I also want each tester record to preserve how access was granted:
+>
+> `testflight`
+> `android_test`
+> `admin_invite`
+>
+> along with:
+>
+> * tester access granted date
+> * granted by/admin if applicable
+> * testing entitlement status
+> * entitlement expiration/end-of-testing rule if one exists
+>
+> This is for administration and auditability, not public display.
+>
+> ## DO NOT IMPLEMENT YET
+>
+> First compare this required tester behavior against the current production authentication, membership, tester, and Kinfolk quota logic.
+>
+> Return:
+>
+> `Requirement | Current behavior | Storage/code source | Gap | Recommended correction`
+>
+> Then specifically answer:
+>
+> **How many approved testers currently exist?**
+> **How many currently have Premium-testing entitlement?**
+> **How many would currently receive a Kinfolk pool of 0?**
+> **Are Apple, Android, and admin-added testers handled identically after login?**
+>
+> Do not change tester accounts or production entitlements until I approve the audit.
+
+I would also make one small architecture distinction now:
+
+**Tester** should be an **access status**, not a membership tier.
+
+So ideally a user could be:
+
+**Membership:** Free
+**Testing entitlement:** Premium testing access
+**Access source:** TestFlight
+
+That prevents your temporary beta rules from contaminating the permanent membership architecture later.
+
+And the temporary-password flow should absolutely force a password change at first login. I would also have Replit confirm the temporary password is single-use or invalidated immediately after the successful change, rather than merely showing a “please change your password” reminder.
+
+That gives you one consistent principle:
+
+**How somebody entered the beta can vary. What they are entitled to once approved as a tester should not.**

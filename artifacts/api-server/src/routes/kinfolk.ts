@@ -1402,18 +1402,34 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 
   try {
-    // ── Enforce free-tier monthly query limit ─────────────────────────────────
+    // ── Enforce monthly query limits ──────────────────────────────────────────
+    // isFree is derived from getTierFromMemberType as the single source of truth.
+    //
+    // Previous bug: the condition used !user?.stripeSubscriptionId as the first
+    // gate. A user with stripeSubscriptionId set (e.g. an RC iOS entry) but
+    // memberType=null would have isFree=false, reach the paid-pool block, call
+    // getTierFromMemberType(null)="free", then checkAiPool("free") returned
+    // limit=0 → "pool of 0 requests" — confusing and incorrect.
+    //
+    // Fix: derive isFree from the canonical tier map first. If a user has an
+    // active subscription ID but memberType is null/unexpected (data gap),
+    // effectiveTier falls back to legacy_member (unlimited) rather than
+    // blocking them with limit=0.
     let queriesUsedThisCall: number | null = null;
     let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
       const user = await storage.getUser(req.user.id);
-      const isFree =
-        !user?.stripeSubscriptionId &&
-        user?.memberType !== "founding" &&
-        user?.memberType !== "beta" &&
-        user?.memberType !== "navigator" &&
-        user?.memberType !== "trailblazer" &&
-        !(user?.trialEndsAt && user.trialEndsAt > new Date());
+      const resolvedTier = getTierFromMemberType(user?.memberType);
+
+      // A paid subscription or active trial with an unset/unknown memberType is
+      // a data gap — treat as legacy_member (unlimited) so we never show "pool of 0".
+      const hasPaidAccount =
+        !!user?.stripeSubscriptionId ||
+        !!(user?.trialEndsAt && user.trialEndsAt > new Date());
+      const effectiveTier: ReturnType<typeof getTierFromMemberType> =
+        hasPaidAccount && resolvedTier === "free" ? "legacy_member" : resolvedTier;
+
+      const isFree = effectiveTier === "free";
 
       if (isFree) {
         const currentMonth = new Date().toISOString().slice(0, 7);
@@ -1422,7 +1438,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
         if (usedQueries >= FREE_MONTHLY_LIMIT) {
           res.status(429).json({
-            error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI queries this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
+            error: `You've used your ${FREE_MONTHLY_LIMIT} free KinfolkAI conversations this month. Upgrade to Navigator or Trailblazer for unlimited access.`,
             code: "KINFOLK_LIMIT_REACHED",
             used: usedQueries,
             limit: FREE_MONTHLY_LIMIT,
@@ -1443,12 +1459,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
       // ── Paid-tier AI pool check ────────────────────────────────────────────
       if (!isFree) {
-        const resolvedTier = getTierFromMemberType(user?.memberType);
-        const poolStatus = await checkAiPool(req.user.id, resolvedTier);
+        const poolStatus = await checkAiPool(req.user.id, effectiveTier);
         if (!poolStatus.allowed) {
           const month = new Date().toLocaleDateString("en-US", { month: "long" });
           res.status(429).json({
-            error: `Your KinfolkAI pool of ${poolStatus.limit} requests has been used for ${month}. Upgrade your plan or wait until next month.`,
+            error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
             code: "AI_POOL_EXHAUSTED",
             used: poolStatus.used,
             limit: poolStatus.limit,
