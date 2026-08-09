@@ -1,0 +1,214 @@
+Perfect — I have the complete set now. I’m ready to treat these screenshots as the reference experience for the business-profile review, including what should be preserved, restored, improved, and connected to real data.
+
+The biggest thing I see is that this is **not simply a prettier business page**. The older app experience expresses the actual Mapping with Melanin concept much more completely than the current web business page.
+
+### What these screenshots establish
+
+The business experience was designed around several different kinds of information working together:
+
+* **Objective identity:** Minority Owned, Women Owned, Veteran Owned, verified vs. self-identified.
+* **Community recognition:** Community Trusted, Welcoming Environment, Solo Traveler Approved, Local Favorite, Consistently Recommended.
+* **MWM-specific recommendation language:** **Put Your People On**, Community Favorite, Would Return, Community Verified, Member Voices.
+* **Experience intelligence:** Vibe Check, Community Says, Community Comments, Community Insights.
+* **Trust intelligence:** Community Confidence Score™, Safety, Welcoming Atmosphere, Community Recommendation, Overall Experience.
+* **Contextual trust:** Circle Trusted™ — *who* recommends this place matters, not merely how many people rated it.
+* **Know Before You Go:** vibe, safety, food/drink, parking, accessibility, inclusivity and eventually the other dimensions.
+* **Community participation:** check-in, review, add vibe, add community caption, endorse comments, write comments, tag people/community.
+* **Rich media:** **Show Me the Vibe** — actual visitor/business video.
+* **Utility:** call, directions, location, hours, website, save/share.
+* **Business accountability:** business right to respond and customer right to be heard.
+
+That is substantially richer than the current desktop AMINA page you showed me. The current page isn't necessarily *wrong*; it looks like **only part of the product model is being surfaced**.
+
+And this connects directly to something we discovered previously: Replit already found that the database contained more of your three-layer identity architecture than the UI was actually exposing.
+
+### Your vibe concern is valid
+
+Yes — **one vibe per person/business interaction is too restrictive for the experience you've designed.**
+
+A restaurant can simultaneously be:
+
+**Date Night + Grown & Sexy + Girls Trip Ready + Sunday Best + Take Somebody From Out of Town.**
+
+Those aren't contradictory ratings. They're descriptive signals.
+
+I would want Replit to investigate before changing anything, but conceptually the behavior should be:
+
+**User → Add Vibe → select multiple applicable vibes → submit once → immediately update the business's aggregated vibe display.**
+
+The user shouldn't have to wonder whether anything happened.
+
+And we should distinguish between:
+
+**my selections** and **community totals**.
+
+For example:
+
+> Date Night · 47
+> Grown & Sexy · 31
+> Girls Trip Ready · 26
+> Sunday Best · 19
+
+Those aggregate signals then become useful to **search, KinfolkAI recommendations, trip planning, occasion matching and discovery**. That's the important part. Vibes shouldn't be decorative tags. They're structured community intelligence.
+
+### I also agree about the HBCU/map experience
+
+I would **not ask Replit to change it yet**.
+
+The older version you showed has something valuable: progressive disclosure.
+
+Instead of dumping 44 HBCUs onto the screen, it gives:
+
+**HBCU — 44**
+
+then a search field and a manageable subset of results. Selecting one produces the rich bottom card.
+
+That feels more like exploration and less like a database.
+
+But some elements of the current map are stronger. So rather than telling Replit, "restore the old map," we should eventually tell it:
+
+> Preserve the current map architecture and working functionality. Audit the previous HBCU/Heritage interaction pattern against the current implementation and propose a hybrid that restores progressive disclosure without regressing current functionality.
+
+That can wait.
+
+### There is one other important thing these screenshots confirmed
+
+Your concern about ordinary emojis is even clearer now.
+
+The older design uses emojis everywhere:
+
+🏠 ❤️ 💬 👑 ✨ 🛡️ 🌈 🗺️ 🍽️ etc.
+
+The **information architecture is excellent**, but those visuals are exactly the element you said no longer represents MWM's design language.
+
+So I would separate the two:
+
+**Preserve the concepts and interaction model.
+Do not preserve the emoji presentation.**
+
+Your gold custom iconography can replace those visual markers while retaining selective functional colors where color conveys meaning — for example safety/trust green, heritage/category distinctions, or accessibility/inclusivity indicators.
+
+That gives you the richness of these screens without making the platform feel cartoonish.
+
+---
+
+## What I recommend we send Replit next
+
+I would **not give Replit a giant "rebuild this" prompt.** There are too many connected systems here, and we've already seen what happens when it starts interpreting instead of diagnosing.
+
+Give it this **read-only audit request first**:
+
+> **READ-ONLY AUDIT — BUSINESS PROFILE / COMMUNITY INTELLIGENCE**
+>
+> DO NOT CHANGE CODE.
+> DO NOT IMPLEMENT FEATURES.
+> DO NOT RESTYLE ANYTHING.
+> DO NOT DELETE OR REPLACE EXISTING FUNCTIONALITY.
+>
+> We are reviewing the current business-profile implementation against previously designed Mapping With Melanin business/community functionality.
+>
+> I have historical screenshots showing functionality/concepts including:
+>
+> * multiple ownership designations and verification status
+> * Put Your People On
+> * Would Return
+> * Community Verified
+> * Member Voices
+> * Vibe Check / Add Vibe
+> * Community Insights
+> * Share Your Experience
+> * Community Says
+> * Community Comments
+> * Community Confidence Score
+> * Business Milestones
+> * Circle Trusted
+> * Know Before You Go dimensions
+> * Pass the Plate
+> * Show Me the Vibe / community video
+> * business hours/contact/location
+> * in-app directions
+> * business response/review resolution
+> * reviews and community recommendations
+>
+> **FIRST: determine what actually exists today.**
+>
+> Audit the database schema, API/server routes, current web UI, mobile/native implementation, admin functionality, and any dormant/unused components.
+>
+> For EACH capability above, report:
+>
+> **1. Database:** Does the data model/schema exist? Name the exact table/column/model.
+>
+> **2. Backend:** Does an API/service/function exist to read and/or write it?
+>
+> **3. Web:** Is it currently displayed and functional on the production web experience?
+>
+> **4. Mobile:** Is it currently displayed and functional in the mobile app?
+>
+> **5. Admin:** Can an administrator view, add, edit, approve, moderate or remove the underlying data where appropriate?
+>
+> **6. Persistence:** Does a user action actually save to the production data source and survive refresh/re-login?
+>
+> **7. Aggregation:** If community members contribute data, is it actually aggregated into the business profile?
+>
+> **8. Search/AI:** Is the data available to discovery filters, search, recommendations or KinfolkAI?
+>
+> **9. Status:** classify each capability as:
+>
+> * LIVE + WORKING
+> * BUILT BUT NOT WIRED
+> * PARTIALLY IMPLEMENTED
+> * UI/MOCK DATA ONLY
+> * DATABASE ONLY
+> * MISSING
+> * BROKEN
+>
+> **VIBE CHECK — INVESTIGATE SPECIFICALLY**
+>
+> I tested a real business and was only able to add one vibe. After submission I did not see an obvious business-profile update.
+>
+> Trace the complete current flow:
+>
+> `user selection → frontend state → request → API → database → aggregation → business profile → search/recommendation`
+>
+> Determine:
+>
+> * whether the current schema supports multiple vibes per user/business
+> * whether the UI artificially limits selection to one
+> * whether submission persists
+> * where it persists
+> * whether duplicate submissions are handled
+> * whether a member can change/remove their selections
+> * whether community counts are calculated
+> * whether the profile is invalidated/refetched after submission
+> * whether those vibes affect search
+> * whether KinfolkAI can consume them
+>
+> **DO NOT FIX THE VIBE ISSUE YET. Diagnose it and report the exact root cause.**
+>
+> Also determine whether the historical business-profile capabilities shown above still exist somewhere in the codebase but are simply not exposed by the current web profile.
+>
+> **DESIGN SYSTEM NOTE — AUDIT ONLY**
+>
+> Identify current use of native/basic emoji as application-owned UI decoration throughout business profiles and related discovery screens. Do not change them yet.
+>
+> MWM's intended future design rule is that application-owned interface imagery should use the approved Mapping With Melanin custom gold icon/illustration system rather than ordinary emoji. User-generated text remains free to contain emoji.
+>
+> Search the repository/assets/design files for the existing gold icon/emoji/template assets previously created for MWM and report exactly what exists and where.
+>
+> **DO NOT recreate those assets if they already exist.**
+>
+> Finally provide:
+>
+> **A. Current-state capability matrix**
+> **B. Historical capability still present but hidden/unwired**
+> **C. Truly missing functionality**
+> **D. Broken functionality**
+> **E. Mock/hard-coded data masquerading as live community data**
+> **F. Database/API/UI disconnects**
+> **G. Recommended restoration order**
+>
+> Do not implement anything until I review and explicitly approve the audit.
+
+That is the safest next move.
+
+And I would keep the **HBCU/map hybrid, profile richness, admin upload failure, profile-picture upload failure, React #310 production crash, responsive profile correction, and global gold-icon cleanup as separate work items** rather than letting Replit fold everything into this business-profile audit. That separation is going to make it much easier for us to know exactly what broke if something changes.
