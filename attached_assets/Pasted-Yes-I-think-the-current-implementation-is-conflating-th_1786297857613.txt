@@ -1,0 +1,351 @@
+Yes. I think the current implementation is conflating **three different things that should be separate**:
+
+**1. Historical record** — Sundown towns are part of the historical/cultural map. Like HBCUs, civil-rights sites, historic districts, and other heritage locations, the underlying record should remain in the platform. Turning a layer off should **never delete, suppress, or alter the historical record**.
+
+**2. Map display preference** — A member should be able to decide whether they want sundown-town history continuously displayed on the map. In your screenshot, the darker map treatment may be communicating something, but it isn't sufficiently self-explanatory. More importantly, I don't see the rich informational experience you built for HBCUs. A historical sundown-town point needs to be something a person can open and **learn about**, not merely a darkened area.
+
+**3. Contextual travel safety** — This is separate from displaying historical markers. Someone can choose *not* to see sundown-town history all over their everyday map and still reasonably expect KinfolkAI/Mapping with Melanin to surface **relevant verified information when their trip, route, destination, overnight stop, or relocation search intersects with a place where that history is materially relevant**.
+
+That distinction is very important to your product.
+
+And I would **not equate historical sundown-town designation with a claim that a town is currently unsafe**. The platform should tell users what is historically documented, what current community information says, and when each piece of information was verified. That protects both the integrity of the history and the credibility of Mapping with Melanin.
+
+I would give Replit this next — **audit first, no implementation**:
+
+```text
+READ-ONLY AUDIT — SUNDOWN TOWN HISTORY EXPERIENCE
+
+DO NOT CHANGE CODE.
+DO NOT CHANGE THE DATABASE.
+DO NOT CHANGE THE MAP.
+DO NOT PUSH OR DEPLOY.
+
+We need to revisit the purpose and implementation of Sundown Town History.
+
+This is NOT simply a map filter.
+
+Sundown-town history is historical information that Mapping with Melanin™
+should preserve and treat with the same seriousness as other cultural and
+historical records.
+
+However, historical designation and present-day safety are NOT the same thing.
+
+We need three separate concepts:
+
+==================================================
+A. HISTORICAL RECORD
+==================================================
+
+A historically documented sundown town/location should remain part of the
+Mapping with Melanin historical dataset.
+
+Turning the map layer OFF must NEVER:
+
+- delete the record
+- change the record
+- remove it from historical search
+- remove it from KinfolkAI's knowledge
+- remove it from route/travel intelligence
+- imply that the history is no longer relevant
+
+Audit what data currently exists for every sundown-town record.
+
+For each record/schema determine whether we currently store:
+
+- place name
+- city
+- county
+- state
+- coordinates
+- historical designation
+- historical dates/time period
+- description/context
+- source
+- source URL
+- source organization
+- citation
+- verification status
+- last verified date
+- historical evidence
+- current community reports
+- current safety information
+- distinction between HISTORICAL and CURRENT information
+
+Tell me exactly what exists and what is missing.
+
+==================================================
+B. HISTORICAL PLACE EXPERIENCE
+==================================================
+
+Compare the current Sundown Town implementation with our HBCU / Heritage
+Site experience.
+
+A user should ultimately be able to tap/select a historical sundown-town
+location and learn:
+
+WHAT HAPPENED HERE?
+
+WHY IS THIS LOCATION IN THE HISTORICAL DATASET?
+
+WHAT PERIOD OF HISTORY DOES THIS REFER TO?
+
+WHAT VERIFIED SOURCES SUPPORT THE DESIGNATION?
+
+WHAT SHOULD I UNDERSTAND ABOUT THIS HISTORY TODAY?
+
+The experience should NOT merely be:
+
+dark map shading
+triangle
+warning symbol
+ON/OFF toggle
+
+Audit whether a Sundown Town marker currently opens:
+
+- detail card
+- bottom sheet
+- historical description
+- source/citation
+- dates
+- location information
+- "Learn More"
+- related historical locations
+- current community information
+
+Compare this directly against the current HBCU detail experience.
+
+DO NOT BUILD ANYTHING YET.
+
+==================================================
+C. MAP VISIBILITY PREFERENCE
+==================================================
+
+The current control says:
+
+"Sundown Town History — ON"
+
+Audit exactly what ON/OFF currently controls.
+
+The intended behavior is:
+
+ON:
+Historical sundown-town markers/layer appear on the normal map.
+
+OFF:
+Historical sundown-town markers/layer are hidden from the member's
+normal map view.
+
+OFF MUST NOT mean:
+"Never tell me about this history."
+
+This should be a USER PREFERENCE.
+
+Audit:
+
+- Is the preference persisted?
+- Is it per session?
+- Is it per device?
+- Is it stored on the user account?
+- Does it reset after closing the app?
+- Does web behave the same as mobile?
+- Does it affect KinfolkAI?
+- Does it affect trip planning?
+- Does it affect routing?
+- Does it affect safety warnings?
+
+Report only.
+
+==================================================
+D. TRAVEL / ROUTE AWARENESS
+==================================================
+
+This is separate from map-layer visibility.
+
+A user may turn the historical layer OFF because they do not want these
+markers displayed during everyday map browsing.
+
+However, Mapping with Melanin should still be capable of informing the user
+when relevant historical or CURRENT safety information affects a trip.
+
+Examples:
+
+A user plans:
+Philadelphia → Atlanta
+
+A historically significant sundown-town location is along the route.
+
+The platform MAY provide contextual information such as:
+
+"Historical context along your route"
+
+rather than automatically declaring:
+
+"Danger — Sundown Town."
+
+Historical designation alone must NEVER automatically become a current
+danger warning.
+
+If CURRENT verified safety information exists, that should be evaluated
+separately through our Safety system.
+
+Audit whether the current architecture can distinguish:
+
+HISTORICAL CONTEXT
+CURRENT COMMUNITY SAFETY DATA
+CURRENT VERIFIED INCIDENT
+ACTIVE SAFETY ALERT
+
+These must not be collapsed into one status.
+
+==================================================
+E. WARNING PREFERENCES
+==================================================
+
+Audit our existing notification/preferences architecture.
+
+Determine whether we can eventually support separate preferences such as:
+
+SHOW HISTORICAL SUNDOWN LOCATIONS ON MAP
+    ON / OFF
+
+HISTORICAL CONTEXT DURING TRIP PLANNING
+    ON / OFF
+
+ROUTE HISTORY NOTICES
+    ON / OFF
+
+CURRENT SAFETY ALERTS
+    governed by the Safety system
+
+URGENT SAFETY ALERTS
+    governed by existing mandatory/critical safety policy where applicable
+
+Do not implement these settings yet.
+
+First determine what infrastructure already exists.
+
+==================================================
+F. VISUAL LANGUAGE
+==================================================
+
+Founder screenshot shows portions of the map appearing darker.
+
+Audit whether that shading is actually associated with Sundown Town History.
+
+Do NOT assume.
+
+Identify exactly:
+
+- what creates the darker shading
+- whether it represents sundown-town geography
+- whether it is a polygon, overlay, map style, heat layer, or unrelated
+- what triangles represent
+- what data generates those triangles
+- what happens when Sundown Town History is switched OFF
+
+The visual treatment must eventually make the distinction clear.
+
+Historical information should not look like an unexplained danger zone.
+
+==================================================
+G. HISTORICAL INTEGRITY
+==================================================
+
+Do not remove historical locations simply because current conditions may
+have changed.
+
+The historical record should remain.
+
+But the UI must distinguish:
+
+HISTORICALLY DOCUMENTED
+
+from
+
+CURRENT COMMUNITY EXPERIENCE
+
+from
+
+CURRENT SAFETY INFORMATION
+
+from
+
+ACTIVE SAFETY WARNING
+
+This distinction is mandatory.
+
+==================================================
+H. SOURCE INTEGRITY
+==================================================
+
+Audit where the current Sundown Town dataset came from.
+
+For every source currently used, report:
+
+SOURCE NAME
+SOURCE URL
+NUMBER OF RECORDS
+WHAT DATA WE IMPORTED
+WHETHER SOURCE IS STILL ACCESSIBLE
+WHETHER WE STORE THE CITATION
+WHETHER USERS CAN CURRENTLY SEE THE SOURCE
+LAST VERIFIED/UPDATED DATE IF KNOWN
+
+Do not fabricate historical information.
+
+If records were seeded without source attribution, explicitly identify them.
+
+==================================================
+I. KINFOLKAI
+==================================================
+
+Audit whether KinfolkAI currently knows about the Sundown Town dataset.
+
+Eventually I want a user to be able to ask things such as:
+
+"Is there any important history I should know along this route?"
+
+"Tell me about the history of this town."
+
+"Are there any places along my trip I should know about?"
+
+But KinfolkAI must distinguish historical information from current safety
+claims.
+
+Report what currently exists.
+
+==================================================
+FINAL AUDIT REPORT
+==================================================
+
+Return:
+
+1. Current Sundown Town data model
+2. Number of records
+3. Source(s)
+4. Current map behavior
+5. What the dark shading actually means
+6. Marker behavior
+7. What ON/OFF actually does
+8. Whether preference persists
+9. Current detail-card capability
+10. HBCU experience vs Sundown History experience
+11. Route-awareness capability
+12. Safety-system relationship
+13. KinfolkAI relationship
+14. Historical/current-data separation
+15. Missing capabilities
+16. Recommended smallest architecture change
+
+STOP AFTER THE AUDIT.
+
+DO NOT IMPLEMENT.
+```
+
+And there is one product principle I'd put at the top of this feature permanently:
+
+> **Visibility is a preference. History is not.**
+
+Someone can say, *“Don't clutter my everyday map with these markers.”* They shouldn't have to say, *“Never tell me this information.”*
+
+Then when travel context makes it relevant, Mapping with Melanin can say, in effect, **“There is history here you may want to know”**—and separately tell them whether there is credible *current* safety information. That feels much closer to the experience you've been describing: preserving cultural memory while giving people useful intelligence for the life they're actually living.
