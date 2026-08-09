@@ -2209,41 +2209,40 @@ async function ensurePhiladelphiaKnowledgeGraph(
       warn("Knowledge graph: Mother Bethel AME not found in cultural_sites — skipping entity connections");
     }
 
-    // ── 5. Seed knowledge_sources — one per tier, on Philadelphia Black History ─
+    // ── 5. Seed knowledge_sources — REAL sources only.
+    //
+    // PROVENANCE RULE (permanent): never seed community or ambassador sources as
+    // structural fixtures. Those tiers exist in the schema but MUST be populated
+    // only when a real MWM member contribution or Ambassador guide actually exists.
+    // Seeding fake community/ambassador records would allow Kinfolk to present
+    // invented "community evidence" as real — a violation of the Big Cousin standard.
+    //
+    // The two real sources below are genuine published works. community + ambassador
+    // tiers will be populated in Layer 3+ when actual content is submitted.
     const bhistId = subtopicIds[1];
-    const tierSeeds = [
+    const realSources = [
       {
         tier: "authoritative",
         name: "Smithsonian National Museum of African American History & Culture",
-        url: "https://nmaahc.si.edu",
-        claim: "Philadelphia's Free African Society (1787) and Mother Bethel AME Church (1794) are founding institutions of organized Black civic and religious life in the United States.",
+        // Stable collection page for African American Philadelphia history
+        url: "https://nmaahc.si.edu/explore/exhibitions/slavery-freedom",
+        claim:
+          "Philadelphia's Free African Society (1787) and Mother Bethel AME Church (1794) are founding institutions of organized Black civic and religious life in the United States, predating formal abolition by nearly a century.",
         is_primary: true,
       },
       {
         tier: "professional",
         name: "W.E.B. Du Bois — The Philadelphia Negro (1899)",
-        url: "https://archive.org/details/philadelphianegr00dubo",
-        claim: "The first sociological study of a Black urban community in the United States, documenting 7th Ward Philadelphia and establishing the academic foundation for understanding Black Philadelphia.",
+        // Internet Archive canonical scan — stable and freely accessible
+        url: "https://archive.org/details/philadelphianegr00duborich",
+        claim:
+          "The first sociological study of a Black urban community in the United States. Du Bois documented the 7th Ward, establishing the academic foundation for understanding Philadelphia's Black community and its institutional history.",
         is_primary: true,
-      },
-      {
-        tier: "community",
-        name: "MWM Community Member Experience",
-        url: null,
-        claim: "Community members have shared firsthand accounts of visiting historically significant Philadelphia sites, including the Mother Bethel AME Museum and the African American Museum in Philadelphia. These are personal experiences, not verified historical claims.",
-        is_primary: false,
-      },
-      {
-        tier: "ambassador",
-        name: "MWM Cultural Ambassador — Philadelphia City Guide",
-        url: null,
-        claim: "Cultural Ambassador content covering Philadelphia's historically Black neighborhoods, recommended businesses, community events, and cultural sites. Represents Ambassador perspective and firsthand visits.",
-        is_primary: false,
       },
     ];
 
     let sourcesInserted = 0;
-    for (const s of tierSeeds) {
+    for (const s of realSources) {
       const existing2 = await pool.query(
         `SELECT id FROM knowledge_sources
          WHERE topic_id=$1 AND authority_tier=$2 AND source_name=$3 LIMIT 1`,
@@ -2259,7 +2258,7 @@ async function ensurePhiladelphiaKnowledgeGraph(
         sourcesInserted++;
       }
     }
-    log(`Knowledge graph: ${sourcesInserted} knowledge_sources seeded (4 tiers on Philadelphia Black History)`);
+    log(`Knowledge graph: ${sourcesInserted} real knowledge_sources seeded (authoritative + professional; community/ambassador tiers populated only from real contributions)`);
 
   } catch (err: unknown) {
     warn(`Knowledge graph seeding failed: ${err instanceof Error ? err.message : String(err)}`);

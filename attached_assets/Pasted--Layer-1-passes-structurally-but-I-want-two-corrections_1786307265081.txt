@@ -1,0 +1,205 @@
+**Layer 1 passes structurally, but I want two corrections before we authorize Layer 2.** Everything else looks right and I would not slow them down.
+
+The knowledge graph itself is now doing what we wanted: Philadelphia is a real node, topics can relate to topics, one canonical entity such as Mother Bethel can belong to several Books without duplication, and the four evidence layers remain distinct. That is a meaningful milestone.
+
+Two things need tightening.
+
+First, **their rollback script is in the wrong order.** They propose restoring the old `library_entity_connections` constraint before deleting rows using the newly allowed entity types. If any `community_post`, `ambassador_content`, or `knowledge_article` rows exist, adding the old constraint could fail. They need to delete/restore those rows first, then re-add the old constraint.
+
+Second, I want them to clarify the four `knowledge_sources` records. Entries like **“MWM Community Member Experience”** and **“MWM Cultural Ambassador — Philadelphia City Guide”** must not be seeded as though they are actual community evidence if no real corresponding member contribution or Ambassador content exists. Likewise, authoritative/professional sources should retain a real source URL/citation, not merely a source name and sample claim. The schema is correct; the proof data must not accidentally become fake production knowledge.
+
+Send Replit this:
+
+```text
+LAYER 1 — PASS WITH TWO REQUIRED CLEANUPS
+
+The structural knowledge-graph work passes.
+
+Philadelphia geography node:
+PASS
+
+Topic-to-topic relationships:
+PASS
+
+One canonical entity → multiple topics:
+PASS
+
+Four distinct provenance tiers:
+PASS
+
+Community/Ambassador entity types:
+PASS
+
+Idempotent migrations:
+PASS
+
+You may proceed to Layer 2 AFTER making/confirming these two corrections.
+
+==================================================
+1. FIX THE ROLLBACK ORDER
+==================================================
+
+The rollback sequence for library_entity_connections is currently unsafe.
+
+You currently show:
+
+DROP new constraint
+→ ADD old constraint
+→ DELETE rows using new entity types
+
+That can fail because the old constraint may reject existing:
+
+community_post
+ambassador_content
+knowledge_article
+
+rows before they are deleted/restored.
+
+Correct rollback logic must handle affected rows FIRST.
+
+Provide a safe rollback sequence such as:
+
+1. backup/identify any rows using newly allowed entity types
+2. delete/revert those rows if rollback is actually required
+3. drop current constraint
+4. restore prior constraint
+
+Do NOT execute the rollback.
+Just correct/document it.
+
+==================================================
+2. VERIFY PROVENANCE SEED DATA IS REAL OR CLEARLY TEST DATA
+==================================================
+
+You seeded four knowledge_sources rows:
+
+authoritative
+professional
+community
+ambassador
+
+The schema test is excellent.
+
+However, provenance is foundational to Kinfolk trust.
+
+Confirm whether these are:
+
+REAL VERIFIED SOURCE RECORDS
+
+or
+
+STRUCTURAL TEST/SEED RECORDS.
+
+For every source return:
+
+authority_tier
+source_name
+source_url
+actual underlying entity/content ID if applicable
+is real evidence? YES/NO
+is test/placeholder? YES/NO
+
+IMPORTANT:
+
+Do not leave synthetic community evidence such as:
+
+"MWM Community Member Experience"
+
+as though a real member actually supplied it unless a real MWM contribution
+exists behind that record.
+
+Do not leave:
+
+"MWM Cultural Ambassador — Philadelphia City Guide"
+
+as though a real Cultural Ambassador created that guide unless an actual
+Ambassador content record exists.
+
+If those two are structural test records:
+
+mark/remove them from live knowledge content after proving the schema,
+or explicitly flag them as test fixtures that Kinfolk retrieval MUST ignore.
+
+The same rule applies to authoritative/professional sources:
+
+A source name alone is insufficient.
+
+Real knowledge used by Kinfolk should preserve:
+
+source URL / citation
+source type
+retrieval date
+publication/update date where available
+claim/summary
+provenance tier
+freshness requirement
+confidence/status
+
+Do not fabricate a claim merely to populate the table.
+
+==================================================
+AFTER THOSE TWO ITEMS
+==================================================
+
+AUTHORIZED: BEGIN LAYER 2.
+
+Layer 2 should build the retrieval engine on top of this graph.
+
+Proceed with:
+
+1. GET /api/knowledge/graph/:topicId
+2. geographic/context expansion
+3. topic relationships
+4. connected entities
+5. provenance-aware source retrieval
+6. surface-appropriate structured response
+7. optional Library deep links, never forced routing
+
+IMPORTANT:
+
+Do not inject the graph into Kinfolk yet if that remains Layer 3.
+
+First prove Layer 2 retrieval independently.
+
+REQUIRED LAYER 2 TESTS:
+
+Philadelphia
+Philadelphia Black History
+Philadelphia Nightlife
+Philadelphia Faith
+Mother Bethel AME Church
+
+For each prove retrieval of:
+
+canonical node
+related topics
+connected entities
+geography
+four source/provenance classes where REAL data exists
+source URLs/provenance
+relationship weights
+no duplicate entities
+
+Also test:
+
+Philadelphia Nightlife from surface=map
+vs
+surface=library
+
+The underlying canonical knowledge should be the same.
+
+The returned emphasis/ranking may differ by surface.
+
+STOP after Layer 2 proof.
+Do not push Railway yet.
+```
+
+One other thing I **would not raise as a blocker right now**: only 16 diaspora-country geography nodes are seeded. You ultimately want all 55 African countries plus every relevant ownership/diaspora geography, but that belongs in the Library/country expansion work—we don't need Replit to interrupt Layer 2 to seed all of them today.
+
+So our status is:
+
+**Layer 1 architecture: PASS.
+Two cleanup items: required.
+Layer 2: authorized immediately afterward.**
+
+And the provenance correction is important because we're now building the piece that will eventually let Kinfolk say, **“Here is what the official source says, here is what a professional says, and here is what our community has experienced.”** We need to know those voices are real from the very beginning.

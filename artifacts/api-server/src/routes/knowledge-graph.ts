@@ -1,0 +1,427 @@
+/**
+ * Layer 2 — Knowledge Graph Retrieval Engine
+ *
+ * Routes:
+ *   GET /knowledge/graph/:topicId?surface=map|library
+ *     Returns a canonical knowledge node with its relationships, connected
+ *     entities, and provenance sources.
+ *
+ *   GET /knowledge/entity/:entityType/:entityId?surface=map|library
+ *     Entity-centric lookup — returns which topics an entity is connected to,
+ *     with each topic's graph data. Used for surfaces like map sidebar or
+ *     cultural-site detail pages.
+ *
+ * Surface parameter:
+ *   Both routes accept ?surface=map|library (default: "library").
+ *   The underlying data is always identical; surface changes emphasis_order
+ *   in surface_meta so consumers know how to rank the sections in their UI.
+ *   "map" emphasises entities (especially those with coordinates).
+ *   "library" emphasises sources and cross-topic relationships.
+ *
+ * Kinfolk injection (Layer 3) is NOT done here.
+ * Do not modify this file to inject KinfolkAI context — that belongs in Layer 3.
+ */
+
+import { Router } from "express";
+import { pool } from "@workspace/db";
+
+const router = Router();
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface KnowledgeNode {
+  id: string;
+  topic_name: string;
+  node_type: string;
+  category: string;
+  geography_ref: string | null;
+  status: string;
+  description: string | null;
+}
+
+interface Relationship {
+  relationship_type: string;
+  weight: number;
+  topic: KnowledgeNode;
+}
+
+interface ConnectedEntity {
+  entity_id: string;
+  entity_type: string;
+  entity_label: string | null;
+  relevance_weight: number;
+  entity_data: Record<string, unknown> | null;
+}
+
+interface KnowledgeSource {
+  id: string;
+  authority_tier: string;
+  source_name: string;
+  source_url: string | null;
+  claim: string | null;
+  is_primary: boolean;
+  status: string;
+  last_verified: string | null;
+}
+
+interface SurfaceMeta {
+  surface: string;
+  emphasis_order: string[];
+  library_url: string | null;
+}
+
+function surfaceMeta(surface: string, topicId: string): SurfaceMeta {
+  const isMap = surface === "map";
+  return {
+    surface,
+    // map: show entities first (things with coordinates), then relationships
+    // library: show sources + cross-topic depth first
+    emphasis_order: isMap
+      ? ["connectedEntities", "node", "geography", "relationships", "sources"]
+      : ["node", "sources", "relationships", "geography", "connectedEntities"],
+    library_url: `/library?topic=${encodeURIComponent(topicId)}`,
+  };
+}
+
+// ── Shared queries ─────────────────────────────────────────────────────────────
+
+async function fetchNode(topicId: string): Promise<KnowledgeNode | null> {
+  const r = await pool.query(
+    `SELECT id, topic_name, node_type, category, geography_ref, status, description
+     FROM knowledge_topics WHERE id = $1 LIMIT 1`,
+    [topicId],
+  );
+  return r.rows[0] ?? null;
+}
+
+async function fetchRelationships(topicId: string): Promise<{
+  parents: Relationship[];
+  children: Relationship[];
+}> {
+  const r = await pool.query(
+    `SELECT
+       tr.relationship_type,
+       tr.weight,
+       tr.parent_topic_id,
+       tr.child_topic_id,
+       kt.id            AS related_id,
+       kt.topic_name    AS related_name,
+       kt.node_type     AS related_node_type,
+       kt.category      AS related_category,
+       kt.geography_ref AS related_geography_ref,
+       kt.status        AS related_status,
+       kt.description   AS related_description
+     FROM topic_relationships tr
+     JOIN knowledge_topics kt ON (
+       CASE WHEN tr.parent_topic_id = $1 THEN tr.child_topic_id
+            ELSE tr.parent_topic_id
+       END = kt.id
+     )
+     WHERE tr.parent_topic_id = $1 OR tr.child_topic_id = $1
+     ORDER BY tr.weight DESC, kt.topic_name`,
+    [topicId],
+  );
+
+  const parents: Relationship[] = [];
+  const children: Relationship[] = [];
+
+  for (const row of r.rows) {
+    const relatedTopic: KnowledgeNode = {
+      id: row.related_id as string,
+      topic_name: row.related_name as string,
+      node_type: row.related_node_type as string,
+      category: row.related_category as string,
+      geography_ref: row.related_geography_ref as string | null,
+      status: row.related_status as string,
+      description: row.related_description as string | null,
+    };
+    const rel: Relationship = {
+      relationship_type: row.relationship_type as string,
+      weight: Number(row.weight),
+      topic: relatedTopic,
+    };
+    // If this topic is the parent, the related node is a child (and vice versa)
+    if (row.parent_topic_id === topicId) {
+      children.push(rel);
+    } else {
+      parents.push(rel);
+    }
+  }
+
+  return { parents, children };
+}
+
+async function fetchConnectedEntities(
+  topicId: string,
+): Promise<ConnectedEntity[]> {
+  // Pull entity connections + join entity data for known entity types
+  const r = await pool.query(
+    `SELECT
+       lec.entity_id,
+       lec.entity_type,
+       lec.entity_label,
+       lec.relevance_weight,
+       -- Cultural sites
+       cs.name       AS cs_name,
+       cs.category   AS cs_category,
+       cs.city       AS cs_city,
+       cs.state      AS cs_state,
+       cs.latitude   AS cs_lat,
+       cs.longitude  AS cs_lng,
+       cs.description AS cs_description,
+       -- Businesses
+       b.name        AS b_name,
+       b.category    AS b_category,
+       b.address     AS b_address,
+       b.city        AS b_city,
+       b.latitude    AS b_lat,
+       b.longitude   AS b_lng
+     FROM library_entity_connections lec
+     LEFT JOIN cultural_sites cs
+       ON lec.entity_type = 'cultural_site'
+       AND cs.id::text = lec.entity_id::text
+     LEFT JOIN businesses b
+       ON lec.entity_type = 'business'
+       AND b.id::text = lec.entity_id::text
+     WHERE lec.topic_id = $1
+     ORDER BY lec.relevance_weight DESC, lec.entity_label`,
+    [topicId],
+  );
+
+  return r.rows.map((row) => {
+    let entityData: Record<string, unknown> | null = null;
+
+    if (row.entity_type === "cultural_site" && row.cs_name) {
+      entityData = {
+        name: row.cs_name,
+        category: row.cs_category,
+        city: row.cs_city,
+        state: row.cs_state,
+        latitude: row.cs_lat,
+        longitude: row.cs_lng,
+        description: row.cs_description,
+      };
+    } else if (row.entity_type === "business" && row.b_name) {
+      entityData = {
+        name: row.b_name,
+        category: row.b_category,
+        address: row.b_address,
+        city: row.b_city,
+        latitude: row.b_lat,
+        longitude: row.b_lng,
+      };
+    }
+
+    return {
+      entity_id: row.entity_id as string,
+      entity_type: row.entity_type as string,
+      entity_label: row.entity_label as string | null,
+      relevance_weight: Number(row.relevance_weight),
+      entity_data: entityData,
+    };
+  });
+}
+
+async function fetchSources(topicId: string): Promise<KnowledgeSource[]> {
+  const r = await pool.query(
+    `SELECT id, authority_tier, source_name, source_url, claim,
+            is_primary, status, last_verified
+     FROM knowledge_sources
+     WHERE topic_id = $1
+     ORDER BY
+       CASE authority_tier
+         WHEN 'authoritative' THEN 1
+         WHEN 'professional'  THEN 2
+         WHEN 'community'     THEN 3
+         WHEN 'ambassador'    THEN 4
+         ELSE 5
+       END,
+       is_primary DESC`,
+    [topicId],
+  );
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    authority_tier: row.authority_tier as string,
+    source_name: row.source_name as string,
+    source_url: row.source_url as string | null,
+    claim: row.claim as string | null,
+    is_primary: Boolean(row.is_primary),
+    status: row.status as string,
+    last_verified: row.last_verified
+      ? String(row.last_verified)
+      : null,
+  }));
+}
+
+async function fetchGeographySubtopics(
+  geographyRef: string,
+  excludeId: string,
+): Promise<KnowledgeNode[]> {
+  const r = await pool.query(
+    `SELECT id, topic_name, node_type, category, geography_ref, status, description
+     FROM knowledge_topics
+     WHERE geography_ref = $1 AND node_type = 'topic' AND id != $2
+     ORDER BY topic_name`,
+    [geographyRef, excludeId],
+  );
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    topic_name: row.topic_name as string,
+    node_type: row.node_type as string,
+    category: row.category as string,
+    geography_ref: row.geography_ref as string | null,
+    status: row.status as string,
+    description: row.description as string | null,
+  }));
+}
+
+// ── GET /knowledge/graph/:topicId ──────────────────────────────────────────────
+
+router.get(
+  "/knowledge/graph/:topicId",
+  async (req, res): Promise<void> => {
+    const { topicId } = req.params;
+    const surface = (req.query.surface as string) ?? "library";
+
+    const node = await fetchNode(topicId);
+    if (!node) {
+      res.status(404).json({ error: "Knowledge node not found", topicId });
+      return;
+    }
+
+    // Run relationships, entities, and sources in parallel — independent queries
+    const [relationships, connectedEntities, sources] = await Promise.all([
+      fetchRelationships(topicId),
+      fetchConnectedEntities(topicId),
+      fetchSources(topicId),
+    ]);
+
+    // Geography subtopics: only if this node IS a geography node
+    let geography: {
+      ref: string;
+      subtopics: KnowledgeNode[];
+    } | null = null;
+
+    if (node.node_type === "geography" && node.geography_ref) {
+      const subtopics = await fetchGeographySubtopics(
+        node.geography_ref,
+        topicId,
+      );
+      geography = { ref: node.geography_ref, subtopics };
+    }
+
+    res.json({
+      node,
+      relationships,
+      connectedEntities,
+      sources,
+      geography,
+      surface_meta: surfaceMeta(surface, topicId),
+    });
+  },
+);
+
+// ── GET /knowledge/entity/:entityType/:entityId ────────────────────────────────
+
+router.get(
+  "/knowledge/entity/:entityType/:entityId",
+  async (req, res): Promise<void> => {
+    const { entityType, entityId } = req.params;
+    const surface = (req.query.surface as string) ?? "library";
+
+    // Validate entity type
+    const validTypes = [
+      "business",
+      "cultural_site",
+      "event",
+      "community_org",
+      "community_post",
+      "ambassador_content",
+      "knowledge_article",
+    ];
+    if (!validTypes.includes(entityType)) {
+      res.status(400).json({
+        error: "Invalid entity_type",
+        valid: validTypes,
+      });
+      return;
+    }
+
+    // Find all topics this entity is connected to
+    const connectionsResult = await pool.query(
+      `SELECT
+         lec.entity_label,
+         lec.relevance_weight,
+         kt.id            AS topic_id,
+         kt.topic_name,
+         kt.node_type,
+         kt.category,
+         kt.geography_ref,
+         kt.status,
+         kt.description
+       FROM library_entity_connections lec
+       JOIN knowledge_topics kt ON kt.id = lec.topic_id
+       WHERE lec.entity_id::text = $1 AND lec.entity_type = $2
+       ORDER BY lec.relevance_weight DESC, kt.topic_name`,
+      [entityId, entityType],
+    );
+
+    if (connectionsResult.rows.length === 0) {
+      res.status(404).json({
+        error: "No knowledge connections found for this entity",
+        entityType,
+        entityId,
+      });
+      return;
+    }
+
+    // Fetch entity display data
+    let entityData: Record<string, unknown> | null = null;
+    if (entityType === "cultural_site") {
+      const er = await pool.query(
+        `SELECT id, name, category, city, state, latitude, longitude, description
+         FROM cultural_sites WHERE id::text = $1 LIMIT 1`,
+        [entityId],
+      );
+      if (er.rows[0]) entityData = er.rows[0] as Record<string, unknown>;
+    } else if (entityType === "business") {
+      const er = await pool.query(
+        `SELECT id, name, category, address, city, state, latitude, longitude
+         FROM businesses WHERE id::text = $1 LIMIT 1`,
+        [entityId],
+      );
+      if (er.rows[0]) entityData = er.rows[0] as Record<string, unknown>;
+    }
+
+    // For each connected topic, fetch its sources in parallel
+    const topicIds = connectionsResult.rows.map(
+      (r) => r.topic_id as string,
+    );
+    const sourceMaps = await Promise.all(
+      topicIds.map((tid) => fetchSources(tid)),
+    );
+
+    const connectedTopics = connectionsResult.rows.map((row, i) => ({
+      entity_label: row.entity_label as string | null,
+      relevance_weight: Number(row.relevance_weight),
+      topic: {
+        id: row.topic_id as string,
+        topic_name: row.topic_name as string,
+        node_type: row.node_type as string,
+        category: row.category as string,
+        geography_ref: row.geography_ref as string | null,
+        status: row.status as string,
+        description: row.description as string | null,
+      },
+      sources: sourceMaps[i],
+    }));
+
+    res.json({
+      entity: { entity_type: entityType, entity_id: entityId, entity_data: entityData },
+      connectedTopics,
+      surface_meta: surfaceMeta(surface, entityId),
+    });
+  },
+);
+
+export default router;

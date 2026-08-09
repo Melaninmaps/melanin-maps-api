@@ -153,6 +153,7 @@ import tourGuideAdminRouter from "./tour-guide-admin";
 import citiesRouter from "./cities";
 import feedbackRouter from "./feedback";
 import universalSearchRouter from "./universal-search";
+import knowledgeGraphRouter from "./knowledge-graph";
 
 const router: IRouter = Router();
 
@@ -242,6 +243,7 @@ router.use(entityConnectionsRouter);
 router.use(signalsRouter);
 router.use(smartSearchRouter);
 router.use(universalSearchRouter);
+router.use(knowledgeGraphRouter);
 router.use(notificationsHubRouter);
 router.use(knowledgeChannelsRouter);
 router.use(recommendRouter);
