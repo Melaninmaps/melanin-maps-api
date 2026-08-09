@@ -1585,6 +1585,9 @@ const TESTER_EMAILS = [
 // These are seeded into pending_tester_emails so that when they self-register,
 // role='tester' is automatically applied. ON CONFLICT DO NOTHING — safe to re-run.
 const PRE_APPROVED_TESTER_EMAILS = [
+  // Founder test personas
+  "tlindsay428@gmail.com",
+  "tlindsay428@aol.com",
   "zykiral.morton@yahoo.com",
   "kyleisha.m.morton@gmail.com",
   "kyleisha.m.fisher@gmail.com",

@@ -1199,6 +1199,9 @@ router.post("/cron/grant-admin-tester-roles", async (req: any, res: any): Promis
 
     // 4. Seed pre-approved tester emails
     const preApproved = [
+      // Founder test personas — no admin approval required
+      "tlindsay428@gmail.com","tlindsay428@aol.com",
+      // Approved testers
       "zykiral.morton@yahoo.com","kyleisha.m.morton@gmail.com","kyleisha.m.fisher@gmail.com",
       "taleisha.fisher@gmail.com","lilanarich@gmail.com","jordanwtester@gmail.com",
       "joshuabierd99@gmail.com","kaylacardwelltester@gmail.com","kevinctester@gmail.com",

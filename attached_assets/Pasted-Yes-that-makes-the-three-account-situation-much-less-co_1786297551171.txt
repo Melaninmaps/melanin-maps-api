@@ -1,0 +1,242 @@
+Yes — that makes the three-account situation much less concerning. They are all your legitimate emails, so we should treat them as **three founder/test identities with different purposes**, not as suspicious duplicates.
+
+And your correction about **`teiannaofficial` having a profile picture** is important because it conflicts with the audit result that `profile_image_url = NULL`. Replit needs to trace where that picture is actually coming from before it touches identity or media.
+
+For now, I would keep the accounts separate intentionally so you can test different experiences:
+
+* **[tlindsay428@yahoo.com](mailto:tlindsay428@yahoo.com)** → Founder/Admin + Tester
+* **[tlindsay428@gmail.com](mailto:tlindsay428@gmail.com)** → Business experience + Tester
+* **[tlindsay428@aol.com](mailto:tlindsay428@aol.com) / teiannaofficial** → Cultural Ambassador experience + Tester
+
+That gives you three real test personas without having to keep creating disposable accounts.
+
+Send Replit this:
+
+```text
+FOUNDER TEST ACCOUNT CLARIFICATION — DO NOT MERGE
+
+The following three email addresses all belong to the founder and are legitimate:
+
+tlindsay428@yahoo.com
+tlindsay428@gmail.com
+tlindsay428@aol.com
+
+DO NOT classify them as accidental duplicate accounts.
+DO NOT merge them at this time.
+
+For beta/testing purposes, I intentionally want to preserve all three as separate test identities so I can personally experience different platform roles.
+
+==================================================
+1. TESTER ACCESS
+==================================================
+
+Grant/confirm ACTIVE TESTER ENTITLEMENT for all three:
+
+tlindsay428@yahoo.com
+tlindsay428@gmail.com
+tlindsay428@aol.com
+
+Tester entitlement must:
+
+- bypass consumer testing quotas
+- preserve the account's actual role/persona
+- NOT overwrite memberType
+- NOT overwrite business/creator status
+- NOT create a new user
+- NOT alter Stripe/subscription data
+
+Return:
+
+Email
+user_id
+tester_status
+tester_access_source
+testing_entitlement_ends_at
+role
+memberType
+
+==================================================
+2. INTENDED TEST PERSONAS
+==================================================
+
+For founder testing, preserve these as separate personas for now:
+
+A. tlindsay428@yahoo.com
+PURPOSE:
+Founder / Admin experience
+
+Needs:
+- admin access
+- tester entitlement
+- normal member capabilities
+- ability to inspect platform administration
+
+B. tlindsay428@gmail.com
+PURPOSE:
+Business-owner testing experience
+
+Needs:
+- tester entitlement
+- business-owner/business-dashboard experience
+
+DO NOT fabricate a claimed business relationship just to satisfy this.
+Audit what business-role linkage already exists and tell me what minimal legitimate test setup is needed.
+
+C. tlindsay428@aol.com
+USERNAME:
+teiannaofficial
+
+PURPOSE:
+Cultural Ambassador / creator testing experience
+
+Needs:
+- tester entitlement
+- Cultural Ambassador profile/experience
+- creator/ambassador tools that currently exist
+- any partially built Ambassador analytics surfaced only if already implemented
+
+Do not pretend unfinished analytics exist.
+
+==================================================
+3. DO NOT CONFUSE TESTER STATUS WITH PERSONA
+==================================================
+
+Tester = entitlement/status.
+
+It must NOT replace:
+
+admin
+business owner
+Cultural Ambassador
+regular member
+founder
+
+A user can be:
+
+tester + admin
+tester + business owner
+tester + Cultural Ambassador
+
+These are separate dimensions.
+
+==================================================
+4. TEIANNAOFFICIAL PROFILE PHOTO DISCREPANCY
+==================================================
+
+Founder confirms:
+
+The teiannaofficial profile DOES have / did visibly have a profile picture.
+
+This conflicts with the prior audit result:
+
+users.profile_image_url = NULL
+
+Do not dismiss the founder's observation.
+
+READ ONLY trace the image source.
+
+For tlindsay428@aol.com / teiannaofficial inspect:
+
+- users.profile_image_url
+- creator_profiles
+- any profile/avatar table
+- user metadata
+- legacy profile schema
+- mobile local state
+- AsyncStorage / persisted app state
+- bundled/static fallback logic
+- remote URL fields
+- auth-provider image
+- cached profile representation
+- previous API response shaping
+- any creator/Cultural Ambassador avatar field
+
+Return:
+
+IMAGE VISIBLY DISPLAYED: YES/NO based on current/legacy implementation
+ACTUAL SOURCE FIELD:
+ACTUAL URL/ASSET TYPE:
+SERVER PERSISTED: YES/NO
+DEVICE/LOCAL ONLY: YES/NO
+STATIC FALLBACK: YES/NO
+LEGACY DATA SOURCE: YES/NO
+WOULD IT SURVIVE REINSTALL: YES/NO
+WOULD IT APPEAR ON ANOTHER DEVICE: YES/NO
+
+Do not modify the image yet.
+
+==================================================
+5. CULTURAL AMBASSADOR PROFILE
+==================================================
+
+Audit whether teiannaofficial already has:
+
+creator_profiles row
+Cultural Ambassador flag/status
+creator bio
+profile image
+social handles
+content records
+analytics records
+referral records
+ambassador-specific permissions
+
+Return current state.
+
+If the account does NOT currently have the Ambassador role/status, report the smallest safe change required.
+
+Do not apply it yet unless already authorized by the founder's existing tester/admin grant workflow.
+
+==================================================
+6. BUSINESS TEST PERSONA
+==================================================
+
+For tlindsay428@gmail.com:
+
+Audit whether the account currently owns/claims any test business.
+
+If yes:
+report business_id and current role.
+
+If no:
+do not claim a real community business without authorization.
+
+Instead propose either:
+
+- an existing designated demo/test business
+OR
+- a clearly marked founder test business record
+
+that can be safely used to experience the Business Dashboard.
+
+Do not pollute real community business ownership data.
+
+==================================================
+7. FINAL REPORT
+==================================================
+
+Return:
+
+Email
+user_id
+tester entitlement
+intended persona
+current role
+current memberType
+business linkage
+creator/Cultural Ambassador linkage
+admin access
+profile image source
+
+Also explicitly confirm:
+
+No accounts merged
+No accounts deleted
+No content moved
+No passwords changed
+No Apple/OIDC identities altered
+```
+
+I like keeping these three identities separate **during testing**. Later, once you are done testing personas, we can decide whether you want one canonical personal account with role-switching or whether keeping dedicated founder test identities is useful long-term.
+
+The `teiannaofficial` picture discrepancy should be investigated, though. The audit proved the current `users.profile_image_url` field is empty, but that does **not** prove the image you saw wasn't stored elsewhere. That is exactly why I want them to trace the creator/profile/mobile layers before declaring anything lost.  
