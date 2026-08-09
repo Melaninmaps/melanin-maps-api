@@ -22,7 +22,7 @@ router.get("/saved-places", async (req: Request, res: Response) => {
       .select()
       .from(savedPlacesTable)
       .where(eq(savedPlacesTable.userId, req.user!.id));
-    res.json({ savedBusinessIds: places.map((p) => p.businessId) });
+    res.json({ businessIds: places.map((p) => p.businessId) });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch saved places");
     res.status(500).json({ error: "Failed to fetch saved places" });

@@ -1,0 +1,83 @@
+Yes — this is an important gap. **A medical professional should be discoverable as a person even if they do not own the practice where they work.**
+
+I would separate **Healthcare Professionals** from **Healthcare Businesses/Practices** in MWM. A user may be searching for “Black female OB-GYN near me,” “Latina pediatrician,” “LGBTQ+-affirming therapist,” or “doctor who understands fibroids” — the individual clinician matters just as much as the practice.
+
+A strong healthcare-professional directory should include at least these categories:
+
+| Medical professional                                    | Useful specialties / search terms                                                                                            |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **OB-GYN**                                              | general gynecology, pregnancy, high-risk pregnancy, fibroids, endometriosis, PCOS, menopause, fertility, reproductive health |
+| **Maternal-Fetal Medicine Specialist**                  | high-risk pregnancy, complicated pregnancy                                                                                   |
+| **Reproductive Endocrinologist / Fertility Specialist** | IVF, IUI, infertility, egg freezing, recurrent pregnancy loss                                                                |
+| **Midwife**                                             | pregnancy, birth, postpartum, home birth/birth center where applicable                                                       |
+| **Doula**                                               | birth, postpartum, fertility, bereavement/loss                                                                               |
+| **Primary Care Physician**                              | family medicine, internal medicine, preventive care                                                                          |
+| **Pediatrician**                                        | newborns, children, adolescents                                                                                              |
+| **Adolescent Medicine Physician**                       | teens/young adults                                                                                                           |
+| **Geriatrician**                                        | older adults, aging-related care                                                                                             |
+| **Cardiologist**                                        | heart disease, hypertension                                                                                                  |
+| **Endocrinologist**                                     | diabetes, thyroid, hormones                                                                                                  |
+| **Neurologist**                                         | migraines, seizures, stroke, neurological conditions                                                                         |
+| **Gastroenterologist**                                  | digestive health, IBS, Crohn’s, colon health                                                                                 |
+| **Pulmonologist**                                       | asthma, lung disease, sleep-related breathing disorders                                                                      |
+| **Nephrologist**                                        | kidney disease                                                                                                               |
+| **Rheumatologist**                                      | lupus, autoimmune disease, arthritis                                                                                         |
+| **Hematologist**                                        | blood disorders, sickle cell disease                                                                                         |
+| **Oncologist**                                          | cancer care; ideally searchable by cancer type                                                                               |
+| **Dermatologist**                                       | skin, scalp, hair loss, hyperpigmentation, keloids, skin of color                                                            |
+| **Allergist / Immunologist**                            | allergies, asthma, immune disorders                                                                                          |
+| **Infectious Disease Specialist**                       | HIV care, complex infections, travel-related infectious disease                                                              |
+| **Urologist**                                           | urinary and male reproductive health                                                                                         |
+| **Proctologist / Colorectal Surgeon**                   | colorectal conditions                                                                                                        |
+| **General Surgeon**                                     | general surgical care                                                                                                        |
+| **Orthopedic Specialist / Surgeon**                     | bones, joints, sports injuries                                                                                               |
+| **Podiatrist**                                          | foot/ankle care, diabetic foot care                                                                                          |
+| **ENT / Otolaryngologist**                              | ear, nose, throat                                                                                                            |
+| **Ophthalmologist**                                     | medical/surgical eye care                                                                                                    |
+| **Optometrist**                                         | routine eye care, glasses/contacts                                                                                           |
+| **Dentist**                                             | general dentistry                                                                                                            |
+| **Pediatric Dentist**                                   | children                                                                                                                     |
+| **Orthodontist**                                        | braces/alignment                                                                                                             |
+| **Oral Surgeon**                                        | extractions, oral surgery                                                                                                    |
+| **Periodontist**                                        | gum disease                                                                                                                  |
+| **Endodontist**                                         | root canals                                                                                                                  |
+| **Psychiatrist**                                        | medication management, mental health                                                                                         |
+| **Psychologist**                                        | assessment/therapy                                                                                                           |
+| **Licensed Therapist/Counselor**                        | trauma, anxiety, depression, grief, couples, family, LGBTQ+, culturally responsive therapy                                   |
+| **Clinical Social Worker**                              | counseling, care navigation                                                                                                  |
+| **Substance Use Specialist**                            | addiction treatment/recovery                                                                                                 |
+| **Physical Therapist**                                  | rehab, pain, mobility                                                                                                        |
+| **Occupational Therapist**                              | daily functioning, disability, pediatric/adult rehab                                                                         |
+| **Speech-Language Pathologist**                         | speech, language, swallowing                                                                                                 |
+| **Audiologist**                                         | hearing/balance                                                                                                              |
+| **Chiropractor**                                        | musculoskeletal care                                                                                                         |
+| **Registered Dietitian / Nutritionist**                 | diabetes, renal, pregnancy, sports, weight management, culturally relevant nutrition                                         |
+| **Lactation Consultant**                                | breastfeeding/chestfeeding support                                                                                           |
+| **Pelvic Floor Therapist**                              | pregnancy/postpartum, pelvic pain, urinary issues                                                                            |
+| **Nurse Practitioner**                                  | primary care or specialty-specific                                                                                           |
+| **Physician Assistant**                                 | primary care or specialty-specific                                                                                           |
+| **Registered Nurse / Specialty Nurse**                  | diabetes education, oncology, wound care, maternal health, etc.                                                              |
+| **Pharmacist**                                          | medication counseling, community pharmacy                                                                                    |
+| **Genetic Counselor**                                   | hereditary conditions, cancer risk, prenatal genetics                                                                        |
+| **Sleep Medicine Specialist**                           | sleep apnea, insomnia                                                                                                        |
+| **Pain Management Specialist**                          | chronic pain                                                                                                                 |
+| **Sports Medicine Physician**                           | sports injuries/performance                                                                                                  |
+| **Urgent Care Clinician**                               | immediate non-emergency needs                                                                                                |
+| **Home Health Clinician**                               | nursing/therapy in the home                                                                                                  |
+| **Hospice / Palliative Care Professional**              | serious illness/end-of-life support                                                                                          |
+
+For MWM, I would also make some **cross-specialty search attributes** available because these may matter more to users than the formal specialty itself:
+
+**Believed My Pain · Listened to Me · Explained My Options · Did Not Rush Me · Culturally Responsive · LGBTQIA+ Affirming · Trauma-Informed · Disability Accessible · Experienced With Darker Skin · Experienced With Black Maternal Health · Fibroid Knowledgeable · Endometriosis Knowledgeable · Sickle Cell Knowledgeable · HIV Knowledgeable · Trans-Inclusive Care · Spanish-Speaking / Language Options · Takes My Insurance · Self-Pay Friendly · Telehealth Available · Evening/Weekend Appointments · Accepting New Patients**
+
+And I would distinguish three separate records:
+
+**Professional profile** → Dr. Jane Smith, OB-GYN
+**Practice profile** → Women's Health Associates
+**Location** → Center City office / South Philadelphia office
+
+That way a doctor changing employers does **not** disappear from MWM, and reviews of the clinician do not become confused with reviews of the office staff, billing department, or facility.
+
+For your tour searches, I would especially prioritize clinicians in areas where community disparities make trusted recommendations extremely valuable: **OB-GYNs, maternal-fetal medicine, fertility, pediatricians, primary care, dentists, therapists, dermatologists, cardiologists, endocrinologists/diabetes care, sickle-cell specialists, HIV care, and elder-care clinicians.**
+
+And one more field I would absolutely add to the professional profile: **“Why people seek this provider.”** That lets someone search naturally for *“doctor who listens about fibroid pain”* instead of having to know the term “gynecologic surgeon.” That fits your entire search philosophy much better.

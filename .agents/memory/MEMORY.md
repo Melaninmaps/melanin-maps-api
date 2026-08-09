@@ -1,6 +1,6 @@
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
 - [Admin Business Entry Tool + Media Upload](admin-business-entry-media.md) — POST /admin/businesses (raw SQL), photo upload direct to photos[], social link paste, AdminAddBusiness 5-step form + post-save media step.
-- [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs must always exist in cultural_sites; self-healing guard in startup-migrations.ts auto-inserts missing schools on every boot.
+- [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs in cultural_sites; guard needs columns: founded_year, status, source, is_featured (all added Aug 9 2026 via startup migrations).
 - [KinfolkAI Cultural Intelligence Model](kinfolk-cultural-intelligence-model.md) — founding principles, city-as-container, two-layer registry, three-setting voice decoupling, code-switching, 16-category depth standard.
 - [Kinfolk Constitution — Founder Decisions (Resolved)](kinfolk-constitution-decisions.md) — all locked decisions: voice names, language names, profanity, Cultural Journey opt-in, Ambassador definition, Family Mode, first cohort order, master governance principle.
 - [Kinfolk Lifelong Companion Vision](kinfolk-lifelong-companion-vision.md) — Kinfolk as lifelong cultural companion; Cultural Journeys feature; My Journey/Passport; Curiosity Lists; no-gamification; businesses as teachers; nothing expires; key sentences verbatim.
@@ -124,7 +124,7 @@
 - [Universal Search semantic precision fix](semantic-precision-fix.md) — extractConcepts bigram-word push bug was root cause; word-level token only pushed if WORD itself matched CONCEPT_TO_CATEGORY, not its bigram.
 - [Endorsement Tag System](endorsement-tag-system.md) — 340 tags, 132 cultural variants, 90 ownership designations, 131 vibes — all permanent version-controlled constants.
 - [Endorsement tags table — no DB table](endorsement-tags-table.md) — `endorsement_tags` is NOT a DB table; use LEFT JOIN the_real_tags + INITCAP fallback; 12 demo users seeded for tap data.
-- [THE REAL Tag System](the-real-tags-system.md) — 151 professional trust-signal tags across 9 categories; separate from The Vibe; display threshold 5 taps; seeded in Railway production Aug 8 2026.
+- [THE REAL Tag System](the-real-tags-system.md) — 299 tags across 10 categories (incl. Childcare & Early Education added Aug 9 2026); startup guard ensureTheRealTags() in startup-migrations.ts; both constants files must stay in sync.
 - [Three-Layer Tag Architecture v1.0](three-layer-architecture.md) — routing table for all 22 categories; 3 absolute rules; display threshold=10 ALL layers; THE REAL display string uses colon; 5 categories get neither layer.
 - [Business Placeholder Image System v1.0](placeholder-image-system.md) — HIGH priority; branded card+category SVG icon; has_owner_photo DB field; absolute rules against cultural stereotyping; 22 icon mappings.
 - [Knowledge Graph Layer 1 — schema and seeding lessons](knowledge-graph-layer1.md) — topic_name not title; idempotency requires WHERE NOT EXISTS; 4-tier provenance; Big Cousin contract.

@@ -40,9 +40,9 @@ export function useFavorites() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-          const data = (await res.json()) as { savedBusinessIds: string[] };
-          setSavedIds(data.savedBusinessIds);
-          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.savedBusinessIds));
+          const data = (await res.json()) as { businessIds: string[] };
+          setSavedIds(data.businessIds);
+          await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data.businessIds));
         }
       } catch {}
     }

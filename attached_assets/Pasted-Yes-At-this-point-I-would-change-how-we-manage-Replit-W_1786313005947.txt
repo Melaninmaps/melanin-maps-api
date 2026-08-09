@@ -1,0 +1,603 @@
+Yes. At this point, I would change how we manage Replit.
+
+What today exposed is not that the vision is wrong—it is that **too much functionality has existed as isolated features without enough end-to-end proof that the entire system works together in production**. Continuing one tiny task at a time will make this take much longer.
+
+I want Replit moving in **parallel workstreams**, with checkpoints only where something is destructive, architectural, security-sensitive, or requires your product decision. It should not stop after every successful migration or minor implementation and wait for permission.
+
+### Send Replit this now
+
+```text
+FOUNDER / PROJECT MANAGEMENT DIRECTION — MOVE INTO EXECUTION MODE
+
+The founder wants us to move as efficiently and effectively as possible.
+
+We have spent significant time discovering features that were assumed to be
+working, connected, or production-ready but were actually incomplete,
+dev-only, disconnected, or unverified.
+
+That changes our execution model.
+
+============================================================
+1. DO NOT TREAT THE BACKLOG AS A STRICT SERIAL LIST
+============================================================
+
+The numbered phases describe priority and dependencies, NOT a requirement
+that every task must be completed one at a time.
+
+Identify independent workstreams and execute them in parallel whenever doing
+so is technically safe.
+
+Do NOT create unnecessary founder checkpoints.
+
+Continue automatically unless:
+
+A. a destructive production/database operation is required
+B. data could be deleted, merged, overwritten, or permanently changed
+C. a security/privacy decision is required
+D. a paid third-party service/infrastructure decision is required
+E. requirements genuinely conflict
+F. the implementation would materially change approved product behavior
+G. production deployment is ready and the standing Railway gate requires
+   authorization
+
+Everything else: diagnose → implement → test → document → continue.
+
+============================================================
+2. WORKSTREAM A — PRODUCTION BLOCKERS — HIGHEST PRIORITY
+============================================================
+
+Immediately complete:
+
+SAVED PLACES
+
+Forensic trace first.
+
+Determine:
+
+UI action
+→ API request
+→ authentication/session
+→ endpoint
+→ database write
+→ saved relationship
+→ retrieval
+→ Profile rendering
+→ Kinfolk consumption.
+
+Do not guess-fix.
+
+Identify exact root cause, fix it, and prove:
+
+1. user saves business
+2. refresh
+3. save remains
+4. Profile shows it
+5. unsave works
+6. another user cannot see private saves
+7. Kinfolk personalization can retrieve/use the save
+8. web/mobile parity where applicable
+
+AUTH
+
+Complete actual production tester proof.
+
+Do not consider auth complete because code looks correct.
+
+Prove:
+
+existing tester login
+new approved tester registration
+email verification
+forgot password
+reset password
+session persistence
+logout/login
+role preservation
+
+Test against Railway production behavior.
+
+KNOWLEDGE GRAPH
+
+Complete browser smoke tests:
+
+Philadelphia
+Philadelphia Black History
+Philadelphia Nightlife
+Mother Bethel
+source display
+empty-source behavior
+community contribution
+
+Resolve defects without waiting unless architectural.
+
+Then prepare Railway gate proof.
+
+============================================================
+3. WORKSTREAM B — BUSINESS DATA INTEGRITY
+============================================================
+
+Run concurrently with Workstream A where safe.
+
+Complete READ-ONLY duplicate audit now.
+
+Do NOT wait for the Sundown Town work.
+
+Audit every non-test business.
+
+Use:
+
+normalized business name
+address
+phone
+website/domain
+coordinates
+parent_business_id
+location_name
+ownership information
+social URLs
+relationships
+reviews
+saves
+community posts
+events
+media
+verification
+Library connections
+Knowledge Graph connections
+
+Specifically investigate Hakim's Bookstore.
+
+Classify potential matches:
+
+EXACT DUPLICATE
+PROBABLE DUPLICATE
+POSSIBLE DUPLICATE
+LEGITIMATE MULTI-LOCATION
+LEGITIMATE SEPARATE BUSINESS
+
+Do NOT merge/delete anything.
+
+Prepare the founder decision report.
+
+At the same time, build duplicate PREVENTION if it can be safely implemented
+without altering existing records.
+
+============================================================
+4. WORKSTREAM C — MULTI-LOCATION + BUSINESS EXPERIENCE
+============================================================
+
+The schema exists.
+
+Finish the actual user experience.
+
+One brand can have multiple physical locations.
+
+Each location must retain:
+
+address
+coordinates
+phone
+hours
+location-specific services
+location-specific accessibility
+location-specific safety/community information
+location-specific events/offers where applicable
+
+Shared parent information may include:
+
+brand identity
+ownership
+description
+website
+social presence
+verified ownership
+
+Prove Success by Steps Early Learning Academy:
+
+1 parent
+4 legitimate locations
+4 map pins
+no appearance as accidental duplicates
+nearest location prioritized appropriately
+Kinfolk understands which location is relevant.
+
+============================================================
+5. WORKSTREAM D — THE REAL / FUNCTIONAL DISCOVERY
+============================================================
+
+Complete Task #179.
+
+This is NOT simply adding more tags.
+
+Audit the entire Vibe system for categories where "Vibe" is inappropriate.
+
+Childcare, elder care, healthcare, legal, education and other high-trust
+services should prioritize functional decision information.
+
+Example:
+
+Childcare:
+age ranges
+hours
+before/after care
+transportation
+meals
+curriculum
+special-needs support
+licensing/accreditation
+languages
+availability/waitlist where known
+
+Elder care:
+care level
+mobility support
+memory care
+transportation
+meal assistance
+home care/facility
+insurance/payment information where appropriate
+languages
+cultural competency
+
+Healthcare:
+specialty
+insurance
+accessibility
+languages
+telehealth
+community experience
+relevant professional credentials
+
+Continue the approved REAL vocabulary implementation and identify any other
+category currently forced into an inappropriate "Vibe" model.
+
+============================================================
+6. WORKSTREAM E — HISTORICAL RACIAL EXCLUSION
+============================================================
+
+Begin the READ-ONLY evidence audit immediately.
+
+Research/data auditing can occur while production blockers are being resolved.
+
+Do not wait unnecessarily.
+
+Audit every existing historical-exclusion marker.
+
+Determine:
+
+what claim MWM makes
+why it is in the database
+source
+whether source actually supports claim
+historical period
+type of exclusion
+evidence strength
+whether current safety has accidentally been conflated with history.
+
+Flag generic source links.
+
+Build the new evidence architecture and internal history experience.
+
+DO NOT automatically remove historical records simply because their existing
+citation is inadequate.
+
+Those become:
+
+RESEARCH REQUIRED
+
+until properly investigated.
+
+Historical exclusion and present-day safety remain separate.
+
+============================================================
+7. WORKSTREAM F — COMMUNITY INTELLIGENCE PREPARATION
+============================================================
+
+Do not begin a giant isolated rebuild.
+
+First perform the approved GAP AUDIT against what already exists.
+
+Inventory reusable:
+
+geography nodes
+city_profiles
+knowledge_topics
+knowledge graph
+Library relationships
+businesses
+cultural sites
+HBCUs
+events
+safety surveys
+community posts
+Universal Search
+demographic fields
+location infrastructure
+Kinfolk retrieval
+
+Then identify ONLY what Community Intelligence still needs.
+
+This prevents rebuilding functionality we already possess.
+
+The first pilot remains:
+
+Philadelphia
+Atlanta
+New Orleans
+
+But design geography hierarchically so the same architecture supports:
+
+country
+state
+county
+city
+borough/district
+township
+neighborhood/community
+
+Examples:
+
+Pennsylvania
+→ Bucks County
+→ Warwick Township
+→ Jamison
+
+These should be connected geography nodes, not unrelated pages.
+
+============================================================
+8. DATA PERSISTENCE IS NOW A FORMAL RELEASE GATE
+============================================================
+
+Today's discoveries make this mandatory.
+
+For EVERY user-generated object, audit:
+
+CREATE
+READ
+UPDATE where supported
+DELETE where supported
+PERSIST AFTER REFRESH
+PERSIST AFTER LOGOUT/LOGIN
+CORRECT USER OWNERSHIP
+PRODUCTION DATABASE LOCATION
+NO SILENT LOSS
+
+Objects include at minimum:
+
+users
+profiles
+profile media
+business submissions
+business media
+saves
+reviews
+community posts
+comments
+replies
+events
+RSVPs
+Library follows
+Library contributions
+topic requests
+marketplace listings
+messages
+safety reports
+check-ins
+vibes/community descriptors
+Cultural Ambassador contributions
+business claims
+verification submissions
+
+Produce a USER DATA PERSISTENCE MATRIX.
+
+Columns:
+
+DATA TYPE
+CREATE ENDPOINT
+PRODUCTION TABLE/STORAGE
+OWNER KEY
+PERSISTS REFRESH?
+PERSISTS RELOGIN?
+BACKUP/RECOVERY STATUS
+KNOWN ISSUE
+SEVERITY
+
+This is critical.
+
+We cannot launch a community platform unless we can demonstrate that member
+contributions are actually preserved.
+
+============================================================
+9. STOP USING "BUILT" AS SYNONYMOUS WITH "DONE"
+============================================================
+
+From now on use these statuses:
+
+SCHEMA READY
+CODED
+DEV VERIFIED
+PRODUCTION DEPLOYED
+PRODUCTION VERIFIED
+USER ACCEPTANCE VERIFIED
+
+Only:
+
+PRODUCTION VERIFIED
+
+may be represented to the founder as working in the live platform.
+
+If mobile requires separate proof, say:
+
+WEB PRODUCTION VERIFIED
+MOBILE NOT YET VERIFIED
+
+Do not say "complete" merely because code compiles.
+
+============================================================
+10. TEST THE FLYWHEEL — NOT JUST FEATURES
+============================================================
+
+Our product is relational.
+
+Every major acceptance test should prove the connection between systems.
+
+Example:
+
+User searches Philadelphia nightlife
+→ Universal Search understands geography + nightlife
+→ Knowledge Graph supplies context
+→ relevant businesses appear
+→ Cultural Ambassador/community material may appear
+→ demand signal is recorded appropriately
+→ user saves a place
+→ save persists
+→ Kinfolk learns from it
+→ future recommendation improves.
+
+Another:
+
+User searches Ethiopian food
+→ businesses
+→ Ethiopian cultural context
+→ relevant Library knowledge
+→ community experience
+→ Cultural Ambassador material
+→ geography
+→ user preferences
+→ recommendation with an explanation.
+
+Another:
+
+User follows Philadelphia Black History
+→ Mother Bethel connection
+→ map entity
+→ authoritative history
+→ community contribution
+→ future Kinfolk recommendation.
+
+We are testing THE SYSTEM now, not merely buttons.
+
+============================================================
+11. KINFOLK ACCEPTANCE STANDARD
+============================================================
+
+Kinfolk should eventually be able to answer:
+
+"Plan my afternoon in Philadelphia."
+
+using interconnected MWM intelligence.
+
+It should understand, where data exists:
+
+user preferences
+saved places
+businesses
+community recommendations
+cultural sites
+Library/Knowledge Graph
+current location
+destination
+events
+faith/culture
+accessibility
+historical context
+safety information
+Cultural Ambassador material
+community intelligence.
+
+It must distinguish what MWM KNOWS from what it does not know.
+
+No fabricated community consensus.
+
+No fabricated business attributes.
+
+No fabricated safety conclusions.
+
+============================================================
+12. WORK WITHOUT LOSING TODAY'S SCOPE
+============================================================
+
+Maintain a persistent implementation ledger containing:
+
+WORKSTREAM
+TASK
+DEPENDENCY
+STATUS
+DEV SHA
+PRODUCTION SHA
+TEST EVIDENCE
+BLOCKER
+FOUNDER DECISION REQUIRED?
+NEXT ACTION
+
+Update it continuously.
+
+Do not rely on chat history as the project record.
+
+The four governing specifications already supplied remain authoritative.
+
+Do not silently drop requirements because another workstream begins.
+
+============================================================
+13. REPORTING CADENCE
+============================================================
+
+Do NOT stop after every task.
+
+Continue through independent work.
+
+Report at meaningful checkpoints:
+
+CHECKPOINT A
+Production blockers diagnosed/fixed and gate evidence ready.
+
+CHECKPOINT B
+Railway deployed + SHA confirmed + production smoke tests.
+
+CHECKPOINT C
+Business integrity/multi-location/REAL work proven.
+
+CHECKPOINT D
+Historical Racial Exclusion overhaul proven.
+
+CHECKPOINT E
+Community Intelligence gap audit and pilot ready.
+
+Immediately stop only for a founder decision or destructive action.
+
+============================================================
+START NOW
+============================================================
+
+Start parallel execution with:
+
+A — Saved Places forensic trace
+B — Tester auth production proof
+C — Knowledge Graph browser smoke test
+D — Business duplicate READ-ONLY audit
+E — Historical Exclusion READ-ONLY evidence audit
+
+These tasks do not need to wait on one another.
+
+When A/B/C satisfy the Railway gate, return the consolidated PRE-PUSH proof.
+
+Do not pause simply because D/E are still running if they are not dependencies
+of the production push.
+
+Efficiency, evidence, preservation of user data, and production verification
+are now the governing execution principles.
+```
+
+### One project-management change I strongly recommend
+
+**Do not make all 34 items prerequisites to your business outreach.** That would create exactly the wrong bottleneck.
+
+There are really two targets now:
+
+**Tomorrow/business demonstration:** authentication, businesses, maps, saves, basic search, business profiles, Kinfolk's currently supported retrieval, and no obvious broken flows need to be dependable.
+
+**Platform expansion:** Community Intelligence, the full historical evidence system, exhaustive business deduplication, country-scale Library expansion, etc. can continue while you begin engaging businesses.
+
+The biggest new priority I added above is the **User Data Persistence Matrix**. Given what you discovered with old profiles, community contributions and now Saved Places, I don't want us merely assuming that a review, save, post, image, event, or contribution is safely stored. Replit should prove the persistence chain once across every user-generated data type. That closes an entire category of surprises instead of discovering them screen by screen.
+
+And from now on, when Replit tells us something is “complete,” I will evaluate it against **production verified**, not “the code exists.” That distinction should make the rest of this move considerably faster because we stop reopening things we thought were finished.

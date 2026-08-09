@@ -8,7 +8,7 @@
  * would be absent.
  */
 import { randomUUID } from "crypto";
-import { pool } from "@workspace/db";
+import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
@@ -1002,6 +1002,69 @@ END $seed$`,
       END $$;
     `,
   },
+  // Task #177 — HBCU boot warning: missing columns for HBCU INSERT
+  {
+    name: "cultural_sites_founded_year_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS founded_year TEXT`,
+  },
+  {
+    name: "cultural_sites_status_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'live_unclaimed'`,
+  },
+  {
+    name: "cultural_sites_source_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS source TEXT`,
+  },
+  {
+    name: "cultural_sites_is_featured_col",
+    sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false`,
+  },
+  // THE REAL trust-signal tables
+  {
+    name: "the_real_tags_table",
+    sql: `CREATE TABLE IF NOT EXISTS the_real_tags (
+      tag_key TEXT PRIMARY KEY,
+      label TEXT NOT NULL,
+      category TEXT NOT NULL,
+      type TEXT NOT NULL,
+      adaptive_family TEXT,
+      subcategory_scope TEXT NOT NULL DEFAULT 'all',
+      helper_text TEXT NOT NULL DEFAULT '',
+      sort_weight INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )`,
+  },
+  {
+    name: "the_real_taps_table",
+    sql: `CREATE TABLE IF NOT EXISTS the_real_taps (
+      id TEXT PRIMARY KEY,
+      business_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      tag_key TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+      CONSTRAINT the_real_taps_business_user_tag UNIQUE (business_id, user_id, tag_key)
+    )`,
+  },
+  {
+    name: "the_real_taps_business_idx",
+    sql: `CREATE INDEX IF NOT EXISTS the_real_taps_business_idx ON the_real_taps(business_id)`,
+  },
+  // Endorsement taps table — stores community tap data for THE REAL + endorsement tags
+  {
+    name: "business_endorsement_taps_table",
+    sql: `CREATE TABLE IF NOT EXISTS business_endorsement_taps (
+      id SERIAL PRIMARY KEY,
+      business_id VARCHAR NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tag_key VARCHAR(100) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(business_id, user_id, tag_key)
+    )`,
+  },
+  {
+    name: "business_endorsement_taps_idx",
+    sql: `CREATE INDEX IF NOT EXISTS biz_endorse_taps_biz_idx ON business_endorsement_taps(business_id)`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -1045,6 +1108,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["cultural sites",    () => ensureCulturalSites(log, warn)],
     ["festivals",         () => ensureNationalFestivals(log, warn)],
     ["sundown towns",     () => ensureSundownTowns(log, warn)],
+    ["the_real_tags",     () => ensureTheRealTags(log, warn)],
     ["dir. businesses",   () => ensureDirectoryBusinesses(log, warn)],
     ["tour businesses",   () => ensureTourBusinesses(log, warn)],
     ["curated businesses", () => ensureFounderCuratedBusinesses(log, warn)],
@@ -1310,6 +1374,38 @@ async function ensureSundownTowns(
     log(`Sundown towns integrity guard: ${inserted} inserted, ${skipped} already present (seed: ${allSundown.length})`);
   } catch (err: unknown) {
     warn(`Sundown towns integrity guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * Ensures all THE REAL professional trust-signal tags exist in the_real_tags table.
+ * Idempotent — ON CONFLICT DO NOTHING. Table structure is created via MIGRATIONS.
+ */
+async function ensureTheRealTags(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const { rows: countRows } = await pool.query(`SELECT COUNT(*) as cnt FROM the_real_tags`);
+    const existing = parseInt(countRows[0]?.cnt ?? "0", 10);
+    if (existing >= THE_REAL_TAGS.length) {
+      log(`THE REAL tags: ${existing} already present, skipping seed`);
+      return;
+    }
+    let inserted = 0;
+    for (const t of THE_REAL_TAGS) {
+      const res = await pool.query(
+        `INSERT INTO the_real_tags
+           (tag_key, label, category, type, adaptive_family, subcategory_scope, helper_text, sort_weight)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,0)
+         ON CONFLICT (tag_key) DO NOTHING`,
+        [t.tag_key, t.label, t.category, t.type, t.adaptive_family ?? null, t.subcategory_scope, t.helper_text]
+      );
+      inserted += res.rowCount ?? 0;
+    }
+    log(`THE REAL tags: ${inserted} inserted, ${existing} already present (seed: ${THE_REAL_TAGS.length})`);
+  } catch (err: unknown) {
+    warn(`THE REAL tags seeding failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

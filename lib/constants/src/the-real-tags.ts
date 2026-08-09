@@ -1542,6 +1542,36 @@ export const THE_REAL_TAGS: TheRealTag[] = [
   { tag_key: "pm_building_cared_for", label: "Made The Building Feel Cared For", category: "Home & Property Services", type: "real-specific", adaptive_family: null, subcategory_scope: "Property Management; Landlords", helper_text: "Common areas and building systems were maintained" },
   { tag_key: "pm_urgent_response", label: "Responded When It Was Urgent", category: "Home & Property Services", type: "real-specific", adaptive_family: null, subcategory_scope: "Property Management; Landlords", helper_text: "No heat in winter, flooding, no power — they came" },
 
+  // ── Childcare & Early Education ───────────────────────────────────────────
+  // Task #179: Trust signals for families choosing daycare, preschool, and
+  // early education providers. Community-verified signals about dignity,
+  // cultural competence, safety, and communication.
+  { tag_key: "child_came_home_happy", label: "My Child Came Home Happy", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care", helper_text: "The most important signal — a child who wanted to go back" },
+  { tag_key: "child_asked_to_go_back", label: "My Child Asked To Go Back", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "No coaxing, no tears — they were ready before you were" },
+  { tag_key: "spoke_to_child_not_around", label: "Spoke To My Child, Not Around Them", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care; Tutoring", helper_text: "Got down to their level and talked to them like a person" },
+  { tag_key: "called_me_right_away", label: "Called Me Right Away", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "When something happened, I heard about it immediately" },
+  { tag_key: "same_teachers_stayed", label: "Same Teachers, Same Faces", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education", helper_text: "Low staff turnover — consistency matters more than most things" },
+  { tag_key: "our_culture_not_a_problem", label: "Our Culture Was Never A Problem", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care", helper_text: "Our food, traditions, language — welcomed, not tolerated" },
+  { tag_key: "childs_hair_respected", label: "My Child's Hair Was Respected", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education", helper_text: "No touching without permission. No comments. No 'fixing' what wasn't broken" },
+  { tag_key: "dietary_needs_no_drama", label: "Handled Dietary Needs Without Drama", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "Allergies, halal, vegan — accommodated like it was no big deal" },
+  { tag_key: "transition_was_gentle", label: "The Transition Was Gentle", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education", helper_text: "They helped your child feel safe before you left the room" },
+  { tag_key: "real_updates_not_just_forms", label: "Real Updates, Not Just Forms", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care", helper_text: "You knew what your child actually did today, not just 'they did well'" },
+  { tag_key: "knew_child_as_individual", label: "Knew My Child As An Individual", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; Tutoring", helper_text: "Not lumped in, not sorted — actually seen" },
+  { tag_key: "strict_pickup_protocols", label: "Strict About Pickup — No Exceptions", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "Verified every person. Non-negotiable. Exactly as it should be" },
+  { tag_key: "classroom_reflected_us", label: "The Classroom Reflected Who We Are", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education", helper_text: "Books, art, dolls — your child saw themselves on the walls" },
+  { tag_key: "home_language_welcomed", label: "My Child's Home Language Was Welcomed", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education", helper_text: "Bilingual, multilingual, code-switching — never shamed" },
+  { tag_key: "told_me_honestly", label: "Told Me About Incidents Honestly", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "When something went wrong, they told you the truth — not a softened version" },
+  { tag_key: "iep_actually_followed", label: "My Child's IEP Was Actually Followed", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Early Childhood Education; After-School Care; Tutoring", helper_text: "The plan existed — and they actually followed it" },
+  { tag_key: "welcomed_parent_questions", label: "Welcomed My Questions", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care; Tutoring", helper_text: "No defensiveness. No rushing you out. You were part of the team" },
+  { tag_key: "child_made_friends_here", label: "My Child Made Friends Here", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care", helper_text: "Social belonging is part of care — they made it happen" },
+  { tag_key: "health_emergency_handled_well", label: "Handled A Health Emergency Well", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "When it mattered most, they knew exactly what to do" },
+  { tag_key: "discipline_not_humiliating", label: "Discipline That Taught, Not Humiliated", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care", helper_text: "Redirected, explained, talked to — never shamed or isolated" },
+  { tag_key: "noticed_when_struggling", label: "Recognized When My Child Was Struggling", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care; Tutoring", helper_text: "They noticed before you had to say anything" },
+  { tag_key: "environment_safe_and_clean", label: "The Environment Was Safe And Clean", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "Basic — but it has to be said because it's not always given" },
+  { tag_key: "medication_administered_correctly", label: "Administered Medication Correctly", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; After-School Care", helper_text: "Required medication was given correctly, on time, every time" },
+  { tag_key: "celebrated_childs_wins", label: "Celebrated My Child's Wins", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; After-School Care; Tutoring", helper_text: "Small victories counted here — reading a word, tying shoes, making a friend" },
+  { tag_key: "no_ability_assumptions", label: "Didn't Assume What My Child Could Do", category: "Childcare & Early Education", type: "real-specific", adaptive_family: null, subcategory_scope: "Daycare & Childcare; Preschool; Early Childhood Education; Tutoring", helper_text: "Let them show what they were capable of — didn't decide before they tried" },
+
 ];
 
 /** Category → THE REAL tags lookup */
@@ -1555,6 +1585,7 @@ export const THE_REAL_CATEGORY_MAP: Record<string, TheRealTag[]> = {
   "Automotive & Transportation": THE_REAL_TAGS.filter(t => t.category === "Automotive & Transportation"),
   "Pets & Animal Services": THE_REAL_TAGS.filter(t => t.category === "Pets & Animal Services"),
   "Other Services": THE_REAL_TAGS.filter(t => t.category === "Other Services"),
+  "Childcare & Early Education": THE_REAL_TAGS.filter(t => t.category === "Childcare & Early Education"),
 };
 
 /**
@@ -1575,6 +1606,7 @@ export const THE_REAL_CATEGORIES: string[] = [
   "Automotive & Transportation",
   "Pets & Animal Services",
   "Other Services",
+  "Childcare & Early Education",
 ];
 
 /**
