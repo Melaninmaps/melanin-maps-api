@@ -283,7 +283,12 @@ export function FullMapView() {
       b.longitude >= -180 && b.longitude <= 180 &&
       // Exclude "Null Island" (0,0) — means coordinates were never geocoded
       (Math.abs(b.latitude) > 0.001 || Math.abs(b.longitude) > 0.001) &&
-      (activeCategory === "All" || b.category === activeCategory),
+      (activeCategory === "All"
+        || (activeCategory === "International"
+            ? (b.country && b.country !== "USA" && b.country !== "United States")
+            : activeCategory === "Healthcare"
+            ? b.category === "Health & Wellness"
+            : b.category === activeCategory)),
   );
 
   // ── Auto-fit to business pins on first load ────────────────────────────────

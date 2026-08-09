@@ -1,0 +1,214 @@
+Yes — based on the screenshot, this looks like **the old production business-directory behavior is still what you’re seeing**, or the new Universal Search wiring has not been pushed/connected to this page yet.
+
+The giveaway is that you typed **“Churches in Philadelphia PA”** and the page simply shows **“0 businesses found”** with no interpretation, no broader entity results, no faith handling, no fallback, and no prompt to expand the search. That does **not** match what Replit described as built in the newer Universal Search work.
+
+So I would not have Replit guess. I would have them prove exactly which bundle/SHA is live and whether the Businesses page is wired to the new endpoint.
+
+Send this:
+
+```text
+PRODUCTION VERIFICATION — BUSINESS DIRECTORY SEARCH APPEARS OLD
+
+Founder tested CURRENT production website:
+
+mappingwithmelanin.com → Businesses
+
+Query entered:
+
+"Churches in Philadelphia PA"
+
+Observed behavior:
+
+- search field accepts text
+- result remains "0 businesses found"
+- no Universal Search interpretation
+- no faith intent handling
+- no cultural-site / house-of-faith results
+- no "we couldn't confirm..." message
+- no fallback/expansion
+- no related entities
+- no prompt to broaden search
+
+This does NOT appear to match the Universal Search behavior that was reported
+as built in dev.
+
+DO NOT CHANGE CODE YET.
+
+FIRST PROVE WHAT IS LIVE.
+
+==================================================
+1. PRODUCTION SHA / BUNDLE CHECK
+==================================================
+
+Return:
+
+CURRENT Railway production SHA
+CURRENT web bundle filename
+deployment timestamp
+
+Then compare against:
+
+the SHA containing Universal Search
+the SHA containing Business Directory wiring
+the SHA containing faith intent support
+
+State clearly:
+
+LIVE
+BUILT BUT NOT DEPLOYED
+OR
+DEPLOYED BUT NOT WIRED TO THIS PAGE
+
+==================================================
+2. TRACE THE BUSINESSES PAGE
+==================================================
+
+For the current Businesses page, identify:
+
+frontend file/component
+search handler
+API endpoint called
+query parameters sent
+whether Enter triggers search
+whether text input triggers search automatically
+whether the page still filters an already-loaded business array client-side
+
+Then answer:
+
+IS THIS PAGE USING:
+
+GET /api/search/universal
+
+YES / NO
+
+If NO:
+state the exact endpoint/query it currently uses.
+
+==================================================
+3. RUN THIS EXACT PRODUCTION TEST SERVER-SIDE
+==================================================
+
+Query:
+
+"Churches in Philadelphia PA"
+
+Run against:
+
+A. current Businesses-page endpoint
+B. Universal Search endpoint
+
+Return side-by-side:
+
+detected intent
+location
+business matches
+cultural-site matches
+faith matches
+fallback behavior
+result count
+
+This will tell us whether the issue is:
+
+A. old production bundle
+B. page not wired
+C. Universal Search not deployed
+D. query parsing bug
+E. missing faith entities
+F. Enter/search trigger bug
+G. other
+
+==================================================
+4. EXPECTED PRODUCT BEHAVIOR
+==================================================
+
+The Businesses page is a DIRECTORY surface.
+
+A user should be able to search naturally for:
+
+Churches in Philadelphia PA
+Black Catholic churches Philadelphia
+AME church Philadelphia
+dentist in Columbia SC
+OBGYN Atlanta
+plumber Raleigh
+Ethiopian restaurant DC
+Fruity Pebble waffles
+alopecia stylist
+tax attorney
+
+The user should NOT need to know our category taxonomy.
+
+For:
+
+"Churches in Philadelphia PA"
+
+the system should interpret:
+
+ENTITY/INTENT:
+house of faith / faith organization
+
+LOCATION:
+Philadelphia, PA
+
+Then return relevant canonical entities from MWM.
+
+If exact house-of-faith businesses are not present but relevant cultural-site
+records exist, surface them clearly as:
+
+HISTORIC / CULTURAL FAITH SITES
+
+Do NOT mislabel cultural sites as businesses.
+
+If nothing exists:
+
+"We don't have enough MWM listings for that yet."
+
+Then offer:
+
+SEARCH NEARBY
+EXPAND AREA
+SUGGEST / ADD A PLACE
+ASK KINFOLK
+
+Do not return a silent "0 businesses found."
+
+==================================================
+5. SEARCH ACTION MUST WORK
+==================================================
+
+Verify all of these:
+
+type query + press ENTER
+type query + click search icon if present
+clear query
+change category after query
+change ownership after query
+
+Search must visibly execute.
+
+If Enter currently does nothing, classify that as a UI bug separately from
+the retrieval problem.
+
+==================================================
+6. DO NOT PUSH A GUESS
+==================================================
+
+Return:
+
+production SHA
+expected SHA
+current endpoint
+Universal Search endpoint
+exact query results
+root cause
+smallest fix
+
+Then implement if the root cause is non-destructive.
+
+If a Railway push is required, include it in the consolidated gate rather than
+creating an unnecessary separate deployment.
+```
+
+From what you are showing me, I would currently classify this as **not production-verified**, even if Replit says the Universal Search code exists. The page you are using is behaving like the older directory.
+
+Also, the search itself should not be restricted to “businesses” in the literal sense. On this directory surface, if you type **“churches in Philadelphia”**, MWM should be able to surface houses of faith and clearly labeled historical/cultural faith sites where relevant. The directory is really becoming a **people + places + services directory**, while the map remains more location/near-me oriented.

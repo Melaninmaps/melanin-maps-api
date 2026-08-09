@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Search, MapPin, CheckCircle, Star, Loader2, ExternalLink } from "lucide-react";
+import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
+const API_BASE = import.meta.env.VITE_API_URL ?? "";
+
+// ── Types ───────────────────────────────────────────────────────────────────
 
 interface Business {
   id: string;
@@ -11,7 +14,8 @@ interface Business {
   category: string;
   subcategory?: string;
   city: string;
-  state: string;
+  state?: string | null;
+  country?: string | null;
   description?: string;
   blackOwned?: boolean;
   ownershipDesignations?: string[];
@@ -21,7 +25,38 @@ interface Business {
   featured?: boolean;
   imageUrl?: string;
   website?: string;
+  matchTier?: string;
+  matchReason?: string;
 }
+
+interface HeritageSite {
+  id: string;
+  name: string;
+  description?: string | null;
+  heritageCategory?: string | null;
+  pinType?: string | null;
+  city: string;
+  state: string;
+  externalUrl?: string | null;
+}
+
+interface UniversalResult {
+  query: string;
+  intentType: string;
+  totalResults: number;
+  fallbackMessage?: string | null;
+  namedBusinessNotFound?: boolean;
+  namedBusinessMessage?: string;
+  namedBusinessNextActions?: string[];
+  results: {
+    businesses: Business[];
+    heritage: HeritageSite[];
+    events: any[];
+    libraryTopics: any[];
+  };
+}
+
+// ── Constants ───────────────────────────────────────────────────────────────
 
 const OWNERSHIP_FILTERS = [
   "Black-Owned", "Minority-Owned", "Hispanic-Owned", "Women-Owned",
@@ -34,6 +69,8 @@ const CATEGORY_FILTERS = [
   "Home & Property", "Technology", "Automotive",
 ];
 
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
 function ownershipLabel(biz: Business): string | null {
   if (biz.ownershipDesignations && biz.ownershipDesignations.length > 0) {
     return biz.ownershipDesignations[0];
@@ -42,37 +79,194 @@ function ownershipLabel(biz: Business): string | null {
   return null;
 }
 
+function heritagePinLabel(site: HeritageSite): string {
+  const hc = site.heritageCategory ?? "";
+  const pt = site.pinType ?? "";
+  if (hc === "HBCU") return "HBCU";
+  if (hc === "Civil Rights") return "Civil Rights Site";
+  if (hc === "Religious Heritage") return "Historic Faith Site";
+  if (pt === "mural_or_public_art") return "Public Art";
+  if (pt === "community_org") return "Community Organization";
+  return hc || "Cultural Site";
+}
+
+// ── Business card ────────────────────────────────────────────────────────────
+
+function BusinessCard({ biz }: { biz: Business }) {
+  const ownership = ownershipLabel(biz);
+  return (
+    <Link href={`/businesses/${biz.id}`}
+      className="block bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+      <div className="relative h-48 overflow-hidden bg-[#2B1507]/8 flex items-center justify-center">
+        {biz.imageUrl ? (
+          <img src={biz.imageUrl} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2B1507]/10 to-[#CA922B]/10">
+            <ShieldCheck className="w-12 h-12 text-[#CA922B]/30" />
+          </div>
+        )}
+        {ownership && (
+          <div className="absolute top-3 left-3">
+            <span className="bg-[#2B1507]/85 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm capitalize">
+              {ownership}
+            </span>
+          </div>
+        )}
+        {biz.featured && (
+          <div className="absolute top-3 right-3">
+            <span className="bg-[#CA922B] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Featured</span>
+          </div>
+        )}
+      </div>
+      <div className="p-5">
+        <div className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase mb-1">
+          {biz.category}{biz.subcategory ? ` · ${biz.subcategory}` : ""} · {biz.city}{biz.state ? `, ${biz.state}` : ""}
+        </div>
+        <h3 className="font-serif font-bold text-lg text-[#3A1F0E] mb-2 group-hover:text-[#CA922B] transition-colors">{biz.name}</h3>
+        {biz.description && (
+          <p className="text-sm text-[#3A1F0E]/60 line-clamp-2 mb-3 font-light leading-relaxed">
+            {biz.description.replace(/^\[DEMO\]\s*/i, "")}
+          </p>
+        )}
+        <div className="flex items-center justify-between">
+          {(biz.reviewCount ?? 0) > 0 ? (
+            <div className="flex items-center gap-1.5">
+              <Star className="w-3.5 h-3.5 fill-[#CA922B] text-[#CA922B]" />
+              <span className="text-sm font-bold text-[#3A1F0E]">{(biz.averageRating ?? 0).toFixed(1)}</span>
+              <span className="text-xs text-[#3A1F0E]/50">({biz.reviewCount})</span>
+            </div>
+          ) : (
+            <span className="text-xs text-[#3A1F0E]/40">No reviews yet</span>
+          )}
+          <span className="text-xs font-bold text-[#CA922B] group-hover:underline">View →</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// ── Heritage site card ────────────────────────────────────────────────────────
+
+function HeritageSiteCard({ site }: { site: HeritageSite }) {
+  const label = heritagePinLabel(site);
+  const Inner = (
+    <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+      <div className="h-24 bg-gradient-to-br from-[#78716C]/10 to-[#CA922B]/10 flex items-center justify-center">
+        <span className="text-3xl">🏛️</span>
+      </div>
+      <div className="p-5">
+        <div className="text-[10px] font-bold tracking-widest text-[#78716C] uppercase mb-1">
+          {label} · {site.city}, {site.state}
+        </div>
+        <h3 className="font-serif font-bold text-base text-[#3A1F0E] mb-2 group-hover:text-[#CA922B] transition-colors">{site.name}</h3>
+        {site.description && (
+          <p className="text-xs text-[#3A1F0E]/60 line-clamp-2 font-light leading-relaxed">{site.description}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  if (site.externalUrl) {
+    return <a href={site.externalUrl} target="_blank" rel="noopener noreferrer">{Inner}</a>;
+  }
+  return Inner;
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+function EmptyState({ query, onClear }: { query: string; onClear: () => void }) {
+  return (
+    <div className="col-span-full py-20 flex flex-col items-center text-center">
+      <div className="w-16 h-16 rounded-full bg-[#CA922B]/10 flex items-center justify-center mb-6">
+        <Search className="w-7 h-7 text-[#CA922B]/60" />
+      </div>
+      <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">
+        {query ? `We don't have enough MWM listings for "${query}" yet.` : "No businesses match your filters."}
+      </h3>
+      <p className="text-sm text-[#3A1F0E]/50 max-w-md mb-8 font-light leading-relaxed">
+        {query
+          ? "Our directory grows every week. You can help by suggesting a place, or ask KinfolkAI to recommend alternatives."
+          : "Try clearing your filters to see the full directory."}
+      </p>
+      <div className="flex flex-wrap gap-3 justify-center">
+        {query && (
+          <>
+            <Link href={`/map?q=${encodeURIComponent(query)}`}>
+              <Button className="rounded-full bg-[#2B1507] text-white px-6 h-10 text-sm gap-2">
+                <MapPin className="w-4 h-4" /> Search on Map
+              </Button>
+            </Link>
+            <Link href="/travel">
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-6 h-10 text-sm gap-2 bg-transparent">
+                <MessageCircle className="w-4 h-4" /> Ask KinfolkAI
+              </Button>
+            </Link>
+            <Link href="/for-business-owners">
+              <Button variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] px-6 h-10 text-sm gap-2 bg-transparent">
+                <Plus className="w-4 h-4" /> Suggest a Place
+              </Button>
+            </Link>
+          </>
+        )}
+        <button onClick={onClear} className="text-sm font-bold text-[#CA922B] hover:underline px-4">
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function Businesses() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [filtered, setFiltered] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Directory state — loaded once on mount, used for browse mode
+  const [allBusinesses, setAllBusinesses] = useState<Business[]>([]);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
+
+  // Search state
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [activeOwnership, setActiveOwnership] = useState<string | null>(null);
 
+  // Universal Search state — populated on Enter/submit, null = browse mode
+  const [universalResult, setUniversalResult] = useState<UniversalResult | null>(null);
+  const [universalLoading, setUniversalLoading] = useState(false);
+  const [searchedQuery, setSearchedQuery] = useState("");
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load directory on mount
   useEffect(() => {
-    fetch(`${BASE}api/businesses?limit=100`, { credentials: "include" })
+    fetch(`${BASE}api/businesses?limit=200`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         const list: Business[] = Array.isArray(d) ? d : (d?.businesses ?? d?.data ?? []);
-        setBusinesses(list);
-        setFiltered(list);
+        setAllBusinesses(list);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setDirectoryLoading(false));
   }, []);
 
-  useEffect(() => {
-    let result = businesses;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(b =>
-        b.name?.toLowerCase().includes(q) ||
-        b.city?.toLowerCase().includes(q) ||
-        b.category?.toLowerCase().includes(q) ||
-        (b.ownershipDesignations ?? []).some(d => d.toLowerCase().includes(q))
-      );
-    }
+  // Universal Search — fires on Enter or button click
+  const runSearch = useCallback(async (q: string) => {
+    const query = q.trim();
+    if (!query || query.length < 2) return;
+    setSearchedQuery(query);
+    setUniversalLoading(true);
+    setUniversalResult(null);
+    try {
+      const p = new URLSearchParams({ q: query, surface: "directory", limit: "30" });
+      const res = await fetch(`${API_BASE}/api/search/universal?${p}`, { credentials: "include" });
+      if (res.ok) {
+        setUniversalResult(await res.json());
+      }
+    } catch { /* fall through to client-side browse */ }
+    finally { setUniversalLoading(false); }
+  }, []);
+
+  // Client-side filter for browse mode (when no active search)
+  const browseFiltered = (() => {
+    let result = allBusinesses;
     if (activeCategory !== "All") {
       result = result.filter(b => b.category?.toLowerCase().includes(activeCategory.toLowerCase()));
     }
@@ -83,14 +277,35 @@ export default function Businesses() {
         return label.includes(term) || (term === "black" && b.blackOwned);
       });
     }
-    setFiltered(result);
-  }, [search, activeCategory, activeOwnership, businesses]);
+    return result;
+  })();
+
+  const clearSearch = () => {
+    setSearch("");
+    setSearchedQuery("");
+    setUniversalResult(null);
+    inputRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") runSearch(search);
+  };
+
+  // Determine what to display
+  const isSearchMode = !!universalResult || universalLoading;
+  const universalBusinesses = universalResult?.results.businesses ?? [];
+  const universalHeritage = universalResult?.results.heritage ?? [];
+  const hasUniversalResults = universalBusinesses.length > 0 || universalHeritage.length > 0;
+
+  const loading = directoryLoading;
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
+
       {/* Hero */}
       <section className="bg-[#2B1507] py-24 relative overflow-hidden">
-        <img src={`${import.meta.env.BASE_URL}images/hero-businesses-bg.jpg`} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <img src={`${import.meta.env.BASE_URL}images/hero-businesses-bg.jpg`} alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-[#2B1507]/82 z-0" />
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-8">
@@ -102,131 +317,228 @@ export default function Businesses() {
             Everywhere You Go.
           </h1>
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-10 font-light">
-            Connect with community-verified minority-owned businesses, service providers, and entrepreneurs.
+            Search naturally — churches, dentists, OBGYN, tax attorneys, Ethiopian restaurants. The directory finds what you need.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <a href="#directory"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Browse Directory →</Button></a>
-            <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">List Your Business</Button></Link>
+            <a href="#directory">
+              <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Browse Directory →</Button>
+            </a>
+            <Link href="/for-business-owners">
+              <Button variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">List Your Business</Button>
+            </Link>
           </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 max-w-6xl py-16">
-        {/* Search + filters */}
-        <div className="mb-10 space-y-5">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#3A1F0E]/40" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search businesses, cities, or categories…"
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/50 shadow-sm text-base"
-            />
+      <div className="container mx-auto px-4 max-w-6xl py-16" id="directory">
+
+        {/* Search bar */}
+        <div className="mb-8 space-y-5">
+          <div className="relative flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#3A1F0E]/40 pointer-events-none" />
+              <input
+                ref={inputRef}
+                value={search}
+                onChange={e => {
+                  setSearch(e.target.value);
+                  // Clear universal results when user changes the query
+                  if (universalResult) { setUniversalResult(null); setSearchedQuery(""); }
+                }}
+                onKeyDown={handleKeyDown}
+                placeholder="Try: Churches in Philadelphia · OBGYN Atlanta · Ethiopian restaurant DC · tax attorney"
+                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] placeholder-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/50 shadow-sm text-base"
+              />
+            </div>
+            <button
+              onClick={() => runSearch(search)}
+              disabled={universalLoading || !search.trim()}
+              className="px-6 py-4 rounded-2xl bg-[#2B1507] text-white font-bold text-sm flex items-center gap-2 hover:bg-[#3A1F0E] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            >
+              {universalLoading
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <><Search className="w-4 h-4" /> Search</>}
+            </button>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {CATEGORY_FILTERS.map(c => (
-              <button key={c} onClick={() => setActiveCategory(c)}
-                className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${c === activeCategory ? 'bg-[#3A1F0E] text-white' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
-                {c}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {OWNERSHIP_FILTERS.map(c => (
-              <button key={c} onClick={() => setActiveOwnership(activeOwnership === c ? null : c)}
-                className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeOwnership === c ? 'bg-[#CA922B] text-white border border-[#CA922B]' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
-                {c}
-              </button>
-            ))}
-          </div>
+
+          {/* Search hint — only shown when not in search mode */}
+          {!isSearchMode && (
+            <p className="text-xs text-[#3A1F0E]/40 font-medium pl-1">
+              Press Enter or click Search to find anything — businesses, faith communities, healthcare providers, and more.
+            </p>
+          )}
+
+          {/* Browse filters — shown only in browse mode */}
+          {!isSearchMode && (
+            <>
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {CATEGORY_FILTERS.map(c => (
+                  <button key={c} onClick={() => setActiveCategory(c)}
+                    className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${c === activeCategory ? 'bg-[#3A1F0E] text-white' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+                {OWNERSHIP_FILTERS.map(c => (
+                  <button key={c} onClick={() => setActiveOwnership(activeOwnership === c ? null : c)}
+                    className={`px-5 py-2.5 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeOwnership === c ? 'bg-[#CA922B] text-white border border-[#CA922B]' : 'bg-white border border-[#3A1F0E]/10 text-[#3A1F0E] hover:border-[#CA922B]'}`}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Result count */}
-        {!loading && (
-          <div className="mb-6 flex items-center justify-between">
-            <p className="text-sm text-[#3A1F0E]/60 font-medium">
-              {filtered.length} {filtered.length === 1 ? "business" : "businesses"} found
-            </p>
-            <div className="flex gap-3">
-              <Link href="/for-business-owners"><Button variant="outline" className="rounded-full border-[#3A1F0E]/30 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] text-sm">Submit a Business</Button></Link>
-              <Link href="/map"><Button className="rounded-full bg-[#2B1507] text-white text-sm"><MapPin className="w-4 h-4 mr-2"/> Near Me</Button></Link>
-            </div>
+        {/* ── SEARCH MODE ─────────────────────────────────────────────────── */}
+        {isSearchMode && (
+          <div className="mb-10">
+            {/* Back to browse */}
+            <button onClick={clearSearch}
+              className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors mb-6">
+              ← Back to directory
+            </button>
+
+            {/* Loading */}
+            {universalLoading && (
+              <div className="flex items-center justify-center py-24 gap-3">
+                <Loader2 className="w-6 h-6 text-[#CA922B] animate-spin" />
+                <span className="text-sm text-[#3A1F0E]/60 font-medium">Searching the community directory…</span>
+              </div>
+            )}
+
+            {/* Results */}
+            {universalResult && !universalLoading && (
+              <>
+                {/* Intent label + result count */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-sm font-bold text-[#3A1F0E]">
+                      {universalResult.totalResults > 0
+                        ? `${universalResult.totalResults} result${universalResult.totalResults === 1 ? "" : "s"} for "${searchedQuery}"`
+                        : `No results for "${searchedQuery}"`}
+                    </p>
+                    {universalResult.fallbackMessage && (
+                      <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{universalResult.fallbackMessage}</p>
+                    )}
+                  </div>
+                  {universalResult.intentType && universalResult.intentType !== "unknown" && (
+                    <span className="text-[10px] font-bold tracking-widest text-[#CA922B]/70 uppercase">
+                      {universalResult.intentType.replace(/_/g, " ")} intent
+                    </span>
+                  )}
+                </div>
+
+                {/* Heritage sites — labeled clearly so they're not confused with businesses */}
+                {universalHeritage.length > 0 && (
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                      <span className="text-[10px] font-bold tracking-widest text-[#78716C] uppercase">Historic & Cultural Sites</span>
+                      <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {universalHeritage.map(site => (
+                        <HeritageSiteCard key={site.id} site={site} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Business results */}
+                {universalBusinesses.length > 0 && (
+                  <div className="mb-8">
+                    {universalHeritage.length > 0 && (
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                        <span className="text-[10px] font-bold tracking-widest text-[#3A1F0E]/40 uppercase">Businesses</span>
+                        <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {universalBusinesses.map(biz => (
+                        <BusinessCard key={biz.id} biz={biz} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No results empty state */}
+                {!hasUniversalResults && (
+                  <div className="grid grid-cols-1">
+                    <EmptyState query={searchedQuery} onClear={clearSearch} />
+                  </div>
+                )}
+
+                {/* Next actions — always shown after search, even with results */}
+                {hasUniversalResults && (
+                  <div className="mt-8 flex flex-wrap gap-3 items-center justify-center border-t border-[#3A1F0E]/6 pt-8">
+                    <span className="text-xs text-[#3A1F0E]/40 font-medium">Not what you were looking for?</span>
+                    <Link href={`/map?q=${encodeURIComponent(searchedQuery)}`}>
+                      <button className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/60 hover:text-[#CA922B] transition-colors">
+                        <MapPin className="w-3.5 h-3.5" /> Search on Map
+                      </button>
+                    </Link>
+                    <Link href="/travel">
+                      <button className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/60 hover:text-[#CA922B] transition-colors">
+                        <MessageCircle className="w-3.5 h-3.5" /> Ask KinfolkAI
+                      </button>
+                    </Link>
+                    <Link href="/for-business-owners">
+                      <button className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/60 hover:text-[#CA922B] transition-colors">
+                        <Plus className="w-3.5 h-3.5" /> Suggest a Place
+                      </button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {/* Grid */}
-        <div id="directory" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {loading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden animate-pulse">
-                <div className="h-48 bg-[#3A1F0E]/5" />
-                <div className="p-5 space-y-3">
-                  <div className="h-4 bg-[#3A1F0E]/5 rounded w-3/4" />
-                  <div className="h-4 bg-[#3A1F0E]/5 rounded w-1/2" />
+        {/* ── BROWSE MODE ──────────────────────────────────────────────────── */}
+        {!isSearchMode && (
+          <>
+            {/* Result count row */}
+            {!loading && (
+              <div className="mb-6 flex items-center justify-between">
+                <p className="text-sm text-[#3A1F0E]/60 font-medium">
+                  {browseFiltered.length} {browseFiltered.length === 1 ? "business" : "businesses"}
+                  {activeCategory !== "All" || activeOwnership ? " matching filters" : " in directory"}
+                </p>
+                <div className="flex gap-3">
+                  <Link href="/for-business-owners">
+                    <Button variant="outline" className="rounded-full border-[#3A1F0E]/30 text-[#3A1F0E] hover:border-[#CA922B] hover:text-[#CA922B] text-sm bg-transparent">Submit a Business</Button>
+                  </Link>
+                  <Link href="/map">
+                    <Button className="rounded-full bg-[#2B1507] text-white text-sm">
+                      <MapPin className="w-4 h-4 mr-2" /> Near Me
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            ))
-          ) : filtered.length === 0 ? (
-            <div className="col-span-full py-24 text-center">
-              <Search className="w-12 h-12 text-[#3A1F0E]/20 mx-auto mb-4" />
-              <p className="text-xl text-[#3A1F0E]/50 font-medium">No businesses match your search.</p>
-              <button onClick={() => { setSearch(""); setActiveCategory("All"); setActiveOwnership(null); }}
-                className="mt-4 text-[#CA922B] font-bold text-sm hover:underline">Clear filters</button>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden animate-pulse">
+                    <div className="h-48 bg-[#3A1F0E]/5" />
+                    <div className="p-5 space-y-3">
+                      <div className="h-4 bg-[#3A1F0E]/5 rounded w-3/4" />
+                      <div className="h-4 bg-[#3A1F0E]/5 rounded w-1/2" />
+                    </div>
+                  </div>
+                ))
+              ) : browseFiltered.length === 0 ? (
+                <EmptyState query="" onClear={() => { setActiveCategory("All"); setActiveOwnership(null); }} />
+              ) : (
+                browseFiltered.map(biz => <BusinessCard key={biz.id} biz={biz} />)
+              )}
             </div>
-          ) : (
-            filtered.map(biz => {
-              const ownership = ownershipLabel(biz);
-              return (
-                <Link key={biz.id} href={`/businesses/${biz.id}`}
-                  className="block bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                  {/* Image / placeholder */}
-                  <div className="relative h-48 overflow-hidden bg-[#2B1507]/8 flex items-center justify-center">
-                    {biz.imageUrl ? (
-                      <img src={biz.imageUrl} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2B1507]/10 to-[#CA922B]/10">
-                        <ShieldCheck className="w-12 h-12 text-[#CA922B]/30" />
-                      </div>
-                    )}
-                    {ownership && (
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-[#2B1507]/85 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm">
-                          {ownership}
-                        </span>
-                      </div>
-                    )}
-                    {biz.featured && (
-                      <div className="absolute top-3 right-3">
-                        <span className="bg-[#CA922B] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Featured</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <div className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase mb-1">
-                      {biz.category} · {biz.city}{biz.state ? `, ${biz.state}` : ""}
-                    </div>
-                    <h3 className="font-serif font-bold text-lg text-[#3A1F0E] mb-2 group-hover:text-[#CA922B] transition-colors">{biz.name}</h3>
-                    {biz.description && (
-                      <p className="text-sm text-[#3A1F0E]/60 line-clamp-2 mb-3 font-light leading-relaxed">{biz.description.replace(/^\[DEMO\]\s*/i, "")}</p>
-                    )}
-                    <div className="flex items-center justify-between">
-                      {(biz.reviewCount ?? 0) > 0 ? (
-                        <div className="flex items-center gap-1.5">
-                          <Star className="w-3.5 h-3.5 fill-[#CA922B] text-[#CA922B]" />
-                          <span className="text-sm font-bold text-[#3A1F0E]">{(biz.averageRating ?? 0).toFixed(1)}</span>
-                          <span className="text-xs text-[#3A1F0E]/50">({biz.reviewCount})</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[#3A1F0E]/40">No reviews yet</span>
-                      )}
-                      <span className="text-xs font-bold text-[#CA922B] group-hover:underline">View →</span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })
-          )}
-        </div>
+          </>
+        )}
 
         {/* CTA */}
         <div className="bg-[#FAF6EF] p-12 rounded-3xl border border-[#3A1F0E]/10 flex flex-col md:flex-row items-center gap-12 mt-8">
@@ -242,16 +554,23 @@ export default function Businesses() {
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
-              <Link href="/for-business-owners"><Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Submit a Business</Button></Link>
-              <Link href="/map"><Button variant="outline" className="rounded-full border-[#2B1507] text-[#2B1507] px-8 h-12">Explore the Map</Button></Link>
+              <Link href="/for-business-owners">
+                <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-12">Submit a Business</Button>
+              </Link>
+              <Link href="/map">
+                <Button variant="outline" className="rounded-full border-[#2B1507] text-[#2B1507] px-8 h-12 bg-transparent">Explore the Map</Button>
+              </Link>
             </div>
           </div>
           <div className="w-full md:w-1/3 bg-white p-8 rounded-2xl shadow-lg border border-[#3A1F0E]/5 transform rotate-2">
-            <div className="w-16 h-16 bg-[#2B1507] rounded-full mx-auto mb-6 flex items-center justify-center"><ShieldCheck className="w-8 h-8 text-[#CA922B]"/></div>
+            <div className="w-16 h-16 bg-[#2B1507] rounded-full mx-auto mb-6 flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8 text-[#CA922B]" />
+            </div>
             <div className="text-center font-serif font-bold text-2xl text-[#3A1F0E] mb-2">Get Listed</div>
             <div className="text-center text-[#3A1F0E]/60 text-sm">Join the network of trusted minority-owned businesses today.</div>
           </div>
         </div>
+
       </div>
     </div>
   );

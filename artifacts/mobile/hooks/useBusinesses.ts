@@ -30,6 +30,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
     address: b.address as string,
     city: b.city as string,
     state: b.state as string,
+    country: b.country as string | undefined,
     rating: typeof b.rating === "string" ? parseFloat(b.rating) : (b.rating as number),
     reviewCount: b.reviewCount as number,
     verified: b.verified as boolean,

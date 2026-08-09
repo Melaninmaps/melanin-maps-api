@@ -1,0 +1,240 @@
+Yes — that is concerning, because it means there are **two separate problems**, not one.
+
+The first problem is now proven: the live Businesses page is still using the old client-side filter and Universal Search was never wired/deployed there.
+
+The second problem is the one you just caught: **even the old client-side search should have found a church if churches you added are actually stored in the same business dataset the page loaded.** If your mother's church or other Philadelphia churches are already in production and categorized in a searchable way, then `Churches in Philadelphia PA` returning zero suggests either those records are not in the 100 loaded businesses, they are stored as another entity type, their category is not normalized to something the old page searches, or the production dataset is not the one you thought you were testing.
+
+So I would not let Replit stop at “we wired Universal Search.” Have it prove where the churches are first.
+
+Send this immediately while they are still working:
+
+```text
+ADD TO CURRENT DIAGNOSIS — DO NOT CLOSE THIS AS ONLY A UI-WIRING ISSUE
+
+The founder has already added houses of faith, including a church personally
+known to her, and MWM also contains historical Philadelphia churches.
+
+Therefore:
+
+"Churches in Philadelphia PA" returning 0 results raises a SECOND question.
+
+Even though the /businesses page was using old client-side filtering, we need
+to prove where the existing church/faith records actually live and why they
+were not discoverable.
+
+DO THIS BEFORE DECLARING THE FIX COMPLETE.
+
+==================================================
+1. AUDIT EXISTING PHILADELPHIA FAITH ENTITIES
+==================================================
+
+Search RAILWAY PRODUCTION for every real Philadelphia-area record that could
+reasonably be considered:
+
+church
+house of faith
+religious organization
+AME
+Baptist
+Catholic
+Black Catholic
+COGIC
+Orthodox
+mosque
+Islamic center
+synagogue
+temple
+gurdwara
+faith organization
+historic church
+religious cultural site
+
+Search across:
+
+businesses
+cultural_sites
+tour_cultural_sites
+community organizations
+Library/entity connection tables
+any faith-specific table/config if one exists
+
+Return:
+
+entity_id
+entity_type
+name
+category
+subcategory
+city/state
+address
+ownership/community designation if applicable
+source/origin
+active/status
+whether it is currently returned by /businesses
+whether it is currently returned by Universal Search
+
+==================================================
+2. SPECIFICALLY IDENTIFY FOUNDER-ADDED CHURCHES
+==================================================
+
+Identify church/faith records added by the founder/admin where possible.
+
+Do not expose unnecessary private data.
+
+State:
+
+FOUND IN RAILWAY PRODUCTION — YES/NO
+CANONICAL ENTITY TYPE
+CURRENT SEARCHABLE FIELDS
+CURRENTLY INDEXED BY UNIVERSAL SEARCH — YES/NO
+
+If a known founder-added church is missing from production, identify where it
+exists instead and why.
+
+==================================================
+3. EXPLAIN THE 100-BUSINESS LIMIT
+==================================================
+
+The current /businesses page loads 100 businesses on mount.
+
+Determine whether this means:
+
+- there are more than 100 production businesses
+- faith entities beyond the first 100 were never loaded
+- ordering/pagination caused them to be invisible
+- faith entities are not business rows at all
+
+A directory search MUST NOT be limited to a random/preloaded first 100 records.
+
+Universal Search should query the backend dataset, not filter a truncated
+frontend list.
+
+==================================================
+4. ENTITY-TYPE RULE
+==================================================
+
+Do not force every house of faith into "business" solely to make it searchable.
+
+MWM needs canonical entity distinctions.
+
+Possible entity types:
+
+BUSINESS / PRACTICE
+HOUSE OF FAITH
+CULTURAL SITE
+COMMUNITY ORGANIZATION
+PROFESSIONAL
+EVENT
+etc.
+
+Universal Search may surface all relevant entity types while labeling them
+correctly.
+
+Example query:
+
+"Churches in Philadelphia PA"
+
+could return sections such as:
+
+HOUSES OF FAITH
+HISTORIC / CULTURAL FAITH SITES
+RELATED COMMUNITY ORGANIZATIONS
+
+It should not say "0 businesses" simply because a church is not represented
+as a business row.
+
+==================================================
+5. MOTHER BETHEL / HISTORICAL CHURCH TEST
+==================================================
+
+Use Mother Bethel AME Church as a known canonical test because the Knowledge
+Graph work already proved it exists.
+
+Test:
+
+"Mother Bethel"
+"AME church Philadelphia"
+"historic Black churches Philadelphia"
+"churches Philadelphia"
+
+For each return:
+
+matched entity
+entity type
+source table
+match reason
+location
+canonical ID
+
+Mother Bethel must not disappear simply because the user happens to search
+from the Businesses/Directory surface.
+
+==================================================
+6. USER-FACING DIRECTORY PRINCIPLE
+==================================================
+
+The page currently called Businesses is effectively becoming MWM's
+DIRECTORY / DISCOVERY surface.
+
+The user is searching for WHO or WHAT they need, not our database table.
+
+They may search:
+
+OBGYN
+Black Catholic church
+dentist
+plumber
+doula
+mosque
+childcare
+museum
+Ethiopian restaurant
+tax attorney
+
+The system should resolve the relevant canonical entity type.
+
+Do not expose database architecture to the user.
+
+==================================================
+7. ACCEPTANCE TEST AFTER WIRING
+==================================================
+
+After Universal Search is wired to this page, prove in dev:
+
+"Churches in Philadelphia PA"
+
+must return all valid matching MWM entities, including already-existing
+faith/historical records where relevant.
+
+Also test:
+
+"Mother Bethel"
+"AME church Philadelphia"
+"Black Catholic churches Philadelphia"
+
+If a query has no MWM result, use the approved fallback behavior.
+
+Do not return silent zero.
+
+==================================================
+8. REPORT BEFORE PUSH
+==================================================
+
+Return:
+
+number of Philadelphia faith entities found in production
+where each entity type is stored
+whether founder-added records are present
+why old search missed them
+whether the first-100 limitation contributed
+whether Universal Search sees them now
+exact acceptance results
+
+Then continue the current non-destructive wiring work.
+```
+
+The **100-record preload** is especially important. Even if churches are stored correctly, a page that loads only 100 records and then searches locally can falsely tell a user “nothing exists” simply because the matching record was record 101. That is not a real search engine.
+
+I also think this confirms a naming issue we were already moving toward: the top navigation can still say **Businesses** if you prefer, but the actual search behavior underneath needs to be closer to **MWM Directory**. People are looking for *a doctor, church, hairstylist, plumber, nonprofit, museum, childcare center or restaurant*. They should not have to understand whether MWM stores that thing as a `business`, `professional`, `house_of_faith`, or `cultural_site`.
+
+So I would let Replit continue wiring Universal Search, but **do not accept the task as finished until they prove your existing churches are actually in production and searchable.**

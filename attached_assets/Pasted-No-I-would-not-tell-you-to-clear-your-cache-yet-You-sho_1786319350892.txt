@@ -1,0 +1,299 @@
+No — I would **not tell you to clear your cache yet**. You should not have to keep doing that just to see whether a core feature works. If repeated cache-clearing is required, that is itself a deployment/versioning problem Replit needs to fix.
+
+This screenshot is more serious than the business-directory one because Replit explicitly reported that **Philadelphia exists as a geography node with 7 connected subtopics**, yet the live Library says **“No topics found”** and offers **“Request ‘Philadelphia’ as a topic.”** Those two states directly contradict each other.
+
+That points to one of a few likely causes: the Library page is still reading the old `knowledge_topics` query instead of the new graph-aware endpoint; the new code is built but not deployed; the production database does not contain the seeded Philadelphia graph despite dev proof; or the browser is serving an older bundle. We should prove which one before touching your browser.
+
+Send Replit this:
+
+```text
+CRITICAL PRODUCTION CONTRADICTION — LIBRARY SEARCH
+
+Founder tested CURRENT production website:
+
+mappingwithmelanin.com → Library → Browse Topics
+
+Search:
+
+Philadelphia
+
+LIVE RESULT:
+
+"No topics found"
+
+and button:
+
+Request "Philadelphia" as a topic
+
+THIS DIRECTLY CONTRADICTS THE IMPLEMENTATION PROOF ALREADY PROVIDED.
+
+Replit previously proved the graph contains:
+
+Philadelphia                         node_type=geography
+Philadelphia Black History
+Philadelphia Businesses
+Philadelphia Employment
+Philadelphia Faith
+Philadelphia History
+Philadelphia Nightlife
+Philadelphia Real Estate
+
+and reported those relationships as successfully seeded.
+
+DO NOT ASK THE FOUNDER TO CLEAR CACHE YET.
+
+FIRST DETERMINE WHETHER THIS IS:
+
+A. OLD WEB BUNDLE
+B. NEW BUNDLE NOT DEPLOYED
+C. LIBRARY UI STILL USING LEGACY ENDPOINT
+D. RAILWAY DB DOES NOT CONTAIN THE GRAPH DATA
+E. FRONTEND FILTER LOGIC EXCLUDES GEOGRAPHY NODES
+F. API RESPONSE EXISTS BUT UI DOES NOT RENDER IT
+G. SERVICE-WORKER / CACHE VERSIONING ISSUE
+H. OTHER
+
+==================================================
+1. PROVE THE LIVE DEPLOYMENT
+==================================================
+
+Return:
+
+CURRENT Railway production SHA
+CURRENT web bundle filename
+deployment timestamp
+
+Compare to:
+
+SHA containing:
+- Philadelphia Knowledge Graph seed
+- Layer 2 retrieval routes
+- Library Knowledge Panel
+- Library graph search/wiring
+
+State clearly for each:
+
+BUILT
+DEV VERIFIED
+DEPLOYED
+PRODUCTION VERIFIED
+
+Do not use "complete" unless production verified.
+
+==================================================
+2. PROVE THE PRODUCTION DATABASE
+==================================================
+
+Query RAILWAY PRODUCTION DATABASE directly.
+
+Return the actual production rows for:
+
+Philadelphia
+Philadelphia Black History
+Philadelphia Businesses
+Philadelphia Employment
+Philadelphia Faith
+Philadelphia History
+Philadelphia Nightlife
+Philadelphia Real Estate
+
+Include:
+
+topic_id
+topic_name
+node_type
+geography_ref
+status
+
+Then return the 8 expected topic_relationships.
+
+If those rows are NOT in Railway production, say that plainly.
+
+Do not confuse Replit dev/prod DB with Railway production again.
+
+==================================================
+3. TRACE THE LIVE LIBRARY SEARCH
+==================================================
+
+Identify the exact production frontend code used when the founder types:
+
+Philadelphia
+
+Return:
+
+component/file
+search handler
+API endpoint
+request parameters
+response shape
+client-side filters
+
+Answer specifically:
+
+Does Library Browse Topics search:
+
+A. legacy /api/library/topics
+B. /api/search/universal
+C. /api/knowledge/graph
+D. another endpoint
+
+Does that endpoint return geography nodes?
+
+YES / NO
+
+Does the frontend FILTER OUT node_type='geography'?
+
+YES / NO
+
+Why does it display:
+
+Request "Philadelphia" as a topic
+
+when Philadelphia already exists?
+
+==================================================
+4. RUN THE EXACT LIVE REQUEST
+==================================================
+
+Execute the exact request that the production Library page makes for:
+
+Philadelphia
+
+Return the raw relevant result:
+
+HTTP status
+result count
+topic IDs
+topic names
+node types
+
+Then execute the equivalent graph/universal request.
+
+Compare them side-by-side.
+
+==================================================
+5. EXPECTED BEHAVIOR
+==================================================
+
+Searching:
+
+Philadelphia
+
+in the Library should NEVER offer:
+
+Request "Philadelphia" as a topic
+
+if Philadelphia already exists as a canonical geography node.
+
+Instead it should surface something like:
+
+PHILADELPHIA
+Geography / Living Legacy City
+
+Explore:
+
+Black History
+History
+Nightlife
+Businesses
+Employment
+Faith
+Real Estate
+
+plus connected:
+
+cultural sites
+businesses
+events
+sources
+community content
+Cultural Ambassador content
+
+as those layers become populated.
+
+Philadelphia itself is the BOOK / geography hub.
+
+Its connected subjects are books/volumes underneath it.
+
+==================================================
+6. REQUEST-TOPIC SAFETY RULE
+==================================================
+
+Before showing:
+
+Request "[query]" as a topic
+
+the system MUST check:
+
+exact canonical topic
+geography aliases
+related graph nodes
+Universal Search aliases
+normalized spelling
+
+A request should only be offered if no canonical or related entity already
+exists.
+
+Otherwise we will create duplicate Library topics.
+
+==================================================
+7. CACHE / SERVICE-WORKER AUDIT
+==================================================
+
+ONLY AFTER proving the server state, check browser caching.
+
+Determine:
+
+Is a service worker registered?
+Are JS bundles served with hashed filenames?
+What Cache-Control headers are returned for index.html?
+What Cache-Control headers are returned for hashed assets?
+Can an old index.html continue pointing to an obsolete bundle?
+Does Railway/CDN invalidate HTML correctly after deployment?
+
+Desired deployment behavior:
+
+index.html:
+NO long-lived immutable cache
+
+hashed JS/CSS assets:
+long-lived immutable cache is fine
+
+Users should receive the current HTML/bundle automatically after normal reload.
+
+The founder should NOT routinely need to:
+
+clear browser cache
+delete website data
+use private browsing
+hard refresh
+
+to receive current production releases.
+
+If those actions are repeatedly required, classify that as a deployment defect
+and fix the caching/version strategy.
+
+==================================================
+8. DO NOT FIX BY TELLING THE USER TO CLEAR CACHE
+==================================================
+
+Cache clearing may be used ONCE as a diagnostic comparison after the above
+proof.
+
+It is not the product fix.
+
+Return:
+
+production SHA
+production DB proof
+Library endpoint
+raw "Philadelphia" response
+root cause
+whether cache contributed
+smallest durable fix
+candidate SHA if code change required
+```
+
+The **expected Library behavior here is very clear**: Philadelphia is already supposed to be a canonical geography topic, so the system should recognize it and open the Philadelphia knowledge hierarchy. The “Request Philadelphia as a topic” button should be impossible in that situation.
+
+And on the cache question: a normal browser can occasionally hold an old asset briefly, but with hashed bundles and sane cache headers, users should generally get new deployments through an ordinary reload/navigation. **You having to repeatedly clear Safari's cache is not an acceptable launch workflow.** I would have Replit audit that deployment behavior as part of this same investigation rather than making you compensate for it.

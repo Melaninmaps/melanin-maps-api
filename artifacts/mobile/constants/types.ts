@@ -17,6 +17,7 @@ export interface Business {
   address: string;
   city: string;
   state: string;
+  country?: string;
   rating: number;
   reviewCount: number;
   verified: boolean;

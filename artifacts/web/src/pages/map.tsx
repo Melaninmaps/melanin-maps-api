@@ -147,7 +147,7 @@ function getConfidenceLabel(level: string): string {
 
 type RouteInfo = { distance: string; duration: string; bizName: string };
 
-const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional"];
+const CATEGORIES = ["All", "Food", "Beauty", "Finance", "Wellness", "Retail", "Cultural", "Professional", "Healthcare", "Trades & Education", "International"];
 
 // ── "What are you in the mood for?" discovery intent chips ─────────────────
 type MoodChip = { id: string; label: string };
@@ -332,7 +332,18 @@ export default function MapPage() {
       const tokens = search.toLowerCase().split(",").map((t) => t.trim()).filter(Boolean);
       const fields = [b.name, b.city, b.state, b.category].map((f) => f?.toLowerCase() ?? "");
       const matchSearch = tokens.length === 0 || tokens.every((t) => fields.some((f) => f.includes(t)));
-      const matchCat = category === "All" || b.category?.toLowerCase().includes(category.toLowerCase());
+      const bAny = b as any;
+      const matchCat = category === "All"
+        || (category === "International"
+            ? bAny.country && bAny.country !== "USA" && bAny.country !== "United States"
+            : category === "Healthcare"
+            ? b.category?.toLowerCase().includes("health")
+            : category === "Trades & Education"
+            ? b.category?.toLowerCase().includes("education") ||
+              (b as any).subcategory?.toLowerCase().includes("trade") ||
+              (b as any).subcategory?.toLowerCase().includes("workforce") ||
+              (b as any).subcategory?.toLowerCase().includes("apprenticeship")
+            : b.category?.toLowerCase().includes(category.toLowerCase()));
       const matchMood = mood === null || matchesMood(b, mood);
       // Near Me radius filter — only applied when GPS is available and mode is active
       const matchNear = nearMeRadius === null || !userCoords || (() => {

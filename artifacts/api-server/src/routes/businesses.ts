@@ -55,7 +55,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
   // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
   try {
     await withDbRetry(async () => {
-    const { category, city, search, state, handle, culturalPreference, ownership, offset: offsetParam, limit: limitParam, lat: latParam, lng: lngParam, radius: radiusParam } = req.query;
+    const { category, city, search, state, country, subcategory, handle, culturalPreference, ownership, offset: offsetParam, limit: limitParam, lat: latParam, lng: lngParam, radius: radiusParam } = req.query;
     const offset = Math.max(0, parseInt((offsetParam as string) ?? "0", 10) || 0);
     const pageLimit = Math.min(200, Math.max(1, parseInt((limitParam as string) ?? "200", 10) || 200));
 
@@ -109,6 +109,14 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
     if (state && typeof state === "string") {
       conditions.push(ilike(businessesTable.state, `%${state}%`));
+    }
+
+    if (country && typeof country === "string") {
+      conditions.push(ilike(businessesTable.country, `%${country}%`));
+    }
+
+    if (subcategory && typeof subcategory === "string") {
+      conditions.push(ilike(businessesTable.subcategory, `%${subcategory}%`));
     }
 
     if (handle && typeof handle === "string") {

@@ -433,6 +433,8 @@ export const ALERTS: AlertItem[] = [
 
 export const CATEGORIES = [
   "All",
+  "Healthcare",
+  "International",
   "Food & Drink",
   "Beauty & Personal Care",
   "Health & Wellness",
