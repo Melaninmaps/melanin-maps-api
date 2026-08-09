@@ -1,0 +1,745 @@
+MAPPING WITH MELANIN™
+LIBRARY EXPANSION — FAITH, SPIRITUALITY & HOUSES OF FAITH
+IMPLEMENTATION ADDENDUM
+
+FOUNDER DECISION:
+Faith, spirituality, religious history, and Houses of Faith must be incorporated
+into the Mapping With Melanin Library architecture and Universal Search.
+
+This is NOT simply a directory of churches.
+
+Faith institutions are often cultural and community anchors. They may function as:
+
+- places of worship
+- historical landmarks
+- cultural preservation centers
+- immigrant/community gathering spaces
+- food and mutual-aid resources
+- youth and family centers
+- educational institutions
+- music and arts institutions
+- civil-rights/community organizing spaces
+- funeral/memorial spaces
+- wedding/celebration spaces
+- language-preservation communities
+- volunteer organizations
+- social-service providers
+
+The architecture must represent this broader role.
+
+==================================================
+1. LIBRARY ARCHITECTURE
+==================================================
+
+Create a primary Library Collection:
+
+FAITH, SPIRITUALITY & COMMUNITY
+
+Use the approved Library architecture:
+
+COLLECTION
+→ BOOK
+→ SECTIONS
+→ ENTRIES / SOURCES / STORIES / MEDIA
+
+Do NOT create one giant "Religion" page.
+
+Individual traditions, denominations, cultural traditions and historically
+important organizations should be independently discoverable while remaining
+relationally connected.
+
+Example:
+
+Faith, Spirituality & Community
+→ Christianity
+→ African Methodist Episcopal Church
+→ History
+→ Philadelphia
+→ Mother Bethel
+→ community stories / historical sources / media
+
+Another:
+
+Faith, Spirituality & Community
+→ Islam
+→ Black Muslim History
+→ Philadelphia
+→ institutions / people / history / community resources
+
+Another:
+
+Faith, Spirituality & Community
+→ African & Diasporic Spiritual Traditions
+→ individual tradition
+→ history / culture / geography / community resources
+
+==================================================
+2. CHRISTIAN TRADITIONS
+==================================================
+
+Include appropriate Books/sub-Books for:
+
+African Methodist Episcopal (AME)
+African Methodist Episcopal Zion (AME Zion)
+Baptist
+National Baptist traditions
+Missionary Baptist
+Church of God in Christ (COGIC)
+Pentecostal
+Apostolic
+Holiness
+Nondenominational
+Catholic
+Black Catholic traditions
+Episcopal / Anglican
+Methodist
+Lutheran
+Presbyterian
+Seventh-day Adventist
+Eastern Orthodox
+Ethiopian Orthodox Tewahedo
+Eritrean Orthodox Tewahedo
+Coptic Orthodox
+Caribbean Christian traditions
+African immigrant Christian communities
+Latino/Hispanic Christian traditions
+Haitian Christian traditions
+Filipino Christian traditions
+other culturally significant Christian communities represented in MWM data
+
+Do not assume cultural identity from denomination.
+
+==================================================
+3. CATHOLIC CULTURAL COMMUNITIES
+==================================================
+
+Catholic discovery must support cultural and language distinctions where
+publicly documented.
+
+Examples:
+
+Black Catholic
+African Catholic communities
+Haitian Catholic
+Latino Catholic
+Puerto Rican Catholic
+Dominican Catholic
+Mexican Catholic
+Cuban Catholic
+Filipino Catholic
+Vietnamese Catholic
+other immigrant/diaspora Catholic communities
+
+Search should support things such as:
+
+Black Catholic church Philadelphia
+Spanish Mass near me
+Haitian Creole Mass
+African Catholic church
+Catholic church with gospel choir
+
+==================================================
+4. ISLAM
+==================================================
+
+Include:
+
+Islam
+Black Muslim History
+African American Muslim communities
+Sunni
+Shia
+Ahmadiyya
+African Muslim communities
+West African Muslim communities
+Arab/MENA Muslim communities
+South Asian Muslim communities
+mosques
+Islamic centers
+Muslim community organizations
+
+Where documented, discovery may include:
+
+women's programming
+youth programming
+family programming
+languages
+community services
+halal/community resources
+education
+visitor information
+
+Do not infer sect, ethnicity or ideology.
+
+==================================================
+5. JUDAISM
+==================================================
+
+Include appropriate Books/relationships for:
+
+Judaism
+Black Jewish history and communities
+Orthodox
+Conservative
+Reform
+Reconstructionist
+Sephardic
+Mizrahi
+Jewish cultural/community organizations
+historic synagogues
+Jewish heritage
+
+Again, cultural identity should be based on documented information,
+not inference.
+
+==================================================
+6. AFRICAN & DIASPORA SPIRITUAL TRADITIONS
+==================================================
+
+This area is especially important to MWM and must be handled respectfully.
+
+Create architecture capable of representing documented traditions such as:
+
+African Traditional Religions
+Yoruba spiritual traditions
+Ifá
+Orisha traditions
+Vodou
+Haitian Vodou
+Santería / Regla de Ocha
+Candomblé
+Umbanda
+Rastafari
+ancestral spiritual traditions
+other African and African-diaspora traditions
+
+Do NOT flatten these traditions into one generic "African spirituality" label.
+
+Do NOT characterize legitimate religious/spiritual traditions as folklore,
+superstition, occult activity or entertainment.
+
+Use reputable historical, cultural, academic and community sources.
+
+==================================================
+7. SOUTH ASIAN / EAST ASIAN / OTHER TRADITIONS
+==================================================
+
+Include:
+
+Hinduism
+Sikhism
+Buddhism
+Jainism
+Baháʼí Faith
+Quaker / Religious Society of Friends
+Unitarian Universalism
+
+Buddhism should support culturally relevant traditions where appropriate,
+including:
+
+Vietnamese
+Cambodian
+Chinese
+Japanese
+Korean
+Tibetan
+Theravada
+Mahayana
+other documented communities
+
+Sikh Houses of Faith should be properly identified as:
+
+Gurdwaras
+
+Hindu Houses of Faith may be identified appropriately as temples/mandirs.
+
+Terminology should respect the terminology used by the community itself.
+
+==================================================
+8. INTERFAITH & MULTIFAITH
+==================================================
+
+Create:
+
+Interfaith & Multifaith
+
+for organizations, coalitions, community programs and institutions whose
+primary role crosses religious traditions.
+
+This is different from assigning a specific faith tradition.
+
+==================================================
+9. HOUSE OF FAITH PROFILE DATA
+==================================================
+
+Houses of Faith need more appropriate metadata than ordinary businesses.
+
+Where publicly available, support:
+
+Official name
+Faith tradition
+Denomination / branch
+Cultural community or communities served
+Languages
+Address
+Geolocation
+Official website
+Official social media
+Phone
+Email
+Worship/service schedule
+Visitor information
+Accessibility
+Parking/transit information
+Youth programming
+Children/family programming
+Senior programming
+Women's programming
+Men's programming
+Young adult programming
+Community outreach
+Food pantry
+Meal/community food programs
+Clothing assistance
+Housing/homelessness resources
+Immigration/refugee resources
+Educational programs
+Tutoring
+Scholarships
+Daycare/school connections
+Mental-health/community support resources
+Volunteer opportunities
+Mutual aid
+Music/choir
+Arts/culture
+Livestream/virtual worship
+Historic significance
+Historic designation
+Archives
+Tours
+Museum/heritage components
+Wedding/celebration information
+Funeral/memorial resources
+
+Only show fields relevant to that institution.
+
+Do not force Christian terminology such as "church," "pastor," "Sunday service,"
+or "ministry" onto other traditions.
+
+==================================================
+10. UNIVERSAL SEARCH
+==================================================
+
+Faith information must become searchable through Universal Search.
+
+Users should be able to search naturally.
+
+Examples:
+
+Black Catholic churches Philadelphia
+AME church near me
+African American mosque Philadelphia
+Ethiopian Orthodox church
+Haitian church
+Spanish Mass
+Black Jewish community
+Sikh gurdwara
+gurdwara with langar
+Hindu temple
+Vietnamese Buddhist temple
+Buddhist meditation
+LGBTQ affirming church
+church with food pantry
+mosque with youth programs
+faith community with immigration assistance
+historic Black churches
+gospel choir near me
+church where I can volunteer
+
+Search intent should understand that users may be searching for:
+
+FAITH
++
+CULTURE
++
+LOCATION
++
+LANGUAGE
++
+PROGRAM/SERVICE
++
+EXPERIENCE
+
+rather than merely an institution name.
+
+==================================================
+11. CULTURAL IDENTITY VS FAITH
+==================================================
+
+Do not equate ethnicity, nationality, race or diaspora identity with religion.
+
+Examples:
+
+Kenyan ≠ Christian
+Arab ≠ Muslim
+Indian ≠ Hindu
+Jewish may describe religious, cultural and/or ethnic identity depending upon
+context.
+
+These entities should be relationally connected in the Library but stored as
+distinct concepts.
+
+This is important for both accuracy and inclusion.
+
+==================================================
+12. LGBTQIA+ INFORMATION
+==================================================
+
+MWM is inclusive, but do not infer whether a House of Faith is affirming or
+non-affirming.
+
+Only label:
+
+LGBTQIA+ affirming
+welcoming
+inclusive ministry/programming
+etc.
+
+when supported by:
+
+the institution's own published information,
+a recognized denominational position where applicable,
+or reliable documented evidence.
+
+If unknown:
+
+UNKNOWN / NOT DOCUMENTED
+
+not "not affirming."
+
+This distinction is important.
+
+==================================================
+13. COMMUNITY GOVERNANCE
+==================================================
+
+Faith communities are subject to the same MWM Community Governance &
+Moderation rules.
+
+A faith institution may hold religious beliefs that differ from another
+member's beliefs.
+
+That alone is not grounds for removal.
+
+However:
+
+active harassment
+targeted hate
+threats
+dehumanization
+calls for violence
+discriminatory conduct on the MWM platform
+
+remain governed by MWM policy.
+
+Do not turn theological disagreement into a moderation violation automatically.
+
+==================================================
+14. COMMUNITY FEEDBACK
+==================================================
+
+Do NOT use restaurant-style Vibes indiscriminately for Houses of Faith.
+
+Create context-appropriate community feedback.
+
+Possible examples:
+
+Felt Welcomed
+Felt Like Community
+Visitors Were Welcomed
+They Made Room for Me
+Beautiful Worship Experience
+Strong Sense of History
+Community Is Active
+Youth Are Included
+Families Are Supported
+Elders Are Valued
+Community Shows Up
+More Than Sunday
+They Serve the Neighborhood
+Strong Music Ministry
+Powerful Choir
+Great Community Programs
+Easy to Visit
+Clear Visitor Information
+Accessible Space
+I Would Return
+I Found Community Here
+
+Culturally specific options may be developed by tradition/community rather than
+forcing one vocabulary across every faith.
+
+Allow optional free text afterward.
+
+==================================================
+15. HISTORICAL SIGNIFICANCE
+==================================================
+
+Houses of Faith may simultaneously be:
+
+HOUSE OF FAITH
++
+CULTURAL LANDMARK
++
+HISTORICAL SITE
+
+Do not force them into only one category.
+
+Philadelphia is particularly important here.
+
+A historically significant Black church, synagogue, mosque, Quaker meeting
+house, temple or other institution may appear in:
+
+Map
+Heritage
+Library
+Faith discovery
+Universal Search
+Kinfolk
+Trip planning
+
+through one canonical entity with relational classifications.
+
+Do not duplicate the location to make this possible.
+
+==================================================
+16. PHILADELPHIA INITIAL DISCOVERY
+==================================================
+
+Use Philadelphia as the first proof-of-concept city.
+
+Search/discovery coverage should intentionally look for documented communities
+including:
+
+Black Catholic
+AME
+AME Zion
+Black Baptist
+COGIC
+Pentecostal/Apostolic
+Black Episcopal
+African immigrant churches
+West African churches
+Haitian churches
+Caribbean churches
+Latino/Hispanic churches
+Spanish-language Catholic communities
+Ethiopian Orthodox
+Eritrean Orthodox
+Coptic Orthodox
+African American Muslim communities
+African Muslim communities
+Arab/MENA Muslim communities
+South Asian Muslim communities
+Jewish communities
+Black Jewish history/community
+Sephardic/Mizrahi communities
+Sikh communities
+Hindu communities
+Buddhist communities
+Jain communities
+Quaker communities
+Baháʼí communities
+Unitarian Universalist communities
+African/diaspora spiritual communities
+Interfaith organizations
+
+This is an inclusion/discovery strategy, NOT a quota.
+
+==================================================
+17. DISCOVERY SOURCE VS VERIFICATION SOURCE
+==================================================
+
+TikTok, Instagram, YouTube and community recommendations may be used to
+DISCOVER a House of Faith.
+
+Example founder workflow:
+
+Search TikTok:
+"Black Catholic churches Philadelphia"
+
+Review:
+official account
+videos
+community engagement
+comments
+events
+community presence
+
+Then verify the basic institution using stronger sources where available:
+
+official institution website
+official social profile
+official denomination directory
+recognized faith/community organization
+government/interfaith directory
+historic register/archive
+reputable local reporting
+
+TikTok comments alone must NOT make a House of Faith "verified."
+
+==================================================
+18. CLAIMABLE PROFILES
+==================================================
+
+Houses of Faith should be able to have claimable MWM profiles similar to
+businesses.
+
+An unclaimed listing may exist based on verified public information.
+
+Status examples:
+
+PUBLICLY DOCUMENTED
+COMMUNITY ADDED
+COMMUNITY CONFIRMED
+CLAIMED
+ORGANIZATION VERIFIED
+
+Do not label a House of Faith "safe" merely because it exists or has been
+claimed.
+
+Claiming proves organizational control/relationship, not universal member
+experience.
+
+==================================================
+19. KINFOLK
+==================================================
+
+Kinfolk should eventually understand faith as OPTIONAL context.
+
+Examples:
+
+"Find me a Black Catholic church while I'm in Philly."
+
+"Is there a mosque near my hotel?"
+
+"I want to visit historic Black churches."
+
+"Find somewhere with gospel music."
+
+"I'm Sikh and traveling to Philadelphia. Is there a gurdwara nearby?"
+
+"Where can I volunteer through a faith organization?"
+
+Kinfolk may use explicitly requested faith preferences.
+
+DO NOT assume faith based on:
+
+race
+ethnicity
+country
+business ownership designation
+family
+location
+previous unrelated searches.
+
+Sensitive Library/context permissions still apply.
+
+==================================================
+20. LIBRARY FLYWHEEL
+==================================================
+
+Faith must participate in the same MWM flywheel.
+
+Example:
+
+Member searches:
+Black Catholic churches Philadelphia
+
+→ Universal Search finds institutions
+→ member opens institution
+→ member discovers Black Catholic history
+→ Library offers Black Catholicism Book
+→ Philadelphia history connects to relevant heritage
+→ member watches community/archival media
+→ member saves a House of Faith
+→ Kinfolk may use that saved information only according to the member's
+   privacy/context permissions
+→ member visits
+→ contributes story/photo/social video
+→ institution receives additional community context
+→ Library becomes richer
+→ next member gets better discovery
+
+The same architecture should work across other faith traditions.
+
+==================================================
+21. IMPORTANT DESIGN PRINCIPLE
+==================================================
+
+Faith should not be treated merely as:
+
+"What religion are you?"
+
+MWM should help answer:
+
+Where can I worship?
+Where can I learn?
+Where is my community?
+Where can I find my culture?
+What happened here historically?
+Where can I volunteer?
+Who serves this neighborhood?
+Where can I experience this tradition respectfully?
+Where can I find resources?
+Where can I visit while traveling?
+
+That is the purpose of Faith, Spirituality & Community inside the
+Mapping With Melanin Library.
+
+==================================================
+22. IMPLEMENTATION REQUIREMENT
+==================================================
+
+Add this architecture to the current Library / Universal Search implementation
+being completed today.
+
+Do not create a disconnected faith database or separate search engine.
+
+Use the canonical:
+
+Library taxonomy
+Universal Search
+entity architecture
+source authority model
+community contribution system
+Kinfolk retrieval architecture
+privacy architecture
+
+Before declaring complete, demonstrate:
+
+1. "Black Catholic churches Philadelphia"
+2. "African American mosque Philadelphia"
+3. "Ethiopian Orthodox Philadelphia"
+4. "Spanish Mass Philadelphia"
+5. "Sikh gurdwara Philadelphia"
+6. "Buddhist temple Philadelphia"
+7. "historic Black churches Philadelphia"
+8. "church with food pantry Philadelphia"
+9. "faith organization where I can volunteer"
+10. "Black Catholic history"
+
+For each test show:
+
+search interpretation
+entity returned
+Library relationship
+source/provenance
+Map behavior where applicable
+Kinfolk retrieval
+community contribution path
+claim status
+verification status
+
+Do not push based only on code inspection.
+Visually verify the actual user experience during today's checkpoint review.

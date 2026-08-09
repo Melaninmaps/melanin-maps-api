@@ -1,0 +1,290 @@
+Yes. These screenshots change my answer: **I would not send the testers to the website yet.** The web authentication/onboarding flow is not ready for group testing.
+
+The screenshots show two different problems:
+
+1. **New registration is being rejected as invite-only.** You entered your AOL address and the site says, *“Mapping With Melanin is currently invite-only. Join the waitlist…”* But Replit just told us that this email was pre-approved for tester access. Those two things conflict. The web registration flow is apparently **not recognizing the tester/pre-approved-email entitlement correctly**.
+
+2. **Password reset reaches the verification screen and claims a six-digit code was sent, but you are not receiving it.** That's particularly important because you confirmed this functionality previously worked in the app for both email and SMS. We should not accept “email provider issue” or replace anything yet. Replit needs to trace the actual production request and determine where it stops.
+
+Also, I would **not let Replit start rewriting authentication right now**. Given the earlier mobile HTTP 404 login problem, the missing historical profiles, and now these web issues, authentication has become a system-level problem. We need a forensic audit first so a “fix” doesn't create another set of accounts or disconnect existing user data.
+
+Send Replit this:
+
+```text
+STOP — AUTHENTICATION FORENSIC AUDIT FIRST.
+READ ONLY. DO NOT FIX, MIGRATE, DELETE, MERGE, RESET OR CREATE USERS.
+
+I have now personally tested the CURRENT PRODUCTION WEBSITE.
+
+TEST 1 — NEW/TESTER REGISTRATION
+
+Email:
+tlindsay428@aol.com
+
+This email was just reported by you as one of my approved founder/tester
+accounts.
+
+However, when I attempt registration on the production website, the website
+returns:
+
+"Mapping With Melanin is currently invite-only.
+Join the waitlist at mappingwithmelanin.com to request access."
+
+That conflicts with your statement that my approved tester emails have
+tester/pre-approved access.
+
+TEST 2 — FORGOT PASSWORD
+
+The production website proceeds to:
+
+"Check Your Email"
+"We sent a 6-digit code to tlindsay428@aol.com"
+
+but the verification email/code is not being received.
+
+Password recovery previously worked in the mobile app and delivered both
+email and text codes.
+
+DO NOT GUESS.
+DO NOT CHANGE AUTHENTICATION YET.
+
+==================================================
+A. TRACE THE AOL ACCOUNT THROUGH RAILWAY PRODUCTION
+==================================================
+
+For:
+
+tlindsay428@aol.com
+
+Report:
+
+- Does a users record exist?
+- user ID
+- username
+- role
+- tester status
+- account status
+- email verification status
+- password hash present? YES/NO only — NEVER expose hash
+- pending_tester_emails match?
+- waitlist match?
+- profile record?
+- business role/profile relationship?
+- cultural ambassador relationship?
+- community posts/comments associated with this user ID?
+- sessions?
+- authentication identities/provider records?
+
+I need to know whether the registration page is correctly preventing
+creation of a DUPLICATE existing account or incorrectly rejecting an
+approved tester.
+
+==================================================
+B. TRACE ALL THREE FOUNDER EMAILS
+==================================================
+
+Read-only trace:
+
+tlindsay428@yahoo.com
+tlindsay428@gmail.com
+tlindsay428@aol.com
+
+Determine whether these represent:
+
+A. three separate user records
+B. aliases/identities belonging to one user
+C. some existing and some pending
+D. another configuration
+
+DO NOT MERGE THEM.
+
+I intentionally want separate tester experiences eventually, including
+business and Cultural Ambassador experiences.
+
+For each return:
+
+email
+user_id
+username
+role
+tester entitlement
+profile exists
+auth method(s)
+password credential present
+community content count
+business relationships
+Cultural Ambassador relationships
+
+==================================================
+C. TRACE PRE-APPROVED TESTER REGISTRATION
+==================================================
+
+Identify the exact CURRENT production code path used when someone submits
+Create Account on mappingwithmelanin.com.
+
+Show:
+
+browser request
+endpoint
+route handler
+invite-only check
+pending_tester_emails lookup
+tester allowlist lookup
+users lookup
+Railway database being queried
+response
+
+Answer specifically:
+
+WHY does tlindsay428@aol.com receive the invite-only rejection if it was
+seeded/approved as a tester?
+
+Do not fix until root cause is proven.
+
+==================================================
+D. TRACE PASSWORD RESET END TO END
+==================================================
+
+Perform a read-only/code/log trace of the password-reset attempt.
+
+Website displays:
+
+"We sent a 6-digit code to tlindsay428@aol.com"
+
+Determine whether that statement is actually true.
+
+Trace:
+
+Forgot Password UI
+→ API request
+→ Railway route
+→ user lookup
+→ reset-code generation
+→ reset-code storage
+→ expiration
+→ email provider call
+→ provider response
+→ delivery/error logs
+
+Report:
+
+1. Was a reset code generated?
+2. Was it stored?
+3. Which user ID was it attached to?
+4. Which email address was used?
+5. Which email provider was called?
+6. Did the provider accept the message?
+7. Provider response/status (redact secrets).
+8. Any production error?
+9. If provider was NEVER called, identify exactly where execution stopped.
+10. Why does the UI claim "sent" if delivery did not occur?
+
+DO NOT expose the reset code itself.
+
+==================================================
+E. COMPARE MOBILE VS WEB PASSWORD RESET
+==================================================
+
+This previously worked from the app and delivered email/text codes.
+
+Compare the LAST KNOWN WORKING mobile recovery path with the CURRENT
+website path.
+
+Determine:
+
+- same endpoint or different?
+- same database?
+- same reset-code table?
+- same email provider?
+- same SMS provider?
+- same environment variables?
+- same API base URL?
+- same authentication service?
+
+Do not tell me merely that one is mobile and one is web.
+Show the actual architectural difference.
+
+==================================================
+F. USER DATA PRESERVATION CHECK
+==================================================
+
+This is critical.
+
+We have already identified historical profiles/users that appear to be
+missing from current lookups even though they previously had profile
+pictures and Community activity.
+
+Before ANY authentication repair, confirm that authentication changes
+cannot orphan:
+
+profiles
+usernames
+profile photos
+comments
+posts
+reviews
+saved businesses
+check-ins
+vibes
+Library contributions
+connections
+business relationships
+Cultural Ambassador data
+messages
+points/rewards
+trip information
+or other user-generated records.
+
+Authentication must resolve back to the SAME canonical user ID.
+
+A password reset must NEVER create a new user.
+
+Logging in through another authentication method must NEVER silently create
+a second account when the identity belongs to an existing account.
+
+==================================================
+G. TESTER READINESS
+
+Do NOT report "testers can test" based merely on role values in the
+database.
+
+A tester is READY only if the complete production flow succeeds:
+
+existing tester:
+website → login → SAME existing user/profile → authenticated session
+
+approved tester without account:
+website → registration → verification → user creation → tester entitlement
+→ authenticated session
+
+existing tester without password:
+Forgot Password → code actually delivered → password established →
+SAME existing user/profile → authenticated session
+
+Return:
+
+READY NOW
+BLOCKED — REGISTRATION
+BLOCKED — PASSWORD RECOVERY
+BLOCKED — LOGIN
+DATA/IDENTITY CONFLICT
+
+for every tester.
+
+==================================================
+STOP AFTER AUDIT
+
+Return evidence and proposed smallest safe repair.
+
+DO NOT IMPLEMENT.
+DO NOT PUSH.
+DO NOT CREATE replacement accounts.
+DO NOT RESET existing accounts.
+DO NOT modify Railway data.
+```
+
+One more important point: **do not create another account with the AOL address while we're investigating this.** If that email already corresponds to an existing identity, creating a replacement account is exactly how your old profile/content could become disconnected from what appears to be your “new” account.
+
+And your expectation is correct: if MWM says **“We sent a 6-digit code,”** that should mean the backend actually successfully handed the message to the configured delivery provider—not merely that the browser advanced to the next screen.
+
+So for now my tester status is: **hold the broader tester invitation.** Your own test just caught the kind of identity/data-integrity issue we wanted to catch before putting 14 people through it.

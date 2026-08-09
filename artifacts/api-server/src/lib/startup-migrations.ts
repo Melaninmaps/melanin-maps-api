@@ -26,6 +26,42 @@ import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-busines
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Universal Search + Demand Flywheel — Checkpoint 1
+    // Canonical search event log: one row per search across all surfaces.
+    // Privacy: user_id nullable; demand signals use aggregated counts only.
+    name: "create_search_events_table",
+    sql: `CREATE TABLE IF NOT EXISTS search_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+      raw_query TEXT NOT NULL,
+      normalized_concept TEXT,
+      intent_type TEXT,
+      surface TEXT,
+      location_bucket TEXT,
+      result_count INTEGER DEFAULT 0,
+      match_types_returned TEXT[],
+      fallback_used BOOLEAN DEFAULT FALSE,
+      engagement TEXT,
+      engaged_entity_id UUID,
+      engaged_entity_type TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "search_events_idx_created",
+    sql: `CREATE INDEX IF NOT EXISTS search_events_created_at_idx ON search_events(created_at DESC)`,
+  },
+  {
+    name: "search_events_idx_concept",
+    sql: `CREATE INDEX IF NOT EXISTS search_events_concept_idx ON search_events(normalized_concept, intent_type, location_bucket)`,
+  },
+  {
+    // Add listing_status column if missing (referenced by search queries)
+    name: "businesses_listing_status_col",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'live_unclaimed'`,
+  },
+  {
     name: "businesses_email_zip_cols",
     sql: `ALTER TABLE businesses
       ADD COLUMN IF NOT EXISTS email VARCHAR(255),

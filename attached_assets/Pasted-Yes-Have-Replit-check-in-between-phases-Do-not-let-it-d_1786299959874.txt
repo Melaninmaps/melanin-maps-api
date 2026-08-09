@@ -1,0 +1,465 @@
+Yes. **Have Replit check in between phases. Do not let it disappear for hours and then hand you one enormous implementation.** Too many of today's changes touch search, Kinfolk, Library, businesses, user-generated media, safety, and database relationships. If one foundational decision is wrong, everything built after it could compound the mistake.
+
+Because tomorrow you will actually be putting the web experience in front of businesses and prospective community members, I would make **today a controlled build day with four founder review gates**. Replit can keep working aggressively between the gates, but it should stop at the places where an error would contaminate subsequent work.
+
+### Today's order
+
+**Checkpoint 1 should be the foundation.** Replit should complete Universal Search infrastructure, "thing" search, shared search-event architecture, exact-vs-related match classification, zero-result fallback logic, and the privacy aggregation foundation. Do not activate business demand notifications yet. This checkpoint answers the most important question: can `Fruity Pebble waffles`, `alopecia stylist`, `Kenya`, `HBCU`, and a named business all be interpreted correctly by one system?
+
+**Checkpoint 2 should be what you can demonstrate tomorrow.** Wire Universal Search into the Map, Business Directory, Explore, and Kinfolk. Make the Business Directory remotely searchable; keep the Map geography-first. Complete the richer business-profile functionality that already exists on mobile but is missing on web. Fix multi-Vibe contribution so a real visit can add several applicable Vibes and visibly update the business. Make sure business/profile media supports original social URLs. Tomorrow, if you are sitting across from a business owner, this is what they are going to judge.
+
+**Checkpoint 3 should be Library + Culture & Roots.** Implement Collection → Book → Sections, all 55 African countries, all applicable nationality/diaspora entities from your approved ownership taxonomy, Divine Nine → individual organization books, immediate missing-topic shells, authority classification, country source portfolios, and Library-to-search/Kinfolk connections. Replit's audit already confirmed the Library `search-or-create` foundation exists, so this should extend rather than replace it. 
+
+**Checkpoint 4 should be safety, flywheel activation, and final regression.** Finish the Sundown Town History treatment and persisted preference, connect historical context to trip planning without conflating it with current safety, validate search privacy, then activate business/Cultural Ambassador demand signals only if aggregation is proven safe. After that: full visual regression, actual authenticated flows, production candidate report, then push.
+
+I would send Replit this **right now**:
+
+```text
+TODAY'S IMPLEMENTATION CONTROL PLAN — FOUNDER REVIEW GATES
+
+We are authorized to implement the approved Universal Search + Library +
+Demand Flywheel architecture today.
+
+I want to complete as much as safely possible TODAY because tomorrow the
+founder will be meeting local businesses, demonstrating the web experience,
+creating community content, and adding businesses in real time.
+
+However:
+
+DO NOT work all day and return one giant implementation.
+
+Use the following founder review gates.
+
+Continue working efficiently inside each checkpoint, but STOP at the end of
+each checkpoint and return evidence before proceeding.
+
+==================================================
+CHECKPOINT 1 — FOUNDATION
+==================================================
+
+Complete:
+
+1. Canonical Universal Search service
+2. Shared search logic rather than seven disconnected engines
+3. "Thing" search:
+   - business names
+   - products
+   - services
+   - specialties
+   - Vibes
+   - THE REAL
+   - Community Says
+   - categories/subcategories
+   - events
+   - heritage
+   - Library topics
+4. Match classification:
+   - exact
+   - community confirmed
+   - related
+   - Vibe/experience
+   - behavioral/community affinity
+   - nearby alternative
+5. Zero-results fallback ladder
+6. Canonical search-event model
+7. Privacy aggregation architecture
+8. Feature flags
+
+DO NOT activate business or Cultural Ambassador demand notifications yet.
+
+TEST THESE QUERIES:
+
+The Pink Tea Cup
+Allure Hair
+Fruity Pebble waffles
+tea parties
+alopecia stylist
+tax attorney
+Kenya
+HBCU
+Underground Railroad
+Welding
+
+Return:
+
+query
+normalized intent
+result type
+exact/inferred classification
+data source
+result count
+fallback behavior
+search event recorded?
+privacy outcome
+
+STOP FOR FOUNDER REVIEW.
+
+==================================================
+CHECKPOINT 2 — TOMORROW'S DEMO EXPERIENCE
+==================================================
+
+After Checkpoint 1 approval, complete the highest-priority visible experience.
+
+A. MAP
+
+- Universal Search field
+- user may search for a business OR a thing
+- named business → exact business result(s)
+- generic category → appropriate refinements
+- nearby-first behavior
+- no automatic business dump
+- pressing Enter works
+- event selection recenters map
+- appropriate map result counts
+- Sundown Town History remains visible/available
+
+B. BUSINESS DIRECTORY
+
+The Directory must support broad intentional discovery.
+
+Examples:
+
+hair stores in ATL
+Ethiopian restaurants in DC
+tattoo cover-up specialist Philadelphia
+Black-owned florist Houston
+
+Directory is NOT limited to user's current geography.
+
+C. BUSINESS PROFILE — WEB PARITY
+
+Use the mobile business profile as the functional reference.
+
+Wire the existing database/API capabilities to web where already built:
+
+- ownership/verification
+- Put Your People On
+- Community badges
+- Community Verified / Member Voices
+- Community Insights
+- Vibe Check
+- Community Says
+- Community Comments
+- Community Confidence Score
+- Business Milestones
+- Circle Trusted
+- Know Before You Go
+- Pass the Plate
+- Show Me the Vibe
+- reviews/community labels
+- business accountability/respond language
+- claim prompt
+- hours/contact/location/directions
+
+Do NOT fabricate community data.
+
+D. MULTI-VIBE
+
+Fix the current one-Vibe restriction.
+
+A member should be able to select multiple applicable Vibes for one business.
+
+Submission must:
+
+- persist
+- survive refresh
+- visibly update business profile
+- aggregate community counts
+- prevent accidental duplicate counting
+- allow member to modify/remove their selections
+- make the resulting Vibes searchable by Universal Search and Kinfolk
+
+E. MEDIA
+
+Users must be able to add:
+
+- original Instagram URL
+- TikTok URL
+- YouTube URL
+- other approved public social URL
+- direct photo/video upload when production storage supports it
+
+Unclaimed businesses can still receive moderated community media.
+
+Do not make business claim status a requirement for community contribution.
+
+F. COMMUNITY / BUSINESS MENTIONS
+
+If safe to complete in this checkpoint:
+
+@ person
+@ business
+
+Business mention must link to canonical MWM business profile.
+
+If business does not exist:
+
+Add this business
+→ duplicate check
+→ public-source discovery
+→ claimable listing
+
+Do not mark newly discovered business as verified/safe.
+
+G. KINFOLK
+
+Kinfolk must use Universal Search retrieval.
+
+Test:
+
+"Where can I get Fruity Pebble waffles near me?"
+
+If exact result does not exist:
+Kinfolk must transparently offer useful alternatives.
+
+Test:
+
+"Soul food in Philly"
+
+Verify every displayed business exists in MWM data/source.
+
+Follow with:
+
+"Which would be good for a date night?"
+
+Confirm conversational continuity.
+
+STOP FOR FOUNDER REVIEW.
+
+==================================================
+CHECKPOINT 3 — LIBRARY / CULTURE & ROOTS
+==================================================
+
+After Checkpoint 2 approval:
+
+Implement the approved:
+
+COLLECTION
+→ BOOK
+→ SECTIONS
+→ SOURCES / STORIES / MEDIA
+
+architecture.
+
+PRIORITY:
+
+1. All 55 African Union member states
+2. Every applicable country/nationality/territory/diaspora identity already
+   represented in the approved MWM business ownership taxonomy
+3. Divine Nine as Collection
+4. Each Divine Nine organization as its own Book
+5. Languages
+6. Diaspora-at-home connections
+7. Travel
+8. History
+9. Culture
+10. Economy/business
+11. News/current events
+12. Entertainment
+13. Health
+14. Tourism
+15. Volunteer/donation opportunities
+16. Heritage
+17. Food
+18. Businesses
+19. Cultural Ambassador/community media
+
+Use the approved trusted-source registry / authority model.
+
+Do not invent country data.
+
+COUNTRY BOOK TEST:
+
+Kenya
+
+Prove that a user can:
+
+- find Kenya
+- see history/culture
+- find reputable news
+- find economy/business information
+- get official travel information
+- find tourism/heritage
+- see appropriate health/traveler-health resources
+- see community/media pathways
+- discover Kenyan/diaspora businesses where data exists
+- save/follow Kenya
+- continue into Kinfolk
+
+MISSING TOPICS:
+
+If a user searches a missing topic such as:
+
+Welding
+
+Create the topic shell immediately and assign the correct authority class.
+
+Medical/legal/high-stakes topics:
+shell may exist immediately,
+but authoritative sources are required before factual guidance is treated
+as trusted.
+
+Community/culture/fun topics:
+community contribution can begin immediately, subject to moderation.
+
+STOP FOR FOUNDER REVIEW.
+
+==================================================
+CHECKPOINT 4 — SAFETY + DEMAND FLYWHEEL + FINAL REGRESSION
+==================================================
+
+A. SUNDOWN TOWN HISTORY
+
+Implement approved changes:
+
+- historical/archive MWM gold icon, not prohibition emoji
+- visible source
+- historical period
+- historical-record explanation
+- persistent map visibility preference
+- OFF hides normal map layer only
+- history remains available to Kinfolk/Library/trip planning
+- historical context remains distinct from current safety intelligence
+- route planning may surface relevant historical context
+- current safety warning requires current safety evidence
+
+B. BUSINESS DEMAND SIGNALS
+
+ONLY ACTIVATE after privacy tests pass.
+
+Businesses receive aggregated relevant demand, not raw individual searches.
+
+Example:
+
+"Members near you are looking for specialty waffles."
+
+Support:
+
+We offer this
+We offer something similar
+Not relevant
+
+C. CULTURAL AMBASSADOR DEMAND SIGNALS
+
+Example:
+
+"Members planning Cabo trips are looking for luxury spa experiences."
+
+Support appropriate creator opportunity workflow.
+
+D. PRIVACY
+
+Prove:
+
+- raw user search histories are never exposed
+- small cohorts suppressed
+- location is aggregated
+- sensitive searches do not become inappropriate public/business signals
+- Library sensitive-context permissions remain intact
+
+E. FULL REGRESSION
+
+Test:
+
+authentication
+admin
+profile
+business directory
+map
+Kinfolk
+Library
+community
+business profile
+Marketplace
+media/social URLs
+Sundown Town History
+events
+mobile responsive web
+desktop web
+
+==================================================
+FINAL PRODUCTION GATE
+==================================================
+
+Return:
+
+Feature
+Built?
+Actual UI tested?
+Authenticated tested?
+Database migration?
+Privacy test?
+Regression result?
+Feature flag?
+Pass / Partial / Fail
+
+Also return:
+
+candidate SHA
+candidate bundle
+database migrations
+data migrations
+rollback point
+open issues
+
+Then STOP.
+
+Founder will authorize production push.
+
+After authorization:
+follow the documented Railway production push procedure exactly.
+
+After deployment:
+visually verify the actual public production site.
+
+==================================================
+TOMORROW-CRITICAL PRIORITY RULE
+==================================================
+
+If time becomes constrained today, prioritize in this exact order:
+
+1. Login/authentication stability
+2. Business Directory search
+3. Map Universal Search
+4. Business profile richness/web parity
+5. Multi-Vibe + visible contribution updates
+6. Kinfolk real-business retrieval + fallback
+7. Social URL media contribution
+8. Library country/Culture & Roots discovery
+9. Sundown Town historical experience
+10. Library auto-topic creation
+11. Community @ business/person
+12. Demand analytics/signals
+
+Do NOT sacrifice platform stability merely to finish the final items today.
+```
+
+### Tomorrow's experience is the deciding factor
+
+If time gets tight tonight, I would **not** prioritize sophisticated business demand notifications over the experience you're actually going to demonstrate tomorrow.
+
+Tomorrow a business owner should be able to watch you:
+
+**search for their business → open a beautiful, rich profile → show how community Vibes/THE REAL work → show social/video contributions → show how Kinfolk finds them → explain how people will eventually discover them by things they offer rather than just by their business name.**
+
+And a person creating content should be able to:
+
+**post → attach their original social video → tag a business → link back to the business → contribute to discovery.**
+
+That alone is a compelling demonstration.
+
+The business-demand message—
+
+> “37 members near you are looking for specialty waffles”
+
+—is extremely powerful, but **it can stay feature-flagged tonight** if the privacy aggregation isn't fully proven. The audit explicitly found that no anonymization/threshold layer currently exists, so that is the one feature I would rather finish tomorrow than expose unsafely tonight. 
+
+### And tomorrow, your work should feed the platform
+
+As you add businesses during your visits, try to capture more than name/address when available:
+
+**official website, Instagram/TikTok/YouTube, category/subcategory, specialties, ownership where appropriately verified, location, what they are known for, and some initial Vibes/What Stands Out language.**
+
+Then every business you add tomorrow immediately strengthens search, Kinfolk, the map, the Directory, and eventually the Library.
+
+So yes: **long build day today, checkpoints with us in between, production push only after the final proof. Tomorrow becomes a real-world content-and-business acquisition day rather than another debugging day.**

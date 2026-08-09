@@ -152,6 +152,7 @@ import cityLaunchRouter from "./city-launch";
 import tourGuideAdminRouter from "./tour-guide-admin";
 import citiesRouter from "./cities";
 import feedbackRouter from "./feedback";
+import universalSearchRouter from "./universal-search";
 
 const router: IRouter = Router();
 
@@ -240,6 +241,7 @@ router.use(journeysRouter);
 router.use(entityConnectionsRouter);
 router.use(signalsRouter);
 router.use(smartSearchRouter);
+router.use(universalSearchRouter);
 router.use(notificationsHubRouter);
 router.use(knowledgeChannelsRouter);
 router.use(recommendRouter);

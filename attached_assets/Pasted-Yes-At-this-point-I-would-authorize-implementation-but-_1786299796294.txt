@@ -1,0 +1,901 @@
+Yes. At this point I would authorize implementation, but **not as one giant rewrite**. The safest approach is to build the shared foundation first, wire each existing surface into it, preserve every existing endpoint as a compatibility layer until verified, and only then activate the demand-notification flywheel.
+
+The audit gives us a good starting point: Replit found **seven disconnected search implementations**, Explore has no search, the main business search only searches name/city/category/description, Kinfolk runs its own queries, and the privacy layer required for business demand notifications does not yet exist.  
+
+Here is what I would give Replit now.
+
+> # MAPPING WITH MELANIN™ — AUTHORIZED IMPLEMENTATION
+>
+> ## UNIVERSAL SEARCH + LIBRARY + DEMAND FLYWHEEL
+>
+> **Founder authorization: IMPLEMENT NOW.**
+>
+> This is a foundational architecture change. The goal is not to rewrite the platform. The goal is to connect functionality that already exists into one safe, reusable discovery system.
+>
+> **NON-NEGOTIABLE RULES**
+>
+> 1. Do not delete or overwrite existing user, business, Library, community, Kinfolk, safety, heritage, event, search-history, or Tour Guide data.
+> 2. All database migrations must be additive/reversible.
+> 3. Existing working search endpoints must remain functional until the new universal-search path passes regression testing.
+> 4. Do not expose individual search histories to businesses, Cultural Ambassadors, or other users.
+> 5. Do not fabricate exact matches.
+> 6. Do not automatically convert historical information into current safety claims.
+> 7. Do not create duplicate businesses, Library topics, countries, cultural entities, or user identities.
+> 8. Build once at the shared backend level and reuse across Map, Explore, Business Directory, Library, KinfolkAI and future trip planning.
+>
+> ---
+>
+> # PHASE 0 — SAFETY CHECKPOINT
+>
+> Before changing production data:
+>
+> Create a database backup/export/checkpoint sufficient to restore the affected schema/data.
+>
+> Record:
+>
+> `pre_implementation_sha`
+> `database_schema_version`
+> `rollback_point`
+>
+> Confirm the existing counts for:
+>
+> businesses
+> users
+> knowledge_topics
+> cultural_sites
+> sundown-town records
+> events
+> community posts
+> reviews
+> search-event tables
+>
+> Do not continue if migrations would destructively alter existing fields.
+>
+> ---
+>
+> # PHASE 1 — ONE SHARED UNIVERSAL SEARCH SERVICE
+>
+> Build a canonical search service/API.
+>
+> Recommended endpoint:
+>
+> `GET /api/search/universal`
+>
+> Parameters should support at minimum:
+>
+> `q`
+> `lat`
+> `lng`
+> `city`
+> `state`
+> `country`
+> `radius`
+> `limit`
+> `resultTypes`
+>
+> Search must be capable of returning typed results:
+>
+> `businesses`
+> `events`
+> `heritage`
+> `library_topics`
+> `guides`
+> `creators/media` where already supported
+>
+> DO NOT remove current endpoints yet.
+>
+> Existing endpoints should delegate to or coexist with the new shared service during migration.
+>
+> ---
+>
+> # PHASE 2 — BUSINESS "THING" SEARCH
+>
+> Expand business discovery beyond:
+>
+> name
+> city
+> category
+> description
+>
+> Current audit confirmed specialties, Vibes, THE REAL, Community Says, reviews and other community intelligence are not searched today.
+>
+> Search should include approved data such as:
+>
+> business name
+> aliases
+> category
+> subcategory
+> specialties
+> services
+> products/menu descriptors where available
+> business description
+> ownership/community designation
+> Vibes
+> THE REAL
+> Community Says
+> approved community captions
+> approved review signals
+> accessibility
+> price
+> location
+> official media metadata where appropriate
+>
+> Example:
+>
+> `Fruity Pebble waffles`
+>
+> must not require a business to literally be named "Fruity Pebble Waffles."
+>
+> The search engine should understand that the query may represent:
+>
+> `food item → specialty brunch/waffles → restaurant/brunch`
+>
+> ---
+>
+> # PHASE 3 — MATCH CONFIDENCE / FALLBACK LADDER
+>
+> Every result returned by Universal Search should carry an internal match classification.
+>
+> Recommended:
+>
+> `exact_name`
+> `exact_item_or_specialty`
+> `community_confirmed`
+> `strong_related`
+> `vibe_or_experience_match`
+> `behavioral_affinity`
+> `nearby_alternative`
+>
+> UI/Kinfolk must be able to distinguish:
+>
+> **We confirmed this business offers it**
+>
+> from:
+>
+> **People looking for something similar also liked this**
+>
+> from:
+>
+> **This is a nearby alternative**
+>
+> This distinction is mandatory.
+>
+> Never say a business offers something unless the available data supports that claim.
+>
+> ---
+>
+> # PHASE 4 — ZERO RESULTS MUST NOT BE A DEAD END
+>
+> LOCKED PRODUCT RULE:
+>
+> **ZERO RESULTS IS A SIGNAL, NOT AN END STATE.**
+>
+> When an exact search cannot be fulfilled:
+>
+> 1. Exact confirmed match
+> 2. Community-confirmed match
+> 3. Related item/service
+> 4. Behavioral affinity
+> 5. Vibe/experience match
+> 6. Nearby appropriate alternative
+> 7. Ask permission to expand geographic range
+> 8. Relevant Library/community resources
+>
+> Example:
+>
+> User searches:
+>
+> `Fruity Pebble waffles near me`
+>
+> If none are confirmed:
+>
+> Kinfolk/search may say:
+>
+> "I couldn't confirm Fruity Pebble waffles nearby yet. People looking for similar specialty-brunch experiences have also liked these spots."
+>
+> Then show real alternatives with the reason each was selected.
+>
+> Do not return a simple:
+>
+> `No results found.`
+>
+> unless there is truly no useful truthful next action.
+>
+> ---
+>
+> # PHASE 5 — MAP UNIVERSAL SEARCH
+>
+> The current Map business field becomes a Universal Search entry point.
+>
+> Do NOT merely rename its placeholder.
+>
+> Suggested user-facing prompt:
+>
+> **What are you looking for?**
+>
+> It should accept:
+>
+> business names
+> products
+> services
+> specialties
+> experiences
+> Vibes
+> ownership/community designations
+> events
+> cultural places
+> heritage terms
+>
+> Examples:
+>
+> `The Pink Tea Cup`
+> → exact business result(s)
+>
+> `Allure Hair`
+> → all legitimate exact/strong name matches
+>
+> `barber`
+> → nearby category search + relevant refinements
+>
+> `Fruity Pebble waffles`
+> → exact/related food search
+>
+> `HBCU`
+> → HBCU map discovery
+>
+> `Underground Railroad`
+> → relevant heritage results
+>
+> `Jazz tonight`
+> → businesses/events where available
+>
+> MAP remains geography-first.
+>
+> Do not automatically show every business.
+>
+> Generic local discovery should default nearby and progressively expand.
+>
+> ---
+>
+> # PHASE 6 — EXPLORE UNIVERSAL SEARCH
+>
+> Audit found that mobile Explore currently has no search at all. Build Universal Search into Explore using the SAME backend search service.
+>
+> Explore means:
+>
+> **Help me find.**
+>
+> Unlike the Map, Explore may return mixed result types:
+>
+> Businesses
+> Experiences
+> Events
+> Cultural places
+> Library topics/books
+> Community media
+> Cultural Ambassador content
+>
+> Do not create a separate Explore search engine.
+>
+> ---
+>
+> # PHASE 7 — BUSINESS DIRECTORY
+>
+> Business Directory remains broader and intentionally remote-searchable.
+>
+> Example:
+>
+> User physically in Philadelphia searches:
+>
+> `hair stores in ATL`
+>
+> Directory should return Atlanta businesses.
+>
+> Map should remain near-me/spatial unless the user deliberately moves or changes location.
+>
+> Both surfaces use the same search intelligence but different presentation/location defaults.
+>
+> ---
+>
+> # PHASE 8 — LIBRARY COLLECTION → BOOK ARCHITECTURE
+>
+> Implement the approved Library hierarchy:
+>
+> **Collection → Book → Sections → Entries / Sources / Stories / Media**
+>
+> Examples:
+>
+> `Africa`
+> → `East Africa`
+> → `Kenya`
+>
+> `Divine Nine`
+> → `Alpha Kappa Alpha`
+> → individual sections/resources
+>
+> `Skills & Trades`
+> → `Welding`
+>
+> Every appropriate approved ownership/community designation should have a corresponding Library discovery entity.
+>
+> This does NOT mean ownership taxonomy and Library taxonomy are one database field.
+>
+> It means they are relationally connected.
+>
+> ---
+>
+> # PHASE 9 — COUNTRIES
+>
+> Seed all 55 African Union member states as individual country Books.
+>
+> Use the existing approved Library specification/source registry.
+>
+> Also read the authoritative Mapping With Melanin ownership/community taxonomy and identify every nationality/country/territory/diaspora designation already offered in business discovery.
+>
+> Ensure each applicable geographic/cultural identity has a corresponding Library entity.
+>
+> Do not hand-create another incomplete country list.
+>
+> Preserve:
+>
+> country ID
+> standardized country name
+> aliases
+> region
+> culture/diaspora relationships
+> languages
+> source provenance
+>
+> ---
+>
+> # PHASE 10 — COUNTRY BOOK SECTIONS
+>
+> Country Books should be capable of supporting:
+>
+> History
+> Culture
+> Travel
+> Tourism
+> Entry/visa information
+> Health/traveler health
+> Economy
+> Business
+> News
+> Politics/government
+> Entertainment
+> Music
+> Film
+> Food
+> Heritage
+> Museums
+> Languages
+> Faith/spirituality where relevant and user-selected
+> Volunteer opportunities
+> Donation opportunities
+> Education
+> Social/community context
+> Diaspora-at-home connections
+> Local businesses in MWM
+> Cultural Ambassador/community media
+>
+> Example:
+>
+> `Kenya`
+>
+> should ultimately allow someone to:
+>
+> learn Kenyan history
+> see reputable current news
+> understand the economy
+> find official travel information
+> find health/travel guidance
+> discover Kenyan businesses locally
+> discover Kenyan businesses in Kenya
+> watch travel/community media
+> find reputable volunteer/donation opportunities
+> save items
+> plan a trip
+> continue into Kinfolk
+>
+> ---
+>
+> # PHASE 11 — SOURCE AUTHORITY
+>
+> Use the approved source hierarchy.
+>
+> Each topic/book/section needs a content authority classification.
+>
+> Examples:
+>
+> **Medical**
+> → authoritative health sources required.
+>
+> **Legal**
+> → official government/court/legal sources required.
+>
+> **History**
+> → archives, museums, UNESCO, universities, authoritative historians.
+>
+> **Travel logistics**
+> → official tourism/government/immigration.
+>
+> **News**
+> → reputable professional journalism + local/regional voices.
+>
+> **Entertainment**
+> → official artists/venues + reputable entertainment sources + community.
+>
+> **Restaurant vibe**
+> → community may be an appropriate authority.
+>
+> **Local slang**
+> → community/local cultural validation.
+>
+> Do not use one universal credibility threshold for every topic.
+>
+> ---
+>
+> # PHASE 12 — MISSING LIBRARY TOPICS
+>
+> When a member explicitly searches within the Library for a topic that does not exist:
+>
+> create a topic/book shell immediately.
+>
+> Example:
+>
+> `Welding`
+>
+> → `Skills & Trades → Welding`
+>
+> User should not encounter a dead end.
+>
+> The newly created topic gets an internal state such as:
+>
+> `building`
+> `needs_sources`
+> `community_ready`
+> `high_trust_sources_required`
+>
+> depending on topic type.
+>
+> A medical/legal topic may exist immediately, but authoritative facts should not be generated from community posts while vetted sources are still being attached.
+>
+> Community-friendly topics may begin accepting contributions immediately.
+>
+> ---
+>
+> # PHASE 13 — KINFOLK MUST USE UNIVERSAL SEARCH
+>
+> Stop maintaining Kinfolk as an isolated business-recommendation search implementation.
+>
+> Preserve its conversational/personality/context layers, but its retrieval should call/use the canonical discovery service.
+>
+> Kinfolk needs access to:
+>
+> businesses
+> specialties
+> services
+> ownership/community designations
+> Vibes
+> THE REAL
+> Community Says
+> events
+> Library Books/topics
+> heritage sites
+> country/culture entities
+> guides
+> community/media evidence where approved
+>
+> The audit specifically found Kinfolk currently lacks specialties, THE REAL, Library topics, events, community media, and live heritage lookup. Correct those retrieval gaps.
+>
+> ---
+>
+> # PHASE 14 — SEARCH EVENT MODEL
+>
+> Create/extend one canonical search-event model.
+>
+> Existing fragmented search stores should be preserved/migrated carefully.
+>
+> At minimum store:
+>
+> `search_event_id`
+> `user_id` where authenticated
+> `raw_query`
+> `normalized_concept`
+> `intent_type`
+> `surface`
+> `location_bucket`
+> `timestamp`
+> `result_count`
+> `match_types_returned`
+>
+> Result engagement should be able to record:
+>
+> clicked
+> saved
+> directions
+> check-in
+> review
+> media viewed
+> no engagement
+>
+> Do not expose raw search history publicly.
+>
+> ---
+>
+> # PHASE 15 — PRIVACY LAYER BEFORE DEMAND NOTIFICATIONS
+>
+> THIS MUST EXIST BEFORE BUSINESS/AMBASSADOR DEMAND NOTIFICATIONS ARE ENABLED.
+>
+> Businesses must NEVER receive:
+>
+> `Teianna searched for Fruity Pebble waffles`
+>
+> They may receive anonymized aggregate demand only.
+>
+> Aggregate by:
+>
+> normalized concept
+> relevant business category/specialty
+> geographic bucket
+> time window
+> unique users
+>
+> Suppress small cohorts.
+>
+> My recommendation:
+>
+> Do not display an exact numerical count below **10 unique members**.
+>
+> Below that threshold, if appropriate:
+>
+> `Members nearby are looking for this.`
+>
+> At/above the threshold:
+>
+> `37 members nearby have looked for similar specialty-brunch experiences recently.`
+>
+> Never expose individual user IDs, names, exact home locations, or individual search histories.
+>
+> ---
+>
+> # PHASE 16 — BUSINESS DEMAND OPPORTUNITIES
+>
+> Once privacy aggregation is proven, implement:
+>
+> **Community Opportunity**
+>
+> Businesses only receive demand that is relevant to their category/specialties/business profile.
+>
+> Example:
+>
+> Brunch restaurant:
+>
+> `Members near you are looking for specialty waffles.`
+>
+> Tea room:
+>
+> `Your supporters are looking for tea-party experiences nearby.`
+>
+> Law office:
+>
+> receives neither.
+>
+> Suggested business actions:
+>
+> `We offer this`
+> `We offer something similar`
+> `Not relevant`
+>
+> If business selects:
+>
+> `We offer this`
+>
+> allow it to add the approved searchable specialty/product/service and provide an official URL/social/menu source where appropriate.
+>
+> That makes the next search better.
+>
+> ---
+>
+> # PHASE 17 — CULTURAL AMBASSADOR DEMAND
+>
+> Build the parallel opportunity stream for Cultural Ambassadors.
+>
+> Example:
+>
+> `Members planning Cabo trips are increasingly looking for luxury spa experiences.`
+>
+> Ambassadors may choose:
+>
+> `Create for this`
+>
+> or dismiss.
+>
+> Use creator categories, covered locations and existing creator-profile infrastructure.
+>
+> Do not reveal who searched.
+>
+> Analytics/opportunity tools belong to the Ambassador entitlement.
+>
+> ---
+>
+> # PHASE 18 — BEHAVIORAL AFFINITY
+>
+> Use aggregate behavior carefully:
+>
+> People who searched X also:
+>
+> saved Y
+> visited Y
+> positively reviewed Y
+> watched Z
+> selected particular Vibes
+>
+> This can power:
+>
+> **People looking for something similar also liked…**
+>
+> Do not use one person's search behavior to generate this.
+>
+> Require meaningful aggregate evidence.
+>
+> ---
+>
+> # PHASE 19 — SUNDOWN TOWN HISTORY
+>
+> Implement the approved smallest Sundown Town History improvements now.
+>
+> Current audit established historical data and current safety data are already architecturally separate, but the UI does not explain the difference. 
+>
+> Implement:
+>
+> 1. Replace the prohibition/danger-style `🚫` system emoji with the approved MWM gold archival/history icon.
+> 2. Show user-visible historical source/provenance.
+> 3. Show historical period where data exists.
+> 4. Add:
+>
+> **Historical Record**
+>
+> `This location is included because of documented historical information. Historical designation does not by itself represent a current safety assessment.`
+>
+> 5. Persist the user's map visibility preference.
+> 6. Keep historical information available to Library/Kinfolk/trip planning even if the member hides the normal map layer.
+> 7. Do not merge historic records with `safety_reports`.
+>
+> The audit found the current dark shading is the **community safety heatmap, not sundown-town shading**, so do not mislabel it. 
+>
+> ---
+>
+> # PHASE 20 — TRAVEL CONTEXT
+>
+> Begin connecting Library + Universal Search + Kinfolk + historical context.
+>
+> Example:
+>
+> Member explores Kenya
+> → saves Kenya
+> → discovers Kenyan/Ethiopian/East African businesses locally
+> → watches community media
+> → saves trip ideas
+> → asks Kinfolk
+> → plans travel
+> → receives appropriate travel/health/history/safety context
+> → visits
+> → contributes media/reviews
+> → improves the Library/search for others
+>
+> This is the MWM flywheel.
+>
+> ---
+>
+> # PHASE 21 — MEMBER MEDIA
+>
+> Implement the founder's locked decision:
+>
+> **Participation is not a paid privilege. Analytics are.**
+>
+> Legitimate members may contribute:
+>
+> photos
+> videos
+> original social URLs
+> stories
+> community posts
+> business media
+> travel/culture media
+>
+> subject to moderation, abuse prevention, file-size/security limits and source/copyright requirements.
+>
+> Remove the current free-tier image prohibition.
+>
+> Prefer:
+>
+> original social URL/embed + attribution
+>
+> when appropriate.
+>
+> Direct upload remains supported once production-compatible storage is implemented.
+>
+> Do NOT solve production storage by introducing multiple unrelated storage systems.
+>
+> Use one production media architecture across avatar/community/review/business/etc.
+>
+> ---
+>
+> # PHASE 22 — ANALYTICS ENTITLEMENT
+>
+> Regular member:
+> broad participation.
+>
+> Business:
+> professional business analytics.
+>
+> Cultural Ambassador:
+> creator/ambassador analytics.
+>
+> Tester:
+> testing entitlement layered on top of whichever persona/account they are using.
+>
+> Do not use media contribution limits as the primary differentiation between these roles.
+>
+> ---
+>
+> # PHASE 23 — FEATURE FLAGS
+>
+> Build all of the above, but activation should be staged.
+>
+> Create feature flags/configuration for:
+>
+> `universal_search`
+> `search_event_logging`
+> `library_country_books`
+> `library_auto_topic_shells`
+> `kinfolk_universal_retrieval`
+> `business_demand_signals`
+> `ambassador_demand_signals`
+> `behavioral_affinity`
+> `sundown_history_enhanced`
+>
+> The code can be complete while higher-risk flywheel outputs remain disabled until their acceptance tests pass.
+>
+> Search and Library improvements may be enabled first.
+>
+> Business/Ambassador demand notifications must remain OFF until privacy aggregation is proven.
+>
+> ---
+>
+> # PHASE 24 — NO MASS PUSH WITHOUT PROOF
+>
+> Complete implementation in logical checkpoints.
+>
+> Before production activation return one matrix:
+>
+> `Feature | Built | Data migration | Test | Privacy test | Regression test | Feature flag | Ready`
+>
+> REQUIRED TEST QUERIES:
+>
+> `The Pink Tea Cup`
+>
+> `Allure Hair`
+>
+> `barber near me`
+>
+> `Fruity Pebble waffles`
+>
+> `tea parties near me`
+>
+> `alopecia stylist`
+>
+> `tax attorney`
+>
+> `Kenya`
+>
+> `Ethiopian restaurants`
+>
+> `Welding`
+>
+> `HBCU`
+>
+> `Underground Railroad`
+>
+> `jazz tonight`
+>
+> For each return:
+>
+> normalized intent
+> result types
+> exact vs inferred result labels
+> geographic behavior
+> Library connection
+> Kinfolk result
+> demand event recorded
+> privacy outcome
+>
+> ---
+>
+> # PHASE 25 — KINFOLK ACCEPTANCE
+>
+> Test:
+>
+> `Where can I get Fruity Pebble waffles near me?`
+>
+> If no confirmed exact match exists, Kinfolk must:
+>
+> * explicitly say it could not confirm the exact item
+> * offer truthful related/community alternatives
+> * explain why alternatives were chosen
+> * offer geographic expansion
+> * record unmet demand
+> * never invent item availability
+>
+> Then test:
+>
+> `What are some restaurants in Philadelphia?`
+>
+> Follow with:
+>
+> `Which of those would be good for a date night?`
+>
+> Kinfolk must retain conversational context and use real platform data.
+>
+> ---
+>
+> # PHASE 26 — FINAL PRODUCTION GATE
+>
+> Before pushing/activating:
+>
+> return:
+>
+> **Candidate SHA**
+>
+> **Database migrations**
+>
+> **Rollback SHA**
+>
+> **Feature flags**
+>
+> **Existing endpoint compatibility**
+>
+> **Data-count comparison before/after**
+>
+> **Privacy tests**
+>
+> **Search tests**
+>
+> **Kinfolk tests**
+>
+> **Library tests**
+>
+> **Sundown History tests**
+>
+> **Mobile tests**
+>
+> **Web tests**
+>
+> **Outstanding failures**
+>
+> STOP.
+>
+> Founder reviews the report.
+>
+> Then follow the documented production push procedure.
+>
+> After deployment, visually test the actual public website/mobile build as applicable.
+>
+> Do not describe anything as complete based solely on code inspection.
+
+The reason I prefer this over simply telling Replit **“implement the eight layers”** is that their audit proved the pieces already exist in fragments: collaborative filtering is already live, business save/community-trend infrastructure exists, Library `search-or-create` already exists, creator profiles already have locations, and there are already several forms of search-event storage.  
+
+So we should **connect and normalize**, not rebuild.
+
+The one piece I would deliberately keep behind a feature flag even after it is coded is **business/Cultural Ambassador demand notifications**. The audit found no aggregation threshold or anonymization layer yet, which would make that unsafe to expose prematurely.  Once Replit proves that, turn it on.
+
+Everything else—especially Universal Search, “thing” search, Library Books/countries, Kinfolk retrieval, fallback results, and the Sundown Town History improvements—can move forward now.
+
+And the product rule I would put at the very top of the code/spec is:
+
+> **Every action should either help the member now, help the community later, or both.**
+
+A Kenya save enriches travel. A waffle search improves business discovery. A video improves search. A check-in improves Kinfolk. A failed search identifies unmet demand. A business response creates new supply. A Cultural Ambassador fills a content gap. The Library holds it all together.
+
+That is the flywheel Replit now needs to implement—not just another search box.
