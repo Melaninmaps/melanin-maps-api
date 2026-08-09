@@ -24,6 +24,8 @@
 
 import { Router } from "express";
 import { pool } from "@workspace/db";
+import { isAdmin } from "../lib/adminAuth";
+import { randomUUID } from "crypto";
 
 const router = Router();
 
@@ -59,6 +61,8 @@ interface KnowledgeSource {
   source_name: string;
   source_url: string | null;
   claim: string | null;
+  evidence_section: string | null;
+  confidence: string | null;
   is_primary: boolean;
   status: string;
   last_verified: string | null;
@@ -222,12 +226,15 @@ async function fetchConnectedEntities(
   });
 }
 
-async function fetchSources(topicId: string): Promise<KnowledgeSource[]> {
+async function fetchSources(topicId: string, includeStatus?: string): Promise<KnowledgeSource[]> {
+  const statusFilter = includeStatus
+    ? `AND status = '${includeStatus.replace(/'/g, "''")}'`
+    : `AND status = 'active'`;
   const r = await pool.query(
     `SELECT id, authority_tier, source_name, source_url, claim,
-            is_primary, status, last_verified
+            evidence_section, confidence, is_primary, status, last_verified
      FROM knowledge_sources
-     WHERE topic_id = $1
+     WHERE topic_id = $1 ${statusFilter}
      ORDER BY
        CASE authority_tier
          WHEN 'authoritative' THEN 1
@@ -245,6 +252,8 @@ async function fetchSources(topicId: string): Promise<KnowledgeSource[]> {
     source_name: row.source_name as string,
     source_url: row.source_url as string | null,
     claim: row.claim as string | null,
+    evidence_section: row.evidence_section as string | null,
+    confidence: row.confidence as string | null,
     is_primary: Boolean(row.is_primary),
     status: row.status as string,
     last_verified: row.last_verified
@@ -421,6 +430,119 @@ router.get(
       connectedTopics,
       surface_meta: surfaceMeta(surface, entityId),
     });
+  },
+);
+
+// ── POST /knowledge/contribute ─────────────────────────────────────────────
+// Authenticated. Creates a community or ambassador evidence contribution
+// with status='pending_review'. Never auto-promotes to 'active'.
+// Community/ambassador tiers remain strictly separate from authoritative/professional.
+router.post(
+  "/knowledge/contribute",
+  async (req, res): Promise<void> => {
+    const userId = (req as { user?: { id?: string } }).user?.id;
+    if (!userId) {
+      res.status(401).json({ error: "Authentication required to contribute" });
+      return;
+    }
+
+    const { topicId, claimText, sourceName, sourceUrl } = req.body as {
+      topicId?: string;
+      claimText?: string;
+      sourceName?: string;
+      sourceUrl?: string;
+    };
+
+    if (!topicId || !claimText || !sourceName) {
+      res.status(400).json({ error: "topicId, claimText, and sourceName are required" });
+      return;
+    }
+
+    // Verify topic exists
+    const topicCheck = await pool.query(
+      `SELECT id FROM knowledge_topics WHERE id = $1 LIMIT 1`,
+      [topicId],
+    );
+    if (!topicCheck.rows.length) {
+      res.status(404).json({ error: "Topic not found" });
+      return;
+    }
+
+    const id = randomUUID();
+    await pool.query(
+      `INSERT INTO knowledge_sources
+         (id, topic_id, authority_tier, source_name, source_url, claim,
+          contributor_id, is_primary, status, confidence, created_at)
+       VALUES ($1,$2,'community',$3,$4,$5,$6,false,'pending_review','unverified',NOW())`,
+      [id, topicId, sourceName, sourceUrl || null, claimText, userId],
+    );
+
+    res.json({ success: true, contributionId: id });
+  },
+);
+
+// ── GET /admin/knowledge/contributions ────────────────────────────────────
+// Admin only. Returns pending community/ambassador contributions for review.
+router.get(
+  "/admin/knowledge/contributions",
+  async (req, res): Promise<void> => {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const status = (req.query.status as string) || "pending_review";
+    const limit = Math.min(parseInt((req.query.limit as string) || "50", 10), 100);
+
+    const r = await pool.query(
+      `SELECT ks.id, ks.topic_id, ks.authority_tier, ks.source_name,
+              ks.source_url, ks.claim, ks.status, ks.confidence,
+              ks.contributor_id, ks.created_at,
+              kt.topic_name, kt.category, kt.geography_ref,
+              u.email AS contributor_email
+       FROM knowledge_sources ks
+       JOIN knowledge_topics kt ON kt.id = ks.topic_id
+       LEFT JOIN users u ON u.id = ks.contributor_id
+       WHERE ks.status = $1
+       ORDER BY ks.created_at DESC
+       LIMIT $2`,
+      [status, limit],
+    );
+
+    res.json({
+      contributions: r.rows,
+      total: r.rows.length,
+      status_filter: status,
+    });
+  },
+);
+
+// ── PATCH /admin/knowledge/contributions/:id ──────────────────────────────
+// Admin only. Approve (→ active) or reject (→ removed) a pending contribution.
+router.patch(
+  "/admin/knowledge/contributions/:id",
+  async (req, res): Promise<void> => {
+    if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+    const { id } = req.params;
+    const { action, notes } = req.body as { action?: string; notes?: string };
+
+    if (!action || !["approve", "reject"].includes(action)) {
+      res.status(400).json({ error: "action must be 'approve' or 'reject'" });
+      return;
+    }
+
+    const newStatus = action === "approve" ? "active" : "removed";
+    // On approval, also upgrade confidence to 'medium' (community tier)
+    const confidenceUpdate = action === "approve"
+      ? ", confidence = 'medium'"
+      : "";
+
+    await pool.query(
+      `UPDATE knowledge_sources
+       SET status = $1${confidenceUpdate}, description = COALESCE($2, description)
+       WHERE id = $3`,
+      [newStatus, notes || null, id],
+    );
+
+    res.json({ success: true, id, action, newStatus });
   },
 );
 

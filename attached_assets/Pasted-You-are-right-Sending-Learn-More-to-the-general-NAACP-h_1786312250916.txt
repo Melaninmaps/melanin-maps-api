@@ -1,0 +1,584 @@
+You are right. **Sending “Learn More” to the general NAACP homepage is not sufficient evidence and should be removed.** A Sundown Town entry is a serious historical designation. MWM needs to show **why the place is included, what evidence supports it, what period the evidence covers, how strong the evidence is, and whether there is any separate current safety information.**
+
+The most important rule is that MWM must never turn **historical racial exclusion into an unsupported present-day danger claim**. A town may have documented exclusionary history without evidence that it is currently unsafe. Conversely, current community reports may reveal concerns that deserve attention even where the historical record is incomplete. Those need to remain two different evidence systems.
+
+I would have the card work progressively. The small map card gives the short answer; **“Read the History”** opens the full MWM record instead of sending the user away. From that record, users can open the actual primary and secondary sources.
+
+Send Replit this:
+
+```text
+CRITICAL CORRECTION — SUNDOWN TOWN HISTORY / EVIDENCE EXPERIENCE
+
+The current Sundown Town implementation is NOT acceptable.
+
+Current behavior:
+
+User clicks a historical Sundown Town marker
+→ sees a short statement
+→ clicks "Learn More"
+→ is sent to the general NAACP website.
+
+A generic organizational homepage is NOT evidence for the designation of a
+specific community.
+
+REMOVE that behavior.
+
+============================================================
+CORE PRODUCT RULE
+============================================================
+
+A historical racial-exclusion designation is a serious claim.
+
+Every MWM Sundown Town / Historical Exclusion record must answer:
+
+WHAT HAPPENED?
+WHEN?
+WHO WAS AFFECTED?
+WHAT EVIDENCE SUPPORTS THIS?
+HOW STRONG IS THE DOCUMENTATION?
+IS THIS HISTORICAL ONLY OR IS THERE CURRENT SAFETY INFORMATION TOO?
+
+Historical evidence and current safety intelligence MUST remain separate.
+
+DO NOT imply:
+
+"historically documented sundown town"
+=
+"currently unsafe."
+
+Do not imply current safety merely from historical classification.
+
+============================================================
+1. MAP CARD — SHORT VERSION
+============================================================
+
+The map card should remain concise.
+
+Example structure:
+
+HISTORICAL RACIAL EXCLUSION
+
+Levittown, Pennsylvania
+
+Documented history of racial exclusion in housing.
+
+Historical period:
+[appropriate date/range]
+
+Evidence level:
+Well documented / Documented / Emerging record / Needs review
+
+Brief synopsis:
+2–4 sentences explaining WHY this place is included.
+
+Then:
+
+READ THE HISTORY
+VIEW SOURCES
+
+If current verified safety/community information exists, show separately:
+
+CURRENT COMMUNITY CONTEXT
+[summary]
+
+If none exists:
+
+"No verified current safety pattern is being inferred from this historical
+record."
+
+DO NOT send "Learn More" to a generic third-party homepage.
+
+============================================================
+2. FULL MWM HISTORICAL RECORD
+============================================================
+
+"Read the History" should open an MWM page / drawer / sheet associated with
+the canonical geography.
+
+Users should be able to read as much or as little as they want.
+
+Recommended sections:
+
+OVERVIEW
+
+WHY THIS PLACE IS INCLUDED
+
+TIMELINE
+
+HOW EXCLUSION OPERATED
+
+WHO WAS AFFECTED
+
+PRIMARY EVIDENCE
+
+HISTORICAL RESEARCH
+
+NEWSPAPER / ARCHIVAL MATERIAL
+
+LOCAL / GOVERNMENT RECORDS
+
+COMMUNITY HISTORY
+
+CURRENT CONTEXT
+
+SOURCES & METHODOLOGY
+
+REPORT A CORRECTION / ADD EVIDENCE
+
+============================================================
+3. SYNOPSIS REQUIREMENT
+============================================================
+
+Every record needs an editor/research-quality synopsis.
+
+Do not merely show:
+
+"Historical Sundown Town."
+
+Explain the basis.
+
+Examples of historical mechanisms that may be relevant IF documented:
+
+racially restrictive covenants
+housing discrimination
+exclusion from home ownership
+municipal ordinances
+police enforcement/intimidation
+posted warnings/signs
+racial violence
+organized intimidation
+real-estate practices
+HOA/developer restrictions
+school segregation
+business/service exclusion
+documented Black traveler warnings
+oral histories corroborated by other evidence
+other documented exclusionary practices
+
+Only mention mechanisms actually supported by evidence for that place.
+
+============================================================
+4. EVIDENCE HIERARCHY
+============================================================
+
+Store sources individually.
+
+SOURCE TYPE A — PRIMARY DOCUMENTATION
+
+Examples where available:
+
+restrictive covenants
+property deeds
+development agreements
+municipal records
+court cases
+government reports
+official correspondence
+historical maps
+archival photographs
+contemporaneous advertisements
+original newspaper reporting
+original letters
+meeting minutes
+
+SOURCE TYPE B — AUTHORITATIVE HISTORICAL RESEARCH
+
+Examples:
+
+Library of Congress
+National Archives
+state archives
+university archives
+museum collections
+historical societies
+peer-reviewed scholarship
+academic books
+recognized research projects
+
+SOURCE TYPE C — JOURNALISM / NEWSPAPER ARCHIVES
+
+Historical newspaper clippings and reputable retrospective reporting.
+
+Preserve:
+
+publication
+article title
+publication date
+archive date if relevant
+URL/archive reference
+claim supported
+
+SOURCE TYPE D — LOCAL HISTORICAL SOURCES
+
+local historical society
+municipal history
+county archive
+library special collections
+university/community archive
+
+SOURCE TYPE E — COMMUNITY / ORAL HISTORY
+
+Community testimony is valuable but must be labeled appropriately.
+
+Whenever possible corroborate oral history with independent evidence.
+
+Never silently convert community recollection into an authoritative historical
+fact.
+
+============================================================
+5. EACH SOURCE RECORD
+============================================================
+
+For every evidence item store:
+
+source_id
+place/geography_id
+title
+publisher/institution
+author where available
+source_type
+publication_date
+historical_period_covered
+URL
+archive_URL if available
+retrieved_at
+
+claim_supported
+
+evidence_excerpt_or_summary
+
+authority_tier
+
+directness:
+DIRECT
+SUPPORTING CONTEXT
+INDIRECT
+
+confidence:
+VERIFIED
+HIGH
+MODERATE
+EMERGING
+DISPUTED
+
+primary_source:
+YES/NO
+
+publicly_viewable:
+YES/NO
+
+notes
+
+Do not use a prestigious organization as a credibility placeholder.
+
+THE SOURCE MUST ACTUALLY SUPPORT THE CLAIM.
+
+============================================================
+6. HISTORICAL EVIDENCE LEVEL
+============================================================
+
+Do not display every record as equally established.
+
+Recommended user-facing classifications:
+
+WELL DOCUMENTED
+
+Multiple strong independent sources and/or primary documentation.
+
+DOCUMENTED
+
+Credible historical evidence supports the designation.
+
+EMERGING HISTORICAL RECORD
+
+Evidence exists but additional corroboration is needed.
+
+COMMUNITY-REPORTED HISTORY — UNDER REVIEW
+
+Community/oral-history signal exists but sufficient independent documentation
+has not yet been established.
+
+DISPUTED / COMPLEX RECORD
+
+Substantial credible disagreement exists over characterization.
+
+Never downgrade uncomfortable evidence merely because it is disputed.
+
+Never upgrade weak evidence merely because it matches expectations.
+
+============================================================
+7. TIMELINE
+============================================================
+
+Where information exists, show historical milestones.
+
+Example structure:
+
+1940
+[documented event]
+
+1947
+[documented covenant / development action]
+
+1952
+[newspaper account]
+
+1968
+[legal/policy change]
+
+Present
+Current historical-context status
+
+This makes it clear that history changed over time.
+
+============================================================
+8. CURRENT SAFETY MUST BE A SEPARATE LAYER
+============================================================
+
+Historical exclusion data:
+
+HISTORICAL SAFETY / RACIAL EXCLUSION CONTEXT
+
+Current information:
+
+CURRENT COMMUNITY SAFETY INTELLIGENCE
+
+Possible current sources:
+
+recent MWM community reports
+verified incidents
+official public-safety information
+current discrimination reports
+current travel advisories where relevant
+recent credible journalism
+other current verified evidence
+
+NEVER calculate current danger simply because a location has historical
+Sundown Town evidence.
+
+============================================================
+9. MAP VISUALIZATION
+============================================================
+
+The subtle historical overlay remains approved.
+
+However, the shading needs a clear meaning.
+
+Do NOT make darker shading mean:
+
+"more dangerous today"
+
+unless it is explicitly a CURRENT safety layer.
+
+Historical shading can represent something like:
+
+strength/depth of HISTORICAL DOCUMENTATION
+
+or
+
+historical exclusion footprint.
+
+If using intensity:
+
+lighter gold =
+documented historical context
+
+deeper gold =
+stronger/more extensive historical documentation
+
+NOT:
+current danger.
+
+Current active safety concerns require a different visual system.
+
+Provide a legend explaining this.
+
+============================================================
+10. TRAVEL / ROUTE BEHAVIOR
+============================================================
+
+A user may opt out of DISPLAYING historical-exclusion overlays.
+
+That does not automatically mean Kinfolk should ignore relevant safety context.
+
+Separate settings:
+
+SHOW HISTORICAL EXCLUSION ON MAP
+ON/OFF
+
+INCLUDE HISTORICAL CONTEXT IN TRAVEL PLANNING
+ON/OFF
+
+CURRENT SAFETY ALERTS
+handled according to approved safety preferences/rules.
+
+If historical information is relevant during a trip, Kinfolk can say:
+
+"This route passes through an area with documented historical racial-exclusion
+history. I don't have evidence from that history alone that it is currently
+unsafe. Would you like the history or current community context?"
+
+If current verified information also matters, explain that separately.
+
+============================================================
+11. CORRECTIONS / COMMUNITY CONTRIBUTIONS
+============================================================
+
+Provide:
+
+ADD HISTORICAL EVIDENCE
+SUGGEST A CORRECTION
+SHARE FAMILY / COMMUNITY HISTORY
+
+Community submissions should enter moderation/research review.
+
+Allow:
+
+URL
+archive reference
+newspaper clipping
+document/photo
+oral history
+book citation
+historical society reference
+personal/family account
+
+Do not immediately convert an unreviewed submission into established historical
+fact.
+
+============================================================
+12. KINFOLK
+============================================================
+
+Connect these records to the knowledge graph.
+
+Example:
+
+User:
+"Why is Levittown shaded on the map?"
+
+Kinfolk should be able to explain:
+
+- the historical designation
+- the specific documented reason
+- approximate historical period
+- strength/type of evidence
+- distinction between historical record and present-day safety
+- current community information if available
+
+Kinfolk should provide:
+
+"Would you like the short version, the full history, or the source documents?"
+
+Big Cousin behavior here means helping someone understand history —
+not frightening them and not minimizing documented exclusion.
+
+============================================================
+13. RESPONSIBLE LANGUAGE
+============================================================
+
+Avoid unsupported language such as:
+
+"This town is dangerous."
+"Avoid this place."
+"This is a racist town."
+
+unless current evidence independently supports the specific relevant claim and
+the wording complies with MWM moderation/safety standards.
+
+Prefer:
+
+"documented history of racial exclusion"
+
+"historical housing discrimination"
+
+"historically documented sundown practices"
+
+"historical record includes..."
+
+"current safety should be evaluated separately from this historical record."
+
+============================================================
+14. EXISTING DATA AUDIT
+============================================================
+
+Before changing the records:
+
+Audit EVERY existing Sundown Town / historical-exclusion record currently used
+by MWM.
+
+Return:
+
+place
+canonical geography ID
+current description
+current source URL
+actual source represented
+source directly supports claim? YES/NO
+historical period
+evidence type
+confidence
+current-safety information incorrectly mixed in? YES/NO
+needs research? YES/NO
+
+Specifically identify every record currently pointing to:
+
+generic NAACP homepage
+generic SPLC homepage
+generic museum homepage
+generic historical website
+or any other non-specific source.
+
+Those cannot remain the sole evidence for a place-level designation.
+
+============================================================
+15. RESEARCH QUEUE
+============================================================
+
+If a current marker lacks sufficient source-level documentation:
+
+DO NOT DELETE HISTORY AUTOMATICALLY.
+
+Mark:
+
+HISTORICAL RECORD — RESEARCH IN PROGRESS
+
+and queue it for evidence enrichment.
+
+Preserve provenance for why it was originally included.
+
+============================================================
+16. ACCEPTANCE TEST — LEVITTOWN
+============================================================
+
+Use the exact marker shown by the founder:
+
+Levittown, Pennsylvania
+
+Prove:
+
+1. Marker opens.
+2. Short synopsis explains why it is historically included.
+3. Historical period is displayed.
+4. Evidence confidence/status appears.
+5. "Read the History" opens the internal MWM record.
+6. User can see specific supporting sources.
+7. Each source opens the relevant record/article/archive — not a generic
+   organization's homepage.
+8. Primary vs secondary evidence is distinguished.
+9. Historical context and current safety are visibly separated.
+10. Kinfolk can answer:
+    "Why is Levittown shown as a historical sundown town?"
+11. Kinfolk can explain the evidence without claiming that historical history
+    automatically means present-day danger.
+
+Then test two additional existing markers with different evidence types.
+
+Return proof before production push.
+```
+
+I would also change the wording on the map itself from **“Sundown Town History”** to something slightly broader like **“Historical Racial Exclusion”**, with “Sundown Town history” as one of the historical classifications underneath it. That gives you room to document places where the history involves restrictive covenants, housing exclusion or other racial barriers without forcing every location into precisely the same historical mechanism.
+
+And the **full page should feel almost like a mini Library Book**. Someone who wants only travel context can read four sentences and close it. Someone doing a school paper, researching their family's history, or trying to understand why their grandparents could not live somewhere should be able to go all the way down to newspaper clippings, deeds, archival records, timelines and source citations.
+
+That is treating these places with the same seriousness as Mother Bethel, an HBCU or another cultural landmark—**the painful history is part of the heritage map too.**

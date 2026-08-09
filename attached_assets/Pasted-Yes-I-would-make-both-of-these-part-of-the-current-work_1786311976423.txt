@@ -1,0 +1,710 @@
+Yes. I would make **both of these part of the current work**, because they directly improve what testers will see and prevent the database from becoming dirtier while you add businesses on tour.
+
+For the Community pages, I agree with your adjustment: **do not wait for community members to create them.** Every existing MWM Living Legacy city should launch with the strongest baseline Replit/Kinfolk can establish from reputable information. Then testers become co-builders rather than being greeted by an empty page.
+
+The experience should actually say that. Something along the lines of:
+
+> **Help us build this community.**
+> We’ve started with trusted public information. You know what the data can’t tell us. Add what it’s like to live here, work here, visit here, raise a family here, build a business here, or simply pass through.
+
+That is a much better beta experience.
+
+And yes, the Hakim's duplication is exactly why I don't want Replit simply deleting “duplicates.” It needs to run a **canonical-entity deduplication audit**. “Hakim's Bookstore” and “Hakim's Bookstore & Gift Shop” may be the same entity, but similarly named businesses in different locations could be legitimate separate businesses or multiple locations of one company.
+
+Give Replit this:
+
+```text
+PRIORITY ADDITIONS — COMMUNITY INTELLIGENCE SEEDING
++ PRODUCTION BUSINESS DUPLICATE AUDIT
+
+These are now approved requirements.
+
+Do not allow either item to interfere with an active migration or partially
+completed phase.
+
+Complete the currently active atomic operation safely, then incorporate these
+requirements into the present work queue.
+
+============================================================
+PART A — LIVING LEGACY COMMUNITY PAGES
+============================================================
+
+CHANGE TO PREVIOUS COMMUNITY INTELLIGENCE PLAN:
+
+Do NOT wait for users to create Community pages for our existing
+Living Legacy cities.
+
+Every city currently designated by Mapping With Melanin as a
+LIVING LEGACY CITY should have a Community Intelligence page created/activated.
+
+Use the EXISTING canonical geography nodes.
+
+DO NOT create another city table or duplicate geography records.
+
+============================================================
+1. INVENTORY FIRST
+============================================================
+
+Identify the complete CURRENT list of Living Legacy cities already stored or
+configured anywhere in the MWM system.
+
+Search:
+
+database
+seed files
+tour guides
+city profiles
+Living Legacy data/configuration
+Library geography
+cultural sites
+existing city lists
+admin configuration
+
+Return:
+
+Living Legacy City
+Canonical Geography ID
+City
+State/Province
+Country
+Existing Community page?
+Existing Library geography node?
+Existing city profile?
+Existing cultural entities?
+Existing businesses?
+Existing events?
+Existing public-data baseline?
+
+Do not rely on memory or hard-code a new list if a canonical list already exists.
+
+============================================================
+2. CREATE / ACTIVATE COMMUNITY PAGES
+============================================================
+
+For EVERY Living Legacy city:
+
+Create or activate the Community Intelligence experience.
+
+The page should NOT begin empty where reputable baseline information can
+reasonably be obtained.
+
+Seed what can be supported with reputable sources.
+
+Potential baseline:
+
+population
+population change
+racial/ethnic demographics
+age
+languages where available
+median household income
+employment/unemployment
+major industries
+housing/rent/homeownership
+education attainment
+school information
+transportation/commuting
+healthcare/resource context
+local government
+history
+cultural significance
+existing MWM cultural sites
+existing MWM businesses
+houses of faith
+events
+Library topics
+current useful public resources
+
+Use the already-approved provenance architecture.
+
+Every factual baseline must retain:
+
+source
+source URL
+data year/publication date
+retrieved_at
+geography represented
+confidence
+freshness
+
+Do not invent missing information.
+
+============================================================
+3. TESTERS HELP BUILD THE REST
+============================================================
+
+Where information is incomplete, DO NOT make the page look broken.
+
+Use a community-building state.
+
+Suggested UX:
+
+HELP US BUILD THIS COMMUNITY
+
+"We've started with trusted public information.
+You know what the data can't tell us.
+
+Tell the community what it's like to live here, work here,
+visit here, raise a family here, build a business here,
+or simply pass through."
+
+Then offer contribution paths such as:
+
+I LIVE HERE
+I GREW UP HERE
+I WORK HERE
+I OWN A BUSINESS HERE
+I GO TO SCHOOL HERE
+MY FAMILY LIVES HERE
+I VISIT OFTEN
+I USED TO LIVE HERE
+I'M VISITING
+I'M PASSING THROUGH
+I'M CONSIDERING MOVING HERE
+
+Then allow the approved Community Intelligence contribution questions.
+
+This is intentional beta participation.
+
+Testers should understand:
+
+YOU ARE HELPING US BUILD MWM.
+
+============================================================
+4. DO NOT SHOW FAKE COMPLETENESS
+============================================================
+
+Use states such as:
+
+TRUSTED PUBLIC DATA
+COMMUNITY INSIGHT NEEDED
+EARLY COMMUNITY SIGNAL
+GROWING COMMUNITY PICTURE
+
+Do not generate artificial reviews or community opinions to make a city look full.
+
+============================================================
+5. CONNECT EXISTING MWM INFORMATION AUTOMATICALLY
+============================================================
+
+For every Living Legacy city, connect existing canonical entities where relevant:
+
+businesses
+cultural sites
+HBCUs
+houses of faith
+events
+community organizations
+Library Books/topics
+Cultural Ambassador content
+community posts
+future Community Needs
+
+ONE CANONICAL ENTITY.
+MULTIPLE RELEVANT SURFACES.
+
+Do not duplicate records just to make the Community page populated.
+
+============================================================
+6. PILOT PROOF
+============================================================
+
+Before bulk activating all cities, prove three different Living Legacy cities.
+
+Use cities with enough existing MWM data to demonstrate:
+
+public data
+business connections
+cultural entities
+Library connections
+events if available
+tester contribution
+
+Show the founder the resulting structure.
+
+Once the underlying process proves idempotent and non-duplicating,
+apply it to the full existing Living Legacy city set.
+
+============================================================
+PART B — BUSINESS DUPLICATE FORENSIC AUDIT
+============================================================
+
+CRITICAL DATA-QUALITY ISSUE:
+
+Testing has already produced an apparent duplicate for:
+
+Hakim's Bookstore
+Philadelphia, Pennsylvania
+
+We have previously discussed canonical business matching and duplicate
+prevention.
+
+Do NOT simply delete one Hakim's record.
+
+Run a complete READ-ONLY duplicate audit across EVERY non-test business in
+the database first.
+
+============================================================
+7. EXCLUDE TEST DATA
+============================================================
+
+Identify and exclude known:
+
+test businesses
+demo businesses
+Apple reviewer businesses
+development fixtures
+explicit test records
+
+Return how you identified test vs real records.
+
+Do NOT infer "test" merely because a business has little activity.
+
+============================================================
+8. NORMALIZATION FOR DUPLICATE DETECTION
+============================================================
+
+Create comparison values without changing stored public names.
+
+Normalize for matching:
+
+BUSINESS NAME
+
+- lowercase
+- trim whitespace
+- normalize punctuation
+- normalize apostrophes
+- normalize "&" vs "and"
+- remove duplicate whitespace
+- carefully ignore corporate suffixes where appropriate:
+  LLC
+  Inc
+  Corporation
+  Co
+  Ltd
+
+Do NOT remove meaningful terms such as:
+
+Barbershop
+Cafe
+Books
+Dental
+Church
+Childcare
+
+ADDRESS
+
+Normalize:
+
+street abbreviations
+unit/suite
+city
+state/province
+postal code
+country
+
+PHONE
+
+Normalize to comparable international format where possible.
+
+WEBSITE
+
+Compare canonical domain.
+
+Examples:
+
+https://www.example.com
+https://example.com/
+http://example.com
+
+should generally resolve to the same domain identity.
+
+SOCIAL PROFILES
+
+Normalize handles/URLs for:
+
+Instagram
+TikTok
+Facebook
+YouTube
+other supported social accounts
+
+LOCATION
+
+Compare latitude/longitude proximity where available.
+
+============================================================
+9. DUPLICATE CONFIDENCE SIGNALS
+============================================================
+
+Use multiple signals.
+
+VERY HIGH CONFIDENCE DUPLICATE:
+
+same normalized name
++
+same address
+
+OR
+
+same normalized name
++
+same website/domain
+
+OR
+
+same normalized name
++
+same phone
+
+OR
+
+same website/domain
++
+same address/location
+
+HIGH CONFIDENCE:
+
+very similar name
++
+same social account
+
+very similar name
++
+coordinates within appropriate small distance
++
+same category
+
+MEDIUM / REVIEW REQUIRED:
+
+similar name
++
+same city
++
+same category
+
+LOW CONFIDENCE:
+
+name similarity alone
+
+NEVER automatically merge based on name similarity alone.
+
+============================================================
+10. MULTI-LOCATION PROTECTION
+============================================================
+
+A company with multiple legitimate locations is NOT a duplicate.
+
+Example:
+
+ABC Childcare
+Location A
+Location B
+Location C
+
+should eventually become:
+
+ONE canonical parent business
++
+THREE business_location records
+
+Do not collapse legitimate locations into one address.
+
+Detect:
+
+same brand/domain
++
+different legitimate addresses
+
+and classify:
+
+POTENTIAL MULTI-LOCATION BUSINESS
+
+rather than DUPLICATE.
+
+============================================================
+11. HAKIM'S SPECIFIC TRACE
+============================================================
+
+For every Hakim's Bookstore-related production record return:
+
+business_id
+public name
+normalized name
+address
+phone
+website
+social URLs
+latitude/longitude
+category
+ownership designation
+claimed/unclaimed status
+created_at
+created_by/source
+photos/videos
+reviews
+saves
+check-ins
+Vibes
+THE REAL
+Community Says
+safety information
+events/connections
+Library/topic relationships
+
+Then state:
+
+SAME BUSINESS DUPLICATE
+
+or
+
+LEGITIMATE SEPARATE ENTITY
+
+or
+
+MULTI-LOCATION RELATIONSHIP
+
+and explain why.
+
+DO NOT ALTER IT YET.
+
+============================================================
+12. FULL DATABASE DUPLICATE REPORT
+============================================================
+
+Return groups such as:
+
+GROUP ID
+
+Canonical Candidate
+
+Possible Duplicate A
+Possible Duplicate B
+
+Confidence:
+Very High / High / Medium / Low
+
+Signals:
+same phone
+same address
+same domain
+same Instagram
+name similarity
+coordinate proximity
+etc.
+
+Recommended action:
+
+AUTO-MERGE CANDIDATE
+MANUAL REVIEW
+MULTI-LOCATION
+KEEP SEPARATE
+
+No changes during this phase.
+
+============================================================
+13. SAFE MERGE RULE
+============================================================
+
+After founder approval of the duplicate methodology:
+
+A duplicate merge must NEVER discard user/community data.
+
+Choose one canonical business ID.
+
+Transfer/repoint ALL legitimate relationships from duplicate record(s),
+including where applicable:
+
+reviews
+saves
+check-ins
+Vibes
+THE REAL
+Community Says
+community captions
+comments
+photos
+videos
+social URLs
+website
+ownership information
+verification
+claim information
+safety reports
+events
+Library connections
+Community geography connections
+search/demand relationships
+Cultural Ambassador content
+media
+business analytics
+referrals
+recommendations
+notifications
+historical audit information
+
+Resolve conflicts field-by-field.
+
+Do not simply DELETE duplicate B and lose its relationships.
+
+============================================================
+14. BUSINESS INFORMATION MERGE PRECEDENCE
+============================================================
+
+Prefer generally:
+
+verified owner-submitted information
+>
+verified authoritative business source
+>
+admin-verified information
+>
+community-provided information
+>
+automated/web-discovered information
+
+BUT:
+
+more recent verified information may supersede older information.
+
+Never overwrite a verified field with a weaker source silently.
+
+Preserve provenance.
+
+============================================================
+15. MEDIA DEDUPLICATION
+============================================================
+
+Do not duplicate identical:
+
+photos
+social videos
+URLs
+social posts
+
+when records merge.
+
+But do not discard unique media from either record.
+
+============================================================
+16. REVIEW / COMMUNITY CONTRIBUTION PROTECTION
+============================================================
+
+If two duplicate records each contain legitimate reviews or community
+contributions:
+
+retain all legitimate contributions.
+
+After merge they should appear under the canonical entity.
+
+Do not change:
+
+author
+timestamp
+original visit/location
+original text
+moderation state
+
+============================================================
+17. DUPLICATE-PREVENTION ON NEW BUSINESS CREATION
+============================================================
+
+After the audit, confirm the ADD BUSINESS workflow checks for duplicates
+BEFORE creating another business.
+
+When member/admin enters:
+
+business name
+website
+social URL
+phone
+address
+
+search existing canonical entities.
+
+If likely match:
+
+"Is this the business you're looking for?"
+
+Show existing candidate(s).
+
+Offer:
+
+OPEN BUSINESS
+ADD ANOTHER LOCATION
+SUGGEST AN UPDATE
+THIS IS A DIFFERENT BUSINESS
+
+Do not silently create another record.
+
+============================================================
+18. SOCIAL / WEB DISCOVERY
+============================================================
+
+If someone @mentions or searches for a business not currently in MWM and the
+system discovers it on the web:
+
+run the SAME duplicate-resolution process before creating a claimable profile.
+
+Web discovery must never become a duplicate factory.
+
+============================================================
+19. REQUIRED FINAL PROOF
+============================================================
+
+Return:
+
+Total real businesses audited
+Exact duplicate groups found
+High-confidence groups
+Manual-review groups
+Potential multi-location groups
+Test records excluded
+
+For Hakim's specifically:
+
+Before record count
+Canonical proposed record
+Relationships on each record
+Proposed merge result
+Expected record count after merge
+Expected relationship counts after merge
+Data that would be preserved
+
+Then STOP.
+
+Do not execute production merges until the founder reviews the report.
+
+============================================================
+PERMANENT RULE
+============================================================
+
+Business duplication prevention is now part of canonical MWM entity integrity.
+
+Before creating any new business from:
+
+admin entry
+member submission
+@mention
+social discovery
+web discovery
+import
+tour guide
+Community Intelligence
+Cultural Ambassador contribution
+
+the system must attempt canonical entity resolution first.
+
+THE GOAL IS:
+
+ONE REAL BUSINESS
+→ ONE CANONICAL MWM BUSINESS ID
+→ ZERO ACCIDENTAL DUPLICATES
+
+with separate location records where the same business legitimately operates
+multiple locations.
+```
+
+One additional thing I would have them do once this is stable: **the duplicate audit shouldn't be a one-time cleanup.** It should become a quiet integrity check whenever you add businesses in bulk. During the tour, you'll be adding businesses from referrals, TikTok, Instagram, direct conversations and existing guides. There will inevitably be variations such as `Hakim Books`, `Hakim's Bookstore`, and `Hakim's Bookstore & Gift Shop`. The system should catch those before they become three profiles.
+
+And I particularly like making the Living Legacy pages available to testers now. It gives you a meaningful beta assignment beyond “click around and tell me if something breaks.” You're effectively telling them: **we built the framework and brought the trusted data; now tell us what only people who know this place can know.** That's exactly the community side of the flywheel.

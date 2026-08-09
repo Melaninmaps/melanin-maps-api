@@ -477,16 +477,30 @@ export function renderKnowledgeGraphContext(ctx: KnowledgeGraphContext): string 
     }
 
     // Sources by tier
+    // CITATION RULE: Kinfolk must only present a source as DIRECT PROOF of a
+    // specific claim when confidence = 'verified'. Any lower confidence means
+    // the source provides context or corroboration, NOT a verbatim citation.
     if (topic.sources.length === 0) {
       lines.push("Evidence: No verified sources on this topic yet.");
     } else {
       lines.push("Evidence:");
       for (const src of topic.sources) {
         const tierLabel = src.authority_tier.toUpperCase();
-        const conf = src.confidence ? ` (confidence: ${src.confidence.toUpperCase()})` : "";
-        lines.push(`  [${tierLabel}]${conf} ${src.source_name}`);
+        // Map confidence → citation strength Kinfolk must honor
+        let citationType: string;
+        if (src.confidence === "verified") {
+          citationType = "DIRECT CITATION";
+        } else if (src.confidence === "high") {
+          citationType = "CONTEXTUAL SUPPORT";
+        } else if (src.confidence === "medium") {
+          citationType = "BACKGROUND REFERENCE";
+        } else {
+          // low, unverified, or missing
+          citationType = "BACKGROUND ONLY — do not cite for specific claims";
+        }
+        lines.push(`  [${tierLabel}] [${citationType}] ${src.source_name}`);
         if (src.claim) {
-          lines.push(`    Claim: "${src.claim}"`);
+          lines.push(`    Claim supported: "${src.claim}"`);
         }
         if (src.source_url) {
           lines.push(`    Source: ${src.source_url}`);
@@ -496,7 +510,15 @@ export function renderKnowledgeGraphContext(ctx: KnowledgeGraphContext): string 
           const section = src.evidence_section.length > 200
             ? src.evidence_section.slice(0, 200) + "…"
             : src.evidence_section;
-          lines.push(`    Note: ${section}`);
+          lines.push(`    Evidence note: ${section}`);
+        }
+        // Explicit guidance per confidence level so Kinfolk knows exactly how to use it
+        if (src.confidence === "verified") {
+          lines.push(`    → Kinfolk may cite this source as direct proof of the claim above.`);
+        } else if (src.confidence === "high") {
+          lines.push(`    → Kinfolk: use "historical records suggest" or "sources indicate" — do NOT say this source directly documents the specific claim.`);
+        } else {
+          lines.push(`    → Kinfolk: background context only — do NOT cite as evidence for any specific claim.`);
         }
       }
     }
@@ -563,12 +585,18 @@ export function renderKnowledgeGraphContext(ctx: KnowledgeGraphContext): string 
   }
 
   // Provenance footer
-  lines.push("KINFOLK EVIDENCE RULES FOR THIS RESPONSE:");
-  lines.push("  FACT = comes from [AUTHORITATIVE] or [PROFESSIONAL] sources above.");
-  lines.push("  INFERENCE = Kinfolk's own reasoning from those facts.");
-  lines.push("  COMMUNITY EXPERIENCE = empty until real MWM members contribute.");
-  lines.push("  AMBASSADOR CONTENT = empty until a Philadelphia Ambassador guide exists.");
-  lines.push("  When uncertain: say so clearly. When citing: name the source.");
+  lines.push("KINFOLK CITATION RULES FOR THIS RESPONSE:");
+  lines.push("  FACT = comes from [AUTHORITATIVE] or [PROFESSIONAL] [DIRECT CITATION] sources above.");
+  lines.push("  CONTEXTUAL = comes from [CONTEXTUAL SUPPORT] sources. Say 'historical records indicate' or 'sources suggest' — never 'X source directly proves'.");
+  lines.push("  INFERENCE = Kinfolk's own reasoning from verified facts. Label it as such.");
+  lines.push("  COMMUNITY EXPERIENCE = empty until real MWM members contribute. Do not invent.");
+  lines.push("  AMBASSADOR CONTENT = empty until a local Ambassador guide exists. Do not invent.");
+  lines.push("");
+  lines.push("  CLAIM-LEVEL RULE: a source's confidence rating governs HOW you cite it, not whether");
+  lines.push("  you mention it. DIRECT CITATION = may be presented as specific proof. CONTEXTUAL");
+  lines.push("  SUPPORT = provides corroborating evidence for the broader topic but does not");
+  lines.push("  verbatim prove the specific claim. Never conflate the two.");
+  lines.push("  When uncertain: say so clearly. When citing: name the source and its citation type.");
   lines.push("=== END KNOWLEDGE GRAPH CONTEXT ===");
 
   return lines.join("\n");

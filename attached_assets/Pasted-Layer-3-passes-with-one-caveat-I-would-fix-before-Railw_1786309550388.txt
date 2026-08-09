@@ -1,0 +1,177 @@
+Layer 3 **passes**, with one caveat I would fix before Railway: the Smithsonian source is explicitly marked as not directly supporting the Philadelphia-specific claim verbatim. That is fine as contextual evidence, but Kinfolk should not cite it as if it directly proves Mother Bethel-specific facts. Replit already added `evidence_section`, `confidence`, and `retrieved_at`, so this is now mostly a retrieval/citation rule rather than a schema problem.
+
+The rest is exactly what we wanted: Kinfolk now resolves the active geography/topic, pulls structured graph context, preserves the distinction between authoritative/professional/community/ambassador evidence, and refuses to invent empty community/ambassador layers. The four-turn Philadelphia test also proves it can keep the same city context while shifting from general city → Black history → nightlife → real estate.
+
+I would **not push Railway yet**. I would authorize one final pre-push layer that covers the user-facing proof we still care about most: actual Library rendering, real community contribution wiring, tester auth production verification, and a small regression set. Then push once those pass.
+
+Send Replit this:
+
+```text
+LAYER 3 — PASS.
+
+The Kinfolk knowledge-graph connection is approved.
+
+One citation/provenance rule to lock before production:
+
+If a source is marked contextual/high-confidence but does NOT directly support
+the exact claim, Kinfolk must not present it as the direct citation for that claim.
+
+Example:
+Smithsonian may support broader historical context,
+but Mother Bethel-specific facts should cite a source that directly supports those facts.
+
+Use:
+claim-level evidence alignment
++
+confidence
++
+evidence_section
+
+when deciding what source Kinfolk cites.
+
+No schema change required unless you find a gap.
+
+==================================================
+FINAL PRE-PUSH LAYER — AUTHORIZE NOW
+==================================================
+
+Before Railway deployment, complete the remaining user-facing proof.
+
+1. LIBRARY GRAPH SURFACING
+
+Implement task #175.
+
+A Library Book must visibly show useful graph content rather than remaining only:
+
+topic title
+follow button
+
+For the Philadelphia proof:
+
+Philadelphia
+→ show related Books/topics
+
+Philadelphia Black History
+→ show:
+- authoritative/professional sources
+- Mother Bethel as connected canonical entity
+- related Philadelphia Faith topic
+- optional deeper exploration
+
+Philadelphia Nightlife
+→ if no sources/entities exist, show an honest "building this Book" state
+rather than an empty/broken experience.
+
+Do not fabricate content to fill empty sections.
+
+==================================================
+2. COMMUNITY CONTRIBUTION PIPELINE
+
+Implement task #176 only to the level needed for the graph to accept REAL
+community/ambassador evidence.
+
+A real contribution should be able to create a properly classified relationship:
+
+community_post
+or
+ambassador_content
+
+with:
+
+real contributor/entity ID
+topic relationship
+source/provenance
+created_at
+moderation status
+visibility/privacy status where applicable
+
+Do NOT auto-promote arbitrary posts into trusted knowledge.
+
+Community/ambassador evidence must stay clearly distinct from authoritative
+or professional sources.
+
+==================================================
+3. TESTER AUTH — PRODUCTION VERIFICATION
+
+Before telling testers to begin:
+
+Verify on CURRENT Railway production:
+
+approved waitlist only → can register
+pending tester only → can register
+existing registered tester → no duplicate; sign in/reset flow
+unauthorized email → invite-only rejection
+
+Also verify:
+
+password-reset provider configured
+reset email actually handed to Resend
+one real tester can complete:
+website login → same profile → Kinfolk → Map → Library
+
+Do not call tester access ready based on dev code alone.
+
+==================================================
+4. PROFILE / BUSINESS DEMO SMOKE TEST
+
+Run one real authenticated browser test for tomorrow's demo path:
+
+- login
+- open business directory
+- search exact business name
+- search generic category
+- open business profile
+- add multiple Vibes if that fix is already in CP2
+- confirm visible update
+- open Map universal search
+- search "Philadelphia nightlife"
+- open Kinfolk
+- ask a Philadelphia question
+- open Library Philadelphia Black History
+- confirm Mother Bethel appears as the same canonical entity
+
+If any item is not yet implemented, mark it PARTIAL rather than silently skipping it.
+
+==================================================
+5. INTERNATIONAL / ADDRESS MODEL CHECK
+
+Because the admin business form now has country/province support:
+
+Confirm one non-US test record can be represented without:
+
+US state requirement
+US ZIP requirement
+
+Do not create junk production data.
+
+Use dev/staging proof if needed.
+
+==================================================
+6. FINAL RAILWAY GATE
+
+Return:
+
+Feature
+Dev proven?
+Authenticated?
+Production dependency?
+Pass / Partial / Fail
+
+Also return:
+
+Candidate SHA
+Database migrations
+Rollback SHA
+Feature flags
+Open blockers
+Tester-ready status
+Business-demo-ready status
+
+DO NOT PUSH YET.
+
+STOP for founder authorization.
+```
+
+I would also keep tasks #175 and #176 in scope now. The HBCU boot-warning fix can wait unless it is actually breaking startup; if it is only a warning, I would not let it delay the demo.
+
+The key thing is that we are now past architecture. The next proof should be **what a user actually sees and does**. Once that passes, I would be comfortable authorizing Railway.

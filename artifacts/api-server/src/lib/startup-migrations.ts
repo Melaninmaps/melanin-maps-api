@@ -933,6 +933,38 @@ END $seed$`,
     `,
   },
 
+  // Extend knowledge_sources status CHECK to include 'pending_review'.
+  // Allows community/ambassador contributions to be submitted and moderated
+  // before being promoted to 'active'. Never auto-promotes — admin review required.
+  {
+    name: "knowledge_sources_status_pending_review_v1",
+    sql: `
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid = 'knowledge_sources'::regclass
+            AND conname = 'knowledge_sources_status_check'
+        ) THEN
+          ALTER TABLE knowledge_sources DROP CONSTRAINT knowledge_sources_status_check;
+        END IF;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid = 'knowledge_sources'::regclass
+            AND conname = 'knowledge_sources_status_check_v2'
+        ) THEN
+          ALTER TABLE knowledge_sources
+            ADD CONSTRAINT knowledge_sources_status_check_v2
+            CHECK (status IN ('active','removed','disputed','pending_review'));
+        END IF;
+      END $$;
+    `,
+  },
+
   // Extend library_entity_connections entity_type CHECK to include
   // community_post, ambassador_content, and knowledge_article.
   // Uses a PL/pgSQL block to locate and drop the auto-named inline constraint

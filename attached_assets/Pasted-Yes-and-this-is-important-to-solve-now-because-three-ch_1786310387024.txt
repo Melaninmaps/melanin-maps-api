@@ -1,0 +1,199 @@
+Yes — and this is important to solve **now**, because three childcare locations should not become three unrelated businesses in MWM.
+
+I would model it as **one business/brand with multiple locations**.
+
+For your cousin's example, imagine the company is “ABC Learning Center” with three South Carolina locations. The business should have **one parent business profile** containing the things that apply to the company overall—ownership designation, owner verification, main website/social accounts, general description, specialties, business type, and claim status. Under it would be **three location profiles**, each with its own address, coordinates/map pin, phone/hours, photos/video links when location-specific, services/specialties, accessibility information, and other location-specific details.
+
+The critical distinction is **reviews and safety information should belong primarily to the location visited**. Someone having a wonderful experience at Location A should not automatically give Location B the same safety/review score. But the main business page could still show an aggregated company view such as “4.7 across 3 locations,” clearly identified as an aggregate.
+
+Vibes should work similarly. There can be **brand-level attributes** and **location-level community intelligence**. Maybe all three locations specialize in early childhood education, but members consistently describe one location as “Feels Like Family” while another gets “Great for Working Parents.” We shouldn't erase that distinction.
+
+This also makes Kinfolk much smarter. If someone asks:
+
+> “Do you know a Black-owned childcare center near Columbia?”
+
+Kinfolk could know the company has three locations and recommend **the closest appropriate location**, rather than displaying the same company three times as though they were competitors.
+
+And your flywheel gets even more interesting: if members keep searching for that childcare center in Charleston but all three locations are around Columbia, MWM can eventually tell the owner, **“Members are searching for your business in the Charleston area.”** That's useful expansion intelligence.
+
+### I would add this to Replit's current Layer 1 work
+
+```text
+ADDITION TO LAYER 1 — MULTI-LOCATION BUSINESS ARCHITECTURE
+
+We need to support businesses/organizations with multiple physical locations.
+
+Do NOT create each location as an unrelated duplicate business.
+
+Use a parent business/entity + location architecture.
+
+BUSINESS / ORGANIZATION (canonical parent)
+
+Stores information that applies across the organization, such as:
+
+- canonical business name
+- ownership designations
+- verified ownership status
+- business category
+- overall description
+- website
+- primary social profiles
+- claim/owner relationship
+- organization-wide specialties/services where appropriate
+- brand-level media
+- business verification
+- founding/history information
+- overall business analytics
+
+BUSINESS LOCATION
+
+Each physical location should have its own location record containing:
+
+- parent business ID
+- location/display name if different
+- street address
+- city
+- state/province
+- country
+- postal code
+- latitude/longitude
+- phone
+- hours
+- location-specific website URL if applicable
+- location-specific social URL if applicable
+- location-specific photos/videos
+- location-specific services/specialties
+- accessibility attributes
+- location status
+- map pin
+- location-specific community intelligence
+
+REVIEWS / SAFETY / COMMUNITY EXPERIENCE
+
+Reviews, safety reports, check-ins and location-based experiences should attach
+to the LOCATION actually visited whenever a location can be identified.
+
+Do not automatically transfer a positive or negative experience from one
+location to every location owned by the business.
+
+The parent business may display clearly labeled aggregate information across
+all locations.
+
+Example:
+
+ABC Learning Center
+Black-owned childcare business
+3 locations
+
+Overall: 4.7 across all locations
+
+Location A — 4.9
+Location B — 4.6
+Location C — 4.4
+
+VIBES / TAGS / SPECIALTIES
+
+Support both:
+
+BUSINESS-LEVEL:
+attributes that genuinely apply to the organization overall.
+
+LOCATION-LEVEL:
+community observations and characteristics unique to that location.
+
+SEARCH BEHAVIOR
+
+Searching the exact business name should not make three locations appear as
+three unrelated businesses.
+
+Preferred presentation:
+
+ABC Learning Center
+3 locations
+
+Then show:
+- nearest location
+- distance
+- other locations
+- map pins for each physical location
+
+A "near me" search should rank the appropriate individual location.
+
+KINFOLK
+
+Kinfolk must understand:
+
+BUSINESS
+    ↓
+HAS LOCATION
+    ↓
+LOCATION 1
+LOCATION 2
+LOCATION 3
+
+and be able to recommend the most relevant location based on:
+
+- user's location
+- destination
+- distance
+- services/specialties
+- hours
+- community experience
+- safety information
+- accessibility
+- vibes
+- user intent
+
+CLAIMING / ADMINISTRATION
+
+When the owner claims the parent business, they should be able to manage all
+verified locations under that business account.
+
+Allow location-level managers later without requiring separate business
+profiles.
+
+COMMUNITY-ADDED LOCATIONS
+
+A member/admin may add a newly discovered location to an existing business.
+
+The system should first attempt to match the parent business using name,
+website/domain, phone, social accounts and other identifiers so we do not
+create unnecessary duplicate businesses.
+
+If uncertain, flag for review rather than silently merging records.
+
+CLOSURES / MOVES
+
+Never delete historical community information merely because a location
+closes or moves.
+
+Locations need lifecycle/status values such as:
+
+active
+temporarily_closed
+permanently_closed
+moved
+unverified
+
+Historical reviews, safety information, media and community contributions
+remain associated with the historical location.
+
+LAYER 1 PROOF
+
+Please confirm whether the current business schema already supports
+parent-business/multiple-location relationships.
+
+If it does, preserve and extend it rather than creating another system.
+
+If it does not, include the smallest safe schema extension in Layer 1.
+
+Do not migrate or merge existing businesses yet.
+
+First report how many apparent duplicate/multi-location businesses already
+exist and propose how they would map to parent + location records without
+changing production data.
+```
+
+And I would **not limit this architecture to businesses**. The underlying model should eventually support organizations with branches/campuses/chapters too: childcare centers, salons, restaurants, churches, mosques, nonprofits, health practices, museums, universities, retailers, professional firms, etc.
+
+That means MWM understands the difference between **“who/what is this organization?”** and **“which physical place am I actually going to?”** That distinction becomes extremely important for maps, directions, safety, reviews, Kinfolk recommendations, and eventually business analytics.

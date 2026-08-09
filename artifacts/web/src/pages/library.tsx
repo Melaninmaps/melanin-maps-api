@@ -50,6 +50,44 @@ interface City {
   has_profile: boolean; business_count: number;
 }
 
+// ── Knowledge Graph types (Layer 2/3 retrieval) ────────────────────────────
+interface KGSource {
+  id: string;
+  authority_tier: "authoritative" | "professional" | "community" | "ambassador";
+  source_name: string;
+  source_url: string | null;
+  claim: string | null;
+  evidence_section: string | null;
+  confidence: "verified" | "high" | "medium" | "low" | "unverified" | null;
+  is_primary: boolean;
+  status: string;
+}
+
+interface KGEntity {
+  entity_id: string;
+  entity_type: string;
+  entity_label: string | null;
+  relevance_weight: number;
+  entity_data: {
+    name?: string; category?: string; city?: string; state?: string;
+    latitude?: number; longitude?: number; description?: string; address?: string;
+  } | null;
+}
+
+interface KGRelTopic {
+  relationship_type: string;
+  weight: number;
+  topic: { id: string; topic_name: string; category: string; description: string | null };
+}
+
+interface GraphData {
+  node: { id: string; topic_name: string; node_type: string; category: string; description: string | null };
+  sources: KGSource[];
+  connectedEntities: KGEntity[];
+  relationships: { parents: KGRelTopic[]; children: KGRelTopic[] };
+  geography: { ref: string; subtopics: Array<{ id: string; topic_name: string; category: string }> } | null;
+}
+
 // ── Category Meta ──────────────────────────────────────────────────────────
 const CAT_META: Record<string, { color: string; label: string }> = {
   health:             { color: "#DC2626", label: "Health" },
@@ -177,15 +215,318 @@ function ArticleCard({ article }: { article: Article }) {
   );
 }
 
+// ── Knowledge Book Panel ───────────────────────────────────────────────────
+const TIER_META: Record<string, { label: string; color: string }> = {
+  authoritative: { label: "Authoritative Sources", color: "#7C3AED" },
+  professional:  { label: "Professional Sources",  color: "#2563EB" },
+  community:     { label: "Community Evidence",    color: "#059669" },
+  ambassador:    { label: "Ambassador Guides",     color: "#CA922B" },
+};
+const CONF_META: Record<string, { label: string; color: string }> = {
+  verified:   { label: "Direct Citation",     color: "#059669" },
+  high:       { label: "Contextual Support",  color: "#2563EB" },
+  medium:     { label: "Background Ref",      color: "#D97706" },
+  low:        { label: "Background Only",     color: "#9CA3AF" },
+  unverified: { label: "Pending Review",      color: "#9CA3AF" },
+};
+const ALL_TIERS = ["authoritative", "professional", "community", "ambassador"] as const;
+
+function KnowledgeBookPanel({
+  topic, isAuthenticated, onClose, onToggleFollow,
+}: {
+  topic: Topic; isAuthenticated: boolean;
+  onClose: () => void; onToggleFollow: (id: string) => void;
+}) {
+  const { toast } = useToast();
+  const [data, setData] = useState<GraphData | null>(null);
+  const [gLoading, setGLoading] = useState(true);
+  const [contributeOpen, setContributeOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [contrib, setContrib] = useState({ claimText: "", sourceName: "", sourceUrl: "" });
+
+  useEffect(() => {
+    setGLoading(true); setData(null);
+    fetch(`${BASE}api/knowledge/graph/${encodeURIComponent(topic.id)}?surface=library`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => setData(d))
+      .catch(() => setData(null))
+      .finally(() => setGLoading(false));
+  }, [topic.id]);
+
+  const submitContrib = async () => {
+    if (!contrib.claimText || !contrib.sourceName) return;
+    setSubmitting(true);
+    try {
+      const r = await fetch(`${BASE}api/knowledge/contribute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ topicId: topic.id, ...contrib }),
+      });
+      if (r.ok) {
+        toast({ title: "Contribution submitted", description: "It will be reviewed before appearing in this Book." });
+        setContrib({ claimText: "", sourceName: "", sourceUrl: "" });
+        setContributeOpen(false);
+      } else {
+        const d = await r.json().catch(() => ({}));
+        toast({ title: "Could not submit", description: (d as {error?: string}).error, variant: "destructive" });
+      }
+    } finally { setSubmitting(false); }
+  };
+
+  const srcByTier = (tier: string) => (data?.sources ?? []).filter(s => s.authority_tier === tier);
+  const hasSources = (data?.sources.length ?? 0) > 0;
+  const relTopics = [...(data?.relationships.parents ?? []), ...(data?.relationships.children ?? [])]
+    .filter(r => r.weight >= 0.6).slice(0, 6);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-end">
+      <div className="absolute inset-0 bg-black/25" onClick={onClose} />
+      <div className="relative w-full max-w-md h-full bg-[#FAF6EF] shadow-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="sticky top-0 bg-[#FAF6EF] border-b border-[#3A1F0E]/8 px-5 py-4 shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: catColor(topic.category) }}>
+                {catLabel(topic.category)}
+              </span>
+              <h2 className="text-base font-bold text-[#2B1507] leading-tight mt-0.5">{topic.topicName}</h2>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 mt-0.5">
+              <button onClick={() => onToggleFollow(topic.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                  topic.isFollowing
+                    ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10"
+                    : "bg-[#CA922B] text-white hover:bg-[#B38024]"
+                }`}>
+                {topic.isFollowing ? "Following" : "Follow"}
+              </button>
+              <button onClick={onClose} className="p-1.5 rounded-full hover:bg-[#3A1F0E]/5 transition-colors">
+                <X className="w-4 h-4 text-[#3A1F0E]/50" />
+              </button>
+            </div>
+          </div>
+          {topic.description && (
+            <p className="text-xs text-[#3A1F0E]/60 mt-2 line-clamp-2">{topic.description}</p>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          {gLoading && (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-5 h-5 text-[#CA922B] animate-spin" />
+            </div>
+          )}
+
+          {!gLoading && !data && (
+            <div className="text-center py-12">
+              <AlertCircle className="w-7 h-7 text-[#CA922B]/40 mx-auto mb-2" />
+              <p className="text-sm text-[#3A1F0E]/50">Could not load this Book</p>
+            </div>
+          )}
+
+          {!gLoading && data && (
+            <>
+              {/* ── Building state (no sources at all) ── */}
+              {!hasSources && (
+                <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-5 text-center">
+                  <div className="w-10 h-10 bg-[#CA922B]/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <BookOpen className="w-5 h-5 text-[#CA922B]" />
+                  </div>
+                  <p className="font-bold text-sm text-[#2B1507] mb-1">We're building this Book</p>
+                  <p className="text-xs text-[#3A1F0E]/50 leading-relaxed mb-3">
+                    No verified sources exist for this topic yet. When they do, they'll appear here — grouped by tier and labeled by how directly they support each claim.
+                  </p>
+                  {isAuthenticated && (
+                    <button onClick={() => setContributeOpen(true)}
+                      className="text-xs font-bold text-[#CA922B] hover:underline">
+                      Be among the first to contribute →
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* ── Sources by tier ── */}
+              {hasSources && (
+                <div className="space-y-5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">What We Know</p>
+                  {ALL_TIERS.map(tier => {
+                    const srcs = srcByTier(tier);
+                    const tm = TIER_META[tier];
+                    return (
+                      <div key={tier}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tm.color }} />
+                          <p className="text-xs font-bold" style={{ color: tm.color }}>{tm.label}</p>
+                          {srcs.length === 0 && (
+                            <span className="text-[10px] text-[#3A1F0E]/30 italic">none yet</span>
+                          )}
+                        </div>
+                        {srcs.map(src => {
+                          const cm = src.confidence ? (CONF_META[src.confidence] ?? CONF_META.unverified) : CONF_META.unverified;
+                          return (
+                            <div key={src.id} className="bg-white rounded-xl border border-[#3A1F0E]/8 p-3.5 mb-2 last:mb-0">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <p className="text-sm font-bold text-[#2B1507] leading-tight flex-1">{src.source_name}</p>
+                                <span className="shrink-0 text-[9px] font-bold px-2 py-0.5 rounded-full"
+                                  style={{ color: cm.color, backgroundColor: `${cm.color}18` }}>
+                                  {cm.label}
+                                </span>
+                              </div>
+                              {src.claim && (
+                                <p className="text-xs text-[#3A1F0E]/65 mt-1 italic leading-relaxed">"{src.claim}"</p>
+                              )}
+                              {src.source_url && (
+                                <a href={src.source_url} target="_blank" rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs text-[#CA922B] hover:underline mt-1.5">
+                                  <Eye className="w-3 h-3" /> View Source
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── Connected entities (On the Map) ── */}
+              {data.connectedEntities.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-3">On the Map</p>
+                  <div className="space-y-2">
+                    {data.connectedEntities.map(e => {
+                      const name = e.entity_data?.name ?? e.entity_id;
+                      const loc = [e.entity_data?.city, e.entity_data?.state].filter(Boolean).join(", ");
+                      return (
+                        <div key={e.entity_id} className="bg-white rounded-xl border border-[#3A1F0E]/8 p-3.5 flex items-start gap-3">
+                          <div className="w-8 h-8 bg-[#CA922B]/10 rounded-xl flex items-center justify-center shrink-0">
+                            <MapPin className="w-4 h-4 text-[#CA922B]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-[#2B1507] truncate">{name}</p>
+                            {e.entity_label && (
+                              <p className="text-xs text-[#3A1F0E]/50 mt-0.5 italic">"{e.entity_label}"</p>
+                            )}
+                            {loc && (
+                              <p className="text-xs text-[#3A1F0E]/40 mt-0.5">{loc}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Geography subtopics ── */}
+              {data.geography && data.geography.subtopics.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-3">
+                    More Books in {data.geography.ref}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {data.geography.subtopics.map(st => (
+                      <span key={st.id} className="px-3 py-1.5 bg-white border border-[#3A1F0E]/10 rounded-full text-xs text-[#3A1F0E]/65">
+                        {st.topic_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Related Books ── */}
+              {relTopics.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-3">Related Books</p>
+                  <div className="flex flex-wrap gap-2">
+                    {relTopics.map((r, i) => (
+                      <span key={i} className="px-3 py-1.5 rounded-full text-xs font-bold"
+                        style={{ color: catColor(r.topic.category), backgroundColor: `${catColor(r.topic.category)}12` }}>
+                        {r.topic.topic_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Contribute form ── */}
+              {isAuthenticated && (
+                <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4">
+                  <button onClick={() => setContributeOpen(o => !o)}
+                    className="w-full flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-[#2B1507]">Add Community Evidence</p>
+                      <p className="text-xs text-[#3A1F0E]/50 mt-0.5">Share a source, story, or local knowledge</p>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 text-[#3A1F0E]/40 transition-transform ${contributeOpen ? "rotate-90" : ""}`} />
+                  </button>
+                  {contributeOpen && (
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-bold text-[#3A1F0E]/60 block mb-1">What do you know? *</label>
+                        <textarea
+                          value={contrib.claimText}
+                          onChange={e => setContrib(p => ({ ...p, claimText: e.target.value }))}
+                          placeholder="Describe what you know about this topic from personal experience or research…"
+                          rows={3}
+                          className="w-full px-3 py-2.5 text-sm border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 resize-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-[#3A1F0E]/60 block mb-1">Source or evidence *</label>
+                        <input
+                          value={contrib.sourceName}
+                          onChange={e => setContrib(p => ({ ...p, sourceName: e.target.value }))}
+                          placeholder="Article title, book, organization, or your own experience"
+                          className="w-full px-3 py-2.5 text-sm border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-[#3A1F0E]/60 block mb-1">Link (optional)</label>
+                        <input
+                          value={contrib.sourceUrl}
+                          onChange={e => setContrib(p => ({ ...p, sourceUrl: e.target.value }))}
+                          placeholder="https://…"
+                          type="url"
+                          className="w-full px-3 py-2.5 text-sm border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50" />
+                      </div>
+                      <p className="text-[10px] text-[#3A1F0E]/40 italic">
+                        Your contribution will be reviewed before appearing in this Book. Community evidence is always kept separate from authoritative and professional sources.
+                      </p>
+                      <button onClick={submitContrib}
+                        disabled={submitting || !contrib.claimText || !contrib.sourceName}
+                        className="w-full py-2.5 bg-[#CA922B] text-white rounded-xl text-sm font-bold disabled:opacity-40 hover:bg-[#B38024] transition-colors flex items-center justify-center gap-2">
+                        {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {submitting ? "Submitting…" : "Submit Contribution"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Topic Card ─────────────────────────────────────────────────────────────
-function TopicCard({ topic, onToggleFollow }: { topic: Topic; onToggleFollow: (id: string) => void }) {
+function TopicCard({
+  topic, onToggleFollow, onOpen,
+}: {
+  topic: Topic; onToggleFollow: (id: string) => void; onOpen: (t: Topic) => void;
+}) {
   const color = catColor(topic.category);
   return (
     <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 flex items-start gap-3 hover:shadow-sm transition-shadow">
-      <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}15` }}>
+      <button onClick={() => onOpen(topic)}
+        className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-opacity hover:opacity-70"
+        style={{ backgroundColor: `${color}15` }}>
         <BookOpen className="w-5 h-5" style={{ color }} />
-      </div>
-      <div className="flex-1 min-w-0">
+      </button>
+      <button onClick={() => onOpen(topic)} className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2">
           <p className="font-bold text-sm text-[#2B1507] truncate">{topic.topicName}</p>
           {(topic.newCount ?? 0) > 0 && (
@@ -196,10 +537,12 @@ function TopicCard({ topic, onToggleFollow }: { topic: Topic; onToggleFollow: (i
         </div>
         <p className="text-xs text-[#3A1F0E]/50 mt-0.5" style={{ color }}>{catLabel(topic.category)}</p>
         {topic.description && <p className="text-xs text-[#3A1F0E]/60 mt-1 line-clamp-2">{topic.description}</p>}
-      </div>
+      </button>
       <button onClick={() => onToggleFollow(topic.id)}
         className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-          topic.isFollowing ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:bg-red-50 hover:text-red-600" : "bg-[#CA922B] text-white hover:bg-[#B38024]"
+          topic.isFollowing
+            ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:bg-red-50 hover:text-red-600"
+            : "bg-[#CA922B] text-white hover:bg-[#B38024]"
         }`}>
         {topic.isFollowing ? "Following" : "Follow"}
       </button>
@@ -326,6 +669,7 @@ export default function Library() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showSubmitStory, setShowSubmitStory] = useState(false);
   const [digestText, setDigestText] = useState("");
+  const [openBookTopic, setOpenBookTopic] = useState<Topic | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -507,7 +851,14 @@ export default function Library() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {filteredTopics.map(t => <TopicCard key={t.id} topic={t} onToggleFollow={toggleFollow} />)}
+                    {filteredTopics.map(t => (
+                      <TopicCard
+                        key={t.id}
+                        topic={t}
+                        onToggleFollow={toggleFollow}
+                        onOpen={setOpenBookTopic}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -557,6 +908,19 @@ export default function Library() {
       </div>
 
       {showSubmitStory && <SubmitStoryModal onClose={() => setShowSubmitStory(false)} />}
+
+      {openBookTopic && (
+        <KnowledgeBookPanel
+          topic={openBookTopic}
+          isAuthenticated={isAuthenticated}
+          onClose={() => setOpenBookTopic(null)}
+          onToggleFollow={(id) => {
+            toggleFollow(id);
+            // Keep topic state in sync with follow toggle
+            setOpenBookTopic(prev => prev?.id === id ? { ...prev, isFollowing: !prev.isFollowing } : prev);
+          }}
+        />
+      )}
     </div>
   );
 }

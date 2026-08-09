@@ -121,6 +121,21 @@ export const businessesTable = pgTable("businesses", {
   isReferenceOnly: boolean("is_reference_only").notNull().default(false),
   // employer | mentor | service | travel | general
   referenceCategory: varchar("reference_category", { length: 30 }),
+  // ── Multi-location business architecture ─────────────────────────────────
+  // When is_parent_listing=true this row is the canonical brand record.
+  // Child location rows reference it via parent_business_id.
+  // Reviews, safety, vibes, and check-ins attach to the LOCATION visited,
+  // not the parent. The parent may aggregate across all locations.
+  // ── Multi-location business architecture ─────────────────────────────────
+  // When is_parent_listing=true this row is the canonical brand record.
+  // Child location rows reference it via parent_business_id (DB FK enforced).
+  // Reviews, safety, vibes, and check-ins attach to the LOCATION visited.
+  isParentListing: boolean("is_parent_listing").notNull().default(false),
+  // FK to businesses.id — enforced at DB level; self-ref omitted from Drizzle
+  // to avoid circular reference at schema-definition time.
+  parentBusinessId: varchar("parent_business_id"),
+  // Human-readable location label, e.g. "Fairfield Road (Columbia)"
+  locationName: varchar("location_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

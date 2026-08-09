@@ -1,0 +1,135 @@
+I checked back, and **you caught a real gap.**
+
+The governing rule was documented correctly: a business/profile gets **THE REAL or The Vibe, never both**, and professional/trust-sensitive categories use THE REAL. Health/care was already explicitly routed that way.  
+
+But the actual business spreadsheet did **not consistently apply that rule to Education & Learning.** Childcare/daycare and preschool were still populated with Vibes such as **“Teach The Kids,” “Come As You Are,” “Creative Energy,” and “Community Classroom.”**
+
+I agree with your instinct: **when I am deciding who gets access to my child, my parent, or another vulnerable person, I don't need to know the “vibe.” I need to know what the community trusts them with.**
+
+### I would correct the routing like this
+
+| Category                                                   | Experience system                                   |
+| ---------------------------------------------------------- | --------------------------------------------------- |
+| Childcare / Daycare                                        | **THE REAL**                                        |
+| Preschool / Early Childhood Education                      | **THE REAL**                                        |
+| Tutoring / Academic Support                                | **THE REAL**                                        |
+| Special Education / Learning Support                       | **THE REAL**                                        |
+| College Prep / Test Prep                                   | **THE REAL**                                        |
+| After-School Programs                                      | **THE REAL** when responsible for child supervision |
+| Youth Programs / Camps                                     | **THE REAL**                                        |
+| Driving Schools                                            | **THE REAL**                                        |
+| Elder Care / Senior Care                                   | **THE REAL**                                        |
+| Home Care / Companion Care                                 | **THE REAL**                                        |
+| Assisted Living / Memory Care                              | **THE REAL**                                        |
+| Adult Day Programs                                         | **THE REAL**                                        |
+| Child/Elder Transportation                                 | **THE REAL**                                        |
+| Recreational adult classes — pottery, dance, cooking, etc. | **The Vibe**                                        |
+
+That gives us a better universal rule:
+
+> **When the primary decision is “Can I trust you with someone I care for, my health, my money, my rights, my property, or my safety?” → THE REAL.**
+> **When the primary decision is “What will this experience feel like?” → The Vibe.**
+
+And sometimes the category determines it—not the business's marketing.
+
+## We need more THE REAL language
+
+The spreadsheet already contains some excellent trust language that points us in the right direction: **“Good With My Elders,” “Safe For My Baby,” “They Told Me The Truth About My Kid,” and “Never Pushed My Child Out.”**
+
+I would expand Education/Childcare with community language like:
+
+**Childcare / Preschool**
+
+* I'd Leave My Baby Here
+* My Child Loves Going
+* They Actually Know My Child
+* They Call When Something's Wrong
+* They Keep Me In The Loop
+* I Feel Good Leaving Them Here
+* They Listen To Parents
+* Patient With The Little Ones
+* My Child Feels Safe Here
+* They Don't Shame Kids
+* They See The Whole Child
+* They Know How To Handle Big Feelings
+* They Respect Our Family
+* They Respect Our Culture
+* My Child Is Learning
+* More Than Just Babysitting
+* They Keep Them Engaged
+* Worth The Waitlist
+
+**School / Tutoring / Academic Support**
+
+* They Finally Made It Click
+* My Child Actually Gets It Now
+* They Don't Make Kids Feel Dumb
+* Patient When They Don't Understand
+* They Know How To Teach Different Learners
+* They Advocate For The Student
+* They Keep Parents Informed
+* They Know Their Stuff
+* Worth The Investment
+* My Grades Actually Improved
+* They Saw What My Child Needed
+* They Don't Give Up On Kids
+
+And for **elder/senior care**, this deserves its own very deliberate language:
+
+* I'd Trust Them With My Mom
+* Good With My Elders
+* They Treat Them Like Family
+* They Actually Listen
+* They Preserve Their Dignity
+* Patient With Them
+* They Keep The Family Informed
+* They Notice The Little Things
+* They Show Up
+* Dependable When It Matters
+* They Don't Talk Down To Them
+* They Respect Their Independence
+* My Family Feels Safe
+* They Remember Who They're Caring For
+* They Treat Them Like A Person, Not A Patient
+
+### One additional gap this exposed
+
+We should **not make THE REAL merely a renamed Vibe system.**
+
+For high-trust categories, some statements carry much more weight than others. “My child likes it here” is useful community sentiment. But “They contacted me immediately when my child was injured” speaks to **responsiveness and safety**.
+
+So THE REAL should eventually have underlying dimensions such as:
+
+**Trust • Communication • Reliability • Respect • Safety • Expertise/Competence • Advocacy • Responsiveness • Cultural Understanding • Accessibility/Accommodation**
+
+The user doesn't necessarily need to see those clinical-looking categories. They can still tap the human statement:
+
+> **“They actually listen.”**
+
+Behind the scenes, MWM knows that contributes to **Communication/Respect**.
+
+That becomes extremely valuable for Kinfolk.
+
+If someone asks:
+
+> “I need a daycare for my autistic son where they aren't going to treat him like a problem.”
+
+Kinfolk shouldn't search for a cute “family-friendly” Vibe. It should understand the request and look for community evidence such as **“They don't shame kids,” “They know how to teach different learners,” “They advocate for the student,”** and **“They don't give up on kids.”**
+
+### Two more categories I would flag now
+
+This same gap probably exists anywhere **caregiving is embedded inside an otherwise experiential category**.
+
+For example, **pet boarding/daycare** is trust-based even though other pet businesses may be experiential. And **home health/medical transportation** shouldn't inherit generic transportation language.
+
+So rather than manually discovering these forever, I would add one permanent taxonomy field:
+
+**`experience_system = VIBE | THE_REAL`**
+
+at the **subcategory/service level**, not merely the top-level business category.
+
+That prevents “Education = Vibe” from accidentally making daycare a Vibe business while an adult pottery class genuinely should be.
+
+And one implementation gap is already documented: **THE REAL was not available to Kinfolk's context and was not searchable.**  That needs to be corrected when Replit connects the shared retrieval layer, or all this excellent language will exist in the database without actually making Kinfolk smarter.
+
+I would add **all of this to the Business Update living document under `REPLIT UPDATE NOW`**, rather than interrupting the knowledge-graph work Replit is currently doing.

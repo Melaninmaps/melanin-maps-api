@@ -3,7 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "wouter";
-import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity, MessageSquarePlus, PlusCircle, CheckCircle } from "lucide-react";
+import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, Send, Store, ExternalLink, Trash2, Star, TrendingUp, Award, GitBranch, BarChart2, Flag, AlertTriangle, Trophy, CalendarDays, Globe, Activity, MessageSquarePlus, PlusCircle, CheckCircle, BookOpen, AlertCircle, Eye, ChevronDown } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
@@ -171,7 +171,7 @@ type MetricsData = {
   };
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -1060,6 +1060,7 @@ export default function Admin() {
     { id: "health", label: "Production Health", icon: <Activity className="w-4 h-4" /> },
     { id: "cities", label: "City Launches", icon: <MapPin className="w-4 h-4" /> },
     { id: "feedback", label: "Beta Feedback", icon: <MessageSquarePlus className="w-4 h-4" />, badge: undefined },
+    { id: "knowledge-contrib", label: "Knowledge Contributions", icon: <BookOpen className="w-4 h-4" /> },
   ];
 
   return (
@@ -3316,6 +3317,12 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === "knowledge-contrib" && (
+        <div className="p-6">
+          <KnowledgeContribTab />
+        </div>
+      )}
+
       {/* Edit Business modal */}
       {editingBiz && (
         <AdminEditBusiness
@@ -4042,6 +4049,192 @@ function CityNotesEditor({ slug, notes, base, onSave }: {
           {saving ? "Saving…" : "Save Notes"}
         </button>
         {saved && <span className="text-xs text-green-600 font-medium">Saved</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── Knowledge Contributions Moderation Tab ─────────────────────────────────
+type KContrib = {
+  id: string; topic_id: string; topic_name: string; category: string;
+  geography_ref: string | null; authority_tier: string;
+  source_name: string; source_url: string | null;
+  claim: string | null; status: string; confidence: string | null;
+  contributor_id: string | null; contributor_email: string | null;
+  created_at: string;
+};
+
+function KnowledgeContribTab() {
+  const BASE = import.meta.env.BASE_URL as string;
+  const [contribs, setContribs] = useState<KContrib[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("pending_review");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
+  const load = async (status: string) => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${BASE}api/admin/knowledge/contributions?status=${status}`, { credentials: "include" });
+      if (r.ok) { const d = await r.json(); setContribs(d.contributions ?? []); }
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { void load(statusFilter); }, [statusFilter]);
+
+  const act = async (id: string, action: "approve" | "reject") => {
+    setActionLoading(id);
+    try {
+      const r = await fetch(`${BASE}api/admin/knowledge/contributions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action, notes: notes[id] || undefined }),
+      });
+      if (r.ok) {
+        setContribs(cs => cs.filter(c => c.id !== id));
+      }
+    } finally { setActionLoading(null); }
+  };
+
+  const TIER_COLOR: Record<string, string> = {
+    community: "#059669", ambassador: "#CA922B",
+    authoritative: "#7C3AED", professional: "#2563EB",
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-[#2B1507] flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-[#CA922B]" />
+            Knowledge Contributions
+          </h2>
+          <p className="text-sm text-[#3A1F0E]/50 mt-0.5">
+            Community and ambassador evidence submitted for moderation.
+            Approved contributions enter the knowledge graph at the community tier — always distinct from authoritative/professional sources.
+          </p>
+        </div>
+        <button onClick={() => load(statusFilter)}
+          className="flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:underline">
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh
+        </button>
+      </div>
+
+      {/* Status filter */}
+      <div className="flex gap-2 mb-6">
+        {["pending_review", "active", "removed"].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
+              statusFilter === s
+                ? "bg-[#2B1507] text-white border-[#2B1507]"
+                : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
+            }`}>
+            {s === "pending_review" ? "Pending Review" : s === "active" ? "Approved" : "Rejected"}
+          </button>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="w-6 h-6 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!loading && contribs.length === 0 && (
+        <div className="text-center py-16 bg-white rounded-2xl border border-[#3A1F0E]/8">
+          <BookOpen className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-2" />
+          <p className="text-sm text-[#3A1F0E]/50">
+            {statusFilter === "pending_review" ? "No pending contributions" : "No contributions with this status"}
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {contribs.map(c => (
+          <div key={c.id} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-5">
+            {/* Topic + tier header */}
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">
+                    {c.geography_ref ?? c.category}
+                  </span>
+                  <span className="w-1 h-1 rounded-full bg-[#3A1F0E]/20" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider"
+                    style={{ color: TIER_COLOR[c.authority_tier] ?? "#9CA3AF" }}>
+                    {c.authority_tier}
+                  </span>
+                </div>
+                <p className="font-bold text-sm text-[#2B1507]">{c.topic_name}</p>
+              </div>
+              <span className="text-xs text-[#3A1F0E]/40 shrink-0">{new Date(c.created_at).toLocaleDateString()}</span>
+            </div>
+
+            {/* Claim */}
+            {c.claim && (
+              <div className="bg-[#FAF6EF] rounded-xl p-3.5 mb-3">
+                <p className="text-xs font-bold text-[#3A1F0E]/50 mb-1">Claim</p>
+                <p className="text-sm text-[#2B1507] leading-relaxed">"{c.claim}"</p>
+              </div>
+            )}
+
+            {/* Source */}
+            <div className="mb-3">
+              <p className="text-xs font-bold text-[#3A1F0E]/50 mb-1">Source</p>
+              <p className="text-sm text-[#2B1507] font-medium">{c.source_name}</p>
+              {c.source_url && (
+                <a href={c.source_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-[#CA922B] hover:underline mt-1">
+                  <Eye className="w-3 h-3" /> {c.source_url.slice(0, 60)}{c.source_url.length > 60 ? "…" : ""}
+                </a>
+              )}
+            </div>
+
+            {/* Contributor */}
+            <p className="text-xs text-[#3A1F0E]/40 mb-3">
+              Submitted by: {c.contributor_email ?? c.contributor_id ?? "Anonymous"}
+            </p>
+
+            {/* Admin notes + actions (only for pending) */}
+            {statusFilter === "pending_review" && (
+              <div className="space-y-2.5 border-t border-[#3A1F0E]/8 pt-3 mt-3">
+                <input
+                  value={notes[c.id] ?? ""}
+                  onChange={e => setNotes(n => ({ ...n, [c.id]: e.target.value }))}
+                  placeholder="Optional review notes…"
+                  className="w-full px-3 py-2 text-xs border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => act(c.id, "approve")}
+                    disabled={actionLoading === c.id}
+                    className="flex-1 py-2 bg-[#059669] text-white rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-[#047857] transition-colors flex items-center justify-center gap-1.5">
+                    {actionLoading === c.id ? <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                    Approve → Community Tier
+                  </button>
+                  <button
+                    onClick={() => act(c.id, "reject")}
+                    disabled={actionLoading === c.id}
+                    className="flex-1 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5">
+                    <X className="w-3.5 h-3.5" />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Status badge for non-pending */}
+            {statusFilter !== "pending_review" && (
+              <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold mt-2 ${
+                c.status === "active" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+              }`}>
+                {c.status === "active" ? <CheckCircle className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                {c.status === "active" ? "Approved — Live in knowledge graph" : "Rejected"}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

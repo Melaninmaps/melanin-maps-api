@@ -1,0 +1,248 @@
+Yes — this is a **real blocker**, because Saved Places is one of the strongest explicit signals Kinfolk should use to understand a member.
+
+From your screenshot, the Profile page is rendering **“No saved places yet”** even though you have been actively saving/using businesses. That means one of three things is happening: the save action is not persisting, the Profile page is reading from the wrong table/API, or the saves exist but are not associated with the correct production user/account.
+
+Kinfolk should **not depend only on Saved Places**, but it absolutely should use them. Think of the personalization stack like this:
+
+**Explicit signals:** Saves, follows, stated preferences, Library topics, profile choices.
+**Behavioral signals:** Searches, clicked businesses, map interactions, check-ins, reviews, Vibes/THE REAL selections, event activity.
+**Context signals:** Current location, trip destination, current conversation, time/occasion.
+**Community intelligence:** What similar members recommend, trusted community signals, Cultural Ambassador content, safety/history data.
+
+So if you save AMINA, Kinfolk should eventually understand that as stronger evidence than simply viewing AMINA once. But it should not conclude, “Teianna only likes Southern food.” It accumulates evidence rather than replacing what it already knows.
+
+This needs to go into **today’s critical regression queue**, before we call the current build production-ready.
+
+Send Replit this now:
+
+```text
+CRITICAL REGRESSION — SAVED PLACES / KINFOLK PERSONALIZATION
+
+DO NOT GUESS-FIX THIS.
+
+RUN A READ-ONLY FORENSIC TRACE FIRST.
+
+Founder has confirmed that saved businesses/places are not appearing under:
+
+PROFILE → SAVED PLACES
+
+The current production UI displays:
+
+"No saved places yet."
+
+This is a launch-critical issue because Saves are an explicit personalization
+signal for Kinfolk and must persist across sessions/devices.
+
+==================================================
+PHASE 1 — TRACE THE COMPLETE SAVE PIPELINE
+==================================================
+
+For the CURRENT RAILWAY PRODUCTION environment, identify:
+
+1. The exact frontend handler triggered when a user clicks Save.
+
+2. The exact API endpoint called.
+
+3. The exact database table(s) where the save should persist.
+
+4. The user ID attached to the save.
+
+5. The entity type supported:
+   business
+   cultural_site
+   event
+   community
+   Library topic
+   etc.
+
+6. Whether saved businesses and saved cultural places use:
+   - one shared saves table
+   - separate tables
+   - legacy tables
+
+7. The exact API/query used by the Profile → Saved Places section.
+
+8. Whether the Profile page is querying:
+   - the same production database
+   - the same user ID
+   - the same entity/save table
+
+9. Whether saves survive:
+   - page refresh
+   - logout/login
+   - different browser
+   - mobile web
+   - app/web using the same account
+
+==================================================
+PHASE 2 — PRODUCTION DATA PROOF
+==================================================
+
+For the founder's CURRENT production account, return READ-ONLY:
+
+user ID
+email
+number of business saves
+number of cultural-site saves
+number of event saves
+number of any other supported saved entity type
+
+Then show the most recent 10 save records with:
+
+entity ID
+entity type
+entity name if resolvable
+created_at
+user_id
+source table
+
+DO NOT expose unnecessary private user data.
+
+==================================================
+PHASE 3 — CLASSIFY THE ROOT CAUSE
+==================================================
+
+Choose the actual classification:
+
+A. Save click never reaches API
+B. API receives request but does not persist
+C. Save persists to wrong DB/environment
+D. Save persists under wrong user ID
+E. Save persists correctly but Profile reads wrong table/endpoint
+F. Save exists but entity join fails
+G. Save was lost during account/auth migration
+H. Different legacy/current save systems are unsynchronized
+I. Other — explain precisely
+
+DO NOT IMPLEMENT UNTIL ROOT CAUSE IS PROVEN.
+
+==================================================
+PHASE 4 — FIX REQUIREMENTS
+==================================================
+
+After proving root cause, implement the smallest durable fix.
+
+REQUIREMENTS:
+
+- Save must persist immediately.
+- Saved state must visibly update without manual refresh.
+- Saved state must remain after refresh.
+- Saved state must remain after logout/login.
+- Same authenticated user must see the same saves on web/mobile where the
+  platform supports the same backend account.
+- Unsaving must remove only the intended save.
+- No duplicate saves for the same user/entity.
+- Existing valid saved data must not be deleted.
+- Profile → Saved Places must use canonical save data.
+- Saved businesses must open the correct canonical business profile.
+- Saved cultural sites must open the correct canonical cultural-site profile.
+
+==================================================
+KINFOLK INTEGRATION REQUIREMENT
+==================================================
+
+DO NOT make Saves the only source of personalization.
+
+Kinfolk should eventually rank evidence roughly as:
+
+EXPLICIT USER SIGNALS
+- Saved places/businesses
+- Followed Library topics
+- stated preferences
+- selected interests
+
+BEHAVIORAL EVIDENCE
+- searches
+- clicks
+- check-ins
+- reviews
+- Vibes / THE REAL selections
+- events
+- repeated interactions
+
+CURRENT CONTEXT
+- current conversation
+- trip/location
+- occasion
+- time/context
+
+COMMUNITY INTELLIGENCE
+- trusted community recommendations
+- Cultural Ambassador content
+- safety/history/community graph
+
+A Save should strengthen Kinfolk's understanding.
+It should NOT overwrite previous context.
+
+Example:
+
+User saves several Philadelphia restaurants
++
+later saves fertility information
++
+later searches pregnancy-safe restaurants.
+
+Kinfolk can use all authorized relevant context.
+
+But sensitive Library information must follow the previously approved
+privacy/permission rules and must NEVER leak into unrelated suggestions.
+
+==================================================
+DATA MODEL CHECK
+==================================================
+
+Confirm whether Saves currently store enough information for the knowledge
+graph to consume them as canonical entity relationships.
+
+Preferred concept:
+
+user
+→ SAVED
+→ canonical entity ID
+
+not:
+
+user
+→ saved copied name/string
+
+If the current implementation is string-based or fragmented, report that
+before changing schema.
+
+==================================================
+ACCEPTANCE TEST
+==================================================
+
+Using an authenticated TESTER account:
+
+1. Open AMINA.
+2. Click Save.
+3. Save state changes visually.
+4. Refresh AMINA → still saved.
+5. Open Profile → Saved Places → AMINA appears.
+6. Open AMINA from Saved Places.
+7. Logout.
+8. Login.
+9. Saved Places → AMINA still appears.
+10. Unsave AMINA.
+11. Profile updates accordingly.
+12. Confirm no duplicate row was created during testing.
+
+Then repeat once with a CULTURAL SITE.
+
+Return:
+
+root cause
+files changed
+tables affected
+API endpoint
+before/after row proof
+authenticated E2E result
+regression result
+candidate SHA
+
+DO NOT PUSH RAILWAY UNTIL THIS PROOF PASSES.
+```
+
+And I would add one architectural rule now: **“Saved Places” should eventually become “Saved” rather than only places.** A person may save a business, church, cultural landmark, community, event, itinerary, Library Book, or resource. The Profile can still organize them into categories, but they should feed one coherent **user-interest graph** behind the scenes.
+
+That will make Kinfolk substantially better: not *“you saved three restaurants”*, but *“these are the people, places, communities, subjects and experiences you have deliberately told me matter to you.”*

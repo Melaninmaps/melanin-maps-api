@@ -1,0 +1,1386 @@
+Yes. I would make this the **next major build after today's approved phases are completely finished and production-stable**. It should use the geography/knowledge graph Replit is building now rather than becoming another disconnected feature.
+
+The key principle is:
+
+> **Community Intelligence answers three questions: What does trusted data say? What are people who know this place experiencing? What is happening here right now?**
+
+And I would add a fourth:
+
+> **What does this community need or have to offer?**
+
+That turns Jamison, Bucks County, Warwick Township, a Philadelphia neighborhood, or eventually a neighborhood in Bangkok into something alive rather than a demographic profile.
+
+## Community Intelligence Specification
+
+```text
+MAPPING WITH MELANIN™
+COMMUNITY INTELLIGENCE SPECIFICATION
+
+STATUS:
+NEXT MAJOR IMPLEMENTATION AFTER CURRENT APPROVED PHASES
+
+PURPOSE:
+
+Create a living, community-powered geographic intelligence system for:
+
+countries
+states/provinces
+counties
+cities
+townships
+boroughs
+towns
+neighborhoods
+districts
+corridors
+other legitimate geographic communities
+
+A Community page should combine:
+
+1. TRUSTED PUBLIC DATA
+2. LIVED COMMUNITY EXPERIENCE
+3. CURRENT ACTIVITY
+4. COMMUNITY NEEDS + OPPORTUNITIES
+
+The system should help answer:
+
+What is it like here?
+Would I feel comfortable here?
+What opportunities exist here?
+What is changing?
+What should I know before visiting?
+What should I know before moving here?
+What resources exist?
+What does the community need?
+What is happening here?
+Who is already here?
+Where are the culturally relevant businesses and organizations?
+What does Kinfolk think is relevant to ME?
+
+============================================================
+1. ONE CANONICAL GEOGRAPHIC ENTITY
+============================================================
+
+Do not create disconnected Community pages.
+
+Community Intelligence must use the canonical geography/knowledge graph
+architecture currently being built.
+
+Example:
+
+United States
+→ Pennsylvania
+→ Bucks County
+→ Warwick Township
+→ Jamison
+
+Philadelphia
+→ West Philadelphia
+→ specific neighborhood where supported
+
+A place can have multiple geographic relationships where necessary.
+
+Each community needs a canonical geography ID.
+
+Never create:
+
+"Jamison"
+"Jamison PA"
+"Jamison Pennsylvania"
+
+as three unrelated communities.
+
+Normalize aliases.
+
+============================================================
+2. CREATE COMMUNITY WHEN IT DOES NOT EXIST
+============================================================
+
+User searches:
+
+Jamison
+
+If Community Intelligence already exists:
+OPEN IT.
+
+If the geographic entity exists but Community page has not been populated:
+
+"Help us build Jamison."
+
+Create/activate the Community Intelligence shell for the EXISTING
+canonical geography.
+
+If the geography itself is unknown:
+
+validate that the place is legitimate before creating a canonical node.
+
+Do not allow arbitrary fabricated places to become public geography records.
+
+============================================================
+3. PAGE PURPOSE
+============================================================
+
+A Community page should eventually support:
+
+OVERVIEW
+
+COMMUNITY AT A GLANCE
+
+SAFETY & WELCOME
+
+JOBS & OPPORTUNITY
+
+HOUSING & COST OF LIVING
+
+FAMILIES & SCHOOLS
+
+HEALTHCARE & ESSENTIALS
+
+TRANSPORTATION
+
+BUSINESSES & SERVICES
+
+CULTURE & COMMUNITY
+
+FAITH & COMMUNITY ORGANIZATIONS
+
+EVENTS
+
+COMMUNITY NEEDS
+
+VOLUNTEER / GIVE BACK
+
+WHAT'S CHANGING
+
+COMMUNITY VOICES
+
+HISTORY & HERITAGE
+
+KNOW BEFORE YOU GO
+
+SOURCES
+
+ASK KINFOLK
+
+Do not show empty sections simply to create a long page.
+
+Use progressive disclosure.
+
+============================================================
+4. COMMUNITY AT A GLANCE — PUBLIC DATA
+============================================================
+
+Kinfolk / the knowledge engine should populate appropriate baseline data
+from reputable sources.
+
+Where applicable:
+
+population
+population change
+age distribution
+racial/ethnic composition
+diaspora/community composition where reliable data exists
+languages
+median household income
+employment/unemployment
+major industries
+job growth
+poverty
+education attainment
+homeownership
+median housing value
+rent
+housing-cost burden
+commute
+transportation modes
+schools
+healthcare access
+broadband
+local government
+other meaningful indicators
+
+Do not infer community identity beyond what the data supports.
+
+Always retain:
+
+source
+source URL
+geography represented
+year/data period
+retrieval date
+freshness
+methodology/context where material
+
+============================================================
+5. PUBLIC DATA SOURCE HIERARCHY
+============================================================
+
+Use context-appropriate authoritative sources.
+
+Examples in the United States may include:
+
+U.S. Census Bureau
+American Community Survey
+Bureau of Labor Statistics
+Bureau of Economic Analysis
+HUD
+NCES
+state education agencies
+state labor/workforce agencies
+county/municipal government
+local planning departments
+state/county health departments
+CDC
+Department of Transportation
+transit authorities
+official open-data portals
+FBI/local official public-safety data where appropriate
+official emergency-management sources
+
+International communities should use equivalent reputable national,
+regional and municipal sources.
+
+Do not build the feature around U.S.-only fields.
+
+============================================================
+6. COMMUNITY MEMBER RELATIONSHIP
+============================================================
+
+Every community contribution should optionally capture:
+
+WHAT IS YOUR RELATIONSHIP TO THIS PLACE?
+
+I live here
+I grew up here
+I work here
+I own a business here
+I attend school here
+My family lives here
+I visit often
+I commute through here
+I previously lived here
+I am visiting
+I am passing through
+I am considering moving here
+Other
+
+Allow more than one where appropriate.
+
+This relationship adds CONTEXT to the contribution.
+
+It does NOT determine whether someone's experience is "valid."
+
+A resident's experience and a traveler passing through may answer different
+questions and both can be useful.
+
+============================================================
+7. SAFETY IS MULTIDIMENSIONAL
+============================================================
+
+Do NOT reduce Community Intelligence to crime.
+
+Community safety may include:
+
+physical safety
+belonging
+discrimination
+economic stability
+housing stability
+healthcare access
+transportation
+family resources
+employment opportunity
+community support
+access to essentials
+environmental concerns
+current incidents
+
+A user deciding whether to MOVE somewhere needs different safety intelligence
+from a traveler deciding whether to STOP FOR GAS there tonight.
+
+============================================================
+8. COMMUNITY EXPERIENCE — SAFETY & WELCOME
+============================================================
+
+Members may contribute structured observations such as:
+
+Felt safe during the day
+Felt safe at night
+Comfortable walking alone
+Comfortable driving through
+Comfortable stopping here while traveling
+Felt welcomed
+Felt respected
+Community felt inclusive
+Would return
+Would recommend to someone I care about
+Would feel comfortable raising a family here
+
+Additional experience reporting may include:
+
+experienced discrimination
+witnessed discrimination
+experienced harassment
+felt targeted
+police/community concern
+business-related concern
+housing-related discrimination
+workplace-related discrimination
+other safety concern
+
+Negative/safety reports must use the approved MWM Safety reporting and
+moderation architecture.
+
+Do not turn every negative opinion into a public safety alert.
+
+============================================================
+9. OPTIONAL EXPERIENCE LENSES
+============================================================
+
+People experience communities differently.
+
+Allow users to voluntarily provide relevant context to a contribution,
+where appropriate, such as:
+
+resident
+woman
+parent/caregiver
+older adult
+student
+traveler
+immigrant/newcomer
+LGBTQIA+ traveler/community member
+disabled/accessibility perspective
+other voluntarily disclosed context
+
+DO NOT infer sensitive identity.
+
+DO NOT require disclosure.
+
+DO NOT make another person's experience disappear because a different
+community member had a positive experience.
+
+============================================================
+10. QUALITY OF LIFE
+============================================================
+
+Community contribution prompts may include:
+
+Good place for families
+Strong schools
+School concerns
+Childcare is accessible
+Healthcare is accessible
+Groceries/essentials are accessible
+Good parks/recreation
+Easy to get around
+Public transportation works well
+Car is necessary
+Strong senior resources
+Strong youth resources
+Accessible for disabled community members
+Strong local community institutions
+
+============================================================
+11. JOBS + ECONOMIC OPPORTUNITY
+============================================================
+
+Community safety/opportunity should include economic realities.
+
+Public data:
+
+employment
+unemployment
+major industries
+job trends
+major employers
+business formation where reliable
+income
+commuting patterns
+economic-development information
+
+Community experience:
+
+Jobs are growing
+Good place for professionals
+Good place to start a business
+Strong small-business community
+Good opportunities for young people
+Hard to find work
+Wages do not match cost of living
+People commute elsewhere for work
+New employers are arriving
+Major employers are leaving
+
+Clearly separate statistics from community perception.
+
+============================================================
+12. HOUSING + COMMUNITY STABILITY
+============================================================
+
+Potential public information:
+
+rent
+home prices
+homeownership
+vacancy
+new development
+housing supply
+housing-cost burden
+
+Community experience may include:
+
+Housing feels attainable
+Rent is rising quickly
+Home prices are rising quickly
+Community is changing rapidly
+Long-term residents are being priced out
+New development is helping
+New development is creating tension
+Good place for first-time buyers
+Rental availability is difficult
+
+Do not present community perception as official market statistics.
+
+============================================================
+13. FAMILY + SCHOOL EXPERIENCE
+============================================================
+
+Connect:
+
+schools
+childcare
+youth programs
+libraries
+parks
+tutoring
+after-school programs
+sports
+community centers
+family events
+
+Public school information should use authoritative educational sources.
+
+Community experience may add lived context but must remain distinct from
+official performance data.
+
+============================================================
+14. COMMUNITY NEEDS
+============================================================
+
+Create a structured Community Needs system.
+
+Examples:
+
+Little League needs uniforms
+School supply drive
+Food pantry needs donations
+Community center needs volunteers
+Senior center needs drivers
+Family displaced by fire needs assistance
+Scholarship fundraiser
+Youth program needs mentors
+Faith organization needs food donations
+Neighborhood cleanup
+Blood drive
+Coat drive
+Emergency community support
+
+Fields should include:
+
+need title
+description
+community
+organization/person submitting
+beneficiary organization
+need type
+requested items/services
+monetary donation URL if applicable
+volunteer URL/contact
+start date
+end date
+verification status
+source
+media/social URL
+status:
+active / fulfilled / expired / cancelled
+
+Do not allow MWM to become an unverified money-transfer system.
+
+Prefer direct verified organization/donation links where possible.
+
+============================================================
+15. EVENTS
+============================================================
+
+Community pages should dynamically display events associated with the
+geography.
+
+Examples:
+
+festivals
+faith events
+school events
+little league
+community meetings
+fundraisers
+concerts
+cultural celebrations
+business events
+job fairs
+health fairs
+political/civic meetings
+volunteer opportunities
+family activities
+
+An event added from the Community page must also become available to the
+main Events system.
+
+ONE EVENT.
+MULTIPLE SURFACES.
+
+Do not create separate Community-only event records.
+
+============================================================
+16. BUSINESSES + PRACTICAL SERVICES
+============================================================
+
+Community pages should surface relevant MWM entities:
+
+restaurants
+salons
+childcare
+dentists
+physicians
+plumbers
+mechanics
+lawyers
+retail
+grocers
+houses of faith
+nonprofits
+community organizations
+cultural landmarks
+etc.
+
+Do not show only tourism-oriented businesses.
+
+Community Intelligence should help explain:
+
+"Who can help me live here?"
+
+not merely:
+
+"Where can I spend money here?"
+
+============================================================
+17. WHAT'S CHANGING HERE
+============================================================
+
+Create a section called:
+
+WHAT'S CHANGING
+
+Structured change types may include:
+
+new business
+business closure
+new development
+housing changes
+school change
+transportation change
+road construction
+major employer opening
+major employer closure
+new cultural institution
+new community program
+loss of community resource
+gentrification/displacement concern
+environmental issue
+new healthcare resource
+policy/civic change
+other
+
+Capture:
+
+what changed
+source
+date observed
+community
+member relationship
+supporting URL/media
+verification status
+
+Current official information should be distinguished from community observation.
+
+============================================================
+18. COMMUNITY VOICES
+============================================================
+
+Allow:
+
+short text stories
+longer community stories
+photos
+social video URLs
+Cultural Ambassador content
+community posts
+local history
+"What I wish people knew"
+"What newcomers should know"
+"What I love about this place"
+"What's difficult here"
+"What is changing"
+
+Media/content remains tied to the canonical community geography.
+
+============================================================
+19. COMMUNITY INTELLIGENCE DIMENSIONS
+============================================================
+
+Do NOT create one simplistic Community Safety Score.
+
+Use separate dimensions.
+
+Recommended foundation:
+
+PHYSICAL SAFETY
+
+BELONGING & WELCOME
+
+ECONOMIC OPPORTUNITY
+
+HOUSING & STABILITY
+
+FAMILY & EDUCATION
+
+HEALTHCARE & ESSENTIALS
+
+TRANSPORTATION & MOBILITY
+
+COMMUNITY SUPPORT
+
+ACCESSIBILITY
+
+CURRENT CONDITIONS
+
+A future summarized score can exist if designed carefully, but individual
+dimensions must remain visible.
+
+============================================================
+20. DIFFERENT QUESTIONS USE DIFFERENT DIMENSIONS
+============================================================
+
+Kinfolk should weight dimensions based on intent.
+
+QUESTION:
+
+"Should I move to Warwick Township?"
+
+Prioritize:
+
+housing
+jobs
+schools/family if relevant
+healthcare
+transportation
+belonging
+community resources
+longer-term safety
+
+QUESTION:
+
+"I'm driving through here tonight. Anything I should know?"
+
+Prioritize:
+
+current safety
+recent incidents
+travel conditions
+available gas/food/services
+community reports
+road information
+historical context where relevant
+
+QUESTION:
+
+"Is this a good place to open a salon?"
+
+Prioritize:
+
+population/community
+business environment
+local demand
+competition where known
+economic trends
+community searches
+commercial/business resources
+
+============================================================
+21. CONTRIBUTION WEIGHTING
+============================================================
+
+Do not simply average every contribution equally.
+
+Maintain context such as:
+
+relationship to community
+recency
+verified visit/residency where appropriate
+number of independent contributors
+community trust/reputation
+source type
+specificity
+corroborating evidence
+
+But do NOT create a caste system where a resident automatically overrides a
+visitor.
+
+Example:
+
+A resident may know school/community life very well.
+
+A Black traveler may have uniquely relevant information about how travelers
+are treated at a specific roadside location.
+
+Weight by relevance to the QUESTION.
+
+============================================================
+22. COMMUNITY CONFIDENCE
+============================================================
+
+Where sufficient information exists, show confidence.
+
+Examples:
+
+EARLY COMMUNITY SIGNAL
+Limited member contributions
+
+GROWING COMMUNITY PICTURE
+Multiple independent contributors
+
+WELL-ESTABLISHED COMMUNITY PICTURE
+Broad, recent, diverse evidence
+
+Do not imply mathematical certainty where the sample is small.
+
+============================================================
+23. CONFLICTING EXPERIENCES
+============================================================
+
+If residents disagree, preserve the disagreement.
+
+Example:
+
+78% felt welcomed
+but
+several recent visitors reported discriminatory treatment at night
+
+Kinfolk should not flatten this to:
+
+"Safe."
+
+It should be able to say:
+
+"Overall community feedback is positive, although several recent travelers
+reported concerns in X context."
+
+Only when evidence supports that statement.
+
+============================================================
+24. SENSITIVE CONTRIBUTION PRIVACY
+============================================================
+
+Allow contributions to be:
+
+public attribution
+display name only
+anonymous publicly / accountable internally
+
+Safety/discrimination information may require stronger privacy controls.
+
+Do not publicly expose personal demographic information merely because it
+was useful internally for contextualizing a report.
+
+============================================================
+25. KINFOLK BACKGROUND RESEARCH
+============================================================
+
+When a legitimate Community geography is created, Kinfolk's research system
+should help build its baseline.
+
+Workflow:
+
+canonical geography established
+→ identify jurisdiction
+→ identify reputable sources
+→ retrieve baseline public information
+→ store source/provenance
+→ establish freshness requirements
+→ connect Library/geography topics
+→ connect existing MWM businesses/events/places
+→ community adds lived experience
+
+Do not make Kinfolk fabricate a complete Community page.
+
+Unknown sections remain:
+
+BUILDING THIS COMMUNITY
+
+until supported.
+
+============================================================
+26. KINFOLK COMMUNITY QUESTIONS
+============================================================
+
+Kinfolk should eventually answer questions such as:
+
+"Should I move to Jamison?"
+
+"What's it like being Black in Bucks County?"
+
+"Is Warwick Township good for families?"
+
+"What jobs are growing around here?"
+
+"What's happening here this weekend?"
+
+"Where can I volunteer?"
+
+"What does this community need?"
+
+"Are there Black-owned businesses here?"
+
+"Where can I find childcare?"
+
+"How expensive is housing?"
+
+"Anything I should know driving through tonight?"
+
+"What's changing in this neighborhood?"
+
+Answers should combine:
+
+authoritative data
+professional information
+community experience
+Cultural Ambassador content
+MWM entities
+current events/needs
+
+and clearly distinguish the source layers.
+
+============================================================
+27. LIBRARY RELATIONSHIP
+============================================================
+
+Community pages and Library Books should share the same graph.
+
+Example:
+
+Bucks County
+↔ Pennsylvania
+↔ Black Communities in Pennsylvania
+↔ Bucks County History
+↔ Employment
+↔ Housing
+↔ Schools
+↔ Faith
+↔ Businesses
+
+The user does NOT need to visit the Library.
+
+The Library/knowledge graph operates behind the Community page.
+
+Optional:
+
+Explore Bucks County in the Library
+
+for deeper research.
+
+============================================================
+28. SEARCH RELATIONSHIP
+============================================================
+
+Universal Search should recognize community intent.
+
+Examples:
+
+Jamison
+Bucks County
+Warwick Township
+West Philly
+Black families Bucks County
+jobs Bucks County
+Bucks County events
+Bucks County childcare
+safe places near Jamison
+
+A geographic search should provide the appropriate surface experience,
+not force a Library redirect.
+
+============================================================
+29. COMMUNITY FLYWHEEL
+============================================================
+
+Example:
+
+User searches Warwick Township.
+
+→ Community page exists/activates.
+
+→ Kinfolk pulls Census/public baseline.
+
+→ User contributes:
+"I've lived here 12 years."
+
+→ Adds experience.
+
+→ Another resident adds youth information.
+
+→ Little League adds uniform fundraiser.
+
+→ local dentist/business is added.
+
+→ Cultural Ambassador posts local video.
+
+→ job seeker searches Warwick.
+
+→ job-demand signal grows.
+
+→ business/organization/community information grows.
+
+→ Kinfolk's next answer becomes more useful.
+
+Every legitimate contribution strengthens the community knowledge graph.
+
+============================================================
+30. MODERATION
+============================================================
+
+Use existing Community Governance rules.
+
+Community Intelligence must distinguish:
+
+opinion
+experience
+allegation
+verified fact
+official data
+safety report
+
+Do not publish serious accusations as factual Community descriptions without
+the appropriate moderation/verification path.
+
+Members may disagree about a community.
+
+Disagreement is not itself abuse.
+
+============================================================
+31. ADMIN
+============================================================
+
+Admin needs:
+
+community creation review where necessary
+geography duplicate resolution
+source review
+community need moderation
+event moderation
+safety escalation
+reported contribution review
+outdated-data review
+merge aliases
+status controls
+provenance visibility
+change audit history
+
+Never erase historical contributions because the Community summary changes.
+
+============================================================
+32. INITIAL ACCEPTANCE TEST
+============================================================
+
+Use three different geographic levels:
+
+A. BUCKS COUNTY, PENNSYLVANIA
+county
+
+B. WARWICK TOWNSHIP, PENNSYLVANIA
+township
+
+C. JAMISON, PENNSYLVANIA
+local community/place
+
+Prove:
+
+canonical geographic relationships
+no duplicate geography
+public baseline source retrieval
+Community page creation
+member relationship contribution
+community experience contribution
+event addition
+community need addition
+business/entity connection
+Library connection
+Universal Search connection
+Kinfolk retrieval
+
+============================================================
+33. PERSONA TESTS
+============================================================
+
+TEST A — RESIDENT
+
+"I live in Warwick Township."
+
+Contribute:
+family/community experience.
+
+TEST B — TRAVELER
+
+"I am driving through Bucks County tonight."
+
+Kinfolk should provide travel-relevant information rather than school rankings.
+
+TEST C — POTENTIAL MOVER
+
+"I'm thinking about moving to Jamison."
+
+Kinfolk should combine:
+
+housing
+jobs
+schools if relevant
+transportation
+community experience
+belonging
+resources
+
+TEST D — ENTREPRENEUR
+
+"I'm thinking about opening a childcare center around here."
+
+Kinfolk should provide appropriate economic/community context and demand
+signals where permitted.
+
+TEST E — COMMUNITY MEMBER
+
+"Our Little League needs donations for uniforms."
+
+Create a Community Need connected to the canonical geography and organization.
+
+============================================================
+34. CORE PRODUCT PRINCIPLE
+============================================================
+
+A COMMUNITY IS NOT A SCORE.
+
+It is:
+
+DATA
++
+PEOPLE
++
+EXPERIENCE
++
+HISTORY
++
+CURRENT CONDITIONS
++
+OPPORTUNITY
++
+NEEDS
++
+RESOURCES
+
+Mapping With Melanin should help people understand the whole picture.
+```
+
+### Instructions for Replit after today's work
+
+I would keep this completely separate from today's current phases. Replit should **finish what is already authorized, verify it, push it safely, and only then begin Community Intelligence**. Otherwise we risk destabilizing the very graph this feature should depend upon.
+
+Send this separately:
+
+```text id="bn3oc1"
+NEXT MAJOR WORKSTREAM — QUEUE AFTER TODAY'S APPROVED PHASES
+
+Please save this as the NEXT authorized major implementation workstream:
+
+COMMUNITY INTELLIGENCE
+
+IMPORTANT SCHEDULING RULE:
+
+DO NOT interrupt today's current implementation phases.
+
+Complete today's work in the existing approved order.
+
+This includes:
+
+- current knowledge graph phases
+- retrieval/Kinfolk work
+- user-facing proof
+- authentication/tester readiness
+- required regression testing
+- approved production deployment
+- post-deployment verification
+
+Only AFTER today's approved work is:
+
+COMPLETE
++
+VERIFIED
++
+PRODUCTION STABLE
+
+move immediately into:
+
+COMMUNITY INTELLIGENCE.
+
+Do not wait for the founder to remember to re-request it.
+
+============================================================
+BEFORE COMMUNITY INTELLIGENCE IMPLEMENTATION
+============================================================
+
+Read the complete:
+
+MAPPING WITH MELANIN™
+COMMUNITY INTELLIGENCE SPECIFICATION
+
+Treat it as the governing product specification.
+
+Then conduct a SHORT READ-ONLY GAP AUDIT.
+
+Do not redesign the concept.
+
+We have already made the product decisions.
+
+Audit only what can be reused from:
+
+knowledge_topics
+topic_relationships
+geography nodes
+city_profiles
+Library entity connections
+Universal Search
+Kinfolk graph retrieval
+community posts
+events
+safety_reports
+businesses
+cultural_sites
+user profiles
+community governance/moderation
+notification infrastructure
+existing city/neighborhood ratings
+existing neighborhood safety survey
+existing relocation features
+
+Return:
+
+ALREADY EXISTS
+CAN BE EXTENDED
+NEW SCHEMA REQUIRED
+UI REQUIRED
+MIGRATION REQUIRED
+RISK / DEPENDENCY
+
+Then begin implementation.
+
+============================================================
+ARCHITECTURAL REQUIREMENT
+============================================================
+
+DO NOT create another disconnected geography system.
+
+Community Intelligence MUST extend the canonical knowledge/geography graph
+being built today.
+
+A Community page is a USER EXPERIENCE over the geography graph.
+
+It is NOT a separate duplicate database of cities/towns/neighborhoods.
+
+============================================================
+IMPLEMENTATION ORDER
+============================================================
+
+PHASE CI-1 — GEOGRAPHY + COMMUNITY FOUNDATION
+
+- canonical geography hierarchy
+- Community profile/shell
+- community status
+- geographic aliases
+- parent/child relationships
+- Community page activation
+
+Proof:
+Bucks County → Warwick Township → Jamison
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-2 — PUBLIC DATA + PROVENANCE
+
+- baseline statistics model
+- source/provenance
+- retrieval/freshness
+- Census/economic/housing/school/etc. source architecture
+- Kinfolk research integration
+
+Never fabricate unavailable data.
+
+Proof:
+populate real baseline fields for the three test geographies.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-3 — COMMUNITY EXPERIENCE
+
+Build structured community contribution model:
+
+relationship to place
+safety/welcome
+quality of life
+opportunity
+housing/stability
+family
+healthcare/access
+transportation
+community support
+free text
+privacy
+recency
+
+Connect contributions to canonical geography.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-4 — EVENTS + COMMUNITY NEEDS
+
+Connect existing Events system.
+
+Build Community Needs.
+
+One event/need should surface wherever relevant without duplicate records.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-5 — BUSINESSES / ORGANIZATIONS / CONTENT
+
+Connect:
+
+businesses
+houses of faith
+nonprofits
+cultural sites
+Cultural Ambassador content
+community stories
+media
+
+to Community geography.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-6 — KINFOLK COMMUNITY INTELLIGENCE
+
+Kinfolk should combine:
+
+official/public data
+professional sources
+community experience
+Ambassador content
+businesses/resources
+events
+needs
+current safety information
+
+according to user intent.
+
+Run all five persona tests from the Community Intelligence Specification.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-7 — UNIVERSAL SEARCH + FINAL UX
+
+Wire geographic/community intent into:
+
+Map
+Explore
+Community
+Library
+Kinfolk
+business discovery
+events
+
+Do not force Community or Library redirects.
+
+Same intelligence.
+Surface-specific experience.
+
+STOP + REPORT.
+
+------------------------------------------------------------
+
+PHASE CI-8 — PRODUCTION GATE
+
+Before deployment return:
+
+Feature
+Schema
+Data migration
+Privacy
+Moderation
+Kinfolk
+Search
+Web
+Mobile/responsive
+Regression
+Pass / Partial / Fail
+
+Provide:
+
+candidate SHA
+rollback SHA
+migrations
+feature flags
+open blockers
+
+STOP FOR FOUNDER REVIEW BEFORE PRODUCTION PUSH.
+
+============================================================
+PERMANENT PROJECT MEMORY
+============================================================
+
+Store this sequencing rule:
+
+CURRENT APPROVED WORK FIRST.
+
+COMMUNITY INTELLIGENCE IMMEDIATELY NEXT.
+
+Do not allow later unrelated feature ideas to silently displace Community
+Intelligence unless the founder explicitly changes priority.
+```
+
+There are also three things I would deliberately design into this from the beginning.
+
+**First, community boundaries overlap.** Jamison may sit within a township, county and state, and people identify with all of them differently. A user shouldn't have to choose one “correct” community. A Little League program could belong to Jamison **and** Warwick Township **and** Bucks County where appropriate.
+
+**Second, we need time as part of Community Intelligence.** Census information can describe a place but can lag behind what residents are seeing. So Kinfolk should understand **baseline data vs. current community signals vs. today's conditions**. “Median household income” and “three families told us rents jumped this year” are different evidence, but together they can tell a stronger story.
+
+**Third, I would eventually give communities a way to organize around needs without requiring a formal group first.** If ten people follow Jamison and somebody posts that the Little League needs uniforms, that need can become discoverable to people who care about Jamison even if those ten people have never joined the same Circle. That is where Community starts becoming infrastructure rather than another social feed.
+
+This is a substantial build, but the work Replit is doing today on geography nodes, relationships, provenance, Kinfolk retrieval and Universal Search is exactly the foundation it needs. So we aren't starting over when we get here—we'll finally be putting a **community experience layer on top of the intelligence architecture we're building now.**
