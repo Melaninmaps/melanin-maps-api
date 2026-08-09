@@ -705,6 +705,31 @@ END $seed$`,
     name: "pending_tester_emails_email_index",
     sql: `CREATE INDEX IF NOT EXISTS IDX_pending_tester_emails_email ON pending_tester_emails (email)`,
   },
+  {
+    name: "businesses_specialties_col_v1",
+    sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS specialties text[] DEFAULT '{}'`,
+  },
+  {
+    name: "specialty_suggestions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS specialty_suggestions (
+      id           serial PRIMARY KEY,
+      business_id  uuid,
+      suggestion   text NOT NULL,
+      subcategory  text,
+      status       text NOT NULL DEFAULT 'pending',
+      submitted_by uuid,
+      submitted_at timestamp NOT NULL DEFAULT now(),
+      reviewed_at  timestamp,
+      reviewed_by  uuid
+    )`,
+  },
+  {
+    name: "specialty_suggestions_indexes_v1",
+    sql: `
+      CREATE INDEX IF NOT EXISTS idx_specialty_suggestions_status   ON specialty_suggestions(status);
+      CREATE INDEX IF NOT EXISTS idx_specialty_suggestions_business ON specialty_suggestions(business_id);
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

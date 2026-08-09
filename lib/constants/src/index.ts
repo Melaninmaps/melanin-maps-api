@@ -64,3 +64,11 @@ export {
   getTheRealTagsForCategory,
 } from "./the-real-tags";
 export type { TheRealTag, TheRealTagType } from "./the-real-tags";
+
+// ── Specialties vocabulary ─────────────────────────────────────────────────
+export {
+  SPECIALTIES_BY_SUBCATEGORY,
+  ALL_SPECIALTIES,
+  getSpecialtiesForSubcategory,
+  isApprovedSpecialty,
+} from "./specialties";
