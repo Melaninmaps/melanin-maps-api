@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Component, type ReactNode } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
@@ -119,15 +119,17 @@ const KINFOLK_WELCOME_HEADLINES = [
 ];
 
 // ─── Chip toggle helper ───────────────────────────────────────────────────────
-function ChipSet({ options, selected, onChange, label }: { options: string[]; selected: string[]; onChange: (v: string[]) => void; label?: string }) {
-  const toggle = (v: string) => onChange(selected.includes(v) ? selected.filter(x => x !== v) : [...selected, v]);
+// selected defaults to [] so a null/undefined value from the API never crashes.
+function ChipSet({ options, selected = [], onChange, label }: { options: string[]; selected: string[]; onChange: (v: string[]) => void; label?: string }) {
+  const safeSelected = Array.isArray(selected) ? selected : [];
+  const toggle = (v: string) => onChange(safeSelected.includes(v) ? safeSelected.filter(x => x !== v) : [...safeSelected, v]);
   return (
     <div>
       {label && <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">{label}</div>}
       <div className="flex flex-wrap gap-1.5">
         {options.map(o => (
           <button key={o} onClick={() => toggle(o)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${selected.includes(o) ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:border-[#CA922B]/30 hover:text-[#CA922B]"}`}>
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${safeSelected.includes(o) ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:border-[#CA922B]/30 hover:text-[#CA922B]"}`}>
             {o}
           </button>
         ))}
@@ -398,8 +400,40 @@ function RecommendationCards({ recs, onFeedback, feedback, onCopy, onShare }: { 
   );
 }
 
+// ─── KinfolkAI local error boundary ──────────────────────────────────────────
+// Isolates any KinfolkAI crash from the global app-wide ErrorBoundary.
+// A preferences crash, API contract mismatch, or render error shows a soft
+// Kinfolk-specific message and a reload button — the rest of the site stays up.
+class KinfolkErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error) { console.error("[KinfolkAI] crashed:", error); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-[#FAF6EF] flex items-center justify-center mb-4">
+            <span className="text-2xl">🤝</span>
+          </div>
+          <h2 className="font-bold text-[#3A1F0E] text-lg mb-2">Kinfolk needs a moment</h2>
+          <p className="text-sm text-[#3A1F0E]/60 mb-6 max-w-xs leading-relaxed">
+            Something went sideways loading your Kinfolk experience. The rest of the site is fine.
+          </p>
+          <button
+            onClick={() => this.setState({ error: null })}
+            className="px-5 py-2.5 rounded-full bg-[#CA922B] text-white text-sm font-semibold hover:bg-[#B38024] transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
-export default function Travel() {
+function TravelPage() {
   const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
   const isLoggedIn = !authLoading && !!authData?.user;
 
@@ -424,12 +458,28 @@ export default function Travel() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load preferences
+  // Load preferences — always merge with DEFAULT_PREFS so every array field is
+  // guaranteed to be an array even if the DB row predates a field addition.
   const loadPrefs = useCallback(async () => {
     if (!isLoggedIn) return;
     try {
       const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include" });
-      if (r.ok) { const d = await r.json() as { preferences: Prefs }; setPrefs(d.preferences ?? DEFAULT_PREFS); }
+      if (r.ok) {
+        const d = await r.json() as { preferences: Record<string, unknown> };
+        const raw = d.preferences ?? {};
+        const ensureArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+        setPrefs({
+          ...DEFAULT_PREFS,
+          ...raw,
+          // Guarantee every array field is always an array
+          favoriteCategories: ensureArr(raw.favoriteCategories),
+          favoriteCities:     ensureArr(raw.favoriteCities),
+          avoidCategories:    ensureArr(raw.avoidCategories),
+          tripStyle:          ensureArr(raw.tripStyle),
+          ownershipTypes:     ensureArr(raw.ownershipTypes),
+          lifestyleServices:  ensureArr(raw.lifestyleServices),
+        });
+      }
     } finally { setPrefsLoaded(true); }
   }, [isLoggedIn]);
 
@@ -799,5 +849,13 @@ export default function Travel() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Travel() {
+  return (
+    <KinfolkErrorBoundary>
+      <TravelPage />
+    </KinfolkErrorBoundary>
   );
 }

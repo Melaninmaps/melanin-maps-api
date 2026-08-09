@@ -1198,6 +1198,10 @@ When you mention any of these businesses, be specific: use their actual name, sh
 }
 
 // ─── GET /api/kinfolk/preferences ─────────────────────────────────────────────
+// IMPORTANT: normalizes the DB row before returning to the web client.
+// 1. Maps preferredOwnershipTypes (DB col) → ownershipTypes (frontend Prefs key).
+// 2. Coerces every array field that may be NULL in older rows to [].
+// This prevents the ChipSet "t.includes is not a function" crash for returning users.
 router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
@@ -1206,7 +1210,25 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
-    res.json({ preferences: prefs ?? { userId: req.user.id, favoriteCategories: [], favoriteCities: [], avoidCategories: [], budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null } });
+    const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+    const normalized = prefs ? {
+      ...prefs,
+      favoriteCategories:    normalizeArr(prefs.favoriteCategories),
+      favoriteCities:        normalizeArr(prefs.favoriteCities),
+      avoidCategories:       normalizeArr(prefs.avoidCategories),
+      tripStyle:             normalizeArr(prefs.tripStyle),
+      culturalInterests:     normalizeArr(prefs.culturalInterests),
+      lifestyleServices:     normalizeArr(prefs.lifestyleServices),
+      diasporaCountries:     normalizeArr(prefs.diasporaCountries),
+      // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
+      ownershipTypes:        normalizeArr(prefs.preferredOwnershipTypes),
+    } : {
+      userId: req.user.id,
+      favoriteCategories: [], favoriteCities: [], avoidCategories: [],
+      budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
+      ownershipTypes: [], lifestyleServices: [],
+    };
+    res.json({ preferences: normalized });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch preferences");
     res.status(500).json({ error: "Failed to fetch preferences" });

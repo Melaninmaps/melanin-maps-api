@@ -1,0 +1,403 @@
+Yes. Given that the production website was white-screened for roughly three hours **after Replit told you the deployment was successful**, I would change the deployment acceptance criteria immediately.
+
+A successful build/push is **not** proof that Mapping With Melanin is working. From now on, Replit needs to prove the **actual production site renders and functions in a real browser after every production push**.
+
+The screenshot gives Replit a concrete starting point. Kinfolk is crashing with:
+
+`TypeError: undefined is not an object (evaluating 't.includes')`
+
+in the production JavaScript bundle. That means some code is calling `.includes()` on a value that is `undefined`. The minified production bundle points to `index-BXPi09ZN.js`, but Replit needs to trace that back to the **original source code using the build/source map**, inspect what `t` represents, and determine **why that value is undefined in production**. They should not scatter optional chaining or fallback strings around the application until they know why the expected value is missing.
+
+I would send Replit this exact instruction:
+
+> # PRODUCTION INCIDENT — DIAGNOSE FIRST, THEN FIX
+>
+> **Mapping With Melanin™ production website**
+>
+> This is a production incident. Do not guess, do not shotgun fixes, and do not begin by adding optional chaining or arbitrary fallbacks.
+>
+> While I was actively networking and directing people to the website today, the production website displayed a white screen for approximately **three hours** after you had previously told me that the push succeeded and the website was working.
+>
+> That is no longer an acceptable definition of a successful deployment.
+>
+> ## CURRENT CONFIRMED PRODUCTION FAILURE
+>
+> On the actual production website:
+>
+> `https://www.mappingwithmelanin.com`
+>
+> Kinfolk AI currently crashes with:
+>
+> `TypeError: undefined is not an object (evaluating 't.includes')`
+>
+> Production bundle shown in the browser:
+>
+> `index-BXPi09ZN.js`
+>
+> The screenshot shows the failure occurring around the minified production stack at approximately:
+>
+> `index-BXPi09ZN.js:147:79574`
+>
+> with another nearby call around:
+>
+> `index-BXPi09ZN.js:147:79460`
+>
+> ## PHASE 1 — READ-ONLY ROOT-CAUSE DIAGNOSIS
+>
+> **Do not change code yet.**
+>
+> First pinpoint the exact original source location responsible for:
+>
+> `undefined.includes(...)`
+>
+> Do all of the following:
+>
+> 1. Use the production bundle/source maps/build artifacts to map the minified stack trace back to the original source file, function, and line.
+> 2. Identify exactly what minified variable `t` represents.
+> 3. Identify which `.includes()` call is failing.
+> 4. Trace where that value originates:
+>
+>    * API response
+>    * database field
+>    * Kinfolk response
+>    * user/session object
+>    * route state
+>    * category/tag data
+>    * environment variable
+>    * local storage/cache
+>    * other source
+> 5. Determine why it is `undefined` in production.
+> 6. Compare the production value/response against development.
+> 7. Check production browser console and network requests associated with opening/using Kinfolk.
+> 8. Check Railway production API logs for the same request/time.
+> 9. Determine whether the bug is:
+>
+>    * missing data,
+>    * malformed data,
+>    * an API contract mismatch,
+>    * a production-only configuration difference,
+>    * a frontend assumption,
+>    * stale production assets/cache,
+>    * or another specific cause.
+>
+> **Do not stop at “`.includes()` needs a null check.”**
+>
+> I need the reason the value became undefined.
+>
+> ### STOP AND REPORT
+>
+> Before editing anything, return:
+>
+> **Exact source file:**
+> **Exact function/component:**
+> **Exact failing expression:**
+> **What `t` actually represents:**
+> **Expected value:**
+> **Actual production value:**
+> **Where that value comes from:**
+> **Why it is undefined:**
+> **Production evidence:**
+> **Development comparison:**
+> **Root cause:**
+> **Smallest safe correction:**
+> **Regression risk:**
+>
+> Do not implement until that diagnosis is complete.
+>
+> ---
+>
+> # PHASE 2 — CORRECT ONLY THE ROOT CAUSE
+>
+> After the root cause is proven, make the **smallest safe correction**.
+>
+> Do not use broad search-and-replace.
+>
+> Do not change unrelated Kinfolk behavior.
+>
+> Do not delete data.
+>
+> Do not rename production fields to make the error disappear.
+>
+> Do not convert expected structured data into empty strings without explaining why the data was missing.
+>
+> Add an appropriate defensive guard **only after fixing the underlying data/contract problem**, so one malformed record cannot white-screen the entire application again.
+>
+> Kinfolk failure should degrade gracefully. A single missing value must never take down the entire Mapping With Melanin website.
+>
+> If Kinfolk itself fails, the rest of the website should remain usable and Kinfolk should show a controlled message rather than the global App Error screen.
+>
+> ---
+>
+> # PHASE 3 — USE OUR EXISTING DOCUMENTED PRODUCTION PUSH PROCEDURE
+>
+> Locate the existing Mapping With Melanin documented production deployment/push procedure in the repository/project documentation.
+>
+> **Follow that procedure exactly.**
+>
+> Do not invent a new deployment method.
+>
+> Before executing it, tell me:
+>
+> **Document/runbook located:**
+> **Path:**
+> **Deployment steps you are about to follow:**
+> **Current production commit/version:**
+> **Commit/version being deployed:**
+> **Rollback commit/version:**
+>
+> If you cannot locate the documented procedure, **STOP and tell me it cannot be located. Do not improvise a production deployment.**
+>
+> ---
+>
+> # PHASE 4 — DEPLOYMENT IS NOT COMPLETE WHEN THE COMMAND SUCCEEDS
+>
+> A green deploy/build/push command is only an intermediate step.
+>
+> After deployment, validate the **real public production environment**:
+>
+> `https://www.mappingwithmelanin.com`
+>
+> Do not validate only:
+>
+> * localhost
+> * Replit preview
+> * automated unit tests
+> * simulated browser tests
+> * API responses
+> * build logs
+> * Railway deployment status
+>
+> Those may all be checked, but they **do not constitute production acceptance**.
+>
+> ## REQUIRED REAL PRODUCTION VALIDATION
+>
+> Open the actual public website in a real browser after deployment.
+>
+> Visually inspect the rendered pages.
+>
+> Test at minimum:
+>
+> **Desktop production website**
+>
+> * homepage renders
+> * navigation renders and works
+> * Discover loads
+> * Map loads
+> * business pins load
+> * business profile opens
+> * Kinfolk opens
+> * Kinfolk accepts a message
+> * Kinfolk returns a response
+> * Community loads
+> * Library/resources pages that currently exist load
+> * login/auth page loads
+>
+> **Mobile production website**
+>
+> Test the real public site in a mobile-sized browser and, where available, Safari/iPhone behavior.
+>
+> Specifically confirm:
+>
+> * no white screen
+> * no Mapping With Melanin App Error screen
+> * navigation is visible and usable
+> * Kinfolk can be opened
+> * keyboard/input works
+> * Kinfolk returns an answer
+> * map loads
+> * pins are tappable
+> * business cards/profile views render correctly
+>
+> ## VISUAL PROOF REQUIRED
+>
+> I do not want “tests passed” as the only evidence.
+>
+> Provide screenshots from the **actual production URL after deployment** showing:
+>
+> 1. Homepage
+> 2. Map
+> 3. An opened business listing
+> 4. Kinfolk open
+> 5. Kinfolk after successfully answering a test question
+>
+> Include the visible production URL in the evidence wherever possible.
+>
+> Also report browser-console errors and failed network requests after the production validation.
+>
+> ---
+>
+> # PHASE 5 — PRODUCTION SMOKE TEST / ROLLBACK RULE
+>
+> From now on:
+>
+> **A deployment that builds but fails the production smoke test is a FAILED DEPLOYMENT.**
+>
+> If the actual public production website white-screens, crashes, loses navigation, breaks authentication, breaks Kinfolk, or otherwise becomes unusable:
+>
+> **do not leave the broken release live while experimenting.**
+>
+> Stop.
+>
+> Capture the error.
+>
+> Roll back to the last known-good production release using the documented rollback process.
+>
+> Diagnose the failed release separately.
+>
+> Report the rollback and result.
+>
+> ---
+>
+> # PHASE 6 — REGRESSION AUDIT FOR FEATURES THAT ARE NOW MISSING
+>
+> **Do not immediately rebuild these features. First determine whether they still exist and became disconnected, were removed by a prior change, are hidden by a UI regression, or were never wired into this production branch.**
+>
+> ## A. BUSINESS PHOTO + VIDEO / SOCIAL MEDIA URL
+>
+> Every business listing — including **unclaimed businesses** — needs the ability for an authorized admin/community workflow to associate media with the listing.
+>
+> Our current intended model is primarily **URL-based media from the original social platform**, so creators/businesses do not have to restart or lose their existing platform traffic.
+>
+> Audit the existing implementation for:
+>
+> * business photo/media records
+> * video/media records
+> * social post URL
+> * Instagram URL
+> * TikTok URL
+> * YouTube URL
+> * Facebook/social URL where supported
+> * embed/display handling
+> * admin ability to add media
+> * community/member ability to submit media if that workflow exists
+> * claimed vs unclaimed business restrictions
+>
+> **An unclaimed business must still be capable of having community/admin-added public media URLs attached to its listing, subject to moderation.**
+>
+> Do not require a business owner account before community information can make the listing useful.
+>
+> Report exactly what currently exists and what is missing.
+>
+> ## B. EVERY BUSINESS PIN NEEDS COMMUNITY INTERACTION
+>
+> Audit every business/map pin workflow.
+>
+> A user who opens a legitimate business listing should ultimately be able to reach:
+>
+> * business details
+> * community feedback/tap system
+> * review/additional text where allowed
+> * photo/social-media URL submission
+> * video/social-media URL submission
+> * save/share/directions where those features currently exist
+>
+> This must not depend solely on whether the business has claimed its profile.
+>
+> Claimed status controls **business-owner management privileges**, not whether community members can contribute useful community intelligence.
+>
+> Report which of those actions currently work for:
+>
+> **Claimed business** vs **Unclaimed business**.
+>
+> Do not change permissions until you report the current state.
+>
+> ## C. SUNDOWN TOWNS MAP LAYER
+>
+> The map previously surfaced sundown-town information and it is no longer visible.
+>
+> Perform a read-only trace.
+>
+> Determine:
+>
+> * whether the dataset still exists
+> * database table/file/source
+> * number of records
+> * whether the API still returns them
+> * whether the frontend map layer/component still exists
+> * whether the legend/filter/toggle still exists
+> * whether a recent map refactor disconnected the layer
+> * whether styling/z-index/filtering is hiding the markers/layer
+> * whether production differs from development
+> * commit where the behavior changed, if identifiable
+>
+> **Do not reseed or recreate this data until you establish whether the original data still exists.**
+>
+> We need to protect historical/community research from being overwritten.
+>
+> Report:
+>
+> **Data exists?**
+> **Record count:**
+> **API exists?**
+> **UI layer exists?**
+> **Production visible?**
+> **Last known working commit if traceable:**
+> **Root cause of disappearance:**
+> **Safest restoration:**
+>
+> ---
+>
+> # PHASE 7 — FINAL ACCEPTANCE REPORT
+>
+> Do not tell me simply “fixed” or “deployment successful.”
+>
+> Return:
+>
+> ### Kinfolk
+>
+> Root cause:
+> Exact fix:
+> Production test question:
+> Production response received: YES/NO
+>
+> ### Website
+>
+> Desktop visually inspected: YES/NO
+> Mobile visually inspected: YES/NO
+> White screen: YES/NO
+> Console errors:
+> Failed network requests:
+>
+> ### Map
+>
+> Loads production pins: YES/NO
+> Business pin opens: YES/NO
+> Sundown-town layer restored/visible: YES/NO
+>
+> ### Businesses
+>
+> Claimed listing review/tap works: YES/NO
+> Unclaimed listing review/tap works: YES/NO
+> Claimed listing media URL works: YES/NO
+> Unclaimed listing media URL works: YES/NO
+>
+> ### Deployment
+>
+> Production URL tested:
+> Deployed commit:
+> Rollback commit:
+> Screenshots supplied: YES/NO
+>
+> ### Remaining Issues
+>
+> List every remaining production issue explicitly.
+>
+> **Do not call this incident complete until the actual public production website has been visually opened and tested after deployment.**
+
+I would also add **one permanent protection** after this incident: the app-wide error boundary should not allow Kinfolk to take down the rest of the site. Your screenshot shows a Kinfolk-related JavaScript failure reaching the Mapping With Melanin global error screen. Even before we know the root cause, that's an architectural weakness worth addressing **after** diagnosis. Kinfolk should have its own local error boundary/fallback.
+
+And I agree with your business-media requirement. The distinction should be:
+
+**Claim status controls who can manage the official business profile. It should not determine whether Mapping With Melanin can contain community-contributed information about that place.**
+
+So an unclaimed listing can still become alive with community reviews, photos, videos, recommendations, and social links, while ownership/admin powers remain restricted.
+
+For outside-platform media, I would keep the architecture we discussed: store the **original post URL + platform + contributor + moderation status + business ID**, rather than copying another creator's video into your own storage by default. Then Mapping With Melanin can embed/link the original where the platform permits it. That preserves attribution and keeps the business/creator's existing social presence relevant.
+
+On the sundown-town layer, I would be particularly strict about **diagnose-before-reseed**. If that data previously existed, Replit should locate it and reconnect it rather than produce a new dataset and potentially erase the provenance of the original research.
+
+And after what happened today, I would make one rule permanent:
+
+> **“Deployment successful” means the actual production URL was opened after deployment, key user journeys were performed successfully, and visual proof was captured. A successful build command alone is never a successful production deployment.**
+
+That single change should prevent Replit from giving you another false “everything is fine” confirmation while the public is actually seeing a white screen.
