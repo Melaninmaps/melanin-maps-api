@@ -1,0 +1,174 @@
+Yes. **That is exactly the experience I would want.** A zero-result search should not be a dead end; it should become a **discovery + learning event**.
+
+The important part is that Kinfolk must never pretend a nearby restaurant serves Fruity Pebble waffles when we don't have evidence that it does.
+
+So the response logic should be something like:
+
+> **I couldn't confirm Fruity Pebble waffles nearby yet — but I'm not leaving you hungry.**
+>
+> People looking for similar specialty brunch experiences have also liked **[Business A]** and **[Business B]**. [Business A] is 1.2 miles away and gets strong community feedback for creative brunch options.
+>
+> **37 members nearby have looked for similar specialty-waffle/brunch experiences recently.** We're using that demand to help participating businesses understand what the community is looking for.
+>
+> Want me to **show the closest options**, **expand the search area**, or **find something with the same vibe**?
+
+The exact wording can evolve, but the architecture underneath it is important.
+
+### Kinfolk should use a fallback ladder
+
+It shouldn't jump from **exact result → random brunch restaurant**.
+
+It should progressively broaden while telling the user what it's doing:
+
+**1. Exact confirmed match**
+“Fruity Pebble waffles” appears in verified business data, menu information, business media, or credible community evidence.
+
+**2. Community-confirmed match**
+Maybe the restaurant hasn't entered it themselves, but multiple community members have posted/reviewed/tagged that item there.
+
+**3. Closely related item**
+No Fruity Pebble waffles, but businesses have cereal waffles, specialty waffles, loaded waffles, creative pancakes, etc.
+
+**4. Behavioral/community affinity**
+This is the piece you're asking about, and **yes, I absolutely think we should eventually use it.**
+
+If people who searched for Fruity Pebble waffles subsequently saved, visited, positively reviewed, or repeatedly engaged with certain brunch businesses, that becomes useful intelligence:
+
+> **People looking for something similar also liked…**
+
+That's much stronger than simply showing the nearest restaurant.
+
+**5. Experience/vibe match**
+Maybe we don't have enough behavioral history yet. Kinfolk can look at what the query *means*: fun brunch, creative food, Instagram-worthy presentation, perhaps energetic atmosphere—**only where the data supports those associations**—and find businesses matching that experience.
+
+**6. Nearby category alternative**
+“We couldn't confirm the exact item, but here are three highly regarded brunch spots within 3 miles.”
+
+**7. Ask permission to expand**
+“Nothing close enough? I can expand to 10 miles.”
+
+Only after exhausting those should we approach anything resembling “nothing found.”
+
+And even then, the search itself has value.
+
+### This becomes the beginning of collaborative filtering
+
+Eventually MWM can learn:
+
+People who searched **Fruity Pebble waffles** also tended to:
+
+save Business A
+visit Business B
+watch Creator C's brunch video
+tap *Worth Every Visit* on Business D
+search *birthday brunch*
+choose *Fun & Social*
+save a particular brunch event
+
+Kinfolk doesn't need to know *why* each person did that. It learns aggregate relationships.
+
+Then it can say:
+
+> **I don't have a confirmed Fruity Pebble waffle spot within 5 miles, but members looking for similar brunch experiences frequently choose X.**
+
+That's a very different claim from:
+
+> “X has Fruity Pebble waffles.”
+
+That distinction needs to be hard-coded into the recommendation architecture.
+
+### Your “37 members” idea is excellent—with one privacy rule
+
+We should **never display tiny counts** that could inadvertently reveal someone's activity.
+
+So I would establish an aggregation threshold. For example, until enough independent people have produced the signal, Kinfolk might simply say:
+
+> **Others nearby are looking for this too.**
+
+Once the privacy threshold is met:
+
+> **37 members in this area have searched for similar brunch experiences recently.**
+
+Businesses get the aggregate signal too:
+
+> **Community opportunity**
+>
+> People around your business are looking for specialty waffles and creative brunch options.
+>
+> **Do you offer this?**
+>
+> `Yes — Add to my profile`
+> `Something similar`
+> `Not something we offer`
+
+Now something fascinating happens.
+
+If the business clicks **Yes**, adds “Fruity Pebble Waffles,” and supplies its menu/social URL as evidence, **the next person's search has an exact result.**
+
+That's your flywheel closing.
+
+### Cultural Ambassadors should receive the gap too
+
+Suppose no business responds, but 100 people keep searching.
+
+A food Cultural Ambassador might see:
+
+> **What the community is looking for**
+>
+> Specialty waffles and creative brunch experiences are trending in Philadelphia.
+
+They create a video:
+
+> “I went looking for the wildest waffles in Philly…”
+
+They tag three MWM businesses.
+
+Those businesses become connected to the topic through community evidence.
+
+The video becomes searchable.
+
+The Library can connect it to Philadelphia → Food → Brunch.
+
+Kinfolk can retrieve it.
+
+The next person searches **Fruity Pebble waffles** and gets a richer answer.
+
+**Search created demand → demand inspired supply/content → content generated community evidence → evidence improved search.**
+
+That's the flywheel.
+
+### And I would make “never dead-end the member” a product rule
+
+Not literally “always invent an answer.” Quite the opposite.
+
+The rule should be:
+
+> **Kinfolk never fabricates an exact match to avoid saying no. When an exact match isn't available, Kinfolk transparently moves outward through related community intelligence until it can offer the most useful truthful next step.**
+
+That applies far beyond waffles.
+
+**“I need a Black woman OB-GYN who specializes in fibroids.”**
+
+No exact match? Don't just return random doctors. Broaden carefully: specialty → relevant providers → community-trusted providers → expand geography → useful Library resources.
+
+**“I need a tax attorney who speaks Haitian Creole.”**
+
+No exact match? Profession + specialty + language → nearby related professionals → community recommendations → expand radius → relevant Library/legal resources.
+
+**“Luxury spa in Cabo owned by a Black woman.”**
+
+No exact match? Don't falsely label one. Kinfolk can separate the criteria:
+
+> “I couldn't confirm a Black-woman-owned luxury spa in Cabo yet. I did find these luxury spa experiences, and these Black-owned businesses nearby. I can also expand the search.”
+
+That transparency is important to the trust model.
+
+And eventually Kinfolk learns something else from the unsuccessful search:
+
+**there is unmet demand for that combination.**
+
+So I would add this sentence to the Universal Search specification we just created:
+
+> **ZERO RESULTS IS A SIGNAL, NOT AN END STATE. Every unsuccessful exact search must trigger the MWM fallback ladder: community-confirmed → related item/service → behavioral affinity → experience/Vibe match → nearby category alternatives → user-approved geographic expansion → relevant Library/community resources. The original unmet query should simultaneously become anonymized demand intelligence for eligible businesses and Cultural Ambassadors. Kinfolk must clearly distinguish exact matches from inferred alternatives and must never fabricate availability merely to avoid returning zero results.**
+
+That's the system I would build. **The user gets help even when MWM doesn't have the answer yet—and the fact that MWM didn't have the answer helps make MWM better for the next person.**
