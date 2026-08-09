@@ -1,0 +1,294 @@
+Yes — this changes the priority. Do not touch storage right now. The immediate issue is authentication.
+The screenshot tells us something important: this is not “wrong password.” The app is receiving HTTP 404 from the login service, meaning the mobile app is calling a route that production cannot find. Your credentials may never even be reaching the actual login handler.
+Also, because you remember the original app profile as teiannal with the MWM logo, Replit should trace that existing profile and user ID before anyone creates, resets, merges, or modifies accounts. We do not want them accidentally creating a second founder profile.
+Send this to Replit:
+URGENT AUTH INCIDENT — MOBILE APP LOGIN HTTP 404
+
+STOP all profile-photo/storage work.
+
+Do not create another account.
+Do not reset or merge the founder account.
+Do not change Apple linkage.
+Do not delete any profile records.
+Do not push speculative fixes.
+
+The founder is now unable to enter the mobile app.
+
+CURRENT PRODUCTION MOBILE ERROR:
+
+"Login service returned an unexpected response (HTTP 404)."
+
+Founder is attempting email/password login with:
+
+tlindsay428@yahoo.com
+
+The founder's original app profile was known as:
+
+teiannal
+
+and displayed the Mapping With Melanin logo as the profile image.
+
+This must be treated as an AUTH ROUTING / MOBILE CLIENT forensic incident first.
+
+==================================================
+1. TRACE THE EXACT MOBILE LOGIN REQUEST
+==================================================
+
+Using the CURRENT mobile source/build and the CURRENT production API:
+
+Identify exactly what request the email/password login screen sends.
+
+Return:
+
+Mobile build/version:
+Mobile commit/SHA if available:
+API base URL:
+Exact login URL:
+Exact path:
+HTTP method:
+Request headers:
+Request body shape:
+Response status:
+Response body:
+Production server route expected:
+
+I need the actual comparison:
+
+MOBILE CALLS:
+________________________
+
+PRODUCTION EXPOSES:
+________________________
+
+Do not infer this from old code.
+Inspect the currently installed/mobile build path and current Railway routes.
+
+==================================================
+2. CONFIRM WHETHER THIS IS A ROUTE MISMATCH
+==================================================
+
+We previously identified the email login handler as something like:
+
+POST /api/auth/login-email
+
+Verify the CURRENT canonical route.
+
+Check whether the mobile app is instead calling any stale path such as:
+
+/auth/login
+/auth/login-email
+/api/auth/login
+/api/login
+or another removed endpoint.
+
+A 404 strongly suggests the request is not reaching credential validation at all.
+
+Confirm:
+
+Request reaches auth handler: YES/NO
+Password comparison occurs: YES/NO
+Session creation occurs: YES/NO
+
+If NO, do not troubleshoot the password yet.
+
+==================================================
+3. TEST THE CANONICAL PRODUCTION ENDPOINT DIRECTLY
+==================================================
+
+Without changing data, test the canonical production login route.
+
+Do NOT log the founder's password.
+
+Confirm only:
+
+Route exists: YES/NO
+GET/POST method expected:
+Unauthenticated malformed request gives expected auth/validation response: YES/NO
+Route returns 404: YES/NO
+
+This separates:
+
+BROKEN SERVER ROUTE
+
+from
+
+STALE MOBILE CLIENT ROUTE.
+
+==================================================
+4. TRACE API BASE URL IN MOBILE BUILD
+==================================================
+
+Confirm whether the installed app is pointing to:
+
+www.mappingwithmelanin.com
+mappingwithmelanin.com
+Railway API hostname
+old Replit URL
+development URL
+stale Expo environment
+or another API base.
+
+Return the exact non-secret base URL embedded in the current build.
+
+Also inspect:
+
+EXPO_PUBLIC_API_URL
+EXPO_PUBLIC_DOMAIN
+build profile env
+runtime config
+fallback API URL logic
+
+Determine whether a recent web/API deployment changed the server path without updating the mobile client.
+
+==================================================
+5. TRACE THE EXISTING FOUNDER PROFILE
+==================================================
+
+READ ONLY.
+
+Find all production records that could correspond to:
+
+email:
+tlindsay428@yahoo.com
+
+username/display identifier:
+teiannal
+
+Return:
+
+User ID:
+Email:
+Username/display name:
+Role:
+Member type:
+Account approved:
+Password hash present: YES/NO
+Apple ID linked: YES/NO
+Google/OIDC identity linked: YES/NO
+Profile image URL:
+Profile image source/provider:
+Created date:
+Last profile update:
+Any duplicate user records: YES/NO
+
+Do NOT display password hashes or tokens.
+
+Do not change the row.
+
+==================================================
+6. LOCATE THE OLD MWM LOGO PROFILE IMAGE
+==================================================
+
+Founder distinctly remembers the mobile profile displaying the Mapping With Melanin logo.
+
+Do not dismiss this because users.profile_image_url is currently NULL.
+
+Audit whether the mobile app previously sourced profile imagery from:
+
+profile_image_url
+avatar_url
+user metadata
+local app state
+Expo/local storage
+Google/OIDC claim
+seed/demo profile
+static MWM logo fallback
+a profile table separate from users
+another legacy user/profile schema
+
+Search git history and current code.
+
+Return:
+
+Where "teiannal" came from:
+Where the displayed MWM logo came from:
+Whether that was persisted server-side or locally:
+Whether the underlying profile still exists:
+
+This is important because the founder's recollection does not match the current users.profile_image_url result.
+
+Resolve the discrepancy instead of assuming the recollection is wrong.
+
+==================================================
+7. CHECK FOR MOBILE/WEB AUTH DIVERGENCE
+==================================================
+
+Compare:
+
+WEB EMAIL LOGIN
+MOBILE EMAIL LOGIN
+
+For each return:
+
+endpoint
+API base
+request body
+session/token handling
+success response expected
+error response handling
+
+If web can authenticate against one endpoint but mobile calls another, classify this as:
+
+CLIENT/SERVER AUTH ROUTE DRIFT.
+
+==================================================
+8. DO NOT CHANGE APPLE AUTH
+==================================================
+
+The founder also has Sign in with Apple functionality.
+
+Do not unlink Apple.
+Do not delete private-relay users.
+Do not alter apple_id.
+Do not change passwordHash during this diagnosis.
+
+This HTTP 404 must be isolated before touching identity linkages.
+
+==================================================
+9. DETERMINE WHETHER A NEW APP BUILD IS REQUIRED
+==================================================
+
+If the installed app contains a stale hard-coded login endpoint:
+
+report clearly:
+
+SERVER HOTFIX POSSIBLE: YES/NO
+NEW EXPO BUILD REQUIRED: YES/NO
+OTA UPDATE POSSIBLE: YES/NO
+APPLE/TESTFLIGHT BUILD REQUIRED: YES/NO
+ANDROID BUILD REQUIRED: YES/NO
+
+Do not start a build yet.
+
+If compatibility can safely be restored server-side by temporarily supporting the old authenticated route, explain that option and risks.
+
+==================================================
+10. FINAL FORENSIC REPORT
+==================================================
+
+Return:
+
+ROOT CAUSE:
+CURRENT MOBILE LOGIN URL:
+CURRENT PRODUCTION LOGIN URL:
+FIRST POINT OF FAILURE:
+WHY HTTP 404 OCCURS:
+FOUNDER USER ID:
+TEIANNAL PROFILE FOUND: YES/NO
+MWM LOGO SOURCE FOUND:
+DATA LOST: YES/NO/UNKNOWN
+DUPLICATE ACCOUNT: YES/NO
+PASSWORD INVOLVED IN FAILURE: YES/NO/NOT REACHED
+APPLE AUTH INVOLVED: YES/NO
+WEB AUTH AFFECTED: YES/NO
+SERVER FIX POSSIBLE:
+NEW MOBILE BUILD REQUIRED:
+SMALLEST SAFE FIX:
+ROLLBACK PLAN:
+
+Do not implement.
+
+STOP for founder review.
+My suspicion from the screenshot is route drift between the installed mobile app and the current production API. A 404 is very different from the 401 Invalid email or password Replit previously saw when testing your website credentials: a 401 means the login handler was reached; this 404 suggests the app isn't reaching that handler at all.
+And I would make them specifically reconcile teiannal + MWM logo with their statement that your current production profile_image_url is null. That may have been a legacy profile field, local/mobile profile state, or fallback image — but we should find out exactly what it was before deciding anything was lost.
+For now: authentication first, storage later.

@@ -796,6 +796,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["geocode tour content", () => geocodeTourContent(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
     ["admin accounts",    () => ensureAdminAccounts(log, warn)],
+    ["tester accounts",   () => ensureTesterAccounts(log, warn)],
+    ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -1548,15 +1550,63 @@ async function ensureRecurringEvents(
 }
 
 // ── Admin account grants ───────────────────────────────────────────────────────
-// Ensures the three permanent admin accounts have role='admin'.
+// Ensures all founder admin accounts have role='admin'.
 // Idempotent — only updates rows where role != 'admin' already.
-// tlindsay428@yahoo.com is the principal admin (owner); all three are granted
+// tlindsay428@yahoo.com is the principal admin (owner); all are granted
 // the same role='admin' column value. Access revocation is controlled at the
 // application level by the principal admin.
 const ADMIN_EMAILS = [
-  "tlindsay428@yahoo.com",   // Principal admin — founder / platform owner
-  "bigdot6017@gmail.com",    // Kevin Cardwell
-  "kaylacardwell3@gmail.com", // Kayla Cardwell (also a tester)
+  "tlindsay428@yahoo.com",          // Principal admin — founder / platform owner
+  "tlindsay428@gmail.com",          // Founder backup account
+  "tlindsay428@aol.com",            // Founder backup account
+];
+
+// ── Tester account grants ──────────────────────────────────────────────────────
+// All testers who have already registered are promoted to role='tester'.
+// Idempotent — only updates rows where role is still 'user'.
+const TESTER_EMAILS = [
+  "cardwellkayla219@gmail.com",
+  "kcardwell17@yahoo.com",
+  "kaylacardwell3@gmail.com",
+  "taleisham.saunders@gmail.com",
+  "trinalindsayhairston@gmail.com",
+  "trinalindsayhairston@gmail..com", // typo variant as registered
+  "bigdot6017@gmail.com",
+  "zykiral.morton@yahoo.com",
+  "kyleisha.m.morton@gmail.com",
+  "kyleisha.m.fisher@gmail.com",
+  "taleisha.fisher@gmail.com",
+  "lilanarich@gmail.com",
+  "jordanwtester@gmail.com",
+  "joshuabierd99@gmail.com",
+];
+
+// ── Pre-approved tester emails (haven't registered yet) ───────────────────────
+// These are seeded into pending_tester_emails so that when they self-register,
+// role='tester' is automatically applied. ON CONFLICT DO NOTHING — safe to re-run.
+const PRE_APPROVED_TESTER_EMAILS = [
+  "zykiral.morton@yahoo.com",
+  "kyleisha.m.morton@gmail.com",
+  "kyleisha.m.fisher@gmail.com",
+  "taleisha.fisher@gmail.com",
+  "lilanarich@gmail.com",
+  "jordanwtester@gmail.com",
+  "joshuabierd99@gmail.com",
+  "kaylacardwelltester@gmail.com",
+  "kevinctester@gmail.com",
+  "kevkaytester@gmail.com",
+  "teiannaltester@gmail.com",
+  "trinalindsaytester@gmail.com",
+  "jross215@gmail.com",
+  "kaylathomas20011@gmail.com",
+  "kansesdwilliams@gmail.com",
+  "fatimccoy@icloud.com",
+  "jordanwyatt117@icloud.com",
+  "jordanw117@icloud.com",
+  "nydiahholly12@gmail.com",
+  "meaparks@gmail.com",
+  "melody.brown1988@gmail.com",
+  "owcforyouth@gmail.com",
 ];
 
 async function ensureAdminAccounts(
@@ -1570,7 +1620,7 @@ async function ensureAdminAccounts(
        WHERE LOWER(TRIM(email)) = ANY($1)
          AND role != 'admin'
        RETURNING email`,
-      [ADMIN_EMAILS]
+      [ADMIN_EMAILS.map(e => e.toLowerCase())]
     );
     const granted = result.rows.map((r: { email: string }) => r.email);
     if (granted.length > 0) {
@@ -1580,6 +1630,87 @@ async function ensureAdminAccounts(
     }
   } catch (err: unknown) {
     warn(`Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Tester account grants ──────────────────────────────────────────────────────
+async function ensureTesterAccounts(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Only promote to tester if currently role='user' — never demote admins
+    const result = await pool.query(
+      `UPDATE users
+       SET role = 'tester', updated_at = NOW()
+       WHERE LOWER(TRIM(email)) = ANY($1)
+         AND role = 'user'
+       RETURNING email`,
+      [TESTER_EMAILS.map(e => e.toLowerCase())]
+    );
+    const granted = result.rows.map((r: { email: string }) => r.email);
+    if (granted.length > 0) {
+      log(`Tester role granted to: ${granted.join(", ")}`);
+    } else {
+      log(`Tester accounts already confirmed for all known testers`);
+    }
+  } catch (err: unknown) {
+    warn(`Tester account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Pending tester emails table + seed ────────────────────────────────────────
+// Creates the pending_tester_emails table if it doesn't exist on Railway,
+// then seeds pre-approved emails so new registrations auto-get tester role.
+async function ensurePendingTesterEmails(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Create table if Railway never received this migration
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pending_tester_emails (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+        email varchar NOT NULL UNIQUE,
+        tester_access_source varchar NOT NULL DEFAULT 'admin_invite',
+        granted_by varchar,
+        granted_at timestamptz NOT NULL DEFAULT NOW(),
+        entitlement_ends_at timestamptz,
+        applied_at timestamptz,
+        applied_to_user_id varchar
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS "IDX_pending_tester_emails_email"
+      ON pending_tester_emails(email)
+    `);
+
+    // Seed pre-approved emails — ON CONFLICT DO NOTHING keeps it idempotent
+    let inserted = 0;
+    for (const email of PRE_APPROVED_TESTER_EMAILS) {
+      const r = await pool.query(
+        `INSERT INTO pending_tester_emails (id, email, tester_access_source)
+         VALUES (gen_random_uuid(), $1, 'website_test')
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id`,
+        [email.toLowerCase().trim()]
+      );
+      if (r.rowCount && r.rowCount > 0) inserted++;
+    }
+
+    // Mark already-registered testers as applied
+    await pool.query(`
+      UPDATE pending_tester_emails pte
+      SET applied_at = NOW(),
+          applied_to_user_id = u.id
+      FROM users u
+      WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(pte.email))
+        AND pte.applied_at IS NULL
+    `);
+
+    log(`Pending tester emails: table ensured, ${inserted} new emails seeded`);
+  } catch (err: unknown) {
+    warn(`Pending tester emails guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
