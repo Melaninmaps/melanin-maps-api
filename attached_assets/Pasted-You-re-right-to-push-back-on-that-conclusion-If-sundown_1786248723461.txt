@@ -1,0 +1,243 @@
+You’re right to push back on that conclusion.
+
+If **sundown towns were visibly working yesterday**, then “the cultural-sites API returns 0, therefore the data was never seeded” is not an acceptable diagnosis. That contradicts observed production behavior.
+
+What Replit has actually proven is only this:
+
+**The API path they checked currently returns 0 sundown-town entries.**
+
+That does **not** prove the data never existed.
+
+The next step should be a preservation-focused trace to answer **where yesterday’s sundown-town data went**.
+
+Send Replit this:
+
+> **CORRECTION REQUIRED — SUNDOWN TOWN DATA WAS VISIBLE IN PRODUCTION YESTERDAY**
+>
+> Your Phase 6 conclusion is incorrect:
+>
+> > “The layer will be invisible until data is added. This is a pre-existing data gap.”
+>
+> This feature was visibly working in production **yesterday**. Sundown towns were displayed on the map and were specifically noticed by people I demonstrated the platform to.
+>
+> Therefore, do **not** treat this as “never seeded.”
+>
+> Treat it as a **possible data-loss, environment, query, migration, deployment, or routing incident** until proven otherwise.
+>
+> ## STOP — DO NOT SEED OR RECREATE ANYTHING
+>
+> Do not insert new sundown-town records.
+>
+> Do not run a seed script.
+>
+> Do not replace the dataset.
+>
+> Do not create a new source.
+>
+> We need to locate the original data first and preserve its provenance.
+>
+> ## READ-ONLY FORENSIC TRACE
+>
+> Please investigate all plausible storage and rendering paths for the sundown-town data.
+>
+> ### 1. Identify exactly what rendered yesterday
+>
+> Find the frontend code responsible for the sundown-town markers/layer that was visible prior to today.
+>
+> Report:
+>
+> * component/file
+> * API endpoint or data source
+> * expected response shape
+> * category/filter used
+> * marker/icon/style used
+> * whether those records came through `cultural-sites`, a separate sundown route, seeded map data, static JSON, database table, or another source
+>
+> Do not assume the currently queried endpoint is the same source that previously rendered the layer.
+>
+> ### 2. Search the entire repository
+>
+> Search read-only for:
+>
+> `sundown`
+>
+> `sundown town`
+>
+> `sundown_towns`
+>
+> `sundown-towns`
+>
+> `category = 'sundown'`
+>
+> seed files
+>
+> JSON/CSV/static datasets
+>
+> migrations
+>
+> import scripts
+>
+> archived/legacy map components
+>
+> feature flags
+>
+> map-layer definitions
+>
+> old API endpoints
+>
+> Report every relevant file and what it does.
+>
+> ### 3. Trace production database history
+>
+> Determine whether the production database currently contains sundown-town records anywhere, not only in the table/query you checked.
+>
+> Search relevant production tables for:
+>
+> * category/type containing `sundown`
+> * names or metadata associated with the prior layer
+> * soft-deleted records
+> * archived records
+> * records with changed category values
+> * records excluded by a new filter
+>
+> Return counts by relevant table/category.
+>
+> **Read only.**
+>
+> ### 4. Determine whether the data was deleted or transformed
+>
+> Review database migrations, seed jobs, cleanup scripts, bulk imports, category migrations and deploy activity since the last known working version.
+>
+> Look specifically for operations that could have:
+>
+> * deleted cultural-site records
+> * truncated/reseeded a table
+> * changed `sundown` to another category
+> * replaced production data with development seed data
+> * excluded historical/safety data
+> * changed a JOIN or WHERE clause
+> * changed an API response filter
+>
+> Report any candidate operation with timestamp/commit.
+>
+> ### 5. Compare yesterday’s working deployment with today
+>
+> Identify:
+>
+> **Last known deployment/commit where sundown towns were visible**
+>
+> versus:
+>
+> **Current deployed SHA `345a39df`**
+>
+> Diff the relevant:
+>
+> * map component
+> * cultural-sites code
+> * sundown route
+> * API query
+> * data model
+> * migrations
+> * seed scripts
+> * environment/configuration
+>
+> Find the first commit where the returned/rendered sundown count changed from non-zero to zero, if traceable.
+>
+> ### 6. Check environment mismatch
+>
+> Confirm that the API/database you queried for the “0 sundown towns” conclusion is the **same Railway production database and production API used by `www.mappingwithmelanin.com` yesterday**.
+>
+> Do not use Replit development data as evidence about production.
+>
+> Report:
+>
+> **Environment queried:**
+> **Database service queried:**
+> **Production confirmed:** YES/NO
+> **Evidence:**
+>
+> ### 7. Check browser/network behavior
+>
+> Open the production map and inspect the actual request responsible for map-layer data.
+>
+> Report:
+>
+> **Request URL:**
+> **HTTP response:**
+> **sundown record count returned:**
+> **filters/query params:**
+> **frontend count after filtering:**
+>
+> This will tell us whether the problem is:
+>
+> **data missing before API → API excluding data → frontend excluding data → rendering failure.**
+>
+> ## REQUIRED FINDING
+>
+> At the end, classify the incident as exactly one of:
+>
+> **A. Original data still exists; API no longer returns it**
+> **B. API returns it; frontend no longer renders it**
+> **C. Data exists but category/schema changed**
+> **D. Production data was deleted/replaced**
+> **E. Yesterday’s layer used a different source than the endpoint currently being checked**
+> **F. Environment mismatch**
+> **G. Another proven cause**
+>
+> Provide evidence for the classification.
+>
+> ## ONLY AFTER ROOT CAUSE
+>
+> If the original data exists, restore the original connection/filter/rendering path.
+>
+> If the original data was deleted, identify the most recent authoritative backup/source containing it and **stop for approval before restoration**.
+>
+> Do not solve this by reseeding a new dataset unless we have first proven the original data cannot be recovered.
+>
+> ## UPDATE YOUR ACCEPTANCE REPORT
+>
+> Replace:
+>
+> > “pre-existing data gap”
+>
+> with:
+>
+> > **“Sundown-town data unexpectedly absent from the currently queried production path; forensic trace underway because the layer was confirmed visible in production yesterday.”**
+>
+> Do not mark the map regression audit complete until this discrepancy is resolved.
+
+I would also flag **one other issue in their report**: they have **not fully completed Phase 7 for Kinfolk**.
+
+They wrote:
+
+> “KinfolkAI answering a question — can’t screenshot authenticated”
+
+That means they have not actually proven the end-to-end production user journey that originally failed.
+
+Their code-level diagnosis sounds plausible, and the guards are sensible, but the acceptance requirement was specifically:
+
+**authenticated production user opens Kinfolk → sends question → receives answer without crash.**
+
+If they cannot authenticate with your account, they need to use an approved production test account or have you perform the test while they inspect production logs. They should not convert “architecturally fixed” into “production verified.”
+
+So I would add this at the bottom:
+
+> **ALSO: PHASE 7 KINFOLK IS NOT YET FULLY ACCEPTED**
+>
+> The authenticated Kinfolk production journey has not actually been tested after deployment.
+>
+> Please do not classify that item as complete based solely on the code guards.
+>
+> Use an authorized production test account, or tell me exactly what I need to do while you observe the production logs.
+>
+> Required proof:
+>
+> authenticated user → open Kinfolk → submit message → successful response → no browser exception → no global error boundary → no failed Kinfolk network request.
+>
+> Until that happens, mark:
+>
+> **Kinfolk authenticated production E2E: PENDING**
+>
+> not complete.
+
+The important shift now is: **your own observed production behavior is evidence.** Replit cannot erase that evidence just because the current query returns zero. If it worked yesterday, the forensic question is **what changed or what source did it use?**, not “was it ever seeded?”
