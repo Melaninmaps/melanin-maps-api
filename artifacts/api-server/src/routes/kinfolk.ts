@@ -23,6 +23,7 @@ import {
   type JourneyPhase,
 } from "@workspace/db";
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
+import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 
@@ -760,6 +761,7 @@ function buildSystemPrompt(opts: {
   topUserVibes?: string[];
   cityContext?: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
   culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
+  knowledgeGraphContext?: KnowledgeGraphContext | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -925,6 +927,14 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
   const weatherSection = opts.weatherContext ? `\n${opts.weatherContext}\n` : "";
 
   // ── Cultural Phrases (MWM Community Language Taxonomy) ───────────────────
+  // ── Knowledge Graph Context (Layer 3) ────────────────────────────────────
+  // Structured, provenance-aware graph context retrieved for this user message.
+  // Injected as a clearly-delimited section so Kinfolk can reason over real evidence,
+  // not invent community or ambassador data that does not yet exist.
+  const knowledgeGraphSection = opts.knowledgeGraphContext
+    ? `\n${renderKnowledgeGraphContext(opts.knowledgeGraphContext)}\n`
+    : "";
+
   const culturalPhrasesSection = opts.culturalPhrases?.length ? `
 COMMUNITY LANGUAGE TOOLKIT — MWM Cultural Phrases:
 These are authentic phrases used across specific cultural communities to express trust, home, and endorsement. Weave them naturally when recommending businesses from these communities. NEVER use a culture's phrase for a different culture.
@@ -1005,7 +1015,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -1911,7 +1921,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Cultural phrases — cached for 6 hours, loaded once per instance
     const culturalPhrases = await getCachedCulturalPhrases();
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases }) + ownerBusinessContext;
+    // Layer 3 — Knowledge Graph Context retrieval.
+    // Resolves the user's message + active geography into structured, provenance-aware
+    // graph context. Non-blocking — returns null if nothing relevant exists or on any error.
+    // Never blocks a Kinfolk response.
+    const kgContext = await getKnowledgeGraphContext(message, destination).catch(() => null);
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages

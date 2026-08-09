@@ -128,6 +128,7 @@
 - [Three-Layer Tag Architecture v1.0](three-layer-architecture.md) — routing table for all 22 categories; 3 absolute rules; display threshold=10 ALL layers; THE REAL display string uses colon; 5 categories get neither layer.
 - [Business Placeholder Image System v1.0](placeholder-image-system.md) — HIGH priority; branded card+category SVG icon; has_owner_photo DB field; absolute rules against cultural stereotyping; 22 icon mappings.
 - [Knowledge Graph Layer 1 — schema and seeding lessons](knowledge-graph-layer1.md) — topic_name not title; idempotency requires WHERE NOT EXISTS; 4-tier provenance; Big Cousin contract.
+- [Knowledge Graph Layer 3 — Kinfolk wiring](knowledge-graph-layer3.md) — getKnowledgeGraphContext() + renderKnowledgeGraphContext() live in lib/; injected at top of buildSystemPrompt; 4-turn Philly proof + Big Cousin test passed; Railway NOT pushed yet.
 - [Knowledge Topics Schema — keywords type trap](knowledge-topics-schema.md) — keywords is text[] not jsonb; bulk INSERT silently fails with ::jsonb cast.
 - [Drizzle route catch blocks silently return fallback zeros](drizzle-silent-catch-pattern.md) — missing import returns 0/0/0/0 with no visible error; always verify non-zero returns against live endpoint.
 - [Web iOS parity — completed pages](web-ios-parity.md) — 7 pages added to close iOS/web gap; POOL_MAX raised to 35 for tour traffic; nav updated with Library, Circles, Guides, Marketplace, Connections.

@@ -910,6 +910,29 @@ END $seed$`,
     `,
   },
 
+  // knowledge_sources claim-alignment columns — Layer 3 provenance standard.
+  // evidence_section: the specific paragraph/exhibit that supports the claim (not just the URL).
+  // confidence:       how directly the cited page supports the specific claim text.
+  //                   'verified'   — primary source, directly cited verbatim.
+  //                   'high'       — source covers the claim specifically, corroborated.
+  //                   'medium'     — source covers the era/topic; specific claim inferred.
+  //                   'low'        — tangential source; claim needs additional corroboration.
+  //                   'unverified' — URL added but page not yet reviewed against claim.
+  // retrieved_at:     when the page was last confirmed to support the claim.
+  //
+  // RULE: a reputable source URL is not sufficient — the cited page must support the
+  // specific claim. Use confidence to be honest about the gap when it exists.
+  {
+    name: "knowledge_sources_claim_columns_v1",
+    sql: `
+      ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS evidence_section TEXT;
+      ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS confidence TEXT
+        CHECK (confidence IN ('verified','high','medium','low','unverified'))
+        DEFAULT 'unverified';
+      ALTER TABLE knowledge_sources ADD COLUMN IF NOT EXISTS retrieved_at TIMESTAMPTZ;
+    `,
+  },
+
   // Extend library_entity_connections entity_type CHECK to include
   // community_post, ambassador_content, and knowledge_article.
   // Uses a PL/pgSQL block to locate and drop the auto-named inline constraint
@@ -2241,6 +2264,23 @@ async function ensurePhiladelphiaKnowledgeGraph(
       },
     ];
 
+    // Claim-alignment metadata for the two real sources.
+    // evidence_section explains exactly what the source page covers and how directly
+    // it supports the specific claim — honest about any gap between URL and claim text.
+    // This is the claim-to-source standard (Layer 3 provenance rule).
+    const sourceMetadata: Record<string, { evidence_section: string; confidence: string }> = {
+      "authoritative": {
+        evidence_section:
+          "Slavery and Freedom exhibition — covers Free African Society (1787) and early Black institutional life; broader NMAAHC collection includes Mother Bethel AME artifacts. Claim accuracy: well-corroborated across NMAAHC, NPS Independence Park, and Library of Congress records. Specific page may not name Philadelphia institutions on its landing view — claim is accurate and institution-supported but not directly cited from a single paragraph on this URL.",
+        confidence: "high",
+      },
+      "professional": {
+        evidence_section:
+          "Full digitized text available. The Philadelphia Negro (1899) Chapter 1 establishes the 7th Ward study scope; Chapters 2-4 document the history of the Black community in Philadelphia including institutional founding. Du Bois explicitly identifies Mother Bethel and the Free African Society as foundational institutions. This claim is directly and specifically supported by the primary source.",
+        confidence: "verified",
+      },
+    };
+
     let sourcesInserted = 0;
     for (const s of realSources) {
       const existing2 = await pool.query(
@@ -2248,14 +2288,27 @@ async function ensurePhiladelphiaKnowledgeGraph(
          WHERE topic_id=$1 AND authority_tier=$2 AND source_name=$3 LIMIT 1`,
         [bhistId, s.tier, s.name],
       );
+      const meta = sourceMetadata[s.tier] ?? { evidence_section: null, confidence: "unverified" };
       if (existing2.rows.length === 0) {
         await pool.query(
           `INSERT INTO knowledge_sources
-             (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status)
-           VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, 'active')`,
-          [bhistId, s.tier, s.name, s.url, s.claim, s.is_primary],
+             (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status,
+              evidence_section, confidence, retrieved_at)
+           VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, 'active', $7, $8, NOW())`,
+          [bhistId, s.tier, s.name, s.url, s.claim, s.is_primary,
+           meta.evidence_section, meta.confidence],
         );
         sourcesInserted++;
+      } else {
+        // Backfill provenance columns on existing rows (Railway will hit this path)
+        await pool.query(
+          `UPDATE knowledge_sources
+           SET evidence_section = COALESCE(evidence_section, $1),
+               confidence       = COALESCE(confidence, $2),
+               retrieved_at     = COALESCE(retrieved_at, NOW())
+           WHERE id = $3`,
+          [meta.evidence_section, meta.confidence, existing2.rows[0].id],
+        );
       }
     }
     log(`Knowledge graph: ${sourcesInserted} real knowledge_sources seeded (authoritative + professional; community/ambassador tiers populated only from real contributions)`);

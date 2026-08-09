@@ -1,0 +1,249 @@
+Yes — **Layer 2 passes**, and Replit can move to Layer 3, but there are **two data-integrity corrections I want made before Kinfolk is allowed to consume this graph**.
+
+The architecture itself is now right: one canonical entity can connect to multiple topics, the same graph powers different surfaces without forcing users into the Library, provenance stays separated, and Kinfolk has deliberately not been connected yet. That is exactly where we wanted to be.
+
+The two corrections are:
+
+1. **Mother Bethel has conflicting dates in Replit's own proof.** One relationship says “established 1794 by Richard Allen,” while the entity description says “Founded in 1816.” Even without deciding which wording/date is correct right now, Kinfolk cannot be allowed to inherit contradictory facts. Replit needs a provenance/fact reconciliation rule before Layer 3.
+2. **A source URL cannot merely be reputable—it must actually support the claim attached to it.** Smithsonian being reputable does not automatically mean a specific Smithsonian page supports every Philadelphia Black History claim. Replit should verify claim-to-source alignment before Kinfolk cites or summarizes it.
+
+Send this:
+
+```text
+LAYER 2 — PASS.
+
+The retrieval architecture is approved.
+
+Before Kinfolk consumes the graph in Layer 3, make TWO data-integrity corrections.
+
+==================================================
+1. RESOLVE CONTRADICTORY FACTS BEFORE KINFOLK
+==================================================
+
+Your own proof currently contains:
+
+Mother Bethel relationship label:
+"established 1794 by Richard Allen"
+
+but the canonical entity description says:
+"Founded in 1816..."
+
+These statements are not consistent enough to inject into Kinfolk as-is.
+
+Do NOT simply choose one value.
+
+Trace:
+
+- canonical cultural_sites record
+- source/provenance
+- historical date fields
+- entity description
+- Library relationship labels
+
+Determine whether the dates refer to different things, for example:
+
+organization founding
+denomination founding
+building construction
+incorporation
+current structure
+another historical milestone
+
+Then normalize the data so Kinfolk can explain the distinction correctly.
+
+IMPORTANT:
+This should become a general rule.
+
+If multiple sources/records contain apparently conflicting facts:
+
+DO NOT silently overwrite.
+DO NOT let Kinfolk choose randomly.
+
+Store/resolve the factual distinction or flag it for review.
+
+==================================================
+2. CLAIM-TO-SOURCE ALIGNMENT
+==================================================
+
+A source being reputable is not enough.
+
+The exact source must actually support the claim attributed to it.
+
+For each knowledge_source record used by Kinfolk, ensure we can trace:
+
+CLAIM
+→ SOURCE
+→ SOURCE URL
+→ EVIDENCE/SECTION OR SUMMARY
+→ RETRIEVAL DATE
+→ CONFIDENCE
+
+Example:
+
+If Smithsonian NMAAHC is attached to a Philadelphia Black History claim,
+verify that the specific cited page actually supports that claim.
+
+Do not use a generally reputable Smithsonian page merely as a credibility
+placeholder.
+
+Same rule for professional, community and Ambassador evidence.
+
+==================================================
+AFTER THESE TWO CORRECTIONS:
+LAYER 3 IS AUTHORIZED.
+==================================================
+
+LAYER 3 — KINFOLK KNOWLEDGE-GRAPH CONNECTION
+
+Now connect Kinfolk to the shared graph.
+
+This is the first point where the "Big Cousin" behavior should become
+technically possible.
+
+Implement:
+
+1. getKnowledgeGraphContext(...)
+2. canonical geography/topic resolution
+3. relevant topic relationships
+4. connected MWM entities
+5. provenance-aware source retrieval
+6. four distinct evidence layers:
+   - authoritative
+   - professional
+   - community
+   - ambassador
+7. freshness metadata
+8. permission/privacy filtering
+9. inject structured graph context into Kinfolk retrieval/reasoning
+
+DO NOT merely dump Library text into the system prompt.
+
+Kinfolk should retrieve only the relevant graph context for the user's
+question.
+
+==================================================
+CRITICAL BEHAVIOR
+==================================================
+
+Kinfolk should understand:
+
+USER QUESTION
+→ INTENT
+→ RELEVANT GRAPH NODES
+→ SOURCES
+→ MWM ENTITIES
+→ COMMUNITY/AMBASSADOR EVIDENCE
+→ PRIVACY/PERMISSION
+→ ANSWER
+→ USEFUL NEXT CONNECTION
+
+But it must distinguish:
+
+FACT
+PROFESSIONAL INTERPRETATION
+COMMUNITY EXPERIENCE
+AMBASSADOR CONTENT
+INFERENCE
+
+==================================================
+PHILADELPHIA CONVERSATION TEST
+==================================================
+
+Run one continuous Kinfolk conversation:
+
+1.
+"Tell me about Philadelphia."
+
+2.
+"What was important in Black history here?"
+
+3.
+"Where should I go tonight?"
+
+4.
+"What is the housing market like?"
+
+Do NOT treat these as four unrelated searches.
+
+Prove Kinfolk maintains:
+
+Philadelphia context
++
+shifts subject correctly:
+general city
+→ Black history
+→ nightlife
+→ real estate
+
+For every turn return internally:
+
+recognized intent
+active geography node
+graph topics retrieved
+MWM entities retrieved
+sources used
+provenance tiers used
+freshness requirement
+permission filtering
+answer produced
+
+==================================================
+BIG COUSIN TEST
+==================================================
+
+Add one test where Kinfolk identifies a useful connection the user did not
+explicitly request.
+
+Example:
+
+User asks about Philadelphia Black History.
+
+Kinfolk may answer the question and then appropriately surface:
+
+a relevant historic MWM entity
+a nearby place to visit
+a connected Faith/History topic
+a community or Ambassador perspective if REAL data exists
+
+But it must explain why the connection is relevant.
+
+Do not manufacture a "you may also want to know" just to pass the test.
+
+==================================================
+NO FAKE COMMUNITY DATA
+==================================================
+
+There are currently no real community or Ambassador knowledge_sources in
+the Philadelphia graph.
+
+That is acceptable.
+
+Kinfolk should simply operate with the authoritative/professional evidence
+that actually exists.
+
+Do NOT seed fake community/ambassador information to make the four-tier
+demo look complete.
+
+==================================================
+TIER MODEL
+==================================================
+
+Preserve the approved distinction:
+
+MANUAL MWM SEARCH
+= does not consume Kinfolk usage.
+
+KINFOLK RESEARCH / SYNTHESIS / PERSONALIZATION
+= governed by existing tier limits.
+
+Do not change tier quantities.
+
+==================================================
+STOP AFTER LAYER 3 PROOF.
+
+Do not push Railway yet.
+```
+
+The **date contradiction is actually a useful catch before Layer 3**. This is exactly why we're doing these checkpoints. Once Kinfolk starts connecting information, small data inconsistencies become confident-sounding answers very quickly. Better to establish now that **Kinfolk inherits evidence, not just text**.
+
+After those two corrections, I am comfortable moving immediately into Layer 3.
