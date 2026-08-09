@@ -515,21 +515,56 @@ function TravelPage() {
     setMessages(prev => [...prev, userMsg]);
     setSending(true);
 
+    // 30-second client-side timeout — Kinfolk must never spin forever.
+    // The server has its own 25s AbortSignal on the OpenAI call, but if the
+    // request hangs before reaching that point (e.g. pool wait), the browser
+    // fetch has no built-in deadline. This abort controller guarantees the UI
+    // always resolves and shows a recoverable error message.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort("timeout"), 30000);
+
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
         body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true }),
+        signal: controller.signal,
       });
+
+      // Always check r.ok — a 4xx/5xx response contains { error: "..." } not
+      // { reply: "..." }. Without this check, data.reply is undefined and the
+      // assistant message renders blank/invisible.
+      if (!r.ok) {
+        let errMsg = "Kinfolk is having trouble answering that right now. Try again.";
+        try {
+          const errData = await r.json() as { error?: string };
+          if (r.status === 429 && errData.error) errMsg = errData.error;
+          else if (r.status === 504) errMsg = "Kinfolk took a little too long on that one. Try again in a moment.";
+        } catch { /* ignore parse error */ }
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: errMsg, timestamp: new Date().toISOString() }]);
+        return;
+      }
+
       const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[] };
+
+      // Guard: if reply is somehow missing, show a recoverable message rather than blank
+      const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
+
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(), role: "assistant",
-        content: data.reply, recommendations: data.recommendations ?? null,
+        content: replyContent, recommendations: data.recommendations ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
       }]);
-    } catch {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Something went sideways on my end — try again in a sec.", timestamp: new Date().toISOString() }]);
-    } finally { setSending(false); }
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.name === "AbortError";
+      const msg = isTimeout
+        ? "Kinfolk is taking longer than expected. Try again in a moment."
+        : "Something went sideways on my end — try again in a sec.";
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: msg, timestamp: new Date().toISOString() }]);
+    } finally {
+      clearTimeout(timeoutId);
+      setSending(false);
+    }
   }, [sending, sessionId, loadSessions]);
 
   const loadSession = useCallback(async (id: string) => {

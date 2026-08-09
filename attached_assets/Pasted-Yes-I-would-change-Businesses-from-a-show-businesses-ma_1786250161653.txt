@@ -1,0 +1,203 @@
+Yes. I would change **Businesses from a “show businesses” map layer into a “Find a Business” search control.** That fits your platform much better.
+
+The current behavior—tap **Businesses** and suddenly every business in the area appears—treats the map like a database dump. It becomes especially problematic as you grow. Fifty businesses today becomes 500 or 5,000 later.
+
+### What I think the map should do
+
+The map should start **quiet**. Heritage/safety information can have persistent optional layers because geography itself is the information. Businesses are different: the member should tell us what they're trying to find.
+
+So instead of:
+
+**📍 Businesses**
+
+I would have:
+
+**🔎 Find a Business**
+
+Tapping it opens a compact search panel:
+
+> **What are you looking for?**
+> Search businesses, services, specialties, vibes, or needs...
+>
+> `Hair salon`
+> `Alopecia stylist`
+> `Black-owned brunch`
+> `Tax attorney`
+> `Date night`
+> `Tattoo cover-up`
+> `Beauty supply`
+> `Open now`
+>
+> **Location**
+> ○ Near Me
+> ○ This Map Area
+> ○ City / ZIP
+>
+> **Distance**
+> 5 mi · 10 mi · 25 mi · 50 mi
+>
+> **Refine**
+> Category · Specialty · Ownership · Vibe/THE REAL · Price · Accessibility · Community Signals
+>
+> **Search**
+
+And importantly, that search box should understand **all of the taxonomy we're creating**, not just business names.
+
+So someone doesn't have to know that alopecia care is:
+
+`Beauty → Hair Salons & Stylists → Alopecia Care`
+
+They can type:
+
+**“someone who does alopecia hair”**
+
+and get the correct businesses.
+
+### “Near Me” should be an action, not 100 pins
+
+I think this distinction matters.
+
+**Businesses Near Me** should mean:
+
+> “Show me a manageable number of relevant businesses close to where I am.”
+
+Not:
+
+> “Put every business within some enormous area onto my map.”
+
+I'd probably start with around **10–15 results**.
+
+Then offer:
+
+**Show More** | **Expand to 10 miles**
+
+If there are 72 matching businesses, the member doesn't need 72 pins to know there are choices.
+
+And ranking should become increasingly intelligent:
+
+**distance + exact search match + specialty + community feedback + safety + user's explicit preferences + current Kinfolk context**
+
+—not simply “closest first.”
+
+### Your salon example is exactly right
+
+If you search **Hair Salon**, I don't think you want 30 salon pins.
+
+I'd rather show perhaps the **10 most relevant nearby** and say:
+
+> **10 of 34 nearby salons shown**
+>
+> Ranked for your search and preferences.
+>
+> `Show More` · `Expand Area` · `Refine`
+
+Then the map remains readable.
+
+But if you search:
+
+**Alopecia Care**
+
+perhaps only three businesses qualify within 10 miles. Show all three.
+
+Search:
+
+**Loc specialist + children's hair**
+
+maybe there are two.
+
+Search:
+
+**Come As You Are + natural hair + under $$**
+
+maybe there are four.
+
+**That is where all this taxonomy work starts paying us back.**
+
+### There should also be two ways to search
+
+I would support both.
+
+**1. Natural-language search**
+
+> “I need a Black-owned salon near me that specializes in alopecia.”
+
+Eventually Kinfolk can interpret that.
+
+**2. Structured filters**
+
+For people who don't want AI involved:
+
+**Category:** Beauty & Personal Care
+**Subcategory:** Hair Salon
+**Specialty:** Alopecia Care
+**Ownership:** Black-Owned
+**Distance:** 10 miles
+**Vibe:** Come As You Are
+
+Same underlying data. Two different ways into it.
+
+### And I would keep the map layers separate
+
+This cleans up the whole interface.
+
+**FIND**
+
+* 🔎 Find a Business
+* 🔎 Find a Place
+* 🔎 Find an Event
+
+**CULTURE**
+
+* HBCUs
+* Heritage Sites
+* Museums
+* Cultural Landmarks
+
+**SAFETY**
+
+* Sundown Town History
+* Community Safety
+* other approved safety layers
+
+The first group is **search**.
+
+The other groups are **map layers**.
+
+That's the distinction that feels missing right now.
+
+A person may genuinely want to turn on **HBCUs** and look across a whole region because seeing their geographic distribution has meaning.
+
+Nobody needs to turn on **“all businesses”** and see hundreds of unrelated plumbers, restaurants, lawyers, salons and photographers simultaneously.
+
+### One more feature: “Search this area”
+
+Once someone searches for salons and then moves the map, don't immediately load another giant group.
+
+Show:
+
+**🔎 Search this area**
+
+They decide when to refresh.
+
+And if they zoom way out, don't suddenly show 800 businesses. Either cluster the existing results or tell them:
+
+> **Zoom in or choose a city to see nearby businesses.**
+
+### This also creates the right relationship with Kinfolk
+
+The regular search could say:
+
+> **Hair Salon — 14 matches within 5 miles**
+
+Kinfolk could say:
+
+> **I found 14 nearby. These 4 seem closest to what you're looking for.**
+
+Then explain why:
+
+**2.1 mi · Alopecia Care · Black-owned**
+*Kinfolk members frequently say: “They Know Our Hair” and “Healthy Hair First.”*
+
+That's where your platform stops behaving like a directory and starts behaving like **community intelligence**.
+
+I would therefore tell Replit **not to redesign this yet**. First have them audit what powers the current Businesses button, how the business pins are queried, whether search already supports category/subcategory/vibes/etc., and whether result limiting/radius filtering already exists. Then we can give them the exact approved **Find a Business** specification without accidentally destroying functionality that's already underneath the current UI.

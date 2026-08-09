@@ -1812,11 +1812,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI — response_format json_object guarantees valid JSON every response
+    // Call AI — gpt-4o-mini matches all other routes in this file and is confirmed
+    // working through the Replit AI Integrations proxy. response_format json_object
+    // guarantees valid JSON every response. AbortSignal.timeout(25000) caps the
+    // OpenAI call so a provider stall can never leave the browser spinning forever.
     const completion = await openai.chat.completions.create(
       {
-        model: "gpt-4o",
-        max_completion_tokens: 1000,
+        model: "gpt-4o-mini",
+        max_tokens: 1000,
         messages: aiMessages,
         response_format: { type: "json_object" },
       },

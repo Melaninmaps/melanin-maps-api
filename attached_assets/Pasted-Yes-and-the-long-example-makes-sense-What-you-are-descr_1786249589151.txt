@@ -1,0 +1,103 @@
+Yes — and the long example makes sense. What you are describing is **not a one-time preference quiz**. Kinfolk needs a light onboarding layer plus a **living context profile** that grows without overwriting the person who came before.
+
+The most important rule is: **new information should modify relevance, not erase history**. Someone can move from fertility treatment → pregnancy → pregnancy loss → later pregnancy, while still being the same person who likes certain restaurants, trusts certain salons, travels a certain way, has a budget range, prefers certain environments, and has years of saved interests. Kinfolk should understand the *current chapter* without deleting the earlier chapters.
+
+For the first-time questionnaire, I would keep it mostly tap-based, skippable, and around **2–3 minutes**:
+
+1. **What would you like Kinfolk to help you with most right now?**
+   Choose up to 3: Find places near me · Travel planning · Food & dining · Beauty & hair · Health & wellness resources · Family & parenting · Community & culture · Events & nightlife · Professional services · Relocation · Business discovery · Shopping · Education · Safety information · Just exploring.
+
+2. **What kinds of places feel most like you?**
+   Chill · Grown & sexy · Family-friendly · Turn up · Creative · Romantic · Luxury · Neighborhood staple · Culturally rooted · Outdoors/adventure · Quiet & restorative · No preference yet.
+
+3. **Who are you usually planning for?**
+   Just me · Partner/date · Friends · Family · Kids · Parents/elders · Coworkers/business · It changes.
+   This should allow multiple selections.
+
+4. **When Kinfolk recommends something, what matters most?**
+   Culture/community connection · Safety/comfort · Price · Reviews from people I trust · Convenience · Quality · Accessibility · Atmosphere · Ownership · Family friendliness · Local favorites · Something new.
+
+5. **What price ranges should Kinfolk usually consider?**
+   Budget-friendly · Moderate · Treat myself · Luxury · Show me everything.
+
+6. **Are there communities or ownership types you especially like supporting?**
+   Use the ownership vocabulary we already created, allow multiple selections, and make **“No preference / show me everything”** prominent. This should be user-selected, never inferred.
+
+7. **What kinds of food do you enjoy?**
+   Broad cuisines first, then optional specifics. Also include: Vegetarian · Vegan · Halal · Kosher · Gluten-conscious · Allergy-aware · No restrictions · Prefer not to say.
+   Kinfolk can learn more later from saves and searches.
+
+8. **Anything you usually avoid when choosing food or experiences?**
+   This can include dietary restrictions, allergies, alcohol-centered environments, loud spaces, smoking, stairs, long waits, very late nights, etc. Keep it optional.
+
+9. **What does a good beauty or self-care recommendation need to understand about you?**
+   Hair · Skin · Nails · Barbering · Makeup · Spa/wellness · Tattoos/piercings · I’m not looking for beauty recommendations right now.
+   If Hair is selected, a second optional tap can ask about interests such as Natural hair · Locs · Braids/protective styles · Wigs · Relaxed hair · Alopecia/thinning support · Color-treated hair · Children's hair · Scalp care. Do not require this during general onboarding.
+
+10. **Are there life topics you want Kinfolk to keep in mind?**
+    Travel · Dating/relationships · Wedding/anniversary · Parenting · Pregnancy/family building · Caregiving · Career/business · Moving/relocation · College/student life · Retirement · Grief/loss · Wellness goals · None right now.
+    This should be clearly labeled **optional** and editable at any time.
+
+11. **How much should Kinfolk personalize?**
+    Keep it simple · Use what I save and tell you · Get very personalized over time.
+    This gives people control over the flywheel rather than forcing it on them.
+
+12. **How do you like recommendations delivered?**
+    Give me the best few · Give me options to compare · Surprise me sometimes · Stick close to what I already like.
+
+13. **How far are you usually willing to go for something worth it?**
+    Nearby only · 15 minutes · 30 minutes · 45+ minutes · If Kinfolk says it’s worth the drive, I’ll go.
+
+14. **Would you like Kinfolk to learn from what you save, tap, visit, and dismiss?**
+    Yes · Yes, but let me review what it learns · No, only use what I directly tell you.
+    I strongly recommend offering that middle choice.
+
+15. **Anything Kinfolk should know that these questions missed?**
+    Optional free text. Example helper copy: *“Tell Kinfolk anything that would make recommendations feel more like they were made for you.”*
+
+The critical product architecture comes after those questions.
+
+Kinfolk should maintain at least **three different kinds of memory**. First are relatively stable preferences: favorite cuisines, budget, hair interests, accessibility needs the user chooses to save, preferred environments, travel style. Second is **current-life context**, which can change: trying to conceive, pregnancy, college, relocation, anniversary coming up, caregiving, grieving, training for a marathon, etc. Third is **behavioral evidence**: saves, dismissals, repeat searches, places visited, Vibes tapped, THE REAL tags trusted, and categories repeatedly explored.
+
+Those three should never be collapsed into a single “user profile.”
+
+Your fertility example demonstrates why.
+
+If someone explicitly saves **infertility/fertility treatment**, Kinfolk can begin giving greater weight to relevant saved resources and user-selected wellness/beauty needs. If that same person later explicitly adds **pregnancy**, pregnancy becomes a newer active context. Fertility history does not disappear; its relevance changes.
+
+If the user later explicitly indicates **pregnancy loss**, Kinfolk should not delete the pregnancy or fertility history. It should add a new life-context event and immediately stop cheerful pregnancy/baby nudges that could be painful. It may surface grief, support, recovery, or community resources only in ways the user has indicated are welcome.
+
+If the person later indicates another pregnancy, Kinfolk now understands something profoundly different from simply “pregnant.” The history can inform gentler language and, if the user welcomes it, things such as rainbow-baby resources. But Kinfolk should **never infer a loss from searches, missed activity, or medical-looking behavior**.
+
+That same model solves your beauty example. If the user has told Kinfolk that textured-hair care matters to them and later saves a health-related journey, Kinfolk can continue considering salons whose specialties match their explicitly saved hair needs. It does **not** need to decide “Black woman + fertility = hair problem.” The user's own saved hair profile supplies the connection.
+
+Likewise with restaurants. A restaurant does not suddenly become “disliked” because it is temporarily unsuitable during a life context. Kinfolk should distinguish:
+
+**Preference:** “I love sushi.”
+**Current context:** “Some choices may be temporarily unsuitable or need modification.”
+**History:** “This is still one of my favorite cuisines.”
+
+When the temporary context changes, sushi can naturally re-enter recommendations rather than Kinfolk having to relearn the preference. For health-related food restrictions, the app should rely on an authoritative, current guidance layer rather than hard-coded assumptions.
+
+And this gives us another extremely useful profile feature: **“What Kinfolk Knows About Me.”**
+
+Users should be able to open their profile and see/edit things like:
+
+**My Preferences**
+**My Current Chapter**
+**My Interests & Saved Topics**
+**My Beauty & Wellness Needs**
+**My Food Preferences**
+**My Travel Style**
+**My Accessibility Preferences**
+**What Kinfolk Has Learned**
+
+Changing one shouldn't wipe out another.
+
+The flywheel then becomes elegant: onboarding gives Kinfolk enough context to avoid being generic; every save/tap/search improves relevance; explicit profile updates provide stronger signals; temporary life contexts reshape recommendations without rewriting the person's history; and community intelligence gives Kinfolk increasingly better things to recommend.
+
+The philosophy I'd give Replit is:
+
+> **Kinfolk should remember the person, recognize the chapter, and never confuse the chapter with the whole person.**
+
+That is the piece I think has been missing from the current implementation.
