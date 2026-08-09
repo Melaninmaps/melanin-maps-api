@@ -1,0 +1,116 @@
+Yes. Based on Replit’s audit, that is the cleanest next step.
+
+You can give Replit a list of tester emails and have them grant a **website testing entitlement** without changing those users into paid members. I would not rely only on `role="tester"` yet, because their own audit proved that role currently does nothing by itself.
+
+The better design is:
+
+**email → approved tester status → premium testing entitlement → website login works → Kinfolk and premium test features available**
+
+while leaving the person’s normal `memberType`/subscription alone.
+
+I would send Replit this:
+
+> **IMPLEMENT TESTER WEBSITE ACCESS FROM APPROVED EMAIL LIST**
+>
+> I want to provide a list of approved tester email addresses.
+>
+> Please implement a tester-access workflow for the website that does **not** require these users to purchase a subscription and does **not** overwrite their permanent membership tier.
+>
+> Required behavior:
+>
+> * Match approved testers by normalized email address.
+> * Grant each approved email an active **testing entitlement**.
+> * Testing entitlement should provide the same premium feature access we agreed testers receive during beta/testing, including Kinfolk.
+> * Do not change `memberType` to a paid tier just to make this work.
+> * Keep tester status/entitlement separate from permanent membership/subscription state.
+> * If `role="tester"` is used, make sure the application actually reads it when determining access.
+> * Apple TestFlight, Android testing, and admin-approved website testers should receive the same testing entitlement once authenticated.
+>
+> Please add/confirm fields sufficient to track:
+>
+> `tester_status`
+>
+> `tester_access_source`
+>
+> `tester_granted_at`
+>
+> `tester_granted_by`
+>
+> `testing_entitlement_ends_at`
+>
+> and any equivalent field names you recommend.
+>
+> Approved access-source values should include at minimum:
+>
+> `testflight`
+>
+> `android_test`
+>
+> `admin_invite`
+>
+> `website_test`
+>
+> ### WEBSITE TESTER LOGIN
+>
+> For testers who already have an account:
+>
+> * grant the testing entitlement to the existing account
+> * do not create a duplicate user
+>
+> For testers who do not yet have an account:
+>
+> * either send them through the normal account-creation flow with the tester entitlement waiting for that email
+> * OR allow an admin-created temporary-login flow if/when that feature is implemented
+>
+> Do not create plaintext temporary passwords.
+>
+> ### KINFOLK / PREMIUM TESTING ACCESS
+>
+> During the approved testing period:
+>
+> `active testing entitlement = premium testing access`
+>
+> This should bypass normal consumer Kinfolk quotas and other premium limits that would interfere with beta testing.
+>
+> Do not require Stripe.
+>
+> Do not change historical usage counters.
+>
+> ### EMAIL LIST IMPORT SAFETY
+>
+> Before changing production data:
+>
+> return a dry-run table:
+>
+> `Email | Existing account? | Current role | Current memberType | Current tester entitlement | Proposed change | Duplicate/conflict?`
+>
+> Normalize email casing and whitespace before matching.
+>
+> Do not create duplicate accounts for an email that already exists.
+>
+> Flag invalid or ambiguous emails instead of guessing.
+>
+> After I approve the dry run, apply the tester entitlements and return:
+>
+> * number of testers updated
+> * number of new pending tester emails
+> * number skipped
+> * reason for every skipped record
+>
+> ### IMPORTANT
+>
+> Tester access is an **entitlement/status**, not a permanent membership tier.
+>
+> When testing ends, removing the testing entitlement must return the user to whatever membership/subscription state they otherwise have.
+>
+> Do not delete their account, profile, saves, history, or Kinfolk context when the testing entitlement ends.
+
+And yes, you can simply send them a list like:
+
+`email1@example.com`
+`email2@example.com`
+`email3@example.com`
+
+or a CSV if you have many.
+
+One small improvement I would make: have Replit support **pending tester emails** too. That way you can approve someone before they create an account, and when they later register with that exact email, the testing entitlement attaches automatically. That will save you from manually revisiting each tester.
