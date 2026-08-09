@@ -668,6 +668,42 @@ BEGIN
   END LOOP;
 END $seed$`,
   },
+  // ── Tester entitlement schema ──────────────────────────────────────────────
+  // Adds the 5 tester entitlement columns to users and creates the
+  // pending_tester_emails table. All idempotent — safe to run on every boot.
+  {
+    name: "tester_entitlement_schema",
+    sql: `
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS tester_status VARCHAR(20)
+          CHECK (tester_status IN ('active', 'inactive')),
+        ADD COLUMN IF NOT EXISTS tester_access_source VARCHAR(30)
+          CHECK (tester_access_source IN ('testflight','android_test','admin_invite','website_test')),
+        ADD COLUMN IF NOT EXISTS tester_granted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS tester_granted_by VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS testing_entitlement_ends_at TIMESTAMPTZ
+    `,
+  },
+  {
+    name: "pending_tester_emails_table",
+    sql: `
+      CREATE TABLE IF NOT EXISTS pending_tester_emails (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        tester_access_source VARCHAR(30) NOT NULL DEFAULT 'admin_invite'
+          CHECK (tester_access_source IN ('testflight','android_test','admin_invite','website_test')),
+        granted_by VARCHAR(255),
+        granted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        entitlement_ends_at TIMESTAMPTZ,
+        applied_at TIMESTAMPTZ,
+        applied_to_user_id VARCHAR(255)
+      )
+    `,
+  },
+  {
+    name: "pending_tester_emails_email_index",
+    sql: `CREATE INDEX IF NOT EXISTS IDX_pending_tester_emails_email ON pending_tester_emails (email)`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -720,6 +756,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["neighborhood timing", () => ensureNeighborhoodTiming(log, warn)],
     ["geocode tour content", () => geocodeTourContent(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
+    ["admin accounts",    () => ensureAdminAccounts(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -1468,6 +1505,42 @@ async function ensureRecurringEvents(
     log(`Recurring events guard: ${inserted} inserted, ${skipped} already present (seed: ${RECURRING_EVENTS_SEED.length})`);
   } catch (err: unknown) {
     warn(`Recurring events guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Admin account grants ───────────────────────────────────────────────────────
+// Ensures the three permanent admin accounts have role='admin'.
+// Idempotent — only updates rows where role != 'admin' already.
+// tlindsay428@yahoo.com is the principal admin (owner); all three are granted
+// the same role='admin' column value. Access revocation is controlled at the
+// application level by the principal admin.
+const ADMIN_EMAILS = [
+  "tlindsay428@yahoo.com",   // Principal admin — founder / platform owner
+  "bigdot6017@gmail.com",    // Kevin Cardwell
+  "kaylacardwell3@gmail.com", // Kayla Cardwell (also a tester)
+];
+
+async function ensureAdminAccounts(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const result = await pool.query(
+      `UPDATE users
+       SET role = 'admin', updated_at = NOW()
+       WHERE LOWER(TRIM(email)) = ANY($1)
+         AND role != 'admin'
+       RETURNING email`,
+      [ADMIN_EMAILS]
+    );
+    const granted = result.rows.map((r: { email: string }) => r.email);
+    if (granted.length > 0) {
+      log(`Admin accounts granted to: ${granted.join(", ")}`);
+    } else {
+      log(`Admin accounts already confirmed for all ${ADMIN_EMAILS.length} accounts`);
+    }
+  } catch (err: unknown) {
+    warn(`Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
