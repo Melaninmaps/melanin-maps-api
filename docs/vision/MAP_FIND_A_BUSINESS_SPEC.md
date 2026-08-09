@@ -62,12 +62,43 @@ Refine
 
 ---
 
+## ⚠️ CLARIFICATIONS ADDED August 9, 2026
+
+### "10–15 results" is a presentation goal, not an API hard cap
+
+> **10–15 is the initial presentation target for general searches. It is not a hard cap applied to all searches.**
+
+| Situation | Behavior |
+|---|---|
+| Search has 4 valid matches | Show all 4 |
+| Search has 80 matches | Surface most relevant ~10–15; offer Show More / Expand Area |
+| Exact business name search | Show the match regardless of distance — do not suppress it |
+| Specialty search (alopecia stylist, tax attorney, tattoo cover-up) | May automatically widen radius because specialty relevance can outweigh proximity |
+
+**The full directory remains intact and searchable. This is presentation and ranking logic — not data deletion.**
+
+### Additional filter dimensions to include in spec (not yet in audit findings)
+
+These must be supported before implementation is considered complete:
+
+- **Price range** — $, $$, $$$, $$$$, Any
+- **Accessibility** — wheelchair, parking, elevator, etc.
+- **Open now / hours** — filter by current hours when data is available
+- **Exact business-name search** — should always surface the named business regardless of radius
+- **Safety / community signals** — community rating, safety-adjacent context
+- **Sorting / ranking controls** — Nearest · Best match · Community-rated · Newest
+- **Pagination / Show More** — load next batch without reloading the whole map
+- **No-results behavior** — clear message + "Expand area?" + "Try a different search" prompt; never a blank map
+- **Mobile map behavior** — panel must not obscure the full map; results list must be dismissible
+
+---
+
 ## Key Behaviors
 
 ### Result Limits
-- Start with ~10–15 most relevant results
+- Start with the most relevant ~10–15 results for general searches (not a hard cap — see clarifications above)
 - "Show More" and "Expand Area" controls for progressively loading more
-- If 72 matches exist, show 10 ranked results + "10 of 72 nearby salons shown · Ranked for your search and preferences · Show More · Expand Area · Refine"
+- If 72 matches exist: "10 of 72 nearby salons shown · Ranked for your search and preferences · Show More · Expand Area · Refine"
 - If only 3 qualify for a specific specialty (e.g., Alopecia Care within 10 mi), show all 3
 
 ### Ranking (intended — not all layers exist yet)

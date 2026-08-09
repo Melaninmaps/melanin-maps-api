@@ -4,6 +4,32 @@
 
 ---
 
+## ⚠️ CRITICAL ONBOARDING CLARIFICATION (added August 9, 2026)
+
+> **The 15 questions below are an approved question bank / data model — NOT 15 mandatory sequential onboarding screens.**
+
+The initial onboarding must remain short, skippable, and primarily tap-based.
+
+**Target: approximately 6–8 high-value initial prompts.** Progressive questions appear only when a member's selections make them relevant.
+
+### Initial onboarding (always shown — ~6–8 questions)
+What Kinfolk should help with · usual planning group · priorities · price range · general interests · personalization level
+
+### Progressive questions (shown conditionally)
+- Member selects **Beauty/Hair** → optionally ask hair/skin interests
+- Member selects **Travel** → optionally ask travel style and distance
+- Member selects **Parenting/Family** → relevant family preferences collected later
+
+### Sensitive / current-life context
+Should generally be **explicitly added by the member** in their profile, saves, or direct Kinfolk interaction — **not demanded during initial registration.**
+
+Examples: pregnancy, fertility, grief, relocation, caregiving. These are Living Context Layer events, not signup questions.
+
+### Architecture remains unchanged
+**Stable Preferences + Current Chapter + Behavioral Evidence** — new information adds context rather than overwriting historical context.
+
+---
+
 ## Core Philosophy
 
 > **Kinfolk should remember the person, recognize the chapter, and never confuse the chapter with the whole person.**
@@ -12,9 +38,9 @@ New information should modify relevance, not erase history. Someone can move thr
 
 ---
 
-## First-Time Onboarding Questionnaire
+## Full Question Bank (data model — not all shown at once)
 
-Tap-based, skippable, ~2–3 minutes. 15 questions:
+The following 15 questions define the complete data model. Implementation must select the right subset for initial onboarding and surface remaining questions progressively.
 
 1. **What would you like Kinfolk to help you most right now?** (up to 3)  
    Find places near me · Travel planning · Food & dining · Beauty & hair · Health & wellness resources · Family & parenting · Community & culture · Events & nightlife · Professional services · Relocation · Business discovery · Shopping · Education · Safety information · Just exploring
