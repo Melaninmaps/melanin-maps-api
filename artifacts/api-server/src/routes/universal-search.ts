@@ -160,9 +160,84 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   "real estate": ["Professional", "Real Estate", "Financial"],
   marketing:     ["Professional"],
   photography:   ["Professional", "Media", "Creative"],
+  // ── Faith & Spirituality ──────────────────────────────────────────────────
+  // Partial keywords match "Faith & Spirituality", "Community & Nonprofit"
+  church:        ["Faith", "Spiritual", "Community"],
+  churches:      ["Faith", "Spiritual", "Community"],
+  mosque:        ["Faith", "Islam", "Muslim", "Community"],
+  mosques:       ["Faith", "Islam", "Muslim"],
+  gurdwara:      ["Faith", "Sikh"],
+  gurdwaras:     ["Faith", "Sikh"],
+  temple:        ["Faith", "Spiritual", "Hindu", "Buddhist"],
+  temples:       ["Faith", "Spiritual"],
+  synagogue:     ["Faith", "Jewish"],
+  synagogues:    ["Faith", "Jewish"],
+  "house of worship": ["Faith", "Spiritual"],
+  "place of worship": ["Faith", "Spiritual"],
+  ame:           ["Faith", "Church", "AME"],
+  "african methodist": ["Faith", "Church", "AME"],
+  "cogic":       ["Faith", "Church"],
+  "pentecostal": ["Faith", "Church"],
+  "apostolic":   ["Faith", "Church"],
+  baptist:       ["Faith", "Church"],
+  "black church": ["Faith", "Church", "Community"],
+  "historic black church": ["Faith", "Church", "Community"],
+  "historic church": ["Faith", "Church"],
+  "black catholic": ["Faith", "Church", "Catholic"],
+  catholic:      ["Faith", "Church", "Catholic"],
+  episcopal:     ["Faith", "Church"],
+  methodist:     ["Faith", "Church"],
+  lutheran:      ["Faith", "Church"],
+  presbyterian:  ["Faith", "Church"],
+  adventist:     ["Faith", "Church"],
+  "seventh day": ["Faith", "Church"],
+  "ethiopian orthodox": ["Faith", "Church", "Ethiopian", "Orthodox"],
+  "eritrean orthodox": ["Faith", "Church", "Eritrean", "Orthodox"],
+  "coptic":      ["Faith", "Church", "Orthodox"],
+  quaker:        ["Faith", "Spiritual", "Community"],
+  "meeting house": ["Faith", "Quaker"],
+  islam:         ["Faith", "Islam", "Muslim"],
+  muslim:        ["Faith", "Islam", "Muslim"],
+  islamic:       ["Faith", "Islam", "Muslim"],
+  jewish:        ["Faith", "Jewish"],
+  judaism:       ["Faith", "Jewish"],
+  "black jewish": ["Faith", "Jewish"],
+  hindu:         ["Faith", "Hindu"],
+  sikh:          ["Faith", "Sikh"],
+  buddhist:      ["Faith", "Buddhist"],
+  buddhism:      ["Faith", "Buddhist"],
+  jain:          ["Faith", "Jain"],
+  "bahai":       ["Faith", "Bahai"],
+  "unitarian":   ["Faith", "Spiritual", "Community"],
+  interfaith:    ["Faith", "Interfaith", "Community"],
+  multifaith:    ["Faith", "Interfaith", "Community"],
+  "spanish mass": ["Faith", "Catholic", "Spanish"],
+  "haitian church": ["Faith", "Church", "Haitian"],
+  "african church": ["Faith", "Church", "African"],
+  "west african church": ["Faith", "Church", "African"],
+  "gospel choir": ["Faith", "Church", "Music"],
+  gospel:        ["Faith", "Church", "Music", "Arts"],
+  "food pantry church": ["Faith", "Community"],
+  "faith volunteer": ["Faith", "Community"],
+  "faith community": ["Faith", "Spiritual", "Community"],
+  "houses of faith": ["Faith", "Spiritual"],
+  meditation:    ["Faith", "Buddhist", "Spiritual", "Health", "Wellness"],
+  "langar":      ["Faith", "Sikh"],
 };
 
-// ── Heritage / Library intent triggers ───────────────────────────────────────
+// ── Faith / heritage / library intent triggers ────────────────────────────────
+const FAITH_TRIGGERS = [
+  "church", "mosque", "gurdwara", "synagogue", "temple", "cathedral",
+  "ame ", "cogic", "baptist", "pentecostal", "apostolic", "methodist",
+  "catholic", "episcopal", "lutheran", "presbyterian", "adventist",
+  "quaker", "meeting house", "islam", "muslim", "jewish", "judaism",
+  "hindu", "sikh", "buddhist", "buddhism", "jain", "bahai", "unitarian",
+  "interfaith", "multifaith", "gospel", "langar", "house of worship",
+  "place of worship", "spiritual community", "faith community",
+  "black church", "historic church", "houses of faith", "meditation center",
+  "spanish mass", "haitian church", "african church",
+];
+
 const HERITAGE_TRIGGERS = [
   "hbcu", "historically black", "underground railroad", "civil rights",
   "freedom trail", "sundown town", "diaspora", "ancestor", "heritage",
@@ -182,6 +257,7 @@ type IntentType =
   | "food_item"
   | "specialty_service"
   | "heritage"
+  | "faith"
   | "library_country"
   | "library_topic"
   | "category_browse"
@@ -192,8 +268,11 @@ type IntentType =
 function detectIntentType(q: string): IntentType {
   const lower = q.toLowerCase().trim();
 
-  // Heritage always wins if these terms appear
+  // Heritage wins over everything except faith for explicitly historical queries
   if (HERITAGE_TRIGGERS.some((t) => lower.includes(t))) return "heritage";
+
+  // Faith intent — check before country so "Ethiopian Orthodox" → faith, not country
+  if (FAITH_TRIGGERS.some((t) => lower.includes(t))) return "faith";
 
   // Country/culture book
   if (COUNTRY_TRIGGERS.some((t) => lower === t || lower.startsWith(t + " ") || lower.endsWith(" " + t))) {
@@ -781,12 +860,15 @@ function buildFallbackMessage(
 ): string | null {
   if (resultCount >= 3) return null; // no fallback needed
 
-  if (intentType === "named_business" && resultCount === 0) {
-    return `I couldn't find a business named "${q}" in our directory yet. These nearby businesses may be similar.`;
-  }
+  // named_business: clear separation handled in route handler — no blended message here
+  if (intentType === "named_business") return null;
 
   if (intentType === "food_item" && resultCount === 0) {
     return `I couldn't confirm "${q}" nearby yet. People looking for similar specialty experiences also liked these spots.`;
+  }
+
+  if (intentType === "faith" && resultCount === 0) {
+    return `No exact match found for "${q}" in our directory yet. Related faith institutions and community spaces are shown below.`;
   }
 
   if (intentType === "heritage" && resultCount === 0) {
@@ -794,7 +876,7 @@ function buildFallbackMessage(
   }
 
   if (intentType === "library_country") {
-    return null; // Library results speak for themselves
+    return null; // library_country zero result handled separately via libraryTopicQueued
   }
 
   if (hasMappedCategories && resultCount < 3) {
@@ -853,59 +935,107 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       : "unknown";
 
   try {
-    // Run all entity searches in parallel
-    // Run all entity searches in parallel — errors surfaced individually
-    const businessesResult = requestedTypes.includes("businesses")
+    const cityStr = typeof city === "string" ? city : undefined;
+    const stateStr = typeof state === "string" ? state : undefined;
+
+    // ── Parallel: businesses + events + library ───────────────────────────────
+    const businessesPromise = requestedTypes.includes("businesses")
       ? searchBusinesses({
-            q: trimmedQ,
-            searchTokens,
-            mappedCategories,
-            intentType,
-            city: typeof city === "string" ? city : undefined,
-            state: typeof state === "string" ? state : undefined,
-            lat,
-            lng,
-            radius,
-            limit,
-            isTester: user?.isTester,
-          }).catch((err: unknown) => {
-            req.log?.error({ err }, "Universal search — business search failed");
-            return [] as BusinessResult[];
-          })
+          q: trimmedQ, searchTokens, mappedCategories, intentType,
+          city: cityStr, state: stateStr, lat, lng, radius, limit,
+          isTester: user?.isTester,
+        }).catch((err: unknown) => {
+          req.log?.error({ err }, "Universal search — business search failed");
+          return [] as BusinessResult[];
+        })
       : Promise.resolve([] as BusinessResult[]);
 
-    const [businesses, events, heritage, libraryTopics] = await Promise.all([
-      businessesResult,
+    const [businesses, events, libraryTopics] = await Promise.all([
+      businessesPromise,
       requestedTypes.includes("events")
-        ? searchEvents(trimmedQ, typeof city === "string" ? city : undefined, 6)
-        : Promise.resolve([]),
-      requestedTypes.includes("heritage")
-        ? searchHeritage(trimmedQ, typeof city === "string" ? city : undefined, 5)
+        ? searchEvents(trimmedQ, cityStr, 6)
         : Promise.resolve([]),
       requestedTypes.includes("library_topics")
         ? searchLibrary(trimmedQ, 5)
         : Promise.resolve([]),
     ]);
 
+    // ── Correction 3: Progressive heritage geographic expansion ───────────────
+    // Ladder: exact city → national (with clear message)
+    let heritage: unknown[] = [];
+    let heritageGeoExpansion: "exact" | "national" | "none" = "none";
+    let heritageGeoMessage: string | undefined;
+
+    if (requestedTypes.includes("heritage")) {
+      const cityHeritage = await searchHeritage(trimmedQ, cityStr, 5);
+      if (cityHeritage.length > 0) {
+        heritage = cityHeritage;
+        heritageGeoExpansion = "exact";
+      } else {
+        // Expand to national when city search returns nothing
+        const nationalHeritage = await searchHeritage(trimmedQ, undefined, 5);
+        if (nationalHeritage.length > 0) {
+          heritage = nationalHeritage;
+          heritageGeoExpansion = "national";
+          heritageGeoMessage = cityStr
+            ? `No results found in ${cityStr}. Showing nearest relevant sites.`
+            : undefined;
+        }
+      }
+    }
+
+    // ── Correction 1: Named business — clear "not found" state ───────────────
+    // If intent is named_business and no exact name match exists, separate
+    // the alternatives clearly — never blend them with the named result.
+    let namedBusinessNotFound = false;
+    let namedBusinessMessage: string | undefined;
+    let namedBusinessNextActions: string[] | undefined;
+
+    if (intentType === "named_business") {
+      // A genuine name match requires the business name to contain at least half
+      // of the significant query words — prevents a partial token like "tea"
+      // from satisfying a search for "The Pink Tea Cup".
+      const queryWords = normalizedConcept.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+      const hasGenuineNameMatch = businesses.some((b) => {
+        if (b.matchTier !== "exact_name") return false;
+        const bizNameLower = b.name.toLowerCase();
+        const matchedWords = queryWords.filter((w) => bizNameLower.includes(w));
+        // Need ≥50% of significant words to match, or the full normalised concept
+        return matchedWords.length >= Math.max(1, Math.ceil(queryWords.length * 0.5))
+          && bizNameLower.includes(normalizedConcept.toLowerCase().split(/\s+/).filter((w) => w.length > 2)[0] ?? "");
+      });
+      if (!hasGenuineNameMatch) {
+        namedBusinessNotFound = true;
+        namedBusinessMessage = `We couldn't find an exact MWM listing for "${normalizedConcept}".`;
+        namedBusinessNextActions = ["search_web", "suggest_listing", "see_alternatives"];
+        // Relabel all returned businesses so the UI can show them as a clearly
+        // separated "You might also like" section, not as a match for the query.
+        businesses.forEach((b) => { b.matchTier = "nearby_alternative"; });
+      }
+    }
+
+    // ── Correction 2: Library country — queue, never dead-end ────────────────
     const totalResults = businesses.length + events.length + heritage.length + libraryTopics.length;
-    const fallbackUsed = businesses.length < 3 && (events.length > 0 || heritage.length > 0 || libraryTopics.length > 0 || mappedCategories.length > 0);
+    let libraryTopicQueued = false;
+    let libraryQueueMessage: string | undefined;
+    if (intentType === "library_country" && totalResults === 0) {
+      libraryTopicQueued = true;
+      libraryQueueMessage = `"${normalizedConcept}" isn't in our Library yet — this search is noted and will help shape it.`;
+    }
+
+    const fallbackUsed = businesses.length < 3 && (
+      events.length > 0 || heritage.length > 0 || libraryTopics.length > 0 || mappedCategories.length > 0
+    );
     const matchTiers = [...new Set(businesses.map((b) => b.matchTier))];
 
     const fallbackMessage = buildFallbackMessage(
       trimmedQ, intentType, businesses.length, mappedCategories.length > 0,
     );
 
-    // Log search event (non-blocking)
     void logSearchEvent({
-      userId: user?.id,
-      rawQuery: trimmedQ,
-      normalizedConcept,
-      intentType,
-      surface,
-      locationBucket,
-      resultCount: totalResults,
-      matchTypes: matchTiers,
-      fallbackUsed,
+      userId: user?.id, rawQuery: trimmedQ, normalizedConcept, intentType,
+      surface, locationBucket, resultCount: totalResults,
+      matchTypes: matchTiers, fallbackUsed,
     });
 
     res.json({
@@ -918,12 +1048,17 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       fallbackUsed,
       fallbackMessage,
       unmetDemandRecorded: totalResults === 0 && FEATURE_FLAGS.search_event_logging,
-      results: {
-        businesses,
-        events,
-        heritage,
-        libraryTopics,
-      },
+      // Correction 1 fields
+      namedBusinessNotFound: namedBusinessNotFound || undefined,
+      namedBusinessMessage,
+      namedBusinessNextActions,
+      // Correction 2 fields
+      libraryTopicQueued: libraryTopicQueued || undefined,
+      libraryQueueMessage,
+      // Correction 3 fields
+      heritageGeoExpansion: heritageGeoExpansion === "none" ? undefined : heritageGeoExpansion,
+      heritageGeoMessage,
+      results: { businesses, events, heritage, libraryTopics },
     });
   } catch (err) {
     req.log?.error({ err }, "Universal search failed");

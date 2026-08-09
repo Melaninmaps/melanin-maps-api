@@ -40,6 +40,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!--
+      Node.js global polyfills — classic (non-module) script runs synchronously
+      BEFORE any <script type="module"> so pg / drizzle-orm don't crash in browsers.
+      Buffer: npm `buffer` is bundled by Vite; we patch it globally here as a fallback.
+      process: minimal stub so pg env-var reads return undefined (not ReferenceError).
+      global:  alias for globalThis, expected by some CJS-compat shims.
+    -->
+    <script>
+      if (typeof window.Buffer === 'undefined') {
+        /* Minimal browser Buffer shim — replaced by the real npm `buffer` polyfill
+           once the JS bundle loads; this just prevents the crash at module init. */
+        window.Buffer = {
+          isBuffer: function() { return false; },
+          from: function(v) { return typeof v === 'string' ? new TextEncoder().encode(v) : new Uint8Array(v); },
+          alloc: function(n) { return new Uint8Array(n); },
+          concat: function(list) {
+            var len = list.reduce(function(a,b){return a+b.length;},0);
+            var out = new Uint8Array(len); var i = 0;
+            list.forEach(function(b){out.set(b,i);i+=b.length;}); return out;
+          }
+        };
+      }
+      if (typeof window.process === 'undefined') {
+        window.process = { env: {}, version: '', versions: {}, platform: 'browser', nextTick: function(fn){setTimeout(fn,0);} };
+      }
+      if (typeof window.global === 'undefined') {
+        window.global = window;
+      }
+    </script>
+
     <!-- Error capture: report any JS crash to /__client-error so we can see it in Railway logs -->
     <script>
       function _reportErr(msg, src, line, col, err) {
@@ -52,8 +82,8 @@
         _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-d6uQ8kxv.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CE1olIus.css">
+    <script type="module" crossorigin src="/assets/index-CbkGnBXC.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DjbmtPRt.css">
   </head>
   <body>
     <div id="root"></div>
