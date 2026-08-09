@@ -2238,7 +2238,7 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
     hours, priceRange,
     instagram, facebook, tiktok, twitter, youtube, pinterest,
     ownershipDesignations, blackOwned, vibes, tags,
-    adminNotes, listingStatus,
+    adminNotes, listingStatus, country, province,
   } = req.body as {
     name?: string; category?: string; subcategory?: string; description?: string;
     address?: string; city?: string; state?: string; zip?: string;
@@ -2248,7 +2248,7 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
     twitter?: string; youtube?: string; pinterest?: string;
     ownershipDesignations?: string[]; blackOwned?: boolean;
     vibes?: string[]; tags?: string[]; adminNotes?: string;
-    listingStatus?: string;
+    listingStatus?: string; country?: string; province?: string;
   };
 
   if (!name?.trim()) { res.status(400).json({ error: "Business name is required." }); return; }
@@ -2266,7 +2266,7 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
   const geoApiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (geoApiKey && address?.trim() && city?.trim()) {
     try {
-      const geoAddr = encodeURIComponent([address.trim(), city.trim(), state?.trim()].filter(Boolean).join(", "));
+      const geoAddr = encodeURIComponent([address.trim(), city.trim(), province?.trim() || state?.trim(), country?.trim()].filter(Boolean).join(", "));
       const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${geoAddr}&key=${geoApiKey}`;
       const geoResp = await fetch(geoUrl);
       const geoData = await geoResp.json() as { results?: Array<{ geometry?: { location?: { lat: number; lng: number } } }> };
@@ -2288,7 +2288,7 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
         instagram, facebook, tiktok, twitter, youtube, pinterest,
         ownership_designations, black_owned, vibes, tags,
         status, submitted_by_id,
-        email, zip, listing_status, data_source
+        email, zip, listing_status, data_source, country, province
       ) VALUES (
         $1, $2, $3, $4, $5,
         $6, $7, $8, $9, $10,
@@ -2296,11 +2296,11 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
         $15, $16, $17, $18, $19, $20,
         $21::text[], $22, $23::text[], $24::text[],
         'active', NULL,
-        $25, $26, $27, 'admin_entry'
+        $25, $26, $27, 'admin_entry', $28, $29
       )`,
       [
         id, name.trim(), category.trim(), (subcategory ?? category).trim(), description?.trim() || "",
-        address?.trim() || "", city.trim(), state?.trim() || "", lat, lng,
+        address?.trim() || "", city.trim(), state?.trim() || null, lat, lng,
         phone?.trim() || null, website?.trim() || null, hours?.trim() || null, priceRange || null,
         instagram?.trim() || null, facebook?.trim() || null, tiktok?.trim() || null,
         twitter?.trim() || null, youtube?.trim() || null, pinterest?.trim() || null,
@@ -2309,6 +2309,7 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
         vibes ?? [],
         tags ?? [],
         email?.trim() || null, zip?.trim() || null, finalListingStatus,
+        country?.trim() || null, province?.trim() || null,
       ]
     );
 

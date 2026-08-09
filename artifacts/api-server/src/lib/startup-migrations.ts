@@ -56,6 +56,68 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `CREATE INDEX IF NOT EXISTS search_events_concept_idx ON search_events(normalized_concept, intent_type, location_bucket)`,
   },
   {
+    name: "create_library_entity_connections_table",
+    sql: `CREATE TABLE IF NOT EXISTS library_entity_connections (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      topic_id VARCHAR NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+      entity_id UUID NOT NULL,
+      entity_type TEXT NOT NULL CHECK (entity_type IN ('business','cultural_site','event','community_org')),
+      entity_label TEXT,
+      relevance_weight FLOAT NOT NULL DEFAULT 1.0,
+      relevance_tags TEXT[],
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(topic_id, entity_id, entity_type)
+    )`,
+  },
+  {
+    // Idempotent insert via WHERE NOT EXISTS — knowledge_topics has no UNIQUE on topic_name,
+    // so ON CONFLICT DO NOTHING alone does not prevent duplicates across boots.
+    name: "seed_diaspora_country_topics_v2",
+    sql: `
+      INSERT INTO knowledge_topics (id, topic_name, category, description, node_type)
+      SELECT gen_random_uuid(), v.n, 'country', v.d, 'geography'
+      FROM (VALUES
+        ('Kenya',              'Cultural and ancestral hub for the Kenyan diaspora — traditions, history, and community connections.'),
+        ('Ghana',              'Cultural hub for Ghanaian diaspora — Sankofa, Afrobeat roots, and the Year of Return legacy.'),
+        ('Nigeria',            'Home to the world''s largest Black population — Yoruba, Igbo, and Hausa cultural traditions.'),
+        ('Jamaica',            'Island hub for Caribbean diaspora — reggae, Rastafari, and pan-African identity.'),
+        ('Haiti',              'First Black republic — revolutionary history, Vodou spirituality, and Haitian Creole culture.'),
+        ('Trinidad and Tobago','Caribbean cultural crossroads — Carnival, calypso, pan steel, and Afro-Trinidadian traditions.'),
+        ('Ethiopia',           'Ancient African civilization — Rastafari sacred homeland, Amharic language, and Coptic Christianity.'),
+        ('South Africa',       'Home of Zulu, Xhosa, and Sotho peoples — anti-apartheid legacy and ubuntu philosophy.'),
+        ('Brazil',             'Largest African diaspora in the Americas — Candomblé, capoeira, and Afro-Brazilian traditions.'),
+        ('Colombia',           'Afro-Colombian heritage — Pacific coast communities, cumbia, and Atlantic roots.'),
+        ('Cuba',               'Afro-Cuban traditions — Santería, son, salsa, and deep African heritage through the Middle Passage.'),
+        ('Senegal',            'West African cultural anchor — Wolof traditions, Dakar arts scene, and Islamic Sufi heritage.'),
+        ('Cameroon',           'Central and West African crossroads — 250+ ethnic groups and Bamileke entrepreneurial traditions.'),
+        ('Dominican Republic', 'Afro-Caribbean identity — merengue, bachata, and the complex history of Taíno, African, and Spanish roots.'),
+        ('Barbados',           'Proud Afro-Caribbean nation — Bajan culture, Crop Over festival, and Atlantic diaspora history.'),
+        ('Bahamas',            'Afro-Caribbean island nation — junkanoo carnival, Bahamian culture, and Atlantic diaspora identity.')
+      ) AS v(n, d)
+      WHERE NOT EXISTS (
+        SELECT 1 FROM knowledge_topics WHERE topic_name = v.n AND category = 'country'
+      )
+    `,
+  },
+  {
+    // International address support — make state nullable so non-US businesses
+    // don't require a US state code. Existing US rows keep their state values.
+    name: "businesses_state_nullable_v1",
+    sql: `ALTER TABLE businesses ALTER COLUMN state DROP NOT NULL`,
+  },
+  {
+    // Add country column — NULL means US (default market). Non-US businesses
+    // should always populate this so search, map, and directory work globally.
+    name: "businesses_country_col_v1",
+    sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS country VARCHAR(100)`,
+  },
+  {
+    // Add province column — stores region/province/territory for non-US addresses
+    // where a US state code is not applicable (e.g. Bangkok → Bangkok Province).
+    name: "businesses_province_col_v1",
+    sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS province VARCHAR(100)`,
+  },
+  {
     // Add listing_status column if missing (referenced by search queries)
     name: "businesses_listing_status_col",
     sql: `ALTER TABLE businesses
@@ -778,6 +840,113 @@ END $seed$`,
         AND category IN ('community', 'education');
     `,
   },
+
+  // ── LAYER 1: Knowledge Graph Schema ──────────────────────────────────────────
+  // Adds node_type (geography vs topic), geography_ref, and status to knowledge_topics.
+  // Allows cities/regions to be first-class nodes alongside subject topics,
+  // with directed relationships between them.
+  {
+    name: "knowledge_graph_layer1_columns_v1",
+    sql: `
+      ALTER TABLE knowledge_topics ADD COLUMN IF NOT EXISTS node_type TEXT NOT NULL DEFAULT 'topic';
+      ALTER TABLE knowledge_topics ADD COLUMN IF NOT EXISTS geography_ref TEXT;
+      ALTER TABLE knowledge_topics ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'published';
+      CREATE INDEX IF NOT EXISTS idx_knowledge_topics_node_type ON knowledge_topics(node_type);
+      CREATE INDEX IF NOT EXISTS idx_knowledge_topics_geography_ref ON knowledge_topics(geography_ref);
+    `,
+  },
+
+  // topic_relationships: directed many-to-many graph between any two knowledge nodes.
+  // Philadelphia → Philadelphia History (relationship_type='contains').
+  // Philadelphia History → Philadelphia Black History (relationship_type='related_to').
+  {
+    name: "topic_relationships_table_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS topic_relationships (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        parent_topic_id VARCHAR NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+        child_topic_id  VARCHAR NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+        relationship_type TEXT NOT NULL CHECK (relationship_type IN (
+          'contains','part_of','related_to','subtopic_of',
+          'precedes','follows','related_geography'
+        )),
+        weight FLOAT NOT NULL DEFAULT 1.0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(parent_topic_id, child_topic_id, relationship_type)
+      );
+      CREATE INDEX IF NOT EXISTS idx_topic_rel_parent ON topic_relationships(parent_topic_id);
+      CREATE INDEX IF NOT EXISTS idx_topic_rel_child  ON topic_relationships(child_topic_id);
+    `,
+  },
+
+  // knowledge_sources: FOUR distinct provenance tiers (founder mandate).
+  // authoritative  — government, museums, archives, universities, official orgs.
+  // professional   — credentialed historians, doctors, economists, journalists.
+  // community      — MWM member experience; clearly labeled as lived experience.
+  // ambassador     — Cultural Ambassador videos, reels, guides, travel stories.
+  // Kinfolk MUST know which tier supplied a claim and may NOT silently convert
+  // community or ambassador opinion into verified authoritative fact.
+  {
+    name: "knowledge_sources_table_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS knowledge_sources (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        topic_id VARCHAR NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+        authority_tier TEXT NOT NULL CHECK (authority_tier IN (
+          'authoritative','professional','community','ambassador'
+        )),
+        source_name TEXT NOT NULL,
+        source_url  TEXT,
+        description TEXT,
+        claim       TEXT,
+        contributor_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        is_primary BOOLEAN NOT NULL DEFAULT false,
+        last_verified TIMESTAMPTZ,
+        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','removed','disputed')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_knowledge_sources_topic ON knowledge_sources(topic_id);
+      CREATE INDEX IF NOT EXISTS idx_knowledge_sources_tier  ON knowledge_sources(authority_tier);
+    `,
+  },
+
+  // Extend library_entity_connections entity_type CHECK to include
+  // community_post, ambassador_content, and knowledge_article.
+  // Uses a PL/pgSQL block to locate and drop the auto-named inline constraint
+  // before adding the replacement named constraint.
+  {
+    name: "library_entity_connections_extend_types_v1",
+    sql: `
+      DO $$
+      DECLARE v_cname text;
+      BEGIN
+        SELECT conname INTO v_cname FROM pg_constraint
+        WHERE conrelid = 'library_entity_connections'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) LIKE '%entity_type%'
+        LIMIT 1;
+        IF v_cname IS NOT NULL THEN
+          EXECUTE format('ALTER TABLE library_entity_connections DROP CONSTRAINT %I', v_cname);
+        END IF;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid = 'library_entity_connections'::regclass
+            AND conname = 'lec_entity_type_check'
+        ) THEN
+          ALTER TABLE library_entity_connections
+            ADD CONSTRAINT lec_entity_type_check
+            CHECK (entity_type IN (
+              'business','cultural_site','event','community_org',
+              'community_post','ambassador_content','knowledge_article'
+            ));
+        END IF;
+      END $$;
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -831,6 +1000,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["neighborhood timing", () => ensureNeighborhoodTiming(log, warn)],
     ["geocode tour content", () => geocodeTourContent(log, warn)],
     ["knowledge topics",  () => ensureKnowledgeTopics(log, warn)],
+    ["knowledge graph",   () => ensurePhiladelphiaKnowledgeGraph(log, warn)],
     ["admin accounts",    () => ensureAdminAccounts(log, warn)],
     ["tester accounts",   () => ensureTesterAccounts(log, warn)],
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
@@ -1869,5 +2039,229 @@ async function ensureFounderCuratedBusinesses(
     log(`Founder-curated businesses guard: ${inserted} inserted, ${skipped} already present`);
   } catch (err: unknown) {
     warn(`Founder-curated businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── LAYER 1: Philadelphia Knowledge Graph Seeding ────────────────────────────
+// Seeds:
+//   • Philadelphia as a geography node (node_type='geography')
+//   • 7 subject subtopics (History, Black History, Nightlife, Employment,
+//     Real Estate, Faith, Businesses) as topic nodes with geography_ref
+//   • topic_relationships linking Philadelphia → each subtopic
+//   • library_entity_connections linking Mother Bethel AME to 3 topics
+//   • knowledge_sources demonstrating all 4 provenance tiers
+// Idempotent — checks existence by title+node_type before inserting.
+async function ensurePhiladelphiaKnowledgeGraph(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── 1. Ensure Philadelphia geography node ───────────────────────────────
+    let phillyId: string;
+    const phillyRow = await pool.query(
+      `SELECT id FROM knowledge_topics WHERE topic_name='Philadelphia' AND node_type='geography' LIMIT 1`,
+    );
+    if (phillyRow.rows.length > 0) {
+      phillyId = phillyRow.rows[0].id as string;
+    } else {
+      const ins = await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, category, description, node_type, geography_ref)
+         VALUES (gen_random_uuid()::text, $1, 'geography', $2, 'geography', 'Philadelphia,PA,USA')
+         RETURNING id`,
+        [
+          "Philadelphia",
+          "Philadelphia, Pennsylvania — a historic city at the center of Black American history. From the founding of Mother Bethel AME Church (the first AME church in the world) to the Great Migration that brought hundreds of thousands north, Philadelphia shaped Black culture, faith, and political life in America.",
+        ],
+      );
+      phillyId = ins.rows[0].id as string;
+    }
+
+    // ── 2. Seed 7 subject subtopics ─────────────────────────────────────────
+    const subtopics: Array<{ title: string; category: string; subcategory: string; description: string }> = [
+      {
+        title: "Philadelphia History",
+        category: "history",
+        subcategory: "city_history",
+        description: "The full arc of Philadelphia history — from colonial founding and the Constitutional Convention to its role as a gateway city for Black Americans during Reconstruction and the Great Migration.",
+      },
+      {
+        title: "Philadelphia Black History",
+        category: "history",
+        subcategory: "black_history",
+        description: "The deep story of Black Philadelphia — from the Free African Society (1787) and Mother Bethel AME to the Harlem Renaissance figures who came through, the civil rights era, and the cultural institutions that preserved community memory.",
+      },
+      {
+        title: "Philadelphia Nightlife",
+        category: "entertainment",
+        subcategory: "nightlife",
+        description: "Philadelphia's music venues, jazz clubs, rooftop bars, and nightlife corridors — including the historic legacy of South Street, the Black club scene, and the city's current entertainment landscape.",
+      },
+      {
+        title: "Philadelphia Employment",
+        category: "business",
+        subcategory: "employment",
+        description: "Jobs, workforce development, and economic opportunity in Philadelphia — including historically Black professional networks, union history, and the city's current labor market for community members.",
+      },
+      {
+        title: "Philadelphia Real Estate",
+        category: "housing",
+        subcategory: "real_estate",
+        description: "Housing, homeownership, and real estate in Philadelphia — including gentrification patterns in historically Black neighborhoods, first-time homebuyer resources, and the history of redlining in the city.",
+      },
+      {
+        title: "Philadelphia Faith",
+        category: "faith",
+        subcategory: "religious_community",
+        description: "Philadelphia's rich tradition of Black religious life — from Mother Bethel AME (founded 1794) and the historic Baptist churches to contemporary megachurches and the city's diverse faith communities.",
+      },
+      {
+        title: "Philadelphia Businesses",
+        category: "business",
+        subcategory: "local_business",
+        description: "Minority-owned and community businesses in Philadelphia — the restaurants, salons, bookstores, health providers, and professional services that make up the economic backbone of Black Philadelphia.",
+      },
+    ];
+
+    let topicsInserted = 0;
+    let topicsSkipped = 0;
+    const subtopicIds: string[] = [];
+
+    for (const t of subtopics) {
+      const existing = await pool.query(
+        `SELECT id FROM knowledge_topics WHERE topic_name=$1 AND node_type='topic' LIMIT 1`,
+        [t.title],
+      );
+      if (existing.rows.length > 0) {
+        subtopicIds.push(existing.rows[0].id as string);
+        topicsSkipped++;
+      } else {
+        const ins = await pool.query(
+          `INSERT INTO knowledge_topics
+             (id, topic_name, category, description, node_type, geography_ref)
+           VALUES (gen_random_uuid()::text, $1, $2, $3, 'topic', 'Philadelphia,PA,USA')
+           RETURNING id`,
+          [t.title, t.category, t.description],
+        );
+        subtopicIds.push(ins.rows[0].id as string);
+        topicsInserted++;
+      }
+    }
+
+    // ── 3. Seed topic_relationships: Philadelphia → each subtopic ───────────
+    let relsInserted = 0;
+    for (const childId of subtopicIds) {
+      await pool.query(
+        `INSERT INTO topic_relationships
+           (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text, $1, $2, 'contains', 1.0)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [phillyId, childId],
+      );
+      relsInserted++;
+    }
+
+    // Cross-link Black History ↔ Faith (both rooted in the same AME founding)
+    const blackHistId = subtopicIds[1]; // Philadelphia Black History
+    const faithId     = subtopicIds[5]; // Philadelphia Faith
+    await pool.query(
+      `INSERT INTO topic_relationships
+         (id, parent_topic_id, child_topic_id, relationship_type, weight)
+       VALUES (gen_random_uuid()::text, $1, $2, 'related_to', 0.9)
+       ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+      [blackHistId, faithId],
+    );
+
+    log(`Knowledge graph: Philadelphia node confirmed (id=${phillyId})`);
+    log(`Knowledge graph: subtopics — ${topicsInserted} inserted, ${topicsSkipped} already present`);
+    log(`Knowledge graph: relationships — ${relsInserted + 1} upserted`);
+
+    // ── 4. Connect Mother Bethel AME to multiple topics (no new entity row) ─
+    // Mother Bethel AME Church already exists in cultural_sites.
+    // We connect its existing UUID to Philadelphia, Philadelphia Black History,
+    // and Philadelphia Faith via library_entity_connections.
+    const motherBethelRow = await pool.query(
+      `SELECT id FROM cultural_sites
+       WHERE name ILIKE '%mother bethel%' OR name ILIKE '%bethel ame%'
+       LIMIT 1`,
+    );
+    let mbConnections = 0;
+    if (motherBethelRow.rows.length > 0) {
+      const mbId = motherBethelRow.rows[0].id as string;
+      const topicsToConnect = [phillyId, blackHistId, faithId];
+      const labelsForTopics = [
+        "Historic Philadelphia landmark central to the city's geography and identity",
+        "Founding institution of Black Philadelphia — established 1794 by Richard Allen",
+        "Mother church of the African Methodist Episcopal denomination — first AME church in the world",
+      ];
+      for (let i = 0; i < topicsToConnect.length; i++) {
+        await pool.query(
+          `INSERT INTO library_entity_connections
+             (id, topic_id, entity_id, entity_type, entity_label, relevance_weight)
+           VALUES (gen_random_uuid(), $1, $2::uuid, 'cultural_site', $3, 1.0)
+           ON CONFLICT (topic_id, entity_id, entity_type) DO NOTHING`,
+          [topicsToConnect[i], mbId, labelsForTopics[i]],
+        );
+        mbConnections++;
+      }
+      log(`Knowledge graph: Mother Bethel AME connected to ${mbConnections} topics`);
+    } else {
+      warn("Knowledge graph: Mother Bethel AME not found in cultural_sites — skipping entity connections");
+    }
+
+    // ── 5. Seed knowledge_sources — one per tier, on Philadelphia Black History ─
+    const bhistId = subtopicIds[1];
+    const tierSeeds = [
+      {
+        tier: "authoritative",
+        name: "Smithsonian National Museum of African American History & Culture",
+        url: "https://nmaahc.si.edu",
+        claim: "Philadelphia's Free African Society (1787) and Mother Bethel AME Church (1794) are founding institutions of organized Black civic and religious life in the United States.",
+        is_primary: true,
+      },
+      {
+        tier: "professional",
+        name: "W.E.B. Du Bois — The Philadelphia Negro (1899)",
+        url: "https://archive.org/details/philadelphianegr00dubo",
+        claim: "The first sociological study of a Black urban community in the United States, documenting 7th Ward Philadelphia and establishing the academic foundation for understanding Black Philadelphia.",
+        is_primary: true,
+      },
+      {
+        tier: "community",
+        name: "MWM Community Member Experience",
+        url: null,
+        claim: "Community members have shared firsthand accounts of visiting historically significant Philadelphia sites, including the Mother Bethel AME Museum and the African American Museum in Philadelphia. These are personal experiences, not verified historical claims.",
+        is_primary: false,
+      },
+      {
+        tier: "ambassador",
+        name: "MWM Cultural Ambassador — Philadelphia City Guide",
+        url: null,
+        claim: "Cultural Ambassador content covering Philadelphia's historically Black neighborhoods, recommended businesses, community events, and cultural sites. Represents Ambassador perspective and firsthand visits.",
+        is_primary: false,
+      },
+    ];
+
+    let sourcesInserted = 0;
+    for (const s of tierSeeds) {
+      const existing2 = await pool.query(
+        `SELECT id FROM knowledge_sources
+         WHERE topic_id=$1 AND authority_tier=$2 AND source_name=$3 LIMIT 1`,
+        [bhistId, s.tier, s.name],
+      );
+      if (existing2.rows.length === 0) {
+        await pool.query(
+          `INSERT INTO knowledge_sources
+             (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status)
+           VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, 'active')`,
+          [bhistId, s.tier, s.name, s.url, s.claim, s.is_primary],
+        );
+        sourcesInserted++;
+      }
+    }
+    log(`Knowledge graph: ${sourcesInserted} knowledge_sources seeded (4 tiers on Philadelphia Black History)`);
+
+  } catch (err: unknown) {
+    warn(`Knowledge graph seeding failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

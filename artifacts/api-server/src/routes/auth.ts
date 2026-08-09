@@ -614,19 +614,30 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       return;
     }
 
-    // ── Waitlist enforcement (server-side gate) ───────────────────────────────
-    // Mapping With Melanin is invite-only during phased launch. Registration is
-    // only permitted for emails that appear in waitlist_signups AND have been
-    // approved by an admin (approvedAt is non-null). This enforces the gate at
-    // the API level — anyone addressing the endpoint directly without an approved
-    // waitlist entry receives 403, not a new account.
+    // ── Authorization gate (server-side) ─────────────────────────────────────
+    // AUTHORIZED TO REGISTER = approved waitlist member OR pre-approved tester.
+    // These are intentionally independent paths — testers are pre-authorized via
+    // pending_tester_emails and must not be forced to also exist in the waitlist.
+    // After account creation, the existing applyPendingTesterEntitlement() logic
+    // auto-attaches the tester role — this gate only controls ENTRY, not entitlement.
+
     const [waitlistEntry] = await db
       .select({ approvedAt: waitlistTable.approvedAt })
       .from(waitlistTable)
       .where(eq(waitlistTable.email, cleanEmail))
       .limit(1);
 
+    // Tester bypass: if not on waitlist, check pending_tester_emails
+    let approvedAsTester = false;
     if (!waitlistEntry) {
+      const testerCheck = await pool.query(
+        `SELECT 1 FROM pending_tester_emails WHERE lower(email) = lower($1) LIMIT 1`,
+        [cleanEmail],
+      );
+      if (testerCheck.rows.length > 0) approvedAsTester = true;
+    }
+
+    if (!waitlistEntry && !approvedAsTester) {
       req.log.info({ ...diagBase, event: "AUTH_REGISTER_NOT_ON_WAITLIST", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(403).json({
         error: "Mapping With Melanin is currently invite-only. Join the waitlist at mappingwithmelanin.com to request access.",
@@ -634,7 +645,8 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       });
       return;
     }
-    if (!waitlistEntry.approvedAt) {
+    if (waitlistEntry && !waitlistEntry.approvedAt) {
+      // On waitlist but pending admin approval — pre-approved testers (approvedAsTester=true) skip this
       req.log.info({ ...diagBase, event: "AUTH_REGISTER_WAITLIST_PENDING", emailMasked, status: 403, durationMs: Date.now() - t0 }, "auth diagnostic");
       res.status(403).json({
         error: "Your waitlist application is still pending review. You'll receive an email when you're approved to join.",
@@ -642,7 +654,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
       });
       return;
     }
-    // ── End waitlist enforcement ──────────────────────────────────────────────
+    // ── End authorization gate ────────────────────────────────────────────────
 
     const referralCode = crypto.randomBytes(4).toString("hex").toUpperCase();
 
@@ -857,14 +869,14 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
       .where(ilike(usersTable.email, email.trim()))
       .limit(1);
 
-    // Unknown email — return success to prevent enumeration
+    // Unknown email — return silent success (anti-enumeration: caller cannot tell
+    // whether an account exists). Internal log distinguishes all 4 outcomes.
     if (!user) {
+      req.log.info({ event: "AUTH_RESET_NO_ACCOUNT", emailMasked: `${email.trim().slice(0, 3)}***@${email.trim().split("@")[1] ?? "?"}` }, "password reset: no account found");
       res.json({ success: true });
       return;
     }
-    // Account exists but has no password (Apple/OIDC signup) — still send a reset
-    // code so they can SET a password and gain email/password access going forward
-
+    // Account exists — generate a 6-digit code (works for both password and Apple users).
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const codeHash = crypto.createHash("sha256").update(code).digest("hex");
     const expires = new Date(Date.now() + 15 * 60 * 1000);
@@ -874,8 +886,18 @@ router.post("/auth/forgot-password", async (req: Request, res: Response) => {
       .set({ emailVerificationToken: codeHash, emailVerificationExpires: expires })
       .where(eq(usersTable.id, user.id));
 
-    await sendPasswordResetEmail(user.email!, user.firstName, code);
-    res.json({ success: true });
+    const emailMasked = `${email.trim().slice(0, 3)}***@${email.trim().split("@")[1] ?? "?"}`;
+    req.log.info({ event: "AUTH_RESET_GENERATED", emailMasked, userId: user.id.slice(0, 8), expiresAt: expires.toISOString() }, "password reset: code stored");
+
+    try {
+      await sendPasswordResetEmail(user.email!, user.firstName, code);
+      req.log.info({ event: "AUTH_RESET_SENT", emailMasked }, "password reset: Resend accepted");
+      res.json({ success: true });
+    } catch (emailErr: unknown) {
+      req.log.error({ event: "AUTH_RESET_PROVIDER_FAILURE", emailMasked, err: String(emailErr) }, "password reset: Resend failed");
+      // Code is already stored; client should retry rather than silently succeed
+      res.status(500).json({ error: "Something went wrong sending the reset email. Please try again." });
+    }
   } catch (err) {
     req.log.error({ err }, "POST /api/auth/forgot-password error");
     res.status(500).json({ error: "Something went wrong. Please try again." });

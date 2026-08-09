@@ -1,0 +1,81 @@
+APPROVED TO PROCEED WITH THE NEXT IMPLEMENTATION LAYER, WITH ONE REQUIRED CLARIFICATION.
+
+Your latest architecture understanding is correct:
+
+Library = persistent knowledge infrastructure
+Universal Search/Retrieval = shared intelligence/retrieval layer
+Map / Directory / Explore / Library / Kinfolk = different experiences consuming that shared intelligence.
+
+The Library is NOT a forced destination.
+
+A user searching “Philadelphia nightlife” from the Map should receive the appropriate Map experience using Library/knowledge-graph intelligence behind the scenes.
+
+A user intentionally opening Philadelphia in the Library should receive the deeper research/learning experience.
+
+Kinfolk should use the same graph internally to reason across both.
+
+REQUIRED CORRECTION BEFORE IMPLEMENTATION:
+
+Do NOT collapse Community and Cultural Ambassador information into one authority/source tier.
+
+Preserve at least these distinct provenance classes:
+
+1. AUTHORITATIVE
+   Government, official institutions, museums, archives, universities,
+   official tourism organizations, official organizational sources.
+
+2. PROFESSIONAL / EXPERT
+   Credentialed professionals, researchers, historians, doctors,
+   attorneys, economists, journalists where appropriate, etc.
+
+3. COMMUNITY
+   MWM member experiences, reviews, stories, recommendations,
+   community reports and firsthand observations.
+
+4. CULTURAL AMBASSADOR
+   Ambassador videos, reels, guides, reviews, travel stories and
+   creator-produced community information.
+
+Kinfolk must know which layer supplied a claim and must not silently
+convert community or Ambassador opinion into verified fact.
+
+This distinction is important even when multiple layers support the
+same conclusion.
+
+Otherwise, APPROVED.
+
+Implement in the staged order you proposed:
+
+1. Schema/knowledge graph
+2. Retrieval/universal search expansion
+3. Kinfolk graph connection
+4. Map/presentation integration
+
+STOP AND REPORT AFTER EACH LAYER.
+
+DO NOT push to Railway production merely because a layer compiles.
+
+At every checkpoint provide:
+
+- exact files/tables changed
+- migrations created
+- what existed before
+- what now works
+- actual test queries
+- actual returned results
+- failures or limitations
+- confirmation existing functionality was not removed
+- rollback path
+
+Do not mark a capability complete because the schema exists.
+Prove the behavior from user query → retrieval → relationship →
+result/presentation.
+
+IMPORTANT:
+Do not broaden scope during these four layers.
+Do not redesign working UI unnecessarily.
+Do not remove existing data.
+Do not duplicate canonical businesses, places, topics or entities.
+Preserve the one-entity/many-relationships principle.
+
+Proceed with Layer 1 only and return the proof checkpoint before Layer 2.

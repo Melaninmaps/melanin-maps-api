@@ -72,6 +72,8 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
+  const [country, setCountry] = useState("");
+  const [province, setProvince] = useState("");
   const [hours, setHours] = useState("");
   const [customHours, setCustomHours] = useState("");
   const [priceRange, setPriceRange] = useState("");
@@ -200,8 +202,10 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
         description: description.trim(),
         address: address.trim(),
         city: city.trim(),
-        state: state.trim(),
-        zip: zip.trim(),
+        state: state.trim() || null,
+        zip: zip.trim() || null,
+        country: country.trim() || null,
+        province: province.trim() || null,
         phone: phone.trim() || null,
         email: bizEmail.trim() || null,
         website: website.trim() || null,
@@ -387,13 +391,17 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelCls}>State</label>
-                    <input className={inputCls} value={state} onChange={e => setState(e.target.value.toUpperCase().slice(0, 2))} placeholder="PA" maxLength={2} />
+                    <label className={labelCls}>State / Province</label>
+                    <input className={inputCls} value={state || province} onChange={e => { if (country && country.toUpperCase() !== "US" && country.toUpperCase() !== "USA" && country.toUpperCase() !== "UNITED STATES") { setProvince(e.target.value); setState(""); } else { setState(e.target.value.toUpperCase().slice(0, 2)); setProvince(""); } }} placeholder="PA or Region" maxLength={50} />
                   </div>
                   <div>
-                    <label className={labelCls}>ZIP</label>
+                    <label className={labelCls}>ZIP / Postal Code</label>
                     <input className={inputCls} value={zip} onChange={e => setZip(e.target.value)} placeholder="19103" maxLength={10} />
                   </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Country <span className="text-[#3A1F0E]/30 font-normal normal-case">(leave blank for United States)</span></label>
+                  <input className={inputCls} value={country} onChange={e => setCountry(e.target.value)} placeholder="e.g. Thailand, Canada, United Kingdom" />
                 </div>
                 <div>
                   <label className={labelCls}>Hours</label>
@@ -562,7 +570,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                 {[
                   { label: "Name", value: name || "—" },
                   { label: "Category", value: [category, subcategory].filter(Boolean).join(" / ") || "—" },
-                  { label: "Address", value: [address, city, state, zip].filter(Boolean).join(", ") || "—" },
+                  { label: "Address", value: [address, city, province || state, zip, country].filter(Boolean).join(", ") || "—" },
                   { label: "Phone", value: phone || "—" },
                   { label: "Email", value: bizEmail || "—" },
                   { label: "Website", value: website || "—" },

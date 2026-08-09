@@ -1,0 +1,346 @@
+Yes — **proceed to Checkpoint 2**, but I would **not use Option B as the permanent tester solution**.
+
+Replit just proved the problem: you intentionally built `pending_tester_emails` so you could hand them an email list and those people could register. But the older invite-only gate runs first and never looks at that list. Manually putting every tester into `waitlist_signups` would make two different approval systems responsible for the same thing and recreate this problem later.
+
+The clean rule should be:
+
+**Approved waitlist member OR approved pending tester → allowed to register.**
+
+Then, after registration, the pending-tester record attaches the tester entitlement as already designed.
+
+I would have Replit do the Railway read-only confirmation first, implement that **smallest eight-line registration fix if the DB confirms it**, test it with your AOL account, and continue Checkpoint 2 in parallel. Do not make everyone go through the waitlist just to work around the bug.
+
+Send this:
+
+```text
+AUTH DECISION + CHECKPOINT 2 AUTHORIZATION
+
+Checkpoint 1 corrections PASS.
+
+PROCEED TO CHECKPOINT 2 NOW.
+
+Do not hold Search / Library / Map / Kinfolk implementation while completing
+the small authentication repair below.
+
+==================================================
+AUTHENTICATION — FOUNDER DECISION
+==================================================
+
+Do NOT use waitlist approval as the permanent workaround for testers.
+
+The forensic audit has identified an architectural mismatch:
+
+pending_tester_emails
+was intentionally created to pre-authorize testers BEFORE account creation,
+
+but
+
+POST /auth/register
+checks only waitlist_signups BEFORE it ever checks pending_tester_emails.
+
+That defeats the purpose of the tester pre-approval system.
+
+The intended registration rule is:
+
+AUTHORIZED TO REGISTER =
+approved waitlist member
+OR
+approved/pending tester email
+OR
+any other explicitly authorized registration class already supported.
+
+Tester registration must NOT require the tester to also be added to the
+waitlist.
+
+==================================================
+STEP 1 — RAILWAY READ-ONLY CONFIRMATION
+==================================================
+
+Before changing code, query the CURRENT Railway production database for:
+
+tlindsay428@yahoo.com
+tlindsay428@gmail.com
+tlindsay428@aol.com
+
+For each report:
+
+users row?
+user_id
+username
+password credential present? YES/NO
+waitlist_signups row?
+approvedAt?
+pending_tester_emails row?
+tester status?
+role?
+profile?
+community content associated with user ID?
+
+Also confirm for tlindsay428@aol.com:
+
+Is the exact reason registration currently fails:
+
+pending_tester_emails = approved/present
+BUT
+waitlist_signups = absent or unapproved
+
+YES / NO
+
+If NO:
+STOP auth changes and report the actual conflict.
+
+If YES:
+proceed with the minimal repair below.
+
+==================================================
+STEP 2 — MINIMAL REGISTRATION REPAIR
+==================================================
+
+Modify the registration authorization gate so it recognizes BOTH:
+
+A. approved waitlist registration
+
+OR
+
+B. valid pending_tester_emails pre-approval
+
+Do NOT:
+
+delete the waitlist requirement globally
+open public registration
+change membership tiers
+create replacement users
+merge users
+change Apple auth
+change existing passwords
+change tester entitlement logic
+rewrite authentication
+
+This is a targeted authorization-gate correction only.
+
+Pseudo-rule:
+
+const approvedWaitlist = ...
+const approvedTester = ...
+
+if (!approvedWaitlist && !approvedTester) {
+    return inviteOnly403
+}
+
+Then continue the EXISTING registration process.
+
+After account creation, preserve the existing pending tester auto-attachment
+behavior.
+
+==================================================
+STEP 3 — DUPLICATE PROTECTION
+==================================================
+
+Before allowing a pre-approved tester to create an account:
+
+check users by normalized email.
+
+If an account already exists:
+
+DO NOT create another user.
+
+Return an existing-account path such as:
+
+"This email already has a Mapping With Melanin account. Sign in or reset your
+password."
+
+This is critical for preserving:
+
+profile
+posts
+comments
+reviews
+saves
+check-ins
+Library activity
+business relationships
+Cultural Ambassador relationships
+and all other user-linked data.
+
+Everything must continue resolving to the same canonical user_id.
+
+==================================================
+STEP 4 — PASSWORD RESET FORENSICS
+==================================================
+
+In parallel, finish the Railway production check for:
+
+RESEND_API_KEY configured? YES/NO
+
+For the AOL password-reset attempt determine:
+
+user existed? YES/NO
+reset record generated? YES/NO
+Resend called? YES/NO
+Resend accepted message? YES/NO
+
+Do NOT expose codes or secrets.
+
+Important:
+
+The current anti-enumeration backend behavior is acceptable security behavior:
+a nonexistent email may still receive `{ success: true }`.
+
+Do NOT weaken that security behavior.
+
+However, internal logs/admin diagnostics must make it possible for us to know:
+
+NO ACCOUNT FOUND
+vs
+RESET GENERATED
+vs
+PROVIDER FAILURE
+
+without exposing that distinction to an unauthenticated attacker.
+
+==================================================
+STEP 5 — PRODUCTION AUTH TEST
+==================================================
+
+Use tlindsay428@aol.com as the controlled acceptance test.
+
+Expected scenarios:
+
+IF NO USER EXISTS + PENDING TESTER EXISTS:
+
+Create Account
+→ registration accepted
+→ verification
+→ same new user receives tester entitlement
+→ login succeeds
+→ tester access works
+
+IF USER ALREADY EXISTS:
+
+Create Account
+→ duplicate account NOT created
+→ user directed to sign in/reset password
+→ password recovery succeeds
+→ same existing user/profile restored
+
+Prove:
+
+user count before
+user count after
+user_id used
+tester entitlement
+no duplicate account
+successful authenticated website session
+
+==================================================
+TESTER REGISTRATION REGRESSION
+==================================================
+
+Test one representative email from each:
+
+approved waitlist only
+pending tester only
+existing registered tester
+unauthorized/random email
+
+Expected:
+
+approved waitlist only → can register
+pending tester only → can register
+existing registered tester → cannot create duplicate; use existing account
+unauthorized/random email → invite-only rejection
+
+==================================================
+THEN RETURN AUTH STATUS
+==================================================
+
+READY TO TEST
+BLOCKED
+
+Do not call tester access ready until a real production browser registration/
+login test succeeds.
+
+==================================================
+CHECKPOINT 2 — AUTHORIZED NOW
+==================================================
+
+Proceed simultaneously with:
+
+1. Map Universal Search wiring
+2. Explore Universal Search
+3. Business Directory broad search
+4. Library entity relationship graph
+5. Library relevance by location + topic + intent
+6. Kenya / country Book foundation
+7. Faith, Spirituality & Community architecture
+8. Multi-Vibe persistence
+9. Social URL business/community media
+10. Kinfolk Universal Search retrieval
+
+Maintain the founder review gate at the end of Checkpoint 2.
+
+Do not push Checkpoint 2 to production until we review its proof matrix.
+```
+
+### One correction I want to make to Replit's HBCU result
+
+Their implementation technically satisfies our correction, but **“city → national” is still too big a jump**. Philadelphia → Spelman in Atlanta isn't what I mean by “nearest relevant sites.”
+
+Checkpoint 2 should evolve that to:
+
+**city → metro/nearby distance → state → surrounding region → national**
+
+and rank by actual distance when geographic coordinates exist.
+
+It can say:
+
+> **No HBCUs are located in Philadelphia proper. Here are the closest HBCUs to you.**
+
+That is much more useful than immediately displaying schools across the country.
+
+### One other thing Replit said that I do *not* want to accept
+
+This line:
+
+> `"historic Black church" ... some business noise ... expected dev behavior`
+
+No. It may be **explainable dev behavior**, but it should not be accepted as intended behavior.
+
+“Historic Black church” should never surface **Black Dragon Take Out** merely because the word *Black* matched. Universal Search needs to understand that the dominant concepts are:
+
+**historic + Black + church**
+
+with `church` defining the entity class and `Black` modifying its cultural relevance.
+
+That's actually another excellent test of whether we're building semantic discovery rather than keyword matching.
+
+Have them add this to Checkpoint 2 acceptance:
+
+```text
+SEMANTIC PRECISION TEST
+
+Query:
+historic Black church
+
+Black Dragon Take Out or unrelated businesses MUST NOT appear.
+
+Query interpretation:
+
+entity/type = house_of_faith / church
+historical significance = true
+cultural relevance = Black / African American
+
+The search engine must weight the complete intent more strongly than isolated
+token matches.
+
+Repeat comparable tests:
+
+Black Catholic church
+Black-owned restaurant
+Black history museum
+Black hair salon
+
+"Black" alone must never cause cross-category contamination.
+```
+
+Then keep moving. We have enough evidence now to **fix tester registration properly while Checkpoint 2 continues**, rather than putting the entire build day on hold.

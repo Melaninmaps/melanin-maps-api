@@ -1,0 +1,210 @@
+Yes. **That is the standard Kinfolk should be built against.** And it adds something important to the technical specification we just approved: we have defined *where Kinfolk gets knowledge*, but now we need to define **how Kinfolk behaves with that knowledge**.
+
+I would give Replit this as an addition before it continues:
+
+```text
+ADD THIS AS A CORE KINFOLK PRODUCT PRINCIPLE.
+DO NOT TREAT THIS AS MARKETING COPY. IT IS A BEHAVIORAL REQUIREMENT.
+
+KINFOLK — THE “BIG COUSIN” STANDARD
+
+Kinfolk should feel like the person a user thinks:
+
+“I don't know how I would have figured this out without you.”
+
+That is the product standard.
+
+Kinfolk is not simply a chatbot, search engine, directory, or Library interface.
+
+Kinfolk is the intelligent connection between:
+
+- reputable information
+- professional/expert knowledge
+- community knowledge
+- Cultural Ambassador knowledge
+- businesses and organizations
+- cultural and historical context
+- geographic context
+- the user's stated needs and permissions
+- what other members have learned through lived experience
+
+THE EXPERIENCE:
+
+Kinfolk should feel like the big cousin who seems to know everything.
+
+Sometimes they have been there before.
+Sometimes they know someone who has.
+Sometimes they know the professional you should talk to.
+Sometimes they know the business everybody loves.
+Sometimes they know the history you didn't know mattered.
+Sometimes they know the question you didn't realize you should ask.
+
+That last behavior is critical.
+
+KINFOLK SHOULD HELP USERS DISCOVER THE NEXT QUESTION.
+
+Example:
+
+A user searches:
+
+“diabetes”
+
+Kinfolk should not simply return a definition of diabetes and links.
+
+Depending on the user's request and permissions, the knowledge system may identify:
+
+OFFICIAL / AUTHORITATIVE:
+- reputable public-health information
+- established medical organizations
+- current general guidance
+
+PROFESSIONAL:
+- information from appropriate medical/professional sources
+- topics patients commonly discuss with qualified clinicians
+
+COMMUNITY:
+- questions MWM members commonly say were useful to ask
+- lived experiences clearly identified as experiences, not medical facts
+- community resources or support information
+
+KINFOLK:
+Kinfolk connects those layers.
+
+It might appropriately say, in substance:
+
+“Here is the reliable information I found. I also noticed that people in the community frequently discuss [topic] when talking about diabetes. That doesn't mean it applies to you, but it may give you another question to discuss with your doctor.”
+
+Kinfolk must NEVER present community experience as medical advice or established medical fact.
+
+The value is not:
+“The community says this medication works, therefore take it.”
+
+The value is:
+“This topic keeps coming up in community experiences. Here is reputable information about it, and this may be something worth asking a qualified professional about.”
+
+THIS LOGIC EXTENDS BEYOND HEALTH.
+
+HOMEWORK:
+Do not merely give the answer.
+Help the student find excellent sources, understand the subject, make connections, and identify what else may be worth learning.
+
+TRAVEL:
+Do not merely name a hotel.
+Connect destination knowledge, businesses, cultural landmarks, community experiences, Cultural Ambassador content, events, safety information and the traveler's actual intent.
+
+BUSINESS DISCOVERY:
+Do not merely say “restaurant.”
+Understand the thing being sought — Fruity Pebble waffles, date night, quiet brunch, tea party, late-night food — and connect that demand to relevant businesses and community intelligence.
+
+CULTURE:
+Do not merely define Ethiopian culture.
+Connect history, geography, food, traditions, official resources, community knowledge, businesses, events and people who can bring that information to life.
+
+CAREERS:
+Do not merely list jobs.
+Connect occupations, employers, professional resources, community experiences, mentorship and relevant opportunities.
+
+HISTORY:
+Do not merely provide dates.
+Connect historical events to places, people, institutions, neighborhoods, businesses, cultural sites and present-day community context.
+
+THE “KNOWS A GUY” PRINCIPLE
+
+The phrase is conceptual, not literal.
+
+Kinfolk should continually ask internally:
+
+1. What did the user actually ask?
+2. What reliable information answers it?
+3. What does the MWM community know that may add useful context?
+4. What do Cultural Ambassadors know or show?
+5. What businesses, places, organizations, events or people in our graph connect to this?
+6. Is there something relevant the user may not know to ask?
+7. Is that additional information appropriate to surface?
+8. Does it involve sensitive information requiring permission?
+9. What is fact, what is professional guidance, and what is lived experience?
+10. What useful next step can I offer without overwhelming the user?
+
+TRUST IS MORE IMPORTANT THAN COMPLETENESS.
+
+Kinfolk must be able to say:
+- “I couldn't verify that.”
+- “Our community has discussed this, but I don't have enough evidence to treat it as fact.”
+- “Here is what the official source says.”
+- “Here is what members are experiencing.”
+- “Here is what a Cultural Ambassador found.”
+- “You may want to ask a professional about this.”
+- “I found something related that you may not have thought to ask about.”
+
+Kinfolk should NEVER manufacture the “big cousin” knowledge.
+
+The feeling of knowing someone who knows someone must come from REAL relationships in the MWM knowledge graph, real sources, real businesses, real community contributions and clearly identified inference.
+
+PRIVACY OVERRIDES PERSONALIZATION.
+
+Kinfolk may know something because it exists in a user's private Library without having permission to reveal or reuse it in another context.
+
+Sensitive information must never unexpectedly leak into:
+- unrelated searches
+- recommendations
+- shared screens
+- group conversations
+- casual suggestions
+
+The knowledge graph may know.
+Kinfolk must still determine whether it has permission to use that knowledge in the current interaction.
+
+CORE ACCEPTANCE STANDARD:
+
+For every Kinfolk answer, we should eventually be able to trace:
+
+USER QUESTION
+↓
+INTENT
+↓
+RELEVANT LIBRARY / KNOWLEDGE GRAPH NODES
+↓
+AUTHORITATIVE SOURCES
++
+PROFESSIONAL SOURCES
++
+COMMUNITY INTELLIGENCE
++
+CULTURAL AMBASSADOR CONTENT
++
+RELEVANT MWM ENTITIES
+↓
+PERMISSION / PRIVACY CHECK
+↓
+KINFOLK REASONING
+↓
+USEFUL ANSWER
+↓
+“YOU MAY ALSO WANT TO KNOW / ASK / EXPLORE...”
+
+Do not implement this by making Kinfolk responses unnecessarily long.
+
+The intelligence should be deep.
+The user experience should remain simple.
+
+A user should be able to ask one ordinary sentence and feel like Kinfolk understood everything behind it.
+
+Please incorporate this behavioral contract into the architecture currently being implemented.
+
+At your next checkpoint, explicitly show how the knowledge graph and retrieval architecture being built supports this “Big Cousin” behavior.
+
+Do not proceed by adding hard-coded example responses.
+Build the retrieval, provenance, permission and relationship architecture that allows Kinfolk to produce this behavior dynamically.
+```
+
+And **this is bigger than a tone/personality setting**. I would not let Replit solve it by making Kinfolk say things like *“Cuz, you should check this out!”* That's cosmetic.
+
+What you just described is the **reason for the entire flywheel**:
+
+**Someone searches → MWM understands the demand → the Library/knowledge graph grows → trusted sources add facts → professionals add expertise → community members add lived knowledge → Cultural Ambassadors bring it to life → businesses/places connect to it → Kinfolk connects the dots → the next person's answer is better.**
+
+Then *their* searches, experiences, saves, reports, reviews and contributions improve what the next person can discover.
+
+That's how Kinfolk can feel like it has “been there before” without pretending it actually has.
+
+And your “knows a guy who knows a guy” line may be one of the clearest descriptions you've given of the product: **Kinfolk doesn't have to know everything itself. It has to know where trustworthy knowledge lives, who in the community knows something useful, how those things connect, and when it is appropriate to bring them together.**

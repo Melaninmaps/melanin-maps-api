@@ -1,0 +1,343 @@
+Yes — **this should become the final pre-tour acceptance test for Kinfolk.** And based on Replit's own audits, I would **not expect Kinfolk to execute the entire itinerary correctly today yet**.
+
+It already has important pieces, but they are not fully connected. Replit confirmed that Kinfolk currently runs separate database queries rather than using the shared search system, and it still lacks direct access to specialties, THE REAL, Library topics, events, community media, and live heritage retrieval.  It also confirmed that historical sundown-town records are **not currently incorporated into route planning**, while current community safety reports are. 
+
+So: **the information exists, but Kinfolk does not yet have all of the plumbing necessary to reproduce the itinerary you and I built.**
+
+### When I would test it
+
+Not today during the early architecture work.
+
+I would make this the **capstone test after these are connected**:
+
+**Universal Search → Library knowledge graph → businesses/places/events → Kinfolk retrieval → trip planning → geographic sequencing → safety/history → user preferences.**
+
+Once Replit says those are live, test **one city first**. I would use Washington, D.C. because your existing itinerary contains enough nuance to expose whether Kinfolk is genuinely reasoning:
+
+> “I have one day in Washington, D.C. as part of the Mapping With Melanin tour. I want culturally important places, HBCUs/college energy, businesses relevant to our community, places where I can meet people and create content, and I need to leave for Raleigh today. Build my day.”
+
+If Kinfolk can give you a sensible sequence, reasons for each stop, timing, relevant businesses, cultural sites, and a reasonable departure window—and explain **why**—then move to the multi-city test.
+
+After that, give it the real challenge:
+
+> **“Plan my first tour leg from Washington, D.C. through Raleigh/NC and the remaining approved destinations, using my saved Mapping With Melanin tour preferences. I want culturally important places, minority-owned businesses, HBCUs, museums, community gathering areas, opportunities to meet people and create content, realistic drive times, overnight recommendations, and relevant travel-safety/history information. Explain why you selected every major stop.”**
+
+Do **not** feed it your completed itinerary during that test. We want to compare what Kinfolk independently produces against the itinerary you've already developed.
+
+That becomes your answer to: **Does Kinfolk understand MWM?**
+
+### What Kinfolk should eventually be able to do
+
+For each day, it should reason across more than geography.
+
+For example:
+
+**Washington, D.C.**
+
+Kinfolk may understand:
+
+current trip destination
+→ D.C.
+
+your objective
+→ networking + cultural discovery + business acquisition + community content
+
+time/day
+→ affects events, business hours and crowd patterns
+
+cultural priorities
+→ HBCUs, Black history, diaspora communities, museums, neighborhoods
+
+business intelligence
+→ MWM businesses, specialties, Vibes, THE REAL, community information
+
+content opportunity
+→ places/events where there are likely to be people or relevant cultural activity
+
+next destination
+→ Raleigh
+
+travel time
+→ determines when you should leave
+
+Then it might say:
+
+**11:00 AM — Howard University / surrounding area**
+Why: HBCU history, student/community energy, nearby businesses and potential community engagement.
+
+**12:30 PM — culturally relevant lunch/business stop**
+Why: existing MWM listing + ownership/community relevance + convenient geographic sequence.
+
+**2:15 PM — depart Washington for Raleigh**
+Why: estimated travel time, planned arrival, daylight/current travel considerations, etc.
+
+That's very different from ChatGPT simply listing “Top 10 Things to Do in DC.”
+
+### The route-safety piece needs one correction
+
+I would not have Kinfolk automatically say:
+
+> “These are sundown towns you should avoid.”
+
+Historical sundown-town designation alone is **not proof of current danger**.
+
+Kinfolk should instead distinguish:
+
+**Historical context**
+“This location has documented sundown-town history.”
+
+**Recent community information**
+“MWM members have reported recent concerns here.”
+
+**Current credible safety information**
+“There is current information that may affect this stop/route.”
+
+Then it may make a practical suggestion:
+
+> “There is documented historical context along this route and recent community concerns in this area. I found an alternate stop 8 miles farther ahead that better matches your preferences. Want me to route you there instead?”
+
+That's stronger and more defensible than simply creating a blacklist.
+
+### Your daughter's version is exactly why the preference architecture matters
+
+Yes. If your daughter **chooses to tell Kinfolk that LGBTQIA+ considerations matter to her**, Kinfolk should absolutely be able to factor that into recommendations.
+
+But the recommendation shouldn't simply be:
+
+> “You're gay, so go to gay businesses.”
+
+It should be more thoughtful.
+
+Suppose she asks:
+
+> “Where should I stay in Atlanta?”
+
+Kinfolk might evaluate:
+
+neighborhood/location
+
+* safety/community information
+* proximity to her itinerary
+* price
+* nightlife preferences
+* LGBTQIA+-affirming information
+* MWM community experience
+* relevant businesses/events
+
+Then it might say:
+
+> “This area is a strong option because it's convenient to the places you're visiting and has several LGBTQIA+-affirming businesses and nightlife options nearby. Here are two alternatives if you'd rather stay somewhere quieter.”
+
+**Suggestion, not instruction.**
+
+If you add LGBTQIA+-owned or affirming businesses, those absolutely should become searchable and recommendation candidates—but there needs to be a distinction between:
+
+**LGBTQIA+-owned**
+**publicly identifies as LGBTQIA+-affirming**
+**community members report positive experiences**
+**unknown**
+
+We should not infer “affirming” merely because the owner belongs to a particular community.
+
+And if **you** are planning a trip for your daughter from your account, Kinfolk should understand:
+
+> “This preference is for my daughter / this trip.”
+
+rather than permanently changing *your* identity profile.
+
+### This is the acceptance test I would lock for Replit
+
+```text
+KINFOLK PRE-TOUR CAPSTONE ACCEPTANCE TEST
+
+THIS TEST MUST BE COMPLETED BEFORE THE FIRST MWM TOUR.
+
+The founder already possesses a detailed independently-created itinerary.
+
+DO NOT ingest that itinerary as the answer during the test.
+
+The purpose is to determine whether Kinfolk can independently produce a
+comparable itinerary from the MWM knowledge graph, businesses, cultural
+entities, Library, user preferences and travel context.
+
+==================================================
+TEST 1 — ONE CITY
+==================================================
+
+Prompt:
+
+"I have one day in Washington, D.C. for the Mapping With Melanin tour.
+I want culturally significant places, HBCUs/college energy, minority-owned
+businesses, places where I can meet community members and create content,
+and I need to continue to Raleigh today. Plan my day and explain why you
+selected each major stop."
+
+Kinfolk must return:
+
+- ordered itinerary
+- realistic geography
+- relevant businesses
+- relevant cultural/heritage entities
+- HBCU/college context
+- reasons for each recommendation
+- realistic timing
+- appropriate departure window
+- next-destination consideration
+- source/provenance for factual claims where appropriate
+
+==================================================
+TEST 2 — MULTI-CITY TOUR
+==================================================
+
+Prompt:
+
+"Plan the approved first leg of my Mapping With Melanin tour beginning in
+Washington, D.C. and continuing through the saved destinations.
+
+Prioritize:
+
+Black and diaspora culture
+HBCUs
+historic sites
+museums
+minority-owned businesses
+community gathering places
+opportunities to create content
+places to meet local people
+reasonable drive times
+appropriate overnight areas
+travel context and safety information.
+
+Explain why every major stop is recommended."
+
+Kinfolk must:
+
+- retrieve actual MWM businesses
+- retrieve existing heritage/cultural sites
+- retrieve relevant events where current
+- understand trip geography
+- sequence destinations logically
+- respect reasonable driving limits
+- use Library knowledge as background
+- explain recommendations
+- distinguish exact MWM data from inferred alternatives
+- preserve prior conversation context
+
+==================================================
+TEST 3 — HISTORICAL + CURRENT SAFETY
+==================================================
+
+Ask:
+
+"Is there anything important I should know about the route between these
+two cities?"
+
+Kinfolk must distinguish:
+
+HISTORICAL SUNDOWN-TOWN CONTEXT
+
+from
+
+CURRENT COMMUNITY SAFETY REPORTS
+
+from
+
+ACTIVE/CURRENT SAFETY INFORMATION.
+
+Historical designation alone must NOT be presented as proof that a location
+is currently dangerous.
+
+Kinfolk may suggest alternatives when relevant current evidence supports it.
+
+==================================================
+TEST 4 — LGBTQIA+ TRAVEL CONTEXT
+==================================================
+
+Create a temporary trip context:
+
+"I'm planning this portion for my adult daughter. LGBTQIA+ welcoming places
+matter to her."
+
+Do NOT permanently change the founder's identity/profile.
+
+Kinfolk should use that trip-specific preference to surface, where documented:
+
+- LGBTQIA+-owned businesses
+- LGBTQIA+-affirming businesses/organizations
+- relevant events
+- neighborhoods/areas
+- Cultural Ambassador content
+- appropriate community information
+
+It must explain WHY a recommendation is relevant.
+
+It must distinguish:
+
+LGBTQIA+-owned
+publicly affirming
+positive community evidence
+unknown
+
+Do not infer affirmation without evidence.
+
+==================================================
+TEST 5 — DIFFERENT PERSON, DIFFERENT TRIP
+==================================================
+
+Repeat the same destination without LGBTQIA+ context.
+
+Recommendations should appropriately change.
+
+This proves Kinfolk is using CONTEXT rather than merely hard-coding a
+"best places" list.
+
+==================================================
+TEST 6 — COMPARE AGAINST FOUNDER ITINERARY
+==================================================
+
+Only AFTER Kinfolk completes its itinerary:
+
+compare it to the founder's independently-created itinerary.
+
+Report:
+
+Stops Kinfolk independently matched
+Important stops Kinfolk missed
+Businesses it correctly retrieved
+Businesses it failed to retrieve
+Timing differences
+Geographic mistakes
+Cultural-context gaps
+Safety/history gaps
+Reasoning-quality gaps
+
+This becomes the final gap analysis before the tour.
+
+==================================================
+PASS CONDITION
+==================================================
+
+Kinfolk passes only if it demonstrates:
+
+KNOWLEDGE
++
+GEOGRAPHY
++
+MWM DATABASE RETRIEVAL
++
+CULTURAL CONTEXT
++
+PERSONALIZATION
++
+TRAVEL SEQUENCING
++
+SAFETY/HISTORY DISTINCTION
++
+EXPLANATION
+
+Do not mark PASS merely because it generated a plausible travel itinerary.
+```
+
+And I think your instinct about doing this **before the tour rather than today** is right. Today we're building the nervous system. Once Replit connects all these pieces, your existing itinerary becomes an unusually good benchmark because we already know what a thoughtful human-assisted answer looks like.
+
+If Kinfolk can independently come reasonably close to it—and then produce a meaningfully different but equally thoughtful version for your daughter based on her explicitly shared travel context—you'll know the platform has moved from **features sitting beside each other** to an actual connected intelligence system.

@@ -281,6 +281,16 @@ export default function MapPage() {
   // Near Me mode — radius in miles (null = show all, number = geo-filtered)
   const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
 
+  // Universal Search — populated on explicit submit; null = client-side filtering
+  const [universalResults, setUniversalResults] = useState<{
+    results: { businesses: any[]; heritage: any[]; events: any[]; libraryTopics: any[] };
+    intentType: string; totalResults: number; fallbackMessage?: string | null;
+    namedBusinessNotFound?: boolean; namedBusinessMessage?: string; namedBusinessNextActions?: string[];
+    heritageGeoExpansion?: string; heritageGeoMessage?: string;
+    libraryTopicQueued?: boolean; libraryQueueMessage?: string;
+  } | null>(null);
+  const [universalLoading, setUniversalLoading] = useState(false);
+
   // Geocode search string and pan map
   const geocodeAndPan = useCallback(() => {
     if (!mapRef.current || !search.trim()) return;
@@ -293,6 +303,25 @@ export default function MapPage() {
       }
     });
   }, [search]);
+
+  // Universal Search — triggered on Enter or button click, runs alongside geocodeAndPan
+  const runUniversalSearch = useCallback(async () => {
+    const q = search.trim();
+    if (!q || q.length < 2) return;
+    geocodeAndPan();
+    setBusinessSearchActive(true);
+    setUniversalResults(null);
+    setUniversalLoading(true);
+    try {
+      const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+      const p = new URLSearchParams({ q, surface: "map", limit: "20" });
+      if (userCoords) { p.set("lat", String(userCoords.lat)); p.set("lng", String(userCoords.lng)); }
+      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
+      if (res.ok) setUniversalResults(await res.json());
+    } catch { /* fall through to client-side filtered list */ }
+    finally { setUniversalLoading(false); }
+  }, [search, userCoords, geocodeAndPan]);
 
   const businesses = ((data?.businesses ?? []) as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
@@ -795,11 +824,14 @@ export default function MapPage() {
   useEffect(() => {
     if (!mapRef.current) return;
     const showBiz = businessSearchActive && (!legendFilter || legendFilter === "business");
-    const filteredIds = new Set(filtered.map((b) => b.id));
+    // When universal search returned results, only show those businesses as markers
+    const activeIds = universalResults
+      ? new Set((universalResults.results.businesses ?? []).map((b: any) => b.id as string))
+      : new Set(filtered.map((b) => b.id));
     markersRef.current.forEach((marker, id) => {
-      marker.setMap(showBiz && filteredIds.has(id) ? mapRef.current : null);
+      marker.setMap(showBiz && activeIds.has(id) ? mapRef.current : null);
     });
-  }, [filtered, legendFilter, businessSearchActive]);
+  }, [filtered, legendFilter, businessSearchActive, universalResults]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
@@ -834,31 +866,28 @@ export default function MapPage() {
             <>
               <div className="relative mb-3">
                 <button
-                  onClick={() => { setBusinessSearchActive(true); geocodeAndPan(); }}
+                  onClick={() => runUniversalSearch()}
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:text-[#CA922B] transition-colors"
                   aria-label="Search"
                 >
-                  <Search className="w-4 h-4 text-[#3A1F0E]/40" />
+                  {universalLoading
+                    ? <span className="w-4 h-4 block rounded-full border-2 border-[#CA922B]/30 border-t-[#CA922B] animate-spin" />
+                    : <Search className="w-4 h-4 text-[#3A1F0E]/40" />}
                 </button>
                 <input
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    // Clear search-active state when user edits — they must re-submit
                     if (businessSearchActive) setBusinessSearchActive(false);
+                    if (universalResults) setUniversalResults(null);
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setBusinessSearchActive(true);
-                      geocodeAndPan();
-                    }
-                  }}
-                  placeholder="Find a business — press Enter to search"
+                  onKeyDown={(e) => { if (e.key === "Enter") runUniversalSearch(); }}
+                  placeholder="Search businesses, heritage, events — press Enter"
                   className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
                 />
                 {search && (
                   <button
-                    onClick={() => { setSearch(""); setBusinessSearchActive(false); }}
+                    onClick={() => { setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5"
                   >
                     <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
@@ -949,8 +978,11 @@ export default function MapPage() {
             {showingCultural
               ? `${activeCulturalSites.length} ${activeCulturalSites.length === 1 ? "site" : "sites"}`
               : businessSearchActive
-                ? `${filtered.length} ${filtered.length === 1 ? "result" : "results"}`
-                : "Search to find businesses"}
+                ? (() => {
+                    const n = universalResults ? universalResults.totalResults : filtered.length;
+                    return `${n} ${n === 1 ? "result" : "results"}`;
+                  })()
+                : "Search businesses, heritage, and more"}
             {nearMeRadius !== null && !showingCultural && businessSearchActive && (
               <span className="ml-1.5 text-[#CA922B] font-bold">within {nearMeRadius} mi</span>
             )}
@@ -1032,9 +1064,9 @@ export default function MapPage() {
               })
             )
           ) : (
-            // ── Business list ──
-            isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
+            // ── Universal Search results ──
+            (isLoading || universalLoading) ? (
+              Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="p-4 border-b border-[#3A1F0E]/6 animate-pulse">
                   <div className="flex gap-3">
                     <div className="w-14 h-14 rounded-xl bg-[#3A1F0E]/8 shrink-0" />
@@ -1048,27 +1080,98 @@ export default function MapPage() {
             ) : !businessSearchActive ? (
               <div className="p-8 text-center">
                 <Search className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-[#2B1507] mb-1">Find a Business</p>
+                <p className="text-sm font-semibold text-[#2B1507] mb-1">Discover the Community</p>
                 <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">
-                  Type a name, category, or vibe<br />above and press Enter to search.
+                  Search businesses, heritage sites,<br />HBCUs, or community events.
                 </p>
                 <p className="text-[10px] text-[#3A1F0E]/35 leading-relaxed">
-                  Cultural sites, HBCUs, and events<br />are always visible on the map.
+                  Cultural sites and HBCUs<br />are always visible on the map.
                 </p>
               </div>
-            ) : filtered.length === 0 ? (
-              <div className="p-8 text-center">
-                <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
-                <p className="text-sm text-[#3A1F0E]/50 mb-3">No businesses match your search.</p>
-                <button
-                  onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); }}
-                  className="text-xs font-bold text-[#CA922B] hover:underline"
-                >
-                  Clear Search
-                </button>
-              </div>
             ) : (
-              filtered.map((biz) => {
+              <div>
+                {/* Heritage / cultural sites section */}
+                {(universalResults?.results?.heritage?.length ?? 0) > 0 && (
+                  <div className="border-b border-[#CA922B]/20 bg-[#FDF8F0]">
+                    <div className="px-4 pt-3 pb-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mb-1.5">
+                        Heritage &amp; Cultural Sites
+                        {universalResults?.heritageGeoExpansion === "nearby" && (
+                          <span className="normal-case font-normal text-[#3A1F0E]/50"> · Within 50 miles</span>
+                        )}
+                        {universalResults?.heritageGeoExpansion === "state" && (
+                          <span className="normal-case font-normal text-[#3A1F0E]/50"> · Statewide</span>
+                        )}
+                        {universalResults?.heritageGeoExpansion === "national" && (
+                          <span className="normal-case font-normal text-[#3A1F0E]/50"> · Nationwide</span>
+                        )}
+                      </p>
+                      {universalResults?.heritageGeoMessage && (
+                        <p className="text-[10px] text-[#3A1F0E]/50 mb-2 italic">{universalResults.heritageGeoMessage}</p>
+                      )}
+                      {(universalResults?.results?.heritage ?? []).slice(0, 4).map((site: any) => (
+                        <div key={site.id ?? site.name} className="flex items-start gap-2 mb-2">
+                          <div className="w-2 h-2 rotate-45 shrink-0 mt-[5px] bg-[#CA922B]" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-[#2B1507] leading-tight">{site.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-[10px] text-[#3A1F0E]/50 truncate">
+                                {site.city ?? ""}{site.city && (site.state || site.country) ? ", " : ""}{site.state ?? site.country ?? ""}
+                                {site.distance_miles != null ? ` · ${site.distance_miles}mi away` : ""}
+                              </p>
+                              {site.id && (
+                                <a
+                                  href={`/sites/${site.id}`}
+                                  className="shrink-0 text-[10px] text-[#CA922B] font-bold hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  View →
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Named business not found banner */}
+                {universalResults?.namedBusinessNotFound && (
+                  <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200">
+                    <p className="text-xs font-bold text-amber-800 leading-tight">{universalResults.namedBusinessMessage}</p>
+                    <p className="text-[10px] text-amber-600 mt-0.5">Showing nearby alternatives below</p>
+                  </div>
+                )}
+
+                {/* Library topic queued */}
+                {universalResults?.libraryTopicQueued && (
+                  <div className="px-4 py-2.5 bg-[#FDF8F0] border-b border-[#CA922B]/20">
+                    <p className="text-[11px] text-[#3A1F0E]/60 leading-relaxed">{universalResults.libraryQueueMessage}</p>
+                  </div>
+                )}
+
+                {/* Fallback message (only when no named-biz banner) */}
+                {universalResults?.fallbackMessage && !universalResults?.namedBusinessNotFound && (
+                  <div className="px-4 py-2 border-b border-[#3A1F0E]/6">
+                    <p className="text-[11px] text-[#3A1F0E]/50 italic">{universalResults.fallbackMessage}</p>
+                  </div>
+                )}
+
+                {/* Business results */}
+                {(universalResults?.results?.businesses ?? filtered).length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
+                    <p className="text-sm text-[#3A1F0E]/50 mb-3">No matching businesses found.</p>
+                    <button
+                      onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); }}
+                      className="text-xs font-bold text-[#CA922B] hover:underline"
+                    >
+                      Clear Search
+                    </button>
+                  </div>
+                ) : (
+                  (universalResults?.results?.businesses ?? filtered).map((biz: any) => {
                 const isRouting = routingBizId === biz.id;
                 return (
                   <div
@@ -1126,7 +1229,10 @@ export default function MapPage() {
                 );
               })
             )
-          )}
+          }
+        </div>
+        )
+      )}
         </div>
       </div>
     );

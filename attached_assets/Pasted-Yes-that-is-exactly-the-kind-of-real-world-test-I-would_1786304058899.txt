@@ -1,0 +1,235 @@
+Yes — **that is exactly the kind of real-world test I would want once tester registration is confirmed working.** But based on Replit's latest report, I would **not yet promise your friend that it will work end-to-end** until they finish the production tester-registration proof.
+
+Once that is confirmed, your Bangkok scenario should work like this:
+
+* She registers/logs into the website as an approved tester.
+* If she permits location access, MWM recognizes that she is in **Bangkok, Thailand**.
+* The Map should center on Bangkok rather than a U.S. default.
+* She should be able to search things such as **“Black-owned businesses near me,” “African restaurants,” “natural hair,” “nightlife,” “LGBTQIA+ friendly,” “Ethiopian food,” “markets,” “things to do,”** or even something very specific.
+* If a business is not already in MWM, she should be able to **suggest/add it as an unclaimed, claimable international business**.
+* She should be able to attach the business's **official website and/or social-media URLs**, rather than needing to own the business or upload its media as if it were hers.
+* Her contribution should retain provenance: *member submitted*, when it was submitted, what source supported it, and verification status.
+* It should **not immediately become “MWM Verified” or “safe.”** It should initially be an unclaimed/community-added listing until stronger verification/community evidence develops.
+
+And Bangkok should eventually trigger the exact Library architecture we have been discussing. A search for **Bangkok** can establish Bangkok as a geographic knowledge node and connect to Thailand, Thai culture, history, tourism, neighborhoods, food, nightlife, businesses, safety/travel information, diaspora communities, Cultural Ambassador content, etc. She doesn't have to visit the Library to benefit from any of that.
+
+There is one especially valuable test here: **location independence.** We have spent so much time testing Philadelphia that I want Replit to prove the platform isn't accidentally Philadelphia/U.S.-centric.
+
+I would add this to the current checkpoint without stopping their work:
+
+```text
+ADD INTERNATIONAL ACCEPTANCE TEST — BANGKOK, THAILAND
+
+We have an actual approved tester currently located in Bangkok.
+
+Do NOT implement a special Bangkok solution.
+This is a test of whether the existing architecture is genuinely global.
+
+Once production tester registration is confirmed, the founder intends to
+invite this tester to perform a live international website test.
+
+Before telling us she is ready to test, confirm the following capabilities.
+
+1. LOCATION
+
+With browser location permission:
+
+Tester in Bangkok
+→ website recognizes current location
+→ Map centers appropriately on Bangkok
+→ no Philadelphia/U.S. default overrides actual location.
+
+If location permission is denied:
+allow manual location entry:
+Bangkok, Thailand.
+
+2. GLOBAL MAP / SEARCH
+
+Test:
+
+Bangkok
+restaurants near me
+nightlife near me
+African restaurant Bangkok
+Ethiopian food Bangkok
+natural hair Bangkok
+
+The architecture must not require:
+US city
+US state
+US ZIP code
+
+to perform discovery.
+
+3. INTERNATIONAL BUSINESS ADDITION
+
+An authenticated tester must be able to suggest a legitimate Bangkok business
+that is not already in MWM.
+
+Before creating:
+
+search existing MWM entities for duplicate
++
+search/validate available public business information.
+
+Store international address appropriately:
+
+business name
+address/locality
+city
+province/region where applicable
+postal code where applicable
+country
+latitude
+longitude
+
+Do NOT force international addresses into a US state/ZIP model.
+
+4. UNCLAIMED / CLAIMABLE STATUS
+
+A member adding a business does NOT make the business:
+
+verified
+MWM endorsed
+safe
+claimed
+
+Initial appropriate status:
+
+Community Added / Unclaimed
+or the equivalent approved terminology.
+
+Preserve:
+
+submitted_by
+submitted_at
+source/provenance
+verification status
+
+The business can later be claimed through the approved business-claim process.
+
+5. SOCIAL MEDIA / MEDIA
+
+Tester should be able to provide:
+
+official website
+Instagram URL
+TikTok URL
+YouTube URL
+other supported public social URL
+
+and appropriate social post/video URLs.
+
+Do not require the member to download someone else's social media content and
+re-upload the file.
+
+Preserve attribution/source URL.
+
+6. SAFETY
+
+Do NOT infer:
+
+"This business is safe"
+
+merely because:
+
+one member added it
+one member likes it
+it has a website
+it has social media
+or it exists on a public map.
+
+Existence verification and community safety confidence are different systems.
+
+7. BANGKOK KNOWLEDGE NODE
+
+Search:
+
+Bangkok
+
+must be capable of recognizing:
+
+entity/concept = geographic place
+city = Bangkok
+country = Thailand
+
+The knowledge architecture should support relationships such as:
+
+Bangkok ↔ Thailand
+Bangkok ↔ History
+Bangkok ↔ Culture
+Bangkok ↔ Food
+Bangkok ↔ Nightlife
+Bangkok ↔ Tourism
+Bangkok ↔ Neighborhoods
+Bangkok ↔ Businesses
+Bangkok ↔ Events
+Bangkok ↔ Safety/Travel Information
+Bangkok ↔ Community Content
+Bangkok ↔ Cultural Ambassador Content
+
+These Books do NOT all need to be prebuilt before this test.
+
+The architecture must be capable of creating/queueing legitimate missing
+knowledge relationships based on demand.
+
+8. SURFACE TEST
+
+Search "Bangkok nightlife" from:
+
+MAP
+→ geographic businesses/events/content
+
+BUSINESS DIRECTORY
+→ relevant businesses
+
+LIBRARY
+→ deeper Bangkok/nightlife knowledge if intentionally opened
+
+KINFOLK
+→ conversational recommendation/research using the shared knowledge layer
+
+Do NOT force Map/Business users into Library.
+
+9. LIVE CONTRIBUTION TEST
+
+Have the tester add ONE real Bangkok business that she personally knows or can
+validate.
+
+Then prove:
+
+business created once
+no duplicate
+correct Bangkok coordinates
+pin appears in correct location
+business profile opens
+website/social links work
+listing shows appropriate unclaimed/community-added status
+tester can interact with listing
+business becomes searchable
+Kinfolk can retrieve it when contextually relevant
+
+10. PRODUCTION READINESS
+
+Do not tell the founder "Bangkok testing is ready" based only on API simulation.
+
+Before inviting the tester, prove:
+
+production website tester registration works
+production login works
+location permission works
+international coordinates/address model works
+business-add workflow is available to tester accounts
+
+Return:
+
+BANGKOK TEST READY
+or
+BANGKOK TEST BLOCKED
+
+with evidence for each requirement.
+```
+
+And I **would ask your friend to do this** once Replit gives us `BANGKOK TEST READY`. She gives you something your Philadelphia testers cannot: a genuine test of whether Mapping With Melanin works when somebody opens it **on the other side of the world**.
+
+If she adds one business she actually visits in Bangkok, then afterward you search or ask Kinfolk about that type of business from the U.S. and it can retrieve her contribution—that would be an excellent early proof of the global flywheel you are building.

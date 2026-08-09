@@ -311,17 +311,27 @@ function extractConcepts(q: string): {
   const searchTokens: string[] = [q.trim()]; // always include raw query
   const mappedCategories: Set<string> = new Set();
 
-  // Extract individual words + bigrams for concept mapping
+  // Extract individual words, bigrams, and trigrams for concept mapping.
+  // SEMANTIC PRECISION RULE: push an n-gram to searchTokens ONLY when that
+  // specific n-gram matched — never push a shorter sub-token just because its
+  // containing bigram/trigram matched. Violating this turns "black church" into
+  // a "black" ILIKE token that pulls in "Black Dragon Take Out" as a faith result.
   const words = lower.split(/\s+/);
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
-    const bigram = i < words.length - 1 ? `${word} ${words[i + 1]}` : null;
+    const bigram  = i < words.length - 1 ? `${word} ${words[i + 1]}` : null;
+    const trigram = i < words.length - 2 ? `${word} ${words[i + 1]} ${words[i + 2]}` : null;
 
-    const cats = CONCEPT_TO_CATEGORY[bigram ?? ""] ?? CONCEPT_TO_CATEGORY[word] ?? [];
-    cats.forEach((c) => mappedCategories.add(c));
+    const wordCats    = CONCEPT_TO_CATEGORY[word]    ?? [];
+    const bigramCats  = bigram  ? (CONCEPT_TO_CATEGORY[bigram]  ?? []) : [];
+    const trigramCats = trigram ? (CONCEPT_TO_CATEGORY[trigram] ?? []) : [];
 
-    if (cats.length > 0) searchTokens.push(word);
-    if (bigram && (CONCEPT_TO_CATEGORY[bigram] ?? []).length > 0) searchTokens.push(bigram);
+    [...wordCats, ...bigramCats, ...trigramCats].forEach((c) => mappedCategories.add(c));
+
+    // Each token is only added to searchTokens if IT ITSELF matched — not its sub-tokens.
+    if (wordCats.length  > 0)                    searchTokens.push(word);
+    if (bigramCats.length > 0  && bigram)         searchTokens.push(bigram);
+    if (trigramCats.length > 0 && trigram)        searchTokens.push(trigram);
   }
 
   // Normalize concept: strip generic adjectives, keep meaningful terms
@@ -766,26 +776,85 @@ async function searchEvents(q: string, city?: string, limit = 6): Promise<unknow
 }
 
 // ── Heritage / cultural sites search ─────────────────────────────────────────
-async function searchHeritage(q: string, city?: string, limit = 5): Promise<unknown[]> {
+async function searchHeritage(
+  q: string,
+  opts: {
+    city?: string;
+    state?: string;
+    lat?: number;
+    lng?: number;
+    radiusMiles?: number;
+    limit?: number;
+  } = {},
+): Promise<Array<Record<string, unknown>>> {
+  const { city, state, lat, lng, radiusMiles, limit = 5 } = opts;
   const tableChecks = ["cultural_sites", "tour_cultural_sites"];
+
   for (const tbl of tableChecks) {
     try {
+      let whereClause = `(name ILIKE $1 OR description ILIKE $1 OR heritage_category ILIKE $1)`;
       const params: unknown[] = [`%${q}%`];
-      const cityClause = city ? `AND city ILIKE $2` : "";
-      if (city) params.push(`%${city}%`);
+      let orderClause = "";
+
+      if (city) {
+        params.push(`%${city}%`);
+        whereClause += ` AND city ILIKE $${params.length}`;
+      } else if (state) {
+        params.push(state.toUpperCase());
+        whereClause += ` AND UPPER(state) = $${params.length}`;
+      } else if (lat !== undefined && lng !== undefined && radiusMiles !== undefined) {
+        // Haversine proximity filter — LEAST(1,x) prevents acos domain errors
+        whereClause += `
+          AND latitude IS NOT NULL AND longitude IS NOT NULL
+          AND (3959 * acos(LEAST(1.0, GREATEST(-1.0,
+            cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
+            * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
+            + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
+          )))) < ${radiusMiles}`;
+        orderClause = `ORDER BY (3959 * acos(LEAST(1.0, GREATEST(-1.0,
+          cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
+          * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
+          + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
+        )))) ASC`;
+      } else if (lat !== undefined && lng !== undefined) {
+        // National — sort by distance when we have coords
+        orderClause = `ORDER BY (3959 * acos(LEAST(1.0, GREATEST(-1.0,
+          cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
+          * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
+          + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
+        )))) ASC NULLS LAST`;
+      }
+
+      // When lat/lng present and no order already set (e.g. state filter),
+      // still sort by distance so state results appear nearest-first.
+      if (orderClause === "" && lat !== undefined && lng !== undefined) {
+        orderClause = `ORDER BY (3959 * acos(LEAST(1.0, GREATEST(-1.0,
+          cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
+          * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
+          + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
+        )))) ASC NULLS LAST`;
+      }
+
+      const distanceExpr = (lat !== undefined && lng !== undefined)
+        ? `, ROUND((3959 * acos(LEAST(1.0, GREATEST(-1.0,
+            cos(radians(${lat})) * cos(radians(CAST(latitude AS double precision)))
+            * cos(radians(CAST(longitude AS double precision)) - radians(${lng}))
+            + sin(radians(${lat})) * sin(radians(CAST(latitude AS double precision)))
+          ))))::numeric, 0) AS distance_miles`
+        : "";
 
       const rows = await pool.query(
         `SELECT id, name, city, state, description, heritage_category,
                 latitude, longitude, image_url, verified_source,
                 '${tbl}' as source_table, 'heritage' as result_type,
-                'exact_specialty' as match_tier
+                'exact_specialty' as match_tier${distanceExpr}
          FROM ${tbl}
-         WHERE (name ILIKE $1 OR description ILIKE $1 OR heritage_category ILIKE $1)
-         ${cityClause}
+         WHERE ${whereClause}
+         ${orderClause}
          LIMIT ${limit}`,
         params,
       );
-      if (rows.rows.length > 0) return rows.rows;
+      if (rows.rows.length > 0) return rows.rows as Array<Record<string, unknown>>;
     } catch { /* table may not exist */ }
   }
   return [];
@@ -795,10 +864,10 @@ async function searchHeritage(q: string, city?: string, limit = 5): Promise<unkn
 async function searchLibrary(q: string, limit = 5): Promise<unknown[]> {
   try {
     const rows = await pool.query(
-      `SELECT kt.id, kt.name, kt.description, kt.category,
+      `SELECT kt.id, kt.topic_name AS name, kt.description, kt.category,
               'library_topic' as result_type, 'related_category' as match_tier
        FROM knowledge_topics kt
-       WHERE (kt.name ILIKE $1 OR kt.description ILIKE $1 OR kt.category ILIKE $1)
+       WHERE (kt.topic_name ILIKE $1 OR kt.description ILIKE $1 OR kt.category ILIKE $1)
        LIMIT ${limit}`,
       [`%${q}%`],
     );
@@ -950,7 +1019,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         })
       : Promise.resolve([] as BusinessResult[]);
 
-    const [businesses, events, libraryTopics] = await Promise.all([
+    let [businesses, events, libraryTopics] = await Promise.all([
       businessesPromise,
       requestedTypes.includes("events")
         ? searchEvents(trimmedQ, cityStr, 6)
@@ -960,26 +1029,71 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         : Promise.resolve([]),
     ]);
 
-    // ── Correction 3: Progressive heritage geographic expansion ───────────────
-    // Ladder: exact city → national (with clear message)
+    // ── Faith intent post-filter (defense-in-depth semantic precision) ────────
+    // Even after the extractConcepts bigram-token fix, apply a category check
+    // for faith intent: only keep businesses whose category signals a faith or
+    // community institution. Retain ALL results if the filter would empty the set.
+    if (intentType === "faith" && businesses.length > 0) {
+      const FAITH_CATEGORIES = new Set([
+        "faith", "church", "spiritual", "mosque", "temple", "synagogue",
+        "religious", "worship", "community", "nonprofit", "cultural center",
+        "meditation", "gurdwara", "shrine", "chapel", "ministry",
+      ]);
+      const faithFiltered = businesses.filter((b) => {
+        const cat = (b.category ?? "").toLowerCase();
+        const sub = (b.subcategory ?? "").toLowerCase();
+        return [...FAITH_CATEGORIES].some((kw) => cat.includes(kw) || sub.includes(kw));
+      });
+      if (faithFiltered.length > 0) businesses = faithFiltered;
+      // If filter would empty results, fall back to all (e.g. small-city search)
+    }
+
+    // ── Correction 3: Distance-ranked heritage geographic expansion ──────────
+    // Ladder: exact city → ≤50mi radius → same state → national (distance-sorted)
     let heritage: unknown[] = [];
-    let heritageGeoExpansion: "exact" | "national" | "none" = "none";
+    let heritageGeoExpansion: "city" | "nearby" | "state" | "national" | "none" = "none";
     let heritageGeoMessage: string | undefined;
 
     if (requestedTypes.includes("heritage")) {
-      const cityHeritage = await searchHeritage(trimmedQ, cityStr, 5);
-      if (cityHeritage.length > 0) {
-        heritage = cityHeritage;
-        heritageGeoExpansion = "exact";
-      } else {
-        // Expand to national when city search returns nothing
-        const nationalHeritage = await searchHeritage(trimmedQ, undefined, 5);
-        if (nationalHeritage.length > 0) {
-          heritage = nationalHeritage;
+      // Step 1 — exact city match
+      if (cityStr) {
+        const r = await searchHeritage(trimmedQ, { city: cityStr, limit: 5 });
+        if (r.length > 0) { heritage = r; heritageGeoExpansion = "city"; }
+      }
+
+      // Step 2 — within 50 miles (requires lat/lng from client or geocode)
+      if (heritageGeoExpansion === "none" && lat !== undefined && lng !== undefined) {
+        const r = await searchHeritage(trimmedQ, { lat, lng, radiusMiles: 50, limit: 5 });
+        if (r.length > 0) {
+          heritage = r;
+          heritageGeoExpansion = "nearby";
+          heritageGeoMessage = cityStr
+            ? `No results in ${cityStr}. Showing the closest sites within 50 miles — sorted by distance.`
+            : "Showing the closest sites within 50 miles — sorted by distance.";
+        }
+      }
+
+      // Step 3 — same state / region
+      if (heritageGeoExpansion === "none" && stateStr) {
+        const r = await searchHeritage(trimmedQ, { state: stateStr, lat, lng, limit: 5 });
+        if (r.length > 0) {
+          heritage = r;
+          heritageGeoExpansion = "state";
+          heritageGeoMessage = cityStr
+            ? `No results near ${cityStr}. Showing sites throughout ${stateStr}.`
+            : `Showing sites throughout ${stateStr}.`;
+        }
+      }
+
+      // Step 4 — national (sorted nearest-first when lat/lng available)
+      if (heritageGeoExpansion === "none") {
+        const r = await searchHeritage(trimmedQ, { lat, lng, limit: 5 });
+        if (r.length > 0) {
+          heritage = r;
           heritageGeoExpansion = "national";
           heritageGeoMessage = cityStr
-            ? `No results found in ${cityStr}. Showing nearest relevant sites.`
-            : undefined;
+            ? `No results near ${cityStr}. Showing the closest matching sites from across the country.`
+            : "Showing matching sites from across the country.";
         }
       }
     }

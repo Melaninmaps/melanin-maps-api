@@ -823,6 +823,53 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── Tester Auth Diagnostic — per-email registration gate status ──────────────
+// CRON_SECRET protected, read-only. Confirms auth gate behavior for specific
+// emails: checks users table, waitlist, AND pending_tester_emails so the
+// "tester present but waitlist absent" architectural mismatch is visible.
+router.get("/admin/auth-diagnostic-tester", async (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers["authorization"] ?? "";
+  if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+    res.status(401).json({ error: "Unauthorized" }); return;
+  }
+  const raw = (req.query.emails as string ?? "");
+  const emails = raw.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean).slice(0, 10);
+  if (emails.length === 0) {
+    res.status(400).json({ error: "Provide ?emails=a@b.com,c@d.com" }); return;
+  }
+
+  const results = [];
+  for (const email of emails) {
+    const masked = `${email.slice(0, 3)}***@${email.split("@")[1] ?? "?"}`;
+
+    const [userRow]    = (await pool.query(`SELECT id, LEFT(email,3)||'***@'||SPLIT_PART(email,'@',2) AS em, role, tester_status, (password_hash IS NOT NULL) AS has_pw, (apple_id IS NOT NULL) AS has_apple, email_verified, created_at FROM users WHERE lower(email)=$1 LIMIT 1`, [email]).catch(() => ({ rows: [] }))).rows;
+    const [wlRow]      = (await pool.query(`SELECT LEFT(email,3)||'***@'||SPLIT_PART(email,'@',2) AS em, approved_at, waitlist_position FROM waitlist WHERE lower(email)=$1 LIMIT 1`, [email]).catch(() => ({ rows: [] }))).rows;
+    const [testerRow]  = (await pool.query(`SELECT LEFT(email,3)||'***@'||SPLIT_PART(email,'@',2) AS em, tester_access_source, entitlement_ends_at, granted_by, created_at FROM pending_tester_emails WHERE lower(email)=$1 LIMIT 1`, [email]).catch(() => ({ rows: [] }))).rows;
+
+    let communityContent = { posts: 0, reviews: 0, saves: 0 };
+    if (userRow?.id) {
+      const [cc] = (await pool.query(
+        `SELECT (SELECT COUNT(*)::int FROM community_posts WHERE user_id=$1) posts,
+                (SELECT COUNT(*)::int FROM business_reviews WHERE user_id=$1) reviews,
+                (SELECT COUNT(*)::int FROM saved_places WHERE user_id=$1) saves`,
+        [userRow.id]
+      ).catch(() => ({ rows: [] }))).rows;
+      if (cc) communityContent = cc;
+    }
+
+    const registrationWouldBlock = !wlRow && !testerRow;
+    const gateConflict = testerRow && !wlRow
+      ? "TESTER_PRESENT_WAITLIST_ABSENT — old code would 403, fixed code allows"
+      : !wlRow && !testerRow ? "NO_AUTHORIZATION"
+      : wlRow && !wlRow.approved_at ? "WAITLIST_PENDING"
+      : "OK";
+
+    results.push({ emailMasked: masked, registrationWouldBlock, gateConflict, user: userRow ?? null, waitlist: wlRow ?? null, pendingTester: testerRow ?? null, communityContent, resendConfigured: !!process.env.RESEND_API_KEY });
+  }
+  res.json({ checkedAt: new Date().toISOString(), results });
+});
+
 // ── Phase 1 Auth Probe: READ-ONLY canonical user investigation ───────────────
 // CRON_SECRET only. Returns every row that could be the founder. No writes.
 router.get("/admin/auth-probe", async (req: Request, res: Response) => {
