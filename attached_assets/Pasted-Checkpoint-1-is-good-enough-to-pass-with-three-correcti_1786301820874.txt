@@ -1,0 +1,125 @@
+Checkpoint 1 is **good enough to pass with three corrections before Checkpoint 2**. I would not hold the entire day up, but I also would not approve it exactly as written.
+
+The biggest issue is **named-business fallback behavior**. If I search **“The Pink Tea Cup”** and that business is not in MWM, showing five unrelated food businesses as though they are the result is too loose. The same problem exists for **“Allure Hair.”** A named-business query should first say clearly that the exact business was not found, then either offer a web/public-source lookup to create a claimable listing or show alternatives in a clearly separated section. It should never blur “I found the business you named” with “here are similar businesses.”
+
+The second issue is **Kenya returning silence**. That may be technically honest, but it conflicts with the Library flywheel we just defined. A legitimate substantive query like Kenya should trigger the Library/topic creation and research path, not stop at zero. Since the country Books are part of the next checkpoint, I am fine with it being incomplete right this second, but Replit should mark this as **expected-to-be-resolved in Checkpoint 2**, not “correct silence.”
+
+The third is the HBCU fallback. I agree with Replit that a city-specific HBCU query should not simply stop if there is no HBCU in Philadelphia proper, but I would **not hard-code 150 miles as the universal rule**. The system should instead use a context-aware expansion ladder. For a heritage/HBCU query, it can say: “I didn’t find an HBCU in Philadelphia proper. Here are the closest relevant HBCUs,” then progressively expand. That is better than silently treating 150 miles as though it were local.
+
+I would send Replit this:
+
+```text
+CHECKPOINT 1 — APPROVED WITH 3 REQUIRED CORRECTIONS
+
+You may proceed, but make these corrections first and include them in the
+Checkpoint 2 verification.
+
+1. NAMED BUSINESS FALLBACK
+
+For intent_type = named_business:
+
+Do NOT present category peers as though they are matches for the named business.
+
+Example:
+
+"The Pink Tea Cup"
+
+If exact/strong business match is not found:
+
+Return a clear state:
+
+"We couldn't find an exact MWM listing for The Pink Tea Cup."
+
+Then provide separate next actions:
+
+- Search public sources / web for this business
+- Add as claimable business if legitimate and not duplicate
+- Show similar nearby businesses
+
+Similar businesses must be labeled as alternatives, not matches.
+
+Same rule for:
+Allure Hair
+or any named business/person/place query.
+
+2. LIBRARY ZERO RESULT
+
+"Kenya" returning 0 is temporarily acceptable only because country Books are
+not seeded yet.
+
+It is NOT the intended final behavior.
+
+Checkpoint 2 must implement:
+
+legitimate missing topic/country
+→ create/queue canonical Library Book
+→ attach authoritative source requirements
+→ return the new/related Library object
+→ no dead-end "nothing found" experience
+
+Do not treat "correct silence" as the finished product for legitimate knowledge
+queries.
+
+3. HBCU / HERITAGE GEOGRAPHIC FALLBACK
+
+Do NOT hard-code "150 miles" as the universal fallback rule.
+
+Use progressive geographic expansion.
+
+Example:
+
+User searches:
+HBCU in Philadelphia
+
+If none exist in Philadelphia proper:
+
+Return:
+
+"No HBCUs are located in Philadelphia proper. Here are the closest relevant
+HBCUs."
+
+Then rank by nearest meaningful geography/distance.
+
+Suggested ladder:
+
+exact city
+→ nearby metro / reasonable radius
+→ state/region
+→ broader national results
+
+Explicit user location/search intent always overrides inferred geography.
+
+The UI must clearly communicate when results are outside the original city.
+
+==================================================
+CHECKPOINT 1 PASS STATUS
+==================================================
+
+PASS WITH REQUIRED CORRECTIONS.
+
+Proceed to Checkpoint 2 after applying the three changes above.
+
+Also add the faith tokens and new faith intent type now.
+
+Checkpoint 2 priorities remain:
+
+1. Map Universal Search wiring
+2. Explore Universal Search
+3. Business Directory broad search
+4. Multi-Vibe persistence/update
+5. Social URL media
+6. Kinfolk Universal Search retrieval
+7. Library entity relationship model
+8. Faith, Spirituality & Community seeding
+9. Dynamic Library relevance by topic + geography + intent
+10. Kenya / country Book foundation
+
+IMPORTANT:
+Run the AUTH FORENSIC AUDIT in parallel before changing authentication.
+Do not delay Checkpoint 2 search/library work while the read-only auth audit runs,
+but do not implement auth fixes until the audit returns.
+```
+
+And I agree with Replit on one architectural point: **Mother Bethel surfacing from one canonical entity is exactly what we want.** That proves the core graph idea is viable. The next step is making that behavior systematic instead of accidental: Historical Churches + Philadelphia should retrieve the relevant canonical entities because of their relationships, not because a text search happened to find overlapping words.
+
+So my answer is: **Checkpoint 1 passes conditionally. Apply those three corrections and move to Checkpoint 2 now.**

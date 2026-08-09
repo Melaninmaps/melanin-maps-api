@@ -1,0 +1,716 @@
+Yes. This clarifies something important: **the Library should not merely contain topics. It should be a continuously growing knowledge system, with KinfolkAI acting as the research and relevance engine behind it.**
+
+The distinction you just made between **manual discovery** and **Kinfolk-assisted discovery** is also essential to your membership model.
+
+### The intended model
+
+A user should always be able to manually search MWM without spending Kinfolk usage. They can search “soul food,” “Fruity Pebble waffles,” “IVF,” “Kenya,” “Delta Sigma Theta,” “Black Catholic churches,” etc., and explore whatever MWM already contains.
+
+**Kinfolk usage is different.** Kinfolk does the work *for* the person: researching, synthesizing, personalizing, connecting information across MWM, and explaining why something matters. That usage remains governed by the user's tier.
+
+And the Library grows from both.
+
+Your infertility → IVF example is a very good acceptance test because it forces Replit to prove that this isn't simply another search box.
+
+I would give Replit this specification now:
+
+```text
+LIBRARY + KINFOLKAI KNOWLEDGE ENGINE
+IMPLEMENT NOW — ARCHITECTURE FIRST, THEN SAFE INCREMENTS
+
+The current Library shell/topics exist, but following a topic does not
+currently produce the intended experience.
+
+The Library is NOT intended to be a static collection of topic names.
+
+It is the persistent knowledge layer of Mapping With Melanin.
+
+KinfolkAI is the research, synthesis, personalization and connection engine
+operating behind it.
+
+============================================================
+1. TWO DIFFERENT TYPES OF SEARCH — DO NOT CONFUSE THEM
+============================================================
+
+A. MANUAL MWM SEARCH
+
+Users may manually search Mapping With Melanin without consuming KinfolkAI
+usage.
+
+Examples:
+
+soul food
+Fruity Pebble waffles
+tea parties
+IVF
+Kenya
+Black Catholic churches
+luxury spas in Cabo
+Delta Sigma Theta
+Ethiopian restaurants
+
+Manual search should search our own indexed ecosystem:
+
+businesses
+places
+houses of faith
+heritage sites
+events
+Library
+community content
+creator/Cultural Ambassador content
+guides
+marketplace where relevant
+and other appropriate MWM entities.
+
+Manual business/discovery searching should NOT be artificially limited
+because of KinfolkAI membership tiers.
+
+------------------------------------------------------------
+
+B. KINFOLKAI RESEARCH / ASSISTANCE
+
+KinfolkAI performs research and reasoning FOR the user.
+
+This usage is tier-based.
+
+Kinfolk may:
+
+research a subject
+identify reputable sources
+synthesize information
+personalize results
+compare information
+connect Library knowledge
+connect businesses/places/resources
+use location context
+use travel context
+use voluntarily shared user context
+explain why a result matters
+suggest next questions/actions
+
+DO NOT turn ordinary MWM search into a KinfolkAI call merely to monetize
+search.
+
+============================================================
+2. LIBRARY BOOKS MUST CONTAIN KNOWLEDGE
+============================================================
+
+A Library Book cannot simply be:
+
+title
+follow button
+empty page
+
+A Book should progressively contain structured knowledge appropriate to
+that subject.
+
+Possible sections include:
+
+Overview
+Why This Matters
+History
+Current Information
+Local Information
+Resources
+Organizations
+Businesses / Places
+Community Voices
+Cultural Ambassador Content
+Videos
+Travel
+Events
+Related Books
+Sources
+Ask Kinfolk
+
+Not every Book needs every section.
+
+The system should determine appropriate sections based on topic type.
+
+============================================================
+3. RESEARCH QUALITY / SOURCE HIERARCHY
+============================================================
+
+Kinfolk must research more like a responsible researcher than a generic
+web scraper.
+
+For every research request:
+
+1. identify the question
+2. identify what type of evidence is appropriate
+3. identify authoritative/reputable sources
+4. distinguish facts from community experience/opinion
+5. prefer primary sources when appropriate
+6. corroborate consequential claims when appropriate
+7. consider publication/update date
+8. preserve source/provenance
+9. summarize rather than copying
+10. communicate uncertainty where evidence is incomplete
+
+Source quality depends on SUBJECT.
+
+Examples:
+
+MEDICAL
+government health agencies
+major medical organizations
+peer-reviewed research
+academic medical centers
+recognized nonprofit/advocacy organizations
+
+LEGAL
+government statutes/regulations
+official courts
+government agencies
+bar/legal-aid resources
+recognized legal organizations
+
+TRAVEL
+official tourism authorities
+government travel information
+local cultural institutions
+reputable travel reporting
+MWM community experience
+
+HISTORY
+museums
+archives
+universities
+government historical resources
+historical societies
+primary documents
+reputable scholarship
+
+BUSINESS
+official business source
+verified MWM business data
+reputable reporting
+community experience clearly labeled as community experience
+
+ENTERTAINMENT/CULTURE
+official sources
+recognized cultural publications
+community voices
+Cultural Ambassadors
+creator content
+
+Do NOT treat every website as equally authoritative.
+
+============================================================
+4. CRITICAL EXAMPLE — INFERTILITY → IVF
+============================================================
+
+Assume:
+
+A user follows/adds:
+
+INFERTILITY
+
+Later the user searches or asks Kinfolk about:
+
+IVF
+
+Kinfolk should understand IVF's relationship to infertility.
+
+It should NOT simply answer:
+
+"No Library topic exists."
+
+Instead:
+
+A. answer the user's IVF question using reputable sources
+
+B. use voluntarily known context where appropriate
+
+C. identify that IVF is substantial enough to become a Library Book
+
+D. create/queue the structured IVF Book
+
+E. relate:
+
+Infertility
+    ↳ IVF
+
+while recognizing IVF may also connect to:
+
+Fertility
+Reproductive Health
+Pregnancy
+Family Building
+Insurance
+Financial Resources
+Mental/Emotional Support
+etc.
+
+Do not force every relationship into a simple parent/child hierarchy.
+Books can have multiple relationships.
+
+============================================================
+5. CORE KNOWLEDGE VS PERSONALIZED KNOWLEDGE
+============================================================
+
+Two users asking about IVF should share a trustworthy CORE knowledge base.
+
+Example core information:
+
+What IVF is
+general process
+common terminology
+general evidence
+questions patients may consider asking providers
+reputable organizations/resources
+
+Then personalization may change the result.
+
+Example:
+
+User A:
+Black woman
+Pennsylvania
+interested in insurance coverage
+
+User B:
+Black woman
+Georgia
+looking for fertility specialists
+
+They receive the SAME trustworthy foundational IVF knowledge.
+
+But Kinfolk may additionally surface relevant information based on
+voluntarily shared context.
+
+For User A:
+Pennsylvania-specific insurance/resources where authoritative information
+exists.
+
+For User B:
+Georgia-specific information/resources.
+
+If the user specifically asks about IVF and Black women, or voluntarily
+provided relevant context that may appropriately personalize the answer,
+Kinfolk may research disparities, outcomes, access issues, culturally
+relevant organizations, and other evidence-backed information.
+
+Do not assume demographic identity merely from platform membership.
+
+============================================================
+6. MEDICAL SAFETY
+============================================================
+
+Medical Library content must distinguish:
+
+educational information
+community experience
+professional medical guidance
+
+Community stories must NEVER become medical evidence merely because many
+members agree with them.
+
+Example:
+
+"Members frequently discuss X"
+
+is different from:
+
+"Medical evidence establishes X."
+
+Preserve that distinction in both Library and Kinfolk responses.
+
+Kinfolk should provide educational information and reputable resources,
+while directing users to appropriate licensed professionals for
+individual diagnosis/treatment decisions.
+
+============================================================
+7. LOCATION RELEVANCE
+============================================================
+
+Library information should have:
+
+GLOBAL / CORE layer
++
+LOCATION-SPECIFIC layer where appropriate.
+
+For IVF this could eventually include:
+
+state insurance information
+state programs/resources
+local clinics/providers
+local support organizations
+local events
+community experiences
+
+For Kenya it could include:
+
+country history
+culture
+economy
+official travel information
+current travel information
+businesses
+heritage
+community stories
+Cultural Ambassador media
+volunteer resources
+donation resources
+diaspora connections
+local MWM entities
+
+For Historical Churches:
+
+core historical information
++
+historical churches relevant to the user's location/trip/search.
+
+============================================================
+8. FOLLOWING A BOOK MUST ACTUALLY DO SOMETHING
+============================================================
+
+"Follow" cannot be decorative.
+
+Following a Library Book should create an interest relationship between:
+
+USER ↔ BOOK
+
+It can then inform, subject to privacy/settings:
+
+Library recommendations
+Kinfolk context
+relevant new resources
+related Books
+events
+business/place discovery
+travel recommendations
+community discovery
+content recommendations
+
+Example:
+
+Follow Kenya
+
+MWM may subsequently recognize relevance when:
+
+a Kenyan restaurant is nearby
+a Kenya cultural event is added
+a Cultural Ambassador posts Kenya content
+the user plans East Africa travel
+a related Library Book becomes available
+
+Do NOT automatically send excessive notifications.
+
+Notification preferences must control delivery.
+
+============================================================
+9. OPTIONAL COMMUNITY VISIBILITY
+============================================================
+
+Following or researching a sensitive topic must NEVER automatically make
+that interest visible to other members.
+
+This is especially important for topics such as:
+
+infertility
+IVF
+health
+family planning
+legal issues
+financial issues
+identity
+religion
+personal safety
+
+Separate:
+
+KNOWLEDGE INTEREST
+from
+COMMUNITY VISIBILITY.
+
+A user may privately follow IVF without anyone knowing.
+
+If they choose, they may separately opt into community discovery.
+
+Example control:
+
+"Connect me with others interested in this topic"
+
+OFF by default for sensitive topics.
+
+Possible visibility:
+
+Private
+Visible to connections
+Visible within selected Circle/group
+Visible to members following this topic
+
+The user controls this.
+
+============================================================
+10. DISTANCE SHOULD NOT PREVENT COMMUNITY
+============================================================
+
+If two users voluntarily opt into IVF community discovery, they may connect
+even if they live 1,000 miles apart.
+
+Knowledge relevance and relationship relevance are different.
+
+For medical providers:
+distance matters heavily.
+
+For state insurance:
+state matters heavily.
+
+For emotional/community connection:
+distance may matter very little.
+
+For an online support group:
+distance may be irrelevant.
+
+The ranking system must understand the difference.
+
+============================================================
+11. USER-GENERATED TOPICS BUILD THE LIBRARY
+============================================================
+
+When a user searches for a meaningful subject that does not yet have a
+Book:
+
+DO NOT simply return:
+"No topics found."
+
+The system should:
+
+1. capture the search/query
+2. determine whether an existing Book semantically covers it
+3. if not, create a topic candidate
+4. classify the subject
+5. determine appropriate research/source requirements
+6. generate/queue the Book structure
+7. connect it to related Books
+8. seed reputable foundational sources
+9. make it available to future users after appropriate validation
+
+This is how the Library grows every day.
+
+Do NOT blindly publish arbitrary strings as authoritative Books.
+
+Example:
+
+User searches:
+IVF
+
+No IVF Book exists.
+
+System recognizes legitimate substantive topic.
+
+Creates/queues:
+
+IVF
+
+and relationships to:
+
+Infertility
+Fertility
+Reproductive Health
+Family Building
+
+The next user benefits from the knowledge created by the prior demand.
+
+============================================================
+12. SEARCH DEMAND FEEDS THE FLYWHEEL
+============================================================
+
+Search terms themselves are useful ecosystem intelligence.
+
+Examples:
+
+37 members search:
+Fruity Pebble waffles
+
+18 members search:
+Black fertility doctors
+
+22 members search:
+Kenyan restaurants
+
+14 members search:
+Black Catholic churches
+
+These searches can improve:
+
+Library development
+business opportunity intelligence
+Cultural Ambassador content opportunities
+recommendations
+missing-data identification
+event/content discovery
+
+However:
+
+NEVER expose individual sensitive searches to businesses or creators.
+
+Business/creator intelligence should use privacy-preserving aggregation
+and appropriate minimum thresholds.
+
+Example:
+
+GOOD:
+"People in your area are increasingly searching for tea-party experiences."
+
+NOT ACCEPTABLE:
+"Teianna searched for tea parties."
+
+============================================================
+13. BUSINESS + CULTURAL AMBASSADOR DIFFERENCE
+============================================================
+
+Ordinary members can contribute information/media according to platform
+rules.
+
+Verified/established Businesses and Cultural Ambassadors receive additional
+analytics/intelligence appropriate to their role/tier.
+
+Examples:
+
+search-demand trends
+content interest
+audience engagement
+business discovery trends
+topic demand
+conversion/interaction analytics
+
+They do NOT receive private individual search histories.
+
+============================================================
+14. DO NOT RESEARCH THE SAME CORE QUESTION REPEATEDLY
+============================================================
+
+The system should reuse validated Library knowledge.
+
+If Kinfolk researches IVF today and establishes reliable foundational
+sources, the next 1,000 users should not require 1,000 identical external
+research operations.
+
+Store:
+
+source
+source type
+retrieval date
+publication/update date where known
+claims/knowledge derived
+topic relationship
+review/update status
+
+Then Kinfolk retrieves the shared knowledge and performs only the
+personalized/contextual work necessary.
+
+This controls:
+
+AI cost
+research cost
+latency
+inconsistency
+
+and makes the Library progressively more valuable.
+
+============================================================
+15. FRESHNESS
+============================================================
+
+Not all information ages at the same speed.
+
+Examples:
+
+Historic founding date:
+rarely needs refresh.
+
+Travel advisory:
+high freshness requirement.
+
+Medical recommendation/guideline:
+periodic verification.
+
+Event:
+real-time/date-sensitive.
+
+Business hours:
+frequent verification.
+
+Insurance law/coverage:
+jurisdiction + freshness sensitive.
+
+The Library knowledge model must include freshness/reverification logic
+appropriate to source/content type.
+
+============================================================
+16. KINFOLK TIER ENFORCEMENT
+============================================================
+
+Preserve the previously approved KinfolkAI membership/tier limits.
+
+DO NOT invent new tier quantities during this implementation.
+
+Audit the existing approved tier configuration and enforce it.
+
+Manual MWM search:
+available independently of Kinfolk usage limits.
+
+Kinfolk research/personalization:
+counts according to approved membership tier.
+
+Shared Library knowledge:
+should not unnecessarily trigger expensive AI research merely because a
+user opens a Book.
+
+============================================================
+17. ACCEPTANCE TEST
+============================================================
+
+Use IVF as the end-to-end test.
+
+Starting state:
+Infertility Book exists.
+IVF Book does NOT exist.
+
+Test:
+
+1. User follows Infertility privately.
+2. Confirm following actually persists.
+3. Search IVF manually.
+4. Confirm manual search does not consume Kinfolk allowance.
+5. Ask Kinfolk about IVF.
+6. Kinfolk identifies reputable sources.
+7. Kinfolk provides trustworthy foundational information.
+8. Kinfolk recognizes relationship to Infertility.
+9. IVF becomes/queues a structured Library Book.
+10. Related Book relationship persists.
+11. Second user can discover IVF.
+12. Second user receives same core foundational knowledge.
+13. Location-specific information differs appropriately.
+14. First user's infertility/IVF interest remains PRIVATE.
+15. User can explicitly opt into community connection.
+16. No business/creator receives individual sensitive-search information.
+17. Sources/provenance are stored.
+18. Tier usage is correctly recorded for the Kinfolk request.
+19. Manual business/Library search remains unlimited.
+20. No duplicate Books are created from spelling/case/synonym variations.
+
+Before implementation:
+audit the existing Library, Kinfolk usage/tier system, search infrastructure,
+user-interest tables, source tables and recommendation architecture.
+
+Reuse existing architecture wherever safe.
+
+Do not replace working systems unnecessarily.
+
+Then implement in small, reversible stages and report after each stage.
+```
+
+There is one additional piece I would add architecturally: **a Book should not equal a webpage.** It should be a knowledge object.
+
+That solves your D9 idea beautifully. “Divine Nine” can be a Book; each organization can be its own Book; an HBCU can be an entity connected to several Books; Philadelphia can be a geographic Book; IVF can simultaneously belong to infertility, reproductive health, insurance, and family-building collections. Nothing needs to be duplicated.
+
+And there is an even bigger flywheel emerging:
+
+**Search → demand signal → research → Library knowledge → entity connections → personalized Kinfolk answer → community contribution → better knowledge → better discovery → business/creator opportunity.**
+
+That is much closer to what you've been describing than the current “Library topic + Follow button” implementation.
