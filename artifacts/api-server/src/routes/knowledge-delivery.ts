@@ -206,6 +206,41 @@ router.patch("/knowledge/issues/:id/follow/pin", async (req: Request, res: Respo
   }
 });
 
+// ── POST /knowledge/topics/request — member requests a new topic ─────────────
+// Creates a knowledge_topics record with category "requested" so admins can review.
+// Returns { ok: true, alreadyExists: false } or { ok: true, alreadyExists: true }.
+router.post("/knowledge/topics/request", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const { topicName } = req.body as { topicName?: string };
+    if (!topicName?.trim()) {
+      res.status(400).json({ error: "topicName is required" });
+      return;
+    }
+    const name = topicName.trim();
+    // Check if topic already exists (case-insensitive)
+    const existing = await db.execute(
+      `SELECT id FROM knowledge_topics WHERE LOWER(topic_name) = LOWER($1) LIMIT 1` as any,
+      [name]
+    ).catch(() => null);
+    const rows = (existing as any)?.rows ?? [];
+    if (rows.length > 0) {
+      res.json({ ok: true, alreadyExists: true, message: "This topic is already in the library or pending review." });
+      return;
+    }
+    // Insert as user-requested — admin will review and re-categorize
+    await db.execute(
+      `INSERT INTO knowledge_topics (id, topic_name, category, description, notification_priority, keywords, trusted_sources, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, 'requested', $2, 'digest', '{}', '[]', NOW(), NOW())` as any,
+      [name, `Community-requested topic submitted by member ${req.user!.id}. Pending admin review.`]
+    ).catch(() => null);
+    res.json({ ok: true, alreadyExists: false, message: `"${name}" has been submitted for review.` });
+  } catch (err) {
+    req.log.error({ err }, "POST /knowledge/topics/request error");
+    res.status(500).json({ error: "Failed to submit topic request." });
+  }
+});
+
 /* ─── Happening Now ─── */
 
 router.get("/knowledge/happening-now", async (req: Request, res: Response) => {

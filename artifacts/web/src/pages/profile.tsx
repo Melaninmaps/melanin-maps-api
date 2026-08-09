@@ -684,10 +684,17 @@ export default function Profile() {
       const res = await fetch(`${BASE}api/users/avatar`, { method: "POST", credentials: "include", body: formData });
       if (res.ok) {
         toast({ title: "Profile photo updated" });
+        // Only invalidate the profile query — auth session is not affected by an avatar change
         queryClient.invalidateQueries({ queryKey: ["getMyProfile"] });
-        queryClient.invalidateQueries({ queryKey: ["getCurrentAuthUser"] });
-      } else { toast({ title: "Could not upload photo", variant: "destructive" }); setAvatarPreview(null); }
-    } catch { toast({ title: "Upload failed", variant: "destructive" }); setAvatarPreview(null); }
+      } else {
+        const errText = await res.text().catch(() => "");
+        toast({ title: "Could not upload photo", description: errText || "Please try again.", variant: "destructive" });
+        setAvatarPreview(null);
+      }
+    } catch (err) {
+      toast({ title: "Upload failed", description: "Check your connection and try again.", variant: "destructive" });
+      setAvatarPreview(null);
+    }
     finally { setAvatarUploading(false); }
   };
   const handleSignOutAll = async () => {
@@ -718,42 +725,52 @@ export default function Profile() {
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
-      <div className="bg-[#2B1507] h-32 md:h-48 w-full absolute top-0 z-0" />
+      {/* Dark header band — tall enough on mobile to cover the two-row header + stats */}
+      <div className="bg-[#2B1507] h-72 sm:h-60 md:h-52 w-full absolute top-0 z-0" />
 
-      <div className="container mx-auto px-4 md:px-6 py-12 relative z-10 max-w-6xl">
-        {/* Top bar */}
-        <div className="flex justify-between items-center mb-8">
+      <div className="container mx-auto px-4 md:px-6 pt-10 pb-28 sm:pb-10 relative z-10 max-w-6xl">
+        {/* Top bar — stacks vertically on mobile, horizontal on sm+ */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 sm:mb-8">
           <h1 className="text-3xl md:text-5xl font-serif font-bold text-white tracking-tight">Your Profile</h1>
-          <div className="flex items-center gap-2">
+
+          {/* Controls — on mobile: admin button full-width, then security buttons share a row */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             {isAdminUser && (
-              <Link href="/admin">
+              <Link href="/admin" className="block sm:inline-block">
                 <Button
                   variant="outline"
-                  className="rounded-full bg-[#CA922B]/20 text-[#CA922B] border-[#CA922B]/40 hover:bg-[#CA922B] hover:text-white hover:border-[#CA922B] backdrop-blur h-10 text-xs font-bold"
+                  className="w-full sm:w-auto rounded-full bg-[#CA922B]/20 text-[#CA922B] border-[#CA922B]/40 hover:bg-[#CA922B] hover:text-white hover:border-[#CA922B] backdrop-blur h-10 text-xs font-bold"
                 >
-                  <svg className="mr-1.5 h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
+                  <svg className="mr-1.5 h-3.5 w-3.5 shrink-0" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>
                   Switch to Admin Dashboard
                 </Button>
               </Link>
             )}
-            <Button
-              variant="outline"
-              onClick={handleSignOutAll}
-              disabled={signOutAllLoading}
-              title="Sign out of every device and session"
-              className="rounded-full bg-white/10 text-white border-white/20 hover:bg-red-600 hover:text-white hover:border-red-600 backdrop-blur h-10 text-xs"
-            >
-              <Shield className="mr-1.5 h-3.5 w-3.5" />
-              {signOutAllLoading ? "Signing out…" : "All Devices"}
-            </Button>
-            <Button variant="outline" onClick={handleLogout} className="rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur h-10">
-              <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </Button>
+            {/* All Devices + Sign Out share a row on mobile */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleSignOutAll}
+                disabled={signOutAllLoading}
+                title="Sign out of every device and session"
+                className="flex-1 sm:flex-none rounded-full bg-white/10 text-white border-white/20 hover:bg-red-600 hover:text-white hover:border-red-600 backdrop-blur h-10 text-xs"
+              >
+                <Shield className="mr-1.5 h-3.5 w-3.5 shrink-0" />
+                {signOutAllLoading ? "Signing out…" : "All Devices"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="flex-1 sm:flex-none rounded-full bg-white/10 text-white border-white/20 hover:bg-white hover:text-[#2B1507] backdrop-blur h-10"
+              >
+                <LogOut className="mr-2 h-4 w-4 shrink-0" /> Sign Out
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
             <div className="text-2xl font-serif font-bold text-[#CA922B]">{savedCount}</div>
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Saved</div>

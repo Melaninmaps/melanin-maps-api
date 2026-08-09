@@ -1,0 +1,1303 @@
+Yes — this is enough to close this audit batch. The screenshots plus your notes reveal a coherent set of issues, and I would treat them as **one web experience correction pass**, not a dozen unrelated changes.
+
+Two product decisions I would lock in before Replit touches anything. First, the **Business page and Map should have different jobs**: Business Directory = broad, deliberate search anywhere; Map = nearby/spatial search based on what the user asks for. Second, the **safety overlay should always exist quietly in the background**, but historical sundown-town context and current community danger must remain distinct. A historical designation should not automatically make an area visually look “currently dangerous.” The darker/golder urgency shading should come from **recent, credible safety intelligence**, while sundown-town history can contribute a subtle baseline/context marker that the user can open or dismiss.
+
+Below is the consolidated Replit instruction. This includes the screenshots and observations from this entire batch and separates **bugs/lost functionality, missing functionality, UX corrections, and future-state architecture**.
+
+```text
+MAPPING WITH MELANIN™
+WEB EXPERIENCE CORRECTION PASS — FINAL FOUNDER AUDIT
+
+IMPORTANT:
+This instruction consolidates the founder's actual production testing.
+
+DO NOT PUSH FIRST.
+
+WORK IN THIS ORDER:
+
+1. READ-ONLY AUDIT / ROOT-CAUSE TRACE
+2. REPORT WHAT EXISTS, WHAT REGRESSED, AND WHAT IS MISSING
+3. IMPLEMENT ONLY THE REQUIREMENTS MARKED FOR THIS PASS
+4. BUILD AND TEST
+5. VISUALLY INSPECT THE ACTUAL BUILD CANDIDATE
+6. PROVIDE PROOF
+7. STOP FOR FOUNDER APPROVAL
+8. THEN follow the documented production push procedure
+9. After push, visually verify the actual public production website again
+
+A successful build, endpoint, API response, unit test, or simulation is NOT sufficient evidence.
+
+=========================================================
+A. GLOBAL PAGE POSITIONING / PAGE START
+=========================================================
+
+CURRENT ISSUE:
+
+Several pages can open or leave the user positioned too far down the document, including views where the footer/About Us area is immediately visible.
+
+REQUIRED BEHAVIOR:
+
+Every normal route/page should load at the correct top-of-page content position unless:
+- the user intentionally followed an anchor/deep link, or
+- the page is intentionally preserving a prior scroll state.
+
+Users should not land at:
+About Us
+footer
+bottom of map
+lower-page content
+
+when opening a page normally.
+
+Audit:
+- window scroll restoration
+- route transitions
+- retained scroll state
+- scrollIntoView calls
+- hash/anchor behavior
+- nested scroll containers
+
+Return exact root cause(s).
+
+=========================================================
+B. BUSINESS DIRECTORY AND MAP HAVE DIFFERENT JOBS
+=========================================================
+
+LOCK THIS PRODUCT DISTINCTION:
+
+BUSINESS DIRECTORY
+= deliberate broad discovery / directory search
+
+MAP
+= nearby and spatial discovery
+
+KINFOLK
+= personalized recommendation / decision support
+
+LIBRARY
+= knowledge, culture, resources, stories and deeper exploration
+
+Do not make all four surfaces behave like the same search page.
+
+=========================================================
+C. MAP — DO NOT AUTOLOAD ALL BUSINESSES
+=========================================================
+
+CURRENT PRODUCTION:
+
+Opening Explore the Map currently produces up to 200 business locations automatically.
+
+This is overwhelming and should stop.
+
+REQUIRED MAP DEFAULT:
+
+When the map opens:
+
+DO NOT automatically populate all businesses.
+
+The map may continue to show approved:
+- heritage/cultural layers
+- HBCUs
+- festivals
+- community events
+- markets
+- public art
+- safety context
+
+but BUSINESS results should appear only after the member searches.
+
+Replace the conceptual behavior of:
+
+"Businesses = show every business"
+
+with:
+
+"Find a Business"
+
+=========================================================
+D. MAP BUSINESS SEARCH — QUERY FIRST
+=========================================================
+
+The member should be able to type:
+
+exact business name
+partial business name
+category
+subcategory
+specialty
+service
+ownership/community
+Vibe
+THE REAL
+What Stands Out
+natural-language need
+
+and press ENTER or click Search.
+
+EXACT / NAMED BUSINESS BEHAVIOR:
+
+Search:
+"The Pink Tea Cup"
+
+If there is exactly one relevant result:
+show that result only.
+
+Search:
+"Allure Hair"
+
+If four businesses legitimately match:
+show those four.
+
+Do not dilute a strong named-business query with unrelated nearby records.
+
+GENERIC BUSINESS SEARCH:
+
+Search:
+"restaurant"
+"barber"
+"hair salon"
+"attorney"
+
+This should NOT immediately return hundreds of results.
+
+First identify the taxonomy match, then expose relevant refinement choices.
+
+Example:
+
+BARBER
+→ Beauty & Personal Care
+→ Barbershop
+
+Then surface contextually appropriate refinements such as:
+
+Near Me
+Distance
+Specialty
+Price
+Ownership/community
+Vibe
+What Stands Out
+Open Now when data exists
+Accessibility when data exists
+
+PROFESSIONAL/HIGH-TRUST SERVICES:
+
+Use THE REAL rather than Vibe where the approved taxonomy says THE REAL applies.
+
+Do not show THE REAL and Vibe simultaneously.
+
+=========================================================
+E. MAP — VIBE / THE REAL AFTER GENERIC SEARCH
+=========================================================
+
+Founder expectation:
+
+If the member types only:
+
+restaurant
+
+then after the category is understood, ask enough to narrow the experience.
+
+Examples could include:
+
+"What kind of mood are you in?"
+
+Romantic
+Chill
+Turn Up
+Family Time
+Eat Good
+Grown Folks
+Culture
+etc. from the approved Vibe source
+
+If the user searches:
+
+attorney
+
+the follow-up should be more functional:
+
+What kind?
+Tax
+Immigration
+Estate
+Family
+Criminal
+etc.
+
+and then THE REAL/community trust filters may help.
+
+This should be dynamic by Category + Subcategory.
+
+Do not create one universal filter panel for every business type.
+
+=========================================================
+F. MAP — NEARBY FIRST
+=========================================================
+
+CURRENT FAILURE OBSERVED:
+
+A search for "barber" displayed:
+- Philadelphia
+- Silver Spring, MD approximately 217.8 km away
+- Montgomery, AL approximately 1,332.5 km away
+
+This is not acceptable for default map discovery.
+
+REQUIRED:
+
+For generic/map business discovery, search nearby first.
+
+Presentation can expand progressively:
+
+5 miles
+10 miles
+25 miles
+50 miles
+
+If useful matches do not exist nearby, ASK:
+
+"Nothing else matched nearby. Expand the search?"
+
+Do not silently jump hundreds of miles.
+
+EXCEPTIONS:
+
+1. Exact named-business search
+2. Very specialized service/specialty where broader distance is justified
+
+In those cases, explain the distance.
+
+=========================================================
+G. MAP — SEARCH THIS AREA
+=========================================================
+
+When the member pans or zooms:
+
+Do not constantly repopulate the entire map.
+
+Provide:
+
+"Search this area"
+
+The user controls when a moved viewport becomes a new search.
+
+=========================================================
+H. MAP RESULT SELECTION MUST MOVE THE MAP
+=========================================================
+
+Current event/category lists can display records geographically unrelated to the current viewport without moving the map.
+
+Example:
+
+Adams Morgan Day
+Washington, DC
+
+If selected:
+the map should move to Washington, DC.
+
+Preferred behavior:
+
+1. use exact stored coordinates where available
+2. center/select marker
+3. open concise preview
+
+If exact coordinates do not exist but city/neighborhood is known:
+use appropriate city/neighborhood coordinates
+and make it clear that the location is approximate.
+
+This must work consistently for:
+
+businesses
+events
+festivals
+markets
+HBCUs
+cultural sites
+public art
+sundown-town records
+other mapped records
+
+=========================================================
+I. RESULT LISTS ARE NOT THE LIBRARY
+=========================================================
+
+Current map category views may show large lists such as 60 community events.
+
+Do not turn the map sidebar into a national directory.
+
+MAP:
+initial manageable spatial results
+
+LIBRARY / EXPLORE:
+complete browsing
+
+If many records exist:
+show an initial relevant set
+then:
+Show More
+Expand Search
+View All in Explore/Library
+
+=========================================================
+J. SUNDOWN TOWN HISTORY — REQUIRED ALWAYS-AVAILABLE SAFETY CONTEXT
+=========================================================
+
+THIS IS STILL NOT VISIBLY WORKING.
+
+We have already proven:
+- sundown_towns data exists
+- the dedicated API exists
+- the production bundle requests it
+
+Yet the user cannot see an obvious Sundown Town layer/control in the current production map legend.
+
+THIS IS A USER-FACING DEFECT.
+
+Sundown-town history is a SAFETY/TRAVEL feature.
+
+REQUIRED:
+
+Add a visible but unobtrusive map safety layer:
+
+"Sundown Town History"
+
+It should exist as an always-available overlay/layer, comparable in discoverability to:
+Festivals
+Markets
+HBCUs
+Community Events
+etc.
+
+The member should be able to:
+- see that the layer exists
+- click/tap it
+- inspect locations
+- dismiss/hide it if desired
+
+DO NOT reseed or recreate the data.
+
+=========================================================
+K. SAFETY MAP VISUALIZATION — HISTORICAL VS CURRENT
+=========================================================
+
+IMPORTANT DESIGN RULE:
+
+Do NOT visually imply:
+
+historic sundown-town designation = current verified danger.
+
+Separate:
+
+1. HISTORICAL SAFETY CONTEXT
+2. CURRENT / RECENT COMMUNITY SAFETY INTELLIGENCE
+
+MY RECOMMENDATION:
+
+Historical sundown-town context:
+subtle persistent background/context treatment
+or discreet marker/overlay.
+
+Recent verified safety patterns:
+may increase visual emphasis.
+
+Possible visual model:
+
+neutral map
+→ very subtle warm/gold contextual shading
+→ deeper gold/amber only as current/recent credible safety evidence increases
+
+The darker/more urgent appearance should be driven by:
+recency
+severity
+credible corroboration
+verified patterns
+
+NOT merely the historic label.
+
+The experience should help, not frighten.
+
+Clicking an area should explain WHY context is appearing:
+
+Historical context
+Recent community concern
+Official advisory
+Verified incident pattern
+etc.
+
+=========================================================
+L. FUTURE ROUTE SAFETY
+=========================================================
+
+CAPTURE AS FUTURE REQUIREMENT — DO NOT BUILD IN THIS PASS.
+
+When turn-by-turn/community-aware routing is developed:
+
+the route should be able to combine:
+- current safety patterns
+- relevant historical context
+- community business recommendations
+- practical service availability
+
+Example:
+
+A user needs gas.
+
+A nearby option has credible community safety concerns.
+
+Another appropriate minority-owned/recommended station exists a reasonable distance ahead.
+
+Kinfolk/navigation may offer:
+
+"There have been community safety concerns near this location. There's another recommended option 4 miles ahead. Would you like to route there instead?"
+
+If no preferred-community option exists within practical range:
+
+ASK:
+"Would you like me to expand the search?"
+
+If not:
+still provide practical alternatives.
+
+Safety and necessary services come before ownership preference.
+
+=========================================================
+M. COMMUNITY @MENTIONS — PEOPLE + BUSINESSES
+=========================================================
+
+The Community composer should make engagement very easy.
+
+Members should be able to @mention:
+
+1. Mapping With Melanin member profiles
+2. Mapping With Melanin business profiles
+
+Do not make users memorize a special MWM business handle.
+
+RECOMMENDATION:
+
+The @ experience should search recognizable display names.
+
+Example:
+
+User types:
+@Pink
+
+Autocomplete may show:
+
+BUSINESSES
+Thee Pink Plate Cafe
+Philadelphia, PA
+Food & Drink
+
+PEOPLE
+Pink Jones
+@pinkjones
+
+When the user selects a business:
+the mention should link directly to that business's MWM profile.
+
+Internally, use the permanent business/user ID, not display text alone.
+
+=========================================================
+N. @MENTION BUSINESS NOT YET IN DATABASE
+=========================================================
+
+Founder requirement:
+
+If a member tries to @mention a business that is not in the Mapping With Melanin database:
+
+do not simply fail.
+
+Offer:
+
+"Can't find it? Add this business."
+
+Then allow the system/admin workflow to discover as much publicly available business information as appropriate.
+
+Potential sources:
+official business website
+verified social profile
+mapping/location source
+public business registry where available
+other approved public-source registry
+
+The result should create:
+
+CLAIMABLE BUSINESS LISTING
+
+not:
+VERIFIED business
+not:
+SAFE business
+not:
+PROMOTED business
+
+Store provenance for discovered fields.
+
+=========================================================
+O. FUTURE BUSINESS INVITE
+=========================================================
+
+When the platform is fully launched and a newly added business has a usable public contact method:
+
+the approved workflow may invite the business to claim its profile.
+
+Do not send automated invitations during the current beta unless the founder has specifically enabled them.
+
+Capture:
+
+business discovered by
+business created by
+source
+claim status
+invitation eligibility
+invitation status
+
+=========================================================
+P. BUSINESS TRUST STATUS MUST REMAIN LAYERED
+=========================================================
+
+Do not use one generic:
+verified = true
+
+for everything.
+
+Keep distinct:
+
+business existence confirmed
+business ownership/identity verified
+business claimed
+community visit confirmed
+community confidence
+safety evidence
+
+Example user-facing states may eventually include:
+
+Listed — Not Yet Community Verified
+Business Verified
+Community Visit Confirmed
+Growing Community Insight
+Strong Community Insight
+Community Concern Reported
+
+Business Verified DOES NOT mean "safe."
+
+One positive member experience DOES NOT certify safety.
+
+=========================================================
+Q. COMMUNITY MEDIA — SOCIAL URL + DIRECT FILE
+=========================================================
+
+Current community composer visibly supports:
+image file upload
+video file upload
+
+Keep that ability where tier/policy permits.
+
+BUT ADD THE APPROVED SOCIAL-MEDIA MODEL.
+
+Users should also be able to attach:
+
+Instagram post/reel URL
+TikTok URL
+YouTube URL
+Facebook/social URL where supported
+other approved public media URL
+
+Store:
+original URL
+platform
+creator/source
+contributor
+date
+moderation status
+related business/place/event/story where applicable
+
+We want to preserve traffic/credit to the original creator whenever possible.
+
+The user should not have to download somebody's video just to share it on Mapping With Melanin.
+
+=========================================================
+R. BUSINESS MEDIA — ALL LISTINGS, INCLUDING UNCLAIMED
+=========================================================
+
+Previous audit only proved the profile can READ media.
+
+We need to prove CONTRIBUTION.
+
+Audit:
+
+Admin
+Business owner
+Free member
+Paid/premium member
+Tester
+other current tiers
+
+For each:
+Can add photo URL?
+Can add video URL?
+Can upload photo file?
+Can upload video file?
+Requires moderation?
+Limits?
+
+UNCLAIMED business:
+
+must still be capable of receiving approved community/admin media contributions.
+
+Claim status governs official owner-management rights.
+
+It must not prevent the community from making a listing useful.
+
+Do not invent tier limits.
+Use the existing approved tier model and report gaps.
+
+=========================================================
+S. MARKETPLACE LISTING ERROR
+=========================================================
+
+Founder attempted to create a Marketplace listing:
+
+Title:
+Teen Boys Clothing
+
+Description:
+Gently used clothes sized 12-14
+
+Category:
+Clothing
+
+Condition:
+Good
+
+Price:
+$20
+
+City:
+Philadelphia, PA
+
+Contact:
+provided
+
+Posting produced an error / did not complete.
+
+This is a BUG.
+
+READ-ONLY trace:
+
+form submission
+frontend validation
+auth
+tier permissions
+API request
+HTTP status
+API body
+database validation
+required columns
+enum/category values
+price format
+contact format
+listing creation
+returned response
+
+Return the exact first failure.
+
+Do not rewrite the Marketplace form until the cause is known.
+
+=========================================================
+T. LIBRARY — EXISTING TOPICS DO NOT APPEAR IN FEED
+=========================================================
+
+Founder has followed/added topics.
+
+Feed displays:
+"No articles in your feed yet"
+
+This is a BUG or incomplete pipeline.
+
+Trace:
+
+topic follow
+→ saved user_topic/follow relation
+→ feed query
+→ eligible Library items/articles/resources
+→ source ingestion
+→ filtering
+→ ranking
+→ frontend display
+
+Report:
+
+Which topics founder currently follows
+How many library items exist for each
+How many are feed-eligible
+Why zero appear
+
+If there is no content behind a topic, do not pretend the feed is broken:
+report the data gap.
+
+If content exists but the feed fails to connect it:
+fix the retrieval.
+
+=========================================================
+U. LIBRARY — TOPIC CREATION / WELDING REGRESSION
+=========================================================
+
+Founder previously used a flow that allowed a missing topic such as HVAC to be added.
+
+Now:
+
+search "Welding"
+→ No topics found
+→ no apparent ability to add/request it.
+
+This functionality appears to have been lost or disconnected.
+
+AUDIT:
+
+Find the previous:
+"Can't find topic? Add/request topic"
+flow.
+
+Determine:
+- component
+- API
+- moderation/approval behavior
+- whether members could create directly or submit for review
+- why it is no longer present
+
+REQUIRED:
+
+If no topic matches:
+provide an obvious action such as:
+
+"Request this topic"
+or
+"Add Welding"
+
+depending on the approved moderation architecture.
+
+Do not silently make every free-text search a public taxonomy value.
+
+=========================================================
+V. HVAC SHOULD NOT LIVE UNDER GENERIC COMMUNITY IF A BETTER TAXONOMY EXISTS
+=========================================================
+
+Current screenshot shows:
+
+HVAC
+Category: Community
+
+This is semantically weak and conflicts with "Community" as an actual social/community concept.
+
+AUDIT the Library topic-category taxonomy.
+
+MY RECOMMENDATION:
+
+Use a clearer umbrella such as:
+
+SKILLS & TRADES
+or
+TRADES & SKILLED WORK
+
+Potential topics:
+HVAC
+Welding
+Electrical
+Plumbing
+Carpentry
+Automotive
+Construction
+Cosmetology education where appropriate
+other trades
+
+Do NOT add a large number of new top-level categories to the UI in this pass.
+
+First determine whether an existing umbrella can be renamed/reused.
+
+Goal:
+avoid "Community" becoming a junk drawer for miscellaneous topics.
+
+=========================================================
+W. LIBRARY — CULTURE & ROOTS
+=========================================================
+
+Preserve the already-approved Culture & Roots specification.
+
+Users must eventually be able to browse/search:
+
+region
+country/territory
+culture/community
+language
+diaspora
+topic
+
+including:
+all approved diaspora/minority communities
+all 55 African Union member states
+Caribbean identities
+Latin American identities
+Asian diaspora
+MENA
+Indigenous communities
+Pacific Islander communities
+Black American/African American
+other approved intersecting community facets
+
+Do not duplicate the Ownership taxonomy unnecessarily.
+
+=========================================================
+X. LIBRARY — SENSITIVE SAVES / KINFOLK PRIVACY
+=========================================================
+
+Preserve the approved permission rule:
+
+SAVED ≠ PERMISSION TO PERSONALIZE
+
+Sensitive topics must not automatically spill into unrelated Kinfolk suggestions.
+
+Sensitive Library saves must support permission such as:
+
+Saved privately
+Use only when I bring it up
+Use when relevant
+Temporary use for this conversation
+Do not use
+
+Do not infer diagnoses, sexuality, immigration status, pregnancy, grief, etc. from searches or saves.
+
+=========================================================
+Y. LIBRARY — SHARE A STORY MUST BE BROADER
+=========================================================
+
+Founder likes the "Share a Story" concept.
+
+Current form appears limited to:
+
+Headline
+Story text
+Category
+Source URL
+
+This should ultimately support richer storytelling.
+
+Audit current capability.
+
+REQUIRED / APPROVED DIRECTION:
+
+Story can include:
+text
+source URL
+photo
+photo/social URL
+video/social URL
+original creator/source attribution
+
+Examples include:
+
+recipe video
+family/community story
+historical account
+alumni story
+community news/context
+cultural tradition
+local creator video
+travel experience
+business/community story
+
+Do not force every story to be written text.
+
+For media:
+prefer original social URL + attribution when appropriate.
+
+=========================================================
+Z. COMMUNITY POST SOCIAL LINKS
+=========================================================
+
+Founder demonstrated typing:
+
+"Started my weekend right with Turkey wings from
+https://www.instagram.com/thee.pink.plate.cafe/"
+
+The system should recognize supported links.
+
+If the linked business already exists in MWM:
+offer/link the Mapping With Melanin business profile.
+
+If not:
+offer to add/create a claimable listing.
+
+Do not automatically create duplicates.
+
+=========================================================
+AA. KINFOLK HOME — WELCOME BACK
+=========================================================
+
+Founder likes:
+
+"Welcome back, Teianna!"
+
+and the continuity:
+"Last time we talked about..."
+
+KEEP THIS.
+
+Founder is undecided about the large action/widget grid.
+
+DO NOT redesign this screen in this pass.
+
+Capture feedback only:
+
+We want members to understand Kinfolk's breadth without the home state feeling overwhelming.
+
+Wait for tester/member feedback before changing.
+
+=========================================================
+AB. KINFOLK BUSINESS RETRIEVAL / CROSS-REFERENCE
+=========================================================
+
+Founder asked:
+"Soul food in Philly"
+
+Kinfolk produced a visually strong response with specific business cards.
+
+However, some businesses the founder manually added to the Mapping With Melanin database did not appear.
+
+READ-ONLY TRACE:
+
+For the exact "Soul food in Philly" query:
+
+Return:
+
+1. normalized intent
+2. normalized city
+3. taxonomy/category/subcategory/vibe interpretation
+4. exact database query
+5. number of matching MWM businesses
+6. every matching database record considered
+7. why each displayed business ranked
+8. why founder-added businesses were excluded
+9. whether any displayed business was generated without a corresponding MWM database/business record
+10. whether Kinfolk is using:
+    - Mapping With Melanin DB
+    - static demo content
+    - model-generated content
+    - outside source
+    - combination
+
+CRITICAL:
+
+Kinfolk must NOT present invented/demo restaurants as if they are platform businesses.
+
+If a business exists in MWM and matches the request, platform data should be the primary retrieval source.
+
+"Soul food" should be able to match:
+category
+subcategory
+specialty
+Vibe/tag
+food/cuisine metadata
+description
+other approved searchable taxonomy
+
+Do not rely on exact text equality only.
+
+=========================================================
+AC. KINFOLK RESULT TRUST
+=========================================================
+
+Every Kinfolk business recommendation should be traceable internally to:
+
+business_id
+source
+matching reason
+ranking reason
+
+Kinfolk should be able to explain:
+
+"Why this?"
+
+Example:
+
+2.3 miles away
+Soul Food
+Black-owned
+Grandma Approved
+Worth Every Visit
+etc.
+
+only when those facts actually exist in approved data.
+
+=========================================================
+AD. BUSINESS DIRECTORY — SEARCH IS REQUIRED
+=========================================================
+
+Founder distinguishes the Businesses page from the map.
+
+BUSINESS DIRECTORY:
+
+User should be able to search broadly by:
+city
+state
+country
+business name
+category
+subcategory
+specialty
+service
+ownership/community
+Vibe
+THE REAL
+What Stands Out
+price
+accessibility
+other approved discovery fields
+
+Example:
+
+"hair stores in ATL"
+
+should work in the Business Directory even if the member is currently in Pennsylvania.
+
+The Map should remain geography/near-me oriented.
+
+The Directory should support intentional remote discovery and travel planning.
+
+=========================================================
+AE. BUSINESS DIRECTORY CURRENT FILTER TAXONOMY IS INCOMPLETE
+=========================================================
+
+Current screenshot shows top-level filters such as:
+
+Black-Owned
+Minority-Owned
+Hispanic-Owned
+Women-Owned
+Veteran-Owned
+LGBTQ+-Owned
+Indigenous-Owned
+
+These do not reflect the comprehensive diaspora/ownership taxonomy already approved.
+
+Audit against the authoritative Ownership Reference.
+
+Do not replace specific identities with one generic "Minority-Owned" choice.
+
+"Minority-Owned" may remain as a broad umbrella if desired,
+but country/community-specific discovery must be supported.
+
+=========================================================
+AF. BUSINESS SEARCH SUBMIT / ENTER
+=========================================================
+
+Every meaningful search field should support:
+
+ENTER
+click/tap search
+autocomplete selection
+
+Do not require the user to know they must click a hidden filter or wait for an implicit refresh.
+
+=========================================================
+AG. BUSINESS @MENTION + DIRECT PROFILE LINK
+=========================================================
+
+LOCK THE DECISION:
+
+A business @mention should resolve to its Mapping With Melanin BUSINESS PROFILE.
+
+User-facing mention can display:
+
+@TheePinkPlateCafe
+or
+Thee Pink Plate Cafe
+
+but internally must link using the canonical business ID.
+
+Do not require every business to claim the profile before it can be mentioned.
+
+=========================================================
+AH. PEOPLE @MENTIONS
+=========================================================
+
+Members should be able to @mention other MWM members where privacy/settings permit.
+
+Autocomplete should respect:
+block relationships
+account visibility
+group visibility
+privacy controls
+
+Do not expose private account data simply because someone types @.
+
+=========================================================
+AI. MULTIPLE PATHS TO ADD A BUSINESS
+=========================================================
+
+Founder principle:
+
+Adding and discovering businesses should be possible through several natural workflows.
+
+Approved conceptual entry points include:
+
+Business Directory
+Map search
+Community @mention
+social-media link in a post
+Kinfolk search
+admin
+business submission
+community business suggestion
+future travel discovery
+
+All paths should converge on one canonical business record / duplicate-prevention process.
+
+DO NOT build separate duplicate business databases for each feature.
+
+=========================================================
+AJ. BUSINESS EXISTENCE / INTERNATIONAL LISTINGS
+=========================================================
+
+International businesses may be added even before community verification.
+
+Keep separate:
+
+Listed
+Existence Confirmed
+Claimed
+Ownership Verified
+Community Visited
+Community Confidence
+Safety Evidence
+
+Do NOT equate:
+listed = endorsed
+verified business = safe
+
+A listing with minimal evidence should say something like:
+
+"Listed — Limited Community Insight"
+
+rather than implying MWM recommends it.
+
+=========================================================
+AK. MARKETPLACE MEDIA
+=========================================================
+
+Audit whether Marketplace listings can currently add photos/video.
+
+At minimum, Marketplace goods likely need direct photos.
+
+Do not automatically apply the social-URL-first rule in exactly the same way as business/community storytelling where physical item photos may need direct upload.
+
+Report current capability before changing.
+
+=========================================================
+AL. VISUAL/UX PROOF REQUIRED BEFORE PUSH
+=========================================================
+
+Return screenshots or equivalent visual evidence for the build candidate showing:
+
+GLOBAL:
+[ ] pages open at their correct top position
+[ ] footer is not shown unexpectedly
+
+MAP:
+[ ] businesses do NOT auto-populate on map open
+[ ] exact business search returns exact match(es)
+[ ] generic category search reveals relevant refinement
+[ ] pressing Enter works
+[ ] nearby-first behavior works
+[ ] far-away results do not appear by default
+[ ] selected event moves the map to its location
+[ ] Search This Area exists/works if implemented in this pass
+[ ] Sundown Town History control is visible
+[ ] at least one sundown-town marker/context is visibly rendered
+[ ] historical vs current safety treatment is distinguishable
+
+COMMUNITY:
+[ ] @ person autocomplete works
+[ ] @ business autocomplete works
+[ ] selected business mention links to MWM business profile
+[ ] missing business gives Add Business path
+[ ] supported social URL is recognized
+
+MEDIA:
+[ ] social video URL path documented/tested
+[ ] social photo URL path documented/tested
+[ ] direct upload capability documented
+[ ] claimed/unclaimed business behavior documented
+[ ] tier permission matrix supplied
+
+MARKETPLACE:
+[ ] founder-equivalent clothing listing successfully posts
+OR
+[ ] exact remaining failure proven
+
+LIBRARY:
+[ ] followed topics feed displays eligible content where content exists
+[ ] Welding missing-topic path exists
+[ ] HVAC is no longer semantically dumped into "Community" without explanation
+[ ] Share a Story media/link capabilities documented
+[ ] sensitive Library/Kinfolk permission architecture preserved
+
+KINFOLK:
+[ ] Welcome Back remains
+[ ] "Soul food in Philly" query logs exact MWM retrieval
+[ ] displayed businesses correspond to actual approved records/sources
+[ ] founder-added matching business inclusion/exclusion explained
+[ ] no fabricated platform listing
+
+BUSINESS DIRECTORY:
+[ ] search works
+[ ] remote city search works
+[ ] approved taxonomy can be searched/refined
+[ ] Map and Directory behavior remain distinct
+
+=========================================================
+AM. FINAL REPORT FORMAT
+=========================================================
+
+Return:
+
+ITEM
+TYPE:
+Bug / Lost Functionality / Missing Functionality / UX Improvement / Future State
+ROOT CAUSE / CURRENT STATE
+FILES / API / TABLE INVOLVED
+CHANGE MADE
+DATABASE CHANGE?
+TEST PERFORMED
+VISUAL PROOF
+PASS / FAIL
+REMAINING RISK
+
+Also return:
+
+Build status:
+Candidate SHA:
+Candidate bundle:
+Database migrations:
+Data migrations:
+Rollback SHA/version:
+Outstanding issue count:
+
+STOP.
+
+DO NOT PUSH UNTIL THE FOUNDER APPROVES.
+```
+
+A few of your product instincts from this pass are worth explicitly locking in.
+
+For **@mentions**, I would absolutely allow a member to tag the **business profile directly**, not just some separate MWM tag identity. The user should never have to think about your database architecture. They type `@Thee Pink...`, they see the business with its city/category, tap it, and the mention links to the canonical MWM business profile. The same interaction searches people too, separated visually into **People** and **Businesses**. If there is no match, **Add this business** becomes the natural next action.
+
+For the **map**, your latest description is the clearest version so far: it should be quiet until the user tells it what they want. `The Pink Tea Cup` may give one result; `Allure Hair` might give four; `barber` should trigger location + relevant refinements instead of throwing the database at them. The Business Directory can be where I intentionally say **“hair stores in Atlanta”** while sitting in Pennsylvania.
+
+For **sundown towns**, I like your subtle-overlay concept with one protection: **history and present danger cannot share one undifferentiated darkness scale.** I would let historical context create a discreet baseline indication, then allow **recent credible safety evidence** to deepen the gold/amber emphasis. When the user taps the area, the explanation should say whether they're seeing historical context, recent community reports, an official advisory, or some combination. That gives the traveler useful situational awareness without turning the map into a fear map.
+
+And on **Kinfolk's Soul Food response**: visually, I agree—it finally looks much closer to what Kinfolk should feel like. But now Replit has to prove those businesses came from your actual data. That is the next level of quality control: **a beautiful answer isn't enough; it needs provenance.**
+
+We now have enough to give Replit one disciplined pass, demand proof **before** a production push, and stop bouncing from screenshot to screenshot fixing symptoms.

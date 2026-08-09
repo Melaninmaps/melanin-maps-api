@@ -1,0 +1,208 @@
+Yes — this can absolutely be addressed, and from this screenshot I would treat it as a **Profile-page responsive layout bug**, not a problem with the whole mobile web experience.
+
+What feels wrong here is pretty specific: the **“Your Profile” heading is overlapping the admin control row**, the admin/dashboard controls are too wide for the viewport, the stat cards are squeezed into a desktop-style row, and the profile form starts too low while the bottom navigation is already occupying a lot of vertical space. That combination makes the page feel compressed rather than intentionally mobile.
+
+The good news is that you said the rest of the mobile website feels good, so I would **not redesign the entire mobile web app**. I would make the Profile page adapt properly at phone widths.
+
+I’d add this to the current Replit correction pass:
+
+```text
+AO. MOBILE WEB PROFILE PAGE — RESPONSIVE LAYOUT DEFECT
+
+CURRENT ISSUE:
+
+The mobile website generally works well, but the Profile page does not feel properly responsive.
+
+On an iPhone-sized viewport:
+
+- "Your Profile" overlaps / collides with the admin control row
+- "Switch to Admin Dashboard" and adjacent controls are too wide for the screen
+- profile stats remain arranged like a desktop row and feel compressed
+- content is vertically crowded
+- the editable profile form begins too low
+- bottom navigation occupies significant screen space while the page content is not accounting for it
+- text and controls feel "smushed together"
+
+This is a PROFILE PAGE responsive-layout defect.
+
+Do not redesign the entire mobile site.
+
+=========================================================
+READ-ONLY AUDIT FIRST
+=========================================================
+
+Identify:
+
+Profile page component
+Desktop layout container
+Mobile breakpoints
+Heading positioning
+Admin-control container
+Stats-card grid/flex rules
+Profile form container
+Bottom-nav safe-area/padding behavior
+Any fixed heights/min-heights
+Any absolute positioning
+Any desktop-only widths being inherited on mobile
+
+Report:
+
+Viewport width tested:
+Current breakpoint:
+Exact CSS/layout rule causing title collision:
+Exact CSS/layout rule causing admin controls to overflow/compress:
+Exact stat-card layout:
+Whether bottom navigation height is accounted for:
+Root cause:
+
+=========================================================
+REQUIRED MOBILE BEHAVIOR
+=========================================================
+
+At phone widths, the Profile page should become a deliberate single-column mobile layout.
+
+Recommended order:
+
+1. Profile page heading / identity
+2. Admin control, if applicable
+3. Device/security control if applicable
+4. Profile stats
+5. Profile photo / profile details
+6. Editable profile fields
+7. Remaining profile sections
+
+Do not try to preserve the desktop horizontal arrangement.
+
+=========================================================
+ADMIN CONTROLS — MOBILE
+=========================================================
+
+Current:
+
+"Switch to Admin Dashboard"
+plus adjacent control(s)
+
+appear side-by-side and crowd the viewport.
+
+On mobile:
+
+stack these controls vertically
+OR
+make each control full-width / appropriately sized
+
+Do not truncate important control labels.
+
+Preserve comfortable touch targets.
+
+=========================================================
+PROFILE HEADING
+=========================================================
+
+"Your Profile" must:
+
+- render completely
+- not sit behind another component
+- not be clipped
+- not overlap the admin controls
+- have adequate top/bottom spacing
+
+Avoid absolute positioning for normal content unless truly necessary.
+
+=========================================================
+PROFILE STATS
+=========================================================
+
+Current three-card desktop-style row:
+
+Saved
+Reviews
+Kinfolk Pts
+
+should adapt on mobile.
+
+Acceptable patterns:
+
+Option A:
+3 compact equal-width cards if they genuinely fit cleanly
+
+OR
+
+Option B:
+2-column grid with remaining card wrapping
+
+OR
+
+Option C:
+horizontal swipe/scroll stat cards
+
+Use whichever matches the existing design system best.
+
+Do not squeeze text until it becomes faint/crowded.
+
+=========================================================
+FORM FIELDS
+=========================================================
+
+Profile fields should use the available phone width with consistent margins.
+
+Ensure:
+
+labels readable
+inputs full-width
+adequate vertical spacing
+buttons not hidden behind bottom navigation
+no horizontal overflow
+keyboard does not obscure the active field without a way to reach it
+
+=========================================================
+BOTTOM NAVIGATION / SAFE AREA
+=========================================================
+
+The fixed mobile bottom navigation must be accounted for by the Profile page.
+
+Add sufficient bottom padding so the last editable control/action can scroll fully above the navigation.
+
+Account for iPhone safe-area inset where supported.
+
+=========================================================
+MOBILE WIDTHS TO TEST
+=========================================================
+
+Visually test at minimum:
+
+320px
+375px
+390px
+430px
+
+and Safari/iPhone-style viewport behavior.
+
+Also confirm desktop/tablet layout remains unchanged.
+
+=========================================================
+ACCEPTANCE PROOF
+=========================================================
+
+Before push provide screenshots showing:
+
+[ ] "Your Profile" fully visible
+[ ] no overlap with admin dashboard control
+[ ] admin controls readable and tappable
+[ ] stats cleanly arranged
+[ ] profile fields use mobile width correctly
+[ ] no horizontal scrolling
+[ ] bottom navigation does not cover form/actions
+[ ] profile picture/upload control remains usable
+[ ] desktop profile remains intact
+
+Classify as:
+
+TYPE:
+Bug / Responsive UX Defect
+
+Do not make unrelated global mobile-layout changes.
+```
+
+My recommendation for the visual layout would be simple: on mobile, **stack the admin button beneath the Profile heading**, then place the stats in a clean compact grid, then start the form. Right now it looks like the desktop page has just been compressed to fit the phone; what you want is for it to **reflow**, not shrink.
+
+And I agree with your broader impression: if the rest of the mobile web experience is already working well, that is a good sign. I would isolate this fix to the Profile page and avoid touching the global mobile shell unless Replit proves the problem is actually coming from a shared layout component.

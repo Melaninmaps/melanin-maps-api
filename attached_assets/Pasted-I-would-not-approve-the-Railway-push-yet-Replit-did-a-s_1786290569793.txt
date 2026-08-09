@@ -1,0 +1,296 @@
+I would **not approve the Railway push yet**.
+
+Replit did a solid amount of work, but their own report shows that several items are either only partially verified, not visually verified, or still deferred. The most important examples are: the profile-photo crash fix is marked “PASS” based only on source logic with no real upload test ; the Marketplace fix only proved the unauthenticated auth gate, not that an authenticated listing actually posts successfully ; and the map still has **no radius cap or expand-search flow**, so far-away businesses can still appear after a generic search even though they no longer auto-populate on initial load .
+
+There is also an admin-access gap. They added the endpoint and fixed inconsistent admin checking, but they explicitly say the founder row still needs to be verified as `role='admin'` or present in the admin allowlist.  So that should be proven before deployment, especially since admin access was one of the production problems you reported.
+
+The sundown-town change sounds directionally correct: it is now an independent toggle and should no longer disappear when another layer is selected.  But again, I want **visual proof that the toggle and at least one marker actually render** before we push.
+
+And Replit openly deferred several things that are important to the web experience, including Search This Area, event recentering, @mentions, social URLs, Kinfolk provenance, and directory improvements.  That is fine if we consciously defer them, but they should not be buried under a “final implementation report” as though the whole batch is complete.
+
+Send Replit this:
+
+```text
+PRE-PUSH HOLD — NEED FINAL PROOF BEFORE RAILWAY DEPLOYMENT
+
+Do not push yet.
+
+I have reviewed the implementation report.
+
+The code changes appear directionally correct, but several items are not sufficiently production-proven for me to authorize the Railway push.
+
+Please complete this final PRE-PUSH VERIFICATION ONLY.
+
+Do not add new features and do not broaden scope.
+
+==================================================
+1. ADMIN ACCESS — VERIFY FOUNDER ACCOUNT
+==================================================
+
+You noted that admin access will still fail if the founder account is neither:
+
+- present in ADMIN_EMAILS
+nor
+- role = "admin"
+
+Before push, read-only confirm the production founder account:
+
+tlindsay428@yahoo.com
+
+Report:
+
+User ID:
+role:
+memberType:
+ADMIN_EMAILS match: YES/NO
+Canonical admin check result: TRUE/FALSE
+
+Then test the authenticated admin route/UI with a founder-equivalent admin session.
+
+I need proof that the Admin Dashboard control will actually work after deployment.
+
+==================================================
+2. PROFILE PHOTO — REAL END-TO-END TEST
+==================================================
+
+The report currently says the handler logic was verified in source.
+
+That is not enough because the actual production defect was:
+
+profile image upload
+→ React #310
+→ global crash
+→ retry impossible
+
+Before push, perform a real authenticated build-candidate test:
+
+1. Open Profile
+2. Select a valid image
+3. Upload
+4. Confirm upload request succeeds
+5. Confirm profile image visibly updates
+6. Refresh
+7. Confirm image persists
+8. Attempt another image upload
+9. Confirm retry/change works
+10. Confirm no global React error
+
+Also test one invalid upload and confirm:
+
+- local readable error
+- profile remains usable
+- upload control can be retried
+- no global App Error
+
+Return screenshot/visual proof.
+
+==================================================
+3. MARKETPLACE — AUTHENTICATED POST TEST
+==================================================
+
+The current curl test only proved:
+
+unauthenticated request → Authentication required
+
+That does NOT prove the listing bug is fixed.
+
+Use an authenticated test account and submit a founder-equivalent listing:
+
+Title:
+Teen Boys Clothing
+
+Description:
+Gently used clothes sized 12-14
+
+Type:
+Item for Sale / product
+
+Category:
+Clothing
+
+Condition:
+Good
+
+Price:
+20
+
+City:
+Philadelphia, PA
+
+Confirm:
+
+HTTP status:
+record created:
+listing ID:
+visible in Marketplace UI:
+refresh persists:
+no generic error:
+
+Clean up the test record afterward if appropriate.
+
+==================================================
+4. MAP — VISUAL PROOF
+==================================================
+
+Provide actual build-candidate screenshots showing:
+
+A. Initial map open:
+- businesses do NOT appear automatically
+- Find a Business prompt is visible
+
+B. Sundown Town History:
+- independent toggle visible
+- toggle defaults on
+- at least one sundown-town marker/context visually renders
+- clicking another legend category does NOT hide the sundown layer
+- clicking the sundown control can hide/show it
+
+C. Business search:
+- pressing Enter submits
+- exact-name search works
+- generic search sorts nearby first
+
+IMPORTANT:
+Your own report says there is still no radius cap.
+
+Do not mark "far-away results fixed."
+
+Mark this accurately:
+
+PARTIAL — auto-display fixed; progressive radius/Expand Search still outstanding.
+
+==================================================
+5. EVENT MAP BEHAVIOR — CORRECT THE REPORT
+==================================================
+
+The checklist says:
+
+"Selected event moves map — existing behavior preserved"
+
+but the Outstanding Items table says:
+
+"events need separate fix."
+
+These statements conflict.
+
+Resolve this before push.
+
+Test one known event such as Adams Morgan Day.
+
+Report:
+
+Click event:
+Map moves to event location: YES/NO
+Exact coordinates available: YES/NO
+Marker selected: YES/NO
+
+If NO:
+mark the item OPEN.
+
+Do not call it preserved/working if it has not been proven.
+
+==================================================
+6. LIBRARY TOPIC REQUEST
+==================================================
+
+The endpoint/auth gate test is not enough.
+
+Using an authenticated test user:
+
+Search:
+Welding
+
+Confirm:
+
+- No topic result appears
+- Request Topic CTA appears
+- click succeeds
+- pending/requested topic is stored
+- duplicate request is prevented
+- user receives readable confirmation
+
+Do not leave junk test data if cleanup is appropriate.
+
+==================================================
+7. HVAC MIGRATION
+==================================================
+
+Confirmed change:
+
+community/home → skills_trades
+
+Keep.
+
+But verify the Library UI visibly displays:
+
+Skills & Trades
+
+rather than only confirming via API.
+
+==================================================
+8. SCROLL-TO-TOP REGRESSION TEST
+==================================================
+
+Test:
+
+Page A → scroll to bottom
+Navigate to:
+Business Directory
+Library
+Map
+Profile
+
+Confirm each normal route opens at the top.
+
+Also make sure this does NOT interfere with:
+
+- Kinfolk internal conversation scrolling
+- browser back behavior where intentional
+- anchors/deep links
+
+==================================================
+9. BUILD CANDIDATE VISUAL PROOF
+==================================================
+
+Provide screenshots for:
+
+- Profile mobile layout
+- Admin access
+- successful profile photo upload
+- Marketplace successful listing
+- Map initial state
+- Sundown Town History toggle + marker
+- Welding Request Topic
+- Skills & Trades / HVAC
+- one normal route opening at top
+
+==================================================
+10. FINAL STATUS TABLE
+==================================================
+
+Return ONLY:
+
+Item
+Verified by actual UI?
+Verified by authenticated request?
+Pass / Partial / Fail
+Remaining issue
+
+Then:
+
+Candidate SHA:
+Candidate bundle:
+Database migrations:
+Rollback point:
+Open issue count:
+
+Do not push.
+
+I will authorize the Railway push after this evidence is complete.
+```
+
+One other thing: I would **keep the HVAC migration**. That is a sensible correction, and they did verify the data moved into `skills_trades`. 
+
+The part I would be most cautious about is the profile-photo issue. Replit says the root cause was an auth-query invalidation cascade and that removing that invalidation “should” stop the global crash.  That may be correct, but **“should no longer occur” is exactly the kind of statement we have been trying to get away from**. This is one of those cases where a 30-second real upload test is worth more than a page of reasoning.
+
+So: **hold push, demand the final authenticated/visual proof, then approve.**

@@ -1,0 +1,198 @@
+AN. ADMIN ACCESS + PROFILE PHOTO UPLOAD — PRODUCTION DEFECTS
+
+CURRENT ISSUES:
+
+1. Admin access is still not functioning correctly.
+2. Attempting to upload the founder/admin profile picture caused a production error.
+3. The app then crashed to the global Mapping With Melanin App Error screen.
+4. After that failure, the founder could not reproduce the upload flow again because the UI no longer allowed another upload attempt.
+
+SCREENSHOT EVIDENCE:
+
+Production shows:
+
+"Mapping With Melanin™ — App Error"
+
+"Error: Minified React error #310"
+
+Current production bundle shown in stack trace:
+
+index-CyXYdj-P.js
+
+This is a real production failure and must be treated as a separate root-cause incident.
+
+=========================================================
+ADMIN ACCESS — READ-ONLY TRACE FIRST
+=========================================================
+
+Do not change roles or permissions yet.
+
+Audit the founder account and current admin authorization path.
+
+Confirm:
+
+Founder user ID
+Founder role
+Admin flag/status
+Admin route authorization middleware
+Admin UI visibility rules
+Admin API authorization rules
+Whether frontend and backend use the same admin criteria
+Whether role="admin" is sufficient
+Whether memberType/tester/founding status interferes
+Whether any recent auth/account changes broke admin recognition
+
+Return:
+
+Expected admin state:
+Actual admin state:
+Frontend thinks admin? YES/NO
+Backend thinks admin? YES/NO
+Exact failing admin route/action:
+HTTP status:
+Root cause:
+Smallest safe fix:
+
+Do not grant duplicate or alternate admin accounts.
+
+=========================================================
+PROFILE PHOTO UPLOAD — FORENSIC TRACE
+=========================================================
+
+Do not ask the founder to repeatedly reproduce the error.
+
+Use the production logs, browser/network evidence, source maps, upload handler, and stored state to determine what happened during the failed upload attempt.
+
+Trace:
+
+profile page
+→ file picker
+→ selected file
+→ client validation
+→ upload request
+→ storage API
+→ response
+→ profile update
+→ React state/render
+→ global error boundary
+
+Identify:
+
+- exact source file/component
+- upload function
+- storage destination/provider
+- request endpoint
+- HTTP method
+- HTTP status if request was sent
+- response body if available
+- whether upload completed before React crashed
+- whether user/profile record was partially updated
+- whether image URL/path was saved
+- whether stale upload state now prevents retry
+- whether local component state is corrupted
+- whether upload input was disabled after failure
+- whether the failure is frontend-only or backend/storage-related
+
+=========================================================
+REACT ERROR #310
+=========================================================
+
+Do not treat "Minified React error #310" as sufficient diagnosis.
+
+Use the production source map/non-minified source to identify the exact original component/function that triggered the React invariant.
+
+Report:
+
+Original source file:
+Component:
+Hook/render path:
+Exact invalid state/operation:
+Why profile-photo upload triggered it:
+Why it reached the GLOBAL error boundary:
+Why the user could not retry afterward:
+
+Do not shotgun-fix React hooks or broadly rewrite the profile page.
+
+=========================================================
+UPLOAD RECOVERY REQUIREMENT
+=========================================================
+
+After any failed profile image upload:
+
+- the profile page must remain usable
+- the user must receive a clear local error message
+- the upload control must reset
+- the same user must be able to try again
+- the global app error screen must NOT be triggered
+- failed upload state must not permanently disable the control
+
+Add a local error boundary or component-level handling if appropriate AFTER root cause is fixed.
+
+=========================================================
+PROFILE MEDIA PERMISSIONS
+=========================================================
+
+Audit whether profile photos are allowed for:
+
+Admin
+Tester
+Free user
+Paid/premium user
+Business owner
+
+Profile-photo capability should not accidentally depend on a business-media tier rule.
+
+Return a permission matrix:
+
+Account type
+Can upload profile photo?
+Current code path
+Current limit
+Gap
+
+=========================================================
+STORAGE SAFETY
+=========================================================
+
+Confirm whether profile photos currently use:
+
+Replit Object Storage
+another storage service
+direct URL storage
+temporary local path
+
+Report:
+
+Upload provider:
+Bucket/container:
+File-size limit:
+Accepted MIME types:
+Image dimension handling:
+URL stored in profile:
+Old image cleanup behavior:
+Orphaned upload behavior if DB update fails:
+
+Do not expose credentials/secrets.
+
+=========================================================
+ADMIN + PROFILE PHOTO ACCEPTANCE TEST
+=========================================================
+
+Before push, prove:
+
+[ ] founder/admin account is recognized as admin
+[ ] admin-only page/action opens successfully
+[ ] profile page loads
+[ ] founder can select a valid image
+[ ] upload completes
+[ ] profile image visibly updates
+[ ] refresh preserves the image
+[ ] failed/invalid upload produces local error only
+[ ] upload control can be retried
+[ ] no global React error
+[ ] no duplicate profile/user created
+[ ] no admin role change occurred
+
+Provide visual proof from the build candidate.
+
+STOP FOR FOUNDER APPROVAL BEFORE PUSH.

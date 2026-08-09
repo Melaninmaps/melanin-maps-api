@@ -6,6 +6,7 @@ import { eq, ilike, or, and, ne, desc, inArray, sql } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
+import { isAdmin } from "../lib/adminAuth";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -17,12 +18,6 @@ const avatarUpload = multer({
 });
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
-
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
-function isAdmin(req: Request): boolean {
-  const user = (req as any).user;
-  return !!(user?.email && ADMIN_EMAILS.includes(user.email));
-}
 function isReservedUsername(username: string): boolean {
   const n = username.toLowerCase().replace(/_/g, "");
   return ["mappingwithmelanin", "melaninmaps", "melaninmap", "melaninmapping", "mappingmelanin"].some(p => n.includes(p));

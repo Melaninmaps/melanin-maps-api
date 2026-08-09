@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState, useCallback, Component, type ReactNode } from "react";
+import React, { useEffect, useRef, useState, useCallback, Component, type ReactNode } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight,
 } from "lucide-react";
+import {
+  MwmHome, MwmPlane, MwmBriefcase, MwmStore,
+  MwmCommunity, MwmShield, MwmHeart, MwmGraduationCap,
+} from "@/components/icons/mwm-icons";
 import { Link } from "wouter";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 
@@ -73,19 +77,20 @@ export const kinfolkReturningWithContext = (firstName: string | null | undefined
     : `Hey! Last time we talked about "${topic}." Want to pick up where we left off, or something new?`;
 
 /**
- * Primary life-category chips — emoji + label + tap-to-send prompt.
+ * Primary life-category chips — MWM gold icon + label + tap-to-send prompt.
  * Mirrors the mobile LIFE_CHIPS. Not travel-only.
  * PERMANENT — do not remove without founder authorization.
+ * Icons use the approved MWM visual language (stroke #CA922B, fill none, rounded).
  */
-const KINFOLK_LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
-  { emoji: "🏠", label: "I'm Moving",       prompt: "I'm thinking about relocating" },
-  { emoji: "✈️",  label: "I'm Traveling",   prompt: "I'm planning a trip" },
-  { emoji: "💼", label: "My Career",         prompt: "I need help with my career" },
-  { emoji: "🛍", label: "Find Businesses",  prompt: "Help me find minority-owned businesses near me" },
-  { emoji: "🤝", label: "Community",         prompt: "I want to connect with my community" },
-  { emoji: "🛡", label: "Stay Safe",         prompt: "I want to check safety info for my area" },
-  { emoji: "❤️", label: "Healthcare",        prompt: "I need healthcare recommendations" },
-  { emoji: "🎓", label: "Schools",           prompt: "I need help finding good schools" },
+const KINFOLK_LIFE_CHIPS: { Icon: React.ComponentType<{ size?: number; color?: string }>; label: string; prompt: string }[] = [
+  { Icon: MwmHome,          label: "I'm Moving",       prompt: "I'm thinking about relocating" },
+  { Icon: MwmPlane,         label: "I'm Traveling",    prompt: "I'm planning a trip" },
+  { Icon: MwmBriefcase,     label: "My Career",        prompt: "I need help with my career" },
+  { Icon: MwmStore,         label: "Find Businesses",  prompt: "Help me find minority-owned businesses near me" },
+  { Icon: MwmCommunity,     label: "Community",        prompt: "I want to connect with my community" },
+  { Icon: MwmShield,        label: "Stay Safe",        prompt: "I want to check safety info for my area" },
+  { Icon: MwmHeart,         label: "Healthcare",       prompt: "I need healthcare recommendations" },
+  { Icon: MwmGraduationCap, label: "Schools",          prompt: "I need help finding good schools" },
 ];
 
 /**
@@ -415,7 +420,7 @@ class KinfolkErrorBoundary extends Component<{ children: ReactNode }, { error: E
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-[#FAF6EF] flex items-center justify-center mb-4">
-            <span className="text-2xl">🤝</span>
+            <MwmCommunity size={28} color="#CA922B" aria-hidden />
           </div>
           <h2 className="font-bold text-[#3A1F0E] text-lg mb-2">Kinfolk needs a moment</h2>
           <p className="text-sm text-[#3A1F0E]/60 mb-6 max-w-xs leading-relaxed">
@@ -821,8 +826,8 @@ function TravelPage() {
                     <div className="grid grid-cols-4 gap-2 max-w-lg mb-5 w-full">
                       {KINFOLK_LIFE_CHIPS.map(chip => (
                         <button key={chip.label} onClick={() => send(chip.prompt)}
-                          className="flex flex-col items-center gap-1.5 px-2 py-3 bg-white border border-[#3A1F0E]/10 rounded-2xl text-center hover:border-[#CA922B]/40 hover:bg-[#CA922B]/5 transition-colors shadow-sm">
-                          <span className="text-xl leading-none">{chip.emoji}</span>
+                          className="flex flex-col items-center gap-1.5 px-2 py-3 bg-white border border-[#3A1F0E]/10 rounded-2xl text-center hover:border-[#CA922B]/40 hover:bg-[#CA922B]/5 transition-colors shadow-sm group">
+                          <chip.Icon size={20} color="#CA922B" aria-hidden />
                           <span className="text-[10px] font-semibold text-[#3A1F0E]/60 leading-tight">{chip.label}</span>
                         </button>
                       ))}

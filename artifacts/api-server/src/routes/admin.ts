@@ -16,6 +16,13 @@ import { createSession } from "../lib/auth";
 
 const router: IRouter = Router();
 
+// ── GET /admin/check — capability probe (always returns 200) ─────────────────
+// Returns { isAdmin: true/false } for all callers so the client can decide
+// whether to render admin UI without exposing auth details in the HTTP status.
+router.get("/admin/check", (req: Request, res: Response) => {
+  res.json({ isAdmin: isAdmin(req) });
+});
+
 router.get("/admin/invites", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });

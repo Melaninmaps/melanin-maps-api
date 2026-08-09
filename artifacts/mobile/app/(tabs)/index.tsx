@@ -165,19 +165,36 @@ export default function DiscoverScreen() {
   const [activeVibe, setActiveVibe] = useState<string | null>(null);
   const [minorityExpanded, setMinorityExpanded] = useState(false);
 
-  const VIBES: { label: string; emoji: string; categories: string[]; vibeId: string }[] = [
-    { label: "Soul Food", emoji: "🍽️", vibeId: "soul-food", categories: ["Food", "Restaurant", "soul", "bbq", "seafood", "southern"] },
-    { label: "Hair & Beauty", emoji: "💈", vibeId: "hair-beauty", categories: ["Beauty", "Hair", "barber", "salon", "nail", "spa"] },
-    { label: "Wellness", emoji: "🌿", vibeId: "wellness", categories: ["Health", "Wellness", "fitness", "gym", "yoga", "medical"] },
-    { label: "Art & Culture", emoji: "🎨", vibeId: "creative-scene", categories: ["Arts", "Culture", "Gallery", "Museum", "creative"] },
-    { label: "Late Night", emoji: "🌙", vibeId: "late-night", categories: ["Entertainment", "Nightlife", "Bar", "lounge", "club"] },
-    { label: "Shopping", emoji: "🛍️", vibeId: "shopping", categories: ["Retail", "Shop", "boutique", "clothing"] },
-    { label: "Date Night", emoji: "✨", vibeId: "date-night", categories: ["Restaurant", "Food", "Entertainment", "lounge"] },
-    { label: "Family", emoji: "🏡", vibeId: "family-time", categories: ["Food", "Entertainment", "Health", "childcare", "education"] },
-    { label: "Bougie", emoji: "🥂", vibeId: "bougie-treat", categories: ["Restaurant", "Spa", "Hotel", "fine dining"] },
-    { label: "Hood Classic", emoji: "🏆", vibeId: "hood-classic", categories: ["Food", "Barbershop", "Community"] },
-    { label: "Work & Study", emoji: "💻", vibeId: "work-and-study", categories: ["Cafe", "Coffee", "coworking", "library"] },
-    { label: "Group Hangout", emoji: "👥", vibeId: "group-hangout", categories: ["Entertainment", "Sports", "Bowling", "Events"] },
+  // MWM visual language: Feather icon names matching each vibe category.
+  // Uses the same Feather icon library already installed (identical to Lucide, approved gold style).
+  const VIBE_ICONS: Record<string, string> = {
+    "Soul Food":     "coffee",
+    "Hair & Beauty": "scissors",
+    "Wellness":      "activity",
+    "Art & Culture": "image",
+    "Late Night":    "moon",
+    "Shopping":      "shopping-bag",
+    "Date Night":    "heart",
+    "Family":        "home",
+    "Bougie":        "star",
+    "Hood Classic":  "award",
+    "Work & Study":  "book-open",
+    "Group Hangout": "users",
+  };
+
+  const VIBES: { label: string; categories: string[]; vibeId: string }[] = [
+    { label: "Soul Food",     vibeId: "soul-food",      categories: ["Food", "Restaurant", "soul", "bbq", "seafood", "southern"] },
+    { label: "Hair & Beauty", vibeId: "hair-beauty",    categories: ["Beauty", "Hair", "barber", "salon", "nail", "spa"] },
+    { label: "Wellness",      vibeId: "wellness",        categories: ["Health", "Wellness", "fitness", "gym", "yoga", "medical"] },
+    { label: "Art & Culture", vibeId: "creative-scene", categories: ["Arts", "Culture", "Gallery", "Museum", "creative"] },
+    { label: "Late Night",    vibeId: "late-night",      categories: ["Entertainment", "Nightlife", "Bar", "lounge", "club"] },
+    { label: "Shopping",      vibeId: "shopping",        categories: ["Retail", "Shop", "boutique", "clothing"] },
+    { label: "Date Night",    vibeId: "date-night",      categories: ["Restaurant", "Food", "Entertainment", "lounge"] },
+    { label: "Family",        vibeId: "family-time",     categories: ["Food", "Entertainment", "Health", "childcare", "education"] },
+    { label: "Bougie",        vibeId: "bougie-treat",    categories: ["Restaurant", "Spa", "Hotel", "fine dining"] },
+    { label: "Hood Classic",  vibeId: "hood-classic",    categories: ["Food", "Barbershop", "Community"] },
+    { label: "Work & Study",  vibeId: "work-and-study",  categories: ["Cafe", "Coffee", "coworking", "library"] },
+    { label: "Group Hangout", vibeId: "group-hangout",   categories: ["Entertainment", "Sports", "Bowling", "Events"] },
   ];
 
   const filtered = businesses.filter((b) => {
@@ -397,7 +414,7 @@ export default function DiscoverScreen() {
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vibeScroll}>
               {VIBES.map((v) => (
                 <TouchableOpacity key={v.label} style={[styles.vibeChip, activeVibe === v.label ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)} activeOpacity={0.75}>
-                  <Text style={styles.vibeEmoji}>{v.emoji}</Text>
+                  <Feather name={(VIBE_ICONS[v.label] ?? "map-pin") as any} size={14} color={activeVibe === v.label ? "#FFFFFF" : "#CA922B"} />
                   <Text style={[styles.vibeLabel, { color: activeVibe === v.label ? "#FFFFFF" : colors.foreground }]}>{v.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -707,7 +724,7 @@ export default function DiscoverScreen() {
             {/* Near You carousel */}
             {businessesLoading ? (
               <View style={styles.section}>
-                <SectionHeader title="📍 Near You" />
+                <SectionHeader title="Near You" />
                 <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
                   {[0, 1, 2].map((i) => <SkeletonBusinessCardHorizontal key={i} />)}
@@ -715,7 +732,7 @@ export default function DiscoverScreen() {
               </View>
             ) : nearYou.length > 0 ? (
               <View style={styles.section}>
-                <SectionHeader title="📍 Near You" onSeeAll={() => router.push("/(tabs)/map")} />
+                <SectionHeader title="Near You" onSeeAll={() => router.push("/(tabs)/map")} />
                 <FlatList
         keyboardDismissMode="on-drag" horizontal data={nearYou} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
@@ -730,7 +747,7 @@ export default function DiscoverScreen() {
               <View style={[styles.section, { paddingHorizontal: 20 }]}>
                 <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/travel")} style={[styles.travelBanner, { backgroundColor: colors.primary }]}>
                   <View style={styles.travelBannerLeft}>
-                    <Text style={styles.travelBannerEyebrow}>✨ KINFOLKAI™</Text>
+                    <Text style={styles.travelBannerEyebrow}>KINFOLKAI™</Text>
                     <Text style={styles.travelBannerTitle}>Plan Your Next Trip</Text>
                     <Text style={styles.travelBannerSub}>{getDailyQuoteText("kinfolk", 0)}</Text>
                   </View>
@@ -746,7 +763,7 @@ export default function DiscoverScreen() {
             {/* Trending This Week carousel */}
             {trending.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader title="🔥 Trending This Week" />
+                <SectionHeader title="Trending This Week" />
                 <FlatList
         keyboardDismissMode="on-drag" horizontal data={trending} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
@@ -759,7 +776,7 @@ export default function DiscoverScreen() {
             {/* Featured carousel */}
             {featured.length > 0 && (
               <View style={styles.section}>
-                <SectionHeader title="⭐ Featured" />
+                <SectionHeader title="Featured" />
                 <FlatList
         keyboardDismissMode="on-drag" horizontal data={featured} keyExtractor={(b) => b.id} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}
                   renderItem={({ item }) => (
@@ -790,7 +807,7 @@ export default function DiscoverScreen() {
             <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
               <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/global-recommendations" as any)} style={[styles.travelBanner, { backgroundColor: "#1A2E22" }]}>
                 <View style={styles.travelBannerLeft}>
-                  <Text style={styles.travelBannerEyebrow}>🌍 COMMUNITY PICKS</Text>
+                  <Text style={styles.travelBannerEyebrow}>COMMUNITY PICKS</Text>
                   <Text style={styles.travelBannerTitle}>Global Recommendations</Text>
                   <Text style={styles.travelBannerSub}>Trusted places around the world — shared by our community.</Text>
                 </View>
@@ -806,13 +823,13 @@ export default function DiscoverScreen() {
             <View style={[styles.section, { paddingHorizontal: 20, marginBottom: 16 }]}>
               <TouchableOpacity activeOpacity={0.88} onPress={() => router.push("/relocation-planner" as any)} style={[styles.travelBanner, { backgroundColor: "#1A3A2A" }]}>
                 <View style={styles.travelBannerLeft}>
-                  <Text style={styles.travelBannerEyebrow}>🚚 RELOCATION CONCIERGE</Text>
+                  <Text style={styles.travelBannerEyebrow}>RELOCATION CONCIERGE</Text>
                   <Text style={styles.travelBannerTitle}>Plan Your Move</Text>
                   <Text style={styles.travelBannerSub}>AI guides you step-by-step — realtor, movers, doctor, and community-verified businesses at every turn.</Text>
                 </View>
                 <View style={styles.travelBannerRight}>
                   <View style={[styles.travelBannerArrow, { backgroundColor: "#C9922B" }]}>
-                    <Text style={{ fontSize: 20 }}>🏠</Text>
+                    <Feather name="home" size={20} color="#fff" />
                   </View>
                 </View>
               </TouchableOpacity>

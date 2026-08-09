@@ -1,0 +1,216 @@
+AP. MWM VISUAL LANGUAGE — REMOVE GENERIC EMOJI FROM SYSTEM UI
+
+FOUNDER DESIGN DECISION:
+
+Mapping With Melanin™ should NOT use ordinary/basic emoji as system-generated interface artwork.
+
+Members may absolutely use emoji in:
+- posts
+- comments
+- stories
+- reviews
+- messages
+- captions
+- other user-generated content
+
+But MWM-controlled UI should use the approved Mapping With Melanin visual language.
+
+CURRENT EXAMPLES THAT FEEL OFF:
+
+KinfolkAI home currently uses standard emoji-style visuals such as:
+- home
+- airplane
+- briefcase
+- shopping bags
+- handshake
+- shield
+- heart
+- graduation cap
+
+Explore/mobile ownership filters also currently use standard emoji-style visuals.
+
+These do not match the polished MWM visual identity.
+
+=========================================================
+READ-ONLY BRAND ASSET AUDIT FIRST
+=========================================================
+
+Before creating ANY new icons:
+
+Search the repository/project assets for the existing Mapping With Melanin gold icon / emoji template previously created for the founder deck and brand materials.
+
+Search:
+- assets
+- brand
+- design
+- deck
+- icons
+- SVG
+- PNG
+- Figma-export folders
+- public assets
+- shared UI assets
+- documentation referring to gold icons/templates
+
+Report:
+
+Existing icon system found: YES/NO
+Path(s):
+File format:
+Current approved visual treatment:
+Whether icons are reusable in web/mobile UI:
+Any missing required icons:
+
+DO NOT invent a competing visual style if the approved template already exists.
+
+=========================================================
+APPROVED SYSTEM ICON STYLE
+=========================================================
+
+MWM-generated icons should follow the existing approved gold visual language.
+
+Conceptually:
+
+NOT:
+🏠
+
+USE:
+a polished MWM gold outlined home icon
+
+NOT:
+✈️
+
+USE:
+MWM gold outlined travel/airplane icon
+
+NOT:
+💼
+
+USE:
+MWM gold outlined career/business icon
+
+NOT:
+❤️
+
+USE:
+MWM gold outlined health/wellness icon
+
+NOT:
+🎓
+
+USE:
+MWM gold outlined education icon
+
+The exact appearance must come from the existing MWM brand template rather than independently designed replacements.
+
+=========================================================
+WHERE THIS RULE APPLIES
+=========================================================
+
+Audit all MWM-generated UI for standard emoji usage, including:
+
+- KinfolkAI home/action cards
+- Explore
+- ownership filters
+- onboarding
+- preference chips
+- Library
+- Map controls
+- Safety
+- profile
+- business/category icons
+- empty states
+- badges
+- system prompts
+- admin UI where consumer-facing
+- future mobile UI
+
+Classify every instance as:
+
+SYSTEM ICON
+→ replace with approved MWM iconography
+
+USER-GENERATED CONTENT
+→ preserve emoji as entered by user
+
+TEXTUAL CULTURAL LANGUAGE
+→ do not strip emoji automatically if intentionally authored
+
+=========================================================
+DO NOT CHANGE KINFOLK HOME LAYOUT YET
+=========================================================
+
+Founder remains undecided about the KinfolkAI home widgets/action cards themselves.
+
+DO NOT redesign or remove those widgets in this pass.
+
+ONLY capture that their iconography should use the approved MWM visual language if/when they remain.
+
+The founder likes:
+- Welcome back personalization
+- conversational continuity
+- Kinfolk remembering prior conversation
+
+Preserve those.
+
+=========================================================
+CROSS-PLATFORM CONSISTENCY
+=========================================================
+
+The mobile web and desktop web should use the SAME icon family.
+
+Do not use:
+emoji on mobile
+custom icons on desktop
+
+for the same concept.
+
+Use responsive sizing of the same MWM visual asset.
+
+=========================================================
+IMPLEMENTATION PREFERENCE
+=========================================================
+
+Where possible, use reusable SVG/icon components rather than separate raster images for every screen so:
+
+- scaling remains sharp
+- gold treatment stays consistent
+- mobile/desktop can share assets
+- accessibility labels can be added
+- future visual updates can happen centrally
+
+Do not expose or distribute proprietary source design assets unnecessarily.
+
+=========================================================
+ACCESSIBILITY
+=========================================================
+
+Decorative icons:
+aria-hidden / equivalent
+
+Functional icons:
+must have accessible label/tooltips where needed
+
+Do not rely on icon shape alone when meaning is important.
+
+=========================================================
+PROOF BEFORE PUSH
+=========================================================
+
+Return:
+
+Existing MWM template located:
+Path:
+Reusable icon family created/used:
+Screens audited:
+Standard system emojis remaining:
+Reason for each remaining system emoji:
+
+Visual proof should include at least:
+- KinfolkAI home
+- mobile Explore
+- ownership filters
+- one desktop page
+- one mobile page
+
+STOP before push with the rest of the current correction pass.

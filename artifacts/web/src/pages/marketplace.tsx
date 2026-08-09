@@ -26,6 +26,7 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"browse" | "mine" | "post">("browse");
   const [category, setCategory] = useState("All");
+  const [newType, setNewType] = useState<"product" | "service" | "skill_trade" | "digital" | "free">("product");
   const [search, setSearch] = useState("");
   const [showPost, setShowPost] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -64,6 +65,7 @@ export default function Marketplace() {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          type: newType,
           title: newTitle.trim(), description: newDesc.trim(), category: newCategory,
           price: newIsFree ? null : (newPrice || null), isFree: newIsFree,
           condition: newCondition, city: newCity.trim() || null,
@@ -230,6 +232,17 @@ export default function Marketplace() {
                 <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wide mb-1 block">Description *</label>
                 <textarea value={newDesc} onChange={e => setNewDesc(e.target.value)} rows={3} placeholder="Describe the item, condition, and any details…"
                   className="w-full border border-[#E8DDD0] rounded-xl px-4 py-3 text-[#2B1507] focus:outline-none focus:ring-2 focus:ring-[#CA922B] resize-none" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wide mb-1 block">Listing Type *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([["product","Item for Sale"],["service","Service"],["skill_trade","Skill/Trade"],["digital","Digital"],["free","Free"]] as [typeof newType, string][]).map(([val, lbl]) => (
+                    <button key={val} type="button"
+                      onClick={() => { setNewType(val); if (val === "free") setNewIsFree(true); else setNewIsFree(false); }}
+                      className={`py-2 px-2 rounded-xl border text-xs font-bold transition-colors ${newType === val ? "bg-[#2B1507] text-white border-[#2B1507]" : "border-[#E8DDD0] text-[#3A1F0E]/60 hover:border-[#CA922B]/50"}`}
+                    >{lbl}</button>
+                  ))}
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

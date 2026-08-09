@@ -730,6 +730,18 @@ END $seed$`,
       CREATE INDEX IF NOT EXISTS idx_specialty_suggestions_business ON specialty_suggestions(business_id);
     `,
   },
+  // Fix knowledge topics that were seeded with "community" but belong in more specific categories
+  // Fix knowledge topics that were seeded with "community" but belong in more specific categories
+  {
+    name: "knowledge_topics_hvac_category_fix_v1",
+    sql: `
+      UPDATE knowledge_topics SET category = 'skills_trades'
+      WHERE LOWER(topic_name) LIKE '%hvac%' AND category IN ('community', 'home');
+      UPDATE knowledge_topics SET category = 'skills_trades'
+      WHERE LOWER(topic_name) IN ('trade school programs & apprenticeships')
+        AND category IN ('community', 'education');
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

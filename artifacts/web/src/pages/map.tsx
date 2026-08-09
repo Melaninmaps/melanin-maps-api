@@ -273,6 +273,10 @@ export default function MapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
   const [mood, setMood] = useState<string | null>(null);
+  // Business search must be explicitly triggered — map does not auto-populate businesses
+  const [businessSearchActive, setBusinessSearchActive] = useState(false);
+  // Sundown layer has its own independent toggle (not subject to legendFilter single-select)
+  const [showSundownLayer, setShowSundownLayer] = useState(true);
 
   // Near Me mode — radius in miles (null = show all, number = geo-filtered)
   const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
@@ -545,12 +549,11 @@ export default function MapPage() {
     eventMarkersRef.current.forEach((m) => m.setMap(visible ? mapRef.current : null));
   }, [legendFilter, mapEvents]);
 
-  // Sundown town marker visibility — responds to legendFilter (on by default, toggleable)
+  // Sundown town marker visibility — independent toggle, never affected by legendFilter
   useEffect(() => {
     if (!mapRef.current) return;
-    const visible = legendFilter === null || legendFilter === "sundown";
-    sundownMarkersRef.current.forEach((m) => m.setMap(visible ? mapRef.current : null));
-  }, [legendFilter, sundownTowns]);
+    sundownMarkersRef.current.forEach((m) => m.setMap(showSundownLayer ? mapRef.current : null));
+  }, [showSundownLayer, sundownTowns]);
 
   // Subscription check
   useEffect(() => {
@@ -788,15 +791,15 @@ export default function MapPage() {
     }
   }, [isPaidMember]);
 
-  // Business marker visibility — respects legendFilter + search/category filter
+  // Business marker visibility — only shown after user explicitly submits a search
   useEffect(() => {
     if (!mapRef.current) return;
-    const showBiz = !legendFilter || legendFilter === "business";
+    const showBiz = businessSearchActive && (!legendFilter || legendFilter === "business");
     const filteredIds = new Set(filtered.map((b) => b.id));
     markersRef.current.forEach((marker, id) => {
       marker.setMap(showBiz && filteredIds.has(id) ? mapRef.current : null);
     });
-  }, [filtered, legendFilter]);
+  }, [filtered, legendFilter, businessSearchActive]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
@@ -831,7 +834,7 @@ export default function MapPage() {
             <>
               <div className="relative mb-3">
                 <button
-                  onClick={geocodeAndPan}
+                  onClick={() => { setBusinessSearchActive(true); geocodeAndPan(); }}
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:text-[#CA922B] transition-colors"
                   aria-label="Search"
                 >
@@ -839,13 +842,25 @@ export default function MapPage() {
                 </button>
                 <input
                   value={search}
-                  onChange={(e) => { setSearch(e.target.value); }}
-                  onKeyDown={(e) => e.key === "Enter" && geocodeAndPan()}
-                  placeholder="Search city or business…"
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    // Clear search-active state when user edits — they must re-submit
+                    if (businessSearchActive) setBusinessSearchActive(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setBusinessSearchActive(true);
+                      geocodeAndPan();
+                    }
+                  }}
+                  placeholder="Find a business — press Enter to search"
                   className="w-full pl-9 pr-8 py-2 text-sm bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-xl focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
                 />
                 {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5">
+                  <button
+                    onClick={() => { setSearch(""); setBusinessSearchActive(false); }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5"
+                  >
                     <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
                   </button>
                 )}
@@ -933,8 +948,10 @@ export default function MapPage() {
           <span>
             {showingCultural
               ? `${activeCulturalSites.length} ${activeCulturalSites.length === 1 ? "site" : "sites"}`
-              : `${filtered.length} ${filtered.length === 1 ? "location" : "locations"}`}
-            {nearMeRadius !== null && !showingCultural && (
+              : businessSearchActive
+                ? `${filtered.length} ${filtered.length === 1 ? "result" : "results"}`
+                : "Search to find businesses"}
+            {nearMeRadius !== null && !showingCultural && businessSearchActive && (
               <span className="ml-1.5 text-[#CA922B] font-bold">within {nearMeRadius} mi</span>
             )}
           </span>
@@ -1028,15 +1045,26 @@ export default function MapPage() {
                   </div>
                 </div>
               ))
+            ) : !businessSearchActive ? (
+              <div className="p-8 text-center">
+                <Search className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-[#2B1507] mb-1">Find a Business</p>
+                <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">
+                  Type a name, category, or vibe<br />above and press Enter to search.
+                </p>
+                <p className="text-[10px] text-[#3A1F0E]/35 leading-relaxed">
+                  Cultural sites, HBCUs, and events<br />are always visible on the map.
+                </p>
+              </div>
             ) : filtered.length === 0 ? (
               <div className="p-8 text-center">
                 <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
-                <p className="text-sm text-[#3A1F0E]/50 mb-3">No businesses match your filters.</p>
+                <p className="text-sm text-[#3A1F0E]/50 mb-3">No businesses match your search.</p>
                 <button
-                  onClick={() => { setSearch(""); setCategory("All"); }}
+                  onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); }}
                   className="text-xs font-bold text-[#CA922B] hover:underline"
                 >
-                  Clear Filters
+                  Clear Search
                 </button>
               </div>
             ) : (
@@ -1165,8 +1193,9 @@ export default function MapPage() {
         )}
 
         {/* Interactive legend */}
-        <div className="absolute bottom-6 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1 max-w-[520px]">
-          {LEGEND_TILES.map(({ key, color, shape, label }) => {
+        <div className="absolute bottom-6 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-[#3A1F0E]/8 flex flex-wrap items-center gap-x-1 gap-y-1 max-w-[560px]">
+          {/* Standard legend tiles — single-select filter for cultural/heritage layers */}
+          {LEGEND_TILES.filter(t => t.key !== "sundown").map(({ key, color, shape, label }) => {
             const isActive = legendFilter === key;
             return (
               <button
@@ -1184,10 +1213,6 @@ export default function MapPage() {
               >
                 {shape === "circle" ? (
                   <div className="w-3 h-3 rounded-full border border-[#2B1507]/40 shrink-0" style={{ background: color }} />
-                ) : shape === "triangle" ? (
-                  <svg width="12" height="12" viewBox="0 0 12 12" className="shrink-0">
-                    <polygon points="6,1 11,11 1,11" fill={color} opacity="0.85" />
-                  </svg>
                 ) : (
                   <div className="w-3 h-3 rotate-45 shrink-0" style={{ background: color }} />
                 )}
@@ -1197,6 +1222,27 @@ export default function MapPage() {
               </button>
             );
           })}
+
+          {/* Sundown Town History — independent toggle, always available regardless of other filters */}
+          <div className="border-l border-[#3A1F0E]/10 pl-2 ml-0.5">
+            <button
+              onClick={() => setShowSundownLayer(v => !v)}
+              title={showSundownLayer ? "Hide Sundown Town History layer" : "Show Sundown Town History layer"}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all ${
+                showSundownLayer
+                  ? "bg-[#7F1D1D]/10 ring-1 ring-[#7F1D1D]/25"
+                  : "opacity-50 hover:opacity-80 hover:bg-[#3A1F0E]/5"
+              }`}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" className="shrink-0">
+                <polygon points="6,1 11,11 1,11" fill="#7F1D1D" opacity={showSundownLayer ? "0.85" : "0.4"} />
+              </svg>
+              <span className={`text-[10px] font-semibold ${showSundownLayer ? "text-[#7F1D1D]" : "text-[#3A1F0E]/50"}`}>
+                Sundown Town History
+              </span>
+            </button>
+          </div>
+
           {isPaidMember && (
             <div className="flex items-center gap-1.5 border-l border-[#3A1F0E]/10 pl-3 ml-1">
               <Navigation className="w-3 h-3 text-[#CA922B]" />

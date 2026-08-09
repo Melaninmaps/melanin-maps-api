@@ -8,6 +8,15 @@ import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useEffect } from "react";
 
+// Scroll to top on every route change so pages always open at the correct position
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [location]);
+  return null;
+}
+
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import Features from "@/pages/features";
@@ -316,6 +325,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={BASE.replace(/\/$/, "")}>
+            <ScrollToTop />
             <OgRedirectHandler />
             <Router />
           </WouterRouter>

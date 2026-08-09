@@ -63,6 +63,9 @@ const CAT_META: Record<string, { color: string; label: string }> = {
   culture:            { color: "#DB2777", label: "Culture" },
   wellness:           { color: "#6D28D9", label: "Wellness" },
   community_culture:  { color: "#9333EA", label: "Community" },
+  community:          { color: "#9333EA", label: "Community" },
+  skills_trades:      { color: "#78716C", label: "Skills & Trades" },
+  home:               { color: "#78716C", label: "Home & Living" },
   safety:             { color: "#DC2626", label: "Safety" },
   business:           { color: "#059669", label: "Business" },
   employment:         { color: "#0891B2", label: "Employment" },
@@ -90,6 +93,49 @@ function timeAgo(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+// ── Request Topic Button ────────────────────────────────────────────────────
+function RequestTopicButton({ topicName }: { topicName: string }) {
+  const [status, setStatus] = useState<"idle" | "sending" | "done" | "exists">("idle");
+  const { toast } = useToast();
+
+  const handleRequest = async () => {
+    setStatus("sending");
+    try {
+      const res = await fetch(`${BASE}api/knowledge/topics/request`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topicName: topicName.trim() }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (d.alreadyExists) {
+        setStatus("exists");
+        toast({ title: `"${topicName}" is already in the review queue`, description: "Check Browse Topics — it may appear under a different name." });
+      } else {
+        setStatus("done");
+        toast({ title: "Topic request submitted!", description: `We'll review "${topicName}" and add it to the library.` });
+      }
+    } catch {
+      setStatus("idle");
+      toast({ title: "Could not submit request", variant: "destructive" });
+    }
+  };
+
+  if (status === "done") return <p className="text-xs text-green-600 font-bold mt-2">✓ Request submitted — thank you!</p>;
+  if (status === "exists") return <p className="text-xs text-[#3A1F0E]/50 mt-2">This topic is already in the library or pending review.</p>;
+
+  return (
+    <button
+      onClick={handleRequest}
+      disabled={status === "sending"}
+      className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-[#CA922B] text-white rounded-full text-xs font-bold hover:bg-[#b07e24] disabled:opacity-60 transition-colors"
+    >
+      <Plus className="w-3.5 h-3.5" />
+      {status === "sending" ? "Submitting…" : `Request "${topicName}" as a topic`}
+    </button>
+  );
 }
 
 // ── Article Card ───────────────────────────────────────────────────────────
@@ -406,9 +452,12 @@ export default function Library() {
                 {feed.length === 0 ? (
                   <div className="text-center py-12">
                     <BookOpen className="w-10 h-10 text-[#CA922B]/40 mx-auto mb-3" />
-                    <p className="text-sm text-[#3A1F0E]/50 font-medium">No articles in your feed yet</p>
-                    <button onClick={() => setActiveTab("browse")} className="mt-2 text-sm font-bold text-[#CA922B] hover:underline">
-                      Follow topics to customize your feed →
+                    <p className="text-sm text-[#3A1F0E]/60 font-semibold mb-1">Articles coming soon</p>
+                    <p className="text-xs text-[#3A1F0E]/40 mb-3 max-w-xs mx-auto leading-relaxed">
+                      The Library is building its article collection. The KinfolkAI digest below is available now — follow topics to activate it.
+                    </p>
+                    <button onClick={() => setActiveTab("browse")} className="text-sm font-bold text-[#CA922B] hover:underline">
+                      Browse & follow topics →
                     </button>
                   </div>
                 ) : (
@@ -451,7 +500,10 @@ export default function Library() {
                 {filteredTopics.length === 0 ? (
                   <div className="text-center py-12">
                     <BookOpen className="w-8 h-8 text-[#CA922B]/40 mx-auto mb-2" />
-                    <p className="text-sm text-[#3A1F0E]/50">No topics found</p>
+                    <p className="text-sm text-[#3A1F0E]/50 mb-1">No topics found</p>
+                    {topicSearch && isAuthenticated && (
+                      <RequestTopicButton topicName={topicSearch} />
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
