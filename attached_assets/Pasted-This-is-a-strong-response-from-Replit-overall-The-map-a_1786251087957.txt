@@ -1,0 +1,111 @@
+This is a strong response from Replit overall. The **map audit is exactly what we needed before touching the UI**, and it uncovered something useful: much of the basic search plumbing already exists. The problem is that the map is currently calling it in the least useful way—zero parameters, up to 200 businesses, client-side filtering, no geographic relevance.
+
+I would **not authorize implementation yet**, because there are a few important clarifications I want added to those two saved specifications first.
+
+For the map, Replit correctly identified the missing pieces: radius/bounds, specialties, Vibes/THE REAL, manageable result counts, Search This Area, Near Me and clustering. I would add **price range, accessibility, open-now/hours when available, exact business-name search, safety/community signals, sorting/ranking, pagination/Show More, no-results behavior, and mobile map behavior** to the specification now so we do not redesign the search twice.
+
+Most importantly, I would tell them:
+
+> **“10–15 results” is not an API hard cap for all searches. It is an initial presentation goal.**
+>
+> If a search has only 4 valid matches, show 4. If there are 80, initially surface the most relevant manageable set and let the user expand/show more.
+>
+> Exact business-name searches should not be suppressed merely because the business is farther away.
+>
+> Specialized searches such as `alopecia stylist`, `tax attorney`, or `tattoo cover-up` may justify automatically widening the radius because specialty relevance can matter more than proximity.
+>
+> The full directory remains intact and searchable; this is presentation/ranking logic, not data deletion.
+
+That will protect the behavior we actually want.
+
+There is also an important clarification for the **Kinfolk Living Context** document. I would not describe what we created as simply a **“15-question onboarding.”** It is really a **15-question onboarding question bank/framework**.
+
+A new member should probably see only the most useful **6–8 lightweight questions initially**, with optional follow-up questions appearing when relevant. Otherwise we risk exactly what you were worried about: losing someone before they experience the value.
+
+For example:
+
+**Initial onboarding:** what Kinfolk should help with, usual planning group, priorities, price, general interests, personalization level.
+
+Then if they choose **Beauty**, we can optionally ask about hair/skin interests.
+
+If they choose **Travel**, ask travel style.
+
+If they later save **Pregnancy**, that becomes living context—not something we interrogate everyone about during signup.
+
+So I would add this to Replit:
+
+> **IMPORTANT KINFOLK ONBOARDING CLARIFICATION**
+>
+> The 15 questions in `KINFOLK_LIVING_CONTEXT_PROFILE.md` are an approved **question bank / data model**, not necessarily 15 mandatory sequential onboarding screens.
+>
+> The initial onboarding must remain short, skippable and primarily tap-based.
+>
+> Target approximately **6–8 high-value initial prompts**, with progressive questions only when a member's selections make them relevant.
+>
+> Example:
+>
+> If Beauty/Hair matters → optionally ask hair interests.
+>
+> If Travel matters → optionally ask travel style.
+>
+> If Parenting/Family matters → relevant family preferences may be collected later.
+>
+> Sensitive/current-life context should generally be **explicitly added by the member in their profile, saves or direct Kinfolk interaction**, not demanded during initial registration.
+>
+> The architecture remains:
+>
+> **Stable Preferences + Current Chapter + Behavioral Evidence**
+>
+> and new information **adds context rather than overwriting historical context.**
+>
+> Please add this clarification to the saved specification before Task #157 is considered implementation-ready.
+
+### One thing Replit is slightly muddling: your Kinfolk test
+
+You **already performed the authenticated production test** and it failed: your questions rendered, Kinfolk went into the loading state, and no answer appeared.
+
+So whether you should repeat it depends entirely on whether Replit has **deployed another Kinfolk fix since those screenshots**.
+
+Their new wording mentions:
+
+* visible API error handling
+* a 30-second timeout
+* “Kinfolk is taking longer than expected”
+
+Those were **not part of the result you showed me earlier**, so it sounds like they may have added another fix after your test.
+
+I would make them state that explicitly before you spend time testing again:
+
+> **Before I repeat the Kinfolk production test, please confirm one thing:**
+>
+> Have you deployed **new Kinfolk changes after my authenticated screenshots where both Philadelphia questions remained indefinitely in the loading state?**
+>
+> If YES, provide:
+>
+> * new deployed SHA
+> * new production bundle
+> * exact changes made since my failed test
+> * confirmation that the documented production push procedure was followed
+> * confirmation that the actual production site was visually opened after the push
+>
+> Then I will perform the authenticated E2E test again.
+>
+> If NO new deployment occurred after my screenshots, then the authenticated E2E result remains:
+>
+> **FAILED — messages submit but Kinfolk does not return a response.**
+>
+> Do not ask me to repeat an identical test against the same deployment.
+
+That's important because I don't want you stuck in a cycle where **you become their debugging loop**.
+
+Once they confirm a genuinely new SHA is live, then yes—do the one-minute test again. And this time send **two messages in the same conversation**, not just one:
+
+> “What are some restaurants in Philadelphia?”
+
+then, if it answers:
+
+> “Which of those would be good for a date night?”
+
+That second question is important because it tests the thing we're actually building: **Kinfolk understanding conversational context**, not merely returning one isolated response.
+
+If both work, **then** we can finally close the Kinfolk production incident and return to the much more interesting work: teaching Kinfolk enough about the member, specialties, community intelligence, and local language to make the answers actually worth asking for.
