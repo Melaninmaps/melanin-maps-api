@@ -105,6 +105,21 @@ export function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+/**
+ * Returns true if a user has an active, non-expired testing entitlement.
+ * Tester entitlement is an access status independent of memberType/subscription.
+ * Active testers bypass normal Kinfolk quotas and premium limits during testing.
+ */
+export function hasActiveTesterEntitlement(user: {
+  testerStatus?: string | null;
+  testingEntitlementEndsAt?: Date | null;
+} | null | undefined): boolean {
+  if (!user) return false;
+  if (user.testerStatus !== "active") return false;
+  if (user.testingEntitlementEndsAt && user.testingEntitlementEndsAt < new Date()) return false;
+  return true;
+}
+
 /** Map a user's memberType string to a canonical MembershipTier. */
 export function getTierFromMemberType(memberType: string | null | undefined): MembershipTier {
   const map: Record<string, MembershipTier> = {

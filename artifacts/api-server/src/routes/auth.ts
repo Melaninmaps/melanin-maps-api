@@ -8,7 +8,7 @@ import {
   ExchangeMobileAuthorizationCodeResponse,
   LogoutMobileSessionResponse,
 } from "@workspace/api-zod";
-import { db, usersTable, getPoolStats, memberAgreementsTable, waitlistTable, userPreferencesTable } from "@workspace/db";
+import { db, pool, usersTable, getPoolStats, memberAgreementsTable, waitlistTable, userPreferencesTable } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
@@ -38,6 +38,48 @@ import jwt from "jsonwebtoken";
 import { encryptToken, generateClientSecret, exchangeAuthCode } from "../lib/apple";
 import { sendWelcomeEmail, sendPasswordResetEmail, generateUnsubscribeToken } from "../lib/email";
 import { getUserTier, TESTING_MODE } from "../middleware/requireMembership";
+
+/**
+ * Auto-attach a pending tester entitlement when a new user registers.
+ *
+ * If an admin pre-approved this email before the user created their account,
+ * the entitlement is applied immediately on registration — no manual follow-up needed.
+ * Non-blocking: a failure here never interrupts the registration flow.
+ */
+async function applyPendingTesterEntitlement(userId: string, email: string): Promise<void> {
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+    // Atomically mark the pending record as applied and read its entitlement fields
+    const result = await pool.query<{
+      tester_access_source: string;
+      entitlement_ends_at: Date | null;
+      granted_by: string | null;
+    }>(
+      `UPDATE pending_tester_emails
+       SET applied_at = NOW(), applied_to_user_id = $1
+       WHERE email = $2 AND applied_at IS NULL
+       RETURNING tester_access_source, entitlement_ends_at, granted_by`,
+      [userId, normalizedEmail]
+    );
+    if (result.rows[0]) {
+      const { tester_access_source, entitlement_ends_at, granted_by } = result.rows[0];
+      await pool.query(
+        `UPDATE users
+         SET tester_status = 'active',
+             tester_access_source = $1,
+             tester_granted_at = NOW(),
+             tester_granted_by = $2,
+             testing_entitlement_ends_at = $3,
+             role = CASE WHEN role = 'user' THEN 'tester' ELSE role END,
+             updated_at = NOW()
+         WHERE id = $4`,
+        [tester_access_source, granted_by, entitlement_ends_at, userId]
+      );
+    }
+  } catch {
+    // Non-fatal — registration continues unaffected
+  }
+}
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
@@ -124,6 +166,8 @@ async function upsertUser(claims: Record<string, unknown>) {
 
   if (isNew && user.email) {
     sendWelcomeEmail(user.email, user.firstName).catch(() => {});
+    // Auto-attach any pre-approved tester entitlement for this email
+    applyPendingTesterEntitlement(user.id, user.email).catch(() => {});
   }
 
   return user;
@@ -631,6 +675,8 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     }).catch(() => {});
 
     sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
+    // Auto-attach any pre-approved tester entitlement for this email
+    applyPendingTesterEntitlement(user.id, user.email!).catch(() => {});
 
     const sessionData: SessionData = {
       user: {
@@ -1072,6 +1118,11 @@ router.post("/auth/apple", async (req: Request, res: Response) => {
         platform: "ios",
         active: true,
       }).catch(() => {});
+
+      // Auto-attach any pre-approved tester entitlement for this Apple email
+      if (verifiedEmail) {
+        applyPendingTesterEntitlement(created.id, verifiedEmail).catch(() => {});
+      }
     } else if (encryptedRefreshToken) {
       await db
         .update(usersTable)

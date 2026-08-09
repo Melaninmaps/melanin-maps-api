@@ -1,7 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { textToSpeech } from "@workspace/integrations-openai-ai-server/audio";
-import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS } from "../constants/membershipTiers";
+import { checkAiPool, incrementAiUsage, getTierFromMemberType, checkVoiceUsage, incrementVoiceChars, getVoiceUsage, TIER_LIMITS, hasActiveTesterEntitlement } from "../constants/membershipTiers";
 import crypto from "crypto";
 import {
   db,
@@ -1403,22 +1403,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
   try {
     // ── Enforce monthly query limits ──────────────────────────────────────────
-    // isFree is derived from getTierFromMemberType as the single source of truth.
-    //
-    // Previous bug: the condition used !user?.stripeSubscriptionId as the first
-    // gate. A user with stripeSubscriptionId set (e.g. an RC iOS entry) but
-    // memberType=null would have isFree=false, reach the paid-pool block, call
-    // getTierFromMemberType(null)="free", then checkAiPool("free") returned
-    // limit=0 → "pool of 0 requests" — confusing and incorrect.
-    //
-    // Fix: derive isFree from the canonical tier map first. If a user has an
-    // active subscription ID but memberType is null/unexpected (data gap),
-    // effectiveTier falls back to legacy_member (unlimited) rather than
-    // blocking them with limit=0.
     let queriesUsedThisCall: number | null = null;
     let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
       const user = await storage.getUser(req.user.id);
+
+      // ── Tester entitlement bypass ────────────────────────────────────────
+      // Active testers receive unlimited Kinfolk access regardless of their
+      // memberType or subscription state. This is an access status, not a tier.
+      // All quota checks are skipped — proceed directly to the AI call.
+      if (!hasActiveTesterEntitlement(user)) {
+
       const resolvedTier = getTierFromMemberType(user?.memberType);
 
       // A paid subscription or active trial with an unset/unknown memberType is
@@ -1473,6 +1468,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         }
         aiPoolCircleId = poolStatus.circleId;
       }
+      } // closes: if (!hasActiveTesterEntitlement(user))
     }
 
     // Fetch personalization context (optional auth — works for guests too)

@@ -1,5 +1,6 @@
 export * from "./auth";
 export * from "./tester-feedback";
+export * from "./pending-tester-emails";
 export * from "./city-archives";
 export * from "./city-launches";
 export * from "./family-circles";

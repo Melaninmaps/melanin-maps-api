@@ -83,6 +83,16 @@ export const usersTable = pgTable("users", {
   marketingOptOut: boolean("marketing_opt_out").notNull().default(false),
   failedLoginAttempts: integer("failed_login_attempts").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  // ── Tester entitlement — separate from permanent memberType/subscription ──
+  // testerStatus tracks whether the user has an active testing entitlement.
+  // This is an access status, not a membership tier. Removing it returns the
+  // user to their normal memberType/subscription state without touching any
+  // saves, history, profile, or Kinfolk context.
+  testerStatus: varchar("tester_status", { enum: ["active", "inactive"] }),
+  testerAccessSource: varchar("tester_access_source", { enum: ["testflight", "android_test", "admin_invite", "website_test"] }),
+  testerGrantedAt: timestamp("tester_granted_at", { withTimezone: true }),
+  testerGrantedBy: varchar("tester_granted_by"),  // admin user ID
+  testingEntitlementEndsAt: timestamp("testing_entitlement_ends_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
