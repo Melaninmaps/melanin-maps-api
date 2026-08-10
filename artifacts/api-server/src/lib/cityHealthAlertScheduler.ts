@@ -4,10 +4,18 @@
  * Runs every 30 minutes and checks the health level of every live / soft_launch city.
  * When a city crosses into "warning" or "critical", an alert fires to the founder via:
  *   1. Email — sent to ADMIN_EMAILS (comma-separated) via the existing Resend infrastructure
- *   2. SMS   — sent via Twilio if TWILIO_FROM_NUMBER and FOUNDER_PHONE are configured
+ *   2. SMS   — sent via Twilio if TWILIO_FROM_NUMBER and FOUNDER_PHONE are configured (optional)
  *
- * A 2-hour cooldown (last_alerted_at) prevents alert floods.
- * Planning / pre_launch cities are never alerted.
+ * Delivery / cooldown semantics
+ * ──────────────────────────────
+ * - Cooldown is enforced with an atomic conditional UPDATE on city_launches.last_alerted_at.
+ *   Only the process that wins the DB claim proceeds to send — prevents duplicate alerts when
+ *   multiple instances run concurrently (e.g. during a Railway rolling deploy).
+ * - last_alerted_at is written AFTER the required channel (email) succeeds.
+ *   If email fails the stamp is not written, so the next cron tick can retry.
+ * - SMS is optional: a Twilio failure does not block the email stamp or retry.
+ * - If the atomic claim succeeds but email fails, we clear the stamp so the next tick retries.
+ * - Planning / pre_launch cities are never checked or alerted.
  */
 
 import cron from "node-cron";
@@ -24,7 +32,15 @@ const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 // ── Types ─────────────────────────────────────────────────────────────────────
 type HealthLevel = "ok" | "warning" | "critical";
 
-interface CityHealthResult {
+interface CityRow {
+  slug: string;
+  city: string;
+  state: string;
+  status: string;
+  last_alerted_at: string | null;
+}
+
+interface DegradedCity {
   slug: string;
   city: string;
   state: string;
@@ -32,12 +48,19 @@ interface CityHealthResult {
   signals: { level: HealthLevel; message: string }[];
 }
 
-// ── Health computation (mirrors city-launch.ts logic, no HTTP round-trip) ─────
+export interface HealthCheckResult {
+  checked: number;
+  alerted: string[];   // slugs for which an alert was successfully sent
+  skipped: string[];   // slugs within cooldown window
+  failed: string[];    // slugs where health check or send failed
+}
+
+// ── Health computation (mirrors city-launch.ts logic — no HTTP round-trip) ───
 async function computeCityHealth(
   slug: string,
   cityName: string,
   cityStatus: string,
-): Promise<CityHealthResult & { city: string; state: string }> {
+): Promise<{ slug: string; level: HealthLevel; signals: { level: HealthLevel; message: string }[] }> {
   const ps = getPoolStats();
 
   // DB round-trip probe
@@ -45,7 +68,7 @@ async function computeCityHealth(
   await pool.query(`SELECT 1`);
   const probeMs = Date.now() - probeStart;
 
-  // City-scoped activity (sequential to avoid pool pressure)
+  // City-scoped activity — run sequentially to avoid pool pressure
   const nameLower = cityName.toLowerCase();
   const { rows: s7d } = await pool.query<{ cnt: string }>(
     `SELECT COUNT(*) as cnt FROM users
@@ -88,20 +111,50 @@ async function computeCityHealth(
     ? "warning"
     : "ok";
 
-  return { slug, city: cityName, state: "", level, signals };
+  return { slug, level, signals };
+}
+
+// ── Atomic cooldown claim ─────────────────────────────────────────────────────
+// Returns true only if THIS process successfully claimed the send slot.
+// Uses a conditional UPDATE so concurrent scheduler instances (rolling deploy)
+// cannot both win — only the first UPDATE to execute gets rowCount > 0.
+async function claimAlertSlot(slug: string): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    `UPDATE city_launches
+     SET last_alerted_at = NOW()
+     WHERE slug = $1
+       AND (last_alerted_at IS NULL
+            OR last_alerted_at < NOW() - ($2 || ' hours')::INTERVAL)`,
+    [slug, String(ALERT_COOLDOWN_HOURS)],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+// Clears the stamp so the next cron tick can retry after a send failure.
+async function releaseAlertSlot(slug: string): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE city_launches
+       SET last_alerted_at = NULL
+       WHERE slug = $1`,
+      [slug],
+    );
+  } catch (err) {
+    logger.error({ err, slug }, "city-health-alert: failed to release alert slot after send failure — next retry may be delayed");
+  }
 }
 
 // ── Notification helpers ───────────────────────────────────────────────────────
-async function sendAlertEmail(
-  cities: { city: string; state: string; slug: string; level: HealthLevel; signals: { level: HealthLevel; message: string }[] }[],
-) {
+async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   const adminEmails = process.env.ADMIN_EMAILS;
-  if (!resendKey || !adminEmails) return;
+  if (!resendKey) throw new Error("RESEND_API_KEY not configured");
+  if (!adminEmails) throw new Error("ADMIN_EMAILS not configured");
+
+  const recipients = adminEmails.split(",").map((e) => e.trim()).filter(Boolean);
+  if (!recipients.length) throw new Error("ADMIN_EMAILS is empty after parsing");
 
   const resend = new Resend(resendKey);
-  const recipients = adminEmails.split(",").map((e) => e.trim()).filter(Boolean);
-  if (!recipients.length) return;
 
   const rows = cities
     .map((c) => {
@@ -151,18 +204,20 @@ async function sendAlertEmail(
       </p>
     </div>`;
 
-  await resend.emails.send({ from: FROM, to: recipients, subject, html });
+  const { error } = await resend.emails.send({ from: FROM, to: recipients, subject, html });
+  if (error) throw new Error(`Resend send failed: ${error.name} — ${error.message}`);
 }
 
-async function sendAlertSms(
-  cities: { city: string; state: string; level: HealthLevel }[],
-) {
+// SMS is optional: configured via TWILIO_FROM_NUMBER + FOUNDER_PHONE env vars.
+// Returns true if sent, false if skipped (not configured), throws if configured but failed.
+async function sendAlertSms(cities: DegradedCity[]): Promise<boolean> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
   const founderPhone = process.env.FOUNDER_PHONE;
 
-  if (!sid || !token || !fromNumber || !founderPhone) return;
+  if (!fromNumber || !founderPhone) return false; // optional channel — not configured
+  if (!sid || !token) throw new Error("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN missing but TWILIO_FROM_NUMBER is set");
 
   const client = twilio(sid, token);
   const hasCritical = cities.some((c) => c.level === "critical");
@@ -171,27 +226,17 @@ async function sendAlertSms(
   const body = `${prefix} — MWM city health alert\n${cityList}\nCheck the admin dashboard for details.`;
 
   await client.messages.create({ from: fromNumber, to: founderPhone, body });
+  return true;
 }
 
-// ── Core check function (exported so it can be called manually / tested) ──────
-export async function runCityHealthCheck(): Promise<{
-  checked: number;
-  alerted: string[];
-  skipped: string[];
-  errors: string[];
-}> {
+// ── Core check function (exported so it can be called manually / from a route) ─
+export async function runCityHealthCheck(): Promise<HealthCheckResult> {
   const alerted: string[] = [];
   const skipped: string[] = [];
-  const errors: string[] = [];
+  const failed: string[] = [];
 
-  // Fetch all live/soft_launch cities not alerted within the cooldown window
-  const { rows: cities } = await pool.query<{
-    slug: string;
-    city: string;
-    state: string;
-    status: string;
-    last_alerted_at: string | null;
-  }>(
+  // Fetch all live/soft_launch cities
+  const { rows: cities } = await pool.query<CityRow>(
     `SELECT slug, city, state, status, last_alerted_at
      FROM city_launches
      WHERE status = ANY($1::text[])
@@ -200,28 +245,14 @@ export async function runCityHealthCheck(): Promise<{
   );
 
   if (!cities.length) {
-    return { checked: 0, alerted: [], skipped: [], errors: [] };
+    return { checked: 0, alerted: [], skipped: [], failed: [] };
   }
 
-  const degraded: {
-    slug: string;
-    city: string;
-    state: string;
-    level: HealthLevel;
-    signals: { level: HealthLevel; message: string }[];
-  }[] = [];
+  // Compute health for all cities, then group degraded ones to send a single
+  // batched alert rather than one email per city.
+  const degraded: DegradedCity[] = [];
 
   for (const city of cities) {
-    // Cooldown check: skip if alerted within the last ALERT_COOLDOWN_HOURS hours
-    if (city.last_alerted_at) {
-      const lastAlerted = new Date(city.last_alerted_at).getTime();
-      const cutoff = Date.now() - ALERT_COOLDOWN_HOURS * 60 * 60 * 1000;
-      if (lastAlerted > cutoff) {
-        skipped.push(city.slug);
-        continue;
-      }
-    }
-
     try {
       const health = await computeCityHealth(city.slug, city.city, city.status);
       if (health.level !== "ok") {
@@ -235,47 +266,71 @@ export async function runCityHealthCheck(): Promise<{
       }
     } catch (err) {
       logger.error({ err, slug: city.slug }, "city-health-alert: failed to compute health for city");
-      errors.push(city.slug);
+      failed.push(city.slug);
     }
   }
 
   if (!degraded.length) {
-    return { checked: cities.length, alerted: [], skipped, errors };
+    return { checked: cities.length, alerted: [], skipped, failed };
   }
 
-  // Stamp last_alerted_at on all degraded cities before sending (so a send failure
-  // doesn't trigger an infinite re-alert loop on the next tick)
-  for (const c of degraded) {
+  // For each degraded city, attempt an atomic cooldown claim.
+  // Cities still within the cooldown window are skipped — their UPDATE finds no
+  // eligible row and returns rowCount 0.
+  const claimedCities: DegradedCity[] = [];
+
+  for (const city of degraded) {
     try {
-      await pool.query(
-        `UPDATE city_launches SET last_alerted_at = NOW() WHERE slug = $1`,
-        [c.slug],
-      );
+      const claimed = await claimAlertSlot(city.slug);
+      if (claimed) {
+        claimedCities.push(city);
+      } else {
+        skipped.push(city.slug);
+      }
     } catch (err) {
-      logger.error({ err, slug: c.slug }, "city-health-alert: failed to stamp last_alerted_at");
-    }
-    alerted.push(c.slug);
-  }
-
-  // Fire notifications (failures are non-fatal — the stamps are already written)
-  try {
-    await sendAlertEmail(degraded);
-  } catch (err) {
-    logger.error({ err }, "city-health-alert: email send failed");
-  }
-
-  try {
-    await sendAlertSms(degraded);
-  } catch (err) {
-    // SMS is optional — only log at debug level if vars aren't configured
-    const hasTwilioCreds =
-      process.env.TWILIO_FROM_NUMBER && process.env.FOUNDER_PHONE;
-    if (hasTwilioCreds) {
-      logger.error({ err }, "city-health-alert: SMS send failed");
+      logger.error({ err, slug: city.slug }, "city-health-alert: failed to claim alert slot");
+      failed.push(city.slug);
     }
   }
 
-  return { checked: cities.length, alerted, skipped, errors };
+  if (!claimedCities.length) {
+    return { checked: cities.length, alerted: [], skipped, failed };
+  }
+
+  // Send email (required channel). On failure: release the DB claim so the next
+  // tick can retry, and surface all claimed cities as failed.
+  let emailSent = false;
+  try {
+    await sendAlertEmail(claimedCities);
+    emailSent = true;
+  } catch (err) {
+    logger.error({ err, cities: claimedCities.map((c) => c.slug) }, "city-health-alert: email send failed — releasing claims for retry");
+    for (const city of claimedCities) {
+      await releaseAlertSlot(city.slug);
+      failed.push(city.slug);
+    }
+    return { checked: cities.length, alerted: [], skipped, failed };
+  }
+
+  // Email succeeded — record all claimed cities as alerted.
+  for (const city of claimedCities) {
+    alerted.push(city.slug);
+  }
+
+  // Send SMS (optional channel). A Twilio failure is logged but does not affect
+  // the cooldown stamp or the alerted set — email is the source of truth.
+  if (emailSent) {
+    try {
+      const smsSent = await sendAlertSms(claimedCities);
+      if (smsSent) {
+        logger.info({ cities: alerted }, "city-health-alert: SMS alert sent");
+      }
+    } catch (err) {
+      logger.error({ err }, "city-health-alert: optional SMS send failed (email was delivered; cooldown stands)");
+    }
+  }
+
+  return { checked: cities.length, alerted, skipped, failed };
 }
 
 // ── Scheduler ─────────────────────────────────────────────────────────────────
@@ -300,15 +355,15 @@ export function startCityHealthAlertScheduler(): void {
           checked: result.checked,
           alerted: result.alerted.length,
           skipped: result.skipped.length,
-          errors: result.errors.length,
+          failed: result.failed.length,
         },
         "city-health-alert: check complete",
       );
       if (result.alerted.length > 0) {
         logger.warn({ cities: result.alerted }, "city-health-alert: alerts fired for degraded cities");
       }
-      if (result.errors.length > 0) {
-        logger.warn({ cities: result.errors }, "city-health-alert: some cities failed health check");
+      if (result.failed.length > 0) {
+        logger.warn({ cities: result.failed }, "city-health-alert: some cities failed health check or send");
       }
     } catch (err) {
       logger.error({ err }, "city-health-alert: health check batch failed");
