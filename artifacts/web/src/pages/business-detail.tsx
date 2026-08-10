@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, Instagram } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, Instagram, Award, Users, MessageCircle, Heart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -436,8 +436,17 @@ export default function BusinessDetail() {
         toast({ title: "Review submitted successfully" });
       },
       onError: (err: any) => {
-        const status = err?.response?.status ?? err?.status;
-        if (status === 403) {
+        const status = err?.status ?? err?.response?.status;
+        const code = (err?.data as any)?.code ?? null;
+        const msg  = (err?.data as any)?.error ?? null;
+        if (status === 403 && code === "ACCOUNT_COOLDOWN") {
+          const hoursLeft = (err?.data as any)?.hoursLeft ?? 24;
+          toast({ title: "Almost ready", description: `New accounts can leave reviews after ${hoursLeft} hour${hoursLeft !== 1 ? "s" : ""} to protect the community from spam.`, variant: "destructive" });
+        } else if (status === 403 && code === "ACCOUNT_SUSPENDED") {
+          toast({ title: "Account suspended", description: msg ?? "Contact hello@mappingwithmelanin.com to appeal.", variant: "destructive" });
+        } else if (status === 409) {
+          toast({ title: "Already reviewed", description: "You've already shared your experience for this business.", variant: "destructive" });
+        } else if (status === 403) {
           setShowUpgrade(true);
         } else {
           toast({ title: "Could not submit review", description: "Please try again.", variant: "destructive" });
@@ -653,8 +662,120 @@ export default function BusinessDetail() {
         </div>
       </div>
 
+      {/* ── Community Intelligence — below hero, above tabs ──────────────────── */}
+      <div className="container mx-auto px-4 md:px-6 pt-8 pb-0">
+
+        {/* Row 1: Ownership + Trust badges */}
+        {(() => {
+          const designations: string[] = (business as any).ownershipDesignations ?? [];
+          const badges = designations.length > 0 ? designations : (business.blackOwned ? ["Black / African American-Owned"] : []);
+          const isTrusted = (business.reviewCount ?? 0) >= 5 && (business.averageRating ?? 0) >= 4.0;
+          const isVerified = !!(business as any).verified;
+          if (badges.length === 0 && !isTrusted && !isVerified) return null;
+          return (
+            <div className="mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {badges.map((d: string) => (
+                  <span key={d} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#CA922B]/10 border border-[#CA922B]/30 text-[#CA922B]">
+                    <ShieldCheck className="w-3 h-3" />
+                    {d}
+                  </span>
+                ))}
+                {isVerified && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                    <ShieldCheck className="w-3 h-3" />
+                    Verified
+                  </span>
+                )}
+                {isTrusted && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700">
+                    <Users className="w-3 h-3" />
+                    Community Trusted
+                  </span>
+                )}
+              </div>
+              {badges.length > 0 && (
+                <p className="text-[10px] text-[#3A1F0E]/40 leading-relaxed mb-4">
+                  Ownership designations indicate the business is owned and operated 51% or more by the identified group. Businesses may self-identify or submit documentation for verified status.
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Row 2: Put Your People On */}
+        <div className="flex items-center gap-2 mb-5">
+          <Award className="w-5 h-5 text-[#CA922B]" />
+          {(business.reviewCount ?? 0) > 0 ? (
+            <>
+              <span className="font-serif font-bold text-[#2B1507] text-lg">Put Your People On</span>
+              <span className="font-serif font-bold text-[#CA922B] text-lg ml-1">{business.averageRating?.toFixed(1)}</span>
+              <span className="text-[#3A1F0E]/40 text-sm">({business.reviewCount?.toLocaleString()} {(business.reviewCount ?? 0) === 1 ? "voice" : "voices"})</span>
+            </>
+          ) : (
+            <span className="font-serif text-[#3A1F0E]/40 text-base">Be among the first to put this business on</span>
+          )}
+        </div>
+
+        {/* Row 3: Community Safety Stats */}
+        <div className="rounded-2xl border border-[#2B1507]/8 bg-[#2B1507]/[0.03] p-5 mb-3">
+          {parseInt((business as any).reportCount ?? "0") > 0 ? (
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-[#CA922B]" />
+                <span className="text-xs font-bold uppercase tracking-widest text-[#CA922B]">Community Safety Stats</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                {(business as any).wouldReturnAlone != null && (
+                  <div>
+                    <div className="text-2xl font-serif font-bold text-emerald-600">{(business as any).wouldReturnAlone}%</div>
+                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Would Return Alone</div>
+                  </div>
+                )}
+                {(business as any).safetyRating != null && (
+                  <div>
+                    <div className="text-2xl font-serif font-bold text-emerald-600">{parseFloat((business as any).safetyRating).toFixed(1)}</div>
+                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Safety Rating</div>
+                  </div>
+                )}
+                {(business as any).recommendationRate != null && (
+                  <div>
+                    <div className="text-2xl font-serif font-bold text-emerald-600">{(business as any).recommendationRate}%</div>
+                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Recommend</div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="w-4 h-4 text-[#3A1F0E]/25" />
+                <span className="text-xs font-bold uppercase tracking-widest text-[#3A1F0E]/35">Community Safety Stats</span>
+              </div>
+              <p className="text-sm text-[#3A1F0E]/40">Community safety ratings will appear here once members share their experiences.</p>
+            </>
+          )}
+        </div>
+
+        {/* Row 4: Rate Your Safety Experience CTA */}
+        <button
+          onClick={() => document.querySelector<HTMLElement>('[data-value="reviews"]')?.click()}
+          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border border-[#2B1507]/8 bg-white hover:border-[#CA922B]/30 hover:bg-[#CA922B]/[0.02] transition-colors mb-8 group"
+        >
+          <div className="flex items-center gap-3">
+            <Shield className="w-5 h-5 text-[#3A1F0E]/35 group-hover:text-[#CA922B] transition-colors" />
+            <div className="text-left">
+              <p className="font-semibold text-[#2B1507] text-sm">Rate Your Safety Experience</p>
+              <p className="text-xs text-[#3A1F0E]/50">Help the community know what to expect</p>
+            </div>
+          </div>
+          <ChevronDown className="w-4 h-4 text-[#3A1F0E]/30 group-hover:text-[#CA922B] -rotate-90 transition-colors" />
+        </button>
+
+      </div>
+
       {/* Main Content */}
-      <div className="container mx-auto px-4 md:px-6 mt-8">
+      <div className="container mx-auto px-4 md:px-6 mt-0">
         <div className="flex flex-col lg:flex-row gap-12">
           
           {/* Left Column - Details */}
@@ -705,32 +826,7 @@ export default function BusinessDetail() {
                   <p>{(business.description?.replace(/^\[DEMO\]\s*/i, "") || "Discover this exceptional business. They provide quality service and a welcoming environment for the community.")}</p>
                 </div>
                 
-                {/* Ownership designation — shows self-identified designation, not "Verified Black-Owned"
-                    Per Map Pin & Living Pages Fix spec: "Verified" should refer to the business being
-                    real, NOT to the owner's race/ethnicity being verified. */}
-                {(() => {
-                  const designations: string[] = (business as any).ownershipDesignations ?? [];
-                  const primaryDesignation = designations[0] ?? (business.blackOwned ? "Black / African American-Owned" : null);
-                  if (!primaryDesignation) return null;
-                  return (
-                    <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5 flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#CA922B]/10 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="text-[#CA922B] w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-1">{primaryDesignation}</h3>
-                        {designations.length > 1 && (
-                          <div className="flex flex-wrap gap-1.5 mb-2">
-                            {designations.slice(1).map((d: string) => (
-                              <span key={d} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#CA922B]/10 text-[#CA922B] border border-[#CA922B]/20">{d}</span>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-[#3A1F0E]/70 text-sm">Ownership self-identified by this business. Supporting minority-owned enterprises strengthens the whole community.</p>
-                      </div>
-                    </div>
-                  );
-                })()}
+                {/* Ownership designations shown above tabs in community intelligence header */}
 
                 {/* Community Vibes — hidden for professional/service categories that use THE REAL instead.
                     Per Master Directory: Professional Services, Home & Property, Automotive, etc. use
@@ -775,30 +871,36 @@ export default function BusinessDetail() {
                   );
                 })()}
 
-                {/* What The Community Said — Endorsement Tags */}
-                {endorsementTags.length > 0 && (
-                  <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">What The Community Said</h3>
-                        <p className="text-xs text-[#3A1F0E]/40 mt-0.5">Tags added by community members who've visited</p>
-                      </div>
+                {/* Community Says — Endorsement Tags */}
+                <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-[#CA922B]" />
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Says</h3>
                     </div>
+                    <button
+                      onClick={() => { const el = document.querySelector<HTMLElement>('[data-state="active"][role="tab"]'); el?.closest('[role="tablist"]')?.querySelector<HTMLElement>('[value="reviews"]')?.click(); }}
+                      className="text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:border-[#CA922B] px-3 py-1 rounded-full transition-colors"
+                    >
+                      + Add Yours
+                    </button>
+                  </div>
+                  {endorsementTags.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {endorsementTags.map((tag) => (
                         <div
                           key={tag.tagKey}
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E]/80"
                         >
-                          <span>{tag.label}</span>
-                          <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B]">
-                            {tag.count}
-                          </span>
+                          <span className="text-[#CA922B] font-bold">{tag.count}</span>
+                          <span>said "{tag.label}"</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-[#3A1F0E]/40 italic">Be the first to add a community caption for this business.</p>
+                  )}
+                </div>
 
                 {/* Flash Deals */}
                 {deals.length > 0 && (
@@ -872,11 +974,19 @@ export default function BusinessDetail() {
                         <Star key={i} size={14} fill={i < Math.round(business.averageRating || 0) ? "currentColor" : "none"} strokeWidth={i < Math.round(business.averageRating || 0) ? 0 : 2} />
                       ))}
                     </div>
-                    <span className="text-xs text-[#3A1F0E]/50 uppercase tracking-wider font-bold">{business.reviewCount || 0} Reviews</span>
+                    <span className="text-xs text-[#3A1F0E]/50 uppercase tracking-wider font-bold">{business.reviewCount || 0} {(business.reviewCount ?? 0) === 1 ? "Voice" : "Voices"}</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-2">Community Voices</h3>
-                    <p className="text-[#3A1F0E]/70 text-sm">Read what the Mapping With Melanin™ community has to say about their experience.</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageCircle className="w-4 h-4 text-[#CA922B]" />
+                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Comments</h3>
+                    </div>
+                    <p className="text-[#3A1F0E]/70 text-sm">
+                      {(business.reviewCount ?? 0) === 0
+                        ? "No community voices yet — be the first to share your experience."
+                        : "Read what the Mapping With Melanin™ community has to say about their experience."
+                      }
+                    </p>
                   </div>
                 </div>
 
