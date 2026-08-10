@@ -262,6 +262,38 @@ async function fetchSources(topicId: string, includeStatus?: string): Promise<Kn
   }));
 }
 
+interface TopicArticle {
+  id: string;
+  title: string;
+  summary: string | null;
+  category: string;
+  tier: string;
+  author_name: string | null;
+  read_time_minutes: number | null;
+  published_at: string | null;
+}
+
+async function fetchTopicArticles(topicId: string): Promise<TopicArticle[]> {
+  const r = await pool.query(
+    `SELECT id, title, summary, category, tier, author_name, read_time_minutes, published_at
+     FROM knowledge_articles
+     WHERE topic_id = $1 AND status = 'published'
+     ORDER BY published_at DESC NULLS LAST
+     LIMIT 10`,
+    [topicId],
+  );
+  return r.rows.map((row) => ({
+    id: row.id as string,
+    title: row.title as string,
+    summary: row.summary as string | null,
+    category: row.category as string,
+    tier: row.tier as string,
+    author_name: row.author_name as string | null,
+    read_time_minutes: row.read_time_minutes ? Number(row.read_time_minutes) : null,
+    published_at: row.published_at ? String(row.published_at) : null,
+  }));
+}
+
 async function fetchGeographySubtopics(
   geographyRef: string,
   excludeId: string,
@@ -298,11 +330,12 @@ router.get(
       return;
     }
 
-    // Run relationships, entities, and sources in parallel — independent queries
-    const [relationships, connectedEntities, sources] = await Promise.all([
+    // Run relationships, entities, sources, and articles in parallel — independent queries
+    const [relationships, connectedEntities, sources, articles] = await Promise.all([
       fetchRelationships(topicId),
       fetchConnectedEntities(topicId),
       fetchSources(topicId),
+      fetchTopicArticles(topicId),
     ]);
 
     // Geography subtopics: only if this node IS a geography node
@@ -324,6 +357,7 @@ router.get(
       relationships,
       connectedEntities,
       sources,
+      articles,
       geography,
       surface_meta: surfaceMeta(surface, topicId),
     });

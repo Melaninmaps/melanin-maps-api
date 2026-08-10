@@ -83,6 +83,7 @@ interface KGRelTopic {
 interface GraphData {
   node: { id: string; topic_name: string; node_type: string; category: string; description: string | null };
   sources: KGSource[];
+  articles: Array<{ id: string; title: string; summary: string | null; category: string; tier: string; author_name: string | null; read_time_minutes: number | null; published_at: string | null }>;
   connectedEntities: KGEntity[];
   relationships: { parents: KGRelTopic[]; children: KGRelTopic[] };
   geography: { ref: string; subtopics: Array<{ id: string; topic_name: string; category: string }> } | null;
@@ -276,6 +277,7 @@ function KnowledgeBookPanel({
 
   const srcByTier = (tier: string) => (data?.sources ?? []).filter(s => s.authority_tier === tier);
   const hasSources = (data?.sources.length ?? 0) > 0;
+  const hasArticles = (data?.articles.length ?? 0) > 0;
   const relTopics = [...(data?.relationships.parents ?? []), ...(data?.relationships.children ?? [])]
     .filter(r => r.weight >= 0.6).slice(0, 6);
 
@@ -386,6 +388,35 @@ function KnowledgeBookPanel({
                             </div>
                           );
                         })}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── Reading materials (articles) ── */}
+              {hasArticles && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Reading Materials</p>
+                  {(data.articles ?? []).map(article => {
+                    const color = catColor(article.category);
+                    return (
+                      <div key={article.id} className="bg-white rounded-xl border border-[#3A1F0E]/8 p-3.5">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: `${color}15` }}>
+                            <BookOpen className="w-3.5 h-3.5" style={{ color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-[#2B1507] leading-tight">{article.title}</p>
+                            {article.summary && (
+                              <p className="text-xs text-[#3A1F0E]/60 mt-1 line-clamp-2 leading-relaxed">{article.summary}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-[#3A1F0E]/40">
+                              {article.author_name && <span>{article.author_name}</span>}
+                              {article.read_time_minutes && <span>{article.read_time_minutes} min read</span>}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     );
                   })}

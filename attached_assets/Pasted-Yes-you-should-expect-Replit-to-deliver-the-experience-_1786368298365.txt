@@ -1,0 +1,384 @@
+Yes — you should expect Replit to deliver the experience you already designed, but I would **temper the expectation that every rich business feature and live analytics layer should be finished today without risk**.
+
+What I would *not* temper is this: the current web business page is too close to a conventional directory. Your screenshot shows name, address, website, reviews, save/check-in. That is useful, but it does not yet communicate the core promise: **“your community is actively helping people choose you, trust you, recommend you, and understand why you matter.”**
+
+And the review form being visible while apparently not actually submitting is a real defect. That should be fixed before business outreach because the whole community-intelligence loop depends on patrons being able to contribute.
+
+The mobile screenshots make the gap very clear. The richer experience has things like **Put Your People On, Community Trusted, Community Safety Stats, Community Says, Vibe/experience signals, Circle Trusted, Community Confidence, Know Before You Go, milestones, and community recommendations.** That is the differentiator. The web page currently does not convey enough of that.
+
+So for **today**, I would narrow Replit to three non-negotiable outcomes:
+
+1. **Authentication stays stable.**
+2. **Library becomes genuinely useful instead of empty shells.**
+3. **Business pages + reviews visibly demonstrate why MWM is not another directory.**
+
+I would not demand full business-owner analytics today. You can show businesses **what members see and how patron activity creates value** before the analytics dashboard is fully mature. That is enough to walk into a business and explain:
+
+> “When your patrons save you, review you, tag the experience, recommend you, check in, contribute media, and tell us why they return, that becomes community intelligence around your business. Once you claim your profile, the business side lets you understand that engagement.”
+
+That is compelling even if the analytics dashboard itself comes next.
+
+Send Replit this:
+
+```text
+FIELD-READINESS PRIORITY RESET — DO NOT EXPAND SCOPE
+
+Founder has manually reviewed production.
+
+The current web business detail experience is technically functional but does
+NOT sufficiently represent the MWM product that has already been designed.
+
+This is NOT authorization for a redesign.
+
+The richer MWM business experience already exists in prior mobile/template work.
+
+The job is to RECOVER / PORT / CONNECT what was already designed.
+
+Do not create another business-profile concept.
+
+============================================================
+TODAY'S THREE NONNEGOTIABLE OUTCOMES
+============================================================
+
+P0:
+AUTHENTICATION / TESTER / APPLE REVIEW MUST REMAIN STABLE.
+
+P0/P1:
+LIBRARY MUST HAVE REAL CONTENT AND WORK THROUGH KINFOLK.
+
+P1:
+BUSINESS MEMBER EXPERIENCE MUST VISIBLY DEMONSTRATE WHY MWM IS NOT A DIRECTORY.
+
+Do not spend today building complete business analytics if doing so risks these
+three.
+
+============================================================
+1. REVIEW SUBMISSION IS CURRENTLY BROKEN
+============================================================
+
+Founder can see the Review form on production but cannot successfully leave a
+review.
+
+Diagnose BEFORE changing code.
+
+Trace:
+
+business detail Review form
+→ submit handler
+→ request payload
+→ review endpoint
+→ auth
+→ validation
+→ DB insert
+→ aggregate update
+→ UI refresh
+
+Return exact root cause.
+
+Then repair.
+
+Acceptance on REAL production website:
+
+1. approved tester opens real business
+2. selects rating
+3. writes review
+4. submits
+5. receives visible success state
+6. review appears
+7. refresh → review remains
+8. Profile/My Contributions reflects it where supported
+9. duplicate accidental resubmission is prevented
+10. business/community aggregate updates correctly where applicable
+
+Use clearly identifiable removable test content if necessary.
+
+============================================================
+2. BUSINESS PROFILE PARITY AUDIT — EXISTING DESIGN ONLY
+============================================================
+
+Locate the richest previously-built MWM business profile/template.
+
+Compare:
+
+CURRENT WEB
+vs
+LATEST MOBILE / APPROVED BUSINESS EXPERIENCE
+vs
+BACKEND CAPABILITIES
+
+Audit every existing feature, including where already built:
+
+ownership designations
+verification
+Put Your People On
+Community Trusted
+Community Says
+Community Voices
+Community Safety Stats
+Would Return
+Recommend
+experience rating
+Vibes / THE REAL
+Community Confidence Score
+Know Before You Go
+Circle Trusted
+business milestones
+photos/media
+social-video content
+check-in
+save
+review
+safety experience
+location/contact
+website/socials
+hours
+directions
+community recommendations
+member voices
+related Library/community context
+other existing approved community-intelligence elements
+
+Classify each:
+
+WEB LIVE
+MOBILE ONLY
+BACKEND READY / WEB NOT WIRED
+MOCK/TEMPLATE ONLY
+MISSING DATA
+BROKEN
+NOT YET IMPLEMENTED
+
+Do NOT rebuild functionality that already exists.
+
+============================================================
+3. MINIMUM BUSINESS EXPERIENCE REQUIRED FOR FIELD OUTREACH
+============================================================
+
+Before founder begins showing businesses the site, a business page should make
+these concepts immediately visible:
+
+A. WHO THEY ARE
+ownership / verification / category
+
+B. WHY THE COMMUNITY VALUES THEM
+Put Your People On
+Community Says
+Would Return / Recommend
+Community Voices
+real reviews
+
+C. WHAT THE EXPERIENCE FEELS LIKE
+Vibes / THE REAL
+category-appropriate experience tags
+
+D. TRUST / SAFETY
+appropriate community safety information
+without fabricating scores when there is insufficient data
+
+E. COMMUNITY PARTICIPATION
+Save
+Check In
+Review
+Add Vibe / THE REAL
+Add Content / media URL
+recommend/share
+
+F. BUSINESS INFORMATION
+address
+website
+phone
+hours
+social links
+media when data exists
+
+This is the minimum demonstration of:
+
+MWM ≠ DIRECTORY.
+
+============================================================
+4. DO NOT INVENT METRICS
+============================================================
+
+If a business has:
+
+0 reviews
+0 saves
+0 check-ins
+0 community tags
+
+show an intentional empty/community-building state.
+
+Example concept:
+
+"Be among the first to put this business on."
+
+Do NOT display fabricated:
+
+98% recommend
+312 voices
+4.9 score
+community trust metrics
+
+unless supported by real production data.
+
+The prior mobile/template designs may contain sample/demo numbers.
+
+Separate TEMPLATE DATA from REAL DATA before porting.
+
+============================================================
+5. PRESERVE THE BEAUTIFUL MOBILE EXPERIENCE
+============================================================
+
+Do not strip the product down simply because web currently has less.
+
+The mobile design communicates the intended product much better.
+
+Use it as the parity reference.
+
+However:
+
+do not blindly copy mobile layout pixel-for-pixel.
+
+Port the information architecture and behavior responsively to web.
+
+============================================================
+6. BUSINESS OWNER STORY — WITHOUT FULL ANALYTICS YET
+============================================================
+
+Full business analytics does NOT have to block today's field readiness.
+
+But the MEMBER-FACING profile must demonstrate the inputs that will eventually
+create analytics:
+
+saves
+search demand
+check-ins
+reviews
+recommendations
+vibes
+THE REAL
+community captions
+media/content
+member voices
+referrals / Put Your People On
+etc.
+
+This lets founder truthfully tell businesses:
+
+"Your community activity builds intelligence around your business."
+
+Do not claim analytics that are not live yet.
+
+============================================================
+7. MEMBER CONTENT CONTRIBUTION
+============================================================
+
+The business page must expose a normal-member contribution path.
+
+Approved tester should be able to add appropriate:
+
+social media URL
+video URL
+image URL
+caption/context
+
+to the canonical business.
+
+Do not require Admin.
+
+Do not create duplicate businesses.
+
+Regular members contribute content.
+
+Business Owner / Cultural Ambassador analytics remain separate permissions.
+
+============================================================
+8. VISUAL PRODUCTION ACCEPTANCE
+============================================================
+
+After fixes, use a brand-new/approved tester in the REAL production website.
+
+Capture screenshot proof of:
+
+business profile top
+community value section
+Vibes / THE REAL
+Review form
+successful review
+Save
+Check In
+media contribution
+Community Says / Voices
+contact information
+mobile responsive view
+
+Use at least:
+
+one business with meaningful existing data
+one business with little/no community data
+
+Prove both states look intentional.
+
+============================================================
+9. RELEASE SAFETY
+============================================================
+
+Do not jeopardize:
+
+tester login
+Apple reviewer login
+member wall
+Kinfolk
+Library
+Map
+Saved Places
+Community
+
+Run permanent regression audit after implementation.
+
+============================================================
+10. EXECUTION PRIORITY
+============================================================
+
+Work in this order:
+
+1. Repair Review submission
+2. Continue Library activation already underway
+3. Perform business-profile parity audit
+4. Wire existing high-value business community components to web
+5. Expose member media contribution
+6. Visual production acceptance
+7. Full regression audit
+
+Do NOT create a new task list for founder.
+
+Proceed autonomously through safe/non-destructive fixes.
+
+Only stop for:
+
+destructive data operation
+new paid infrastructure
+irreversible migration
+genuine privacy/security decision
+
+Founder needs the product demonstrably field-ready, not another planning report.
+```
+
+And I want to temper one other expectation for you personally: **you do not need the business-owner analytics dashboard finished before you start knocking on doors.**
+
+You need the **member-facing evidence of value** finished.
+
+That conversation can be:
+
+* “This is what somebody sees when they find you.”
+* “This is what your customers can say about you.”
+* “This is how they tell people *why* they love you instead of just giving five stars.”
+* “This is how their videos and posts can live alongside your profile without requiring creators to abandon TikTok or Instagram.”
+* “This is how saves, searches, reviews, check-ins and recommendations begin creating demand intelligence.”
+* “When you claim the business, that intelligence becomes useful to you.”
+
+That is already fundamentally different from Yelp or a plain directory.
+
+So I would not call what you're seeing a failure of the vision. I'd call it **an incomplete web translation of a product you already designed much more fully on mobile**. The right response is parity recovery and wiring—not another redesign.
+
+And I agree with your priorities: **authentication → Library/Kinfolk knowledge → business/community flywheel.** Everything else can be polished after real people start using it.

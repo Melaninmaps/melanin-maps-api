@@ -1,0 +1,170 @@
+Yes — add that as a **nonnegotiable part of the business/member contribution flow**, not an optional future enhancement.
+
+One important distinction: **users should be able to add media in two ways**:
+
+* **Upload their own photo/video directly**
+* **Attach a social/media URL** from TikTok, Instagram, YouTube, Vimeo, etc.
+
+The direct upload path matters for people creating original content on the spot. The URL path matters for preserving existing social-platform reach and attribution.
+
+Add this to the Replit instruction:
+
+```text
+ADD TO FIELD-READINESS REQUIREMENT — PHOTO + VIDEO UPLOAD
+
+This is nonnegotiable.
+
+Approved members/testers must be able to contribute BOTH:
+
+1. DIRECT UPLOAD
+   - photos
+   - videos
+
+2. EXTERNAL MEDIA / SOCIAL URL
+   - TikTok
+   - Instagram
+   - YouTube
+   - Vimeo
+   - direct image/video URL where supported
+
+This must work from the member-facing experience, not only Admin.
+
+============================================================
+DIRECT UPLOAD REQUIREMENT
+============================================================
+
+An approved member should be able to:
+
+open a business/place
+→ Add Content
+→ choose Photo or Video
+→ select file from device
+→ add caption/context
+→ submit
+→ see success/pending state
+→ refresh
+→ contribution still exists
+
+Support multiple media contributions over time.
+
+Do not limit a member to one photo/video per business.
+
+============================================================
+STORAGE WARNING
+============================================================
+
+We previously identified that Railway production direct uploads were broken
+because the old Replit Object Storage implementation depended on the Replit
+sidecar.
+
+Therefore:
+
+DO NOT simply re-enable the old broken upload buttons.
+
+First audit the current production-compatible storage architecture.
+
+If a production-safe storage provider/path is already configured, use it.
+
+If not, report the smallest safe production storage solution BEFORE enabling
+direct uploads.
+
+The URL/social-link contribution path must remain available regardless.
+
+============================================================
+MEDIA MUST CONNECT TO THE CANONICAL ENTITY
+============================================================
+
+Uploaded media must attach to the existing canonical:
+
+business
+business location
+cultural site
+HBCU
+house of faith
+event
+community place
+
+Do not create duplicate entities.
+
+Store:
+
+uploader user_id
+entity type/id
+media type
+media URL/path
+caption
+source type
+original social URL where applicable
+created_at
+moderation status
+attribution
+visibility/status
+
+============================================================
+MODERATION / SAFETY
+============================================================
+
+Use appropriate moderation state:
+
+submitted
+pending review
+approved
+rejected
+
+Member must always receive a visible confirmation after submission.
+
+Do not silently accept and then make the content disappear.
+
+============================================================
+ROLE DISTINCTION
+============================================================
+
+Regular approved member:
+may contribute permitted photo/video/media
+
+Business owner:
+may additionally manage authorized business media and access business analytics
+
+Cultural Ambassador:
+may additionally receive creator/ambassador analytics and attribution
+
+Uploading media alone does NOT make a regular member a business owner or
+Cultural Ambassador.
+
+============================================================
+REAL PRODUCTION ACCEPTANCE
+============================================================
+
+Using a clean approved tester on the REAL website:
+
+TEST A:
+Upload one photo to a real test-approved business.
+
+TEST B:
+Upload one short video.
+
+TEST C:
+Add one social-media URL.
+
+For each:
+
+submit
+screenshot confirmation
+refresh
+confirm persistence
+confirm entity unchanged
+confirm attribution correct
+confirm member can see contribution/pending state
+
+Then logout/login and verify persistence.
+
+Also test at mobile-web width because field users will commonly contribute
+from phones.
+
+Do not declare MEDIA CONTRIBUTION PASS until all three paths are visibly
+verified in production.
+```
+
+The only caveat is the storage issue Replit already uncovered: **URL-based media can be made field-ready immediately; direct uploads need a production-safe storage path**. I would absolutely require both, but I would not let Replit “solve” direct uploads by turning the old Railway-broken storage code back on.
+
+For your immediate business outreach, social URLs + direct uploads together are the right experience: a customer can film something right there, or paste the TikTok/Instagram post they already made, and that activity becomes part of the business’s community story.

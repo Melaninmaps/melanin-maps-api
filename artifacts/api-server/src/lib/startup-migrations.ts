@@ -1716,6 +1716,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
     ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
     ["library collections",  () => ensureLibraryCollections(log, warn)],
+    ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
+    ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3051,6 +3053,374 @@ async function ensurePhiladelphiaKnowledgeGraph(
 //   Hierarchy is stored in topic_relationships (parent_topic_id → child_topic_id).
 //
 // All inserts are idempotent via ON CONFLICT DO NOTHING.
+// ── Library Content Activation v1 ─────────────────────────────────────────────
+// Seeds geography_refs, collection→topic relationships, and knowledge_sources for
+// all Tier 1 Books (Divine Nine, Health, Faith) plus priority general topics.
+// Fully idempotent — uses WHERE NOT EXISTS guards on all inserts.
+async function ensureLibraryContentActivation_v1(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    let sourcesAdded = 0;
+
+    // Helper: seed source for a Book with stable short ID
+    const sb = async (
+      topicId: string, tier: string, name: string, url: string | null,
+      claim: string | null, isPrimary: boolean, conf = "verified",
+    ) => {
+      const r = await pool.query(
+        `INSERT INTO knowledge_sources
+           (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status, confidence, created_at, retrieved_at)
+         SELECT gen_random_uuid()::text,$1,$2,$3,$4,$5,$6,'active',$7,NOW(),NOW()
+         WHERE NOT EXISTS (SELECT 1 FROM knowledge_sources WHERE topic_id=$1 AND source_name=$3)`,
+        [topicId, tier, name, url, claim, isPrimary, conf],
+      );
+      sourcesAdded += r.rowCount ?? 0;
+    };
+
+    // Helper: seed source for a general topic looked up by name
+    const st = async (
+      topicName: string, tier: string, name: string, url: string | null,
+      claim: string | null, isPrimary: boolean, conf = "verified",
+    ) => {
+      const r = await pool.query(
+        `INSERT INTO knowledge_sources
+           (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status, confidence, created_at, retrieved_at)
+         SELECT gen_random_uuid()::text, kt.id, $2, $3, $4, $5, $6, 'active', $7, NOW(), NOW()
+         FROM knowledge_topics kt
+         WHERE kt.topic_name = $1
+           AND NOT EXISTS (SELECT 1 FROM knowledge_sources ks WHERE ks.topic_id = kt.id AND ks.source_name = $3)
+         LIMIT 1`,
+        [topicName, tier, name, url, claim, isPrimary, conf],
+      );
+      sourcesAdded += r.rowCount ?? 0;
+    };
+
+    // ── Step 1: Fix geography_refs ───────────────────────────────────────────
+    await pool.query(`
+      UPDATE knowledge_topics
+      SET geography_ref = topic_name
+      WHERE node_type = 'geography'
+        AND (geography_ref IS NULL OR geography_ref = '')
+        AND category = 'country'
+    `);
+    // Bangkok and Phuket are cities, not countries
+    await pool.query(`UPDATE knowledge_topics SET geography_ref='Bangkok,Thailand',category='geography' WHERE topic_name='Bangkok' AND node_type='geography'`);
+    await pool.query(`UPDATE knowledge_topics SET geography_ref='Phuket,Thailand',category='geography' WHERE topic_name='Phuket' AND node_type='geography'`);
+    await pool.query(`UPDATE knowledge_topics SET geography_ref='Thailand' WHERE topic_name='Thailand' AND (geography_ref IS NULL OR geography_ref='')`);
+    log("Library activation: geography_refs fixed");
+
+    // ── Step 2: Connect general topics to parent Collections ─────────────────
+    const catToCollection: [string, string][] = [
+      ["business","coll_business"],["financial","coll_business"],["digital","coll_business"],["skills_trades","coll_careers"],
+      ["employment","coll_careers"],["legal","coll_careers"],["community","coll_community"],["community_culture","coll_culture"],
+      ["diaspora","coll_culture"],["education","coll_education"],["faith","coll_faith"],["history","coll_history"],
+      ["health","coll_health"],["recovery","coll_health"],["travel","coll_travel"],["relocation","coll_travel"],
+      ["country","coll_places"],["geography","coll_places"],["safety","coll_community"],["home","coll_community"],
+      ["housing","coll_community"],["family","coll_community"],["entertainment","coll_community"],["lifestyle","coll_community"],
+    ];
+    for (const [cat, collId] of catToCollection) {
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         SELECT gen_random_uuid()::text, $1, kt.id, 'contains', 0.8
+         FROM knowledge_topics kt
+         WHERE kt.category=$2 AND kt.topic_type='general' AND kt.enabled=true
+           AND NOT EXISTS (SELECT 1 FROM topic_relationships tr WHERE tr.parent_topic_id=$1 AND tr.child_topic_id=kt.id AND tr.relationship_type='contains')`,
+        [collId, cat],
+      );
+    }
+    // Also connect Travel topics to Culture & Community collection
+    await pool.query(
+      `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+       SELECT gen_random_uuid()::text, 'coll_travel', kt.id, 'contains', 0.8
+       FROM knowledge_topics kt
+       WHERE kt.category='country' AND kt.topic_type='general' AND kt.enabled=true
+         AND NOT EXISTS (SELECT 1 FROM topic_relationships tr WHERE tr.parent_topic_id='coll_travel' AND tr.child_topic_id=kt.id AND tr.relationship_type='contains')`,
+    );
+    log("Library activation: general topics connected to Collections");
+
+    // ── Step 3: Seed knowledge_sources for Divine Nine Books ─────────────────
+    await sb("book_d9_aka","authoritative","Alpha Kappa Alpha Sorority, Inc. — Official Site","https://aka1908.org","Alpha Kappa Alpha Sorority, Incorporated was founded January 15, 1908 at Howard University — the first intercollegiate Greek-letter sorority established by African American college women. Over 300,000 members in 1,042 chapters worldwide.",true);
+    await sb("book_d9_aka","authoritative","Smithsonian NMAAHC","https://nmaahc.si.edu","The Smithsonian documents AKA's century of service including healthcare initiatives, education advocacy, and civil rights leadership.",false);
+
+    await sb("book_d9_apa","authoritative","Alpha Phi Alpha Fraternity, Inc. — Official Site","https://www.alphaphialpha.net","Alpha Phi Alpha was founded December 4, 1906 at Cornell University — the first African American intercollegiate Greek-letter fraternity. Members include Dr. Martin Luther King Jr., Thurgood Marshall, and Jesse Owens.",true);
+    await sb("book_d9_apa","professional","Cornell University Library — Rare & Manuscript Collections","https://rmc.library.cornell.edu","Cornell's archives preserve the fraternity's founding documents, early correspondence, and historical records from its establishment at Cornell.",false,"high");
+
+    await sb("book_d9_kap","authoritative","Kappa Alpha Psi Fraternity, Inc. — Official Site","https://www.kappaalphapsi1911.com","Kappa Alpha Psi was founded January 5, 1911 at Indiana University. The fraternity's motto is Achievement in Every Field of Human Endeavor. Over 150,000 members in 700+ chapters.",true);
+
+    await sb("book_d9_oop","authoritative","Omega Psi Phi Fraternity, Inc. — Official Site","https://www.omegapsiphifraternity.org","Omega Psi Phi was founded November 17, 1911 at Howard University by Edgar Amos Love, Oscar James Cooper, Frank Coleman, and Dr. Ernest Everett Just. The first Greek-letter fraternity founded at an HBCU.",true);
+
+    await sb("book_d9_dst","authoritative","Delta Sigma Theta Sorority, Inc. — Official Site","https://www.deltasigmatheta.org","Delta Sigma Theta was founded January 13, 1913 at Howard University by 22 collegiate women. A sisterhood of predominantly Black, college-educated women committed to public service. Over 350,000 members worldwide.",true);
+
+    await sb("book_d9_pbs","authoritative","Phi Beta Sigma Fraternity, Inc. — Official Site","https://www.phibetasigma1914.org","Phi Beta Sigma was founded January 9, 1914 at Howard University on the ideals of Brotherhood, Scholarship, and Service. The only fraternity constitutionally bound to a sorority (Zeta Phi Beta).",true);
+
+    await sb("book_d9_zpb","authoritative","Zeta Phi Beta Sorority, Inc. — Official Site","https://www.zphib1920.org","Zeta Phi Beta was founded January 16, 1920 at Howard University — the first sorority to charter a chapter in Africa, establish auxiliary groups, and be constitutionally bound to a fraternity (Phi Beta Sigma).",true);
+
+    await sb("book_d9_sgr","authoritative","Sigma Gamma Rho Sorority, Inc. — Official Site","https://www.sgrho1922.org","Sigma Gamma Rho was founded November 12, 1922 at Butler University in Indianapolis — the only Divine Nine sorority not founded at an HBCU. Over 100,000 members across 500+ chapters.",true);
+
+    await sb("book_d9_ipt","authoritative","Iota Phi Theta Fraternity, Inc. — Official Site","https://www.iotaphitheta.org","Iota Phi Theta was founded September 19, 1963 at Morgan State University — the youngest of the Divine Nine organizations, founded during the height of the Civil Rights Movement.",true);
+
+    log("Library activation: Divine Nine sources seeded");
+
+    // ── Step 4: Seed knowledge_sources for Health Books ──────────────────────
+    await sb("book_h_diabetes","authoritative","CDC — Diabetes and African Americans","https://www.cdc.gov/diabetes/library/features/diabetes-african-americans.html","Black adults are 60% more likely to be diagnosed with diabetes compared to non-Hispanic white adults, and face higher rates of kidney disease, blindness, and amputation as complications.",true);
+    await sb("book_h_diabetes","authoritative","National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)","https://www.niddk.nih.gov","NIDDK supports research and provides evidence-based information on diabetes prevention, management, and treatment — including culturally tailored resources.",false);
+    await sb("book_h_diabetes","professional","American Diabetes Association","https://www.diabetes.org","The ADA funds research, advocates for people with diabetes, and publishes clinical guidelines for care. The Standards of Medical Care in Diabetes is the field's definitive reference.",false,"high");
+
+    await sb("book_h_maternal","authoritative","CDC — Racial and Ethnic Disparities in Pregnancy-Related Deaths","https://www.cdc.gov/reproductivehealth/maternal-mortality/disparities.html","Black women are approximately 2.6 times more likely to die from pregnancy-related causes than white women. This disparity persists across income and education levels.",true);
+    await sb("book_h_maternal","authoritative","HHS Office of Minority Health — Black/African American Women's Health","https://minorityhealth.hhs.gov/omh/browse.aspx?lvl=4&lvlid=19","The Office of Minority Health provides data and resources on maternal mortality, prenatal care disparities, doula access, and programs addressing the Black maternal health crisis.",false);
+    await sb("book_h_maternal","professional","American College of Obstetricians and Gynecologists (ACOG)","https://www.acog.org","ACOG's equity work addresses persistent disparities in maternal outcomes faced by Black women, including initiatives on implicit bias training and expanded doula reimbursement.",false,"high");
+
+    await sb("book_h_mental","authoritative","SAMHSA — Behavioral Health Among African Americans","https://www.samhsa.gov/behavioral-health-equity/racial-ethnic-minority-populations/african-american-behavioral-health","Black Americans face unique mental health challenges tied to historical trauma and ongoing discrimination, yet are less likely to receive mental health care due to stigma, cost, and access barriers.",true);
+    await sb("book_h_mental","authoritative","National Institute of Mental Health (NIMH)","https://www.nimh.nih.gov","NIMH provides evidence-based information on mental health conditions, culturally informed treatment approaches, and resources for finding culturally competent therapists.",false);
+    await sb("book_h_mental","professional","American Psychological Association — Racism and Mental Health","https://www.apa.org/topics/racism-bias-discrimination/ptsd-racial-ethnic-minorities","The APA documents the psychological impacts of racism and discrimination and publishes guidelines for culturally responsive mental health care.",false,"high");
+
+    await sb("book_h_fertility","authoritative","American Society for Reproductive Medicine (ASRM)","https://www.reproductivefacts.org","ASRM provides patient-centered information on fertility evaluation, causes of infertility, and the full range of treatment options. Its fact sheets are the field's standard patient resources.",true);
+    await sb("book_h_fertility","authoritative","NICHD — Infertility Research","https://www.nichd.nih.gov/health/topics/infertility","The Eunice Kennedy Shriver National Institute of Child Health and Human Development conducts and funds research on causes of infertility and factors affecting reproductive health across communities.",false);
+
+    await sb("book_h_ivf","authoritative","RESOLVE: The National Infertility Association","https://resolve.org","RESOLVE provides comprehensive resources on IVF and assisted reproductive technology, including a clinic finder, cost guides, insurance navigation support, and community forums.",true);
+    await sb("book_h_ivf","authoritative","ASRM — In Vitro Fertilization Patient Guide","https://www.reproductivefacts.org","ASRM's patient guide explains the IVF process step by step — from ovarian stimulation through embryo transfer — including success rates by age, costs, and what to ask your clinic.",false);
+
+    await sb("book_h_fibroids","authoritative","NICHD — Uterine Fibroids","https://www.nichd.nih.gov/health/topics/uterine","Black women are 2 to 3 times more likely to develop uterine fibroids, tend to develop them earlier, have more numerous fibroids, and experience more severe symptoms than white women.",true);
+    await sb("book_h_fibroids","authoritative","HHS Office on Women's Health — Uterine Fibroids","https://www.womenshealth.gov/a-z-topics/uterine-fibroids","The OWH provides comprehensive patient information on fibroid symptoms, diagnosis methods, and the full range of treatment options from medication to surgery.",false);
+
+    await sb("book_h_endometriosis","authoritative","Endometriosis Foundation of America","https://www.endofound.org","The Endometriosis Foundation educates, advocates, and funds research on endometriosis — a condition affecting ~1 in 10 women of reproductive age that causes chronic pain and fertility challenges.",true);
+    await sb("book_h_endometriosis","authoritative","HHS Office on Women's Health — Endometriosis","https://www.womenshealth.gov/a-z-topics/endometriosis","OWH provides evidence-based information on endometriosis symptoms, diagnostic challenges (average 7-year diagnosis delay), and treatment options.",false);
+
+    await sb("book_h_sickle_cell","authoritative","CDC — Sickle Cell Disease","https://www.cdc.gov/ncbddd/sicklecell/index.html","Sickle cell disease affects approximately 100,000 Americans — predominantly Black Americans. About 1 in 365 Black children is born with SCD. About 1 in 13 Black Americans is born with sickle cell trait.",true);
+    await sb("book_h_sickle_cell","authoritative","National Heart, Lung, and Blood Institute (NHLBI)","https://www.nhlbi.nih.gov/health/sickle-cell-disease","NHLBI provides research-backed information on SCD causes, symptoms, diagnosis, treatment advances including hydroxyurea and gene therapy, and resources for patients and families.",false);
+
+    await sb("book_h_breast_cancer","authoritative","American Cancer Society — Breast Cancer in African American Women","https://www.cancer.org/cancer/breast-cancer/understanding-a-breast-cancer-diagnosis/breast-cancer-in-african-american-women.html","Black women have a higher rate of dying from breast cancer than white women. Triple-negative breast cancer — more aggressive and harder to treat — is more common among Black women.",true);
+    await sb("book_h_breast_cancer","authoritative","CDC — Breast Cancer Statistics","https://www.cdc.gov/cancer/breast/statistics/index.htm","CDC provides breast cancer statistics broken down by race and ethnicity, and publishes screening guidelines and resources for understanding individual risk.",false);
+
+    await sb("book_h_prostate","authoritative","CDC — Prostate Cancer and African American Men","https://www.cdc.gov/cancer/prostate/statistics/race.htm","Black men are 73% more likely to develop prostate cancer and more than twice as likely to die from it compared to non-Hispanic white men. Earlier screening conversations are critical.",true);
+    await sb("book_h_prostate","professional","American Cancer Society — Prostate Cancer Risk Factors","https://www.cancer.org/cancer/prostate-cancer/causes-risks-prevention/risk-factors.html","The ACS documents racial disparities in prostate cancer and provides guidance on when to begin screening discussions with your healthcare provider.",false,"high");
+
+    await sb("book_h_hypertension","authoritative","CDC — High Blood Pressure and African Americans","https://www.cdc.gov/bloodpressure/about.htm","Black adults have among the highest rates of hypertension in the world — nearly 56% of Black adults have high blood pressure. They develop it earlier and more severely than white adults.",true);
+    await sb("book_h_hypertension","professional","American Heart Association — High Blood Pressure in African Americans","https://www.heart.org/en/health-topics/high-blood-pressure","The AHA provides clinical guidance on the unique cardiovascular risks Black Americans face and prevention and treatment recommendations including diet, medication, and monitoring.",false,"high");
+
+    await sb("book_h_menopause","authoritative","The Menopause Society (formerly NAMS)","https://www.menopause.org","The Menopause Society is the leading nonprofit scientific organization dedicated to promoting the health of women during midlife and beyond — including evidence on racial disparities in menopause experience.",true);
+    await sb("book_h_menopause","authoritative","NICHD — Menopause and Racial/Ethnic Health","https://www.nichd.nih.gov/health/topics/menopause","Research shows Black women experience more severe hot flashes, higher rates of sleep disturbances, and higher reporting of depression during perimenopause compared to white women.",false);
+
+    await sb("book_h_pcos","authoritative","NICHD — Polycystic Ovary Syndrome (PCOS)","https://www.nichd.nih.gov/health/topics/pcos","PCOS affects approximately 6–12% of U.S. women of reproductive age, making it one of the most common hormonal disorders. The NICHD funds research on its causes, symptoms, and treatments.",true);
+    await sb("book_h_pcos","professional","PCOS Awareness Association","https://www.pcosaa.org","The PCOS Awareness Association provides education and peer support resources for individuals living with polycystic ovary syndrome, including symptom tracking and treatment guidance.",false,"high");
+
+    log("Library activation: Health Book sources seeded");
+
+    // ── Step 5: Seed knowledge_sources for Faith Books ────────────────────────
+    await sb("book_f_ame","authoritative","African Methodist Episcopal Church — Official Site","https://www.ame-church.com","The African Methodist Episcopal Church was founded in 1816 by Bishop Richard Allen in Philadelphia, PA — the first independent Black denomination in the United States. The AME Church has played a central role in civil rights, education, and community life.",true);
+    await sb("book_f_ame","authoritative","Smithsonian NMAAHC — AME Church History","https://nmaahc.si.edu","The Smithsonian documents the AME Church's founding at Mother Bethel in Philadelphia and its pivotal role in the abolition movement, Underground Railroad, and civil rights.",false);
+    await sb("book_f_ame","professional","Library of Congress — AME Church Records","https://www.loc.gov","The Library of Congress holds historical AME records including early convention proceedings, missionary documentation, and correspondence from the church's founding era.",false,"high");
+
+    await sb("book_f_baptist","authoritative","National Baptist Convention, USA, Inc. — Official Site","https://www.nationalbaptist.com","The National Baptist Convention is the largest Black religious denomination in the United States, with over 31,000 member churches and 7.5 million members. It was instrumental in the civil rights movement.",true);
+    await sb("book_f_baptist","professional","PBS — This Far by Faith Documentary","https://www.pbs.org/thisfarbyfaith","PBS This Far by Faith documents the Black Baptist tradition and its role in shaping African American community, culture, and the civil rights movement from slavery through the present.",false,"high");
+
+    await sb("book_f_cogic","authoritative","Church of God in Christ — Official Site","https://www.cogic.org","COGIC is the largest Pentecostal denomination in the United States, founded in 1907 by Bishop Charles Harrison Mason in Memphis, TN. Known for worship culture, gospel music, and global community.",true);
+
+    await sb("book_f_black_cath","authoritative","National Black Catholic Congress","https://www.nbccongress.org","The National Black Catholic Congress is the representative voice for Black Catholics in America, tracing its roots to a series of congresses beginning in 1889. Over 3 million Black Catholics in the U.S.",true);
+    await sb("book_f_black_cath","professional","USCCB — Black Catholic History","https://www.usccb.org","The USCCB documents Black Catholic history and the contributions of historically Black Catholic institutions, parishes, and schools to African American community life.",false,"high");
+
+    await sb("book_f_eth_orth","authoritative","Ethiopian Orthodox Tewahedo Church — Official Documentation","https://www.ethiopianorthodox.org","The Ethiopian Orthodox Tewahedo Church is one of the oldest Christian churches in the world, established in the 4th century AD. It uses the ancient Ge'ez liturgical language and follows the Alexandrian Rite.",true);
+    await sb("book_f_eth_orth","professional","Library of Congress — Ethiopian & Eritrean Collections","https://www.loc.gov/research-centers/african-and-middle-eastern-division","The Library of Congress African and Middle Eastern Division holds extensive resources on Ethiopian Orthodox history, canonical scripture, and diaspora communities in the U.S.",false,"high");
+
+    await sb("book_f_islam","authoritative","Islamic Society of North America (ISNA)","https://www.isna.net","ISNA is one of the largest Muslim organizations in North America, serving as a platform for presenting Islam and providing resources connecting Muslims across communities.",true);
+    await sb("book_f_islam","professional","Smithsonian — Islam in African American History","https://www.smithsonianmag.com","Smithsonian documents Islam in the Black American experience — from the estimated 15–30% of enslaved Africans who were Muslim, through the Nation of Islam, to mainstream Sunni and Shia communities today.",false,"high");
+
+    await sb("book_f_judaism","authoritative","Union for Reform Judaism — Black Jewish Communities","https://www.urj.org","The URJ provides resources on Black Jewish identity, the history of Hebrew Israelite communities, Lemba and Ethiopian Jewish traditions, and the experiences of African American Jews.",true);
+
+    await sb("book_f_sikh","authoritative","Sikh Coalition","https://www.sikhcoalition.org","The Sikh Coalition is the largest Sikh civil rights organization in the United States and provides educational resources on Sikh heritage, the Guru Granth Sahib, and the langar tradition of community feeding.",true);
+
+    await sb("book_f_buddhism","authoritative","Soka Gakkai International-USA","https://www.sgi-usa.org","SGI-USA has a significant African American membership and has been an important gateway for Black Americans to engage with Buddhist practice, Nichiren Buddhism, and interfaith dialogue.",true);
+
+    await sb("book_f_african_sp","professional","Smithsonian — African Diasporic Religious Traditions","https://www.smithsonianmag.com","Smithsonian provides historical and cultural context for Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions preserved and transformed across the diaspora.",true,"high");
+    await sb("book_f_african_sp","professional","Library of Congress — African Diaspora Collection","https://www.loc.gov","The Library of Congress holds extensive documentation on African diaspora spiritual traditions, their West African origins, and their evolution in the Americas under enslavement and freedom.",false,"high");
+
+    await sb("book_f_interfaith","professional","Interfaith America","https://www.interfaithamerica.org","Interfaith America (formerly Interfaith Youth Core) advances religious diversity and bridges communities across faith traditions through education, civic dialogue, and campus initiatives.",true,"high");
+
+    log("Library activation: Faith Book sources seeded");
+
+    // ── Step 6: Priority general topics — Education ───────────────────────────
+    await st("HBCU Admissions & Scholarships","authoritative","Federal Student Aid — HBCUs","https://studentaid.gov/understand-aid/types/grants","Federal Student Aid provides information on HBCU-specific scholarships, grants, and financial aid programs. The federal government provides more than $3.4 billion annually to support the 101 federally recognized HBCUs.",true);
+    await st("HBCU Admissions & Scholarships","authoritative","U.S. Department of Education — White House HBCU Initiative","https://www2.ed.gov/about/inits/ed/whhbcu/index.html","The White House Initiative on HBCUs coordinates federal resources, tracks accountability data, and supports students seeking admission and scholarships at Historically Black Colleges and Universities.",false);
+    await st("HBCU Admissions & Scholarships","professional","NAFEO — National Association for Equal Opportunity","https://www.nafeo.org","NAFEO advocates for HBCUs and provides scholarship databases, enrollment support, and policy resources for students applying to and attending Historically Black Colleges and Universities.",false,"high");
+
+    await st("FAFSA & Financial Aid Navigation","authoritative","Federal Student Aid — FAFSA","https://studentaid.gov/h/apply-for-aid/fafsa","The Free Application for Federal Student Aid (FAFSA) is the official federal application that determines eligibility for grants (including Pell), work-study, and federal student loans. It is the starting point for all federal college financial aid.",true);
+    await st("FAFSA & Financial Aid Navigation","authoritative","Federal Student Aid — Understanding Aid Types","https://studentaid.gov/understand-aid/types","Federal Student Aid explains the four types of aid (grants, scholarships, work-study, loans), how Expected Family Contribution is calculated, and how to compare financial aid packages.",false);
+    await st("FAFSA & Financial Aid Navigation","professional","College Board — BigFuture Paying for College","https://bigfuture.collegeboard.org/pay-for-college","College Board's BigFuture provides tools for estimating college costs, understanding financial aid award letters, and comparing net prices across institutions.",false,"high");
+
+    await st("First-Generation College Students","authoritative","Federal TRIO Programs — U.S. Department of Education","https://www2.ed.gov/about/offices/list/ope/trio/index.html","The Federal TRIO Programs support first-generation and low-income students from middle school through graduate school — including Upward Bound, Talent Search, Student Support Services, and McNair Scholars.",true);
+    await st("First-Generation College Students","professional","Pell Institute for the Study of Opportunity in Higher Education","https://www.pellinstitute.org","The Pell Institute conducts research on barriers faced by first-generation and low-income college students and advocates for evidence-based policies to improve access and completion.",false,"high");
+
+    await st("HBCUs","authoritative","U.S. Department of Education — HBCU List and Data","https://www2.ed.gov/about/inits/ed/whhbcu/hbcu-list.html","The U.S. Department of Education maintains the official list of 101 federally recognized HBCUs, with enrollment data, graduation rates, and information on federal funding by institution.",true);
+    await st("HBCUs","authoritative","Smithsonian NMAAHC — HBCU Legacy","https://nmaahc.si.edu","The Smithsonian documents the founding of HBCUs after the Civil War, their role in educating generations of Black Americans during segregation, and their ongoing cultural significance to Black identity.",false);
+
+    // ── Step 7: Priority general topics — Philadelphia ───────────────────────
+    await st("Philadelphia Faith","authoritative","Mother Bethel AME Church — Official Site","https://www.motherbethel.org","Mother Bethel AME Church, founded 1793 by Bishop Richard Allen, is the oldest parcel of land continuously owned by Black Americans in the United States and a National Historic Landmark in Philadelphia.",true);
+    await st("Philadelphia Faith","professional","Visit Philadelphia — Historic Black Churches","https://www.visitphilly.com","Philadelphia's Black religious landscape spans the oldest AME congregation in the world, historic Black Catholic parishes, mosques, and diverse faith communities rooted in the city's African American history.",false,"high");
+
+    await st("Philadelphia Nightlife","professional","Visit Philadelphia — Nightlife & Entertainment","https://www.visitphilly.com","Visit Philadelphia is the official tourism organization providing guides to live music venues, jazz clubs, comedy shows, and neighborhood nightlife scenes across the city.",true,"high");
+
+    await st("Philadelphia History","authoritative","Historical Society of Pennsylvania","https://hsp.org","The HSP holds millions of primary documents on Philadelphia and Pennsylvania history, including one of the largest collections of African American historical records on the East Coast.",true);
+
+    await st("Philadelphia Employment","professional","Philadelphia Works — Workforce Development","https://www.philaworks.org","Philadelphia Works is the workforce development board for the city of Philadelphia, providing job training, career resources, and employer connections for residents seeking employment.",true,"high");
+
+    // ── Step 8: International — Thailand / Southeast Asia ────────────────────
+    await st("Thailand","authoritative","Tourism Authority of Thailand — Official Site","https://www.tourismthailand.org","Thailand's official tourism organization provides destination guides, cultural information, visa requirements, and travel resources across all regions of Thailand.",true);
+    await st("Thailand","authoritative","Royal Thai Embassy — U.S. Visitor Information","https://thaiembdc.org","The Royal Thai Embassy provides official visa information, entry requirements, health advisories, and practical information for Americans planning travel to Thailand.",false);
+
+    await st("Bangkok","authoritative","Tourism Authority of Thailand — Bangkok","https://www.tourismthailand.org/Destinations/Provinces/Bangkok/149","Bangkok is Thailand's capital and largest city — known for ornate temples (Wat Phra Kaew, Wat Arun), floating markets, world-class street food, vibrant nightlife, and as Southeast Asia's major travel gateway.",true);
+    await st("Bangkok","professional","Lonely Planet — Bangkok City Guide","https://www.lonelyplanet.com/thailand/bangkok","Lonely Planet provides neighborhood guides, transportation info, cultural tips, and curated recommendations for experiencing Bangkok as an international traveler.",false,"high");
+
+    await st("Phuket","authoritative","Tourism Authority of Thailand — Phuket","https://www.tourismthailand.org/Destinations/Provinces/Phuket/170","Phuket is Thailand's largest island province in the Andaman Sea — known for beaches, the historic Old Town, Phi Phi Islands, and as one of Southeast Asia's most visited destinations.",true);
+    await st("Phuket","professional","Lonely Planet — Phuket Province Guide","https://www.lonelyplanet.com/thailand/phuket-province","Lonely Planet covers Phuket's beaches, Old Town walking tours, island-hopping day trips, and practical transport information from the airport.",false,"high");
+
+    // ── Step 9: International — Africa ───────────────────────────────────────
+    await st("Kenya","authoritative","Kenya Tourism Board — Magical Kenya","https://www.magicalkenya.com","Kenya's official tourism authority provides destination guides for Maasai Mara safari experiences, coastal Mombasa culture, Nairobi city life, and the country's 47 counties.",true);
+    await st("Kenya","professional","Smithsonian — East African Heritage","https://www.smithsonianmag.com","Smithsonian provides cultural and historical context on Kenya, including the Swahili Coast trading networks, Maasai and Kikuyu communities, and Kenya's role in human evolutionary history.",false,"high");
+
+    await st("Ethiopia","authoritative","Ethiopian Tourism Organization","https://www.tourismethiopia.org","Ethiopia's official tourism organization provides guides to Lalibela's rock-hewn churches, the Omo Valley, Simien Mountains, Axum obelisks, and the country's extraordinary cultural heritage.",true);
+    await st("Ethiopia","authoritative","UNESCO — Ethiopian World Heritage Sites","https://whc.unesco.org/en/statesparties/et","Ethiopia has 9 UNESCO World Heritage Sites — including the rock-hewn churches of Lalibela, the ruins of Aksum, and the Lower Omo Valley, among the oldest archaeological sites in the world.",false);
+
+    await st("Ghana","authoritative","Ghana Tourism Authority — Ghana.travel","https://www.ghana.travel","Ghana's official tourism authority provides destination guides including Cape Coast Castle, Kakum National Park, Kumasi Ashanti cultural sites, and the country's role as a leading Diaspora travel destination.",true);
+    await st("Ghana","professional","Smithsonian — Ghana's Year of Return and Diaspora Heritage","https://www.smithsonianmag.com","Ghana's Year of Return (2019) and Beyond the Return initiative have made Ghana a key destination for African Americans reconnecting with ancestral roots — marking 400 years since the transatlantic slave trade.",false,"high");
+
+    await st("Nigeria","authoritative","Nigeria Tourism Development Corporation","https://www.tourism.gov.ng","Nigeria's official tourism corporation provides destination information for Lagos, Abuja, the Niger Delta, and northern historical sites including Kano and Zaria.",true);
+    await st("Nigeria","professional","Smithsonian — Nigerian Arts, Culture, and Nollywood","https://www.smithsonianmag.com","Nigeria is Africa's largest economy with over 250 ethnic groups, a rich cultural landscape including Nollywood (world's 2nd-largest film industry), Afrobeats, and the ancient Benin bronze tradition.",false,"high");
+
+    await st("South Africa","authoritative","South African Tourism — Official Site","https://www.southafrica.net","South Africa's official tourism site provides guides to Cape Town, Johannesburg, the Garden Route, Kruger National Park, and Robben Island where Nelson Mandela was imprisoned for 18 years.",true);
+    await st("South Africa","professional","Smithsonian — South Africa and the End of Apartheid","https://www.smithsonianmag.com","Smithsonian documents South Africa's history under apartheid, the 1994 democratic transition led by Nelson Mandela, and the country's ongoing social and economic transformation.",false,"high");
+
+    // ── Step 10: Caribbean ───────────────────────────────────────────────────
+    await st("Jamaica","authoritative","Jamaica Tourist Board — Visit Jamaica","https://www.visitjamaica.com","Jamaica's official tourism board provides destination guides to Kingston, Montego Bay, Negril, Ocho Rios, and the Blue Mountains. Jamaica is the birthplace of reggae, dancehall, and Rastafari.",true);
+    await st("Jamaica","professional","Smithsonian — Jamaican Culture and African Diaspora","https://www.smithsonianmag.com","Jamaican culture — from reggae and Bob Marley to Rastafari, jerk cuisine, and the Blue Lagoon — reflects a vibrant African diaspora heritage that has shaped global music and culture.",false,"high");
+
+    await st("Haiti","authoritative","Haiti — Cultural and Historical Resources","https://www.haiti.org","Haiti was the first Black republic in the world, achieving independence in 1804 after the only successful slave revolt in history. Citadelle Laferrière is a UNESCO World Heritage Site.",true);
+
+    await st("Bahamas","authoritative","Bahamas Ministry of Tourism — Official Site","https://www.bahamas.com","The Bahamas' official tourism site covers Nassau, Paradise Island, the Exumas, and 700 islands known for world-class beaches, diving, and the Junkanoo cultural festival tradition.",true);
+
+    await st("Barbados","authoritative","Barbados Tourism Marketing Inc. — Visit Barbados","https://www.visitbarbados.org","Barbados is a sovereign island nation with a distinct Bajan identity — birthplace of Rihanna, with a rich rum heritage, the UNESCO-listed Bridgetown historic district, and coral-lined beaches.",true);
+
+    await st("Trinidad and Tobago","authoritative","Tourism Trinidad Ltd. — Official Site","https://www.gotrinidadandtobago.com","Trinidad and Tobago is the birthplace of calypso and soca music and home to one of the world's largest Carnival celebrations. The twin-island nation has a rich African, Indian, and Creole heritage.",true);
+
+    await st("Dominican Republic","authoritative","Ministry of Tourism Dominican Republic — Go Dominican Republic","https://www.godominicanrepublic.com","The Dominican Republic's official tourism site covers Punta Cana, Santo Domingo (the oldest continuously inhabited European settlement in the Americas), Samaná, and the country's Caribbean culture.",true);
+
+    await st("Cuba","authoritative","Cuba Travel — Official Tourism Resources","https://www.cubatravelusa.com","Cuba is home to 9 UNESCO World Heritage Sites including Old Havana, the Valley of Viñales, and Trinidad. Its Afro-Cuban culture — from Santería to Rumba and son music — is central to its identity.",true);
+
+    await st("Colombia","authoritative","ProColombia Tourism","https://colombia.travel","Colombia's official tourism promotion agency covers Cartagena (with its large Afro-Colombian population and UNESCO-listed old city), Medellín, Cali (salsa capital), the Amazon, and Caribbean coast.",true);
+
+    await st("Brazil","authoritative","Brazilian Tourist Board (Embratur)","https://www.embratur.com.br","Brazil has the largest African diaspora population outside Africa. Salvador da Bahia is considered the cultural heart of Afro-Brazilian heritage — home to Candomblé, capoeira, and axé music.",true);
+
+    log(`Library activation: ${sourcesAdded} knowledge_sources seeded across all Tier 1 Books and general topics`);
+    log("Library Content Activation v1: complete");
+
+  } catch (err: unknown) {
+    warn(`Library activation v1 failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── African Geography Nodes v1 ─────────────────────────────────────────────────
+// Adds the 45 African sovereign nations missing from the geography topology.
+// Each gets: stable short ID, node_type=geography, category=country, status=published.
+// Connected to Places and Travel collections, and to Culture & Community.
+async function ensureAfricanGeographyNodes_v1(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const AFRICA = [
+      ["geo_af_algeria",    "Algeria",                   "North Africa's largest country — home to the Sahara Desert, ancient Roman ruins at Timgad and Djémila, and the UNESCO-listed Casbah of Algiers."],
+      ["geo_af_angola",     "Angola",                    "A nation of extraordinary natural diversity — from Kalandula Falls to the Namib Desert. Angola has one of Africa's fastest-growing economies."],
+      ["geo_af_benin",      "Benin",                     "Birthplace of Vodun (Voodoo) religion and home to the ancient Kingdom of Dahomey — a center of African cultural heritage and history."],
+      ["geo_af_botswana",   "Botswana",                  "Home to the Okavango Delta, one of the world's largest inland deltas and a UNESCO World Heritage Site, and the Chobe National Park."],
+      ["geo_af_bfaso",      "Burkina Faso",              "A landlocked West African nation known for its vibrant arts and crafts tradition and the FESPACO Pan-African Film Festival held in Ouagadougou."],
+      ["geo_af_burundi",    "Burundi",                   "One of Africa's smallest nations, situated at the northeastern shore of Lake Tanganyika — the world's longest freshwater lake."],
+      ["geo_af_capeverde",  "Cape Verde",                "An archipelago of 10 volcanic islands off West Africa's coast — known for morna music, Creole culture, and as a nexus of African, Portuguese, and diaspora identity."],
+      ["geo_af_cameroon",   "Cameroon",                  "Known as 'Africa in miniature' for its geographic and cultural diversity — spanning rainforest, savannah, mountains, and over 250 ethnic groups."],
+      ["geo_af_car",        "Central African Republic",  "A landlocked country with extraordinary biodiversity, including Dzanga-Sangha Reserve — one of the last refuges for forest elephants and western lowland gorillas."],
+      ["geo_af_chad",       "Chad",                      "Home to Lake Chad and the Tibesti Mountains, Chad straddles the Sahara and sub-Saharan Africa with a richly diverse culture of over 200 ethnic groups."],
+      ["geo_af_comoros",    "Comoros",                   "An archipelago nation between Madagascar and Mozambique — known as the Perfume Islands for their ylang-ylang and clove cultivation."],
+      ["geo_af_congo_brz",  "Republic of the Congo",     "Home to the Congo Basin rainforest — the world's second-largest tropical rainforest — and a rich tradition of Kongo kingdom heritage."],
+      ["geo_af_congo_drc",  "Democratic Republic of Congo","The DRC contains more than half of Africa's rainforest and the Congo River — Africa's deepest river. It is one of the most biodiverse places on Earth."],
+      ["geo_af_cotediv",    "Côte d'Ivoire",             "Côte d'Ivoire (Ivory Coast) is one of West Africa's most prosperous nations and a major center of Ivorian music, fashion, and contemporary African art."],
+      ["geo_af_djibouti",   "Djibouti",                  "A small East African nation at the strategic Bab-el-Mandeb Strait — where the Red Sea meets the Gulf of Aden — with salt lakes, volcanoes, and underwater coral reefs."],
+      ["geo_af_egypt",      "Egypt",                     "Home to one of humanity's oldest civilizations — the pyramids of Giza, the Sphinx, Luxor's temples, and the Nile — Egypt is both an African and Mediterranean heritage destination."],
+      ["geo_af_equatguinea","Equatorial Guinea",         "The only Spanish-speaking country in Africa — comprising a mainland region and islands including Bioko — with rich oil resources and tropical rainforest."],
+      ["geo_af_eritrea",    "Eritrea",                   "One of Africa's youngest nations, achieving independence in 1993. Home to the UNESCO-listed modernist city of Asmara and ancient Aksumite ruins."],
+      ["geo_af_eswatini",   "Eswatini",                  "One of the world's last absolute monarchies and landlocked between South Africa and Mozambique — known for the Incwala and Umhlanga Reed Dance ceremonies."],
+      ["geo_af_gabon",      "Gabon",                     "One of Africa's most forested countries — 88% forest cover — with national parks protecting gorillas, forest elephants, and hippos in Loango National Park."],
+      ["geo_af_gambia",     "Gambia",                    "Africa's smallest mainland nation — a narrow strip along the Gambia River — known as the Gateway to Africa and a major roots tourism destination for the African diaspora."],
+      ["geo_af_guinea",     "Guinea",                    "Home to the Fouta Djallon highlands — the 'water tower of West Africa' — and a significant Fulani and Mandinka cultural heritage."],
+      ["geo_af_guineabiss", "Guinea-Bissau",             "An archipelago of 88 islands and a mainland — known for the UNESCO-listed Bijagós Archipelago, one of West Africa's most pristine coastal ecosystems."],
+      ["geo_af_lesotho",    "Lesotho",                   "The only country in the world entirely above 1,000 meters elevation — a mountainous kingdom within South Africa known as the Kingdom in the Sky and for Basotho culture."],
+      ["geo_af_liberia",    "Liberia",                   "Founded in 1847 by free Black Americans and freed slaves — Liberia has a unique historical connection to the African American diaspora and is Africa's oldest republic."],
+      ["geo_af_libya",      "Libya",                     "Home to extraordinary Roman ruins at Leptis Magna and Sabratha — UNESCO World Heritage Sites along the Mediterranean — and ancient rock art in the Sahara."],
+      ["geo_af_madagascar", "Madagascar",                "The fourth-largest island in the world — home to 90% of endemic wildlife including lemurs and baobab avenues — a biodiversity treasure unlike anywhere on Earth."],
+      ["geo_af_malawi",     "Malawi",                    "Known as the Warm Heart of Africa — Malawi's culture of hospitality is legendary — with Lake Malawi (a UNESCO World Heritage Site) at its center."],
+      ["geo_af_mali",       "Mali",                      "Home to the ancient city of Timbuktu — once a global center of Islamic learning — and the Dogon cliffs with one of Africa's most distinctive living cultural landscapes."],
+      ["geo_af_mauritania", "Mauritania",                "A vast Saharan nation where ancient caravan cities like Chinguetti — a UNESCO World Heritage Site — served as gateways to Mecca for West African pilgrims."],
+      ["geo_af_mauritius",  "Mauritius",                 "A multicultural island nation in the Indian Ocean — with a blend of African, Indian, French, and Creole culture, UNESCO-listed Aapravasi Ghat, and pristine lagoons."],
+      ["geo_af_morocco",    "Morocco",                   "Where Africa meets the Arab world and the Mediterranean — the medinas of Marrakesh, Fès, and Chefchaouen are UNESCO World Heritage Sites drawing millions of visitors."],
+      ["geo_af_mozambique", "Mozambique",                "A long Indian Ocean coastline with extraordinary marine biodiversity, Portuguese colonial architecture in Maputo, and the Bazaruto Archipelago coral reefs."],
+      ["geo_af_namibia",    "Namibia",                   "Home to the oldest desert in the world — the Namib — and the red dunes of Sossusvlei, Etosha National Park, and the Himba people with their ochre-painted skin."],
+      ["geo_af_niger",      "Niger",                     "One of the world's largest countries by area — home to the Air Mountains, Ténéré Desert, and the ancient city of Agadez — a UNESCO World Heritage Site and traditional Tuareg hub."],
+      ["geo_af_rwanda",     "Rwanda",                    "Known as the Land of a Thousand Hills — Rwanda's remarkable post-genocide national reconciliation, mountain gorilla conservation, and Kigali's cleanliness are internationally recognized."],
+      ["geo_af_saotome",    "São Tomé and Príncipe",     "A small island nation in the Gulf of Guinea — one of Africa's smallest countries — with Portuguese Creole culture, cacao heritage, and tropical biodiversity."],
+      ["geo_af_seychelles", "Seychelles",                "A 115-island archipelago in the Indian Ocean — home to UNESCO-listed Vallée de Mai (where the legendary Coco de Mer palm grows), pristine coral reefs, and rare endemic species."],
+      ["geo_af_sierraleone","Sierra Leone",              "Home to Bunce Island — one of the most significant slave trading sites in West Africa — and a nation with a powerful connection to the African American roots journey."],
+      ["geo_af_somalia",    "Somalia",                   "One of the world's longest coastlines on the Horn of Africa — home to ancient Cushitic civilization, Somali poetry tradition, and the historic port of Mogadishu."],
+      ["geo_af_southsudan", "South Sudan",               "The world's youngest nation (independence 2011) — home to the Sudd, one of the world's largest freshwater ecosystems, and the Dinka and Nuer cattle culture."],
+      ["geo_af_sudan",      "Sudan",                     "Home to more ancient pyramids than Egypt — the Nubian pyramids of Meroe are UNESCO World Heritage Sites — and the ancient Nubian civilization along the Nile."],
+      ["geo_af_tanzania",   "Tanzania",                  "Home to Kilimanjaro (Africa's highest peak), the Serengeti, Zanzibar's Stone Town (UNESCO World Heritage Site), and the Ngorongoro Crater — East Africa's premier destination.",],
+      ["geo_af_togo",       "Togo",                      "A narrow West African nation with vibrant Ewe and Kabye cultures, Voodoo spiritual traditions, and the UNESCO-listed Koutammakou landscape."],
+      ["geo_af_tunisia",    "Tunisia",                   "Where Africa meets the Mediterranean — Carthage's ruins, the UNESCO-listed medina of Tunis, and the Sahara landscapes of Douz make Tunisia a cultural crossroads."],
+      ["geo_af_uganda",     "Uganda",                    "The Pearl of Africa — home to mountain gorillas in Bwindi, the source of the Nile at Jinja, and diverse cultures including the historic Buganda Kingdom."],
+      ["geo_af_zambia",     "Zambia",                    "Home to Victoria Falls — one of the world's largest waterfalls and a UNESCO World Heritage Site — and extraordinary Luangwa Valley wildlife reserves."],
+      ["geo_af_zimbabwe",   "Zimbabwe",                  "Home to Great Zimbabwe — the largest ancient stone structure in sub-Saharan Africa and a UNESCO World Heritage Site — and Victoria Falls on the Zambezi River."],
+    ];
+
+    let added = 0;
+    for (const [id, name, desc] of AFRICA) {
+      // Insert topic node
+      const topicResult = await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, status, credibility_score, credibility_tier, geography_ref)
+         VALUES ($1,$2,$2,'country',$3,'geography','general',true,'published',60,'professional',$2)
+         ON CONFLICT (id) DO NOTHING`,
+        [id, name, desc],
+      );
+      added += topicResult.rowCount ?? 0;
+
+      // Connect to Places collection
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text,'coll_places',$1,'contains',0.8)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+      // Connect to Travel collection
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text,'coll_travel',$1,'contains',0.8)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+      // Connect to Culture & Community collection for diaspora-relevant countries
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text,'coll_culture',$1,'contains',0.7)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+    }
+
+    log(`African geography nodes: ${added} new countries added, ${AFRICA.length} total checked`);
+
+  } catch (err: unknown) {
+    warn(`African geography nodes v1 failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureLibraryCollections(
   log: (msg: string) => void,
   warn: (msg: string) => void,

@@ -1,0 +1,404 @@
+You are right. **This is not polish. These are core product failures.**
+
+Your screenshot proves two things visually:
+
+* searching **“Pink table”** returns **0 results** and “No matching businesses found,” even though the intended business should be close enough by name to surface;
+* on this Map/Explore experience, there is **no visible way for a tester/member to add a photo/video/link contribution** tied to a business/place.
+
+Those both undermine the exact field-use case you are preparing for: someone finds a place, contributes content, and the system becomes smarter.
+
+I would stop Replit from moving deeper into Library activation until it fixes and then visually proves these two flows. Send this:
+
+```text
+P0/P1 FIELD-USE CORRECTION — FIX BEFORE CONTINUING EXPANSION
+
+Founder has visually tested production and found two core failures.
+
+These are NOT cosmetic.
+
+Do not continue unrelated feature expansion until both are diagnosed, repaired,
+and visually verified on the real production website.
+
+============================================================
+ISSUE 1 — PARTIAL / FUZZY BUSINESS NAME SEARCH FAILS
+============================================================
+
+Production screenshot:
+
+Search query:
+"Pink table"
+
+Actual:
+0 results
+"No matching businesses found"
+
+Founder knows the intended business exists or should be discoverable by a close
+name match.
+
+This search behavior is unacceptable.
+
+A member should NOT have to know the exact canonical spelling of a business.
+
+FORENSICALLY TRACE THE QUERY FIRST.
+
+For "Pink table", return:
+
+- normalized query
+- significant tokens
+- exact-name pass
+- token-overlap pass
+- pg_trgm / fuzzy pass
+- aliases searched
+- city/location scope
+- candidate business names and scores
+- threshold that caused the intended record to be excluded
+
+Do not guess-fix.
+
+============================================================
+EXPECTED BUSINESS NAME SEARCH BEHAVIOR
+============================================================
+
+Search must tolerate:
+
+partial names
+missing words
+word-order differences
+minor misspellings
+common punctuation differences
+abbreviations
+known aliases / DBA names
+user shorthand
+
+Examples:
+
+"The Pink Table"
+"Pink Table"
+"Pink table"
+"Pink"
+"Pink Tbl" where confidence is reasonable
+
+should be capable of resolving to the same canonical business or showing:
+
+"Did you mean...?"
+
+Do NOT return unrelated filler merely because fuzzy matching is enabled.
+
+Ranking should prioritize:
+
+1. exact canonical name
+2. exact alias / DBA
+3. strong token overlap
+4. strong trigram/fuzzy name similarity
+5. category/location alternatives only after clear messaging
+
+A strong partial-name match should outrank category peers.
+
+============================================================
+CANONICAL ENTITY RESOLUTION
+============================================================
+
+Use one canonical business record.
+
+Do not create a second listing to solve search.
+
+If the business has:
+
+legal name
+DBA
+nickname
+former name
+location-specific name
+
+store/search those as aliases mapped to the same canonical entity.
+
+============================================================
+SEARCH ACCEPTANCE TESTS
+============================================================
+
+Use the actual known intended business record.
+
+Test from the REAL website:
+
+exact full name
+partial name
+"Pink table"
+one misspelling
+one omitted-word variation
+
+Capture screenshots.
+
+Expected:
+
+intended business appears prominently
+or
+clear "Did you mean?" resolution
+
+No silent 0-result state when a high-confidence canonical match exists.
+
+============================================================
+ISSUE 2 — MEMBER CONTENT CONTRIBUTION IS NOT ACCESSIBLE
+============================================================
+
+Founder still cannot see a usable method from the field experience to add
+content.
+
+This is a core requirement.
+
+Approved testers/members need to be able to contribute:
+
+photos
+video references
+social-media URLs
+content URLs
+
+to legitimate MWM entities while traveling / visiting businesses / cultural
+sites / houses of faith / events where permitted.
+
+The founder should NOT need Admin tools for ordinary contribution.
+
+============================================================
+AUDIT EXISTING MEDIA CAPABILITY FIRST
+============================================================
+
+Before rebuilding anything, locate every existing:
+
+community media URL field
+business video/social URL field
+photo URL field
+content contribution endpoint
+mediaUrls array
+social-link parser
+YouTube embed support
+Instagram URL support
+TikTok URL support
+admin media fields
+community composer media UI
+
+Return:
+
+BACKEND EXISTS?
+WEB UI EXISTS?
+MOBILE UI EXISTS?
+WHICH ROLES?
+WHICH ENTITY TYPES?
+WHERE IS IT ACCESSIBLE?
+
+The system has previously been reported as supporting URL-based media.
+
+If the capability exists but is not exposed in the member UX:
+
+WIRE IT.
+
+Do not create a second incompatible media system.
+
+============================================================
+REQUIRED FIELD-USE EXPERIENCE
+============================================================
+
+On a business/place detail page, an approved member should have a clear action
+such as:
+
+Add Content
+Share the Vibe
+Add Photo / Video
+Contribute Media
+
+Use polished MWM visual language — no basic emoji-based design.
+
+The contribution flow should allow, at minimum:
+
+1. paste social-media post URL
+   - TikTok
+   - Instagram
+   - YouTube
+   - Vimeo where supported
+
+2. paste direct image/video URL where supported
+
+3. add a short caption/context
+
+4. identify what the content shows
+
+5. submit
+
+Do not require downloading/re-uploading another creator's content.
+
+Preserve original platform attribution/linkage.
+
+============================================================
+ENTITY TYPES
+============================================================
+
+Audit and support appropriate contribution attachment to:
+
+business
+business location
+cultural site
+HBCU
+house of faith
+event
+community place
+
+using canonical entity relationships.
+
+Do not duplicate the entity just because content is added.
+
+============================================================
+MULTIPLE CONTENT ITEMS
+============================================================
+
+A user should NOT be limited to one lifetime media item per entity.
+
+Members should be able to contribute multiple legitimate content references
+over time.
+
+Use safeguards for:
+
+duplicates
+spam
+broken URLs
+unsafe content
+moderation
+
+but do not impose an arbitrary one-item limit.
+
+============================================================
+ROLE / ANALYTICS DISTINCTION
+============================================================
+
+Content contribution and analytics are different permissions.
+
+Regular approved member:
+may contribute permitted content
+
+Business owner:
+may contribute/manage business content + receive appropriate business analytics
+
+Cultural Ambassador:
+may contribute creator content + receive appropriate creator/ambassador
+analytics
+
+Regular members do NOT receive business/ambassador analytics merely because
+they added media.
+
+============================================================
+PERSISTENCE + IMMEDIATE RESULT
+============================================================
+
+After contribution:
+
+the user must receive a clear success state
+
+the contribution must persist
+
+the entity should refresh/update appropriately
+
+the member should be able to see that their contribution exists or is pending
+moderation
+
+If moderation is required, say:
+
+Submitted / Pending Review
+
+Do not let the user submit successfully and then see no evidence anything
+happened.
+
+============================================================
+REAL-WORLD ACCEPTANCE TEST
+============================================================
+
+Create/use a clean approved tester.
+
+On the REAL production website:
+
+1. Search for known business using partial name
+2. Open business
+3. Add a legitimate test social-media URL
+4. Add caption
+5. Submit
+6. Screenshot success/pending state
+7. Refresh
+8. Screenshot persistence
+9. Verify canonical entity unchanged
+10. Verify contribution row/link exists
+11. Verify tester does NOT receive business analytics
+12. Verify business-owner/ambassador analytics permissions remain distinct
+
+Also test a cultural-site contribution if architecture supports it.
+
+============================================================
+BANGKOK / PHILLY / TOUR READINESS
+============================================================
+
+This is specifically required for field testing in:
+
+Philadelphia
+NC / SC / tour cities
+Bangkok / Phuket
+other international locations
+
+The workflow must not assume:
+
+US state
+ZIP code
+US phone formatting
+
+for international entity/content contribution.
+
+============================================================
+RELEASE CONTROL
+============================================================
+
+After both corrections:
+
+run the permanent regression audit.
+
+Then perform a VISUAL new-user test from:
+
+login
+→ search
+→ partial business match
+→ open entity
+→ contribute media URL
+→ save entity
+→ follow Library topic
+→ ask Kinfolk
+→ logout
+→ login
+→ verify persistence
+
+Capture screenshots throughout.
+
+Do not declare PASS based only on API/code.
+
+============================================================
+STATUS RULE
+============================================================
+
+Do not label:
+
+SEARCH: PASS
+
+until partial-name resolution is visually verified.
+
+Do not label:
+
+MEDIA CONTRIBUTION: PASS
+
+until a normal approved tester can visibly find and use the contribution flow
+on production.
+
+These are required for field readiness.
+```
+
+The key point is that Replit should **reuse what already exists** rather than inventing another upload architecture. You already deliberately moved toward URL/social-platform contributions because it preserves the creator’s original platform and avoids unnecessary storage. That is ideal for Bangkok and for you walking into businesses tomorrow.
+
+And on search: “close enough” absolutely matters. A discovery product cannot require users to know the exact database string. **Canonical name + aliases + strong fuzzy matching** is the right model.
+
+I would classify these as:
+
+**P0/P1 before field use:** partial-name search, visible member media contribution.
+**Minor tweaks:** visual polish, exact labels, layout refinements.
+
+So yes—have Replit fix these before it spends more time making the Library deeper.

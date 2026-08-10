@@ -1,0 +1,110 @@
+Exactly. What you want for Mea in Bangkok is the **URL-based social media path**, and that is actually the easiest and safest part to make work immediately.
+
+The flow should be:
+
+**Mea visits a place in Bangkok → posts her normal Instagram Reel/photo/carousel like she always does → copies the Instagram post link → opens MWM → finds that business/place → taps “Add Content” or “Show the Vibe” → pastes the Instagram URL → adds an optional MWM caption → submits.**
+
+MWM would then **store the link to her Instagram post, not steal or re-upload her video**.
+
+That distinction is important.
+
+### What “URL-based media” means
+
+Suppose Mea posts a Reel on Instagram.
+
+Her content continues to live on Instagram, under **her account**, with her views, likes, comments and followers.
+
+MWM stores something like:
+
+**Business:** Restaurant XYZ Bangkok
+**Contributor:** Mea
+**Source:** Instagram
+**Original URL:** her Instagram Reel
+**Caption:** “The rooftop at sunset was amazing — definitely birthday-night energy.”
+
+Then on the MWM business profile you could eventually show something like:
+
+**Show Me the Vibe**
+*Real community content*
+
+and display or link to Mea's Instagram content.
+
+So she doesn't have to:
+
+1. post on Instagram;
+2. download her video;
+3. upload the same giant video to MWM;
+4. start over with zero views on another platform.
+
+That is **exactly aligned with the original selling point you've been describing to creators.**
+
+### Why I mentioned the storage issue
+
+That's a completely different scenario.
+
+Imagine Mea takes a photo but **doesn't post it anywhere**.
+
+If she wants to upload that original photo directly to MWM from her iPhone, MWM has to physically store the photo file somewhere.
+
+That's what requires storage infrastructure.
+
+The old system Replit built tried to store uploads through **Replit Object Storage**. But your production website runs on **Railway**, and Replit discovered that its old storage code depended on a special Replit-only authentication service. Railway can't access that service.
+
+So:
+
+**Instagram URL → MWM:** no major file storage problem. ✅
+**TikTok URL → MWM:** no major file storage problem. ✅
+**YouTube URL → MWM:** no major file storage problem. ✅
+**Upload a brand-new 200 MB video directly to MWM:** MWM needs a proper production storage system. ⚠️
+
+That's why I don't want Replit simply switching the old upload button back on. It might look like an upload feature but fail as soon as your friends try to use it.
+
+### And I think your priority should actually be URL-first
+
+For this tour and Bangkok opportunity, I'd tell Replit:
+
+**Get social URL contribution flawless first.**
+
+That's the experience your actual content creators are most likely to use anyway.
+
+Mea already posts to Instagram. Your daughter may post to TikTok. Someone else might use YouTube. They should simply bring that existing content into MWM **by reference**.
+
+Later, direct upload becomes useful for things like:
+
+* a member takes a quick picture but doesn't use social media;
+* someone photographs a menu;
+* someone records a 15-second clip specifically for MWM;
+* a community member uploads historical photos they own;
+* a business uploads its own approved photos.
+
+But **direct upload does not have to block Mea's Bangkok use case.**
+
+### There is another major benefit
+
+This also helps you with creators.
+
+You can tell a Cultural Ambassador:
+
+> “I'm not asking you to start your audience over on another platform. Keep creating on Instagram, TikTok or YouTube. Mapping with Melanin connects that content to the places and communities it represents, so people who are actively looking for that experience can discover your content too.”
+
+That's substantially different from asking somebody to upload videos into yet another social network.
+
+And eventually the flywheel gets interesting.
+
+Mea posts a Bangkok rooftop Reel → connects it to the Bangkok business on MWM → another member searches **“birthday rooftop Bangkok”** → Kinfolk can see that MWM has community content associated with that location → it can say something like:
+
+**“We have community content from a member who visited this rooftop for a celebration. Here’s why it may fit what you're looking for.”**
+
+Meanwhile, the business can eventually learn that users are discovering it through birthday/nightlife/luxury searches, and Mea as a Cultural Ambassador can eventually see that her content helped drive discovery.
+
+**One Instagram Reel has now become business intelligence, travel discovery, community knowledge and creator value—without removing the Reel from Instagram.**
+
+That is the model I think you have been trying to build.
+
+So I would modify the priority to:
+
+**NOW:** social URL contribution from Instagram/TikTok/YouTube → associate with canonical business/place → visible attribution → multiple contributions → searchable/Kinfolk-readable.
+
+**NEXT:** production-safe direct photo/video uploads.
+
+And we should absolutely keep both. The direct upload is valuable, but **Mea should be able to use Bangkok even if we haven't solved direct file storage yet.**
