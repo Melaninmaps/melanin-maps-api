@@ -1,0 +1,191 @@
+Yes. That is the important correction: **the geocoder should help MWM understand where the user means, but it should never become the source of businesses shown to the user.**
+
+Right now Replit's fix risks turning Nominatim into a discovery engine. That would undermine your model. MWM is not "search the open web/map and show whatever exists." It is **search our curated/community-powered data intelligently**.
+
+The right architecture is:
+
+**User query → extract geography → geocode only the geography → search MWM database within that geography → show only MWM entities.**
+
+If there are no MWM results, say so and offer **Add a Place / Ask Kinfolk / broaden MWM categories**. Do **not** show the Oslo restaurant Nominatim found, or any other outside listing, as if it belongs to MWM.
+
+Send Replit this immediately:
+
+```text
+IMPORTANT PRODUCT RULE — GEOCODING IS LOCATION RESOLUTION ONLY
+
+The root cause diagnosis is correct, but the fix must preserve a core
+Mapping With Melanin product rule:
+
+ONLY MWM DATABASE ENTITIES MAY APPEAR AS BUSINESS/PLACE RESULTS.
+
+We are NOT a generic directory.
+
+Nominatim / OpenStreetMap / Google geocoding may be used ONLY to resolve:
+
+city
+country
+region
+neighborhood
+coordinates / map center
+
+It must NEVER supply businesses, restaurants, venues, doctors, churches,
+or other discovery results to the user.
+
+============================================================
+CORRECT SEARCH ARCHITECTURE
+============================================================
+
+Example query:
+
+"Phuket restaurants"
+
+STEP 1:
+Parse query.
+
+GEOGRAPHY:
+Phuket, Thailand
+
+INTENT:
+restaurant / food
+
+STEP 2:
+Geocode ONLY:
+"Phuket, Thailand"
+
+Use geocoder result to obtain:
+lat/lng
+city/region/country context
+map center
+
+STEP 3:
+Search ONLY Mapping With Melanin's canonical database for:
+
+businesses / places in or near Phuket
+matching Food / restaurant intent
+
+STEP 4:
+Return ONLY MWM records.
+
+============================================================
+NO EXTERNAL DISCOVERY LEAKAGE
+============================================================
+
+Do NOT surface:
+
+Nominatim POIs
+OpenStreetMap businesses
+Google Places businesses
+generic external directory records
+
+as MWM results.
+
+External geocoding is infrastructure, not content.
+
+If Nominatim returns a restaurant named "Phuket" in Oslo,
+that result must NEVER become a business result.
+
+It should only be considered if the query being geocoded is actually a
+geographic phrase.
+
+============================================================
+ZERO-RESULT BEHAVIOR
+============================================================
+
+If geography resolves successfully but MWM has no matching entities:
+
+Move the map to the correct geography.
+
+Then show an honest MWM state such as:
+
+"We don't have enough MWM restaurant listings in Phuket yet."
+
+Offer:
+
+View all MWM places in Phuket
+Ask KinfolkAI
+Add a Place
+
+Do NOT fill the gap with random internet businesses.
+
+============================================================
+KINFOLK DISTINCTION
+============================================================
+
+Kinfolk may use broader reputable knowledge when explicitly helping a user
+and when the product architecture permits it.
+
+But Kinfolk must clearly distinguish:
+
+MWM-listed / community-known place
+vs
+broader general recommendation
+
+The Map and Business Directory themselves should remain canonical MWM data.
+
+============================================================
+ACCEPTANCE TEST
+============================================================
+
+Test production:
+
+"Phuket restaurants"
+
+Expected:
+- geography = Phuket, Thailand
+- map centers Phuket
+- only MWM Phuket restaurant/business records display
+
+"Phuket nightlife"
+
+Expected:
+- geography = Phuket
+- only MWM nightlife/entertainment results display
+
+"Bangkok restaurants"
+
+Expected:
+- map centers Bangkok
+- only MWM Bangkok records
+
+"Jamaica restaurants"
+
+Expected:
+- map centers Jamaica / appropriate geographic scope
+- only MWM Jamaica records
+
+"AME church Baltimore"
+
+Expected:
+- geography Baltimore
+- only MWM faith listings
+- no external POI injection
+
+============================================================
+DATA PROVENANCE RULE
+============================================================
+
+Every displayed business/place result must have a canonical MWM entity ID.
+
+If an item does not exist in our database:
+
+do not show it as a result.
+
+Instead:
+Add a Place
+or
+Kinfolk may mention it separately as broader context if clearly labeled.
+
+============================================================
+FINAL RULE
+============================================================
+
+GEOCODER ANSWERS:
+"WHERE IS THIS?"
+
+MWM DATABASE ANSWERS:
+"WHAT DO WE HAVE THERE?"
+
+Do not merge those two responsibilities.
+```
+
+That is the model I would lock in permanently. It keeps the map useful without letting it become just another Google/OSM directory wearing your branding.

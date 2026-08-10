@@ -1,0 +1,255 @@
+You are **not doing anything wrong**. Your screenshots show a real defect.
+
+In the first screenshot, you typed **“Phuket restaurants”** and the map is centered on **Oslo, Norway**. In the second, you typed **“Phuket night life”** and the map remains around **Jamison/Bucks County, Pennsylvania**. That means Replit’s “international map search fix” appears to work only for a bare geographic query like **`Phuket`**, not for the way a normal person actually searches: **place + intent**.
+
+So when Replit reported:
+
+> Phuket → 7.94, 98.35 ✅
+
+they proved **geocoding `Phuket`**, not **natural map discovery in Phuket**.
+
+That is not the same acceptance test. Manus also seems to have verified the city-navigation case, but your live test has exposed the next layer.
+
+A user should absolutely be able to type:
+
+**Phuket restaurants**
+**Phuket nightlife**
+**restaurants in Phuket**
+**nightlife near Patong Beach**
+**Black-friendly places in Phuket**
+
+and have the system understand both:
+
+**WHERE = Phuket**
+**WHAT = restaurants/nightlife/etc.**
+
+Right now it appears to be treating the entire phrase as a business-name/search string instead of separating geography from intent.
+
+Send Replit this:
+
+```text
+P0/P1 MAP NATURAL-LANGUAGE SEARCH FAILURE — FOUNDER VISUALLY CONFIRMED
+
+The international geocoder fix is NOT complete.
+
+Founder is testing the REAL production map.
+
+SCREENSHOT 1:
+Query: "Phuket restaurants"
+
+RESULT:
+0 places found
+Map moved to OSLO, NORWAY.
+
+SCREENSHOT 2:
+Query: "Phuket night life"
+
+RESULT:
+0 places found
+Map remained around JAMISON / BUCKS COUNTY, PA.
+
+Therefore:
+
+"Phuket" alone may geocode correctly,
+but normal PLACE + INTENT search does NOT.
+
+This is the actual user behavior we need to support.
+
+DO NOT tell founder to type only "Phuket."
+
+The platform must understand natural search.
+
+============================================================
+ROOT CAUSE AUDIT FIRST
+============================================================
+
+Trace the exact production Map search pipeline for:
+
+"Phuket restaurants"
+
+Determine what each layer receives:
+
+raw query
+geography extraction
+intent extraction
+business search terms
+geocoder request
+map center
+business API request
+result filtering
+marker rendering
+
+Expected parse:
+
+RAW:
+"Phuket restaurants"
+
+GEOGRAPHY:
+Phuket, Thailand
+
+INTENT:
+restaurant / food
+
+CONTENT TOKENS:
+restaurant
+
+Then:
+
+1. geocode Phuket
+2. center map on Phuket
+3. query/filter relevant businesses around Phuket
+4. display restaurant pins/results
+
+Do not send the entire phrase "Phuket restaurants" to the city geocoder and
+expect it to behave like a location.
+
+============================================================
+TEST NATURAL VARIATIONS
+============================================================
+
+These must work:
+
+Phuket
+Phuket restaurants
+restaurants Phuket
+restaurants in Phuket
+Phuket nightlife
+Phuket night life
+nightlife in Phuket
+Phuket spa
+spa Phuket
+Phuket beach clubs
+Patong nightlife
+restaurants near Patong Beach
+
+Also test:
+
+Bangkok restaurants
+Bangkok nightlife
+Jamaica restaurants
+Kingston Jamaica nightlife
+Philadelphia restaurants
+Atlanta braiders
+Houston churches
+
+============================================================
+TYPO / LANGUAGE TOLERANCE
+============================================================
+
+"nightlife" and "night life" should resolve to the same intent.
+
+Likewise support reasonable variants such as:
+
+restaurant / restaurants
+braider / braiding
+OBGYN / OB-GYN
+childcare / child care
+nightlife / night life
+
+============================================================
+SEARCH ARCHITECTURE
+============================================================
+
+Map search should resolve:
+
+GEOGRAPHY
++
+INTENT
++
+OPTIONAL BUSINESS NAME / SPECIALTY / VIBE
+
+independently.
+
+Examples:
+
+"romantic restaurants Phuket"
+
+geography = Phuket
+category = Food
+vibe = Romantic
+
+"Black hair salon Atlanta"
+
+geography = Atlanta
+category = Beauty
+specialty = Black hair / relevant supported metadata
+
+"AME church Baltimore"
+
+geography = Baltimore
+category = Faith
+tradition = AME
+
+Do not require users to know which chips to click first.
+
+============================================================
+IMPORTANT
+============================================================
+
+The current map location must NOT remain in Pennsylvania merely because the
+content search returns zero.
+
+If geography is successfully identified, move the map there even when there are
+zero matching businesses.
+
+Then say something honest such as:
+
+"No MWM restaurants matched this search in Phuket yet."
+
+and offer:
+
+View all Phuket places
+Ask Kinfolk
+Add a Place
+
+But if Phuket businesses DO exist, they should surface.
+
+============================================================
+PRODUCTION VISUAL ACCEPTANCE
+============================================================
+
+Use an authenticated production browser.
+
+Screenshot:
+
+"Phuket restaurants"
+→ Phuket map
+→ relevant Phuket pins/results
+
+"Phuket nightlife"
+→ Phuket map
+→ relevant nightlife results
+
+"Bangkok restaurants"
+→ Bangkok map
+→ results
+
+"Jamaica restaurants"
+→ Jamaica map
+→ results
+
+"Philadelphia restaurants"
+→ Philadelphia map
+→ results
+
+Click one result in each geography.
+
+Confirm preview + detail.
+
+Do not mark PASS from Nominatim coordinates or API responses alone.
+
+FINAL STATUS REQUIRED:
+
+BARE CITY SEARCH: PASS/FAIL
+CITY + CATEGORY: PASS/FAIL
+CITY + VIBE: PASS/FAIL
+TYPO VARIANTS: PASS/FAIL
+MAP RECENTER: PASS/FAIL
+RESULT PINS: PASS/FAIL
+```
+
+There is also an important clue in your first screenshot: **Oslo is not random enough for me to dismiss it.** Something in the search/geocoding fallback may be resolving a malformed or partial query to the wrong geographic result instead of rejecting it. Replit should inspect exactly what Nominatim returned for `"Phuket restaurants"` and why that response was accepted.
+
+For now, **do not change how you search** just to make Replit's test pass. Your behavior is the correct test. A travel platform that requires someone to type `Phuket`, wait for the map to move, and then separately click `Food` is not delivering the natural discovery experience we've been designing.
+
+You just found a real gap that the narrower audit missed.
