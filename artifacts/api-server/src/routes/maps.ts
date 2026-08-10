@@ -54,15 +54,12 @@ router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
   res.json({ key: apiKey });
 });
 
-// Proxies Google Geocoding API so international city/place queries resolve correctly
-// regardless of which APIs are enabled on the browser key.
+// Server-side geocoding via OpenStreetMap Nominatim — free, no key required,
+// full international coverage. Using server-side so browser key restrictions
+// (referrer-locked GOOGLE_MAPS_BROWSER_KEY) never block international lookups.
+// Nominatim usage policy requires a valid User-Agent.
 // ?address=Bangkok — returns { lat, lng, formattedAddress }
 router.get("/maps/geocode", mapsLimiter, async (req: Request, res: Response) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) {
-    res.status(503).json({ error: "Maps not configured" });
-    return;
-  }
   const address = typeof req.query.address === "string" ? req.query.address.trim() : "";
   if (!address) {
     res.status(400).json({ error: "address is required" });
@@ -70,26 +67,29 @@ router.get("/maps/geocode", mapsLimiter, async (req: Request, res: Response) => 
   }
   try {
     const url =
-      `https://maps.googleapis.com/maps/api/geocode/json` +
-      `?address=${encodeURIComponent(address)}` +
-      `&key=${apiKey}`;
-    const upstream = await fetch(url);
-    const data = await upstream.json() as {
-      status: string;
-      results: Array<{
-        formatted_address: string;
-        geometry: { location: { lat: number; lng: number } };
-      }>;
-    };
-    if (data.status !== "OK" || !data.results?.[0]) {
-      res.status(404).json({ error: "Location not found", geocodeStatus: data.status });
+      `https://nominatim.openstreetmap.org/search` +
+      `?q=${encodeURIComponent(address)}` +
+      `&format=json&limit=1&addressdetails=0`;
+    const upstream = await fetch(url, {
+      headers: {
+        "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)",
+        "Accept-Language": "en",
+      },
+    });
+    const data = await upstream.json() as Array<{
+      lat: string;
+      lon: string;
+      display_name: string;
+    }>;
+    if (!data?.[0]) {
+      res.status(404).json({ error: "Location not found" });
       return;
     }
-    const result = data.results[0];
+    const result = data[0];
     res.json({
-      lat: result.geometry.location.lat,
-      lng: result.geometry.location.lng,
-      formattedAddress: result.formatted_address,
+      lat: parseFloat(result.lat),
+      lng: parseFloat(result.lon),
+      formattedAddress: result.display_name,
     });
   } catch {
     res.status(500).json({ error: "Failed to geocode address" });
