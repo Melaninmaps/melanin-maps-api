@@ -1147,6 +1147,25 @@ END $seed$`,
              'founding', true, 'user')
           ON CONFLICT (email) DO NOTHING`,
   },
+  {
+    // Manus AI audit account — pre-approved tester for full web UX audit.
+    // member_type='founding' gives top-tier access to every feature without
+    // a Stripe subscription. Password: MWM-Manus-2026!
+    // ON CONFLICT DO NOTHING — safe to run on every boot.
+    name: "ensure_manus_tester_account_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, home_city)
+          VALUES
+            (gen_random_uuid(),
+             'tester@mwm.com',
+             'Manus', 'Tester',
+             '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2',
+             true, true, true,
+             'founding', true, 'tester', 'Philadelphia')
+          ON CONFLICT (email) DO NOTHING`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -2006,6 +2025,7 @@ const ADMIN_EMAILS = [
 // All testers who have already registered are promoted to role='tester'.
 // Idempotent — only updates rows where role is still 'user'.
 const TESTER_EMAILS = [
+  "tester@mwm.com",          // Manus AI audit account — pre-approved founding tester
   "cardwellkayla219@gmail.com",
   "kcardwell17@yahoo.com",
   "kaylacardwell3@gmail.com",
