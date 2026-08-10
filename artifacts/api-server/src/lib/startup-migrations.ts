@@ -1094,6 +1094,16 @@ END $seed$`,
           WHERE name IN ('Enon Tabernacle Baptist Church', 'Refugee Evangelical Church')
             AND category != 'Faith & Spirituality'`,
   },
+  {
+    // Enon Tabernacle was seeded with listing_status='demo', which excludes it from
+    // Universal Search (the listingFilter only allows live_unclaimed and live_claimed).
+    // Promote it to live_unclaimed so it surfaces on faith queries like "churches Philadelphia".
+    name: "fix_enon_tabernacle_listing_status_v1",
+    sql: `UPDATE businesses
+          SET listing_status = 'live_unclaimed'
+          WHERE name = 'Enon Tabernacle Baptist Church'
+            AND listing_status = 'demo'`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

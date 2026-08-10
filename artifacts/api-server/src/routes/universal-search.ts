@@ -104,6 +104,7 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   // ── Health ───────────────────────────────────────────────────────────────
   doctor:        ["Health"],
   dentist:       ["Health", "Dental"],
+  dental:        ["Health", "Dental"],
   therapy:       ["Health", "Wellness"],
   therapist:     ["Health", "Wellness"],
   medical:       ["Health"],
@@ -112,6 +113,40 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   gym:           ["Health", "Sports"],
   nutrition:     ["Health", "Wellness"],
   wellness:      ["Health", "Wellness"],
+  // Medical specialties — these are commonly searched but lack CONCEPT_TO_CATEGORY entries,
+  // causing them to produce zero mappedCategories → bypassing the nearby_alternative guard.
+  obgyn:         ["Health"],
+  "ob/gyn":      ["Health"],
+  gynecologist:  ["Health"],
+  gynecology:    ["Health"],
+  pediatrician:  ["Health"],
+  pediatrics:    ["Health"],
+  physician:     ["Health"],
+  specialist:    ["Health", "Professional"],
+  clinic:        ["Health"],
+  psychiatrist:  ["Health", "Wellness"],
+  psychiatry:    ["Health", "Wellness"],
+  urologist:     ["Health"],
+  urology:       ["Health"],
+  cardiologist:  ["Health"],
+  orthopedic:    ["Health"],
+  dermatologist: ["Health"],
+  optometrist:   ["Health", "Vision"],
+  chiropractor:  ["Health", "Wellness"],
+  acupuncture:   ["Health", "Wellness"],
+  doula:         ["Health", "Family"],
+  midwife:       ["Health", "Family"],
+  midwifery:     ["Health", "Family"],
+  // Trades — "plumber" vs "plumbing" both need entries
+  plumber:       ["Home", "Property"],
+  electrician:   ["Home", "Property"],
+  contractor:    ["Home", "Property"],
+  handyman:      ["Home", "Property"],
+  roofer:        ["Home", "Property"],
+  roofing:       ["Home", "Property"],
+  hvac:          ["Home", "Property"],
+  painter:       ["Home", "Property"],
+  painting:      ["Home", "Property"],
   // ── Retail / Shopping ────────────────────────────────────────────────────
   boutique:      ["Retail", "Shopping"],
   clothing:      ["Retail", "Shopping"],
@@ -293,7 +328,16 @@ function detectIntentType(q: string): IntentType {
   // Specialty beauty/trade service
   if (/\b(alopecia|stylist|braids|locs|welder|welding|attorney|therapist)\b/i.test(q)) return "specialty_service";
 
-  // Named business heuristic: title-cased multi-word with no category keywords
+  // Medical/healthcare specialties — must fire BEFORE isProperNoun check because
+  // many medical terms are acronyms or proper-looking words (OBGYN, OBGYN Philadelphia).
+  // A query like "OBGYN Philadelphia" would otherwise match isProperNoun and become
+  // named_business, returning fuzzy-name alternatives like employment nonprofits.
+  if (/\b(obgyn|ob\/gyn|gynecol|gynecolog|pediatri|physician|psychiatr|urolog|cardiolog|orthoped|dermatolog|optometri|chiropract|doula|midwif|radiolog|oncolog|neurolog|ophthalmol|endocrinol|gastroenterol|pulmonolog|rheumatol|hematolog|nephrolog|anesthesiol|patholog|allergist|immunolog|osteopath)\b/i.test(q)) return "healthcare";
+
+  // Named business heuristic: title-cased multi-word with no category keywords.
+  // Guard: only fire if the query doesn't contain any trade/profession keywords that
+  // were mapped via CONCEPT_TO_CATEGORY (those queries have category anchors and
+  // should use the general path to get proper mappedCategories populated).
   const words = q.trim().split(/\s+/);
   const isProperNoun = words.length >= 2 && words.every((w) => /^[A-Z]/.test(w));
   if (isProperNoun) return "named_business";
@@ -860,6 +904,33 @@ async function searchHeritage(
   return [];
 }
 
+// ── Community organizations search ───────────────────────────────────────────
+// Searches community_organizations for the query. Returns rows with result_type
+// "community_org" so the frontend can render them in a distinct labeled section.
+async function searchCommunityOrgs(
+  q: string,
+  city?: string,
+  limit = 4,
+): Promise<unknown[]> {
+  try {
+    const params: unknown[] = [`%${q}%`];
+    const cityClause = city ? `AND (city ILIKE $2 OR state ILIKE $2)` : "";
+    if (city) params.push(`%${city}%`);
+    const rows = await pool.query(
+      `SELECT id::text, name, category, city, state, description,
+              website, 'community_org' as result_type, 'related_category' as match_tier
+       FROM community_organizations
+       WHERE (name ILIKE $1 OR description ILIKE $1 OR category ILIKE $1)
+         AND is_active = true
+         ${cityClause}
+       ORDER BY name ASC
+       LIMIT ${limit}`,
+      params,
+    );
+    return rows.rows;
+  } catch { return []; }
+}
+
 // ── Library topic search ──────────────────────────────────────────────────────
 async function searchLibrary(q: string, limit = 5): Promise<unknown[]> {
   try {
@@ -990,7 +1061,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
 
   const requestedTypes = resultTypesStr
     ? resultTypesStr.split(",").map((s) => s.trim())
-    : ["businesses", "events", "heritage", "library_topics"];
+    : ["businesses", "events", "heritage", "library_topics", "community_orgs"];
 
   // Concept extraction
   const { normalizedConcept, searchTokens, mappedCategories } = extractConcepts(trimmedQ);
@@ -1019,13 +1090,16 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         })
       : Promise.resolve([] as BusinessResult[]);
 
-    let [businesses, events, libraryTopics] = await Promise.all([
+    let [businesses, events, libraryTopics, communityOrgs] = await Promise.all([
       businessesPromise,
       requestedTypes.includes("events")
         ? searchEvents(trimmedQ, cityStr, 6)
         : Promise.resolve([]),
       requestedTypes.includes("library_topics")
         ? searchLibrary(trimmedQ, 5)
+        : Promise.resolve([]),
+      requestedTypes.includes("community_orgs")
+        ? searchCommunityOrgs(trimmedQ, cityStr, 4)
         : Promise.resolve([]),
     ]);
 
@@ -1046,6 +1120,29 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       });
       if (faithFiltered.length > 0) businesses = faithFiltered;
       // If filter would empty results, fall back to all (e.g. small-city search)
+    }
+
+    // ── Universal nearby_alternative quality gate ────────────────────────────
+    // "nearby_alternative" is a pg_trgm name-similarity match (similarity > 0.2).
+    // This fires on the city name alone (e.g. "Philadelphia" in "Year Up Philadelphia"
+    // matches "plumber Philadelphia" via trigram) — completely irrelevant to the query.
+    //
+    // Rule: a nearby_alternative result is only kept when:
+    //   (a) the query has mapped category anchors (mappedCategories.length > 0), AND
+    //   (b) the matched business category contains at least one of those anchors.
+    // If there are no category anchors, drop all nearby_alternative results entirely —
+    // an honest empty state beats an irrelevant recommendation for any intent type.
+    if (mappedCategories.length > 0) {
+      businesses = businesses.filter(
+        (b) =>
+          b.matchTier !== "nearby_alternative" ||
+          mappedCategories.some((cat) =>
+            b.category?.toLowerCase().includes(cat.toLowerCase()),
+          ),
+      );
+    } else {
+      // No category anchor to validate against — drop all nearby_alternative results
+      businesses = businesses.filter((b) => b.matchTier !== "nearby_alternative");
     }
 
     // ── Correction 3: Distance-ranked heritage geographic expansion ──────────
@@ -1154,7 +1251,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     }
 
     // ── Correction 2: Library country — queue, never dead-end ────────────────
-    const totalResults = businesses.length + events.length + heritage.length + libraryTopics.length;
+    const totalResults = businesses.length + events.length + heritage.length + libraryTopics.length + (communityOrgs as unknown[]).length;
     let libraryTopicQueued = false;
     let libraryQueueMessage: string | undefined;
     if (intentType === "library_country" && totalResults === 0) {
@@ -1162,13 +1259,17 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       libraryQueueMessage = `"${normalizedConcept}" isn't in our Library yet — this search is noted and will help shape it.`;
     }
 
-    const fallbackUsed = businesses.length < 3 && (
+    // totalResults counts all entity types — fallback should only fire when the
+    // combined cross-entity count is low, not just when businesses.length is low.
+    // This prevents "No exact match found" appearing alongside 3 heritage results.
+    const crossEntityTotal = businesses.length + heritage.length + (communityOrgs as unknown[]).length;
+    const fallbackUsed = crossEntityTotal < 3 && (
       events.length > 0 || heritage.length > 0 || libraryTopics.length > 0 || mappedCategories.length > 0
     );
     const matchTiers = [...new Set(businesses.map((b) => b.matchTier))];
 
     const fallbackMessage = buildFallbackMessage(
-      trimmedQ, intentType, businesses.length, mappedCategories.length > 0,
+      trimmedQ, intentType, crossEntityTotal, mappedCategories.length > 0,
     );
 
     void logSearchEvent({
@@ -1197,7 +1298,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       // Correction 3 fields
       heritageGeoExpansion: heritageGeoExpansion === "none" ? undefined : heritageGeoExpansion,
       heritageGeoMessage,
-      results: { businesses, events, heritage, libraryTopics },
+      results: { businesses, events, heritage, libraryTopics, communityOrgs },
     });
   } catch (err) {
     req.log?.error({ err }, "Universal search failed");

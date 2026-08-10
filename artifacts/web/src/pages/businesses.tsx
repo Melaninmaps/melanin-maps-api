@@ -34,10 +34,22 @@ interface HeritageSite {
   name: string;
   description?: string | null;
   heritageCategory?: string | null;
+  heritage_category?: string | null;
   pinType?: string | null;
+  pin_type?: string | null;
   city: string;
   state: string;
   externalUrl?: string | null;
+}
+
+interface CommunityOrg {
+  id: string;
+  name: string;
+  category?: string;
+  city: string;
+  state?: string;
+  description?: string | null;
+  website?: string | null;
 }
 
 interface UniversalResult {
@@ -53,6 +65,7 @@ interface UniversalResult {
     heritage: HeritageSite[];
     events: any[];
     libraryTopics: any[];
+    communityOrgs?: CommunityOrg[];
   };
 }
 
@@ -80,14 +93,42 @@ function ownershipLabel(biz: Business): string | null {
 }
 
 function heritagePinLabel(site: HeritageSite): string {
-  const hc = site.heritageCategory ?? "";
-  const pt = site.pinType ?? "";
+  // API returns snake_case (heritage_category, pin_type) — normalize both cases
+  const hc = site.heritageCategory ?? site.heritage_category ?? "";
+  const pt = site.pinType ?? site.pin_type ?? "";
   if (hc === "HBCU") return "HBCU";
-  if (hc === "Civil Rights") return "Civil Rights Site";
-  if (hc === "Religious Heritage") return "Historic Faith Site";
+  if (hc === "Civil Rights" || hc === "civil_rights_landmark") return "Civil Rights Site";
+  if (hc === "Religious Heritage" || hc === "church_faith_landmark") return "Historic Faith Site";
+  if (hc === "African American Heritage") return "African American Heritage";
   if (pt === "mural_or_public_art") return "Public Art";
   if (pt === "community_org") return "Community Organization";
   return hc || "Cultural Site";
+}
+
+// Determine whether a heritage site is a faith institution
+function isFaithSite(site: HeritageSite): boolean {
+  const hc = (site.heritageCategory ?? site.heritage_category ?? "").toLowerCase();
+  const pt = (site.pinType ?? site.pin_type ?? "").toLowerCase();
+  return hc.includes("church") || hc.includes("faith") || hc.includes("religious") ||
+    hc.includes("chapel") || hc.includes("temple") || hc.includes("mosque") ||
+    hc.includes("synagogue") || hc.includes("gurdwara") || pt.includes("faith");
+}
+
+// Derive contextual section label for heritage based on intent + site types
+function heritageSection(intentType: string, sites: HeritageSite[]): string {
+  if (intentType === "faith") {
+    const allFaith = sites.every(isFaithSite);
+    const someFaith = sites.some(isFaithSite);
+    if (allFaith) return "Houses of Faith";
+    if (someFaith) return "Houses of Faith & Historic Sites";
+  }
+  return "Historic & Cultural Sites";
+}
+
+// Derive contextual section label for businesses based on intent
+function businessesSection(intentType: string): string {
+  if (intentType === "faith") return "Faith Communities";
+  return "Businesses";
 }
 
 // ── Business card ────────────────────────────────────────────────────────────
@@ -168,6 +209,39 @@ function HeritageSiteCard({ site }: { site: HeritageSite }) {
 
   if (site.externalUrl) {
     return <a href={site.externalUrl} target="_blank" rel="noopener noreferrer">{Inner}</a>;
+  }
+  return Inner;
+}
+
+// ── Community org card ────────────────────────────────────────────────────────
+
+function CommunityOrgCard({ org }: { org: CommunityOrg }) {
+  const Inner = (
+    <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#CA922B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div>
+          <div className="text-[10px] font-bold tracking-widest text-[#CA922B] uppercase">
+            {org.category ?? "Community"} · {org.city}{org.state ? `, ${org.state}` : ""}
+          </div>
+        </div>
+      </div>
+      <h3 className="font-serif font-bold text-base text-[#3A1F0E] mb-2 group-hover:text-[#CA922B] transition-colors">{org.name}</h3>
+      {org.description && (
+        <p className="text-xs text-[#3A1F0E]/60 line-clamp-2 font-light leading-relaxed mb-3">{org.description}</p>
+      )}
+      {org.website && (
+        <span className="text-xs font-bold text-[#CA922B] group-hover:underline">Visit website →</span>
+      )}
+    </div>
+  );
+  if (org.website) {
+    return <a href={org.website} target="_blank" rel="noopener noreferrer">{Inner}</a>;
   }
   return Inner;
 }
@@ -295,7 +369,9 @@ export default function Businesses() {
   const isSearchMode = !!universalResult || universalLoading;
   const universalBusinesses = universalResult?.results.businesses ?? [];
   const universalHeritage = universalResult?.results.heritage ?? [];
-  const hasUniversalResults = universalBusinesses.length > 0 || universalHeritage.length > 0;
+  const universalCommunityOrgs = universalResult?.results.communityOrgs ?? [];
+  const intentType = universalResult?.intentType ?? "general";
+  const hasUniversalResults = universalBusinesses.length > 0 || universalHeritage.length > 0 || universalCommunityOrgs.length > 0;
 
   const loading = directoryLoading;
 
@@ -430,12 +506,14 @@ export default function Businesses() {
                   )}
                 </div>
 
-                {/* Heritage sites — labeled clearly so they're not confused with businesses */}
+                {/* Heritage / Faith sites — label is intent-aware */}
                 {universalHeritage.length > 0 && (
                   <div className="mb-8">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-px flex-1 bg-[#3A1F0E]/8" />
-                      <span className="text-[10px] font-bold tracking-widest text-[#78716C] uppercase">Historic & Cultural Sites</span>
+                      <span className="text-[10px] font-bold tracking-widest text-[#78716C] uppercase">
+                        {heritageSection(intentType, universalHeritage)}
+                      </span>
                       <div className="h-px flex-1 bg-[#3A1F0E]/8" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -446,19 +524,37 @@ export default function Businesses() {
                   </div>
                 )}
 
-                {/* Business results */}
+                {/* Business results — label is intent-aware */}
                 {universalBusinesses.length > 0 && (
                   <div className="mb-8">
-                    {universalHeritage.length > 0 && (
+                    {(universalHeritage.length > 0 || universalCommunityOrgs.length > 0) && (
                       <div className="flex items-center gap-3 mb-4">
                         <div className="h-px flex-1 bg-[#3A1F0E]/8" />
-                        <span className="text-[10px] font-bold tracking-widest text-[#3A1F0E]/40 uppercase">Businesses</span>
+                        <span className="text-[10px] font-bold tracking-widest text-[#3A1F0E]/40 uppercase">
+                          {businessesSection(intentType)}
+                        </span>
                         <div className="h-px flex-1 bg-[#3A1F0E]/8" />
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {universalBusinesses.map(biz => (
                         <BusinessCard key={biz.id} biz={biz} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Community organizations */}
+                {universalCommunityOrgs.length > 0 && (
+                  <div className="mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                      <span className="text-[10px] font-bold tracking-widest text-[#3A1F0E]/40 uppercase">Community Organizations</span>
+                      <div className="h-px flex-1 bg-[#3A1F0E]/8" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {universalCommunityOrgs.map(org => (
+                        <CommunityOrgCard key={org.id} org={org} />
                       ))}
                     </div>
                   </div>
