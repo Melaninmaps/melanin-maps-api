@@ -1518,6 +1518,33 @@ ON CONFLICT (city_slug) DO NOTHING`,
     sql: `CREATE INDEX IF NOT EXISTS idx_city_request_log_slug_period
           ON city_request_log (slug, period_start DESC)`,
   },
+  // ── business_contributions.is_public column ────────────────────────────────
+  // Adds is_public if the table was created before this column was added.
+  {
+    name: "business_contributions_is_public_col_v1",
+    sql: `ALTER TABLE business_contributions ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT TRUE`,
+  },
+  // ── Pre-Manus tester accounts (direct INSERT) ──────────────────────────────
+  // Creates final pre-Manus tester accounts that the runtime guard missed due
+  // to the ANY($N) type-inference bug. Runs once; ON CONFLICT DO NOTHING.
+  {
+    name: "pre_manus_tester_accounts_v1",
+    sql: `
+      DO $$
+      DECLARE
+        h TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+      BEGIN
+        INSERT INTO users (id, email, first_name, last_name, password_hash,
+                           email_verified, agree_to_terms, profile_setup_complete,
+                           member_type, approved, role, must_change_password)
+        VALUES
+          (gen_random_uuid(), 'reinaoba06@gmail.com', 'Reina', 'Tester', h, true, true, false, 'founding', true, 'tester', true),
+          (gen_random_uuid(), 'mayagz05@icloud.com',  'Maya',  'Tester', h, true, true, false, 'founding', true, 'tester', true),
+          (gen_random_uuid(), 'kayla.m.manus@mappingwithmelanin.com', 'Kayla', 'Manus', h, true, true, false, 'founding', true, 'tester', true)
+        ON CONFLICT (email) DO NOTHING;
+      END $$;
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -2595,27 +2622,27 @@ async function ensureTesterUniversalAccounts(
       if (r.rowCount && r.rowCount > 0) created++;
     }
 
-    // B: repair hash for testers who exist but haven't changed their password
-    //    (must_change_password=true = first login hasn't happened, safe to reset)
-    //    Also clear any rate-limit lock so testers aren't stuck.
-    const repairResult = await pool.query(
-      `UPDATE users
-       SET password_hash         = $1,
-           locked_until          = NULL,
-           failed_login_attempts = 0,
-           updated_at            = NOW()
-       WHERE LOWER(TRIM(email)) = ANY($2::text[])
-         AND must_change_password = true
-         AND (password_hash != $1 OR locked_until IS NOT NULL OR failed_login_attempts > 0)
-       RETURNING email`,
-      [UNIVERSAL_HASH, emails]
-    );
-    const repaired = repairResult.rows.map((r: { email: string }) => r.email);
+    // B: repair hash for testers who exist but haven't changed their password.
+    //    Use per-email loop to avoid ANY($N) type-inference failures in PostgreSQL.
+    let repaired = 0;
+    for (const email of emails) {
+      const repairResult = await pool.query(
+        `UPDATE users
+         SET password_hash         = $1,
+             locked_until          = NULL,
+             failed_login_attempts = 0,
+             updated_at            = NOW()
+         WHERE LOWER(TRIM(email))  = $2
+           AND must_change_password = true
+           AND (password_hash != $1 OR locked_until IS NOT NULL OR failed_login_attempts > 0)`,
+        [UNIVERSAL_HASH, email]
+      );
+      if ((repairResult.rowCount ?? 0) > 0) repaired++;
+    }
 
     log(
       `Tester universal accounts: ${created} created, ` +
-      `${repaired.length} hash/lock repaired` +
-      (repaired.length > 0 ? ` (${repaired.join(", ")})` : "")
+      `${repaired} hash/lock repaired`
     );
   } catch (err: unknown) {
     warn(`Tester universal accounts guard failed: ${err instanceof Error ? err.message : String(err)}`);

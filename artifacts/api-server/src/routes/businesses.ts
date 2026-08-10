@@ -2588,7 +2588,7 @@ router.get("/businesses/:id/contributions", async (req: Request, res: Response):
               u.display_name AS contributor_name, u.profile_image_url AS contributor_avatar
        FROM business_contributions bc
        LEFT JOIN users u ON u.id = bc.user_id
-       WHERE bc.business_id = $1 AND bc.status = 'approved' AND bc.is_public = TRUE
+       WHERE bc.business_id = $1 AND bc.status = 'approved'
        ORDER BY bc.created_at DESC
        LIMIT 50`,
       [businessId],
