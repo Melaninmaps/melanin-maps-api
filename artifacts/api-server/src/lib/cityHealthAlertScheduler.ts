@@ -115,29 +115,38 @@ async function computeCityHealth(
 }
 
 // ── Atomic cooldown claim ─────────────────────────────────────────────────────
-// Returns true only if THIS process successfully claimed the send slot.
-// Uses a conditional UPDATE so concurrent scheduler instances (rolling deploy)
-// cannot both win — only the first UPDATE to execute gets rowCount > 0.
-async function claimAlertSlot(slug: string): Promise<boolean> {
-  const { rowCount } = await pool.query(
+// Returns the exact timestamp written by THIS process (ownership token), or null
+// if the cooldown window is still active or the row no longer exists.
+// Uses a conditional UPDATE + RETURNING so concurrent scheduler instances
+// (e.g. during a Railway rolling deploy) cannot both win — only the first
+// UPDATE to execute gets rowCount > 0, and it returns the precise timestamp it
+// wrote. The caller must pass that timestamp to releaseAlertSlot to guarantee
+// that only this exact claim is cleared on failure.
+async function claimAlertSlot(slug: string): Promise<Date | null> {
+  const { rows } = await pool.query<{ last_alerted_at: Date }>(
     `UPDATE city_launches
      SET last_alerted_at = NOW()
      WHERE slug = $1
        AND (last_alerted_at IS NULL
-            OR last_alerted_at < NOW() - ($2 || ' hours')::INTERVAL)`,
+            OR last_alerted_at < NOW() - ($2 || ' hours')::INTERVAL)
+     RETURNING last_alerted_at`,
     [slug, String(ALERT_COOLDOWN_HOURS)],
   );
-  return (rowCount ?? 0) > 0;
+  return rows[0]?.last_alerted_at ?? null;
 }
 
 // Clears the stamp so the next cron tick can retry after a send failure.
-async function releaseAlertSlot(slug: string): Promise<void> {
+// Conditions the UPDATE on the exact ownership token (claimedAt) returned by
+// claimAlertSlot. This prevents a delayed cleanup from clearing a competing
+// instance's successful cooldown stamp.
+async function releaseAlertSlot(slug: string, claimedAt: Date): Promise<void> {
   try {
     await pool.query(
       `UPDATE city_launches
        SET last_alerted_at = NULL
-       WHERE slug = $1`,
-      [slug],
+       WHERE slug = $1
+         AND last_alerted_at = $2`,
+      [slug, claimedAt],
     );
   } catch (err) {
     logger.error({ err, slug }, "city-health-alert: failed to release alert slot after send failure — next retry may be delayed");
@@ -276,14 +285,16 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
 
   // For each degraded city, attempt an atomic cooldown claim.
   // Cities still within the cooldown window are skipped — their UPDATE finds no
-  // eligible row and returns rowCount 0.
-  const claimedCities: DegradedCity[] = [];
+  // eligible row and returns null. The returned Date is the ownership token: it
+  // must be passed to releaseAlertSlot so that a delayed cleanup cannot clear a
+  // competing instance's successful cooldown stamp.
+  const claimedCities: Array<DegradedCity & { claimedAt: Date }> = [];
 
   for (const city of degraded) {
     try {
-      const claimed = await claimAlertSlot(city.slug);
-      if (claimed) {
-        claimedCities.push(city);
+      const claimedAt = await claimAlertSlot(city.slug);
+      if (claimedAt) {
+        claimedCities.push({ ...city, claimedAt });
       } else {
         skipped.push(city.slug);
       }
@@ -297,8 +308,9 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
     return { checked: cities.length, alerted: [], skipped, failed };
   }
 
-  // Send email (required channel). On failure: release the DB claim so the next
-  // tick can retry, and surface all claimed cities as failed.
+  // Send email (required channel). On failure: release the DB claim — conditioned
+  // on the ownership token — so the next tick can retry without risk of clearing
+  // a competing instance's successful stamp.
   let emailSent = false;
   try {
     await sendAlertEmail(claimedCities);
@@ -306,7 +318,7 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
   } catch (err) {
     logger.error({ err, cities: claimedCities.map((c) => c.slug) }, "city-health-alert: email send failed — releasing claims for retry");
     for (const city of claimedCities) {
-      await releaseAlertSlot(city.slug);
+      await releaseAlertSlot(city.slug, city.claimedAt);
       failed.push(city.slug);
     }
     return { checked: cities.length, alerted: [], skipped, failed };
