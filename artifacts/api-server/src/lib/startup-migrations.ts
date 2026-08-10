@@ -1545,6 +1545,22 @@ ON CONFLICT (city_slug) DO NOTHING`,
       END $$;
     `,
   },
+  // ── Clear must_change_password for pre-Manus tester accounts ──────────────
+  // Seeded accounts had must_change_password=true which blocks access at the
+  // web UI change-password wall. Testers need direct access during the audit.
+  {
+    name: "pre_manus_tester_clear_must_change_password_v1",
+    sql: `
+      UPDATE users
+      SET must_change_password = false
+      WHERE email IN (
+        'reinaoba06@gmail.com',
+        'mayagz05@icloud.com',
+        'kayla.m.manus@mappingwithmelanin.com'
+      )
+      AND must_change_password = true;
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
