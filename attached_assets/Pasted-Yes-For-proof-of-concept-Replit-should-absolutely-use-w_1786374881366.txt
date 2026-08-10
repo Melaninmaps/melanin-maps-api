@@ -1,0 +1,650 @@
+Yes. For proof of concept, Replit should absolutely use web research to fill the obvious coverage gaps across your Living Legacy/tour cities and across diaspora-oriented categories — but under a strict evidence standard so we do not seed inaccurate ownership, faith affiliation, or business status.
+
+The key is: **research broadly, seed conservatively.** Publicly verifiable facts can go in. Identity/ownership/affiliation should only be added when supported by a reliable source or the organization’s own site.
+
+Send Replit this:
+
+```text
+PROOF-OF-CONCEPT COVERAGE EXPANSION — WEB RESEARCH + VERIFIED SEEDING
+
+AUTHORIZED.
+
+Use full internet research to identify REAL, CURRENT businesses, professionals,
+houses of faith, cultural organizations, and community-serving institutions
+that fit Mapping With Melanin's existing categories and proof-of-concept needs.
+
+This is for controlled testing before the tour.
+
+Do NOT add random filler.
+Do NOT fabricate ownership, identity, affiliation, or operating status.
+Do NOT create duplicates.
+
+The goal is to close obvious discovery gaps so testers can realistically search
+across the diaspora and across our Living Legacy / tour cities.
+
+============================================================
+CORE STANDARD
+============================================================
+
+SEARCH BROADLY.
+VERIFY CONSERVATIVELY.
+SEED ONLY WHAT CAN BE SUPPORTED.
+
+Every seeded entity must have, where available:
+
+- canonical name
+- current address
+- city
+- state/province/region
+- country
+- valid website OR official social page
+- category
+- subcategory
+- latitude/longitude
+- source URL(s)
+- source/retrieved date
+- operating-status confidence
+- duplicate-check result
+
+If ownership, cultural identity, religious affiliation, or community designation
+is included, store the evidence source supporting it.
+
+If uncertain:
+
+leave the designation blank
+rather than guessing.
+
+============================================================
+GEOGRAPHIC PRIORITY
+============================================================
+
+Seed across the Living Legacy / tour geography first.
+
+At minimum:
+
+Philadelphia
+Washington, DC
+Baltimore if already part of active geography
+Raleigh/Durham or approved NC stop
+Columbia, SC
+Atlanta
+Montgomery
+Birmingham
+New Orleans
+Baton Rouge
+Houston
+
+Also maintain/improve:
+
+Bangkok
+Phuket
+
+Then expand selectively to other existing Living Legacy cities already in MWM.
+
+Do not create a new city taxonomy.
+Use canonical existing geography nodes.
+
+============================================================
+PROOF-OF-CONCEPT COVERAGE TARGET
+============================================================
+
+For each major tour/Living Legacy city, aim for enough coverage that a tester
+can try ordinary searches without constantly receiving zero results.
+
+This is not a public launch inventory requirement.
+
+A practical testing floor is:
+
+FOOD / HOSPITALITY
+5–10 meaningful entities where available
+
+BEAUTY / PERSONAL CARE
+3–5
+
+HEALTH / MEDICAL PROFESSIONALS
+3–5
+
+LEGAL / PROFESSIONAL SERVICES
+3–5
+
+HOME / TRADES
+2–4
+
+FAMILY / CARE
+2–4
+
+FAITH / HOUSES OF WORSHIP
+5–10 across multiple traditions where available
+
+CULTURE / HERITAGE / COMMUNITY
+3–8
+
+NIGHTLIFE / ENTERTAINMENT
+3–5 where relevant
+
+Do not force a quota if credible entities cannot be verified.
+
+Quality > numeric target.
+
+============================================================
+FAITH / HOUSES OF WORSHIP — PRIORITY GAP
+============================================================
+
+This is one of the largest current gaps.
+
+Research active houses of faith across the tour/Living Legacy cities.
+
+Include a representative mix where real institutions exist:
+
+AME
+African Methodist Episcopal Zion
+Baptist
+Missionary Baptist
+COGIC
+Pentecostal / Holiness
+Black Catholic
+Catholic parishes with documented Black ministry/history
+Ethiopian Orthodox
+Coptic Orthodox where culturally relevant
+Muslim mosques / Islamic centers
+Black Muslim institutions where responsibly verifiable
+Jewish congregations
+Black Jewish / Hebrew communities only where publicly documented
+Sikh gurdwaras
+Hindu temples
+Buddhist temples/centers
+Interfaith organizations
+African / Diaspora spiritual institutions where publicly established
+
+Also identify:
+
+Spanish-language worship
+Creole/Haitian congregations
+African immigrant congregations
+Caribbean congregations
+LGBTQIA+-affirming houses of faith
+
+ONLY label these attributes when supported by:
+
+official organization website
+official denomination directory
+recognized religious directory
+reputable local/institutional source
+
+Do not infer from neighborhood or congregation appearance.
+
+============================================================
+HAIR / BEAUTY GAP
+============================================================
+
+Research:
+
+braiders
+natural-hair salons
+loc specialists
+barbers
+Black hair salons
+beauty supply stores
+alopecia specialists
+wig specialists
+protective-style specialists
+nail studios
+esthetician/spa services
+
+Make sure searchable metadata includes real specialties.
+
+Examples:
+
+braids
+box braids
+locs
+natural hair
+silk press
+protective styles
+alopecia
+wigs
+barber
+beauty supply
+
+Do not rely only on business name.
+
+============================================================
+HEALTH / MEDICAL PROFESSIONALS
+============================================================
+
+Include INDIVIDUAL professionals even when they do not own the practice if the
+existing MWM professional model supports that.
+
+Research:
+
+OB-GYN
+primary care
+pediatrician
+dentist
+orthodontist
+dermatologist
+fertility specialist
+reproductive endocrinologist
+therapist
+psychologist
+psychiatrist
+doula
+midwife
+physical therapist
+maternal-health providers
+women's-health specialists
+
+Verify:
+
+professional name
+practice
+specialty
+location
+official provider/practice page
+
+Do not claim race/identity unless publicly self-identified or verified through
+an appropriate source.
+
+============================================================
+LEGAL / PROFESSIONAL
+============================================================
+
+Research:
+
+family attorney
+immigration attorney
+criminal defense
+civil rights
+employment law
+tax attorney
+estate planning
+real estate attorney
+accountant
+CPA
+financial advisor
+realtor
+insurance
+consulting
+marketing
+IT/technology services
+
+Again:
+individual professionals may be valid entities even if they do not own the firm.
+
+============================================================
+HOME / TRADES
+============================================================
+
+Research:
+
+plumbers
+electricians
+HVAC
+general contractors
+roofers
+landscapers
+cleaners
+locksmiths
+mechanics
+handyman services
+moving companies
+
+The platform should not look like it only serves restaurants and salons.
+
+============================================================
+FAMILY / CARE
+============================================================
+
+Research:
+
+childcare
+daycare
+preschool
+after-school programs
+tutoring
+special-needs services
+elder care
+home health
+senior services
+youth organizations
+family resource centers
+
+Do NOT use casual "vibe" language for serious care categories.
+
+Use the approved THE REAL / trust/service framework.
+
+============================================================
+FOOD / DIASPORA
+============================================================
+
+Ensure discoverability across:
+
+African American / Southern
+Ethiopian
+Eritrean
+Nigerian
+Ghanaian
+Senegalese
+West African
+East African
+Caribbean
+Jamaican
+Haitian
+Trinidadian
+Cuban
+Dominican
+Puerto Rican
+Brazilian
+Afro-Latino
+halal
+diaspora bakeries
+coffee/tea
+fine dining
+brunch
+nightlife
+
+Do not classify cultural ownership solely from cuisine.
+
+Cuisine and ownership are separate fields.
+
+============================================================
+CULTURE / HERITAGE / COMMUNITY
+============================================================
+
+Research:
+
+Black museums
+diaspora museums
+historic churches
+Civil Rights sites
+HBCUs
+cultural centers
+community organizations
+Black bookstores
+diaspora markets
+arts organizations
+historic neighborhoods/sites
+public art
+LGBTQIA+ cultural/community spaces
+immigrant community centers
+
+Preserve canonical cultural-site entities where they already exist.
+
+Do not duplicate a cultural site as a business unless the data model explicitly
+calls for both representations.
+
+============================================================
+INTERNATIONAL — BANGKOK / PHUKET
+============================================================
+
+Do not limit international coverage to generic luxury/tourist venues.
+
+Research real:
+
+restaurants
+cafes
+spas
+nightlife
+markets
+cultural sites
+museums
+wellness
+LGBTQIA+-affirming venues where verifiable
+diaspora/African-owned businesses where verifiable
+Black traveler/community-relevant businesses/content where responsibly sourced
+
+For each:
+validate current operation
+official website/social
+coordinates
+category
+city/country
+
+Do not invent minority ownership.
+
+============================================================
+DUPLICATE PREVENTION
+============================================================
+
+Before inserting ANY entity:
+
+compare normalized:
+
+name
+address
+phone
+website
+coordinates
+aliases
+
+against existing production records.
+
+Classify:
+
+EXACT EXISTING
+LIKELY DUPLICATE
+LEGITIMATE SECOND LOCATION
+NEW ENTITY
+
+For multiple locations:
+
+use the existing parent-business / location model.
+
+Never create duplicate canonical entities merely because spelling differs.
+
+============================================================
+SOURCE QUALITY
+============================================================
+
+Preferred evidence order:
+
+1. official business/organization website
+2. official denomination/professional/institutional directory
+3. official government/licensing record where appropriate
+4. reputable local media/institution
+5. Google/major business listing only as secondary confirmation
+6. official social profile when no site exists
+
+Do not seed from random listicles alone.
+
+============================================================
+REMOVAL / CLAIMING
+============================================================
+
+Seed these as:
+
+live_unclaimed
+or the existing equivalent
+
+where appropriate.
+
+They are proof-of-concept community listings.
+
+Clearly preserve:
+
+claim profile
+suggest correction
+request removal
+
+Do not represent the organization as having endorsed or partnered with MWM.
+
+============================================================
+SEARCH METADATA
+============================================================
+
+Do not merely add the entity.
+
+Populate searchable metadata so natural-language discovery works.
+
+Include where supported:
+
+category
+subcategory
+specializations
+services
+faith tradition
+languages
+cuisine
+audience served
+city
+aliases
+known DBA
+relevant tags
+
+Examples:
+
+A braiding salon must be discoverable by:
+braids
+braider
+protective styles
+
+A mosque:
+mosque
+Islamic center
+Muslim prayer
+
+An OB-GYN:
+OBGYN
+OB-GYN
+women's health
+gynecologist
+
+============================================================
+VALIDATION QUERY SET
+============================================================
+
+After seeding, test the REAL production UI across multiple cities.
+
+Examples:
+
+"AME church Atlanta"
+"Black Catholic church DC"
+"mosque Houston"
+"Ethiopian Orthodox DC"
+"braider Atlanta"
+"natural hair Columbia SC"
+"OBGYN Houston"
+"dentist Columbia SC"
+"plumber Raleigh"
+"child care Atlanta"
+"immigration lawyer Houston"
+"Ethiopian restaurant Philadelphia"
+"Caribbean food Baltimore"
+"Black bookstore Atlanta"
+"museum New Orleans"
+"nightlife Houston"
+"spa Bangkok"
+"restaurant Phuket"
+
+Use exact + natural-language variants.
+
+============================================================
+MINIMUM CITY COVERAGE REPORT
+============================================================
+
+Return a city-by-city matrix:
+
+CITY
+FOOD
+BEAUTY
+HEALTH
+LEGAL/PROFESSIONAL
+TRADES
+FAMILY/CARE
+FAITH
+CULTURE/HERITAGE
+NIGHTLIFE
+TOTAL
+
+Then identify only genuine remaining gaps.
+
+============================================================
+VISUAL PROOF
+============================================================
+
+Do not stop at DB counts.
+
+Use authenticated tester on real production website.
+
+For each major category, visually prove at least one successful search.
+
+Capture screenshots for representative:
+
+faith
+health
+hair/beauty
+professional
+trade
+family care
+diaspora food
+cultural site
+international
+
+============================================================
+DATA SAFETY
+============================================================
+
+Before seeding:
+record business/entity counts.
+
+After seeding:
+confirm:
+no deletes
+no accidental duplicates
+no broken parent-location relationships
+no overwritten user content
+no changes to reviews/saves/vibes
+
+============================================================
+FINAL REGRESSION
+============================================================
+
+Run the permanent release-control audit afterward.
+
+Explicitly verify:
+
+authentication
+tester login
+Apple reviewer
+member wall
+Map
+Directory
+business pages
+Library
+Kinfolk
+Reviews
+Vibes/THE REAL
+media contribution
+Saved Places
+Community
+Events
+Safety
+mobile compatibility
+
+============================================================
+EXECUTION
+============================================================
+
+Do not send founder individual research tasks.
+
+Perform the research, verify, seed safely, test, and report.
+
+Stop only for:
+destructive change
+paid vendor
+privacy/security conflict
+uncertain identity designation that would require founder judgment
+
+For uncertain ownership/cultural identity:
+
+seed the entity WITHOUT that designation rather than stopping the entire run.
+
+This is a controlled proof-of-concept data expansion, not a claim that every
+listed organization has partnered with Mapping With Melanin.
+```
+
+I would also give Replit one principle that matters a lot here: **do not make “minority-owned” the admission requirement for the whole database.** Your platform can contain a plumber, church, doctor, museum, spa, daycare, or restaurant because it is useful to discovery; promotion, verification, community relevance, ownership designation, and ranking are separate questions.
+
+That will let the proof of concept feel like an actual **life map**, instead of a restaurant directory with a few cultural businesses added to it.
+
+And for houses of faith specifically, I would rather see **five well-verified, meaningfully different institutions in a city** than fifty churches pulled from a generic directory. We need enough diversity for the tester to prove that “Black Catholic,” “AME,” “mosque,” “Ethiopian Orthodox,” etc. actually mean something to search.

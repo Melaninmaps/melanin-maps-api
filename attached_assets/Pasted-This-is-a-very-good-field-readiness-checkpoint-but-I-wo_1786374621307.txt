@@ -1,0 +1,116 @@
+This is a very good field-readiness checkpoint, but I would **not let the phrase “FIELD READY” make us ignore the gaps that directly affect your tour promise.**
+
+The strongest parts are now real: the map has broad inventory, Phuket is actually represented, Bangkok is being seeded, members can add missing places, category mappings were corrected, Kinfolk is auth-gated and aware of Bangkok/Phuket topics, multi-select vibes work, and Show the Vibe has a real moderation path.
+
+The three gaps I would treat as **tour-critical data coverage, not future backlog**, are:
+
+* **Faith coverage** — 2 churches in Philly is not enough if you plan to search houses of faith across Atlanta, Birmingham, Houston, SC, NC, etc.
+* **Braiding/hair specialization** — if `braid` returns nothing, one of your strongest cultural discovery examples will fail.
+* **Bangkok seed quality** — the 15 names sound useful, but Replit should verify they are real, current, correctly located, and not merely well-known generic tourist venues with no reason to be in MWM beyond geography.
+
+I would send Replit one last short directive before you personally start adding vibes today:
+
+```text
+FIELD-READINESS FINAL DATA PASS — DO NOT REDESIGN
+
+The 42-phase audit is accepted.
+
+Do not start another architecture cycle.
+
+Before calling the platform fully tour-ready, perform one final targeted DATA COVERAGE pass only.
+
+1. FAITH
+Seed/verify enough real houses of faith in:
+Philadelphia
+DC
+Raleigh/Durham or other NC tour stop
+Columbia SC
+Atlanta
+Montgomery/Birmingham where applicable
+New Orleans
+Baton Rouge
+Houston
+
+Include multiple traditions where responsibly verifiable.
+
+Do not claim identity/affiliation without evidence.
+
+2. HAIR / BRAIDING
+Seed/verify real:
+braiders
+natural-hair salons
+barbers
+beauty supply
+alopecia specialists where available
+
+in major tour cities.
+
+Make sure search terms:
+braid
+braider
+natural hair
+Black hair
+beauty supply
+barber
+resolve correctly.
+
+3. BANGKOK / PHUKET
+For every seeded business/place:
+verify real current website or official social presence
+verify coordinates
+verify category
+verify city/country
+verify not duplicate
+verify business is currently operating where reasonably possible
+
+Do not seed places solely because they are famous.
+
+4. ADD-A-PLACE FLOW
+Visually verify in production:
+member searches missing place
+→ Add a Place
+→ submits real place
+→ place becomes live_unclaimed
+→ place appears in search/map
+→ member can add vibe/media/social URL
+→ no duplicate created.
+
+5. BUSINESS CONTRIBUTION
+Visually verify:
+add multiple vibes
+add social URL
+add photo/video path if production-safe
+submit review
+save/check-in
+refresh
+persistence.
+
+6. LIBRARY
+Confirm Bangkok, Phuket, Thailand, Kenya, Ethiopia, HBCU, IVF open to actual useful content — not shell-only states.
+
+7. REGRESSION
+Run the permanent release audit after this data pass.
+
+Return only:
+PASS
+PARTIAL
+FAIL
+
+for:
+Faith coverage
+Hair/braiding coverage
+Bangkok/Phuket quality
+Add-a-Place
+Vibes/media/review
+Library usefulness
+Auth/Apple/tester stability
+Data integrity
+
+Do not create new task suggestions.
+```
+
+One thing I would correct in Replit’s wording: **“709 businesses client-side” is not automatically a win.** If the map truly loads all 709 at once every time, that may become a performance problem as you scale. I would not touch it today if it is stable, but that should eventually become radius/viewport-based loading or clustering rather than continuing indefinitely.
+
+For your immediate use today, though, I think the right move is to start doing exactly what you planned: **visit real businesses, add vibes/THE REAL, save them, check in, attach social content, and see whether another tester can find them afterward.** That is now the highest-value proof of the flywheel.
+
+And if that flow works cleanly, you have enough to walk into a business and show something meaningful even before the full analytics dashboard is finished.

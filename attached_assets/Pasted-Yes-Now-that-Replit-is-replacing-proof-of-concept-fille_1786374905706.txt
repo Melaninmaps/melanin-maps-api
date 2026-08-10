@@ -1,0 +1,334 @@
+Yes. Now that Replit is replacing proof-of-concept filler with **real, researched entities**, I would remove demo/test businesses—but **only after an audit identifies them with certainty**. We should not let Replit delete anything merely because a name looks fake, because some real businesses can have unusual names and some test records may have relationships we need to clean up safely.
+
+Add this directly to the script I gave you:
+
+```text
+============================================================
+PROOF-OF-CONCEPT DATA CLEANUP — REMOVE TEST/DEMO LISTINGS
+============================================================
+
+AUTHORIZED.
+
+Because Mapping With Melanin™ is now being populated with real,
+web-researched businesses, organizations, professionals, cultural sites,
+and houses of faith for proof-of-concept testing, production should no
+longer display placeholder/demo businesses as if they are real listings.
+
+Perform this cleanup as part of the coverage expansion.
+
+IMPORTANT:
+AUDIT FIRST.
+DELETE ONLY AFTER POSITIVE IDENTIFICATION.
+DO NOT DELETE BASED ONLY ON A BUSINESS "sounding fake."
+
+============================================================
+STEP 1 — IDENTIFY TEST / DEMO RECORDS
+============================================================
+
+Audit the entire production business/entity inventory for records that are
+clearly development/test/demo/placeholder data.
+
+Look for evidence including:
+
+- explicitly marked test/demo/seed fixture
+- names containing TEST, DEMO, SAMPLE, PLACEHOLDER where appropriate
+- known developer-created fixtures
+- fake/example domains
+- fake phone numbers
+- obviously fabricated addresses
+- records created specifically for automated testing
+- records documented in migrations/code as test fixtures
+- demo businesses previously created for UI testing
+
+Also inspect:
+
+businesses
+professionals
+community organizations
+faith organizations
+cultural sites
+events
+marketplace listings
+
+where applicable.
+
+Do NOT assume that every seeded record is fake.
+
+A seeded REAL business that was researched and verified should remain.
+
+============================================================
+STEP 2 — CLASSIFY
+============================================================
+
+Every suspicious record must be classified as:
+
+A — CONFIRMED REAL
+Keep.
+
+B — REAL BUSINESS SEEDED BY MWM
+Keep.
+
+C — CONFIRMED TEST/DEMO/PLACEHOLDER
+Eligible for removal.
+
+D — DUPLICATE OF REAL ENTITY
+Handle through the existing duplicate-resolution procedure.
+
+E — UNCERTAIN
+Do not delete.
+
+============================================================
+STEP 3 — RELATIONSHIP AUDIT BEFORE DELETION
+============================================================
+
+Before removing a confirmed test/demo entity, inspect every relationship
+connected to it.
+
+Examples:
+
+reviews
+saves
+vibes
+THE REAL responses
+media
+videos
+photos
+events
+business ownership
+claims
+check-ins
+recommendations
+Library connections
+Knowledge Graph connections
+community contributions
+analytics
+safety information
+admin moderation
+parent/location relationships
+Kinfolk personalization signals
+
+Determine whether related records are also test fixtures.
+
+NEVER cascade-delete legitimate member data simply because it references
+a test business.
+
+If legitimate member data exists, STOP deletion for that entity and report it.
+
+============================================================
+STEP 4 — REMOVE CONFIRMED TEST DATA
+============================================================
+
+After the relationship audit:
+
+Remove confirmed test/demo/placeholder business records and their confirmed
+test-only dependent data using referentially safe procedures.
+
+Do not remove:
+
+real businesses
+real organizations
+real professionals
+real houses of faith
+real cultural sites
+real member submissions
+real community contributions
+
+============================================================
+STEP 5 — TEST ACCOUNTS ARE DIFFERENT
+============================================================
+
+DO NOT interpret this authorization as permission to remove tester accounts.
+
+Keep required:
+
+founder account
+Apple reviewer account
+Manus/audit accounts where still needed
+active tester accounts
+approved tour testers
+
+We are cleaning TEST BUSINESS/CONTENT DATA from member-facing discovery,
+not eliminating the controlled testing infrastructure.
+
+============================================================
+STEP 6 — REMOVE TEST CONTENT FROM DISCOVERY
+============================================================
+
+After cleanup, confirm that ordinary members cannot encounter obvious
+development fixtures through:
+
+Map
+Business Search
+Universal Search
+KinfolkAI
+Library
+Community
+Events
+Marketplace
+recommendations
+Saved Places
+Business detail
+Community pages
+
+Kinfolk should not recommend a demo business simply because an old fixture
+remained indexed somewhere.
+
+============================================================
+STEP 7 — REAL DATA REPLACES TEST DATA
+============================================================
+
+Proceed with the authorized proof-of-concept web research and verified
+coverage expansion.
+
+The target state is:
+
+REAL BUSINESSES
+REAL PROFESSIONALS
+REAL HOUSES OF FAITH
+REAL COMMUNITY ORGANIZATIONS
+REAL CULTURAL/HERITAGE PLACES
+
+They may be:
+
+claimed
+unclaimed
+verified
+not yet verified
+
+but they must be REAL.
+
+IMPORTANT DISTINCTION:
+
+"Verified by MWM" is NOT the same as "verified to exist."
+
+For proof-of-concept seeding, Replit may verify through research that an
+entity exists and is currently operating.
+
+That does NOT give the entity an MWM Verified badge.
+
+MWM verification remains governed by our separate verification rules.
+
+============================================================
+STEP 8 — PROTECT CLAIM / REMOVAL RIGHTS
+============================================================
+
+Research-seeded businesses should normally enter as:
+
+LIVE_UNCLAIMED
+
+or the existing equivalent.
+
+They must NOT be represented as:
+
+MWM partners
+MWM members
+MWM verified businesses
+MWM endorsers
+
+unless that relationship actually exists.
+
+Maintain the future ability for an authorized representative to:
+
+Claim this listing
+Suggest an update
+Request correction
+Request removal
+
+============================================================
+STEP 9 — FINAL PROOF
+============================================================
+
+Return:
+
+BEFORE:
+Total businesses/entities
+Confirmed test/demo
+Duplicates identified
+Uncertain records
+
+AFTER:
+Real businesses/entities remaining
+Test/demo records removed
+Duplicates resolved/held
+Research-seeded entities added
+Live-unclaimed count
+
+Then visually test production.
+
+Search naturally as a member for examples including:
+
+church
+AME church
+mosque
+braider
+hair store
+dentist
+OBGYN
+lawyer
+plumber
+daycare
+realtor
+restaurant
+nightlife
+museum
+Black bookstore
+Ethiopian food
+Caribbean food
+
+Test these across multiple Living Legacy/tour cities.
+
+Also test Bangkok and Phuket.
+
+Confirm that the returned results are REAL entities and that obvious
+test/demo businesses no longer appear.
+
+============================================================
+NON-DESTRUCTIVE RULE
+============================================================
+
+If Replit cannot prove that a record is test/demo data:
+
+KEEP IT.
+
+Uncertainty is not authorization to delete.
+
+============================================================
+FINAL REGRESSION
+============================================================
+
+After cleanup and real-data expansion, run the complete permanent
+post-implementation/release audit.
+
+Visually test production using a fresh tester session.
+
+Do not merely query the database or inspect code.
+
+Confirm:
+
+Login
+Onboarding
+Search
+Map
+Business pages
+Add a Place
+Reviews
+Vibes/THE REAL
+Media/social URL contribution
+Save
+Library
+KinfolkAI
+Community
+Events
+Safety
+Marketplace
+Profile
+Logout
+Member wall
+Apple reviewer access
+
+No cleanup operation is complete until production remains stable.
+```
+
+There is one distinction here I think is **very important for your platform**: a business Replit confirms exists on the internet is **“research-confirmed/live unclaimed,” not “MWM Verified.”** Your Verified designation should continue to mean something stronger—such as owner verification, qualifying organizational membership, documentation, or whatever verification framework we ultimately approve.
+
+That lets you put hundreds of real places into the proof of concept without accidentally suggesting that all 700+ businesses have already participated in or been endorsed by Mapping With Melanin™.

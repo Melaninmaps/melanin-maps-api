@@ -1,0 +1,294 @@
+Yes — this makes complete sense, and it should become a **design-system rule**, not a one-off cleanup.
+
+The distinction is:
+
+**MWM-authored / platform-generated visual language → polished Mapping with Melanin™ iconography.**
+**User-authored expressive content → normal native emoji are allowed.**
+
+So if a community member writes, “I love this house 🏠,” their 🏠 stays the normal Apple/Android emoji. But if MWM displays **Top Realtor**, **Home Services**, a housing badge, a search chip, a category icon, a Kinfolk recommendation card, or a platform-generated indicator, the house should be the **MWM polished gold house icon**, not 🏠.
+
+I’ll treat that as a standing Mapping with Melanin design requirement in our work going forward. Since persistent memory controls aren’t available to me in this turn, I don’t want to falsely claim I’ve written it into a permanent memory store—but I will carry it forward in this project context.
+
+Give Replit this:
+
+```text
+PERMANENT MWM DESIGN-SYSTEM RULE — PLATFORM ICONS VS USER EMOJIS
+
+SAVE THIS TO PROJECT MEMORY / DESIGN SYSTEM.
+
+This does NOT require an immediate production change if the platform is currently
+in a stable testing state.
+
+Apply this automatically during the next appropriate implementation/design pass
+and to all future development.
+
+============================================================
+CORE RULE
+============================================================
+
+Mapping with Melanin™ has TWO distinct visual languages:
+
+1. PLATFORM / MWM-AUTHORED VISUAL LANGUAGE
+2. USER-AUTHORED EXPRESSIVE CONTENT
+
+They must NOT be treated the same.
+
+============================================================
+1. MWM-AUTHORED / SYSTEM-GENERATED CONTENT
+============================================================
+
+Whenever Mapping with Melanin itself displays an icon, designation, badge,
+category, status, feature, recommendation, navigation element, insight,
+achievement, or structured community signal:
+
+DO NOT use standard Unicode emoji as the final production visual.
+
+Use the approved polished MWM icon system instead.
+
+Default visual direction:
+
+- refined
+- cohesive
+- premium
+- gold / MWM palette where appropriate
+- consistent stroke/fill treatment
+- accessible
+- recognizable at small sizes
+- visually consistent across web and mobile
+
+Examples:
+
+Home / Realtor
+Food
+Beauty
+Faith
+Safety
+Healthcare
+Travel
+Community
+Business
+Education
+History
+Library
+Badges
+Milestones
+Top Performer
+Verified
+Community Favorite
+Put Your People On
+Top Realtor
+Top Restaurant
+etc.
+
+If MWM eventually displays:
+
+"Top Realtor — 2 Years Running"
+
+and the design uses a house symbol,
+
+that house must use the MWM-designed gold home icon/badge system.
+
+NOT:
+
+🏠
+
+============================================================
+2. USER-AUTHORED CONTENT
+============================================================
+
+Community members may use normal emojis naturally in:
+
+comments
+reviews
+captions
+community posts
+messages
+user-written recommendations
+user-written business feedback
+user-generated text
+
+Example:
+
+User writes:
+
+"I absolutely love this house 🏠 ❤️"
+
+The user's 🏠 and ❤️ should remain normal native emoji.
+
+Do NOT convert or replace user-written emoji with MWM icons.
+
+Depending on platform, these may render using:
+
+Apple emoji
+Android emoji
+browser/system emoji
+
+That is expected.
+
+============================================================
+3. COMMUNITY DATA DISPLAYED BY MWM
+============================================================
+
+Important distinction:
+
+If the COMMUNITY provides the underlying information but MWM summarizes or
+structures it into a platform element, the DISPLAY belongs to the MWM visual
+system.
+
+Example:
+
+Users repeatedly recommend a realtor.
+
+MWM generates:
+
+TOP REALTOR
+2 YEARS RUNNING
+
+That badge is MWM-authored structured intelligence.
+
+Therefore use:
+
+MWM gold realtor/home badge icon
+
+not a standard house emoji.
+
+Another example:
+
+Member writes:
+
+"Perfect for date night ❤️"
+
+Inside their review:
+native ❤️ remains.
+
+MWM later aggregates the signal into:
+
+Date Night Favorite
+
+That platform badge/chip should use the approved MWM iconography.
+
+============================================================
+4. THIS APPLIES ACROSS THE ENTIRE PRODUCT
+============================================================
+
+Audit this distinction whenever working on:
+
+Map
+Business profiles
+Library
+KinfolkAI
+Community
+Safety
+Events
+Marketplace
+Profile
+Business Dashboard
+Cultural Ambassador
+Badges
+Milestones
+Search
+Filters
+Vibes
+THE REAL
+Community Confidence
+Community Says
+Know Before You Go
+Travel
+Community pages
+Notifications
+Achievements
+Analytics
+
+============================================================
+5. KINFOLKAI
+============================================================
+
+Kinfolk's structured UI elements should also follow the MWM icon system.
+
+Kinfolk may naturally use emoji inside conversational text where appropriate.
+
+But:
+
+buttons
+chips
+suggestion cards
+categories
+feature icons
+system statuses
+
+must use polished MWM icons rather than ordinary emoji.
+
+============================================================
+6. DO NOT DESTABILIZE CURRENT TESTING
+============================================================
+
+This is NOT authorization to interrupt a stable production build solely to
+replace cosmetic emoji today.
+
+Record this requirement now.
+
+Apply it:
+
+- during the next relevant UI implementation
+- when touching an affected component
+- during design-system cleanup
+- before final public launch
+
+Do not jeopardize authentication, Library, Map, business pages, Kinfolk,
+reviews, media contribution, Apple review, or current tester stability merely
+for icon cleanup.
+
+============================================================
+7. CREATE ONE CENTRAL ICON SYSTEM
+============================================================
+
+Do not allow every page to invent its own gold icons.
+
+Maintain a centralized reusable MWM icon library/design system.
+
+Prefer semantic identifiers such as:
+
+home
+realtor
+restaurant
+faith
+health
+safety
+travel
+education
+community
+verified
+favorite
+milestone
+
+Components should call the semantic MWM icon rather than hard-code emoji.
+
+This allows the artwork to evolve later without rewriting every page.
+
+============================================================
+8. ACCESSIBILITY
+============================================================
+
+Decorative icons should not create noisy screen-reader output.
+
+Meaningful icons require appropriate labels/accessible text.
+
+Never rely on icon/color alone to communicate important status.
+
+============================================================
+PERMANENT PRINCIPLE
+============================================================
+
+USER'S VOICE:
+native emojis are allowed.
+
+MWM'S VOICE:
+MWM-designed iconography.
+
+COMMUNITY DATA STRUCTURED BY MWM:
+MWM-designed iconography.
+
+Save this distinction permanently and enforce it in future UI work.
+```
+
+And I particularly like the rule you just created because it solves something subtle: **the platform can still feel human without looking amateur.** Members retain their own expressive voice, while anything Mapping with Melanin officially says, awards, summarizes, categorizes, or certifies has a recognizable visual identity.
