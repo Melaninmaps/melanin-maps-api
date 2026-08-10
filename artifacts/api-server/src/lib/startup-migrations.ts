@@ -1241,6 +1241,12 @@ END $seed$`,
       END $$`,
   },
 
+  // ── kinfolk_voice preference column (additive, idempotent) ───────────────────
+  {
+    name: "user_preferences_kinfolk_voice_v1",
+    sql: `ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS kinfolk_voice VARCHAR(20) NOT NULL DEFAULT 'onyx'`,
+  },
+
   // ── Business schema sync — adds every column the Drizzle schema defines
   //    that may be missing from older Railway deployments.  All ADD COLUMN IF
   //    NOT EXISTS so this is fully idempotent.
@@ -1570,6 +1576,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["admin accounts",    () => ensureAdminAccounts(log, warn)],
     ["tester accounts",   () => ensureTesterAccounts(log, warn)],
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
+    ["tester universal accts", () => ensureTesterUniversalAccounts(log, warn)],
     ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
     ["library collections",  () => ensureLibraryCollections(log, warn)],
     ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
@@ -2545,6 +2552,41 @@ async function ensurePendingTesterEmails(
     log(`Pending tester emails: table ensured, ${inserted} new emails seeded`);
   } catch (err: unknown) {
     warn(`Pending tester emails guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Per-boot tester account creation ──────────────────────────────────────────
+// Unlike tester_universal_accounts_v1 (one-time migration), this runs every
+// boot and handles testers added to PRE_APPROVED_TESTER_EMAILS AFTER the
+// initial migration already ran on Railway. Idempotent — ON CONFLICT DO NOTHING.
+async function ensureTesterUniversalAccounts(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  // bcrypt(cost=8) of "MWM-Manus-2026!" — same hash used by tester_universal_accounts_v1
+  const UNIVERSAL_HASH = '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+  try {
+    let created = 0;
+    for (const email of PRE_APPROVED_TESTER_EMAILS) {
+      const r = await pool.query(
+        `INSERT INTO users
+           (id, email, first_name, last_name, password_hash,
+            email_verified, agree_to_terms, profile_setup_complete,
+            member_type, approved, role, must_change_password)
+         VALUES
+           (gen_random_uuid(), $1,
+            split_part($1, '@', 1), 'Tester',
+            $2,
+            true, true, false,
+            'founding', true, 'tester', true)
+         ON CONFLICT (email) DO NOTHING`,
+        [email.toLowerCase().trim(), UNIVERSAL_HASH]
+      );
+      if (r.rowCount && r.rowCount > 0) created++;
+    }
+    log(`Tester universal accounts: ${created} created (${PRE_APPROVED_TESTER_EMAILS.length - created} already existed)`);
+  } catch (err: unknown) {
+    warn(`Tester universal accounts guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

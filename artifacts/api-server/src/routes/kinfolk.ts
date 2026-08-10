@@ -1319,6 +1319,13 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
     const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+    // Read kinfolk_voice separately (column added by startup migration, not in Drizzle schema)
+    const voiceRow = await pool.query(
+      `SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`,
+      [req.user.id]
+    );
+    const kinfolkVoice: string = voiceRow.rows[0]?.kinfolk_voice ?? "onyx";
+
     const normalized = prefs ? {
       ...prefs,
       favoriteCategories:    normalizeArr(prefs.favoriteCategories),
@@ -1330,11 +1337,15 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       diasporaCountries:     normalizeArr(prefs.diasporaCountries),
       // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
       ownershipTypes:        normalizeArr(prefs.preferredOwnershipTypes),
+      kinfolkVoice,
     } : {
       userId: req.user.id,
       favoriteCategories: [], favoriteCities: [], avoidCategories: [],
       budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
       ownershipTypes: [], lifestyleServices: [],
+      communicationStyle: "friendly", personalityMode: "neighborhood_guide",
+      emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
+      kinfolkVoice: "onyx",
     };
     res.json({ preferences: normalized });
   } catch (err) {
@@ -1349,8 +1360,11 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
-    preferredOwnershipTypes, diasporaCountries, lifestyleServices, personalityMode,
+    preferredOwnershipTypes, ownershipTypes, diasporaCountries, lifestyleServices, personalityMode, kinfolkVoice,
   } = req.body as Record<string, unknown>;
+  // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
+  const resolvedOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[]
+    : Array.isArray(ownershipTypes) ? ownershipTypes as string[] : undefined;
   try {
     const [prefs] = await db
       .insert(userPreferencesTable)
@@ -1370,7 +1384,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
         knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
-        preferredOwnershipTypes: Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[] : undefined,
+        preferredOwnershipTypes: resolvedOwnershipTypes,
         diasporaCountries: Array.isArray(diasporaCountries) ? diasporaCountries as string[] : undefined,
         lifestyleServices: Array.isArray(lifestyleServices) ? lifestyleServices as string[] : undefined,
       })
@@ -1391,13 +1405,21 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
-          ...(Array.isArray(preferredOwnershipTypes) && { preferredOwnershipTypes: preferredOwnershipTypes as string[] }),
+          ...(resolvedOwnershipTypes && { preferredOwnershipTypes: resolvedOwnershipTypes }),
           ...(Array.isArray(diasporaCountries) && { diasporaCountries: diasporaCountries as string[] }),
           ...(Array.isArray(lifestyleServices) && { lifestyleServices: lifestyleServices as string[] }),
           updatedAt: new Date(),
         },
       })
       .returning();
+    // Persist kinfolkVoice via raw query (column added by startup migration)
+    const ALLOWED_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
+    if (typeof kinfolkVoice === "string" && ALLOWED_VOICES.includes(kinfolkVoice)) {
+      await pool.query(
+        `UPDATE user_preferences SET kinfolk_voice = $1 WHERE user_id = $2`,
+        [kinfolkVoice, req.user.id]
+      );
+    }
     res.json({ preferences: prefs });
   } catch (err) {
     req.log.error({ err }, "Failed to update preferences");

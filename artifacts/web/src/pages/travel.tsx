@@ -3,7 +3,7 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
-  Settings, X, Copy, Check, History, Menu, Share2, ArrowRight,
+  Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
 } from "lucide-react";
 import {
   MwmHome, MwmPlane, MwmBriefcase, MwmStore,
@@ -37,12 +37,19 @@ interface Prefs {
   tripStyle: string[]; travelCompanion: string; dietaryNotes: string | null;
   // Kinfolk personalization — what I care about, used to promote the right businesses
   ownershipTypes: string[]; lifestyleServices: string[];
+  // How Kinfolk talks to me
+  communicationStyle: string; personalityMode: string;
+  emojiLevel: string; humorLevel: string; regionalFlavor: string;
+  kinfolkVoice: string;
 }
 
 const DEFAULT_PREFS: Prefs = {
   favoriteCategories: [], favoriteCities: [], avoidCategories: [],
   budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
   ownershipTypes: [], lifestyleServices: [],
+  communicationStyle: "friendly", personalityMode: "neighborhood_guide",
+  emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
+  kinfolkVoice: "onyx",
 };
 
 const ALL_CATEGORIES = ["Food & Drink","Nightlife","Culture & Art","Music & Live Events","Beauty & Wellness","History","Outdoors","Family-Friendly","Shopping","Coffee","Spiritual","Sports"];
@@ -50,6 +57,11 @@ const AVOID_OPTS = ["Nightlife","Bars & Clubs","Loud venues","Crowded spaces","T
 const BUDGET_OPTS = [{ id: "budget", label: "Budget 💵" }, { id: "mid", label: "Mid-range 💳" }, { id: "luxury", label: "Luxury ✨" }, { id: "any", label: "No limit" }];
 const TRIP_STYLES = [{ id: "solo", label: "Solo" }, { id: "couple", label: "Couple" }, { id: "family", label: "Family" }, { id: "group", label: "Friend group" }, { id: "business", label: "Work trip" }, { id: "spiritual", label: "Spiritual" }];
 const COMPANIONS = [{ id: "solo", label: "Solo" }, { id: "partner", label: "Partner" }, { id: "family", label: "Family" }, { id: "friends", label: "Friends" }, { id: "colleagues", label: "Colleagues" }];
+const COMMUNICATION_STYLES = [{ id: "friendly", label: "Conversational" }, { id: "concise", label: "Concise" }, { id: "detailed", label: "Detailed" }, { id: "professional", label: "Professional" }];
+const PERSONALITY_MODES = [{ id: "neighborhood_guide", label: "Neighborhood Guide" }, { id: "cultural_curator", label: "Cultural Curator" }, { id: "travel_companion", label: "Travel Companion" }, { id: "community", label: "Community Voice" }];
+const EMOJI_LEVELS = [{ id: "none", label: "None" }, { id: "some", label: "Balanced" }, { id: "lots", label: "Expressive" }];
+const HUMOR_LEVELS = [{ id: "none", label: "Straightforward" }, { id: "light", label: "Light" }, { id: "playful", label: "Playful" }];
+const KINFOLK_VOICES = [{ id: "onyx", label: "Onyx" }, { id: "alloy", label: "Alloy" }, { id: "echo", label: "Echo" }, { id: "fable", label: "Fable" }, { id: "nova", label: "Nova" }, { id: "shimmer", label: "Shimmer" }];
 
 // ─── Kinfolk Identity Defaults ─────────────────────────────────────────────────
 // PERMANENT — Do not remove or edit without explicit founder authorization.
@@ -270,6 +282,72 @@ function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onC
             selected={local.lifestyleServices}
             onChange={v => setLocal(p => ({ ...p, lifestyleServices: v }))}
           />
+
+          {/* ── How Kinfolk Talks to You ── */}
+          <div className="pt-2 border-t border-[#3A1F0E]/8">
+            <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">How Kinfolk Talks to You</div>
+            <div className="text-[10px] text-[#3A1F0E]/40 mb-4">Customize Kinfolk's tone and communication style.</div>
+            <div className="space-y-4">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Response style</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {COMMUNICATION_STYLES.map(o => (
+                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, communicationStyle: o.id }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${local.communicationStyle === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Kinfolk style</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {PERSONALITY_MODES.map(o => (
+                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, personalityMode: o.id }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${local.personalityMode === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Emoji in responses</div>
+                <div className="flex gap-1.5">
+                  {EMOJI_LEVELS.map(o => (
+                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, emojiLevel: o.id }))}
+                      className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${local.emojiLevel === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Tone</div>
+                <div className="flex gap-1.5">
+                  {HUMOR_LEVELS.map(o => (
+                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, humorLevel: o.id }))}
+                      className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${local.humorLevel === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Kinfolk's Voice ── */}
+          <div className="pt-2 border-t border-[#3A1F0E]/8">
+            <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">Kinfolk's Voice</div>
+            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">Choose the voice you hear when you listen to Kinfolk's responses.</div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {KINFOLK_VOICES.map(o => (
+                <button key={o.id} onClick={() => setLocal(p => ({ ...p, kinfolkVoice: o.id }))}
+                  className={`py-2 rounded-xl text-xs font-medium transition-colors ${local.kinfolkVoice === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="px-5 py-4 border-t border-[#3A1F0E]/8 shrink-0">
@@ -465,6 +543,10 @@ function TravelPage() {
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // TTS state
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   // Load preferences — always merge with DEFAULT_PREFS so every array field is
   // guaranteed to be an array even if the DB row predates a field addition.
   const loadPrefs = useCallback(async () => {
@@ -485,6 +567,13 @@ function TravelPage() {
           tripStyle:          ensureArr(raw.tripStyle),
           ownershipTypes:     ensureArr(raw.ownershipTypes),
           lifestyleServices:  ensureArr(raw.lifestyleServices),
+          // Communication style fields with defaults
+          communicationStyle: typeof raw.communicationStyle === "string" ? raw.communicationStyle : DEFAULT_PREFS.communicationStyle,
+          personalityMode:    typeof raw.personalityMode === "string" ? raw.personalityMode : DEFAULT_PREFS.personalityMode,
+          emojiLevel:         typeof raw.emojiLevel === "string" ? raw.emojiLevel : DEFAULT_PREFS.emojiLevel,
+          humorLevel:         typeof raw.humorLevel === "string" ? raw.humorLevel : DEFAULT_PREFS.humorLevel,
+          regionalFlavor:     typeof raw.regionalFlavor === "string" ? raw.regionalFlavor : DEFAULT_PREFS.regionalFlavor,
+          kinfolkVoice:       typeof raw.kinfolkVoice === "string" ? raw.kinfolkVoice : DEFAULT_PREFS.kinfolkVoice,
         });
       }
     } finally { setPrefsLoaded(true); }
@@ -492,12 +581,41 @@ function TravelPage() {
 
   const savePrefs = useCallback(async (p: Prefs) => {
     setPrefs(p);
+    // Map ownershipTypes → preferredOwnershipTypes (API field name)
     await fetch(`${BASE}api/kinfolk/preferences`, {
       method: "PUT", credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(p),
+      body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
     });
   }, []);
+
+  // TTS playback
+  const playMessage = useCallback(async (msgId: string, content: string) => {
+    if (playingId === msgId) {
+      audioRef.current?.pause();
+      if (audioRef.current) audioRef.current.currentTime = 0;
+      setPlayingId(null);
+      return;
+    }
+    audioRef.current?.pause();
+    if (audioRef.current) audioRef.current.currentTime = 0;
+    setPlayingId(msgId);
+    try {
+      const r = await fetch(`${BASE}api/kinfolk/speak`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: content.slice(0, 600), voice: prefs.kinfolkVoice || "onyx" }),
+      });
+      if (!r.ok) { setPlayingId(null); return; }
+      const d = await r.json() as { audio?: string };
+      if (!d.audio) { setPlayingId(null); return; }
+      const audio = new Audio(`data:audio/wav;base64,${d.audio}`);
+      audioRef.current = audio;
+      audio.onended = () => setPlayingId(null);
+      audio.onerror = () => setPlayingId(null);
+      await audio.play();
+    } catch { setPlayingId(null); }
+  }, [playingId, prefs.kinfolkVoice]);
 
   // Load session list
   const loadSessions = useCallback(async () => {
@@ -860,6 +978,19 @@ function TravelPage() {
                       }`}>
                         {msg.content}
                       </div>
+                      {msg.role === "assistant" && isLoggedIn && (
+                        <button
+                          onClick={() => playMessage(msg.id, msg.content)}
+                          className={`mt-1 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors ${
+                            playingId === msg.id
+                              ? "text-[#CA922B] bg-[#CA922B]/8 border border-[#CA922B]/20"
+                              : "text-[#3A1F0E]/30 hover:text-[#CA922B] hover:bg-[#CA922B]/5"
+                          }`}
+                        >
+                          <Volume2 size={10} />
+                          {playingId === msg.id ? "Stop" : "Listen"}
+                        </button>
+                      )}
                       {msg.recommendations && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}

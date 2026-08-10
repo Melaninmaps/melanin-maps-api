@@ -1538,7 +1538,7 @@ export default function Profile() {
             <h3 className="text-xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-[#CA922B]" /> What Kinfolk Knows About You
             </h3>
-            <Link href="/kinfolk">
+            <Link href="/travel">
               <button className="text-xs font-bold text-[#CA922B] hover:underline flex items-center gap-1">
                 Edit in Kinfolk <ChevronRight className="w-3 h-3" />
               </button>
@@ -1619,7 +1619,7 @@ export default function Profile() {
                 <div className="text-center py-6">
                   <Sparkles className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-3" />
                   <p className="text-sm text-[#3A1F0E]/50 mb-4">Kinfolk doesn't know much about you yet. The more you chat, the better it knows you.</p>
-                  <Link href="/kinfolk">
+                  <Link href="/travel">
                     <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 h-10 text-sm">
                       Start Chatting with Kinfolk
                     </Button>
