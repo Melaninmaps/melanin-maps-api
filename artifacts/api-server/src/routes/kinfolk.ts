@@ -1293,10 +1293,10 @@ If you're asking a question or don't have enough info yet, set "recommendations"
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
 BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the VERIFIED PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business that is not explicitly listed in the VERIFIED PLATFORM BUSINESSES section. If no platform businesses match what the user is looking for, set "businesses": [] and explain in the "reply" field: "Mapping With Melanin doesn't have a verified listing for that specific type in [city] yet — here's what I know generally..." then offer general guidance in the reply. Never populate the businesses array with invented or unverified names.
 SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY — parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
-Only recommend real minority-owned or culturally significant spots — no tourist traps, no chains.${businessCatalog?.length ? `
+Only recommend real community or culturally significant spots — no tourist traps, no chains.${businessCatalog?.length ? `
 
-VERIFIED PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} — PRIORITIZE THESE:
-These are real, verified minority-owned businesses listed on Mapping With Melanin™. When they match the user's vibe or needs, recommend them by name and tell their story authentically. Weave in their mission, values, and personality — not just their category.
+MWM PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} — PRIORITIZE THESE:
+These are real businesses listed in the Mapping With Melanin™ community directory. Recommend them first when they match the user's vibe or needs — verified or not. Use their name, tell their story authentically, and explain WHY they'd resonate with this user. Unverified businesses are still real community spots worth mentioning.
 
 ${businessCatalog.map(b => {
   const lines: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}`];
