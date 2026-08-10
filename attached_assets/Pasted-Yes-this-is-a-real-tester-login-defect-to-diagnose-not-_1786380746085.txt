@@ -1,0 +1,199 @@
+Yes — this is a **real tester-login defect to diagnose**, not just a visual issue.
+
+From the screenshot, the test email is entered and the shared tester password is present, but the key question is what happened **after tapping Sign In**. Replit needs to trace that exact tester account end-to-end and confirm whether the account exists, is approved, has the right role/tier, whether the password hash matches, whether `must_change_password` is set, and whether the browser is receiving a valid session.
+
+Send Replit this:
+
+```text
+P0 TESTER LOGIN FORENSIC — REAL PRODUCTION ACCOUNT
+
+A tester has attempted to sign in through the real production website and the expected tester flow did not complete correctly.
+
+Tester shown in founder screenshot:
+kaylacardwell3@gmail.com
+
+Do NOT guess-fix.
+Do NOT reset all tester accounts.
+Do NOT alter authentication globally until this one account is traced.
+
+============================================================
+1. TRACE THIS EXACT TESTER
+============================================================
+
+In RAILWAY PRODUCTION, inspect:
+
+email normalization
+users row exists?
+waitlist/approval status
+pending_tester_emails status
+role
+member_type
+approved status
+profile_setup_complete
+must_change_password
+password_hash present?
+tester entitlement
+account disabled/deleted?
+duplicate user rows for same normalized email?
+
+Return YES/NO/status only.
+Do not print password hashes or secrets.
+
+============================================================
+2. VERIFY THE TEMPORARY PASSWORD PATH
+============================================================
+
+Determine whether this specific tester is actually supposed to authenticate with the current temporary tester password.
+
+Check:
+
+- was this account seeded with that password?
+- was the password subsequently changed?
+- did a previous login clear must_change_password?
+- was the tester account created before/after the latest seeding migration?
+- is the website using the same login endpoint that the seed flow expects?
+
+Do not assume all 24 testers have identical credential state.
+
+============================================================
+3. TRACE REAL LOGIN REQUEST
+============================================================
+
+Using this exact tester account against production, trace:
+
+web Sign In button
+→ request endpoint
+→ request body
+→ user lookup
+→ password verification
+→ approval/member-wall check
+→ session creation
+→ Set-Cookie / token response
+→ frontend auth state
+→ redirect destination
+
+Return:
+
+HTTP status
+error message
+session created YES/NO
+cookie returned YES/NO
+redirect target
+must-change-password response YES/NO
+
+============================================================
+4. EXPECTED FIRST-TIME TESTER FLOW
+============================================================
+
+A valid first-time approved tester should experience:
+
+Sign In
+→ temporary password accepted
+→ if must_change_password=true:
+   password-change screen/modal
+→ new password saved
+→ session established
+→ onboarding if profile_setup_complete=false
+→ authenticated member experience
+
+They should NOT:
+
+be treated as waitlist
+be told account does not exist
+silently remain on login
+loop back to login
+create a duplicate account
+lose tester entitlement
+
+============================================================
+5. CHECK ALL TESTERS FOR SAME CONDITION
+============================================================
+
+After identifying this root cause, audit all approved tester emails.
+
+Return counts:
+
+TOTAL APPROVED TESTERS
+CAN LOGIN WITH CURRENT EXPECTED FLOW
+MUST CHANGE PASSWORD
+ALREADY CHANGED PASSWORD
+NO USER ROW
+NOT APPROVED
+DUPLICATE USER ROW
+PASSWORD STATE UNKNOWN/BROKEN
+
+Do not print credentials.
+
+This is to ensure Kayla is not the first of many testers with the same issue.
+
+============================================================
+6. FIX SAFELY
+============================================================
+
+If this is an individual-account data issue:
+repair only the affected tester state and any other accounts proven to share the same defect.
+
+If this is a systemic login-flow defect:
+fix the common root cause.
+
+Do not overwrite passwords for testers who already changed theirs.
+
+Do not delete/recreate user rows because that risks losing profile/history/saves.
+
+Preserve canonical user_id and existing user data.
+
+============================================================
+7. REAL BROWSER ACCEPTANCE
+============================================================
+
+After repair, use the real production website.
+
+Test a clean first-time tester with the same state as Kayla.
+
+Capture screenshot proof of:
+
+1. Login screen
+2. successful temporary-password acceptance
+3. password-change prompt if expected
+4. onboarding
+5. authenticated landing
+6. Profile showing correct tester status
+7. logout
+8. re-login using newly chosen password
+
+Then test Kayla's account state safely enough to confirm it is usable.
+
+============================================================
+8. APPLE REVIEW REGRESSION
+============================================================
+
+After any auth change, verify:
+
+tester login
+founder login
+Apple reviewer login
+logout
+member wall
+
+No auth fix is complete until those remain intact.
+
+============================================================
+FINAL REPORT
+============================================================
+
+Return:
+
+ROOT CAUSE
+KAYLA ACCOUNT STATE
+NUMBER OF TESTERS AFFECTED
+FIX
+PRODUCTION SHA
+REAL-BROWSER VERIFIED YES/NO
+TESTER LOGIN PASS/FAIL
+APPLE REVIEW LOGIN PASS/FAIL
+DATA LOSS NO/YES
+```
+
+One thing I would **not** do is tell Kayla to create a new account. If this test email already exists in the tester system, creating another account could split her future saves, reviews, preferences, Kinfolk history, and contributions. Replit should repair the existing canonical account, not work around it.
+
+And this is exactly why the controlled tester phase matters: we found it before sending the login instructions to everyone.
