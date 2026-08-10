@@ -2597,12 +2597,13 @@ async function ensureTesterUniversalAccounts(
     //    Also clear any rate-limit lock so testers aren't stuck.
     const repairResult = await pool.query(
       `UPDATE users
-       SET password_hash = $1,
-           locked_until  = NULL,
-           updated_at    = NOW()
+       SET password_hash         = $1,
+           locked_until          = NULL,
+           failed_login_attempts = 0,
+           updated_at            = NOW()
        WHERE LOWER(TRIM(email)) = ANY($2)
          AND must_change_password = true
-         AND (password_hash != $1 OR locked_until IS NOT NULL)
+         AND (password_hash != $1 OR locked_until IS NOT NULL OR failed_login_attempts > 0)
        RETURNING email`,
       [UNIVERSAL_HASH, emails]
     );
