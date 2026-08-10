@@ -378,13 +378,11 @@ export default function MapPage() {
         p.set("lat", String(geoLat));
         p.set("lng", String(geoLng));
         p.set("radius", "50");
-        // Pass the detected city name explicitly so Pass 3 (category search)
-        // filters with `city ILIKE '%Phuket%'`. Without this, Pass 2.5 (the
-        // in-query city detector) is skipped when lat is present (line 687:
-        // `lat === undefined` guard), meaning "Phuket" is never matched against
-        // the businesses table — and 0 results are returned even though 26+
-        // Phuket businesses exist in the DB.
-        if (geoName) p.set("city", geoName);
+        // NOTE: we intentionally do NOT pass city= here. The geo-filter alone
+        // (lat/lng + radius=50) is better for international searches: Phuket
+        // businesses are stored as "Phuket Town", "Patong", "Karon" — city=Phuket
+        // would AND-filter to only ILIKE '%Phuket%' matches, excluding Patong/Karon.
+        // The radius covers the full region regardless of how each sub-area is named.
       } else if (userCoords) {
         p.set("lat", String(userCoords.lat));
         p.set("lng", String(userCoords.lng));

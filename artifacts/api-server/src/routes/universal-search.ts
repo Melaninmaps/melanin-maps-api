@@ -69,6 +69,7 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   jamaican:      ["Food"],
   african:       ["Food"],
   restaurant:    ["Food"],
+  restaurants:   ["Food"],
   food:          ["Food"],
   catering:      ["Food"],
   // ── Beauty / Hair / Personal Care ────────────────────────────────────────
@@ -194,6 +195,15 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   wedding:       ["Event", "Celebration"],
   party:         ["Event", "Celebration"],
   venue:         ["Event", "Celebration"],
+  // ── Travel ───────────────────────────────────────────────────────────────
+  // ── Entertainment / Nightlife ─────────────────────────────────────────────
+  nightlife:     ["Entertainment & Recreation", "Bar / Nightlife"],
+  bar:           ["Entertainment & Recreation", "Bar / Nightlife"],
+  bars:          ["Entertainment & Recreation", "Bar / Nightlife"],
+  club:          ["Entertainment & Recreation", "Bar / Nightlife"],
+  clubs:         ["Entertainment & Recreation", "Bar / Nightlife"],
+  lounge:        ["Entertainment & Recreation", "Bar / Nightlife"],
+  lounges:       ["Entertainment & Recreation", "Bar / Nightlife"],
   // ── Travel ───────────────────────────────────────────────────────────────
   travel:        ["Travel", "Hospitality"],
   tour:          ["Travel", "Culture"],
@@ -378,7 +388,17 @@ function extractConcepts(q: string): {
     const bigram  = i < words.length - 1 ? `${word} ${words[i + 1]}` : null;
     const trigram = i < words.length - 2 ? `${word} ${words[i + 1]} ${words[i + 2]}` : null;
 
-    const wordCats    = CONCEPT_TO_CATEGORY[word]    ?? [];
+    // De-pluralization fallback: "restaurants"→"restaurant", "spas"→"spa", etc.
+    // Only fires when the exact word has no entry, so it never overrides explicit
+    // plural entries (e.g. "churches" is already mapped directly above).
+    const singular = CONCEPT_TO_CATEGORY[word]
+      ? null
+      : word.endsWith("ies") && word.length > 4
+        ? word.slice(0, -3) + "y"
+        : word.endsWith("s") && word.length > 4
+          ? word.slice(0, -1)
+          : null;
+    const wordCats = CONCEPT_TO_CATEGORY[word] ?? (singular ? (CONCEPT_TO_CATEGORY[singular] ?? []) : []);
     const bigramCats  = bigram  ? (CONCEPT_TO_CATEGORY[bigram]  ?? []) : [];
     const trigramCats = trigram ? (CONCEPT_TO_CATEGORY[trigram] ?? []) : [];
 
