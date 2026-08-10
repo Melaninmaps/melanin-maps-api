@@ -51,3 +51,22 @@ International businesses (Phuket, Jamaica, Bangkok) exist in the DB (26 Thailand
 - "Kingston Jamaica nightlife" → loc=Kingston Jamaica lat=17.97 lng=-76.79
 
 **Why:** Nominatim returned class=place for all these (not class=amenity like the Oslo case).
+
+## Pass 2.5 guard bug (August 10 2026)
+Pass 2.5 (in-query city detection) has a guard: `lat === undefined`. When geo-extract passes lat/lng for map panning, Pass 2.5 is skipped — the city token in the query ("Phuket") never matches the businesses table.
+
+## extractConcepts plural bug (root cause for 0-result international searches)
+`extractConcepts("Phuket restaurants")` → `mappedCategories=[]` because CONCEPT_TO_CATEGORY has "restaurant" (singular) but not "restaurants" (plural). With empty mappedCategories, Pass 3 (category geo-search) never runs — 0 results even though businesses exist.
+
+**Fix (SHA 76b3d4e5):**
+1. Added "restaurants" explicitly + de-pluralization fallback in extractConcepts (tries word[:-1] or word[:-3]+'y' as singular when exact word has no entry)
+2. Added nightlife, bar, bars, club, clubs, lounge, lounges to CONCEPT_TO_CATEGORY → ["Entertainment & Recreation", "Bar / Nightlife"]
+3. geo-extract path in map.tsx does NOT pass city= — lat/lng+radius=50 is better (Phuket businesses stored as "Phuket Town"/"Patong"/"Karon" — city=Phuket AND-filter would exclude Patong/Karon)
+
+**Production-verified results (76b3d4e5, apple.reviewer session):**
+- "Phuket restaurants" (lat=7.94, lng=98.35, r=50) → n=4 Food in Karon/Chalong/Wichit ✅
+- "Phuket nightlife" → n=10 Entertainment in Patong/Kamala ✅
+- "Bangkok restaurants" → n=7 Food in Bangkok ✅
+- "Jamaica restaurants" → n=6 Food in Montego Bay/Ocho Rios/Kingston ✅
+- "Atlanta braiders" → n=10 Beauty in Atlanta ✅
+- "Philadelphia restaurants" (no geo) → n=10 Food in Philadelphia ✅
