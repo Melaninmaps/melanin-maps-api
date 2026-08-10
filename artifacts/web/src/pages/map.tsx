@@ -378,6 +378,13 @@ export default function MapPage() {
         p.set("lat", String(geoLat));
         p.set("lng", String(geoLng));
         p.set("radius", "50");
+        // Pass the detected city name explicitly so Pass 3 (category search)
+        // filters with `city ILIKE '%Phuket%'`. Without this, Pass 2.5 (the
+        // in-query city detector) is skipped when lat is present (line 687:
+        // `lat === undefined` guard), meaning "Phuket" is never matched against
+        // the businesses table — and 0 results are returned even though 26+
+        // Phuket businesses exist in the DB.
+        if (geoName) p.set("city", geoName);
       } else if (userCoords) {
         p.set("lat", String(userCoords.lat));
         p.set("lng", String(userCoords.lng));
