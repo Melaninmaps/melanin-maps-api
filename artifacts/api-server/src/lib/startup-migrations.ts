@@ -2448,6 +2448,9 @@ const PRE_APPROVED_TESTER_EMAILS = [
   "themontgomerymanagementgroup@gmail.com",
   "gregorywilliam05@gmail.com",
   "kahvealynne@gmail.com",
+  // Added Aug 10 2026 — final pre-tester cohort
+  "reinaoba06@gmail.com",
+  "mayagz05@icloud.com",
 ];
 
 async function ensureAdminAccounts(
