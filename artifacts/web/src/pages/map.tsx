@@ -1222,7 +1222,8 @@ export default function MapPage() {
                         {biz.city}, {biz.state}
                         {userCoords && (() => {
                           const dist = haversineKm(userCoords.lat, userCoords.lng, parseFloat(String(biz.latitude)), parseFloat(String(biz.longitude)));
-                          const label = dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
+                          const distMi = dist * 0.621371;
+                          const label = distMi < 0.1 ? "< 0.1 mi" : `${distMi.toFixed(1)} mi`;
                           return <span className="ml-1 text-[#CA922B] font-semibold">{label} away</span>;
                         })()}
                       </div>

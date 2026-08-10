@@ -272,8 +272,8 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
                 </View>
                 <Text style={s.bannerSub}>
                   {a.distanceMeters < 1000
-                    ? `${a.distanceMeters}m away`
-                    : `${(a.distanceMeters / 1000).toFixed(1)}km away`}
+                    ? "< 0.1 mi away"
+                    : `${(a.distanceMeters / 1609.34).toFixed(1)} mi away`}
                   {a.confirmedCount > 0 ? ` · ${a.confirmedCount} confirmed` : ""}
                 </Text>
               </View>
@@ -328,8 +328,8 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
               <Text style={s.bannerTitle}>{currentWarning.name}</Text>
               <Text style={s.bannerSub}>
                 {currentWarning.distanceMeters < 1000
-                  ? `${Math.round(currentWarning.distanceMeters)}m away`
-                  : `${(currentWarning.distanceMeters / 1000).toFixed(1)}km away`}
+                  ? "< 0.1 mi away"
+                  : `${(currentWarning.distanceMeters / 1609.34).toFixed(1)} mi away`}
                 {" "}· {currentWarning.reportCount} community {currentWarning.reportCount === 1 ? "report" : "reports"}
               </Text>
             </View>

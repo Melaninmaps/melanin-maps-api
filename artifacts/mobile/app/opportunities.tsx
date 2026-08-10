@@ -612,7 +612,7 @@ export default function OpportunitiesScreen() {
                           {job.distanceKm != null && job.distanceKm > 0 && (
                             <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                               <Feather name="navigation" size={11} color={colors.mutedForeground} />
-                              <Text style={[s.jobMeta, { color: colors.mutedForeground }]}>{Math.round(job.distanceKm)}km</Text>
+                              <Text style={[s.jobMeta, { color: colors.mutedForeground }]}>{(job.distanceKm * 0.621371).toFixed(1)} mi</Text>
                             </View>
                           )}
                         </View>
