@@ -9,9 +9,8 @@ cmds = [
   #    build can embed the web assets (needed for the express.static fallback path).
   "cp -r web-static/. artifacts/api-server/web-static/",
   # 2. Build api-server — esbuild compile + embed web assets.
-  #    git rev-parse HEAD is evaluated at build time so this layer is unique per commit
-  #    and never reuses a stale Docker cache.
-  "echo \"api-$(git rev-parse HEAD)\" && pnpm --filter @workspace/api-server run build",
+  #    Literal token changes on every push to bust Docker layer cache.
+  "echo \"pre-manus-1754850000\" && pnpm --filter @workspace/api-server run build",
   # 3. Sync api-server bundle to root dist (what static-server.mjs spawns).
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
