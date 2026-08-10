@@ -1730,22 +1730,52 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     if (destination) {
       try {
-        const bizRows = await db
-          .select(bizSelectShape)
-          .from(businessesTable)
-          .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))
-          .where(and(
-            ilike(businessesTable.city, `%${destination}%`),
-            eq(businessesTable.status, "active"),
-          ))
-          .limit(25);
-        businessCatalog = bizRows;
+        // Use pool.query (raw SQL) — Drizzle db.select() with leftJoin silently
+        // fails in the esbuild bundle on Railway; pool.query is proven to work.
+        const CATALOG_SQL = `
+          SELECT b.name, b.category, b.city, b.description, b.verified,
+                 b.tags, b.profile_status,
+                 bi.business_story, bi.mission_statement, bi.why_started,
+                 bi.what_customers_should_know, bi.ownership_badges,
+                 bi.community_values, bi.audiences_served, bi.vibes,
+                 bi.accessibility_features, bi.community_initiatives,
+                 bi.growth_goals, bi.audience_type,
+                 bi.environment_tags, bi.amenity_tags
+          FROM businesses b
+          LEFT JOIN business_identity bi ON bi.business_id = b.id
+          WHERE b.status = 'active'
+            AND b.city ILIKE $1
+          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
+          LIMIT 25`;
+        const catalogRows = await pool.query(CATALOG_SQL, [`%${destination}%`]);
+        businessCatalog = catalogRows.rows.map((r: Record<string, unknown>) => ({
+          name: r.name,
+          category: r.category,
+          city: r.city,
+          description: r.description,
+          verified: r.verified,
+          tags: r.tags,
+          profileStatus: r.profile_status,
+          story: r.business_story,
+          missionStatement: r.mission_statement,
+          whyStarted: r.why_started,
+          whatCustomersShouldKnow: r.what_customers_should_know,
+          ownershipBadges: r.ownership_badges,
+          communityValues: r.community_values,
+          audiencesServed: r.audiences_served,
+          vibes: r.vibes,
+          accessibilityFeatures: r.accessibility_features,
+          communityInitiatives: r.community_initiatives,
+          growthGoals: r.growth_goals,
+          audienceType: r.audience_type,
+          environmentTags: r.environment_tags,
+          amenityTags: r.amenity_tags,
+        })) as unknown as typeof businessCatalog;
 
-        // City-name ILIKE returned 0 — the destination may be a region/province
+        // City-name ILIKE returned 0 — destination may be a province/region
         // whose businesses are stored under sub-area city names (e.g. "Phuket"
         // has businesses stored as city="Karon", "Patong", "Chalong").
-        // Geocode the destination via Nominatim and fall back to a geo-radius
-        // query (50-mile radius covers any metro area or island province).
+        // Geocode via Nominatim and fall back to a 50-mile geo-radius query.
         if (!businessCatalog.length) {
           try {
             const geoResp = await fetch(
