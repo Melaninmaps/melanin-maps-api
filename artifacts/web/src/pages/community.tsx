@@ -6,7 +6,7 @@ import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
   Plus, AlertCircle, Smile, MoreHorizontal, Bookmark, Flag, Trash2,
-  TrendingUp, RefreshCw, Radio, Shield
+  TrendingUp, RefreshCw, Radio, Shield, Link2
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -226,37 +226,38 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const [postType, setPostType] = useState<"community" | "recommendation" | "alert">("community");
   const [visibility, setVisibility] = useState<"public" | "followers_only">("public");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [uploadingMedia, setUploadingMedia] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [showMediaInput, setShowMediaInput] = useState(false);
+  const [mediaUrlInput, setMediaUrlInput] = useState("");
+  // file refs kept to avoid breaking hidden reference but not used for upload
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadMedia = async (file: File, type: "image" | "video") => {
-    setUploadingMedia(true);
-    try {
-      const fd = new FormData();
-      fd.append(type === "image" ? "image" : "video", file);
-      const res = await fetch(`${BASE}api/community/media/upload/${type}`, {
-        method: "POST", credentials: "include", body: fd,
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        if (res.status === 403 && (e as any).code === "UPGRADE_REQUIRED") {
-          toast({ title: "Membership required", description: "Upgrade to upload media.", variant: "destructive" });
-        } else {
-          toast({ title: "Upload failed", description: "Please try again.", variant: "destructive" });
-        }
-        return;
-      }
-      const d = await res.json() as { url: string };
-      setMediaUrls(u => [...u, d.url]);
-    } catch {
-      toast({ title: "Upload failed", variant: "destructive" });
-    } finally {
-      setUploadingMedia(false);
+  const addMediaUrl = () => {
+    const url = mediaUrlInput.trim();
+    if (!url) return;
+    try { new URL(url); } catch {
+      toast({ title: "Invalid URL", description: "Paste a complete URL starting with https://", variant: "destructive" });
+      return;
     }
+    if (!mediaUrls.includes(url)) setMediaUrls(u => [...u, url]);
+    setMediaUrlInput("");
+    setShowMediaInput(false);
+  };
+
+  /** Returns a YouTube embed URL from a watch or youtu.be link, or null. */
+  const getYouTubeEmbed = (url: string): string | null => {
+    try {
+      const u = new URL(url);
+      if (u.hostname.includes("youtu.be")) return `https://www.youtube.com/embed/${u.pathname.slice(1).split("?")[0]}`;
+      if (u.hostname.includes("youtube.com")) {
+        const v = u.searchParams.get("v");
+        return v ? `https://www.youtube.com/embed/${v}` : null;
+      }
+    } catch { /* ignore */ }
+    return null;
   };
 
   const addHashtag = () => {
@@ -353,19 +354,49 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
           {/* Media preview */}
           {mediaUrls.length > 0 && (
             <div className="flex gap-2 flex-wrap">
-              {mediaUrls.map((url, i) => (
-                <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden">
-                  {url.includes(".mp4") ? (
-                    <video src={url} className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                  )}
-                  <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              ))}
+              {mediaUrls.map((url, i) => {
+                const ytEmbed = getYouTubeEmbed(url);
+                const isSocial = url.includes("tiktok.com") || url.includes("instagram.com");
+                const isVid = !isSocial && !ytEmbed && (url.includes(".mp4") || url.toLowerCase().includes("video"));
+                const socialLabel = url.includes("tiktok.com") ? "TikTok" : url.includes("instagram.com") ? "Instagram" : "Link";
+                return (
+                  <div key={i} className="relative">
+                    {isSocial ? (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-[#FAF6EF] border border-[#CA922B]/20 rounded-xl">
+                        <Link2 className="w-4 h-4 text-[#CA922B] shrink-0" />
+                        <span className="text-xs font-semibold text-[#3A1F0E]/70">{socialLabel}</span>
+                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))} className="text-[#3A1F0E]/30 hover:text-red-500">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : ytEmbed ? (
+                      <div className="relative w-44 h-24 rounded-xl overflow-hidden">
+                        <iframe src={ytEmbed} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
+                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ) : isVid ? (
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden">
+                        <video src={url} className="w-full h-full object-cover" />
+                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -395,22 +426,32 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
             </button>
           </div>
 
+          {/* Media URL input */}
+          {showMediaInput && (
+            <div className="flex gap-2 items-center">
+              <input
+                autoFocus
+                value={mediaUrlInput}
+                onChange={e => setMediaUrlInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addMediaUrl(); } if (e.key === "Escape") setShowMediaInput(false); }}
+                placeholder="Paste image, video, YouTube, Instagram, or TikTok URL…"
+                className="flex-1 text-xs border border-[#CA922B]/30 rounded-xl px-3 py-2.5 focus:outline-none focus:border-[#CA922B] bg-[#FAF6EF] text-[#3A1F0E]"
+              />
+              <button onClick={addMediaUrl} className="px-3 py-2 bg-[#CA922B] text-white rounded-xl text-xs font-bold hover:bg-[#B38024] shrink-0">Add</button>
+              <button onClick={() => setShowMediaInput(false)} className="p-2 text-[#3A1F0E]/30 hover:text-[#3A1F0E]/60"><X className="w-4 h-4" /></button>
+            </div>
+          )}
+
           {/* Actions row */}
           <div className="flex items-center justify-between pt-2 border-t border-[#3A1F0E]/8">
             <div className="flex items-center gap-2">
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" multiple
-                onChange={e => Array.from(e.target.files ?? []).forEach(f => uploadMedia(f, "image"))} />
-              <input ref={videoInputRef} type="file" accept="video/*" className="hidden"
-                onChange={e => e.target.files?.[0] && uploadMedia(e.target.files[0], "video")} />
-              <button onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingMedia}
-                className="p-2 rounded-xl hover:bg-[#FAF6EF] text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors" title="Add photo">
-                {uploadingMedia ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImageIcon className="w-5 h-5" />}
-              </button>
-              <button onClick={() => videoInputRef.current?.click()}
-                disabled={uploadingMedia}
-                className="p-2 rounded-xl hover:bg-[#FAF6EF] text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors" title="Add video">
-                <Video className="w-5 h-5" />
+              {/* Hidden file inputs kept to avoid ref errors but not used for upload in production */}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
+              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" />
+              <button onClick={() => setShowMediaInput(v => !v)}
+                className={`p-2 rounded-xl hover:bg-[#FAF6EF] transition-colors ${showMediaInput ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"}`}
+                title="Add media link (image, video, YouTube, Instagram, TikTok)">
+                <Link2 className="w-5 h-5" />
               </button>
               <button onClick={() => setVisibility(v => v === "public" ? "followers_only" : "public")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${

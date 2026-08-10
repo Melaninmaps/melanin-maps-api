@@ -681,6 +681,39 @@ export default function Profile() {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
 
+  // ── Community Impact ───────────────────────────────────────────────────────
+  const [impact, setImpact] = useState<{
+    reviewCount: number;
+    businessesReviewedCount: number;
+    communityPosts: number;
+    eventsAttended: number;
+    savedBusinesses: number;
+    referralsMade: number;
+  } | null>(null);
+
+  // ── Recommended Spots ──────────────────────────────────────────────────────
+  const [recommendedSpots, setRecommendedSpots] = useState<Array<{
+    id: string;
+    businessId: string;
+    businessName?: string;
+    blurb: string | null;
+    stance: string;
+  }>>([]);
+
+  // ── Health / Pinned Topics ─────────────────────────────────────────────────
+  const [healthTopics, setHealthTopics] = useState<{
+    topicIds: string[];
+    pinnedTopicIds: string[];
+  } | null>(null);
+
+  // ── Circles ────────────────────────────────────────────────────────────────
+  const [myCircles, setMyCircles] = useState<Array<{
+    id: string;
+    name: string;
+    memberCount?: number;
+    description?: string;
+  }>>([]);
+
   useEffect(() => {
     if (!auth?.user) return;
     const userId = (auth.user as any).id;
@@ -733,6 +766,28 @@ export default function Profile() {
           });
         }
       })
+      .catch(() => {});
+    // Community Impact
+    if (userId) {
+      fetch(`${base}/api/community-impact/${userId}`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.stats) setImpact(d.stats); })
+        .catch(() => {});
+      // Recommended Spots
+      fetch(`${base}/api/users/${userId}/recommended-spots`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.spots) setRecommendedSpots(d.spots); })
+        .catch(() => {});
+    }
+    // Health / Pinned Topics (private to self)
+    fetch(`${base}/api/health-hub/topics/mine`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setHealthTopics(d); })
+      .catch(() => {});
+    // My Circles
+    fetch(`${base}/api/circles`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.circles) setMyCircles(d.circles.slice(0, 3)); })
       .catch(() => {});
   }, [auth?.user]);
 
@@ -1159,7 +1214,10 @@ export default function Profile() {
             )}
             <div className="mt-4 flex gap-2">
               <Link href="/community" className="flex-1">
-                <button className="w-full text-xs font-bold text-[#CA922B] py-2.5 rounded-xl bg-[#CA922B]/10 hover:bg-[#CA922B]/20 transition-colors">View All Posts →</button>
+                <button className="w-full text-xs font-bold text-[#CA922B] py-2.5 rounded-xl bg-[#CA922B]/10 hover:bg-[#CA922B]/20 transition-colors">My Posts →</button>
+              </Link>
+              <Link href="/community" className="flex-1">
+                <button className="w-full text-xs font-bold text-[#CA922B] py-2.5 rounded-xl bg-[#CA922B]/10 hover:bg-[#CA922B]/20 transition-colors">My Reviews →</button>
               </Link>
             </div>
           </div>
@@ -1565,6 +1623,180 @@ export default function Profile() {
               )}
             </div>
           )}
+        </div>
+
+        {/* ── My Community Impact ─────────────────────────────────────────── */}
+        {impact && (impact.reviewCount > 0 || impact.communityPosts > 0 || impact.savedBusinesses > 0) && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-5 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-[#CA922B]" /> My Community Impact
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {([
+                { label: "Reviews Written", value: impact.reviewCount },
+                { label: "Businesses Reviewed", value: impact.businessesReviewedCount },
+                { label: "Community Posts", value: impact.communityPosts },
+                { label: "Events Attended", value: impact.eventsAttended },
+                { label: "Places Saved", value: impact.savedBusinesses },
+                { label: "Members Referred", value: impact.referralsMade },
+              ] as const).filter(m => m.value > 0).map(m => (
+                <div key={m.label} className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                  <div className="text-2xl font-serif font-bold text-[#CA922B]">{m.value}</div>
+                  <div className="text-[10px] text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1 leading-tight">{m.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Recommended Spots ────────────────────────────────────────────── */}
+        {recommendedSpots.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
+                <Heart className="w-5 h-5 text-[#CA922B]" /> My Recommended Spots
+              </h3>
+            </div>
+            <div className="space-y-3">
+              {recommendedSpots.map(spot => (
+                <Link key={spot.id} href={`/businesses/${spot.businessId}`}>
+                  <div className="flex items-start gap-3 p-3 bg-[#FAF6EF] rounded-2xl hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                    <div className="w-9 h-9 rounded-xl bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-[#CA922B]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-[#CA922B] uppercase tracking-wide capitalize">{(spot.stance ?? "").replace(/_/g, " ") || "Recommended"}</div>
+                      {spot.blurb && <p className="text-xs text-[#3A1F0E]/70 mt-0.5 leading-relaxed line-clamp-2">{spot.blurb}</p>}
+                      <div className="text-[10px] text-[#3A1F0E]/40 mt-1">Tap to view business →</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Pinned Health Topics (private — visible only to account holder) ─ */}
+        {healthTopics && healthTopics.pinnedTopicIds.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
+                <Shield className="w-5 h-5 text-[#CA922B]" /> My Pinned Health Topics
+              </h3>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-[#3A1F0E]/50 px-2 py-1 rounded-full flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" /> Private
+              </span>
+            </div>
+            <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">Only you can see these. They are never shared with businesses, other members, or Kinfolk without your permission.</p>
+            <div className="flex flex-wrap gap-2">
+              {healthTopics.pinnedTopicIds.map(id => (
+                <Link key={id} href="/health-hub">
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-[#FAF6EF] border border-[#3A1F0E]/10 text-xs font-semibold text-[#3A1F0E] hover:border-[#CA922B]/30 transition-colors cursor-pointer capitalize">
+                    {id.replace(/-/g, " ").replace(/_/g, " ")}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {healthTopics.topicIds.length > healthTopics.pinnedTopicIds.length && (
+              <Link href="/health-hub">
+                <button className="mt-4 text-xs font-bold text-[#CA922B] hover:underline">
+                  View all {healthTopics.topicIds.length} followed topics in Health Hub →
+                </button>
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* ── My Circles ───────────────────────────────────────────────────── */}
+        {myCircles.length > 0 && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#CA922B]" /> My Circles
+              </h3>
+              <Link href="/circles">
+                <button className="text-xs font-bold text-[#CA922B] hover:underline flex items-center gap-1">
+                  View all <ChevronRight className="w-3 h-3" />
+                </button>
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {myCircles.map(circle => (
+                <Link key={circle.id} href={`/circles/${circle.id}`}>
+                  <div className="flex items-center gap-3 p-3 bg-[#FAF6EF] rounded-2xl hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                    <div className="w-9 h-9 rounded-xl bg-[#CA922B]/10 flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4 text-[#CA922B]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-[#3A1F0E] truncate">{circle.name}</div>
+                      {circle.description && <div className="text-xs text-[#3A1F0E]/50 truncate">{circle.description}</div>}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 shrink-0" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Creator / Cultural Ambassador Profile ─────────────────────────── */}
+        {((auth?.user as any)?.isContentCreator || (auth?.user as any)?.isCommunityOrganizer) && (
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
+              <Award className="w-5 h-5 text-[#CA922B]" />
+              {(auth?.user as any)?.isCommunityOrganizer ? "Cultural Ambassador Profile" : "Creator Profile"}
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {(auth?.user as any)?.isCommunityOrganizer && (
+                <Link href="/community">
+                  <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                    <Globe className="w-5 h-5 text-[#CA922B] mx-auto mb-2" />
+                    <div className="text-xs font-bold text-[#3A1F0E]">Community Hub</div>
+                    <div className="text-[10px] text-[#3A1F0E]/50 mt-0.5">Manage your community presence</div>
+                  </div>
+                </Link>
+              )}
+              {(auth?.user as any)?.isContentCreator && (
+                <Link href="/community">
+                  <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                    <MessageCircle className="w-5 h-5 text-[#CA922B] mx-auto mb-2" />
+                    <div className="text-xs font-bold text-[#3A1F0E]">Create Content</div>
+                    <div className="text-[10px] text-[#3A1F0E]/50 mt-0.5">Share posts, guides, and stories</div>
+                  </div>
+                </Link>
+              )}
+              <Link href="/library">
+                <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                  <Globe className="w-5 h-5 text-[#CA922B] mx-auto mb-2" />
+                  <div className="text-xs font-bold text-[#3A1F0E]">Knowledge Library</div>
+                  <div className="text-[10px] text-[#3A1F0E]/50 mt-0.5">Contribute to the community</div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── My Contributions ─────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+          <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-5 flex items-center gap-2">
+            <Star className="w-5 h-5 text-[#CA922B]" /> My Contributions
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {([
+              { label: "My Posts", href: "/community", icon: MessageCircle, desc: "Community discussions" },
+              { label: "My Reviews", href: "/discover", icon: Star, desc: "Business reviews" },
+              { label: "My Library", href: "/library", icon: Globe, desc: "Topics I follow" },
+              { label: "My Events", href: "/events", icon: Calendar, desc: "Events & RSVPs" },
+            ] as const).map(({ label, href, icon: Icon, desc }) => (
+              <Link key={label} href={href}>
+                <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <Icon className="w-5 h-5 text-[#CA922B] mx-auto mb-2" />
+                  <div className="text-xs font-bold text-[#3A1F0E] group-hover:text-[#CA922B] transition-colors leading-tight">{label}</div>
+                  <div className="text-[10px] text-[#3A1F0E]/50 mt-0.5 leading-tight">{desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
       </div>
