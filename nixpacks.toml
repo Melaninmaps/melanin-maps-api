@@ -3,7 +3,15 @@ cmds = [
   # ARCHITECTURE: web assets are committed to git in web-static/.
   # Railway does NOT rebuild the web from source — it uses the committed files.
   # This eliminates Docker layer cache staleness for the frontend bundle.
-  # To update the frontend: rebuild web locally, copy to web-static/, commit.
+  #
+  # To update the frontend after a web build:
+  #   pnpm --filter @workspace/web run build
+  #   cp -r artifacts/web/dist/public/. web-static/   ← MUST be dist/public/, not dist/
+  #   git add web-static/ && git commit && git push github main
+  #
+  # ⚠️  Vite outDir = dist/public (see artifacts/web/vite.config.ts:55).
+  #     Syncing from dist/ (one level too high) puts assets in web-static/public/assets/
+  #     which express.static cannot reach — causing every JS/CSS request to return HTML.
   #
   # 1. Copy committed web-static into api-server/web-static so the api-server
   #    build can embed the web assets (needed for the express.static fallback path).
