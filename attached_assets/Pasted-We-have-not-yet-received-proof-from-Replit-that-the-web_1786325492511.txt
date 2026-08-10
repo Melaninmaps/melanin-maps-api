@@ -1,0 +1,524 @@
+We **have not yet received proof from Replit that the website fully mirrors the latest app-build Profile capabilities**. We asked Replit to perform that parity audit, but based on what you've sent since then, I have not seen a completed matrix proving every current mobile Profile function exists and works on web.
+
+So I would not let Replit simply “make the web profile look like the app.” First it should inspect the **latest actual mobile build/source**, establish the authoritative feature inventory, compare it to web, and then immediately close the gaps that are safe to close. That is especially important before Manus tests because the Profile is where Manus will need to change preferences/personas and test how Kinfolk behaves for different types of members.
+
+Send Replit this:
+
+```text
+P0 — PROFILE PARITY MUST BE VERIFIED AND COMPLETED NOW
+SMART AUDIT → IMPLEMENT → TEST → CONTINUE
+
+This is time-sensitive.
+
+The founder will be having Manus perform a comprehensive user-experience test
+once the current work is complete.
+
+For that test to be meaningful, the WEBSITE must provide equivalent functional
+access to the capabilities available in the LATEST MOBILE APP BUILD.
+
+This is especially important because Profile controls:
+
+- identity
+- preferences
+- Kinfolk personalization
+- tester status
+- business-owner experience
+- Cultural Ambassador experience
+- Library/followed interests
+- Saved items
+- privacy/safety controls
+- account/security
+- other persona-dependent functionality
+
+DO NOT merely redesign the website Profile.
+
+FIRST CONFIRM WHAT THE LATEST APP ACTUALLY HAS.
+
+============================================================
+STEP 1 — IDENTIFY THE AUTHORITATIVE MOBILE BUILD
+============================================================
+
+Determine:
+
+latest iOS source/build represented in the repository
+latest Android source/build represented in the repository
+whether both use the same Profile implementation
+current mobile Profile routes/components
+
+Return:
+
+LATEST MOBILE PROFILE SOURCE
+LATEST MOBILE BUILD NUMBER(S)
+MOBILE PROFILE COMPONENTS / ROUTES
+
+Do not use an older screenshot or historical implementation as the authority.
+
+============================================================
+STEP 2 — FULL MOBILE PROFILE INVENTORY
+============================================================
+
+Read the current mobile Profile implementation completely.
+
+Inventory EVERY:
+
+tab
+section
+card
+button
+setting
+route
+modal
+status
+badge
+control
+edit capability
+linked subpage
+
+Include anything related to:
+
+PROFILE / IDENTITY
+- display name
+- username
+- profile photo
+- bio
+- location
+- demographic/cultural preferences if explicitly supported
+- personal interests
+
+KINFOLK
+- preferences
+- personalization
+- onboarding answers
+- What Kinfolk Knows About Me
+- editable current context
+- memory/privacy controls
+- any existing Kinfolk settings
+
+LIBRARY
+- followed topics
+- saved Library content
+- contributions
+- visibility/community connection preferences
+
+SAVED
+- saved businesses
+- places
+- cultural sites
+- events
+- other saved entity types
+
+COMMUNITY
+- posts
+- comments
+- connections
+- Circles/groups
+- community contributions
+
+BUSINESS
+- business-owner status
+- claimed businesses
+- business profile access
+- verification
+- analytics
+- business management
+
+CULTURAL AMBASSADOR
+- Ambassador status/profile
+- content
+- analytics
+- creator settings
+
+MEMBERSHIP / TESTER
+- membership type
+- tester status
+- entitlements
+- founding status
+- rewards/points/badges
+
+SAFETY / PRIVACY
+- safety preferences
+- location permissions/preferences
+- blocked users
+- incident/report history where applicable
+- sensitive-topic permissions
+- community visibility
+
+ACCOUNT / SECURITY
+- password
+- email
+- phone
+- linked authentication methods
+- Apple
+- devices/sessions
+- notifications
+- subscription/billing
+- referrals
+- logout
+- delete account
+
+ADMIN
+- Switch to Admin
+- any admin-only profile controls
+
+AND ANYTHING ELSE ACTUALLY PRESENT IN THE LATEST MOBILE SOURCE.
+
+Do not invent features.
+
+============================================================
+STEP 3 — MOBILE VS WEB PARITY MATRIX
+============================================================
+
+For EVERY mobile capability return:
+
+FEATURE
+MOBILE COMPONENT/ROUTE
+MOBILE WORKING?
+WEB COMPONENT/ROUTE
+WEB WORKING?
+SAME BACKEND/API?
+SAME DATA?
+STATUS
+GAP
+RECOMMENDED ACTION
+
+Use statuses:
+
+PARITY VERIFIED
+WEB UI MISSING
+WEB FUNCTION MISSING
+WEB USING WRONG API
+WEB USING OLD DATA MODEL
+MOBILE BROKEN TOO
+BACKEND EXISTS / NO WEB UI
+INTENTIONALLY MOBILE-ONLY
+FOUNDER DECISION REQUIRED
+
+============================================================
+STEP 4 — CRITICAL KINFOLK DEPENDENCIES
+============================================================
+
+Flag every Profile capability Kinfolk depends upon.
+
+Examples may include:
+
+preferences
+saved places
+followed Library topics
+current trip context
+Vibes / THE REAL interactions
+location
+persona/status
+sensitive-topic permissions
+community visibility
+business-owner relationships
+Cultural Ambassador relationships
+
+For each answer:
+
+DOES KINFOLK READ THIS TODAY?
+YES / NO
+
+WHERE FROM?
+
+IS WEB UPDATING THE SAME DATA?
+YES / NO
+
+This is critical.
+
+The founder wants Manus to test different methods of using Kinfolk.
+
+If a user changes something on the web Profile, Kinfolk must be able to
+retrieve the same underlying state expected from mobile.
+
+============================================================
+STEP 5 — PERSONA / ROLE TESTABILITY
+============================================================
+
+The founder needs to test different experiences.
+
+Confirm Profile can correctly represent combinations such as:
+
+REGULAR MEMBER
+
+TESTER
+
+BUSINESS OWNER
+
+CULTURAL AMBASSADOR
+
+ADMIN
+
+and legitimate combinations such as:
+
+member + tester
+
+member + tester + business owner
+
+member + tester + Cultural Ambassador
+
+member + tester + business owner + Cultural Ambassador + admin
+
+where authorized.
+
+Do NOT create separate identities unnecessarily.
+
+One canonical user may have multiple legitimate capabilities/statuses.
+
+============================================================
+STEP 6 — IMPLEMENT SAFE PARITY GAPS IMMEDIATELY
+============================================================
+
+After the audit:
+
+DO NOT stop and wait for founder approval for ordinary non-destructive parity
+fixes.
+
+Immediately implement missing web functionality when:
+
+- backend capability already exists
+- mobile already uses it
+- functionality is clearly approved
+- no destructive migration is required
+- no product decision is required
+
+Reuse the existing API/data model.
+
+DO NOT build a second Profile system.
+
+DO NOT duplicate mobile data into web-specific tables.
+
+============================================================
+STEP 7 — WEB UX PRINCIPLE
+============================================================
+
+FUNCTIONAL PARITY does NOT require pixel-for-pixel duplication.
+
+Mobile may use:
+
+tabs
+stacked screens
+bottom sheets
+
+Web may use:
+
+tabs
+sidebar navigation
+cards
+accordions
+panels
+
+But users must have equivalent access to the same approved capabilities.
+
+The website should feel intentional and rich, not like a stripped-down
+version of the app.
+
+============================================================
+STEP 8 — PROFILE MUST BE RESPONSIVE
+============================================================
+
+Verify:
+
+desktop web
+mobile browser
+tablet-width web
+
+No:
+
+overlapping controls
+cut-off text
+horizontal scrolling
+hidden tabs
+fixed navigation covering content
+smushed Profile information
+
+The prior Profile responsive defect must not regress.
+
+============================================================
+STEP 9 — SAVED DATA
+============================================================
+
+Saved Places is currently a known critical regression.
+
+Do NOT mark Profile parity complete until:
+
+Save business
+→ persists
+→ Profile Saved shows it
+→ refresh persists
+→ logout/login persists
+→ Kinfolk can retrieve the explicit preference signal
+
+Also verify other Profile-linked data persists.
+
+============================================================
+STEP 10 — MANUS TEST MODE READINESS
+============================================================
+
+Create a clear test matrix Manus can use.
+
+For each supported persona, identify an appropriate test account or safe role
+configuration.
+
+Manus should be able to test:
+
+A. REGULAR MEMBER
+
+B. BUSINESS OWNER
+
+C. CULTURAL AMBASSADOR
+
+D. ADMIN
+
+E. TESTER entitlement behavior
+
+without accidentally corrupting another persona's data.
+
+Provide:
+
+TEST PERSONA
+EXPECTED PROFILE SECTIONS
+EXPECTED KINFOLK CONTEXT
+EXPECTED RESTRICTIONS
+TEST ACCOUNT / SAFE SETUP METHOD
+
+Do NOT expose secrets/passwords in documentation.
+
+============================================================
+STEP 11 — KINFOLK PROFILE ACCEPTANCE TEST
+============================================================
+
+Perform this sequence on WEB:
+
+1. Log in.
+2. Open Profile.
+3. Change a non-sensitive preference.
+4. Ask Kinfolk a relevant question.
+5. Confirm Kinfolk can use the updated preference.
+
+6. Save a business.
+7. Ask Kinfolk for a related recommendation.
+8. Confirm the saved business is available as an explicit preference signal.
+
+9. Follow a Library topic.
+10. Ask Kinfolk something contextually related.
+11. Confirm the Library relationship is available.
+
+12. Change a sensitive-topic visibility/permission setting.
+13. Confirm Kinfolk respects that permission.
+
+14. Switch to appropriate Business/Cultural Ambassador persona capability.
+15. Confirm Profile exposes the correct additional functionality.
+
+Do NOT fake Kinfolk behavior with hard-coded test responses.
+
+============================================================
+STEP 12 — CROSS-PLATFORM DATA TEST
+============================================================
+
+Where mobile auth becomes available:
+
+Change an allowed Profile field on web.
+
+Open same canonical account in app.
+
+Confirm change appears.
+
+Then change an allowed field in app.
+
+Reload web.
+
+Confirm change appears.
+
+This proves:
+
+ONE USER
+ONE PROFILE DATA MODEL
+MULTIPLE SURFACES
+
+not two disconnected profiles.
+
+============================================================
+STEP 13 — DO NOT LET THIS BECOME ANOTHER LONG STOP
+============================================================
+
+Move efficiently.
+
+Run in parallel where safe:
+
+PROFILE PARITY AUDIT
+SAVED PLACES FORENSICS
+AUTH RESTORATION
+EXISTING RAILWAY GATE TASKS
+
+Do not stop current independent workstreams.
+
+Only stop for:
+
+destructive data change
+account merging
+privacy/security conflict
+new infrastructure/vendor
+true product decision
+production push gate
+
+============================================================
+NEXT REPORT
+============================================================
+
+Return one consolidated PROFILE PARITY REPORT:
+
+TOTAL MOBILE CAPABILITIES FOUND
+PARITY VERIFIED
+WEB MISSING
+BROKEN ON BOTH
+BACKEND-ONLY
+FOUNDER DECISIONS NEEDED
+
+Then:
+
+LIST WHAT YOU FIXED IMMEDIATELY.
+
+Then provide:
+
+WEB PROFILE:
+DEV VERIFIED / PRODUCTION VERIFIED
+
+KINFOLK PROFILE INTEGRATION:
+DEV VERIFIED / PRODUCTION VERIFIED
+
+SAVED PROFILE DATA:
+DEV VERIFIED / PRODUCTION VERIFIED
+
+MOBILE PROFILE:
+DEVICE VERIFIED / BLOCKED BY AUTH
+
+MANUS TEST READY:
+YES / NO
+
+If NO:
+list ONLY the remaining blockers.
+
+IMPORTANT:
+
+Do not tell the founder the Profile is "complete" because components exist.
+
+The acceptance standard is:
+
+LATEST MOBILE FUNCTIONALITY
+→ AVAILABLE APPROPRIATELY ON WEB
+→ SAME BACKEND DATA
+→ PERSISTS
+→ KINFOLK CAN USE APPROVED CONTEXT
+→ PERSONAS CAN BE TESTED
+→ ACTUAL USER EXPERIENCE VERIFIED.
+```
+
+And I would make this a **hard Manus-readiness gate**:
+
+> **Manus should not begin the full experience audit until Replit returns `MANUS TEST READY: YES`.**
+
+That does not mean every future feature has to be finished. It means the core test environment must be trustworthy: authentication works, Profile exposes the correct controls, Saves persist, persona/statuses work, and Kinfolk is reading the same data the tester is changing.
+
+Otherwise Manus could tell you *“Kinfolk didn't personalize this correctly”* when the actual problem is that the web Profile never saved the preference—or *“Business-owner functionality is missing”* when the web simply never exposed a mobile control. We would spend time diagnosing the wrong layer.
+
+So yes: **Replit should move fast now, but the order is audit the latest mobile source → prove the gaps → immediately implement safe parity fixes → test the data/Kinfolk connection → declare Manus-ready only after that proof.**

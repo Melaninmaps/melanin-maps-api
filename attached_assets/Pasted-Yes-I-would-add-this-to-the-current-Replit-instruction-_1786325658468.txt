@@ -1,0 +1,380 @@
+Yes. I would add this **to the current Replit instruction before they finish the Profile-parity work**, because it affects the exact tester experience you are preparing for Manus and for Bangkok.
+
+The important distinction is that we should **not ask Replit to build media again** if they just built URL/social-media media support. We need them to **audit what exists, prove it works, and make it available to the correct tester population**.
+
+Your 15–30-person web group is actually ideal for this stage: Philadelphia gives you local testing, Bangkok/Phuket gives you international testing, and the trip down the coast gives you multi-city testing before Apple approval.
+
+Add this to the Replit prompt:
+
+```text
+ADD TO CURRENT EXECUTION — TESTER MEDIA + FIELD TESTING
+
+IMPORTANT:
+
+It appears URL/social-media-based photo and video functionality may have
+recently been implemented.
+
+DO NOT BUILD ANOTHER MEDIA SYSTEM.
+
+FIRST AUDIT THE CURRENT IMPLEMENTATION AND CONFIRM EXACTLY WHAT EXISTS.
+
+This capability is now important for our small controlled web testing group
+(approximately 15–30 users) because we will use it for:
+
+Philadelphia
+North Carolina / tour cities
+Bangkok
+Phuket
+and additional cities as the founder travels down the East Coast.
+
+============================================================
+1. AUDIT CURRENT MEDIA CAPABILITY
+============================================================
+
+Confirm whether users can currently add media through:
+
+- direct photo upload
+- direct video upload
+- image URL
+- video URL
+- Instagram post/reel URL
+- TikTok URL
+- YouTube URL
+- Facebook URL
+- other supported social-media URLs
+
+For EACH method return:
+
+SUPPORTED?
+WEB?
+MOBILE?
+WHO CAN USE IT?
+WHERE CAN IT BE USED?
+HOW IS IT STORED?
+DOES IT EMBED/PREVIEW?
+DOES IT LINK BACK TO ORIGINAL CREATOR/SOURCE?
+PRODUCTION OR DEV ONLY?
+
+Do not assume.
+
+Prove from current code.
+
+============================================================
+2. TESTER ACCESS
+============================================================
+
+During this controlled testing period, approved active testers should be able
+to exercise the approved media contribution capabilities.
+
+Audit whether media functionality is currently restricted by:
+
+membership tier
+tester status
+business-owner status
+Cultural Ambassador status
+admin status
+feature flag
+environment
+or another permission.
+
+Do NOT simply remove permission checks.
+
+Determine the correct entitlement.
+
+The intended temporary testing behavior is:
+
+ACTIVE APPROVED TESTER
+→ may test the media contribution functionality appropriate to ordinary
+community participation
+
+while still preserving privileged functionality for:
+
+BUSINESS OWNERS
+CULTURAL AMBASSADORS
+ADMINS
+
+where applicable.
+
+Tester access does NOT automatically make someone a Business Owner,
+Cultural Ambassador, or Admin.
+
+============================================================
+3. COMMUNITY MEMBERS MAY CONTRIBUTE MEDIA
+============================================================
+
+Our underlying principle:
+
+A regular community member should be able to contribute appropriate photos,
+videos, social-media links, stories, recommendations, and experiences where
+the product allows community contribution.
+
+They do NOT need to establish themselves as a business or Cultural Ambassador
+simply to contribute community media.
+
+However, advanced capabilities remain role/tier dependent.
+
+For example:
+
+COMMUNITY MEMBER
+can contribute/share approved media and experiences.
+
+BUSINESS OWNER
+may additionally manage business media/profile and receive approved business
+analytics.
+
+CULTURAL AMBASSADOR
+may additionally receive creator/engagement analytics and creator-specific
+capabilities.
+
+ADMIN
+may moderate/manage content.
+
+Do not confuse CONTRIBUTION RIGHTS with ANALYTICS RIGHTS.
+
+============================================================
+4. SOCIAL MEDIA SHOULD REMAIN ATTRIBUTED
+============================================================
+
+When a member contributes a social-media URL:
+
+preserve:
+
+original URL
+platform
+creator/account attribution when publicly available
+source
+submitted_by
+submitted_at
+associated entity/location/topic
+moderation status
+
+MWM should not make third-party content appear to be owned by MWM.
+
+Where embedding is permitted by the source platform, use the approved embed
+mechanism.
+
+Otherwise provide an attributed preview/link.
+
+Do not download/rehost third-party video merely because a URL was submitted.
+
+============================================================
+5. MEDIA MUST CONNECT TO THE GRAPH / FLYWHEEL
+============================================================
+
+Media should not become an isolated attachment.
+
+Where appropriate, a contribution should be capable of relating to:
+
+BUSINESS
+PROFESSIONAL
+HOUSE OF FAITH
+CULTURAL SITE
+HBCU
+EVENT
+COMMUNITY
+CITY
+COUNTRY
+LIBRARY TOPIC
+TRIP/DESTINATION
+OTHER SUPPORTED ENTITY
+
+Example:
+
+User adds Bangkok restaurant video
+→ associated with restaurant
+→ Bangkok
+→ Thailand
+→ appropriate food/cultural topics
+→ contributor
+
+That allows the same contribution to become relevant later on:
+
+Map
+Business profile
+Community
+Library
+Universal Search
+Kinfolk
+
+without duplicating the media record.
+
+============================================================
+6. BANGKOK / PHUKET FIELD TEST
+============================================================
+
+Create an acceptance test using:
+
+Bangkok, Thailand
+Phuket, Thailand
+
+Test the real workflow:
+
+Founder/admin scouts a legitimate place
+→ adds or identifies place
+→ attaches official website/social source where available
+→ saves/recommends place
+→ approved tester can find it on web
+→ tester visits
+→ tester can contribute a photo/video OR social-media URL
+→ contribution remains connected to that location
+→ another tester can discover the resulting information
+→ Kinfolk can retrieve the approved contribution when contextually relevant.
+
+This should NOT require the business to already have an MWM account.
+
+Unclaimed businesses remain clearly identified as unclaimed/unverified
+according to the approved verification model.
+
+============================================================
+7. PHILADELPHIA FIELD TEST
+============================================================
+
+Run the same workflow against an existing Philadelphia entity already in MWM.
+
+This proves international support did not break domestic behavior.
+
+============================================================
+8. TOUR FIELD TEST
+============================================================
+
+Confirm the architecture is geography-independent so the same process works
+for:
+
+Philadelphia
+Washington DC
+North Carolina
+South Carolina
+Atlanta
+and subsequent tour destinations
+
+without code changes for every new city.
+
+============================================================
+9. PROFILE PARITY CONNECTION
+============================================================
+
+Include media contributions in the Profile parity audit.
+
+Determine whether the latest app Profile provides access to:
+
+my posts
+my photos/videos
+my contributions
+my reviews
+my recommendations
+my Ambassador content
+my business content
+
+as applicable.
+
+If mobile exposes an approved capability and web does not, include it in the
+Profile parity gap matrix.
+
+A tester must be able to understand:
+
+WHAT I CONTRIBUTED
+WHERE I CONTRIBUTED IT
+WHAT IS PUBLIC
+WHAT IS PRIVATE
+WHAT I CAN EDIT/REMOVE
+
+============================================================
+10. DO NOT LOSE CONTRIBUTIONS
+============================================================
+
+This is critical.
+
+Media/contribution records must attach to the canonical USER ID and canonical
+ENTITY ID where applicable.
+
+Login changes, tester entitlement changes, membership changes, role changes,
+or future app builds must NOT orphan:
+
+photos
+videos
+URLs
+posts
+comments
+recommendations
+reviews
+saved places
+other user contributions.
+
+Prove the foreign-key/data relationship.
+
+============================================================
+11. SMALL CONTROLLED TESTING GROUP
+============================================================
+
+Current intended testing scale is approximately 15–30 approved people.
+
+Do not overengineer this as though millions of users are uploading video
+tomorrow.
+
+But do NOT create temporary architecture that must later be thrown away.
+
+Use the production-safe canonical model at small scale.
+
+This controlled group should help us test:
+
+domestic discovery
+international discovery
+media contribution
+business discovery
+community contribution
+Kinfolk retrieval
+Profile history
+role/entitlement behavior
+
+before broader expansion.
+
+============================================================
+12. REQUIRED PROOF
+============================================================
+
+Return:
+
+MEDIA CAPABILITY MATRIX
+TESTER PERMISSION MATRIX
+PROFILE MEDIA PARITY STATUS
+BANGKOK TEST STATUS
+PHUKET TEST STATUS
+PHILADELPHIA TEST STATUS
+KIN FOLK RETRIEVAL STATUS
+DATA PERSISTENCE STATUS
+PRODUCTION DEPLOYMENT STATUS
+
+Use only:
+
+NOT BUILT
+BUILT / UNTESTED
+DEV VERIFIED
+PRODUCTION VERIFIED
+
+Do not call anything LIVE unless it is production verified.
+
+============================================================
+EXECUTION
+============================================================
+
+Fold this into the current Profile/Auth/Manus-readiness work.
+
+Do not restart completed work.
+
+Do not create duplicate media systems.
+
+Audit → reuse → repair permissions/wiring → test.
+
+Continue automatically on safe, non-destructive changes.
+
+The ultimate gate remains:
+
+MANUS TEST READY = YES
+
+only when the web experience is sufficiently complete and reliable for
+meaningful multi-persona testing.
+```
+
+There is another reason I like this approach: **your friends become field testers, not just app testers.** Someone in Philadelphia can test whether local discovery is useful. Someone in Bangkok can expose international assumptions we never noticed. Someone in North Carolina can add a plumber, church, restaurant or dentist. Your tour then tests whether the same system travels with you.
+
+And we shouldn't wait for Apple to build that momentum. The website can become the controlled proving ground while Replit continues fixing the mobile builds. Then when Apple approval comes, we aren't launching an untested concept—we're moving an already-active community experience into another access point.

@@ -42,9 +42,8 @@ interface Cache {
 
 let cache: Cache | null = null;
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+import { getApiBase } from "@/lib/api";
+const API_BASE = getApiBase();
 
 export function useAutoContext(): AutoContext {
   const [ctx, setCtx] = useState<AutoContext>({

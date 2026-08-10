@@ -736,4 +736,34 @@ router.patch("/admin/reviews/:id/decision", async (req: Request, res: Response) 
   }
 });
 
+// ─── GET /reviews/mine ────────────────────────────────────────────────────────
+// Returns the authenticated user's own reviews — count + recent list.
+router.get("/reviews/mine", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const userId = req.user!.id;
+    const reviews = await db
+      .select({
+        id: reviewsTable.id,
+        businessId: reviewsTable.businessId,
+        rating: reviewsTable.rating,
+        body: reviewsTable.body,
+        badge: reviewsTable.badge,
+        createdAt: reviewsTable.createdAt,
+      })
+      .from(reviewsTable)
+      .where(and(
+        eq(reviewsTable.userId, userId),
+        ne(reviewsTable.status, "rejected"),
+      ))
+      .orderBy(desc(reviewsTable.createdAt))
+      .limit(100);
+    res.json({ reviews, count: reviews.length });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/reviews/mine error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
+

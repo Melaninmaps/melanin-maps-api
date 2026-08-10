@@ -17,7 +17,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useFamilyPlan } from "@/hooks/useFamilyPlan";
 import * as SecureStore from "expo-secure-store";
 
-const apiBase = process.env.EXPO_PUBLIC_API_URL ?? "";
+import { getApiBase } from "@/lib/api";
+const apiBase = getApiBase();
 
 // ── AI Pool Bar ─────────────────────────────────────────────────────────────
 function AiPoolBar({

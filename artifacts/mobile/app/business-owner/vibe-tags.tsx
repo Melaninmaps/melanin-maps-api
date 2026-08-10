@@ -15,9 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-function getApiBase(): string {
-  return process.env.EXPO_PUBLIC_API_URL ?? "";
-}
+import { getApiBase } from "@/lib/api";
 
 async function getToken(): Promise<string | null> {
   try {

@@ -50,17 +50,22 @@ const AuthContext = createContext<AuthContextValue>({
   refreshUser: async () => false,
 });
 
+// Canonical production API base — same value used in all eas.json build profiles.
+const _PRODUCTION_BASE = "https://www.mappingwithmelanin.com";
+
 export function getApiBaseUrl(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, "");
-  }
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
+  // Replit dev domain: only present during simulator testing against a local server.
   if (process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN) {
     return `https://${process.env.EXPO_PUBLIC_REPLIT_DEV_DOMAIN}`;
   }
-  return "";
+  // EXPO_PUBLIC_DOMAIN is set in eas.json for ALL build profiles.
+  // Prefer it because eas.json values are baked in at build time and are reliable.
+  // EXPO_PUBLIC_API_URL lives only in EAS Dashboard and may be stale — intentionally skipped.
+  if (process.env.EXPO_PUBLIC_DOMAIN) {
+    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  }
+  // Hard fallback: guarantees auth works even when neither env var is propagated (e.g. OTA).
+  return _PRODUCTION_BASE;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

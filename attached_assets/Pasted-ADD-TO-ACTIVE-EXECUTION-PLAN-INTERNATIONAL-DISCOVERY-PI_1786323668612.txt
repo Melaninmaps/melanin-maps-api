@@ -1,0 +1,88 @@
+ADD TO ACTIVE EXECUTION PLAN — INTERNATIONAL DISCOVERY PILOT
+BANGKOK + PHUKET
+
+This is a real founder use case and a promotional opportunity.
+
+Do NOT interrupt P0 authentication restoration or the current Railway gate.
+
+However, use Bangkok + Phuket as the first real-world international acceptance
+test of the MWM discovery flywheel.
+
+============================================================
+THE REAL USER STORY
+============================================================
+
+The founder has a friend currently traveling in Bangkok and Phuket.
+
+The founder wants to scout businesses/places remotely, add or save appropriate
+locations to MWM, and give her friend website access so that she can:
+
+discover the places
+visit them
+understand why they were recommended
+create/share content about the experience
+tag the business/location
+tell the business she found it through Mapping with Melanin
+and contribute information that improves future recommendations.
+
+This should work even before a business has formally joined MWM.
+
+============================================================
+1. FIRST PROVE INTERNATIONAL GEOGRAPHY WORKS
+============================================================
+
+Test:
+
+Bangkok, Thailand
+Phuket, Thailand
+
+Prove MWM can represent:
+
+country
+province/region where appropriate
+city/locality
+neighborhood/area
+coordinates
+
+Do NOT force international addresses into U.S.-specific:
+
+city/state/ZIP
+
+assumptions.
+
+Audit the schema/forms/search/map for:
+
+state required
+ZIP required
+U.S.-only geocoder assumptions
+U.S.-only phone validation
+U.S.-only country defaults
+U.S.-only map bounds
+U.S.-only distance logic
+
+Return any blockers.
+
+============================================================
+2. FOUNDER/ADMIN MUST BE ABLE TO ADD INTERNATIONAL PLACES
+============================================================
+
+Founder should be able to add a place discovered through legitimate public
+information.
+
+Minimum:
+
+name
+entity type/category
+country
+city/locality
+address when known
+coordinates/geocoding
+website
+social URL(s)
+phone when available
+description
+why MWM added/recommends it
+source/provenance
+verification status
+
+Photos/videos should follow the approved media/source rules

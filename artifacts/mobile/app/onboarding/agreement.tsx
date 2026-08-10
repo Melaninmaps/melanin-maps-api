@@ -82,7 +82,7 @@ export default function OnboardingAgreement() {
     if (Platform.OS !== "web") {
       SecureStore.getItemAsync("auth_session_token").then((token) => {
         if (!token) return;
-        const base = process.env.EXPO_PUBLIC_API_URL ?? "";
+        const base = (await import("@/lib/api")).getApiBase();
         fetch(`${base}/api/membership/agreement`, {
           method: "POST",
           headers: {

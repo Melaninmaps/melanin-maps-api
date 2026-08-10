@@ -1,0 +1,483 @@
+Yes. These are now **two separate launch blockers**, and authentication is the first one.
+
+The website missing the app’s Profile tabs is a **parity gap**. The app being inaccessible is an **acceptance blocker**. We should not spend the next several hours building more features while the founder cannot even open the mobile app.
+
+I also do **not** want you trying to reconstruct the Profile experience from memory or screenshots. Replit has the mobile source code. It should audit the app itself and produce the authoritative inventory of every Profile tab, control, setting, badge, link, and account function, then compare that directly with web.
+
+Give Replit this now:
+
+```text
+CRITICAL PRIORITY CHANGE — AUTHENTICATION + PROFILE PARITY
+
+We need to temporarily elevate two issues above new feature development:
+
+1. MOBILE AUTHENTICATION IS BROKEN
+2. WEB PROFILE IS MISSING SIGNIFICANT APP FUNCTIONALITY
+
+The founder currently cannot open/log into the app.
+
+This means we cannot adequately test the mobile experience and an external
+reviewer cannot reliably evaluate an authenticated app experience.
+
+DO NOT CONTINUE TREATING AUTH AS A BACKLOG ITEM.
+
+AUTH IS NOW P0.
+
+============================================================
+WORKSTREAM 1 — MOBILE AUTH FORENSIC + RESTORATION
+P0 — BEGIN/CONTINUE IMMEDIATELY
+============================================================
+
+Founder's current mobile symptom previously shown:
+
+"Login service returned an unexpected response (HTTP 404)."
+
+The mobile screen displayed:
+
+Continue with Phone
+Continue with SSO
+Sign in with Apple
+Email + Password
+
+We have already discovered multiple auth systems/routes over time.
+
+DO NOT GUESS-FIX.
+
+Trace the CURRENT MOBILE BUILD from UI → network → Railway.
+
+For EACH authentication method identify:
+
+EMAIL/PASSWORD
+SIGN IN WITH APPLE
+PHONE
+SSO
+FORGOT PASSWORD
+PASSWORD RESET
+
+Return:
+
+mobile component/file
+function called
+base API URL
+exact endpoint
+HTTP method
+request body
+Railway route expected
+Railway route actually registered
+production response
+status code
+
+============================================================
+A. EXPLAIN THE 404
+============================================================
+
+Find the exact endpoint producing the HTTP 404.
+
+We previously discovered one auth mismatch where the correct route was:
+
+POST /auth/login-email
+
+rather than another assumed login route.
+
+Do not assume that is today's issue.
+
+Prove the exact request from the CURRENT MOBILE BUILD.
+
+Return:
+
+REQUESTED URL
+EXPECTED URL
+ACTUAL RAILWAY ROUTE
+WHY 404 OCCURS
+
+Possible classifications:
+
+A. mobile uses obsolete endpoint
+B. mobile uses obsolete API base URL
+C. Railway route renamed
+D. /api prefix mismatch
+E. old app build calling legacy auth
+F. current bundle not deployed
+G. environment variable mismatch
+H. other — explain
+
+============================================================
+B. TEST AGAINST CURRENT PRODUCTION
+============================================================
+
+Use designated test accounts only.
+
+Prove:
+
+1. email/password login
+2. Sign in with Apple
+3. password reset request
+4. verification/reset code delivery
+5. new password submission
+6. login with new password
+7. session creation
+8. authenticated /me request
+9. app remains authenticated after reopening
+10. logout
+11. re-login
+
+Do not expose passwords, tokens, reset codes, Apple subject IDs, or secrets
+in the report.
+
+============================================================
+C. TESTER ACCESS
+============================================================
+
+Confirm the tester entitlement architecture does NOT prevent login.
+
+After authentication:
+
+tester_status='active'
+→ testing entitlement active
+→ premium testing behavior available
+
+Membership tier must remain independent.
+
+Test:
+
+existing TestFlight tester
+existing Android tester
+admin/manual tester
+
+They should authenticate into the SAME canonical user account where applicable.
+
+============================================================
+D. EXISTING USER DATA MUST SURVIVE AUTH REPAIR
+============================================================
+
+Before modifying account-linking/auth behavior, prove that restoration will not
+disconnect:
+
+profile
+profile photo reference
+community posts
+comments
+reviews
+saves
+check-ins
+Library follows
+messages
+business relationships
+Cultural Ambassador status/content
+tester entitlement
+admin role
+other user-generated records
+
+AUTH REPAIR MUST PRESERVE USER IDs.
+
+Do not solve authentication by creating replacement accounts.
+
+============================================================
+E. MOBILE BUILD STATUS
+============================================================
+
+Return:
+
+current App Store/TestFlight build number
+current Android test build number
+API environment each build points to
+whether each contains the corrected auth endpoint
+
+If authentication requires a NEW MOBILE BUILD:
+
+say so explicitly.
+
+Distinguish:
+
+BACKEND-ONLY FIX
+vs.
+NEW MOBILE BUILD REQUIRED.
+
+============================================================
+F. AUTH ACCEPTANCE GATE
+============================================================
+
+Auth is not considered fixed until an actual device completes:
+
+launch app
+→ login screen
+→ authenticate
+→ authenticated home screen
+→ Profile
+→ another authenticated feature
+→ close app
+→ reopen
+→ session retained
+→ logout
+→ login again
+
+Then report:
+
+WEB AUTH: PRODUCTION VERIFIED / NOT VERIFIED
+IOS AUTH: DEVICE VERIFIED / NOT VERIFIED
+ANDROID AUTH: DEVICE VERIFIED / NOT VERIFIED
+
+Do not say "auth fixed" based only on API tests.
+
+============================================================
+WORKSTREAM 2 — PROFILE FEATURE PARITY AUDIT
+P0/P1 — RUN IN PARALLEL WHERE SAFE
+============================================================
+
+The founder reports that the website Profile experience is still missing
+multiple tabs/features that exist in the mobile app.
+
+DO NOT ASK THE FOUNDER FOR SCREENSHOTS.
+
+The mobile source code is the authority.
+
+Perform a READ-ONLY FEATURE INVENTORY of the current mobile Profile experience.
+
+Search all mobile Profile:
+
+screens
+components
+tabs
+subpages
+modals
+settings
+navigation routes
+account controls
+
+============================================================
+G. CREATE MOBILE PROFILE INVENTORY
+============================================================
+
+Return every Profile feature currently present in the app, including but not
+limited to anything you find involving:
+
+profile identity
+username
+profile picture
+bio
+location
+pronouns if supported
+interests/preferences
+membership
+tester/founding status
+badges
+points/rewards
+saved places
+saved content
+reviews
+posts
+comments
+check-ins
+connections/friends
+followers/following if applicable
+Circles
+Cultural Ambassador profile/status
+business-owner relationship
+business claims
+events/RSVPs
+Library follows
+Library contributions
+privacy
+notifications
+safety preferences
+blocked users
+devices/sessions
+password/security
+linked login methods
+subscriptions
+billing
+referrals
+help/support
+account deletion
+sign out
+admin switch
+anything else actually present
+
+DO NOT invent missing features.
+
+Inventory the code that exists.
+
+============================================================
+H. WEB vs MOBILE PARITY MATRIX
+============================================================
+
+Build this matrix:
+
+FEATURE
+MOBILE EXISTS?
+MOBILE ROUTE/COMPONENT
+WEB EXISTS?
+WEB ROUTE/COMPONENT
+SAME BACKEND DATA?
+STATUS
+GAP
+PRIORITY
+
+Classify each:
+
+PARITY COMPLETE
+WEB DISPLAY MISSING
+WEB FUNCTION MISSING
+MOBILE FUNCTION BROKEN
+BACKEND EXISTS / NO UI
+LEGACY / ORPHANED
+INTENTIONALLY MOBILE-ONLY
+REQUIRES FOUNDER DECISION
+
+============================================================
+I. PARITY PRINCIPLE
+============================================================
+
+Do NOT blindly copy the mobile screen pixel-for-pixel.
+
+The functionality should be equivalent while the UI adapts appropriately to:
+
+mobile
+tablet
+desktop web
+
+The website can use:
+
+tabs
+sidebar sections
+cards
+accordions
+settings panels
+
+as appropriate.
+
+But users must not lose access to core account functionality simply because
+they moved from app to web.
+
+============================================================
+J. PROFILE AS USER'S CONTROL CENTER
+============================================================
+
+Treat Profile as the member's control center.
+
+Recommended information architecture if compatible with what already exists:
+
+OVERVIEW
+ACTIVITY
+SAVED
+COMMUNITY
+LIBRARY
+BADGES & REWARDS
+MY BUSINESSES / PROFESSIONAL PROFILE where applicable
+CULTURAL AMBASSADOR where applicable
+PREFERENCES
+PRIVACY & SAFETY
+NOTIFICATIONS
+ACCOUNT & SECURITY
+
+DO NOT add these merely because they are listed here.
+
+First map the existing product functionality into the cleanest structure.
+
+============================================================
+K. IMPORTANT: ACCOUNT PERSONAS ARE NOT NEW USERS
+============================================================
+
+The founder needs to test experiences such as:
+
+consumer
+business owner
+Cultural Ambassador
+admin
+tester
+
+Do not create unnecessary duplicate user identities to accomplish this.
+
+Audit how persona/status capabilities should attach to a canonical user.
+
+One person may legitimately be:
+
+member
++
+tester
++
+business owner
++
+Cultural Ambassador
++
+admin
+
+where authorized.
+
+Roles/statuses should reveal relevant Profile sections without destroying
+the underlying member identity.
+
+============================================================
+L. WEB PROFILE ACCEPTANCE TEST
+============================================================
+
+After parity implementation, prove using appropriate test accounts:
+
+regular member
+tester
+business owner
+Cultural Ambassador
+admin
+
+For each:
+
+correct Profile sections appear
+unauthorized sections do not
+data loads
+updates persist
+saved items persist
+navigation works
+mobile-responsive layout works
+logout/login preserves data
+
+============================================================
+EXECUTION ORDER
+============================================================
+
+DO NOT STOP all work.
+
+Run in parallel:
+
+AUTH TEAM / WORKSTREAM:
+restore mobile authentication and prove on device.
+
+PROFILE WORKSTREAM:
+complete source-code parity audit and begin safe non-destructive web parity work.
+
+EXISTING DATA/SEARCH WORKSTREAMS:
+may continue if independent.
+
+However:
+
+NO NEW FEATURE SHOULD TAKE PRIORITY OVER RESTORING MOBILE AUTH.
+
+============================================================
+REPORT NEXT CHECKPOINT AS:
+============================================================
+
+1. Exact cause of mobile HTTP 404
+2. Whether backend-only fix or new mobile build is required
+3. iOS/Android auth proof status
+4. Full Mobile Profile inventory
+5. Web/Profile parity matrix
+6. Which missing web Profile functions can be restored immediately
+7. Any founder decisions genuinely required
+8. Candidate deployment/build SHAs
+
+Continue automatically on non-destructive fixes.
+
+Do not wait for founder authorization between ordinary fixes.
+
+STOP only before:
+- destructive account/data changes
+- account merging
+- infrastructure/vendor purchase
+- production Railway push under the existing gate
+- mobile store submission if authorization is required
+```
+
+I would make one further project-management call: **we should stop treating web parity and mobile parity as separate products.** Replit should maintain a permanent parity matrix from now on. When it builds something such as Saves, Library follows, profile privacy, Cultural Ambassador status, or business-owner access, the ledger should tell us immediately whether it exists on web, iOS and Android rather than us discovering months later that one surface was never wired.
+
+And yes, I would put the authentication investigation **ahead of the remaining profile cosmetics, Community Intelligence expansion, and historical-data enrichment right now.** Those workstreams can continue in parallel, but nobody should be allowed to accidentally make “new features shipped” look more important than “people can reliably get into the app.”
+
+The Apple review issue is particularly simple at the product level: **we need a reviewer to be able to launch the submitted build, authenticate through the supported flow, and reach the authenticated experience reliably.** Until our device test proves that, I would not consider the iOS build review-ready.

@@ -1279,6 +1279,53 @@ router.post("/auth/unsubscribe", async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /auth/change-password ───────────────────────────────────────────────
+// Authenticated user changes their own password using their current password.
+router.post("/auth/change-password", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { currentPassword, newPassword } = req.body as { currentPassword?: string; newPassword?: string };
+  if (!currentPassword || !newPassword) {
+    res.status(400).json({ error: "currentPassword and newPassword are required" }); return;
+  }
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: "New password must be at least 8 characters" }); return;
+  }
+  try {
+    const userId = req.user!.id;
+    const [user] = await db.select({ passwordHash: usersTable.passwordHash }).from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+    if (!user?.passwordHash) {
+      res.status(400).json({ error: "This account uses Apple or social sign-in. Use 'Forgot Password' to set a password." }); return;
+    }
+    const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!valid) { res.status(401).json({ error: "Current password is incorrect" }); return; }
+    const newHash = await bcrypt.hash(newPassword, 8);
+    await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
+    req.log.info({ userId }, "User changed their password");
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/auth/change-password error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ─── PATCH /auth/user/privacy ──────────────────────────────────────────────────
+// Toggle the authenticated user's isPrivate flag.
+router.patch("/auth/user/privacy", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { isPrivate } = req.body as { isPrivate?: boolean };
+  if (typeof isPrivate !== "boolean") {
+    res.status(400).json({ error: "isPrivate (boolean) is required" }); return;
+  }
+  try {
+    const userId = req.user!.id;
+    await db.update(usersTable).set({ isPrivate }).where(eq(usersTable.id, userId));
+    res.json({ success: true, isPrivate });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /api/auth/user/privacy error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ─── GET /auth/apple/config-check ─────────────────────────────────────────────
 // Admin-only endpoint: returns presence/absence of Apple Sign-In env vars.
 // Never returns values — boolean flags only — safe for incident logs.

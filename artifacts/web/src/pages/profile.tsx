@@ -6,7 +6,8 @@ import {
   LogOut, Save, MapPin, Map, FlaskConical, Trophy, Star, Shield, Heart, Zap, Award,
   Crown, Search, Compass, Navigation, BadgeCheck, CheckCircle, Building2, Plane,
   Globe, Home, MessageCircle, Link2, Users, Hammer, Calendar, PartyPopper,
-  Flag, Gem, Lock, ChevronDown, ChevronUp, Footprints, Camera, Loader2
+  Flag, Gem, Lock, ChevronDown, ChevronUp, Footprints, Camera, Loader2,
+  Settings, ChevronRight, Eye, EyeOff, KeyRound, Trash2
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -632,14 +633,42 @@ export default function Profile() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
+
+  // ── Reviews count ──────────────────────────────────────────────────────────
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
+
+  // ── Account Settings state ─────────────────────────────────────────────────
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
+  const [privacyLoading, setPrivacyLoading] = useState(false);
+  const [showPasswordPanel, setShowPasswordPanel] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+
   useEffect(() => {
     if (!auth?.user) return;
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    // Points
     fetch(`${base}/api/points`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setKinfolkPoints(d.total ?? 0); })
       .catch(() => {});
+    // Reviews count
+    fetch(`${base}/api/reviews/mine`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setReviewCount(d.count ?? 0); })
+      .catch(() => {});
   }, [auth?.user]);
+
+  // Sync isPrivate from profile data once loaded
+  useEffect(() => {
+    if (profile) {
+      setIsPrivate(!!(profile as any).isPrivate ?? false);
+    }
+  }, [profile]);
 
   if (authLoading) return <div className="p-10 bg-[#FAF6EF] min-h-screen"><Skeleton className="h-64 w-full rounded-3xl" /></div>;
 
@@ -697,6 +726,59 @@ export default function Profile() {
     }
     finally { setAvatarUploading(false); }
   };
+  const togglePrivacy = async () => {
+    setPrivacyLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const next = !isPrivate;
+      const res = await fetch(`${base}/api/auth/user/privacy`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPrivate: next }),
+      });
+      if (res.ok) {
+        setIsPrivate(next);
+        toast({ title: next ? "Profile set to Private" : "Profile set to Public", description: next ? "Only you can see your activity." : "Your profile is visible to the community." });
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string };
+        toast({ title: "Could not update privacy", description: d.error ?? "Please try again.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Connection error", description: "Check your connection and try again.", variant: "destructive" });
+    } finally {
+      setPrivacyLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) { toast({ title: "Passwords don't match", variant: "destructive" }); return; }
+    if (newPassword.length < 8) { toast({ title: "New password must be at least 8 characters", variant: "destructive" }); return; }
+    setPasswordLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/auth/change-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const d = await res.json().catch(() => ({})) as { success?: boolean; error?: string };
+      if (res.ok && d.success) {
+        toast({ title: "Password updated", description: "Your new password is active." });
+        setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+        setShowPasswordPanel(false);
+      } else {
+        toast({ title: "Could not update password", description: d.error ?? "Please try again.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Connection error", description: "Check your connection and try again.", variant: "destructive" });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleSignOutAll = async () => {
     if (!window.confirm("Sign out all devices?\n\nThis will immediately invalidate every active session across all your devices, including this one. You will need to sign in again everywhere.")) return;
     setSignOutAllLoading(true);
@@ -776,7 +858,7 @@ export default function Profile() {
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Saved</div>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
-            <div className="text-lg font-serif font-bold text-[#CA922B]/70">—</div>
+            <div className="text-2xl font-serif font-bold text-[#CA922B]">{reviewCount !== null ? reviewCount : "—"}</div>
             <div className="text-xs text-[#F5EBD8]/70 uppercase tracking-wider font-bold mt-1">Reviews</div>
           </div>
           <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center border border-white/10">
@@ -887,6 +969,120 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {/* ── Account & Privacy Settings ──────────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+          <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-6 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-[#CA922B]" /> Account &amp; Privacy
+          </h3>
+          <div className="space-y-3">
+
+            {/* Profile Visibility toggle */}
+            <div className="flex items-center justify-between p-4 bg-[#FAF6EF] rounded-2xl">
+              <div>
+                <div className="font-semibold text-sm text-[#3A1F0E]">Profile Visibility</div>
+                <div className="text-xs text-[#3A1F0E]/60 mt-0.5">
+                  {isPrivate ? "Private — only you can see your activity" : "Public — your profile is visible to the community"}
+                </div>
+              </div>
+              <button
+                onClick={togglePrivacy}
+                disabled={privacyLoading}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                  isPrivate
+                    ? "bg-[#2B1507] text-white hover:bg-[#3A1F0E]"
+                    : "bg-[#CA922B]/15 text-[#CA922B] hover:bg-[#CA922B]/25"
+                }`}
+              >
+                {privacyLoading ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : isPrivate ? (
+                  <><Lock className="w-3 h-3" /> Private</>
+                ) : (
+                  <><Globe className="w-3 h-3" /> Public</>
+                )}
+              </button>
+            </div>
+
+            {/* Change Password */}
+            <button
+              onClick={() => setShowPasswordPanel(v => !v)}
+              className="w-full flex items-center justify-between p-4 bg-[#FAF6EF] rounded-2xl hover:bg-[#F0E8D9] transition-colors text-left"
+            >
+              <div>
+                <div className="font-semibold text-sm text-[#3A1F0E] flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-[#CA922B]" /> Change Password
+                </div>
+                <div className="text-xs text-[#3A1F0E]/60 mt-0.5">Update your account password</div>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-[#3A1F0E]/40 transition-transform shrink-0 ${showPasswordPanel ? "rotate-180" : ""}`} />
+            </button>
+
+            {showPasswordPanel && (
+              <form onSubmit={handleChangePassword} className="px-4 pb-4 space-y-3">
+                <div className="relative">
+                  <Input
+                    type={showCurrentPw ? "text" : "password"}
+                    placeholder="Current password"
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    required
+                    className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 pr-10"
+                  />
+                  <button type="button" onClick={() => setShowCurrentPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3A1F0E]/40 hover:text-[#3A1F0E]">
+                    {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showNewPw ? "text" : "password"}
+                    placeholder="New password (8+ characters)"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                    className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 pr-10"
+                  />
+                  <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3A1F0E]/40 hover:text-[#3A1F0E]">
+                    {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  required
+                  className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40"
+                />
+                <Button
+                  type="submit"
+                  disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
+                  className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-11"
+                >
+                  {passwordLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Updating…</> : "Update Password"}
+                </Button>
+              </form>
+            )}
+
+            {/* Delete Account */}
+            <a
+              href="/delete-account"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between p-4 bg-red-50 rounded-2xl hover:bg-red-100 transition-colors group"
+            >
+              <div>
+                <div className="font-semibold text-sm text-red-700 flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" /> Delete Account
+                </div>
+                <div className="text-xs text-red-500 mt-0.5">Permanently delete your account and all personal data</div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-red-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </a>
+
+          </div>
+        </div>
+
       </div>
     </div>
   );

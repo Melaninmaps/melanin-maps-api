@@ -1,0 +1,211 @@
+This is a good correction, and I would **accept the wiring fix but not accept the feature as “done” yet**.
+
+Replit has now proven the immediate root cause: the live Businesses page was effectively a static client-side filter over only 100 records, while the Universal Search system existed separately in dev and had never been connected to that page. That explains the behavior you saw.
+
+The two follow-up tasks they proposed are not optional polish, though. **#186 and #187 are part of making this actually useful.** If a church search returns Year Up as an alternative, that weakens trust. And if we already have real churches and historical faith sites in our data, we should not solve the problem by merely “adding reference listings” without first checking whether those existing records can already be surfaced properly.
+
+I would respond to Replit with this:
+
+```text
+APPROVED TO CONTINUE — WITH TWO REQUIRED CORRECTIONS BEFORE THIS SEARCH WORK
+IS CONSIDERED COMPLETE.
+
+The root cause diagnosis is accepted.
+
+The Businesses page was not using Universal Search, and the new wiring is the
+correct direction.
+
+However, do NOT mark this workstream complete yet.
+
+============================================================
+1. TASK #186 — FALLBACK QUALITY IS REQUIRED
+============================================================
+
+Fix the fuzzy/alternative quality problem now.
+
+A faith query must not return irrelevant organizations such as Year Up simply
+because the database lacks enough exact faith records.
+
+Fallbacks must remain SEMANTICALLY RELEVANT.
+
+Examples:
+
+"churches Philadelphia"
+
+Acceptable fallback:
+- historic church
+- house of faith
+- religious cultural site
+- faith/community organization
+- nearby church in expanded radius
+
+Not acceptable:
+- unrelated nonprofit
+- unrelated educational organization
+- arbitrary business with a weak text similarity
+
+If no relevant result exists, say so honestly.
+
+"No exact MWM listings yet" is better than a bad recommendation.
+
+Add a relevance threshold and entity-type/category guard so fallback results
+remain within the user's actual intent.
+
+============================================================
+2. TASK #187 — AUDIT EXISTING FAITH DATA BEFORE ADDING NEW RECORDS
+============================================================
+
+Do NOT immediately create new faith reference listings.
+
+First audit what already exists.
+
+Search Railway production + dev for:
+
+churches
+historic churches
+houses of faith
+religious cultural sites
+faith organizations
+Mother Bethel
+AME
+Baptist
+Catholic
+Black Catholic
+COGIC
+Orthodox
+mosques
+Islamic centers
+synagogues
+temples
+gurdwaras
+
+Across:
+
+businesses
+cultural_sites
+tour_cultural_sites
+community organizations
+knowledge graph
+Library/entity connections
+
+Return:
+
+name
+canonical ID
+entity type
+city/state
+source table
+current searchable fields
+whether Universal Search returns it
+whether it is duplicated elsewhere
+
+Specifically prove:
+
+Mother Bethel
+founder-added churches
+historical Philadelphia churches
+
+Do not create duplicates simply because one surface cannot currently see them.
+
+============================================================
+3. DIRECTORY SEARCH SHOULD BE ENTITY-AWARE
+============================================================
+
+The current top-nav label may remain Businesses for now.
+
+But the search engine underneath should act as an MWM DIRECTORY.
+
+Users search for what they need, not our schema.
+
+Examples:
+
+OBGYN
+Black Catholic church
+dentist
+doula
+plumber
+childcare
+mosque
+museum
+Ethiopian restaurant
+tax attorney
+
+Universal Search should return correctly labeled sections such as:
+
+BUSINESSES
+PROFESSIONALS
+HOUSES OF FAITH
+HISTORIC & CULTURAL SITES
+COMMUNITY ORGANIZATIONS
+
+Only show sections that have relevant results.
+
+Do not mislabel a cultural site as a business.
+
+============================================================
+4. REMOVE THE 100-RECORD SEARCH LIMIT AS A SEARCH DEPENDENCY
+============================================================
+
+Browse mode may paginate or initially display a limited set for performance.
+
+Search mode must query the backend.
+
+A valid result cannot disappear simply because it was record #101.
+
+Confirm that Universal Search does NOT depend on the initial 100-record
+Businesses-page payload.
+
+============================================================
+5. REQUIRED DEV ACCEPTANCE TESTS
+============================================================
+
+Before including this in the Railway gate, run:
+
+"Churches in Philadelphia PA"
+"Mother Bethel"
+"AME church Philadelphia"
+"historic Black churches Philadelphia"
+"Black Catholic church Philadelphia"
+"OBGYN Philadelphia"
+"plumber Philadelphia"
+"Fruity Pebble waffles"
+
+For each return:
+
+intent
+location
+exact results
+entity types
+fallback used?
+fallback reason
+irrelevant results count
+
+Expected irrelevant-result count:
+0
+
+If there are no suitable results, honest empty state is acceptable.
+
+============================================================
+6. PRODUCTION STATUS LANGUAGE
+============================================================
+
+Until Railway deployment + browser verification:
+
+status = CODED / DEV VERIFIED
+
+NOT:
+
+complete
+live
+fixed in production
+
+Include this work in the existing consolidated Railway deployment gate.
+
+Continue moving.
+```
+
+One point I especially want to preserve as project manager: **Replit should not respond to every missing search by adding another record.** We already know there are records distributed across businesses, cultural sites, tour data, the Library, and the new graph. The first job is to make Universal Search see the canonical entities we already own.
+
+Once that is working, adding additional real houses of faith is useful content expansion rather than a workaround for broken retrieval.
+
+So I would tell them **continue — no need to stop for us here**. Fix relevance, audit existing faith entities, run the acceptance tests, and fold it into the consolidated Railway gate.

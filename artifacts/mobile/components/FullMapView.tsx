@@ -195,15 +195,7 @@ function getCategoryStyle(heritageCategory: string, pinType?: string | null): Ca
   return CATEGORY_STYLES[heritageCategory] ?? DEFAULT_CATEGORY_STYLE;
 }
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-  if (process.env.EXPO_PUBLIC_DOMAIN) {
-    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  }
-  return "";
-}
+import { getApiBase } from "@/lib/api";
 
 export function FullMapView() {
   const colors = useColors();

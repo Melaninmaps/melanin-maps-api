@@ -258,12 +258,7 @@ async function saveAndSend(report: CrashReport): Promise<void> {
 
 async function sendToServer(report: CrashReport): Promise<boolean> {
   try {
-    // EXPO_PUBLIC_API_URL takes precedence; fall back to EXPO_PUBLIC_DOMAIN
-    // (same pattern as PushNotificationRegistrar in _layout.tsx)
-    const domain = process.env.EXPO_PUBLIC_DOMAIN;
-    const base =
-      process.env.EXPO_PUBLIC_API_URL ??
-      (domain ? `https://${domain}` : "");
+    const base = (await import("./api")).getApiBase();
     if (!base) return false;
     const resp = await fetch(`${base}/api/crash-reports`, {
       method: "POST",

@@ -9,7 +9,8 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-const apiBase = process.env.EXPO_PUBLIC_API_URL ?? "";
+import { getApiBase } from "@/lib/api";
+const apiBase = getApiBase();
 
 export interface FamilyMember {
   id: string;

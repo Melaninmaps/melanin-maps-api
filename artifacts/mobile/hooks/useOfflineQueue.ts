@@ -25,9 +25,8 @@ interface QueuedItem {
   attempts: number;
 }
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : process.env.EXPO_PUBLIC_API_URL ?? "";
+import { getApiBase } from "@/lib/api";
+const API_BASE = getApiBase();
 
 async function readQueue(namespace: string): Promise<QueuedItem[]> {
   try {
