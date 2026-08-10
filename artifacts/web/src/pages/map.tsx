@@ -373,8 +373,11 @@ export default function MapPage() {
       if (geoLat !== null && geoLng !== null) {
         // Override user GPS coords with the detected location so the MWM DB
         // search is geo-bounded around the identified city/region.
+        // radius=50: wider than the near-me default (25 mi) so international
+        // cities (Phuket province, Jamaica, etc.) are fully covered.
         p.set("lat", String(geoLat));
         p.set("lng", String(geoLng));
+        p.set("radius", "50");
       } else if (userCoords) {
         p.set("lat", String(userCoords.lat));
         p.set("lng", String(userCoords.lng));
