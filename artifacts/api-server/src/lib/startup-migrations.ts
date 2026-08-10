@@ -1354,6 +1354,40 @@ END $seed$`,
           AND LOWER(b.city) = 'philadelphia'
       )`,
   },
+  {
+    // Add Bangkok, Thailand, Laos, and Phuket to the Library as geography topics.
+    // Uses the same format as seed_diaspora_country_topics_v2: knowledge_topics with
+    // category='country' and node_type='geography'. WHERE NOT EXISTS guards against
+    // duplicates across boots.
+    name: "seed_southeast_asia_library_topics_v1",
+    sql: `
+      INSERT INTO knowledge_topics (id, topic_name, category, description, node_type)
+      SELECT gen_random_uuid(), v.n, 'country', v.d, 'geography'
+      FROM (VALUES
+        ('Thailand',
+         'Southeast Asian cultural crossroads — ancient Buddhist temples, vibrant street food, and a spirit of welcome that has made Bangkok, Phuket, and Chiang Mai pillar destinations for Black diaspora travelers.'),
+        ('Laos',
+         'Southeast Asia''s quiet heart — Mekong River culture, Theravada Buddhist traditions, and Luang Prabang''s UNESCO-protected temples offering one of the most peaceful and authentic travel experiences in the region.'),
+        ('Bangkok',
+         'Thailand''s capital and its beating heart — ancient temples alongside neon-lit night markets, world-class street food, and an energy that draws travelers of the African diaspora from every corner of the globe.'),
+        ('Phuket',
+         'Thailand''s most celebrated island — sun-soaked beaches, vibrant night markets, and a growing reputation as one of Southeast Asia''s most welcoming destinations for Black travelers.')
+      ) AS v(n, d)
+      WHERE NOT EXISTS (
+        SELECT 1 FROM knowledge_topics WHERE topic_name = v.n AND category = 'country'
+      )
+    `,
+  },
+  {
+    // City profile for Laos — gives KinfolkAI cultural context when travelers ask
+    // about this destination. Bangkok and Phuket profiles already exist in
+    // city_profiles_international_v1. ON CONFLICT DO NOTHING so manual edits survive.
+    name: "city_profiles_laos_v1",
+    sql: `INSERT INTO city_profiles (city_slug, city_name, brief_context, historical_context)
+VALUES
+  ('luang-prabang','Luang Prabang, Laos','A UNESCO World Heritage city on the Mekong River where ancient Buddhist temples, French colonial architecture, and the gentle pace of Lao life create one of the most tranquil travel experiences in Southeast Asia — a place that rewards slow travel and cultural curiosity.','Luang Prabang was the royal capital of Laos until 1975 and remains the country''s cultural and spiritual heart. The old city sits at the confluence of the Mekong and Nam Khan rivers, surrounded by mountains and protected as a UNESCO World Heritage Site since 1995. The city is home to over 30 Buddhist temples (wats), including the gilded Wat Xieng Thong dating to 1560. The pre-dawn alms-giving ceremony (tak bat) — monks collecting offerings from residents — is one of the most sacred living traditions in Southeast Asia. For travelers of the African diaspora, Luang Prabang offers an unhurried alternative to the major tourist circuits: waterfall hikes to Kuang Si Falls, boat journeys to the Pak Ou caves, and a night market of hill-tribe textiles. The city has a small but growing international visitor community. Best time to visit: November–March (cool and dry). Hot season April–May; monsoon June–October.')
+ON CONFLICT (city_slug) DO NOTHING`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
