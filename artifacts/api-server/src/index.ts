@@ -11,6 +11,7 @@ import { runStartupMigrations } from "./lib/startup-migrations";
 // Route pool events through the structured pino logger so they appear in
 // Railway's log stream in the same JSON format as request logs.
 setDbLogger(logger);
+import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTracker";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -131,6 +132,9 @@ const server = app.listen(port, (err) => {
     });
 
   startNudgeCronScheduler();
+
+  // Flush per-city request metrics to city_request_log every 5 minutes.
+  startCityRequestFlush();
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
@@ -164,6 +168,7 @@ function gracefulShutdown(signal: string) {
     logger.info("HTTP server closed. Draining DB pools…");
     stopHealthMonitor();
     stopBuild97Monitor();
+    stopCityRequestFlush();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

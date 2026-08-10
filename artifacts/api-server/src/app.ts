@@ -14,6 +14,7 @@ import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
 import { generalLimiter } from "./middleware/rateLimiter";
+import { cityRequestMiddleware } from "./lib/cityRequestTracker";
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 import { getHealthHistory } from "./lib/healthMonitor";
 
@@ -243,6 +244,9 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// City request tracker — runs after body parsing so home_city is available.
+// Records per-city request counts, error counts, and timing for health metrics.
+app.use(cityRequestMiddleware);
 app.use(authMiddleware);
 app.use("/api", generalLimiter);
 

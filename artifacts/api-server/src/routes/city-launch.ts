@@ -230,12 +230,48 @@ router.get("/admin/city-launches/:slug/health", async (req: Request, res: Respon
       [cityName]
     );
 
+    // ── Error rate metrics from city_request_log (last 24 h) ─────────────────
+    const { rows: errorRows } = await pool.query<{
+      total_requests: string;
+      total_errors: string;
+      avg_response_ms: string;
+    }>(
+      `SELECT
+         COALESCE(SUM(request_count), 0)::text AS total_requests,
+         COALESCE(SUM(error_count), 0)::text   AS total_errors,
+         COALESCE(
+           ROUND(
+             SUM(avg_ms * request_count) / NULLIF(SUM(request_count), 0)::numeric,
+             0
+           ),
+           0
+         )::text AS avg_response_ms
+       FROM city_request_log
+       WHERE slug = $1
+         AND period_start >= NOW() - INTERVAL '24 hours'`,
+      [slug]
+    );
+    const totalRequests = parseInt(errorRows[0]?.total_requests ?? "0", 10);
+    const totalErrors   = parseInt(errorRows[0]?.total_errors   ?? "0", 10);
+    const avgResponseMs = parseInt(errorRows[0]?.avg_response_ms ?? "0", 10);
+    const errorRatePct  = totalRequests > 0
+      ? parseFloat(((totalErrors / totalRequests) * 100).toFixed(1))
+      : null; // null = no data yet
+
     const activity = {
       signups24h:        parseInt(s24h[0]?.cnt ?? "0", 10),
       signups7d:         parseInt(s7d[0]?.cnt  ?? "0", 10),
       posts24h:          parseInt(p24h[0]?.cnt  ?? "0", 10),
       posts7d:           parseInt(p7d[0]?.cnt   ?? "0", 10),
       waitlistSignups24h: parseInt(w24h[0]?.cnt ?? "0", 10),
+    };
+
+    const requestMetrics = {
+      totalRequests,
+      totalErrors,
+      errorRatePct,   // null when no data; number (0–100) when data present
+      avgResponseMs,  // 0 when no data
+      windowHours: 24,
     };
 
     // ── Build health signals ─────────────────────────────────────────────────
@@ -247,6 +283,20 @@ router.get("/admin/city-launches/:slug/health", async (req: Request, res: Respon
 
     if (probeMs > 1000) signals.push({ level: "critical", message: `DB slow: ${probeMs}ms round-trip` });
     else if (probeMs > 300) signals.push({ level: "warning", message: `DB response elevated: ${probeMs}ms` });
+
+    // Error rate signals — only fire when we have enough data (≥10 requests)
+    if (errorRatePct !== null && totalRequests >= 10) {
+      if (errorRatePct >= 20)
+        signals.push({ level: "critical", message: `High error rate: ${errorRatePct}% of requests failed in last 24h` });
+      else if (errorRatePct >= 5)
+        signals.push({ level: "warning", message: `Elevated error rate: ${errorRatePct}% of requests failed in last 24h` });
+    }
+
+    // Slow response signal — only fire when we have data
+    if (totalRequests >= 10 && avgResponseMs > 2000)
+      signals.push({ level: "critical", message: `Avg response time critical: ${avgResponseMs}ms` });
+    else if (totalRequests >= 10 && avgResponseMs > 800)
+      signals.push({ level: "warning", message: `Avg response time elevated: ${avgResponseMs}ms` });
 
     const isActiveLive = ["live", "soft_launch"].includes(cityStatus);
     if (isActiveLive) {
@@ -263,7 +313,7 @@ router.get("/admin/city-launches/:slug/health", async (req: Request, res: Respon
       : signals.some(s => s.level === "warning")  ? "warning"
       : "ok";
 
-    res.json({ slug, level, signals, probeMs, poolStats: ps, activity, cityStatus, checkedAt: new Date().toISOString() });
+    res.json({ slug, level, signals, probeMs, poolStats: ps, activity, requestMetrics, cityStatus, checkedAt: new Date().toISOString() });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch city health");
     res.status(500).json({ error: "Failed to fetch city health" });

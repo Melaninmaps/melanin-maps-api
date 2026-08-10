@@ -228,6 +228,13 @@ type CityHealth = {
     posts7d: number;
     waitlistSignups24h: number;
   };
+  requestMetrics?: {
+    totalRequests: number;
+    totalErrors: number;
+    errorRatePct: number | null;
+    avgResponseMs: number;
+    windowHours: number;
+  };
   cityStatus: string;
   checkedAt: string;
 };
@@ -3167,7 +3174,57 @@ export default function Admin() {
                         {sig.message}
                       </div>
                     ))}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                    {/* API error rate + response time */}
+                    {cityHealth.requestMetrics && (
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <div className={`rounded-xl px-3 py-2.5 text-center border ${
+                          cityHealth.requestMetrics.errorRatePct !== null && cityHealth.requestMetrics.errorRatePct >= 20
+                            ? "bg-red-50 border-red-200"
+                            : cityHealth.requestMetrics.errorRatePct !== null && cityHealth.requestMetrics.errorRatePct >= 5
+                            ? "bg-amber-50 border-amber-200"
+                            : "bg-[#FAF6EF] border-transparent"
+                        }`}>
+                          <div className={`text-base font-bold ${
+                            cityHealth.requestMetrics.errorRatePct !== null && cityHealth.requestMetrics.errorRatePct >= 20
+                              ? "text-red-700"
+                              : cityHealth.requestMetrics.errorRatePct !== null && cityHealth.requestMetrics.errorRatePct >= 5
+                              ? "text-amber-700"
+                              : "text-[#3A1F0E]"
+                          }`}>
+                            {cityHealth.requestMetrics.errorRatePct !== null
+                              ? `${cityHealth.requestMetrics.errorRatePct}%`
+                              : "—"}
+                          </div>
+                          <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide mt-0.5">Error rate (24h)</div>
+                          {cityHealth.requestMetrics.totalRequests > 0 && (
+                            <div className="text-[10px] text-[#3A1F0E]/30 mt-0.5">
+                              {cityHealth.requestMetrics.totalErrors}/{cityHealth.requestMetrics.totalRequests} reqs
+                            </div>
+                          )}
+                        </div>
+                        <div className={`rounded-xl px-3 py-2.5 text-center border ${
+                          cityHealth.requestMetrics.avgResponseMs >= 2000
+                            ? "bg-red-50 border-red-200"
+                            : cityHealth.requestMetrics.avgResponseMs >= 800
+                            ? "bg-amber-50 border-amber-200"
+                            : "bg-[#FAF6EF] border-transparent"
+                        }`}>
+                          <div className={`text-base font-bold ${
+                            cityHealth.requestMetrics.avgResponseMs >= 2000
+                              ? "text-red-700"
+                              : cityHealth.requestMetrics.avgResponseMs >= 800
+                              ? "text-amber-700"
+                              : "text-[#3A1F0E]"
+                          }`}>
+                            {cityHealth.requestMetrics.totalRequests > 0
+                              ? `${cityHealth.requestMetrics.avgResponseMs}ms`
+                              : "—"}
+                          </div>
+                          <div className="text-[10px] text-[#3A1F0E]/40 uppercase tracking-wide mt-0.5">Avg response (24h)</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                       {[
                         { label: "Signups 24h", val: cityHealth.activity.signups24h },
                         { label: "Signups 7d", val: cityHealth.activity.signups7d },
