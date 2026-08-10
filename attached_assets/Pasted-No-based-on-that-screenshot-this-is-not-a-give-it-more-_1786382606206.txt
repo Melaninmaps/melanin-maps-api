@@ -1,0 +1,81 @@
+No — based on that screenshot, **this is not a “give it more time” situation.** The site is explicitly returning **“Invalid email or password.”** That means the login request completed and authentication rejected the credentials.
+
+So for your daughter’s account, one of these is true: the email is not the exact seeded tester email, the temporary password on that account is not the one being used, the account was already forced through a password change and now expects her new password, or Replit’s tester seeding did not correctly create/approve her user row.
+
+I would have Replit check her exact account immediately rather than asking her to keep retrying. Send this:
+
+```text
+P0 — TESTER LOGIN FAILURE STILL ACTIVE
+
+Founder’s daughter is STILL unable to log in on production.
+
+This is NOT a timing/propagation issue.
+
+The live website returns:
+
+"Invalid email or password."
+
+That means the authentication request completed and rejected the credentials.
+
+Do not ask the tester to keep waiting or retrying.
+
+Audit this exact email in RAILWAY PRODUCTION:
+
+KaylaCardwell3@gmail.com
+
+Check:
+
+- normalized email
+- exact users row exists
+- duplicate user rows
+- tester/preapproval record
+- approved status
+- member_type
+- role
+- password_hash present
+- must_change_password
+- profile_setup_complete
+- whether password was previously changed
+- whether this account was actually seeded with the shared temporary password
+- whether the seed ran before or after this email was added
+
+DO NOT print password hashes or secrets.
+
+Then test the exact production login flow for this account.
+
+Return:
+
+USER ROW EXISTS: YES/NO
+APPROVED: YES/NO
+TESTER ENTITLEMENT: YES/NO
+TEMP PASSWORD EXPECTED TO WORK: YES/NO
+PASSWORD ALREADY CHANGED: YES/NO
+MUST_CHANGE_PASSWORD: TRUE/FALSE
+DUPLICATE ACCOUNT: YES/NO
+ROOT CAUSE
+
+If the temporary password was never correctly assigned to this tester:
+
+repair ONLY this affected account and other accounts proven to have the same
+defect.
+
+Do not overwrite passwords for testers who already changed theirs.
+
+Preserve canonical user_id and all existing data.
+
+After repair, visually test the REAL website:
+
+login
+→ temporary password accepted
+→ password-change prompt if required
+→ onboarding
+→ authenticated landing
+
+Then audit all pending/approved tester accounts for the same credential-state
+mismatch so we do not discover this one person at a time.
+
+Do not call tester authentication PASS until a first-time tester actually logs
+in through the production browser.
+```
+
+Also, the Kinfolk audit is actually good news: **most of the personalization architecture already exists**, but a lot of it is hidden or unwired on web. That means we can expose it instead of rebuilding it. But your daughter’s login issue comes first, because none of those perks matter if testers cannot get through the door.
