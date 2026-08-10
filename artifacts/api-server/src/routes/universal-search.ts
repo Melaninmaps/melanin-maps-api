@@ -818,7 +818,10 @@ async function searchBusinesses(opts: {
   let serverExtractedGeo = false;
   const GEO_EXTRACT_RADIUS = 50; // miles — covers any metro area / island province
 
-  if (lat === undefined && !city && results.size === 0) {
+  // Run when no explicit geo params — even if earlier passes already have results,
+  // because PASS 1 may have filled with national data when geo-extract wasn't sent.
+  // When serverExtractedGeo=true those national results are cleared before PASS 3.
+  if (lat === undefined && !city) {
     const GEO_STOP_WORDS = new Set([
       "the","a","an","in","at","for","with","of","and","or","near","around",
       "some","any","best","good","great","find","show","get","want","looking",
@@ -826,7 +829,7 @@ async function searchBusinesses(opts: {
       "things","places","spots","area","areas","black","owned","community",
       "go","out","tonight","nearby","local","where","what","which",
     ]);
-    const candidateWords = trimmedQ.toLowerCase().split(/\s+/);
+    const candidateWords = q.toLowerCase().split(/\s+/);
     const geoTokens = candidateWords.filter(
       (w) => w.length >= 3 && !GEO_STOP_WORDS.has(w) && !CONCEPT_TO_CATEGORY[w] && !/^\d+$/.test(w),
     );
@@ -935,7 +938,9 @@ async function searchBusinesses(opts: {
   }
 
   // ── PASS 4: Fuzzy name fallback (pg_trgm) if still sparse ────────────────
-  if (results.size < 3 && q.length >= 3) {
+  // Skip when server-side geo was extracted: an honest "no MWM listings yet"
+  // is better than fuzzy-matching a business from a completely different city.
+  if (!serverExtractedGeo && results.size < 3 && q.length >= 3) {
     try {
       const already = [...results.keys()];
       const excludeClause = already.length > 0
