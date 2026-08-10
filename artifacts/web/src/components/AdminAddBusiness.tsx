@@ -365,12 +365,12 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelCls}>Description</label>
-                  <textarea className={inputCls} value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="A brief description of what the business offers…" />
+                  <label className={labelCls}>Description &amp; Why MWM Recommends <span className="font-normal normal-case text-[#3A1F0E]/35">(public)</span></label>
+                  <textarea className={inputCls} value={description} onChange={e => setDescription(e.target.value)} rows={3} placeholder="What this place offers and why it matters to our community — e.g. 'Family-owned Thai restaurant in Silom beloved by locals for authentic Isan cuisine. One of the few spots welcoming to Black travelers in the neighborhood.'" />
                 </div>
                 <div>
-                  <label className={labelCls}>Phone</label>
-                  <input className={inputCls} type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 555-5555" />
+                  <label className={labelCls}>Phone <span className="font-normal normal-case text-[#3A1F0E]/35">(any format)</span></label>
+                  <input className={inputCls} type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+66 81 234 5678  or  (555) 555-5555" />
                 </div>
                 <div>
                   <label className={labelCls}>Business Email</label>
@@ -387,7 +387,7 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                 </div>
                 <div>
                   <label className={labelCls}>City <span className="text-red-500">*</span></label>
-                  <input className={inputCls} value={city} onChange={e => setCity(e.target.value)} placeholder="Philadelphia" />
+                  <input className={inputCls} value={city} onChange={e => setCity(e.target.value)} placeholder="Bangkok, Philadelphia, Toronto…" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -484,13 +484,13 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
               </div>
 
               <div>
-                <label className={labelCls}>Admin Notes <span className="font-normal normal-case text-[#3A1F0E]/35">(internal only)</span></label>
+                <label className={labelCls}>Source &amp; Provenance <span className="font-normal normal-case text-[#3A1F0E]/35">(internal — never shown publicly)</span></label>
                 <textarea
                   className={inputCls}
                   value={adminNotes}
                   onChange={e => setAdminNotes(e.target.value)}
                   rows={3}
-                  placeholder="Notes for the team — e.g. 'Met owner at the market, will follow up for photos.' Not visible to public."
+                  placeholder="How this place was found — e.g. 'Founder scouted via Google Maps / TripAdvisor reviews from Black travelers. Instagram: @placename. Will follow up for owner contact.'"
                 />
               </div>
             </>

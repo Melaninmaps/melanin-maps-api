@@ -2329,17 +2329,14 @@ router.post("/admin/businesses", async (req: Request, res: Response): Promise<vo
       [id]
     );
 
-    // Store admin note appended to description if provided
+    // Store admin notes in dedicated internal column — never appended to public description
     if (adminNotes?.trim()) {
       try {
         await pool.query(
-          `UPDATE businesses SET description =
-            CASE WHEN description = '' OR description IS NULL THEN $1
-                 ELSE description || E'\n\n[Admin note: ' || $1 || ']'
-            END WHERE id = $2`,
+          `UPDATE businesses SET admin_notes = $1 WHERE id = $2`,
           [adminNotes.trim(), id]
         );
-      } catch { /* Non-fatal */ }
+      } catch { /* Non-fatal — column may not exist on older Railway instances until migration runs */ }
     }
 
     res.status(201).json({

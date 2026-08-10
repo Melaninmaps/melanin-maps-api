@@ -119,6 +119,13 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS province VARCHAR(100)`,
   },
   {
+    // Add admin_notes column — internal-only notes never exposed in public queries.
+    // Stores source/provenance info, team context, and scout notes for admin-entered
+    // businesses (especially international entries). NOT appended to description.
+    name: "businesses_admin_notes_col_v1",
+    sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS admin_notes TEXT`,
+  },
+  {
     // Add listing_status column if missing (referenced by search queries)
     name: "businesses_listing_status_col",
     sql: `ALTER TABLE businesses
@@ -1780,8 +1787,9 @@ async function geocodeTourContent(
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) { warn("Geocode tour content: GOOGLE_MAPS_API_KEY not set — skipping"); return; }
 
-  async function geocodeAddress(address: string, city: string, state: string): Promise<{ lat: number; lng: number } | null> {
-    const query = [address, city, state].filter(Boolean).join(", ");
+  // Accepts optional country so international entries geocode correctly.
+  async function geocodeAddress(address: string, city: string, stateOrProvince: string | null, country?: string | null): Promise<{ lat: number; lng: number } | null> {
+    const query = [address, city, stateOrProvince, country].filter(Boolean).join(", ");
     try {
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
       const res = await fetch(url);
@@ -1799,16 +1807,16 @@ async function geocodeTourContent(
   const CAP = 60;
 
   try {
-    // Cultural sites with address but no lat/lng
+    // Cultural sites with address but no lat/lng — include country for international sites
     const sites = await pool.query(
-      `SELECT id, name, address, city, state FROM tour_cultural_sites
+      `SELECT id, name, address, city, state, province, country FROM tour_cultural_sites
        WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
        LIMIT $1`,
       [CAP]
     );
     for (const s of sites.rows) {
       if (geocoded >= CAP) break;
-      const coords = await geocodeAddress(s.address, s.city, s.state);
+      const coords = await geocodeAddress(s.address, s.city, s.province || s.state, s.country);
       if (coords) {
         await pool.query(`UPDATE tour_cultural_sites SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, s.id]);
         geocoded++;
@@ -1816,17 +1824,17 @@ async function geocodeTourContent(
       await sleep(100);
     }
 
-    // Community orgs with address but no lat/lng
+    // Community orgs — include country for international orgs
     if (geocoded < CAP) {
       const orgs = await pool.query(
-        `SELECT id, name, address, city, state FROM community_organizations
+        `SELECT id, name, address, city, state, province, country FROM community_organizations
          WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
          LIMIT $1`,
         [CAP - geocoded]
       );
       for (const o of orgs.rows) {
         if (geocoded >= CAP) break;
-        const coords = await geocodeAddress(o.address, o.city, o.state);
+        const coords = await geocodeAddress(o.address, o.city, o.province || o.state, o.country);
         if (coords) {
           await pool.query(`UPDATE community_organizations SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, o.id]);
           geocoded++;
@@ -1838,7 +1846,7 @@ async function geocodeTourContent(
     // Recurring events with venue + address but no lat/lng
     if (geocoded < CAP) {
       const evts = await pool.query(
-        `SELECT id, name, venue, address, city, state FROM recurring_events
+        `SELECT id, name, venue, address, city, state, province, country FROM recurring_events
          WHERE (address IS NOT NULL OR venue IS NOT NULL) AND (latitude IS NULL OR longitude IS NULL)
          LIMIT $1`,
         [CAP - geocoded]
@@ -1846,7 +1854,7 @@ async function geocodeTourContent(
       for (const e of evts.rows) {
         if (geocoded >= CAP) break;
         const addrQuery = e.address || e.venue || "";
-        const coords = await geocodeAddress(addrQuery, e.city, e.state);
+        const coords = await geocodeAddress(addrQuery, e.city, e.province || e.state, e.country);
         if (coords) {
           await pool.query(`UPDATE recurring_events SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, e.id]);
           geocoded++;
