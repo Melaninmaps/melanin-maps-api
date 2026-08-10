@@ -990,4 +990,40 @@ export const HBCU_COMPLETE_SEED: HBCUSeed[] = [
     description: "Founded in 1891 as the West Virginia Colored Institute, West Virginia State University became a fully integrated institution after World War II — one of the first HBCUs to desegregate — and today enrolls a majority-white student body while retaining its HBCU designation. WVSU was the home institution of Katherine Johnson, the Black mathematician whose orbital calculations were essential to NASA's Mercury and Apollo programs — a story brought to national attention by the film Hidden Figures. Johnson worked at WVSU before being recruited to NASA's Langley Research Center, where she became one of the most important mathematicians in American space exploration history.",
     significance: "Katherine Johnson — NASA mathematician whose calculations made the Mercury and Apollo programs possible, as documented in Hidden Figures — studied and worked at WVSU. Her story represents every Black intellectual whose genius was hidden from public view.",
   },
+
+  // ── ALABAMA (additional) ─────────────────────────────────────────────────
+
+  {
+    name: "Concordia College Alabama",
+    city: "Selma", state: "AL",
+    latitude: 32.4074, longitude: -87.0211,
+    externalUrl: "https://www.concordiaselma.edu",
+    founded: 1922, control: "private",
+    description: "Founded in 1922 by the Lutheran Church — Missouri Synod to serve the Black community of Selma, Alabama, Concordia College Alabama is a small private HBCU with deep roots in one of the most historically significant cities of the Civil Rights Movement. Selma is where Bloody Sunday took place on March 7, 1965, when state troopers attacked peaceful marchers on the Edmund Pettus Bridge — a turning point that led directly to the Voting Rights Act of 1965. Concordia continues its educational mission in this city that remains central to American memory of the struggle for Black suffrage and civil rights.",
+    significance: "Located in Selma, Alabama — site of Bloody Sunday (1965) and the march that precipitated the Voting Rights Act. Concordia College Alabama continues the educational mission of Black Lutheran higher education in one of America's most historically charged cities.",
+  },
+
+  // ── INDIANA ──────────────────────────────────────────────────────────────
+
+  {
+    name: "Martin University",
+    city: "Indianapolis", state: "IN",
+    latitude: 39.7828, longitude: -86.0864,
+    externalUrl: "https://www.martin.edu",
+    founded: 1977, control: "private",
+    description: "Founded in 1977 by Father Boniface Hardin, a Benedictine monk, Martin University was created specifically to serve Indianapolis's inner-city Black community — adults who had been bypassed by traditional higher education. It is one of the youngest HBCUs in the United States and the only HBCU in Indiana. Martin University's founding philosophy centers on the belief that higher education must go to the community rather than waiting for the community to come to it, offering flexible schedules and community-centered programs for working adults, formerly incarcerated individuals, and others shut out of traditional pathways.",
+    significance: "The only HBCU in Indiana and one of the youngest in the country, Martin University was founded in 1977 to bring higher education directly to Indianapolis's inner-city Black community — adults shut out of traditional pathways. Its founding philosophy remains radical: the university goes to the community.",
+  },
+
+  // ── SOUTH CAROLINA (additional) ─────────────────────────────────────────
+
+  {
+    name: "Clinton College",
+    city: "Rock Hill", state: "SC",
+    latitude: 34.9249, longitude: -81.0251,
+    externalUrl: "https://www.clintoncolleges.edu",
+    founded: 1894, control: "private",
+    description: "Founded in 1894 by the African Methodist Episcopal Zion (AMEZ) Church, Clinton College is a small private HBCU in Rock Hill, South Carolina. Rock Hill sits along the North Carolina border in the Piedmont region and has its own civil rights history — the Friendship Nine, a group of Winthrop College students and one YMCA worker, staged a sit-in at a McCrory's lunch counter in 1961 and chose 'jail, no bail,' a tactic that shifted the civil rights movement's approach to protest and incarceration. Clinton College continues the AMEZ Church's 130-year educational mission to the Black community of the Carolina Piedmont.",
+    significance: "Founded in 1894 by the African Methodist Episcopal Zion Church, Clinton College is a 130-year institution of the Carolina Piedmont. Rock Hill is where the Friendship Nine's 'jail, no bail' sit-in (1961) transformed the civil rights movement's relationship with incarceration as protest.",
+  },
 ];
