@@ -150,7 +150,7 @@ export default function BusinessDetail() {
   useEffect(() => {
     if (!id) return;
     const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/businesses/${id}/contributions`)
+    fetch(`${apiBase}/api/businesses/${id}/contributions`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (Array.isArray(d?.contributions)) setCommunityVibes(d.contributions); })
       .catch(() => {});
