@@ -1,0 +1,318 @@
+Yes — **this is the Manus audit.** I reviewed it, and it is extremely useful because it finally gives us an independent view of the actual production experience rather than relying only on Replit's implementation reports. Manus tested the live site on August 10 using the tester account. 
+
+The biggest takeaway is: **do not send Replit the entire Manus report and say "fix everything."** Some Manus findings are legitimate defects, some are expected because the community is new, and a few conflict with deliberate decisions we made.
+
+### The one P0: Kinfolk
+
+This is the serious problem.
+
+Manus tried Bangkok/Phuket, a simpler Bangkok restaurant query, **and Philadelphia**, and all three returned the same failure. Manus therefore classified Kinfolk as a complete backend failure. 
+
+That needs to stop everything else Replit is doing **long enough to diagnose it**. We just spent significant time building the knowledge graph, provenance tiers, Library retrieval, Big Cousin behavior and Kinfolk personalization. None of that matters if production chat cannot answer.
+
+Importantly: **do not let Replit guess-fix it.** We need the production request trace.
+
+### Several P1 findings are also real
+
+Search relevance is not good enough yet. `"hair store Philadelphia"` produced businesses from many other states and even irrelevant businesses such as a brewery, remodeling company and juice bar. 
+
+Faith search is partially working—which is actually good proof that yesterday's architecture is doing something—but it mixes historical churches, an HBCU and Ethiopian restaurants with actual houses of worship. Manus correctly identifies the distinction we discussed: **"historic Black church" and "church I can attend Sunday" are different intents.** 
+
+The Library is also not exposing what Replit told us it built. Production shows essentially an "Articles coming soon" shell, and Browse Topics/Happening Now do not expose the knowledge graph experience we just approved. 
+
+Connections apparently spins indefinitely rather than presenting an empty state. 
+
+And business pages are still missing much of the experience you're trying to demonstrate tomorrow: imagery, phone/site/social information, hours, and some of the community/safety intelligence we've designed. 
+
+### Things I would **not** have Replit "fix" from Manus
+
+Manus calls the member wall a "significant UX barrier." 
+
+**That is not a defect.** We literally just made that change intentionally. During this controlled launch, non-members are not supposed to search the map, businesses, Library, etc. Leave the member wall alone.
+
+An empty Marketplace is also not a production emergency. The platform is new. We don't need fake marketplace listings simply so the screen doesn't look empty. We need a good genuine empty state inviting members to contribute. 
+
+Likewise, I would **not** invent community content, reviews, testimonials, ambassador content or community evidence just to populate screens. That would violate the provenance rules we just established.
+
+And the onboarding criticism is valid eventually, but **not before Kinfolk/search/Library work**. Manus repeatedly notes the absence of first-time onboarding.  We already have plans for Kinfolk onboarding/profile memory. Don't let Replit build another disconnected onboarding wizard tonight.
+
+---
+
+## Send this to Replit now
+
+```text
+MANUS PRODUCTION AUDIT RECEIVED — TRIAGE DIRECTIVE
+
+We now have an independent production audit.
+
+DO NOT attempt to fix every item in the Manus report.
+DO NOT create a new backlog of speculative tasks.
+DO NOT redesign working systems.
+
+The founder needs production stable for active field use.
+
+============================================================
+P0 — KINFOLK PRODUCTION FAILURE
+============================================================
+
+STOP feature development temporarily and diagnose this FIRST.
+
+Manus tested at least:
+
+1. Bangkok / Phuket trip request
+2. Bangkok restaurant request
+3. Philadelphia food request
+
+ALL returned:
+
+"Kinfolk is having trouble answering that right now. Try again."
+
+This means we cannot classify this as missing Bangkok data.
+
+It appears to be a production Kinfolk execution failure.
+
+FORENSIC TRACE ONLY FIRST.
+
+Trace one failed production request completely:
+
+browser
+→ Kinfolk endpoint
+→ authentication
+→ request body
+→ profile/preferences retrieval
+→ knowledge graph context retrieval
+→ system prompt construction
+→ AI provider request
+→ provider response/error
+→ server parsing
+→ response returned to client
+
+Return:
+
+HTTP status
+server error
+provider error
+model requested
+API credential presence (YES/NO only — NEVER print secret)
+timeout status
+knowledge graph context status
+database errors
+token/context-size errors
+client timeout
+server timeout
+
+CLASSIFY ROOT CAUSE BEFORE WRITING A FIX.
+
+Then make the smallest safe repair.
+
+Acceptance tests MUST include:
+
+A. "Where should I eat in Philadelphia?"
+B. "Tell me about Black history in Philadelphia."
+C. "Help me plan things to do in Bangkok for my friend's birthday."
+D. "Find Ethiopian food in Philadelphia."
+E. one personalized query using tester profile/preferences.
+
+Kinfolk must return an actual answer for all five.
+
+For Bangkok, absence of MWM listings is NOT permission to fail.
+Kinfolk should use its broader research/retrieval capability where permitted,
+clearly distinguish MWM/community evidence from external information,
+and honestly identify when MWM has no community evidence yet.
+
+============================================================
+P1 — UNIVERSAL SEARCH RELEVANCE
+============================================================
+
+After Kinfolk passes:
+
+Investigate Manus test:
+
+"hair store Philadelphia"
+
+It returned geographically distant and categorically irrelevant results,
+including businesses such as a brewery, remodeling business and juice bar.
+
+Expected ranking hierarchy should strongly consider:
+
+1. semantic/intention match
+2. explicit location
+3. exact specialty/product/service
+4. distance/location relevance
+5. MWM/community relevance
+6. broader alternatives only AFTER good local matches are exhausted
+
+Do not return irrelevant businesses merely to avoid zero results.
+
+A truthful fallback is better than junk.
+
+============================================================
+P1 — FAITH INTENT DISTINCTION
+============================================================
+
+Current "church" search proves faith intent detection works.
+
+DO NOT remove historic church discovery.
+
+Improve intent distinction between:
+
+"historic Black churches"
+vs
+"church near me"
+vs
+"church to attend Sunday"
+vs
+"AME church"
+vs
+"Black Catholic church"
+vs
+"church history"
+
+Historical sites may appropriately appear for historical intent.
+
+Attendance intent should prioritize ACTIVE houses of faith.
+
+Do not allow restaurants named after religious places to outrank actual
+houses of faith for attendance intent.
+
+============================================================
+P1 — LIBRARY PRODUCTION SURFACING
+============================================================
+
+Manus reports production Library currently appears essentially empty:
+
+"Articles coming soon"
+
+and Browse Topics / Happening Now do not expose the graph experience.
+
+This conflicts with the Knowledge Graph/Library work reported as completed.
+
+FORENSICALLY determine whether:
+
+A. new Library panel was never deployed
+B. route still renders legacy Library component
+C. API data exists but UI is not consuming it
+D. feature flag is preventing rendering
+E. auth/tier logic is hiding it
+F. production DB lacks expected relationships
+G. other
+
+Do not rebuild the Library.
+
+Prove why the existing graph work is not visible first.
+
+Acceptance:
+
+Philadelphia
+→ Philadelphia Black History
+→ sources/provenance
+→ Mother Bethel connection
+
+must be navigable through the Library.
+
+Remember architectural rule:
+
+Library is the knowledge foundation.
+Users do NOT have to enter the Library to benefit from it.
+
+============================================================
+P1 — CONNECTIONS LOADING STATE
+============================================================
+
+Manus reports Connections displays an indefinite spinner with zero
+connections.
+
+Diagnose whether request is hanging or whether UI lacks zero-state handling.
+
+If the account legitimately has zero connections, render an intentional
+empty state — never an infinite spinner.
+
+============================================================
+P1 — BUSINESS DETAIL COMPLETENESS
+============================================================
+
+Do NOT fabricate missing business information.
+
+Audit why known fields are not appearing when they exist:
+
+photos/media
+phone
+website
+social URLs
+hours
+community intelligence
+safety/review metrics
+
+Distinguish:
+
+DATA DOES NOT EXIST
+from
+DATA EXISTS BUT UI DOES NOT DISPLAY IT.
+
+Only fix the second automatically.
+
+Missing data should provide appropriate community/business-owner contribution
+prompts.
+
+============================================================
+DO NOT CHANGE
+============================================================
+
+1. MEMBER WALL
+
+Manus criticized gated access.
+
+THIS IS INTENTIONAL AND NONNEGOTIABLE DURING CONTROLLED LAUNCH.
+
+Anonymous visitors receive marketing/public website information only.
+
+Do not reopen member-only discovery.
+
+2. DO NOT CREATE FAKE CONTENT
+
+Do not seed fake:
+community posts
+reviews
+ambassador recommendations
+marketplace listings
+testimonials
+community evidence
+
+Empty states should invite authentic participation.
+
+3. DO NOT BUILD A NEW ONBOARDING SYSTEM TONIGHT
+
+Onboarding improvements are valid but secondary.
+
+Existing Kinfolk preference/profile architecture remains canonical.
+
+4. DO NOT REDESIGN THE PLATFORM FROM MANUS OPINIONS
+
+Treat the audit as evidence, not product authority.
+
+============================================================
+REPORT BACK AT CHECKPOINT
+============================================================
+
+Return after P0 Kinfolk diagnosis and repair with:
+
+ROOT CAUSE
+FIX
+PRODUCTION SHA
+5 KINFOLK ACCEPTANCE RESULTS
+ERROR LOG STATUS
+
+Then STOP for founder review before moving through the P1 findings.
+
+Do not generate additional suggested tasks.
+```
+
+### And one thing that actually makes me feel better
+
+Manus independently found some of your distinctive ideas **working well**. The Safety Hub changed Kinfolk's language to *"I'm here if you need me"* in context, which Manus specifically praised. 
+
+And on the Ethiopian restaurant page, Manus called your culturally specific Community Vibes **"EXCELLENT and culturally resonant."** 
+
+So this audit isn't telling us the concept failed. It's showing something much more actionable: **the architecture has gotten considerably ahead of the production connections between the pieces.**
+
+That's exactly why doing this independent audit before you start walking into businesses was worth it.
