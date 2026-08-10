@@ -1237,6 +1237,123 @@ END $seed$`,
         UPDATE users SET must_change_password = true WHERE email = 'tester@mwm.com';
       END $$`,
   },
+
+  // ── Business schema sync — adds every column the Drizzle schema defines
+  //    that may be missing from older Railway deployments.  All ADD COLUMN IF
+  //    NOT EXISTS so this is fully idempotent.
+  {
+    name: "businesses_schema_sync_v1",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS vibes JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS verified_designations JSONB NOT NULL DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS diaspora_countries JSONB DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS safety_rating NUMERIC(3,1),
+      ADD COLUMN IF NOT EXISTS would_return_alone INTEGER,
+      ADD COLUMN IF NOT EXISTS recommendation_rate INTEGER,
+      ADD COLUMN IF NOT EXISTS instagram VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS tiktok VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS facebook VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS twitter VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS youtube VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS pinterest VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS primary_social_platform VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS business_tagline VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS owner_name VARCHAR(150),
+      ADD COLUMN IF NOT EXISTS owner_bio TEXT,
+      ADD COLUMN IF NOT EXISTS owner_story TEXT,
+      ADD COLUMN IF NOT EXISTS current_location_since VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS business_founded_date VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS return_policy TEXT,
+      ADD COLUMN IF NOT EXISTS seller_agreement_accepted_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS stripe_connect_account_id VARCHAR,
+      ADD COLUMN IF NOT EXISTS submitted_by_id VARCHAR,
+      ADD COLUMN IF NOT EXISTS promoted_until TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS founding_business BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS founding_number INTEGER,
+      ADD COLUMN IF NOT EXISTS founding_granted_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS business_trial_started_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS locked_fee NUMERIC(5,4),
+      ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS fee_source VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS promotion_expiration_date TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS membership_renewal_date TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS referred_by_code VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS intro_video_url VARCHAR(512),
+      ADD COLUMN IF NOT EXISTS featured_video_url VARCHAR(512),
+      ADD COLUMN IF NOT EXISTS featured_video_title VARCHAR(150),
+      ADD COLUMN IF NOT EXISTS featured_video_purpose VARCHAR(60),
+      ADD COLUMN IF NOT EXISTS weekly_schedule JSONB,
+      ADD COLUMN IF NOT EXISTS hidden_gem_label VARCHAR(60),
+      ADD COLUMN IF NOT EXISTS hidden_gem_category VARCHAR(60),
+      ADD COLUMN IF NOT EXISTS hidden_gem_tagline VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS hidden_gem_since TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS hidden_gem_expires_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS target_audience JSONB,
+      ADD COLUMN IF NOT EXISTS reference_category VARCHAR(30),
+      ADD COLUMN IF NOT EXISTS is_parent_listing BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS parent_business_id VARCHAR,
+      ADD COLUMN IF NOT EXISTS location_name VARCHAR`,
+  },
+
+  // ── business_captions table — stores AI-generated or community captions
+  //    for businesses.  Used by the GET /businesses list endpoint to annotate
+  //    search results with short contextual blurbs.
+  {
+    name: "business_captions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_captions (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      business_id VARCHAR(255) NOT NULL,
+      user_id VARCHAR(255),
+      caption VARCHAR(255) NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+
+  // ── Philadelphia nightlife venues — 7 Black-owned or community-affirming
+  //    spots seeded for the Manus audit.  Idempotent: skips existing rows.
+  {
+    name: "philly_nightlife_seed_v1",
+    sql: `
+      INSERT INTO businesses
+        (id, name, category, subcategory, address, city, state,
+         description, ownership_designations, black_owned,
+         latitude, longitude,
+         listing_status, profile_status, status,
+         rating, review_count, verified, featured,
+         confidence_score, tags, photos, pending_photos, videos,
+         trust_badges, flag_count, flag_status, hidden_gem_nominations,
+         marketplace_tier, business_status, marketplace_fee_locked,
+         promotion_eligible, feedback_opt_in, show_availability,
+         community_audience_type, is_reference_only,
+         created_at, updated_at)
+      SELECT
+        gen_random_uuid()::text, v.name, 'Entertainment & Recreation', 'Nightlife & Bars',
+        v.address, 'Philadelphia', 'PA',
+        v.description, '["black-owned"]'::jsonb, TRUE,
+        v.lat, v.lng,
+        'live_unclaimed','community_listed','active',
+        0,0,FALSE,FALSE,
+        30,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,'[]'::jsonb,
+        '[]'::jsonb,0,'none',0,
+        'free','community',FALSE,
+        TRUE,FALSE,FALSE,
+        'adults_21plus',FALSE,
+        NOW(),NOW()
+      FROM (VALUES
+        ('Eight Twelve Lounge', '812 N Broad St', 'Upscale Black-owned lounge on North Broad. Known for craft cocktails, private events, and a welcoming vibe for the community.', 39.9662, -75.1636),
+        ('Stinger La Pointe', '1535 S 11th St', 'Beloved South Philly neighborhood bar with strong community roots and late-night energy.', 39.9234, -75.1581),
+        ('Smokin'' Silverbacks', '2600 W Girard Ave', 'Casual sports bar and grill in West Philly with authentic community flavor.', 39.9712, -75.1814),
+        ('The Saints', '4 S 40th St', 'West Philadelphia bar and community gathering space known for its inclusive atmosphere.', 39.9552, -75.2013),
+        ('Honeysuckle', '2201 Walnut St', 'Rittenhouse-area cocktail bar known for its artful drinks and community-centered service.', 39.9528, -75.1757),
+        ('Black Squirrel Club', '3901 Locust Walk', 'Intimate University City spot with a loyal community following and late-night hours.', 39.9521, -75.2018),
+        ('Midnight & The Wicked', '1701 Point Breeze Ave', 'Point Breeze late-night spot with a signature dark ambiance and craft cocktail program.', 39.9311, -75.1762)
+      ) AS v(name, address, description, lat, lng)
+      WHERE NOT EXISTS (
+        SELECT 1 FROM businesses b
+        WHERE LOWER(b.name) = LOWER(v.name)
+          AND LOWER(b.city) = 'philadelphia'
+      )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
