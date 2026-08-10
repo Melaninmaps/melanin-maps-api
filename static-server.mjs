@@ -219,6 +219,9 @@ if (WEB_STATIC) {
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.setHeader("Pragma", "no-cache");
         res.setHeader("Expires", "0");
+      } else if (filePath.includes("/assets/")) {
+        // Content-hashed filenames (Vite fingerprinting) — safe to cache for 1 year
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       }
     },
   }));
