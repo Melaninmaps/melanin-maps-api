@@ -1,0 +1,560 @@
+Yes. At this point **stop offering you follow-up tasks and product decisions that are already implied by the parity requirement.** Replit has enough information to finish this.
+
+There is also one important correction: **`MANUS TEST READY: YES` is premature** while Railway is still deploying and while known web capabilities are missing. It should become YES only after the actual production website passes the end-to-end test.
+
+Send Replit this exactly:
+
+```text
+P0 — MANUS READINESS COMPLETION
+NO MORE SUGGESTED TASKS. CLOSE THE GAPS NOW.
+
+The founder is authorizing completion of ALL remaining Profile/web parity gaps
+that are already supported by the approved product architecture.
+
+Do not return more:
+"Should I build this?"
+"Do you want this on web?"
+"Suggested task #..."
+
+The answer is:
+
+IF IT EXISTS IN THE CURRENT APPROVED MOBILE EXPERIENCE AND IS NOT
+INHERENTLY MOBILE-ONLY, PROVIDE FUNCTIONAL WEB PARITY.
+
+Audit → reuse existing backend → implement → test → continue.
+
+The founder needs to hand the website to Manus for a comprehensive audit tonight.
+
+============================================================
+FIRST — CORRECT THE STATUS
+============================================================
+
+Do NOT report:
+
+MANUS TEST READY: YES
+
+until:
+
+1. Railway deployment is complete
+2. correct production SHA is confirmed
+3. production web bundle is confirmed
+4. authenticated tester login works on www.mappingwithmelanin.com
+5. Profile parity is production-tested
+6. Saved Places is production-tested
+7. Kinfolk personalization is production-tested
+8. web community media contribution is production-tested
+9. business/directory search is production-tested
+
+Until then:
+
+MANUS TEST READY = NO — FINAL VERIFICATION IN PROGRESS
+
+============================================================
+1. RESOLVE ALL SIX "FOUNDER DECISION" PROFILE GAPS NOW
+============================================================
+
+The parity objective already answers these questions.
+
+IMPLEMENT:
+
+A. RECOMMENDED SPOTS
+Yes — add appropriate web Profile access.
+
+Reuse existing API/data.
+
+B. FAMILY CIRCLE
+Yes — provide functional web access if this is an approved current mobile
+capability.
+
+Do not create a second Family Circle data model.
+
+C. CREATOR / CULTURAL AMBASSADOR PROFILE
+Yes — build the web route/view using the existing backend.
+
+It should appear only for users entitled to that capability.
+
+D. COMMUNITY COMPOSER
+Yes — community members must be able to contribute from web.
+
+The composer does not have to dominate the Profile page.
+
+If the cleanest UX is:
+Profile → My Activity / Contributions → Create Post
+or a link into the Community composer,
+that is acceptable.
+
+Functional parity matters more than pixel duplication.
+
+E. MY IMPACT THIS MONTH
+Yes — include it where existing real data supports it.
+
+Do NOT fabricate missing analytics.
+
+If only some metrics are currently available, show only those metrics and
+label unsupported portions as not yet available rather than inventing data.
+
+F. PINNED HEALTH TOPICS
+Yes — provide PRIVATE web Profile access.
+
+These are sensitive.
+
+Default visibility must remain private.
+
+Do not expose them to:
+other users
+businesses
+Cultural Ambassadors
+public Profile
+unrelated Kinfolk contexts
+
+Kinfolk use remains subject to the approved sensitive-context permission rules.
+
+============================================================
+2. AUDIT THE FOUR "INTENTIONALLY MOBILE-ONLY" ITEMS
+============================================================
+
+Return the four exact capabilities currently classified as intentionally
+mobile-only.
+
+For each ask internally:
+
+IS THIS ACTUALLY DEPENDENT ON MOBILE HARDWARE / OS?
+
+Examples of legitimately mobile-specific behavior might include:
+device-native integrations that cannot reasonably exist on desktop.
+
+If NO:
+implement equivalent web access now.
+
+Do not classify something as mobile-only merely because nobody built the web UI.
+
+No founder checkpoint is required unless moving it to web creates a genuine
+privacy/security/product conflict.
+
+============================================================
+3. BUILD COMMUNITY MEDIA COMPOSER NOW
+============================================================
+
+This is NOT deferred.
+
+The founder specifically needs media contribution for:
+
+Philadelphia
+North Carolina
+Bangkok
+Phuket
+tour expansion
+
+and Manus must be able to test it.
+
+Create web member composer support for approved media methods.
+
+At minimum support:
+
+TEXT POST
++
+IMAGE URL
++
+VIDEO URL
++
+INSTAGRAM URL
++
+TIKTOK URL
++
+YOUTUBE URL
++
+other already-approved social URL types
+
+Where direct upload is genuinely production-compatible, also support:
+
+DIRECT PHOTO
+DIRECT VIDEO according to appropriate size/security limits.
+
+============================================================
+4. VERIFY STORAGE BEFORE CLAIMING DIRECT UPLOAD WORKS
+============================================================
+
+IMPORTANT HISTORICAL ISSUE:
+
+We previously established that Replit Object Storage originally relied on the
+Replit sidecar and did not work automatically on Railway.
+
+Therefore:
+
+DO NOT say direct upload works merely because:
+
+the API exists
+or
+object_storage code exists.
+
+Trace the CURRENT production implementation.
+
+For Railway answer:
+
+storage provider
+authentication method
+bucket/provider
+production credentials/configuration
+write test
+read test
+returned public/media URL
+persistence after refresh
+
+If current Railway-compatible storage has since been implemented:
+prove it.
+
+If it has NOT:
+do not block SOCIAL URL media contribution.
+
+Enable the URL/social-media path now and clearly mark direct binary upload as
+the remaining infrastructure gap.
+
+Do not create a second throwaway storage architecture tonight.
+
+============================================================
+5. TESTER MEDIA ENTITLEMENT
+============================================================
+
+During the current controlled testing period:
+
+ACTIVE APPROVED TESTERS
+must be able to test ordinary community media contribution.
+
+Do not require a tester to become a Cultural Ambassador or Business Owner merely
+to contribute a community photo/video/social link.
+
+Preserve the distinction:
+
+COMMUNITY PARTICIPATION
+≠
+PROFESSIONAL ANALYTICS ENTITLEMENT
+
+Businesses and Cultural Ambassadors may receive additional analytics/tools.
+
+They do not own the basic right to participate.
+
+============================================================
+6. PROFILE → CONTRIBUTIONS
+============================================================
+
+The website Profile should allow the member to understand their own activity.
+
+Where supported, include:
+
+My Posts
+My Media
+My Reviews
+My Recommendations
+My Community Contributions
+My Library Contributions
+My Saved Items
+My Events/RSVPs
+
+Only show sections containing approved/current functionality.
+
+The user must be able to understand:
+
+what I contributed
+where I contributed it
+whether it is public/private
+whether I can edit/remove it
+
+============================================================
+7. SAVED PLACES — PRODUCTION ACCEPTANCE
+============================================================
+
+DEV VERIFIED is not sufficient.
+
+Using the actual production tester account:
+
+1. login
+2. open existing business
+3. Save
+4. visible saved state
+5. refresh
+6. still saved
+7. Profile → Saved → appears
+8. open item from Profile
+9. logout
+10. login again
+11. save still exists
+12. ask Kinfolk a contextually relevant question
+13. prove the saved entity is available as an explicit preference signal
+14. unsave
+15. Profile updates
+16. no duplicate save rows
+
+Repeat with one cultural site if that entity type supports Saves.
+
+============================================================
+8. KINFOLK PROFILE TEST
+============================================================
+
+On production web perform:
+
+TEST A — PREFERENCE
+
+Change a normal Profile/Kinfolk preference.
+Ask a related Kinfolk question.
+Confirm updated preference is available.
+
+TEST B — SAVE
+
+Save a business.
+Ask a related recommendation.
+Confirm Kinfolk can retrieve the saved signal.
+
+TEST C — LIBRARY
+
+Follow a Library Book/topic.
+Ask a related Kinfolk question.
+Confirm graph/topic relationship is available.
+
+TEST D — SENSITIVE CONTEXT
+
+Use a designated test-only sensitive topic.
+Confirm privacy/permission rules prevent inappropriate cross-context disclosure.
+
+Do not use real founder-sensitive information for this test.
+
+TEST E — PERSONA
+
+Business Owner capability:
+correct additional Profile controls.
+
+Cultural Ambassador capability:
+correct additional Profile controls.
+
+Admin:
+correct administrative access.
+
+Tester:
+testing entitlement applies without becoming another persona.
+
+============================================================
+9. DIRECTORY / UNIVERSAL SEARCH PRODUCTION TEST
+============================================================
+
+The Businesses/Directory page was just found to be using legacy search.
+
+Do not give Manus the website until the new search is actually deployed.
+
+Production-test:
+
+Churches in Philadelphia PA
+Mother Bethel
+historic Black churches Philadelphia
+OBGYN Philadelphia
+plumber Philadelphia
+Ethiopian restaurant Philadelphia
+Fruity Pebble waffles
+
+Verify:
+
+Enter works
+Search button works
+backend search used
+no first-100-record limitation
+entity type correct
+no unrelated fuzzy garbage
+honest fallback
+no silent "0 businesses found"
+
+============================================================
+10. LIBRARY PRODUCTION TEST
+============================================================
+
+Production-test:
+
+Philadelphia
+
+It must NOT say:
+
+No topics found
+Request Philadelphia as a topic
+
+if Philadelphia already exists in the canonical graph.
+
+Confirm the production Library can surface:
+
+Philadelphia
+Philadelphia Black History
+Philadelphia History
+Philadelphia Nightlife
+Philadelphia Businesses
+Philadelphia Employment
+Philadelphia Faith
+Philadelphia Real Estate
+
+Then open Philadelphia Black History.
+
+Prove:
+sources
+Mother Bethel entity connection
+related topic
+Knowledge Panel
+community contribution path
+
+============================================================
+11. PROFILE FUNCTIONAL PARITY ACCEPTANCE
+============================================================
+
+Use the 47-capability inventory already created.
+
+Re-run the matrix after implementation.
+
+Every item must end as one of:
+
+PRODUCTION VERIFIED
+INTENTIONALLY MOBILE-ONLY — TECHNICAL REASON DOCUMENTED
+NOT CURRENTLY SUPPORTED BY BACKEND — CLEARLY DOCUMENTED
+
+There should be NO:
+
+"Founder decision required"
+
+for capabilities whose decision is already established by functional parity.
+
+============================================================
+12. PERSONA TEST ACCOUNTS
+============================================================
+
+Prepare Manus to test:
+
+REGULAR MEMBER
+BUSINESS OWNER
+CULTURAL AMBASSADOR
+ADMIN
+TESTER
+
+Use the smallest safe number of canonical accounts/configurations.
+
+Do not unnecessarily create five independent identities if role/status switching
+can safely represent the experience.
+
+Never change a persona in a way that destroys another role/status.
+
+============================================================
+13. SECURITY — TEST CREDENTIAL
+============================================================
+
+A tester credential has already been supplied for the Manus audit.
+
+Do NOT repeat the password in:
+logs
+reports
+screenshots
+task documentation
+commit messages
+test output
+
+After the Manus audit is complete, the temporary/shared password should be
+rotated.
+
+Do not create more widely shared static passwords unnecessarily.
+
+============================================================
+14. RAILWAY DEPLOYMENT
+============================================================
+
+Once the consolidated gate passes:
+
+Follow the documented production push procedure EXACTLY.
+
+Then verify:
+
+production SHA
+production bundle
+database migrations
+/api/version or equivalent
+homepage
+Profile
+Library
+Directory
+Map
+Kinfolk
+Community
+
+VISUALLY TEST THE REAL PUBLIC WEBSITE.
+
+Do not stop at curl/API proof.
+
+============================================================
+15. MANUS HANDOFF PACKAGE
+============================================================
+
+Once all production tests pass, return ONE final concise package:
+
+MANUS TEST READY: YES
+
+PRODUCTION SHA:
+WEB BUNDLE:
+
+PERSONAS AVAILABLE:
+Regular Member
+Tester
+Business Owner
+Cultural Ambassador
+Admin
+
+CORE FLOWS VERIFIED:
+Auth
+Profile
+Saved
+Community
+Media
+Directory
+Map
+Library
+Kinfolk
+
+KNOWN LIMITATIONS:
+ONLY genuine remaining limitations — no suggested future features.
+
+TEST ACCOUNT:
+identify email/username only.
+
+DO NOT print the password.
+
+Then provide a short recommended Manus test sequence.
+
+============================================================
+EXECUTION RULE
+============================================================
+
+DO NOT STOP AFTER EACH FIX.
+
+DO NOT PROPOSE MORE TASKS.
+
+DO NOT ASK WHETHER TO BUILD EXISTING APPROVED PARITY FEATURES.
+
+MOVE.
+
+Run independent work in parallel.
+
+Fix → test → continue.
+
+Stop only for:
+
+DESTRUCTIVE DATA CHANGE
+ACCOUNT MERGE
+NEW PAID INFRASTRUCTURE/VENDOR
+UNRESOLVABLE PRIVACY/SECURITY CONFLICT
+or the standing production deployment authorization if still required.
+
+The objective tonight is:
+
+MANUS TEST READY: YES
+
+based on ACTUAL PRODUCTION PROOF.
+
+Not dev proof.
+Not code existence.
+Not assumptions.
+```
+
+And from me as PM: **I would not add another major feature tonight.** This is now a closure sprint. Replit has enough backlog and enough architecture. Tonight should be about turning all those `DEV VERIFIED` labels into a dependable production experience and giving Manus a clean environment to attack.
+
+Also, you don't need to stay awake watching Replit produce a paragraph after every fix. The instruction above specifically tells it to continue through ordinary non-destructive work and come back with **one consolidated Manus-ready result**. The only things worth interrupting you for tonight are a true destructive-data decision, security conflict, required paid infrastructure change, or the final production gate.
+
+One security note: because a test password was pasted into the conversation and presumably may also appear in Replit context, **rotate that temporary Manus password once the audit is finished**. There is no need to disrupt tonight's test setup solely for that, but it should not become a permanent credential.
