@@ -225,6 +225,9 @@ export default function Login() {
                     onChange={e => setForceNewPw(e.target.value)}
                     placeholder="At least 8 characters"
                     className="w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white pr-11"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     required
                     minLength={8}
                   />
@@ -241,6 +244,9 @@ export default function Login() {
                   onChange={e => setForceConfirmPw(e.target.value)}
                   placeholder="Type it again"
                   className="w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   required
                 />
               </div>
@@ -335,6 +341,9 @@ export default function Login() {
                       placeholder="Your password"
                       className={`${inputClass} pr-11`}
                       autoComplete="current-password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       required
                     />
                     <button
