@@ -1,0 +1,403 @@
+You’re right to be cautious here. **Do not “fix” this by reseeding or replacing the Library.** The screenshots show the Library shell and hierarchy are working, but the **content retrieval/source layer is not populated or not connected to the rendered Books**. That is a much safer problem than a broken Library.
+
+What I see in your screenshots is actually useful evidence:
+
+* the **Collection grid is working**
+* the **Education collection drills down correctly**
+* the individual Book panel opens
+* the Book knows its title/description
+* but it says **“We’re building this Book”** and **“No verified sources exist for this topic yet”**
+
+So the likely gap is not the taxonomy itself. The gap is **source/content population and/or source-to-topic connections**.
+
+And I agree with your second point: this does **not** look like the entire intentional Library we planned from tester demand. I would not ignore that, but I also would not let Replit respond by dumping hundreds of topics into production without checking what already exists.
+
+Send Replit this:
+
+```text
+P0/P1 LIBRARY CONTENT RECOVERY + COMPLETENESS AUDIT
+DO NOT REBUILD OR REPLACE THE CURRENT LIBRARY
+
+The current Library UI and Collection hierarchy are working and should be
+preserved.
+
+Founder manually verified in production:
+
+- Collection grid renders correctly
+- Collection drill-down works
+- Book panel opens
+- Book titles/descriptions render
+- Follow button renders
+
+BUT:
+
+Books currently show:
+
+"We're building this Book"
+"No verified sources exist for this topic yet"
+
+This means the Library STRUCTURE is working but the CONTENT / SOURCE layer is
+not producing usable knowledge.
+
+DO NOT DROP TABLES.
+DO NOT RESEED FROM SCRATCH.
+DO NOT REPLACE THE CURRENT TAXONOMY.
+DO NOT DELETE EXISTING topics, relationships, follows, entity connections,
+or contributor data.
+
+We need a FORENSIC CONTENT AUDIT FIRST.
+
+============================================================
+1. DETERMINE EXACTLY WHAT IS MISSING
+============================================================
+
+For a sample of current production Books, trace:
+
+Book
+→ knowledge_topics row
+→ topic_relationships
+→ knowledge_sources
+→ library_entity_connections
+→ knowledge articles / generated summaries if applicable
+→ Library panel rendering
+
+Test at minimum:
+
+HBCU Admissions & Scholarships
+FAFSA & Financial Aid Navigation
+First-Generation College Students
+Philadelphia Black History
+Philadelphia
+Diabetes
+Alpha Kappa Alpha
+AME
+Kenya if present
+
+For each return:
+
+TOPIC EXISTS?
+COLLECTION RELATIONSHIP EXISTS?
+SOURCES COUNT?
+SOURCE TIERS?
+ENTITY CONNECTION COUNT?
+ARTICLE/CONTENT COUNT?
+UI RETRIEVAL ENDPOINT?
+UI RECEIVES CONTENT?
+WHY EMPTY?
+
+Classify root cause for each as:
+
+A. Topic exists, no sources seeded
+B. Sources exist but not connected
+C. Sources connected but retrieval endpoint excludes them
+D. Retrieval works but UI does not render them
+E. Production migration/data missing
+F. Topic exists only as shell
+G. Other
+
+============================================================
+2. AUDIT THE ENTIRE ORIGINAL LIBRARY INVENTORY
+============================================================
+
+The current visible Library does NOT appear to contain the full intentional
+Library foundation previously designed from tester needs and founder requests.
+
+Do not assume the current 11 Collections / current visible Books equal the
+approved full Library.
+
+Search:
+
+database
+migrations
+seed files
+constants
+earlier knowledge_topics
+Library taxonomy files
+project memory/specifications
+
+Return a MASTER INVENTORY of every existing or previously approved Library
+topic/book.
+
+Group by:
+
+Collection
+Canonical Book
+Subtopic
+Geography
+Status
+
+Status:
+
+LIVE
+EXISTS IN DB BUT NOT UI
+EXISTS IN CODE/SEED BUT NOT PROD
+APPROVED SPEC BUT NOT SEEDED
+DUPLICATE/ALIAS
+MISSING
+
+Do NOT create anything yet.
+
+============================================================
+3. PRESERVE THE PURPOSEFUL TESTER-DRIVEN LIBRARY
+============================================================
+
+The founder intentionally developed Library topics from actual tester/user
+needs.
+
+Those topics must NOT be lost simply because a new Collection hierarchy was
+added.
+
+Compare the current production Library against prior approved topic groups,
+including at minimum:
+
+diaspora/country topics
+travel
+health
+fertility/IVF and related health topics
+employment/career
+finance
+family
+education
+faith/spirituality
+community
+business
+history
+culture
+Divine Nine
+digital/technology
+legal/practical resources
+relocation
+safety
+professional services
+other previously seeded user-demand topics
+
+Return anything missing.
+
+Do not overwrite old topics with new generalized categories.
+
+============================================================
+4. CONTENT POPULATION STANDARD
+============================================================
+
+A Book should NOT be considered usable merely because the topic exists.
+
+Every production Book should eventually have one of these states:
+
+A. SEEDED VERIFIED CONTENT
+B. CONNECTED ENTITY CONTENT
+C. COMMUNITY/AMBASSADOR CONTENT
+D. RESEARCH QUEUED
+E. NEW/EMPTY — clearly labeled as being built
+
+For established core Books, state E should NOT be the default forever.
+
+High-priority Books should have real source-backed starter content.
+
+============================================================
+5. SOURCE SEEDING — SAFE METHOD
+============================================================
+
+For existing core Books, populate knowledge_sources and/or approved content
+using the established provenance system:
+
+AUTHORITATIVE
+PROFESSIONAL
+COMMUNITY
+AMBASSADOR
+
+Do NOT fabricate Community or Ambassador evidence.
+
+For initial foundation, use only real reputable sources.
+
+Examples:
+
+EDUCATION
+→ U.S. Department of Education
+→ Federal Student Aid
+→ official HBCU institution pages
+→ recognized scholarship organizations
+
+HEALTH
+→ CDC
+→ NIH
+→ HHS
+→ major professional medical organizations
+→ peer-reviewed/academic sources where appropriate
+
+COUNTRIES/TRAVEL
+→ official tourism ministries
+→ embassies/consulates
+→ government travel advisories
+→ reputable economic/statistical agencies
+→ reputable journalism as secondary context
+
+DIVINE NINE
+→ official national organization sites
+→ recognized institutional/history sources
+
+FAITH
+→ official denomination/religious institution sources
+→ historical archives
+→ recognized scholarly/institutional sources
+
+Do not use generic SEO blogs as foundational evidence.
+
+============================================================
+6. CREATE A MINIMUM VIABLE CONTENT FLOOR
+============================================================
+
+Do NOT attempt to manually write thousands of articles.
+
+Instead establish a safe baseline per core Book.
+
+For each high-priority Book provide:
+
+- short verified overview
+- why it matters / context
+- 2–5 reputable sources where available
+- related Books
+- connected MWM entities where available
+- current geography relevance where applicable
+- contribution opportunity
+- provenance labels
+
+This is enough for the Book to feel alive while the Library grows.
+
+============================================================
+7. KINFOLK CONNECTION
+============================================================
+
+Verify Kinfolk can retrieve the SAME source-backed Book content.
+
+The Library should not become a separate silo.
+
+Test:
+
+"Tell me about HBCU scholarships."
+"Help me understand FAFSA."
+"Tell me about Alpha Kappa Alpha."
+"What should I know about diabetes?"
+"Tell me about Philadelphia Black history."
+
+Kinfolk should retrieve the same canonical graph/source layer.
+
+Do not create separate duplicate AI knowledge just for Kinfolk.
+
+============================================================
+8. GEOGRAPHY / COUNTRY COVERAGE
+============================================================
+
+Audit whether the current production Library includes:
+
+all African countries
+all countries already represented in ownership/diaspora taxonomy
+Living Legacy cities
+other approved city/geography nodes
+
+If the geography nodes already exist but do not appear in the Library,
+fix the relationship/UI exposure rather than duplicating them.
+
+============================================================
+9. VISUAL ACCEPTANCE
+============================================================
+
+After the content/source fix, visually test the REAL production website.
+
+Open:
+
+Education
+→ HBCU Admissions & Scholarships
+
+Expected:
+
+NOT merely "We're building this Book."
+
+Should show real starter content and reputable sources if such sources were
+successfully seeded.
+
+Then test:
+
+Health → Diabetes
+Divine Nine → Alpha Kappa Alpha
+Faith & Spirituality → AME
+Places → Philadelphia
+History → Philadelphia Black History
+
+Capture screenshots.
+
+============================================================
+10. PRESERVE EMPTY-BOOK BEHAVIOR FOR NEW TOPICS
+============================================================
+
+The current "We're building this Book" empty state is GOOD for genuinely new
+topics.
+
+Do NOT remove it globally.
+
+Use it only when:
+
+topic exists
+AND
+no verified content/source is available yet.
+
+Established seeded Books should transition out of empty state once sources are
+connected.
+
+============================================================
+11. DATA SAFETY
+============================================================
+
+Before any content population:
+
+snapshot counts for:
+
+knowledge_topics
+topic_relationships
+knowledge_sources
+library_entity_connections
+user_follows
+knowledge contributions
+
+After changes:
+
+compare counts
+confirm no deletes
+confirm no duplicate canonical Books
+confirm follows still point to valid topic IDs
+confirm entity connections remain intact
+
+============================================================
+12. FINAL REPORT
+============================================================
+
+Return:
+
+TOTAL COLLECTIONS
+TOTAL CANONICAL BOOKS
+TOTAL GEOGRAPHY NODES
+TOTAL SOURCED BOOKS
+TOTAL EMPTY BOOKS
+TOTAL SOURCES
+TOTAL ENTITY CONNECTIONS
+TOTAL USER FOLLOWS
+
+Then provide:
+
+MISSING ORIGINAL LIBRARY TOPICS
+RESTORED TOPICS
+NEWLY SOURCED BOOKS
+BOOKS STILL EMPTY
+DATA LOSS: YES/NO
+DUPLICATES CREATED: YES/NO
+
+Then run the permanent release-control audit.
+
+Do not declare success until the REAL production Library visually shows
+source-backed content for the tested Books.
+```
+
+The key here is: **we preserve what is now working and fill the Library from underneath rather than tearing it apart.**
+
+And I would not be “not too picky” about the missing original Library. You were purposeful about those topics because they came from actual tester and community use cases. The right answer is not to abandon them; it is to have Replit **inventory what survived, what is hidden, and what never made it into the new hierarchy**.
+
+What you have now is the **bookshelf**. We need to make sure the books you already planned are still on it—and then actually put information inside them.
