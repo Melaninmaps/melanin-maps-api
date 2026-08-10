@@ -1750,6 +1750,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
     ["test data cleanup",    () => ensureTestDataRemoved(log, warn)],
     ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
+    ["founder churches",     () => ensureFounderChurches(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3789,5 +3790,111 @@ async function ensureCoverageExpansion(
     log(`Coverage expansion: ${inserted} inserted, ${skipped} already present (${COVERAGE_EXPANSION.length} total in seed)`);
   } catch (err: unknown) {
     warn(`Coverage expansion failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Founder-specified churches — confirmed addresses, official websites ────────
+async function ensureFounderChurches(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const churches = [
+    {
+      name: "1BCC Church",
+      website: "https://1bcc.org",
+      address: "1678 Fairview Ave",
+      city: "Willow Grove",
+      state: "PA",
+      country: "USA",
+      description:
+        "1BCC Church is a welcoming faith community in Willow Grove, Pennsylvania, serving the greater Philadelphia region.",
+      lat: 40.1421,
+      lng: -75.1168,
+    },
+    {
+      name: "McKinley Missionary Baptist Church",
+      website: "https://www.mckinleymbc.com",
+      address: "214 Cedar Ave",
+      city: "Willow Grove",
+      state: "PA",
+      country: "USA",
+      description:
+        "McKinley Missionary Baptist Church is a historic Black Baptist congregation in Willow Grove, Pennsylvania, rooted in faith, community, and service.",
+      lat: 40.1448,
+      lng: -75.1148,
+    },
+    {
+      name: "NSWM Church",
+      website: "https://nswm.org",
+      address: "709 N Norristown Rd",
+      city: "Warminster",
+      state: "PA",
+      country: "USA",
+      description:
+        "NSWM is a spirit-filled faith community in Warminster, Pennsylvania, committed to worship, discipleship, and community impact.",
+      lat: 40.1972,
+      lng: -75.0882,
+    },
+  ];
+
+  try {
+    const existing = await pool.query(
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+    );
+    const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const c of churches) {
+      const key = `${c.name.toLowerCase()}|${c.city.toLowerCase()}|${c.country.toLowerCase()}`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             website,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,'Faith & Spirituality','Church / House of Worship',$3,$4,$5,$6,
+             $7,'[]'::jsonb,false,
+             $8,
+             $9,$10,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            c.name, c.address, c.city, c.state, c.country,
+            c.description,
+            c.website,
+            String(c.lat), String(c.lng),
+          ]
+        );
+        existingKeys.add(key);
+        inserted++;
+        log(`  Founder churches: inserted "${c.name}" in ${c.city}, ${c.state}`);
+      } catch (err: unknown) {
+        warn(`  Founder churches: failed to insert "${c.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Founder churches guard: ${inserted} inserted, ${skipped} already present`);
+  } catch (err: unknown) {
+    warn(`Founder churches guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
