@@ -1,0 +1,717 @@
+I would **approve controlled tester use after one final narrow post-deploy audit**, not another marathon 42-phase audit.
+
+The reason is that Replit’s own inventory still shows several gaps that will noticeably affect a tester’s first impression: Faith is still thin in the currently live data, Children & Family has only 1 listing nationally, Legal and Professional Services are extremely sparse, Arts & Culture is thin, and nightlife outside Philadelphia is underrepresented.  It also identifies Jamaica, New Orleans/Atlanta/Houston nightlife, category fragmentation, NYC/LA, family services, legal/professional services, and arts/culture as the largest remaining coverage problems. 
+
+But these are **coverage gaps**, not reasons to hold back all testing. We should fill the most visible ones now, run one compact real-user regression once the new data lands, and then let your 15–30 testers loose.
+
+There is also one inconsistency I want Replit to resolve automatically: the report says Bangkok currently has only one live listing while earlier updates said a larger Bangkok seed was being deployed.  That may simply be a deploy timing issue, but it should be proven before testers use International search.
+
+Send Replit this:
+
+```text
+FINAL PROOF-OF-CONCEPT COVERAGE PASS
++ COMPACT TESTER RELEASE GATE
+
+You are authorized to continue immediately.
+
+DO NOT run another 42-phase audit from scratch before testing.
+
+Instead:
+
+1. fill the highest-impact real-business coverage gaps
+2. normalize the category fragmentation
+3. verify the deployed international data
+4. run one compact real-user production regression
+5. if that passes, declare CONTROLLED TESTER RELEASE APPROVED
+
+Use real internet research.
+Seed conservatively.
+Do not fabricate identity/ownership/affiliation.
+Do not create duplicates.
+
+============================================================
+A. FIRST — RESOLVE CURRENT COUNT / DEPLOY STATE
+============================================================
+
+The latest inventory report contains deployment-state inconsistencies.
+
+Before adding more data, confirm CURRENT RAILWAY PRODUCTION counts for:
+
+Bangkok
+Phuket
+Jamaica
+Faith & Spirituality
+Children & Family
+Legal
+Professional Services
+Arts & Culture
+Entertainment & Recreation
+
+Also confirm whether the:
+
++27 Phuket places
++350 US coverage expansion
++41 churches
+
+actually landed in Railway production.
+
+Return current counts.
+
+Do not use pre-deploy counts as current production truth.
+
+============================================================
+B. NORMALIZE CATEGORY FRAGMENTATION FIRST
+============================================================
+
+The audit found:
+
+Food
+Food & Drink
+
+Beauty
+Beauty & Personal Care
+
+Health
+Health & Wellness
+
+These represent overlapping category systems.
+
+Do NOT delete or destructively rewrite business records.
+
+Create/repair canonical category normalization so search and filters treat them
+as one appropriate category family.
+
+Existing records must remain searchable using old labels/aliases.
+
+Examples:
+
+Food + Food & Drink
+→ canonical Food / approved MWM category
+
+Beauty + Beauty & Personal Care
+→ canonical Beauty & Personal Care
+
+Health + Health & Wellness
+→ canonical Health & Wellness
+
+Preserve subcategory/specialization detail.
+
+Verify filters/search no longer split valid results.
+
+============================================================
+C. COVERAGE PRINCIPLE
+============================================================
+
+The proof of concept should feel like a LIFE DISCOVERY PLATFORM.
+
+Do not overfill restaurants while leaving:
+
+childcare
+doctors
+attorneys
+churches
+trades
+culture
+nightlife
+
+empty.
+
+For each Living Legacy/tour city, create a balanced testing floor.
+
+Do not force numeric quotas when credible real entities cannot be verified.
+
+============================================================
+D. PRIORITY GEOGRAPHIES
+============================================================
+
+Highest priority:
+
+Philadelphia
+Washington DC
+Baltimore
+Raleigh / Durham
+Charlotte
+Columbia SC
+Atlanta
+Montgomery
+Birmingham
+New Orleans
+Baton Rouge
+Houston
+
+Also maintain:
+
+Bangkok
+Phuket
+
+Secondary expansion if time allows:
+
+Chicago
+New York City
+Los Angeles
+Miami
+
+Jamaica should receive a minimum useful travel/discovery foundation.
+
+============================================================
+E. FAITH / HOUSES OF WORSHIP — HIGH PRIORITY
+============================================================
+
+Research ACTIVE houses of faith in every major tour city.
+
+Aim for multiple traditions where credible institutions exist.
+
+Search/verify:
+
+AME
+AME Zion
+Baptist
+Missionary Baptist
+COGIC
+Pentecostal / Holiness
+Black Catholic
+Catholic parishes with documented Black ministry/history
+Islamic centers / mosques
+Ethiopian Orthodox
+Coptic Orthodox
+Jewish congregations
+Sikh gurdwaras
+Hindu temples
+Buddhist temples
+Haitian/Creole congregations
+African immigrant congregations
+Caribbean congregations
+Spanish-language worship
+LGBTQIA+-affirming faith communities where explicitly documented
+
+For every institution:
+
+canonical name
+address
+city/state/country
+website
+official social URL if available
+faith tradition
+languages/services if publicly documented
+coordinates
+source URLs
+retrieved date
+operating status
+
+Never infer congregation race, ethnicity, sexuality, or affiliation from
+appearance/neighborhood.
+
+============================================================
+F. CHILDREN & FAMILY — CRITICAL COVERAGE GAP
+============================================================
+
+Current report showed only one national listing.
+
+Research real:
+
+daycare
+childcare centers
+preschools
+early learning centers
+after-school programs
+tutoring
+youth programs
+summer programs
+special-needs services
+family resource centers
+elder care
+home health
+senior services
+
+in every major tour city.
+
+Use THE REAL / trust/service metadata appropriately.
+
+Do not use frivolous vibe language for care settings.
+
+Where available capture searchable specialties such as:
+
+infant care
+toddler
+preschool
+before/after care
+special needs
+STEM tutoring
+college prep
+elder care
+memory care
+home health
+
+============================================================
+G. HEALTH / MEDICAL PROFESSIONALS
+============================================================
+
+Expand beyond practices alone.
+
+Where the professional model permits, add individual professionals who work
+inside larger practices.
+
+Search:
+
+OB-GYN
+primary care
+pediatrician
+dentist
+orthodontist
+dermatologist
+fertility specialist
+reproductive endocrinologist
+therapist
+psychologist
+psychiatrist
+doula
+midwife
+physical therapist
+maternal-health provider
+women's-health specialist
+
+Verify professional name + practice + official provider/practice page.
+
+Do NOT infer minority identity.
+
+If identity/ownership cannot be verified, leave designation blank.
+
+============================================================
+H. LEGAL + PROFESSIONAL SERVICES
+============================================================
+
+Current inventory is too thin.
+
+Research across tour cities:
+
+family law
+immigration
+criminal defense
+civil rights
+employment law
+personal injury
+tax attorney
+estate planning
+real estate attorney
+
+CPA
+accountant
+tax preparer
+realtor
+mortgage professional
+insurance
+financial advisor
+business consultant
+marketing
+technology / IT
+HR
+career services
+
+Use real professional/business websites.
+
+Populate specializations so natural-language search works.
+
+============================================================
+I. HOME / TRADES
+============================================================
+
+Ensure proof of concept includes:
+
+plumber
+electrician
+HVAC
+general contractor
+roofer
+landscaper
+cleaning service
+locksmith
+mechanic
+moving company
+handyman
+welding
+
+across multiple tour cities.
+
+Search should find them by service, not just exact business name.
+
+============================================================
+J. BEAUTY / HAIR
+============================================================
+
+Ensure actual coverage for:
+
+braider
+box braids
+natural hair
+locs
+silk press
+protective styles
+alopecia
+wig specialist
+barber
+beauty supply
+nail salon
+esthetician
+spa
+
+Populate subcategory/specialization correctly.
+
+A salon should not be invisible because its name does not contain "braid."
+
+============================================================
+K. ENTERTAINMENT / NIGHTLIFE
+============================================================
+
+Highest-priority nightlife gaps:
+
+Atlanta
+New Orleans
+Houston
+DC
+Raleigh/Charlotte where appropriate
+Birmingham
+
+Research:
+
+live music
+jazz
+R&B
+hip-hop
+Afrobeats
+lounges
+dance clubs
+rooftops
+adult nightlife
+LGBTQIA+-affirming nightlife where explicitly documented
+comedy
+theater
+cultural entertainment
+
+Do not mislabel a venue as minority-owned unless verified.
+
+Search experience matters more than ownership quantity.
+
+============================================================
+L. ARTS & CULTURE
+============================================================
+
+Expand:
+
+Black museums
+African diaspora museums
+Civil Rights museums
+Black theaters
+galleries
+cultural centers
+historic bookstores
+literary spaces
+music heritage sites
+public art
+community arts organizations
+Black cultural festivals/venues
+
+Use existing cultural_sites canonical records where possible.
+
+Do not duplicate the same institution as a business merely to increase counts.
+
+============================================================
+M. JAMAICA — PRIORITY INTERNATIONAL GAP
+============================================================
+
+Jamaica cannot remain at one listing for proof-of-concept travel testing.
+
+Research/verify a small but meaningful foundation across:
+
+Kingston
+Montego Bay
+Negril
+Ocho Rios
+other major traveler areas where appropriate
+
+Include:
+
+cultural sites
+museums
+food
+nightlife
+music
+markets
+wellness
+attractions
+community/history
+travel/hospitality
+
+Examples suggested by the audit may be researched, not blindly inserted:
+
+Bob Marley Museum
+Devon House
+Rick's Cafe
+Scotchies
+
+Verify current operations and official sources before insertion.
+
+============================================================
+N. BANGKOK / PHUKET QUALITY
+============================================================
+
+Verify the actual currently deployed international inventory.
+
+For every Bangkok/Phuket entity:
+
+real current operation?
+official website/social?
+coordinates?
+correct city/country?
+correct category?
+duplicate?
+business vs cultural site correctly modeled?
+
+Do not call generic tourist attractions minority-owned.
+
+They may still belong in MWM discovery because the platform includes travel and
+cultural context.
+
+============================================================
+O. NEW YORK + LOS ANGELES
+============================================================
+
+These are secondary to the active tour but represent credibility gaps.
+
+If bandwidth remains after tour-city coverage:
+
+add balanced real proof-of-concept coverage in NYC and LA across:
+
+food
+beauty
+health
+professional
+faith
+culture
+nightlife
+
+Do not attempt comprehensive city coverage.
+
+============================================================
+P. OWNERSHIP / IDENTITY STANDARD
+============================================================
+
+Separate:
+
+ENTITY EXISTS
+from
+MWM VERIFIED
+from
+MINORITY OWNED
+from
+COMMUNITY RECOMMENDED
+
+A web-researched real business may be:
+
+LIVE_UNCLAIMED
+
+without being MWM Verified.
+
+Ownership designation requires evidence.
+
+Cuisine does NOT prove ownership.
+
+Serving a Black neighborhood does NOT prove Black ownership.
+
+Affirming/serving LGBTQIA+ people does NOT automatically mean LGBTQIA-owned.
+
+============================================================
+Q. SOURCE STANDARD
+============================================================
+
+Preferred:
+
+1. official business/organization website
+2. official professional/denomination/institutional directory
+3. official licensing/government record
+4. reputable local institutional/media source
+5. verified official social profile
+
+Use generic directory/review sites only as secondary confirmation.
+
+Store source provenance.
+
+============================================================
+R. DUPLICATE CHECK
+============================================================
+
+Before every insert compare:
+
+normalized name
+address
+phone
+website
+coordinates
+aliases
+
+Classify:
+
+EXACT EXISTING
+LIKELY DUPLICATE
+SEPARATE LOCATION
+NEW ENTITY
+
+Use parent/location architecture for multi-location businesses.
+
+No duplicate inflation.
+
+============================================================
+S. SEARCHABLE METADATA
+============================================================
+
+Seed enough metadata to make the entity useful.
+
+Examples:
+
+OB-GYN
+→ gynecologist, women's health, obstetrics
+
+Braider
+→ braids, box braids, protective styles
+
+Mosque
+→ mosque, Islamic center, Muslim
+
+Childcare
+→ daycare, early learning, preschool
+
+Plumber
+→ plumbing, emergency plumbing
+
+Do not rely solely on business name.
+
+============================================================
+T. REMOVAL OF DEMO/TEST BUSINESSES
+============================================================
+
+Execute the already-authorized confirmed test/demo business cleanup.
+
+Audit dependencies first.
+
+Only remove records positively identified as test/demo fixtures.
+
+Do not delete uncertain or real businesses.
+
+Do not remove tester USER accounts.
+
+============================================================
+U. FINAL COVERAGE MATRIX
+============================================================
+
+After expansion return:
+
+CITY
+Food
+Beauty
+Health
+Legal/Professional
+Trades
+Children/Family
+Faith
+Arts/Culture
+Nightlife
+Total
+
+Also return international:
+
+Bangkok
+Phuket
+Jamaica
+
+Do not hide weak categories behind total business count.
+
+============================================================
+V. FINAL REAL-USER TEST — COMPACT, NOT ANOTHER 42-PHASE AUDIT
+============================================================
+
+Use one clean approved tester in a REAL production browser.
+
+Visually test:
+
+1. login
+2. onboarding appears/works
+3. "church"
+4. "braider"
+5. "OBGYN"
+6. "child care"
+7. "lawyer"
+8. "plumber"
+9. "nightlife"
+10. Ethiopian food
+11. Bangkok
+12. Phuket
+13. Jamaica
+14. open a business
+15. Save
+16. Review
+17. multiple Vibes/THE REAL
+18. Add Content/social URL
+19. Add a missing place
+20. Library topic
+21. Follow Library topic
+22. Kinfolk uses saved/followed context
+23. Safety
+24. Historical Exclusion marker/history
+25. logout
+26. Apple reviewer login sanity check
+
+Capture screenshot proof.
+
+============================================================
+W. RELEASE DECISION
+============================================================
+
+After the compact browser audit and permanent regression gate, return:
+
+AUTH: PASS/PARTIAL/FAIL
+SEARCH: PASS/PARTIAL/FAIL
+MAP: PASS/PARTIAL/FAIL
+BUSINESS PAGES: PASS/PARTIAL/FAIL
+REVIEWS: PASS/PARTIAL/FAIL
+VIBES/THE REAL: PASS/PARTIAL/FAIL
+MEDIA: PASS/PARTIAL/FAIL
+LIBRARY: PASS/PARTIAL/FAIL
+KINFOLK: PASS/PARTIAL/FAIL
+FAITH COVERAGE: PASS/PARTIAL/FAIL
+FAMILY COVERAGE: PASS/PARTIAL/FAIL
+PROFESSIONAL COVERAGE: PASS/PARTIAL/FAIL
+TOUR CITY COVERAGE: PASS/PARTIAL/FAIL
+INTERNATIONAL: PASS/PARTIAL/FAIL
+APPLE REVIEW ACCESS: PASS/PARTIAL/FAIL
+DATA INTEGRITY: PASS/PARTIAL/FAIL
+
+Then answer:
+
+CONTROLLED TESTER RELEASE APPROVED:
+YES / NO
+
+Do not ask the founder to interpret raw logs.
+
+If no P0 failures remain and core P1 journeys work:
+
+APPROVE TESTING.
+
+Minor data/content gaps can then be improved using actual tester feedback.
+```
+
+### My recommendation on testing
+
+**Do this final targeted coverage pass + compact browser regression, then approve the testers.**
+
+I would **not** run another giant audit after that. At some point testing itself becomes the audit. You've already done an extraordinary amount of internal inspection; the next useful information comes from people who don't know how the platform is “supposed” to work.
+
+Also, I would change the tester instructions Replit drafted before you send them. They currently tell testers exactly what to search and how things should work. That's useful for a structured second round, but **your first round should include some open-ended testing** so you can see what people naturally try. The current briefing instructs them to test specific searches such as braiding and Ethiopian food. 
+
+I'd give testers two phases:
+
+**First 20–30 minutes:** *“Use MWM however you naturally would. Don't worry about testing a checklist. Tell us what you tried, what confused you, what delighted you, and where you got stuck.”*
+
+**Then structured testing:** give them the specific Map, Kinfolk, Library, Reviews, Vibes, media, Add-a-Place and safety exercises.
+
+That way you don't accidentally train your testers to behave like Replit instead of behaving like users.
+
+One security cleanup before distribution: the tester briefing in this document includes a shared first-time password in plain text.  I would have Replit issue individual temporary credentials or at minimum rotate that shared credential after this round rather than letting it become your standing tester password.

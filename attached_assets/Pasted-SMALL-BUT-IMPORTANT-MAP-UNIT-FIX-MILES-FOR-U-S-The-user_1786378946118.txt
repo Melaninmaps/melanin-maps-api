@@ -1,0 +1,113 @@
+SMALL BUT IMPORTANT MAP UNIT FIX — MILES FOR U.S.
+
+The user-facing distance controls currently allow selection in miles, but the
+map displays/registers distance in kilometers.
+
+Fix this consistently.
+
+============================================================
+UNIT RULE
+============================================================
+
+For U.S.-based map/search experiences:
+
+DISPLAY DISTANCE IN MILES.
+
+For international locations where metric is standard:
+
+DISPLAY DISTANCE IN KILOMETERS.
+
+Do not merely relabel km as mi.
+
+Verify the underlying calculations.
+
+============================================================
+AUDIT
+============================================================
+
+Trace:
+
+distance selector
+→ stored preference/value
+→ search radius
+→ geospatial query
+→ map radius
+→ result distance display
+→ Kinfolk distance wording
+
+Confirm whether each currently expects:
+
+miles
+kilometers
+meters
+
+Document the conversion point.
+
+============================================================
+U.S. ACCEPTANCE TEST
+============================================================
+
+Set radius:
+
+1 mile
+2 miles
+3 miles
+5 miles
+10 miles
+
+Confirm the actual map/search radius corresponds to those distances.
+
+Example:
+
+5 miles must NOT produce a 5 km radius.
+
+If backend/geospatial functions expect meters or kilometers, convert correctly.
+
+============================================================
+INTERNATIONAL ACCEPTANCE
+============================================================
+
+Test Bangkok/Phuket.
+
+Use kilometers in the user-facing experience where appropriate.
+
+Do not change stored canonical coordinates.
+
+============================================================
+CONSISTENCY
+============================================================
+
+Verify the same unit convention appears in:
+
+Map
+Directory/search distance
+Profile safety-alert radius
+Kinfolk recommendations
+Nearby results
+Travel/local discovery
+Safety radius
+any other distance labels
+
+A U.S. user should not see a mixture of:
+
+"5 miles"
+and
+"8 km"
+
+for the same radius.
+
+============================================================
+DO NOT DESTABILIZE
+============================================================
+
+This is a localized unit/formatting correction.
+
+Do not redesign the map or alter coordinates.
+
+After the fix, run the normal regression check for:
+
+Map search
+radius filters
+nearby results
+Safety alert radius
+Kinfolk location recommendations
