@@ -1,0 +1,154 @@
+Yes — **I would let Manus start now.** The important production gates are finally passing: member wall, tester access, logout invalidation, protected APIs, and production authentication. The Maps-key split is important security hardening, but based on Replit’s report it does **not** need to delay the functional audit.
+
+I would have Replit do the Maps split **in parallel** while Manus tests, but with one correction: do not blindly restrict the server key to Railway IP addresses until Replit proves the production service has a stable outbound IP suitable for that restriction.
+
+Send Replit this:
+
+```text
+APPROVED — MANUS MAY BEGIN TESTING NOW.
+
+Do not hold Manus for the Google Maps key split.
+
+Current status accepted:
+
+MANUS FUNCTIONAL TEST READY: YES
+MANUS SECURITY GATE: YES
+
+Continue the remaining Maps-key hardening in parallel.
+
+==================================================
+GOOGLE MAPS KEY SPLIT — AUTHORIZED
+==================================================
+
+The current single-key architecture is not acceptable long-term because the
+same key is used for:
+
+- browser Maps JavaScript
+- server Directions
+- Maps Embed
+
+Split browser and server responsibilities.
+
+DO NOT break current production Maps while doing this.
+
+==================================================
+STEP 1 — VERIFY CURRENT USAGE
+==================================================
+
+Before changing configuration, confirm exact production callers for:
+
+Maps JavaScript API
+Directions API
+Maps Embed API
+
+Return exact env var and route for each.
+
+==================================================
+STEP 2 — BROWSER KEY
+==================================================
+
+Create/use a dedicated browser key:
+
+GOOGLE_MAPS_BROWSER_KEY
+
+It should be used ONLY by browser-facing Maps JavaScript functionality.
+
+Update:
+
+GET /api/maps/js-key
+
+to return GOOGLE_MAPS_BROWSER_KEY.
+
+Allowed HTTP referrers should be limited to approved production origins:
+
+https://www.mappingwithmelanin.com/*
+https://mappingwithmelanin.com/*
+
+Only include the Railway direct domain if it is genuinely still required for
+testing.
+
+Do NOT use broad wildcards.
+
+Restrict this key to only the browser APIs actually required.
+
+==================================================
+STEP 3 — SERVER KEY
+==================================================
+
+Keep a separate server-side key for:
+
+Directions
+other legitimate server-side Maps services
+
+Do NOT expose this key to the browser.
+
+Before applying an IP-address application restriction:
+
+VERIFY whether the current Railway production service has a stable outbound IP
+that can safely be allowlisted.
+
+Do not assume.
+
+If stable egress is not available, report the safest supported alternative
+before changing the application restriction.
+
+Regardless, restrict the server key to only the APIs it actually needs.
+
+==================================================
+STEP 4 — MAPS EMBED
+==================================================
+
+Audit the Embed implementation carefully.
+
+Determine whether the Embed API request is actually browser-loaded through an
+iframe even though the server constructs the URL.
+
+Do not classify it as server-only merely because server code builds the URL.
+
+Apply the appropriate key/restriction model based on how Google actually
+receives the request.
+
+Do not break business-profile embeds.
+
+==================================================
+STEP 5 — ROTATION / OLD KEY
+==================================================
+
+After both new paths are verified:
+
+browser map works
+directions work
+embeds work
+unauthorized browser origin rejected
+
+then retire or further restrict the previous shared key.
+
+Do not delete/revoke the old key before the replacement paths are production
+verified.
+
+==================================================
+PRODUCTION ACCEPTANCE
+==================================================
+
+Test:
+
+1. authenticated member → Map loads
+2. map pins load
+3. search works
+4. business map/detail embed works
+5. Directions works
+6. unauthorized foreign web origin cannot use browser key
+7. server key is never returned to browser
+8. logout → map/data no longer accessible
+9. no Google API errors in production logs
+
+Return final key architecture without printing either key value.
+```
+
+For **Manus**, I would now tell it to be deliberately adversarial, not just click through happy paths. Have it test as a logged-out visitor, standard tester, business owner/Cultural Ambassador if Replit gives it those capabilities, and normal member. It should particularly try direct URLs, refreshes, logout/back-button behavior, Saved Places, Profile/Kinfolk preference changes, Library, business search, media links, map searches, and mobile-browser responsiveness.
+
+I would also have Manus specifically test your **Bangkok/Phuket scenario** if international records are ready: find an international place, save it, view it on the map, attach/use a social-media URL where permitted, and ask Kinfolk about it. That tests far more of the flywheel than another Philadelphia-only smoke test.
+
+One cleanup after Manus finishes: **rotate the shared tester credentials** that have been used during this testing period. They have now appeared in multiple working contexts, so they should remain temporary.
+
+At this point, I would stop expanding tonight and let **Manus attack the production experience while Replit hardens Maps in parallel**. That is the fastest useful next move.

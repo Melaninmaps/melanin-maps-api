@@ -1,0 +1,616 @@
+Yes. Then there is no longer a product decision here.
+
+Your rule is now:
+
+**Unauthenticated visitors may see only standard public/marketing website information and authentication/entry flows. They may not search, browse, discover, view directory results, inspect the map, view safety intelligence, read member Library material, see cultural-site detail, view events, marketplace listings, jobs, recommendations, or use any member discovery API.**
+
+Replit’s audit confirms the current architecture does **not** meet that requirement. Right now `/explore`, `/discover`, `/businesses`, `/safety`, `/map`, and `/global-recommendations` are unguarded, and `/sites/:id` is also intentionally public in the current build.  Even more importantly, the underlying APIs for businesses, events, cultural sites, Library topics, marketplace, jobs, sundown-town history, universal search, safety heatmaps, community organizations, places, and Library articles are currently readable without authentication. 
+
+So this needs to be fixed **both at the frontend-route level and server/API level**. Hiding navigation is not enough.
+
+Send Replit this now:
+
+```text
+P0 — AUTHENTICATED MEMBER WALL
+FOUNDER DECISION IS FINAL — IMPLEMENT NOW
+
+The founder has made the access-control decision.
+
+THIS IS NONNEGOTIABLE:
+
+AN UNAUTHENTICATED PERSON MAY SEE ONLY STANDARD PUBLIC WEBSITE INFORMATION
+AND THE AUTHENTICATION / ENTRY EXPERIENCE.
+
+A NON-MEMBER MUST NOT BE ABLE TO SEARCH, BROWSE, DISCOVER, OR VIEW PLATFORM
+DATA BY USING THE UI, A DIRECT URL, OR THE API.
+
+This supersedes the previous public-discovery architecture.
+
+DO NOT ask whether the founder wants the public discovery model.
+
+THE ANSWER IS NO.
+
+============================================================
+1. PUBLIC EXPERIENCE — ALLOWED WITHOUT LOGIN
+============================================================
+
+Only standard public/marketing material should remain accessible.
+
+Examples:
+
+/
+About
+Features / How It Works
+For Business Owners — marketing information only
+Membership / pricing information
+Contact
+Privacy Policy
+Terms of Service
+Community Guidelines
+Trust & Safety explanatory pages
+Delete-account information
+Waitlist
+Login
+Signup / registration
+Forgot password
+Reset password
+Pending approval / welcome
+appropriate referral/invite landing pages
+
+Public marketing copy MAY explain that MWM provides:
+
+business discovery
+cultural discovery
+safety intelligence
+community knowledge
+KinfolkAI
+travel functionality
+etc.
+
+But public visitors must NOT receive the underlying data or interactive
+member experience.
+
+============================================================
+2. THESE ROUTES MUST REQUIRE AUTHENTICATION
+============================================================
+
+At minimum protect:
+
+/map
+
+/explore
+
+/discover
+
+/businesses
+
+/businesses/:id
+
+/sites/:id
+
+/safety
+
+/global-recommendations
+
+/community
+
+/events
+
+/travel
+
+/resources
+
+/jobs
+
+/library
+
+/profile
+
+billing
+
+business dashboard
+
+notifications
+
+circles
+
+collections
+
+financial hub
+
+marketplace
+
+wellness
+
+connections
+
+guides
+
+health hub
+
+journeys
+
+saved places
+
+recommendations
+
+community contribution pages
+
+business discovery/search pages
+
+cultural / heritage discovery pages
+
+and every other route that exposes actual MWM platform data.
+
+If not authenticated:
+
+redirect to login / approved entry flow.
+
+Preserve returnTo so a legitimate member can authenticate and continue.
+
+============================================================
+3. DO NOT RELY ONLY ON FRONTEND ROUTE GUARDS
+============================================================
+
+This is a SECURITY BOUNDARY.
+
+The API must enforce the same rule.
+
+The audit found the following currently public GET APIs.
+
+They must be reviewed and protected:
+
+GET /api/businesses
+GET /api/events
+GET /api/cultural-sites
+GET /api/knowledge/topics
+GET /api/marketplace
+GET /api/jobs
+GET /api/sundown-towns
+GET /api/search/universal
+GET /api/safety/heatmap
+GET /api/community-orgs
+GET /api/places
+GET /api/knowledge/categories
+GET /api/knowledge/articles
+GET /api/knowledge/articles/:id
+and any related discovery endpoint.
+
+Unauthenticated requests to member-data APIs should return:
+
+401 Unauthorized
+
+Do not merely return an empty result set.
+
+============================================================
+4. SEARCH MUST BE MEMBER-ONLY
+============================================================
+
+An unauthenticated visitor must NOT be able to:
+
+search for a business
+search for a person
+search for a cultural site
+search Philadelphia
+search Bangkok
+search Fruity Pebble waffles
+search churches
+search HBCUs
+search Library topics
+search events
+search jobs
+search safety information
+search marketplace
+use Universal Search
+
+Search itself is a member benefit.
+
+The marketing site may contain a NONFUNCTIONAL visual/example explaining
+search capability, but it must not query production data.
+
+============================================================
+5. MAP MUST BE COMPLETELY MEMBER-ONLY
+============================================================
+
+Logged out:
+
+NO map data.
+
+NO business pins.
+
+NO HBCUs.
+
+NO cultural sites.
+
+NO Historical Racial Exclusion / sundown-town records.
+
+NO safety layer.
+
+NO events.
+
+NO location-based discovery.
+
+NO map search.
+
+NO map API initialization if it is unnecessary before authentication.
+
+A logged-out visitor who manually enters:
+
+/map
+
+must be redirected before platform data is fetched.
+
+============================================================
+6. BUSINESS DIRECTORY MUST BE MEMBER-ONLY
+============================================================
+
+Logged-out users must not be able to:
+
+browse businesses
+search businesses
+open business profiles
+see ownership information
+see recommendations
+see community ratings
+see community commentary
+see member-generated media
+see business contact/location intelligence through MWM
+
+The PUBLIC For Business Owners page remains marketing material only.
+
+============================================================
+7. LIBRARY MUST BE MEMBER-ONLY
+============================================================
+
+Logged-out visitors must not be able to:
+
+browse topics
+read Library Books
+search Library
+view Philadelphia graph content
+view country content
+view health/legal/community research
+see source panels
+view community/ambassador contributions
+
+Public marketing may explain what the Library does.
+
+Actual Library knowledge is a member experience.
+
+============================================================
+8. SAFETY MUST BE MEMBER-ONLY
+============================================================
+
+Logged-out visitors must not receive:
+
+safety heatmaps
+Historical Racial Exclusion data
+neighborhood safety intelligence
+member safety reports
+community safety ratings
+route warnings
+safety survey data
+
+The public Trust & Safety page may explain MWM's safety philosophy and policies.
+
+That is different from exposing the intelligence itself.
+
+============================================================
+9. KINFOLK MUST BE MEMBER-ONLY
+============================================================
+
+KinfolkAI conversation and retrieval must require authentication.
+
+Do not allow anonymous users to use Kinfolk to indirectly retrieve data that
+the website itself protects.
+
+Health endpoint may remain internal/operational if harmless, but no actual
+Kinfolk chat/retrieval response should be anonymous.
+
+============================================================
+10. EVENTS / JOBS / MARKETPLACE / RESOURCES
+============================================================
+
+Actual records require membership.
+
+Public website may say:
+
+"Discover community events"
+"Find opportunities"
+"Explore businesses"
+etc.
+
+But it should not expose the real records until the user authenticates.
+
+============================================================
+11. CULTURAL SITES ARE ALSO MEMBER CONTENT
+============================================================
+
+The audit currently classifies:
+
+/sites/:id
+
+as intentionally public.
+
+CHANGE THAT.
+
+Cultural heritage is part of the MWM member discovery experience.
+
+A public visitor may learn through marketing copy that MWM includes cultural
+landmarks and heritage intelligence.
+
+They may not browse the actual database.
+
+============================================================
+12. APPROVED TESTERS MUST CONTINUE TO WORK
+============================================================
+
+This change must NOT lock out:
+
+approved testers
+founder/admin
+Apple reviewer
+business owners
+Cultural Ambassadors
+other properly approved users
+
+Authentication and approval status must remain distinct from public access.
+
+Use the existing approved-member/tester logic.
+
+============================================================
+13. PRE-LAUNCH APPROVAL GATE
+============================================================
+
+During this controlled pre-launch period:
+
+authenticated AND approved
+→ platform access
+
+not approved
+→ waitlist/pending approval experience
+
+This prevents someone from simply creating an account and bypassing the
+controlled testing group.
+
+Verify the registration fix for approved testers still works.
+
+============================================================
+14. DIRECT URL TESTING
+============================================================
+
+Do not test only through navigation.
+
+In a completely private/logged-out session manually request:
+
+/map
+/businesses
+/businesses/[real-id]
+/explore
+/discover
+/safety
+/sites/[real-id]
+/library
+/events
+/jobs
+/marketplace
+/global-recommendations
+/community
+/profile
+/circles
+/guides
+/travel
+
+EXPECTED:
+
+No platform data renders.
+
+Redirect to appropriate authentication/entry screen.
+
+============================================================
+15. DIRECT API TESTING
+============================================================
+
+Without a session cookie call every platform-data GET endpoint.
+
+Expected:
+
+401
+
+or 403 where role authorization applies.
+
+No business data.
+No map data.
+No cultural records.
+No Library content.
+No safety data.
+No events.
+No jobs.
+No marketplace.
+No search results.
+
+============================================================
+16. FIX THE TWO SECURITY/PRIVACY ISSUES FOUND BY THE AUDIT
+============================================================
+
+A. MAPS KEY
+
+The audit found:
+
+GET /api/maps/js-key
+
+currently returns the live Google Maps key anonymously.
+
+Fix this immediately.
+
+Also verify Google Cloud application restrictions independently.
+
+Do NOT assume API authentication alone is sufficient protection for a
+browser-facing Maps JavaScript key.
+
+Confirm appropriate HTTP referrer restrictions are configured for the
+approved MWM production web domains.
+
+B. SURVEY PRIVACY
+
+The audit found:
+
+GET /api/surveys
+
+can expose userId.
+
+Remove userId and any other unnecessary user-identifying fields from community
+survey GET responses.
+
+Safety/community aggregates should not identify individual contributors unless
+a feature explicitly requires and permits it.
+
+============================================================
+17. ADMIN ROUTE
+============================================================
+
+The audit found /admin relies on component-level redirect rather than the
+route-level protection used elsewhere.
+
+Move /admin behind the appropriate protected/admin route as well.
+
+Server-side admin authorization already exists and must remain.
+
+============================================================
+18. PUBLIC MARKETING MUST STILL WORK WELL
+============================================================
+
+Do not make the logged-out website feel broken.
+
+The visitor should still understand MWM.
+
+Public navigation should contain appropriate items such as:
+
+Home
+About
+How It Works / Features
+For Business Owners
+Membership
+Safety / Trust explanation
+Contact
+Login
+Join Waitlist / Request Access
+
+Do not display member navigation that only sends people into repeated login
+walls.
+
+============================================================
+19. NO SEO JUSTIFICATION OVERRIDES THIS DECISION
+============================================================
+
+The founder is intentionally choosing:
+
+MEMBER PRIVACY / PLATFORM VALUE
+over
+PUBLIC INDEXING OF THE DISCOVERY DATABASE.
+
+Do not keep platform data public for SEO.
+
+Marketing SEO can be handled through intentional public landing pages later.
+
+============================================================
+20. ACCEPTANCE TEST — ABSOLUTE REQUIREMENT
+============================================================
+
+TEST A — BRAND-NEW PRIVATE WINDOW
+
+Allowed:
+
+homepage
+About
+Features
+For Business Owners marketing
+policies
+Contact
+Login / waitlist
+
+TEST B — ATTEMPT PLATFORM ROUTES
+
+Every member/data route redirects.
+
+ZERO actual data visible.
+
+TEST C — API
+
+Anonymous calls to platform-data endpoints return 401/403.
+
+TEST D — APPROVED TESTER
+
+Login tester.
+Full approved platform experience works.
+
+TEST E — FOUNDER
+
+Login founder/admin.
+Member + admin experience works.
+
+TEST F — APPLE REVIEWER
+
+Authentication still succeeds.
+Required reviewer access remains functional.
+
+TEST G — LOGOUT
+
+Logout.
+Previously accessible member URL can no longer expose cached/private data.
+
+Hard refresh.
+Still protected.
+
+============================================================
+21. MANUS READINESS MUST BE RE-VERIFIED
+============================================================
+
+The previous:
+
+MANUS TEST READY: YES
+
+is temporarily invalidated by this access-control finding.
+
+Do not panic and do not restart the entire Manus readiness audit.
+
+After this correction run only the affected regression tests.
+
+Then report:
+
+PUBLIC WEBSITE: VERIFIED
+MEMBER WALL: VERIFIED
+MEMBER DATA APIs: VERIFIED
+APPROVED TESTER ACCESS: VERIFIED
+FOUNDER ACCESS: VERIFIED
+APPLE REVIEWER ACCESS: VERIFIED
+MAPS KEY SECURITY: VERIFIED
+SURVEY PRIVACY: VERIFIED
+
+Then:
+
+MANUS TEST READY: YES
+
+============================================================
+EXECUTION
+============================================================
+
+This is authorized.
+
+No further founder decision is required about whether discovery should be
+public.
+
+Do not create follow-up task suggestions for these gaps.
+
+Diagnose dependencies quickly, implement the complete boundary, run regression
+tests, and return proof.
+
+Stop only if the correction would cause destructive data loss or requires a
+new paid vendor/infrastructure decision.
+```
+
+One more point: Replit’s audit found that **anonymous writes are already protected**, which is good—unauthenticated users currently cannot post, save, RSVP, submit community posts, etc.  So they do **not** need to rebuild the whole authorization system. The immediate job is to close the **read/discovery boundary** consistently.
+
+And the two issues they uncovered should be fixed in this same security pass. The public Maps-key endpoint is a billing/security risk, and the survey endpoint can expose `userId` even though there are currently no production survey rows to expose. 
+
+Your marketing site can still show people **what MWM does**. What it should not do is give them **the actual MWM experience** until they are members. That distinction is now explicit.

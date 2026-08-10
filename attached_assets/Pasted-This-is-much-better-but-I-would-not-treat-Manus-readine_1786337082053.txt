@@ -1,0 +1,169 @@
+This is much better, but I would **not treat Manus readiness as fully clean yet** because one security item is still open: **logout does not actually invalidate the session**. Replit itself says the cookie continues to grant access after `/logout`. That means a user could think they signed out while the browser session remains valid. That is a real account-security issue, even if it predates this work.
+
+Also, the GoDaddy action is already done, so Replit’s “Founder action #1” is outdated. We should strike that from the list. The remaining founder-side item is the Google Maps key restriction.
+
+Google’s current guidance is to use **both application restrictions and API restrictions** on Maps keys. For a browser key, that means HTTP referrer restrictions limiting which websites can use it. ([Google Cloud Documentation][1])
+
+I would send Replit this final correction before Manus starts:
+
+```text
+FINAL MANUS GATE CORRECTION
+
+Good progress. Two corrections before this is considered completely closed.
+
+1. GODADDY ACTION IS COMPLETE
+
+The founder has successfully configured:
+
+mappingwithmelanin.com
+→ permanent 301 forwarding
+→ https://www.mappingwithmelanin.com
+
+Remove this from outstanding founder actions.
+
+Do not modify www DNS or Railway networking.
+
+============================================================
+2. LOGOUT SESSION INVALIDATION IS NOW P0
+============================================================
+
+The current report states:
+
+"After calling /logout, the session cookie continues to grant access."
+
+This is NOT acceptable for the production member wall.
+
+A user who clicks Sign Out must actually lose access to protected content.
+
+Do not defer this simply because it predates today's work.
+
+Run a forensic trace first:
+
+UI Sign Out
+→ logout request
+→ session/token invalidation
+→ cookie clearing
+→ server session record
+→ subsequent authenticated request
+
+Determine whether the problem is:
+
+A. logout endpoint does not revoke server session
+B. cookie is not cleared
+C. wrong cookie name/domain/path
+D. web uses a different logout endpoint
+E. stale Bearer token remains client-side
+F. session cache remains valid
+G. multiple auth cookies exist
+H. other
+
+Then implement the smallest safe repair.
+
+============================================================
+LOGOUT ACCEPTANCE TEST
+============================================================
+
+Production test:
+
+1. Login as designated tester.
+2. Access /map → 200.
+3. Access /profile → 200.
+4. Click Sign Out.
+5. Confirm browser auth cookie/token is cleared appropriately.
+6. Refresh /map.
+7. Must redirect to login/waitlist.
+8. Direct GET to protected API with former session:
+   MUST return 401.
+9. Close browser.
+10. Reopen.
+11. Protected content must remain unavailable.
+12. Login again.
+13. New session works normally.
+
+Also confirm logout from:
+
+web
+iOS
+Android
+
+does not unintentionally revoke every device unless "Sign out all devices"
+is explicitly chosen.
+
+Do not destroy persistent user data while ending a session.
+
+============================================================
+3. GOOGLE MAPS KEY
+============================================================
+
+Code-side authentication is already live.
+
+The remaining infrastructure control is Google Cloud key restriction.
+
+The browser/web Maps key should be restricted to approved HTTP referrers.
+
+Do NOT guess which key.
+
+Identify the exact production browser Maps key currently returned by
+/api/maps/js-key and tell the founder the NAME of that key in Google Cloud,
+without printing the key value.
+
+Also report the APIs that key is currently allowed to call.
+
+Recommended allowed web referrers should be limited to the real web origins,
+for example:
+
+https://www.mappingwithmelanin.com/*
+https://mappingwithmelanin.com/*
+
+Only include the Railway production domain if the founder/Manus still needs
+to access the website directly through Railway.
+
+Do not add broad patterns such as:
+
+*.railway.app
+*.replit.dev
+*
+
+After the founder applies the restriction, test:
+
+approved MWM web domain → map works
+unauthorized foreign referrer → rejected
+authenticated map → works
+business map embeds → work
+directions → work if this same key legitimately serves that API
+
+If server-side Directions uses the same browser key, REPORT THAT before
+changing API restrictions. We previously intended browser and server usage
+to be separated appropriately.
+
+============================================================
+4. MANUS STATUS
+============================================================
+
+Until logout is repaired:
+
+MANUS FUNCTIONAL TEST READY: YES
+MANUS SECURITY GATE: NOT COMPLETE
+
+Once logout acceptance passes:
+
+PUBLIC WEBSITE: VERIFIED
+MEMBER WALL: VERIFIED
+SESSION LOGOUT: VERIFIED
+MEMBER DATA APIs: VERIFIED
+TESTER ACCESS: VERIFIED
+
+Then:
+
+MANUS TEST READY: YES
+
+Return only remaining genuine limitations.
+Do not generate new backlog suggestions tonight.
+```
+
+For the Google Cloud piece, I can walk you through it exactly the same way we did GoDaddy. Google recommends restricting browser API keys by allowed HTTP referrers and also limiting the APIs that the key itself can call. ([Google Cloud Documentation][2])
+
+I would have Replit fix the logout bug **while you and I handle the Google Maps restriction**. Those can happen in parallel and should be the last security cleanup before you hand the site to Manus.
+
+[1]: https://docs.cloud.google.com/docs/authentication/api-keys?utm_source=chatgpt.com "Manage API keys | Authentication"
+[2]: https://docs.cloud.google.com/api-keys/docs/add-restrictions-api-keys?utm_source=chatgpt.com "Adding restrictions to API keys"
