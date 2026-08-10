@@ -862,9 +862,14 @@ async function searchBusinesses(opts: {
   // Run when: categories matched AND either (a) room in results, OR (b) server
   // geo-extract resolved a destination so we can add geo-bounded results even
   // if earlier passes already filled the results map with national data.
-  if (serverExtractedGeo && results.size > 0) {
-    // Discard national results from PASSES 1–2.5 — geo-bounded results from
-    // PASS 3 are strictly preferred when we've identified a specific destination.
+  //
+  // IMPORTANT: only clear national results when PASS 3 can actually replace
+  // them (i.e. when mappedCategories exist). For category-less geo queries
+  // ("Phuket", "things to do Bangkok"), keep PASS 1 name-match results and
+  // let PASS 3b below handle the geo-bounded all-category fallback instead.
+  if (serverExtractedGeo && results.size > 0 && mappedCategories.length > 0) {
+    // Discard national results from PASSES 1–2.5 — geo-bounded category results
+    // from PASS 3 are strictly preferred when we've identified a destination.
     results.clear();
   }
   if (mappedCategories.length > 0 && (results.size < limit || serverExtractedGeo)) {
@@ -935,6 +940,87 @@ async function searchBusinesses(opts: {
         });
       }
     } catch { /* skip */ }
+  }
+
+  // ── PASS 3b: Geo-bounded all-category fallback ──────────────────────────
+  // When the server resolved a destination (serverExtractedGeo=true) but NO
+  // category words were found (mappedCategories=[]), PASS 3 above was skipped.
+  // Examples: "Phuket", "things to do Bangkok", "Black owned Phuket".
+  // Return all active MWM businesses within the geo radius (any category).
+  // This also clears any national PASS-1 name-match noise if those results
+  // are from the wrong city, replacing them with correctly located businesses.
+  if (serverExtractedGeo && mappedCategories.length === 0 && effectiveLat !== undefined && effectiveLng !== undefined) {
+    // Determine whether existing PASS 1 results are actually local.
+    const localAlready = [...results.values()].filter((b) => {
+      if (b.latitude === undefined || b.longitude === undefined) return false;
+      const dLat = (b.latitude - effectiveLat!) * (Math.PI / 180);
+      const dLng = (b.longitude - effectiveLng!) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(b.latitude * (Math.PI / 180)) * Math.cos(effectiveLat! * (Math.PI / 180)) *
+        Math.sin(dLng / 2) ** 2;
+      const distMi = 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return distMi <= GEO_EXTRACT_RADIUS;
+    });
+    // Only run the DB query if we need more local results
+    if (localAlready.length < limit) {
+      // Remove non-local results already in map (e.g. name-matched but wrong country)
+      for (const [id, b] of results) {
+        if (!localAlready.find((r) => r.id === id)) results.delete(id);
+      }
+      try {
+        const params3b: unknown[] = [effectiveLat, effectiveLng, GEO_EXTRACT_RADIUS];
+        const already3b = [...results.keys()];
+        const excludeClause3b = already3b.length > 0
+          ? `AND b.id NOT IN (${already3b.map((_, i) => `$${i + 4}`).join(", ")})`
+          : "";
+        if (already3b.length > 0) params3b.push(...already3b);
+        const geoAllRows = await pool.query<{
+          id: string; name: string; category: string; subcategory: string;
+          city: string; state: string; description: string; image_url: string;
+          rating: string; review_count: string; verified: boolean;
+          latitude: string; longitude: string; ownership_designations: string;
+          black_owned: boolean; instagram: string; website: string;
+          phone: string; price_range: string; confidence_score: string;
+        }>(
+          `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
+                  b.description, b.image_url, b.rating, b.review_count,
+                  b.verified, b.latitude, b.longitude, b.ownership_designations,
+                  b.black_owned, b.instagram, b.website, b.phone,
+                  b.price_range, b.confidence_score
+           FROM businesses b
+           WHERE b.status = 'active'
+             AND ${listingFilter}
+             AND (3959 * acos(GREATEST(-1, LEAST(1,
+                   cos(radians($1)) * cos(radians(b.latitude)) *
+                   cos(radians(b.longitude) - radians($2)) +
+                   sin(radians($1)) * sin(radians(b.latitude)))))) <= $3
+             ${excludeClause3b}
+           ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
+           LIMIT ${Math.min(limit - results.size, 20)}`,
+          params3b,
+        );
+        for (const row of geoAllRows.rows) {
+          if (results.has(row.id)) continue;
+          results.set(row.id, {
+            id: row.id, name: row.name, category: row.category,
+            subcategory: row.subcategory ?? undefined, city: row.city, state: row.state,
+            description: row.description ?? undefined, imageUrl: row.image_url ?? undefined,
+            rating: row.rating ? parseFloat(row.rating) : undefined,
+            reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
+            verified: row.verified, latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+            longitude: row.longitude ? parseFloat(row.longitude) : undefined,
+            ownershipDesignations: safeParseArray(row.ownership_designations),
+            blackOwned: row.black_owned, instagram: row.instagram ?? undefined,
+            website: row.website ?? undefined, phone: row.phone ?? undefined,
+            priceRange: row.price_range ?? undefined,
+            confidenceScore: row.confidence_score ? parseFloat(row.confidence_score) : undefined,
+            matchTier: "exact_name",
+            matchReason: `Business near the resolved destination`,
+            matchedFields: ["geo"],
+          });
+        }
+      } catch { /* non-fatal */ }
+    }
   }
 
   // ── PASS 4: Fuzzy name fallback (pg_trgm) if still sparse ────────────────
