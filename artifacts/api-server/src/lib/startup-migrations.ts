@@ -253,6 +253,16 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS last_alerted_at TIMESTAMPTZ`,
   },
   {
+    // UUID claim token for the city health alert scheduler.
+    // Stored alongside last_alerted_at so that releaseAlertSlot can condition its
+    // cleanup on the exact token this process wrote — avoiding the microsecond
+    // precision loss that occurs when PostgreSQL timestamps are round-tripped
+    // through JavaScript Date objects.
+    name: "city_launches_alert_claim_token_col",
+    sql: `ALTER TABLE city_launches
+      ADD COLUMN IF NOT EXISTS alert_claim_token TEXT`,
+  },
+  {
     name: "city_launch_events_table",
     sql: `CREATE TABLE IF NOT EXISTS city_launch_events (
       id SERIAL PRIMARY KEY,

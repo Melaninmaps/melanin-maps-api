@@ -19,6 +19,7 @@
  */
 
 import cron from "node-cron";
+import { randomUUID } from "crypto";
 import { pool, getPoolStats } from "@workspace/db";
 import { logger } from "./logger";
 import { Resend } from "resend";
@@ -115,38 +116,42 @@ async function computeCityHealth(
 }
 
 // ── Atomic cooldown claim ─────────────────────────────────────────────────────
-// Returns the exact timestamp written by THIS process (ownership token), or null
-// if the cooldown window is still active or the row no longer exists.
-// Uses a conditional UPDATE + RETURNING so concurrent scheduler instances
-// (e.g. during a Railway rolling deploy) cannot both win — only the first
-// UPDATE to execute gets rowCount > 0, and it returns the precise timestamp it
-// wrote. The caller must pass that timestamp to releaseAlertSlot to guarantee
-// that only this exact claim is cleared on failure.
-async function claimAlertSlot(slug: string): Promise<Date | null> {
-  const { rows } = await pool.query<{ last_alerted_at: Date }>(
+// Returns a UUID ownership token if THIS process wins the claim, or null if the
+// cooldown window is still active.
+//
+// Uses a conditional UPDATE that writes both last_alerted_at and a fresh
+// alert_claim_token UUID. Concurrent scheduler instances (rolling deploy) cannot
+// both win — only the first UPDATE to execute gets rowCount > 0. The returned
+// UUID string is lossless (no timestamp precision issues) and uniquely identifies
+// this process's claim. The caller must pass it to releaseAlertSlot so that a
+// delayed cleanup cannot clear a competing instance's successful cooldown stamp.
+async function claimAlertSlot(slug: string): Promise<string | null> {
+  const token = randomUUID();
+  const { rowCount } = await pool.query(
     `UPDATE city_launches
-     SET last_alerted_at = NOW()
+     SET last_alerted_at = NOW(),
+         alert_claim_token = $2
      WHERE slug = $1
        AND (last_alerted_at IS NULL
-            OR last_alerted_at < NOW() - ($2 || ' hours')::INTERVAL)
-     RETURNING last_alerted_at`,
-    [slug, String(ALERT_COOLDOWN_HOURS)],
+            OR last_alerted_at < NOW() - ($3 || ' hours')::INTERVAL)`,
+    [slug, token, String(ALERT_COOLDOWN_HOURS)],
   );
-  return rows[0]?.last_alerted_at ?? null;
+  return (rowCount ?? 0) > 0 ? token : null;
 }
 
-// Clears the stamp so the next cron tick can retry after a send failure.
-// Conditions the UPDATE on the exact ownership token (claimedAt) returned by
-// claimAlertSlot. This prevents a delayed cleanup from clearing a competing
-// instance's successful cooldown stamp.
-async function releaseAlertSlot(slug: string, claimedAt: Date): Promise<void> {
+// Clears the cooldown stamp so the next cron tick can retry after a send failure.
+// Conditions the UPDATE on the exact UUID token returned by claimAlertSlot —
+// if a competing instance has since claimed and successfully delivered, its token
+// will differ and this UPDATE becomes a safe no-op, preserving that cooldown.
+async function releaseAlertSlot(slug: string, token: string): Promise<void> {
   try {
     await pool.query(
       `UPDATE city_launches
-       SET last_alerted_at = NULL
+       SET last_alerted_at = NULL,
+           alert_claim_token = NULL
        WHERE slug = $1
-         AND last_alerted_at = $2`,
-      [slug, claimedAt],
+         AND alert_claim_token = $2`,
+      [slug, token],
     );
   } catch (err) {
     logger.error({ err, slug }, "city-health-alert: failed to release alert slot after send failure — next retry may be delayed");
@@ -288,7 +293,7 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
   // eligible row and returns null. The returned Date is the ownership token: it
   // must be passed to releaseAlertSlot so that a delayed cleanup cannot clear a
   // competing instance's successful cooldown stamp.
-  const claimedCities: Array<DegradedCity & { claimedAt: Date }> = [];
+  const claimedCities: Array<DegradedCity & { claimedAt: string }> = [];
 
   for (const city of degraded) {
     try {
