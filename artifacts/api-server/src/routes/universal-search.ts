@@ -1055,44 +1055,69 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     let heritageGeoMessage: string | undefined;
 
     if (requestedTypes.includes("heritage")) {
+      // For faith-intent queries (e.g. "churches Philadelphia"), the full query string
+      // won't ILIKE-match heritage sites like "Mother Bethel AME Church" because the
+      // query contains a city name + a plural noun, not the site's actual name.
+      // Fix: extract the core faith trigger word and use it as the search term.
+      // Also infer the city from the query text (since the frontend passes no explicit
+      // ?city= param for free-text searches like "churches Philadelphia").
+      const lowerQ = trimmedQ.toLowerCase();
+      const faithTrigger: string | null = intentType === "faith"
+        ? (FAITH_TRIGGERS.find((t) => lowerQ.includes(t)) ?? "church")
+        : null;
+      const heritageQuery = faithTrigger ?? trimmedQ;
+
+      // Infer city from the faith query by stripping the trigger word + stop words.
+      // "churches Philadelphia" → strip "church(es)" → strip stops → "philadelphia"
+      const heritageCity: string | undefined = cityStr ?? (faithTrigger
+        ? (() => {
+            const escapedTrigger = faithTrigger.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const stripped = lowerQ
+              .replace(new RegExp(`\\b${escapedTrigger}(?:es|s)?\\b`, "gi"), " ")
+              .replace(/\b(in|near|at|around|the|a|an|all|black|historic|ame|sda|cme|sbc|og)\b/gi, " ")
+              .split(/\s+/).filter((w) => w.length >= 3).join(" ").trim();
+            return stripped.length >= 2 ? stripped : undefined;
+          })()
+        : undefined);
+
       // Step 1 — exact city match
-      if (cityStr) {
-        const r = await searchHeritage(trimmedQ, { city: cityStr, limit: 5 });
+      if (heritageCity) {
+        const r = await searchHeritage(heritageQuery, { city: heritageCity, limit: 5 });
         if (r.length > 0) { heritage = r; heritageGeoExpansion = "city"; }
       }
 
       // Step 2 — within 50 miles (requires lat/lng from client or geocode)
       if (heritageGeoExpansion === "none" && lat !== undefined && lng !== undefined) {
-        const r = await searchHeritage(trimmedQ, { lat, lng, radiusMiles: 50, limit: 5 });
+        const r = await searchHeritage(heritageQuery, { lat, lng, radiusMiles: 50, limit: 5 });
         if (r.length > 0) {
           heritage = r;
           heritageGeoExpansion = "nearby";
-          heritageGeoMessage = cityStr
-            ? `No results in ${cityStr}. Showing the closest sites within 50 miles — sorted by distance.`
+          heritageGeoMessage = heritageCity
+            ? `No results in ${heritageCity}. Showing the closest sites within 50 miles — sorted by distance.`
             : "Showing the closest sites within 50 miles — sorted by distance.";
         }
       }
 
       // Step 3 — same state / region
       if (heritageGeoExpansion === "none" && stateStr) {
-        const r = await searchHeritage(trimmedQ, { state: stateStr, lat, lng, limit: 5 });
+        const r = await searchHeritage(heritageQuery, { state: stateStr, lat, lng, limit: 5 });
         if (r.length > 0) {
           heritage = r;
           heritageGeoExpansion = "state";
-          heritageGeoMessage = cityStr
-            ? `No results near ${cityStr}. Showing sites throughout ${stateStr}.`
+          heritageGeoMessage = heritageCity
+            ? `No results near ${heritageCity}. Showing sites throughout ${stateStr}.`
             : `Showing sites throughout ${stateStr}.`;
         }
       }
 
       // Step 4 — national (sorted nearest-first when lat/lng available)
       if (heritageGeoExpansion === "none") {
-        const r = await searchHeritage(trimmedQ, { lat, lng, limit: 5 });
+        const r = await searchHeritage(heritageQuery, { lat, lng, limit: 5 });
         if (r.length > 0) {
           heritage = r;
           heritageGeoExpansion = "national";
-          heritageGeoMessage = cityStr
-            ? `No results near ${cityStr}. Showing the closest matching sites from across the country.`
+          heritageGeoMessage = heritageCity
+            ? `No results near ${heritageCity}. Showing the closest matching sites from across the country.`
             : "Showing matching sites from across the country.";
         }
       }

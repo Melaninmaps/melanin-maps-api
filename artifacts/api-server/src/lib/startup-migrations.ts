@@ -1082,6 +1082,18 @@ END $seed$`,
     name: "business_endorsement_taps_idx",
     sql: `CREATE INDEX IF NOT EXISTS biz_endorse_taps_biz_idx ON business_endorsement_taps(business_id)`,
   },
+  {
+    // Correct categories for faith institutions that were imported with wrong categories.
+    // Enon Tabernacle Baptist Church was imported as "Arts & Culture" (wrong).
+    // Refugee Evangelical Church was imported as "Education" (wrong).
+    // Both are faith institutions and must be "Faith & Spirituality" so Universal Search
+    // finds them on faith-intent queries like "churches Philadelphia".
+    name: "fix_church_business_categories_v1",
+    sql: `UPDATE businesses
+          SET category = 'Faith & Spirituality'
+          WHERE name IN ('Enon Tabernacle Baptist Church', 'Refugee Evangelical Church')
+            AND category != 'Faith & Spirituality'`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
