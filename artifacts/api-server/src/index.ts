@@ -5,6 +5,7 @@ import { getStripeSync, endStripeSyncPool } from "./stripeClient";
 import { startHealthMonitor, setMonitorLogger, stopHealthMonitor } from "./lib/healthMonitor";
 import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
+import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import { runStartupMigrations } from "./lib/startup-migrations";
 
 // Route pool events through the structured pino logger so they appear in
@@ -114,6 +115,7 @@ const server = app.listen(port, (err) => {
   );
 
   startNudgeCronScheduler();
+  startCityHealthAlertScheduler();
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────

@@ -246,6 +246,13 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS auto_advance BOOLEAN NOT NULL DEFAULT true`,
   },
   {
+    // Tracks when the last health-degradation alert was sent for a city.
+    // Prevents repeat alerts within the 2-hour cooldown window.
+    name: "city_launches_last_alerted_at_col",
+    sql: `ALTER TABLE city_launches
+      ADD COLUMN IF NOT EXISTS last_alerted_at TIMESTAMPTZ`,
+  },
+  {
     name: "city_launch_events_table",
     sql: `CREATE TABLE IF NOT EXISTS city_launch_events (
       id SERIAL PRIMARY KEY,
