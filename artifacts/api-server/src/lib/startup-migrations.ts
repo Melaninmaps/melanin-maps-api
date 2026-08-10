@@ -2604,7 +2604,7 @@ async function ensureTesterUniversalAccounts(
            locked_until          = NULL,
            failed_login_attempts = 0,
            updated_at            = NOW()
-       WHERE LOWER(TRIM(email)) = ANY($2)
+       WHERE LOWER(TRIM(email)) = ANY($2::text[])
          AND must_change_password = true
          AND (password_hash != $1 OR locked_until IS NOT NULL OR failed_login_attempts > 0)
        RETURNING email`,
