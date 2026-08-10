@@ -147,3 +147,4 @@
 - [Business Vocabulary Delta Additions](../docs/product/MWM-Business-Vocabulary-Delta-Additions.md) — New Vibes/What Stands Out?/THE REAL for: Travel Agents, Tour Guides, Accountants, Insurance, Staffing, Translation, Event Planners, Photographers, Florists, Movers, Cleaning, Real Estate.
 - [Beauty Supply Vocabulary](../docs/product/MWM-Beauty-Supply-Vocabulary.md) — 20 Vibes + 31 What Stands Out? specifically for beauty supply stores; micro-signals by shopping intent (braids/natural/wigs/beauty); "Come As You Are" anchors experience language.
 - [Interruption handling — PERMANENT](interruption-handling.md) — address concern, return to implementation list immediately; original authorization stays active.
+- [Web-static committed bundle pattern](web-static-committed-bundle.md) — web assets must be committed to git in web-static/; Railway Docker cache stales the web build layer even with echo-token busting.

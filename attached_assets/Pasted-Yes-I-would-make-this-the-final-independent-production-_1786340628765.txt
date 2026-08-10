@@ -1,0 +1,858 @@
+Yes. I would make this the **final independent production acceptance audit before you rely on the web experience for broader testing and outreach**.
+
+The important change from the prior Replit checks is: **Replit must behave like a brand-new real user, not like a developer inspecting code.** It should create a fresh approved tester account, go through onboarding, complete Profile setup, use Kinfolk, search, save, contribute, log out/in, and visually verify the live production website at every major step.
+
+And yes — **screenshots at each checkpoint**. Not API-only proof, not “the component exists,” not simulation. The real website.
+
+Send Replit this:
+
+```text
+FINAL PRODUCTION ACCEPTANCE AUDIT
+NEW USER → ONBOARDING → FULL WEB EXPERIENCE
+
+This is now authorized.
+
+The Kinfolk P0 fix passed.
+
+Before proceeding through the remaining P1 findings, perform a COMPLETE
+new-user production audit modeled on the independent Manus audit.
+
+IMPORTANT:
+
+Do NOT audit from the existing founder account.
+Do NOT rely on an account that already has preferences, saves, history,
+permissions, or prior profile setup.
+
+Create/use a BRAND-NEW approved tester identity so we can prove the complete
+first-time member journey.
+
+============================================================
+CORE STANDARD
+============================================================
+
+THIS IS A REAL USER EXPERIENCE AUDIT.
+
+For every major task:
+
+1. perform it on the real production website
+2. visually inspect what the member actually sees
+3. capture a screenshot
+4. verify the resulting data/state
+5. continue from that same user journey
+
+Do not consider API/curl/code proof alone sufficient.
+
+Production URL:
+
+https://www.mappingwithmelanin.com
+
+============================================================
+PHASE 0 — PREPARE A CLEAN TESTER
+============================================================
+
+Create one NEW designated tester account.
+
+Requirements:
+
+- unique email controlled for testing
+- approved through the SAME legitimate tester mechanism
+- no existing user row
+- no saved places
+- no prior Library follows
+- no Kinfolk conversations
+- no profile preferences
+- no posts
+- no reviews
+- no business-owner role
+- no Cultural Ambassador role
+- no admin role
+
+The only special entitlement should be:
+
+ACTIVE TESTER
+
+Do not make the account Founding simply to bypass broken entitlement logic
+unless that is the approved tester architecture.
+
+We need to see the experience an actual new tester receives.
+
+Before registration provide:
+
+email
+tester preapproval status
+existing account? NO
+waitlist approval / tester eligibility
+expected entitlement after registration
+
+Do not print passwords in the report.
+
+============================================================
+PHASE 1 — REGISTRATION
+============================================================
+
+From a brand-new private/incognito browser session:
+
+1. Open public homepage.
+
+SCREENSHOT 1:
+homepage logged out.
+
+Confirm:
+- only marketing/public material visible
+- member routes not browsable
+- appropriate Login / Join / tester entry available
+
+2. Register using the new tester email.
+
+SCREENSHOT 2:
+registration screen.
+
+3. Complete required verification/password setup.
+
+SCREENSHOT 3:
+successful registration / approval state.
+
+Confirm:
+- only ONE user row created
+- tester entitlement attaches
+- correct canonical user_id assigned
+
+If registration fails:
+STOP THIS JOURNEY ONLY LONG ENOUGH TO DIAGNOSE AND FIX IT,
+then restart with another clean new tester if necessary.
+
+============================================================
+PHASE 2 — FIRST LOGIN + ONBOARDING
+============================================================
+
+THIS IS CRITICAL.
+
+A NEW USER SHOULD NOT SIMPLY BE DROPPED INTO THE MAP.
+
+Audit what currently happens.
+
+We have already approved Kinfolk onboarding/profile setup architecture.
+
+A first-time user should receive an onboarding experience that is:
+
+SHORT ENOUGH TO COMPLETE
++
+COMPREHENSIVE ENOUGH TO START PERSONALIZATION.
+
+Use the previously approved approximately 15-question Kinfolk onboarding model.
+
+The onboarding should gather appropriate NON-SENSITIVE starting context such as:
+
+1. What should Kinfolk call you?
+2. Home city / area
+3. Places/cities you care about
+4. What brings you to MWM?
+   - discovering businesses
+   - travel
+   - relocation
+   - community
+   - safety
+   - events
+   - culture/history
+   - career/opportunity
+   - other
+5. Favorite experiences/categories
+6. Things you usually avoid / skip
+7. Typical budget preference
+8. Travel/discovery style
+9. Who you usually travel/go out with
+10. Preferred atmosphere / occasions
+11. Business/community ownership interests
+12. Accessibility needs if the user voluntarily chooses to provide them
+13. Dietary preferences if voluntarily provided
+14. Lifestyle/service interests
+15. How much personalization they want Kinfolk to use
+
+Do NOT require sensitive health, sexuality, religion, fertility, legal,
+immigration, or similar information during ordinary onboarding.
+
+Those can be voluntarily added later with approved privacy controls.
+
+SCREENSHOT 4:
+welcome/onboarding introduction.
+
+SCREENSHOT 5+:
+representative onboarding questions.
+
+SCREENSHOT:
+completion state.
+
+============================================================
+ONBOARDING ACCEPTANCE
+============================================================
+
+Confirm:
+
+- onboarding appears ONLY when appropriate
+- user may skip optional questions
+- answers save immediately or reliably at completion
+- answers write to canonical user/profile/preferences model
+- onboarding completion flag persists
+- refresh does not restart completed onboarding
+- logout/login does not restart completed onboarding
+- user can later edit answers through Profile / Kinfolk preferences
+- updating preferences ADDS new context rather than erasing historical context
+  unless user explicitly deletes something
+
+============================================================
+PHASE 3 — FIRST AUTHENTICATED LANDING
+============================================================
+
+After onboarding:
+
+confirm intentional landing destination.
+
+SCREENSHOT:
+first authenticated landing page.
+
+The user should understand:
+
+- where they are
+- what MWM can do
+- how to search
+- how to access Kinfolk
+- how to access Profile
+- how to contribute
+
+Do not overwhelm them with every feature at once.
+
+If the map remains the first landing surface, verify the page gives enough
+orientation to understand what to do next.
+
+============================================================
+PHASE 4 — PROFILE
+============================================================
+
+Open Profile.
+
+SCREENSHOT:
+full Profile top section.
+
+Confirm:
+
+- name
+- username
+- bio
+- job title
+- industry
+- tester badge/status
+- saved content section
+- community/activity sections
+- safety preferences
+- Kinfolk knowledge/preferences
+- Library relationships
+- privacy/account controls
+- contributions
+- other current parity-approved sections
+
+Test:
+
+edit username
+edit bio
+edit normal preference
+
+SCREENSHOT before and after.
+
+Refresh.
+
+Confirm persistence.
+
+============================================================
+PHASE 5 — KINFOLK PERSONALIZATION
+============================================================
+
+Ask first:
+
+"What should I do in Philadelphia this weekend?"
+
+SCREENSHOT:
+user question + complete answer.
+
+Then:
+
+"Which of those would fit my preferences best?"
+
+SCREENSHOT:
+follow-up answer.
+
+Prove Kinfolk used:
+
+- onboarding/profile context
+- active city
+- current conversation
+
+without fabricating community evidence.
+
+Then ask:
+
+"What do you know about me?"
+
+Confirm it does NOT reveal sensitive information the user never provided.
+
+============================================================
+PHASE 6 — DIRECTORY / SEARCH
+============================================================
+
+Test exact production UI.
+
+Queries:
+
+1. Churches in Philadelphia PA
+2. AME church Philadelphia
+3. Black Catholic church Philadelphia
+4. hair store Philadelphia
+5. OBGYN Philadelphia
+6. plumber Philadelphia
+7. Ethiopian food Philadelphia
+8. Fruity Pebble waffles
+
+SCREENSHOT EACH MATERIAL RESULT STATE.
+
+For each record:
+
+query
+intent
+location interpretation
+result count
+entity types
+irrelevant results
+fallback message
+
+Expected:
+
+- no unrelated garbage
+- location prioritized
+- houses of faith distinct from historic sites
+- honest fallback better than irrelevant filler
+
+============================================================
+PHASE 7 — MAP
+============================================================
+
+Open Map.
+
+SCREENSHOT:
+initial authenticated map.
+
+Confirm:
+
+- no businesses automatically overwhelm the user
+- relevant legend visible
+- Historical Racial Exclusion layer/toggle visible
+- map search works
+- pins are interactive
+- selecting a result recenters/zooms correctly
+- map only shows appropriate result scope/radius
+
+Test:
+
+Philadelphia church
+nearby restaurant
+historic site
+
+SCREENSHOT each relevant map state.
+
+============================================================
+PHASE 8 — BUSINESS DETAIL + SAVE
+============================================================
+
+Open one known real business.
+
+SCREENSHOT:
+business profile.
+
+Confirm display of real available data:
+
+- name
+- location
+- ownership
+- category
+- website
+- social media
+- phone
+- hours
+- media
+- Vibes or THE REAL as appropriate
+- claim status
+- community signals
+
+Do NOT flag genuinely missing source data as a UI defect.
+
+Then:
+
+SAVE business.
+
+SCREENSHOT:
+saved state.
+
+Refresh.
+
+SCREENSHOT:
+still saved.
+
+Profile → Saved.
+
+SCREENSHOT:
+business appears.
+
+============================================================
+PHASE 9 — KINFOLK AFTER SAVE
+============================================================
+
+Ask:
+
+"I liked/saved that place. What else might I like nearby?"
+
+SCREENSHOT answer.
+
+Confirm the saved entity is available to Kinfolk as an explicit signal.
+
+It should not over-generalize from one save.
+
+============================================================
+PHASE 10 — LIBRARY
+============================================================
+
+Search/open:
+
+Philadelphia
+
+SCREENSHOT:
+Philadelphia Library experience.
+
+Then:
+
+Philadelphia Black History
+
+SCREENSHOT:
+Book/knowledge panel.
+
+Confirm:
+
+- related topics
+- reputable sources
+- Mother Bethel canonical entity
+- provenance distinction
+- optional community contribution
+- no fake community/ambassador evidence
+
+Follow the topic.
+
+SCREENSHOT:
+followed state.
+
+============================================================
+PHASE 11 — KINFOLK AFTER LIBRARY FOLLOW
+============================================================
+
+Ask:
+
+"I'm interested in Black history. Is there somewhere nearby I should visit?"
+
+SCREENSHOT response.
+
+Confirm Library/graph context is available without forcing the user back into
+the Library.
+
+============================================================
+PHASE 12 — COMMUNITY
+============================================================
+
+Open Community.
+
+SCREENSHOT:
+initial page.
+
+Create a benign TEST post.
+
+Use clearly identifiable temporary test content.
+
+Add:
+
+text
++
+one approved social/media URL
+
+SCREENSHOT:
+composer.
+
+Submit.
+
+SCREENSHOT:
+posted content.
+
+Confirm:
+- persists refresh
+- appears in My Contributions
+- attribution correct
+- media URL works/preview works appropriately
+
+Then remove test content if deletion is supported and safe.
+
+============================================================
+PHASE 13 — CONNECTIONS
+============================================================
+
+Open Connections.
+
+SCREENSHOT.
+
+If zero connections:
+
+must show intentional empty state.
+
+No infinite spinner.
+
+Test user search if another test account exists.
+
+Confirm invitation/connect workflow if currently supported.
+
+============================================================
+PHASE 14 — EVENTS
+============================================================
+
+Open Events.
+
+SCREENSHOT.
+
+Open one event.
+
+Confirm:
+
+- event details
+- location
+- RSVP where supported
+- canonical event record
+
+Perform test RSVP if safe.
+
+Refresh and confirm persistence.
+
+============================================================
+PHASE 15 — MARKETPLACE
+============================================================
+
+Open Marketplace.
+
+SCREENSHOT empty/default state.
+
+If no real listings:
+show intentional community-building CTA.
+
+Do NOT seed fake marketplace content.
+
+Open Post form.
+
+SCREENSHOT.
+
+Confirm:
+- listing type
+- category
+- condition where relevant
+- price/free
+- city
+- contact or in-app communication path
+- media capability if currently approved
+
+Do not submit junk production listing unless using clearly identified test data
+that can be removed immediately.
+
+============================================================
+PHASE 16 — SAFETY
+============================================================
+
+Open Safety.
+
+SCREENSHOT.
+
+Confirm current location/context is clear.
+
+Open Police/ICE reporting flow.
+
+SCREENSHOT.
+
+Audit:
+
+- encounter type
+- spoken-language severity tiers
+- city/state/location
+- date/time of incident
+- anonymous option
+- media/evidence capability
+- explanation of what happens after submission
+
+Do not submit a fake emergency or police report.
+
+============================================================
+PHASE 17 — HISTORICAL RACIAL EXCLUSION
+============================================================
+
+Open Map historical layer.
+
+Test one documented record.
+
+SCREENSHOT:
+
+marker
+short synopsis
+evidence level
+historical period
+Read the History
+specific source links
+
+Confirm:
+
+historical context
+≠
+present-day safety conclusion.
+
+Do not accept generic organization homepages as place-level evidence.
+
+============================================================
+PHASE 18 — BANGKOK / INTERNATIONAL TEST
+============================================================
+
+THIS IS A REQUIRED REAL-WORLD USE CASE.
+
+Search:
+
+Bangkok
+Bangkok nightlife
+Bangkok restaurants
+Phuket
+Phuket birthday activities
+
+SCREENSHOT representative results.
+
+Ask Kinfolk:
+
+"Help me plan a birthday day in Bangkok."
+
+SCREENSHOT answer.
+
+Then:
+
+"Find something my friend could visit and tell me why you recommend it."
+
+Confirm:
+
+- international geography understood
+- no U.S.-state/ZIP assumption
+- broader research can support gaps
+- MWM data distinguished from external/general information
+
+============================================================
+PHASE 19 — CONTRIBUTING AN INTERNATIONAL BUSINESS
+============================================================
+
+DO NOT create junk production data.
+
+Use a real legitimate business only if one is already approved for this test.
+
+Prove the form supports:
+
+country
+province/region
+city
+international address
+website
+social URLs
+media URL
+canonical duplicate check
+unclaimed status
+
+SCREENSHOT form/result.
+
+============================================================
+PHASE 20 — LOGOUT / RETURN
+============================================================
+
+Logout.
+
+SCREENSHOT:
+public/logged-out state.
+
+Directly attempt:
+
+/map
+/businesses
+/library
+/profile
+/travel
+
+Confirm member wall.
+
+Log back in.
+
+SCREENSHOT:
+successful return.
+
+Confirm:
+
+- onboarding does not restart
+- saved business remains
+- followed Library topic remains
+- Profile edits remain
+- test contribution remains if not removed
+- Kinfolk preferences remain
+
+============================================================
+PHASE 21 — RESPONSIVE WEB TEST
+============================================================
+
+Repeat representative flows at:
+
+desktop width
+tablet width
+mobile web width
+
+Capture screenshots for:
+
+Profile
+Map
+Directory
+Library
+Kinfolk
+Community
+
+Confirm:
+
+- no horizontal overflow
+- no clipped navigation
+- no smushed Profile content
+- buttons tappable
+- composer usable
+- bottom nav does not cover content
+
+============================================================
+PHASE 22 — SCREENSHOT EVIDENCE PACKAGE
+============================================================
+
+Create a folder/report containing screenshots labeled:
+
+01-public-home
+02-registration
+03-onboarding
+04-authenticated-home
+05-profile
+06-kinfolk
+07-search-church
+08-search-hair
+09-map
+10-business-detail
+11-saved
+12-library
+13-community
+14-connections
+15-events
+16-marketplace
+17-safety
+18-historical-exclusion
+19-bangkok
+20-logout
+21-mobile-profile
+22-mobile-map
+etc.
+
+Every screenshot must identify:
+
+PRODUCTION URL
+DATE/TIME
+TEST USER/PERSONA
+STEP
+
+Redact:
+
+passwords
+tokens
+API keys
+private sensitive data
+
+============================================================
+PHASE 23 — FINAL AUDIT MATRIX
+============================================================
+
+Return:
+
+FEATURE
+USER ACTION
+EXPECTED RESULT
+ACTUAL RESULT
+SCREENSHOT
+API/DATA VERIFIED?
+STATUS
+
+Statuses ONLY:
+
+PASS
+FAIL
+PARTIAL
+NOT APPLICABLE
+
+Then classify defects:
+
+P0 — prevents core use/security/data integrity
+P1 — materially damages primary user experience
+P2 — important but nonblocking
+P3 — polish/future
+
+============================================================
+EXECUTION RULE
+============================================================
+
+Do NOT stop after every issue.
+
+When a safe, obvious, non-destructive defect is discovered:
+
+DIAGNOSE
+→ FIX
+→ RESTART THAT TEST
+→ CONTINUE.
+
+Do not ask founder whether to correct obvious regressions.
+
+STOP only for:
+
+- destructive production data operation
+- account merge
+- privacy/security product conflict
+- paid infrastructure/vendor
+- genuine product decision
+
+============================================================
+MOST IMPORTANT
+============================================================
+
+Do not tell the founder:
+
+"the code exists."
+
+Do not tell the founder:
+
+"the API returns 200."
+
+Do not tell the founder:
+
+"architecturally this should work."
+
+SHOW THE REAL WEBSITE WORKING.
+
+The purpose of this audit is to answer:
+
+CAN A BRAND-NEW REAL MEMBER SUCCESSFULLY USE MAPPING WITH MELANIN FROM
+REGISTRATION THROUGH PERSONALIZED DISCOVERY WITHOUT THE FOUNDER EXPLAINING
+HOW THE PLATFORM WORKS?
+
+That is the acceptance standard.
+```
+
+One addition I want to make to your onboarding requirement: because Kinfolk is meant to learn over time, **the onboarding should establish a starting point, not try to interrogate the user into a complete life profile**. Fifteen short questions is enough. Everything after that should develop naturally through saves, follows, searches, contributions and explicit updates.
+
+And this audit should give us something we have not had yet: **visual production evidence tied to one clean user's entire lifecycle**. If Replit reports PASS on a step, there should be a screenshot showing the member actually saw it and a data check showing it persisted.
+
+That will dramatically reduce the cycle we've been stuck in of “Replit says it exists → you open the website → it isn't there.”
