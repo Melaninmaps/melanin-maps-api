@@ -1,0 +1,345 @@
+Yes. **This needs to be verified now**, because Kinfolk personalization is not a minor feature. If the platform has been represented as having customizable Kinfolk behavior/voice, you should be able to find and use those controls as a normal member—not merely have personalization fields sitting in the database.
+
+And there are actually **three separate things Replit needs to distinguish**:
+
+1. **How Kinfolk knows me** — preferences, interests, travel style, cultural context, current life context, saved places, prior choices, etc.
+2. **How Kinfolk talks to me** — tone/conversational style, degree of cultural familiarity, concise vs. detailed, possibly regional/AAVE preferences where appropriate.
+3. **How Kinfolk sounds** — actual audio/text-to-speech, selectable voice, play/pause/replay, and whether that functionality exists on web/mobile today.
+
+I would send Replit this exact diagnostic. **Do not ask them to build anything yet. Make them prove what exists first.**
+
+```text
+KIN FOLK AI PERSONALIZATION + VOICE — READ-ONLY PRODUCTION AUDIT
+
+STOP BEFORE IMPLEMENTING ANYTHING.
+
+Founder was previously told KinfolkAI personalization exists, including
+personalized interaction / communication preferences.
+
+Founder cannot currently find these controls in the production website.
+
+This is a major Mapping With Melanin platform differentiator.
+
+I need you to determine WHAT ACTUALLY EXISTS versus what was merely planned,
+stored in the database, partially implemented, mobile-only, or never exposed.
+
+DO NOT BUILD OR CHANGE ANYTHING DURING THIS AUDIT.
+
+============================================================
+1. FIND ALL EXISTING KINFOLK PERSONALIZATION
+============================================================
+
+Search the complete codebase, database schema, migrations, API routes,
+frontend components, mobile app, web app, and stored product specifications.
+
+Find everything related to:
+
+- Kinfolk personalization
+- AI preferences
+- communication preferences
+- conversational style
+- tone
+- voice
+- audio
+- text-to-speech
+- speech
+- regional voice
+- AAVE preference
+- cultural communication preference
+- preferred name
+- pronouns if applicable
+- interests
+- travel style
+- vibes
+- accessibility preferences
+- language
+- onboarding answers
+- "What Kinfolk Knows About Me"
+- Kinfolk memory
+- stable preferences
+- current life/chapter context
+- behavioral evidence
+- saved places
+- previous searches
+- previous Kinfolk conversations
+- personalization settings
+- profileSetupComplete
+- onboarding/profile answers
+
+For EVERY capability classify it:
+
+A. Production web + visible to member
+B. Production mobile + visible to member
+C. Backend/database exists but UI missing
+D. UI exists but backend not connected
+E. Partially implemented
+F. Planned/specification only
+G. Not found
+
+Do not call something implemented merely because a field, route, or component
+exists.
+
+============================================================
+2. WHERE DOES A MEMBER CHANGE KINFOLK?
+============================================================
+
+Using a REAL authenticated production tester at:
+
+https://www.mappingwithmelanin.com
+
+navigate the website as a normal member.
+
+Determine whether there is currently somewhere such as:
+
+Profile
+→ KinfolkAI
+→ Personalization
+
+or:
+
+Settings
+→ Kinfolk Preferences
+
+or another location.
+
+I need to know:
+
+Can I change how Kinfolk communicates with me?
+
+Can I tell Kinfolk:
+- be concise
+- give me more detail
+- be conversational
+- use culturally familiar language
+- change communication style
+
+Can I update the information Kinfolk learned during onboarding?
+
+Can I see:
+"What Kinfolk Knows About Me"?
+
+Can I correct something Kinfolk believes about me?
+
+Can I tell Kinfolk to forget/change a preference?
+
+SCREENSHOT THE ACTUAL PRODUCTION EXPERIENCE.
+
+If these controls do not exist, state:
+
+NOT USER ACCESSIBLE
+
+Do not mark PASS because backend fields exist.
+
+============================================================
+3. VOICE — VERY IMPORTANT
+============================================================
+
+Founder needs an exact answer:
+
+CAN KINFOLK SPEAK OUT LOUD TODAY?
+
+Test production web AND current mobile implementation.
+
+Determine whether Kinfolk has:
+
+- text-to-speech
+- speaker/play button
+- pause
+- replay
+- selectable voices
+- multiple voice options
+- voice preference persistence
+- speech speed
+- speech input / microphone
+- voice conversation
+- regional voice selection
+- any AAVE/cultural voice preference
+
+For each return:
+
+WEB: YES / NO / PARTIAL
+MOBILE: YES / NO / PARTIAL
+BACKEND ONLY: YES / NO
+PLANNED ONLY: YES / NO
+
+If voice exists, actually use it.
+
+I need screenshot evidence of the control and identify what technology/service
+provides the audio.
+
+If selectable voices exist:
+
+change the voice
+close Kinfolk
+reopen Kinfolk
+confirm the selected voice persisted
+play another response
+
+Do NOT infer voice functionality from package dependencies.
+
+Actually hear/trigger the production functionality.
+
+============================================================
+4. ONBOARDING → PERSONALIZATION
+============================================================
+
+Create a BRAND-NEW TEST MEMBER.
+
+Complete the existing Kinfolk onboarding intentionally with distinctive
+preferences.
+
+Example:
+
+- prefers culturally immersive travel
+- likes grown-folks nightlife
+- likes Black-owned businesses
+- interested in history
+- traveling internationally
+- prefers detailed recommendations
+
+Then open Kinfolk.
+
+Ask:
+
+"Where should I go tonight?"
+
+Confirm whether Kinfolk actually uses the onboarding information.
+
+Then change one available preference.
+
+Ask a comparable question again.
+
+Determine whether Kinfolk's response changes appropriately.
+
+============================================================
+5. MEMORY TEST
+============================================================
+
+Test whether Kinfolk actually remembers information across conversations.
+
+Tell Kinfolk something benign such as:
+
+"I'm planning a birthday trip to Bangkok and I prefer relaxed evenings
+over clubs."
+
+Start another Kinfolk interaction/session.
+
+Ask:
+
+"What kind of evening would you recommend for my Bangkok trip?"
+
+Determine whether the preference is actually remembered.
+
+Then determine WHERE the user can view or edit that stored information.
+
+Do not expose sensitive/private tester data in the report.
+
+============================================================
+6. DISTINGUISH PERSONALIZATION FROM CHAT HISTORY
+============================================================
+
+Do not confuse:
+
+conversation history
+
+with:
+
+persistent personalization.
+
+I need confirmation of what survives:
+
+- another message
+- another Kinfolk conversation
+- page refresh
+- logout/login
+- another device/platform, where testable
+
+============================================================
+7. IMPORTANT EXISTING PRODUCT PROMISE
+============================================================
+
+Our intended Kinfolk architecture has included the concept of:
+
+STABLE PREFERENCES
+CURRENT CHAPTER / CURRENT CONTEXT
+BEHAVIORAL EVIDENCE
+
+and a user-facing concept similar to:
+
+"WHAT KINFOLK KNOWS ABOUT ME"
+
+Audit whether this architecture actually exists.
+
+Also determine whether Kinfolk can appropriately evolve when circumstances
+change rather than permanently treating old context as current.
+
+DO NOT create or expose sensitive-life test data during this audit.
+Use benign test examples.
+
+============================================================
+8. UX ASSESSMENT
+============================================================
+
+Even if the functionality technically exists, answer:
+
+Would a normal first-time member KNOW that Kinfolk can be personalized?
+
+Would they know where to change it?
+
+Does Kinfolk explain during onboarding that answers improve recommendations?
+
+Does the Kinfolk interface provide an obvious path to personalization?
+
+Does Profile provide an obvious path?
+
+If not, mark:
+
+DISCOVERABILITY FAILURE
+
+============================================================
+9. FINAL REPORT
+============================================================
+
+Return one table:
+
+CAPABILITY | WEB | MOBILE | BACKEND | USER CAN FIND IT? | ACTUALLY TESTED
+
+Include:
+
+Onboarding personalization
+Profile preferences
+Kinfolk memory
+What Kinfolk Knows About Me
+Communication style
+Cultural communication preference
+Voice playback
+Voice selection
+Voice persistence
+Speech input
+Cross-session memory
+Saved-place learning
+Behavioral personalization
+
+Then state clearly:
+
+KINFOLK PERSONALIZATION STATUS:
+FULL / PARTIAL / NOT USER ACCESSIBLE
+
+KINFOLK VOICE STATUS:
+FULL / PARTIAL / NOT IMPLEMENTED
+
+DO NOT IMPLEMENT YET.
+
+Founder will decide what needs to be restored/exposed after seeing the audit.
+
+And because this audit is occurring during controlled testing:
+
+DO NOT disturb authentication.
+DO NOT disturb Railway production.
+DO NOT disturb Apple reviewer access.
+DO NOT change the current stable build.
+```
+
+One thing I want to emphasize: **“Kinfolk is personalized” and “Kinfolk has a voice” are not the same claim.** It is entirely possible Replit built the personalization/memory infrastructure but never exposed the settings—or built speech-related code without actually giving members a usable voice selector.
+
+If the audit comes back showing the three-layer memory exists but the controls don't, that's actually a much smaller problem than rebuilding Kinfolk. We would need to **surface what you've already built** in a polished Kinfolk settings area. And if actual voice audio isn't implemented, I would rather Replit tell us **NO** today than continue calling something complete that a tester cannot see, hear, or use.
