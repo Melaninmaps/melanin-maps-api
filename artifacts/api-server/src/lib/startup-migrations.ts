@@ -1751,6 +1751,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["test data cleanup",    () => ensureTestDataRemoved(log, warn)],
     ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
     ["founder churches",     () => ensureFounderChurches(log, warn)],
+    ["phuket full layer",    () => ensurePhuketFullLayer(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3896,5 +3897,421 @@ async function ensureFounderChurches(
     log(`Founder churches guard: ${inserted} inserted, ${skipped} already present`);
   } catch (err: unknown) {
     warn(`Founder churches guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Phuket full layer — nightlife, Afrobeats, cultural, nature, creative ──────
+// Source: TikTok screenshots from tester on-ground + curated research
+async function ensurePhuketFullLayer(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+
+  type PlaceEntry = {
+    name: string;
+    category: string;
+    subcategory: string;
+    address: string;
+    city: string;
+    description: string;
+    lat: number;
+    lng: number;
+    website?: string;
+  };
+
+  const places: PlaceEntry[] = [
+    // ── Nightlife from viral "Black in Phuket" TikTok (raeahb, 2022) ──────────
+    {
+      name: "No.69 Cafe & Bar",
+      category: "Entertainment & Recreation",
+      subcategory: "Bar / Lounge",
+      address: "Bangla Road, Patong",
+      city: "Patong",
+      description:
+        "No.69 is a lively Bangla Road bar with Afrobeats nights that pop off. Consistently recommended by Black travelers as one of the best spots in Phuket for good music and an inclusive vibe.",
+      lat: 7.8956,
+      lng: 98.2996,
+    },
+    {
+      name: "Sugar Nightclub Phuket",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightclub",
+      address: "Bangla Road, Patong",
+      city: "Patong",
+      description:
+        "Sugar is one of Patong's most energetic nightclubs on the iconic Bangla Road strip — multi-level, high-energy, diverse crowd, international DJs spinning hip-hop, R&B, and Afrobeats.",
+      lat: 7.8959,
+      lng: 98.2993,
+      website: "https://sugarphuket.com",
+    },
+    {
+      name: "Illuzion Nightclub Phuket",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightclub",
+      address: "31 Bangla Road, Patong",
+      city: "Patong",
+      description:
+        "Illuzion is one of Asia's largest nightclubs — massive indoor/outdoor venue on Bangla Road with world-class sound, international DJ headliners, and a famously inclusive atmosphere. Frequently featured in Black travel TikToks.",
+      lat: 7.8952,
+      lng: 98.2991,
+      website: "https://illuzionphuket.com",
+    },
+    {
+      name: "B Pocha Hip Hop & R&B Bar",
+      category: "Entertainment & Recreation",
+      subcategory: "Bar / Lounge",
+      address: "Bangla Road, Patong",
+      city: "Patong",
+      description:
+        "B Pocha is Patong's dedicated hip-hop and R&B bar — the go-to spot on Bangla Road for travelers looking for familiar sounds. Expect a laid-back but hype atmosphere with a diverse international crowd.",
+      lat: 7.8964,
+      lng: 98.2988,
+    },
+    {
+      name: "Zippy Day Club",
+      category: "Entertainment & Recreation",
+      subcategory: "Day Club / Beach Club",
+      address: "Patong Beach, Patong",
+      city: "Patong",
+      description:
+        "Zippy is a popular Patong day club known for pool parties and daytime DJ sets. Great entry point for the Phuket party scene before the Bangla Road night begins.",
+      lat: 7.8970,
+      lng: 98.2981,
+    },
+    {
+      name: "Bangla Boat Bar",
+      category: "Entertainment & Recreation",
+      subcategory: "Bar / Lounge",
+      address: "Bangla Road, Patong",
+      city: "Patong",
+      description:
+        "The Bangla Boat is a unique floating-themed bar right on Bangla Road — one of the strip's most recognizable landmarks and a great spot to start the night before hitting the clubs.",
+      lat: 7.8961,
+      lng: 98.2994,
+    },
+    // ── From TikTok screenshot — Wave Club (Black Moon party) ─────────────────
+    {
+      name: "Wave Club Phuket",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightclub",
+      address: "Sai Uan Road, Patong",
+      city: "Patong",
+      description:
+        "Wave Club hosts the legendary Black Moon party — high-energy DJ performances, stunning light shows, and a vibrant crowd. One of Phuket's most talked-about club nights on TikTok.",
+      lat: 7.8946,
+      lng: 98.2979,
+    },
+    // ── Additional Afrobeats & inclusive nightlife ─────────────────────────────
+    {
+      name: "Café del Mar Phuket",
+      category: "Entertainment & Recreation",
+      subcategory: "Beach Club",
+      address: "Kamala Beach, Kamala",
+      city: "Kamala",
+      description:
+        "The iconic Ibiza brand on a Phuket cliffside — stunning infinity pool overlooking the Andaman Sea, world-class sunset DJ sets, and an international crowd. One of the most beautiful beach clubs in Southeast Asia.",
+      lat: 7.9452,
+      lng: 98.2779,
+      website: "https://cafedelmarphuket.com",
+    },
+    {
+      name: "Seduction Beach Club & Disco",
+      category: "Entertainment & Recreation",
+      subcategory: "Beach Club",
+      address: "Patong Beach Road, Patong",
+      city: "Patong",
+      description:
+        "Seduction is a Patong beachfront staple — open-air beach club by day, disco by night. Inclusive atmosphere with a mix of tourists and expats; regular themed nights including hip-hop and international music.",
+      lat: 7.8978,
+      lng: 98.2964,
+    },
+    {
+      name: "Mixx Discotheque Phuket",
+      category: "Entertainment & Recreation",
+      subcategory: "Nightclub",
+      address: "Holiday Inn Patong, Patong",
+      city: "Patong",
+      description:
+        "Mixx is one of Phuket's longest-running clubs — connected to the Holiday Inn and known for a diverse music policy including Afrobeats, R&B, and dance music. Popular with international travelers.",
+      lat: 7.8968,
+      lng: 98.2972,
+    },
+    // ── Cultural & religious ──────────────────────────────────────────────────
+    {
+      name: "Wat Chalong Temple",
+      category: "Arts & Culture",
+      subcategory: "Temple / Religious Site",
+      address: "Chao Fah Tawan Ok Road, Chalong",
+      city: "Chalong",
+      description:
+        "Wat Chalong is Phuket's most important and revered Buddhist temple — a stunning complex of gilded pagodas, ancient relics, and intricate murals. The temple enshrines relics believed to be from the Buddha. Respectful dress required.",
+      lat: 7.8444,
+      lng: 98.3376,
+    },
+    {
+      name: "The Big Buddha Phuket",
+      category: "Arts & Culture",
+      subcategory: "Monument / Landmark",
+      address: "Nakkerd Hills, Chalong",
+      city: "Chalong",
+      description:
+        "The Big Buddha is a 45-meter white marble Maravija Buddha statue sitting atop the Nakkerd Hills — one of the most important and revered landmarks in Phuket. Panoramic 360° views of the island from the hilltop. Respectful dress required; free sarongs at the entrance.",
+      lat: 7.8278,
+      lng: 98.3129,
+    },
+    {
+      name: "Phuket Old Town Historic Quarter",
+      category: "Arts & Culture",
+      subcategory: "Historic District",
+      address: "Thalang Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Phuket Old Town is a UNESCO-recognized historic district with beautifully preserved Sino-Portuguese shophouses, colorful murals, and shrines. A vibrant arts and coffee scene has grown around the heritage buildings. Best explored on foot in the early morning.",
+      lat: 7.8812,
+      lng: 98.3932,
+    },
+    {
+      name: "Shrine of the Serene Light",
+      category: "Arts & Culture",
+      subcategory: "Temple / Religious Site",
+      address: "Phang Nga Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "A hidden Chinese Taoist shrine tucked in a narrow alley in Phuket Old Town — over 100 years old, ornately decorated, and one of the most serene and photogenic spots in the city. Easy to miss if you don't know it's there.",
+      lat: 7.8815,
+      lng: 98.3924,
+    },
+    {
+      name: "Thai Hua Museum",
+      category: "Arts & Culture",
+      subcategory: "Museum",
+      address: "28 Krabi Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "The Thai Hua Museum is housed in a stunning 1934 Sino-Portuguese building and tells the story of Phuket's Chinese diaspora — their migration, culture, and contribution to the island's identity. Beautifully curated with photos, artifacts, and language exhibits.",
+      lat: 7.8808,
+      lng: 98.3928,
+      website: "https://thaihuamuseum.com",
+    },
+    {
+      name: "Jui Tui Taoist Temple",
+      category: "Arts & Culture",
+      subcategory: "Temple / Religious Site",
+      address: "Ranong Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Jui Tui is one of Phuket's most important Chinese Taoist shrines and the heart of the famous Phuket Vegetarian Festival. Vivid red-and-gold architecture, incense, and a deeply spiritual atmosphere year-round.",
+      lat: 7.8820,
+      lng: 98.3918,
+    },
+    // ── Nature & views ────────────────────────────────────────────────────────
+    {
+      name: "Promthep Cape Viewpoint",
+      category: "Travel & Hospitality",
+      subcategory: "Viewpoint / Scenic Spot",
+      address: "Cape Panwa Road, Rawai",
+      city: "Rawai",
+      description:
+        "Promthep Cape is Phuket's most famous viewpoint — a dramatic rocky headland at the island's southernmost tip with breathtaking 270° views of the Andaman Sea. The sunset here is legendary. Get there 45 minutes early to claim a spot.",
+      lat: 7.7721,
+      lng: 98.3036,
+    },
+    {
+      name: "Karon Viewpoint (Three Beaches Hill)",
+      category: "Travel & Hospitality",
+      subcategory: "Viewpoint / Scenic Spot",
+      address: "Patak Road, Karon",
+      city: "Karon",
+      description:
+        "Karon Viewpoint sits on a hill between Kata and Karon beaches — on a clear day you can see Kata Noi, Kata, and Karon beaches simultaneously in one stunning panoramic view. One of the most photographed spots on the island.",
+      lat: 7.8192,
+      lng: 98.2971,
+    },
+    {
+      name: "Rang Hill (Khao Rang) Viewpoint",
+      category: "Travel & Hospitality",
+      subcategory: "Viewpoint / Scenic Spot",
+      address: "Khao Rang, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Rang Hill is a forested hilltop park just above Phuket Town with sweeping views of the city and surrounding islands. Quiet, local, and far less touristy than the southern viewpoints — perfect for an early morning walk or sunset with locals.",
+      lat: 7.8987,
+      lng: 98.3783,
+    },
+    {
+      name: "Elephant Jungle Sanctuary Phuket",
+      category: "Travel & Hospitality",
+      subcategory: "Nature / Wildlife Sanctuary",
+      address: "Patak Road, Chalong",
+      city: "Chalong",
+      description:
+        "Elephant Jungle Sanctuary is an ethical elephant rescue and rehabilitation center — no riding, no chains, just peaceful interaction with rescued elephants in a natural jungle setting. Mud baths, feeding, and walking alongside them. One of the most responsible sanctuaries in Thailand.",
+      lat: 7.9156,
+      lng: 98.3542,
+      website: "https://elephantjunglesanctuary.com",
+    },
+    {
+      name: "Phang Nga Bay (James Bond Island)",
+      category: "Travel & Hospitality",
+      subcategory: "Nature / Day Trip",
+      address: "Rassada Pier, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Phang Nga Bay is one of Thailand's most spectacular natural landscapes — towering limestone karsts rising from emerald green water, sea caves, and the famous Khao Phing Kan rock (James Bond Island). A full-day boat tour from Phuket. Book early — it sells out.",
+      lat: 7.9003,
+      lng: 98.3847,
+    },
+    {
+      name: "Monkey Hill (Khao Toh Sae)",
+      category: "Travel & Hospitality",
+      subcategory: "Nature / Viewpoint",
+      address: "Khao Toh Sae, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Monkey Hill is a forested peak in the middle of Phuket Town populated by hundreds of wild macaque monkeys. An easy 20-minute climb rewards you with city views and unforgettable wildlife encounters. Go early, don't bring food out in the open.",
+      lat: 7.9020,
+      lng: 98.3700,
+    },
+    // ── Creative & unique ─────────────────────────────────────────────────────
+    {
+      name: "Art in Paradise Phuket",
+      category: "Arts & Culture",
+      subcategory: "Museum / Interactive Art",
+      address: "Phang Nga Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Art in Paradise is a massive 3D trick-art museum spread across multiple themed rooms — you become part of the paintings. Ocean floors, dinosaurs, ancient Egypt, and more. Wildly fun and uniquely photogenic. Great rainy-day activity.",
+      lat: 7.8822,
+      lng: 98.3910,
+      website: "https://artinparadisephuket.com",
+    },
+    {
+      name: "Phuket Trickeye Museum",
+      category: "Arts & Culture",
+      subcategory: "Museum / Interactive Art",
+      address: "Rat U Thit 200 Pi Road, Patong",
+      city: "Patong",
+      description:
+        "The Trickeye Museum in Patong features optical illusion art and 3D installations you can step into and photograph. Smaller and more accessible than Art in Paradise — great for an afternoon between beach and nightlife.",
+      lat: 7.8940,
+      lng: 98.2968,
+    },
+    {
+      name: "Phuket Upside Down House",
+      category: "Arts & Culture",
+      subcategory: "Attraction / Experience",
+      address: "Chao Fah Tawan Tok Road, Wichit",
+      city: "Wichit",
+      description:
+        "The Upside Down House is exactly what it sounds like — a full-size house built and furnished completely inverted. Walk on the ceiling, sit in upside-down chairs, and take impossibly fun photos. One of Phuket's most creative and shareable experiences.",
+      lat: 7.8756,
+      lng: 98.3563,
+    },
+    {
+      name: "Naka Weekend Market Phuket",
+      category: "Arts & Culture",
+      subcategory: "Market / Night Bazaar",
+      address: "Chao Fah Tawan Ok Road, Phuket Town",
+      city: "Phuket Town",
+      description:
+        "Naka Market is Phuket's most popular weekend night market — hundreds of stalls selling street food, Thai street fashion, handmade crafts, vintage goods, and local art. Very local feel, very affordable, and a great place to try authentic Thai snacks.",
+      lat: 7.9095,
+      lng: 98.3756,
+    },
+    {
+      name: "Surin Beach",
+      category: "Travel & Hospitality",
+      subcategory: "Beach",
+      address: "Surin Beach, Cherng Talay",
+      city: "Cherng Talay",
+      description:
+        "Surin Beach is Phuket's most sophisticated beach — calm turquoise water, minimal vendors, and a relaxed upscale atmosphere compared to Patong. Popular with expats and long-stay travelers. The Sunday Walking Street in nearby Cherng Talay is also excellent.",
+      lat: 7.9628,
+      lng: 98.2772,
+    },
+    {
+      name: "Kata Noi Beach",
+      category: "Travel & Hospitality",
+      subcategory: "Beach",
+      address: "Kata Noi Road, Karon",
+      city: "Karon",
+      description:
+        "Kata Noi is one of Phuket's most beautiful and least crowded beaches — a small, intimate bay with powdery sand, clear water, and a peaceful atmosphere. Far fewer vendors and tourists than the main Kata beach nearby.",
+      lat: 7.8130,
+      lng: 98.2995,
+    },
+    {
+      name: "Phuket Fantasea Cultural Theme Park",
+      category: "Entertainment & Recreation",
+      subcategory: "Cultural Show / Theme Park",
+      address: "99 Moo 3, Kamala Beach",
+      city: "Kamala",
+      description:
+        "Phuket Fantasea is a grand cultural theme park and nightly show celebrating Thai heritage through acrobatics, elephants, illusions, and a cast of hundreds. Think Cirque du Soleil meets Thai mythology — spectacular and uniquely Thai.",
+      lat: 7.9418,
+      lng: 98.2756,
+      website: "https://phuket-fantasea.com",
+    },
+  ];
+
+  try {
+    const existing = await pool.query(
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'thailand')) AS k FROM businesses`
+    );
+    const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const p of places) {
+      const key = `${p.name.toLowerCase()}|${p.city.toLowerCase()}|thailand`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             website,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,NULL,'Thailand',
+             $7,'[]'::jsonb,false,
+             $8,
+             $9,$10,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            p.name, p.category, p.subcategory,
+            p.address, p.city,
+            p.description,
+            p.website ?? null,
+            String(p.lat), String(p.lng),
+          ]
+        );
+        existingKeys.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Phuket full layer: failed to insert "${p.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Phuket full layer: ${inserted} inserted, ${skipped} already present (${places.length} total)`);
+  } catch (err: unknown) {
+    warn(`Phuket full layer failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
