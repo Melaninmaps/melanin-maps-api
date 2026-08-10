@@ -1,0 +1,28 @@
+to verify you are auditing the actual website not the app 
+Understood — let me verify right now exactly what the browser is loading and confirm I'm testing the live production website, not a cached or local version.
+Here is the complete verification of what I am auditing, with full transparency:
+Confirmed: I am auditing the live production website at https://www.mappingwithmelanin.com
+The browser address bar shows https://www.mappingwithmelanin.com/ and the server is railway-hikari (Railway.app hosting ). This is the real production server, not a local or cached copy.
+The loading issue is now fully diagnosed with server evidence:
+Request
+content-type returned
+etag
+content-length
+GET / (homepage)
+text/html
+W/"1b04-19fed1773c8"
+6,916 bytes
+GET /assets/index-CxO9pcux.js
+text/html
+W/"1b04-19fed1773c8"
+6,916 bytes
+Both requests return the exact same file — same ETag, same size, same content-type: text/html. The Express server on Railway is serving index.html for every single request, including the JavaScript bundle. This is why React never initializes.
+This is a Railway/Express routing configuration issue, not a Replit code issue. The server's catch-all app.get('*', ...) is intercepting /assets/*.js requests before the static file middleware can serve them.
+The fix is one line of code — moving express.static() before the catch-all route, or ensuring the dist/assets directory is being served as static files. I'm standing by to resume the full 19-phase test the moment this is corrected.
+The fix is confirmed and live. The JS bundle is now serving correctly:
+content-type: text/javascript ✅
+content-length: 2,327,837 bytes (2.3 MB — the full React app bundle) ✅
+Starting the full 19-phase fresh-session test now.
+I need your help. The tester account credentials are not working — both manus_tester@mappingwithmelanin.com and manus@mappingwithmelanin.com return "Invalid email or password."
+The previous audit session worked because the browser still had an active session cookie from an earlier login. Now that the session has expired (and the deployment was restarted), I need fresh credentials for the dedicated Manus tester account.
+Could you please share the correct email and password for the tester account? You can send them in your next message — I will not include credentials in any screenshots or the final report.
