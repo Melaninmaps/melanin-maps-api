@@ -95,14 +95,37 @@ router.get("/businesses", async (req: Request, res: Response) => {
     }
 
     if (search && typeof search === "string") {
-      conditions.push(
-        or(
-          ilike(businessesTable.name, `%${search}%`),
-          ilike(businessesTable.city, `%${search}%`),
-          ilike(businessesTable.category, `%${search}%`),
-          ilike(businessesTable.description, `%${search}%`),
-        ),
-      );
+      const q = search.trim();
+      const STOP = new Set(["a","an","the","and","or","of","in","at","on","for","to","with","is","by","near","best","good","great"]);
+      const tokens = q
+        .toLowerCase()
+        .split(/\s+/)
+        .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
+        .filter(t => t.length >= 2 && !STOP.has(t));
+      if (tokens.length <= 1) {
+        // Single token: standard substring match across all fields
+        conditions.push(
+          or(
+            ilike(businessesTable.name, `%${q}%`),
+            ilike(businessesTable.city, `%${q}%`),
+            ilike(businessesTable.category, `%${q}%`),
+            ilike(businessesTable.description, `%${q}%`),
+          ),
+        );
+      } else {
+        // Multi-token: satisfy ALL tokens in name (most precise), OR the full
+        // phrase in any field. This catches "Pink Table" → both "pink" AND "table"
+        // present in the name. Falls through to fuzzy if still zero results.
+        const allInName = tokens.map(t => ilike(businessesTable.name, `%${t}%`));
+        conditions.push(
+          or(
+            and(...allInName),                                          // all tokens in name
+            ilike(businessesTable.name, `%${q}%`),                     // full phrase in name
+            ilike(businessesTable.description, `%${q}%`),              // full phrase in description
+            ilike(businessesTable.category, `%${q}%`),                 // full phrase in category
+          ),
+        );
+      }
     }
 
     if (city && typeof city === "string") {
@@ -246,23 +269,55 @@ router.get("/businesses", async (req: Request, res: Response) => {
     const withCaptions = annotated.map((b) => ({ ...b, topCaptions: captionMap.get(b.id) ?? [] }));
 
     // ── Fuzzy name fallback — trigram similarity via pg_trgm ─────────────────
-    // When a name search returns zero results (e.g. "Hakeem's book store" vs
-    // "Hakim's Bookstore"), run a similarity query so close-enough spellings
-    // still surface the right business. Falls back silently if pg_trgm is absent.
+    // When a name search returns zero results, try:
+    //  1. Per-token ILIKE or trigram similarity (multi-word queries)
+    //  2. Full-phrase trigram similarity (single-word or short queries)
+    // Falls back silently if pg_trgm is absent.
     let finalResults = withCaptions;
     if (search && typeof search === "string" && withCaptions.length === 0) {
       try {
         const cleanSearch = search.replace(/[^\w\s'-]/gi, " ").trim();
-        const fuzzyRes = await pool.query<Record<string, unknown>>(
-          `SELECT b.*,
-                  similarity(LOWER(b.name), LOWER($1)) AS _sim_score
-           FROM businesses b
-           WHERE b.status = 'active'
-             AND similarity(LOWER(b.name), LOWER($1)) > 0.22
-           ORDER BY _sim_score DESC
-           LIMIT 15`,
-          [cleanSearch],
-        );
+        const STOP = ["a","an","the","and","or","of","in","at","on","for","to","with","is","by","near","best","good","great"];
+        const tokens = cleanSearch
+          .toLowerCase()
+          .split(/\s+/)
+          .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
+          .filter(t => t.length >= 3 && !STOP.includes(t));
+
+        let fuzzyRes: { rows: Record<string, unknown>[] } = { rows: [] };
+
+        if (tokens.length > 1) {
+          // Multi-token fuzzy: any significant token matches by ILIKE or trigram
+          const orClauses = tokens.flatMap((t, i) => [
+            `b.name ILIKE $${i + 2}`,
+            `similarity(LOWER(b.name), LOWER($${tokens.length + i + 2})) > 0.18`,
+          ]).join(" OR ");
+          const simCols = tokens.map((_, i) => `similarity(LOWER(b.name), LOWER($${tokens.length + i + 2}))`).join(", ");
+          const params: unknown[] = [cleanSearch, ...tokens.map(t => `%${t}%`), ...tokens];
+          const r = await pool.query<Record<string, unknown>>(
+            `SELECT b.*, GREATEST(${simCols}) AS _sim_score
+             FROM businesses b
+             WHERE b.status = 'active' AND (${orClauses})
+             ORDER BY _sim_score DESC, b.confidence_score DESC
+             LIMIT 20`,
+            params,
+          );
+          fuzzyRes = r;
+        }
+
+        // Always try full-phrase similarity too (catches misspellings)
+        if (fuzzyRes.rows.length === 0) {
+          fuzzyRes = await pool.query<Record<string, unknown>>(
+            `SELECT b.*, similarity(LOWER(b.name), LOWER($1)) AS _sim_score
+             FROM businesses b
+             WHERE b.status = 'active'
+               AND similarity(LOWER(b.name), LOWER($1)) > 0.22
+             ORDER BY _sim_score DESC
+             LIMIT 15`,
+            [cleanSearch],
+          );
+        }
+
         if (fuzzyRes.rows.length > 0) {
           finalResults = fuzzyRes.rows.map((r) => ({
             ...r,
@@ -2377,5 +2432,131 @@ router.post("/admin/businesses/:id/confirm-fake", async (req: Request, res: Resp
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMUNITY MEDIA CONTRIBUTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /businesses/:id/contributions — public, returns approved contributions
+router.get("/:id/contributions", async (req: Request, res: Response): Promise<void> => {
+  const businessId = String(req.params.id);
+  try {
+    const rows = await pool.query<Record<string, unknown>>(
+      `SELECT bc.id, bc.media_type, bc.source_type, bc.source_url, bc.caption,
+              bc.attribution, bc.created_at,
+              u.display_name AS contributor_name, u.profile_image_url AS contributor_avatar
+       FROM business_contributions bc
+       LEFT JOIN users u ON u.id = bc.user_id
+       WHERE bc.business_id = $1 AND bc.status = 'approved' AND bc.is_public = TRUE
+       ORDER BY bc.created_at DESC
+       LIMIT 50`,
+      [businessId],
+    );
+    res.json({ contributions: rows.rows });
+  } catch (err) {
+    req.log.error({ err }, "GET contributions failed");
+    res.status(500).json({ error: "Failed to load contributions" });
+  }
+});
+
+// POST /businesses/:id/contributions — authenticated, member submits social URL
+router.post("/:id/contributions", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const businessId = String(req.params.id);
+  const userId = (req as any).user?.id;
+  if (!userId) { res.status(401).json({ error: "Authentication required" }); return; }
+
+  const { mediaType = "social_url", sourceType, sourceUrl, caption, attribution } = req.body ?? {};
+
+  if (!sourceUrl || typeof sourceUrl !== "string") {
+    res.status(400).json({ error: "sourceUrl is required" }); return;
+  }
+
+  // Validate URL
+  try { new URL(sourceUrl); } catch {
+    res.status(400).json({ error: "sourceUrl must be a valid URL (e.g. https://www.instagram.com/...)" }); return;
+  }
+
+  // Detect source type from URL if not provided
+  let detectedType = sourceType ?? "other";
+  if (!sourceType) {
+    try {
+      const host = new URL(sourceUrl).hostname.replace("www.", "");
+      if (host.includes("instagram")) detectedType = "instagram";
+      else if (host.includes("tiktok")) detectedType = "tiktok";
+      else if (host.includes("youtube") || host.includes("youtu.be")) detectedType = "youtube";
+      else if (host.includes("vimeo")) detectedType = "vimeo";
+      else if (host.includes("facebook") || host.includes("fb.watch")) detectedType = "facebook";
+      else if (host.includes("twitter") || host.includes("x.com")) detectedType = "twitter";
+    } catch { /* ignore */ }
+  }
+
+  // Check business exists
+  const biz = await pool.query("SELECT id, name FROM businesses WHERE id = $1 LIMIT 1", [businessId]);
+  if (biz.rows.length === 0) { res.status(404).json({ error: "Business not found" }); return; }
+
+  const id = randomUUID();
+  try {
+    await pool.query(
+      `INSERT INTO business_contributions
+         (id, business_id, user_id, media_type, source_type, source_url, caption, attribution, status, is_public, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', TRUE, NOW(), NOW())`,
+      [id, businessId, userId, mediaType, detectedType, sourceUrl.trim(), caption?.trim() ?? null, attribution?.trim() ?? null],
+    );
+    res.status(201).json({
+      contribution: { id, status: "pending", message: "Your contribution has been submitted and will appear after review — usually within 24 hours." },
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST contribution failed");
+    res.status(500).json({ error: "Failed to submit contribution. Please try again." });
+  }
+});
+
+// PATCH /admin/businesses/contributions/:id — admin approves or rejects
+router.patch("/admin/contributions/:id", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const id = String(req.params.id);
+  const { status, rejectedReason } = req.body ?? {};
+  if (!["approved", "rejected"].includes(status)) {
+    res.status(400).json({ error: "status must be 'approved' or 'rejected'" }); return;
+  }
+  try {
+    const r = await pool.query(
+      `UPDATE business_contributions
+       SET status=$1, rejected_reason=$2, moderated_by=$3,
+           approved_at=CASE WHEN $1='approved' THEN NOW() ELSE NULL END,
+           updated_at=NOW()
+       WHERE id=$4 RETURNING id, status`,
+      [status, rejectedReason ?? null, (req as any).user?.id ?? null, id],
+    );
+    if (r.rows.length === 0) { res.status(404).json({ error: "Contribution not found" }); return; }
+    res.json({ contribution: r.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "PATCH contribution failed");
+    res.status(500).json({ error: "Failed to update contribution" });
+  }
+});
+
+// GET /admin/businesses/contributions — list pending for moderation
+router.get("/admin/contributions", async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Admin required" }); return; }
+  const status = (req.query.status as string) ?? "pending";
+  try {
+    const r = await pool.query(
+      `SELECT bc.*, b.name AS business_name, u.display_name AS contributor_name, u.email AS contributor_email
+       FROM business_contributions bc
+       LEFT JOIN businesses b ON b.id = bc.business_id
+       LEFT JOIN users u ON u.id = bc.user_id
+       WHERE bc.status = $1
+       ORDER BY bc.created_at DESC
+       LIMIT 100`,
+      [status],
+    );
+    res.json({ contributions: r.rows, count: r.rows.length });
+  } catch (err) {
+    req.log.error({ err }, "GET admin contributions failed");
+    res.status(500).json({ error: "Failed to load contributions" });
+  }
+});
+
 export default router;
+
 

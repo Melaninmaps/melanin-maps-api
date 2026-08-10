@@ -27,6 +27,34 @@ import { ensureDiasporaFaithSites } from "./ensure-diaspora-faith-sites";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    name: "create_business_contributions_table",
+    sql: `CREATE TABLE IF NOT EXISTS business_contributions (
+      id             VARCHAR(128) PRIMARY KEY,
+      business_id    VARCHAR(128) NOT NULL,
+      user_id        VARCHAR(128) NOT NULL,
+      media_type     VARCHAR(32)  NOT NULL DEFAULT 'social_url',
+      source_type    VARCHAR(32),
+      source_url     TEXT,
+      caption        TEXT,
+      attribution    VARCHAR(256),
+      status         VARCHAR(32)  NOT NULL DEFAULT 'pending',
+      rejected_reason TEXT,
+      is_public      BOOLEAN      NOT NULL DEFAULT TRUE,
+      created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+      updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+      approved_at    TIMESTAMPTZ,
+      moderated_by   VARCHAR(128)
+    )`,
+  },
+  {
+    name: "business_contributions_business_idx",
+    sql: `CREATE INDEX IF NOT EXISTS business_contributions_business_idx ON business_contributions(business_id)`,
+  },
+  {
+    name: "business_contributions_status_idx",
+    sql: `CREATE INDEX IF NOT EXISTS business_contributions_status_idx ON business_contributions(status)`,
+  },
+  {
     // Universal Search + Demand Flywheel — Checkpoint 1
     // Canonical search event log: one row per search across all surfaces.
     // Privacy: user_id nullable; demand signals use aggregated counts only.

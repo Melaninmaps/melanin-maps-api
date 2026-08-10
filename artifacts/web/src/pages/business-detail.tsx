@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink } from "lucide-react";
+import { MapPin, Star, Bookmark, BookmarkCheck, Phone, Globe, ShieldCheck, Clock, Navigation, Zap, BookOpen, Lock, CheckSquare, Shield, ChevronDown, ChevronUp, Share2, ExternalLink, Camera, X, CheckCircle2, Instagram } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -137,6 +137,67 @@ export default function BusinessDetail() {
   const [vibeLoading, setVibeLoading] = useState<string | null>(null);
   const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
   const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
+
+  // ── Community media contribution state ──────────────────────────────────────
+  const [showContribModal, setShowContribModal] = useState(false);
+  const [contribUrl, setContribUrl] = useState("");
+  const [contribCaption, setContribCaption] = useState("");
+  const [contribSubmitting, setContribSubmitting] = useState(false);
+  const [contribSuccess, setContribSuccess] = useState(false);
+  const [contribError, setContribError] = useState<string | null>(null);
+  const [communityVibes, setCommunityVibes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!id) return;
+    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${apiBase}/api/businesses/${id}/contributions`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (Array.isArray(d?.contributions)) setCommunityVibes(d.contributions); })
+      .catch(() => {});
+  }, [id]);
+
+  function detectPlatformFromUrl(url: string): string {
+    try {
+      const host = new URL(url).hostname.replace("www.", "");
+      if (host.includes("instagram")) return "Instagram";
+      if (host.includes("tiktok")) return "TikTok";
+      if (host.includes("youtube") || host.includes("youtu.be")) return "YouTube";
+      if (host.includes("vimeo")) return "Vimeo";
+      if (host.includes("facebook") || host.includes("fb.watch")) return "Facebook";
+      if (host.includes("twitter") || host.includes("x.com")) return "X / Twitter";
+    } catch { /* ignore */ }
+    return "Social";
+  }
+
+  async function handleContribSubmit() {
+    if (!auth?.user) {
+      setShowContribModal(false);
+      toast({ title: "Sign in to contribute", description: "Create a free account to share your experience." });
+      return;
+    }
+    const url = contribUrl.trim();
+    if (!url) { setContribError("Please paste a social media link."); return; }
+    try { new URL(url); } catch { setContribError("Please enter a valid URL (e.g. https://www.instagram.com/...)"); return; }
+
+    setContribSubmitting(true);
+    setContribError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${apiBase}/api/businesses/${id}/contributions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ mediaType: "social_url", sourceUrl: url, caption: contribCaption.trim() || null }),
+      });
+      if (res.ok) {
+        setContribSuccess(true);
+      } else {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setContribError(body.error ?? "Something went wrong. Try again.");
+      }
+    } catch { setContribError("Unable to submit. Check your connection."); }
+    finally { setContribSubmitting(false); }
+  }
 
   // Categories that use THE REAL (professional trust tags) instead of Community Vibes.
   // Per the Master Directory and Three-Layer Architecture spec.
@@ -411,6 +472,85 @@ export default function BusinessDetail() {
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] flex flex-col w-full pb-24">
+      {/* ── Community Media Contribution Modal ── */}
+      {showContribModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#CA922B]/20 relative">
+            <button onClick={() => { setShowContribModal(false); setContribSuccess(false); setContribUrl(""); setContribCaption(""); setContribError(null); }} className="absolute top-4 right-4 text-[#3A1F0E]/40 hover:text-[#3A1F0E] transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+
+            {contribSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-xl font-serif font-bold text-[#2B1507] mb-2">Contribution Received</h3>
+                <p className="text-[#3A1F0E]/70 text-sm leading-relaxed mb-6">
+                  Your content has been submitted and will appear on this page after review — usually within 24 hours. Thank you for showing the community the vibe.
+                </p>
+                <button onClick={() => { setShowContribModal(false); setContribSuccess(false); setContribUrl(""); setContribCaption(""); }} className="py-3 px-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm transition-colors">
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-[#CA922B]/10 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-[#CA922B]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-serif font-bold text-[#2B1507]">Show the Vibe</h3>
+                    <p className="text-xs text-[#3A1F0E]/60">Paste a link from Instagram, TikTok, YouTube, or Vimeo</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Your post or video link</label>
+                    <input
+                      type="url"
+                      value={contribUrl}
+                      onChange={e => { setContribUrl(e.target.value); setContribError(null); }}
+                      placeholder="https://www.instagram.com/p/..."
+                      className="w-full px-4 py-3 rounded-xl border border-[#2B1507]/15 bg-[#FAF6EF] text-sm text-[#2B1507] placeholder-[#3A1F0E]/35 focus:outline-none focus:border-[#CA922B] focus:ring-2 focus:ring-[#CA922B]/10 transition"
+                    />
+                    {contribUrl && (() => { try { const p = detectPlatformFromUrl(contribUrl); return p !== "Social" ? <p className="text-xs text-[#CA922B] mt-1 font-semibold">{p} link detected ✓</p> : null; } catch { return null; } })()}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Caption <span className="normal-case text-[#3A1F0E]/35 font-normal">(optional)</span></label>
+                    <textarea
+                      value={contribCaption}
+                      onChange={e => setContribCaption(e.target.value)}
+                      placeholder="What made this place special for you?"
+                      rows={2}
+                      maxLength={280}
+                      className="w-full px-4 py-3 rounded-xl border border-[#2B1507]/15 bg-[#FAF6EF] text-sm text-[#2B1507] placeholder-[#3A1F0E]/35 focus:outline-none focus:border-[#CA922B] focus:ring-2 focus:ring-[#CA922B]/10 resize-none transition"
+                    />
+                  </div>
+
+                  <div className="bg-[#FAF6EF] rounded-xl p-3 border border-[#2B1507]/8">
+                    <p className="text-[10px] text-[#3A1F0E]/50 leading-relaxed">
+                      <strong className="text-[#3A1F0E]/70">Your content stays yours.</strong> MWM stores only a link to your original post — your views, followers, and credit stay on your platform. Submissions are reviewed before appearing.
+                    </p>
+                  </div>
+
+                  {contribError && <p className="text-red-600 text-xs font-medium">{contribError}</p>}
+
+                  <button
+                    onClick={handleContribSubmit}
+                    disabled={contribSubmitting || !contribUrl.trim()}
+                    className="w-full py-3 rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-white font-bold text-sm transition-colors"
+                  >
+                    {contribSubmitting ? "Submitting…" : "Submit Contribution"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Upgrade Modal */}
       {showUpgrade && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -491,6 +631,13 @@ export default function BusinessDetail() {
                 className={`rounded-full h-12 px-6 border-white/20 backdrop-blur-md ${isSaved ? "bg-white text-[#2B1507]" : "bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"}`}
               >
                 {isSaved ? <><BookmarkCheck className="mr-2 w-5 h-5" /> Saved</> : <><Bookmark className="mr-2 w-5 h-5" /> Save</>}
+              </Button>
+              <Button
+                onClick={() => setShowContribModal(true)}
+                variant="outline"
+                className="rounded-full h-12 px-6 border-white/20 backdrop-blur-md bg-black/30 text-white hover:bg-white hover:text-[#2B1507]"
+              >
+                <Camera className="mr-2 w-5 h-5" /> Show the Vibe
               </Button>
               <Button
                 onClick={handleCheckIn}
@@ -946,6 +1093,48 @@ export default function BusinessDetail() {
                             </a>
                           ))}
                         </div>
+                      )}
+
+                      {/* Community media contributions */}
+                      {communityVibes.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider">Community Vibes</span>
+                          </div>
+                          {communityVibes.slice(0, 5).map((c: any) => {
+                            const platform = detectPlatformFromUrl(c.source_url ?? "");
+                            return (
+                              <a
+                                key={c.id}
+                                href={c.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 hover:border-[#CA922B]/40 transition-colors group"
+                              >
+                                <span className="text-[10px] font-bold text-[#CA922B] bg-[#CA922B]/10 rounded-full px-2 py-0.5 shrink-0 mt-0.5">
+                                  {platform}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  {c.caption && <p className="text-xs text-[#3A1F0E]/70 leading-relaxed line-clamp-2">{c.caption}</p>}
+                                  {c.contributor_name && <p className="text-[10px] text-[#3A1F0E]/40 mt-0.5">by {c.contributor_name}</p>}
+                                </div>
+                                <ExternalLink className="w-3.5 h-3.5 text-[#3A1F0E]/30 group-hover:text-[#CA922B] shrink-0 mt-0.5 transition-colors" />
+                              </a>
+                            );
+                          })}
+                          <button onClick={() => setShowContribModal(true)} className="w-full text-xs text-[#CA922B] font-semibold hover:text-[#B38024] text-center py-1 transition-colors">
+                            + Add your content
+                          </button>
+                        </div>
+                      )}
+                      {communityVibes.length === 0 && (
+                        <button
+                          onClick={() => setShowContribModal(true)}
+                          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#CA922B]/30 text-xs text-[#CA922B] font-semibold hover:border-[#CA922B]/60 hover:bg-[#CA922B]/5 transition-colors"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Be the first to Show the Vibe
+                        </button>
                       )}
 
                       {/* Admin-linked social posts */}
