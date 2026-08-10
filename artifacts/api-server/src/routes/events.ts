@@ -2,11 +2,12 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, eventsTable, savedCommunityLocationsTable, notificationsTable, userPreferencesTable } from "@workspace/db";
 import { eq, desc, and, ilike, or, gte, sql, isNotNull } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.get("/events", async (req: Request, res: Response) => {
-  // Events are publicly browsable — auth is optional (personalization applies when authenticated)
   try {
     const { category, search, featured } = req.query;
 

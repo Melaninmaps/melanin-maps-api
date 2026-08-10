@@ -3,8 +3,10 @@ import { db, communityListingsTable, marketplaceSavedTable, usersTable } from "@
 import { eq, and, or, ilike, desc, sql, inArray } from "drizzle-orm";
 import { computeTrustLevel } from "@workspace/db/trust";
 import { sendMarketplaceInquiry } from "../lib/email";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 const CATEGORIES = [
   "Clothing & Accessories", "Electronics & Tech", "Furniture & Home",

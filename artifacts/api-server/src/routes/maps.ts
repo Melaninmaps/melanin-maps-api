@@ -1,8 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { mapsLimiter } from "../middleware/rateLimiter";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;

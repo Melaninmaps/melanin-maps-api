@@ -14,8 +14,10 @@ import {
   userTopicFollowsTable,
   usersTable,
 } from "@workspace/db";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
+router.use(requireAuth);
 
 // ─── Topic Type Classifier ────────────────────────────────────────────────────
 type TopicType = "location" | "medical" | "wellness" | "education" | "business" | "community" | "hobby" | "general";

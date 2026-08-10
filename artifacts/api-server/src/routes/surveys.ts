@@ -112,18 +112,39 @@ router.post("/surveys", surveyLimiter, requireTrust, async (req: Request, res: R
 });
 
 router.get("/surveys", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   try {
     const { city } = req.query;
 
+    // Select explicit columns — userId is intentionally omitted to protect
+    // contributor anonymity. Safety/community aggregates must not identify
+    // individual submitters.
+    const cols = {
+      id: neighborhoodSurveysTable.id,
+      city: neighborhoodSurveysTable.city,
+      neighborhood: neighborhoodSurveysTable.neighborhood,
+      visitedDaytime: neighborhoodSurveysTable.visitedDaytime,
+      visitedNighttime: neighborhoodSurveysTable.visitedNighttime,
+      daytimeSafetyRating: neighborhoodSurveysTable.daytimeSafetyRating,
+      nighttimeSafetyRating: neighborhoodSurveysTable.nighttimeSafetyRating,
+      atmosphere: neighborhoodSurveysTable.atmosphere,
+      wouldReturn: neighborhoodSurveysTable.wouldReturn,
+      additionalNotes: neighborhoodSurveysTable.additionalNotes,
+      createdAt: neighborhoodSurveysTable.createdAt,
+    } as const;
+
     const surveys = city && typeof city === "string"
       ? await db
-          .select()
+          .select(cols)
           .from(neighborhoodSurveysTable)
           .where(eq(neighborhoodSurveysTable.city, city))
           .orderBy(desc(neighborhoodSurveysTable.createdAt))
           .limit(50)
       : await db
-          .select()
+          .select(cols)
           .from(neighborhoodSurveysTable)
           .orderBy(desc(neighborhoodSurveysTable.createdAt))
           .limit(50);

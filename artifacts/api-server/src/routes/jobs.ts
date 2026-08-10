@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { db, jobListingsTable, savedJobsTable, insertJobListingSchema, usersTable } from "@workspace/db";
 import { eq, desc, and, sql, isNotNull } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router = Router();
+router.use(requireAuth);
 
 const JOB_TYPES = ["full_time", "part_time", "contract", "gig", "internship", "volunteer", "collaboration"] as const;
 

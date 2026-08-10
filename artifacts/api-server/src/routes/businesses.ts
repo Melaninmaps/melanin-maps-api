@@ -9,6 +9,7 @@ import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
 import { reportLimiter } from "../middleware/rateLimiter";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -28,6 +29,7 @@ const videoUpload = multer({
 });
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
   .split(",")

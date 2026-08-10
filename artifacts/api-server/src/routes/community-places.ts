@@ -1,8 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, communityPlacesTable } from "@workspace/db";
 import { desc, eq, ilike, or, sql } from "drizzle-orm";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 // GET /places/search?q=hyatt&country=Brazil — autocomplete for location tagging
 router.get("/places/search", async (req: Request, res: Response) => {

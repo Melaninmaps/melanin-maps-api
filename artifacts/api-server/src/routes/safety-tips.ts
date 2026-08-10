@@ -3,8 +3,10 @@ import { db, pool, safetyTipsTable, safetyTipConfirmationsTable, pushTokensTable
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { sendPushToAllMembers } from "../lib/pushNotifications";
 import { logger } from "../lib/logger";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 const CONFIRMATION_THRESHOLD = 3;
 const MAX_RADIUS_MILES = 10;

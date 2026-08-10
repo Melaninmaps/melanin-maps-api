@@ -1,7 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 const CITY_COORDS: Record<string, { lat: number; lng: number; state: string }> = {
   "Atlanta": { lat: 33.749, lng: -84.388, state: "GA" },

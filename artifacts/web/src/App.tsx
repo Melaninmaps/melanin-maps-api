@@ -199,15 +199,6 @@ function Router() {
       <Route path="/trust-and-safety">
         <Layout><TrustAndSafety /></Layout>
       </Route>
-      {/* Cultural site living pages — public, no auth required */}
-      <Route path="/sites/:id">
-        <Layout><CulturalSiteDetail /></Layout>
-      </Route>
-      {/* Legacy URL alias — redirect /cultural-sites/:id to /sites/:id */}
-      <Route path="/cultural-sites/:id">
-        <CulturalSiteRedirect />
-      </Route>
-
       {/* ── Auth pages ──────────────────────────────────────────────────────── */}
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
@@ -220,37 +211,48 @@ function Router() {
       <Route path="/r/:code" component={ReferralRedirect} />
       <Route path="/business-response/:token" component={BusinessResponse} />
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
-      <Route path="/admin" component={Admin} />
+      <Route path="/admin">
+        <ProtectedRoute><Admin /></ProtectedRoute>
+      </Route>
 
-      {/* ── Open to everyone — no account needed ────────────────────────────── */}
-      {/* Browse, explore, and report concerns without creating an account.      */}
-      {/* Write actions (save, review, vibe) prompt sign-in inline.              */}
+      {/* ── Member discovery — authentication required ───────────────────────── */}
+      {/* Platform data is a member benefit. Business locations, cultural sites, */}
+      {/* safety intelligence, and sundown-town records must never be reachable   */}
+      {/* by unauthenticated visitors. Redirect to entry flow on all data routes. */}
       <Route path="/explore">
-        <Layout><Explore /></Layout>
+        <Layout><PreLaunchRoute><Explore /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/discover">
-        <Layout><Discover /></Layout>
+        <Layout><PreLaunchRoute><Discover /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/businesses">
-        <Layout><Businesses /></Layout>
+        <Layout><PreLaunchRoute><Businesses /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/businesses/:id">
-        <Layout><BusinessDetail /></Layout>
+        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/business/:id">
-        <Layout><BusinessDetail /></Layout>
+        <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/safety">
-        <Layout><Safety /></Layout>
+        <Layout><PreLaunchRoute><Safety /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/map">
-        <Layout><MapPage /></Layout>
+        <Layout><PreLaunchRoute><MapPage /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/rate-neighborhood">
-        <Layout><RateNeighborhood /></Layout>
+        <Layout><PreLaunchRoute><RateNeighborhood /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/global-recommendations">
-        <Layout><GlobalRecommendations /></Layout>
+        <Layout><PreLaunchRoute><GlobalRecommendations /></PreLaunchRoute></Layout>
+      </Route>
+      {/* Cultural site living pages — member only */}
+      <Route path="/sites/:id">
+        <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
+      </Route>
+      {/* Legacy URL alias — redirect /cultural-sites/:id to /sites/:id (auth enforced there) */}
+      <Route path="/cultural-sites/:id">
+        <CulturalSiteRedirect />
       </Route>
 
       {/* ── Account required — identity makes these features meaningful ──────── */}

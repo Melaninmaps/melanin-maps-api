@@ -23,8 +23,10 @@
 import { randomUUID } from "crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 // ── Table creation (idempotent) ───────────────────────────────────────────────
 

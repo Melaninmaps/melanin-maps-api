@@ -10,8 +10,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { FEATURE_FLAGS } from "../constants/featureFlags";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+router.use(requireAuth);
 
 // ── Match tiers — ordered best to worst ──────────────────────────────────────
 export type MatchTier =
