@@ -10,6 +10,7 @@
 import { randomUUID } from "crypto";
 import { COVERAGE_EXPANSION } from "./seeds/coverage-expansion.js";
 import { GAP_COVERAGE_V2 } from "./seeds/gap-coverage-v2.js";
+import { FINAL_MICRO_SEED } from "./seeds/final-micro-seed.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
@@ -1755,6 +1756,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["phuket full layer",    () => ensurePhuketFullLayer(log, warn)],
     ["category normalize",   () => ensureCategoryNormalization(log, warn)],
     ["gap coverage v2",      () => ensureGapCoverageV2(log, warn)],
+    ["final micro seed",     () => ensureFinalMicroSeed(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -4415,5 +4417,76 @@ async function ensureGapCoverageV2(
     log(`Gap coverage v2: ${inserted} inserted, ${skipped} already present (${GAP_COVERAGE_V2.length} total in seed)`);
   } catch (err: unknown) {
     warn(`Gap coverage v2 failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Final micro-seed — Children/Family · Legal · Trades · Medical · Inclusion ─
+// FREEZE after this pass. Future additions by tester demand only.
+async function ensureFinalMicroSeed(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const existing = await pool.query(
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+    );
+    const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of FINAL_MICRO_SEED) {
+      const countryKey = (b.country ?? 'usa').toLowerCase();
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${countryKey}`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             website,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,'[]'::jsonb,false,
+             $10,
+             $11,$12,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address, b.city,
+            b.state || null,
+            b.country,
+            b.description,
+            b.website ?? null,
+            String(b.lat), String(b.lng),
+          ]
+        );
+        existingKeys.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  final-micro: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Final micro-seed: ${inserted} inserted, ${skipped} already present (${FINAL_MICRO_SEED.length} total)`);
+  } catch (err: unknown) {
+    warn(`Final micro-seed failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
