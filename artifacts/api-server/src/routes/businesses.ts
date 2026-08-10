@@ -2579,7 +2579,7 @@ router.post("/admin/businesses/:id/confirm-fake", async (req: Request, res: Resp
 // ─────────────────────────────────────────────────────────────────────────────
 
 // GET /businesses/:id/contributions — public, returns approved contributions
-router.get("/:id/contributions", async (req: Request, res: Response): Promise<void> => {
+router.get("/businesses/:id/contributions", async (req: Request, res: Response): Promise<void> => {
   const businessId = String(req.params.id);
   try {
     const rows = await pool.query<Record<string, unknown>>(
@@ -2601,7 +2601,7 @@ router.get("/:id/contributions", async (req: Request, res: Response): Promise<vo
 });
 
 // POST /businesses/:id/contributions — authenticated, member submits social URL
-router.post("/:id/contributions", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/businesses/:id/contributions", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const businessId = String(req.params.id);
   const userId = (req as any).user?.id;
   if (!userId) { res.status(401).json({ error: "Authentication required" }); return; }

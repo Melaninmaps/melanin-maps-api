@@ -390,14 +390,20 @@ export default function BusinessDetail() {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
           toast({ title: "Removed from saved places" });
-        }
+        },
+        onError: () => {
+          toast({ title: "Could not remove from saved places", description: "Please try again.", variant: "destructive" });
+        },
       });
     } else {
       savePlace.mutate({ data: { businessId: id } }, {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
           toast({ title: "Added to saved places" });
-        }
+        },
+        onError: () => {
+          toast({ title: "Could not save this place", description: "Please try again.", variant: "destructive" });
+        },
       });
     }
   };
