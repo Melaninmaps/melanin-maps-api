@@ -116,12 +116,15 @@ const server = app.listen(port, (err) => {
   // before the first cron tick fires.
   runStartupMigrations(logger)
     .then(() => {
+      // Start only after migrations resolve — guarantees alert_claim_token and
+      // alert_lease_expires_at columns exist before the first cron tick fires.
       startCityHealthAlertScheduler();
     })
     .catch((err) => {
-      logger.error({ err }, "Startup migrations failed");
-      // Still start the scheduler — columns may already exist from a prior deploy.
-      startCityHealthAlertScheduler();
+      // Top-level migration runner rejected (unusual — individual migration errors
+      // are caught internally). Do NOT start the scheduler: the lease columns may
+      // be absent, which would cause every claim UPDATE to fail silently.
+      logger.error({ err }, "Startup migrations failed — city health alert scheduler NOT started");
     });
 
   startNudgeCronScheduler();
