@@ -2601,6 +2601,8 @@ const PRE_APPROVED_TESTER_EMAILS = [
   "meaparks@gmail.com",
   "melody.brown1988@gmail.com",
   "owcforyouth@gmail.com",
+  // Founder-direct approvals (no admin step required)
+  "dghaskin@gmail.com",
 ];
 
 async function ensureAdminAccounts(
