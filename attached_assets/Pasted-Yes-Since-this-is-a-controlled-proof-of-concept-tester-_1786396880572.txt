@@ -1,0 +1,119 @@
+Yes. Since this is a **controlled proof-of-concept tester group**, I think the cleanest solution is to reset the tester accounts so everyone starts from a known state.
+
+But I would **not delete all users or touch production broadly**. Have Replit reset only the approved tester cohort while preserving your founder/admin account and Apple reviewer account.
+
+Send Replit this:
+
+> **CONTROLLED TESTER RESET — EXECUTE, THEN VERIFY**
+>
+> We have discovered that some tester email addresses already exist in production from earlier testing/provisioning, which is causing “account already exists” and/or “invalid email or password” experiences.
+>
+> Because this is still controlled proof-of-concept testing, I authorize resetting the **approved human tester accounts** so testers can start clean.
+>
+> **DO NOT modify or delete:**
+>
+> * Founder/admin account(s)
+> * Apple reviewer account
+> * Production business data
+> * Library data
+> * Map/cultural-site data
+> * Kinfolk configuration or knowledge data
+> * Events
+> * Marketplace seed data
+> * Any other production platform content
+>
+> **FIRST: inventory the approved tester accounts before changing anything.**
+>
+> For each approved tester email, report:
+>
+> * whether a user record exists
+> * account/member type
+> * whether password authentication exists
+> * whether the account originated from Apple Sign In if determinable
+> * onboarding/profile completion state
+> * saved businesses
+> * check-ins
+> * reviews
+> * Kinfolk preferences/memory
+> * community activity
+> * any other user-owned records that would be affected by a reset
+>
+> Then perform a **TESTER-ONLY CLEAN RESET**.
+>
+> The goal is that each approved tester can visit mappingwithmelanin.com and experience the platform as a genuine first-time member.
+>
+> For these controlled testers, it is acceptable to remove their previous test activity and start over.
+>
+> **Important:** do not merely change their passwords if that would leave onboarding/preferences/history behind. We want a genuine first-user state.
+>
+> After reset, a tester email should NOT already have an active member account unless we intentionally pre-provision that specific tester.
+>
+> Therefore, when the tester selects **Create Account**, they should be able to:
+>
+> create account → authenticate → complete first-time onboarding → establish Kinfolk preferences → enter the member experience.
+>
+> Do NOT automatically recreate deleted tester accounts through `PRE_APPROVED_TESTER_EMAILS`, boot guards, migrations, `ensureTesterUniversalAccounts()`, or any other provisioning process. Being an **approved tester** and having an **already-created user account** must be treated as two separate things.
+>
+> This is important: check whether the current tester provisioning system itself is recreating accounts before testers arrive. If so, correct that behavior safely. An allowlisted tester should be **authorized to create an account**, not necessarily have an account silently created for them.
+>
+> Preserve a separate pre-provisioned account for Manus if needed. Preserve the Apple reviewer account exactly as required for Apple review.
+>
+> **DO NOT reset the founder/admin account.**
+>
+> ### Verification required after reset
+>
+> Do not report PASS based only on database state or route/code inspection.
+>
+> Pick one reset tester email and test the actual production website as a first-time user.
+>
+> Confirm visually:
+>
+> 1. Open fresh/private browser.
+> 2. Go to Mapping with Melanin.
+> 3. Select Create Account.
+> 4. Enter that tester's email.
+> 5. Confirm there is NO “account already exists” error.
+> 6. Complete account creation.
+> 7. Confirm authentication succeeds.
+> 8. Confirm first-time onboarding appears.
+> 9. Complete onboarding.
+> 10. Confirm the member enters the correct authenticated experience.
+> 11. Log out.
+> 12. Sign back in using the newly created credentials.
+> 13. Confirm the account and onboarding data persist.
+>
+> Take screenshots/photo proof at the important stages.
+>
+> Then test a SECOND reset tester independently to make sure this wasn't an account-specific success.
+>
+> **Also regression-test Apple reviewer login after this work.**
+>
+> Do not alter the Apple reviewer credentials or account state.
+>
+> Finally report:
+>
+> `TESTER RESET COMPLETE: YES/NO`
+>
+> `TESTER AUTO-PROVISIONING DISABLED/CORRECTED: YES/NO/NOT APPLICABLE`
+>
+> `NEW ACCOUNT CREATION VISUALLY VERIFIED: YES/NO`
+>
+> `FIRST-TIME ONBOARDING VISUALLY VERIFIED: YES/NO`
+>
+> `LOGOUT/RETURNING LOGIN VERIFIED: YES/NO`
+>
+> `APPLE REVIEWER LOGIN STILL VERIFIED: YES/NO`
+>
+> Include the tester emails used for verification and screenshot evidence.
+>
+> **Do not make unrelated platform changes during this operation.**
+
+There is one especially important issue here: Replit previously told us that Reina, Maya and Kayla were being **automatically created through migrations/boot guards**. If that's still happening, deleting them won't solve anything—they'll simply be recreated.
+
+What we actually want is:
+
+**Approved tester ≠ existing account.**
+
+An approved email should be permitted through the test-access gate, but the person should still be able to create their own account and experience onboarding naturally.
+
+That also gives us a much better test of the product you're about to put in people's hands. And I would absolutely have Replit re-test the **Apple reviewer login afterward**, because we do not want this cleanup accidentally touching the one account Apple needs.
