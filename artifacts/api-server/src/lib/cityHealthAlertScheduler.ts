@@ -53,6 +53,10 @@ import twilio from "twilio";
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ALERT_COOLDOWN_HOURS = 2;
 const LEASE_TTL_MINUTES = 10; // crashed/stalled leases expire after this
+// Email send must complete within this window — safely below the lease TTL —
+// so an in-progress send cannot outlive the lease and allow a competing
+// instance to claim, send a duplicate, and finalize ahead of us.
+const EMAIL_TIMEOUT_MS = (LEASE_TTL_MINUTES - 2) * 60 * 1000; // 8 minutes
 const LIVE_STATUSES = ["live", "soft_launch"];
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
@@ -157,11 +161,14 @@ async function claimAlertLease(slug: string): Promise<string | null> {
 }
 
 // ── Two-phase lease: finalize on delivery success ─────────────────────────────
-// Writes last_alerted_at = NOW() and clears the lease fields, conditioned on
-// the ownership token. If a competing process's lease has since expired and it
-// re-claimed and delivered, this becomes a safe no-op — the cooldown is intact.
-async function finalizeAlertLease(slug: string, token: string): Promise<void> {
-  await pool.query(
+// Writes last_alerted_at = NOW() and clears the lease, conditioned on the
+// ownership token. Returns true if THIS process owned the row and finalized it;
+// false if the lease had already expired and been reclaimed by a competing
+// instance (in which case that instance's cooldown stamp is preserved).
+// Callers MUST check the return value — only a true result means confirmed
+// cooldown and a delivered alert.
+async function finalizeAlertLease(slug: string, token: string): Promise<boolean> {
+  const { rowCount } = await pool.query(
     `UPDATE city_launches
      SET last_alerted_at      = NOW(),
          alert_claim_token    = NULL,
@@ -170,6 +177,7 @@ async function finalizeAlertLease(slug: string, token: string): Promise<void> {
        AND alert_claim_token = $2`,
     [slug, token],
   );
+  return (rowCount ?? 0) > 0;
 }
 
 // ── Two-phase lease: release on delivery failure ──────────────────────────────
@@ -335,14 +343,18 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
 
   if (!leasedCities.length) return { checked: cities.length, alerted: [], skipped, failed };
 
-  // Send email (required channel). On failure: release leases (conditioned on
-  // ownership token) so the next tick retries. last_alerted_at is NOT written.
+  // Send email (required channel) with a hard timeout below the lease TTL.
+  // This ensures delivery completes before any lease can expire and be reclaimed
+  // by a competing process — preventing duplicate alerts from a slow send.
+  const emailTimeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Email send timed out after ${EMAIL_TIMEOUT_MS / 1000}s`)), EMAIL_TIMEOUT_MS),
+  );
   try {
-    await sendAlertEmail(leasedCities);
+    await Promise.race([sendAlertEmail(leasedCities), emailTimeoutPromise]);
   } catch (err) {
     logger.error(
       { err, cities: leasedCities.map((c) => c.slug) },
-      "city-health-alert: email failed — releasing leases for retry",
+      "city-health-alert: email failed or timed out — releasing leases for retry",
     );
     for (const city of leasedCities) {
       await releaseAlertLease(city.slug, city.leaseToken);
@@ -351,13 +363,20 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
     return { checked: cities.length, alerted: [], skipped, failed };
   }
 
-  // Email confirmed. Finalize each city: write last_alerted_at + clear lease.
-  // Conditioned on ownership token — safe no-op if a competing process's
-  // expired lease was reclaimed and it independently delivered first.
+  // Email confirmed. Finalize each city: write last_alerted_at + clear lease,
+  // conditioned on the ownership token. Only cities where THIS process still
+  // owns the token (rowCount > 0) count as successfully alerted — if the lease
+  // expired and was reclaimed by another instance that already finalized, the
+  // predicate matches 0 rows and we do not double-count or overwrite.
   for (const city of leasedCities) {
     try {
-      await finalizeAlertLease(city.slug, city.leaseToken);
-      alerted.push(city.slug);
+      const owned = await finalizeAlertLease(city.slug, city.leaseToken);
+      if (owned) {
+        alerted.push(city.slug);
+      } else {
+        // Lease was reclaimed — competing instance already delivered and finalized.
+        logger.warn({ slug: city.slug }, "city-health-alert: lease lost before finalization — competing instance delivered");
+      }
     } catch (err) {
       logger.error({ err, slug: city.slug }, "city-health-alert: finalize failed — lease will expire naturally");
       failed.push(city.slug);
