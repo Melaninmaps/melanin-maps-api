@@ -1593,4 +1593,33 @@ export const GAP_COVERAGE_V2: GapBusiness[] = [
     lat: 29.7477,
     lng: -95.3956,
   },
+
+  // ── PHUKET — founder-specified additions ────────────────────────────────
+
+  {
+    name: "Greek Kitchen Phuket",
+    category: "Food",
+    subcategory: "Mediterranean Restaurant",
+    address: "93/5 Soi Yot Sane 1",
+    city: "Wichit",
+    state: undefined,
+    country: "Thailand",
+    website: "https://greekkitchenphuket.com",
+    description: "Authentic Greek restaurant perched on a Phuket hillside near Big Buddha with sweeping sea views. Greek Kitchen serves creative, innovative Greek fare using select ingredients from across Greece — from grilled meats and fresh seafood to classic mezze and homemade pastries. Highly-rated (4.9 stars) for its seaview dining and Mediterranean hospitality.",
+    lat: 7.8285,
+    lng: 98.3175,
+  },
+  {
+    name: "Elevated Hype Leaf Lounge",
+    category: "Entertainment & Recreation",
+    subcategory: "Lounge & Bar",
+    address: "Patong",
+    city: "Patong",
+    state: undefined,
+    country: "Thailand",
+    website: "https://www.facebook.com/p/Elevated-Hype-Leaf-Lounge-61574479271844/",
+    description: "A stylish lifestyle lounge in Patong bringing elevated R&B vibes, smooth cocktails, and a cool-crowd atmosphere to Phuket's most vibrant neighborhood. Elevated Hype Leaf Lounge is a go-to spot for curated music nights and an upscale lounge experience — featured by Time Out Phuket.",
+    lat: 7.8935,
+    lng: 98.2992,
+  },
 ];
