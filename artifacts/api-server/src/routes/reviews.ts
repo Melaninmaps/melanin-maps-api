@@ -747,8 +747,8 @@ router.get("/reviews/mine", async (req: Request, res: Response) => {
         id: reviewsTable.id,
         businessId: reviewsTable.businessId,
         rating: reviewsTable.rating,
-        body: reviewsTable.body,
-        badge: reviewsTable.badge,
+        body: reviewsTable.text,
+        badge: reviewsTable.verificationBadge,
         createdAt: reviewsTable.createdAt,
       })
       .from(reviewsTable)

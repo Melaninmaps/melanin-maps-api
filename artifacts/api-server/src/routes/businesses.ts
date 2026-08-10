@@ -2585,7 +2585,8 @@ router.get("/businesses/:id/contributions", async (req: Request, res: Response):
     const rows = await pool.query<Record<string, unknown>>(
       `SELECT bc.id, bc.media_type, bc.source_type, bc.source_url, bc.caption,
               bc.attribution, bc.created_at,
-              u.display_name AS contributor_name, u.profile_image_url AS contributor_avatar
+              (u.first_name || ' ' || COALESCE(u.last_name, '')) AS contributor_name,
+              u.profile_image_url AS contributor_avatar
        FROM business_contributions bc
        LEFT JOIN users u ON u.id = bc.user_id
        WHERE bc.business_id = $1 AND bc.status = 'approved'
