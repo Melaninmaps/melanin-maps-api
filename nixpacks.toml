@@ -3,7 +3,7 @@ cmds = [
   # 1. Build the web Vite SPA — output → artifacts/web/dist/public/
   #    Cache-bust token forces Docker layer cache miss so /preview route is included.
   #    UPDATE THIS TOKEN whenever web routes or pages change.
-  "echo ship-20260810-carib-med-sites-v11 && pnpm --filter @workspace/web run build",
+  "echo ship-20260810-kinfolk-fix-v12 && pnpm --filter @workspace/web run build",
   # 2. Sync web output into api-server/web-static (what api-server build.mjs reads)
   "cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/ && find artifacts/api-server/web-static -name '*.zip' -o -name '*.ipa' -o -name '*.apk' -o -name '*.aab' | xargs rm -f 2>/dev/null || true",
   # 3. Build api-server — cache-bust token is IN this command so Docker layer cache
@@ -11,7 +11,7 @@ cmds = [
   #    compiles fresh, git rev-parse HEAD returns the current commit SHA, which becomes
   #    built_from_sha — making stale_bundle:false after deploy.
   #    UPDATE THIS TOKEN ON EVERY PUSH THAT MUST DEPLOY CLEAN.
-  "echo ship-20260810-carib-med-sites-v11 && pnpm --filter @workspace/api-server run build",
+  "echo ship-20260810-kinfolk-fix-v12 && pnpm --filter @workspace/api-server run build",
   # 4. Sync api-server output to root dist (what static-server.mjs spawns)
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",

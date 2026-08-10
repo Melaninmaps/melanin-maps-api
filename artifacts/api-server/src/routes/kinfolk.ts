@@ -1650,11 +1650,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // This ensures the business catalog is populated even on the first message
     // ("Best restaurants in Philly" should immediately surface Philly listings).
     const sessionDestination = currentSession?.destination ?? null;
-    const messageDestination = sessionDestination ? null : extractCityFromUserMessage(userMessage);
+    const messageDestination = sessionDestination ? null : extractCityFromUserMessage(message);
 
     // Detect explicit cultural identity statements ("I'm Ethiopian", "my family is from Ghana")
     // Only fires on clear first-person declarations — never infers from searches or behavior.
-    const detectedCulture = detectCulturalIdentity(userMessage);
+    const detectedCulture = detectCulturalIdentity(message);
     const destination = sessionDestination ?? messageDestination;
 
     // Fetch platform business catalog — destination first, then fall back to user's home city.
