@@ -1,0 +1,599 @@
+Yes. This should become a **permanent release-control rule**, not something you have to remember to ask for after every Replit change. I’ve saved that as a standing requirement.
+
+Send Replit this:
+
+```text
+PERMANENT PROJECT RULE — POST-IMPLEMENTATION REGRESSION + RELEASE AUDIT
+
+SAVE THIS TO PERMANENT PROJECT MEMORY.
+
+From this point forward, EVERY:
+
+- implementation
+- bug fix
+- schema change
+- migration
+- build
+- deployment
+- Railway push
+- OTA update
+- mobile build
+- production configuration change
+
+must be followed by a COMPLETE regression / acceptance audit before the work is
+declared complete.
+
+This is mandatory.
+
+============================================================
+CORE RULE
+============================================================
+
+DO NOT use:
+
+BUILT
+CODED
+COMPILED
+DEPLOYED
+PUSHED
+
+as synonyms for:
+
+WORKING IN PRODUCTION.
+
+A change is not complete until the affected production experience has been
+verified and the existing platform has been checked for regressions.
+
+============================================================
+1. VERIFY THE DOCUMENTED DEPLOYMENT PROCEDURE
+============================================================
+
+After every deployment, confirm the approved procedure was followed exactly.
+
+For web/Railway, verify as applicable:
+
+- web build completed
+- correct web-static assets synchronized
+- API/server build completed
+- required dist/static directories synchronized
+- correct source commit created
+- correct rebuild/deploy commit created if required by our Railway procedure
+- push completed
+- Railway picked up intended commit
+- startup migrations completed
+- deployment reached ACTIVE / SUCCESS
+- correct SHA is live
+- correct bundle is live
+- stale_bundle = false
+
+Return:
+
+SOURCE SHA
+DEPLOYED SHA
+WEB BUNDLE
+DEPLOYMENT STATUS
+MIGRATIONS APPLIED
+STALE BUNDLE TRUE/FALSE
+
+============================================================
+2. WEBSITE AVAILABILITY CHECK
+============================================================
+
+Using the REAL public production website:
+
+https://www.mappingwithmelanin.com
+
+verify:
+
+- homepage loads
+- no white screen
+- no endless loading splash
+- no JavaScript crash
+- no blank React root
+- public marketing pages render
+- normal reload works
+- fresh/private session works
+
+Do not verify only through curl.
+
+VISUALLY OPEN THE SITE.
+
+Capture screenshot evidence for major production deployments.
+
+============================================================
+3. AUTHENTICATION — REQUIRED AFTER EVERY BUILD
+============================================================
+
+This is NONNEGOTIABLE.
+
+Every production deployment must verify authentication has not regressed.
+
+Test:
+
+FOUNDER / ADMIN
+APPROVED TESTER
+APPLE REVIEWER
+
+where applicable.
+
+At minimum verify:
+
+login page loads
+email/password login works
+Apple review login path remains intact
+tester entitlement remains intact
+authenticated session created
+protected page opens
+session persists appropriately
+logout invalidates current session
+re-login works
+
+If the change touches authentication, also verify:
+
+registration
+forgot password
+reset password
+approval/waitlist gate
+tester preapproval
+Apple Sign In
+mobile auth
+cross-platform session behavior
+
+DO NOT tell the founder the website is ready if an approved tester or Apple
+reviewer cannot authenticate.
+
+============================================================
+4. MEMBER WALL / ACCESS CONTROL
+============================================================
+
+After every production build verify:
+
+LOGGED OUT:
+
+Only approved public marketing/authentication pages are visible.
+
+Protected/member data remains inaccessible.
+
+Direct requests to protected routes must not expose data.
+
+Anonymous API requests to member-data endpoints must return 401/403.
+
+LOGGED IN + APPROVED:
+
+member experience works normally.
+
+LOGGED IN + NOT APPROVED:
+
+appropriate pending/waitlist experience.
+
+ADMIN:
+
+admin role remains restricted correctly.
+
+============================================================
+5. CORE PRODUCTION SMOKE TEST
+============================================================
+
+After EVERY significant implementation/build, test the current critical paths.
+
+Minimum baseline:
+
+HOME
+LOGIN
+PROFILE
+BUSINESSES / DIRECTORY
+MAP
+LIBRARY
+KINFOLKAI
+COMMUNITY
+EVENTS
+SAFETY
+SAVED PLACES
+LOGOUT
+
+For each:
+
+PAGE LOADS?
+DATA LOADS?
+PRIMARY ACTION WORKS?
+CONSOLE ERROR?
+API ERROR?
+VISIBLE REGRESSION?
+
+============================================================
+6. KINFOLKAI REGRESSION TEST
+============================================================
+
+Kinfolk is a flagship feature and must be checked after every meaningful
+server/API build.
+
+Run at least:
+
+"Where should I eat in Philadelphia?"
+
+and one context/personalization test.
+
+Confirm:
+
+HTTP 200
+substantive response
+no blank response
+no generic unexpected failure
+conversation stays visible
+scroll behavior works
+preferences/context retrieval does not crash
+
+If Knowledge Graph work changed, also test one graph-aware question.
+
+============================================================
+7. SAVED PLACES / DATA PERSISTENCE
+============================================================
+
+Verify core user data has not regressed.
+
+At minimum:
+
+save an approved test entity
+refresh
+save remains
+Profile shows it
+logout/login
+save remains
+unsave
+correct row removed
+
+Do not create duplicate save rows.
+
+If implementation touches user-generated content, test that corresponding data
+also persists.
+
+============================================================
+8. BUSINESS / DIRECTORY SEARCH
+============================================================
+
+Run a small stable regression query set after search-related or backend builds.
+
+Examples:
+
+"Churches in Philadelphia PA"
+"hair store Philadelphia"
+"OBGYN Philadelphia"
+"plumber Philadelphia"
+"Ethiopian food Philadelphia"
+
+Confirm:
+
+search executes
+location parsing works
+relevant results
+no obviously unrelated results
+no silent zero state
+member wall still enforced
+
+============================================================
+9. MAP
+============================================================
+
+Verify:
+
+map loads for authenticated user
+map does NOT load for unauthenticated user
+pins render
+search works
+pin click works
+selected result recenters where appropriate
+Historical Racial Exclusion layer/toggle still works
+no Beta Feedback button blocks pin interaction
+no full-country irrelevant result explosion
+Google Maps authentication/key request succeeds
+
+============================================================
+10. LIBRARY
+============================================================
+
+Verify:
+
+Library loads
+Browse Topics / Collections load
+search works
+canonical topics remain
+Collection → Book drill-down works
+Knowledge Graph relationships still work
+
+Stable regression examples:
+
+Philadelphia
+Philadelphia Black History
+Diabetes
+Alpha Kappa Alpha
+Faith & Spirituality
+
+Do not allow a migration to wipe or duplicate Library nodes.
+
+============================================================
+11. PROFILE PARITY
+============================================================
+
+Verify the Profile still renders and important controls remain accessible.
+
+At minimum:
+
+identity
+preferences
+Saved
+Kinfolk preferences
+Community contributions
+tester badge/status
+safety preferences
+account/privacy
+appropriate role-specific sections
+
+Check both:
+
+desktop
+mobile-web width
+
+No overflow, clipped controls, or navigation obstruction.
+
+============================================================
+12. COMMUNITY / USER-GENERATED DATA
+============================================================
+
+Verify:
+
+Community page loads
+real existing posts remain
+post composer opens
+approved media URL path remains functional
+existing comments/posts are not lost
+
+Do not create fake production content just for a smoke test unless it is clearly
+identified test data that can safely be removed.
+
+============================================================
+13. APPLE REVIEW SAFETY CHECK
+============================================================
+
+After every change that could affect:
+
+authentication
+API
+membership
+profile
+networking
+sessions
+routes
+server deployment
+
+confirm Apple reviewer access has NOT been broken.
+
+Apple reviewer must be able to:
+
+launch supported build
+authenticate
+reach approved authenticated experience
+navigate required review functionality
+
+If a new mobile build is required because backend compatibility changed,
+state that IMMEDIATELY.
+
+Do not wait for Apple rejection to discover this.
+
+============================================================
+14. MOBILE TESTER SAFETY CHECK
+============================================================
+
+Where backend/API changes could affect mobile:
+
+confirm current iOS/TestFlight build API compatibility
+confirm current Android test build API compatibility
+
+Return:
+
+IOS CURRENT BUILD COMPATIBLE: YES/NO
+ANDROID CURRENT BUILD COMPATIBLE: YES/NO
+
+Do not assume a web API change is harmless to installed app builds.
+
+============================================================
+15. DATA INTEGRITY
+============================================================
+
+After schema/migration changes verify:
+
+expected row counts
+no unexpected deletes
+no duplicate canonical entities
+no orphaned user relationships
+foreign keys intact where applicable
+user-generated content preserved
+
+Pay special attention to:
+
+users
+businesses
+business locations
+reviews
+saves
+community posts
+comments
+Library topics
+Knowledge Graph relationships
+events
+safety reports
+tester entitlements
+
+============================================================
+16. ERROR / LOG AUDIT
+============================================================
+
+After deployment check production-visible errors where available.
+
+Look for:
+
+500s
+ReferenceError
+TypeError
+database migration errors
+missing-column errors
+auth failures
+failed AI provider requests
+failed storage calls
+unexpected 404 routes
+infinite retries
+
+Do not assume HTTP 200 homepage means production is healthy.
+
+============================================================
+17. VISUAL PROOF
+============================================================
+
+For significant releases capture screenshots of:
+
+homepage
+authenticated landing
+Profile
+Map
+Directory
+Library
+Kinfolk
+any feature changed in the release
+
+Screenshots should be from the REAL production web experience whenever
+technically possible.
+
+This is specifically to prevent:
+
+"the code says it works"
+
+from being treated as:
+
+"the user can actually see/use it."
+
+============================================================
+18. REGRESSION MATRIX
+============================================================
+
+After each release return:
+
+FEATURE
+BEFORE STATUS
+AFTER STATUS
+TEST PERFORMED
+RESULT
+PRODUCTION VERIFIED?
+REGRESSION?
+
+Use:
+
+PASS
+FAIL
+PARTIAL
+NOT AFFECTED
+
+If FAIL:
+
+diagnose before declaring release complete.
+
+============================================================
+19. RELEASE STATUS LANGUAGE
+============================================================
+
+Use only these maturity statuses:
+
+CODED
+DEV VERIFIED
+DEPLOYED
+PRODUCTION VERIFIED
+USER ACCEPTANCE VERIFIED
+
+The founder should only hear:
+
+"WORKING"
+
+when at least:
+
+PRODUCTION VERIFIED
+
+is true.
+
+============================================================
+20. FAILURE RULE
+============================================================
+
+If any previously working P0/P1 feature breaks after a new implementation:
+
+DO NOT CONTINUE ADDING NEW FEATURES.
+
+Diagnose the regression first.
+
+Examples:
+
+login fails
+website white-screens
+Kinfolk stops responding
+saves disappear
+member wall fails
+directory stops searching
+Library disappears
+Map crashes
+Apple reviewer cannot login
+tester access breaks
+
+Regression repair takes priority over expansion.
+
+============================================================
+21. PERMANENT RELEASE CHECKLIST
+============================================================
+
+Every production release should end with this summary:
+
+DEPLOYMENT PROCEDURE FOLLOWED: YES/NO
+PRODUCTION SHA VERIFIED: YES/NO
+STALE BUNDLE: TRUE/FALSE
+WEBSITE AVAILABLE: YES/NO
+PUBLIC/MEMBER WALL VERIFIED: YES/NO
+FOUNDER LOGIN VERIFIED: YES/NO
+TESTER LOGIN VERIFIED: YES/NO
+APPLE REVIEWER VERIFIED: YES/NO
+LOGOUT VERIFIED: YES/NO
+PROFILE VERIFIED: YES/NO
+DIRECTORY VERIFIED: YES/NO
+MAP VERIFIED: YES/NO
+LIBRARY VERIFIED: YES/NO
+KINFOLK VERIFIED: YES/NO
+SAVED DATA VERIFIED: YES/NO
+COMMUNITY VERIFIED: YES/NO
+MOBILE COMPATIBILITY CHECKED: YES/NO
+NEW PRODUCTION ERRORS: YES/NO
+DATA LOSS DETECTED: YES/NO
+REGRESSION DETECTED: YES/NO
+
+FINAL RELEASE STATUS:
+
+PASS
+or
+FAIL — DO NOT PROCEED
+
+============================================================
+22. THIS AUDIT IS AUTOMATIC
+============================================================
+
+The founder should NOT have to ask:
+
+"Did you check login?"
+"Did you check Apple?"
+"Did you check the website?"
+"Did you check if Kinfolk still works?"
+"Did you visually open production?"
+
+These checks are now automatic after every relevant release.
+
+SAVE THIS AS A PERMANENT PROJECT / RELEASE MANAGEMENT RULE.
+```
+
+I especially want the **Apple reviewer + tester login checks to remain permanent**, because the worst outcome is Replit successfully implementing something unrelated and silently breaking the exact authenticated pathway Apple is evaluating.
+
+The other important change is that Replit now has a clear rule: **regression repair interrupts expansion**. If Kinfolk worked yesterday and stops after a Library migration, they do not move on to Community Intelligence and leave Kinfolk broken. They diagnose what the new change affected first.
+
+That should eliminate a lot of the pattern we've been dealing with: *something gets built → Replit celebrates the build → you discover three screens later that something older disappeared.*

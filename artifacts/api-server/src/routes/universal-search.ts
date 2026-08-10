@@ -17,6 +17,7 @@ router.use(requireAuth);
 
 // ── Match tiers — ordered best to worst ──────────────────────────────────────
 export type MatchTier =
+  | "city_exact"
   | "exact_name"
   | "exact_specialty"
   | "community_confirmed"
@@ -25,6 +26,7 @@ export type MatchTier =
   | "nearby_alternative";
 
 const TIER_RANK: Record<MatchTier, number> = {
+  city_exact: 7,       // Location-aware match: city token detected in query, result is in that city
   exact_name: 6,
   exact_specialty: 5,
   community_confirmed: 4,
@@ -756,7 +758,7 @@ async function searchBusinesses(opts: {
               confidenceScore: row.confidence_score
                 ? parseFloat(row.confidence_score)
                 : undefined,
-              matchTier: "exact_specialty",
+              matchTier: "city_exact",
               matchReason: `${row.category} in ${locationTokens.join("/")} matching "${contentTokens.join(" ")}"`,
               matchedFields: ["city", "category"],
             });

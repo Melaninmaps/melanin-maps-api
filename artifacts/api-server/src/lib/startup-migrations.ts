@@ -1151,6 +1151,40 @@ END $seed$`,
             AND listing_status = 'demo'`,
   },
   {
+    // Seed Philadelphia faith businesses into the Railway production DB.
+    // Enon Tabernacle Baptist Church and Refugee Evangelical Church were created
+    // via admin UI in the dev environment and were never included in tour-businesses-seed.ts.
+    // The fix_church_business_categories_v1 migration above only UPDATEs — it does nothing
+    // when the rows don't yet exist in Railway. This INSERT ... ON CONFLICT DO NOTHING
+    // ensures both businesses are present on every Railway deploy so faith-intent queries
+    // like "churches Philadelphia" return relevant results.
+    name: "seed_philly_faith_businesses_v1",
+    sql: `INSERT INTO businesses
+            (id, name, address, city, state, category, subcategory,
+             latitude, longitude, description, listing_status, website,
+             ownership_designations, confidence_score, status, black_owned)
+          VALUES
+            ('43d3f609-74af-44e2-8693-4459f5b0711f',
+             'Enon Tabernacle Baptist Church',
+             '230 W Coulter St, Philadelphia, PA 19144',
+             'Philadelphia', 'PA',
+             'Faith & Spirituality', 'Baptist Church',
+             40.0283692, -75.1752098,
+             'One of Philadelphia''s most significant African American congregations with over 15,000 members. Founded over 149 years ago, Enon Tabernacle is a cornerstone of faith, community service, and social justice. Home to the nationally recognized Enon Bible Walk ministry and a powerful anchor of the Germantown community.',
+             'live_unclaimed', 'https://enonbiblewalk.org',
+             ARRAY['black-owned'], 0, 'active', true),
+            ('830df15f-2b53-479e-97e9-31236a91fccc',
+             'Refugee Evangelical Church',
+             'Philadelphia, PA',
+             'Philadelphia', 'PA',
+             'Faith & Spirituality', 'Evangelical Church',
+             39.9526000, -75.1652000,
+             'A faith community serving refugees, immigrants, and diaspora communities. Refugee Evangelical Church creates a welcoming spiritual home that bridges cultural backgrounds while centering the lived experiences of those who have journeyed from their homelands.',
+             'live_unclaimed', 'https://www.refugeevangelical.org',
+             ARRAY[]::text[], 0, 'active', false)
+          ON CONFLICT (id) DO NOTHING`,
+  },
+  {
     // Apple App Store review account — must exist on every Railway deploy so the
     // App Store reviewer (and Manus audit) can log in to the web app with a known
     // test account. member_type='founding' gives legacy_member (top-tier) access

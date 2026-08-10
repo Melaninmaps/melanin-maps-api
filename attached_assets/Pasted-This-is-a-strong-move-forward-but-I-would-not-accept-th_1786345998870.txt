@@ -1,0 +1,313 @@
+This is a strong move forward, but I would **not accept the Library portion as fully live yet** because Replit’s own report contains one contradiction:
+
+> “Everything is verified and live”
+> but also
+> “Production DB shows 0 Collections now … will self-heal as soon as the Railway deploy completes.”
+
+Those cannot both be true at the same time.
+
+So my PM call is:
+
+**#211 Search relevance — PASS**
+**#212 Faith intent — PASS**
+**#213 Business detail normalization — PASS**
+**Library taxonomy code — BUILT / DEPLOYING**
+**Library taxonomy production data — NOT YET VERIFIED**
+
+And I would not let them move on until they perform the post-deploy check. Send this:
+
+```text
+FINAL POST-DEPLOY VERIFICATION — LIBRARY FOUNDATION
+
+The P1 corrections are accepted.
+
+However, the Library portion is NOT yet allowed to be labeled:
+
+VERIFIED AND LIVE
+
+because your own report states:
+
+"Production DB shows 0 Collections now"
+
+and that the migration will run after Railway deploy completes.
+
+That means current status is:
+
+CODED
++
+DEPLOYED/DEPLOYING
++
+PRODUCTION DATA VERIFICATION PENDING
+
+Please complete the actual production verification now.
+
+DO NOT make additional changes unless verification finds a defect.
+
+============================================================
+1. CONFIRM RAILWAY DEPLOYMENT
+============================================================
+
+Return:
+
+CURRENT PRODUCTION SHA
+EXPECTED SHA: dec3c8e7
+STALE BUNDLE: true/false
+RAILWAY DEPLOYMENT STATUS
+
+============================================================
+2. CONFIRM MIGRATION ACTUALLY RAN
+============================================================
+
+Query RAILWAY PRODUCTION.
+
+Return actual counts:
+
+COLLECTIONS
+CANONICAL BOOKS
+GEOGRAPHY NODES
+TOPIC RELATIONSHIPS
+ENTITY CONNECTIONS
+KNOWLEDGE SOURCES
+
+Specifically prove the 11 Collections exist:
+
+Places
+Culture & Community
+History
+Health
+Faith & Spirituality
+Careers & Professional
+Travel
+Community
+Education
+Business
+Divine Nine
+
+============================================================
+3. CONFIRM BOOKS
+============================================================
+
+Prove production contains all newly seeded canonical Books.
+
+Return counts and names for:
+
+DIVINE NINE — 9
+HEALTH — 14
+FAITH — 11
+
+Do not merely confirm migration SQL exists.
+
+============================================================
+4. CONFIRM GEOGRAPHY RELATIONSHIPS
+============================================================
+
+You reported:
+
+69 geography nodes
+→ linked to Places collection
+
+Prove:
+
+number expected
+number actually linked
+duplicates
+missing relationships
+
+Expected:
+idempotent
+no duplicate edges
+
+============================================================
+5. VISUAL PRODUCTION TEST
+============================================================
+
+Use the REAL website:
+
+https://www.mappingwithmelanin.com
+
+Authenticated tester.
+
+Open Library.
+
+Capture screenshots proving:
+
+A. Browse Topics loads by default
+
+B. 11 Collection grid appears
+
+C. Click:
+Places
+
+→ geography Books/nodes appear
+
+D. Click:
+Divine Nine
+
+→ all 9 organizations appear
+
+E. Click:
+Health
+
+→ health Books appear
+
+F. Click:
+Faith & Spirituality
+
+→ faith Books appear
+
+G. Search:
+Philadelphia
+
+→ canonical Philadelphia node appears
+
+H. Search:
+Diabetes
+
+→ canonical Diabetes Book appears
+
+I. Search:
+Alpha Kappa Alpha
+
+→ correct Divine Nine Book appears
+
+============================================================
+6. PROVE DRILL-DOWN
+============================================================
+
+Open:
+
+Philadelphia
+
+then:
+
+Philadelphia Black History
+
+Confirm the existing graph still surfaces:
+
+related topics
+sources
+Mother Bethel
+provenance
+
+The new Collection hierarchy must NOT break the deeper Knowledge Graph.
+
+============================================================
+7. UI EXPERIENCE CHECK
+============================================================
+
+The Collections design should provide progressive discovery.
+
+Confirm the user is NOT presented with:
+
+hundreds of flat tiles
+duplicate Books
+Collection names mixed indiscriminately with Books
+geographies treated as random topics
+
+The hierarchy should visually communicate:
+
+COLLECTION
+→ BOOK
+→ RELATED KNOWLEDGE
+
+while Universal Search can still find everything directly.
+
+============================================================
+8. DO NOT CALL 34 BOOKS "LIBRARY COMPLETE"
+============================================================
+
+This is a FOUNDATION.
+
+The Library is intended to become demand-driven and significantly broader.
+
+Correct status after verification should be:
+
+LIBRARY TAXONOMY FOUNDATION:
+PRODUCTION VERIFIED
+
+not:
+
+LIBRARY CONTENT COMPLETE
+
+We still expect later expansion across:
+
+all African countries
+all approved diaspora/ownership geographies
+Living Legacy cities
+Community Intelligence geographies
+additional Health
+Faith
+Careers
+History
+Travel
+Education
+Culture
+Business
+and demand-created Books.
+
+============================================================
+9. FINAL STATUS
+============================================================
+
+Return:
+
+P1 #211: PRODUCTION VERIFIED / FAIL
+P1 #212: PRODUCTION VERIFIED / FAIL
+P1 #213: PRODUCTION VERIFIED / FAIL
+
+LIBRARY COLLECTIONS: PRODUCTION VERIFIED / FAIL
+LIBRARY BOOKS: PRODUCTION VERIFIED / FAIL
+LIBRARY DRILL-DOWN: PRODUCTION VERIFIED / FAIL
+LIBRARY SEARCH: PRODUCTION VERIFIED / FAIL
+
+If everything passes:
+
+CONTINUE TO THE NEXT APPROVED WORKSTREAM.
+
+Do not stop for founder approval after a clean verification.
+```
+
+And I want to make one conceptual distinction now so we don't accidentally celebrate the wrong number:
+
+**11 Collections is probably plenty.** We do not need 70 Collections.
+
+The enormous growth should happen underneath them.
+
+For example:
+
+**Places**
+→ Africa
+→ Kenya
+→ Nairobi
+→ Kenyan History
+→ Kenyan Travel
+→ Kenyan Food
+→ Kenyan Business
+→ Kenyan Diaspora
+
+Or:
+
+**Health**
+→ Women's Health
+→ Fertility
+→ Infertility
+→ IVF
+→ Fibroids
+→ Endometriosis
+→ Maternal Health
+
+Or:
+
+**Culture & Community**
+→ Divine Nine
+→ Alpha Kappa Alpha
+→ history
+→ chapters
+→ HBCU connections
+→ community service
+→ events
+→ businesses/community content
+
+So the 11-Collection structure may actually be a very good front door. What we want to become almost limitless is the **Book and relationship layer**, not the number of giant headings.
+
+And I would let Replit continue immediately after it proves the migration actually landed. No new strategy meeting needed.
