@@ -1561,6 +1561,126 @@ ON CONFLICT (city_slug) DO NOTHING`,
       AND must_change_password = true;
     `,
   },
+  // ── TESTER CLEAN SLATE — founder-authorized Aug 10 2026 ────────────────────
+  // Deletes ALL pre-provisioned tester accounts so each tester experiences
+  // genuine first-time registration and onboarding.
+  //
+  // PROTECTED (never touched):
+  //   tlindsay428@yahoo.com          — principal admin / founder
+  //   apple.reviewer@mappingwithmelanin.com — Apple App Store review account
+  //
+  // After this migration, approved testers are listed in pending_tester_emails
+  // (whitelisted for self-registration) but do NOT have pre-created accounts.
+  // When they visit the site and create an account, they get the genuine
+  // first-time onboarding experience.
+  {
+    name: "tester_clean_slate_v1",
+    sql: `
+      DO $$
+      DECLARE
+        v_emails TEXT[] := ARRAY[
+          'tlindsay428@gmail.com',
+          'tlindsay428@aol.com',
+          'reinaoba06@gmail.com',
+          'mayagz05@icloud.com',
+          'kayla.m.manus@mappingwithmelanin.com',
+          'tester@mwm.com',
+          'zykiral.morton@yahoo.com',
+          'kyleisha.m.morton@gmail.com',
+          'kyleisha.m.fisher@gmail.com',
+          'taleisha.fisher@gmail.com',
+          'lilanarich@gmail.com',
+          'jordanwtester@gmail.com',
+          'joshuabierd99@gmail.com',
+          'kaylacardwelltester@gmail.com',
+          'kevinctester@gmail.com',
+          'kevkaytester@gmail.com',
+          'teiannaltester@gmail.com',
+          'trinalindsaytester@gmail.com',
+          'jross215@gmail.com',
+          'kaylathomas20011@gmail.com',
+          'kansesdwilliams@gmail.com',
+          'fatimccoy@icloud.com',
+          'jordanwyatt117@icloud.com',
+          'jordanw117@icloud.com',
+          'nydiahholly12@gmail.com',
+          'meaparks@gmail.com',
+          'melody.brown1988@gmail.com',
+          'owcforyouth@gmail.com',
+          'cardwellkayla219@gmail.com',
+          'kcardwell17@yahoo.com',
+          'kaylacardwell3@gmail.com',
+          'taleisham.saunders@gmail.com',
+          'trinalindsayhairston@gmail.com',
+          'trinalindsayhairston@gmail..com',
+          'bigdot6017@gmail.com',
+          'dghaskin@gmail.com',
+          'sharonnlw2@gmail.com',
+          'ninamartinez409@gmail.com',
+          'winternewman88@gmail.com',
+          'shawnhillhomes@gmail.com',
+          'themontgomerymanagementgroup@gmail.com',
+          'gregorywilliam05@gmail.com',
+          'kahvealynne@gmail.com'
+        ];
+        v_ids uuid[];
+        v_deleted int;
+      BEGIN
+        -- Collect user IDs to delete (lower+trim for safety)
+        SELECT ARRAY_AGG(id) INTO v_ids
+        FROM users
+        WHERE LOWER(TRIM(email)) = ANY(
+          SELECT LOWER(TRIM(unnest(v_emails)))
+        );
+
+        IF v_ids IS NULL OR array_length(v_ids, 1) = 0 THEN
+          RAISE NOTICE 'tester_clean_slate_v1: no tester accounts found — already clean';
+          RETURN;
+        END IF;
+
+        -- Delete owned data first (each wrapped so missing tables are skipped)
+        BEGIN DELETE FROM user_preferences        WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM saved_places            WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM check_ins               WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM reviews                 WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM life_journeys           WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM entity_connections      WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM community_posts         WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM community_post_likes    WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM community_post_reposts  WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM user_follows            WHERE follower_id    = ANY(v_ids) OR following_id   = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM member_connections      WHERE user_id_1      = ANY(v_ids) OR user_id_2      = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM user_topic_follows      WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM user_delivery_preferences WHERE user_id      = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM user_issue_follows      WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM user_hashtag_follows    WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM business_interactions   WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM business_endorsements   WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM kinfolk_conversations   WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM circle_members          WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM circles                 WHERE created_by     = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM notifications           WHERE user_id        = ANY(v_ids) OR actor_id       = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM referrals               WHERE referrer_id    = ANY(v_ids) OR referred_id    = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM voice_usage             WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM family_ai_usage         WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM content_reports         WHERE reporter_id    = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM business_contributions  WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM safety_incidents        WHERE reporter_id    = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM saved_jobs              WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM community_listings      WHERE posted_by      = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM wellness_checkins       WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM wellness_goals          WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM financial_goals         WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM financial_checkins      WHERE user_id        = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+
+        -- Delete the user records themselves
+        DELETE FROM users WHERE id = ANY(v_ids);
+        GET DIAGNOSTICS v_deleted = ROW_COUNT;
+
+        RAISE NOTICE 'tester_clean_slate_v1: deleted % user records', v_deleted;
+      END $$;
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -1619,7 +1739,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["admin accounts",    () => ensureAdminAccounts(log, warn)],
     ["tester accounts",   () => ensureTesterAccounts(log, warn)],
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
-    ["tester universal accts", () => ensureTesterUniversalAccounts(log, warn)],
+    // ensureTesterUniversalAccounts() removed Aug 10 2026: per-boot account
+    // creation conflicted with the tester_clean_slate_v1 migration. Approved
+    // testers are now whitelisted in pending_tester_emails and must self-register.
     ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
     ["library collections",  () => ensureLibraryCollections(log, warn)],
     ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
@@ -2494,6 +2616,8 @@ const PRE_APPROVED_TESTER_EMAILS = [
   // Added Aug 10 2026 — final pre-tester cohort
   "reinaoba06@gmail.com",
   "mayagz05@icloud.com",
+  // Manus audit tester — added to pending list so self-registration works after clean slate
+  "kayla.m.manus@mappingwithmelanin.com",
 ];
 
 async function ensureAdminAccounts(
