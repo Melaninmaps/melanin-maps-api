@@ -1325,7 +1325,15 @@ END $seed$`,
           'kaylacardwell3@gmail.com',
           'taleisham.saunders@gmail.com',
           'trinalindsayhairston@gmail.com',
-          'bigdot6017@gmail.com'
+          'bigdot6017@gmail.com',
+          'dghaskin@gmail.com',
+          'sharonnlw2@gmail.com',
+          'ninamartinez409@gmail.com',
+          'winternewman88@gmail.com',
+          'shawnhillhomes@gmail.com',
+          'themontgomerymanagementgroup@gmail.com',
+          'gregorywilliam05@gmail.com',
+          'kahvealynne@gmail.com'
         ];
         e TEXT;
       BEGIN
@@ -2603,8 +2611,19 @@ const PRE_APPROVED_TESTER_EMAILS = [
   "meaparks@gmail.com",
   "melody.brown1988@gmail.com",
   "owcforyouth@gmail.com",
-  // Founder-direct approvals (no admin step required)
+  // Founder-confirmed tester cohort (Aug 10 2026)
   "dghaskin@gmail.com",
+  "sharonnlw2@gmail.com",
+  "ninamartinez409@gmail.com",
+  "winternewman88@gmail.com",
+  "shawnhillhomes@gmail.com",
+  "kaylacardwell3@gmail.com",
+  "taleisham.saunders@gmail.com",
+  "trinalindsayhairston@gmail.com",
+  "bigdot6017@gmail.com",
+  "themontgomerymanagementgroup@gmail.com",
+  "gregorywilliam05@gmail.com",
+  "kahvealynne@gmail.com",
 ];
 
 async function ensureAdminAccounts(
