@@ -1,0 +1,1510 @@
+Yes. **This is the audit.** What you just described is much closer to the right acceptance test than the narrower code/API checks Replit has been doing.
+
+The biggest correction is this: **Replit must stop testing individual features in isolation and test Mapping with Melanin as a living product.** A new person should be able to arrive, reveal very little at first, use it naturally, then gradually give Kinfolk more context and see the experience improve.
+
+And I would not increase your tester pool yet. **15–30 testers is enough for this stage** if they are diverse in geography, age, identity, role and use case. More users will not help if the core flows are still inconsistent. First make the existing 15–30 capable of genuinely testing what you promised.
+
+Send Replit this. I would replace any smaller audit instruction with it.
+
+```text
+FOUNDER DIRECTIVE — COMPLETE REAL-USER PRODUCT AUDIT
+FIELD READINESS GATE — TOUR DEPARTS IN 4 DAYS
+
+This supersedes narrow feature-by-feature audits.
+
+The founder does NOT want another code audit that says:
+
+"endpoint works"
+"component exists"
+"API returned 200"
+"feature is in the bundle"
+
+The question is:
+
+DOES MAPPING WITH MELANIN ACTUALLY WORK THE WAY A REAL PERSON WOULD EXPECT
+WITHOUT THE FOUNDER EXPLAINING IT?
+
+You are authorized to:
+
+DIAGNOSE
+→ FIX SAFE/NON-DESTRUCTIVE DEFECTS
+→ RETEST
+→ CONTINUE
+
+Do NOT send the founder a queue of tasks after every discovery.
+
+Work continuously.
+
+Stop only for:
+
+- destructive data deletion
+- irreversible migration
+- user/account merge
+- new paid infrastructure/vendor
+- genuine privacy/security product decision
+
+Otherwise:
+
+GET IT WORKING AND PROVE IT VISUALLY.
+
+============================================================
+NONNEGOTIABLE ACCEPTANCE STANDARD
+============================================================
+
+Use the REAL production website:
+
+https://www.mappingwithmelanin.com
+
+Create a completely NEW approved tester.
+
+The tester must begin with:
+
+- no prior profile
+- no saved places
+- no Library follows
+- no Kinfolk history
+- no posts
+- no reviews
+- no business ownership
+- no Cultural Ambassador status
+- no admin privileges
+
+Only:
+
+APPROVED TESTER ACCESS.
+
+Use a fresh/private browser.
+
+Take screenshots throughout.
+
+For every PASS:
+
+1. actually perform the action through the website
+2. visually inspect the result
+3. screenshot it
+4. verify persistence/data where applicable
+
+Do not mark something PASS from source inspection alone.
+
+============================================================
+PHASE 1 — ARRIVE KNOWING ALMOST NOTHING
+============================================================
+
+Start as a normal person.
+
+Do not immediately fill out every preference.
+
+The user should be prompted to introduce themselves / complete first-time
+onboarding, but allow optional information to be skipped.
+
+Test:
+
+- public homepage
+- registration
+- approved tester entry
+- first login
+- first-time welcome
+- onboarding questions
+- skipping optional questions
+- completing only minimal information
+
+Capture screenshots.
+
+Ask:
+
+Does the experience feel intuitive?
+
+Does the user understand what MWM is without founder explanation?
+
+Does Kinfolk introduce itself naturally?
+
+Is the user overwhelmed?
+
+Does the platform immediately demand too much personal information?
+
+The initial experience should feel useful even when the user has shared very
+little.
+
+============================================================
+PHASE 2 — QUICK, LOW-EFFORT DISCOVERY
+============================================================
+
+Before teaching the system much about the tester, behave impatiently.
+
+Search like a real person.
+
+Examples:
+
+"church"
+"hair store"
+"doctor"
+"lawyer"
+"child care"
+"plumber"
+"brunch"
+"dentist"
+
+Use the tester's current location where appropriate.
+
+The user should NOT need:
+
+perfect category names
+exact business names
+database vocabulary
+special syntax
+
+Test misspellings, partial names and shorthand.
+
+Examples:
+
+partial business name
+missing one word
+slightly misspelled business
+"Black hair store"
+"church near me"
+"OBGYN near me"
+
+Record:
+
+query
+expected intent
+actual result
+irrelevant results
+location behavior
+fallback behavior
+
+No silent dead ends when a reasonable alternative exists.
+
+No irrelevant filler merely to avoid zero results.
+
+============================================================
+PHASE 3 — FULL BUSINESS/DIRECTORY SEARCH BREADTH
+============================================================
+
+Test businesses and service providers across a broad range of real-life needs.
+
+Include at minimum:
+
+FOOD / HOSPITALITY
+- soul food
+- Ethiopian
+- Caribbean
+- Haitian
+- Nigerian
+- Ghanaian
+- halal
+- vegan
+- brunch
+- bakery
+- coffee
+- nightlife
+- tea
+- fine dining
+
+BEAUTY / PERSONAL CARE
+- barber
+- Black hair salon
+- braider
+- natural hair
+- alopecia stylist
+- nail salon
+- esthetician
+- spa
+- beauty supply
+
+HEALTH / MEDICAL PROFESSIONALS
+- OB-GYN
+- primary care
+- pediatrician
+- dentist
+- orthodontist
+- therapist
+- psychiatrist
+- dermatologist
+- fertility specialist
+- doula
+- midwife
+- physical therapist
+
+Do NOT require the professional to own the entire practice in order to be a
+discoverable professional if the approved data model supports individual
+professionals.
+
+LEGAL / PROFESSIONAL
+- family lawyer
+- immigration lawyer
+- tax attorney
+- criminal defense
+- estate planning
+- accountant
+- realtor
+- insurance
+- financial advisor
+
+HOME / TRADES
+- plumber
+- electrician
+- HVAC
+- contractor
+- cleaner
+- landscaper
+- mechanic
+- locksmith
+
+FAMILY / CARE
+- childcare
+- preschool
+- tutoring
+- elder care
+- home health
+- special-needs services
+
+FAITH
+- AME
+- Baptist
+- Black Catholic
+- mosque
+- Ethiopian Orthodox
+- synagogue
+- Sikh gurdwara
+- Hindu temple
+- Buddhist temple
+- COGIC
+- Spanish-language worship
+
+COMMUNITY / CULTURAL
+- bookstores
+- museums
+- HBCUs
+- cultural organizations
+- nonprofits
+- community centers
+- arts
+- LGBTQIA+-affirming places where appropriately identified
+
+INTERNATIONAL / DIASPORA
+Search several cultures/countries already represented in the MWM taxonomy.
+
+For every search:
+
+validate both relevance AND geography.
+
+============================================================
+PHASE 4 — TEST KNOWN ENTITIES
+============================================================
+
+Choose several REAL businesses already confirmed in production.
+
+Search each using:
+
+- full exact name
+- partial name
+- one misspelling
+- one omitted-word variation
+- category/service description instead of name
+
+The intended entity should surface prominently.
+
+Do not create duplicate records to fix search.
+
+Use canonical entity + aliases.
+
+============================================================
+PHASE 5 — KINFOLK WITH VERY LITTLE CONTEXT
+============================================================
+
+Before teaching Kinfolk much:
+
+Ask ordinary questions.
+
+Examples:
+
+"Where should I eat?"
+"Find me a church."
+"What should I do tonight?"
+"Help me find a hair store."
+
+Evaluate:
+
+- does Kinfolk ask useful follow-up questions only when necessary?
+- can it make a useful suggestion without interrogating the user?
+- does it explain why?
+- does it distinguish MWM/community evidence from broader information?
+- is it honest when MWM has insufficient local data?
+- does it avoid "we don't have anything" as a dead end?
+
+Kinfolk should feel like a knowledgeable cousin, not a search error page.
+
+============================================================
+PHASE 6 — CHANGE KINFOLK'S UNDERSTANDING
+============================================================
+
+Now intentionally teach Kinfolk more.
+
+Change:
+
+- preferred vibe
+- budget
+- travel style
+- who user travels with
+- preferred categories
+- city/location interest
+
+Then repeat prior queries.
+
+Verify answers actually change.
+
+Test:
+
+"I don't like loud places."
+
+Then later:
+
+"Where should I go tonight?"
+
+Expected:
+
+Kinfolk remembers the preference.
+
+Then:
+
+"Actually tonight I want somewhere lively."
+
+Expected:
+
+current intent can temporarily override stable preference appropriately.
+
+============================================================
+PHASE 7 — LIFE JOURNEY / CONTEXT CONNECTION TEST
+============================================================
+
+Test the Big Cousin behavior carefully using TEST profile context.
+
+Example progression:
+
+user follows/reads "Infertility"
+
+later searches:
+IVF
+
+later asks:
+"what should I know before my appointment?"
+
+Kinfolk should understand the relationship between:
+
+infertility
+IVF
+fertility care
+
+without making medical assumptions or diagnoses.
+
+Then test a life-stage update such as:
+
+"I'm pregnant now."
+
+Kinfolk should update current context without erasing legitimate previous
+history.
+
+Do NOT use real sensitive tester data for this test.
+
+Use clearly artificial test-profile information.
+
+Test other appropriate context chains where safe:
+
+career change → job search
+anniversary → romantic activity search
+new city → relocation / neighborhood research
+
+============================================================
+PHASE 8 — LIBRARY
+============================================================
+
+Browse normally.
+
+Do NOT know the taxonomy beforehand.
+
+Search:
+
+Philadelphia
+Thailand
+Bangkok
+Kenya
+Ethiopia
+HBCU scholarships
+FAFSA
+Alpha Kappa Alpha
+AME
+Diabetes
+Infertility
+IVF
+Black Catholic History
+Welding
+
+Test:
+
+Collection
+→ Book
+→ content
+→ reputable sources
+→ related topics
+→ connected businesses/sites/content
+
+Verify information is actually useful.
+
+Test a topic that does NOT exist.
+
+Expected:
+
+no dead end.
+
+The demand should be recorded / topic queued or created according to the
+approved architecture.
+
+Kinfolk should still help appropriately while the MWM Book grows.
+
+============================================================
+PHASE 9 — FOLLOW / SAVE LIBRARY TOPICS
+============================================================
+
+Follow/save several Books.
+
+Examples:
+
+Philadelphia Black History
+Thailand
+one career or education topic
+
+Use a clearly artificial health-interest test if sensitive-topic follow
+behavior must be validated.
+
+Verify:
+
+- follow succeeds
+- refresh persists
+- logout/login persists
+- Profile reflects interests where appropriate
+- default visibility remains private
+- Kinfolk can use them as personalization signals
+
+Then ask a related question and confirm the followed topic changes the answer.
+
+============================================================
+PHASE 10 — ETHIOPIAN DISCOVERY TEST
+============================================================
+
+Search:
+
+"Ethiopian"
+
+Try:
+
+- map
+- business directory
+- Kinfolk
+- Library
+
+Use at least one REAL Ethiopian business known to exist in production or seed
+data.
+
+Expected:
+
+appropriate restaurants/businesses should appear when relevant.
+
+Kinfolk should understand that "Ethiopian" can refer to:
+
+food
+culture
+country
+faith
+travel
+community
+businesses
+
+and clarify/rank appropriately from user context.
+
+============================================================
+PHASE 11 — SHARING / FRIEND CONNECTION
+============================================================
+
+Open a business/place/event/Library topic.
+
+Test:
+
+Share
+
+If @mention/tagging a MWM connection is currently part of the product,
+test it.
+
+If not yet implemented, determine whether the current Share path reasonably
+supports sending the item to a friend.
+
+Test:
+
+copy/share link
+recipient can open it after authentication
+canonical entity resolves correctly
+
+Do not expose member data publicly through share links.
+
+============================================================
+PHASE 12 — BANGKOK + PHUKET TRIP
+============================================================
+
+This is a mandatory field-readiness scenario.
+
+Plan a trip to:
+
+Bangkok
+Phuket
+
+Test both:
+
+Map search
+Business search
+Library
+Kinfolk
+
+Ask:
+
+"Plan a birthday day in Bangkok."
+
+Then:
+
+"Make it more luxurious."
+
+Then:
+
+"Give me nightlife."
+
+Then:
+
+"Now something culturally meaningful."
+
+Then:
+
+"What would you recommend in Phuket?"
+
+Then:
+
+"Why are you recommending these?"
+
+Kinfolk must distinguish:
+
+MWM businesses/community evidence
+official/reputable research
+broader AI synthesis
+
+No fabrication.
+
+If MWM has no business coverage:
+
+Kinfolk must remain helpful
++
+honestly state the MWM/community coverage gap
++
+surface reputable alternatives where architecture permits
++
+record demand.
+
+============================================================
+PHASE 13 — INTERNATIONAL BUSINESS SEARCH
+============================================================
+
+Search actual businesses in:
+
+Bangkok
+Phuket
+
+Use an internet search to identify legitimate real businesses fitting MWM
+categories.
+
+Examples may include:
+
+restaurant
+spa
+nightlife
+museum/cultural site
+Black/diaspora-owned business if verifiable
+LGBTQIA+-affirming venue where responsibly sourced
+
+Do not claim ownership identity without evidence.
+
+============================================================
+PHASE 14 — ADD A NEW BUSINESS/PLACE AS A MEMBER
+============================================================
+
+Find ONE legitimate real business from a reputable web source that is not
+already in MWM.
+
+Use a real:
+
+name
+website
+address
+country
+city
+region/province
+category
+
+Walk through the NORMAL MEMBER submission process.
+
+Test:
+
+duplicate detection
+international address support
+country
+province/region
+website
+social URLs
+category
+subcategory
+ownership designation only when supported
+business description
+location
+
+The user should not need Admin.
+
+After submit:
+
+visible confirmation
+pending/unclaimed state where applicable
+no duplicate created
+
+============================================================
+PHASE 15 — ADD PHOTO / VIDEO / SOCIAL CONTENT
+============================================================
+
+THIS IS NONNEGOTIABLE.
+
+Every appropriate listed location/entity should support member contribution
+where allowed.
+
+Test BOTH:
+
+A. social URL
+- Instagram
+- TikTok
+- YouTube
+
+B. direct upload
+- image
+- short video
+
+If direct upload production storage is not yet safe, identify that as an
+actual blocker and implement the approved production-safe path if already
+authorized.
+
+Do not silently re-enable broken Replit-only storage.
+
+Test media on:
+
+business/place
+community post
+
+Also audit media contribution for:
+
+cultural site
+HBCU
+house of faith
+event
+
+where the data model supports it.
+
+Capture:
+
+submission
+confirmation
+pending/approved state
+refresh persistence
+logout/login persistence
+attribution
+
+Members may contribute multiple legitimate media items over time.
+
+============================================================
+PHASE 16 — COMMUNITY PAGE / POST
+============================================================
+
+Create a clearly labeled benign TEST post.
+
+Test:
+
+text
+image
+video/social URL
+caption
+location/topic attachment if supported
+
+Verify:
+
+post persists
+media works
+attribution correct
+Profile/My Contributions reflects it
+
+Remove test content afterward if safe.
+
+============================================================
+PHASE 17 — SAVE ACROSS A TRIP
+============================================================
+
+Save:
+
+Philadelphia business
+domestic travel business
+Bangkok/Phuket business/place if available
+cultural site
+event where save applies
+
+Refresh.
+
+Logout/login.
+
+All saves remain.
+
+Then ask Kinfolk:
+
+"I've saved these places. What does my trip look like?"
+
+Verify Kinfolk uses the saves as explicit signals.
+
+============================================================
+PHASE 18 — BUSINESS DETAIL EXPERIENCE
+============================================================
+
+Open multiple business pages:
+
+one with rich data
+one with little community data
+one faith organization
+one professional
+one family-care provider
+
+Evaluate:
+
+Does this feel like MWM
+or
+does it feel like a generic directory?
+
+Validate existing approved elements where supported:
+
+ownership
+verification
+Put Your People On
+Community Trusted
+Community Says
+Community Voices
+Would Return
+Recommend
+reviews
+Vibes / THE REAL
+Community Safety Stats
+Community Confidence
+Know Before You Go
+Circle Trusted
+milestones
+media/social content
+save
+check-in
+review
+safety
+location
+website
+phone
+hours
+directions
+
+Never fabricate community metrics.
+
+Empty/community-building states should feel intentional.
+
+============================================================
+PHASE 19 — VIBES / THE REAL
+============================================================
+
+Founder needs to be able to update real visited locations TODAY.
+
+Test a real business.
+
+Add MULTIPLE appropriate Vibes / THE REAL selections.
+
+Not one.
+
+Verify:
+
+multiple selections allowed
+submission succeeds
+business profile updates appropriately
+refresh persists
+other users can see aggregated/community-approved result as designed
+
+Test category-sensitive vocabulary.
+
+Examples:
+
+restaurant ≠ childcare
+childcare ≠ elder care
+doctor ≠ nightclub
+
+For childcare, elder care and similarly serious categories, do not force
+flippant "vibe" language.
+
+Use approved THE REAL / trust/service dimensions.
+
+============================================================
+PHASE 20 — REVIEWS
+============================================================
+
+Submit a clearly removable TEST review to an approved test business.
+
+Verify:
+
+rating
+text
+category-specific feedback if present
+submission
+success state
+review appears
+refresh persists
+Profile contribution appears
+business aggregates update correctly
+
+Test business right-to-respond architecture if implemented.
+
+Prevent accidental duplicate submission.
+
+============================================================
+PHASE 21 — QUICK SAFETY EXPERIENCE FIRST
+============================================================
+
+First behave like someone in a hurry.
+
+Test:
+
+receive/view police/ICE alert
+open Safety
+start report
+report an incident with minimal required information
+
+Question:
+
+Can a person under stress complete this quickly?
+
+Do not submit a false public alert that could alarm real testers.
+
+Use a test-safe/non-public workflow or clearly held-for-moderation TEST
+submission.
+
+============================================================
+PHASE 22 — DETAILED SAFETY EXPERIENCE
+============================================================
+
+Now test the user who wants to provide detail.
+
+Safety reporting should allow appropriate detail such as:
+
+incident type
+date/time
+location
+narrative
+who was involved
+language/severity/context
+evidence/media
+anonymous/private options
+follow-up/moderation state
+
+Also test:
+
+employer safety/discrimination reporting
+business safety
+neighborhood/community safety
+
+Verify data is separated appropriately and does not expose contributor identity
+where privacy rules prohibit it.
+
+============================================================
+PHASE 23 — HISTORICAL RACIAL EXCLUSION / SUNDOWN HISTORY
+============================================================
+
+Plan domestic travel.
+
+Ensure relevant historical exclusion information can inform the trip.
+
+Test map markers.
+
+For a documented record:
+
+click marker
+
+Expected:
+
+short preview
+place name
+historical period
+why it is documented
+evidence/confidence
+clear distinction between historical record and present-day safety
+Read the History
+
+Open full record.
+
+Expected:
+
+specific source evidence
+historical records
+newspaper/archival evidence where available
+responsible synopsis
+
+Generic NAACP/SPLC homepage links are NOT sufficient evidence.
+
+Kinfolk should be able to use this layer in route planning without simply
+telling a user a present-day community is dangerous because of historical
+classification.
+
+============================================================
+PHASE 24 — HISTORICAL / CULTURAL SITE MAP EXPERIENCE
+============================================================
+
+Test:
+
+HBCU
+historic church
+Civil Rights site
+museum
+other cultural site
+
+Search/select.
+
+Expected:
+
+map recenters appropriately
+marker opens
+short preview appears
+Learn More / detail route works
+related Library context available
+save/share where supported
+media contribution where supported
+
+No duplicate canonical entities.
+
+============================================================
+PHASE 25 — DOMESTIC TRIP
+============================================================
+
+Plan a short domestic trip using Kinfolk.
+
+Require:
+
+business stops
+cultural sites
+food
+lodging/areas where appropriate
+route context
+travel timing suggestions
+historical racial exclusion context where relevant
+user preferences
+saved places
+
+Change one preference mid-plan and verify recommendation changes.
+
+============================================================
+PHASE 26 — MARKETPLACE
+============================================================
+
+Browse Marketplace.
+
+Search categories.
+
+Offer to sell one clearly labeled removable TEST item.
+
+Test:
+
+listing type
+title
+description
+category
+condition if relevant
+price/free
+city/location
+media
+contact/in-app communication path
+
+Submit only if it can be safely marked TEST and removed.
+
+Verify:
+
+success
+persistence
+edit/delete if supported
+no fake permanent marketplace content left behind
+
+============================================================
+PHASE 27 — BUSINESS OWNER JOURNEY
+============================================================
+
+Create/use an appropriate dedicated test account.
+
+Walk through:
+
+List Your Business
+claim/create business
+verification options
+business information
+locations
+multiple locations
+services offered
+audience served
+ownership designations
+website
+socials
+video
+photos
+Vibes/THE REAL configuration where business-editable
+business profile preview
+
+Test the currently approved "Deluxe" business tier if that tier exists in the
+live membership architecture.
+
+Do not invent or rename tiers.
+
+============================================================
+PHASE 28 — BUSINESS DASHBOARD
+============================================================
+
+After creating/claiming the test business:
+
+audit the actual business-owner dashboard.
+
+Question:
+
+Does it visually communicate why a business should join?
+
+Evaluate:
+
+profile management
+community activity
+reviews
+responses
+saves/check-ins where available
+search demand where actually built
+media/content
+verification
+events/offers
+analytics that genuinely exist
+recommendations/insights
+
+Do NOT fabricate analytics.
+
+If analytics are not ready, distinguish:
+
+member-facing value visible now
+vs
+future analytics.
+
+Take screenshots.
+
+============================================================
+PHASE 29 — CULTURAL AMBASSADOR JOURNEY
+============================================================
+
+If Cultural Ambassador architecture is currently implemented:
+
+test:
+
+profile
+content attribution
+business/place attachment
+media URLs
+discoverability
+creator-specific analytics where genuinely available
+
+Regular members should NOT receive Ambassador analytics merely because they
+post media.
+
+============================================================
+PHASE 30 — SOCIAL / CONNECTIONS
+============================================================
+
+Test:
+
+find person
+connect/follow where supported
+Connections
+Circles
+share entity
+refer friend
+@mention/tag only if actually built
+
+No infinite spinners.
+
+Empty states should make sense.
+
+============================================================
+PHASE 31 — EVENTS / COMMUNITY NEEDS
+============================================================
+
+Browse event.
+
+Open event.
+
+Save/RSVP if supported.
+
+Test community need / volunteer / donation-request experience if already built.
+
+Do not create actual money-transfer requests.
+
+============================================================
+PHASE 32 — PROFILE
+============================================================
+
+After significant activity, return to Profile.
+
+Does it now reflect the journey?
+
+Check:
+
+identity
+preferences
+saved places
+Library follows
+reviews
+posts
+contributions
+circles/connections
+business/ambassador links where applicable
+safety settings
+Kinfolk understanding
+privacy controls
+
+Nothing should mysteriously disappear.
+
+============================================================
+PHASE 33 — "WHAT KINFOLK KNOWS"
+============================================================
+
+Open/use the approved Kinfolk memory/preferences experience.
+
+Verify Kinfolk has learned from:
+
+onboarding
+searches where permitted
+explicit preference changes
+saves
+Library follows
+trip context
+
+Test correction:
+
+"You got that wrong. I prefer X."
+
+Then ask related question again.
+
+Expected:
+
+behavior changes.
+
+============================================================
+PHASE 34 — LOGOUT / RETURN
+============================================================
+
+Logout.
+
+Protected routes blocked.
+
+Old session invalid.
+
+Login again.
+
+Verify persistence of:
+
+profile
+preferences
+saves
+Library follows
+reviews
+community posts
+media contributions
+trip context where designed
+business relationship
+
+Onboarding must NOT restart.
+
+============================================================
+PHASE 35 — MOBILE-WEB FIELD EXPERIENCE
+============================================================
+
+Repeat major workflows at mobile web width:
+
+first login/onboarding
+search
+Map
+business page
+Review
+Vibes/THE REAL
+Add Content
+direct photo/video
+social URL
+Library
+Follow
+Kinfolk
+Safety
+Community
+Profile
+
+A tester in Bangkok or on the domestic tour will likely use a phone.
+
+No desktop-only critical capability.
+
+============================================================
+PHASE 36 — CURRENT APP COMPATIBILITY
+============================================================
+
+Do NOT build a new app merely for this audit.
+
+But verify current iOS/TestFlight and Android tester builds remain compatible
+with any backend changes.
+
+Verify Apple reviewer authentication still works.
+
+If web and mobile intentionally differ in an unfinished feature, report it
+clearly.
+
+============================================================
+PHASE 37 — OTHER BUILT FEATURES
+============================================================
+
+Audit project memory / routes / feature inventory for already-built features
+not explicitly named above.
+
+For each existing significant member capability:
+
+test it through the real website if appropriate.
+
+Examples may include:
+
+travel
+resources
+jobs
+guides
+health
+journeys
+notifications
+referrals
+points/rewards
+family circle
+community groups
+business submissions
+incident history
+saved collections
+etc.
+
+Do not allow an existing feature to silently disappear simply because it was
+not named in this prompt.
+
+============================================================
+PHASE 38 — TESTER POOL ASSESSMENT
+============================================================
+
+Current expected controlled pool:
+
+approximately 15–30 testers.
+
+Do NOT recommend increasing purely for volume.
+
+Evaluate coverage instead.
+
+Report missing tester PERSONAS such as:
+
+different age groups
+different cities
+international traveler
+business owner
+Cultural Ambassador
+parent
+professional/service seeker
+LGBTQIA+ traveler
+different diaspora backgrounds
+Android/iPhone/web
+accessibility considerations
+
+If a critical persona is absent, say which one.
+
+============================================================
+PHASE 39 — FIX EVERYTHING SAFE THAT YOU FIND
+============================================================
+
+This audit is not merely observational.
+
+When you find an obvious non-destructive defect:
+
+DIAGNOSE
+→ FIX
+→ DEPLOY
+→ RETEST THAT FLOW
+→ CONTINUE
+
+Examples:
+
+search fails
+Review fails
+Vibes limited incorrectly
+media UI missing
+Library content disconnected
+Kinfolk ignores saves
+Map doesn't recenter
+empty-state spinner
+profile state not persisting
+
+Do not stop to create a task suggestion for the founder.
+
+============================================================
+PHASE 40 — FULL REGRESSION AUDIT AFTER FIXES
+============================================================
+
+When implementation/fixes are finished:
+
+run the permanent release-control audit.
+
+Verify:
+
+website
+production SHA
+stale bundle
+public/member wall
+founder login
+tester login
+Apple reviewer
+logout
+Profile
+Directory
+Map
+Library
+Library follows
+Kinfolk
+Saved Places
+Community
+Events
+Safety
+business pages
+Review
+Vibes/THE REAL
+media contribution
+mobile compatibility
+data integrity
+production errors
+
+No regression.
+
+============================================================
+PHASE 41 — VISUAL EVIDENCE PACKAGE
+============================================================
+
+Create screenshot evidence from real production.
+
+Organize screenshots by phase.
+
+Each should identify:
+
+date/time
+production URL
+tester persona
+step
+
+Do not expose:
+
+passwords
+tokens
+API keys
+sensitive private data
+
+============================================================
+PHASE 42 — FINAL REPORT
+============================================================
+
+Return ONE consolidated report.
+
+Do not flood founder with implementation chatter.
+
+Report:
+
+EXECUTIVE RESULT
+
+Can a brand-new tester use MWM successfully without founder assistance?
+
+YES / PARTIAL / NO
+
+Then:
+
+MAP: status
+LIBRARY: status
+KINFOLK: status
+BUSINESS MEMBER EXPERIENCE: status
+REVIEWS: status
+VIBES/THE REAL: status
+MEDIA: status
+INTERNATIONAL/BANGKOK: status
+SAFETY: status
+HISTORICAL EXCLUSION: status
+BUSINESS OWNER: status
+COMMUNITY: status
+MARKETPLACE: status
+PROFILE/PERSISTENCE: status
+MOBILE WEB: status
+APPLE/TESTER AUTH: status
+
+For defects use:
+
+P0
+P1
+P2
+P3
+
+Also report:
+
+WHAT YOU FIXED
+WHAT REMAINS
+WHY IT REMAINS
+SCREENSHOT INDEX
+DATA-INTEGRITY RESULT
+PRODUCTION SHA
+REGRESSION RESULT
+
+============================================================
+FINAL FIELD-READINESS QUESTION
+============================================================
+
+The founder leaves for the tour in 4 days.
+
+Answer this plainly:
+
+CAN THE FOUNDER TODAY:
+
+1. update real businesses she has visited
+2. add multiple appropriate Vibes/THE REAL
+3. add images/videos/social content
+4. have testers find those businesses naturally
+5. have testers save/check-in/review/contribute
+6. use the Library meaningfully
+7. ask Kinfolk and receive useful personalized help
+8. plan domestic and international trips
+9. add a legitimate missing business/place
+10. show a business owner why MWM is not just another directory
+
+YES / PARTIAL / NO for each.
+
+Anything marked NO or PARTIAL that blocks field use is prioritized immediately.
+
+That is the acceptance gate.
+```
+
+A few project-manager calls on top of that:
+
+**Map, Library and the business/community page are the field-readiness core.** Kinfolk connects them, but those three surfaces need to work independently too. If Kinfolk vanished for an hour, a tester should still be able to find a business, understand it, save it, contribute to it and explore knowledge.
+
+**Vibes/THE REAL and media are nonnegotiable before you start updating businesses today.** If you visit a location and know it is date-night friendly, Black-family friendly, great for solo travelers, judgment-free, excellent with natural hair, listens to patients, etc., you need to be able to capture that intelligence now rather than waiting for another redesign.
+
+**For safety tests, Replit should not generate fake live police/ICE alerts visible to your actual tester community.** They should validate submission using a clearly isolated test/moderation state so we prove the workflow without creating false safety information.
+
+And **15–30 testers is enough right now**. I would rather have 20 people who represent different real journeys than 100 people hitting the same broken search box. Once this audit passes, then expanding the pool becomes useful.
+
+This is also the point where I would tell Replit: **stop optimizing for feature count. Optimize for completed journeys.** Your tour is four days away. A smaller set of completely connected journeys is far more valuable than another 40 partially wired screens.

@@ -1,0 +1,256 @@
+No. **In this screenshot, I do not see any business markers in Bangkok — or anywhere in Thailand.**
+
+Your concern is exactly right. The map is showing a huge concentration of data in the United States, while Bangkok/Thailand appears empty. So **this does not currently accomplish the Mea use case we just described.**
+
+The bigger issue is architectural: Mea cannot attach her Instagram Reel to a Bangkok business if **that Bangkok business/place does not exist in Mapping with Melanin first.**
+
+For the Bangkok opportunity, the experience needs to work like this:
+
+**Mea is in Bangkok → searches the business/location → MWM finds it → opens its profile → she pastes her Instagram Reel URL → MWM associates her Reel with that place.**
+
+And if the business is **not already in MWM**, there needs to be a second path:
+
+**Can't find this place? → Add a Place/Business → enter basic information → create/submits the place → attach Instagram/TikTok/YouTube content.**
+
+That second path is crucial for your tour too. You cannot possibly pre-load every business in Bangkok, Philadelphia, North Carolina, Atlanta, New Orleans, Houston, etc. Your testers and Cultural Ambassadors need to help **build the map while they're living their lives.**
+
+So I would **not** have Replit spend hours manually loading Bangkok businesses just to make the screenshot look populated. I would tell them to make the underlying contribution system work.
+
+### Send Replit this now
+
+```text
+STOP — IMPORTANT REAL-WORLD ACCEPTANCE FAILURE.
+
+I am looking at the live production map right now.
+
+Bangkok / Thailand has no visible businesses.
+
+This means the Cultural Ambassador / traveler workflow we are building
+cannot actually work.
+
+Do not solve this merely by manually seeding a handful of Bangkok
+businesses.
+
+We need the SYSTEM that allows Mapping With Melanin to grow as members
+travel.
+
+REAL USE CASE:
+
+A tester/Cultural Ambassador is currently traveling in Bangkok and Phuket.
+
+She normally posts her experiences to Instagram.
+
+She must be able to:
+
+1. Search for the Bangkok/Phuket business or place she visited.
+
+2. If it exists:
+   → open the canonical business/place profile
+   → choose Add Content / Share Your Experience
+   → paste her Instagram/TikTok/YouTube URL
+   → optionally add caption, vibe, recommendation/context
+   → submit
+   → content becomes associated with that exact place
+   → original social account/content remains the source
+
+3. If the place DOES NOT exist:
+   → select "Can't find this place? Add it"
+   → enter enough information to identify the real location
+   → prevent duplicates
+   → create/submit the canonical place record
+   → immediately continue into the media contribution workflow
+   → attach the Instagram/TikTok/YouTube content
+
+This capability must work for approved testers/members on the WEB.
+
+It cannot be Admin-only.
+
+========================================================
+MAP SEARCH MUST ALSO BE GLOBAL
+========================================================
+
+Audit whether the map/business search is actually capable of finding
+international locations.
+
+Test:
+
+Bangkok
+Phuket
+Thailand
+
+Then test actual Bangkok/Phuket businesses if any currently exist in
+production.
+
+Do not claim PASS based on API/code inspection.
+
+Use the production website with an authenticated tester.
+
+========================================================
+DO NOT DESTROY THE WORKING MAP
+========================================================
+
+The current map, authentication wall, cultural-site layers, HBCUs,
+sundown-town history, businesses, and existing production data are working.
+
+Do NOT redesign or replace the map.
+
+Extend the existing architecture.
+
+Preserve canonical entity IDs and existing records.
+
+========================================================
+MEDIA PRIORITY
+========================================================
+
+PRIORITY 1 FOR TODAY:
+
+External social content URLs:
+
+Instagram
+TikTok
+YouTube
+Vimeo where supported
+
+This DOES NOT require us to solve direct video-file storage first.
+
+The creator's original social platform remains the source of the content.
+
+MWM stores the association:
+
+contributor
+business/place
+source platform
+original URL
+caption/context
+vibes/tags if supported
+timestamp
+moderation status
+attribution
+
+Do not download/re-upload social content unnecessarily.
+
+========================================================
+BUSINESS/PATRON CONNECTION
+========================================================
+
+This contribution must ultimately be visible on the business/place profile.
+
+A business profile should begin demonstrating WHY MWM IS NOT JUST A
+DIRECTORY:
+
+Community Experiences / Community Voices
+Real visitor content
+Photos/videos/social posts
+Recommendations
+Reviews
+Vibes/context
+Saves/check-ins where applicable
+
+A participating business should eventually be able to see that its
+customers/community are helping build its presence.
+
+========================================================
+PRODUCTION ACCEPTANCE TEST
+========================================================
+
+Create/use a clean approved tester.
+
+Perform this ENTIRE workflow through the actual browser UI.
+
+TEST 1
+Search Bangkok.
+
+Screenshot.
+
+TEST 2
+Search Phuket.
+
+Screenshot.
+
+TEST 3
+Find an existing international business/place if one exists.
+
+Screenshot.
+
+TEST 4
+If no appropriate Bangkok business exists, use the MEMBER-facing
+"Can't find it? Add a Place" workflow.
+
+Create ONE clearly identified TEST record or use a founder-approved real
+business.
+
+Screenshot every step.
+
+TEST 5
+Open that place.
+
+Add an Instagram/social URL.
+
+Screenshot.
+
+TEST 6
+Submit it.
+
+Screenshot confirmation.
+
+TEST 7
+Refresh.
+
+Verify the place still exists and contribution persists.
+
+Screenshot.
+
+TEST 8
+Logout and login again.
+
+Return to the place.
+
+Verify persistence.
+
+Screenshot.
+
+TEST 9
+Confirm the contribution did NOT create a duplicate business/place.
+
+TEST 10
+Confirm existing Philadelphia/business/map functionality still works.
+
+Then run the COMPLETE permanent post-deployment regression audit,
+including:
+
+authentication
+member wall
+Apple reviewer
+tester login
+logout
+profile
+business directory
+business details
+reviews
+map
+Library
+Library follows/saves
+KinfolkAI
+community
+events
+safety
+saved places
+mobile-web responsiveness
+production errors/data integrity
+
+DO NOT report "code verified" as completion.
+
+For this workflow I require:
+
+PRODUCTION BROWSER VERIFIED
++ SCREENSHOT EVIDENCE.
+
+If something prevents this from working, STOP and report the precise
+blocker rather than inventing a workaround.
+```
+
+And I would **not lower your expectation on this particular point**. We can accept a less polished dashboard temporarily. We can accept incomplete analytics temporarily. We can accept that the Library needs more content.
+
+But if the immediate premise is **“my friend is in Bangkok and I want her experiences to start building MWM while she is there,”** then she needs two fundamental capabilities: **find/add the place and attach her existing social content to it.**
+
+Otherwise we've built a map she can look at, rather than a community-powered map she can help build.
