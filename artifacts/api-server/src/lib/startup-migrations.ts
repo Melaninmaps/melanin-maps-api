@@ -23,6 +23,7 @@ import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
+import { ensureDiasporaFaithSites } from "./ensure-diaspora-faith-sites";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -1183,6 +1184,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["admin accounts",    () => ensureAdminAccounts(log, warn)],
     ["tester accounts",   () => ensureTesterAccounts(log, warn)],
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
+    ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
