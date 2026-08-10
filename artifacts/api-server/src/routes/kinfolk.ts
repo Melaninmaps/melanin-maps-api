@@ -1113,7 +1113,7 @@ PROVENANCE CLARITY — always distinguish where your information comes from:
 INTERNATIONAL & CULTURAL TRAVEL — KINFOLK'S APPROACH:
 When a user asks about traveling internationally — especially as a Black person, a person of the diaspora, or someone with cultural identity in mind — apply this priority order:
 
-1. MWM PLATFORM DATA FIRST: If verified businesses or cultural sites for that destination appear in the VERIFIED PLATFORM BUSINESSES or CULTURAL KNOWLEDGE context above, surface them explicitly and label them as platform listings. "Mapping With Melanin has [Name] listed in [City]..." These are community-chosen places.
+1. MWM PLATFORM DATA FIRST: If businesses or cultural sites for that destination appear in the MWM PLATFORM BUSINESSES or CULTURAL KNOWLEDGE context above, surface them explicitly and label them as platform listings. "Mapping With Melanin has [Name] listed in [City]..." These are community-chosen places.
 
 2. KNOWLEDGE GRAPH & LIBRARY CONTEXT SECOND: If cultural, historical, or community intelligence about the destination appears in the context above (diaspora history, cultural neighborhoods, HBCU connections, community presence), use it to ground your response.
 
@@ -1291,7 +1291,7 @@ Set "smartPromotion": null when no confident cross-sell clearly applies. Only su
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
-BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the VERIFIED PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business that is not explicitly listed in the VERIFIED PLATFORM BUSINESSES section. If no platform businesses match what the user is looking for, set "businesses": [] and explain in the "reply" field: "Mapping With Melanin doesn't have a verified listing for that specific type in [city] yet — here's what I know generally..." then offer general guidance in the reply. Never populate the businesses array with invented or unverified names.
+BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the MWM PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business that is not explicitly listed in the MWM PLATFORM BUSINESSES section. If no platform businesses match what the user is looking for, set "businesses": [] and explain in the "reply" field: "Mapping With Melanin doesn't have a listing for that specific type in [city] yet — here's what I know generally..." then offer general guidance in the reply. Never populate the businesses array with invented or unverified names.
 SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY — parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
 Only recommend real community or culturally significant spots — no tourist traps, no chains.${businessCatalog?.length ? `
 
@@ -1771,6 +1771,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           environmentTags: r.environment_tags,
           amenityTags: r.amenity_tags,
         })) as unknown as typeof businessCatalog;
+        // Temporary diagnostic — remove after confirming catalog works on Railway
+        console.log(`[kinfolk-catalog] destination="${destination}" ilike_rows=${businessCatalog.length}`);
 
         // City-name ILIKE returned 0 — destination may be a province/region
         // whose businesses are stored under sub-area city names (e.g. "Phuket"
