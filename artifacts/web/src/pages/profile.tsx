@@ -1,4 +1,4 @@
-import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useListSavedPlaces, useGetBusiness } from "@workspace/api-client-react";
+import { useGetCurrentAuthUser, useGetMyProfile, useUpdateMyProfile, useListSavedPlaces, useGetBusiness, useUnsavePlace } from "@workspace/api-client-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import {
   Crown, Search, Compass, Navigation, BadgeCheck, CheckCircle, Building2, Plane,
   Globe, Home, MessageCircle, Link2, Users, Hammer, Calendar, PartyPopper,
   Flag, Gem, Lock, ChevronDown, ChevronUp, Footprints, Camera, Loader2,
-  Settings, ChevronRight, Eye, EyeOff, KeyRound, Trash2
+  Settings, ChevronRight, Eye, EyeOff, KeyRound, Trash2, Sparkles, X
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -645,6 +645,16 @@ export default function Profile() {
   // ── Community posts count ─────────────────────────────────────────────────
   const [postCount, setPostCount] = useState<number | null>(null);
 
+  // ── Kinfolk preferences (What Kinfolk Knows About You) ────────────────────
+  const [kinfolkPrefs, setKinfolkPrefs] = useState<{
+    favoriteCategories: string[];
+    favoriteCities: string[];
+    lifestyleServices: string[];
+    culturalInterests: string[];
+    personalityMode: string | null;
+    travelCompanion: string | null;
+  } | null>(null);
+
   // ── Account Settings state ─────────────────────────────────────────────────
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [privacyLoading, setPrivacyLoading] = useState(false);
@@ -681,6 +691,22 @@ export default function Profile() {
     fetch(`${base}/api/community/posts?authorId=${userId}&limit=1`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setPostCount(d.total ?? d.posts?.length ?? 0); })
+      .catch(() => {});
+    // Kinfolk personalization preferences
+    fetch(`${base}/api/kinfolk/preferences`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d?.preferences) {
+          setKinfolkPrefs({
+            favoriteCategories: d.preferences.favoriteCategories ?? [],
+            favoriteCities:     d.preferences.favoriteCities ?? [],
+            lifestyleServices:  d.preferences.lifestyleServices ?? [],
+            culturalInterests:  d.preferences.culturalInterests ?? [],
+            personalityMode:    d.preferences.personalityMode ?? null,
+            travelCompanion:    d.preferences.travelCompanion ?? null,
+          });
+        }
+      })
       .catch(() => {});
   }, [auth?.user]);
 
@@ -1215,6 +1241,104 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* ── What Kinfolk Knows About You ────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#CA922B]" /> What Kinfolk Knows About You
+            </h3>
+            <Link href="/kinfolk">
+              <button className="text-xs font-bold text-[#CA922B] hover:underline flex items-center gap-1">
+                Edit in Kinfolk <ChevronRight className="w-3 h-3" />
+              </button>
+            </Link>
+          </div>
+          {kinfolkPrefs === null ? (
+            <div className="text-sm text-[#3A1F0E]/50 py-4 text-center">Loading your Kinfolk profile…</div>
+          ) : (
+            <div className="space-y-4">
+              {/* Personality mode */}
+              {kinfolkPrefs.personalityMode && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Kinfolk Voice</div>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold border border-[#CA922B]/20 capitalize">
+                    {kinfolkPrefs.personalityMode.replace(/_/g, " ")}
+                  </span>
+                </div>
+              )}
+              {/* Travel companion */}
+              {kinfolkPrefs.travelCompanion && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Travel Style</div>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAF6EF] text-[#3A1F0E] text-xs font-bold border border-[#3A1F0E]/10 capitalize">
+                    {kinfolkPrefs.travelCompanion.replace(/_/g, " ")}
+                  </span>
+                </div>
+              )}
+              {/* Favorite cities */}
+              {kinfolkPrefs.favoriteCities.length > 0 && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Cities You Love</div>
+                  <div className="flex flex-wrap gap-2">
+                    {kinfolkPrefs.favoriteCities.map(c => (
+                      <span key={c} className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAF6EF] text-[#3A1F0E] text-xs font-semibold border border-[#3A1F0E]/10">{c}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Favorite categories */}
+              {kinfolkPrefs.favoriteCategories.length > 0 && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Interests</div>
+                  <div className="flex flex-wrap gap-2">
+                    {kinfolkPrefs.favoriteCategories.map(c => (
+                      <span key={c} className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAF6EF] text-[#3A1F0E] text-xs font-semibold border border-[#3A1F0E]/10 capitalize">{c.replace(/_/g, " ")}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Cultural interests */}
+              {kinfolkPrefs.culturalInterests.length > 0 && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Cultural Connections</div>
+                  <div className="flex flex-wrap gap-2">
+                    {kinfolkPrefs.culturalInterests.map(c => (
+                      <span key={c} className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAF6EF] text-[#3A1F0E] text-xs font-semibold border border-[#3A1F0E]/10 capitalize">{c.replace(/_/g, " ")}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Lifestyle services */}
+              {kinfolkPrefs.lifestyleServices.length > 0 && (
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">Your Lifestyle Services</div>
+                  <div className="flex flex-wrap gap-2">
+                    {kinfolkPrefs.lifestyleServices.map(s => (
+                      <span key={s} className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAF6EF] text-[#3A1F0E] text-xs font-semibold border border-[#3A1F0E]/10 capitalize">{s.replace(/_/g, " ")}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Empty state */}
+              {!kinfolkPrefs.personalityMode &&
+               kinfolkPrefs.favoriteCities.length === 0 &&
+               kinfolkPrefs.favoriteCategories.length === 0 &&
+               kinfolkPrefs.culturalInterests.length === 0 &&
+               kinfolkPrefs.lifestyleServices.length === 0 && (
+                <div className="text-center py-6">
+                  <Sparkles className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-3" />
+                  <p className="text-sm text-[#3A1F0E]/50 mb-4">Kinfolk doesn't know much about you yet. The more you chat, the better it knows you.</p>
+                  <Link href="/kinfolk">
+                    <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 h-10 text-sm">
+                      Start Chatting with Kinfolk
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -1224,16 +1348,34 @@ function BookmarkIcon(props: any) {
   return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>
 }
 
-function SavedPlaceCard({ id }: { id: string }) {
+function SavedPlaceCard({ id, onUnsave }: { id: string; onUnsave?: () => void }) {
   const { data: bizData, isLoading } = useGetBusiness(id, { query: { queryKey: ["getBusiness", id], enabled: !!id } });
+  const unsavePlace = useUnsavePlace();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const biz = bizData?.business;
+
+  const handleUnsave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    unsavePlace.mutate({ businessId: id }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["listSavedPlaces"] });
+        toast({ title: "Removed", description: `${biz?.name ?? "Place"} removed from your saved places.` });
+        onUnsave?.();
+      },
+      onError: () => {
+        toast({ title: "Couldn't remove", description: "Please try again.", variant: "destructive" });
+      },
+    });
+  };
 
   if (isLoading) return <Skeleton className="h-20 w-full rounded-2xl" />;
   if (!biz) return null;
 
   return (
-    <Link href={`/businesses/${id}`}>
-      <div className="flex gap-3 p-3 border border-[#3A1F0E]/10 rounded-2xl hover:border-[#CA922B] transition-colors cursor-pointer bg-white group">
+    <div className="flex gap-3 p-3 border border-[#3A1F0E]/10 rounded-2xl hover:border-[#CA922B] transition-colors bg-white group relative">
+      <Link href={`/businesses/${id}`} className="flex gap-3 flex-1 min-w-0 cursor-pointer">
         <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-[#FAF6EF]">
           {biz.imageUrl ? (
             <img src={biz.imageUrl} alt={biz.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
@@ -1248,10 +1390,18 @@ function SavedPlaceCard({ id }: { id: string }) {
           <h4 className="font-serif font-bold text-base text-[#3A1F0E] truncate leading-tight">{biz.name}</h4>
           <div className="flex items-center gap-1 text-xs text-[#3A1F0E]/50 mt-0.5">
             <MapPin size={9} />
-            <span className="truncate">{biz.city}, {biz.state}</span>
+            <span className="truncate">{biz.city}{biz.state ? `, ${biz.state}` : ""}</span>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      <button
+        onClick={handleUnsave}
+        disabled={unsavePlace.isPending}
+        className="shrink-0 self-center w-7 h-7 rounded-full flex items-center justify-center text-[#3A1F0E]/20 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+        title="Remove from saved"
+      >
+        {unsavePlace.isPending ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+      </button>
+    </div>
   );
 }
