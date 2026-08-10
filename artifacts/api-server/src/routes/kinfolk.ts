@@ -1771,8 +1771,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           environmentTags: r.environment_tags,
           amenityTags: r.amenity_tags,
         })) as unknown as typeof businessCatalog;
-        // Temporary diagnostic — remove after confirming catalog works on Railway
-        console.log(`[kinfolk-catalog] destination="${destination}" ilike_rows=${businessCatalog.length}`);
+        // Diagnostic: pino logger so this appears in Railway logs (console.log is swallowed)
+        req.log?.info({ destination, ilike_rows: businessCatalog.length }, "[kinfolk-catalog] city ilike query complete");
 
         // City-name ILIKE returned 0 — destination may be a province/region
         // whose businesses are stored under sub-area city names (e.g. "Phuket"
@@ -1844,7 +1844,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             }
           } catch { /* non-critical — geo-radius fallback failed */ }
         }
-      } catch { /* non-critical — proceed without catalog */ }
+      } catch (catalogErr) {
+        req.log?.error({ catalogErr, destination }, "[kinfolk-catalog] outer catch — pool.query or mapping failed");
+      }
     }
 
     // No destination or destination yielded no listings — load from user's home city so
