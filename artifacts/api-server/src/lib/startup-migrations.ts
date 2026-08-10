@@ -609,6 +609,20 @@ END $seed$`,
           ON tour_cultural_sites (LOWER(city), LOWER(state))
           WHERE is_active = true`,
   },
+  {
+    // International support — tour content tables need province + country
+    // so the batch geocoder can resolve non-US addresses correctly.
+    name: "tour_content_intl_cols_v1",
+    sql: `ALTER TABLE tour_cultural_sites
+            ADD COLUMN IF NOT EXISTS province VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS country  VARCHAR(100);
+          ALTER TABLE community_organizations
+            ADD COLUMN IF NOT EXISTS province VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS country  VARCHAR(100);
+          ALTER TABLE recurring_events
+            ADD COLUMN IF NOT EXISTS province VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS country  VARCHAR(100)`,
+  },
   // ── has_pending_edit on cultural_sites ────────────────────────────────
   {
     name: "cultural_sites_has_pending_edit_col",
