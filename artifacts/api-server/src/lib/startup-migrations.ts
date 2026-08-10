@@ -1172,7 +1172,7 @@ END $seed$`,
              40.0283692, -75.1752098,
              'One of Philadelphia''s most significant African American congregations with over 15,000 members. Founded over 149 years ago, Enon Tabernacle is a cornerstone of faith, community service, and social justice. Home to the nationally recognized Enon Bible Walk ministry and a powerful anchor of the Germantown community.',
              'live_unclaimed', 'https://enonbiblewalk.org',
-             ARRAY['black-owned'], 0, 'active', true),
+             '["black-owned"]'::jsonb, 0, 'active', true),
             ('830df15f-2b53-479e-97e9-31236a91fccc',
              'Refugee Evangelical Church',
              'Philadelphia, PA',
@@ -1181,7 +1181,7 @@ END $seed$`,
              39.9526000, -75.1652000,
              'A faith community serving refugees, immigrants, and diaspora communities. Refugee Evangelical Church creates a welcoming spiritual home that bridges cultural backgrounds while centering the lived experiences of those who have journeyed from their homelands.',
              'live_unclaimed', 'https://www.refugeevangelical.org',
-             ARRAY[]::text[], 0, 'active', false)
+             '[]'::jsonb, 0, 'active', false)
           ON CONFLICT (id) DO NOTHING`,
   },
   {
