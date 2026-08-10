@@ -151,3 +151,4 @@
 - [Beauty Supply Vocabulary](../docs/product/MWM-Beauty-Supply-Vocabulary.md) — 20 Vibes + 31 What Stands Out? specifically for beauty supply stores; micro-signals by shopping intent (braids/natural/wigs/beauty); "Come As You Are" anchors experience language.
 - [Interruption handling — PERMANENT](interruption-handling.md) — address concern, return to implementation list immediately; original authorization stays active.
 - [Web-static committed bundle pattern](web-static-committed-bundle.md) — web assets must be committed to git in web-static/; Railway Docker cache stales the web build layer even with echo-token busting.
+- [Field Readiness Audit Aug 10 2026](field-readiness-audit-aug10.md) — 42-phase audit findings: 4 fixes applied; discover.tsx VIBES must use real DB category names; map loads ALL businesses client-side; Phuket 26 biz all have coords; braiding/Jamaica/faith are data gaps not bugs.
