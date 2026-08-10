@@ -16,14 +16,14 @@ import {
 const BASE = import.meta.env.BASE_URL;
 
 const VIBES = [
-  { emoji: "🍽️", label: "Soul Food", category: "Restaurants & Nightlife" },
-  { emoji: "💇🏾", label: "Hair & Beauty", category: "Professional Services" },
-  { emoji: "🌙", label: "Date Night", category: "Restaurants & Nightlife" },
-  { emoji: "☕", label: "Café Vibes", category: "Restaurants & Nightlife" },
-  { emoji: "💼", label: "Minority-Owned", category: "Minority-Owned Businesses" },
-  { emoji: "🏨", label: "Stay & Explore", category: "Hotels & Stays" },
-  { emoji: "🎭", label: "Culture", category: "Cultural Landmarks" },
-  { emoji: "🎉", label: "Events & More", category: "Community Events" },
+  { emoji: "🍽️", label: "Soul Food", category: "Food" },
+  { emoji: "💇🏾", label: "Hair & Beauty", category: "Beauty" },
+  { emoji: "🌙", label: "Date Night", category: "Food" },
+  { emoji: "☕", label: "Café Vibes", category: "Food" },
+  { emoji: "💼", label: "Minority-Owned", category: undefined },
+  { emoji: "🏨", label: "Stay & Explore", category: "Travel & Hospitality" },
+  { emoji: "🎭", label: "Culture", category: "Arts & Culture" },
+  { emoji: "🎉", label: "Events & More", category: "Entertainment & Recreation" },
 ];
 
 function isOpenNow(hours: string | null | undefined): boolean {
@@ -258,12 +258,15 @@ export default function Discover() {
 
   const categories = [
     "All",
-    "Minority-Owned Businesses",
-    "Restaurants & Nightlife",
-    "Hotels & Stays",
-    "Cultural Landmarks",
-    "Professional Services",
-    "Community Events"
+    "Food",
+    "Beauty",
+    "Health & Wellness",
+    "Retail",
+    "Travel & Hospitality",
+    "Arts & Culture",
+    "Education",
+    "Entertainment & Recreation",
+    "Faith & Spirituality",
   ];
 
   return (
