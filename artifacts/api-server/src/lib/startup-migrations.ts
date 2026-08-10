@@ -1746,6 +1746,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library collections",  () => ensureLibraryCollections(log, warn)],
     ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
     ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
+    ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3595,5 +3596,89 @@ async function ensureLibraryCollections(
 
   } catch (err: unknown) {
     warn(`Library collections seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Bangkok International Businesses ─────────────────────────────────────────
+// Real, verifiable businesses in Bangkok, Thailand for international discovery.
+// These complement the Phuket businesses already seeded.
+async function ensureBangkokBusinesses(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const BANGKOK_BUSINESSES = [
+    { name: "Issaya Siamese Club", category: "Food", subcategory: "Fine Dining Thai", address: "4 Soi Si Akson, Chua Ploeng Rd", city: "Bangkok", country: "Thailand", lat: 13.7210, lng: 100.5476, description: "Award-winning Thai restaurant helmed by Chef Ian Kittichai, set in a restored colonial house. Known for reimagined traditional Thai dishes in a lush garden setting." },
+    { name: "Paste Restaurant", category: "Food", subcategory: "Fine Dining Thai", address: "Gaysorn Village, 999 Ploenchit Rd", city: "Bangkok", country: "Thailand", lat: 13.7435, lng: 100.5400, description: "Michelin-starred Thai restaurant celebrated for elevating ancient Thai recipes using modern technique. One of Bangkok's most respected dining destinations." },
+    { name: "Blue Elephant Royal Thai Cuisine", category: "Food", subcategory: "Fine Dining Thai", address: "233 South Sathorn Rd", city: "Bangkok", country: "Thailand", lat: 13.7213, lng: 100.5300, description: "Fine dining Thai cuisine in a landmark century-old colonial building. Famous for its Royal Thai tasting menus and highly regarded cooking school." },
+    { name: "Bo.lan Restaurant", category: "Food", subcategory: "Thai Cuisine", address: "24 Sukhumvit Soi 53, Klongtoey Nua", city: "Bangkok", country: "Thailand", lat: 13.7295, lng: 100.5680, description: "A pioneering sustainable fine-dining Thai restaurant committed to reviving heritage ingredients and cooking traditions. Beloved by food travelers worldwide." },
+    { name: "Soul Food Mahanakorn", category: "Food", subcategory: "Thai Tavern", address: "56/10 Sukhumvit Soi 55, Thonglor", city: "Bangkok", country: "Thailand", lat: 13.7290, lng: 100.5800, description: "A neighborhood Thai restaurant and bar known for honest Thai comfort food and creative cocktails. A local favorite for community dining in Thonglor." },
+    { name: "Vertigo & Moon Bar", category: "Entertainment & Recreation", subcategory: "Rooftop Bar", address: "Banyan Tree Bangkok, 21/100 South Sathorn Rd", city: "Bangkok", country: "Thailand", lat: 13.7199, lng: 100.5278, description: "Open-air rooftop restaurant and bar on the 61st floor of the Banyan Tree Hotel. Stunning panoramic views of the Bangkok skyline — one of the world's great rooftop experiences." },
+    { name: "Sirocco Sky Bar", category: "Entertainment & Recreation", subcategory: "Rooftop Bar", address: "Lebua at State Tower, 1055 Silom Rd", city: "Bangkok", country: "Thailand", lat: 13.7223, lng: 100.5140, description: "The world's highest open-air rooftop bar on the 63rd floor of the State Tower. An iconic Bangkok landmark featured in The Hangover Part II." },
+    { name: "Saxophone Pub & Restaurant", category: "Entertainment & Recreation", subcategory: "Live Music Venue", address: "3/8 Phetchaburi Rd, Victory Monument", city: "Bangkok", country: "Thailand", lat: 13.7617, lng: 100.5370, description: "Bangkok's beloved live music institution since 1987. Features nightly jazz, blues, and soul performances in an intimate setting near Victory Monument." },
+    { name: "Chatuchak Weekend Market", category: "Retail", subcategory: "Weekend Market", address: "587/10 Kampaeng Phet 2 Rd, Chatuchak", city: "Bangkok", country: "Thailand", lat: 13.7999, lng: 100.5505, description: "One of the world's largest weekend markets with over 8,000 stalls. Spanning 35 acres, it's the go-to destination for art, antiques, clothing, street food, and local crafts." },
+    { name: "Asiatique The Riverfront", category: "Entertainment & Recreation", subcategory: "Night Market", address: "2194 Charoen Krung Rd, Wat Phraya Krai", city: "Bangkok", country: "Thailand", lat: 13.7014, lng: 100.5095, description: "A sprawling riverside night market on the Chao Phraya River combining shopping, restaurants, bars, and live entertainment in a stunning open-air setting." },
+    { name: "Jim Thompson House", category: "Arts & Culture", subcategory: "Museum & Historic Site", address: "6 Kasem San 2, Wang Mai, Pathum Wan", city: "Bangkok", country: "Thailand", lat: 13.7480, lng: 100.5286, description: "The former home of American businessman and Thai silk entrepreneur Jim Thompson, now a museum showcasing a stunning collection of Southeast Asian art and antiques." },
+    { name: "MOCA Bangkok", category: "Arts & Culture", subcategory: "Museum & Art Gallery", address: "499 Kamphaeng Phet 6 Rd, Lat Yao", city: "Bangkok", country: "Thailand", lat: 13.8567, lng: 100.5695, description: "The Museum of Contemporary Art is Thailand's largest private contemporary art museum, home to over 800 works by Thai artists spanning the last 50 years." },
+    { name: "Lhong 1919", category: "Arts & Culture", subcategory: "Cultural Heritage Site", address: "248 Chiang Mai Rd, Khlong San", city: "Bangkok", country: "Thailand", lat: 13.7283, lng: 100.4972, description: "A beautifully restored 19th-century Chinese trading port on the Chao Phraya River, now a cultural center with galleries, weekend markets, and riverside dining." },
+    { name: "Mandarin Oriental Spa Bangkok", category: "Health & Wellness", subcategory: "Luxury Spa", address: "48 Oriental Ave, Bang Rak", city: "Bangkok", country: "Thailand", lat: 13.7213, lng: 100.5123, description: "The legendary spa at the Mandarin Oriental Hotel offering award-winning Thai massage, traditional healing rituals, and holistic wellness treatments since 1876." },
+    { name: "Roots Coffee Roasters", category: "Food", subcategory: "Specialty Coffee", address: "Ari neighborhood, Phahon Yothin Rd", city: "Bangkok", country: "Thailand", lat: 13.7759, lng: 100.5485, description: "Bangkok's beloved specialty coffee chain founded by Thai coffee enthusiasts. Known for meticulously sourced single-origin Thai beans and warm, welcoming cafés throughout the city." },
+  ];
+
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of BANGKOK_BUSINESSES) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.country.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,NULL,$7,
+             $8,'[]'::jsonb,false,
+             $9,$10,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address, b.city, b.country,
+            b.description,
+            String(b.lat), String(b.lng),
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Bangkok businesses: failed to insert ${b.name}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Bangkok businesses guard: ${inserted} inserted, ${skipped} already present`);
+  } catch (err: unknown) {
+    warn(`Bangkok businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

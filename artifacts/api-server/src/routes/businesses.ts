@@ -103,12 +103,13 @@ router.get("/businesses", async (req: Request, res: Response) => {
         .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
         .filter(t => t.length >= 2 && !STOP.has(t));
       if (tokens.length <= 1) {
-        // Single token: standard substring match across all fields
+        // Single token: standard substring match across all key fields
         conditions.push(
           or(
             ilike(businessesTable.name, `%${q}%`),
             ilike(businessesTable.city, `%${q}%`),
             ilike(businessesTable.category, `%${q}%`),
+            ilike(businessesTable.subcategory, `%${q}%`),
             ilike(businessesTable.description, `%${q}%`),
           ),
         );
@@ -117,12 +118,15 @@ router.get("/businesses", async (req: Request, res: Response) => {
         // phrase in any field. This catches "Pink Table" → both "pink" AND "table"
         // present in the name. Falls through to fuzzy if still zero results.
         const allInName = tokens.map(t => ilike(businessesTable.name, `%${t}%`));
+        const allInDesc = tokens.map(t => ilike(businessesTable.description, `%${t}%`));
         conditions.push(
           or(
             and(...allInName),                                          // all tokens in name
+            and(...allInDesc),                                          // all tokens in description
             ilike(businessesTable.name, `%${q}%`),                     // full phrase in name
             ilike(businessesTable.description, `%${q}%`),              // full phrase in description
             ilike(businessesTable.category, `%${q}%`),                 // full phrase in category
+            ilike(businessesTable.subcategory, `%${q}%`),              // full phrase in subcategory
           ),
         );
       }
@@ -1187,6 +1191,8 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
       blackOwned: false,
       isReferenceOnly: false,
       status: "active",
+      // live_unclaimed makes the place immediately visible to all approved members
+      listingStatus: "live_unclaimed",
       verified: false,
       featured: false,
       promotionEligible: false,
