@@ -1,0 +1,53 @@
+That changes my assessment slightly: **the domain works, but the intermittent white screen/slow first load is a real issue worth documenting.** It does not look like a reason to change DNS right now.
+
+The fact that the second attempt loaded the correct site within seconds tells us routing is reaching Mapping with Melanin. The first-load white screen could instead be a cold start, frontend initialization problem, JavaScript error, API delay, or asset-loading problem. We should have Replit diagnose it rather than guess.
+
+Before Manus begins, send Replit this:
+
+> **PRODUCTION PERFORMANCE DIAGNOSTIC — DO NOT CHANGE DNS**
+>
+> We have manually verified Railway and GoDaddy.
+>
+> * Railway shows `www.mappingwithmelanin.com` as a valid custom domain with a green check.
+> * GoDaddy currently has `www` configured as a CNAME to a Railway domain.
+> * In a fresh Safari Private Window, manually entering `www.mappingwithmelanin.com` initially resulted in a white screen after waiting.
+> * Retrying the exact same URL then loaded the correct Mapping with Melanin production website within a few seconds.
+>
+> Therefore, **do not disconnect GoDaddy Website Builder, modify DNS, change CNAMEs, or alter Railway networking at this time.**
+>
+> Instead, perform a **read-only production first-load diagnostic**.
+>
+> Determine why a completely fresh/private browser session can initially display a prolonged white screen.
+>
+> Check:
+>
+> 1. production server response/startup latency
+> 2. Railway cold-start behavior
+> 3. HTML response time
+> 4. JS bundle download/load time
+> 5. frontend initialization/runtime errors
+> 6. failed or slow API requests during initial render
+> 7. authentication/session initialization blocking rendering
+> 8. asset/font/image requests blocking first paint
+> 9. redirects involving apex vs `www`
+> 10. whether the SPA renders a blank root while waiting for initialization instead of displaying a loading state
+> 11. browser console errors on a completely fresh session
+> 12. network waterfall/TTFB for first request versus immediate second request
+>
+> Test at minimum:
+>
+> * `https://www.mappingwithmelanin.com`
+> * `https://mappingwithmelanin.com`
+> * Railway's direct production URL
+>
+> Compare first uncached load versus second load.
+>
+> **Do not fix anything until the cause is identified.**
+>
+> Report the root cause, evidence, measured first-load times, whether this is DNS/network/server/frontend related, and the safest correction.
+>
+> This should NOT delay Manus testing if the application is otherwise reachable. Manus should specifically include fresh-session/uncached load performance in the audit.
+
+And **we are done touching GoDaddy tonight unless that diagnostic proves a DNS problem.**
+
+The next priority is much more important: **Manus needs to test the actual production user experience**, including authentication, profile parity, search, Library, Kinfolk, saves, community posting/media links, Bangkok/international behavior, and the different personas. The white-screen event should become one of its test cases rather than sending us into another speculative infrastructure change.
