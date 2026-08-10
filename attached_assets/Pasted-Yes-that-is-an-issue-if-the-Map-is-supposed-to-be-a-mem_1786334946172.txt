@@ -1,0 +1,91 @@
+Yes — **that is an issue if the Map is supposed to be a member/tester experience.** And this is exactly the kind of thing we want to catch before Manus starts, because otherwise Manus would be auditing an experience that does not match your access model.
+
+There are actually **two separate things Replit needs to verify**:
+
+1. **What may be intentionally public** — your marketing/landing pages and whatever limited preview you deliberately want prospective users to see.
+2. **What requires authentication** — the actual interactive Mapping with Melanin experience, including personalized Map functionality, saves, safety/community intelligence, Kinfolk personalization, Profile, Community, Library/member features, etc.
+
+I would **not tell Replit simply “hide the Map.”** That invites another quick patch. Have them audit the entire unauthenticated route/access boundary first.
+
+Send Replit this:
+
+> **STOP — NEW PRODUCTION ACCESS-CONTROL ISSUE FOUND. DIAGNOSE BEFORE CHANGING ANYTHING.**
+>
+> I have confirmed that I can access the Map on the production website **without signing in**.
+>
+> Do **not** immediately hide the Map or add a cosmetic redirect. First determine why an unauthenticated visitor can access it and whether this same problem exists anywhere else.
+>
+> ### 1. Perform a complete unauthenticated-access audit
+>
+> Starting from a completely logged-out/private browser session, enumerate **every web route and API capability an unauthenticated visitor can currently reach.**
+>
+> Classify each as:
+>
+> * PUBLIC — intentionally available before authentication
+> * PUBLIC PREVIEW — intentionally limited marketing/demo experience
+> * AUTH REQUIRED — member/tester functionality that should require login
+> * ADMIN/ROLE RESTRICTED — requires additional authorization beyond login
+> * QUESTION FOR FOUNDER — product decision genuinely required
+>
+> Do not assume the navigation menu represents the security boundary. Test direct URLs and API calls as well.
+>
+> ### 2. Specifically trace the Map
+>
+> Determine:
+>
+> * whether `/map` itself has an authentication guard
+> * whether the frontend merely displays the page without checking session state
+> * whether its underlying APIs return data without authentication
+> * whether business data, cultural sites, safety data, Historical Racial Exclusion records, community information, user-specific data, or other layers are exposed anonymously
+> * whether anonymous visitors can search, save, submit, contribute, report, RSVP, or perform any mutation
+>
+> **Reading a public page and performing authenticated member actions are different security questions. Audit both.**
+>
+> ### 3. Audit the rest of the platform for the same problem
+>
+> Include at minimum:
+>
+> Map, Businesses/Directory, Explore, Safety, Community, Library, KinfolkAI, Events, Circles, Guides, Marketplace, Connections, Profile, Travel, Notifications, Saved Places, Health Hub, Journeys, referrals, contributions, business submission/claiming, media submission, and all admin/business-owner routes.
+>
+> Test both UI routes **and their APIs**.
+>
+> ### 4. Preserve intentional public discovery
+>
+> Do not destroy our acquisition strategy while fixing authentication.
+>
+> Mapping with Melanin may intentionally allow some public-facing discovery/marketing information so prospective users and businesses understand the value of the platform. What I do **not** want is someone receiving the complete member experience merely because they know a URL.
+>
+> If the existing architecture mixes public discovery with authenticated functionality, report that clearly and recommend the cleanest access model before implementing it.
+>
+> ### 5. Tester access must remain functional
+>
+> Our approximately 15–30 approved testers need to be able to sign in and use the full website experience. Bangkok/international testing, Philadelphia testing, NC/SC testing, Manus testing, and Apple-review-related authentication cannot be broken by this correction.
+>
+> ### 6. Security must be enforced server-side
+>
+> Do not treat hidden buttons, hidden navigation, or React route redirects as sufficient security.
+>
+> Any API containing private/member-only data or allowing member actions must independently enforce authentication/authorization on the server.
+>
+> ### 7. REPORT BEFORE FIXING
+>
+> Return:
+>
+> 1. complete route-access matrix,
+> 2. API-access matrix,
+> 3. exact reason `/map` is currently accessible logged out,
+> 4. any other unauthorized surfaces discovered,
+> 5. recommended public-vs-authenticated boundary,
+> 6. files/middleware/routes that would need modification,
+> 7. regression risks, especially tester login and Apple review,
+> 8. acceptance-test plan.
+>
+> **Do not implement until the diagnosis is reported.**
+>
+> This is a production access-control audit, not a UI patch.
+
+And I want to make one distinction before we tell Replit what the final behavior should be: **having some map information publicly visible may actually be valuable to you.** Your public site already says things like “Find Businesses” and demonstrates what Mapping with Melanin does. We may decide that a visitor can browse a *limited* public map, but signing in unlocks the real intelligence—personalization, saves, community signals, contributions, deeper safety information, Kinfolk recommendations, etc.
+
+So the immediate problem isn't necessarily **“a logged-out person can see a map.”** The problem is that right now we don't know whether Replit intentionally designed a public preview or simply failed to protect a member route.
+
+That is what I want them to prove before touching it.
