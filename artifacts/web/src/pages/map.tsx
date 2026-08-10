@@ -1,4 +1,4 @@
-import { useListBusinesses, useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -234,7 +234,17 @@ const LEGEND_TILES = [
 ] as const;
 
 export default function MapPage() {
-  const { data, isLoading } = useListBusinesses({}, { query: { queryKey: ["businesses", "map-full"] } });
+  // Load ALL geolocated businesses — uses dedicated map-pins endpoint (no 200-row cap)
+  const [mapPins, setMapPins] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/businesses/map-pins`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : { pins: [] })
+      .then((d: { pins?: any[] }) => { setMapPins(d.pins ?? []); })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
   const { data: authData } = useGetCurrentAuthUser();
 
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -325,7 +335,7 @@ export default function MapPage() {
     finally { setUniversalLoading(false); }
   }, [search, userCoords, geocodeAndPan]);
 
-  const businesses = ((data?.businesses ?? []) as BizWithCoords[]).filter(
+  const businesses = (mapPins as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
   );
 

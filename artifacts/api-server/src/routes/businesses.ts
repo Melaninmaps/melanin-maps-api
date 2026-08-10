@@ -52,6 +52,34 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
   });
 });
 
+// ── Lightweight map-pins endpoint ──────────────────────────────────────────
+// Returns ALL active businesses that have valid coordinates, with only the
+// minimal fields a map marker needs. No 200-row cap — this is intentional.
+// The small payload (id/name/lat/lng/category/city/country) keeps it fast.
+router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query<{
+      id: string; name: string; latitude: string; longitude: string;
+      category: string | null; subcategory: string | null;
+      city: string | null; state: string | null; country: string | null;
+      listing_status: string | null;
+    }>(`
+      SELECT id, name, latitude, longitude, category, subcategory,
+             city, state, country, listing_status
+      FROM businesses
+      WHERE status = 'active'
+        AND latitude IS NOT NULL
+        AND longitude IS NOT NULL
+        AND latitude != 0
+        AND longitude != 0
+      ORDER BY confidence_score DESC, created_at DESC
+    `);
+    res.json({ pins: rows });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load map pins" });
+  }
+});
+
 router.get("/businesses", async (req: Request, res: Response) => {
   // Public browsing is allowed. Personalization (preferences, saved status) requires auth.
   // Mutation endpoints (save, tag, vibe, etc.) enforce auth individually below.
