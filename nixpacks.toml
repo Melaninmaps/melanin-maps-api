@@ -1,25 +1,23 @@
 [phases.build]
 cmds = [
-  # 1. Build the web Vite SPA — output → artifacts/web/dist/public/
-  #    Cache-bust token forces Docker layer cache miss so /preview route is included.
-  #    UPDATE THIS TOKEN whenever web routes or pages change.
-  "echo ship-20260810-onboarding-v1 && pnpm --filter @workspace/web run build",
-  # 2. Sync web output into api-server/web-static (what api-server build.mjs reads)
-  "cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/ && find artifacts/api-server/web-static -name '*.zip' -o -name '*.ipa' -o -name '*.apk' -o -name '*.aab' | xargs rm -f 2>/dev/null || true",
-  # 3. Build api-server — cache-bust token is IN this command so Docker layer cache
-  #    misses on every change here, forcing a fresh TypeScript compile. When Railway
-  #    compiles fresh, git rev-parse HEAD returns the current commit SHA, which becomes
-  #    built_from_sha — making stale_bundle:false after deploy.
-  #    UPDATE THIS TOKEN ON EVERY PUSH THAT MUST DEPLOY CLEAN.
-  "echo ship-20260810-onboarding-v1 && pnpm --filter @workspace/api-server run build",
-  # 4. Sync api-server output to root dist (what static-server.mjs spawns)
+  # ARCHITECTURE: web assets are committed to git in web-static/.
+  # Railway does NOT rebuild the web from source — it uses the committed files.
+  # This eliminates Docker layer cache staleness for the frontend bundle.
+  # To update the frontend: rebuild web locally, copy to web-static/, commit.
+  #
+  # 1. Copy committed web-static into api-server/web-static so the api-server
+  #    build can embed the web assets (needed for the express.static fallback path).
+  "cp -r web-static/. artifacts/api-server/web-static/",
+  # 2. Build api-server — esbuild compile + embed web assets.
+  #    git rev-parse HEAD is evaluated at build time so this layer is unique per commit
+  #    and never reuses a stale Docker cache.
+  "echo \"api-$(git rev-parse HEAD)\" && pnpm --filter @workspace/api-server run build",
+  # 3. Sync api-server bundle to root dist (what static-server.mjs spawns).
   "cp artifacts/api-server/dist/index.mjs dist/index.mjs",
   "cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map",
   "cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY",
-  "mkdir -p dist/public && cp -r artifacts/api-server/dist/public/. dist/public/",
-  # 5. Sync freshly built web assets to root web-static (what static-server.mjs serves).
-  #    This overwrites the committed web-static on every deploy so it never goes stale.
-  "cp -r artifacts/api-server/dist/public/. web-static/"
+  # 4. Keep root dist/public in sync with web-static (no-op if identical).
+  "mkdir -p dist/public && cp -r web-static/. dist/public/"
 ]
 
 [start]

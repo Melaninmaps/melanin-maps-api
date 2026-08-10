@@ -24,6 +24,8 @@ export interface AuthUser {
   /** @nullable */
   profileImageUrl: string | null;
   approved?: boolean;
+  /** False until the member completes the Kinfolk onboarding wizard */
+  profileSetupComplete?: boolean;
 }
 
 export interface AuthUserEnvelope {

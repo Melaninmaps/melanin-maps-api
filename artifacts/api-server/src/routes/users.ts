@@ -49,8 +49,10 @@ router.get("/users/me", async (req: Request, res: Response) => {
       user = { ...user, trialEndsAt };
     }
 
+    // Return the user object directly (not wrapped) so the web profile page
+    // can read fields like bio/username/jobTitle as profile.bio, not profile.user.bio.
     const { stripeCustomerId, stripeSubscriptionId, pushToken, ...safeUser } = user;
-    res.json({ user: safeUser });
+    res.json(safeUser);
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user profile");
     res.status(500).json({ error: "Failed to fetch profile" });
