@@ -343,23 +343,43 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
 
   if (!leasedCities.length) return { checked: cities.length, alerted: [], skipped, failed };
 
-  // Send email (required channel) with a hard timeout below the lease TTL.
-  // This ensures delivery completes before any lease can expire and be reclaimed
-  // by a competing process — preventing duplicate alerts from a slow send.
+  // Send email (required channel) with a hard timeout safely below the lease TTL.
+  //
+  // IMPORTANT: on timeout we do NOT release the lease. Releasing would allow the
+  // next tick to claim and send a new alert while the original Resend request may
+  // still complete in the background — producing a duplicate founder notification.
+  // Instead, the lease expires naturally after LEASE_TTL_MINUTES. The original
+  // request cannot finalize (we return early from this function), so no cooldown
+  // stamp is written. After the lease expires the next tick re-claims and retries.
+  // At worst the founder receives the alert with a delay of up to LEASE_TTL_MINUTES
+  // rather than instantly — an acceptable trade-off for guaranteed no-duplicate.
+  //
+  // If the send genuinely fails (network error, bad API key, etc.) the lease IS
+  // released so the next tick can retry immediately.
   const emailTimeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`Email send timed out after ${EMAIL_TIMEOUT_MS / 1000}s`)), EMAIL_TIMEOUT_MS),
+    setTimeout(() => reject(new Error(`__TIMEOUT__: email timed out after ${EMAIL_TIMEOUT_MS / 1000}s`)), EMAIL_TIMEOUT_MS),
   );
   try {
     await Promise.race([sendAlertEmail(leasedCities), emailTimeoutPromise]);
   } catch (err) {
-    logger.error(
-      { err, cities: leasedCities.map((c) => c.slug) },
-      "city-health-alert: email failed or timed out — releasing leases for retry",
-    );
-    for (const city of leasedCities) {
-      await releaseAlertLease(city.slug, city.leaseToken);
-      failed.push(city.slug);
+    const isTimeout = err instanceof Error && err.message.startsWith("__TIMEOUT__");
+    if (isTimeout) {
+      // Let leases expire naturally — do NOT release. See comment above.
+      logger.warn(
+        { leaseTtlMinutes: LEASE_TTL_MINUTES, cities: leasedCities.map((c) => c.slug) },
+        "city-health-alert: email timed out — retaining leases until natural expiry to prevent duplicate sends",
+      );
+    } else {
+      // Genuine send failure — release leases so the next tick retries promptly.
+      logger.error(
+        { err, cities: leasedCities.map((c) => c.slug) },
+        "city-health-alert: email failed — releasing leases for retry",
+      );
+      for (const city of leasedCities) {
+        await releaseAlertLease(city.slug, city.leaseToken);
+      }
     }
+    for (const city of leasedCities) failed.push(city.slug);
     return { checked: cities.length, alerted: [], skipped, failed };
   }
 
@@ -394,16 +414,52 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
   return { checked: cities.length, alerted, skipped, failed };
 }
 
+// ── Required schema columns ───────────────────────────────────────────────────
+// Verified explicitly before the scheduler starts. runStartupMigrations() catches
+// individual migration errors and always resolves — a failed ADD COLUMN leaves
+// the scheduler starting against a table with missing columns, causing every
+// lease claim to fail silently. This DB probe is the authoritative gate.
+const REQUIRED_COLUMNS = ["last_alerted_at", "alert_claim_token", "alert_lease_expires_at"] as const;
+
+async function verifyAlertSchema(): Promise<boolean> {
+  try {
+    const { rows } = await pool.query<{ column_name: string }>(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_name = 'city_launches'
+         AND column_name = ANY($1::text[])`,
+      [REQUIRED_COLUMNS],
+    );
+    const found = new Set(rows.map((r) => r.column_name));
+    const missing = (REQUIRED_COLUMNS as readonly string[]).filter((c) => !found.has(c));
+    if (missing.length > 0) {
+      logger.error(
+        { missing },
+        "city-health-alert: required columns missing from city_launches — scheduler NOT started",
+      );
+      return false;
+    }
+    return true;
+  } catch (err) {
+    logger.error({ err }, "city-health-alert: schema verification query failed — scheduler NOT started");
+    return false;
+  }
+}
+
 // ── Scheduler ─────────────────────────────────────────────────────────────────
-// Called from index.ts AFTER runStartupMigrations resolves, so the
-// alert_claim_token and alert_lease_expires_at columns are guaranteed present.
-export function startCityHealthAlertScheduler(): void {
+// Called from index.ts after runStartupMigrations resolves. Verifies the three
+// required lease columns actually exist in the DB before registering the cron
+// job — guards against a migration runner that resolves despite partial failure.
+export async function startCityHealthAlertScheduler(): Promise<void> {
   const schedule = process.env.CITY_HEALTH_CRON_SCHEDULE ?? "*/30 * * * *";
 
   if (!cron.validate(schedule)) {
     logger.error({ schedule }, "city-health-alert: invalid schedule — scheduler not started");
     return;
   }
+
+  const schemaReady = await verifyAlertSchema();
+  if (!schemaReady) return;
 
   cron.schedule(schedule, async () => {
     logger.info("city-health-alert: running health check");

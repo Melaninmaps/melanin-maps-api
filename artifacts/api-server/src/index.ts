@@ -116,14 +116,17 @@ const server = app.listen(port, (err) => {
   // before the first cron tick fires.
   runStartupMigrations(logger)
     .then(() => {
-      // Start only after migrations resolve — guarantees alert_claim_token and
-      // alert_lease_expires_at columns exist before the first cron tick fires.
-      startCityHealthAlertScheduler();
+      // startCityHealthAlertScheduler is async: it probes information_schema to
+      // confirm the three lease columns actually exist before registering the cron
+      // job. This guards against runStartupMigrations resolving despite an
+      // individual ADD COLUMN failure (it catches per-migration errors internally).
+      startCityHealthAlertScheduler().catch((err) =>
+        logger.error({ err }, "City health alert scheduler startup failed"),
+      );
     })
     .catch((err) => {
-      // Top-level migration runner rejected (unusual — individual migration errors
-      // are caught internally). Do NOT start the scheduler: the lease columns may
-      // be absent, which would cause every claim UPDATE to fail silently.
+      // Top-level migration runner rejected — lease columns may be absent.
+      // Do NOT start the scheduler; it will self-verify and refuse on any column gap.
       logger.error({ err }, "Startup migrations failed — city health alert scheduler NOT started");
     });
 
