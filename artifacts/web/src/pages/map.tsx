@@ -1,7 +1,8 @@
 import { useListBusinesses, useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link } from "wouter";
-import { Search, MapPin, X, Navigation, Navigation2 } from "lucide-react";
+import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
+import AddPlaceModal from "@/components/AddPlaceModal";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -273,6 +274,7 @@ export default function MapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [legendFilter, setLegendFilter] = useState<string | null>(null);
   const [mood, setMood] = useState<string | null>(null);
+  const [showAddPlace, setShowAddPlace] = useState(false);
   // Business search must be explicitly triggered — map does not auto-populate businesses
   const [businessSearchActive, setBusinessSearchActive] = useState(false);
   // Sundown layer has its own independent toggle (not subject to legendFilter single-select)
@@ -1173,7 +1175,17 @@ export default function MapPage() {
                 {(universalResults?.results?.businesses ?? filtered).length === 0 ? (
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
-                    <p className="text-sm text-[#3A1F0E]/50 mb-3">No matching businesses found.</p>
+                    <p className="text-sm font-semibold text-[#2B1507] mb-1">No places found</p>
+                    <p className="text-xs text-[#3A1F0E]/50 mb-5 leading-relaxed">
+                      Don't see it on the map yet?<br />Add it and share your experience.
+                    </p>
+                    <button
+                      onClick={() => setShowAddPlace(true)}
+                      className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-full bg-[#CA922B] text-white text-xs font-bold hover:bg-[#B38024] transition-colors mb-3"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add a Place
+                    </button>
                     <button
                       onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); }}
                       className="text-xs font-bold text-[#CA922B] hover:underline"
@@ -1251,6 +1263,10 @@ export default function MapPage() {
 
   if (apiKeyError) {
     return (
+      <>
+        {showAddPlace && (
+          <AddPlaceModal initialSearch={search} onClose={() => setShowAddPlace(false)} />
+        )}
       <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
         {renderSidebar()}
         <div className="hidden sm:flex flex-1 min-w-0 flex-col items-center justify-center bg-[#F5EBD8] text-center px-8 overflow-hidden">
@@ -1263,10 +1279,15 @@ export default function MapPage() {
           </p>
         </div>
       </div>
+      </>
     );
   }
 
   return (
+    <>
+      {showAddPlace && (
+        <AddPlaceModal initialSearch={search} onClose={() => setShowAddPlace(false)} />
+      )}
     <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
       {/* Sidebar — only visible when open */}
       {sidebarOpen && renderSidebar()}
@@ -1370,5 +1391,6 @@ export default function MapPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

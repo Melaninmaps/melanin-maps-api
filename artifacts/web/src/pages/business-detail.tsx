@@ -1,4 +1,4 @@
-import { useRoute, Link } from "wouter";
+import { useRoute, Link, useSearch } from "wouter";
 import { VIBES_BY_CATEGORY } from "@workspace/constants";
 import { 
   useGetBusiness, 
@@ -139,6 +139,7 @@ export default function BusinessDetail() {
   const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
 
   // ── Community media contribution state ──────────────────────────────────────
+  const search = useSearch();
   const [showContribModal, setShowContribModal] = useState(false);
   const [contribUrl, setContribUrl] = useState("");
   const [contribCaption, setContribCaption] = useState("");
@@ -146,6 +147,13 @@ export default function BusinessDetail() {
   const [contribSuccess, setContribSuccess] = useState(false);
   const [contribError, setContribError] = useState<string | null>(null);
   const [communityVibes, setCommunityVibes] = useState<any[]>([]);
+
+  // Auto-open the contribution modal when arriving from "Add a Place" flow
+  useEffect(() => {
+    if (new URLSearchParams(search).get("addContent") === "true") {
+      setShowContribModal(true);
+    }
+  }, [search]);
 
   useEffect(() => {
     if (!id) return;

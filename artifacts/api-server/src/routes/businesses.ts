@@ -1107,6 +1107,114 @@ router.post("/businesses/community-reference", async (req: any, res: Response) =
   }
 });
 
+// ── POST /businesses/suggest-place — member-facing "Add a Place" ──────────────
+// Any approved member can submit a new place (restaurant, venue, salon, temple, etc.)
+// on any continent.  Geocodes the address server-side, returns the canonical business
+// ID so the client can immediately route to the contribution flow.
+router.post("/businesses/suggest-place", async (req: any, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
+    const { name, category, subcategory, city, state, country, address, description, website } =
+      req.body as Record<string, string | undefined>;
+
+    if (!name?.trim() || !category?.trim() || !city?.trim()) {
+      res.status(400).json({ error: "name, category, and city are required" });
+      return;
+    }
+
+    // ── Soft duplicate check (name + city, case-insensitive) ─────────────────
+    const dupeRows = await pool.query(
+      `SELECT id, name, city FROM businesses
+       WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2) AND status != 'removed'
+       LIMIT 1`,
+      [name.trim(), city.trim()]
+    );
+    if (dupeRows.rows.length > 0) {
+      const existing = dupeRows.rows[0] as { id: string; name: string; city: string };
+      res.status(409).json({
+        error: "A place with this name already exists in this city.",
+        existingId: existing.id,
+        existingName: existing.name,
+      });
+      return;
+    }
+
+    // ── Geocode via Google Maps Geocoding API ─────────────────────────────────
+    let lat = "0";
+    let lng = "0";
+    const geoQuery = [address?.trim(), city.trim(), state?.trim(), country?.trim()]
+      .filter(Boolean).join(", ");
+    const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (gmKey && geoQuery) {
+      try {
+        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(geoQuery)}&key=${gmKey}`;
+        const geoResp = await fetch(geoUrl);
+        const geoData = await geoResp.json() as any;
+        if (geoData.status === "OK" && geoData.results?.[0]?.geometry?.location) {
+          lat = String(geoData.results[0].geometry.location.lat);
+          lng = String(geoData.results[0].geometry.location.lng);
+        }
+      } catch {
+        // geocoding failure is non-fatal — place is still created, pins at 0,0
+      }
+    }
+
+    const id = `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const resolvedCategory = category.trim();
+    const resolvedSubcategory = subcategory?.trim() || resolvedCategory;
+    const resolvedState = state?.trim() || null;
+    // Infer country: if state looks like a US code and no country given, default to USA
+    const resolvedCountry = country?.trim() ||
+      (resolvedState && resolvedState.length <= 2 ? "USA" : null);
+    const resolvedDescription = description?.trim() ||
+      `Community-submitted place in ${city.trim()}${resolvedCountry && resolvedCountry !== "USA" ? `, ${resolvedCountry}` : ""}.`;
+    const resolvedAddress = address?.trim() || city.trim();
+
+    const insertValues: Record<string, unknown> = {
+      id,
+      name: name.trim(),
+      category: resolvedCategory,
+      subcategory: resolvedSubcategory,
+      description: resolvedDescription,
+      address: resolvedAddress,
+      city: city.trim(),
+      latitude: lat,
+      longitude: lng,
+      blackOwned: false,
+      isReferenceOnly: false,
+      status: "active",
+      verified: false,
+      featured: false,
+      promotionEligible: false,
+      feedbackOptIn: false,
+      submittedById: req.user.id,
+      ownershipDesignations: [],
+    };
+    if (resolvedState) insertValues.state = resolvedState;
+    if (resolvedCountry) insertValues.country = resolvedCountry;
+    if (website?.trim()) insertValues.website = website.trim();
+
+    const [business] = await db
+      .insert(businessesTable)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .values(insertValues as any)
+      .returning();
+
+    req.log.info(
+      { businessId: business.id, submittedBy: req.user.id, city, country: resolvedCountry },
+      "Member-submitted place created"
+    );
+    res.status(201).json({ businessId: business.id, name: business.name, isNew: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to create member-submitted place");
+    res.status(500).json({ error: "Failed to create place. Please try again." });
+  }
+});
+
 // ── GET /businesses/duplicate-check — 4-step soft-match for submissions & claims ──
 router.get("/businesses/duplicate-check", async (req: Request, res: Response) => {
   if (!(req as any).user) { res.status(401).json({ error: "Authentication required" }); return; }
