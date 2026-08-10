@@ -1104,6 +1104,27 @@ END $seed$`,
           WHERE name = 'Enon Tabernacle Baptist Church'
             AND listing_status = 'demo'`,
   },
+  {
+    // Apple App Store review account — must exist on every Railway deploy so the
+    // App Store reviewer (and Manus audit) can log in to the web app with a known
+    // test account. member_type='founding' gives legacy_member (top-tier) access
+    // so all features are visible without a Stripe subscription.
+    // Password hash is bcrypt(cost=8) of "MWM-Apple-2026!"
+    // ON CONFLICT DO NOTHING makes this safe to run on every boot.
+    name: "ensure_apple_reviewer_account_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role)
+          VALUES
+            (gen_random_uuid(),
+             'apple.reviewer@mappingwithmelanin.com',
+             'Apple', 'Reviewer',
+             '$2b$08$dsQzFsaQkl4p/Qk5kYKMUutTgUdXpWr5AHl3CJ76Fg.2hEanFjcaO',
+             true, true, true,
+             'founding', true, 'user')
+          ON CONFLICT (email) DO NOTHING`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
