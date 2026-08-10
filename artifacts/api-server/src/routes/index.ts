@@ -154,16 +154,52 @@ import citiesRouter from "./cities";
 import feedbackRouter from "./feedback";
 import universalSearchRouter from "./universal-search";
 import knowledgeGraphRouter from "./knowledge-graph";
+import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
+// ── Operational / health — no auth required ─────────────────────────────────
 router.use(healthRouter);
 router.use(dbProbeRouter);
 router.use("/internal", readyzRouter);
 router.use(poolStatsRouter);
+
+// ── Auth flows — no auth required (these create sessions) ──────────────────
 router.use(authRouter);
-router.use("/membership", membershipRouter);
 router.use(phoneAuthRouter);
+
+// ── Truly public — accessible without an account ───────────────────────────
+// Only routes that MUST work for unauthenticated visitors belong here.
+// When in doubt, put routes AFTER the member wall.
+router.use(waitlistRouter);       // public waitlist signup form
+router.use(contactRouter);        // public contact form
+router.use(cronRouter);           // CRON_SECRET-protected background jobs (no session)
+router.use(ogRouter);             // social media link previews (no session for crawlers)
+router.use(legalRouter);          // legal docs (public)
+router.use(previewRouter);        // approved-tester preview mode
+router.use(externalClicksRouter); // anonymous outbound click tracking
+router.use(crashReportsRouter);   // anonymous crash reports from app clients
+router.use(monitorBuild97Router); // internal health monitoring endpoint
+router.use(feedbackRouter);       // in-app feedback (submitted before session check)
+
+// ── Member wall — ALL platform data requires an authenticated session ───────
+// MWM serves communities that face real harm. Business locations, HBCU records,
+// sundown-town data, and safety intelligence must never be readable by
+// unauthenticated callers. Returns 401 — never an empty result set.
+// Established: 2026-08-10. Supersedes previous public-discovery architecture.
+router.use(requireAuth);
+
+// ── Everything below requires authentication ────────────────────────────────
+
+// Membership / billing
+router.use("/membership", membershipRouter);
+router.use(stripeRouter);
+router.use(billingRouter);
+router.use(referralsRouter);
+router.use(revenuecatRouter);
+router.use(membershipFamilyRouter);
+
+// Businesses
 router.use(businessesRouter);
 router.use(travelRouter);
 router.use(surveysRouter);
@@ -177,8 +213,6 @@ router.use(eventRsvpsRouter);
 router.use(pushTokenRouter);
 router.use(communityRouter);
 router.use(conversationsRouter);
-router.use(waitlistRouter);
-router.use(contactRouter);
 router.use(eventsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
@@ -188,17 +222,12 @@ router.use(kinfolkTasksRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);
 router.use(notificationsRouter);
-router.use(stripeRouter);
 router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(mapsRouter);
-router.use(ogRouter);
 router.use(jobsRouter);
 router.use(impactRouter);
 router.use(submitBusinessRouter);
-router.use(billingRouter);
-router.use(cronRouter);
-router.use(referralsRouter);
 router.use(contentReportsRouter);
 router.use(verificationRouter);
 router.use(dealsRouter);
@@ -278,7 +307,6 @@ router.use(travelPlannerRouter);
 router.use(smartFillRouter);
 router.use(wrappedRouter);
 router.use(archiveRouter);
-router.use(revenuecatRouter);
 router.use(kinfolkIntelligenceRouter);
 router.use("/hidden-gems", hiddenGemsRouter);
 router.use(resourcesRouter);
@@ -287,14 +315,11 @@ router.use(wellnessTrackerRouter);
 router.use(financialHubRouter);
 router.use(directionsRouter);
 router.use(recommendedSpotsRouter);
-router.use(previewRouter);
 router.use(vibesRouter);
 router.use(hashtagsRouter);
 router.use(communityPlacesRouter);
 router.use(communityImpactRouter);
 router.use(showLoveRouter);
-router.use(membershipFamilyRouter);
-router.use(legalRouter);
 router.use(businessMembershipInfoRouter);
 router.use(cityLaunchRouter);
 router.use(tourGuideAdminRouter);
@@ -304,14 +329,9 @@ router.use(recurringEventsRouter);
 router.use(editSuggestionsRouter);
 router.use(tourCulturalSitesRouter);
 router.use(culturalPhrasesRouter);
-
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);
-router.use(externalClicksRouter);
-router.use(monitorBuild97Router);
-router.use(crashReportsRouter);
-router.use(feedbackRouter);
 
 export default router;
