@@ -1,0 +1,1 @@
+{"version":3,"file":"openaiImageInput.d.ts","sourceRoot":"","sources":["../../../src/generated/types/openaiImageInput.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,oBAAoB,EAAE,MAAM,wBAAwB,CAAC;AAEnE,MAAM,WAAW,gBAAgB;IAC/B,MAAM,EAAE,MAAM,CAAC;IACf,IAAI,CAAC,EAAE,oBAAoB,CAAC;CAC7B"}

@@ -1,0 +1,1 @@
+{"version":3,"file":"businessListResponse.d.ts","sourceRoot":"","sources":["../../../src/generated/types/businessListResponse.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,YAAY,CAAC;AAE3C,MAAM,WAAW,oBAAoB;IACnC,UAAU,EAAE,QAAQ,EAAE,CAAC;IACvB,KAAK,EAAE,MAAM,CAAC;CACf"}

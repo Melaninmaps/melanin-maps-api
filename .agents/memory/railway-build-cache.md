@@ -1,75 +1,44 @@
 ---
-name: Railway nixpacks build cache — root cause and bypass pattern
-description: Railway caches the build layer per nixpacks echo token; the root dist/index.mjs (not artifacts/api-server/dist/) is what Railway actually serves. Documents the confirmed root causes and the mandatory update procedure.
+name: Railway nixpacks build cache bypass
+description: Complete root cause analysis of Railway cache/deployment failures. Updated Aug 10 2026 after 8 consecutive FAILED deploys.
 ---
 
-# Railway nixpacks build cache — root cause and confirmed fix
+# Railway Nixpacks Build Cache — Root Causes
 
-## The Two Root Causes
+## Root Cause 1 (CONFIRMED): dist/ gitignored → MODULE_NOT_FOUND
 
-### 1. nixpacks.toml echo cache-bust token (MOST IMPORTANT)
-`nixpacks.toml` step 3 contains:
-```
-"echo <token> && pnpm --filter @workspace/api-server run build"
-```
-Railway caches Docker build layers based on the exact command string. If the echo token doesn't change, Railway reuses the cached build layer — meaning `pnpm run build` never runs again in Railway's environment.
+**Status**: Fixed Aug 10 2026 (commit 6608d45c)
 
-**The fix:** Change the echo token on every push that must deploy clean.
-Example: `build-city-profiles-kinfolk-aug7-2026` → `build-<feature>-<date>`
+`.gitignore` had bare `dist` which gitignored ALL `dist/` directories including root `dist/`.
 
-### 2. Root dist/index.mjs (not artifacts/api-server/dist/)
-Railway runs `node static-server.mjs` which spawns `dist/index.mjs` at the **repo root** — NOT `artifacts/api-server/dist/index.mjs`.
+Railway's nixpacks Dockerfile has a final `COPY . /app` step that copies from the **git checkout** context, not from the build stage. Since `dist/index.mjs` was never in the git checkout, it was wiped by this final COPY step.
 
-`nixpacks.toml` step 4 syncs it:
-```
-cp artifacts/api-server/dist/index.mjs dist/index.mjs
-```
-But if the build layer is cached (root cause #1), this cp never runs.
+Runtime error: `Error: Cannot find module '/app/dist/index.mjs'` → server exits 1 → healthcheck fails.
 
-**The fix:** Always commit a fresh root `dist/index.mjs` alongside code changes:
-```bash
-cp artifacts/api-server/dist/index.mjs dist/index.mjs
-cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
-cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
-git add -f dist/index.mjs dist/index.mjs.map dist/BUILD_IDENTITY \
-           artifacts/api-server/dist/index.mjs artifacts/api-server/dist/index.mjs.map \
-           nixpacks.toml
-```
+**Fix**: Added `!dist/` and `!dist/**` to `.gitignore` (after the `dist` line). Force-added all dist files. Now dist/ is tracked and Railway's final COPY includes it.
 
-## MANDATORY Deploy Checklist (every api-server push)
+## Root Cause 2: $(git rev-parse HEAD) never busts Docker cache
 
-1. Build: `pnpm --filter @workspace/api-server run build`
-2. Sync root dist:
-   ```bash
-   cp artifacts/api-server/dist/index.mjs dist/index.mjs
-   cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
-   cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
-   ```
-3. Update the echo token in `nixpacks.toml` line 14 to `build-<feature>-<mmdd>-<year>`
-4. Commit ALL of: root dist files + api-server dist files + nixpacks.toml + source
-5. Push to `github` remote (not `origin`)
+The echo token approach `echo "api-$(git rev-parse HEAD)"` in nixpacks.toml does NOT bust Docker layer cache because Docker hashes the **text** of the command, not the evaluated output. The literal string `$(git rev-parse HEAD)` never changes.
 
-## What DOES NOT work
-- Bumping `package.json` version alone — only busts pnpm install layer, not build layer
-- Adding a new devDependency — same as above, build layer still cached
-- Railway "Redeploy" button — reuses same cached layers
-- Railway dashboard "Deployment successful" — do NOT trust this; always verify SHA
+**Fix**: Use a literal timestamp that changes per push: `echo "pre-manus-1754850000"`. Update this literal every push.
 
-## Verification — the ONLY reliable test
-```bash
-# 1. SHA check
-curl -s https://www.mappingwithmelanin.com/api/version | python3 -c \
-  "import sys,json; d=json.load(sys.stdin); print('built_from:', d['built_from_sha'][:12])"
+## Root Cause 3 (HISTORICAL): Committed dist/ was stale
 
-# 2. Endpoint existence probe (returns 401=new code, 404=old binary)
-curl -s -o /dev/null -w "%{http_code}" \
-  https://www.mappingwithmelanin.com/api/admin/seed-manus-cultural-sites-pass2
-```
-Both must pass. Dashboard status alone is not sufficient.
+Before the gitignore issue, commits sometimes had stale dist/ (built from old source). Railway served stale binary until a real rebuild triggered.
 
-## Direct-DB Workaround (when endpoint unavailable due to cached build)
-When Railway's cached binary doesn't have a new endpoint, seed directly via Railway Postgres public proxy:
-- Host: `tokaido.proxy.rlwy.net:10066`
-- Connection: `ssl: { rejectUnauthorized: false }`
-- Get URL via Railway API using `RAILWAY_ACCOUNT_TOKEN`, service `7bb11d12`
-- Run tsx scripts from workspace root
+**Fix**: Always build → commit dist → push in the same sequence. The committed dist IS what Railway serves (not a freshly-built one, due to COPY order).
+
+## Key Insight: What Railway Actually Serves
+
+Railway's nixpacks multi-step build:
+1. COPY source → /app (including committed dist/)
+2. Run nixpacks cmds (builds fresh dist/ in artifacts/api-server/dist/, copies to root dist/)
+3. Final COPY from git checkout → /app (OVERWRITES step 2's built dist/ with git's dist/)
+
+So: Railway serves the **git-committed** dist/index.mjs, not the freshly-built one.
+This is fine because we commit dist/ explicitly after building.
+
+## Monitoring Railway Deploy Status
+
+See nixpacks-deploy-checklist.md for full API commands.

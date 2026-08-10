@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mapping With Melanin — App Screenshots</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; padding: 40px 20px; }
+  h1 { color: #CA922B; text-align: center; margin-bottom: 8px; font-size: 24px; }
+  p.sub { color: #888; text-align: center; margin-bottom: 40px; font-size: 14px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
+  .screen-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .screen-label { color: #CA922B; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+  canvas { border-radius: 44px; box-shadow: 0 20px 60px rgba(0,0,0,0.8); display: block; }
+  .dl-btn {
+    background: #CA922B; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+  .dl-btn:hover { background: #E8A830; }
+  .dl-all {
+    display: block; margin: 40px auto 0; background: #CA922B; color: #fff;
+    border: none; border-radius: 10px; padding: 14px 40px; font-size: 16px;
+    font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+  }
+  .dl-all:hover { background: #E8A830; }
+</style>
+</head>
+<body>
+<h1>Mapping With Melanin™</h1>
+<p class="sub">App Store Screenshots — 1284 × 2778px (iPhone 6.5") — Click each button to download</p>
+<div class="grid" id="grid"></div>
+<button class="dl-all" onclick="downloadAll()">⬇ Download All 7 Screenshots</button>
+
+<script>
+const W = 1284, H = 2778;
+const DISPLAY = 320;
+const SCALE = W / DISPLAY;
+
+const C = {
+  bg: '#1C0E06',
+  card: '#2A1500',
+  card2: '#3A1F0E',
+  gold: '#CA922B',
+  goldLight: '#E8A830',
+  cream: '#FAF6EF',
+  muted: '#A87A40',
+  border: '#442A19',
+  green: '#3D9E6A',
+  red: '#EF4444',
+};
+
+function mkCanvas(id) {
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  c.style.width = DISPLAY + 'px';
+  c.style.height = Math.round(DISPLAY * H / W) + 'px';
+  c.id = id;
+  return c;
+}
+
+function drawStatusBar(ctx) {
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${42 * SCALE}px -apple-system, sans-serif`;
+  ctx.fillText('9:41', 80, 90);
+  // battery
+  ctx.strokeStyle = C.cream;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(W - 160, 55, 100, 40);
+  ctx.fillStyle = C.cream;
+  ctx.fillRect(W - 158, 57, 70, 36);
+  ctx.fillRect(W - 55, 65, 8, 24);
+  // wifi signal
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(W - 260 + i * 22, 72 - i * 10, 14, 10 + i * 10);
+  }
+}
+
+function drawTabBar(ctx, active) {
+  const tabs = [
+    { icon: '⊞', label: 'Discover' },
+    { icon: '◎', label: 'Map' },
+    { icon: '♡', label: 'Community' },
+    { icon: '◈', label: 'Events' },
+    { icon: '◉', label: 'Profile' },
+  ];
+  const tbH = 200;
+  const tbY = H - tbH;
+  ctx.fillStyle = '#1A0C04';
+  ctx.fillRect(0, tbY, W, tbH);
+  ctx.strokeStyle = C.border;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, tbY); ctx.lineTo(W, tbY); ctx.stroke();
+
+  const tw = W / tabs.length;
+  tabs.forEach((t, i) => {
+    const cx = tw * i + tw / 2;
+    const isActive = i === active;
+    ctx.fillStyle = isActive ? C.gold : C.muted;
+    ctx.font = `${52}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(t.icon, cx, tbY + 65);
+    ctx.font = `${isActive ? 'bold ' : ''}${32}px -apple-system, sans-serif`;
+    ctx.fillText(t.label, cx, tbY + 110);
+    if (isActive) {
+      ctx.fillStyle = C.gold;
+      ctx.beginPath();
+      ctx.arc(cx, tbY + 140, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  ctx.textAlign = 'left';
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
+
+function stars(ctx, x, y, n, size) {
+  for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = i < n ? C.gold : C.border;
+    ctx.font = `${size}px sans-serif`;
+    ctx.fillText('★', x + i * (size + 8), y);
+  }
+}
+
+// ─── SCREEN 1: DISCOVER ─────────────────────────────────────────────────────
+function drawDiscover(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  drawStatusBar(ctx);
+
+  // Header
+  ctx.fillStyle = C.gold;
+  ctx.font = `bold ${68}px -apple-system, sans-serif`;
+  ctx.fillText('Mapping With Melanin™', 60, 200);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Discover Black-Owned Businesses', 60, 258);
+
+  // Search bar
+  roundRect(ctx, 50, 300, W - 100, 110, 20, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${40}px sans-serif`;
+  ctx.fillText('🔍', 90, 368);
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Search businesses, neighborhoods...', 160, 368);
+
+  // Category pills
+  const cats = ['🍽 Food', '💇 Beauty', '🏥 Health', '🛍 Shop', '☕ Café'];
+  let cx = 50;
+  cats.forEach(cat => {
+    const tw = ctx.measureText(cat).width + 60;
+    roundRect(ctx, cx, 440, tw, 72, 36, C.card2, C.gold);
+    ctx.fillStyle = C.cream;
+    ctx.font = `${34}px -apple-system, sans-serif`;
+    ctx.fillText(cat, cx + 30, 484);
+    cx += tw + 20;
+  });
+
+  // Section heading
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px -apple-system, sans-serif`;
+  ctx.fillText('Near You', 60, 580);
+  ctx.fillStyle = C.gold;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('See all →', W - 200, 580);
+
+  const businesses = [
+    { name: "Essence Kitchen", cat: "Soul Food · 0.3 mi", rating: 5, price: "$$", tag: "✓ Verified", color: "#8B1A1A" },
+    { name: "Crown & Glory Salon", cat: "Beauty · 0.7 mi", rating: 4, price: "$$$", tag: "★ Top Pick", color: "#1A4A8B" },
+    { name: "Melanin Wellness Spa", cat: "Wellness · 1.1 mi", rating: 5, price: "$$", tag: "🔥 Popular", color: "#1A6B3C" },
+  ];
+
+  businesses.forEach((b, i) => {
+    const cardY = 620 + i * 480;
+    roundRect(ctx, 50, cardY, W - 100, 440, 24, C.card, null);
+
+    // Image placeholder
+    roundRect(ctx, 50, cardY, W - 100, 220, 24, b.color, null);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(50, cardY + 120, W - 100, 100);
+
+    // Tag badge
+    roundRect(ctx, 80, cardY + 20, 200, 56, 28, C.gold, null);
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${30}px -apple-system, sans-serif`;
+    ctx.fillText(b.tag, 95, 58 + cardY);
+
+    // Price badge
+    roundRect(ctx, W - 180, cardY + 20, 110, 56, 28, 'rgba(0,0,0,0.5)', null);
+    ctx.fillStyle = C.cream;
+    ctx.font = `bold ${32}px -apple-system, sans-serif`;
+    ctx.fillText(b.price, W - 163, 58 + cardY);
+
+    ctx.fillStyle = C.cream;
+    ctx.font = `bold ${46}px -apple-system, sans-serif`;
+    ctx.fillText(b.name, 80, cardY + 268);
+
+    ctx.fillStyle = C.muted;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    ctx.fillText(b.cat, 80, cardY + 318);
+
+    stars(ctx, 80, cardY + 360, b.rating, 38);
+
+    // Save button
+    ctx.fillStyle = C.gold;
+    ctx.font = `${50}px sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText('♡', W - 80, cardY + 370);
+    ctx.textAlign = 'left';
+  });
+
+  drawTabBar(ctx, 0);
+}
+
+// ─── SCREEN 2: MAP ──────────────────────────────────────────────────────────
+function drawMap(ctx) {
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw stylized map grid
+  ctx.strokeStyle = '#1f2a40';
+  ctx.lineWidth = 3;
+  for (let x = 0; x < W; x += 90) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * 0.75); ctx.stroke(); }
+  for (let y = 0; y < H * 0.75; y += 90) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Main roads
+  ctx.strokeStyle = '#243050';
+  ctx.lineWidth = 14;
+  const roads = [[0, 600, W, 600], [0, 1100, W, 1100], [0, 1600, W, 1600],
+                  [300, 0, 300, H * 0.75], [700, 0, 700, H * 0.75], [1000, 0, 1000, H * 0.75]];
+  roads.forEach(([x1, y1, x2, y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  });
+
+  // Blocks (buildings)
+  const blocks = [
+    [100,700,180,180,'#1e2d1e'], [350,700,160,160,'#1e1e2d'], [600,420,180,160,'#2d1e1e'],
+    [800,700,160,180,'#1e2d2d'], [400,1200,200,160,'#2d2d1e'], [750,1250,180,140,'#1e1e2d'],
+    [100,1200,160,180,'#2d1e1e'], [100,1700,180,160,'#1e2d1e'], [400,1700,160,180,'#1e2d2d'],
+    [800,1250,160,160,'#2d1e2d'], [1050,700,160,180,'#1e1e2d'], [1050,1200,160,180,'#2d1e2d'],
+  ];
+  blocks.forEach(([x,y,w,h,c]) => { ctx.fillStyle=c; ctx.fillRect(x,y,w,h); });
+
+  // Business pins
+  const pins = [
+    { x: 300, y: 580, label: 'Essence Kitchen', active: true },
+    { x: 700, y: 380, label: 'Crown Salon', active: false },
+    { x: 1000, y: 580, label: 'Melanin Spa', active: false },
+    { x: 700, y: 1100, label: 'Black Bean Café', active: false },
+    { x: 300, y: 1100, label: 'Unity Books', active: false },
+  ];
+
+  pins.forEach(p => {
+    const r = p.active ? 52 : 36;
+    ctx.fillStyle = p.active ? C.gold : C.card2;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = p.active ? '#fff' : C.gold;
+    ctx.lineWidth = p.active ? 6 : 3;
+    ctx.stroke();
+
+    if (p.active) {
+      // callout
+      const bw = ctx.measureText(p.label).width + 60;
+      roundRect(ctx, p.x - bw/2, p.y - 130, bw + 40, 64, 12, C.gold, null);
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${34}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(p.label, p.x + 20, p.y - 88);
+      ctx.textAlign = 'left';
+    }
+
+    ctx.fillStyle = p.active ? C.bg : C.cream;
+    ctx.font = `bold ${p.active ? 40 : 28}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('★', p.x, p.y + (p.active ? 16 : 12));
+    ctx.textAlign = 'left';
+  });
+
+  // Status bar overlay
+  ctx.fillStyle = 'rgba(28,14,6,0.85)';
+  ctx.fillRect(0, 0, W, 120);
+  drawStatusBar(ctx);
+
+  // Map header
+  ctx.fillStyle = 'rgba(28,14,6,0.9)';
+  ctx.fillRect(0, 100, W, 110);
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${52}px -apple-system, sans-serif`;
+  ctx.fillText('Explore the Map', 60, 168);
+  ctx.fillStyle = C.gold;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('● Washington, DC  · 24 nearby', 60, 210); // note: this gets cropped but that's fine
+
+  // Bottom sheet
+  const sheetY = H * 0.73;
+  ctx.fillStyle = C.card;
+  roundRect(ctx, 0, sheetY, W, H - sheetY, 36, C.card, null);
+
+  // drag handle
+  roundRect(ctx, W/2 - 60, sheetY + 24, 120, 10, 5, C.border, null);
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${46}px -apple-system, sans-serif`;
+  ctx.fillText('Nearby Businesses', 60, sheetY + 96);
+
+  const nearby = [
+    { name: 'Essence Kitchen', dist: '0.3 mi', cat: 'Soul Food', r: 5 },
+    { name: 'Crown & Glory', dist: '0.7 mi', cat: 'Beauty', r: 4 },
+    { name: 'Black Bean Café', dist: '0.9 mi', cat: 'Café', r: 5 },
+  ];
+
+  nearby.forEach((n, i) => {
+    const ny = sheetY + 140 + i * 160;
+    roundRect(ctx, 50, ny, W - 100, 140, 16, C.card2, null);
+    ctx.fillStyle = C.gold;
+    ctx.font = `${48}px sans-serif`;
+    ctx.fillText('📍', 80, ny + 90);
+    ctx.fillStyle = C.cream;
+    ctx.font = `bold ${40}px -apple-system, sans-serif`;
+    ctx.fillText(n.name, 150, ny + 65);
+    ctx.fillStyle = C.muted;
+    ctx.font = `${34}px -apple-system, sans-serif`;
+    ctx.fillText(`${n.cat} · ${n.dist}`, 150, ny + 108);
+    stars(ctx, W - 300, ny + 55, n.r, 30);
+  });
+
+  drawTabBar(ctx, 1);
+}
+
+// ─── SCREEN 3: BUSINESS PROFILE ─────────────────────────────────────────────
+function drawProfile(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Hero image
+  const grad = ctx.createLinearGradient(0, 0, 0, 700);
+  grad.addColorStop(0, '#8B2A0A');
+  grad.addColorStop(1, '#3A1F0E');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, 700);
+
+  // decorative circles
+  ctx.fillStyle = 'rgba(202,146,43,0.15)';
+  ctx.beginPath(); ctx.arc(W * 0.8, 200, 300, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(200, 500, 200, 0, Math.PI*2); ctx.fill();
+
+  // Status bar
+  drawStatusBar(ctx);
+
+  // Back arrow
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.arc(80, 180, 45, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px sans-serif`;
+  ctx.fillText('←', 58, 196);
+
+  // Heart
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.arc(W - 80, 180, 45, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.gold;
+  ctx.font = `${44}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('♡', W - 52, 196);
+  ctx.textAlign = 'left';
+
+  // Business emoji
+  ctx.font = `${160}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('🍽', W/2, 480);
+  ctx.textAlign = 'left';
+
+  // Gradient overlay at bottom of hero
+  const heroGrad = ctx.createLinearGradient(0, 500, 0, 700);
+  heroGrad.addColorStop(0, 'transparent');
+  heroGrad.addColorStop(1, C.bg);
+  ctx.fillStyle = heroGrad;
+  ctx.fillRect(0, 500, W, 200);
+
+  // Verified badge
+  roundRect(ctx, 60, 670, 220, 62, 31, C.green, null);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${32}px -apple-system, sans-serif`;
+  ctx.fillText('✓ Verified', 85, 710);
+
+  // Business name
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${76}px -apple-system, sans-serif`;
+  ctx.fillText('Essence Kitchen', 60, 810);
+
+  ctx.fillStyle = C.muted;
+  ctx.font = `${40}px -apple-system, sans-serif`;
+  ctx.fillText('Soul Food & Southern Cuisine', 60, 862);
+
+  stars(ctx, 60, 900, 5, 44);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('4.9   (248 reviews)', 340, 940);
+
+  // Info row
+  const infos = ['📍 0.3 mi away', '🕐 Open until 10 PM', '💰 $$'];
+  infos.forEach((info, i) => {
+    ctx.fillStyle = C.muted;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    ctx.fillText(info, 60, 1000 + i * 58);
+  });
+
+  // Action buttons
+  const actions = [
+    { icon: '📞', label: 'Call', color: C.gold },
+    { icon: '♡', label: 'Save', color: C.card2 },
+    { icon: '↗', label: 'Directions', color: C.card2 },
+    { icon: '⋯', label: 'Share', color: C.card2 },
+  ];
+  const aw = (W - 120) / 4;
+  actions.forEach((a, i) => {
+    const ax = 60 + i * (aw + 10);
+    roundRect(ctx, ax, 1180, aw, 130, 16, a.color, null);
+    ctx.fillStyle = C.cream;
+    ctx.font = `${50}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(a.icon, ax + aw/2, 1248);
+    ctx.font = `bold ${30}px -apple-system, sans-serif`;
+    ctx.fillText(a.label, ax + aw/2, 1288);
+    ctx.textAlign = 'left';
+  });
+
+  // About section
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${52}px -apple-system, sans-serif`;
+  ctx.fillText('About', 60, 1390);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  const about = 'Essence Kitchen brings authentic Southern flavors to the heart of the community. Family-owned since 2018, we serve scratch-made soul food with love.';
+  wrapText(ctx, about, 60, 1440, W - 120, 50);
+
+  // Community Safety
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${52}px -apple-system, sans-serif`;
+  ctx.fillText('Community Safety Score', 60, 1640);
+
+  roundRect(ctx, 60, 1660, W - 120, 180, 20, C.card, null);
+  const safeGrad = ctx.createLinearGradient(80, 0, 80 + (W - 160) * 0.87, 0);
+  safeGrad.addColorStop(0, C.green);
+  safeGrad.addColorStop(1, '#85E8A4');
+  roundRect(ctx, 80, 1700, (W - 160) * 0.87, 50, 12, safeGrad, null);
+  roundRect(ctx, 80, 1700, W - 160, 50, 12, null, C.border);
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${52}px -apple-system, sans-serif`;
+  ctx.fillText('87 / 100', 80, 1800);
+  ctx.fillStyle = C.green;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('Community Approved', 300, 1800);
+
+  // Reviews
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${52}px -apple-system, sans-serif`;
+  ctx.fillText('Recent Reviews', 60, 1900);
+
+  const reviews = [
+    { user: 'Keisha M.', text: 'Best mac & cheese in the city! Always feel at home here.', r: 5 },
+    { user: 'Darius T.', text: 'The oxtails are incredible. Love supporting Black businesses!', r: 5 },
+  ];
+  reviews.forEach((rv, i) => {
+    const ry = 1930 + i * 270;
+    roundRect(ctx, 60, ry, W - 120, 240, 16, C.card, null);
+    ctx.fillStyle = C.gold;
+    ctx.font = `bold ${38}px -apple-system, sans-serif`;
+    ctx.fillText(rv.user, 100, ry + 60);
+    stars(ctx, 100, ry + 78, rv.r, 30);
+    ctx.fillStyle = C.muted;
+    ctx.font = `${34}px -apple-system, sans-serif`;
+    wrapText(ctx, rv.text, 100, ry + 148, W - 200, 46);
+  });
+
+  drawTabBar(ctx, 0);
+}
+
+// ─── SCREEN 4: SAFETY HUB ───────────────────────────────────────────────────
+function drawSafety(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawStatusBar(ctx);
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${68}px -apple-system, sans-serif`;
+  ctx.fillText('Safety Hub', 60, 200);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Community-powered safety insights', 60, 258);
+
+  // Location bar
+  roundRect(ctx, 50, 290, W - 100, 96, 20, C.card, C.border);
+  ctx.fillStyle = C.gold;
+  ctx.font = `${44}px sans-serif`;
+  ctx.fillText('📍', 80, 350);
+  ctx.fillStyle = C.cream;
+  ctx.font = `${40}px -apple-system, sans-serif`;
+  ctx.fillText('Washington, DC', 140, 350);
+  ctx.fillStyle = C.gold;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('Change →', W - 220, 350);
+
+  // Neighborhood score card
+  const scoreGrad = ctx.createLinearGradient(0, 410, 0, 730);
+  scoreGrad.addColorStop(0, '#1A3A2A');
+  scoreGrad.addColorStop(1, '#0E2218');
+  roundRect(ctx, 50, 410, W - 100, 320, 24, null, null);
+  ctx.fillStyle = scoreGrad;
+  ctx.fill();
+
+  ctx.fillStyle = C.green;
+  ctx.font = `bold ${42}px -apple-system, sans-serif`;
+  ctx.fillText('Shaw / Howard University', 90, 480);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${130}px -apple-system, sans-serif`;
+  ctx.fillText('92', 90, 620);
+  ctx.fillStyle = C.green;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Highly Safe · Community Approved', 90, 680);
+
+  // donut-style arc
+  ctx.strokeStyle = C.green;
+  ctx.lineWidth = 18;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(W - 180, 570, 110, -Math.PI/2, -Math.PI/2 + (2*Math.PI*0.92));
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(61,158,106,0.2)';
+  ctx.lineWidth = 18;
+  ctx.beginPath();
+  ctx.arc(W - 180, 570, 110, -Math.PI/2 + (2*Math.PI*0.92), -Math.PI/2 + 2*Math.PI);
+  ctx.stroke();
+
+  // Quick stats
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px -apple-system, sans-serif`;
+  ctx.fillText('Neighborhood Breakdown', 60, 790);
+
+  const stats = [
+    { icon: '🛡', label: 'Overall Safety', score: 92, color: C.green },
+    { icon: '🌙', label: 'Night Safety', score: 78, color: C.gold },
+    { icon: '🤝', label: 'Community Feel', score: 96, color: C.green },
+    { icon: '🚗', label: 'Transit Access', score: 88, color: C.green },
+  ];
+
+  stats.forEach((s, i) => {
+    const sy = 840 + i * 200;
+    roundRect(ctx, 50, sy, W - 100, 170, 16, C.card, null);
+    ctx.fillStyle = C.cream;
+    ctx.font = `${52}px sans-serif`;
+    ctx.fillText(s.icon, 80, sy + 112);
+    ctx.font = `bold ${40}px -apple-system, sans-serif`;
+    ctx.fillText(s.label, 165, sy + 78);
+    // progress bar
+    roundRect(ctx, 165, sy + 102, W - 280, 22, 11, C.border, null);
+    roundRect(ctx, 165, sy + 102, (W - 280) * s.score / 100, 22, 11, s.color, null);
+    ctx.fillStyle = s.color;
+    ctx.font = `bold ${40}px -apple-system, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(s.score, W - 80, sy + 90);
+    ctx.textAlign = 'left';
+  });
+
+  // Recent reports heading
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px -apple-system, sans-serif`;
+  ctx.fillText('Recent Community Reports', 60, 1690);
+
+  const reports = [
+    { type: '✅', text: 'Great experience at the street fair on 7th!', time: '2h ago', pos: true },
+    { type: '✅', text: 'Felt very welcome and safe walking tonight.', time: '5h ago', pos: true },
+    { type: '⚠️', text: 'Poorly lit block on T St NW after 10pm.', time: '1d ago', pos: false },
+  ];
+
+  reports.forEach((r, i) => {
+    const ry = 1730 + i * 220;
+    roundRect(ctx, 50, ry, W - 100, 190, 16, C.card, null);
+    ctx.fillStyle = C.cream;
+    ctx.font = `${50}px sans-serif`;
+    ctx.fillText(r.type, 80, ry + 110);
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    wrapText(ctx, r.text, 165, ry + 75, W - 260, 50);
+    ctx.fillStyle = C.muted;
+    ctx.font = `${32}px -apple-system, sans-serif`;
+    ctx.fillText(r.time, 165, ry + 145);
+  });
+
+  // Submit button
+  roundRect(ctx, 50, 2410, W - 100, 110, 20, C.gold, null);
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${44}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('+ Submit a Safety Report', W/2, 2476);
+  ctx.textAlign = 'left';
+
+  drawTabBar(ctx, 2);
+}
+
+// ─── SCREEN 5: KINFOLK AI ────────────────────────────────────────────────────
+function drawKinfolk(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Gradient header
+  const hGrad = ctx.createLinearGradient(0, 0, W, 320);
+  hGrad.addColorStop(0, '#3A1F0E');
+  hGrad.addColorStop(1, '#1C0E06');
+  ctx.fillStyle = hGrad;
+  ctx.fillRect(0, 0, W, 320);
+
+  // Decorative orb
+  const orb = ctx.createRadialGradient(W - 100, 160, 0, W - 100, 160, 250);
+  orb.addColorStop(0, 'rgba(202,146,43,0.3)');
+  orb.addColorStop(1, 'transparent');
+  ctx.fillStyle = orb;
+  ctx.fillRect(0, 0, W, 320);
+
+  drawStatusBar(ctx);
+
+  ctx.fillStyle = C.gold;
+  ctx.font = `bold ${60}px -apple-system, sans-serif`;
+  ctx.fillText('KinfolkAI™', 60, 190);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${36}px -apple-system, sans-serif`;
+  ctx.fillText('Your Personal Black Travel Guide', 60, 244);
+
+  // Sparkle icon area
+  ctx.fillStyle = C.gold;
+  ctx.font = `${80}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('✨', W - 60, 210);
+  ctx.textAlign = 'left';
+
+  // Chat messages
+  const msgs = [
+    { side: 'user', text: "I'm visiting Atlanta this weekend. Where should I eat?" },
+    { side: 'ai', text: "✨ Welcome to Atlanta! Here are my top picks for minority-owned restaurants:\n\n🍽 The RECESS — upscale Southern fusion, must-try shrimp & grits\n\n🍗 Busy Bee Café — legendary soul food since 1947, Dr. King's favorite\n\n🍋 Slutty Vegan — Atlanta's iconic plant-based destination" },
+    { side: 'user', text: "Any beauty spots near Buckhead?" },
+    { side: 'ai', text: "Absolutely! For minority-owned beauty in Buckhead:\n\n💇 Trim + Proper — premium grooming & locs\n\n💅 Melanin & Co. Spa — facials, lashes & self-care\n\nBoth are community-verified ✓" },
+  ];
+
+  let msgY = 360;
+  msgs.forEach(m => {
+    const isAI = m.side === 'ai';
+    const lines = m.text.split('\n');
+    const lineH = 50;
+    const totalH = lines.length * lineH + 80;
+    const maxW = W - 180;
+    const bW = Math.min(maxW, W * 0.8);
+    const bX = isAI ? 60 : W - bW - 60;
+
+    roundRect(ctx, bX, msgY, bW, totalH, 20,
+      isAI ? C.card2 : C.gold, null);
+
+    if (isAI) {
+      ctx.fillStyle = C.gold;
+      ctx.font = `bold ${32}px -apple-system, sans-serif`;
+      ctx.fillText('KinfolkAI™', bX + 30, msgY + 46);
+      ctx.fillStyle = C.cream;
+      ctx.font = `${36}px -apple-system, sans-serif`;
+      lines.forEach((line, li) => {
+        ctx.fillText(line, bX + 30, msgY + 96 + li * lineH);
+      });
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.font = `${36}px -apple-system, sans-serif`;
+      lines.forEach((line, li) => {
+        ctx.fillText(line, bX + 30, msgY + 56 + li * lineH);
+      });
+    }
+
+    msgY += totalH + 30;
+  });
+
+  // Input bar
+  const inputY = H - 290;
+  roundRect(ctx, 50, inputY, W - 140, 110, 30, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Ask about minority-owned places...', 100, inputY + 65);
+  // Send button
+  ctx.fillStyle = C.gold;
+  ctx.beginPath(); ctx.arc(W - 90, inputY + 55, 48, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${40}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('↑', W - 90, inputY + 72);
+  ctx.textAlign = 'left';
+
+  drawTabBar(ctx, 1);
+}
+
+// Helper: wrap text
+function wrapText(ctx, text, x, y, maxWidth, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  let cy = y;
+  words.forEach(word => {
+    const test = line + word + ' ';
+    if (ctx.measureText(test).width > maxWidth && line !== '') {
+      ctx.fillText(line, x, cy);
+      line = word + ' ';
+      cy += lineH;
+    } else {
+      line = test;
+    }
+  });
+  ctx.fillText(line, x, cy);
+}
+
+// ─── SCREEN 6: MESSAGES LIST ─────────────────────────────────────────────────
+function drawMessages(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawStatusBar(ctx);
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${68}px -apple-system, sans-serif`;
+  ctx.fillText('Messages', 60, 200);
+
+  // New message button
+  ctx.fillStyle = C.gold;
+  ctx.font = `${56}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('✏', W - 60, 200);
+  ctx.textAlign = 'left';
+
+  // Search bar
+  roundRect(ctx, 50, 230, W - 100, 100, 20, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${40}px sans-serif`;
+  ctx.fillText('🔍', 88, 292);
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Search messages...', 155, 292);
+
+  // Filter pills
+  const filters = ['All', 'Unread', 'Community', 'Business'];
+  let fx = 50;
+  filters.forEach((f, i) => {
+    const tw = ctx.measureText(f).width + 56;
+    roundRect(ctx, fx, 358, tw, 64, 32, i === 0 ? C.gold : C.card, i === 0 ? null : C.border);
+    ctx.fillStyle = i === 0 ? '#fff' : C.muted;
+    ctx.font = `${i===0?'bold ':''} ${34}px -apple-system, sans-serif`;
+    ctx.fillText(f, fx + 28, 398);
+    fx += tw + 18;
+  });
+
+  const convos = [
+    { name: 'Keisha M.', msg: 'Thanks for the recommendation! The food was amazing 🙌', time: '2m', unread: 3, color: '#2D7A4F', initials: 'KM' },
+    { name: 'Essence Kitchen', msg: "Hi! We're hosting a community dinner this Saturday...", time: '15m', unread: 1, color: '#C9922B', initials: 'EK' },
+    { name: 'Marcus & Darius', msg: 'Marcus: Bro the map feature is fire 🔥', time: '1h', unread: 0, color: '#7B2D8B', initials: 'MD' },
+    { name: 'DC Black Foodies', msg: 'You: Has anyone tried the new spot on U St?', time: '3h', unread: 0, color: '#1D4ED8', initials: 'DC' },
+    { name: 'Crown & Glory Salon', msg: 'Your appointment is confirmed for Saturday at 2pm', time: '5h', unread: 0, color: '#8B1A1A', initials: 'CG' },
+    { name: 'Nia Johnson', msg: 'Girl yes!! We have to go to the Juneteenth event', time: '1d', unread: 2, color: '#C9922B', initials: 'NJ' },
+    { name: 'Community Safety', msg: 'New report submitted near your saved area', time: '2d', unread: 0, color: '#2D7A4F', initials: 'CS' },
+    { name: 'Melanin Wellness Spa', msg: 'Thank you for your 5-star review! We appreciate...', time: '3d', unread: 0, color: '#7B4F2E', initials: 'MW' },
+  ];
+
+  convos.forEach((c, i) => {
+    const cy = 450 + i * 250;
+    roundRect(ctx, 50, cy, W - 100, 220, 0, 'transparent', null);
+
+    // Divider (except first)
+    if (i > 0) {
+      ctx.strokeStyle = C.border;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(160, cy); ctx.lineTo(W - 50, cy); ctx.stroke();
+    }
+
+    // Avatar circle
+    ctx.fillStyle = c.color;
+    ctx.beginPath(); ctx.arc(110, cy + 110, 75, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${44}px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(c.initials, 110, cy + 126);
+    ctx.textAlign = 'left';
+
+    // Online dot
+    ctx.fillStyle = C.green;
+    ctx.beginPath(); ctx.arc(168, cy + 168, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C.bg;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // Name + time
+    ctx.fillStyle = C.cream;
+    ctx.font = `bold ${44}px -apple-system, sans-serif`;
+    ctx.fillText(c.name, 215, cy + 80);
+    ctx.fillStyle = C.muted;
+    ctx.font = `${34}px -apple-system, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(c.time, W - 70, cy + 80);
+    ctx.textAlign = 'left';
+
+    // Message preview
+    ctx.fillStyle = c.unread > 0 ? C.cream : C.muted;
+    ctx.font = `${c.unread > 0 ? 'bold ' : ''}${36}px -apple-system, sans-serif`;
+    const preview = c.msg.length > 48 ? c.msg.slice(0, 48) + '…' : c.msg;
+    ctx.fillText(preview, 215, cy + 140);
+
+    // Unread badge
+    if (c.unread > 0) {
+      ctx.fillStyle = C.gold;
+      ctx.beginPath(); ctx.arc(W - 90, cy + 140, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${32}px -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(c.unread, W - 90, cy + 150);
+      ctx.textAlign = 'left';
+    }
+  });
+
+  drawTabBar(ctx, 2);
+}
+
+// ─── SCREEN 7: CHAT CONVERSATION ─────────────────────────────────────────────
+function drawChat(ctx) {
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawStatusBar(ctx);
+
+  // Header
+  roundRect(ctx, 0, 0, W, 230, 0, C.card, null);
+  ctx.fillStyle = C.cream;
+  ctx.font = `${48}px sans-serif`;
+  ctx.fillText('←', 50, 180);
+
+  // Avatar
+  ctx.fillStyle = '#2D7A4F';
+  ctx.beginPath(); ctx.arc(210, 160, 62, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${42}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('KM', 210, 176);
+  ctx.textAlign = 'left';
+
+  // Online dot
+  ctx.fillStyle = C.green;
+  ctx.beginPath(); ctx.arc(258, 205, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = C.card;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.fillStyle = C.cream;
+  ctx.font = `bold ${48}px -apple-system, sans-serif`;
+  ctx.fillText('Keisha M.', 295, 155);
+  ctx.fillStyle = C.green;
+  ctx.font = `${34}px -apple-system, sans-serif`;
+  ctx.fillText('Active now', 295, 200);
+
+  // Menu dots
+  ctx.fillStyle = C.gold;
+  ctx.font = `${52}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.fillText('⋯', W - 50, 175);
+  ctx.textAlign = 'left';
+
+  // Date separator
+  ctx.fillStyle = C.muted;
+  ctx.font = `${32}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Today', W/2, 295);
+  ctx.textAlign = 'left';
+  ctx.strokeStyle = C.border;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(50, 285); ctx.lineTo(W/2 - 80, 285); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W/2 + 80, 285); ctx.lineTo(W - 50, 285); ctx.stroke();
+
+  const messages = [
+    { fromMe: false, text: 'Hey! Have you been to Essence Kitchen on U Street? My friend said it\'s amazing 🍽', time: '9:14 AM' },
+    { fromMe: true, text: 'Yes!! I went last month. The oxtails and cornbread are unreal. Definitely go!', time: '9:16 AM', status: '✓✓' },
+    { fromMe: false, text: 'Okay I\'m sold 😂 Is it minority-owned? Trying to be intentional about where I spend', time: '9:17 AM' },
+    { fromMe: true, text: 'Yes it\'s verified on Mapping With Melanin! Family-owned since 2018. Community safety score is 92 too 🙌', time: '9:18 AM', status: '✓✓' },
+    { fromMe: false, text: 'That app is so helpful omg. Just found 3 new spots near me I never knew about!', time: '9:20 AM' },
+    { fromMe: true, text: 'Right?! The KinfolkAI feature is my fav — asked it for minority-owned brunch spots in Atlanta and it gave me a whole itinerary 💛', time: '9:22 AM', status: '✓' },
+    { fromMe: false, text: 'Thanks for the recommendation! The food was amazing 🙌', time: '9:45 AM' },
+  ];
+
+  let msgY = 330;
+  messages.forEach(m => {
+    const maxW = W * 0.72;
+    const padding = 36;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    const words = m.text.split(' ');
+    let lines = [];
+    let cur = '';
+    words.forEach(w => {
+      const test = cur + w + ' ';
+      if (ctx.measureText(test).width > maxW - padding * 2 && cur) {
+        lines.push(cur.trim());
+        cur = w + ' ';
+      } else { cur = test; }
+    });
+    if (cur.trim()) lines.push(cur.trim());
+
+    const lineH = 52;
+    const bH = lines.length * lineH + padding * 1.8 + (m.fromMe && m.status ? 42 : 0);
+    const bW = Math.min(maxW, Math.max(...lines.map(l => ctx.measureText(l).width)) + padding * 2);
+    const bX = m.fromMe ? W - bW - 50 : 50;
+    const radius = 28;
+
+    roundRect(ctx, bX, msgY, bW, bH, radius,
+      m.fromMe ? C.gold : C.card2, null);
+
+    ctx.fillStyle = m.fromMe ? '#fff' : C.cream;
+    ctx.font = `${36}px -apple-system, sans-serif`;
+    lines.forEach((line, li) => {
+      ctx.fillText(line, bX + padding, msgY + padding * 1.4 + li * lineH);
+    });
+
+    if (m.fromMe && m.status) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = `${28}px sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText(m.status + ' ' + m.time, bX + bW - padding, msgY + bH - 18);
+      ctx.textAlign = 'left';
+    } else {
+      ctx.fillStyle = C.muted;
+      ctx.font = `${28}px -apple-system, sans-serif`;
+      ctx.fillText(m.time, bX, msgY + bH + 14);
+    }
+
+    msgY += bH + 50;
+  });
+
+  // Input bar
+  const inputY = H - 270;
+  roundRect(ctx, 50, inputY, W - 200, 110, 30, C.card, C.border);
+  ctx.fillStyle = C.muted;
+  ctx.font = `${38}px -apple-system, sans-serif`;
+  ctx.fillText('Message Keisha...', 100, inputY + 65);
+
+  // Attachment icon
+  ctx.fillStyle = C.muted;
+  ctx.font = `${52}px sans-serif`;
+  ctx.fillText('📎', W - 190, inputY + 72);
+
+  // Send button
+  ctx.fillStyle = C.gold;
+  ctx.beginPath(); ctx.arc(W - 70, inputY + 55, 48, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${44}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('↑', W - 70, inputY + 72);
+  ctx.textAlign = 'left';
+
+  drawTabBar(ctx, 2);
+}
+
+// ─── RENDER ALL ──────────────────────────────────────────────────────────────
+const screens = [
+  { id: 's1', label: '1. Discover', draw: drawDiscover },
+  { id: 's2', label: '2. Map', draw: drawMap },
+  { id: 's3', label: '3. Business Profile', draw: drawProfile },
+  { id: 's4', label: '4. Safety Hub', draw: drawSafety },
+  { id: 's5', label: '5. KinfolkAI™', draw: drawKinfolk },
+  { id: 's6', label: '6. Messages', draw: drawMessages },
+  { id: 's7', label: '7. Chat', draw: drawChat },
+];
+
+const grid = document.getElementById('grid');
+
+screens.forEach(s => {
+  const wrap = document.createElement('div');
+  wrap.className = 'screen-wrap';
+
+  const label = document.createElement('div');
+  label.className = 'screen-label';
+  label.textContent = s.label;
+
+  const canvas = mkCanvas(s.id);
+  const ctx = canvas.getContext('2d');
+  s.draw(ctx);
+
+  const btn = document.createElement('button');
+  btn.className = 'dl-btn';
+  btn.textContent = '⬇ Download';
+  btn.onclick = () => {
+    const a = document.createElement('a');
+    a.download = `MWM-screenshot-${s.id}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+
+  wrap.appendChild(label);
+  wrap.appendChild(canvas);
+  wrap.appendChild(btn);
+  grid.appendChild(wrap);
+});
+
+function downloadAll() {
+  screens.forEach((s, i) => {
+    setTimeout(() => {
+      const canvas = document.getElementById(s.id);
+      const a = document.createElement('a');
+      a.download = `MWM-screenshot-${i+1}-${s.id}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }, i * 500);
+  });
+}
+</script>
+</body>
+</html>

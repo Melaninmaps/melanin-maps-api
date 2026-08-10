@@ -1,94 +1,58 @@
 ---
-name: Railway nixpacks deploy checklist — mandatory steps per push
-description: Every api-server push must follow this exact sequence or Railway will serve a stale binary.
+name: Railway nixpacks deploy checklist
+description: MANDATORY per push. Root cause of 8 consecutive FAILED deploys (Aug 10 2026) documented here.
 ---
 
-# Railway nixpacks deploy checklist — MANDATORY every api-server push
+# Railway Nixpacks Deploy Checklist — MANDATORY per push
 
-## The Problem (root causes — both must be fixed per push)
+## Root Cause of Aug 10 2026 Railway Failures (8 consecutive FAILED deploys)
 
-1. **Stale root dist/index.mjs** — Railway runs from `/dist/index.mjs` at the REPO ROOT (spawned by `static-server.mjs`). The `artifacts/api-server/dist/index.mjs` is a DIFFERENT file. Previous sessions only committed the artifacts path. Always sync root dist after building.
+**Discovery**: `.gitignore` had bare `dist` on line 4, gitignoring ALL `dist/` directories.
 
-2. **Cached nixpacks build layer** — Railway caches the build step by command string. If the echo token in `nixpacks.toml` doesn't change, Railway reuses the old compiled binary. Must update the token on every push that must deploy clean.
+Railway's nixpacks generates a final `COPY . /app` Dockerfile step that copies from the **git checkout** (not the build stage). Since `dist/index.mjs` was gitignored, it was never in the checkout. Railway's nixpacks DID build `dist/index.mjs` during the build phase, but the final COPY overwrote it with the git source that had no `dist/` → `MODULE_NOT_FOUND` on startup → healthcheck fails → `FAILED` deploy.
 
-## CRITICAL LESSON — Both web AND api tokens must change every push
+**Fix applied**: Added `!dist/` and `!dist/**` exceptions to `.gitignore`, then `git add -f dist/index.mjs` (and all other dist files), committed, pushed.
 
-The **web build token** (`echo web-build-<token>`) must be updated on **every push that changes web source files**, not just api-server files. If the web token stays the same, Docker caches the web Vite build layer and Railway keeps serving the old bundle — even when the api-server token changes. This caused a React error #310 crash in production (Aug 7 2026): the old web bundle (`index-CWObelCJ.js`) tried to render data shapes from the updated API that it couldn't handle.
+**The `$(git rev-parse HEAD)` echo token** also never worked: Docker layer hashing is based on the **text** of the command, not its output. The literal `$(git rev-parse HEAD)` never changes between commits, so Docker always reused the cached layer. Fix: use a literal timestamp token (`echo "pre-manus-XXXXXX"`) that changes per push.
 
-**Rule: update BOTH tokens on every push, regardless of what changed.**
+## MANDATORY Sequence Per Push
 
-## CRITICAL — THREE directories must all be synced on every web push
+1. **Build api-server**: `cd artifacts/api-server && pnpm build`
+2. **Sync root dist/**: `cp artifacts/api-server/dist/index.mjs dist/index.mjs` (+ pino workers + BUILD_IDENTITY)
+3. **Update echo token in nixpacks.toml**: change literal string (e.g. `"pre-manus-1754851000"`) — new literal per push
+4. **Stage all dist/ files** (they ARE now tracked after the gitignore fix, no need for `-f`):
+   `git add dist/index.mjs dist/pino-worker.mjs dist/pino-file.mjs dist/pino-pretty.mjs dist/thread-stream-worker.mjs dist/BUILD_IDENTITY`
+5. **Commit source + dist + nixpacks.toml together**
+6. **Push**: `git push github main`
+7. **Trigger Railway deploy**: `environmentTriggersDeploy` mutation (Railway auto-deploy webhook may not be reliable)
+8. **Verify**: poll `https://www.mappingwithmelanin.com/` for new bundle hash; confirm `/api/version` SHA matches
 
-`static-server.mjs` on Railway serves from ROOT `web-static/` (process.cwd()/web-static). There are THREE separate web-static locations that must all have the fresh build:
-
-1. `artifacts/web/dist/public/` — Vite output (source of truth)
-2. `artifacts/api-server/web-static/` — what api-server build.mjs embeds as SPA_HTML
-3. `web-static/` (repo root) — what static-server.mjs actually serves in production
-
-**All three must be in sync before committing. If any one is stale, Railway serves the wrong bundle.**
-
-## CRITICAL — web-static must be synced locally before api-server build
-
-Before running `pnpm --filter @workspace/api-server run build` locally, you MUST first copy the fresh web build output into api-server/web-static/:
+## Railway API — Manual Deploy Trigger
 
 ```bash
-pnpm --filter @workspace/web run build
-cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/
-pnpm --filter @workspace/api-server run build   # now embeds the correct SPA HTML
+RAILWAY_TOKEN=$(printenv RAILWAY_ACCOUNT_TOKEN)
+curl -s -X POST "https://backboard.railway.app/graphql/v2" \
+  -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"mutation { environmentTriggersDeploy(input: { projectId: \"b98310f8-7bfa-4e43-a574-8819752e9cfe\", environmentId: \"2292b38f-3d0d-4cad-92a4-ad36cabda629\", serviceId: \"a77b49bb-e448-4be8-9d02-de7a3b43136b\" }) }"}'
 ```
 
-If you skip this step, the committed dist/index.mjs bakes the OLD web bundle hash into the SPA HTML. Railway will serve the stale web bundle even after deploying the latest commit. This caused React error #310 in production (Aug 7 2026) — old bundle tried to render data shapes the new API returned, old bundle didn't know how to handle them.
+Returns `{"data":{"environmentTriggersDeploy":true}}` on success.
 
-nixpacks handles this correctly (step 2 copies web→api-server/web-static before step 3), but local builds must do it manually.
-
-## Mandatory Checklist
+## Checking Railway Deploy Status
 
 ```bash
-# 1. Build
-pnpm --filter @workspace/api-server run build
-
-# 2. Sync root dist (Railway serves THIS file, not artifacts/api-server/dist/)
-cp artifacts/api-server/dist/index.mjs dist/index.mjs
-cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
-cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
-
-# 3. Update nixpacks token (nixpacks.toml line ~14)
-# Change: "echo build-<old-token> && pnpm ..."
-# To:     "echo build-<feature>-<mmdd>-<year> && pnpm ..."
-
-# 4. git add ALL of:
-git add -f \
-  dist/index.mjs dist/index.mjs.map dist/BUILD_IDENTITY \
-  artifacts/api-server/dist/index.mjs artifacts/api-server/dist/index.mjs.map \
-  nixpacks.toml \
-  <all source files changed>
-
-# 5. Commit + push (commit 1 of 2)
-git commit -m "feat/fix: <description>"
-git push github main
-
-# 6. Rebuild from HEAD (commit 2 of 2 — mandatory two-commit rule)
-pnpm --filter @workspace/api-server run build
-cp artifacts/api-server/dist/index.mjs dist/index.mjs
-cp artifacts/api-server/dist/index.mjs.map dist/index.mjs.map
-cp artifacts/api-server/dist/BUILD_IDENTITY dist/BUILD_IDENTITY
-git add -f dist/index.mjs dist/index.mjs.map dist/BUILD_IDENTITY \
-           artifacts/api-server/dist/index.mjs artifacts/api-server/dist/index.mjs.map
-git commit -m "build: rebuild from HEAD (<feature>)"
-git push github main
+RAILWAY_TOKEN=$(printenv RAILWAY_ACCOUNT_TOKEN)
+curl -s -X POST "https://backboard.railway.app/graphql/v2" \
+  -H "Authorization: Bearer $RAILWAY_TOKEN" -H "Content-Type: application/json" \
+  -d '{"query":"{ deployments(first: 5, input: { projectId: \"b98310f8-...\", serviceId: \"a77b49bb-...\" }) { edges { node { id status createdAt } } } }"}'
 ```
 
-## Verification (after Railway deploys — ~2-3 min)
+## Why Railway Auto-Deploy May Not Fire
 
-```bash
-curl -s https://www.mappingwithmelanin.com/api/version | python3 -c \
-  "import sys,json; d=json.load(sys.stdin); print('sha:', d['railway_sha'][:12], '| built_from:', d['built_from_sha'][:12])"
-```
+Railway's GitHub webhook may not reliably trigger on every push. Always use `environmentTriggersDeploy` manually after pushing important changes.
 
-`built_from_sha` should match the source commit (not the rebuild commit — that's expected).
+## Build Logs vs Deployment Logs
 
-## Why "stale: False" doesn't mean fresh code
-`stale_bundle` checks `bundle_sha256_self === bundle_sha256` (binary self-consistency), NOT whether it matches the latest commit. Always verify `built_from_sha` against the git log.
-
-## Startup migrations pattern
-Use `startup-migrations.ts` for one-time DB backfills when Railway's build cache is stale and the admin endpoint isn't reachable. Migrations are idempotent by name — safe to add even if columns already exist (use `IF NOT EXISTS` / `IF NOT EXISTS` guard).
+- **Build logs** (`buildLogs` query): show nixpacks build output — use to diagnose build failures
+- **Deployment logs** (`deploymentLogs` query): show runtime crash output — use to diagnose startup failures
+- deployment ID needed for both; get via `deployments(first: N, input: {...})` query

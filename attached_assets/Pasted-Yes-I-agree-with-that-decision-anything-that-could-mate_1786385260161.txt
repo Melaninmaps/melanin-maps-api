@@ -1,0 +1,474 @@
+Yes. I agree with that decision: **anything that could materially change what Manus sees should be completed before Manus starts.** Otherwise, we risk paying for an independent audit of a version we already know is incomplete.
+
+From Replit's report, I would **not start Manus yet**. The biggest reason is simple: production is stale. Manus should audit the actual release candidate, not `fb9652db` while four newer commits are still waiting to deploy.
+
+Of the four proposed tasks, **#200 should be done now** because it adds regression protection to save/unsave and check-in, which Manus will test. **#203 and #206 can wait** because neither changes the ordinary tester experience Manus is evaluating. **#40 absolutely waits**—do not change the Kinfolk model immediately before an acceptance audit. That would introduce a new variable when the current model is functioning.
+
+There is also one item that I consider more important than those four proposed tasks: **direct image/video contribution needs to be resolved before Manus**. Replit's report says it is PARTIAL and admits it does not yet know the correct production upload path. Since media contribution is part of what we specifically want Manus to evaluate, that should not go into the audit unresolved.
+
+Send Replit this:
+
+```text
+FINAL PRE-MANUS WORK AUTHORIZATION
+
+I want ALL work that could materially affect Manus's independent user-experience
+review completed BEFORE Manus begins.
+
+Do not send Manus into a known stale or incomplete production build.
+
+============================================================
+FIRST — FINISH CURRENT RAILWAY DEPLOYMENT
+============================================================
+
+Production is currently STALE.
+
+STOP adding unrelated features until the existing four commits are successfully
+deployed.
+
+Confirm Railway is actually serving the intended HEAD.
+
+Required proof:
+
+RAILWAY DEPLOY STATUS
+EXPECTED SHA
+ACTUAL PRODUCTION SHA
+EXPECTED WEB BUNDLE
+ACTUAL WEB BUNDLE
+STALE_BUNDLE = FALSE
+
+Do not continue based on "auto-deploy is in progress."
+
+Wait until production itself proves the deployment completed.
+
+Then verify the features contained in those commits on PRODUCTION:
+
+- Kinfolk web preferences
+- corrected Profile → Kinfolk edit path
+- Kinfolk Listen/Stop
+- Kinfolk voice preference
+- voice persistence
+- new tester accounts
+- Kayla credential repair
+
+============================================================
+IMPLEMENT TASK #200 NOW
+============================================================
+
+Approved:
+
+#200 — save/unsave + check-in regression protection.
+
+This directly protects functionality Manus will test.
+
+Implement safely.
+
+Do not redesign those features.
+
+============================================================
+DO NOT IMPLEMENT THESE BEFORE MANUS
+============================================================
+
+#203 — founder city health alert testing convenience
+DEFER
+
+#206 — Sentry preview-build validation
+DEFER unless a production crash/release dependency is discovered
+
+#40 — gpt-4o-mini → gpt-5-mini
+DEFER
+
+IMPORTANT:
+
+DO NOT CHANGE THE KINFOLK MODEL BEFORE MANUS.
+
+We need Manus evaluating the currently functioning Kinfolk behavior without
+introducing a model-change variable.
+
+============================================================
+MEDIA CONTRIBUTION — RESOLVE BEFORE MANUS
+============================================================
+
+This is currently marked PARTIAL.
+
+That is not sufficient because media contribution is explicitly part of the
+experience Manus is being asked to test.
+
+Perform a forensic audit FIRST.
+
+Determine the actual production architecture for:
+
+A. SOCIAL MEDIA URL CONTRIBUTION
+B. DIRECT IMAGE UPLOAD
+C. DIRECT VIDEO UPLOAD
+
+Do not guess endpoints.
+
+Trace:
+
+frontend control
+→ frontend request
+→ API route
+→ authentication
+→ validation
+→ storage
+→ database record
+→ moderation state
+→ business/location association
+→ eventual display
+
+We already established an important product requirement:
+
+A member/business/admin should be able to contribute content through an
+existing social-media URL without forcing the creator to re-upload their
+content.
+
+Example:
+
+Mea posts her Phuket content to Instagram as usual.
+
+She should be able to provide that content/post URL to Mapping with Melanin,
+associate it with the appropriate business/place/location, and submit it.
+
+This is the highest-priority media path for the field tour.
+
+Direct uploads are ALSO required, but do not reactivate an old production-
+unsafe storage implementation merely to make the button appear.
+
+============================================================
+SOCIAL URL — REQUIRED BEFORE MANUS
+============================================================
+
+On real production web, visually prove:
+
+open business/place
+→ Add Content
+→ select/provide supported social media URL
+→ associate contribution
+→ submit
+→ confirmation
+→ moderation/pending state as designed
+
+Test at least one valid supported social URL format.
+
+Do not create fake public content.
+
+Screenshot the flow.
+
+============================================================
+DIRECT IMAGE — REQUIRED DECISION BEFORE MANUS
+============================================================
+
+Determine whether a production-safe direct-image upload path actually exists.
+
+If YES:
+
+wire the existing correct route if necessary and visually test:
+
+select image
+→ upload
+→ preview
+→ submit
+→ stored successfully
+→ correct association
+→ correct moderation state
+
+If NO:
+
+DO NOT fabricate a quick unsafe storage solution.
+
+Report:
+
+DIRECT IMAGE UPLOAD = DEFERRED — STORAGE DEPENDENCY
+
+and make sure the UI does not falsely imply that direct upload works.
+
+============================================================
+DIRECT VIDEO
+============================================================
+
+Apply the same rule.
+
+Social video URL contribution should work now where supported.
+
+Direct binary video upload should only be enabled if production-safe storage
+already exists.
+
+Do not jeopardize production stability to add large-file video storage before
+Manus.
+
+============================================================
+NEW TESTER ACCOUNTS
+============================================================
+
+After Railway deployment, actually authenticate:
+
+reinaoba06@gmail.com
+mayagz05@icloud.com
+
+Do NOT mark PASS because ensureTesterUniversalAccounts() exists.
+
+Use the real production login endpoint.
+
+Verify:
+
+LOGIN
+APPROVAL
+ENTITLEMENT
+ONBOARDING STATE
+PROTECTED PAGE ACCESS
+LOGOUT
+RE-LOGIN
+
+============================================================
+KAYLA
+============================================================
+
+Re-test Kayla after the new Railway boot.
+
+The fact that CRON_SECRET repaired the account during this session is not
+sufficient.
+
+We need proof that the PERMANENT boot guard does not undo/break her state.
+
+Real production:
+
+login
+protected resource
+logout
+login again
+
+PASS required.
+
+============================================================
+APPLE REVIEWER
+============================================================
+
+Re-test AFTER the final deployment.
+
+Do not rely on the four earlier tests against the old production build.
+
+Use the documented Apple reviewer credentials through the real production auth
+flow.
+
+Verify:
+
+login
+authenticated landing
+Map
+Businesses
+Library
+Kinfolk
+Safety
+Profile
+logout
+session invalidated
+re-login
+
+Do not expose password in final report/screenshots.
+
+============================================================
+KINFOLK — VISUAL VERIFICATION
+============================================================
+
+The previous audit proved APIs.
+
+Now prove the NEW WEB EXPERIENCE.
+
+Use authenticated production browser.
+
+Visually verify:
+
+Profile
+→ What Kinfolk Knows About Me
+→ Edit
+→ valid page — NO 404
+
+Kinfolk
+→ Preferences/Settings discoverable
+
+Change:
+communication style
+personality
+emoji preference
+
+Save.
+
+Ask Kinfolk a question.
+
+Confirm settings remain after refresh.
+
+VOICE:
+
+play answer
+stop answer
+change voice
+play another answer
+refresh
+confirm selected voice persists
+
+Screenshots required.
+
+============================================================
+MAP — VISUAL PROOF REQUIRED
+============================================================
+
+API pin counts are NOT sufficient for final release acceptance.
+
+We previously experienced the exact problem where database records existed but
+businesses did not render visibly.
+
+Therefore visually test production:
+
+PHILADELPHIA
+BANGKOK
+PHUKET
+JAMAICA
+
+For EACH:
+
+navigate/search to location
+→ map moves to correct geography
+→ business pins visibly render
+→ click business pin
+→ preview appears
+→ open business
+→ correct detail page
+
+Take screenshots.
+
+No PASS based only on /map-pins counts.
+
+============================================================
+LIBRARY — VISUAL PROOF
+============================================================
+
+Visually:
+
+Library
+→ Collection
+→ Book
+→ actual content
+→ sources
+→ Follow
+→ refresh
+→ Follow persists
+
+Test several different categories.
+
+============================================================
+REVIEWS / VIBES — VISUAL PROOF
+============================================================
+
+Use a controlled audit business/account.
+
+Actually submit through the website UI.
+
+REVIEW:
+enter rating
+enter text
+submit
+confirmation
+verify persistence
+
+VIBE/THE REAL:
+select visible label
+submit
+verify it appears/persists appropriately
+
+The frontend must correctly translate label → vibe ID.
+
+Do not call PASS because the API accepts an ID.
+
+============================================================
+FINAL REGRESSION AFTER ALL ABOVE
+============================================================
+
+Only after all approved pre-Manus work is complete:
+
+Run the permanent release-control audit again.
+
+This is the RELEASE CANDIDATE.
+
+Return:
+
+FINAL PRODUCTION SHA:
+STALE_BUNDLE:
+RAILWAY STATUS:
+
+AUTH:
+Kayla:
+Reina:
+Maya:
+Apple reviewer:
+
+MAP VISUAL:
+Philadelphia:
+Bangkok:
+Phuket:
+Jamaica:
+
+LIBRARY VISUAL:
+
+REVIEWS VISUAL:
+
+VIBES/THE REAL VISUAL:
+
+SOCIAL MEDIA URL CONTRIBUTION:
+
+DIRECT IMAGE:
+PASS / DEFERRED — STORAGE DEPENDENCY
+
+DIRECT VIDEO:
+PASS / DEFERRED — STORAGE DEPENDENCY
+
+KINFOLK SETTINGS:
+
+KINFOLK VOICE:
+
+SAVE/UNSAVE:
+
+CHECK-IN:
+
+NEW P0:
+NEW P1:
+
+DATA LOSS:
+REGRESSION:
+
+============================================================
+MANUS HANDOFF GATE
+============================================================
+
+Only declare:
+
+READY FOR INDEPENDENT MANUS AUDIT
+
+when:
+
+1. Railway deployment is complete
+2. stale_bundle = FALSE
+3. tester accounts actually authenticate
+4. Apple reviewer actually authenticates after final deployment
+5. Map is visually proven
+6. Library is visually proven
+7. Reviews are visually proven
+8. Vibes/THE REAL are visually proven
+9. social URL contribution is visually proven
+10. Kinfolk new web controls are visually proven
+11. no new P0 exists
+
+Direct binary image/video upload may be explicitly DEFERRED only if the
+remaining blocker is production-safe storage.
+
+Do not create additional task suggestions.
+
+Do not begin another enhancement cycle.
+
+The next step after this is INDEPENDENT MANUS AUDIT.
+```
+
+One distinction is important: I **wouldn't hold Manus hostage to direct binary video storage** if that turns out to require new infrastructure. For your immediate Phuket opportunity, the critical field capability is **Mea posts normally to Instagram → takes that post/reel URL → contributes it to the relevant Mapping with Melanin business/place → it becomes associated with that location through your moderation process**. That delivers the core vision without forcing Mapping with Melanin to become the original video host right now.
+
+But Replit should know definitively whether direct uploads work before Manus begins. "Infrastructure exists" and "real upload path TBD" is exactly the kind of ambiguity we're trying to eliminate with this final gate.
+
+And after this, I would stop letting Replit expand the product. **Freeze the release candidate, give that exact SHA to Manus, and let Manus try to break it.** If Manus passes it, then the 15–30 person controlled tester round begins.
