@@ -1,0 +1,487 @@
+Yes. I would **run the Kinfolk fixes in parallel**. That does not concern me as long as Replit keeps the work isolated until verification. The tester-login issue is auth/account-state work; the Kinfolk problems are mostly web UI/wiring. They can move simultaneously and save us time.
+
+What I would **not** allow is two separate production pushes without coordination. Have them finish both branches, merge, build once, deploy once, then run the permanent regression audit. And yes, **Apple reviewer credentials must be tested as part of this**, including the actual password—not merely confirming that the account row exists.
+
+Send Replit this:
+
+```text
+PARALLEL EXECUTION AUTHORIZED — TESTER AUTH + KINFOLK ACCESSIBILITY
+
+Proceed immediately with TWO isolated workstreams in parallel.
+
+Do not wait for Workstream A to finish before beginning Workstream B.
+
+However:
+
+DO NOT independently deploy overlapping branches.
+
+Complete both safely
+→ merge
+→ build
+→ deploy
+→ run full production regression.
+
+============================================================
+WORKSTREAM A — P0 TESTER AUTHENTICATION
+============================================================
+
+Continue forensic investigation of:
+
+KaylaCardwell3@gmail.com
+
+Current production behavior:
+
+"Invalid email or password."
+
+This is an active tester-blocking defect.
+
+Determine:
+
+USER ROW EXISTS
+NORMALIZED EMAIL
+APPROVED STATUS
+TESTER ENTITLEMENT
+MEMBER TYPE
+ROLE
+PASSWORD HASH PRESENT
+MUST_CHANGE_PASSWORD
+PROFILE_SETUP_COMPLETE
+PASSWORD PREVIOUSLY CHANGED?
+TEMPORARY PASSWORD ACTUALLY ASSIGNED?
+DUPLICATE ACCOUNT?
+SEED/MIGRATION THAT CREATED ACCOUNT
+
+Do not print hashes or secrets.
+
+Test the exact live login endpoint.
+
+Identify exact root cause.
+
+Repair the minimum necessary state.
+
+Do not delete/recreate her canonical user record.
+Do not overwrite passwords for testers who already changed theirs.
+
+Then audit all current approved testers for the same state mismatch.
+
+============================================================
+APPLE REVIEWER — ACTUAL LOGIN TEST REQUIRED
+============================================================
+
+Do NOT merely inspect the Apple reviewer database row.
+
+Actually test:
+
+apple.reviewer@mappingwithmelanin.com
+
+using the currently documented reviewer password from the secure project
+configuration / reviewer credentials.
+
+DO NOT print the password in logs, screenshots, or final report.
+
+Test through the REAL production authentication flow.
+
+Verify:
+
+1. email exists
+2. password is actually accepted
+3. session/token is created
+4. account is approved
+5. correct member_type/entitlement
+6. no force-change-password interruption unless intentionally documented
+7. onboarding does not unexpectedly block reviewer
+8. authenticated landing loads
+9. Map loads
+10. Business Directory loads
+11. Library loads
+12. KinfolkAI opens
+13. Safety loads
+14. Profile loads
+15. logout succeeds
+16. old session cannot access protected content
+17. reviewer can log in again
+
+Return:
+
+APPLE REVIEWER EMAIL: VERIFIED
+PASSWORD ACCEPTED: YES/NO
+LOGIN THROUGH REAL AUTH FLOW: PASS/FAIL
+POST-LOGIN ACCESS: PASS/FAIL
+LOGOUT: PASS/FAIL
+RE-LOGIN: PASS/FAIL
+
+If the password does NOT work:
+
+fix reviewer access immediately using the established secure reviewer-account
+procedure.
+
+Do not create duplicate reviewer accounts.
+
+============================================================
+WORKSTREAM B — KINFOLK PERSONALIZATION SURFACE
+============================================================
+
+The read-only audit proved the underlying infrastructure already exists.
+
+Do NOT redesign Kinfolk.
+
+Expose and connect the existing capabilities on WEB.
+
+Priority order:
+
+1. Fix Profile:
+"What Kinfolk Knows About You"
+→ Edit
+
+The current /kinfolk 404 must be eliminated.
+
+Use an actual valid route.
+
+2. Create/expose a clear Kinfolk Settings experience on web.
+
+Normal member should be able to find it from:
+
+Kinfolk
+AND
+Profile.
+
+3. Expose existing editable preferences:
+
+communication_style
+personality_mode
+emoji_level
+humor_level
+regional_flavor
+aave_level where product/privacy rules permit
+favorite categories
+cities
+budget
+trip style
+travel companion
+dietary preferences
+ownership interests
+lifestyle services
+cultural interests
+
+Do not invent new preference architecture.
+
+Use the existing DB/API.
+
+============================================================
+HOW KINFOLK TALKS TO ME
+============================================================
+
+Create a clear member-facing section such as:
+
+HOW KINFOLK TALKS TO ME
+
+Use the existing settings architecture.
+
+Allow understandable controls for concepts such as:
+
+Concise ↔ Detailed
+
+Straightforward ↔ Conversational
+
+Low ↔ Balanced ↔ High emoji
+
+Low ↔ Balanced ↔ High humor
+
+Personality / Kinfolk style
+
+Regional/cultural flavor where appropriate
+
+AAVE preference where permitted by the approved design.
+
+Do not stereotype.
+
+These are voluntary communication preferences.
+
+============================================================
+WHAT KINFOLK KNOWS ABOUT ME
+============================================================
+
+Preserve the existing read-only summary.
+
+Fix the edit path.
+
+User should be able to update:
+
+stable preferences
+current relevant context
+ordinary lifestyle/travel preferences
+
+Do NOT expose raw database representations.
+
+Do NOT expose internal prompt engineering.
+
+============================================================
+VOICE — WEB
+============================================================
+
+Backend TTS already exists.
+
+Mobile Listen/Stop already exists.
+
+Wire the existing TTS capability to web Kinfolk.
+
+Add:
+
+Listen
+Stop
+
+to appropriate Kinfolk responses.
+
+Do NOT introduce a new speech provider.
+
+Use:
+
+POST /api/kinfolk/speak
+
+that already exists.
+
+============================================================
+VOICE SELECTION
+============================================================
+
+Backend supports six current voices.
+
+Audit them and expose a simple user-facing selector if safe.
+
+Do not expose internal provider-specific technical terminology unless
+appropriate.
+
+If using those existing six voices is production-safe:
+
+allow user selection.
+
+Store selected Kinfolk voice preference persistently.
+
+If there is no current DB column:
+
+make the smallest additive migration necessary.
+
+Do NOT redesign user_preferences.
+
+Default voice must remain valid if no selection exists.
+
+============================================================
+VOICE PERSISTENCE ACCEPTANCE
+============================================================
+
+Tester:
+
+choose voice
+→ play Kinfolk answer
+→ close Kinfolk
+→ reopen
+→ voice remains selected
+→ refresh
+→ voice remains selected
+→ logout/login
+→ voice remains selected.
+
+============================================================
+SPEECH INPUT
+============================================================
+
+Backend transcription route already exists.
+
+Do not let microphone UI delay the higher-priority personalization/voice
+playback work.
+
+If safely exposable without destabilizing current testing:
+
+add speech input.
+
+Otherwise:
+
+leave it for the next iteration and report PARTIAL.
+
+Do NOT rebuild transcription.
+
+============================================================
+KINFOLK PERSONALIZATION ACCEPTANCE
+============================================================
+
+Use a dedicated clean tester.
+
+Set:
+
+detailed communication
+low emoji
+specific personality style
+one travel preference
+one vibe preference
+
+Ask:
+
+"Where should I go tonight?"
+
+Capture answer.
+
+Change:
+
+communication → concise
+vibe → something different
+
+Ask comparable question.
+
+Verify output materially reflects the updated preferences.
+
+Then:
+
+save a business
+follow a Library topic
+
+Ask Kinfolk for another recommendation.
+
+Confirm it can use:
+
+explicit settings
+saved business
+Library follow
+
+without inventing evidence.
+
+============================================================
+PARALLEL SAFETY RULE
+============================================================
+
+Workstream B must NOT modify:
+
+authentication middleware
+tester approval
+password verification
+Apple reviewer credentials
+member wall
+
+unless a concrete dependency requires it.
+
+Workstream A must NOT alter:
+
+Kinfolk preferences
+voice
+Library
+Map
+business data
+
+unless required for authentication.
+
+Keep the blast radius separate.
+
+============================================================
+MERGE / DEPLOY GATE
+============================================================
+
+When both workstreams are complete:
+
+1. merge safely
+2. run type/build checks
+3. check migration safety
+4. create approved deployment commits
+5. deploy once
+6. verify correct Railway SHA
+7. stale_bundle=false
+
+Then run the FULL permanent release-control audit.
+
+============================================================
+MANDATORY POST-DEPLOY AUTH TESTS
+============================================================
+
+REAL production:
+
+FOUNDER ACCOUNT
+→ login
+→ protected page
+→ logout
+→ protected page blocked
+→ login again
+
+APPROVED FIRST-TIME TESTER
+→ temporary password
+→ change-password flow if applicable
+→ onboarding
+→ authenticated experience
+
+KAYLA
+→ confirm repaired access
+
+APPLE REVIEWER
+→ documented reviewer password
+→ login
+→ required review screens
+→ logout
+→ re-login
+
+No auth-related PASS based only on database inspection.
+
+============================================================
+MANDATORY KINFOLK VISUAL TESTS
+============================================================
+
+On real production web:
+
+Profile
+→ What Kinfolk Knows About Me
+→ Edit works
+
+Kinfolk
+→ Settings discoverable
+
+Change communication style.
+
+Ask question.
+
+Change style again.
+
+Ask question.
+
+Listen to answer.
+
+Change voice.
+
+Listen again.
+
+Refresh.
+
+Confirm persistence.
+
+Take screenshot evidence throughout.
+
+============================================================
+FINAL REPORT
+============================================================
+
+Return ONE consolidated report:
+
+TESTER AUTH ROOT CAUSE
+KAYLA LOGIN: PASS/FAIL
+NUMBER OF OTHER TESTERS AFFECTED
+
+APPLE REVIEW PASSWORD ACCEPTED: YES/NO
+APPLE REVIEW FULL LOGIN FLOW: PASS/FAIL
+
+KINFOLK WEB SETTINGS: PASS/FAIL
+WHAT KINFOLK KNOWS EDIT: PASS/FAIL
+COMMUNICATION STYLE: PASS/FAIL
+PERSONALITY MODE: PASS/FAIL
+VOICE PLAYBACK: PASS/FAIL
+VOICE SELECTION: PASS/FAIL/PARTIAL
+VOICE PERSISTENCE: PASS/FAIL/PARTIAL
+SPEECH INPUT: PASS/PARTIAL/DEFERRED
+
+PRODUCTION SHA
+STALE BUNDLE
+REGRESSION AUDIT
+DATA LOSS: YES/NO
+
+Do not create additional task suggestions.
+
+Proceed.
+```
+
+The **Apple review test is especially important now**. Earlier Replit sometimes called Apple access “verified” because the account existed and had the right tier. That is no longer sufficient. From now on, “Apple reviewer verified” should mean **the exact credentials Apple has can actually authenticate through the live production flow and reach the features they're expected to review**.
+
+And yes, parallelizing this is the right call. We don't need to lose another several hours waiting for an account-state investigation before someone wires settings that are already sitting in the Kinfolk backend.
