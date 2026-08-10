@@ -6,8 +6,27 @@ import { requireAuth } from "../middlewares/requireAuth";
 const router: IRouter = Router();
 router.use(requireAuth);
 
+// ── KEY ARCHITECTURE ─────────────────────────────────────────────────────────
+// Two separate Google Cloud API keys are used to enforce least-privilege:
+//
+//   GOOGLE_MAPS_BROWSER_KEY  — browser-facing routes only (js-key, embed-url).
+//     Google receives the request with the user's page URL as the Referer, so
+//     this key must be restricted to HTTP referrer origins (mappingwithmelanin.com).
+//     Falls back to GOOGLE_MAPS_API_KEY during the transition period so production
+//     never breaks before the new key is added to Railway.
+//
+//   GOOGLE_MAPS_API_KEY      — server-side routes only (directions).
+//     Server calls Google directly with no Referer header; referrer restrictions
+//     would reject these calls. This key must NEVER be sent to the browser.
+//     Restrict it to the Directions API only in Google Cloud Console.
+//
+// Do not re-merge these into a single key — they serve different trust boundaries.
+// ──────────────────────────────────────────────────────────────────────────────
+
 router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  // Uses browser key: the embed URL is loaded by the browser as an iframe src,
+  // so Google receives the Referer from the user's page — referrer restrictions apply.
+  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY ?? process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     res.status(503).json({ error: "Maps not configured" });
     return;
@@ -21,10 +40,13 @@ router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
   res.json({ url });
 });
 
-// Exposes the Maps JS API key so the frontend can load the interactive map.
-// The key should have HTTP referrer restrictions set in Google Cloud Console.
+// Exposes the Maps JS API browser key so the frontend can load the interactive map.
+// GOOGLE_MAPS_BROWSER_KEY must have HTTP referrer restrictions set in Google Cloud Console:
+//   https://www.mappingwithmelanin.com/*
+//   https://mappingwithmelanin.com/*
+// Falls back to GOOGLE_MAPS_API_KEY during the key-split transition period only.
 router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY ?? process.env.GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     res.status(503).json({ error: "Maps not configured" });
     return;
@@ -32,7 +54,9 @@ router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
   res.json({ key: apiKey });
 });
 
-// Proxies Google Directions API so the key stays server-side.
+// Proxies Google Directions API so the key stays server-side and is never sent
+// to the browser. Uses GOOGLE_MAPS_API_KEY (the server-only key), NOT the browser
+// key. This key should be API-restricted to Directions API only in Google Cloud.
 // ?origin=lat,lng  &destination=lat,lng  (&mode=driving|walking|bicycling|transit)
 router.get("/maps/directions", mapsLimiter, async (req: Request, res: Response) => {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
