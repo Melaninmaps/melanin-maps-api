@@ -3,19 +3,44 @@
  *
  * Runs every 30 minutes and checks the health level of every live / soft_launch city.
  * When a city crosses into "warning" or "critical", an alert fires to the founder via:
- *   1. Email — sent to ADMIN_EMAILS (comma-separated) via the existing Resend infrastructure
- *   2. SMS   — sent via Twilio if TWILIO_FROM_NUMBER and FOUNDER_PHONE are configured (optional)
+ *   1. Email — sent to ADMIN_EMAILS (comma-separated) via Resend
+ *   2. SMS   — optional, via Twilio if TWILIO_FROM_NUMBER + FOUNDER_PHONE are set
  *
- * Delivery / cooldown semantics
- * ──────────────────────────────
- * - Cooldown is enforced with an atomic conditional UPDATE on city_launches.last_alerted_at.
- *   Only the process that wins the DB claim proceeds to send — prevents duplicate alerts when
- *   multiple instances run concurrently (e.g. during a Railway rolling deploy).
- * - last_alerted_at is written AFTER the required channel (email) succeeds.
- *   If email fails the stamp is not written, so the next cron tick can retry.
- * - SMS is optional: a Twilio failure does not block the email stamp or retry.
- * - If the atomic claim succeeds but email fails, we clear the stamp so the next tick retries.
- * - Planning / pre_launch cities are never checked or alerted.
+ * ── Delivery / cooldown guarantee ──────────────────────────────────────────────
+ *
+ * Two DB columns implement a two-phase ownership protocol:
+ *
+ *   alert_claim_token      TEXT        — UUID identifying the owning process/tick
+ *   alert_lease_expires_at TIMESTAMPTZ — hard expiry for the lease (default: 10 min)
+ *   last_alerted_at        TIMESTAMPTZ — written ONLY after confirmed email delivery
+ *
+ * Phase 1 — Acquire lease (claimAlertLease):
+ *   Conditional UPDATE sets token + lease expiry only when:
+ *     - last_alerted_at is NULL or older than the 2-hour cooldown, AND
+ *     - no unexpired lease is held (alert_claim_token IS NULL OR lease expired)
+ *   Returns the UUID if this process won, null otherwise.
+ *   Concurrent processes both writing at the same instant: only one UPDATE wins
+ *   the DB write (row-level lock during UPDATE), so exactly one gets a UUID back.
+ *
+ * Phase 2a — Finalize on success (finalizeAlertLease):
+ *   Conditional UPDATE: sets last_alerted_at = NOW(), clears token + expiry
+ *   WHERE alert_claim_token = $token (ownership check).
+ *   Safe no-op if a later process stole an expired lease before delivery finished.
+ *
+ * Phase 2b — Release on failure (releaseAlertLease):
+ *   Conditional UPDATE: clears token + expiry WHERE alert_claim_token = $token.
+ *   If a different process has already re-claimed an expired lease and delivered
+ *   successfully, the token won't match — this is a safe no-op that preserves
+ *   the successful cooldown.
+ *
+ * Crash / stall recovery:
+ *   A process that claims a lease then crashes or times out leaves the lease fields
+ *   set but last_alerted_at unchanged. The next tick's claimAlertLease condition
+ *   treats an expired lease as unclaimed (alert_lease_expires_at < NOW()), so the
+ *   city becomes eligible for re-alert after LEASE_TTL_MINUTES — not after the full
+ *   2-hour cooldown.
+ *
+ * Planning / pre_launch cities are never checked or alerted.
  */
 
 import cron from "node-cron";
@@ -27,19 +52,12 @@ import twilio from "twilio";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ALERT_COOLDOWN_HOURS = 2;
+const LEASE_TTL_MINUTES = 10; // crashed/stalled leases expire after this
 const LIVE_STATUSES = ["live", "soft_launch"];
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type HealthLevel = "ok" | "warning" | "critical";
-
-interface CityRow {
-  slug: string;
-  city: string;
-  state: string;
-  status: string;
-  last_alerted_at: string | null;
-}
 
 interface DegradedCity {
   slug: string;
@@ -51,9 +69,9 @@ interface DegradedCity {
 
 export interface HealthCheckResult {
   checked: number;
-  alerted: string[];   // slugs for which an alert was successfully sent
-  skipped: string[];   // slugs within cooldown window
-  failed: string[];    // slugs where health check or send failed
+  alerted: string[];  // slugs for which an alert was successfully sent
+  skipped: string[];  // slugs within cooldown or holding valid lease
+  failed: string[];   // slugs where health check, lease, or send failed
 }
 
 // ── Health computation (mirrors city-launch.ts logic — no HTTP round-trip) ───
@@ -64,13 +82,12 @@ async function computeCityHealth(
 ): Promise<{ slug: string; level: HealthLevel; signals: { level: HealthLevel; message: string }[] }> {
   const ps = getPoolStats();
 
-  // DB round-trip probe
   const probeStart = Date.now();
   await pool.query(`SELECT 1`);
   const probeMs = Date.now() - probeStart;
 
-  // City-scoped activity — run sequentially to avoid pool pressure
   const nameLower = cityName.toLowerCase();
+
   const { rows: s7d } = await pool.query<{ cnt: string }>(
     `SELECT COUNT(*) as cnt FROM users
      WHERE LOWER(TRIM(home_city)) = $1 AND created_at > NOW() - INTERVAL '7 days'`,
@@ -104,61 +121,79 @@ async function computeCityHealth(
       signals.push({ level: "warning", message: "No community posts in the last 7 days" });
   }
 
-  if (signals.length === 0) signals.push({ level: "ok", message: "All systems healthy" });
+  if (signals.length === 0)
+    signals.push({ level: "ok", message: "All systems healthy" });
 
-  const level: HealthLevel = signals.some((s) => s.level === "critical")
-    ? "critical"
-    : signals.some((s) => s.level === "warning")
-    ? "warning"
+  const level: HealthLevel =
+    signals.some((s) => s.level === "critical") ? "critical"
+    : signals.some((s) => s.level === "warning") ? "warning"
     : "ok";
 
   return { slug, level, signals };
 }
 
-// ── Atomic cooldown claim ─────────────────────────────────────────────────────
-// Returns a UUID ownership token if THIS process wins the claim, or null if the
-// cooldown window is still active.
-//
-// Uses a conditional UPDATE that writes both last_alerted_at and a fresh
-// alert_claim_token UUID. Concurrent scheduler instances (rolling deploy) cannot
-// both win — only the first UPDATE to execute gets rowCount > 0. The returned
-// UUID string is lossless (no timestamp precision issues) and uniquely identifies
-// this process's claim. The caller must pass it to releaseAlertSlot so that a
-// delayed cleanup cannot clear a competing instance's successful cooldown stamp.
-async function claimAlertSlot(slug: string): Promise<string | null> {
+// ── Two-phase lease: acquire ───────────────────────────────────────────────────
+// Writes a UUID token + lease expiry ONLY when:
+//   1. The 2-hour cooldown (last_alerted_at) has elapsed, AND
+//   2. No valid unexpired lease is held by another process.
+// Returns the UUID if this process won the lease, null otherwise.
+// Note: last_alerted_at is NOT touched here — it is written exclusively on
+// confirmed delivery via finalizeAlertLease.
+async function claimAlertLease(slug: string): Promise<string | null> {
   const token = randomUUID();
   const { rowCount } = await pool.query(
     `UPDATE city_launches
-     SET last_alerted_at = NOW(),
-         alert_claim_token = $2
+     SET alert_claim_token    = $2,
+         alert_lease_expires_at = NOW() + ($3 || ' minutes')::INTERVAL
      WHERE slug = $1
        AND (last_alerted_at IS NULL
-            OR last_alerted_at < NOW() - ($3 || ' hours')::INTERVAL)`,
-    [slug, token, String(ALERT_COOLDOWN_HOURS)],
+            OR last_alerted_at < NOW() - ($4 || ' hours')::INTERVAL)
+       AND (alert_claim_token IS NULL
+            OR alert_lease_expires_at IS NULL
+            OR alert_lease_expires_at < NOW())`,
+    [slug, token, String(LEASE_TTL_MINUTES), String(ALERT_COOLDOWN_HOURS)],
   );
   return (rowCount ?? 0) > 0 ? token : null;
 }
 
-// Clears the cooldown stamp so the next cron tick can retry after a send failure.
-// Conditions the UPDATE on the exact UUID token returned by claimAlertSlot —
-// if a competing instance has since claimed and successfully delivered, its token
-// will differ and this UPDATE becomes a safe no-op, preserving that cooldown.
-async function releaseAlertSlot(slug: string, token: string): Promise<void> {
+// ── Two-phase lease: finalize on delivery success ─────────────────────────────
+// Writes last_alerted_at = NOW() and clears the lease fields, conditioned on
+// the ownership token. If a competing process's lease has since expired and it
+// re-claimed and delivered, this becomes a safe no-op — the cooldown is intact.
+async function finalizeAlertLease(slug: string, token: string): Promise<void> {
+  await pool.query(
+    `UPDATE city_launches
+     SET last_alerted_at      = NOW(),
+         alert_claim_token    = NULL,
+         alert_lease_expires_at = NULL
+     WHERE slug = $1
+       AND alert_claim_token = $2`,
+    [slug, token],
+  );
+}
+
+// ── Two-phase lease: release on delivery failure ──────────────────────────────
+// Clears the lease so the next tick can retry. Conditioned on the ownership
+// token — safe no-op if a competing process has already claimed and finalized.
+async function releaseAlertLease(slug: string, token: string): Promise<void> {
   try {
     await pool.query(
       `UPDATE city_launches
-       SET last_alerted_at = NULL,
-           alert_claim_token = NULL
+       SET alert_claim_token    = NULL,
+           alert_lease_expires_at = NULL
        WHERE slug = $1
          AND alert_claim_token = $2`,
       [slug, token],
     );
   } catch (err) {
-    logger.error({ err, slug }, "city-health-alert: failed to release alert slot after send failure — next retry may be delayed");
+    logger.error(
+      { err, slug },
+      "city-health-alert: failed to release lease after send failure — lease will expire naturally",
+    );
   }
 }
 
-// ── Notification helpers ───────────────────────────────────────────────────────
+// ── Notification: email (required channel) ────────────────────────────────────
 async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   const adminEmails = process.env.ADMIN_EMAILS;
@@ -179,9 +214,7 @@ async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
         .join("");
       return `
         <tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #f0e8dc;font-weight:600;color:#2B1507">
-            ${c.city}, ${c.state}
-          </td>
+          <td style="padding:12px 16px;border-bottom:1px solid #f0e8dc;font-weight:600;color:#2B1507">${c.city}, ${c.state}</td>
           <td style="padding:12px 16px;border-bottom:1px solid #f0e8dc">${badge}</td>
           <td style="padding:12px 16px;border-bottom:1px solid #f0e8dc">
             <ul style="margin:0;padding-left:16px">${signalList}</ul>
@@ -201,7 +234,7 @@ async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
       <h2 style="color:#2B1507;margin:0 0 8px">City Health Alert</h2>
       <p style="color:#6b5240;margin:0 0 24px;font-size:14px">
         The following live cities have health signals that need your attention.
-        This alert fires when a city crosses into <strong>warning</strong> or <strong>critical</strong>.
+        Alerts repeat at most every ${ALERT_COOLDOWN_HOURS} hours per city.
       </p>
       <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden">
         <thead>
@@ -214,7 +247,7 @@ async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
         <tbody>${rows}</tbody>
       </table>
       <p style="margin:24px 0 0;font-size:13px;color:#888;text-align:center">
-        Sent automatically by the MWM City Health Monitor · alerts repeat at most every ${ALERT_COOLDOWN_HOURS} hours
+        MWM City Health Monitor · alerts repeat at most every ${ALERT_COOLDOWN_HOURS} hours
       </p>
     </div>`;
 
@@ -222,16 +255,17 @@ async function sendAlertEmail(cities: DegradedCity[]): Promise<void> {
   if (error) throw new Error(`Resend send failed: ${error.name} — ${error.message}`);
 }
 
-// SMS is optional: configured via TWILIO_FROM_NUMBER + FOUNDER_PHONE env vars.
-// Returns true if sent, false if skipped (not configured), throws if configured but failed.
+// ── Notification: SMS (optional channel) ─────────────────────────────────────
+// Returns true if sent, false if not configured, throws if configured but failed.
 async function sendAlertSms(cities: DegradedCity[]): Promise<boolean> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_FROM_NUMBER;
   const founderPhone = process.env.FOUNDER_PHONE;
 
-  if (!fromNumber || !founderPhone) return false; // optional channel — not configured
-  if (!sid || !token) throw new Error("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN missing but TWILIO_FROM_NUMBER is set");
+  if (!fromNumber || !founderPhone) return false;
+  if (!sid || !token)
+    throw new Error("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN missing but TWILIO_FROM_NUMBER is set");
 
   const client = twilio(sid, token);
   const hasCritical = cities.some((c) => c.level === "critical");
@@ -243,149 +277,131 @@ async function sendAlertSms(cities: DegradedCity[]): Promise<boolean> {
   return true;
 }
 
-// ── Core check function (exported so it can be called manually / from a route) ─
+// ── Core check function (exported for manual trigger / testing) ───────────────
 export async function runCityHealthCheck(): Promise<HealthCheckResult> {
   const alerted: string[] = [];
   const skipped: string[] = [];
   const failed: string[] = [];
 
-  // Fetch all live/soft_launch cities
-  const { rows: cities } = await pool.query<CityRow>(
-    `SELECT slug, city, state, status, last_alerted_at
+  const { rows: cities } = await pool.query<{
+    slug: string;
+    city: string;
+    state: string;
+    status: string;
+  }>(
+    `SELECT slug, city, state, status
      FROM city_launches
      WHERE status = ANY($1::text[])
      ORDER BY sequence_order ASC`,
     [LIVE_STATUSES],
   );
 
-  if (!cities.length) {
-    return { checked: 0, alerted: [], skipped: [], failed: [] };
-  }
+  if (!cities.length) return { checked: 0, alerted: [], skipped: [], failed: [] };
 
-  // Compute health for all cities, then group degraded ones to send a single
-  // batched alert rather than one email per city.
+  // Compute health for all cities first (no leases held yet)
   const degraded: DegradedCity[] = [];
 
   for (const city of cities) {
     try {
       const health = await computeCityHealth(city.slug, city.city, city.status);
       if (health.level !== "ok") {
-        degraded.push({
-          slug: city.slug,
-          city: city.city,
-          state: city.state,
-          level: health.level,
-          signals: health.signals,
-        });
+        degraded.push({ slug: city.slug, city: city.city, state: city.state, level: health.level, signals: health.signals });
       }
     } catch (err) {
-      logger.error({ err, slug: city.slug }, "city-health-alert: failed to compute health for city");
+      logger.error({ err, slug: city.slug }, "city-health-alert: health computation failed");
       failed.push(city.slug);
     }
   }
 
-  if (!degraded.length) {
-    return { checked: cities.length, alerted: [], skipped, failed };
-  }
+  if (!degraded.length) return { checked: cities.length, alerted: [], skipped, failed };
 
-  // For each degraded city, attempt an atomic cooldown claim.
-  // Cities still within the cooldown window are skipped — their UPDATE finds no
-  // eligible row and returns null. The returned Date is the ownership token: it
-  // must be passed to releaseAlertSlot so that a delayed cleanup cannot clear a
-  // competing instance's successful cooldown stamp.
-  const claimedCities: Array<DegradedCity & { claimedAt: string }> = [];
+  // Attempt to acquire a time-bounded lease for each degraded city.
+  // Leases are held only as long as delivery takes (bounded by LEASE_TTL_MINUTES).
+  const leasedCities: Array<DegradedCity & { leaseToken: string }> = [];
 
   for (const city of degraded) {
     try {
-      const claimedAt = await claimAlertSlot(city.slug);
-      if (claimedAt) {
-        claimedCities.push({ ...city, claimedAt });
+      const leaseToken = await claimAlertLease(city.slug);
+      if (leaseToken) {
+        leasedCities.push({ ...city, leaseToken });
       } else {
         skipped.push(city.slug);
       }
     } catch (err) {
-      logger.error({ err, slug: city.slug }, "city-health-alert: failed to claim alert slot");
+      logger.error({ err, slug: city.slug }, "city-health-alert: lease acquisition failed");
       failed.push(city.slug);
     }
   }
 
-  if (!claimedCities.length) {
-    return { checked: cities.length, alerted: [], skipped, failed };
-  }
+  if (!leasedCities.length) return { checked: cities.length, alerted: [], skipped, failed };
 
-  // Send email (required channel). On failure: release the DB claim — conditioned
-  // on the ownership token — so the next tick can retry without risk of clearing
-  // a competing instance's successful stamp.
-  let emailSent = false;
+  // Send email (required channel). On failure: release leases (conditioned on
+  // ownership token) so the next tick retries. last_alerted_at is NOT written.
   try {
-    await sendAlertEmail(claimedCities);
-    emailSent = true;
+    await sendAlertEmail(leasedCities);
   } catch (err) {
-    logger.error({ err, cities: claimedCities.map((c) => c.slug) }, "city-health-alert: email send failed — releasing claims for retry");
-    for (const city of claimedCities) {
-      await releaseAlertSlot(city.slug, city.claimedAt);
+    logger.error(
+      { err, cities: leasedCities.map((c) => c.slug) },
+      "city-health-alert: email failed — releasing leases for retry",
+    );
+    for (const city of leasedCities) {
+      await releaseAlertLease(city.slug, city.leaseToken);
       failed.push(city.slug);
     }
     return { checked: cities.length, alerted: [], skipped, failed };
   }
 
-  // Email succeeded — record all claimed cities as alerted.
-  for (const city of claimedCities) {
-    alerted.push(city.slug);
+  // Email confirmed. Finalize each city: write last_alerted_at + clear lease.
+  // Conditioned on ownership token — safe no-op if a competing process's
+  // expired lease was reclaimed and it independently delivered first.
+  for (const city of leasedCities) {
+    try {
+      await finalizeAlertLease(city.slug, city.leaseToken);
+      alerted.push(city.slug);
+    } catch (err) {
+      logger.error({ err, slug: city.slug }, "city-health-alert: finalize failed — lease will expire naturally");
+      failed.push(city.slug);
+    }
   }
 
-  // Send SMS (optional channel). A Twilio failure is logged but does not affect
-  // the cooldown stamp or the alerted set — email is the source of truth.
-  if (emailSent) {
-    try {
-      const smsSent = await sendAlertSms(claimedCities);
-      if (smsSent) {
-        logger.info({ cities: alerted }, "city-health-alert: SMS alert sent");
-      }
-    } catch (err) {
-      logger.error({ err }, "city-health-alert: optional SMS send failed (email was delivered; cooldown stands)");
-    }
+  // SMS is optional — a failure does not affect the cooldown or the alerted set.
+  try {
+    const smsSent = await sendAlertSms(leasedCities);
+    if (smsSent) logger.info({ cities: alerted }, "city-health-alert: SMS alert sent");
+  } catch (err) {
+    logger.error({ err }, "city-health-alert: optional SMS failed (email delivered; cooldown intact)");
   }
 
   return { checked: cities.length, alerted, skipped, failed };
 }
 
 // ── Scheduler ─────────────────────────────────────────────────────────────────
+// Called from index.ts AFTER runStartupMigrations resolves, so the
+// alert_claim_token and alert_lease_expires_at columns are guaranteed present.
 export function startCityHealthAlertScheduler(): void {
-  // Default: every 30 minutes. Override with CITY_HEALTH_CRON_SCHEDULE env var.
   const schedule = process.env.CITY_HEALTH_CRON_SCHEDULE ?? "*/30 * * * *";
 
   if (!cron.validate(schedule)) {
-    logger.error(
-      { schedule },
-      "city-health-alert: invalid CITY_HEALTH_CRON_SCHEDULE — scheduler not started",
-    );
+    logger.error({ schedule }, "city-health-alert: invalid schedule — scheduler not started");
     return;
   }
 
   cron.schedule(schedule, async () => {
-    logger.info({ schedule }, "city-health-alert: running health check");
+    logger.info("city-health-alert: running health check");
     try {
       const result = await runCityHealthCheck();
       logger.info(
-        {
-          checked: result.checked,
-          alerted: result.alerted.length,
-          skipped: result.skipped.length,
-          failed: result.failed.length,
-        },
+        { checked: result.checked, alerted: result.alerted.length, skipped: result.skipped.length, failed: result.failed.length },
         "city-health-alert: check complete",
       );
-      if (result.alerted.length > 0) {
+      if (result.alerted.length > 0)
         logger.warn({ cities: result.alerted }, "city-health-alert: alerts fired for degraded cities");
-      }
-      if (result.failed.length > 0) {
-        logger.warn({ cities: result.failed }, "city-health-alert: some cities failed health check or send");
-      }
+      if (result.failed.length > 0)
+        logger.warn({ cities: result.failed }, "city-health-alert: some cities failed health check or delivery");
     } catch (err) {
-      logger.error({ err }, "city-health-alert: health check batch failed");
+      logger.error({ err }, "city-health-alert: batch failed");
     }
   });
 
-  logger.info({ schedule }, "city-health-alert: scheduler started (every 30 min by default)");
+  logger.info({ schedule }, "city-health-alert: scheduler started");
 }

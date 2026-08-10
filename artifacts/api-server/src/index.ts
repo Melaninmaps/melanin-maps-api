@@ -110,12 +110,21 @@ const server = app.listen(port, (err) => {
   // Apply any schema columns that exist in the Drizzle model but are missing
   // from older Railway deployments.  Runs after the port opens so the server
   // is never delayed, but completes in <1 s — before any auth request arrives.
-  runStartupMigrations(logger).catch((err) =>
-    logger.error({ err }, "Startup migrations failed")
-  );
+  //
+  // startCityHealthAlertScheduler is called inside the resolved callback so the
+  // alert_claim_token and alert_lease_expires_at columns are guaranteed present
+  // before the first cron tick fires.
+  runStartupMigrations(logger)
+    .then(() => {
+      startCityHealthAlertScheduler();
+    })
+    .catch((err) => {
+      logger.error({ err }, "Startup migrations failed");
+      // Still start the scheduler — columns may already exist from a prior deploy.
+      startCityHealthAlertScheduler();
+    });
 
   startNudgeCronScheduler();
-  startCityHealthAlertScheduler();
 });
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────

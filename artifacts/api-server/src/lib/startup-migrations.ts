@@ -254,13 +254,20 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   },
   {
     // UUID claim token for the city health alert scheduler.
-    // Stored alongside last_alerted_at so that releaseAlertSlot can condition its
-    // cleanup on the exact token this process wrote — avoiding the microsecond
-    // precision loss that occurs when PostgreSQL timestamps are round-tripped
-    // through JavaScript Date objects.
+    // Used as an ownership token so only the process that claimed the lease can
+    // finalize or release it.
     name: "city_launches_alert_claim_token_col",
     sql: `ALTER TABLE city_launches
       ADD COLUMN IF NOT EXISTS alert_claim_token TEXT`,
+  },
+  {
+    // Lease expiry for the city health alert scheduler.
+    // A time-bounded lease means a crashed or stalled process's claim expires
+    // automatically (LEASE_TTL_MINUTES) so the next tick can retry without
+    // waiting the full 2-hour cooldown.
+    name: "city_launches_alert_lease_expires_at_col",
+    sql: `ALTER TABLE city_launches
+      ADD COLUMN IF NOT EXISTS alert_lease_expires_at TIMESTAMPTZ`,
   },
   {
     name: "city_launch_events_table",
