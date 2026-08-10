@@ -5,6 +5,7 @@ import { Menu, X, MessageSquare, Bell, Sun, Moon, Compass, Map, Users, Shield, B
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
 import { FeedbackButton } from "./FeedbackButton";
+import { KinfolkOnboarding } from "./KinfolkOnboarding";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -22,10 +23,19 @@ function useRequireApproval() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [kinfolkDismissed, setKinfolkDismissed] = useState(false);
   const [location] = useLocation();
-  const { data: auth } = useGetCurrentAuthUser();
+  const { data: auth, refetch: refetchAuth } = useGetCurrentAuthUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const requireApproval = useRequireApproval();
   const { theme, setTheme } = useTheme();
+
+  // Onboarding: show once when an authenticated member hasn't completed profile setup
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const needsOnboarding =
+    !!auth?.user && auth.user.profileSetupComplete === false && !onboardingDismissed;
+  const handleOnboardingComplete = useCallback(() => {
+    setOnboardingDismissed(true);
+    refetchAuth?.();
+  }, [refetchAuth]);
 
   if (requireApproval && auth?.user && auth.user.approved === false) {
     return <Redirect to="/pending-approval" />;
@@ -73,6 +83,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
+      {/* First-time Kinfolk onboarding — shown once when profileSetupComplete is false */}
+      {needsOnboarding && (
+        <KinfolkOnboarding
+          firstName={auth?.user?.firstName ?? undefined}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
       {/* Sticky Top Navbar */}
       <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">

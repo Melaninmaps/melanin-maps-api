@@ -1190,6 +1190,26 @@ END $seed$`,
              'founding', true, 'tester', 'Philadelphia')
           ON CONFLICT (email) DO NOTHING`,
   },
+  {
+    // Production acceptance audit tester — clean account, profile_setup_complete=false
+    // so the new 15-question web onboarding triggers on first login.
+    // member_type='founding' for full-tier KinfolkAI access (same as other testers).
+    // Password: MWM-Audit-Aug10-2026! (bcrypt cost=10)
+    // ON CONFLICT DO NOTHING — never overwrites an existing row.
+    name: "ensure_audit_tester_account_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role)
+          VALUES
+            (gen_random_uuid(),
+             'audit.tester@mappingwithmelanin.com',
+             'Audit', 'Tester',
+             '$2b$10$K5HL9YY//y/LLERqyn88bOKw3xljACCI2qriYM8rZFe5W2EbmodKa',
+             true, true, false,
+             'founding', true, 'user')
+          ON CONFLICT (email) DO NOTHING`,
+  },
   // ── Must-change-password column ────────────────────────────────────────────
   // Enables a forced password-change flow on first login for pre-seeded tester
   // accounts. Safe to run on every boot (IF NOT EXISTS).

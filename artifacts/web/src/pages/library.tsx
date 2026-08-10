@@ -658,7 +658,9 @@ export default function Library() {
   const { toast } = useToast();
   const isAuthenticated = !!(auth?.user);
 
-  const [activeTab, setActiveTab] = useState<Tab>("library");
+  // Default to Browse Topics so first-time members immediately see real knowledge-graph content.
+  // The Feed tab shows "Articles coming soon" until curated articles are published.
+  const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [topics, setTopics] = useState<Topic[]>([]);
   const [feed, setFeed] = useState<Article[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
