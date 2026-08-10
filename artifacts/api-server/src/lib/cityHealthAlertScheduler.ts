@@ -53,10 +53,10 @@ import twilio from "twilio";
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ALERT_COOLDOWN_HOURS = 2;
 const LEASE_TTL_MINUTES = 10; // crashed/stalled leases expire after this
-// Email send must complete within this window — safely below the lease TTL —
-// so an in-progress send cannot outlive the lease and allow a competing
-// instance to claim, send a duplicate, and finalize ahead of us.
-const EMAIL_TIMEOUT_MS = (LEASE_TTL_MINUTES - 2) * 60 * 1000; // 8 minutes
+// Heartbeat keeps the lease alive while delivery is in flight. Interval must be
+// strictly less than LEASE_TTL_MINUTES so no tick fires after the prior renewal
+// has already expired. Half the TTL gives a comfortable margin.
+const LEASE_HEARTBEAT_INTERVAL_MS = (LEASE_TTL_MINUTES / 2) * 60 * 1000; // 5 minutes
 const LIVE_STATUSES = ["live", "soft_launch"];
 const FROM = "Mapping With Melanin™ <hello@mappingwithmelanin.com>";
 
@@ -198,6 +198,29 @@ async function releaseAlertLease(slug: string, token: string): Promise<void> {
       { err, slug },
       "city-health-alert: failed to release lease after send failure — lease will expire naturally",
     );
+  }
+}
+
+// ── Two-phase lease: heartbeat renewal while delivery is in flight ────────────
+// Extends the lease expiry by LEASE_TTL_MINUTES from NOW(), conditioned on the
+// ownership token. Returns false when the token no longer matches — meaning the
+// lease expired and was reclaimed by a competing instance. In that case the
+// caller should abort delivery if possible, but finalize/release are still safe
+// because both are ownership-token-conditioned.
+async function renewAlertLease(slug: string, token: string): Promise<boolean> {
+  try {
+    const { rowCount } = await pool.query(
+      `UPDATE city_launches
+       SET alert_lease_expires_at = NOW() + ($3 || ' minutes')::INTERVAL
+       WHERE slug = $1
+         AND alert_claim_token = $2`,
+      [slug, token, String(LEASE_TTL_MINUTES)],
+    );
+    return (rowCount ?? 0) > 0;
+  } catch (err) {
+    // Renewal is best-effort — log but do not block delivery.
+    logger.warn({ err, slug }, "city-health-alert: lease renewal failed — lease may expire before send completes");
+    return false;
   }
 }
 
@@ -343,45 +366,51 @@ export async function runCityHealthCheck(): Promise<HealthCheckResult> {
 
   if (!leasedCities.length) return { checked: cities.length, alerted: [], skipped, failed };
 
-  // Send email (required channel) with a hard timeout safely below the lease TTL.
+  // ── Lease heartbeat: keep leases alive for the full duration of the send ──────
+  // Problem: Promise.race with a fixed timeout does not cancel the underlying
+  // Resend HTTP request. If we timeout and release, the original request can still
+  // deliver — and the next tick (seeing a released lease) sends a second alert,
+  // producing a duplicate.
   //
-  // IMPORTANT: on timeout we do NOT release the lease. Releasing would allow the
-  // next tick to claim and send a new alert while the original Resend request may
-  // still complete in the background — producing a duplicate founder notification.
-  // Instead, the lease expires naturally after LEASE_TTL_MINUTES. The original
-  // request cannot finalize (we return early from this function), so no cooldown
-  // stamp is written. After the lease expires the next tick re-claims and retries.
-  // At worst the founder receives the alert with a delay of up to LEASE_TTL_MINUTES
-  // rather than instantly — an acceptable trade-off for guaranteed no-duplicate.
-  //
-  // If the send genuinely fails (network error, bad API key, etc.) the lease IS
-  // released so the next tick can retry immediately.
-  const emailTimeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`__TIMEOUT__: email timed out after ${EMAIL_TIMEOUT_MS / 1000}s`)), EMAIL_TIMEOUT_MS),
-  );
-  try {
-    await Promise.race([sendAlertEmail(leasedCities), emailTimeoutPromise]);
-  } catch (err) {
-    const isTimeout = err instanceof Error && err.message.startsWith("__TIMEOUT__");
-    if (isTimeout) {
-      // Let leases expire naturally — do NOT release. See comment above.
-      logger.warn(
-        { leaseTtlMinutes: LEASE_TTL_MINUTES, cities: leasedCities.map((c) => c.slug) },
-        "city-health-alert: email timed out — retaining leases until natural expiry to prevent duplicate sends",
-      );
-    } else {
-      // Genuine send failure — release leases so the next tick retries promptly.
-      logger.error(
-        { err, cities: leasedCities.map((c) => c.slug) },
-        "city-health-alert: email failed — releasing leases for retry",
-      );
-      for (const city of leasedCities) {
-        await releaseAlertLease(city.slug, city.leaseToken);
+  // Solution: run a heartbeat that renews every lease every LEASE_HEARTBEAT_INTERVAL_MS
+  // while the send is in flight. The send has no timeout — we wait for it to settle
+  // definitively (success, network error, or Resend API error). Only then do we
+  // finalize or release. If THIS process crashes mid-send, the heartbeat stops,
+  // the lease expires after LEASE_TTL_MINUTES, and the next tick retries — no
+  // duplicate, no permanent lock.
+  const heartbeatIntervals = leasedCities.map((city) =>
+    setInterval(async () => {
+      const stillOwned = await renewAlertLease(city.slug, city.leaseToken);
+      if (!stillOwned) {
+        logger.warn(
+          { slug: city.slug },
+          "city-health-alert: lease renewal found no matching row — lease may have been reclaimed",
+        );
       }
+    }, LEASE_HEARTBEAT_INTERVAL_MS),
+  );
+
+  const stopHeartbeats = () => {
+    for (const interval of heartbeatIntervals) clearInterval(interval);
+  };
+
+  try {
+    await sendAlertEmail(leasedCities);
+  } catch (err) {
+    stopHeartbeats();
+    // Genuine send failure — release leases so the next tick retries promptly.
+    logger.error(
+      { err, cities: leasedCities.map((c) => c.slug) },
+      "city-health-alert: email failed — releasing leases for retry",
+    );
+    for (const city of leasedCities) {
+      await releaseAlertLease(city.slug, city.leaseToken);
+      failed.push(city.slug);
     }
-    for (const city of leasedCities) failed.push(city.slug);
     return { checked: cities.length, alerted: [], skipped, failed };
   }
+
+  stopHeartbeats();
 
   // Email confirmed. Finalize each city: write last_alerted_at + clear lease,
   // conditioned on the ownership token. Only cities where THIS process still
