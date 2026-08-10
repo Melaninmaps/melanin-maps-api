@@ -1169,6 +1169,34 @@ END $seed$`,
              'founding', true, 'tester', 'Philadelphia')
           ON CONFLICT (email) DO NOTHING`,
   },
+  {
+    // Manus geo-audit account — dedicated account for geo-tagged platform audits.
+    // Uses ON CONFLICT DO UPDATE so it self-heals if deleted between deploys.
+    // Email:    manus.geo@mappingwithmelanin.com
+    // Password: MWM-GeoAudit-2026!
+    // Role:     tester (sees tester-only demo businesses + all live listings)
+    // Tier:     founding (full feature access, no Stripe subscription required)
+    name: "ensure_manus_geo_audit_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, home_city)
+          VALUES
+            (gen_random_uuid(),
+             'manus.geo@mappingwithmelanin.com',
+             'Manus', 'GeoAudit',
+             '$2b$08$V/x.s3dNFIvC6mrbp9HWEO8jnbgv6oyVc1sDktQvczNf7VDbdwoGa',
+             true, true, true,
+             'founding', true, 'tester', 'Philadelphia')
+          ON CONFLICT (email) DO UPDATE SET
+            password_hash         = EXCLUDED.password_hash,
+            role                  = EXCLUDED.role,
+            member_type           = EXCLUDED.member_type,
+            approved              = EXCLUDED.approved,
+            email_verified        = EXCLUDED.email_verified,
+            profile_setup_complete = EXCLUDED.profile_setup_complete,
+            updated_at            = NOW()`,
+  },
   // ── Must-change-password column ────────────────────────────────────────────
   // Enables a forced password-change flow on first login for pre-seeded tester
   // accounts. Safe to run on every boot (IF NOT EXISTS).
