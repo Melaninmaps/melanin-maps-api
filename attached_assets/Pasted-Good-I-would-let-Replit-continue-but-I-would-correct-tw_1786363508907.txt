@@ -1,0 +1,123 @@
+Good. I would let Replit continue, **but I would correct two things in this report before we treat the release-control process itself as proven.**
+
+First, **“FOUNDER LOGIN VERIFIED” is mislabeled.** They tested `tester@mwm.com`, not the founder account. Tester login passed; founder login was not demonstrated in this report. That is a reporting error, not necessarily an authentication failure.
+
+Second, **the final release status should technically be `PARTIAL PASS / browser verification outstanding`, not an unconditional PASS.** Our permanent rule specifically says real-browser verification matters. Replit itself says Map was not tested and Library drill-down is only DEV VERIFIED. That's exactly the kind of distinction we created the rule to catch.
+
+Also, `GET /api/logout → 302` alone is weaker proof than the logout acceptance test we already established: login → access protected endpoint → logout → old session/token can no longer access it.
+
+I would send this short correction rather than stopping all progress:
+
+```text
+RELEASE AUDIT ACCEPTED WITH THREE PROCESS CORRECTIONS
+
+You may continue the next approved workstream.
+
+However, correct the release record and permanent release-control behavior:
+
+1. FOUNDER LOGIN
+
+The report states:
+
+FOUNDER LOGIN VERIFIED:
+tester@mwm.com
+
+That is not the founder account.
+
+Correct status for this release:
+
+FOUNDER LOGIN: NOT TESTED THIS CYCLE
+TESTER LOGIN: PRODUCTION VERIFIED
+APPLE REVIEWER LOGIN: PRODUCTION VERIFIED
+
+Never substitute one persona for another in future release reports.
+
+Each persona must be independently identified and tested when the release
+checklist requires it.
+
+Do not print passwords.
+
+============================================================
+
+2. BROWSER-DEPENDENT TESTS
+
+The report states:
+
+MAP VERIFIED: NOT TESTED
+
+and:
+
+LIBRARY DRILL-DOWN: DEV VERIFIED
+
+Therefore the release-control system must not represent the ENTIRE acceptance
+suite as completely production verified.
+
+Correct distinction:
+
+AUTOMATED PRODUCTION REGRESSION GATE: PASS
+BROWSER ACCEPTANCE GATE: PARTIAL — MAP + LIBRARY DRILL-DOWN OUTSTANDING
+
+This does NOT block continuing the next approved workstream because the
+affected underlying production services passed and no regression was detected.
+
+But these browser checks must be completed during the next authenticated
+browser session and attached to the release record.
+
+Future rule:
+
+If a required test cannot actually be performed, report:
+
+NOT TESTED
+
+Never infer PASS from code/API compatibility.
+
+============================================================
+
+3. LOGOUT PROOF
+
+GET /api/logout → 302 alone is not sufficient logout acceptance proof.
+
+Use our established regression sequence:
+
+LOGIN
+→ protected endpoint returns 200
+→ LOGOUT
+→ session cookie cleared
+→ same protected endpoint returns 401
+→ old Bearer/session credential returns 401 where applicable
+
+This prevents a redirect from being mistaken for session invalidation.
+
+============================================================
+
+CONTINUE NOW
+
+Do not redeploy merely to correct documentation.
+
+Update the release record/memory with these distinctions and continue the
+next already-approved workstream.
+
+At the next authenticated browser opportunity, complete:
+
+A. production Map visual test
+B. production Library Collection → Book → Knowledge Graph drill-down
+C. founder-login verification
+
+Capture screenshots.
+
+The permanent release-control principle remains:
+
+BUILT ≠ DEPLOYED
+DEPLOYED ≠ PRODUCTION VERIFIED
+PRODUCTION VERIFIED ≠ USER-EXPERIENCE VERIFIED
+
+Never upgrade a verification status without the corresponding evidence.
+```
+
+### Where we actually stand
+
+The important news is very good: **tester authentication works, Apple reviewer authentication works, Kinfolk works, the member wall remains intact, search improvements are live, the Library foundation is in production, community data survived, and Replit detected no migration errors or data loss.**
+
+So I **would not hold up development** over these three audit-documentation issues. We should correct Replit's discipline while allowing it to move.
+
+The release-control rule itself is already doing something useful: Replit actually admitted **“Map: NOT TESTED”** instead of telling us everything worked because the code compiled. That's the behavior we wanted—we just need to make sure an outstanding test can't coexist with an overly broad **FINAL RELEASE STATUS: PASS**.

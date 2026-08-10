@@ -336,11 +336,14 @@ router.get("/callback", async (req: Request, res: Response) => {
 });
 
 router.get("/logout", async (req: Request, res: Response) => {
+  // Always capture the session ID first — before any async calls that might fail.
+  // This ensures email-login Bearer-token sessions are invalidated even when the
+  // downstream OIDC end-session endpoint is unavailable.
+  const sid = getSessionId(req);
   try {
     const config = await getOidcConfig();
     const origin = getOrigin(req);
 
-    const sid = getSessionId(req);
     await clearSession(res, sid);
 
     const endSessionUrl = oidc.buildEndSessionUrl(config, {
@@ -351,6 +354,8 @@ router.get("/logout", async (req: Request, res: Response) => {
     res.redirect(endSessionUrl.href);
   } catch (err) {
     req.log.error({ err }, "Failed to complete logout");
+    // Still invalidate the session even if OIDC end-session fails.
+    await clearSession(res, sid).catch(() => {});
     res.redirect("/");
   }
 });
