@@ -1,0 +1,408 @@
+This is a strong update. I would **accept the acceptance audit as a meaningful pass**, with one important qualification: the three P1s (#211–#213) are not “future nice-to-haves.” They should be the next functional corrections because search quality and business-detail completeness directly affect what you are about to show people.
+
+On the Library: **70 categories/topics is nowhere near the intended end state.** But before telling Replit to simply “add hundreds more,” I want them to distinguish three different things so we do not create another messy taxonomy:
+
+* **Collections / shelves** — broad areas such as Countries & Cultures, Faith & Spirituality, Health, Careers, History, Travel, Divine 9, etc.
+* **Books / canonical topics** — Kenya, Philadelphia, IVF, Alpha Kappa Alpha, Black Catholic History, Diabetes, Ethiopian Culture, etc.
+* **Relationships / subtopics** — Kenya → history, tourism, economy, food, current news, volunteering, businesses, diaspora communities, and so forth.
+
+You do **not** want 700 random flat “categories.” You want a Library graph capable of becoming enormous without becoming overwhelming.
+
+I would send Replit this now:
+
+```text
+LIBRARY TAXONOMY EXPANSION — AUDIT + SCALE CORRECTLY
+
+The production acceptance audit is accepted.
+
+Current production state is substantially improved.
+
+The three P1 items already identified remain active and should be completed next:
+
+#211 Search relevance
+#212 Faith intent distinction
+#213 Business-detail field surfacing
+
+Do not defer those as optional future work.
+
+============================================================
+LIBRARY — IMPORTANT SCALE CORRECTION
+============================================================
+
+You referenced approximately 70 Library categories/topics.
+
+That is NOT the intended scope of the Mapping With Melanin Library.
+
+The Library is intended to become an extremely broad, demand-driven knowledge
+system.
+
+However:
+
+DO NOT solve this by creating hundreds of flat categories.
+
+First audit and clearly distinguish:
+
+1. COLLECTION / SHELF
+2. CANONICAL BOOK / TOPIC
+3. SUBTOPIC / RELATED KNOWLEDGE NODE
+4. GEOGRAPHY NODE
+5. ENTITY CONNECTION
+
+Return current counts for EACH.
+
+Do not call all of them "categories."
+
+============================================================
+EXPECTED MODEL
+============================================================
+
+Example:
+
+COLLECTION:
+Countries & Cultures
+
+BOOK:
+Kenya
+
+RELATED NODES:
+Kenyan History
+Kenyan Food
+Kenyan Tourism
+Kenyan Economy
+Kenyan Politics
+Kenyan Business
+Kenyan Music
+Kenyan Film
+Kenyan Fashion
+Kenyan Languages
+Kenyan Diaspora
+Volunteer Opportunities in Kenya
+Travel Safety in Kenya
+Healthcare in Kenya
+
+CONNECTED ENTITIES:
+businesses
+cultural sites
+events
+community organizations
+Cultural Ambassador content
+
+The user does not need to see 15 tiles immediately.
+
+The graph can be deep while the UI remains simple.
+
+============================================================
+GEOGRAPHY MUST SCALE
+============================================================
+
+At minimum the Library architecture should support canonical Books/nodes for:
+
+ALL AFRICAN COUNTRIES
+
+ALL OTHER COUNTRIES ALREADY PRESENT IN MWM OWNERSHIP / DIASPORA DESIGNATIONS
+
+MWM LIVING LEGACY CITIES
+
+states/provinces
+counties
+townships
+neighborhoods
+
+as legitimate demand creates them.
+
+Examples:
+
+Philadelphia
+Bangkok
+Phuket
+Bucks County
+Warwick Township
+Jamison
+
+Each can develop relevant connected Books dynamically.
+
+============================================================
+MINORITY / CULTURAL COLLECTIONS
+============================================================
+
+Audit coverage for all existing MWM ownership/community designations.
+
+Examples include, where already approved in our taxonomy:
+
+Black / African American
+African diaspora identities
+Caribbean identities
+Latino/Hispanic identities
+Asian / AAPI identities
+Indigenous identities
+Middle Eastern / North African identities
+multiracial communities
+immigrant/diaspora communities
+women-owned
+veteran-owned
+disabled-owned
+LGBTQIA+-owned / affirming where appropriately distinguished
+
+Do not infer identity.
+
+Use the existing approved designation taxonomy as the source of truth.
+
+============================================================
+DIVINE 9
+============================================================
+
+This is an explicit requirement.
+
+Library structure should support:
+
+COLLECTION / VOLUME:
+Divine Nine
+
+BOOKS:
+Alpha Phi Alpha
+Alpha Kappa Alpha
+Kappa Alpha Psi
+Omega Psi Phi
+Delta Sigma Theta
+Phi Beta Sigma
+Zeta Phi Beta
+Sigma Gamma Rho
+Iota Phi Theta
+
+Each organization is its OWN canonical Book/node.
+
+Divine Nine is not merely a single article with nine paragraphs.
+
+Each Book can connect to:
+
+history
+founders
+chapters
+HBCUs
+events
+community service
+businesses
+Cultural Ambassador/community content
+official organization sources
+
+============================================================
+FAITH
+============================================================
+
+Faith must also be graph-based rather than one flat topic.
+
+Support Books/nodes for approved traditions and communities, including:
+
+AME
+Baptist
+Black Catholic
+COGIC
+Ethiopian Orthodox
+Islam
+Judaism
+Sikh traditions
+Hindu traditions
+Buddhist traditions
+African/Diaspora spiritual traditions
+Interfaith
+and other approved faith communities
+
+A house of faith is an ENTITY connected to these topics,
+not the topic itself.
+
+============================================================
+HEALTH
+============================================================
+
+Health cannot be one Book.
+
+Support legitimate topics such as:
+
+diabetes
+hypertension
+fibroids
+endometriosis
+PCOS
+fertility
+IVF
+maternal health
+sickle cell
+mental health
+HIV/AIDS
+breast cancer
+prostate health
+menopause
+etc.
+
+Do not bulk-generate unsupported medical content.
+
+Create canonical topics + source architecture, then populate with reputable
+medical evidence.
+
+Sensitive-topic privacy rules remain mandatory.
+
+============================================================
+CAREERS / PROFESSIONAL / PRACTICAL LIFE
+============================================================
+
+The Library must eventually support demand-driven Books around:
+
+careers
+occupations
+employment
+entrepreneurship
+homeownership
+real estate
+taxes
+legal topics
+education
+trades
+college
+HBCUs
+professional licensing
+financial literacy
+small-business resources
+community resources
+
+Again:
+topic existence ≠ fabricated content.
+
+============================================================
+DEMAND-DRIVEN CREATION
+============================================================
+
+If a legitimate user searches for a topic that does not yet exist:
+
+Example:
+"Welding"
+
+the system should:
+
+1. normalize the concept
+2. check canonical/alias graph
+3. create or queue the legitimate canonical topic
+4. identify what type of research model it requires
+5. connect reputable sources
+6. connect relevant businesses/professionals/entities
+7. make that Book available to future users
+
+Do not create duplicate Books from spelling variations.
+
+============================================================
+SOURCE MODEL
+============================================================
+
+Each Book may draw appropriately from:
+
+AUTHORITATIVE
+PROFESSIONAL
+COMMUNITY
+CULTURAL AMBASSADOR
+
+with the existing provenance distinctions.
+
+Different subjects require different source standards.
+
+Example:
+
+IVF
+→ authoritative medical + professional clinical information first
+
+Philadelphia nightlife
+→ businesses + events + community + Ambassador content may be more prominent
+
+Kenya
+→ official government/tourism/economic/history sources
++ journalism
++ community
++ Ambassador/travel content
+
+============================================================
+UI RULE
+============================================================
+
+DO NOT respond to this expansion by dumping hundreds of tiles on Browse Topics.
+
+User experience should remain progressive.
+
+Examples:
+
+Browse by:
+Places
+Culture
+History
+Health
+Faith
+Careers
+Travel
+Community
+Education
+Business
+Lifestyle
+
+Then drill deeper.
+
+Search remains universal.
+
+Kinfolk can retrieve the graph without requiring the user to browse the
+Library manually.
+
+============================================================
+AUDIT FIRST
+============================================================
+
+Return:
+
+CURRENT COLLECTION COUNT
+CURRENT CANONICAL BOOK COUNT
+CURRENT GEOGRAPHY NODE COUNT
+CURRENT RELATIONSHIP COUNT
+CURRENT ENTITY CONNECTION COUNT
+CURRENT SOURCE COUNT
+
+Then compare against:
+
+- all African countries
+- current MWM ownership/diaspora designations
+- Divine 9
+- approved Faith hierarchy
+- Living Legacy cities
+- major Health topics already discussed
+- Careers/professional topics
+- community geography model
+
+Classify each:
+
+COVERED
+PARTIAL
+MISSING
+
+Then implement the missing FOUNDATION efficiently.
+
+Do not manually author thousands of articles.
+
+Build the scalable graph and seed the highest-priority canonical Books.
+
+============================================================
+NEXT EXECUTION ORDER
+============================================================
+
+1. Complete P1 #211 Search relevance
+2. Complete P1 #212 Faith intent
+3. Complete P1 #213 Business-detail surfacing
+4. Run Library taxonomy audit above
+5. Expand canonical Library foundation
+6. Continue Community Intelligence work afterward according to existing queue
+
+Continue automatically.
+
+Do not create suggested future tasks for already-approved requirements.
+```
+
+One other thing in Replit’s update caught my attention: the audit says the Bangkok Kinfolk query **“engaged intelligently with follow-up”** rather than actually producing the full birthday itinerary. That is not a failure—the assistant asking what kind of experience she wants is reasonable—but when we do the Bangkok field test, I want the next turn to prove it can actually turn that conversation into **real places + reasons + geography + a share/save workflow**, not merely have a nice conversation.
+
+And I like that the fresh-user audit now passed Saves. That matters because it means we finally have evidence of the beginning of the personalization loop:
+
+**new user → onboarding → search → save → Profile → Kinfolk → future recommendation.**
+
+That is much closer to the actual product you have been describing than where the website was even a day ago.
