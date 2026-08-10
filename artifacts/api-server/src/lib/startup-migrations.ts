@@ -8,6 +8,7 @@
  * would be absent.
  */
 import { randomUUID } from "crypto";
+import { COVERAGE_EXPANSION } from "./seeds/coverage-expansion.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
@@ -1747,6 +1748,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
     ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
     ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
+    ["test data cleanup",    () => ensureTestDataRemoved(log, warn)],
+    ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3680,5 +3683,111 @@ async function ensureBangkokBusinesses(
     log(`Bangkok businesses guard: ${inserted} inserted, ${skipped} already present`);
   } catch (err: unknown) {
     warn(`Bangkok businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Remove confirmed test/demo/placeholder businesses ─────────────────────────
+async function ensureTestDataRemoved(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Only remove records we have POSITIVELY identified as test/demo fixtures.
+    // These were created on 2026-08-08 with names "Test Cafe" and "Audit Test Cafe"
+    // and have zero reviews, saves, vibes, or any member data attached.
+    const CONFIRMED_TEST_IDS = [
+      "sub_1786210637699_i1f8",
+      "sub_1786210856364_mjtt",
+    ];
+
+    let removed = 0;
+    for (const id of CONFIRMED_TEST_IDS) {
+      // Final safety check: abort if any member data exists on this record
+      const relationships = await pool.query(
+        `SELECT
+          (SELECT COUNT(*) FROM reviews WHERE business_id = $1) +
+          (SELECT COUNT(*) FROM saved_places WHERE business_id = $1) +
+          (SELECT COUNT(*) FROM business_vibe_tags WHERE business_id = $1)
+          AS total_related`,
+        [id]
+      );
+      const related = parseInt(relationships.rows[0]?.total_related ?? "1");
+      if (related > 0) {
+        warn(`  test-data-cleanup: skipping ${id} — has ${related} related member records`);
+        continue;
+      }
+      await pool.query(`DELETE FROM businesses WHERE id = $1`, [id]);
+      removed++;
+    }
+    log(`Test data cleanup: ${removed} confirmed test records removed`);
+  } catch (err: unknown) {
+    warn(`Test data cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Proof-of-concept coverage expansion — real businesses, all tour cities ────
+async function ensureCoverageExpansion(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // Build a dedup set keyed by normalized name|city|country
+    const existing = await pool.query(
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+    );
+    const existingKeys = new Set<string>(existing.rows.map((r: any) => r.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of COVERAGE_EXPANSION) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${b.country.toLowerCase()}`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,'[]'::jsonb,false,
+             $10,$11,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address, b.city,
+            b.state || null,
+            b.country,
+            b.description,
+            String(b.lat), String(b.lng),
+          ]
+        );
+        existingKeys.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  coverage-expansion: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`Coverage expansion: ${inserted} inserted, ${skipped} already present (${COVERAGE_EXPANSION.length} total in seed)`);
+  } catch (err: unknown) {
+    warn(`Coverage expansion failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
