@@ -1740,6 +1740,78 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           ))
           .limit(25);
         businessCatalog = bizRows;
+
+        // City-name ILIKE returned 0 — the destination may be a region/province
+        // whose businesses are stored under sub-area city names (e.g. "Phuket"
+        // has businesses stored as city="Karon", "Patong", "Chalong").
+        // Geocode the destination via Nominatim and fall back to a geo-radius
+        // query (50-mile radius covers any metro area or island province).
+        if (!businessCatalog.length) {
+          try {
+            const geoResp = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=3&addressdetails=0`,
+              {
+                headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
+                signal: AbortSignal.timeout(4000),
+              },
+            );
+            const geoHits = (await geoResp.json()) as Array<{
+              lat: string; lon: string; class: string; type: string;
+            }>;
+            const VALID_GEO = new Set(["place","boundary","natural","landuse","administrative"]);
+            const INVALID_GEO = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop"]);
+            const hit = geoHits.find((h) => VALID_GEO.has(h.class) && !INVALID_GEO.has(h.type));
+            if (hit) {
+              const destLat = parseFloat(hit.lat);
+              const destLng = parseFloat(hit.lon);
+              const geoRows = await pool.query(
+                `SELECT b.name, b.category, b.city, b.description, b.verified,
+                        b.tags, b.profile_status,
+                        bi.business_story, bi.mission_statement, bi.why_started,
+                        bi.what_customers_should_know, bi.ownership_badges,
+                        bi.community_values, bi.audiences_served, bi.vibes,
+                        bi.accessibility_features, bi.community_initiatives,
+                        bi.growth_goals, bi.audience_type,
+                        bi.environment_tags, bi.amenity_tags
+                 FROM businesses b
+                 LEFT JOIN business_identity bi ON bi.business_id = b.id
+                 WHERE b.status = 'active'
+                   AND (3959 * acos(GREATEST(-1, LEAST(1,
+                     cos(radians($1)) * cos(radians(b.latitude::float))
+                     * cos(radians(b.longitude::float) - radians($2))
+                     + sin(radians($1)) * sin(radians(b.latitude::float))
+                   )))) <= 50
+                 ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
+                 LIMIT 25`,
+                [destLat, destLng],
+              );
+              // Map snake_case pool.query rows to the same shape as the Drizzle select
+              businessCatalog = geoRows.rows.map((r: Record<string, unknown>) => ({
+                name: r.name,
+                category: r.category,
+                city: r.city,
+                description: r.description,
+                verified: r.verified,
+                tags: r.tags,
+                profileStatus: r.profile_status,
+                story: r.business_story,
+                missionStatement: r.mission_statement,
+                whyStarted: r.why_started,
+                whatCustomersShouldKnow: r.what_customers_should_know,
+                ownershipBadges: r.ownership_badges,
+                communityValues: r.community_values,
+                audiencesServed: r.audiences_served,
+                vibes: r.vibes,
+                accessibilityFeatures: r.accessibility_features,
+                communityInitiatives: r.community_initiatives,
+                growthGoals: r.growth_goals,
+                audienceType: r.audience_type,
+                environmentTags: r.environment_tags,
+                amenityTags: r.amenity_tags,
+              })) as unknown as typeof businessCatalog;
+            }
+          } catch { /* non-critical — geo-radius fallback failed */ }
+        }
       } catch { /* non-critical — proceed without catalog */ }
     }
 

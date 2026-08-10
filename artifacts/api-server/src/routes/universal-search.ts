@@ -572,7 +572,16 @@ async function searchBusinesses(opts: {
       // Also join community_says if it exists
       const params: unknown[] = [`%${extendedToken}%`];
       let offset = 1;
-      if (city) { offset++; params.push(`%${city}%`); }
+      let p2CityClause = "";
+      let p2GeoClause = "";
+      if (city) { offset++; params.push(`%${city}%`); p2CityClause = `AND b.city ILIKE $${offset}`; }
+      // Apply geo filter when caller supplied coordinates — prevents PASS 2 from
+      // returning US businesses when the search is geo-bounded to an international city.
+      if (lat !== undefined && lng !== undefined) {
+        params.push(lat, lng, radius);
+        const p2li = params.length;
+        p2GeoClause = ` AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${p2li - 2})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${p2li - 1})) + sin(radians($${p2li - 2})) * sin(radians(b.latitude)))))) <= $${p2li}`;
+      }
 
       const rows = await pool.query<{
         id: string; name: string; category: string; subcategory: string;
@@ -606,7 +615,7 @@ async function searchBusinesses(opts: {
              OR b.owner_bio ILIKE $1
              OR b.business_tagline ILIKE $1
            )
-           ${city ? `AND b.city ILIKE $${offset}` : ""}
+           ${p2CityClause} ${p2GeoClause}
          ORDER BY b.id, b.verified DESC
          LIMIT ${Math.min(limit, 20)}`,
         params,
@@ -792,16 +801,79 @@ async function searchBusinesses(opts: {
     }
   }
 
+  // ── PASS 2.6: Server-side geo-extract fallback ────────────────────────────
+  // When the frontend's geo-extract step failed (no ?lat/?lng were supplied)
+  // but the query contains geographic tokens that aren't category/intent words
+  // (e.g. "Phuket", "Bangkok", "Los Angeles"), resolve those tokens via
+  // Nominatim server-side. The resolved coords are then used in PASS 3 so that
+  // "restaurant Phuket Thailand" and "restaurants los angeles" both return
+  // correctly geo-bounded MWM records even when the client sent no coordinates.
+  //
+  // Guard conditions (all must be true to run):
+  //   • No explicit lat/lng from caller (frontend geo-extract already handled it)
+  //   • No explicit city param
+  //   • PASSES 1–2.5 returned 0 results (geo-extract only needed as a fallback)
+  let effectiveLat: number | undefined = lat;
+  let effectiveLng: number | undefined = lng;
+  let serverExtractedGeo = false;
+  const GEO_EXTRACT_RADIUS = 50; // miles — covers any metro area / island province
+
+  if (lat === undefined && !city && results.size === 0) {
+    const GEO_STOP_WORDS = new Set([
+      "the","a","an","in","at","for","with","of","and","or","near","around",
+      "some","any","best","good","great","find","show","get","want","looking",
+      "me","my","us","we","are","is","was","can","do","to","from","by","on",
+      "things","places","spots","area","areas","black","owned","community",
+      "go","out","tonight","nearby","local","where","what","which",
+    ]);
+    const candidateWords = trimmedQ.toLowerCase().split(/\s+/);
+    const geoTokens = candidateWords.filter(
+      (w) => w.length >= 3 && !GEO_STOP_WORDS.has(w) && !CONCEPT_TO_CATEGORY[w] && !/^\d+$/.test(w),
+    );
+    if (geoTokens.length > 0) {
+      try {
+        const geoQ = geoTokens.join(" ");
+        const geoResp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQ)}&format=json&limit=3&addressdetails=0`,
+          {
+            headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
+            signal: AbortSignal.timeout(3000),
+          },
+        );
+        const geoHits = (await geoResp.json()) as Array<{
+          lat: string; lon: string; class: string; type: string;
+        }>;
+        const VALID_GEO = new Set(["place","boundary","natural","landuse","administrative"]);
+        const INVALID_GEO = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop"]);
+        const hit = geoHits.find((h) => VALID_GEO.has(h.class) && !INVALID_GEO.has(h.type));
+        if (hit) {
+          effectiveLat = parseFloat(hit.lat);
+          effectiveLng = parseFloat(hit.lon);
+          serverExtractedGeo = true;
+        }
+      } catch { /* non-fatal — proceed without server geo-extract */ }
+    }
+  }
+
   // ── PASS 3: Category/concept mapping ─────────────────────────────────────
-  if (mappedCategories.length > 0 && results.size < limit) {
+  // Run when: categories matched AND either (a) room in results, OR (b) server
+  // geo-extract resolved a destination so we can add geo-bounded results even
+  // if earlier passes already filled the results map with national data.
+  if (serverExtractedGeo && results.size > 0) {
+    // Discard national results from PASSES 1–2.5 — geo-bounded results from
+    // PASS 3 are strictly preferred when we've identified a specific destination.
+    results.clear();
+  }
+  if (mappedCategories.length > 0 && (results.size < limit || serverExtractedGeo)) {
     try {
       // Use wildcard patterns so "Food" matches "Food", "Food & Drink", "Food & Beverage"
       const params: unknown[] = mappedCategories.map((c) => `%${c}%`);
       let extraClauses = "";
 
       if (city) { params.push(`%${city}%`); extraClauses += ` AND b.city ILIKE $${params.length}`; }
-      if (lat !== undefined && lng !== undefined) {
-        params.push(lat, lng, radius);
+      if (effectiveLat !== undefined && effectiveLng !== undefined) {
+        const geoRadius = serverExtractedGeo ? GEO_EXTRACT_RADIUS : radius;
+        params.push(effectiveLat, effectiveLng, geoRadius);
         const li = params.length;
         extraClauses += ` AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${li - 2})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${li - 1})) + sin(radians($${li - 2})) * sin(radians(b.latitude)))))) <= $${li}`;
       }

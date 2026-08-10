@@ -293,6 +293,10 @@ export default function MapPage() {
   // Near Me mode — radius in miles (null = show all, number = geo-filtered)
   const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
 
+  // Tracks whether the user explicitly denied location permission so we can
+  // show a retry prompt instead of silently falling back to homeCity.
+  const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
+
   // Universal Search — populated on explicit submit; null = client-side filtering
   const [universalResults, setUniversalResults] = useState<{
     results: { businesses: any[]; heritage: any[]; events: any[]; libraryTopics: any[] };
@@ -752,7 +756,7 @@ export default function MapPage() {
             map.setZoom(13);
             setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           },
-          () => { /* geolocation denied — homeCity is already the center */ },
+          () => { setGeoPermissionDenied(true); /* denied — homeCity is already center */ },
           { timeout: 6_000, maximumAge: 120_000 },
         );
       }
@@ -1025,6 +1029,36 @@ export default function MapPage() {
             </>
           )}
         </div>
+
+        {/* Location denied — show one-tap retry so user doesn't have to refresh */}
+        {!showingCultural && !userCoords && geoPermissionDenied && (
+          <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0">
+            <button
+              onClick={() => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    if (mapRef.current) {
+                      mapRef.current.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                      mapRef.current.setZoom(13);
+                    }
+                    setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    setGeoPermissionDenied(false);
+                  },
+                  () => { /* still denied — keep prompt visible */ },
+                  { timeout: 8_000, maximumAge: 0 },
+                );
+              }}
+              className="flex items-center gap-2 text-[10px] font-bold text-[#CA922B] hover:text-[#B38024] transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+              </svg>
+              Use My Location
+            </button>
+          </div>
+        )}
 
         {/* Near Me toggle — only shown in business view when GPS is available */}
         {!showingCultural && userCoords && (
