@@ -616,6 +616,11 @@ export default function Profile() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "reserved">("idle");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -623,6 +628,10 @@ export default function Profile() {
     if (profile) {
       setFirstName(profile.firstName || "");
       setLastName(profile.lastName || "");
+      setUsername((profile as any).username || "");
+      setBio((profile as any).bio || "");
+      setJobTitle((profile as any).jobTitle || "");
+      setIndustry((profile as any).industry || "");
     }
   }, [profile]);
 
@@ -633,6 +642,12 @@ export default function Profile() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
+
+  // ── Safety Alerts settings ─────────────────────────────────────────────────
+  const [safetyAlertPolice, setSafetyAlertPolice] = useState(true);
+  const [safetyAlertIce, setSafetyAlertIce] = useState(true);
+  const [safetyAlertRadius, setSafetyAlertRadius] = useState(5);
+  const [safetySettingsLoading, setSafetySettingsLoading] = useState(false);
 
   // ── Reviews count + recent reviews ────────────────────────────────────────
   const [reviewCount, setReviewCount] = useState<number | null>(null);
@@ -692,6 +707,17 @@ export default function Profile() {
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setPostCount(d.total ?? d.posts?.length ?? 0); })
       .catch(() => {});
+    // Safety alert settings
+    fetch(`${base}/api/users/settings`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d) {
+          setSafetyAlertPolice(d.safetyAlertPolice ?? true);
+          setSafetyAlertIce(d.safetyAlertIce ?? true);
+          setSafetyAlertRadius(d.safetyAlertRadiusMiles ?? 5);
+        }
+      })
+      .catch(() => {});
     // Kinfolk personalization preferences
     fetch(`${base}/api/kinfolk/preferences`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
@@ -725,9 +751,13 @@ export default function Profile() {
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile.mutate({ data: { firstName, lastName } }, {
+    if (usernameStatus === "taken" || usernameStatus === "reserved") {
+      toast({ title: "Username unavailable", description: "Choose a different username.", variant: "destructive" });
+      return;
+    }
+    updateProfile.mutate({ data: { firstName, lastName, username: username || undefined, bio: bio || undefined, jobTitle: jobTitle || undefined, industry: industry || undefined } as any }, {
       onSuccess: () => {
-        toast({ title: "Profile updated", description: "Your name has been saved." });
+        toast({ title: "Profile updated", description: "Your changes have been saved." });
         queryClient.invalidateQueries({ queryKey: ["getMyProfile"] });
         queryClient.invalidateQueries({ queryKey: ["getCurrentAuthUser"] });
       },
@@ -736,6 +766,33 @@ export default function Profile() {
         toast({ title: "Update failed", description: msg, variant: "destructive" });
       },
     });
+  };
+
+  const checkUsername = async (val: string) => {
+    const clean = val.trim().toLowerCase().replace(/^@/, "");
+    if (!clean || clean === ((profile as any)?.username ?? "")) { setUsernameStatus("idle"); return; }
+    if (clean.length < 3) { setUsernameStatus("idle"); return; }
+    setUsernameStatus("checking");
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const r = await fetch(`${base}/api/users/check-username/${encodeURIComponent(clean)}`, { credentials: "include" });
+      const d = await r.json();
+      if (d.reason === "That username is reserved.") setUsernameStatus("reserved");
+      else setUsernameStatus(d.available ? "available" : "taken");
+    } catch { setUsernameStatus("idle"); }
+  };
+
+  const saveSafetySettings = async (patch: { safetyAlertPolice?: boolean; safetyAlertIce?: boolean; safetyAlertRadiusMiles?: number }) => {
+    setSafetySettingsLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      await fetch(`${base}/api/users/settings`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+    } catch { /* silent */ } finally { setSafetySettingsLoading(false); }
   };
 
   const handleLogout = () => {
@@ -947,24 +1004,73 @@ export default function Profile() {
                 />
               </div>
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">{profile?.firstName} {profile?.lastName}</h2>
-              <p className="text-sm text-[#3A1F0E]/50 mb-3">{profile?.email}</p>
+              {(profile as any)?.username && (
+                <p className="text-sm font-medium text-[#CA922B] -mt-0.5">@{(profile as any).username}</p>
+              )}
+              {(profile as any)?.bio && (
+                <p className="text-xs text-[#3A1F0E]/60 mt-1 max-w-xs text-center">{(profile as any).bio}</p>
+              )}
+              {(profile as any)?.jobTitle && (
+                <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{(profile as any).jobTitle}{(profile as any)?.industry ? ` · ${(profile as any).industry}` : ""}</p>
+              )}
+              <p className="text-sm text-[#3A1F0E]/50 mb-3 mt-1">{profile?.email}</p>
               {isEarlyTester && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mb-6 border border-purple-200">
                   <FlaskConical className="w-3.5 h-3.5" /> Early Tester
                 </span>
               )}
 
-              <form onSubmit={handleUpdate} className="space-y-5 text-left mt-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">First Name</label>
-                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              <form onSubmit={handleUpdate} className="space-y-4 text-left mt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">First Name</label>
+                    <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={firstName} onChange={e => setFirstName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Last Name</label>
+                    <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={lastName} onChange={e => setLastName(e.target.value)} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Last Name</label>
-                  <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-12 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40" value={lastName} onChange={e => setLastName(e.target.value)} />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Username</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3A1F0E]/40 text-sm">@</span>
+                    <Input
+                      className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 pl-7"
+                      value={username}
+                      placeholder="your_handle"
+                      onChange={e => { setUsername(e.target.value); setUsernameStatus("idle"); }}
+                      onBlur={e => checkUsername(e.target.value)}
+                    />
+                  </div>
+                  {usernameStatus === "taken" && <p className="text-xs text-red-500">Username already taken</p>}
+                  {usernameStatus === "reserved" && <p className="text-xs text-red-500">Username reserved</p>}
+                  {usernameStatus === "available" && <p className="text-xs text-green-600">Username available</p>}
+                  {usernameStatus === "checking" && <p className="text-xs text-[#3A1F0E]/40">Checking…</p>}
                 </div>
-                <Button type="submit" className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-4" disabled={updateProfile.isPending}>
-                  <Save className="mr-2 h-4 w-4" /> Save Changes
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Bio <span className="font-normal normal-case text-[#3A1F0E]/40">({bio.length}/300)</span></label>
+                  <textarea
+                    className="w-full bg-[#FAF6EF] border-transparent rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 resize-none"
+                    rows={3}
+                    placeholder="Tell the community who you are…"
+                    value={bio}
+                    maxLength={300}
+                    onChange={e => setBio(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Job Title</label>
+                    <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 text-sm" placeholder="e.g. Teacher" value={jobTitle} onChange={e => setJobTitle(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Industry</label>
+                    <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E] placeholder:text-[#3A1F0E]/40 text-sm" placeholder="e.g. Education" value={industry} onChange={e => setIndustry(e.target.value)} />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-2" disabled={updateProfile.isPending || usernameStatus === "taken" || usernameStatus === "reserved"}>
+                  <Save className="mr-2 h-4 w-4" /> {updateProfile.isPending ? "Saving…" : "Save Changes"}
                 </Button>
               </form>
             </div>
@@ -1072,6 +1178,10 @@ export default function Profile() {
                 <div className="text-2xl font-serif font-bold text-[#CA922B]">{followingCount !== null ? followingCount : "—"}</div>
                 <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Following</div>
               </div>
+              <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                <div className="text-2xl font-serif font-bold text-[#CA922B]">{kinfolkPoints !== null ? kinfolkPoints : "—"}</div>
+                <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Points</div>
+              </div>
             </div>
             <div className="space-y-2">
               <Link href="/connections">
@@ -1124,6 +1234,124 @@ export default function Profile() {
                   </div>
                 </Link>
               )}
+              <Link href="/notifications">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <MessageCircle className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Notifications</div>
+                      <div className="text-xs text-[#3A1F0E]/50">Activity, alerts, and updates</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              <Link href="/travel">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <Plane className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Kinfolk Travel</div>
+                      <div className="text-xs text-[#3A1F0E]/50">Trip planner and city guides</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              <Link href="/referral-redirect">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <Heart className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Refer a Friend</div>
+                      <div className="text-xs text-[#3A1F0E]/50">Invite someone to the community</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              {(auth?.user as any)?.role === "admin" && (
+                <Link href="/admin">
+                  <div className="flex items-center justify-between p-3.5 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors cursor-pointer group border border-amber-200/50">
+                    <div className="flex items-center gap-2.5">
+                      <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div>
+                        <div className="text-sm font-semibold text-amber-800">Admin Panel</div>
+                        <div className="text-xs text-amber-600/70">Platform management</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </div>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Safety Alerts ────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 md:p-8 border border-[#3A1F0E]/5 shadow-sm mt-8">
+          <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#CA922B]" /> Safety Alerts
+          </h3>
+          <p className="text-xs text-[#3A1F0E]/50 mb-5">Control which community safety alerts you receive. These are community-reported — not connected to police databases.</p>
+          <div className="space-y-3">
+            {/* Police activity */}
+            <div className="flex items-center justify-between p-4 bg-[#FAF6EF] rounded-2xl">
+              <div>
+                <div className="font-semibold text-sm text-[#3A1F0E]">Police Activity Alerts</div>
+                <div className="text-xs text-[#3A1F0E]/60 mt-0.5">Community-reported police presence in your area</div>
+              </div>
+              <button
+                disabled={safetySettingsLoading}
+                onClick={() => {
+                  const next = !safetyAlertPolice;
+                  setSafetyAlertPolice(next);
+                  saveSafetySettings({ safetyAlertPolice: next });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                  safetyAlertPolice ? "bg-[#2B1507] text-white" : "bg-[#CA922B]/15 text-[#CA922B]"
+                }`}
+              >
+                {safetyAlertPolice ? "On" : "Off"}
+              </button>
+            </div>
+            {/* ICE activity */}
+            <div className="flex items-center justify-between p-4 bg-[#FAF6EF] rounded-2xl">
+              <div>
+                <div className="font-semibold text-sm text-[#3A1F0E]">Immigration Activity Alerts</div>
+                <div className="text-xs text-[#3A1F0E]/60 mt-0.5">Community-reported ICE activity near you</div>
+              </div>
+              <button
+                disabled={safetySettingsLoading}
+                onClick={() => {
+                  const next = !safetyAlertIce;
+                  setSafetyAlertIce(next);
+                  saveSafetySettings({ safetyAlertIce: next });
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                  safetyAlertIce ? "bg-[#2B1507] text-white" : "bg-[#CA922B]/15 text-[#CA922B]"
+                }`}
+              >
+                {safetyAlertIce ? "On" : "Off"}
+              </button>
+            </div>
+            {/* Alert radius */}
+            <div className="p-4 bg-[#FAF6EF] rounded-2xl">
+              <div className="font-semibold text-sm text-[#3A1F0E] mb-3">Alert Radius</div>
+              <div className="flex gap-2 flex-wrap">
+                {[1, 2, 3, 5, 10].map(r => (
+                  <button
+                    key={r}
+                    disabled={safetySettingsLoading}
+                    onClick={() => { setSafetyAlertRadius(r); saveSafetySettings({ safetyAlertRadiusMiles: r }); }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-60 ${
+                      safetyAlertRadius === r ? "bg-[#CA922B] text-white" : "bg-white border border-[#3A1F0E]/10 text-[#3A1F0E]/60 hover:border-[#CA922B]"
+                    }`}
+                  >
+                    {r} mi
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
