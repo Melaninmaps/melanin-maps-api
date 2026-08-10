@@ -26,10 +26,10 @@ PRODUCTION SHA VERIFIED: YES/NO
 STALE BUNDLE: TRUE/FALSE
 WEBSITE AVAILABLE: YES/NO
 PUBLIC/MEMBER WALL VERIFIED: YES/NO
-FOUNDER LOGIN VERIFIED: YES/NO
-TESTER LOGIN VERIFIED: YES/NO
-APPLE REVIEWER VERIFIED: YES/NO
-LOGOUT VERIFIED: YES/NO
+FOUNDER LOGIN VERIFIED: YES/NO   ← must be the FOUNDER account, not tester/reviewer
+TESTER LOGIN VERIFIED: YES/NO    ← must be a named tester account, not founder
+APPLE REVIEWER VERIFIED: YES/NO  ← must be apple.reviewer@mappingwithmelanin.com
+LOGOUT VERIFIED: YES/NO          ← must use full sequence, not just HTTP code
 PROFILE VERIFIED: YES/NO
 DIRECTORY VERIFIED: YES/NO
 MAP VERIFIED: YES/NO
@@ -42,8 +42,16 @@ NEW PRODUCTION ERRORS: YES/NO
 DATA LOSS DETECTED: YES/NO
 REGRESSION DETECTED: YES/NO
 
-FINAL RELEASE STATUS: PASS or FAIL — DO NOT PROCEED
+AUTOMATED PRODUCTION REGRESSION GATE: PASS / FAIL
+BROWSER ACCEPTANCE GATE: PASS / PARTIAL (list outstanding) / FAIL
+FINAL RELEASE STATUS: PASS / PARTIAL PASS / FAIL
 ```
+
+**FINAL RELEASE STATUS rules:**
+- PASS only when ALL 20 items above are verified including browser tests
+- PARTIAL PASS when automated gate passes but browser tests outstanding — must list what is pending
+- FAIL when any P0/P1 regression detected — do not proceed until resolved
+- Never report PASS when MAP or LIBRARY DRILL-DOWN are NOT TESTED
 
 ## Section-by-Section Obligations
 
@@ -52,6 +60,20 @@ FINAL RELEASE STATUS: PASS or FAIL — DO NOT PROCEED
 **2. Website Availability** — VISUALLY open https://www.mappingwithmelanin.com. No white screen, no crash, no blank React root. Capture screenshot evidence for major releases.
 
 **3. Authentication** — Every production deployment: login page loads, email/password works, Apple review path intact, tester entitlement intact, authenticated session created, protected page opens, session persists, logout works, re-login works. Non-negotiable.
+
+**PERSONA RULE:** Each account must be tested independently. Never substitute one persona for another:
+- FOUNDER LOGIN: use the founder's own account — do NOT use tester@mwm.com
+- TESTER LOGIN: use a named tester account (e.g. tester@mwm.com, manus@mwm.com)
+- APPLE REVIEWER: use apple.reviewer@mappingwithmelanin.com specifically
+- If a persona's credentials are not available this cycle: report NOT TESTED THIS CYCLE — never infer pass from a different account
+
+**LOGOUT SEQUENCE (mandatory — not just HTTP redirect code):**
+1. LOGIN → obtain token
+2. GET /api/auth/user with token → confirm HTTP 200 + correct user
+3. POST /api/auth/logout-all (Bearer token) → confirm success response
+4. GET /api/auth/user with SAME token → must return HTTP 401
+If step 4 still returns 200: LOGOUT VERIFIED = FAIL — report the gap.
+Note: GET /logout is OIDC-only and will not invalidate email-login sessions when OIDC is unavailable. Use POST /api/auth/logout-all for Bearer-token logout verification.
 
 **4. Member Wall** — Logged out: only public pages visible, protected routes return 401/403. Logged in + approved: member experience works. Admin: role restricted correctly.
 
