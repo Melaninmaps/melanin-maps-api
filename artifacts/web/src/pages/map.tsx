@@ -303,44 +303,87 @@ export default function MapPage() {
   } | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
 
-  // Geocode search string and pan map — uses server-side endpoint so the key
-  // restrictions on the browser key don't block international city geocoding.
-  const geocodeAndPan = useCallback(async () => {
-    if (!mapRef.current || !search.trim()) return;
-    try {
-      const apiBase = import.meta.env.VITE_API_URL ?? "";
-      const res = await fetch(
-        `${apiBase}/api/maps/geocode?address=${encodeURIComponent(search.trim())}`,
-        { credentials: "include" }
-      );
-      if (res.ok) {
-        const { lat, lng } = await res.json() as { lat: number; lng: number };
-        if (mapRef.current && typeof lat === "number" && typeof lng === "number") {
-          mapRef.current.panTo({ lat, lng });
-          mapRef.current.setZoom(13);
-        }
-      }
-    } catch { /* geocoding failed — map stays at current position */ }
-  }, [search]);
+  // Detected geography from the last natural-language search.
+  // Used to pan the map and show honest zero-result messaging.
+  // PRODUCT RULE: this contains ONLY WHERE — never business/place data.
+  const [detectedLocation, setDetectedLocation] = useState<{
+    lat: number; lng: number; name: string;
+  } | null>(null);
 
-  // Universal Search — triggered on Enter or button click, runs alongside geocodeAndPan
+  // Universal Search — triggered on Enter or button click.
+  //
+  // ARCHITECTURE:
+  //   Step 1 — geo-extract: parse "WHERE" from the natural query
+  //             ("Phuket restaurants" → WHERE=Phuket, WHAT=restaurants)
+  //             Geocode ONLY the WHERE portion via Nominatim. Pan map.
+  //   Step 2 — MWM DB search: query our database with the full phrase +
+  //             detected coordinates so Pass 2.5 (city detection) and
+  //             geo-radius filtering both apply.
+  //   Step 3 — display ONLY MWM records. Never surface Nominatim POIs.
+  //
+  // geocodeAndPan (the old single-step approach) sent the full phrase
+  // "Phuket restaurants" to Nominatim, which returned a restaurant
+  // named "Phuket" in Oslo. This is the fix.
   const runUniversalSearch = useCallback(async () => {
     const q = search.trim();
     if (!q || q.length < 2) return;
-    geocodeAndPan();
     setBusinessSearchActive(true);
     setUniversalResults(null);
     setUniversalLoading(true);
+    setDetectedLocation(null);
+
+    const apiBase = import.meta.env.VITE_API_URL ?? "";
+
+    // Step 1 — geography extraction + map pan
+    // Sends q to /api/maps/geo-extract which strips intent words (e.g.
+    // "restaurants"), geocodes only the geographic portion, validates the
+    // Nominatim result is a real place (not an amenity), and returns lat/lng.
+    let geoLat: number | null = null;
+    let geoLng: number | null = null;
+    let geoName: string | null = null;
     try {
-      const base = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
+      const geoRes = await fetch(
+        `${apiBase}/api/maps/geo-extract?q=${encodeURIComponent(q)}`,
+        { credentials: "include" }
+      );
+      if (geoRes.ok) {
+        const gd = await geoRes.json() as {
+          hasLocation: boolean; locationQuery: string | null;
+          contentQuery: string; lat: number | null; lng: number | null;
+        };
+        if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
+          geoLat = gd.lat;
+          geoLng = gd.lng;
+          geoName = gd.locationQuery ?? null;
+          setDetectedLocation({ lat: gd.lat, lng: gd.lng, name: gd.locationQuery ?? q });
+          if (mapRef.current) {
+            mapRef.current.panTo({ lat: gd.lat, lng: gd.lng });
+            mapRef.current.setZoom(12);
+          }
+        }
+      }
+    } catch { /* geo-extract failed — map stays at current position, search continues */ }
+
+    // Step 2 — search MWM database only
+    // Pass full query so Pass 2.5 city detection works ("Phuket" found in
+    // businesses table → filters to Phuket). Also pass detected lat/lng so
+    // geo-radius ranking activates for that geography.
+    try {
       const p = new URLSearchParams({ q, surface: "map", limit: "20" });
-      if (userCoords) { p.set("lat", String(userCoords.lat)); p.set("lng", String(userCoords.lng)); }
-      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      if (geoLat !== null && geoLng !== null) {
+        // Override user GPS coords with the detected location so the MWM DB
+        // search is geo-bounded around the identified city/region.
+        p.set("lat", String(geoLat));
+        p.set("lng", String(geoLng));
+      } else if (userCoords) {
+        p.set("lat", String(userCoords.lat));
+        p.set("lng", String(userCoords.lng));
+      }
       const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
       if (res.ok) setUniversalResults(await res.json());
     } catch { /* fall through to client-side filtered list */ }
     finally { setUniversalLoading(false); }
-  }, [search, userCoords, geocodeAndPan]);
+  }, [search, userCoords]);
 
   const businesses = (mapPins as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude
@@ -910,6 +953,7 @@ export default function MapPage() {
                     setSearch(e.target.value);
                     if (businessSearchActive) setBusinessSearchActive(false);
                     if (universalResults) setUniversalResults(null);
+                    if (detectedLocation) setDetectedLocation(null);
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter") runUniversalSearch(); }}
                   placeholder="Search businesses, heritage, events — press Enter"
@@ -917,7 +961,7 @@ export default function MapPage() {
                 />
                 {search && (
                   <button
-                    onClick={() => { setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); }}
+                    onClick={() => { setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null); }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5"
                   >
                     <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
@@ -1192,10 +1236,35 @@ export default function MapPage() {
                 {(universalResults?.results?.businesses ?? filtered).length === 0 ? (
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-[#2B1507] mb-1">No places found</p>
-                    <p className="text-xs text-[#3A1F0E]/50 mb-5 leading-relaxed">
-                      Don't see it on the map yet?<br />Add it and share your experience.
-                    </p>
+                    {detectedLocation ? (
+                      <>
+                        <p className="text-sm font-semibold text-[#2B1507] mb-1">
+                          No MWM listings in {detectedLocation.name} yet
+                        </p>
+                        <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">
+                          We haven't fully mapped this area yet.<br />
+                          You can help the community by adding a place.
+                        </p>
+                        {/* "View all" resets the content filter, keeps the map centered on detected city */}
+                        <button
+                          onClick={() => {
+                            setSearch(detectedLocation.name);
+                            setUniversalResults(null);
+                            setDetectedLocation(null);
+                          }}
+                          className="text-xs font-bold text-[#CA922B] hover:underline block mx-auto mb-3"
+                        >
+                          View all MWM places in {detectedLocation.name}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-[#2B1507] mb-1">No places found</p>
+                        <p className="text-xs text-[#3A1F0E]/50 mb-4 leading-relaxed">
+                          Don't see it on the map yet?<br />Add it and share your experience.
+                        </p>
+                      </>
+                    )}
                     <button
                       onClick={() => setShowAddPlace(true)}
                       className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-full bg-[#CA922B] text-white text-xs font-bold hover:bg-[#B38024] transition-colors mb-3"
@@ -1204,7 +1273,7 @@ export default function MapPage() {
                       Add a Place
                     </button>
                     <button
-                      onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); }}
+                      onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null); }}
                       className="text-xs font-bold text-[#CA922B] hover:underline"
                     >
                       Clear Search

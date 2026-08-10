@@ -96,6 +96,173 @@ router.get("/maps/geocode", mapsLimiter, async (req: Request, res: Response) => 
   }
 });
 
+// ── Natural-language geography extractor ─────────────────────────────────────
+// GET /maps/geo-extract?q=Phuket+restaurants
+//
+// PRODUCT RULE (permanent):
+//   The geocoder resolves WHERE.  The MWM database resolves WHAT.
+//   This endpoint exists ONLY to obtain lat/lng + city context so:
+//     (a) the map can pan to the correct location
+//     (b) the MWM DB search can be geo-bounded
+//   It NEVER returns or implies business results from Nominatim/OSM/Google.
+//
+// Returns:
+//   { hasLocation, locationQuery, contentQuery, lat, lng, formattedAddress }
+//
+// Algorithm (in order):
+//   1. Normalize two-word intent phrases ("night life" → "nightlife")
+//   2. Pattern: "X in/near/at/around Y" → content=X, location=Y
+//   3. Strip known content/intent words → remaining tokens are the geo candidate
+//   4. Geocode ONLY the geo candidate via Nominatim
+//   5. Validate Nominatim result is a real place (class=place/boundary/etc.)
+//      Reject class=amenity (e.g. "Phuket" restaurant in Oslo)
+//   6. Return hasLocation=false if no valid geography found
+// ──────────────────────────────────────────────────────────────────────────────
+
+// Words that express intent/category, not geography.  Strip these to isolate
+// the geographic portion of a natural-language query.
+const CONTENT_TOKENS = new Set([
+  // Food & drink
+  "restaurant","restaurants","food","eat","eating","dining","dine",
+  "cafe","cafes","coffee","brunch","lunch","dinner","breakfast","bistro",
+  // Nightlife
+  "nightlife","nightclub","nightclubs","bar","bars","lounge","lounges",
+  "club","clubs","pub","pubs","entertainment","drinks",
+  // Wellness / beauty
+  "spa","spas","massage","wellness","salon","salons","hair",
+  "braider","braiders","braiding","barber","barbers","barbershop",
+  "nail","nails","beauty","skincare",
+  // Faith
+  "church","churches","temple","temples","mosque","mosques",
+  "faith","worship","ame","baptist","methodist","catholic","christian","prayer",
+  // Lodging
+  "hotel","hotels","resort","resorts","motel","inn","airbnb","hostel",
+  "stay","accommodation","lodging",
+  // Retail
+  "shop","shops","store","stores","market","markets","mall","boutique","shopping",
+  // Services
+  "doctor","doctors","dentist","hospital","clinic","healthcare","medical","pharmacy",
+  "obgyn","gyn","lawyer","attorney","law","legal","notary",
+  "plumber","plumbing","electrician","contractor","roofer","painter","handyman",
+  "childcare","daycare","school","schools","tutoring","education",
+  "gym","fitness","yoga","pilates","crossfit","wellness",
+  "bank","banks","credit","union","financial","insurance",
+  // Recreation
+  "beach","beaches","pool","rooftop","outdoor","park","parks",
+  "museum","art","gallery","galleries",
+  // Qualifiers (non-geographic adjectives)
+  "black","friendly","owned","minority","community","cultural",
+  "best","good","top","great","nice","popular","local","authentic",
+  "traditional","modern","family","luxury","affordable","cheap",
+  "romantic","vibrant","cozy","trendy","lively","upscale","casual","chill",
+  "amazing","perfect","hidden","gem","cool","fun","known","famous",
+  // Generic discovery words
+  "places","businesses","spots","venue","venues","location","locations",
+  "things","stuff","services","options","choices",
+  // Prepositions handled in Pattern 2 (not stripped here — used for splitting)
+  // Articles / noise
+  "the","a","an","and","or","with","for",
+]);
+
+// Nominatim classes that represent real geographic places
+const VALID_GEO_CLASSES = new Set(["place","boundary","natural","landuse","administrative"]);
+
+// Nominatim types that are INVALID even inside a "valid" class (specific POIs)
+const INVALID_GEO_TYPES = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop","school"]);
+
+interface NominatimHit {
+  lat: string; lon: string; display_name: string;
+  class: string; type: string; importance: number;
+}
+
+async function nominatimGeocode(q: string): Promise<NominatimHit | null> {
+  const url =
+    `https://nominatim.openstreetmap.org/search` +
+    `?q=${encodeURIComponent(q)}&format=json&limit=3&addressdetails=0`;
+  const upstream = await fetch(url, {
+    headers: {
+      "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)",
+      "Accept-Language": "en",
+    },
+  });
+  const hits = await upstream.json() as NominatimHit[];
+  if (!hits?.length) return null;
+  // Prefer the first result whose class is a real geographic entity
+  for (const h of hits) {
+    if (VALID_GEO_CLASSES.has(h.class) && !INVALID_GEO_TYPES.has(h.type)) return h;
+  }
+  return null; // Every result was an amenity/POI — reject all
+}
+
+router.get("/maps/geo-extract", mapsLimiter, async (req: Request, res: Response) => {
+  const raw = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (!raw) { res.status(400).json({ error: "q is required" }); return; }
+
+  // Step 1: normalize common two-word intent phrases so they collapse to one token
+  let q = raw
+    .replace(/\bnight\s+life\b/gi, "nightlife")
+    .replace(/\bchild\s+care\b/gi, "childcare")
+    .replace(/\bob[\s-]gyn\b/gi, "obgyn")
+    .replace(/\bbeach\s+club(s)?\b/gi, "beachclubs")
+    .replace(/\bfitness\s+center\b/gi, "fitnesscenter");
+
+  let locationQuery: string | null = null;
+  let contentQuery = "";
+
+  // Step 2: Preposition pattern — "X in/near/at/around Y" → content=X, location=Y
+  const prepMatch = q.match(/^(.+?)\s+\b(?:in|near|at|around)\b\s+(.+)$/i);
+  if (prepMatch) {
+    contentQuery  = prepMatch[1].trim();
+    locationQuery = prepMatch[2].trim();
+  } else {
+    // Step 3: Strip content tokens — what's left is the geo candidate
+    const words = q.split(/\s+/);
+    const geoWords: string[] = [];
+    const ctWords: string[] = [];
+    for (const w of words) {
+      const key = w.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (CONTENT_TOKENS.has(key)) ctWords.push(w);
+      else geoWords.push(w);
+    }
+
+    if (geoWords.length > 0 && geoWords.length < words.length) {
+      // Some content words stripped — remaining are the location candidate
+      locationQuery = geoWords.join(" ");
+      contentQuery  = ctWords.join(" ");
+    } else if (geoWords.length === words.length) {
+      // No content words found → treat the whole thing as a location
+      locationQuery = q;
+      contentQuery  = "";
+    }
+    // If all words are content (geoWords.length===0) → hasLocation=false below
+  }
+
+  // Step 4 + 5: Geocode and validate
+  if (!locationQuery) {
+    res.json({ hasLocation: false, locationQuery: null, contentQuery: raw, lat: null, lng: null, formattedAddress: null });
+    return;
+  }
+
+  try {
+    const hit = await nominatimGeocode(locationQuery);
+    if (!hit) {
+      // No valid geographic result → return hasLocation=false; client keeps current map position
+      res.json({ hasLocation: false, locationQuery, contentQuery, lat: null, lng: null, formattedAddress: null });
+      return;
+    }
+    res.json({
+      hasLocation: true,
+      locationQuery,          // Geographic portion of the original query (e.g. "Phuket")
+      contentQuery,           // Intent portion (e.g. "restaurants")
+      lat: parseFloat(hit.lat),
+      lng: parseFloat(hit.lon),
+      formattedAddress: hit.display_name,
+    });
+  } catch {
+    res.status(500).json({ error: "Geo extraction failed" });
+  }
+});
+
 // Proxies Google Directions API so the key stays server-side and is never sent
 // to the browser. Uses GOOGLE_MAPS_API_KEY (the server-only key), NOT the browser
 // key. This key should be API-restricted to Directions API only in Google Cloud.
