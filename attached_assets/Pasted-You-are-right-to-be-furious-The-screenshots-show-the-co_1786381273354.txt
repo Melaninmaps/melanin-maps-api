@@ -1,0 +1,331 @@
+You are right to be furious. The screenshots show the core problem plainly: **Replit is reporting database/business counts as “done,” but the actual map experience is not surfacing those businesses where the user is looking.**
+
+That means the issue is no longer “do we have Phuket/Jamaica/Bangkok data?” The issue is **the map-to-data wiring, filtering, clustering, or viewport query logic is still wrong in production.** Replit has been validating inventory and APIs, but not proving that the actual map renders the expected businesses in the expected geography.
+
+Do not let Replit seed one more business until this is fixed. Send this:
+
+```text
+P0 — STOP ALL SEEDING. MAP PRODUCTION DISPLAY IS FAILING.
+
+Founder has manually tested the LIVE production map.
+
+SCREENSHOT EVIDENCE:
+
+1. Thailand / Bangkok / Phuket region:
+   no business markers visible where expected.
+
+2. Jamaica / Caribbean region:
+   no business markers visible where expected.
+
+This directly contradicts the latest reports claiming:
+
+- 25 Bangkok businesses
+- 62 Phuket businesses
+- 23 Jamaica businesses
+- 1,186 active businesses total
+- all geolocated
+
+STOP adding data.
+
+The problem is now clearly:
+
+DATA EXISTS
+BUT THE USER CANNOT SEE IT ON THE MAP.
+
+This is a P0 field-readiness failure.
+
+============================================================
+DO NOT GUESS
+============================================================
+
+Do not immediately:
+
+- add more businesses
+- change coordinates
+- reseed Thailand
+- reseed Jamaica
+- change map styles
+- increase API limits
+- rewrite the map
+
+First perform a full forensic trace of why real production entities are not rendering.
+
+============================================================
+TEST THE EXACT PRODUCTION RECORDS
+============================================================
+
+Pick:
+
+3 confirmed Bangkok records
+3 confirmed Phuket records
+3 confirmed Jamaica records
+
+For each return:
+
+business id
+name
+city
+state/province
+country
+latitude
+longitude
+listing_status
+category
+active/deleted state
+
+Do NOT print private data.
+
+Confirm these rows exist in RAILWAY PRODUCTION — not dev/Replit DB.
+
+============================================================
+TRACE MAP DATA PIPELINE
+============================================================
+
+For each selected record trace:
+
+Railway production DB
+→ /api/businesses or map endpoint
+→ server filtering
+→ auth
+→ country/location filters
+→ result limit
+→ JSON response
+→ frontend fetch
+→ frontend transformation
+→ marker eligibility
+→ marker component
+→ Google Maps coordinates
+→ viewport visibility
+
+Return exactly where the record disappears.
+
+============================================================
+CHECK THESE FAILURE MODES
+============================================================
+
+A. MAP ONLY FETCHES FIRST N BUSINESSES
+
+The map may be loading 100 / 500 / some fixed limit and never receiving
+international records.
+
+Verify API limit and pagination.
+
+B. MAP LOADS ALL DATA BUT FRONTEND FILTERS TO US
+
+Audit country/default filter logic.
+
+C. INTERNATIONAL CHIP IS REQUIRED BUT NOT ACTIVE
+
+If international entities only appear after selecting a hidden/filter state,
+confirm whether that is intentional.
+
+A user panning to Thailand should still have a reasonable way to see local
+businesses.
+
+D. VIEWPORT / BOUNDS LOGIC IS BROKEN
+
+Verify whether map movement triggers a new query for the current bounds.
+
+E. COORDINATES ARE STRINGS / INVALID / REVERSED
+
+Confirm lat/lng type and ordering.
+
+Thailand should be roughly:
+
+latitude positive ~7–14
+longitude positive ~98–101
+
+Jamaica roughly:
+
+latitude ~17–19
+longitude ~-78 to -76
+
+Do not alter values unless proven wrong.
+
+F. MARKER TYPE FILTER
+
+Check whether only cultural sites/HBCUs/etc are being rendered while business
+markers are excluded.
+
+G. CATEGORY FILTER DEFAULT
+
+Verify "ALL" truly includes businesses.
+
+H. CLUSTER / ZOOM THRESHOLD
+
+Check whether markers are hidden until a certain zoom level.
+
+I. MAP INITIAL DATA SOURCE IS STALE
+
+Confirm the web map is not reading:
+
+old static JSON
+old cached bundle
+dev data
+legacy endpoint
+
+J. SERVER RESPONSE LIMIT ORDERING
+
+If API returns first 1000 ordered by US-heavy insertion/id, international
+businesses may never enter the response despite existing in DB.
+
+This is especially likely given the reported 1,186 businesses.
+
+============================================================
+CRITICAL TEST
+============================================================
+
+Call the SAME endpoint the production map uses.
+
+Query/filter for:
+
+Bangkok
+Phuket
+Jamaica
+
+Return whether the specific known businesses appear in the payload.
+
+Then inspect browser network request from the real production map.
+
+Do not use a different API route to prove that the data exists.
+
+THE EXACT MAP REQUEST MUST RETURN THE DATA.
+
+============================================================
+EXPECTED MAP BEHAVIOR
+============================================================
+
+The map should NOT preload a fixed arbitrary subset of 1,186 businesses and
+pretend that represents the world.
+
+The architecture needs to support geography.
+
+Preferred behavior:
+
+map viewport / bounds
+→ request entities within visible geography
+→ return relevant businesses/sites
+→ render markers
+
+or another safe equivalent.
+
+When user pans/zooms to Bangkok:
+
+Bangkok businesses should load.
+
+When user pans to Phuket:
+
+Phuket businesses should load.
+
+When user pans to Jamaica:
+
+Jamaica businesses should load.
+
+The user should NOT have to know which hidden filter to activate merely to
+make existing geographic data appear.
+
+An International filter may help discovery, but it must not be the only way
+the system is capable of rendering international records.
+
+============================================================
+SEARCH → MAP
+============================================================
+
+Also test:
+
+Search "Bangkok"
+→ map centers Bangkok
+→ Bangkok business markers visible.
+
+Search "Phuket"
+→ map centers Phuket
+→ Phuket business markers visible.
+
+Search "Jamaica"
+→ map centers Jamaica
+→ Jamaica business/place markers visible.
+
+Search real business name in Phuket
+→ result opens
+→ map centers exact location
+→ marker visible.
+
+============================================================
+PRODUCTION BROWSER PROOF — REQUIRED
+============================================================
+
+Use a REAL authenticated tester in:
+
+https://www.mappingwithmelanin.com
+
+Capture screenshots of:
+
+1. Bangkok zoomed in with business pins
+2. Phuket zoomed in with business pins
+3. Jamaica zoomed in with business/place pins
+4. click a Bangkok business pin
+5. click a Phuket business pin
+6. click a Jamaica pin
+7. business preview appears
+8. detail link works
+
+Do not report PASS using curl alone.
+
+Founder has already proven curl/database counts are not sufficient.
+
+============================================================
+DO NOT CONTINUE OTHER WORK
+============================================================
+
+Until this passes:
+
+STOP broad seeding
+STOP new feature expansion
+STOP calling the platform FIELD READY
+
+Fix this map rendering issue first.
+
+============================================================
+AFTER FIX
+============================================================
+
+Run:
+
+- search Bangkok
+- search Phuket
+- search Jamaica
+- search Philadelphia
+- search Atlanta
+- US map regression
+- cultural sites
+- HBCUs
+- historical exclusion markers
+- member wall
+- tester login
+- Apple reviewer
+- Kinfolk
+- Library
+
+Then return:
+
+ROOT CAUSE
+EXACT FIX
+PRODUCTION SHA
+BANGKOK VISUAL: PASS/FAIL
+PHUKET VISUAL: PASS/FAIL
+JAMAICA VISUAL: PASS/FAIL
+US MAP REGRESSION: PASS/FAIL
+DATA LOSS: YES/NO
+
+Do not tell founder "businesses are in the database."
+
+The acceptance condition is:
+
+THE USER CAN SEE THEM ON THE MAP.
+```
+
+I strongly suspect one of two things: **the map is capped at a fixed result limit**, or it is **loading a US-heavy subset once and never querying by viewport**. With 1,186 businesses, that would explain why Replit can truthfully query “62 Phuket businesses” while your live map still shows none.
+
+The good news is this is probably not lost work. The records may genuinely exist. The bad news is Replit has been using the wrong definition of “verified.”
+
+From now on the standard for this feature is not **“DB row exists.”** It is **“I can pan to Phuket and see the businesses.”**
