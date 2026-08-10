@@ -1576,6 +1576,40 @@ ON CONFLICT (city_slug) DO NOTHING`,
   //
   // v2: fixes uuid[] → text[] type mismatch (users.id is character varying).
   // v1 errored with "operator does not exist: character varying = uuid".
+  // ── Post-verification cleanup ───────────────────────────────────────────────
+  // tester_clean_slate_v2 was verified by registering 4 test accounts. This
+  // migration removes those verification accounts before real testers arrive.
+  {
+    name: "tester_verification_cleanup_v1",
+    sql: `
+      DO $$
+      DECLARE
+        v_emails TEXT[] := ARRAY[
+          'reinaoba06@gmail.com',
+          'kayla.m.manus@mappingwithmelanin.com',
+          'tlindsay428@gmail.com',
+          'tlindsay428@aol.com'
+        ];
+        v_ids text[];
+      BEGIN
+        SELECT ARRAY_AGG(id::text) INTO v_ids
+        FROM users
+        WHERE LOWER(TRIM(email)) = ANY(SELECT LOWER(TRIM(e)) FROM unnest(v_emails) AS e);
+        IF v_ids IS NULL OR array_length(v_ids, 1) = 0 THEN RETURN; END IF;
+        BEGIN DELETE FROM user_preferences        WHERE user_id::text = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM saved_places            WHERE user_id::text = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN DELETE FROM kinfolk_conversations   WHERE user_id::text = ANY(v_ids); EXCEPTION WHEN OTHERS THEN NULL; END;
+        BEGIN
+          DELETE FROM users WHERE id::text = ANY(v_ids);
+        EXCEPTION WHEN OTHERS THEN
+          SET session_replication_role = replica;
+          DELETE FROM users WHERE id::text = ANY(v_ids);
+          SET session_replication_role = DEFAULT;
+        END;
+        RAISE NOTICE 'tester_verification_cleanup_v1: removed % verification test accounts', array_length(v_ids, 1);
+      END $$;
+    `,
+  },
   {
     name: "tester_clean_slate_v2",
     sql: `
