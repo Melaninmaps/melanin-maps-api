@@ -80,9 +80,10 @@ export default function OnboardingAgreement() {
     // sync the acceptance to the server immediately. For new users coming through
     // onboarding, the server record is created automatically during signup.
     if (Platform.OS !== "web") {
-      SecureStore.getItemAsync("auth_session_token").then((token) => {
+      SecureStore.getItemAsync("auth_session_token").then(async (token) => {
         if (!token) return;
-        const base = (await import("@/lib/api")).getApiBase();
+        const { getApiBase } = await import("@/lib/api");
+        const base = getApiBase();
         fetch(`${base}/api/membership/agreement`, {
           method: "POST",
           headers: {
