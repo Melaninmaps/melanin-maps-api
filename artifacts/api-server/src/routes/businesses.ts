@@ -973,6 +973,11 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
     res.json({
       business: {
         ...business,
+        // Normalize array fields so the web/mobile clients always receive [] not null.
+        // photos and pendingPhotos are jsonb columns that default to [] but can be null
+        // in older rows that pre-date the column addition.
+        photos: Array.isArray(business.photos) ? business.photos : [],
+        pendingPhotos: Array.isArray(business.pendingPhotos) ? business.pendingPhotos : [],
         audienceType: identity?.audienceType ?? "unknown",
         ageRestrictionReasons: identity?.ageRestrictionReasons ?? [],
         environmentTags: identity?.environmentTags ?? [],

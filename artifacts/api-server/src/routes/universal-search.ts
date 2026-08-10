@@ -265,14 +265,18 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
 // ── Faith / heritage / library intent triggers ────────────────────────────────
 const FAITH_TRIGGERS = [
   "church", "mosque", "gurdwara", "synagogue", "temple", "cathedral",
-  "ame ", "cogic", "baptist", "pentecostal", "apostolic", "methodist",
-  "catholic", "episcopal", "lutheran", "presbyterian", "adventist",
-  "quaker", "meeting house", "islam", "muslim", "jewish", "judaism",
+  // Fixed: "ame " (with trailing space) missed "AME" at end of string — use bare word.
+  // detectIntentType uses .includes() so word-boundary is not needed here.
+  "ame church", "african methodist episcopal", "cogic", "baptist", "pentecostal",
+  "apostolic", "methodist", "catholic", "episcopal", "lutheran", "presbyterian",
+  "adventist", "quaker", "meeting house", "islam", "muslim", "jewish", "judaism",
   "hindu", "sikh", "buddhist", "buddhism", "jain", "bahai", "unitarian",
   "interfaith", "multifaith", "gospel", "langar", "house of worship",
-  "place of worship", "spiritual community", "faith community",
+  "place of worship", "spiritual community", "faith community", "congregation",
+  "parish", "diocese", "ministry", "chapel", "shrine", "tabernacle", "zion",
   "black church", "historic church", "houses of faith", "meditation center",
-  "spanish mass", "haitian church", "african church",
+  "spanish mass", "haitian church", "african church", "orthodox church",
+  "ethiopian orthodox", "african orthodox", "coptic", "masjid", "jumu'ah",
 ];
 
 const HERITAGE_TRIGGERS = [
@@ -663,6 +667,103 @@ async function searchBusinesses(opts: {
         });
       }
     } catch { /* community_says may not exist */ }
+  }
+
+  // ── PASS 2.5: Location-aware multi-token search ───────────────────────────
+  // Handles queries like "hair store Philadelphia" or "barber DC" where the user
+  // embeds a city/state name in the search string without using the ?city= param.
+  // We detect which tokens are real cities in our DB using ANY(), then filter the
+  // remaining tokens (category/name intent) to businesses in that location.
+  // Only runs when no explicit city/state/geo params were provided, and the query
+  // has 2+ words — so it never interferes with single-term or geo-bounded searches.
+  {
+    const allWords = q.trim().toLowerCase().split(/\s+/).filter(w => w.length >= 2);
+    if (allWords.length >= 2 && !city && !state && lat === undefined) {
+      try {
+        const cityCheckRes = await pool.query<{ city_lower: string }>(
+          `SELECT DISTINCT lower(city) AS city_lower
+           FROM businesses
+           WHERE status = 'active' AND lower(city) = ANY($1::text[])
+           LIMIT 10`,
+          [allWords],
+        );
+        const detectedCities = new Set(cityCheckRes.rows.map(r => r.city_lower));
+
+        const STATE_ABBREVS_SET = new Set([
+          "al","ak","az","ar","ca","co","ct","de","fl","ga","hi","id","il","in","ia",
+          "ks","ky","la","me","md","ma","mi","mn","ms","mo","mt","ne","nv","nh","nj",
+          "nm","ny","nc","nd","oh","ok","or","pa","ri","sc","sd","tn","tx","ut","vt",
+          "va","wa","wv","wi","wy","dc",
+        ]);
+
+        const locationTokens = allWords.filter(w =>
+          detectedCities.has(w) || (w.length === 2 && STATE_ABBREVS_SET.has(w)),
+        );
+        const contentTokens = allWords.filter(
+          w => !locationTokens.includes(w) && w.length >= 2,
+        );
+
+        if (locationTokens.length > 0 && contentTokens.length > 0) {
+          const contentPatterns = contentTokens.map(t => `%${t}%`);
+
+          const locRows = await pool.query<{
+            id: string; name: string; category: string; subcategory: string;
+            city: string; state: string; description: string; image_url: string;
+            rating: string; review_count: string; verified: boolean;
+            latitude: string; longitude: string; ownership_designations: string;
+            black_owned: boolean; instagram: string; website: string;
+            phone: string; price_range: string; confidence_score: string;
+          }>(
+            `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state,
+                    b.description, b.image_url, b.rating, b.review_count,
+                    b.verified, b.latitude, b.longitude, b.ownership_designations,
+                    b.black_owned, b.instagram, b.website, b.phone,
+                    b.price_range, b.confidence_score
+             FROM businesses b
+             WHERE b.status = 'active'
+               AND ${listingFilter}
+               AND lower(b.city) = ANY($1::text[])
+               AND (
+                 lower(b.name)           LIKE ANY($2::text[])
+                 OR lower(b.category)    LIKE ANY($2::text[])
+                 OR lower(b.subcategory) LIKE ANY($2::text[])
+                 OR lower(b.description) LIKE ANY($2::text[])
+               )
+             ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
+             LIMIT ${Math.min(limit * 2, 20)}`,
+            [locationTokens, contentPatterns],
+          );
+
+          for (const row of locRows.rows) {
+            if (results.has(row.id)) continue;
+            results.set(row.id, {
+              id: row.id, name: row.name, category: row.category,
+              subcategory: row.subcategory ?? undefined,
+              city: row.city, state: row.state,
+              description: row.description ?? undefined,
+              imageUrl: row.image_url ?? undefined,
+              rating: row.rating ? parseFloat(row.rating) : undefined,
+              reviewCount: row.review_count ? parseInt(row.review_count) : undefined,
+              verified: row.verified,
+              latitude: row.latitude ? parseFloat(row.latitude) : undefined,
+              longitude: row.longitude ? parseFloat(row.longitude) : undefined,
+              ownershipDesignations: safeParseArray(row.ownership_designations),
+              blackOwned: row.black_owned,
+              instagram: row.instagram ?? undefined,
+              website: row.website ?? undefined,
+              phone: row.phone ?? undefined,
+              priceRange: row.price_range ?? undefined,
+              confidenceScore: row.confidence_score
+                ? parseFloat(row.confidence_score)
+                : undefined,
+              matchTier: "exact_specialty",
+              matchReason: `${row.category} in ${locationTokens.join("/")} matching "${contentTokens.join(" ")}"`,
+              matchedFields: ["city", "category"],
+            });
+          }
+        }
+      } catch { /* non-fatal — city token lookup failed */ }
+    }
   }
 
   // ── PASS 3: Category/concept mapping ─────────────────────────────────────
@@ -1110,10 +1211,19 @@ router.get("/search/universal", async (req: Request, res: Response) => {
     // for faith intent: only keep businesses whose category signals a faith or
     // community institution. Retain ALL results if the filter would empty the set.
     if (intentType === "faith" && businesses.length > 0) {
+      // Precise faith-category filter: keeps only businesses whose category/subcategory
+      // signals an active faith community or house of worship.
+      // "community" and "nonprofit" removed — far too broad (gyms, libraries, food banks
+      // all use those labels and are irrelevant to a "find me a church" query).
       const FAITH_CATEGORIES = new Set([
-        "faith", "church", "spiritual", "mosque", "temple", "synagogue",
-        "religious", "worship", "community", "nonprofit", "cultural center",
-        "meditation", "gurdwara", "shrine", "chapel", "ministry",
+        "faith", "faith & spirituality", "church", "spiritual", "mosque",
+        "temple", "synagogue", "religious", "worship", "gurdwara", "shrine",
+        "chapel", "ministry", "congregation", "parish", "diocese", "tabernacle",
+        "house of worship", "place of worship", "meditation", "zion",
+        "masjid", "orthodox", "coptic", "ame", "cogic", "baptist church",
+        "pentecostal", "apostolic", "methodist church", "catholic church",
+        "episcopal", "lutheran", "presbyterian", "adventist", "quaker",
+        "interfaith", "multifaith",
       ]);
       const faithFiltered = businesses.filter((b) => {
         const cat = (b.category ?? "").toLowerCase();

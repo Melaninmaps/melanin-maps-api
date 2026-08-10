@@ -659,9 +659,10 @@ export default function Library() {
   const isAuthenticated = !!(auth?.user);
 
   // Default to Browse Topics so first-time members immediately see real knowledge-graph content.
-  // The Feed tab shows "Articles coming soon" until curated articles are published.
   const [activeTab, setActiveTab] = useState<Tab>("browse");
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [collections, setCollections] = useState<Topic[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState<Topic | null>(null);
   const [feed, setFeed] = useState<Article[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -676,14 +677,16 @@ export default function Library() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [topicsRes, feedRes, storiesRes, citiesRes, digestRes] = await Promise.all([
-        fetch(`${BASE}api/knowledge/topics`, { credentials: "include" }),
+      const [topicsRes, collectionsRes, feedRes, storiesRes, citiesRes, digestRes] = await Promise.all([
+        fetch(`${BASE}api/knowledge/topics?excludeType=collection`, { credentials: "include" }),
+        fetch(`${BASE}api/knowledge/topics?topicType=collection`, { credentials: "include" }),
         fetch(`${BASE}api/knowledge/feed`, { credentials: "include" }),
         fetch(`${BASE}api/knowledge/issues`, { credentials: "include" }),
         fetch(`${BASE}api/cities`),
         fetch(`${BASE}api/knowledge/digest`, { credentials: "include" }),
       ]);
       if (topicsRes.ok) { const d = await topicsRes.json(); setTopics(d.topics ?? []); }
+      if (collectionsRes.ok) { const d = await collectionsRes.json(); setCollections(d.topics ?? []); }
       if (feedRes.ok) { const d = await feedRes.json(); setFeed(d.articles ?? d.feed ?? []); }
       if (storiesRes.ok) { const d = await storiesRes.json(); setStories(d.issues ?? d.stories ?? []); }
       if (citiesRes.ok) { const d = await citiesRes.json(); setCities((d.cities ?? []).filter((c: City) => c.has_profile)); }
@@ -704,16 +707,36 @@ export default function Library() {
     } catch { toast({ title: "Could not update", variant: "destructive" }); }
   };
 
-  const filteredTopics = topics.filter(t =>
-    (selectedCategory === "all" || t.category === selectedCategory) &&
-    (!topicSearch || t.topicName.toLowerCase().includes(topicSearch.toLowerCase()))
-  );
+  // When a collection is selected, filter topics to that collection's category.
+  // When searching, show all matching topics regardless of collection.
+  const browseTopics = topics.filter(t => {
+    if (topicSearch) return t.topicName.toLowerCase().includes(topicSearch.toLowerCase());
+    if (selectedCollection) return t.category === selectedCollection.category;
+    return selectedCategory === "all" || t.category === selectedCategory;
+  });
+
+  const filteredTopics = browseTopics;
 
   const filteredStories = stories.filter(s =>
     !storySearch || s.title.toLowerCase().includes(storySearch.toLowerCase()) || s.summary.toLowerCase().includes(storySearch.toLowerCase())
   );
 
   const categoryKeys = ["all", ...Array.from(new Set(topics.map(t => t.category)))];
+
+  // Collection icon mapping (emoji fallback — clean and reliable across browsers)
+  const COLLECTION_ICONS: Record<string, string> = {
+    "Places": "📍",
+    "Culture & Community": "🌍",
+    "History": "📖",
+    "Health": "❤️",
+    "Faith & Spirituality": "✨",
+    "Careers & Professional": "💼",
+    "Travel": "✈️",
+    "Community": "🤝",
+    "Education": "🎓",
+    "Business": "📊",
+    "Divine Nine": "🔱",
+  };
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -818,50 +841,95 @@ export default function Library() {
             {/* ── Browse Topics ── */}
             {activeTab === "browse" && (
               <div className="space-y-4">
-                {/* Search */}
+                {/* Search — always visible */}
                 <div className="relative">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3A1F0E]/35" />
-                  <input value={topicSearch} onChange={e => setTopicSearch(e.target.value)}
-                    placeholder="Search topics…"
+                  <input value={topicSearch} onChange={e => { setTopicSearch(e.target.value); if (e.target.value) setSelectedCollection(null); }}
+                    placeholder={selectedCollection ? `Search in ${selectedCollection.topicName}…` : "Search the Library…"}
                     className="w-full pl-10 pr-4 py-3 bg-white border border-[#3A1F0E]/10 rounded-2xl text-sm focus:outline-none focus:border-[#CA922B]/50 text-[#3A1F0E]" />
                   {topicSearch && <button onClick={() => setTopicSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2"><X className="w-4 h-4 text-[#3A1F0E]/40" /></button>}
                 </div>
 
-                {/* Category chips */}
-                <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
-                  {categoryKeys.map(cat => (
-                    <button key={cat} onClick={() => setSelectedCategory(cat)}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
-                        selectedCategory === cat
-                          ? "bg-[#2B1507] text-white border-[#2B1507]"
-                          : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
-                      }`}
-                      style={selectedCategory === cat ? {} : {}}>
-                      {cat === "all" ? "All Topics" : catLabel(cat)}
-                    </button>
-                  ))}
-                </div>
+                {/* ── Collection Grid (top-level view) ── */}
+                {collections.length > 0 && !selectedCollection && !topicSearch && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-3">Browse by</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {collections.map(col => {
+                        const icon = COLLECTION_ICONS[col.topicName] ?? "📚";
+                        const topicCount = topics.filter(t => t.category === col.category).length;
+                        return (
+                          <button key={col.id} onClick={() => setSelectedCollection(col)}
+                            className="text-left bg-[#2B1507] rounded-2xl p-4 hover:bg-[#3A1F0E] transition-colors group border border-transparent hover:border-[#CA922B]/40">
+                            <span className="text-2xl mb-2 block">{icon}</span>
+                            <p className="font-bold text-white text-sm leading-tight mb-1">{col.topicName}</p>
+                            {topicCount > 0 && (
+                              <p className="text-[10px] text-[#CA922B]/70 font-semibold">{topicCount} topic{topicCount !== 1 ? "s" : ""}</p>
+                            )}
+                            {col.description && (
+                              <p className="text-[10px] text-white/40 mt-1 line-clamp-2 leading-relaxed hidden group-hover:block">{col.description}</p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-                {/* Topics */}
-                {filteredTopics.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BookOpen className="w-8 h-8 text-[#CA922B]/40 mx-auto mb-2" />
-                    <p className="text-sm text-[#3A1F0E]/50 mb-1">No topics found</p>
-                    {topicSearch && isAuthenticated && (
-                      <RequestTopicButton topicName={topicSearch} />
+                {/* ── Collection drilldown header ── */}
+                {selectedCollection && !topicSearch && (
+                  <div>
+                    <button onClick={() => setSelectedCollection(null)}
+                      className="flex items-center gap-2 text-sm font-bold text-[#CA922B] hover:underline mb-3">
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                      {selectedCollection.topicName}
+                    </button>
+                    {selectedCollection.description && (
+                      <p className="text-xs text-[#3A1F0E]/50 mb-3 leading-relaxed">{selectedCollection.description}</p>
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredTopics.map(t => (
-                      <TopicCard
-                        key={t.id}
-                        topic={t}
-                        onToggleFollow={toggleFollow}
-                        onOpen={setOpenBookTopic}
-                      />
+                )}
+
+                {/* ── Flat category chips (fallback when no collections, or when collection selected) ── */}
+                {(collections.length === 0 || selectedCollection || topicSearch) && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+                    {categoryKeys.map(cat => (
+                      <button key={cat} onClick={() => setSelectedCategory(cat)}
+                        className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border ${
+                          selectedCategory === cat
+                            ? "bg-[#2B1507] text-white border-[#2B1507]"
+                            : "bg-white text-[#3A1F0E]/60 border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
+                        }`}>
+                        {cat === "all" ? "All Topics" : catLabel(cat)}
+                      </button>
                     ))}
                   </div>
+                )}
+
+                {/* ── Topic list (shown when collection selected, searching, or no collections) ── */}
+                {(selectedCollection || topicSearch || collections.length === 0) && (
+                  <>
+                    {filteredTopics.length === 0 ? (
+                      <div className="text-center py-12">
+                        <BookOpen className="w-8 h-8 text-[#CA922B]/40 mx-auto mb-2" />
+                        <p className="text-sm text-[#3A1F0E]/50 mb-1">No topics found</p>
+                        {topicSearch && isAuthenticated && (
+                          <RequestTopicButton topicName={topicSearch} />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredTopics.map(t => (
+                          <TopicCard
+                            key={t.id}
+                            topic={t}
+                            onToggleFollow={toggleFollow}
+                            onOpen={setOpenBookTopic}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

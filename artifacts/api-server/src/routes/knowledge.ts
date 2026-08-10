@@ -414,11 +414,20 @@ router.get("/knowledge/articles/:id/bookmark-status", async (req: Request, res: 
 // ─── GET /api/knowledge/topics ───────────────────────────────────────────────
 router.get("/knowledge/topics", async (req: Request, res: Response) => {
   const userId = (req as any).user?.id as string | undefined;
+  // Optional ?topicType=collection|book|subtopic|geography|general — filter by type.
+  // Optional ?excludeType=collection — exclude a specific type from results.
+  const topicTypeFilter = typeof req.query.topicType === "string" ? req.query.topicType : undefined;
+  const excludeTypeFilter = typeof req.query.excludeType === "string" ? req.query.excludeType : undefined;
+
   try {
+    const conditions = [eq(knowledgeTopicsTable.enabled, true)];
+    if (topicTypeFilter) conditions.push(eq(knowledgeTopicsTable.topicType, topicTypeFilter));
+    if (excludeTypeFilter) conditions.push(sql`${knowledgeTopicsTable.topicType} != ${excludeTypeFilter}`);
+
     const topics = await db
       .select()
       .from(knowledgeTopicsTable)
-      .where(eq(knowledgeTopicsTable.enabled, true))
+      .where(and(...conditions))
       .orderBy(knowledgeTopicsTable.topicName);
 
     let followedIds = new Set<string>();

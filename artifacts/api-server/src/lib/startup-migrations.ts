@@ -1681,6 +1681,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["tester accounts",   () => ensureTesterAccounts(log, warn)],
     ["pending testers",   () => ensurePendingTesterEmails(log, warn)],
     ["diaspora faith sites", () => ensureDiasporaFaithSites(log, warn)],
+    ["library collections",  () => ensureLibraryCollections(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3003,5 +3004,164 @@ async function ensurePhiladelphiaKnowledgeGraph(
 
   } catch (err: unknown) {
     warn(`Knowledge graph seeding failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Library Collections — hierarchical taxonomy foundation ────────────────────
+// Seeds 11 top-level Collections (topicType='collection') and their canonical
+// Books. The Browse Topics UI uses these to show a Collection grid instead of
+// a flat list of 160 topics.
+//
+// Architecture:
+//   Collection (topicType='collection') → Book (topicType='book') → topics
+//   Hierarchy is stored in topic_relationships (parent_topic_id → child_topic_id).
+//
+// All inserts are idempotent via ON CONFLICT DO NOTHING.
+async function ensureLibraryCollections(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── 1. Seed top-level Collections ────────────────────────────────────────
+    const COLLECTIONS = [
+      { id: "coll_places",    name: "Places",                  cat: "geography", desc: "Cities, neighborhoods, countries, HBCUs, and Living Legacy destinations" },
+      { id: "coll_culture",   name: "Culture & Community",     cat: "diaspora",  desc: "Cultural communities, diaspora identities, and shared heritage" },
+      { id: "coll_history",   name: "History",                 cat: "history",   desc: "Black history, civil rights, heritage sites, and historical context" },
+      { id: "coll_health",    name: "Health",                  cat: "health",    desc: "Health topics, medical conditions, maternal care, and wellness resources" },
+      { id: "coll_faith",     name: "Faith & Spirituality",    cat: "faith",     desc: "Faith traditions, denominations, and active spiritual communities" },
+      { id: "coll_careers",   name: "Careers & Professional",  cat: "employment",desc: "Jobs, trades, entrepreneurship, professional licensing, and financial literacy" },
+      { id: "coll_travel",    name: "Travel",                  cat: "travel",    desc: "Destination guides, cultural travel, safety, and travel resources" },
+      { id: "coll_community", name: "Community",               cat: "community", desc: "Civic engagement, organizations, community resources, and mutual aid" },
+      { id: "coll_education", name: "Education",               cat: "education", desc: "HBCUs, K-12, college prep, scholarships, and lifelong learning" },
+      { id: "coll_business",  name: "Business",                cat: "business",  desc: "Business resources, entrepreneurship, legal, and economic empowerment" },
+      { id: "coll_divine9",   name: "Divine Nine",             cat: "culture",   desc: "The nine historically Black Greek-letter organizations" },
+    ];
+
+    for (const c of COLLECTIONS) {
+      await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, credibility_score, credibility_tier)
+         VALUES ($1, $2, $2, $3, $4, 'topic', 'collection', true, 80, 'authoritative')
+         ON CONFLICT (id) DO NOTHING`,
+        [c.id, c.name, c.cat, c.desc],
+      );
+    }
+    log("Library: 11 Collection nodes seeded");
+
+    // ── 2. Seed canonical Books — Divine Nine ─────────────────────────────────
+    const DIVINE_NINE_BOOKS = [
+      ["book_d9_apa",  "Alpha Phi Alpha",   "Founded 1906 at Cornell. The first intercollegiate Black fraternity. 'First of All, Servants of All, We Shall Transcend All.'"],
+      ["book_d9_aka",  "Alpha Kappa Alpha", "Founded 1908 at Howard University. The first Black sorority. 'By Culture and By Merit.'"],
+      ["book_d9_kap",  "Kappa Alpha Psi",   "Founded 1911 at Indiana University. 'Achievement in Every Field of Human Endeavor.'"],
+      ["book_d9_oop",  "Omega Psi Phi",     "Founded 1911 at Howard University. The first Black fraternity founded at a historically Black institution."],
+      ["book_d9_dst",  "Delta Sigma Theta", "Founded 1913 at Howard University. Public service sorority focused on social action and community development."],
+      ["book_d9_pbs",  "Phi Beta Sigma",    "Founded 1914 at Howard University. 'Culture for Service and Service for Humanity.'"],
+      ["book_d9_zpb",  "Zeta Phi Beta",     "Founded 1920 at Howard University. The first Greek-letter organization constitutionally bound to its founding fraternity (Phi Beta Sigma)."],
+      ["book_d9_sgr",  "Sigma Gamma Rho",   "Founded 1922 at Butler University. 'Greater Service, Greater Progress.'"],
+      ["book_d9_ipt",  "Iota Phi Theta",    "Founded 1963 at Morgan State University. 'Building a Tradition, Not Resting on One.'"],
+    ];
+
+    for (const [id, name, desc] of DIVINE_NINE_BOOKS) {
+      await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, credibility_score, credibility_tier)
+         VALUES ($1, $2, $2, 'culture', $3, 'topic', 'book', true, 75, 'authoritative')
+         ON CONFLICT (id) DO NOTHING`,
+        [id, name, desc],
+      );
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text, 'coll_divine9', $1, 'contains', 1)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+    }
+    log("Library: 9 Divine Nine Book nodes seeded");
+
+    // ── 3. Seed canonical Books — Health ─────────────────────────────────────
+    const HEALTH_BOOKS = [
+      ["book_h_diabetes",    "Diabetes",             "Type 2 diabetes disproportionately affects Black Americans. Prevention, management, community resources, and culturally competent care."],
+      ["book_h_hypertension","Hypertension",         "High blood pressure — causes, prevention, treatment, and why Black Americans are affected at higher rates."],
+      ["book_h_fibroids",    "Fibroids",             "Uterine fibroids affect Black women at 2-3x the rate of white women. Symptoms, treatment options, and advocacy resources."],
+      ["book_h_endometriosis","Endometriosis",       "A painful chronic condition frequently underdiagnosed in Black women. Symptoms, diagnosis, treatment, and support communities."],
+      ["book_h_pcos",        "PCOS",                 "Polycystic ovary syndrome — hormonal disorder affecting fertility and long-term health. Diagnosis and management resources."],
+      ["book_h_fertility",   "Fertility",            "Fertility health, family planning, and resources for navigating fertility challenges and assisted reproduction."],
+      ["book_h_ivf",         "IVF",                  "In vitro fertilization — process, costs, success rates, emotional considerations, and finding culturally competent care providers."],
+      ["book_h_maternal",    "Maternal Health",      "Black maternal mortality rates and advocacy. Prenatal care, birth rights, midwifery, doulas, and postpartum support."],
+      ["book_h_sickle_cell", "Sickle Cell Disease",  "Genetic blood disorder affecting predominantly people of African descent. Treatment advances, support organizations, and carrier information."],
+      ["book_h_mental",      "Mental Health",        "Black mental health — therapy access, stigma, culturally competent therapists, crisis resources, and community support."],
+      ["book_h_hiv",         "HIV & AIDS",           "Prevention, treatment, community impact, PrEP access, and finding Black-affirming healthcare providers."],
+      ["book_h_breast_cancer","Breast Cancer",       "Prevention, screening, treatment, and why Black women face higher mortality rates. Advocacy and support organizations."],
+      ["book_h_prostate",    "Prostate Health",      "Prostate cancer affects Black men at higher rates. Screening recommendations, treatment options, and community resources."],
+      ["book_h_menopause",   "Menopause",            "Perimenopause and menopause — symptoms, treatment, and navigating this life stage with culturally informed care."],
+    ];
+
+    for (const [id, name, desc] of HEALTH_BOOKS) {
+      await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, credibility_score, credibility_tier)
+         VALUES ($1, $2, $2, 'health', $3, 'topic', 'book', true, 75, 'authoritative')
+         ON CONFLICT (id) DO NOTHING`,
+        [id, name, desc],
+      );
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text, 'coll_health', $1, 'contains', 1)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+    }
+    log("Library: 14 Health Book nodes seeded");
+
+    // ── 4. Seed canonical Books — Faith & Spirituality ───────────────────────
+    const FAITH_BOOKS = [
+      ["book_f_ame",        "African Methodist Episcopal",   "The AME Church — founded 1816 by Richard Allen. History, governance, social justice legacy, and locating AME congregations."],
+      ["book_f_baptist",    "Baptist",                       "Black Baptist churches — history, theology, civil rights leadership, conventions, and community role."],
+      ["book_f_cogic",      "Church of God in Christ",       "COGIC — the largest Pentecostal denomination. Founded by Charles H. Mason in 1907. Worship culture and global community."],
+      ["book_f_black_cath", "Black Catholic",                "The history of Black Catholics in America, historically Black Catholic institutions, and the movement for Black Catholic identity."],
+      ["book_f_eth_orth",   "Ethiopian Orthodox",            "One of the oldest Christian churches. Ge'ez liturgy, Coptic traditions, and the Ethiopian Orthodox diaspora."],
+      ["book_f_islam",      "Islam",                         "Islam in the Black American experience — from Malcolm X to the Nation of Islam to mainstream Sunni and Shia communities."],
+      ["book_f_judaism",    "Judaism",                       "Black Jewish communities — Hebrew Israelites, Ethiopian Jews (Beta Israel), and African American Jewish congregations."],
+      ["book_f_sikh",       "Sikhism",                       "Sikh traditions, the Guru Granth Sahib, the langar tradition of community feeding, and Sikh diaspora communities."],
+      ["book_f_buddhism",   "Buddhism",                      "Buddhism in the Black community — Thich Nhat Hanh's teachings, Soka Gakkai, and mindfulness traditions."],
+      ["book_f_african_sp", "African & Diaspora Spirituality","Yoruba, Vodou, Candomblé, Santería, and other African spiritual traditions in the diaspora."],
+      ["book_f_interfaith", "Interfaith",                    "Interfaith dialogue, multi-faith communities, and bridging spiritual traditions in the Black community."],
+    ];
+
+    for (const [id, name, desc] of FAITH_BOOKS) {
+      await pool.query(
+        `INSERT INTO knowledge_topics
+           (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, credibility_score, credibility_tier)
+         VALUES ($1, $2, $2, 'faith', $3, 'topic', 'book', true, 75, 'authoritative')
+         ON CONFLICT (id) DO NOTHING`,
+        [id, name, desc],
+      );
+      await pool.query(
+        `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+         VALUES (gen_random_uuid()::text, 'coll_faith', $1, 'contains', 1)
+         ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+        [id],
+      );
+    }
+    log("Library: 11 Faith Book nodes seeded");
+
+    // ── 5. Connect existing geography nodes to Places collection ─────────────
+    // African country geography nodes (category='country') and US city nodes
+    // (category='travel', node_type='geography') become Books under Places.
+    await pool.query(
+      `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
+       SELECT gen_random_uuid()::text, 'coll_places', kt.id, 'contains', 1
+       FROM knowledge_topics kt
+       WHERE kt.node_type = 'geography'
+         AND kt.topic_type != 'collection'
+         AND kt.enabled = true
+       ON CONFLICT (parent_topic_id, child_topic_id, relationship_type) DO NOTHING`,
+    );
+    log("Library: existing geography nodes linked to Places collection");
+
+    log("Library Collections: foundation complete — 11 Collections, 34 canonical Books");
+
+  } catch (err: unknown) {
+    warn(`Library collections seeding failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
