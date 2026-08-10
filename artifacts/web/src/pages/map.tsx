@@ -1253,7 +1253,7 @@ export default function MapPage() {
     return (
       <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
         {renderSidebar()}
-        <div className="flex-1 flex flex-col items-center justify-center bg-[#F5EBD8] text-center px-8">
+        <div className="hidden sm:flex flex-1 min-w-0 flex-col items-center justify-center bg-[#F5EBD8] text-center px-8 overflow-hidden">
           <div className="w-20 h-20 rounded-full bg-[#CA922B]/15 flex items-center justify-center mb-5">
             <MapPin className="w-9 h-9 text-[#CA922B]" />
           </div>
@@ -1272,7 +1272,7 @@ export default function MapPage() {
       {sidebarOpen && renderSidebar()}
 
       {/* ── Map ── */}
-      <div className="flex-1 relative">
+      <div className="flex-1 min-w-0 relative">
         {(!ready || isLoading) && (
           <div className="absolute inset-0 bg-[#F5EBD8] flex flex-col items-center justify-center z-10">
             <div className="w-10 h-10 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin mb-4" />
