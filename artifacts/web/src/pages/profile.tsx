@@ -634,8 +634,16 @@ export default function Profile() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [kinfolkPoints, setKinfolkPoints] = useState<number | null>(null);
 
-  // ── Reviews count ──────────────────────────────────────────────────────────
+  // ── Reviews count + recent reviews ────────────────────────────────────────
   const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [recentReviews, setRecentReviews] = useState<Array<{ id: string; businessId: string; rating: number; body: string | null; badge: string | null; createdAt: string }>>([]);
+
+  // ── Network (followers / following) ───────────────────────────────────────
+  const [followersCount, setFollowersCount] = useState<number | null>(null);
+  const [followingCount, setFollowingCount] = useState<number | null>(null);
+
+  // ── Community posts count ─────────────────────────────────────────────────
+  const [postCount, setPostCount] = useState<number | null>(null);
 
   // ── Account Settings state ─────────────────────────────────────────────────
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
@@ -650,23 +658,36 @@ export default function Profile() {
 
   useEffect(() => {
     if (!auth?.user) return;
+    const userId = (auth.user as any).id;
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     // Points
     fetch(`${base}/api/points`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setKinfolkPoints(d.total ?? 0); })
       .catch(() => {});
-    // Reviews count
+    // Reviews (count + recent)
     fetch(`${base}/api/reviews/mine`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setReviewCount(d.count ?? 0); })
+      .then(d => { if (d) { setReviewCount(d.count ?? 0); setRecentReviews(d.reviews?.slice(0, 3) ?? []); } })
+      .catch(() => {});
+    // Followers / following counts from public profile endpoint
+    if (userId) {
+      fetch(`${base}/api/users/${userId}/profile`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) { setFollowersCount(d.followersCount ?? 0); setFollowingCount(d.followingCount ?? 0); } })
+        .catch(() => {});
+    }
+    // Post count (posts authored by me)
+    fetch(`${base}/api/community/posts?authorId=${userId}&limit=1`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setPostCount(d.total ?? d.posts?.length ?? 0); })
       .catch(() => {});
   }, [auth?.user]);
 
   // Sync isPrivate from profile data once loaded
   useEffect(() => {
     if (profile) {
-      setIsPrivate(!!(profile as any).isPrivate ?? false);
+      setIsPrivate((profile as any).isPrivate === true);
     }
   }, [profile]);
 
@@ -966,6 +987,117 @@ export default function Profile() {
                   </div>
                 </Link>
               ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Your Activity ──────────────────────────────────────────────── */}
+        <div className="grid md:grid-cols-2 gap-6 mt-8">
+          <div className="bg-white rounded-3xl p-6 border border-[#3A1F0E]/5 shadow-sm">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
+              <Star className="w-5 h-5 text-[#CA922B]" /> Your Activity
+            </h3>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                <div className="text-2xl font-serif font-bold text-[#CA922B]">{reviewCount !== null ? reviewCount : "—"}</div>
+                <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Reviews</div>
+              </div>
+              <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                <div className="text-2xl font-serif font-bold text-[#CA922B]">{postCount !== null ? postCount : "—"}</div>
+                <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Posts</div>
+              </div>
+            </div>
+            {recentReviews.length > 0 && (
+              <div className="space-y-2">
+                <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-3">Recent Reviews</div>
+                {recentReviews.map(r => (
+                  <Link key={r.id} href={`/businesses/${r.businessId}`}>
+                    <div className="flex items-center gap-3 p-3 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer">
+                      <div className="flex gap-0.5 shrink-0">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < r.rating ? "text-[#CA922B] fill-[#CA922B]" : "text-[#3A1F0E]/20"}`} />
+                        ))}
+                      </div>
+                      <span className="text-xs text-[#3A1F0E]/70 truncate flex-1">{r.badge ?? r.body?.slice(0, 60) ?? "No comment"}</span>
+                      <span className="text-xs text-[#3A1F0E]/40 shrink-0">{new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
+              <Link href="/community" className="flex-1">
+                <button className="w-full text-xs font-bold text-[#CA922B] py-2.5 rounded-xl bg-[#CA922B]/10 hover:bg-[#CA922B]/20 transition-colors">View All Posts →</button>
+              </Link>
+            </div>
+          </div>
+
+          {/* ── Your Network ─────────────────────────────────────────────── */}
+          <div className="bg-white rounded-3xl p-6 border border-[#3A1F0E]/5 shadow-sm">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#CA922B]" /> Your Network
+            </h3>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                <div className="text-2xl font-serif font-bold text-[#CA922B]">{followersCount !== null ? followersCount : "—"}</div>
+                <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Followers</div>
+              </div>
+              <div className="bg-[#FAF6EF] rounded-2xl p-4 text-center">
+                <div className="text-2xl font-serif font-bold text-[#CA922B]">{followingCount !== null ? followingCount : "—"}</div>
+                <div className="text-xs text-[#3A1F0E]/60 font-bold uppercase tracking-wider mt-1">Following</div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Link href="/connections">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <Users className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Connections</div>
+                      <div className="text-xs text-[#3A1F0E]/50">People you're directly connected with</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              <Link href="/circles">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <Globe className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Circles</div>
+                      <div className="text-xs text-[#3A1F0E]/50">Your community groups</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              <Link href="/library">
+                <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-2.5">
+                    <BookmarkIcon className="w-4 h-4 text-[#CA922B] shrink-0" />
+                    <div>
+                      <div className="text-sm font-semibold text-[#3A1F0E]">Library & Interests</div>
+                      <div className="text-xs text-[#3A1F0E]/50">Topics, issues, and cultural content you follow</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                </div>
+              </Link>
+              {(auth?.user as any)?.isBusinessOwner && (
+                <Link href="/business-dashboard">
+                  <div className="flex items-center justify-between p-3.5 bg-[#FAF6EF] rounded-xl hover:bg-[#F0E8D9] transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-2.5">
+                      <Building2 className="w-4 h-4 text-[#CA922B] shrink-0" />
+                      <div>
+                        <div className="text-sm font-semibold text-[#3A1F0E]">Business Dashboard</div>
+                        <div className="text-xs text-[#3A1F0E]/50">Manage your business listings</div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#3A1F0E]/30 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
         </div>
