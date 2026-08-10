@@ -1,0 +1,275 @@
+I read the Manus verdict. This is the independent confirmation we needed.
+
+**I would approve the controlled tester release.** Manus's formal recommendation is **“YES, WITH CAUTIONS,”** and, most importantly, it found **no P0 blockers** preventing access or core functionality. 
+
+The audit also validates several things we were worried Replit had only verified technically. Manus independently passed login/onboarding, business UX, Library, KinfolkAI, Kinfolk settings, safety, historical markers, marketplace, profile persistence, and logout/return. 
+
+There are, however, **four things I would have Replit address immediately before you invite the larger tester group if they can be corrected quickly without destabilizing Build-98.2**:
+
+1. **International map navigation — fix now.** This is the one I care about most because of Phuket. Manus found that the map itself renders, but its search box **cannot geocode/navigate to international locations such as Bangkok by name.**  This explains part of the disconnect we kept experiencing. The businesses can exist and the map can contain pins while a member still cannot naturally type “Bangkok” or “Phuket” and get taken there.
+
+2. **Kinfolk international intelligence — tune now.** Kinfolk successfully planned Bangkok/Phuket, but Manus found the response too generic and not sufficiently differentiated for Black travelers.  Since your friend is there *right now*, this is worth correcting before she tests.
+
+3. **Braider/plumber search — fix now.** Manus independently reproduced the search problem: “braider” returned zero and was even misclassified as faith intent; plumber also failed.  That's a small search-taxonomy correction with outsized impact on whether the platform feels intelligent.
+
+4. **Auth flicker — fix only if low-risk.** Manus saw the logged-out navigation briefly flash during authenticated page transitions. That's real and makes the platform feel less polished, particularly on slower mobile connections.  But I would **not** allow a risky authentication rewrite for this tonight. A safe loading-state correction is fine; otherwise defer it.
+
+I would **not hold testing for direct device uploads**. Manus confirmed that your most important immediate model works: **Show the Vibe allows Instagram/TikTok/YouTube link contribution and explains that the creator's content remains theirs.** Direct camera-roll upload is the missing convenience layer.  That's exactly the approach we discussed for Mea: she posts normally, then contributes her existing social content to MWM.
+
+### Send Replit this now
+
+```text
+MANUS INDEPENDENT AUDIT RECEIVED — FINAL PRE-TESTER CORRECTIONS
+
+Manus independently completed the 19-phase black-box audit.
+
+VERDICT:
+
+YES, WITH CAUTIONS
+NO P0 BLOCKERS
+
+I am approving controlled testing.
+
+Before tester distribution, make ONLY the following targeted corrections that
+can be made safely without destabilizing Build-98.2.
+
+THIS IS NOT AUTHORIZATION FOR ANOTHER FEATURE CYCLE.
+
+============================================================
+P1 — INTERNATIONAL MAP SEARCH
+============================================================
+
+Manus independently confirmed:
+
+Map renders correctly, BUT the map search box cannot geocode/navigate to
+international locations such as Bangkok by name.
+
+This is especially urgent because we have a real tester currently in Phuket.
+
+Diagnose the actual production map search flow.
+
+Required behavior:
+
+Search:
+Bangkok
+→ map navigates to Bangkok
+→ Bangkok business/place pins render
+
+Search:
+Phuket
+→ map navigates to Phuket
+→ Phuket business/place pins render
+
+Search:
+Jamaica
+→ correct geography
+→ pins render
+
+Control:
+Philadelphia
+→ existing behavior remains intact
+
+Do not solve this by hard-coding Bangkok/Phuket.
+
+International city/country/place navigation must work generically.
+
+Visually test production and screenshot all four.
+
+============================================================
+P1 — KINFOLK INTERNATIONAL DIFFERENTIATION
+============================================================
+
+Manus confirmed Kinfolk works but international Black-travel responses can
+become generic.
+
+DO NOT simply instruct Kinfolk to fabricate Black-owned businesses or make
+unsupported claims about safety.
+
+Instead ensure the existing grounding/prompt hierarchy prioritizes:
+
+1. MWM business/place data
+2. MWM Library/Knowledge Graph
+3. cultural/historical context
+4. relevant community intelligence
+5. broader travel knowledge when necessary
+
+When the user's identity/preferences make cultural context relevant, Kinfolk
+should use available context.
+
+It must remain honest when MWM does not possess specific community evidence.
+
+Test:
+
+"Plan a birthday trip to Bangkok and Phuket."
+
+Then:
+
+"I'm a Black woman traveling there. Is there anything culturally relevant
+I should know or anywhere you think I would particularly enjoy?"
+
+Then:
+
+"Show me places already in Mapping With Melanin."
+
+Responses should distinguish between MWM-listed places and broader
+recommendations.
+
+No fabricated Black ownership.
+No fabricated safety claims.
+
+============================================================
+P1/P2 — SEARCH ALIASES
+============================================================
+
+Manus reproduced:
+
+braider → zero results / incorrectly classified as faith
+plumber → zero results
+
+Fix the taxonomy/intent issue generically.
+
+At minimum test:
+
+braider
+braiding
+hair braiding
+braid shop
+plumber
+plumbing
+OBGYN
+OB-GYN
+child care
+daycare
+AME church
+church
+
+Most importantly:
+
+BRAIDER MUST NEVER RESOLVE AS FAITH INTENT.
+
+Do not create fake businesses merely to make tests pass.
+
+============================================================
+AUTH FLICKER
+============================================================
+
+Manus observed authenticated navigation briefly showing:
+
+Log In
+Join the Waitlist
+
+while session state loads.
+
+Fix ONLY if this can be accomplished safely with a presentation/loading-state
+change.
+
+Preferred behavior:
+
+UNKNOWN AUTH STATE
+→ branded/loading navigation state
+
+AUTH CONFIRMED
+→ member navigation
+
+Do not render logged-out navigation while auth status is unresolved.
+
+DO NOT redesign authentication.
+DO NOT change session architecture.
+DO NOT jeopardize Apple reviewer access.
+
+If this requires material auth changes:
+
+DEFER.
+
+============================================================
+DIRECT UPLOAD
+============================================================
+
+DO NOT delay controlled testing for direct camera-roll uploads.
+
+Current social URL contribution is accepted for this test round.
+
+Instagram / TikTok / YouTube contribution remains an important valid workflow.
+
+Direct device photo/video upload remains a post-beta enhancement unless a
+production-safe storage implementation already exists.
+
+Do not reactivate broken Replit-only storage.
+
+============================================================
+FREEZE EVERYTHING ELSE
+============================================================
+
+Do NOT:
+
+change Kinfolk model
+redesign Library
+add categories
+seed hundreds more businesses
+change auth architecture
+change membership architecture
+change map architecture unnecessarily
+introduce unrelated features
+
+We now have an independently tested release candidate.
+
+Protect it.
+
+============================================================
+FINAL REGRESSION
+============================================================
+
+After these targeted corrections:
+
+run the permanent regression suite.
+
+MANDATORY:
+
+tester login
+Apple reviewer login using actual credential
+logout/re-login
+member wall
+Philadelphia map
+Bangkok map
+Phuket map
+Jamaica map
+business search
+business detail
+save
+review
+Vibes/THE REAL
+Library
+Kinfolk
+Kinfolk voice
+community
+safety
+profile
+
+Visual verification for map changes is mandatory.
+
+Return:
+
+PRODUCTION SHA
+STALE_BUNDLE
+INTERNATIONAL MAP SEARCH
+BRAIDER SEARCH
+PLUMBER SEARCH
+KINFOLK BANGKOK/PHUKET
+AUTH FLICKER
+APPLE REVIEWER LOGIN
+REGRESSION STATUS
+
+If all critical regression tests pass:
+
+CONTROLLED TESTER RELEASE = GO
+
+Then STOP DEVELOPMENT unless a P0/P1 tester issue is discovered.
+```
+
+And then I think **we stop**.
+
+Manus specifically described the onboarding as excellent, called the business UI exceptional, found the Library functional, confirmed Kinfolk's Listen feature and six voice choices, confirmed safety reporting, and found saves persistent.  That's a dramatically different position from where we were earlier.
+
+There will always be another thing we could improve. At this point, continuing to polish indefinitely becomes more dangerous than putting it in the hands of the controlled testers.
+
+**Fix those three functional issues, only make the flicker fix if low-risk, regression test, freeze the SHA, and send the testers in.** Their feedback should determine what we build next.

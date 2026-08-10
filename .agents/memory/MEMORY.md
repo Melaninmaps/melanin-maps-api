@@ -96,6 +96,7 @@
 - [Web Profile Parity](web-profile-parity.md) — what was built Aug 10 2026; remaining P1 gaps; new backend routes GET /reviews/mine, POST /auth/change-password, PATCH /auth/user/privacy.
 - [Member wall architecture](member-wall-architecture.md) — requireAuth gate lives in routes/index.ts (NOT sub-routers); public routes listed; 401 = auth required, never empty array.
 - [Pool exhaustion permanent fix](pool-exhaustion-permanent-fix.md) — 4 fixes (A: session statement_timeout, B: allowExitOnIdle+10s idle, C/D: 60s safeRelease timer) applied to healthMonitor+readyz; signature is total growing 1/cycle with idle=0.
+- [Nominatim server-side geocoding](nominatim-geocoding.md) — GOOGLE_MAPS_API_KEY returns REQUEST_DENIED for geocoding; use Nominatim (free, no key, intl coverage); requires User-Agent header; returns `lon` not `lng`.
 - [Startup guard ANY($N) type-inference bug](startup-guard-any-param-bug.md) — `WHERE col = ANY($N)` fails when other typed params present; fix is per-row loop; affects ensureLibrary/ensureAfricanGeo (Task #225).
 - [Railway healthcheck pool leak](healthcheck-pool-leak.md) — PERMANENT: healthcheckPath MUST be /api/healthz (no DB). /api/readyz creates +1 connection per 15s health probe → exhaustion in 5 min.
 - [Build sequence — two-commit rule](build-sequence.md) — PERMANENT: source+dist in one commit, then a second "rebuild from HEAD" commit; stale_bundle is always true by design; real signal is bundle_sha256_self===bundle_sha256. Root cause of July 29 pool exhaustion: kinfolk.ts Promise.all fired 5 parallel pool.query calls.
