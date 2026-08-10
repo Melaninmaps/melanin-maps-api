@@ -820,11 +820,19 @@ router.post("/auth/login-email", async (req: Request, res: Response) => {
     };
     const sid = await createSession(sessionData);
     req.log.info({ ...diagBase, event: "AUTH_LOGIN_SUCCESS", emailMasked, hasPasswordHash: true, status: 200, durationMs: Date.now() - t0 }, "auth diagnostic");
+    // Check if user must change password on first login (pre-seeded tester accounts)
+    let mustChangePassword = false;
+    try {
+      const { rows } = await pool.query<{ must_change_password: boolean }>(
+        'SELECT must_change_password FROM users WHERE id = $1', [user.id]
+      );
+      mustChangePassword = rows[0]?.must_change_password ?? false;
+    } catch { /* column may not exist yet — safe to ignore */ }
     // Set HttpOnly session cookie so web clients authenticate automatically
     // without needing to read the token from localStorage. Mobile clients continue
     // to use the token returned in the JSON body (Bearer header).
     setSessionCookie(res, sid);
-    res.json({ token: sid });
+    res.json({ token: sid, mustChangePassword });
     }, req.log, "POST /auth/login-email");
   } catch (err) {
     const pool = getPoolStats();
@@ -1300,6 +1308,10 @@ router.post("/auth/change-password", async (req: Request, res: Response) => {
     if (!valid) { res.status(401).json({ error: "Current password is incorrect" }); return; }
     const newHash = await bcrypt.hash(newPassword, 8);
     await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, userId));
+    // Clear forced-change flag if it was set (tester first-login flow)
+    try {
+      await pool.query('UPDATE users SET must_change_password = FALSE WHERE id = $1', [userId]);
+    } catch { /* safe to ignore if column not yet present */ }
     req.log.info({ userId }, "User changed their password");
     res.json({ success: true });
   } catch (err) {

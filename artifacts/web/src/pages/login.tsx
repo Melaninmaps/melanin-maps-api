@@ -61,6 +61,43 @@ export default function Login() {
   const [regLoading, setRegLoading] = useState(false);
   const [regError, setRegError] = useState("");
 
+  // ── Forced password change (pre-seeded tester accounts) ───────────────────
+  const [forceChangeMode, setForceChangeMode] = useState(false);
+  const [pendingToken, setPendingToken] = useState("");
+  const [forceNewPw, setForceNewPw] = useState("");
+  const [forceConfirmPw, setForceConfirmPw] = useState("");
+  const [forceShowPw, setForceShowPw] = useState(false);
+  const [forceLoading, setForceLoading] = useState(false);
+  const [forceError, setForceError] = useState("");
+
+  async function handleForceChange(e: React.FormEvent) {
+    e.preventDefault();
+    setForceError("");
+    if (forceNewPw.length < 8) { setForceError("Password must be at least 8 characters."); return; }
+    if (forceNewPw !== forceConfirmPw) { setForceError("Passwords do not match."); return; }
+    setForceLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const r = await fetch(`${base}/api/auth/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ currentPassword: signinPassword, newPassword: forceNewPw }),
+      });
+      if (!r.ok) {
+        const d = await r.json() as { error?: string };
+        setForceError(d.error ?? "Could not update password. Please try again.");
+        return;
+      }
+      setForceChangeMode(false);
+      await afterAuth(pendingToken);
+    } catch {
+      setForceError("Could not connect. Please check your connection.");
+    } finally {
+      setForceLoading(false);
+    }
+  }
+
   async function afterAuth(token: string) {
     setWebToken(token);
     await queryClient.invalidateQueries();
@@ -82,9 +119,14 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: signinEmail.trim(), password: signinPassword }),
       });
-      const data = await res.json() as { token?: string } & ApiError;
+      const data = await res.json() as { token?: string; mustChangePassword?: boolean } & ApiError;
       if (!res.ok || !data.token) {
         setSigninError(data.error ?? "Sign-in failed. Please try again.");
+        return;
+      }
+      if (data.mustChangePassword) {
+        setPendingToken(data.token);
+        setForceChangeMode(true);
         return;
       }
       await afterAuth(data.token);
@@ -158,6 +200,67 @@ export default function Login() {
           </button>
         </Link>
       </header>
+
+      {/* ── Forced password change modal ───────────────────────────────── */}
+      {forceChangeMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[#2B1507]/5 overflow-hidden">
+            <div className="bg-[#2B1507] px-8 py-7 text-center">
+              <div className="w-12 h-12 rounded-full bg-[#CA922B] flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-serif font-bold text-white mb-1">Welcome to the Community</h2>
+              <p className="text-[#F5EBD8]/70 text-sm">Please set your own password to continue.</p>
+            </div>
+            <form onSubmit={handleForceChange} className="px-8 py-7 space-y-4">
+              <p className="text-xs text-[#3A1F0E]/60 bg-[#FAF6EF] rounded-xl p-4 leading-relaxed">
+                Your account was created with a temporary password. Choose something personal that only you know — this keeps your experience private.
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={forceShowPw ? "text" : "password"}
+                    value={forceNewPw}
+                    onChange={e => setForceNewPw(e.target.value)}
+                    placeholder="At least 8 characters"
+                    className="w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white pr-11"
+                    required
+                    minLength={8}
+                  />
+                  <button type="button" onClick={() => setForceShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#3A1F0E]/30 hover:text-[#3A1F0E]/60">
+                    {forceShowPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider mb-1.5">Confirm Password</label>
+                <input
+                  type={forceShowPw ? "text" : "password"}
+                  value={forceConfirmPw}
+                  onChange={e => setForceConfirmPw(e.target.value)}
+                  placeholder="Type it again"
+                  className="w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white"
+                  required
+                />
+              </div>
+              {forceError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-start gap-2.5">
+                  <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-red-700 text-sm">{forceError}</p>
+                </div>
+              )}
+              <button
+                type="submit"
+                disabled={forceLoading}
+                className="w-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold rounded-full py-3.5 text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+              >
+                {forceLoading ? "Setting password…" : "Set My Password & Enter"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-[#2B1507]/5" style={{ backgroundImage: "radial-gradient(circle at center, #CA922B 1px, transparent 1px)", backgroundSize: "24px 24px" }} />

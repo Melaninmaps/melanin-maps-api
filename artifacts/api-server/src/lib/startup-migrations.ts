@@ -1166,6 +1166,77 @@ END $seed$`,
              'founding', true, 'tester', 'Philadelphia')
           ON CONFLICT (email) DO NOTHING`,
   },
+  // ── Must-change-password column ────────────────────────────────────────────
+  // Enables a forced password-change flow on first login for pre-seeded tester
+  // accounts. Safe to run on every boot (IF NOT EXISTS).
+  {
+    name: "users_must_change_password_col_v1",
+    sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE`,
+  },
+  // ── Pre-approved tester accounts with universal first-time password ────────
+  // Creates accounts for every tester email that hasn't self-registered yet.
+  // Universal password: MWM-Manus-2026! (bcrypt cost=8)
+  // must_change_password=true so they are forced to set their own password on
+  // first login. Also sets must_change_password=true on the Manus tester.
+  // ON CONFLICT DO NOTHING — never overwrites a user who already set their own password.
+  {
+    name: "tester_universal_accounts_v1",
+    sql: `
+      -- Universal password hash: bcrypt(cost=8) of "MWM-Manus-2026!"
+      DO $$
+      DECLARE
+        universal_hash TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+        tester_emails TEXT[] := ARRAY[
+          'tlindsay428@gmail.com',
+          'tlindsay428@aol.com',
+          'zykiral.morton@yahoo.com',
+          'kyleisha.m.morton@gmail.com',
+          'kyleisha.m.fisher@gmail.com',
+          'taleisha.fisher@gmail.com',
+          'lilanarich@gmail.com',
+          'jordanwtester@gmail.com',
+          'joshuabierd99@gmail.com',
+          'kaylacardwelltester@gmail.com',
+          'kevinctester@gmail.com',
+          'kevkaytester@gmail.com',
+          'teiannaltester@gmail.com',
+          'trinalindsaytester@gmail.com',
+          'jross215@gmail.com',
+          'kaylathomas20011@gmail.com',
+          'kansesdwilliams@gmail.com',
+          'fatimccoy@icloud.com',
+          'jordanwyatt117@icloud.com',
+          'jordanw117@icloud.com',
+          'nydiahholly12@gmail.com',
+          'meaparks@gmail.com',
+          'melody.brown1988@gmail.com',
+          'owcforyouth@gmail.com',
+          'cardwellkayla219@gmail.com',
+          'kcardwell17@yahoo.com',
+          'kaylacardwell3@gmail.com',
+          'taleisham.saunders@gmail.com',
+          'trinalindsayhairston@gmail.com',
+          'bigdot6017@gmail.com'
+        ];
+        e TEXT;
+      BEGIN
+        FOREACH e IN ARRAY tester_emails LOOP
+          INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, must_change_password)
+          VALUES
+            (gen_random_uuid(), e,
+             split_part(e, '@', 1), 'Tester',
+             universal_hash,
+             true, true, false,
+             'founding', true, 'tester', true)
+          ON CONFLICT (email) DO NOTHING;
+        END LOOP;
+        -- Always ensure the Manus tester account must change password
+        UPDATE users SET must_change_password = true WHERE email = 'tester@mwm.com';
+      END $$`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
