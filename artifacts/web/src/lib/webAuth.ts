@@ -7,6 +7,9 @@ function setSidCookie(token: string): void {
 }
 
 function clearSidCookie(): void {
+  // Note: the server sets sid as HttpOnly, which means JavaScript cannot delete
+  // it via document.cookie. The server clears it via Set-Cookie in the logout
+  // response. This line is belt-and-suspenders for any non-HttpOnly fallback.
   document.cookie = `${SID_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
 }
 
@@ -26,18 +29,30 @@ export function setWebToken(token: string): void {
   }
 }
 
-export function clearWebToken(): void {
+/**
+ * Clear the local token and revoke the server session.
+ * Returns a Promise that resolves only after the server has confirmed the
+ * session is deleted and returned a Set-Cookie header clearing the HttpOnly
+ * sid cookie. Callers MUST await this before navigating away, otherwise the
+ * browser page-load request races the server-side deletion and the user
+ * appears still logged in.
+ */
+export async function clearWebToken(): Promise<void> {
   try {
     const token = localStorage.getItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     clearSidCookie();
     if (token) {
-      fetch("/api/mobile-auth/logout", {
+      // Await the fetch so the server has time to delete the session and send
+      // the Set-Cookie: sid=; Max-Age=0 header before the browser navigates.
+      await fetch("/api/mobile-auth/logout", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
+      });
     }
   } catch {
+    // Non-fatal — localStorage may be unavailable, or network may fail.
+    // Navigation proceeds regardless; worst case the session expires naturally.
   }
 }
 

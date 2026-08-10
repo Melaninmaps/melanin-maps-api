@@ -426,7 +426,7 @@ function AdminBootstrap({ currentEmail, onBootstrapped }: { currentEmail: string
               {status === "loading" ? "Claiming access…" : "Claim Admin Access"}
             </button>
             <button
-              onClick={() => { import("@/lib/webAuth").then(({ clearWebToken }) => { clearWebToken(); window.location.href = `${BASE}login?returnTo=/admin`; }); }}
+              onClick={async () => { const { clearWebToken } = await import("@/lib/webAuth"); await clearWebToken(); window.location.href = `${BASE}login?returnTo=/admin`; }}
               className="px-6 py-2 text-[#3A1F0E]/50 text-sm hover:text-[#CA922B] transition-colors">
               Sign out &amp; switch account
             </button>

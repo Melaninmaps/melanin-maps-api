@@ -468,9 +468,16 @@ router.post("/mobile-auth/logout", async (req: Request, res: Response) => {
     if (sid) {
       await deleteSession(sid);
     }
+    // Clear the HttpOnly session cookie so web browser sessions are fully
+    // invalidated in the server response. Mobile clients use Bearer tokens
+    // and have no cookie — clearCookie is a harmless no-op for them.
+    // This is the only way to delete an HttpOnly cookie: JS document.cookie
+    // cannot touch it, so the Set-Cookie header on this response is required.
+    res.clearCookie(SESSION_COOKIE, { path: "/" });
     res.json(LogoutMobileSessionResponse.parse({ success: true }));
   } catch (err) {
     req.log.error({ err }, "Failed to complete mobile logout");
+    res.clearCookie(SESSION_COOKIE, { path: "/" });
     res.json(LogoutMobileSessionResponse.parse({ success: true }));
   }
 });

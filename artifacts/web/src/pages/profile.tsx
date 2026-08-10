@@ -850,8 +850,13 @@ export default function Profile() {
     } catch { /* silent */ } finally { setSafetySettingsLoading(false); }
   };
 
-  const handleLogout = () => {
-    import("@/lib/webAuth").then(({ clearWebToken }) => clearWebToken());
+  const handleLogout = async () => {
+    // Must await clearWebToken() so the server deletes the session and the
+    // browser processes the Set-Cookie header clearing the HttpOnly sid cookie
+    // BEFORE the page navigates. Without the await, window.location.replace
+    // fires while the session is still live and the user appears still logged in.
+    const { clearWebToken } = await import("@/lib/webAuth");
+    await clearWebToken();
     queryClient.clear();
     window.location.replace("/");
   };
