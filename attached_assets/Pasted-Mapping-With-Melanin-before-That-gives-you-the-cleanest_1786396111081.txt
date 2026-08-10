@@ -1,0 +1,28 @@
+Mapping With Melanin before. That gives you the cleanest possible founder-side confirmation of the true first-time-user experience.
+Importantly, don't have Replit preconfigure that email as an existing user unless your current controlled-test process requires preapproval. You want to experience what your invited testers are actually about to experience.
+
+Test this exact journey:
+
+Open a Private Safari window so there are no old cookies/sessions.
+Go to the production website.
+Use your alternate email through the same invitation/signup path a tester receives.
+Confirm login/password creation works.
+Confirm the 15-question Kinfolk onboarding appears.
+Answer it genuinely rather than rushing through it.
+Enter the platform and immediately try something simple: “church in Philadelphia.”
+Try “braider in Philadelphia.”
+Open Map → search Phuket → confirm the map physically moves there and visible pins appear.
+Open one Phuket pin → preview → business page.
+Save it.
+Open Library → find a Thailand/Bangkok topic → follow it.
+Open Kinfolk and ask: “I'm going to Phuket. Based on what you know about me, where should I go?”
+Change how Kinfolk talks to you and try Listen/voice.
+Open a business → try Show the Vibe / Add Content so you see exactly what Mea will experience.
+Go to Profile and make sure your saves/preferences/activity are reflected.
+Log out.
+Confirm Map/Library/business discovery are blocked again.
+Log back in and confirm your onboarding, save, Library follow, and Kinfolk preferences survived.
+I would not ask Replit to change anything while you're doing this. SHA 45926c03b5 is frozen. That's valuable. You now have an independently audited build plus Replit's regression pass. Your test should be against that exact release candidate.
+And if you encounter a minor wording/design issue, write it down—don't immediately fix it. Only stop release for something like login failure, missing map businesses, broken onboarding, inability to use Kinfolk, data not persisting, or another genuine P0/P1 journey failure.
+
+If you complete that clean-account journey successfully, I would consider the internal verification period finished and release to the controlled testers. At that point, real tester behavior is more valuable than another Replit audit.
