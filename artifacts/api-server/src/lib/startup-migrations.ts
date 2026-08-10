@@ -2555,19 +2555,26 @@ async function ensurePendingTesterEmails(
   }
 }
 
-// ── Per-boot tester account creation ──────────────────────────────────────────
+// ── Per-boot tester account creation + credential repair ──────────────────────
 // Unlike tester_universal_accounts_v1 (one-time migration), this runs every
-// boot and handles testers added to PRE_APPROVED_TESTER_EMAILS AFTER the
-// initial migration already ran on Railway. Idempotent — ON CONFLICT DO NOTHING.
+// boot. It handles two cases:
+//   A. Tester emails added AFTER the one-time migration already ran on Railway
+//      → inserts missing rows (ON CONFLICT DO NOTHING)
+//   B. Tester accounts that exist but have a wrong/stale password hash AND
+//      must_change_password=true (haven't set their own password yet)
+//      → resets hash to universal + clears any rate-limit lock
+//      Safe because must_change_password=true means first login hasn't happened.
 async function ensureTesterUniversalAccounts(
   log: (msg: string) => void,
   warn: (msg: string) => void
 ): Promise<void> {
   // bcrypt(cost=8) of "MWM-Manus-2026!" — same hash used by tester_universal_accounts_v1
   const UNIVERSAL_HASH = '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+  const emails = PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim());
   try {
+    // A: create missing accounts
     let created = 0;
-    for (const email of PRE_APPROVED_TESTER_EMAILS) {
+    for (const email of emails) {
       const r = await pool.query(
         `INSERT INTO users
            (id, email, first_name, last_name, password_hash,
@@ -2580,11 +2587,32 @@ async function ensureTesterUniversalAccounts(
             true, true, false,
             'founding', true, 'tester', true)
          ON CONFLICT (email) DO NOTHING`,
-        [email.toLowerCase().trim(), UNIVERSAL_HASH]
+        [email, UNIVERSAL_HASH]
       );
       if (r.rowCount && r.rowCount > 0) created++;
     }
-    log(`Tester universal accounts: ${created} created (${PRE_APPROVED_TESTER_EMAILS.length - created} already existed)`);
+
+    // B: repair hash for testers who exist but haven't changed their password
+    //    (must_change_password=true = first login hasn't happened, safe to reset)
+    //    Also clear any rate-limit lock so testers aren't stuck.
+    const repairResult = await pool.query(
+      `UPDATE users
+       SET password_hash = $1,
+           locked_until  = NULL,
+           updated_at    = NOW()
+       WHERE LOWER(TRIM(email)) = ANY($2)
+         AND must_change_password = true
+         AND (password_hash != $1 OR locked_until IS NOT NULL)
+       RETURNING email`,
+      [UNIVERSAL_HASH, emails]
+    );
+    const repaired = repairResult.rows.map((r: { email: string }) => r.email);
+
+    log(
+      `Tester universal accounts: ${created} created, ` +
+      `${repaired.length} hash/lock repaired` +
+      (repaired.length > 0 ? ` (${repaired.join(", ")})` : "")
+    );
   } catch (err: unknown) {
     warn(`Tester universal accounts guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
