@@ -23,7 +23,7 @@ function useRequireApproval() {
 export function Layout({ children }: { children: React.ReactNode }) {
   const [kinfolkDismissed, setKinfolkDismissed] = useState(false);
   const [location] = useLocation();
-  const { data: auth, refetch: refetchAuth } = useGetCurrentAuthUser();
+  const { data: auth, isLoading: authLoading, refetch: refetchAuth } = useGetCurrentAuthUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const requireApproval = useRequireApproval();
   const { theme, setTheme } = useTheme();
@@ -140,7 +140,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            {auth?.user ? (
+            {authLoading ? (
+              /* Stable placeholder while session resolves — prevents Log In flash */
+              <div className="w-20 h-8" aria-hidden="true" />
+            ) : auth?.user ? (
               <>
                 <Link href="/notifications">
                   <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
@@ -196,7 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               </button>
-              {auth?.user ? (
+              {authLoading ? null : auth?.user ? (
                 <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
                   <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
                 </Link>

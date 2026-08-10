@@ -83,6 +83,10 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   "hair loss":   ["Beauty", "Personal Care", "Health"],
   wig:           ["Beauty", "Personal Care"],
   braids:        ["Beauty", "Personal Care"],
+  braiding:      ["Beauty", "Personal Care"],
+  braider:       ["Beauty", "Personal Care"],
+  "braid shop":  ["Beauty", "Personal Care"],
+  "hair braiding": ["Beauty", "Personal Care"],
   locs:          ["Beauty", "Personal Care"],
   extensions:    ["Beauty", "Personal Care"],
   "beauty supply": ["Beauty", "Retail"],
@@ -142,15 +146,15 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   midwife:       ["Health", "Family"],
   midwifery:     ["Health", "Family"],
   // Trades — "plumber" vs "plumbing" both need entries
-  plumber:       ["Home", "Property"],
-  electrician:   ["Home", "Property"],
-  contractor:    ["Home", "Property"],
-  handyman:      ["Home", "Property"],
-  roofer:        ["Home", "Property"],
-  roofing:       ["Home", "Property"],
-  hvac:          ["Home", "Property"],
-  painter:       ["Home", "Property"],
-  painting:      ["Home", "Property"],
+  plumber:       ["Home", "Property", "Trades", "Home Services", "Plumbing"],
+  electrician:   ["Home", "Property", "Trades", "Home Services", "Electrical"],
+  contractor:    ["Home", "Property", "Trades", "Home Services", "Construction"],
+  handyman:      ["Home", "Property", "Trades", "Home Services"],
+  roofer:        ["Home", "Property", "Trades", "Home Services", "Roofing"],
+  roofing:       ["Home", "Property", "Trades", "Home Services", "Roofing"],
+  hvac:          ["Home", "Property", "Trades", "Home Services", "HVAC"],
+  painter:       ["Home", "Property", "Trades", "Home Services", "Painting"],
+  painting:      ["Home", "Property", "Trades", "Home Services", "Painting"],
   // ── Retail / Shopping ────────────────────────────────────────────────────
   boutique:      ["Retail", "Shopping"],
   clothing:      ["Retail", "Shopping"],
@@ -334,7 +338,7 @@ function detectIntentType(q: string): IntentType {
   if (/\b(tonight|this week|weekend|festival|concert|jazz|event)\b/i.test(q)) return "event";
 
   // Specialty beauty/trade service
-  if (/\b(alopecia|stylist|braids|locs|welder|welding|attorney|therapist)\b/i.test(q)) return "specialty_service";
+  if (/\b(alopecia|stylist|braids|braiding|braider|locs|welder|welding|attorney|therapist)\b/i.test(q)) return "specialty_service";
 
   // Medical/healthcare specialties — must fire BEFORE isProperNoun check because
   // many medical terms are acronyms or proper-looking words (OBGYN, OBGYN Philadelphia).

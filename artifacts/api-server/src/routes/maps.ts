@@ -54,6 +54,48 @@ router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
   res.json({ key: apiKey });
 });
 
+// Proxies Google Geocoding API so international city/place queries resolve correctly
+// regardless of which APIs are enabled on the browser key.
+// ?address=Bangkok — returns { lat, lng, formattedAddress }
+router.get("/maps/geocode", mapsLimiter, async (req: Request, res: Response) => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: "Maps not configured" });
+    return;
+  }
+  const address = typeof req.query.address === "string" ? req.query.address.trim() : "";
+  if (!address) {
+    res.status(400).json({ error: "address is required" });
+    return;
+  }
+  try {
+    const url =
+      `https://maps.googleapis.com/maps/api/geocode/json` +
+      `?address=${encodeURIComponent(address)}` +
+      `&key=${apiKey}`;
+    const upstream = await fetch(url);
+    const data = await upstream.json() as {
+      status: string;
+      results: Array<{
+        formatted_address: string;
+        geometry: { location: { lat: number; lng: number } };
+      }>;
+    };
+    if (data.status !== "OK" || !data.results?.[0]) {
+      res.status(404).json({ error: "Location not found", geocodeStatus: data.status });
+      return;
+    }
+    const result = data.results[0];
+    res.json({
+      lat: result.geometry.location.lat,
+      lng: result.geometry.location.lng,
+      formattedAddress: result.formatted_address,
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to geocode address" });
+  }
+});
+
 // Proxies Google Directions API so the key stays server-side and is never sent
 // to the browser. Uses GOOGLE_MAPS_API_KEY (the server-only key), NOT the browser
 // key. This key should be API-restricted to Directions API only in Google Cloud.

@@ -303,17 +303,24 @@ export default function MapPage() {
   } | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
 
-  // Geocode search string and pan map
-  const geocodeAndPan = useCallback(() => {
+  // Geocode search string and pan map — uses server-side endpoint so the key
+  // restrictions on the browser key don't block international city geocoding.
+  const geocodeAndPan = useCallback(async () => {
     if (!mapRef.current || !search.trim()) return;
-    const g = (window as any).google?.maps;
-    if (!g) return;
-    new g.Geocoder().geocode({ address: search.trim() }, (results: any[], status: string) => {
-      if (status === "OK" && results?.[0]?.geometry?.location) {
-        mapRef.current.panTo(results[0].geometry.location);
-        mapRef.current.setZoom(13);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL ?? "";
+      const res = await fetch(
+        `${apiBase}/api/maps/geocode?address=${encodeURIComponent(search.trim())}`,
+        { credentials: "include" }
+      );
+      if (res.ok) {
+        const { lat, lng } = await res.json() as { lat: number; lng: number };
+        if (mapRef.current && typeof lat === "number" && typeof lng === "number") {
+          mapRef.current.panTo({ lat, lng });
+          mapRef.current.setZoom(13);
+        }
       }
-    });
+    } catch { /* geocoding failed — map stays at current position */ }
   }, [search]);
 
   // Universal Search — triggered on Enter or button click, runs alongside geocodeAndPan
