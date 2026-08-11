@@ -2322,13 +2322,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI — gpt-5-mini matches all other routes in this file and is confirmed
+    // Call AI — gpt-4o-mini is the production model for all routes in this file
     // working through the Replit AI Integrations proxy. response_format json_object
     // guarantees valid JSON every response. AbortSignal.timeout(25000) caps the
     // OpenAI call so a provider stall can never leave the browser spinning forever.
     const completion = await openai.chat.completions.create(
       {
-        model: "gpt-5-mini",
+        model: "gpt-4o-mini",
         max_tokens: 1000,
         messages: aiMessages,
         response_format: { type: "json_object" },
@@ -2629,7 +2629,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
       max_tokens: isTrailblazer ? 2000 : 1000,
@@ -2771,7 +2771,7 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 1500,
@@ -3002,7 +3002,7 @@ ${businessCatalog}`;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         ...(messages as Array<{ role: string; content: string }>).map(m => ({
