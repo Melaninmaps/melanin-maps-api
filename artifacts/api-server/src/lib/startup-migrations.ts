@@ -641,6 +641,46 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE tour_cultural_sites ALTER COLUMN state TYPE TEXT USING state::text`,
   },
   {
+    // Hardcoded coordinates for all 25 Phuket cultural sites seeded from
+    // phuket-international-cultural-v1.ts — Nominatim fails on Thai addresses
+    // so we supply accurate coordinates directly. WHERE latitude IS NULL makes
+    // this idempotent; runs once then no-ops on every subsequent boot.
+    name: "phuket_cultural_sites_coords_v1",
+    sql: `
+      UPDATE tour_cultural_sites AS t
+      SET latitude = c.lat, longitude = c.lng
+      FROM (VALUES
+        ('wat chalong (wat chaiyathararam)',                                                    7.8446,  98.3378),
+        ('big buddha (phra puttamingmongkol akenakkiri)',                                       7.8274,  98.3106),
+        ('heroines monument — chan and mook (thao thepkrasattri and thao srisoonthorn)',        8.0159,  98.3016),
+        ('old phuket town (sino-portuguese heritage district)',                                 7.8889,  98.3975),
+        ('jui tui shrine (shrine of the serene light)',                                         7.8884,  98.3930),
+        ('thalang national museum',                                                             8.0153,  98.3125),
+        ('urak lawoi (sea gypsy) village — ban rawai',                                         7.7770,  98.3249),
+        ('phuket vegetarian festival — jui tui shrine & nine emperor gods procession',         7.8884,  98.3930),
+        ('chinpracha house',                                                                    7.8891,  98.3944),
+        ('kathu mining museum and the tin mining heritage district',                            7.9166,  98.3218),
+        ('koh panyee — floating muslim village, phang nga bay',                                8.2735,  98.5009),
+        ('promthep cape and the andaman sea trade route outlook',                              7.7618,  98.3051),
+        ('phuket''s malay muslim heritage — chao fa west and karon mosque',                   7.8468,  98.2990),
+        ('2004 tsunami memorial — ban nam khem and phuket international memorial',             9.1430,  98.2560),
+        ('khao phra thaeo national park — last virgin rainforest on phuket',                   8.0739,  98.3627),
+        ('wat phra thong — the half-buried golden buddha',                                     8.0283,  98.3145),
+        ('srivijayan empire heritage — the maritime kingdom that built the andaman world',     8.0153,  98.3125),
+        ('phuket''s connection to british colonial penang — the straits chinese network',      7.8889,  98.3975),
+        ('phuket rubber plantation heritage — early 20th-century agricultural revolution',     8.0000,  98.3300),
+        ('andaman sea coral reefs and marine biodiversity — the extraordinary underwater world',7.8206,  98.3424),
+        ('moken people''s astronomical and tidal knowledge — indigenous navigation science',   7.7770,  98.3249),
+        ('phuket''s islamic sultanate connections — the malay peninsula maritime world',       7.8870,  98.3920),
+        ('environmental justice frontlines — phuket''s conservation and development conflicts',7.8800,  98.3900),
+        ('karon and kata beaches — remaining fishing village culture',                         7.8468,  98.2990),
+        ('patong beach — from coconut plantation to black travel culture',                     7.8968,  98.2968)
+      ) AS c(name_lower, lat, lng)
+      WHERE LOWER(t.name) = c.name_lower
+        AND t.latitude IS NULL
+    `,
+  },
+  {
     // International support — tour content tables need province + country
     // so the batch geocoder can resolve non-US addresses correctly.
     name: "tour_content_intl_cols_v1",
