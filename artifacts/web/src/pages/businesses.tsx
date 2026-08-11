@@ -306,6 +306,8 @@ export default function Businesses() {
   const [universalResult, setUniversalResult] = useState<UniversalResult | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState("");
+  // Detected geography — set when geo-extract identifies a destination in the query
+  const [detectedLocation, setDetectedLocation] = useState<{ name: string } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -321,15 +323,53 @@ export default function Businesses() {
       .finally(() => setDirectoryLoading(false));
   }, []);
 
-  // Universal Search — fires on Enter or button click
+  // Universal Search — fires on Enter or button click.
+  // Architecture mirrors the Map page: geo-extract runs FIRST to detect any
+  // geographic intent ("Phuket", "Bangkok", "Jamaica"). If a destination is
+  // found its coordinates are passed to universal-search so PASS 3 geo-bounds
+  // the query to MWM businesses in that region rather than using the user's
+  // current location. Geocoder coordinates only — never geocoder businesses.
   const runSearch = useCallback(async (q: string) => {
     const query = q.trim();
     if (!query || query.length < 2) return;
     setSearchedQuery(query);
     setUniversalLoading(true);
     setUniversalResult(null);
+    setDetectedLocation(null);
+
+    let geoLat: number | null = null;
+    let geoLng: number | null = null;
+
+    // Step 1 — geography extraction (same logic as Map page)
+    try {
+      const geoRes = await fetch(
+        `${API_BASE}/api/maps/geo-extract?q=${encodeURIComponent(query)}`,
+        { credentials: "include" }
+      );
+      if (geoRes.ok) {
+        const gd = await geoRes.json() as {
+          hasLocation: boolean; locationQuery: string | null;
+          lat: number | null; lng: number | null;
+        };
+        if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
+          geoLat = gd.lat;
+          geoLng = gd.lng;
+          setDetectedLocation({ name: gd.locationQuery ?? query });
+        }
+      }
+    } catch { /* geo-extract failed — search continues with no geo-bounds */ }
+
+    // Step 2 — MWM database search only (never display geocoder businesses)
     try {
       const p = new URLSearchParams({ q: query, surface: "directory", limit: "30" });
+      if (geoLat !== null && geoLng !== null) {
+        // Geo-bound to the detected destination.
+        // radius=50 mirrors the map page — covers a full province/island/metro area
+        // regardless of how individual sub-areas are stored (e.g. "Patong" for Phuket).
+        p.set("lat", String(geoLat));
+        p.set("lng", String(geoLng));
+        p.set("radius", "50");
+      }
       const res = await fetch(`${API_BASE}/api/search/universal?${p}`, { credentials: "include" });
       if (res.ok) {
         setUniversalResult(await res.json());
@@ -358,6 +398,7 @@ export default function Businesses() {
     setSearch("");
     setSearchedQuery("");
     setUniversalResult(null);
+    setDetectedLocation(null);
     inputRef.current?.focus();
   };
 
@@ -495,6 +536,12 @@ export default function Businesses() {
                         ? `${universalResult.totalResults} result${universalResult.totalResults === 1 ? "" : "s"} for "${searchedQuery}"`
                         : `No results for "${searchedQuery}"`}
                     </p>
+                    {detectedLocation && (
+                      <p className="text-xs text-[#CA922B] mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        Showing MWM businesses near {detectedLocation.name}
+                      </p>
+                    )}
                     {universalResult.fallbackMessage && (
                       <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{universalResult.fallbackMessage}</p>
                     )}
