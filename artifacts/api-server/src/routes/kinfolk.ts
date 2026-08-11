@@ -1453,9 +1453,16 @@ If you're asking a question or don't have enough info yet, set "recommendations"
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
 BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the MWM PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business not explicitly listed in the MWM PLATFORM BUSINESSES section. When MWM PLATFORM BUSINESSES are listed above, populate the businesses array with the relevant ones and reference them by name in your reply. Only say "Mapping With Melanin doesn't have a listing for [city]" when the MWM PLATFORM BUSINESSES section above is COMPLETELY EMPTY. Never populate the businesses array with invented or hallucinated names.
 SAFETY TIPS RULE: "safetyTips" must contain practical logistics ONLY — parking, transit, neighborhood navigation, what to bring, business hours, accessibility. Never include danger assessments, crime rates, or unsupported safety judgments about a community. If a user asks directly about safety conditions, respond in the "reply" field with honest, grounded information; do not fabricate safety scores or current danger levels.
-Only recommend real community or culturally significant spots — no tourist traps, no chains.${businessCatalog?.length ? `
+Only recommend real community or culturally significant spots — no tourist traps, no chains.${destination ? `
 
-MWM PLATFORM BUSINESSES${destination ? ` IN ${destination.toUpperCase()}` : ""} — ALWAYS SURFACE THESE FIRST:
+⚡ DIRECTORY RETRIEVAL — SERVER-AUTHORITATIVE (this is a machine-generated fact, never contradict it):
+• Requested location: ${destination}
+• MWM listings retrieved: ${businessCatalog.length}${catalogSource === "radius" ? " (nearest community businesses within 50 miles — these are the closest MWM-listed spots to this destination)" : catalogSource === "city" ? " (exact city match)" : ""}
+${businessCatalog.length > 0
+  ? `→ RULE: MWM DOES HAVE LISTINGS for this area. You MUST NOT say "I don't have listings for ${destination}", "no specific listings", or any equivalent disclaimer — it is factually WRONG. Surface the businesses below by name in your reply.`
+  : `→ RULE: MWM has no directory listings for this destination yet. You may offer helpful general travel context, but you MUST label it: "This is general travel guidance — not yet in the MWM community directory." Do NOT name specific restaurants or venues as though they are MWM-verified.`}` : ""}${businessCatalog?.length ? `
+
+MWM PLATFORM BUSINESSES${destination ? ` ${catalogSource === "radius" ? "NEAR" : "IN"} ${destination.toUpperCase()}` : ""} — ALWAYS SURFACE THESE FIRST:
 These are real businesses listed in the Mapping With Melanin™ community directory. When these are present, ALWAYS mention them by name in your reply: "Mapping With Melanin has [Name] listed in [City] — [brief description]." Do NOT require an exact category match. If the user asks for "restaurants" and MWM has food spots, cafes, or any dining-adjacent businesses listed, surface them. If the user asks for nightlife and MWM has bars, lounges, or entertainment spaces, surface them. Use every business's actual name. Unverified businesses are still real community spots — recommend them.
 
 ${businessCatalog.map(b => {
@@ -1877,6 +1884,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
     // not just when a travel destination has been set.
     let businessCatalog: BusinessCatalogEntry[] = [];
+    // Tracks how the catalog was populated — injected into the prompt so the
+    // model has a server-authoritative signal and cannot emit contradictory disclaimers.
+    let catalogSource: "city" | "radius" | "home" | "none" = "none";
 
     // Shared select shape reused for both destination and home-city queries
     const bizSelectShape = {
@@ -1946,6 +1956,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           environmentTags: r.environment_tags,
           amenityTags: r.amenity_tags,
         })) as unknown as typeof businessCatalog;
+        if (businessCatalog.length) catalogSource = "city";
 
         // City-name ILIKE returned 0 — destination may be a province/region
         // whose businesses are stored under sub-area city names (e.g. "Phuket"
@@ -2013,6 +2024,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                 environmentTags: r.environment_tags,
                 amenityTags: r.amenity_tags,
               })) as unknown as typeof businessCatalog;
+              if (businessCatalog.length) catalogSource = "radius";
             }
           } catch { /* non-critical — geo-radius fallback failed */ }
         }
@@ -2041,6 +2053,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ))
             .limit(20);
           businessCatalog = homeBizRows;
+          if (businessCatalog.length) catalogSource = "home";
         }
       } catch { /* non-critical — proceed without catalog */ }
     }

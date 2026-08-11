@@ -2330,6 +2330,41 @@ ON CONFLICT (city_slug) DO UPDATE SET
       PRIMARY KEY (user_id, year_month)
     )`,
   },
+
+  // ── Mapping With Melanin — canonical platform listing in the production directory
+  // The MWM platform itself should appear in its own community directory.
+  // Uses a stable deterministic ID so ON CONFLICT self-heals on every deploy.
+  {
+    name: "mwm_platform_listing_v1",
+    sql: `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             latitude, longitude, website, instagram, tiktok,
+             description, status, verified, black_owned, confidence_score,
+             profile_status, approved, business_status)
+          VALUES
+            ('c678e359-0000-4000-8000-000000000001',
+             'Mapping With Melanin',
+             'Community Organization',
+             'Community Tech Platform',
+             '1600 Market St',
+             'Philadelphia', 'PA', 'US',
+             39.9526, -75.1652,
+             'https://mappingwithmelanin.com',
+             'mapping_with_melanin',
+             'mapping.with.mela',
+             'Mapping With Melanin™ is a community-powered platform connecting Black travelers and residents with verified Black-owned businesses, cultural heritage sites, community events, and safety resources across the United States and beyond.',
+             'active', true, true, 100,
+             'complete', true, 'community')
+          ON CONFLICT (id) DO UPDATE SET
+            name         = EXCLUDED.name,
+            website      = EXCLUDED.website,
+            instagram    = EXCLUDED.instagram,
+            tiktok       = EXCLUDED.tiktok,
+            verified     = EXCLUDED.verified,
+            black_owned  = EXCLUDED.black_owned,
+            status       = EXCLUDED.status,
+            updated_at   = NOW()`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
