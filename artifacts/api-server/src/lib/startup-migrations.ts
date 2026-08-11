@@ -1818,6 +1818,57 @@ ON CONFLICT (city_slug) DO NOTHING`,
   // tester_accounts_restore_v1 (UPSERT above). Do not add any DELETE FROM users
   // logic to this array — it will execute on every deploy and every crash-restart.
   {
+    // Deduplicate Bangkok, Phuket, Sickle Cell Disease, and Faith & Spirituality in
+    // knowledge_topics. The seed_southeast_asia_library_topics_v1 migration had a bug:
+    // it checked WHERE NOT EXISTS ... AND category = 'country' but the existing rows
+    // have category = 'geography', so a new row was created on every boot.
+    // This migration is idempotent: UPDATE and DELETE affect 0 rows once dedup is done.
+    name: "deduplicate_geography_topics_v1",
+    sql: `
+      DO $$
+      DECLARE
+        canonical_id TEXT;
+      BEGIN
+        -- Bangkok
+        SELECT id INTO canonical_id FROM knowledge_topics
+        WHERE topic_name = 'Bangkok' ORDER BY created_at ASC LIMIT 1;
+        IF canonical_id IS NOT NULL THEN
+          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
+          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
+          UPDATE topic_relationships SET parent_topic_id = canonical_id WHERE parent_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
+          UPDATE topic_relationships SET child_topic_id = canonical_id WHERE child_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
+          DELETE FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id;
+        END IF;
+        -- Phuket
+        SELECT id INTO canonical_id FROM knowledge_topics
+        WHERE topic_name = 'Phuket' ORDER BY created_at ASC LIMIT 1;
+        IF canonical_id IS NOT NULL THEN
+          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
+          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
+          UPDATE topic_relationships SET parent_topic_id = canonical_id WHERE parent_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
+          UPDATE topic_relationships SET child_topic_id = canonical_id WHERE child_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
+          DELETE FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id;
+        END IF;
+        -- Sickle Cell Disease
+        SELECT id INTO canonical_id FROM knowledge_topics
+        WHERE topic_name = 'Sickle Cell Disease' ORDER BY created_at ASC LIMIT 1;
+        IF canonical_id IS NOT NULL THEN
+          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id);
+          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id);
+          DELETE FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id;
+        END IF;
+        -- Faith & Spirituality
+        SELECT id INTO canonical_id FROM knowledge_topics
+        WHERE topic_name = 'Faith & Spirituality' ORDER BY created_at ASC LIMIT 1;
+        IF canonical_id IS NOT NULL THEN
+          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id);
+          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id);
+          DELETE FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id;
+        END IF;
+      END $$;
+    `,
+  },
+  {
     // user_library_interests — tracks which topics a user has followed or saved.
     // Powers KinfolkAI cross-pollination: when a user follows "Ethiopia" in the Library,
     // KinfolkAI surfaces Ethiopian businesses and events in travel/businesses conversations.
