@@ -149,3 +149,4 @@
 - [Geo-extract map search architecture](geo-extract-architecture.md) — separates WHERE from WHAT before geocoding; 'Phuket restaurants' was panning to Oslo; 13/13 cases verified.
 - [KinfolkAI catalog column bug](kinfolk-catalog-column-bug.md) — Drizzle leftJoin fails silently on Railway; must use pool.query; 3 schema columns were missing from Railway prod DB; startup migrations now add them; AI prompt must say "surface by name, not exact category."
 - [MIGRATIONS array — no tracking table, runs every boot](migrations-no-tracking-table.md) — PERMANENT: every entry runs on every server start; DELETE/TRUNCATE in that array wipes data on every deploy. tester_clean_slate_v2 was deleting all tester accounts on every boot.
+- [Kinfolk Adaptive Delivery & Audience Filter](kinfolk-adaptive-delivery.md) — explicit-only tone/depth; evaluateAudienceEligibility governs proactive push only; kinfolk_delivery_profiles table needed in Railway.
