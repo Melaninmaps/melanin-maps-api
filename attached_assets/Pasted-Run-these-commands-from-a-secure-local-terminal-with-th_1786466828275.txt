@@ -1,0 +1,137 @@
+Run these commands from a **secure local terminal** with the Railway CLI authenticated and `psql` installed. Replace the placeholders with the Railway **project ID**, **API service name**, and **production environment name**. Do not paste the output anywhere public, because it identifies production infrastructure.
+
+## 1. Inspect `family_ai_usage` directly through Railway CLI
+
+First link the CLI to the service that actually serves `mappingwithmelanin.com`—**not** the Railway Postgres service itself:
+
+```bash
+railway link \
+  --project <RAILWAY_PROJECT_ID> \
+  --service <API_SERVICE_NAME> \
+  --environment production
+```
+
+Then run this exact schema, existence, and permission check. It supports either `DATABASE_URL` or `POSTGRES_URL` in the API runtime:
+
+```bash
+railway run -- bash -lc '
+set -euo pipefail
+
+DB_URL="${DATABASE_URL:-${POSTGRES_URL:-}}"
+if [ -z "$DB_URL" ]; then
+  echo "ERROR: Neither DATABASE_URL nor POSTGRES_URL exists in the linked API service."
+  exit 1
+fi
+
+psql "$DB_URL" -v ON_ERROR_STOP=1 <<'"'"'SQL'"'"'
+SELECT
+  current_database() AS database_name,
+  current_user AS database_role,
+  inet_server_addr() AS server_ip,
+  inet_server_port() AS server_port;
+
+SELECT to_regclass('"'"'public.family_ai_usage'"'"') AS family_ai_usage_table;
+
+SELECT
+  ordinal_position,
+  column_name,
+  data_type,
+  is_nullable,
+  column_default
+FROM information_schema.columns
+WHERE table_schema = '"'"'public'"'"'
+  AND table_name = '"'"'family_ai_usage'"'"'
+ORDER BY ordinal_position;
+
+SELECT
+  grantee,
+  privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = '"'"'public'"'"'
+  AND table_name = '"'"'family_ai_usage'"'"'
+ORDER BY grantee, privilege_type;
+SQL
+'
+```
+
+A passing result must show:
+
+| Check | Expected result |
+|---|---|
+| `family_ai_usage_table` | `family_ai_usage`, **not** `NULL` |
+| Database identity | The same database/host used by the deployed API service |
+| Columns | Every field referenced by `checkAiPool` exists with a compatible type |
+| Privileges | The runtime role has required `SELECT`, plus `INSERT`/`UPDATE` where the route writes usage data |
+
+If `psql` is not installed locally, Replit should either install the PostgreSQL client or open the API service’s Railway shell and run the SQL there. The key requirement is that the query uses the **API service’s runtime database variable**.
+
+## 2. Exact authenticated cURL reproduction for `POST /api/kinfolk/chat`
+
+This logs in, stores the HTTP-only cookie in a temporary file, extracts a Bearer token only into process memory if the login response returns one, and then prints the **raw HTTP status, headers, and body** for the chat route. It does **not** print the token or cookie.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE_URL="https://www.mappingwithmelanin.com"
+EMAIL="manus@mappingwithmelanin.com"
+PASSWORD="<INSERT-TEST-ACCOUNT-PASSWORD-HERE>"
+
+COOKIE_JAR="$(mktemp)"
+LOGIN_BODY="$(mktemp)"
+CHAT_BODY="$(mktemp)"
+trap 'rm -f "$COOKIE_JAR" "$LOGIN_BODY" "$CHAT_BODY"' EXIT
+
+# 1) Authenticate and save only the temporary session cookie.
+LOGIN_STATUS="$(curl -sS --max-time 25 \
+  -c "$COOKIE_JAR" \
+  -o "$LOGIN_BODY" \
+  -w '%{http_code}' \
+  -X POST "$BASE_URL/api/auth/login-email" \
+  -H 'Content-Type: application/json' \
+  --data "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")"
+
+echo "Login HTTP status: $LOGIN_STATUS"
+
+# 2) Use a token if the login response supplies one; do not print it.
+TOKEN="$(grep -oE '"(token|accessToken|access_token|sessionToken)":"[^"]+"' "$LOGIN_BODY" \
+  | head -1 \
+  | sed -E 's/"(token|accessToken|access_token|sessionToken)":"([^"]+)"/\2/' || true)"
+
+AUTH_ARGS=()
+if [ -n "$TOKEN" ]; then
+  AUTH_ARGS=(-H "Authorization: Bearer $TOKEN")
+  echo "Auth mode: Bearer token present (redacted)."
+else
+  echo "Auth mode: session cookie only."
+fi
+
+# 3) Send the current frontend-compatible payload and print raw response.
+CHAT_STATUS="$(curl -sS --max-time 60 \
+  -D /dev/stderr \
+  -b "$COOKIE_JAR" \
+  "${AUTH_ARGS[@]}" \
+  -o "$CHAT_BODY" \
+  -w '%{http_code}' \
+  -X POST "$BASE_URL/api/kinfolk/chat" \
+  -H 'Content-Type: application/json' \
+  --data '{"message":"What is 12 times 8?","neighborVoice":true}')"
+
+echo
+printf 'Kinfolk chat HTTP status: %s\n' "$CHAT_STATUS"
+echo 'Kinfolk chat raw response:'
+cat "$CHAT_BODY"
+printf '\n'
+```
+
+The independent result I captured with this same authentication pattern was:
+
+```text
+Login HTTP status: 200
+Kinfolk chat HTTP status: 500
+{"error":"Kinfolk is having trouble answering that right now. Please try again in a moment."}
+```
+
+The current browser payload contains **`message`** and **`neighborVoice`**, but no `sessionId`. Replit should specifically confirm that the active server route does not still require `sessionId`; that frontend/backend contract mismatch is one plausible source of the HTTP 500.
+
+Finally, Replit should run the cURL command while viewing the active Railway deployment logs and search the matching timestamp for `/api/kinfolk/chat`, `checkAiPool`, `family_ai_usage`, and the first underlying exception—not merely the generic error sent back to the browser.

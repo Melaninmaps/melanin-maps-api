@@ -1,0 +1,32 @@
+## Independent Verification of Railway Deploy `3afb0a17`
+
+I hard-refreshed the live production KinfolkAI page and ran the exact acceptance tests after the stated environment-variable correction.
+
+| Test | Result | Live observation |
+|---|---:|---|
+| Hard-refreshed production app loads | ✅ Pass | The authenticated KinfolkAI page loaded normally. |
+| `What is 12 times 8?` | ❌ Fail | Kinfolk displayed: **“Kinfolk is having trouble answering that right now. Try again.”** |
+| Phuket birthday itinerary | ❌ Fail | The same generic failure appeared after the full Phuket birthday request. |
+| Map → KinfolkAI session continuity | ✅ Pass | I navigated away to Map and returned to `/travel` without being asked to log in again. |
+
+> **Conclusion:** The Railway runtime can now reach the OpenAI endpoint at startup, but the **live `/api/kinfolk/chat` request path is still failing after the user submits a message**. The startup connectivity check is therefore not an end-to-end proof that Kinfolk chat works.
+
+The remaining fault is likely in one of four places: the `checkAiPool`/usage-table runtime query; a chat-route-specific database operation; the provider call request shape/model configuration; or the server-to-frontend response transformation. I cannot determine which one from public-browser access because the UI masks the error.
+
+### Replit’s required next check
+
+Replit should send **one real production chat request** while tailing the active Railway deployment logs, then locate the request by timestamp or request ID. They should confirm these checkpoints in order:
+
+```text
+POST /api/kinfolk/chat received
+→ authenticated user resolved
+→ checkAiPool completed (or fallback used)
+→ any family_ai_usage read/write completed
+→ OpenAI request sent
+→ OpenAI response status received
+→ API route returned HTTP 200 with the response body expected by the frontend
+```
+
+They should capture the first failing line, plus the exact HTTP status and redacted exception message. A successful startup line such as *“AI connectivity check: OK”* only confirms Railway can reach OpenAI; it does **not** validate the complete chat request, database usage logic, model request, or UI response contract.
+
+**Release status: KinfolkAI remains a P0 blocker.** The login/session and surrounding platform navigation are stable, but I cannot approve KinfolkAI or the Phuket birthday experience until both acceptance prompts return visible answers in the live browser.
