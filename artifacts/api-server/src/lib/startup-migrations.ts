@@ -8,9 +8,13 @@
  * would be absent.
  */
 import { randomUUID } from "crypto";
-import { COVERAGE_EXPANSION } from "./seeds/coverage-expansion.js";
+import { COVERAGE_EXPANSION, type SeedBiz } from "./seeds/coverage-expansion.js";
 import { GAP_COVERAGE_V2 } from "./seeds/gap-coverage-v2.js";
 import { FINAL_MICRO_SEED } from "./seeds/final-micro-seed.js";
+import { LA_DIASPORA_V1 } from "./seeds/la-diaspora-v1.js";
+import { EAST_COAST_DIASPORA_V1 } from "./seeds/east-coast-diaspora-v1.js";
+import { SOUTH_DIASPORA_V1 } from "./seeds/south-diaspora-v1.js";
+import { MIDWEST_WEST_DIASPORA_V1 } from "./seeds/midwest-west-diaspora-v1.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
@@ -411,41 +415,11 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'staged'`,
   },
   {
-    // Seed 12 Philadelphia demo businesses so the map has gold pins from day one.
-    // Uses WHERE NOT EXISTS per row — no unique constraint needed, fully idempotent.
+    // Demo businesses removed — replaced with real diaspora community listings.
+    // This migration is kept as a no-op so the name stays tracked and the block
+    // is never re-executed with the old INSERT logic on older Railway instances.
     name: "demo_businesses_philly_seed_v2",
-    sql: `DO $seed$
-DECLARE biz RECORD;
-BEGIN
-  FOR biz IN SELECT * FROM (VALUES
-    ('Kinfolk Kitchen','[DEMO] A beloved gathering spot serving Southern and West African-inspired comfort food. Family recipes, community events, and a warm welcome for everyone.','Food','Restaurant','1400 South St','Philadelphia','PA','39.9416','-75.1650',true,'["black-owned"]','moderate'),
-    ('Akosua''s Cloth & Culture','[DEMO] Handcrafted West African textiles, kente cloth, and contemporary Afro-diasporic fashion.','Retail','Fashion','3210 Girard Ave','Philadelphia','PA','39.9665','-75.1730',true,'["black-owned","african-diaspora-owned"]','moderate'),
-    ('Yard Style Caribbean Grill','[DEMO] Jerk chicken, oxtail, and roti made from family recipes brought from Kingston and Port of Spain.','Food','Caribbean','5523 Germantown Ave','Philadelphia','PA','39.9980','-75.1720',true,'["black-owned","caribbean-owned"]','budget'),
-    ('Casa Hernandez Panaderia','[DEMO] Mexican and Puerto Rican baked goods, pan dulce, and fresh empanadas. A community anchor for over a decade.','Food','Bakery','2812 N 5th St','Philadelphia','PA','39.9810','-75.1350',false,'["hispanic-owned","latino-owned"]','budget'),
-    ('Lenape Roots Wellness','[DEMO] Holistic wellness rooted in Indigenous traditions — herbal medicine, mindfulness, and educational programs.','Health','Wellness','1200 E Columbia Ave','Philadelphia','PA','39.9740','-75.1210',false,'["indigenous-owned","native-american-owned"]','moderate'),
-    ('Samira''s Moroccan Table','[DEMO] Slow-cooked tagines, fresh mint tea, and warm hospitality from a Casablanca native.','Food','Restaurant','734 S 9th St','Philadelphia','PA','39.9352','-75.1534',false,'["middle-eastern-owned","north-african-owned","immigrant-owned"]','moderate'),
-    ('New Arrival Market','[DEMO] A multicultural grocery stocking ingredients from over 30 countries, founded by first-generation immigrants.','Retail','Grocery','1840 Point Breeze Ave','Philadelphia','PA','39.9291','-75.1720',false,'["immigrant-owned"]','budget'),
-    ('Her Collective Studio','[DEMO] Women-owned beauty and wellness studio specializing in natural hair care, skincare, and holistic self-care.','Beauty','Salon','4512 Baltimore Ave','Philadelphia','PA','39.9447','-75.2045',false,'["women-owned"]','moderate'),
-    ('Prism Books and Community Space','[DEMO] An LGBTQ+-owned independent bookstore, event venue, and safe space celebrating queer literature.','Retail','Bookstore','704 S 4th St','Philadelphia','PA','39.9418','-75.1480',false,'["lgbtq-owned"]','moderate'),
-    ('Accessibility First Consulting','[DEMO] Disability-owned consulting firm specializing in ADA compliance, accessible design, and inclusive workplace strategy.','Services','Consulting','1500 Market St','Philadelphia','PA','39.9530','-75.1653',false,'["disability-owned"]','upscale'),
-    ('Honor Grounds Coffee','[DEMO] Veteran-owned coffee shop and community meeting space. Single-origin roasts and a standing welcome for all who have served.','Food','Cafe','1910 Passyunk Ave','Philadelphia','PA','39.9280','-75.1720',false,'["veteran-owned"]','budget'),
-    ('The Gathering Place','[DEMO] A multicultural community restaurant co-owned by Black, LGBTQ+, and women founders. Food, art, and storytelling.','Food','Restaurant','2100 Fairmount Ave','Philadelphia','PA','39.9635','-75.1723',true,'["black-owned","women-owned","lgbtq-owned"]','moderate')
-  ) AS t(name,description,category,subcategory,address,city,state,latitude,longitude,black_owned,ownership_designations,price_range)
-  LOOP
-    IF NOT EXISTS (SELECT 1 FROM businesses WHERE name = biz.name AND city = biz.city) THEN
-      INSERT INTO businesses
-        (id, name, description, category, subcategory, address, city, state,
-         latitude, longitude, black_owned, ownership_designations,
-         confidence_score, verified, price_range, business_status, listing_status)
-      VALUES (
-        gen_random_uuid(), biz.name, biz.description, biz.category, biz.subcategory,
-        biz.address, biz.city, biz.state, biz.latitude::numeric, biz.longitude::numeric,
-        biz.black_owned::boolean, biz.ownership_designations::jsonb,
-        75, false, biz.price_range, 'community', 'live_unclaimed'
-      );
-    END IF;
-  END LOOP;
-END $seed$`,
+    sql: `SELECT 1 -- demo businesses retired; real listings loaded via runEveryBoot diaspora seeds`,
   },
   {
     // Backfill: any remaining staged/null Philadelphia businesses → live_unclaimed
@@ -2033,6 +2007,13 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["category normalize",   () => ensureCategoryNormalization(log, warn)],
     ["gap coverage v2",      () => ensureGapCoverageV2(log, warn)],
     ["final micro seed",     () => ensureFinalMicroSeed(log, warn)],
+    // ── Demo removal — wipes all [DEMO] businesses (safe, checks for member data) ──
+    ["demo removal",          () => ensureDemoRemoval(log, warn)],
+    // ── Full diaspora expansion — every community, every city ──────────────────────
+    ["la diaspora v1",        () => runSeedBatch("LA Diaspora V1", LA_DIASPORA_V1, log, warn)],
+    ["east coast diaspora",   () => runSeedBatch("East Coast Diaspora", EAST_COAST_DIASPORA_V1, log, warn)],
+    ["south diaspora",        () => runSeedBatch("South Diaspora", SOUTH_DIASPORA_V1, log, warn)],
+    ["midwest west diaspora", () => runSeedBatch("Midwest/West Diaspora", MIDWEST_WEST_DIASPORA_V1, log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -4983,5 +4964,108 @@ async function ensureFinalMicroSeed(
     log(`Final micro-seed: ${inserted} inserted, ${skipped} already present (${FINAL_MICRO_SEED.length} total)`);
   } catch (err: unknown) {
     warn(`Final micro-seed failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Generic seed batch runner ────────────────────────────────────────────────
+// Shared by all diaspora expansion batches. Deduplicates by name|city|country.
+async function runSeedBatch(
+  batchName: string,
+  businesses: SeedBiz[],
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  if (!businesses || businesses.length === 0) {
+    log(`${batchName}: empty seed array — skipping`);
+    return;
+  }
+  try {
+    const existing = await pool.query(
+      `SELECT LOWER(name) || '|' || LOWER(city) || '|' || LOWER(COALESCE(country,'usa')) AS k FROM businesses`
+    );
+    const existingKeys = new Set<string>(existing.rows.map((r: { k: string }) => r.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of businesses) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.country || 'USA').toLowerCase()}`;
+      if (existingKeys.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude,
+             website,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,'[]'::jsonb,false,
+             $10,$11,
+             $12,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address, b.city,
+            b.state ?? null,
+            b.country || 'USA',
+            b.description,
+            String(b.lat), String(b.lng),
+            b.website ?? null,
+          ]
+        );
+        existingKeys.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  ${batchName}: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`${batchName}: ${inserted} inserted, ${skipped} already present (${businesses.length} total in batch)`);
+  } catch (err: unknown) {
+    warn(`${batchName} seed failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Remove all [DEMO] businesses ────────────────────────────────────────────
+// Runs on every boot — idempotent (no-op once demos are gone).
+// Only removes records with no member data attached (reviews, saves, vibe tags).
+async function ensureDemoRemoval(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    const result = await pool.query<{ name: string; city: string }>(
+      `DELETE FROM businesses
+       WHERE description LIKE '[DEMO]%'
+         AND NOT EXISTS (SELECT 1 FROM reviews         WHERE business_id = businesses.id)
+         AND NOT EXISTS (SELECT 1 FROM saved_places    WHERE business_id = businesses.id)
+         AND NOT EXISTS (SELECT 1 FROM business_vibe_tags WHERE business_id = businesses.id)
+       RETURNING name, city`
+    );
+    if (result.rowCount && result.rowCount > 0) {
+      const names = result.rows.map((r) => `${r.name} (${r.city})`).join(', ');
+      log(`Demo removal: removed ${result.rowCount} demo listings — ${names}`);
+    } else {
+      log('Demo removal: platform is clean — no demo listings found');
+    }
+  } catch (err: unknown) {
+    warn(`Demo removal failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
