@@ -1,55 +1,55 @@
 ---
 name: Kinfolk Universal Search & Evidence Architecture
-description: Founder-authored full architecture for Kinfolk as a universal domain-aware search companion. All specs saved to docs/architecture/ on 2026-08-11.
+description: All architecture specs for Kinfolk as a universal domain-aware search companion. All docs saved to docs/architecture/ on 2026-08-11. Priority order confirmed by founder.
 ---
 
 # Kinfolk Universal Search Architecture — Filed 2026-08-11
 
-## What was filed
+## Implementation Priority (founder-confirmed 2026-08-11)
 
-All 8 architecture documents saved to `docs/architecture/` in commit 8700637a:
+1. **Business Page Recovery** — mirror July 11 2026 2:00 AM build exactly (Task #240)
+2. **Library evidence gap** — 125 empty topics, Phuket dedup, source join bug (Task #255)
+3. **Kinfolk Universal Router** — intent classification + live web + citations (Task #256)
+4. **Privacy firewall** — sensitive queries never surface in Circles/recommendations (Task #257)
+5. **City readiness registry** — proactive tour-city prep, search-to-brick pipeline (not yet tasked)
+6. **Adaptive tone & delivery** — explicit delivery profiles, age-safe routing (not yet tasked)
 
-| File | Contents |
+## Documents in docs/architecture/ (13 files total)
+
+| File | Phase |
 |---|---|
-| KINFOLK_UNIVERSAL_SEARCH_ARCHITECTURE.md | Product definition, evidence calibration table, request router, search implementation, Library governance, privacy rules, implementation phases, acceptance tests |
-| KINFOLK_SEARCH_ROUTER_CONTRACT.md | HTTP API contract for `/api/kinfolk/route`, RouterPlan schema, server-side enforcement code, policy examples (diabetes/Philly rap/vintage cars), prompt templates |
-| KINFOLK_EVIDENCE_SCHEMA.md | Multi-domain Library schema design: evidence domains, source policies, scoped mappings, claims, research runs, Library candidates, user learning scopes |
-| KINFOLK_ADAPTIVE_DELIVERY_RULES.md | Delivery profiles, progressive disclosure (quick/standard/deep), tone adaptation, age-aware safety, notification policy |
-| kinfolk-universal-search-evidence.migration.sql | Production-safe PostgreSQL migration — all `kinfolk_*` tables, additive columns on `knowledge_sources`, scoped source mapping view, RLS policies |
-| kinfolk-universal-search-router.reference.ts | Complete reference TypeScript implementation of Universal Search Router middleware |
-| library-missing-source-topics-2026-08-11.csv | 125 Travel/regional topics with zero verified sources |
-| library-phuket-source-inspection-sql.md | SQL runbook for Phuket source mapping audit against production |
+| KINFOLK_UNIVERSAL_SEARCH_ARCHITECTURE.md | All phases — product definition |
+| KINFOLK_CONCEPTUAL_GAP_ANALYSIS.md | All phases — gap analysis, confirms priority |
+| KINFOLK_SEARCH_ROUTER_CONTRACT.md | Phase 1 — Router HTTP contract |
+| KINFOLK_EVIDENCE_SCHEMA.md | Phase 2 — DB schema for evidence system |
+| KINFOLK_ADAPTIVE_DELIVERY_RULES.md | Phase 2 — delivery profiles spec |
+| KINFOLK_TOUR_CITY_READINESS.md | Phase 3 — city readiness model |
+| BUSINESS_PAGE_RECOVERY_BRIEF.md | Priority 1 — business page mirror brief |
+| kinfolk-universal-search-router.reference.ts | Phase 1 — reference implementation |
+| kinfolk-adaptive-tone-and-audience-filter.reference.ts | Phase 2 — reference implementation |
+| kinfolk-universal-search-evidence.migration.sql | Phase 2 — DB migration (needs RLS adaptation) |
+| kinfolk-tour-city-readiness-search-to-brick.migration.sql | Phase 3 — DB migration (needs RLS adaptation) |
+| library-missing-source-topics-2026-08-11.csv | Phase 0 — 125 unsourced topics |
+| library-phuket-source-inspection-sql.md | Phase 0 — Phuket SQL runbook |
+
+## Critical RLS Warning
+Both SQL migrations use Supabase `auth.uid()` syntax. Railway runs plain PostgreSQL.
+Before running either migration: strip all `ENABLE ROW LEVEL SECURITY`, `CREATE POLICY`,
+and `auth.uid()` references, or replace with app-layer auth checks.
+The tables themselves are safe — only the RLS blocks need adaptation.
+
+## Current system gap (confirmed by architecture review 2026-08-11)
+The Library is a TOPIC SYSTEM, not a knowledge engine. Kinfolk's effective pipeline is:
+  User → buildSystemPrompt (15 data sources, metadata only) → gpt-4o-mini → answer
+The Library sits beside Kinfolk, not inside it. Source content never reaches the model.
+The flywheel breaks at the enrichment step: reviews, posts, contributions don't feed Kinfolk.
 
 ## Core principle
+Every search can be a brick for the next person, but it is never a brick made out of somebody else's private life.
 
-Kinfolk is a culturally aware, privacy-respecting, GENERAL-PURPOSE search and reasoning companion — not a travel chatbot, not a medical database. Can answer math, research diabetes, discuss Philly rap, find vintage car clubs, plan travel.
+**Why:** The flywheel requires community signals to improve future answers, but personal/sensitive searches must remain private. The search-to-brick pipeline (governed aggregate demand → research task → moderated Library candidate) is the architectural solution.
 
-## Evidence calibration (not one rule for every query)
-
-| Intent | Example | Source standard |
-|---|---|---|
-| general_knowledge | 12×8 | No search needed |
-| culture_entertainment | Best rapper from Philly | Credible journalism/public sources; citations recommended |
-| hobby_lifestyle | Find vintage car club | Specialist sites, clubs, verified directory + community |
-| medical_health | Diabetes doctor questions | CDC/NIH/WHO-level; community evidence BLOCKED |
-| legal_regulated | Employment lawyer | Gov/bar association only; community evidence BLOCKED |
-| safety_emergency | Hurricane warning | Official alerts only; web_required; citations required |
-
-## Implementation phases
-
-- **Phase 0** (immediate): Fix Library integrity — deduplicate Phuket sources, mark 125 empty topics as `overview_pending_sources`
-- **Phase 1**: Universal chat + citations — Request Router, web_search provider adapter, clickable citations
-- **Phase 2**: Governed Library enrichment — candidate evidence, reviewer workflow, canonical URL dedup
-- **Phase 3**: Community/business intelligence with privacy boundaries
-
-## Task refs
-
-- Task #255: Library evidence gap fix (Phase 0)
-- Task #256: Universal search router + live web (Phase 1)
-- Task #257: Privacy firewall for sensitive queries (cross-cutting)
-
-## No-touch guardrail
-
-Login/auth, session behavior, Maps, Safety Hub, existing business-listing rendering, Marketplace, Circles, Connections, global navigation MUST NOT be altered during implementation.
-
-**Why:** These are the proven-stable, tester-facing parts of the platform. Changes there require separate release gates.
+**How to apply:** Before any Kinfolk feature that stores or reuses a user's query, ask:
+1. Is this sensitive/high-consequence? → ephemeral only, no storage
+2. Is this a non-sensitive pattern with k≥10 distinct users? → aggregate demand signal only
+3. Has it passed source-policy review? → Library candidate, then moderated publish
