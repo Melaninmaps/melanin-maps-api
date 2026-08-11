@@ -1,0 +1,85 @@
+This is progress, but **I would not stop here yet** because Replit itself is telling us the three remaining Manus issues are still real:
+
+* **#236 International directory search** — this is still a blocker for your Phuket/Bangkok use case. If `/businesses` does not call the same geo-extraction logic, then “Phuket restaurants” can still fail in the directory even though Map now understands Phuket.
+* **#237 Kinfolk home city** — important for personalization, but I would classify this as P1 and not let it delay the controlled tester release if everything else is stable.
+* **#238 Auth flicker** — cosmetic/UX unless it causes real logout confusion. Fix only if low-risk.
+
+The key thing I would tell Replit now is: **do #236 immediately, then freeze.** Do not create another broad task cycle.
+
+Send this:
+
+```text
+FINAL PRE-TESTER DIRECTIVE
+
+Good. The Amina bug, homepage stats, and referral 404 are fixed.
+
+Now complete ONLY the remaining issue that materially affects the proof-of-concept:
+
+#236 — International Directory Search
+
+The Businesses page must use the SAME geography/intention parsing architecture as the Map.
+
+Required production behavior:
+
+"Phuket restaurants"
+→ geography = Phuket
+→ intent = restaurants
+→ return ONLY MWM Phuket restaurant/business records
+
+"Bangkok nightlife"
+→ geography = Bangkok
+→ intent = nightlife
+→ return ONLY MWM Bangkok records
+
+"Jamaica restaurants"
+→ geography = Jamaica
+→ intent = restaurants
+→ return ONLY MWM Jamaica records
+
+Control:
+"Philadelphia restaurants"
+→ Philadelphia MWM results
+
+DO NOT use external geocoders as a business source.
+
+Geocoder = geography only.
+MWM DB = business results only.
+
+After implementing #236:
+
+VISUALLY TEST production using a real authenticated browser.
+
+Required screenshots:
+
+Amina
+Phuket restaurants
+Bangkok nightlife
+Jamaica restaurants
+Philadelphia restaurants
+
+Each must show the expected MWM result set.
+
+Then run a short regression only:
+
+login
+Apple reviewer login
+Map
+Businesses
+Library
+Kinfolk
+save
+review
+logout/re-login
+
+DO NOT implement #237 or #238 in this same deployment unless they are completely isolated and zero-risk.
+
+If #236 passes visually:
+
+FREEZE RELEASE CANDIDATE.
+
+Report final SHA and stale_bundle=false.
+
+Then stop development and allow controlled testers in.
+```
+
+My recommendation: **#236 now, #237 next release, #238 only if low-risk.** You are finally at the point where continued work risks stealing more time from the marketing and investor momentum you need. Once directory routing matches Map routing, I would move to testers.
