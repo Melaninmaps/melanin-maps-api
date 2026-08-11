@@ -1883,6 +1883,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library activation",   () => ensureLibraryContentActivation_v1(log, warn)],
     ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
     ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
+    ["LA businesses",        () => ensureLABusinesses(log, warn)],
     ["test data cleanup",    () => ensureTestDataRemoved(log, warn)],
     ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
     ["founder churches",     () => ensureFounderChurches(log, warn)],
@@ -3905,6 +3906,126 @@ async function ensureBangkokBusinesses(
     log(`Bangkok businesses guard: ${inserted} inserted, ${skipped} already present`);
   } catch (err: unknown) {
     warn(`Bangkok businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Los Angeles — Black & diaspora businesses across the metro ─────────────────
+// Covers: soul food, BBQ, Ethiopian, Jamaican, Trinidadian, Oaxacan/Afro-Mexican,
+// coffee, health food, arts, nightlife, beauty, faith — Leimert Park through Watts,
+// Inglewood, Pasadena, Long Beach, Culver City, Hermosa Beach.
+// Does NOT duplicate tour seed: Malik Books, Post & Beam, Earle's, Meals by Genet,
+// Guelaguetza, Flavors from Afar, Bossa Nova, Wi Spa, Ayara Thai.
+async function ensureLABusinesses(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const LA_BUSINESSES = [
+    // ── Soul Food & BBQ — Black American institutions ──────────────────────────
+    { name: "Dulan's Soul Food Kitchen", category: "Food", subcategory: "Soul Food", address: "4859 Crenshaw Blvd", city: "Los Angeles", lat: 33.9933, lng: -118.3359, description: "One of LA's most beloved soul food restaurants — Dulan's has fed the Crenshaw community for decades with smothered chicken, candied yams, and black-eyed peas that taste like a Sunday plate from home. A gathering place as much as a restaurant." },
+    { name: "Harold & Belle's Restaurant", category: "Food", subcategory: "Creole & Soul Food", address: "2920 W Jefferson Blvd", city: "Los Angeles", lat: 34.0140, lng: -118.3282, description: "A Los Angeles institution since 1969. Harold & Belle's brought the flavors of New Orleans Creole cooking to the West Adams neighborhood and never stopped. Gumbo, crawfish étouffée, and red beans and rice served with the warmth of family." },
+    { name: "Phillips Bar-B-Que", category: "Food", subcategory: "BBQ", address: "4307 Leimert Blvd", city: "Los Angeles", lat: 34.0072, lng: -118.3321, description: "Since 1971, Phillips has been the soul of Leimert Park BBQ. Hot links, ribs, and beef brisket slow-smoked over oak — the lines wrap around the corner every weekend and always have. A community pillar and a culinary landmark." },
+    { name: "Woody's Bar-B-Que", category: "Food", subcategory: "BBQ", address: "3446 W Slauson Ave", city: "Los Angeles", lat: 33.9930, lng: -118.3387, description: "Woody's has been slinging legendary BBQ on Slauson since 1975. Ribs, hot links, and sliced beef piled onto butcher paper — no-frills, pure flavor. A Hyde Park staple beloved across generations of South LA families." },
+    { name: "Bludso's Bar & Que", category: "Food", subcategory: "Texas BBQ", address: "609 N La Brea Ave", city: "Los Angeles", lat: 34.0806, lng: -118.3381, description: "Kevin Bludso brought his Compton roots and Texas BBQ traditions together at this La Brea landmark. Beef ribs, brisket, and Texas-style hot links in a bar setting that's as lively as the food is serious. One of LA's most celebrated pitmasters." },
+    { name: "Roscoe's House of Chicken & Waffles", category: "Food", subcategory: "Soul Food", address: "1518 N Gower St", city: "Los Angeles", lat: 34.0985, lng: -118.3262, description: "Herb Hudson opened the original Roscoe's in Hollywood in 1975 and created an LA legend. Chicken and waffles — crispy, golden, smothered — became the city's comfort food symbol. Beloved by the community, musicians, and every president who's passed through." },
+    { name: "The Serving Spoon", category: "Food", subcategory: "Soul Food Breakfast", address: "1403 Centinela Ave", city: "Inglewood", lat: 33.9636, lng: -118.3502, description: "Inglewood's favorite breakfast spot — a no-nonsense soul food diner serving grits, catfish and eggs, and the kind of smothered potatoes that make you close your eyes. The Serving Spoon is a community anchor that has never chased trends and never needed to." },
+    { name: "Big Mama's Rib Shack", category: "Food", subcategory: "BBQ & Soul Food", address: "1453 N Lake Ave", city: "Pasadena", lat: 34.1475, lng: -118.1123, description: "Big Mama's brought deep-South BBQ tradition to Pasadena and became the heartbeat of the city's Black community dining scene. Ribs, rib tips, and sides cooked with decades of muscle memory — the kind of place where regulars are known by name." },
+    { name: "Harriet's Cheesecakes Unlimited", category: "Food", subcategory: "Bakery & Desserts", address: "4440 W Slauson Ave", city: "Los Angeles", lat: 33.9890, lng: -118.3500, description: "For over 30 years, Harriet's has been baking the cheesecakes that show up at every South LA celebration — New York style, sweet potato, peach cobbler, and rotating seasonal flavors. Black-owned and deeply rooted in the community." },
+    { name: "Flossie's", category: "Food", subcategory: "Southern Cuisine", address: "2651 E 4th St", city: "Long Beach", lat: 33.7706, lng: -118.1574, description: "A Long Beach institution bringing Southern comfort food — fried catfish, collard greens, oxtails, and peach cobbler — to the heart of the city's historic Black community. Flossie's is the kind of place that makes you feel at home the moment you walk in." },
+
+    // ── Ethiopian & East African — Little Ethiopia corridor ─────────────────────
+    { name: "Rahel Ethiopian Vegan Cuisine", category: "Food", subcategory: "Ethiopian Vegan", address: "1047 S Fairfax Ave", city: "Los Angeles", lat: 34.0523, lng: -118.3609, description: "The crown jewel of LA's Little Ethiopia neighborhood — Rahel serves a fully vegan Ethiopian menu of injera, tibs, misir, and gomen that is as ceremonially prepared as it is deeply flavorful. A landmark for plant-based eating that predates the trend by decades." },
+    { name: "Awash Ethiopian Restaurant", category: "Food", subcategory: "Ethiopian Cuisine", address: "1012 S Fairfax Ave", city: "Los Angeles", lat: 34.0515, lng: -118.3601, description: "A beloved stalwart of Little Ethiopia — Awash serves generous communal platters of lamb tibs, doro wot, and ayib on hand-made injera. The kind of place where first-timers become regulars and regulars become family." },
+
+    // ── Caribbean & Jamaican ───────────────────────────────────────────────────
+    { name: "Coley's Jamaican Restaurant", category: "Food", subcategory: "Jamaican Cuisine", address: "4335 Crenshaw Blvd", city: "Los Angeles", lat: 34.0028, lng: -118.3388, description: "Coley's has been feeding the Crenshaw corridor with authentic Jamaican cooking for years — jerk chicken, curry goat, oxtail, and plantain cooked low and slow with the island's full flavor spectrum. A cornerstone of LA's Caribbean community." },
+    { name: "Bridgetown Roti", category: "Food", subcategory: "Trinidadian Caribbean", address: "4556 Eagle Rock Blvd", city: "Los Angeles", lat: 34.1326, lng: -118.2186, description: "Bridgetown brings the flavors of Trinidad and Tobago to Eagle Rock — curry chicken roti, doubles, and pholourie from a kitchen that takes Caribbean food as seriously as any white-tablecloth restaurant. One of the most exciting diaspora kitchens in the city." },
+
+    // ── Afro-Mexican & Latin Diaspora ─────────────────────────────────────────
+    { name: "Chichen Itza", category: "Food", subcategory: "Oaxacan Mexican", address: "3655 S Grand Ave", city: "Los Angeles", lat: 34.0266, lng: -118.2853, description: "Tucked inside the Mercado La Paloma community market, Chichen Itza serves Yucatecan Mayan cuisine — cochinita pibil, panuchos, and sopa de lima — representing the Indigenous and African-descended communities of southern Mexico. James Beard-nominated and deeply community-rooted." },
+
+    // ── Coffee, Café & Brunch ──────────────────────────────────────────────────
+    { name: "Hilltop Coffee + Kitchen", category: "Food", subcategory: "Coffee & Brunch", address: "3237 W Jefferson Blvd", city: "Los Angeles", lat: 34.0235, lng: -118.3264, description: "A Black-owned coffee shop and brunch destination rooted in the West Adams neighborhood — a community that has resisted displacement for decades. Hilltop is the kind of third place that anchors a block: good coffee, real food, familiar faces." },
+    { name: "Highly Likely", category: "Food", subcategory: "Café & Brunch", address: "5011 W Adams Blvd", city: "Los Angeles", lat: 34.0280, lng: -118.3547, description: "A Black-owned café in West Adams that quickly became one of LA's most talked-about brunch spots. Highly Likely is as warm in its welcome as it is creative in its kitchen — the neighborhood's living room, open to everyone." },
+
+    // ── Health Food & Organic ──────────────────────────────────────────────────
+    { name: "Simply Wholesome", category: "Health & Wellness", subcategory: "Organic Health Food", address: "4508 W Slauson Ave", city: "Los Angeles", lat: 33.9898, lng: -118.3493, description: "South LA's pioneering health food store and café — Simply Wholesome has been serving organic, vegan, and Caribbean-inspired health food to the Crenshaw community since 1989. A true institution that proved healthy food and Black community have always belonged together." },
+
+    // ── Arts, Culture & Community Institutions ────────────────────────────────
+    { name: "World Stage Performance Gallery", category: "Arts & Culture", subcategory: "Jazz & Performing Arts", address: "4321 Degnan Blvd", city: "Los Angeles", lat: 34.0052, lng: -118.3316, description: "Founded by jazz drummer Billy Higgins in 1989, the World Stage is the cultural soul of Leimert Park — a workshop, gallery, and performance space where LA's Black artistic tradition of jazz, poetry, and visual art lives and breathes. The stage where Kamasi Washington came up." },
+    { name: "Eso Won Books", category: "Arts & Culture", subcategory: "Black Bookstore", address: "4327 Degnan Blvd", city: "Los Angeles", lat: 34.0052, lng: -118.3319, description: "Eso Won — meaning 'water over stone' — has been LA's premier Black bookstore since 1988. Every major Black author who has passed through Los Angeles has read here. A gathering place for ideas, community, and the literature that sustains both." },
+    { name: "The Underground Museum", category: "Arts & Culture", subcategory: "Contemporary Art Gallery", address: "3508 W Washington Blvd", city: "Los Angeles", lat: 34.0183, lng: -118.3354, description: "Founded by artist Noah Davis in 2012, the Underground Museum is a free contemporary art space in the Arlington Heights neighborhood that brought world-class art — including shows from MoMA's collection — to a community that deserved it. Now stewarded by his estate." },
+    { name: "Destination Crenshaw", category: "Arts & Culture", subcategory: "Open-Air Art Museum", address: "4100 Crenshaw Blvd", city: "Los Angeles", lat: 34.0010, lng: -118.3380, description: "A 1.3-mile open-air museum celebrating Black Los Angeles — 100 works of art by Black artists installed along Crenshaw Boulevard as the Metro K Line was built. Destination Crenshaw is LA's answer to displacement: a permanent cultural declaration that this corridor belongs to its community." },
+    { name: "Museum of African American Art", category: "Arts & Culture", subcategory: "Museum", address: "4005 Crenshaw Blvd", city: "Los Angeles", lat: 34.0033, lng: -118.3363, description: "Founded in 1977, the Museum of African American Art inside Baldwin Hills Crenshaw Plaza houses a significant permanent collection of African American fine art and hosts rotating exhibitions celebrating Black creativity across generations. One of the few museums of its kind west of the Mississippi." },
+    { name: "Watts Towers Arts Center", category: "Arts & Culture", subcategory: "Cultural Center", address: "1727 E 107th St", city: "Los Angeles", lat: 33.9393, lng: -118.2416, description: "Adjacent to Simon Rodia's landmark Watts Towers, the Arts Center has been a community hub for creative expression in South LA since 1961. Classes, exhibitions, and the annual Watts Towers Jazz Festival make this one of LA's most beloved community institutions." },
+
+    // ── Nightlife, Music & Entertainment ──────────────────────────────────────
+    { name: "Catch One", category: "Entertainment & Recreation", subcategory: "Nightclub", address: "4067 W Pico Blvd", city: "Los Angeles", lat: 34.0376, lng: -118.3349, description: "Opened by Jewel Thais-Williams in 1973, Catch One is one of the longest-running Black LGBTQ+ nightclubs in America — a sanctuary on Pico Boulevard where the community could be fully itself. Through disco, house, R&B, and hip-hop, Catch One has been the heartbeat of Black queer LA for 50 years." },
+    { name: "The Lighthouse Café", category: "Entertainment & Recreation", subcategory: "Jazz & Live Music", address: "30 Pier Ave", city: "Hermosa Beach", lat: 33.8591, lng: -118.3995, description: "The Lighthouse has been a pillar of the West Coast jazz scene since 1949 — a venue where Miles Davis, Chet Baker, and Dexter Gordon played when jazz was defining LA's cultural identity. Still hosting live jazz nightly on the Hermosa Beach pier." },
+    { name: "Marcus Bar & Grille", category: "Entertainment & Recreation", subcategory: "Bar & Grill", address: "5100 W Century Blvd", city: "Los Angeles", lat: 33.9561, lng: -118.3694, description: "A Black-owned bar and grill near LAX that has become a go-to for travelers, locals, and industry professionals — good food, strong drinks, and the kind of energy that makes you stay longer than planned. A sophisticated gathering spot anchoring the Westchester community." },
+
+    // ── Faith & Spiritual Community ───────────────────────────────────────────
+    { name: "Agape International Spiritual Center", category: "Faith & Spirituality", subcategory: "Spiritual Center", address: "5700 Buckingham Pkwy", city: "Culver City", lat: 33.9748, lng: -118.3950, description: "Founded by Rev. Michael Bernard Beckwith in 1986, Agape is one of the most influential spiritual communities in Los Angeles — a trans-denominational center that draws thousands weekly across race and background. Rooted in the New Thought tradition and deeply connected to the Black community that helped build it." },
+
+    // ── Beauty & Personal Care ─────────────────────────────────────────────────
+    { name: "Deja Vu Beauty & Hair Salon", category: "Beauty & Personal Care", subcategory: "Black Hair Salon", address: "3815 Crenshaw Blvd", city: "Los Angeles", lat: 34.0096, lng: -118.3378, description: "A Crenshaw District institution for natural hair, relaxers, braids, and locs — Deja Vu is where South LA comes for their crown. The kind of salon where you come for a service and leave with community, conversation, and a style that turns heads." },
+  ];
+
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(country,'')) AS k FROM businesses`
+    );
+    const existing = new Set(r.rows.map((row: { k: string }) => row.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of LA_BUSINESSES) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|us`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,'CA','US',
+             $7,'[]'::jsonb,false,
+             $8,$9,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address, b.city,
+            b.description,
+            String(b.lat), String(b.lng),
+          ]
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  LA businesses: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    log(`LA businesses guard: ${inserted} inserted, ${skipped} already present`);
+  } catch (err: unknown) {
+    warn(`LA businesses guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
