@@ -1,3 +1,4 @@
+- [MWM Permanent Release Control Policy](production-release-control.md) — MANDATORY GOVERNING RULE: 5-level verification, triple-check, no false positives, rollback policy, final report format. Supersedes all previous "done/pass/live" interpretations. Installed 2026-08-11 by founder directive.
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
 - [Admin Business Entry Tool + Media Upload](admin-business-entry-media.md) — POST /admin/businesses (raw SQL), photo upload direct to photos[], social link paste, AdminAddBusiness 5-step form + post-save media step.
 - [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs in cultural_sites; guard needs columns: founded_year, status, source, is_featured (all added Aug 9 2026 via startup migrations).

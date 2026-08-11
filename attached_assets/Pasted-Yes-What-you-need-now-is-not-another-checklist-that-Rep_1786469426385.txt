@@ -1,0 +1,834 @@
+Yes. What you need now is not another checklist that Replit may or may not follow. You need a **permanent release-control policy stored inside the repo and enforced as a mandatory gate** so Replit is not allowed to say “done,” “live,” “working,” “production verified,” or “ready” merely because code compiled or an API returned 200.
+
+The standard needs to become:
+
+**Code proves implementation.
+API proves connectivity.
+Production browser proves reality.
+A real user journey proves release readiness.**
+
+And because this is time-sensitive, I would have Replit install this rule **now**, without changing any product functionality while it does so.
+
+Send Replit this entire instruction:
+
+```text
+══════════════════════════════════════════════════════════════
+MAPPING WITH MELANIN™ — PERMANENT RELEASE CONTROL POLICY
+FOUNDER DIRECTIVE — GOVERNING RULE
+══════════════════════════════════════════════════════════════
+
+This is now a PERMANENT engineering and deployment rule for Mapping With
+Melanin™.
+
+Store this policy in the repository and in agent/project memory.
+
+Suggested canonical file:
+
+.agents/memory/production-release-control.md
+
+Also reference it from any existing Replit project instructions / AGENTS.md /
+release-control documentation so it is automatically loaded before future
+implementation and deployment work.
+
+This policy supersedes any previous loose interpretation of:
+
+DONE
+PASS
+LIVE
+WORKING
+VERIFIED
+DEPLOYED
+PRODUCTION READY
+TESTER READY
+APPLE READY
+
+============================================================
+CORE PRINCIPLE
+============================================================
+
+YOU MAY NEVER DECLARE A USER-FACING FEATURE WORKING SOLELY BECAUSE:
+
+- code exists
+- code compiles
+- TypeScript passes
+- a route exists
+- an API returns HTTP 200
+- a database row exists
+- a migration succeeded
+- curl works
+- unit tests pass
+- a component renders in dev
+- the deployment reports SUCCESS
+- Railway says ACTIVE
+- a bundle exists
+- the implementation "should work"
+
+Those are supporting technical checks.
+
+They are NOT final user acceptance proof.
+
+============================================================
+REQUIRED VERIFICATION LEVELS
+============================================================
+
+Every feature must be classified using these exact levels:
+
+LEVEL 1 — CODE VERIFIED
+Source exists and passes static/build checks.
+
+LEVEL 2 — API VERIFIED
+The correct deployed production API behaves correctly.
+
+LEVEL 3 — PRODUCTION DATA VERIFIED
+The production environment contains the expected real data.
+
+LEVEL 4 — PRODUCTION UI VERIFIED
+The deployed website at the real production URL visibly performs the feature.
+
+LEVEL 5 — REAL USER JOURNEY VERIFIED
+A real audit user completes the intended workflow from beginning to end,
+including persistence and expected downstream behavior.
+
+For any user-facing feature:
+
+DO NOT REPORT "PASS" UNTIL LEVEL 4 OR LEVEL 5 IS ACHIEVED.
+
+If only Levels 1–3 are available, report the exact level honestly.
+
+============================================================
+PERMANENT PRODUCTION URL
+============================================================
+
+All final website verification must use:
+
+https://www.mappingwithmelanin.com
+
+Do not substitute:
+
+- localhost
+- Replit preview
+- dev environment
+- direct internal endpoint
+- Railway direct URL
+
+unless diagnosing an infrastructure problem.
+
+The public production URL is the acceptance environment.
+
+============================================================
+DEDICATED AUDIT USER
+============================================================
+
+Maintain ONE dedicated STANDARD MEMBER account used ONLY for release audits.
+
+Name/purpose:
+
+MWM Production Audit User
+
+Requirements:
+
+- normal member/tester permissions
+- approved access
+- NOT admin
+- NOT founder
+- NOT business owner
+- NOT Cultural Ambassador
+- no elevated privileges
+- no manually injected feature entitlements beyond the normal controlled
+  tester experience
+
+This account is used to test the actual member journey.
+
+Maintain its credentials securely.
+
+DO NOT print its password in:
+logs
+commits
+reports
+screenshots
+Replit chat
+source code
+
+The audit account must be capable of being reset to a clean FIRST-TIME state
+when onboarding must be tested.
+
+============================================================
+REAL BROWSER TESTING REQUIRED
+============================================================
+
+Before declaring production ready:
+
+OPEN THE ACTUAL PRODUCTION WEBSITE.
+
+Use the audit account.
+
+Perform the actions by interacting with the UI exactly as a human user would.
+
+Do not replace these actions with direct API calls.
+
+API calls may be used to diagnose failures, but they do not replace browser
+acceptance.
+
+Capture supporting evidence where available:
+
+- screenshots
+- browser screenshots
+- screen recordings
+- network evidence
+- rendered state
+- persisted state after refresh
+
+============================================================
+PRE-DEPLOYMENT GATE
+============================================================
+
+BEFORE every production deployment:
+
+1. Identify exact intended change.
+2. Identify files changed.
+3. Identify DB/schema changes.
+4. Confirm changes are scoped to the requested issue.
+5. Check git diff for unrelated modifications.
+6. Run TypeScript/static checks.
+7. Run build.
+8. Run relevant unit/integration tests.
+9. Verify migrations are:
+   - additive where possible
+   - idempotent
+   - production-safe
+10. Verify no secrets were committed.
+11. Verify required production environment variables exist.
+12. Verify auth middleware was not accidentally moved/bypassed.
+13. Verify member wall remains protected.
+14. Verify Apple reviewer route/account requirements remain intact.
+15. Verify business/map/library data are not being deleted/reseeded
+    unnecessarily.
+16. Verify no test/demo records are being added to production.
+17. Verify no unrelated package/library/model upgrades occurred.
+18. Record CURRENT production SHA.
+19. Record EXPECTED new SHA.
+20. Establish rollback target = last known GOOD production SHA.
+
+IF ANY CHECK FAILS:
+
+STOP DEPLOYMENT.
+
+============================================================
+DEPLOYMENT RULE
+============================================================
+
+Deploy the smallest approved change.
+
+DO NOT combine unrelated improvements into the deployment.
+
+After deployment:
+
+WAIT FOR RAILWAY TO COMPLETE.
+
+Do not assume Git push = production.
+
+Confirm:
+
+Railway deployment SUCCESS
+Expected SHA = actual SHA
+Expected bundle = actual bundle
+stale_bundle = FALSE
+service healthy
+database reachable
+
+============================================================
+IMMEDIATE POST-DEPLOYMENT HEALTH CHECK
+============================================================
+
+Immediately test:
+
+Homepage
+Login page
+API health
+Database connection
+Kinfolk health
+Member wall
+Static JS/CSS assets
+
+Confirm:
+
+no white screen
+no infinite loader
+no crash
+no 500 loop
+no missing JS bundle
+no stale bundle
+no accidental public member data
+
+============================================================
+MANDATORY TRIPLE CHECK
+============================================================
+
+EVERY production release must pass THREE independent verification passes.
+
+──────────────────────────────────────────────────────────────
+CHECK 1 — TECHNICAL PRODUCTION CHECK
+──────────────────────────────────────────────────────────────
+
+Verify:
+
+deployment
+SHA
+bundle
+health
+DB
+API
+auth/session
+critical routes
+migrations
+logs/errors
+
+This is the engineering check.
+
+──────────────────────────────────────────────────────────────
+CHECK 2 — REAL USER SMOKE TEST
+──────────────────────────────────────────────────────────────
+
+Use the dedicated production audit member.
+
+Do NOT call APIs manually as a substitute.
+
+Navigate the production website and perform normal user actions.
+
+At minimum:
+
+login
+authenticated landing
+Profile
+Businesses
+Map
+Library
+KinfolkAI
+Community
+Safety
+Events
+logout
+re-login
+
+This is the real-user check.
+
+──────────────────────────────────────────────────────────────
+CHECK 3 — CORE JOURNEY REGRESSION
+──────────────────────────────────────────────────────────────
+
+Perform MULTIPLE realistic workflows, not isolated button tests.
+
+Examples:
+
+JOURNEY A — DISCOVERY
+
+Login
+→ search "Amina"
+→ Amina Philadelphia business appears
+→ open listing
+→ map/location correct
+→ save business
+→ refresh
+→ Saved persists
+
+JOURNEY B — DOMESTIC SEARCH
+
+Search:
+Philadelphia restaurants
+
+→ geography correctly understood
+→ MWM records displayed
+→ click result
+→ detail correct
+
+JOURNEY C — INTERNATIONAL
+
+Search:
+Phuket restaurants
+
+→ geography = Phuket
+→ ONLY MWM Phuket business data shown
+→ map centers Phuket
+→ pins visible
+→ open business
+→ save
+→ refresh
+→ persist
+
+Repeat with:
+Bangkok nightlife
+
+JOURNEY D — LIBRARY
+
+Library
+→ search topic
+→ open Book
+→ actual content visible
+→ sources visible
+→ Follow
+→ refresh
+→ Follow persists
+
+JOURNEY E — KINFOLK
+
+Open Kinfolk
+→ ask normal question
+→ receive response
+→ personalization available
+→ saved preferences used appropriately
+→ voice/listen functionality works if enabled
+→ no backend outage banner
+
+JOURNEY F — COMMUNITY CONTRIBUTION
+
+Business
+→ Show the Vibe / Add Content
+→ add supported social URL
+→ submit
+→ proper confirmation/moderation state
+
+JOURNEY G — REVIEW
+
+Business
+→ submit review
+→ success
+→ persistence/appropriate moderation behavior
+
+JOURNEY H — SAFETY
+
+Open Safety
+→ forms load
+→ historical exclusion information accessible
+→ no broken routes
+
+JOURNEY I — SESSION
+
+logout
+→ protected data unavailable
+→ login again
+→ user state persists
+
+============================================================
+SEARCH REGRESSION SET
+============================================================
+
+Because Search and Map are core platform features, always test several
+different query TYPES after any search/map/business/location change.
+
+MANDATORY:
+
+Amina
+Hakim's Bookstore
+Mother Bethel
+church
+AME church
+braider
+OB-GYN
+child care
+lawyer
+Ethiopian restaurant
+Philadelphia restaurants
+Atlanta restaurant
+Bangkok restaurants
+Bangkok nightlife
+Phuket
+Phuket restaurants
+Phuket nightlife
+Jamaica restaurants
+one deliberately nonexistent business
+
+Validate:
+
+intent
+geography
+MWM result
+map position
+no external business leakage
+appropriate empty state
+
+============================================================
+MWM DATA PROVENANCE RULE
+============================================================
+
+External mapping/geocoding systems answer:
+
+"WHERE IS THIS?"
+
+Mapping With Melanin's database answers:
+
+"WHAT MWM PLACES/BUSINESSES DO WE HAVE THERE?"
+
+External geocoders MUST NOT inject external businesses into MWM results.
+
+Every business/place displayed as an MWM discovery result must map to a
+canonical MWM entity record.
+
+============================================================
+PRODUCTION DATA CHECK
+============================================================
+
+For every deployment involving discovery, verify that the production website
+is talking to the SAME database that contains the expected businesses.
+
+Trace when necessary:
+
+Browser
+→ production API
+→ Railway service
+→ production database
+
+Never assume dev and production data are identical.
+
+============================================================
+APPLE REVIEW REGRESSION
+============================================================
+
+After EVERY auth/session/member-wall/deployment infrastructure change:
+
+actually authenticate using the Apple reviewer account and currently documented
+review credential.
+
+Verify:
+
+login
+member access
+Map
+Businesses
+Library
+Kinfolk
+Safety
+Profile
+logout
+re-login
+
+Do not print the password.
+
+Do not report Apple reviewer VERIFIED merely because the user row exists.
+
+============================================================
+KINFOLK HEALTH CHECK
+============================================================
+
+Before declaring production ready verify:
+
+OPENAI_API_KEY / required AI infrastructure available
+Kinfolk health endpoint OK
+real chat response works
+no amber unavailable banner
+one personalized query returns successfully
+
+If Kinfolk is down:
+
+PLATFORM STATUS CANNOT BE "FULLY READY."
+
+Report the limitation explicitly.
+
+============================================================
+VISUAL SCREENSHOT REQUIREMENTS
+============================================================
+
+Take production screenshots proving representative states:
+
+authenticated home/member page
+business search result
+business detail
+Philadelphia map
+Bangkok map/results
+Phuket map/results
+Library content
+Kinfolk response
+Profile
+mobile-width representative screen
+
+Do not require hundreds of screenshots.
+
+Capture enough evidence to prove that the important user-facing flows truly
+render.
+
+============================================================
+MOBILE WEB CHECK
+============================================================
+
+At minimum test representative phone width.
+
+Look specifically for:
+
+clipped navigation
+overlapping Kinfolk widget
+hidden buttons
+horizontal overflow
+off-screen modals
+unusable forms
+keyboard/input issues
+map controls hidden by overlays
+
+============================================================
+DO NOT CHANGE UNRELATED THINGS
+============================================================
+
+During diagnosis:
+
+DO NOT opportunistically:
+
+upgrade packages
+change AI models
+rewrite auth
+reseed businesses
+redesign screens
+rename categories
+modify unrelated migrations
+change pricing
+alter memberships
+"clean up" unrelated code
+
+The rule is:
+
+DIAGNOSE
+→ CLASSIFY
+→ MINIMAL FIX
+→ VERIFY
+→ STOP
+
+============================================================
+FAILURE CLASSIFICATION
+============================================================
+
+Every issue found must be classified:
+
+P0
+Platform unavailable, auth broken, core Map/Businesses unusable, data loss,
+Apple review impossible.
+
+P1
+Core promise materially broken, such as international discovery failing,
+Kinfolk unavailable, Library unusable, review/save flow broken.
+
+P2
+User experience issue that does not stop proof-of-concept testing.
+
+P3
+Polish/future improvement.
+
+Only P0 automatically authorizes emergency production work.
+
+P1 must be reported to founder unless already within the specifically
+authorized workstream.
+
+P2/P3 go to backlog.
+
+============================================================
+AUTOMATIC STOP RULE
+============================================================
+
+If post-deployment verification discovers a NEW P0 or P1:
+
+STOP.
+
+Do not begin a chain of speculative fixes.
+
+Return:
+
+USER ACTION:
+EXPECTED:
+ACTUAL:
+SCREENSHOT/EVIDENCE:
+ROOT CAUSE IF KNOWN:
+ROOT CAUSE CONFIDENCE:
+PROPOSED FIX:
+FILES AFFECTED:
+DB IMPACT:
+RISK:
+ROLLBACK OPTION:
+
+Wait for founder authorization unless the system is fully unavailable and
+emergency rollback is required.
+
+============================================================
+ROLLBACK POLICY
+============================================================
+
+Before deployment record:
+
+LAST_KNOWN_GOOD_SHA
+
+If deployment produces:
+
+website outage
+white screen
+auth failure
+critical API failure
+data corruption
+member-wall exposure
+Map completely broken
+Kinfolk catastrophic failure caused by deployment
+
+and the problem cannot be safely corrected immediately:
+
+ROLL BACK TO LAST KNOWN GOOD DEPLOYMENT.
+
+Do not continue stacking experimental fixes on a broken production build.
+
+After rollback:
+
+verify production URL
+verify login
+verify core journey
+report status
+
+============================================================
+NO FALSE POSITIVE LANGUAGE
+============================================================
+
+You may only use these status labels:
+
+CODE VERIFIED
+API VERIFIED
+PRODUCTION DATA VERIFIED
+PRODUCTION UI VERIFIED
+REAL USER JOURNEY VERIFIED
+FAILED
+NOT TESTED
+
+Do not use ambiguous language such as:
+
+"should work"
+"appears correct"
+"route exists so this passes"
+"expected to work"
+"will work after deploy"
+"ready once Railway finishes"
+
+A feature awaiting deployment is:
+
+NOT YET PRODUCTION VERIFIED.
+
+============================================================
+FINAL RELEASE REPORT FORMAT
+============================================================
+
+After EVERY production deployment return:
+
+RELEASE:
+PRODUCTION SHA:
+LAST KNOWN GOOD SHA:
+BUNDLE MATCH:
+STALE BUNDLE:
+RAILWAY:
+DATABASE:
+MIGRATIONS:
+NEW SERVER ERRORS:
+
+AUTH:
+TEST USER:
+APPLE REVIEWER:
+LOGOUT/RELOGIN:
+MEMBER WALL:
+
+BUSINESS SEARCH:
+MAP:
+PHILADELPHIA:
+BANGKOK:
+PHUKET:
+JAMAICA:
+
+BUSINESS DETAIL:
+SAVE:
+CHECK-IN:
+REVIEW:
+VIBES/THE REAL:
+MEDIA CONTRIBUTION:
+
+LIBRARY:
+KINFOLK HEALTH:
+KINFOLK RESPONSE:
+KINFOLK PERSONALIZATION:
+KINFOLK VOICE:
+
+COMMUNITY:
+SAFETY:
+EVENTS:
+PROFILE:
+MOBILE WEB:
+
+P0:
+P1:
+P2:
+P3:
+
+ROLLBACK REQUIRED:
+DATA LOSS:
+SECURITY REGRESSION:
+
+FINAL STATUS:
+
+REAL USER JOURNEY VERIFIED
+or
+NOT READY
+
+============================================================
+FOUNDER RELEASE STANDARD
+============================================================
+
+The founder should NEVER have to discover the morning after deployment that
+something reported as "working" was never actually exercised through the
+website.
+
+The release process itself must catch that first.
+
+The final question before declaring anything ready is:
+
+"Could I hand this URL to a person who knows nothing about the code and have
+them successfully perform the intended task?"
+
+If that has not actually been demonstrated:
+
+DO NOT REPORT READY.
+
+============================================================
+CURRENT BUSINESS PRIORITY
+============================================================
+
+Mapping With Melanin is entering active proof-of-concept testing.
+
+The founder must be able to spend time on:
+
+marketing
+content creation
+business outreach
+partnerships
+tour execution
+investor preparation
+
+rather than repeatedly re-testing engineering claims.
+
+Engineering therefore has a responsibility to PROVE completion before handing
+work back to the founder.
+
+Reliability now takes priority over adding more features.
+
+============================================================
+IMPLEMENT THIS GOVERNANCE RULE NOW
+============================================================
+
+1. Save this policy permanently in repo/agent memory.
+2. Show the exact file path.
+3. Confirm it will be read before future implementation/deployment.
+4. Integrate it with the existing release-control rule rather than creating
+   conflicting duplicate policies.
+5. Do NOT modify product functionality while installing this policy.
+6. Do NOT deploy merely to save documentation unless deployment is actually
+   required.
+7. Return the consolidated final release-control document for founder review.
+
+From this point forward this is a MANDATORY rule.
+```
+
+There is one additional safeguard I would add that is particularly important now: **Replit should maintain a “last known good” release marker and never overwrite that concept with the newest deployment merely because Railway says deployment successful.** A release becomes “last known good” only **after the triple verification completes**.
+
+So the lifecycle becomes:
+
+**Build → deploy → technical check → human-browser check → multi-journey check → promote to LAST KNOWN GOOD.**
+
+If the new build fails, they can immediately return to the prior proven release instead of spending six hours layering fixes on top of a broken one.
+
+And for today, I would tell Replit that once Phuket + international discovery + Kinfolk are genuinely proven through that process, **development freezes**. Your friend has three full days left in Phuket; the goal is for her to actually use the gift you built for her, contribute content, and demonstrate the concept—not for you to spend those three days supervising Replit.

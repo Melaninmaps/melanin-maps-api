@@ -1,18 +1,28 @@
 ---
-name: KinfolkAI web Bearer token 401 bug
-description: Stale localStorage Bearer token shadows valid HttpOnly cookie in getSessionId(), causing 401s for logged-in users on kinfolk/chat only.
+name: KinfolkAI web Bearer token 401 bug + Railway env var mismatch
+description: Two root causes of 100% KinfolkAI failure on production. Both fixed 2026-08-11.
 ---
 
-## The Rule
-`travel.tsx` must NEVER inject an `Authorization: Bearer` header on kinfolk fetch() calls. Use `credentials: "include"` alone — the HttpOnly `sid` cookie handles auth and is always current.
+# KinfolkAI Production Failure — Root Causes (Both Resolved 2026-08-11)
 
-## Why
-`getSessionId()` in authMiddleware checks Bearer header FIRST, then cookie. The web app stores the session ID in localStorage (`web_auth_token`) at login and injects it as Bearer. After Railway deploys rolling session renewals, the HttpOnly cookie is refreshed server-side but localStorage is NOT updated. The stale localStorage Bearer token then shadows the valid cookie → `getSession(stale_sid)` returns null → `req.user` never set → 401, even though the user is fully logged in everywhere else.
+## Root Cause 1 — Wrong Railway OpenAI env vars
+`AI_INTEGRATIONS_OPENAI_BASE_URL` was set to `http://localhost:1106/modelfarm/openai` — a Replit-internal proxy unreachable from Railway.
+`AI_INTEGRATIONS_OPENAI_API_KEY` was set to `_DUMMY_API_KEY_` placeholder.
 
-**Why other routes aren't affected:** `profile.tsx`, saved businesses, and all other pages use bare fetch() with no Authorization header. They hit the cookie path in `getSessionId()` which is always in sync.
+**Fix:** Use Railway GraphQL `variableCollectionUpsert` to sync real values from Replit process.env to Railway. Set BASE_URL to `https://api.openai.com/v1`.
 
-## How to Apply
-- `kinfolkAuthHeaders()` in `travel.tsx` must return `extra ?? {}` — no Bearer injection.
-- Any future raw fetch() call added to travel.tsx must follow the same pattern: `credentials: "include"`, no Authorization header.
-- If a future developer asks "why isn't there a Bearer token here?" — this file is why.
-- The `getWebToken()` import can be removed from travel.tsx entirely since nothing should call it there.
+## Root Cause 2 — Wrong model name `gpt-5-mini`
+The health check used `gpt-4o-mini` (real, passes). All chat routes used `gpt-5-mini` (doesn't exist → 404).
+Health check said "OK" while every actual chat returned 500.
+
+**Fix:** Replace all `gpt-5-mini` with `gpt-4o-mini` in kinfolk.ts.
+
+## Root Cause 3 — Home-city catalog injected for destination queries
+When geo-radius found 0 Phuket businesses, home-city fallback fired and injected Philadelphia businesses.
+Kinfolk then recommended "Earle's on Crenshaw" for a Phuket birthday dinner.
+
+**Fix:** `if (!businessCatalog.length && req.user?.id && !destination)` — only load home city when no destination is set.
+
+## Lesson
+Railway env vars must be explicitly synced from Replit. `AI_INTEGRATIONS_OPENAI_BASE_URL` is localhost inside Replit, `https://api.openai.com/v1` on Railway.
+Model name in health check must match model names in all chat routes — divergence creates false "all OK" signals.
