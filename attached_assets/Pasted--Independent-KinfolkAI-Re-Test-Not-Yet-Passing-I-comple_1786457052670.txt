@@ -1,0 +1,26 @@
+## Independent KinfolkAI Re-Test — **Not Yet Passing**
+
+I completed the clean live re-test after the stated **1:31 PM** database fix. I hard-refreshed the production site, used the active authenticated `manus@mappingwithmelanin.com` session, and tested KinfolkAI again.
+
+| Check | Result | Evidence |
+|---|---:|---|
+| Current production app loads after hard refresh | ✅ Pass | KinfolkAI page loaded normally with the authenticated navigation and profile access. |
+| Phuket birthday-planning request | ❌ Fail | It again returned: **“Kinfolk is having trouble answering that right now. Try again.”** |
+| Basic AI request: “What is 12 times 8?” | ❌ Fail | It returned the **same** failure message. This proves the issue is still global, not Phuket data or itinerary logic. |
+| Authentication/session continuity | ✅ Pass | I navigated KinfolkAI → Map → KinfolkAI. The session remained active and there was no re-login prompt. |
+
+> **Verdict:** The database-table/fallback change has not produced a successful end-to-end KinfolkAI response in the live app. The account session is valid; the AI chat path still fails after the request is sent.
+
+### What Replit should check before asking for another audit
+
+The next check needs to happen in **Railway production logs**, not only in code or the database console. Have them run one chat message with request-level logs enabled and confirm all five checkpoints:
+
+1. The request reaches `POST /api/kinfolk/chat` with the authenticated user ID.
+2. `checkAiPool` either reads `family_ai_usage` successfully **or actually enters the new fallback**.
+3. The production service is connected to the same database where the two new tables were created. This is critical—migration success in one database does not prove the Railway runtime is using that database.
+4. The LLM/provider request begins and returns a response; if it fails, capture the real provider status and message.
+5. The route returns `HTTP 200` with a response payload to the browser, rather than the generic UI error.
+
+Ask them to send you a short production log excerpt for a single successful test, with the user ID and any secrets redacted. Their acceptance condition should be: **the Phuket prompt and `12 × 8` both receive visible answers in a fresh browser session.** Until both pass, KinfolkAI should remain marked as a launch blocker.
+
+The rest of the platform’s authenticated navigation remains stable; this is isolated to the KinfolkAI response pipeline.
