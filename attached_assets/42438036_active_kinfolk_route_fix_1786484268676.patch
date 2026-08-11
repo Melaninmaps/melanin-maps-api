@@ -1,0 +1,339 @@
+# Mapping With Melanin — Surgical Active-Route Patch
+#
+# PURPOSE
+# Fix the live behavior observed in production without changing Login, Maps,
+# Safety, Library, business search, Circles, or unrelated API routes.
+#
+# LIVE SYMPTOMS BEING FIXED
+# 1. POST /api/kinfolk/chat serializes intentClass: "business_discovery" for
+#    Thailand visa/extension questions and omits provenanceNote/sources.
+# 2. GET /api/kinfolk/preferences returns only legacy taste preferences.
+# 3. Save Taste Profile persists only legacy values, so Detailed resets to
+#    Conversational after a hard refresh.
+#
+# PRE-FLIGHT — REQUIRED BEFORE APPLYING
+#   git status --short                 # must be clean
+#   git switch -c fix/active-kinfolk-contract
+#   git grep -n "router.post.*kinfolk/chat\|/api/kinfolk/chat" server
+#   git grep -n "api/kinfolk/preferences" server client
+#
+# IMPORTANT
+# - Apply the hunks to the ACTIVE route registration identified by the first
+#   command above. Do not add a second unused route file.
+# - Names such as `authenticateRequest`, `db`, `runUniversalSearchRouter`, and
+#   `getKinfolkCompletion` are integration markers. Map them to the existing
+#   project services while preserving the specified control flow and response
+#   contract.
+# - Existing public route /api/kinfolk/health must remain mounted BEFORE auth.
+
+--- a/server/routes/kinfolk.ts
++++ b/server/routes/kinfolk.ts
+@@
+-import { Router } from 'express';
++import { Router } from 'express';
++import { z } from 'zod';
++import crypto from 'node:crypto';
++import { runUniversalSearchRouter } from '../kinfolk/universal-search-router-service';
++import { resolveEvidenceForPlan } from '../kinfolk/evidence-retrieval-service';
++import { getOrCreateKinfolkSession } from '../kinfolk/session-service';
++import { getKinfolkCompletion } from '../kinfolk/model-service';
++import { checkAiPool } from '../kinfolk/usage-pool-service';
++import { buildAdaptiveAnswerSystemPrompt } from '../kinfolk/adaptive-tone-and-audience-filter';
++
++type KinfolkIntentClass =
++  | 'general_knowledge'
++  | 'business_discovery'
++  | 'culture_entertainment'
++  | 'travel_discovery'
++  | 'legal_regulated'
++  | 'medical_health'
++  | 'financial_regulated'
++  | 'safety_emergency'
++  | 'education_guidance'
++  | 'community_discovery';
++
++const chatBodySchema = z.object({
++  message: z.string().trim().min(1).max(4_000),
++  sessionId: z.string().uuid().optional(),
++  neighborVoice: z.boolean().optional().default(false),
++});
++
++const HIGH_CONSEQUENCE = new Set<KinfolkIntentClass>([
++  'legal_regulated',
++  'medical_health',
++  'financial_regulated',
++  'safety_emergency',
++]);
++
++function enforceRouterContract(plan: {
++  intent: KinfolkIntentClass;
++  domainTags: string[];
++  consequence: 'low' | 'medium' | 'high';
++  sourcePolicyId: string;
++  citationMode: 'none' | 'recommended' | 'required';
++}) {
++  const tags = new Set(plan.domainTags.map((tag) => tag.toLowerCase()));
++  const isTravelPolicy =
++    tags.has('visa') ||
++    tags.has('immigration') ||
++    tags.has('entry_requirements') ||
++    tags.has('government_policy') ||
++    tags.has('travel_extension');
++
++  // The legacy fallback must never overwrite this downstream.
++  if (isTravelPolicy) {
++    return {
++      ...plan,
++      intent: 'legal_regulated' as const,
++      consequence: 'high' as const,
++      sourcePolicyId: 'legal-authoritative-v1',
++      citationMode: 'required' as const,
++    };
++  }
++
++  return plan;
++}
++
++function provenanceNoteFor(intent: KinfolkIntentClass, sourceCount: number): string | undefined {
++  if (intent === 'legal_regulated') {
++    return sourceCount > 0
++      ? 'General legal and travel information from the sources shown. Requirements can change; verify with the relevant official authority before acting.'
++      : 'General legal and travel information only. Entry requirements can change; verify with an official government or embassy source before acting.';
++  }
++  if (intent === 'medical_health') {
++    return sourceCount > 0
++      ? 'General health information from the sources shown. It is not medical advice or a diagnosis.'
++      : 'General health information only. Verify decisions with a qualified clinician and current authoritative sources.';
++  }
++  if (intent === 'financial_regulated') {
++    return 'General financial information only. It is not individualized investment, tax, insurance, or financial advice.';
++  }
++  if (intent === 'safety_emergency') {
++    return 'For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities.';
++  }
++  return undefined;
++}
+@@
+-router.post('/chat', requireAuth, async (req, res) => {
+-  // Existing legacy handler
+-});
++router.post('/chat', requireAuth, async (req, res) => {
++  const requestId = crypto.randomUUID();
++  const parsed = chatBodySchema.safeParse(req.body);
++  if (!parsed.success) {
++    return res.status(400).json({ error: 'INVALID_KINFOLK_CHAT_REQUEST' });
++  }
++
++  try {
++    const userId = req.user.id;
++    const { message, sessionId: requestedSessionId } = parsed.data;
++
++    const pool = await checkAiPool(userId);
++    if (!pool.allowed) {
++      return res.status(429).json({
++        error: 'KINFOLK_USAGE_LIMIT_REACHED',
++        message: 'KinfolkAI is temporarily unavailable for this account. Please try again later.',
++      });
++    }
++
++    const session = await getOrCreateKinfolkSession({ userId, requestedSessionId });
++
++    // ACTIVE FIX: Router output, not a legacy model/default classifier, owns
++    // intentClass and source policy for the rest of this request.
++    const routerPlan = enforceRouterContract(
++      await runUniversalSearchRouter({
++        userId,
++        sessionId: session.id,
++        message,
++      }),
++    );
++
++    const [deliveryProfile, evidence] = await Promise.all([
++      loadDeliveryProfileForChat(req.supabase, userId, req.user.ageBand ?? 'unknown'),
++      resolveEvidenceForPlan({
++        plan: routerPlan,
++        normalizedQuestion: routerPlan.normalizedQuestion,
++      }),
++    ]);
++
++    const approvedSources = evidence
++      .filter((item) => item.permittedForResponse)
++      .map((item) => ({
++        id: item.id,
++        label:
++          item.origin === 'MWM_DIRECTORY'
++            ? 'MWM verified listing'
++            : item.origin === 'LIBRARY'
++              ? 'Library-verified evidence'
++              : item.origin === 'LIVE_WEB'
++                ? 'Current source'
++                : 'Community experience',
++        title: item.title,
++        url: item.url,
++        verifiedAt: item.verifiedAt,
++      }));
++
++    const completion = await getKinfolkCompletion({
++      requestId,
++      sessionId: session.id,
++      message,
++      systemPrompt: buildAdaptiveAnswerSystemPrompt(deliveryProfile, routerPlan),
++      evidence,
++      permittedTools: routerPlan.permittedTools,
++    });
++
++    // ACTIVE FIX: do not set intentClass from completion, old classifyIntent(),
++    // `smartPromotion`, a UI default, or business recommendation logic.
++    return res.status(200).json({
++      sessionId: session.id,
++      reply: completion.reply,
++      intentClass: routerPlan.intent,
++      provenanceNote: provenanceNoteFor(routerPlan.intent, approvedSources.length),
++      sources: approvedSources,
++      followUpSuggestions: HIGH_CONSEQUENCE.has(routerPlan.intent)
++        ? ['Show me the official source for this.', 'What should I verify before I act on this?']
++        : completion.followUpSuggestions ?? [],
++      recommendations: completion.recommendations ?? null,
++      smartPromotion: null,
++      taskAction: null,
++    });
++  } catch (error) {
++    req.log?.error({ requestId, err: error }, 'kinfolk_chat_failed');
++    return res.status(500).json({
++      error: 'KINFOLK_RESPONSE_UNAVAILABLE',
++      message: 'Kinfolk is having trouble answering that right now. Please try again in a moment.',
++      requestId,
++    });
++  }
++});
+
+--- a/server/routes/kinfolk-preferences.ts
++++ b/server/routes/kinfolk-preferences.ts
+@@
+ import { Router } from 'express';
++import { z } from 'zod';
+@@
+ const router = Router();
++
++const styleSchema = z.object({
++  responseStyle: z.enum(['conversational', 'concise', 'detailed', 'professional']),
++});
++
++function styleToDelivery(responseStyle: z.infer<typeof styleSchema>['responseStyle']) {
++  if (responseStyle === 'concise') return { detail_level: 'quick', tone_preference: 'default' };
++  if (responseStyle === 'detailed') return { detail_level: 'deep', tone_preference: 'default' };
++  if (responseStyle === 'professional') return { detail_level: 'standard', tone_preference: 'professional' };
++  return { detail_level: 'standard', tone_preference: 'warm' };
++}
++
++function deliveryToStyle(row: { detail_level: string; tone_preference: string }) {
++  if (row.tone_preference === 'professional') return 'professional';
++  if (row.detail_level === 'deep') return 'detailed';
++  if (row.detail_level === 'quick') return 'concise';
++  return 'conversational';
++}
++
++async function loadDeliveryProfileForChat(supabase: any, userId: string, ageBand: string) {
++  const { data, error } = await supabase
++    .from('kinfolk_delivery_profiles')
++    .select('detail_level,tone_preference,learning_mode,notification_cadence,age_band,regional_language_opt_in,regional_reference,allow_related_branches,allow_non_sensitive_recommendations,allow_civic_safety_updates')
++    .eq('user_id', userId)
++    .maybeSingle();
++  if (error) throw error;
++  return data ?? {
++    detail_level: 'standard', tone_preference: 'default', learning_mode: 'guided',
++    notification_cadence: 'essential_only', age_band: ageBand,
++    regional_language_opt_in: false, regional_reference: null,
++    allow_related_branches: false, allow_non_sensitive_recommendations: false,
++    allow_civic_safety_updates: false,
++  };
++}
+@@
+-router.get('/', requireAuth, async (req, res) => {
+-  const preferences = await existingPreferencesRepository.get(req.user.id);
+-  return res.json({ preferences, responseStyle: preferences.communicationStyle ?? 'conversational' });
+-});
++router.get('/', requireAuth, async (req, res) => {
++  const [preferences, deliveryProfile] = await Promise.all([
++    existingPreferencesRepository.get(req.user.id),
++    loadDeliveryProfileForChat(req.supabase, req.user.id, req.user.ageBand ?? 'unknown'),
++  ]);
++
++  return res.status(200).json({
++    preferences,
++    deliveryProfile,
++    responseStyle: deliveryToStyle(deliveryProfile),
++  });
++});
++
++// Compatibility endpoint: wire the existing “Save Taste Profile” button to
++// this route immediately. This avoids a broad Preferences UI rewrite.
++router.put('/response-style', requireAuth, async (req, res) => {
++  const parsed = styleSchema.safeParse(req.body);
++  if (!parsed.success) return res.status(400).json({ error: 'INVALID_RESPONSE_STYLE' });
++
++  const deliveryPatch = styleToDelivery(parsed.data.responseStyle);
++  const { data, error } = await req.supabase
++    .from('kinfolk_delivery_profiles')
++    .upsert({
++      user_id: req.user.id,
++      ...deliveryPatch,
++      age_band: req.user.ageBand ?? 'unknown',
++      // Do not erase existing independent delivery controls on a style update.
++      updated_at: new Date().toISOString(),
++    }, { onConflict: 'user_id', ignoreDuplicates: false })
++    .select('detail_level,tone_preference,learning_mode,notification_cadence,age_band,regional_language_opt_in,regional_reference,allow_related_branches,allow_non_sensitive_recommendations,allow_civic_safety_updates')
++    .single();
++
++  if (error) {
++    req.log?.error({ err: error, userId: req.user.id }, 'kinfolk_response_style_save_failed');
++    return res.status(500).json({ error: 'KINFOLK_RESPONSE_STYLE_SAVE_FAILED' });
++  }
++
++  return res.status(200).json({
++    deliveryProfile: data,
++    responseStyle: deliveryToStyle(data),
++  });
++});
+
+--- a/client/src/pages/travel.tsx
++++ b/client/src/pages/travel.tsx
+@@
+-const saveTasteProfile = () => api.put('/api/kinfolk/preferences', profileForm);
++const saveTasteProfile = async () => {
++  // Keep the existing legacy taste-profile write if it already exists.
++  await api.put('/api/kinfolk/preferences', profileForm);
++
++  // ACTIVE FIX: persist the existing response-style control in the new table.
++  const { data } = await api.put('/api/kinfolk/preferences/response-style', {
++    responseStyle: selectedResponseStyle,
++  });
++  setSelectedResponseStyle(data.responseStyle);
++  setDeliveryProfile(data.deliveryProfile);
++};
+@@
+-const message: ChatMessage = { role: 'assistant', content: response.reply };
++const message: ChatMessage = {
++  role: 'assistant',
++  content: response.reply,
++  intentClass: response.intentClass,
++  provenanceNote: response.provenanceNote,
++  sources: response.sources ?? [],
++};
+@@
+ {message.role === 'assistant' && message.provenanceNote ? (
+-  null
++  <div className="kinfolk-provenance-note" role="note">
++    <InfoIcon aria-hidden="true" />
++    <span>{message.provenanceNote}</span>
++  </div>
+ ) : null}
+
+# POST-APPLY CHECKLIST
+# 1. `git diff --check`
+# 2. Run the staging script supplied with this patch.
+# 3. Confirm GET /api/kinfolk/preferences returns `deliveryProfile` and
+#    `responseStyle: "detailed"` after a detailed save.
+# 4. Confirm POST /api/kinfolk/chat for Thailand visa/extension question returns
+#    intentClass `legal_regulated`, a non-empty provenanceNote, and sources array.
+# 5. Only then deploy to production.

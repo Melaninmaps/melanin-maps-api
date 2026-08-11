@@ -1,0 +1,26 @@
+## Independent Authenticated Audit — Deployment `42438036`
+
+The reported code is present in the latest production bundle, but the two authenticated acceptance checks still **fail end to end**.
+
+| Check | Result | Live evidence |
+|---|---:|---|
+| New production bundle | ✅ Pass | Production serves `index-BU5DZ52C.js`, modified at **21:26 UTC**, after the reported fixes. |
+| Kinfolk chat availability | ✅ Pass | Authenticated chat returned `HTTP 200`. |
+| Thailand visa/extension routing | ❌ Fail | A fresh Thailand extension-documents request returned `intentClass: "business_discovery"`, not `legal_regulated`. |
+| Structured provenance | ❌ Fail | The live response payload contained no `provenanceNote` and no `sources` property. No distinct response-level provenance box rendered. |
+| Detailed preference persistence | ❌ Fail | After selecting **Detailed**, clicking **Save Taste Profile**, and hard-refreshing, `GET /api/kinfolk/preferences` still returned only legacy preferences with `responseStyle: "conversational"`. The UI again selected **Conversational**. |
+| Native mobile Welcoming Environment badge | ⏸️ Not verifiable here | This needs a simulator/TestFlight test on a qualifying business with `wouldReturnAlone >= 70`. |
+
+> **Conclusion:** The bundle-level audit is accurate that code strings exist, but the active request paths are still using the legacy behavior. The new Router/provenance response contract and the new delivery-profile API contract are not yet connected to the live `/api/kinfolk/chat` and `/api/kinfolk/preferences` flows.
+
+### Exact Replit correction
+
+Replit should trace the active controller registrations, not just search the built bundle:
+
+1. Confirm the live `POST /api/kinfolk/chat` route invokes the new Universal Router before the AI provider call, and that it serializes `intentClass`, `provenanceNote`, and `sources` in the final response.
+2. Confirm there is no later legacy assignment such as `intentClass = "business_discovery"` overwriting the Router result.
+3. Register the delivery-profile routes on the active API router and extend the existing `GET /api/kinfolk/preferences` response with `deliveryProfile` plus mapped `responseStyle`.
+4. Ensure the existing **Save Taste Profile** button calls the new response-style or delivery-profile save endpoint—not only the legacy preference save.
+5. Re-run the authenticated browser release gate after redeploy: visa request must return `legal_regulated` + non-empty `provenanceNote`; then **Detailed → Save → hard refresh** must remain Detailed.
+
+I attached the raw audit notes for Replit’s debugging handoff.
