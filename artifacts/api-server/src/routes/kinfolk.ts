@@ -24,6 +24,7 @@ import {
 } from "@workspace/db";
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
+import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt } from "../kinfolk/intent-router";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 
@@ -1884,6 +1885,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const detectedCulture = detectCulturalIdentity(message);
     const destination = sessionDestination ?? messageDestination;
 
+    // ── Intent classification ────────────────────────────────────────────────
+    // Runs before catalog fetch so high-consequence intents can adjust what
+    // gets injected. No extra API call — deterministic keyword classifier.
+    const intentClass = classifyIntent(message, !!destination);
+    const intentPolicy = getEvidencePolicy(intentClass);
+    const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
+
     // Fetch platform business catalog — destination first, then fall back to user's home city.
     // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
     // not just when a travel destination has been set.
@@ -2315,16 +2323,28 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — circle tables may not exist yet on this instance */ }
     }
 
-    const systemPrompt = buildSystemPrompt({
+    // High-consequence intents (medical, legal, financial, emergency) suppress
+    // Library cross-pollination and Circle context — same privacy boundary as
+    // sensitiveTopicDetected. This prevents community data from being used as
+    // authoritative evidence for regulated-domain queries.
+    const effectivePrivacySuppressed = sensitiveTopicDetected || intentPolicy.blockCommunityAsProof;
+
+    const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
       aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
       weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases,
       knowledgeGraphContext: kgContext,
       libraryInterests,
       circleContext,
-      privacySuppressed: sensitiveTopicDetected,
+      privacySuppressed: effectivePrivacySuppressed,
       catalogSource,
     }) + ownerBusinessContext;
+
+    // Prepend intent policy block for any intent that requires special handling.
+    // Empty string for low-consequence general knowledge queries (no overhead).
+    const systemPrompt = intentPolicyPrompt
+      ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
+      : baseSystemPrompt;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
@@ -2450,6 +2470,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       followUpSuggestions,
       smartPromotion,
       taskAction,
+      // Intent classification — lets the client know how this answer was governed.
+      // Does not leak user data; intentClass is derived from the message only.
+      intentClass,
+      // Provenance note — optional display text for the UI to surface alongside the reply.
+      // For high-consequence intents this is a required disclaimer; for low-consequence
+      // intents it reflects source type (MWM catalog vs. general knowledge).
+      provenanceNote: intentPolicy.consequence !== "low" ? intentPolicy.provenanceLabel : undefined,
       // Cultural identity detected in this message — offer member the chance to save
       // to their roots (diasporaCountries) with explicit consent. Never auto-saved.
       ...(detectedCulture && {

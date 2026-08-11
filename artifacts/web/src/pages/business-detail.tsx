@@ -892,6 +892,12 @@ export default function BusinessDetail() {
                     Community Trusted
                   </span>
                 )}
+                {(business as any).wouldReturnAlone != null && (business as any).wouldReturnAlone >= 70 && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-700">
+                    <Shield className="w-3 h-3" />
+                    Welcoming Environment
+                  </span>
+                )}
               </div>
               {badges.length > 0 && (
                 <p className="text-[10px] text-[#3A1F0E]/40 leading-relaxed mb-4">
