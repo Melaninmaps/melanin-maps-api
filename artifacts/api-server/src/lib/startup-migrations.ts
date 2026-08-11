@@ -1937,6 +1937,28 @@ ON CONFLICT (city_slug) DO NOTHING`,
       CREATE INDEX IF NOT EXISTS idx_endorsement_taps_user ON business_endorsement_taps(user_id);
     `,
   },
+  {
+    // Privacy Intelligence settings on user_preferences
+    // kinfolk_proactivity: high (suggests without being asked) | medium (context-relevant only) | reactive (never volunteers)
+    // kinfolk_learning_categories: JSONB array of categories user has opted Kinfolk learning into
+    // kinfolk_privacy_settings: JSONB blob for full granular control (what Kinfolk learns vs where it surfaces)
+    name: "kinfolk_privacy_settings_v1",
+    sql: `
+      ALTER TABLE user_preferences
+        ADD COLUMN IF NOT EXISTS kinfolk_proactivity VARCHAR(20) NOT NULL DEFAULT 'medium',
+        ADD COLUMN IF NOT EXISTS kinfolk_learning_categories JSONB DEFAULT '["travel","food","culture","community","business"]'::jsonb,
+        ADD COLUMN IF NOT EXISTS kinfolk_privacy_settings JSONB DEFAULT '{
+          "learnHealth": true,
+          "learnTravel": true,
+          "learnFood": true,
+          "learnBusiness": true,
+          "learnCommunity": true,
+          "surfaceInCircles": true,
+          "surfaceInLibrary": true,
+          "surfaceInProfile": false
+        }'::jsonb;
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

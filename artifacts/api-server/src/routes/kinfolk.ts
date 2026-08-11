@@ -29,6 +29,30 @@ import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
+// ─── Privacy Intelligence — Sensitive Topic Classifier ───────────────────────
+// Per Manus AI Privacy Intelligence spec (Aug 11 2026):
+// These patterns identify searches that must NEVER propagate to Library write-back,
+// Circle context, or any public-facing surface. Single-search suppression rule applies.
+// One match → note privately, do nothing else. No behavioral change on the platform.
+const SENSITIVE_TOPIC_PATTERNS: RegExp[] = [
+  /\b(hiv|aids|std|sti|herpes|chlamydia|gonorrhea|syphilis|hpv|sexually[\s-]transmitted)\b/i,
+  /\b(suicide|self[\s-]harm|cutting\s+myself|crisis\s+line|psychiatric\s+ward|mental\s+health\s+(clinic|diagnosis|treatment|hospitalization)|psychosis|bipolar\s+disorder|schizophren)\b/i,
+  /\b(rehab\s+center|detox\s+center|alcoholic|narcotics\s+anonymous|\baa\s+meeting|drug\s+treatment|substance\s+abuse|recovery\s+center|sober\s+living|addiction\s+(treatment|center|help|counseling))\b/i,
+  /\b(divorce\s+(lawyer|attorney|proceedings|filing)|separation\s+agreement|domestic\s+violence|restraining\s+order|custody\s+battle|spousal\s+(abuse|support))\b/i,
+  /\b(immigration\s+(lawyer|attorney)|deportation|undocumented\s+immigrant|asylum\s+(seeker|case|claim)|green\s+card\s+(status|help)|visa\s+status|uscis|daca\s+(renewal|application))\b/i,
+  /\b(miscarriage|stillbirth|pregnancy\s+loss|abortion\s+(clinic|provider|pill)|fertility\s+clinic|ivf\s+(treatment|cost|process)|infertility\s+treatment|ectopic\s+pregnancy)\b/i,
+  /\b(bankruptcy\s+(lawyer|attorney|filing|chapter\s+[7-9])|foreclosure\s+(lawyer|attorney|help|prevention)|wage\s+garnishment|debt\s+relief\s+(program|lawyer))\b/i,
+];
+
+/**
+ * Returns true if the user's message touches a permanently siloed sensitive topic.
+ * One match → apply single-search suppression: no Library write-back, no Circle
+ * context injection, no behavioral change on any public surface.
+ */
+function classifySensitiveTopic(message: string): boolean {
+  return SENSITIVE_TOPIC_PATTERNS.some((p) => p.test(message));
+}
+
 // ─── Live Weather Integration (Open-Meteo — free, no key required) ────────────
 const WMO_CODES: Record<number, string> = {
   0: "clear sky", 1: "mainly clear", 2: "partly cloudy", 3: "overcast",
@@ -770,6 +794,9 @@ function buildSystemPrompt(opts: {
     sharedSaves: string[];
     upcomingDates: string[];
   } | null;
+  /** When true: sensitive topic detected — suppress Library cross-pollination and
+   *  Circle context injection. Engage the topic privately in this conversation only. */
+  privacySuppressed?: boolean;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -973,24 +1000,28 @@ PROACTIVE LIFESTYLE RULE: Any time they ask about a new city, trip, or stay of a
     : "";
 
   // ── Library cross-pollination (user's followed topics) ───────────────────
-  const libraryInterestsSection = (opts.libraryInterests?.length ?? 0) > 0
+  // Privacy Intelligence: suppress when sensitive topic detected (non-leakage rule)
+  const effectiveLibraryInterests = opts.privacySuppressed ? [] : (opts.libraryInterests ?? []);
+  const libraryInterestsSection = effectiveLibraryInterests.length > 0
     ? `\nLIBRARY INTERESTS — CROSS-POLLINATION (what this user follows in the MWM Library):
-${opts.libraryInterests!.map((t) => `- ${t}`).join("\n")}
+${effectiveLibraryInterests.map((t) => `- ${t}`).join("\n")}
 
-CROSS-POLLINATION RULE: When the user asks about travel, food, culture, or recommendations, proactively connect to their library interests. If they follow "Ethiopia" in the Library and ask where to eat, surface Ethiopian restaurants. If they follow "Maternal Health" and ask for an OBGYN, lead with that context. Make the connection feel like a friend who pays attention — natural, never mechanical.`
+CROSS-POLLINATION RULE: Surface these connections only when genuinely relevant to the conversation. If they follow "Ethiopia" and ask where to eat, surface Ethiopian restaurants. If they follow "Maternal Health" and ask for an OBGYN, lead with that context. Make the connection feel like a friend who pays attention — natural, never mechanical. DO NOT inject library interests when they are unrelated to the topic at hand (e.g. don't mention heart health when someone is planning a trip to Cancun).`
     : "";
 
   // ── Circle Intelligence ──────────────────────────────────────────────────
-  const circleSection = opts.circleContext
+  // Privacy Intelligence: suppress when sensitive topic detected (Circle data boundary rule)
+  const effectiveCircleContext = opts.privacySuppressed ? null : (opts.circleContext ?? null);
+  const circleSection = effectiveCircleContext
     ? `\nCIRCLE INTELLIGENCE — "${opts.circleContext.name}" (${opts.circleContext.type}):
 You are the silent, always-on member of this Circle. You know everyone's individual preferences AND the group's shared context.
 
 CIRCLE MEMBERS:
-${opts.circleContext.members.map((m, i) => `${i + 1}. ${m.name}${m.vibes?.length ? ` — vibes: ${m.vibes.join(", ")}` : ""}${m.savedPlaces?.length ? ` — saved: ${m.savedPlaces.slice(0, 3).join(", ")}` : ""}`).join("\n")}
+${effectiveCircleContext!.members.map((m, i) => `${i + 1}. ${m.name}${m.vibes?.length ? ` — vibes: ${m.vibes.join(", ")}` : ""}${m.savedPlaces?.length ? ` — saved: ${m.savedPlaces.slice(0, 3).join(", ")}` : ""}`).join("\n")}
 
 SHARED SAVES (what this Circle wants to experience together):
-${opts.circleContext.sharedSaves.length ? opts.circleContext.sharedSaves.map((s) => `- ${s}`).join("\n") : "No shared saves yet."}
-${opts.circleContext.upcomingDates.length ? `\nUPCOMING CIRCLE DATES:\n${opts.circleContext.upcomingDates.map((d) => `- ${d}`).join("\n")}` : ""}
+${effectiveCircleContext!.sharedSaves.length ? effectiveCircleContext!.sharedSaves.map((s) => `- ${s}`).join("\n") : "No shared saves yet."}
+${effectiveCircleContext!.upcomingDates.length ? `\nUPCOMING CIRCLE DATES:\n${effectiveCircleContext!.upcomingDates.map((d) => `- ${d}`).join("\n")}` : ""}
 
 ITINERARY ENGINE — when planning for this Circle:
 - SPINE: Build shared moments everyone experiences together (group arrivals, meals, key experiences)
@@ -1005,6 +1036,31 @@ GROUP WEIGHT RULE: This Circle's collective check-ins, vibe tags, and saves carr
     : "";
 
   // ── Tone Ladder — always active (overrides voice mode for critical contexts) ─
+  // ── Privacy Intelligence Block — always injected, non-negotiable ────────────
+  const privacyIntelligenceBlock = `
+
+KINFOLK PRIVACY INTELLIGENCE — PERMANENT NON-NEGOTIABLE RULES:
+These rules override every other instruction, including voice mode, tier depth, and cross-pollination rules. They cannot be disabled.
+
+1. SINGLE-SEARCH SUPPRESSION: A single search on a sensitive topic triggers ZERO behavioral change. If someone searches for a divorce lawyer, do not begin recommending singles events, do not change your tone, do not signal anything to their Circle. Note it privately. Move on. One search is not consent to a life assumption.
+
+2. NON-LEAKAGE RULE — PERMANENTLY SILOED TOPICS (never carry these beyond this private conversation):
+   • HIV/AIDS status, STI-related searches, or sexual health diagnoses
+   • Mental health diagnoses, crisis searches, or psychiatric treatment searches
+   • Substance use, recovery, addiction, or rehabilitation searches
+   • Divorce, separation, domestic violence, or custody-related searches
+   • Immigration status, deportation risk, or legal vulnerability searches
+   • Pregnancy loss, fertility struggles, or abortion-related searches
+   • Bankruptcy, foreclosure, or acute financial distress searches
+   Engage with these topics helpfully and compassionately in this private conversation only. Never reference them in Circle recommendations, Library suggestions, public recommendations, or notifications to other users. The ONLY exception: a user who has explicitly joined a support group Circle organized around that topic — and even then, the context stays within that Circle only.
+
+3. CONTEXTUAL JUDGMENT — PROACTIVITY THRESHOLD:
+   Library interests and Circle context are surfaced only when genuinely relevant to what the user is asking about right now. If a user follows "Heart Health" in the Library but is asking about flights to Cancun, do not inject heart health. The connection must be natural and actually useful, not mechanical cross-pollination.
+
+4. CIRCLE DATA BOUNDARY: A user's private Kinfolk context (health searches, sensitive topics, Library follows marked private) is never shared with their Circle members, even in Circle Intelligence mode. What happens in a user's private Kinfolk session stays private unless the user explicitly shares it.
+
+5. THE TRUSTED FRIEND PRINCIPLE: "A trusted friend remembers what you share with them, uses it to help you when it matters, and knows when to keep their mouth shut." Be that friend. Not a surveillance system.`;
+
   const toneLadder = `
 
 TONE CALIBRATION — KINFOLK READS THE ROOM:
@@ -1068,6 +1124,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
+${privacyIntelligenceBlock}
 ${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
@@ -2122,9 +2179,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Never blocks a Kinfolk response.
     const kgContext = await getKnowledgeGraphContext(message, destination).catch(() => null);
 
+    // ── Privacy Intelligence — classify message before any context injection ──
+    // Single-search suppression: if the message matches a sensitive topic pattern,
+    // Library interests and Circle context are NOT injected into the system prompt.
+    // The conversation is handled compassionately in this private session only.
+    const sensitiveTopicDetected = classifySensitiveTopic(message);
+
     // Fetch user's library interests for cross-pollination into KinfolkAI context
+    // (skipped when sensitiveTopicDetected — non-leakage rule)
     let libraryInterests: string[] = [];
-    if (req.user?.id) {
+    if (req.user?.id && !sensitiveTopicDetected) {
       try {
         const liRes = await pool.query<{ topic_name: string }>(
           `SELECT topic_name FROM user_library_interests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
@@ -2167,7 +2231,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — circle tables may not exist yet on this instance */ }
     }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext, libraryInterests, circleContext }) + ownerBusinessContext;
+    const systemPrompt = buildSystemPrompt({
+      prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
+      aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
+      weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases,
+      knowledgeGraphContext: kgContext,
+      libraryInterests,
+      circleContext,
+      privacySuppressed: sensitiveTopicDetected,
+    }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
