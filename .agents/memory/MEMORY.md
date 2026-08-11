@@ -1,6 +1,7 @@
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
 - [Admin Business Entry Tool + Media Upload](admin-business-entry-media.md) — POST /admin/businesses (raw SQL), photo upload direct to photos[], social link paste, AdminAddBusiness 5-step form + post-save media step.
 - [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs in cultural_sites; guard needs columns: founded_year, status, source, is_featured (all added Aug 9 2026 via startup migrations).
+- [KinfolkAI Privacy Intelligence](kinfolk-privacy-intelligence.md) — sensitive topic classifier, non-leakage rule, Divorce Rule, Circle data boundary, privacy DB cols all live Aug 11 2026.
 - [KinfolkAI Cultural Intelligence Model](kinfolk-cultural-intelligence-model.md) — founding principles, city-as-container, two-layer registry, three-setting voice decoupling, code-switching, 16-category depth standard.
 - [Kinfolk Constitution — Founder Decisions (Resolved)](kinfolk-constitution-decisions.md) — all locked decisions: voice names, language names, profanity, Cultural Journey opt-in, Ambassador definition, Family Mode, first cohort order, master governance principle.
 - [Kinfolk Lifelong Companion Vision](kinfolk-lifelong-companion-vision.md) — Kinfolk as lifelong cultural companion; Cultural Journeys feature; My Journey/Passport; Curiosity Lists; no-gamification; businesses as teachers; nothing expires; key sentences verbatim.
