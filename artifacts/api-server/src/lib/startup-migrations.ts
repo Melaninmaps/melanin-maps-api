@@ -513,7 +513,7 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name TEXT NOT NULL,
       city TEXT NOT NULL,
-      state VARCHAR(2) NOT NULL,
+      state TEXT NOT NULL DEFAULT '',
       category TEXT NOT NULL DEFAULT 'other',
       mission TEXT,
       website TEXT,
@@ -543,7 +543,7 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name TEXT NOT NULL,
       city TEXT NOT NULL,
-      state VARCHAR(2) NOT NULL,
+      state TEXT NOT NULL DEFAULT '',
       venue TEXT,
       address TEXT,
       description TEXT,
@@ -617,7 +617,7 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       name TEXT NOT NULL,
       city TEXT NOT NULL,
-      state VARCHAR(2) NOT NULL,
+      state TEXT NOT NULL DEFAULT '',
       address TEXT,
       description TEXT,
       latitude DOUBLE PRECISION,
@@ -634,6 +634,11 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `CREATE INDEX IF NOT EXISTS idx_tour_cultural_sites_city_state
           ON tour_cultural_sites (LOWER(city), LOWER(state))
           WHERE is_active = true`,
+  },
+  {
+    // Widen state column so international sites (e.g. "Phuket Province") fit.
+    name: "tour_cultural_sites_state_text_v1",
+    sql: `ALTER TABLE tour_cultural_sites ALTER COLUMN state TYPE TEXT USING state::text`,
   },
   {
     // International support — tour content tables need province + country
@@ -3688,8 +3693,8 @@ async function ensureLibraryContentActivation_v1(
       const r = await pool.query(
         `INSERT INTO knowledge_sources
            (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status, confidence, created_at, retrieved_at)
-         SELECT gen_random_uuid()::text,$1,$2,$3,$4,$5,$6,'active',$7,NOW(),NOW()
-         WHERE NOT EXISTS (SELECT 1 FROM knowledge_sources WHERE topic_id=$1 AND source_name=$3)`,
+         SELECT gen_random_uuid()::text,$1::text,$2::text,$3::text,$4::text,$5::text,$6::boolean,'active',$7::text,NOW(),NOW()
+         WHERE NOT EXISTS (SELECT 1 FROM knowledge_sources WHERE topic_id=$1::text AND source_name=$3::text)`,
         [topicId, tier, name, url, claim, isPrimary, conf],
       );
       sourcesAdded += r.rowCount ?? 0;
@@ -3703,10 +3708,10 @@ async function ensureLibraryContentActivation_v1(
       const r = await pool.query(
         `INSERT INTO knowledge_sources
            (id, topic_id, authority_tier, source_name, source_url, claim, is_primary, status, confidence, created_at, retrieved_at)
-         SELECT gen_random_uuid()::text, kt.id, $2, $3, $4, $5, $6, 'active', $7, NOW(), NOW()
+         SELECT gen_random_uuid()::text, kt.id, $2::text, $3::text, $4::text, $5::text, $6::boolean, 'active', $7::text, NOW(), NOW()
          FROM knowledge_topics kt
-         WHERE kt.topic_name = $1
-           AND NOT EXISTS (SELECT 1 FROM knowledge_sources ks WHERE ks.topic_id = kt.id AND ks.source_name = $3)
+         WHERE kt.topic_name = $1::text
+           AND NOT EXISTS (SELECT 1 FROM knowledge_sources ks WHERE ks.topic_id = kt.id AND ks.source_name = $3::text)
          LIMIT 1`,
         [topicName, tier, name, url, claim, isPrimary, conf],
       );
@@ -4001,7 +4006,7 @@ async function ensureAfricanGeographyNodes_v1(
       const topicResult = await pool.query(
         `INSERT INTO knowledge_topics
            (id, topic_name, canonical_name, category, description, node_type, topic_type, enabled, status, credibility_score, credibility_tier, geography_ref)
-         VALUES ($1,$2,$2,'country',$3,'geography','general',true,'published',60,'professional',$2)
+         VALUES ($1::text,$2::text,$2::text,'country',$3::text,'geography','general',true,'published',60,'professional',$2::text)
          ON CONFLICT (id) DO NOTHING`,
         [id, name, desc],
       );
