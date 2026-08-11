@@ -1402,7 +1402,8 @@ END $seed$`,
           'kevinctester@gmail.com',
           'kevkaytester@gmail.com',
           'teiannaltester@gmail.com',
-          'trinalindsaytester@gmail.com'
+          'trinalindsaytester@gmail.com',
+          'manus.tester@mappingwithmelanin.com'
         ];
         e TEXT;
       BEGIN
