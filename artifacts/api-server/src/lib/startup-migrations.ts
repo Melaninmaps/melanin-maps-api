@@ -1387,6 +1387,37 @@ END $seed$`,
             profile_setup_complete = EXCLUDED.profile_setup_complete,
             updated_at            = NOW()`,
   },
+  {
+    // Dedicated Manus AI tester account — created Aug 2026.
+    // Email:    manus@mappingwithmelanin.com
+    // Password: MWM-Manus-2026!
+    // Role:     tester (sees tester-only demo businesses + all live listings)
+    // Tier:     founding (full feature access, no Stripe subscription required)
+    // ON CONFLICT DO UPDATE so credentials self-heal if manually edited.
+    name: "ensure_manus_ai_tester_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, home_city, must_change_password)
+          VALUES
+            (gen_random_uuid(),
+             'manus@mappingwithmelanin.com',
+             'Manus', 'AI',
+             '$2b$08$DTYSXXrFt8ZPTKx3uzBD3edNsvgL/yNNMAKqRiYE.g6nvdVaWa.Yi',
+             true, true, true,
+             'founding', true, 'tester', 'Philadelphia', false)
+          ON CONFLICT (email) DO UPDATE SET
+            password_hash          = EXCLUDED.password_hash,
+            first_name             = EXCLUDED.first_name,
+            last_name              = EXCLUDED.last_name,
+            role                   = EXCLUDED.role,
+            member_type            = EXCLUDED.member_type,
+            approved               = EXCLUDED.approved,
+            email_verified         = EXCLUDED.email_verified,
+            profile_setup_complete = EXCLUDED.profile_setup_complete,
+            must_change_password   = false,
+            updated_at             = NOW()`,
+  },
   // ── business_identity columns missing from Railway prod DB ─────────────────
   // These three columns were added to the Drizzle schema after Railway's last
   // migration. The KinfolkAI catalog pool.query was failing with error 42703
