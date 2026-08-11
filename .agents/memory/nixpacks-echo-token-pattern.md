@@ -1,6 +1,6 @@
 ---
 name: nixpacks echo token — correct format and sed pattern
-description: How to correctly update the cache-bust echo token in nixpacks.toml
+description: How to correctly update the cache-bust echo token in nixpacks.toml; why it is MANDATORY on every push.
 ---
 
 # Nixpacks Echo Token — Correct Format
@@ -24,30 +24,41 @@ Or more reliably, just use a direct Edit call or write the full line.
 
 ## Why the Cache Bust Matters
 
-Railway caches Docker build layers. If the nixpacks.toml build step command doesn't change,
-Railway reuses the cached layer and serves the OLD binary. The echo token makes the command
-text unique on every push, forcing a fresh build.
+Railway caches Docker build layers keyed on the **text** of each RUN command. If the
+nixpacks.toml build step command string doesn't change, Railway reuses the cached build layer
+and the esbuild step never runs — source file changes are completely ignored.
 
-**However**: Railway also busts the cache when source files change (COPY layers are invalidated).
-So even without updating the echo token, a fresh source-file change usually triggers a rebuild.
-The echo token is a belt-and-suspenders guarantee.
+**CONFIRMED Aug 11 2026**: An entire session of commits to `kinfolk.ts` and `intent-router.ts`
+were invisible to Railway production because the echo token had not changed since the first commit
+of that session. Railway served the cached build from before any of those edits. The source files
+were present in git HEAD but the RUN layer was served from cache.
+
+⚠️  **The echo token is MANDATORY on every push that changes api-server source files.**
+The previous note that said "a fresh source-file change usually triggers a rebuild" was WRONG.
+It does NOT. Only the echo token change guarantees Railway runs esbuild with fresh source.
 
 ## Token Naming Convention
 
 `<feature-slug>-v<N>-<unix-timestamp>`
 
-Example: `"safety-exp-v1-1786435000"`
+Example: `"kinfolk-audit-fix-v2-1786484600"`
 
 ## IMPORTANT: Full Cache Rebuild Takes 60-90 Minutes
 
-When the echo token IS updated (or COPY layers change), Railway does a full rebuild from scratch:
+When the echo token is updated, Railway does a full rebuild from scratch:
 - pnpm install: 30-60 min (large monorepo)
 - esbuild: 1-4 min
 - Startup migrations: 5-15 min (seeding)
-- Total: 60-90+ min of zero-traffic downtime
+- Total: 60-90+ min of downtime
 
-This means updating the echo token causes EXTENDED DOWNTIME on Railway. Only do it when necessary.
-If source files changed, Railway will rebuild the affected layers WITHOUT needing an echo token change.
+**Why:** Aug 11 2026 — echo token change confirmed to cause 90 min Railway outage.
+The old container tears down immediately; the new one isn't ready until the full build completes.
 
-**Why:** Aug 11 2026 — a cache-bust with echo token update caused 90+ min Railway outage while
-the full rebuild ran. Old container was torn down immediately, new one wasn't ready.
+## Additional Pitfall: TRAVEL_POLICY_OVERRIDE vs LEGAL_SIGNALS drift
+
+`intent-router.ts` contains `LEGAL_SIGNALS` (used in `classifyIntent`).
+`routes/kinfolk.ts` contains `TRAVEL_POLICY_OVERRIDE` (post-classification belt-and-suspenders).
+
+Both regex groups MUST be updated together. They drifted on Aug 11 2026 — the override
+missed "visa extension / extend my stay / extension documents" because LEGAL_SIGNALS was updated
+in one file but the override in the other was not. Keep them in sync on every edit.
