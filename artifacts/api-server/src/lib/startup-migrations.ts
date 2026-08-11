@@ -1351,6 +1351,83 @@ END $seed$`,
       ])`,
   },
 
+  // ── Restore deleted tester accounts — UPSERT so deleted rows are recreated ──
+  // tester_universal_accounts_v1 used ON CONFLICT DO NOTHING and already ran,
+  // so accounts deleted after that deploy were never recreated. This migration
+  // uses INSERT ... ON CONFLICT DO UPDATE so it both creates missing accounts
+  // AND corrects any existing accounts with wrong passwords in one shot.
+  {
+    name: "tester_accounts_restore_v1",
+    sql: `
+      DO $$
+      DECLARE
+        h TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+        tester_emails TEXT[] := ARRAY[
+          'tlindsay428@gmail.com',
+          'tlindsay428@aol.com',
+          'zykiral.morton@yahoo.com',
+          'kyleisha.m.morton@gmail.com',
+          'kyleisha.m.fisher@gmail.com',
+          'taleisha.fisher@gmail.com',
+          'lilanarich@gmail.com',
+          'joshuabierd99@gmail.com',
+          'jross215@gmail.com',
+          'kaylathomas20011@gmail.com',
+          'kansesdwilliams@gmail.com',
+          'fatimccoy@icloud.com',
+          'jordanwyatt117@icloud.com',
+          'jordanw117@icloud.com',
+          'nydiahholly12@gmail.com',
+          'meaparks@gmail.com',
+          'owcforyouth@gmail.com',
+          'kaylacardwell3@gmail.com',
+          'taleisham.saunders@gmail.com',
+          'trinalindsayhairston@gmail.com',
+          'bigdot6017@gmail.com',
+          'dghaskin@gmail.com',
+          'sharonnlw2@gmail.com',
+          'ninamartinez409@gmail.com',
+          'winternewman88@gmail.com',
+          'shawnhillhomes@gmail.com',
+          'themontgomerymanagementgroup@gmail.com',
+          'gregorywilliam05@gmail.com',
+          'kahvealynne@gmail.com',
+          'reinaoba06@gmail.com',
+          'mayagz05@icloud.com',
+          'melody.brown1988@gmail.com',
+          'cardwellkayla219@gmail.com',
+          'kcardwell17@yahoo.com',
+          'jordanwtester@gmail.com',
+          'kaylacardwelltester@gmail.com',
+          'kevinctester@gmail.com',
+          'kevkaytester@gmail.com',
+          'teiannaltester@gmail.com',
+          'trinalindsaytester@gmail.com'
+        ];
+        e TEXT;
+      BEGIN
+        FOREACH e IN ARRAY tester_emails LOOP
+          INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, must_change_password)
+          VALUES
+            (gen_random_uuid(), e,
+             split_part(e, '@', 1), 'Tester',
+             h, true, true, false,
+             'navigator', true, 'tester', true)
+          ON CONFLICT (email) DO UPDATE SET
+            password_hash        = EXCLUDED.password_hash,
+            email_verified       = true,
+            approved             = true,
+            role                 = 'tester',
+            member_type          = 'navigator',
+            must_change_password = true,
+            updated_at           = NOW();
+        END LOOP;
+      END $$`,
+  },
+
   // ── Tester batch v2 — missing account + new Manus smoke-test audit account ──
   // jandirafernandes13@gmail.com was omitted from v1; added here.
   // manus.smoke@mappingwithmelanin.com is a dedicated Manus release smoke-test
