@@ -2294,6 +2294,14 @@ ON CONFLICT (city_slug) DO UPDATE SET
   historical_context  = EXCLUDED.historical_context`,
   },
 
+  // ── moon.mayes444@gmail.com — approved tester (admin_invite, Aug 11 2026)
+  {
+    name: "tester_moon_mayes_v1",
+    sql: `INSERT INTO pending_tester_emails (email, tester_access_source)
+          VALUES ('moon.mayes444@gmail.com', 'admin_invite')
+          ON CONFLICT (email) DO NOTHING`,
+  },
+
   // ── family_ai_usage — tracks AI quota consumption per circle/user per month.
   // Required by checkAiPool() (called on every non-free KinfolkAI chat request).
   // Missing table causes an instant "KinfolkAI chat failed" for all navigator/
