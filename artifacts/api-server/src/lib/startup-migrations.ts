@@ -1288,6 +1288,69 @@ END $seed$`,
       END $$`,
   },
 
+  // ── Force-reset tester passwords so all approved testers can log in ─────────
+  // Some testers self-registered before the seeding migration ran, so their
+  // accounts exist but with unknown self-set passwords. ON CONFLICT DO NOTHING
+  // in tester_universal_accounts_v1 silently skipped those rows, leaving testers
+  // locked out. This UPDATE covers EVERY tester email — it resets the password
+  // to the universal hash AND sets must_change_password=true so they're prompted
+  // to create their own password on first login.
+  // Safe exception: manus.* audit accounts are excluded (must_change_password=false).
+  {
+    name: "tester_password_force_reset_v1",
+    sql: `
+      UPDATE users SET
+        password_hash        = '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2',
+        must_change_password = true,
+        approved             = true,
+        email_verified       = true,
+        role                 = 'tester',
+        updated_at           = NOW()
+      WHERE email = ANY(ARRAY[
+        'tlindsay428@gmail.com',
+        'tlindsay428@aol.com',
+        'zykiral.morton@yahoo.com',
+        'kyleisha.m.morton@gmail.com',
+        'kyleisha.m.fisher@gmail.com',
+        'taleisha.fisher@gmail.com',
+        'lilanarich@gmail.com',
+        'joshuabierd99@gmail.com',
+        'jross215@gmail.com',
+        'kaylathomas20011@gmail.com',
+        'kansesdwilliams@gmail.com',
+        'fatimccoy@icloud.com',
+        'jordanwyatt117@icloud.com',
+        'jordanw117@icloud.com',
+        'nydiahholly12@gmail.com',
+        'meaparks@gmail.com',
+        'owcforyouth@gmail.com',
+        'kaylacardwell3@gmail.com',
+        'taleisham.saunders@gmail.com',
+        'trinalindsayhairston@gmail.com',
+        'bigdot6017@gmail.com',
+        'dghaskin@gmail.com',
+        'sharonnlw2@gmail.com',
+        'ninamartinez409@gmail.com',
+        'winternewman88@gmail.com',
+        'shawnhillhomes@gmail.com',
+        'themontgomerymanagementgroup@gmail.com',
+        'gregorywilliam05@gmail.com',
+        'kahvealynne@gmail.com',
+        'jandirafernandes13@gmail.com',
+        'reinaoba06@gmail.com',
+        'mayagz05@icloud.com',
+        'melody.brown1988@gmail.com',
+        'cardwellkayla219@gmail.com',
+        'kcardwell17@yahoo.com',
+        'jordanwtester@gmail.com',
+        'kaylacardwelltester@gmail.com',
+        'kevinctester@gmail.com',
+        'kevkaytester@gmail.com',
+        'teiannaltester@gmail.com',
+        'trinalindsaytester@gmail.com'
+      ])`,
+  },
+
   // ── Tester batch v2 — missing account + new Manus smoke-test audit account ──
   // jandirafernandes13@gmail.com was omitted from v1; added here.
   // manus.smoke@mappingwithmelanin.com is a dedicated Manus release smoke-test
