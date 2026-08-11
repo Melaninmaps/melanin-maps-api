@@ -1,0 +1,126 @@
+category,topic,id
+country,Algeria,geo_af_algeria
+country,Angola,geo_af_angola
+country,Benin,geo_af_benin
+country,Botswana,geo_af_botswana
+country,Burkina Faso,geo_af_bfaso
+country,Burundi,geo_af_burundi
+country,Cameroon,4380ee69-5f8c-4a2b-9f6c-5f8660c16076
+country,Cameroon,geo_af_cameroon
+country,Cape Verde,geo_af_capeverde
+country,Central African Republic,geo_af_car
+country,Chad,geo_af_chad
+country,Comoros,geo_af_comoros
+country,Côte d'Ivoire,geo_af_cotediv
+country,Democratic Republic of Congo,geo_af_congo_drc
+country,Djibouti,geo_af_djibouti
+country,Egypt,geo_af_egypt
+country,Equatorial Guinea,geo_af_equatguinea
+country,Eritrea,geo_af_eritrea
+country,Eswatini,geo_af_eswatini
+country,Gabon,geo_af_gabon
+country,Gambia,geo_af_gambia
+country,Guinea,geo_af_guinea
+country,Guinea-Bissau,geo_af_guineabiss
+country,Laos,d4640021-71b9-49fc-b29f-9d425f71d809
+country,Lesotho,geo_af_lesotho
+country,Liberia,geo_af_liberia
+country,Libya,geo_af_libya
+country,Madagascar,geo_af_madagascar
+country,Malawi,geo_af_malawi
+country,Mali,geo_af_mali
+country,Mauritania,geo_af_mauritania
+country,Mauritius,geo_af_mauritius
+country,Morocco,geo_af_morocco
+country,Mozambique,geo_af_mozambique
+country,Namibia,geo_af_namibia
+country,Niger,geo_af_niger
+country,Republic of the Congo,geo_af_congo_brz
+country,Rwanda,geo_af_rwanda
+country,Senegal,6ccabc4f-4fc4-44b3-bf62-912423998c63
+country,Seychelles,geo_af_seychelles
+country,Sierra Leone,geo_af_sierraleone
+country,Somalia,geo_af_somalia
+country,South Sudan,geo_af_southsudan
+country,Sudan,geo_af_sudan
+country,São Tomé and Príncipe,geo_af_saotome
+country,Tanzania,geo_af_tanzania
+country,Togo,geo_af_togo
+country,Tunisia,geo_af_tunisia
+country,Uganda,geo_af_uganda
+country,Zambia,geo_af_zambia
+country,Zimbabwe,geo_af_zimbabwe
+diaspora,African Diaspora History,fbfbc161-5121-4eca-a0a4-c35731b010f6
+diaspora,Black & Diaspora Foodways,f64fc179-c304-451d-a966-6f7a25b578cc
+diaspora,Cultural Etiquette & Customs,f558119d-60d0-46b3-9827-76dbaa8ec676
+diaspora,Cultural Preservation & Oral History,9c597da0-424d-4955-95fa-39764897d66f
+diaspora,Festivals & Cultural Celebrations,f84948af-98c1-4e0c-8bbf-b5e92631f11a
+diaspora,Genealogy & Family History,feb5c746-c988-45c2-8eb4-f9671a543332
+diaspora,Heritage Language Learning,1f60a476-51dc-48e6-b765-b1b48f1ab927
+geography,Philadelphia,0388fe7c-11f1-436b-8ab6-f817be0e9f27
+travel,2004 Indian Ocean Tsunami — Memory & Lessons,3e479e69-b734-4310-a4bf-26676dfdca9c
+travel,"Akrotiri Archaeological Site, Santorini, Greece",5fed9fcc-826e-4bf9-9ac6-c65ee732a4e7
+travel,"Amoudi Bay, Santorini, Greece",85081bee-9481-4209-8e04-d71250e74b18
+travel,Andaman Sea Ecology & Travel,309721e5-e469-433b-85a1-b55632b44a83
+travel,"Ayutthaya Historical Park, Thailand",35bafa52-a5c6-4f7a-a405-0a12d60078f1
+travel,"Big Buddha, Phuket",58ceba77-7500-445c-ab5b-75cd2609acec
+travel,"Blue Mountains, Jamaica",1f780cd0-87f3-48b5-ba49-4947c4353693
+travel,"Bob Marley Museum, Kingston, Jamaica",9c01d8ac-cf9c-4c66-844f-d55f64ea66a5
+travel,"Boston Beach, Port Antonio, Jamaica",706a0ac2-5e6e-4c27-8567-7f7325b4cdea
+travel,"Chao Phraya River & the Klong Network, Bangkok",34392d54-195a-4fe0-93a9-4c552a6593de
+travel,"Chatuchak Weekend Market, Bangkok",191c7b2f-1409-419d-9cf5-65ccc9821d76
+travel,"Chichen Itza, Yucatán, Mexico",7b29297d-e9e2-4491-8da0-278e8e5f40a4
+travel,"Cobá Ruins, Quintana Roo, Mexico",fa127536-5a71-4181-b417-9fe0c32b7c13
+travel,"Doi Suthep Temple, Chiang Mai, Thailand",661f9ad2-c461-4b32-9cba-f123cf8b4300
+travel,"Dos Ojos Cenote, Riviera Maya, Mexico",3851e444-1793-4c00-9a9c-ae4787723b68
+travel,"Dunn's River Falls, Ocho Rios, Jamaica",4b1dd63b-2efd-45a0-9ed0-756a6a7a7f2e
+travel,"Elephant Nature Park, Chiang Mai, Thailand",d1ba49b0-3661-46d3-8f0e-2cc67ef9b04c
+travel,"Erawan Falls, Kanchanaburi, Thailand",c412afa2-e852-411c-be3f-dd0e8c2a5f6c
+travel,"Fira — Capital of Santorini, Greece",7f0d66ca-c4e6-447c-bb57-95b823fbc953
+travel,"Gran Cenote, Tulum, Mexico",4da22de4-27c2-4fe4-b268-f0ab2f3eb57a
+travel,Heritage & Diaspora Travel,3186952e-3df7-495b-8790-2696d738280b
+travel,"Imerovigli, Santorini, Greece",9fe507b7-c13b-4def-9a64-d3b6b9c58b0b
+travel,"Isla Holbox, Yucatán, Mexico",ed544731-55d7-48d5-ae63-b4f08f6bce47
+travel,"Isla Mujeres, Quintana Roo, Mexico",0895a0fa-5f12-4b0c-95a4-d80595c1cadd
+travel,"Kata Beach & Kata Noi, Phuket",c5f9a5c9-1ef7-45d7-a7c8-ff0c9d47ea41
+travel,"Khao San Road Area, Bangkok",a7092aef-5dbe-4ded-8818-93ad0b626cae
+travel,"Kuang Si Falls, Luang Prabang, Laos",2d02a574-c07e-4fd1-956d-8585cb2fb4af
+travel,Loy Krathong Festival,112bab45-27ab-47de-ac06-55dc37767841
+travel,"Luang Prabang Night Market, Laos",a87a949d-8ae4-4851-8903-375b223e777d
+travel,"Lumphini Park, Bangkok",626ba55c-6cae-486e-b074-3bd043d8c1ff
+travel,"Mayfield Falls, Westmoreland, Jamaica",7d601461-f0d7-4a35-849a-0444a11ad1a3
+travel,Moken Sea Gypsy Heritage,f2217413-eb32-4251-95c0-579d332f87b8
+travel,"Mount Phousi, Luang Prabang, Laos",1ca45d3c-fb84-4dc9-bac7-8a3717cb3f1d
+travel,Muay Thai History & Culture,d42d6e12-1aff-447b-8eb2-6136cde9c446
+travel,"Oia Village, Santorini, Greece",3421dad9-603e-4bbd-9166-411c28a8c06e
+travel,"Pak Ou Caves, Luang Prabang, Laos",8a323c66-de61-4566-a91a-cc7834bb8633
+travel,"Patong Beach, Phuket",9a732eba-a585-4563-a345-55a7a3b24809
+travel,Peranakan (Baba-Nyonya) Culture,c614ae45-f979-48cc-bad5-8d47de451737
+travel,"Perissa & Perivolos Black Sand Beach, Santorini, Greece",03cdc03b-11bf-49d7-8d61-bc6bab43e386
+travel,"Pha That Luang, Vientiane, Laos",d3eacc73-9351-469f-a9f5-9d7bee723df1
+travel,"Phang Nga Bay — James Bond Island, Phuket",f4ac9ca9-2c55-468e-a10f-df6af02b9d30
+travel,"Phi Phi Islands, Phuket",2c835131-4f94-436c-a06e-371cb0aaa0fa
+travel,Phuket Architecture Heritage,719223ae-1b38-4146-9fa5-6f7631c7445c
+travel,Phuket History & Culture,321a9bd8-e47f-4f55-bbfe-4e3f5898c905
+travel,Phuket Old Town,ada05b29-2a95-49c6-a30b-97badd2410ce
+travel,Phuket Vegetarian Festival,9b069c9f-da1c-4544-86f9-f03cc7b43e5e
+travel,"Rick's Café, Negril, Jamaica",cc6cfc06-1a5c-4e47-8a24-e1944d1a16fa
+travel,"Rose Hall Great House, Montego Bay, Jamaica",88b16da1-fbf1-4d71-bc34-ac2fb756378f
+travel,Santorini Caldera Boat Cruise,4b69239e-b159-4e28-a8b5-d57a036ff0c2
+travel,Songkran (Thai New Year) Festival,3ba7c18b-93fc-449a-9d90-0b10bad5fbd6
+travel,"Tad Sae Waterfalls, Luang Prabang, Laos",57549a59-7ee6-4ff3-8ed8-e7925e44a7eb
+travel,Thai Buddhism for Travelers,6f92222b-3ff3-4b00-8076-e95c76b8b2e2
+travel,Thai Cuisine & Food Culture,4dec399a-48af-4539-86ba-5d4d61ff7d79
+travel,Thai Massage & Wellness Traditions,77cd77cb-2fc0-4a85-bc3f-41eb90b7e519
+travel,Thai Royal History & Buddhism,01dc5ece-9631-4260-b519-e47433f161d9
+travel,"The Grand Palace & Wat Phra Kaew, Bangkok",0cae6bbc-c504-4583-8167-56bc67ccd8df
+travel,Travel Mood & Experience Planning,9710268f-3c52-4293-baa4-ab98431cf828
+travel,Travel Safety for People of Color,529c45d7-d703-46bd-9e10-041c7eb64b0a
+travel,"Tulum Ruins, Mexico",050a57ca-6cce-4480-ac0a-dafb52dcf7bb
+travel,"Wat Arun — Temple of Dawn, Bangkok",80698212-55bc-4398-8604-e04f9244dfe3
+travel,"Wat Chalong, Phuket",710f2fb2-2002-4ba6-90fc-c1a2d789422d
+travel,"Wat Pho — Temple of the Reclining Buddha, Bangkok",92c4565a-cf06-4f3d-b624-f640a8239a6c
+travel,"Wat Xieng Thong, Luang Prabang, Laos",a07d204d-8af7-4216-bea7-16858b0b0688
+travel,"Xcaret Park, Riviera Maya, Mexico",a6832a22-776e-481b-a31b-0f4d9b19c31c
+travel,"YS Falls, St. Elizabeth, Jamaica",ec81ff59-5adf-4a60-9cd6-6b1b6496dce1
+travel,Yaowarat — Bangkok Chinatown,66e14aa7-2e9f-4f2a-8349-45dfdee7240f
