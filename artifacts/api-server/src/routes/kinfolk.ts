@@ -1982,7 +1982,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // always resolve to legal_regulated even when hasDestination caused the keyword
     // classifier to return business_discovery. Catches live mis-routes without
     // requiring a classifier retrain.
-    const TRAVEL_POLICY_OVERRIDE = /\b(visa requirement|entry requirement|travel document|documentation requirement|border requirement|border crossing|entry policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|passport requirement)\b/i;
+    const TRAVEL_POLICY_OVERRIDE = /\b(visa requirements?|entry requirements?|travel documents?|documentation requirements?|border requirements?|border crossing|entry policy|travel policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|passport requirements?|visa extension|visa extensions|extend my stay|extending (?:my |your |their )?stay|extension documents?|stay extension|overstay|overstaying|immigration requirements?|consulate appointment|embassy appointment)\b/i;
     const intentClass: KinfolkIntent = (
       rawIntentClass === "business_discovery" &&
       TRAVEL_POLICY_OVERRIDE.test(message)
@@ -2571,10 +2571,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,
-      // Provenance note — optional display text for the UI to surface alongside the reply.
-      // For high-consequence intents this is a required disclaimer; for low-consequence
-      // intents it reflects source type (MWM catalog vs. general knowledge).
-      provenanceNote: intentPolicy.consequence !== "low" ? intentPolicy.provenanceLabel : undefined,
+      // Provenance note — required display text for high-consequence intents (legal/medical/
+      // financial/emergency). Deterministic from intent class, never from model output.
+      provenanceNote: intentPolicy.consequence !== "low"
+        ? (intentClass === "legal_regulated"
+            ? (recommendations.length > 0
+                ? "General legal and travel information from MWM listings and general knowledge. Requirements can change — verify with the relevant official authority before acting."
+                : "General legal and travel information only. Entry and visa requirements can change — verify with an official government or embassy source before acting.")
+            : intentClass === "medical_health"
+            ? "General health information only. It is not medical advice or a diagnosis. Verify decisions with a qualified clinician."
+            : intentClass === "financial_regulated"
+            ? "General financial information only. It is not individualized investment, tax, or financial advice."
+            : intentClass === "safety_emergency"
+            ? "For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities."
+            : intentPolicy.provenanceLabel)
+        : undefined,
+      // sources — empty for now; will be populated when evidence retrieval is wired.
+      // Always an array so client-side checks (Array.isArray) don't need a guard.
+      sources: [] as { id: string; label: string; title?: string; url?: string }[],
       // Cultural identity detected in this message — offer member the chance to save
       // to their roots (diasporaCountries) with explicit consent. Never auto-saved.
       ...(detectedCulture && {
