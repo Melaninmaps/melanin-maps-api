@@ -286,7 +286,7 @@ export default function SmartSearchScreen() {
                 </Text>
                 <TouchableOpacity activeOpacity={0.85}
                   style={[styles.kinfolkBtn, { backgroundColor: primaryGold }]}
-                  onPress={() => router.push("/travel" as any)}
+                  onPress={() => router.push(`/travel?q=${encodeURIComponent(query.trim())}` as any)}
                 >
                   <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Ask KinfolkAI™ instead</Text>
                 </TouchableOpacity>

@@ -1307,6 +1307,13 @@ export default function MapPage() {
                         </p>
                       </>
                     )}
+                    {search.trim() && (
+                      <Link href={`/travel?q=${encodeURIComponent(search.trim())}`}>
+                        <button className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-full border-2 border-[#CA922B] text-[#CA922B] text-xs font-bold hover:bg-[#CA922B] hover:text-white transition-colors mb-3">
+                          Ask KinfolkAI™ instead
+                        </button>
+                      </Link>
+                    )}
                     <button
                       onClick={() => setShowAddPlace(true)}
                       className="flex items-center gap-2 mx-auto px-5 py-2.5 rounded-full bg-[#CA922B] text-white text-xs font-bold hover:bg-[#B38024] transition-colors mb-3"

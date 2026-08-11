@@ -536,6 +536,13 @@ function TravelPage() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+
+  // Pre-fill from ?q= URL param — set once on mount (map/business search handoff)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q?.trim()) setInput(q.trim());
+  }, []);
+
   const [sending, setSending] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [sessions, setSessions] = useState<Session[]>([]);

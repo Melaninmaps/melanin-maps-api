@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
@@ -1454,7 +1454,8 @@ export default function TravelScreen() {
   const { isAuthenticated } = useAuth();
   const { subscription } = useMembership();
 
-  const [inputText, setInputText] = useState("");
+  const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
+  const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
   const [voiceMode, setVoiceMode] = useState<"community" | "home" | "local" | "professional">("community");
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
