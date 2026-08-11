@@ -1,0 +1,76 @@
+Your email is already set up — no registration needed.
+Field
+Value
+Email
+(your email)
+First-time password
+MWM-invite-2026!
+________________________________________
+Step 1 — Go to the website
+
+Open mappingwithmelanin.com in your browser (Chrome or Safari recommended).
+
+https://www.mappingwithmelanin.com
+________________________________________
+Step 2 — Sign in
+Click Sign In in the top right corner
+Enter your email address
+Enter the password: MWM-invite-2026!
+Click Sign In
+________________________________________
+Step 3 — Change your password (required on first login)
+The platform will immediately ask you to set a new password.
+Type a new password of your choice (must be at least 8 characters)
+Confirm it
+Click Save — you're in
+💡 Write your new password down somewhere safe. If you forget it, use the Forgot Password link on the sign-in page and it'll send a reset code to your email.
+________________________________________
+Step 4 — Complete your profile (5 quick questions)
+You'll see a short welcome setup screen — this takes about 60 seconds:
+Your name — first and last
+Your city — type the city you're based in
+Interests — pick a few that apply (food, travel, community, etc.)
+Are you a business owner? — yes or no
+How did you hear about us?
+Click Finish when done. You're now on the home screen.
+________________________________________
+Step 5 — Explore the app
+On the home screen you'll see:
+Discover tab — browse businesses by category chip (Food, Beauty, Faith, etc.)
+Map tab — see all businesses on a live map. Tap the International chip to see Phuket, Cancun, and other destinations
+Library tab — cultural knowledge, topics, and community guides
+KinfolkAI — tap the chat bubble and ask it anything: "What's the best soul food spot in Philly?"or "What's the vibe on Bangla Road in Phuket tonight?"
+Community tab — social feed, events near you
+________________________________________
+What to test and look for
+Feature
+What to try
+What to report back
+Search
+Type "braiding salon Atlanta" or "Ethiopian food DC"
+Does it return relevant results? Any weird mismatch?
+Map — International
+Tap the International chip (globe icon)
+Do you see Phuket? Bangkok? How many pins load?
+Business page
+Tap any business
+Can you see the full detail page? Is the info correct?
+Check In
+Open a business and tap Check In
+Does it register? Does anything feel broken?
+KinfolkAI
+Ask it about a place you're near or curious about
+Does the response feel helpful and culturally aware?
+Suggest a place
+If you know a business not on the map, tap the + on the map
+Does the suggestion form work?
+Wrong info
+If a business has wrong hours, name, or address
+Use the flag / suggest edit button and note it
+________________________________________
+If something doesn't work
+Can't sign in: Make sure you're using the exact email the team registered for you. Password is MWM-invite-2026! (capital M, capital W, capital M dash,  lower case invite dash, 2026, exclamation mark). If it still fails, reply to the team with your email address and they'll check your account status.
+Map shows nothing: Tap the reload icon or pull down to refresh. If still empty, check that location permission is enabled for the browser.
+KinfolkAI doesn't respond: It requires a signed-in account with founding member access — if you're logged in and it's unresponsive, note the time and message you tried so the team can check the logs.
+________________________________________
+Your account type: founding member — this gives you full KinfolkAI access, all platform features, and the same experience as paid subscribers. This is intentional so you can test the complete platform, not a limited version.
