@@ -1288,6 +1288,52 @@ END $seed$`,
       END $$`,
   },
 
+  // ── Tester batch v2 — missing account + new Manus smoke-test audit account ──
+  // jandirafernandes13@gmail.com was omitted from v1; added here.
+  // manus.smoke@mappingwithmelanin.com is a dedicated Manus release smoke-test
+  // account separate from manus.geo (geo audit). Password: MWM-Smoke-2026!
+  // must_change_password=false — used for automated audit tooling.
+  {
+    name: "tester_batch_v2",
+    sql: `
+      DO $$
+      DECLARE
+        h TEXT := '$2b$08$RbwckO9NCzKtBDomyHSBVutmq/L7ZTL/faehsBbQFBb00imARwAFC';
+      BEGIN
+        -- Missing tester from v1 batch
+        INSERT INTO users
+          (id, email, first_name, last_name, password_hash,
+           email_verified, agree_to_terms, profile_setup_complete,
+           member_type, approved, role, must_change_password)
+        VALUES
+          (gen_random_uuid(), 'jandirafernandes13@gmail.com',
+           'Jandira', 'Tester', h,
+           true, true, false,
+           'navigator', true, 'tester', true)
+        ON CONFLICT (email) DO UPDATE SET
+          role         = 'tester',
+          member_type  = 'navigator',
+          approved     = true;
+
+        -- New Manus release smoke-test audit account
+        INSERT INTO users
+          (id, email, first_name, last_name, password_hash,
+           email_verified, agree_to_terms, profile_setup_complete,
+           member_type, approved, role, must_change_password)
+        VALUES
+          (gen_random_uuid(), 'manus.smoke@mappingwithmelanin.com',
+           'Manus', 'SmokeTest', h,
+           true, true, false,
+           'navigator', true, 'tester', false)
+        ON CONFLICT (email) DO UPDATE SET
+          password_hash = EXCLUDED.password_hash,
+          role          = 'tester',
+          member_type   = 'navigator',
+          approved      = true,
+          updated_at    = NOW();
+      END $$`,
+  },
+
   // ── kinfolk_voice preference column (additive, idempotent) ───────────────────
   {
     name: "user_preferences_kinfolk_voice_v1",
