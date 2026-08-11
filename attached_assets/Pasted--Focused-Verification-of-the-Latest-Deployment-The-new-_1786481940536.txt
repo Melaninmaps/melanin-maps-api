@@ -1,0 +1,32 @@
+## Focused Verification of the Latest Deployment
+
+The new Railway deployment is live: the production homepage now references **`/assets/index-BU5DZ52C.js`**, last modified at **20:42 UTC**.
+
+| Item | Result | Independent evidence |
+|---|---:|---|
+| Kinfolk chat still responds | ✅ Pass | The live current-information request completed with `HTTP 200`. |
+| Generic legal disclaimer can render | ⚠️ Partial | The first Thailand visa response displayed *“General legal information — not a substitute for professional legal advice.”* beneath the answer. |
+| New structured `provenanceNote` API field | ❌ Fail | The captured live chat payload contained `reply`, `intentClass`, `followUpSuggestions`, and `sessionId`, but **no `provenanceNote` field**. The conditional amber note box cannot render unless the backend actually sends that field. |
+| High-stakes routing classification | ❌ Fail | For a Thailand documentation/visa question, the live payload returned `intentClass: "business_discovery"`. That is the wrong class for a current travel-policy/legal-adjacent query and explains why evidence/provenance routing is still not reliable. |
+| Delivery-profile persistence | ⚠️ Not proven / likely incomplete | I selected **Detailed** and clicked **Save Taste Profile**. The rendered control remained on **Conversational** afterward. This suggests the new table may exist on boot, but the live preference UI/API is not yet demonstrably reading and writing the new delivery-profile fields. |
+| Mobile Welcoming Environment badge | ⏸️ Requires native verification | The public browser can verify the web build, not the compiled iOS/Android screen. Replit must verify this in a simulator/TestFlight build using a business with `wouldReturnAlone >= 70`. |
+
+> **Bottom line:** The deployment improved the web surface and Kinfolk remains online, but the delivery-profile and provenance feature is **not yet end-to-end complete**. The UI code may be present, yet the live backend response does not supply the expected `provenanceNote`, and the Router still misclassifies a visa/documentation question.
+
+### Required Replit fixes before this can be marked complete
+
+1. Ensure `/api/kinfolk/chat` returns `intentClass` from the **Universal Search Router**, not the legacy/default `business_discovery` classifier.
+2. For high-consequence/current-policy routes, always return a structured field such as:
+
+```json
+{
+  "intentClass": "legal_regulated",
+  "provenanceNote": "General travel and legal information. Verify current entry requirements with an official Thai government or embassy source.",
+  "sources": []
+}
+```
+
+3. Wire the Preferences UI save/load path to `kinfolk_delivery_profiles` and prove it with a refresh test: select **Detailed**, save, hard-refresh, and confirm **Detailed** remains selected.
+4. Verify the mobile badge through a native test, not only source-code review.
+
+I would keep these changes behind the feature flag until those four acceptance checks pass.
