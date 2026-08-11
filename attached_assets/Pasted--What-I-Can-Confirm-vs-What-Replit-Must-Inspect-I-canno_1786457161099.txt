@@ -1,0 +1,210 @@
+## What I Can Confirm vs. What Replit Must Inspect
+
+I **cannot see Railway’s private production console or database credentials** from the public website, so I cannot honestly name the exact server exception currently in Railway. I can confirm two related live API calls from the browser are succeeding:
+
+| Browser-observed request | HTTP status | Meaning |
+|---|---:|---|
+| `GET /api/kinfolk/sessions` | `200` | The Kinfolk session list endpoint is reachable. |
+| `GET /api/kinfolk/preferences` | `200` | The Kinfolk preferences endpoint is reachable. |
+| `POST /api/kinfolk/chat` | Not exposed by the public UI | The UI returns the generic error after submitting; Railway logs must reveal the actual server status/exception. |
+
+The fact that **sessions and preferences work while chat fails** strongly suggests the failure is in the chat route’s usage-pool check, database write/read, AI-provider invocation, or error handling—not the basic Kinfolk page load.
+
+---
+
+## Exact Railway Database Verification Procedure
+
+Tell Replit to do the following **inside the Railway service that runs the live API**, not from their local machine and not from a different Railway service.
+
+### 1. Identify the actual runtime service and deployment
+
+In Railway, open the relevant project, then select the **service that serves `mappingwithmelanin.com`**. Confirm the currently active deployment ID and timestamp. They must run the verification in that service’s shell or add temporary server-side logging there.
+
+They should also open **Variables** and confirm the runtime uses the expected connection variable name, typically `DATABASE_URL` or `POSTGRES_URL`. If it contains a Railway variable reference such as `${{Postgres.DATABASE_URL}}`, note the referenced database service name.
+
+**Never paste the raw connection string into chat, logs, screenshots, or a ticket.** It contains credentials.
+
+### 2. Print a redacted connection fingerprint from the API runtime
+
+Run this in the Railway shell for the **web/API service**:
+
+```bash
+node - <<'NODE'
+const crypto = require('crypto');
+const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+if (!raw) throw new Error('No DATABASE_URL or POSTGRES_URL is set in this runtime service');
+const u = new URL(raw);
+console.log(JSON.stringify({
+  connection_fingerprint: crypto.createHash('sha256').update(raw).digest('hex').slice(0, 12),
+  protocol: u.protocol,
+  host: u.hostname,
+  port: u.port || '(default)',
+  database: u.pathname.replace(/^\//, ''),
+  username: u.username,
+  has_password: Boolean(u.password),
+  sslmode: u.searchParams.get('sslmode') || '(not specified)'
+}, null, 2));
+NODE
+```
+
+This safely produces a **fingerprint** and database identity without displaying the password. Save the output.
+
+### 3. Print the same fingerprint from the migration target
+
+Run the exact same command in the environment/job/script that created `family_ai_usage` and the second table. The two fingerprints must match.
+
+| Result | Interpretation |
+|---|---|
+| Fingerprints match | The migration and live API target the same database connection string. Continue to table verification. |
+| Host/database differs | The migration was run against the wrong database. Re-run the migration against the API runtime database. |
+| Same host but different database name | Also a mismatch. The deployed API cannot see the migrated tables. |
+| Variable is missing or points to a removed service | Fix the Railway variable reference, redeploy, then repeat the test. |
+
+### 4. Query the database from the API runtime
+
+For PostgreSQL, run this in the **API service’s Railway shell**:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+SELECT
+  current_database() AS database_name,
+  current_user AS database_role,
+  inet_server_addr() AS server_ip,
+  inet_server_port() AS server_port;
+
+SELECT
+  to_regclass('public.family_ai_usage') AS family_ai_usage_table,
+  to_regclass('public.<SECOND_TABLE_NAME>') AS second_required_table;
+
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('family_ai_usage', '<SECOND_TABLE_NAME>');
+SQL
+```
+
+Replit should replace `<SECOND_TABLE_NAME>` with the actual second table they created. Both `to_regclass` values must return table names—not `NULL`.
+
+Then verify permissions and schema:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'public'
+  AND table_name = 'family_ai_usage';
+
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'family_ai_usage'
+ORDER BY ordinal_position;
+SQL
+```
+
+If they use MySQL instead, the equivalent checks are:
+
+```sql
+SELECT DATABASE(), CURRENT_USER();
+SHOW TABLES LIKE 'family_ai_usage';
+SHOW CREATE TABLE family_ai_usage;
+SHOW GRANTS FOR CURRENT_USER();
+```
+
+### 5. Add a temporary, redacted startup log
+
+Before the next test, Replit should deploy this **temporary diagnostic log** in the API process startup path:
+
+```ts
+console.info({
+  event: 'db_runtime_identity',
+  environment: process.env.RAILWAY_ENVIRONMENT || 'unknown',
+  database: parsedDatabaseName,
+  host: parsedHost,
+  connectionFingerprint: fingerprint.slice(0, 12),
+  hasFamilyAiUsageTable: true // only after an actual DB check
+});
+```
+
+That makes it impossible to confuse a local/preview database with Railway production. It must not log the password, full URL, cookie, bearer token, or user message content.
+
+---
+
+## Exact KinfolkAI Log Checks for `POST /api/kinfolk/chat`
+
+Replit should search Railway’s **Deploy Logs / Runtime Logs** for the exact minute they send a message in the production app. They should filter for:
+
+```text
+/api/kinfolk/chat
+family_ai_usage
+checkAiPool
+kinfolk
+```
+
+They need to capture these five stages for **one request**, ideally with a request ID:
+
+```text
+kinfolk_chat_started
+kinfolk_auth_succeeded
+kinfolk_ai_pool_checked
+kinfolk_provider_called
+kinfolk_chat_completed
+```
+
+A safe diagnostic pattern is:
+
+```ts
+const requestId = crypto.randomUUID();
+console.info({ event: 'kinfolk_chat_started', requestId, userId: req.user?.id });
+
+try {
+  const pool = await checkAiPool(req.user.id);
+  console.info({ event: 'kinfolk_ai_pool_checked', requestId, allowed: pool.allowed });
+
+  const answer = await callProvider(/* omit user secrets */);
+  console.info({ event: 'kinfolk_provider_called', requestId, providerStatus: answer.status });
+
+  console.info({ event: 'kinfolk_chat_completed', requestId, httpStatus: 200 });
+} catch (error: any) {
+  console.error({
+    event: 'kinfolk_chat_failed',
+    requestId,
+    errorName: error?.name,
+    errorCode: error?.code,
+    errorMessage: error?.message,
+    httpStatus: error?.status || 500
+  });
+  throw error;
+}
+```
+
+### Errors they should specifically look for
+
+| Log/status pattern | Likely cause | Required action |
+|---|---|---|
+| `42P01` or `relation "family_ai_usage" does not exist` | PostgreSQL table absent in the runtime database | Run the migration against the actual runtime DB; confirm fingerprints match. |
+| `permission denied for table family_ai_usage` | Runtime role lacks rights | Grant the deployed role `SELECT`, `INSERT`, and `UPDATE` as needed. |
+| `ER_NO_SUCH_TABLE` / MySQL `1146` | MySQL equivalent: table missing | Apply the migration to the correct MySQL database. |
+| `401` / `403` before `kinfolk_ai_pool_checked` | Auth/session middleware still blocking the route | Fix auth middleware or cookie/session handling. |
+| `429` | Usage pool, quota, or AI-provider rate-limit issue | Check usage rules and provider quota. |
+| `500` immediately after pool check | Fallback or table schema is still failing | Log the error code/message and repair the fallback path. |
+| `401`, `403`, `429`, or `5xx` from the AI provider | Provider credential, quota, model access, or upstream outage | Correct provider configuration and return a controlled fallback to the user. |
+| Chat returns `200` but UI still displays error | Response JSON shape does not match the frontend contract | Compare actual response body against the frontend’s expected fields. |
+
+## The Evidence Replit Should Send You Before Re-Audit
+
+Ask for this exact, redacted packet:
+
+```text
+1. Active Railway deployment ID and deployment timestamp
+2. Redacted runtime DB fingerprint: host + database name + 12-char hash
+3. Redacted migration-target DB fingerprint
+4. PostgreSQL table-existence query output for family_ai_usage and the second table
+5. One Kinfolk POST request ID with these log events:
+   started → auth_succeeded → ai_pool_checked → provider_called → completed (HTTP 200)
+6. Screenshot/video of a fresh browser session receiving an answer to:
+   - “What is 12 times 8?”
+   - the Phuket birthday prompt
+```
+
+Once those are present, I can re-run the independent test. Right now, the browser evidence shows **Kinfolk session and preferences endpoints return 200**, but the chat path is still returning the generic failure to users.
