@@ -1465,6 +1465,7 @@ export default function TravelScreen() {
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
   useEffect(() => {
     void loadSessions();
@@ -1474,6 +1475,21 @@ export default function TravelScreen() {
 
   useEffect(() => {
     void shouldShowKinfolkOnboarding().then((show) => { if (show) setShowOnboarding(true); });
+  }, []);
+
+  // ── KinfolkAI health check ─────────────────────────────────────────────────
+  // Checks the real AI connectivity on mount so users see a clear banner
+  // instead of a silent failure when the AI backend is unreachable.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const r = await fetch(`${base}/api/kinfolk/health`, { signal: AbortSignal.timeout(8000) });
+        setKinfolkOk(r.ok);
+      } catch {
+        setKinfolkOk(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -1725,6 +1741,16 @@ export default function TravelScreen() {
         </TouchableOpacity>
       )}
 
+      {/* KinfolkAI status banner — shown when the AI backend is unreachable */}
+      {kinfolkOk === false && (
+        <View style={[styles.aiDownBanner, { backgroundColor: "#FEF3C7", borderBottomColor: "#F59E0B30" }]}>
+          <Ionicons name="warning-outline" size={14} color="#92400E" />
+          <Text style={[styles.aiDownBannerText, { color: "#92400E" }]}>
+            KinfolkAI is temporarily unavailable. Our team has been notified. Business search and all other features are working normally.
+          </Text>
+        </View>
+      )}
+
       {/* Chat area */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
         <FlatList
@@ -1884,6 +1910,8 @@ const styles = StyleSheet.create({
   personalBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   queryCounter: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1 },
   queryCounterText: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
+  aiDownBanner: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  aiDownBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1, lineHeight: 18 },
   chatContent: { paddingTop: 16, paddingBottom: 8 },
   compareBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },

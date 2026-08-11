@@ -29,6 +29,44 @@ import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
+// ─── KinfolkAI health probe cache ────────────────────────────────────────────
+// Probes the real OpenAI connection at most once every 5 minutes.
+// Result is cached so the /kinfolk/health endpoint can be polled frequently
+// by uptime monitors without hammering OpenAI or the DB pool.
+type KinfolkHealthResult = { ok: boolean; reason?: string; checkedAt: number };
+let _kinfolkHealthCache: KinfolkHealthResult | null = null;
+const KINFOLK_HEALTH_CACHE_MS = 5 * 60 * 1000;
+
+async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }> {
+  const now = Date.now();
+  if (_kinfolkHealthCache && now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS) {
+    return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
+  }
+  try {
+    await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: "ping" }],
+      max_tokens: 3,
+    } as Parameters<typeof openai.chat.completions.create>[0]);
+    _kinfolkHealthCache = { ok: true, checkedAt: now };
+    return { ok: true };
+  } catch (err) {
+    const reason = err instanceof Error ? `${err.message}` : String(err);
+    _kinfolkHealthCache = { ok: false, reason, checkedAt: now };
+    return { ok: false, reason };
+  }
+}
+
+// Run one probe at startup so Railway logs show the AI status immediately.
+void probeKinfolkAI().then(({ ok, reason }) => {
+  if (ok) {
+    console.log("[kinfolk] AI connectivity check: OK");
+  } else {
+    console.error(`[kinfolk] AI connectivity check FAILED: ${reason ?? "unknown"}`);
+    console.error("[kinfolk] Check AI_INTEGRATIONS_OPENAI_BASE_URL and AI_INTEGRATIONS_OPENAI_API_KEY in Railway env vars.");
+  }
+});
+
 // ─── Privacy Intelligence — Sensitive Topic Classifier ───────────────────────
 // Per Manus AI Privacy Intelligence spec (Aug 11 2026):
 // These patterns identify searches that must NEVER propagate to Library write-back,
@@ -1624,13 +1662,16 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 // ─── POST /api/kinfolk/chat ───────────────────────────────────────────────────
 const FREE_MONTHLY_LIMIT = 3;
 
-// ─── GET /api/kinfolk/health — lightweight liveness check for monitoring ─────
-// Returns 200 if the AI key is configured, 503 if not.
-// Does NOT call OpenAI — safe to poll frequently without pool pressure.
-router.get("/kinfolk/health", (_req: Request, res: Response) => {
-  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ ok: false, reason: "AI_INTEGRATIONS_OPENAI_API_KEY not set" });
+// ─── GET /api/kinfolk/health — real AI connectivity check for uptime monitors ─
+// Probes the actual OpenAI connection (cached 5 min) so monitors and the mobile
+// app know immediately when the AI backend is unreachable, not just unconfigured.
+// Unauthenticated — safe for external uptime monitors (UptimeRobot, etc.).
+router.get("/kinfolk/health", async (_req: Request, res: Response) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
+    return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
   }
+  const { ok, reason } = await probeKinfolkAI();
+  if (!ok) return void res.status(503).json({ ok: false, reason: reason ?? "AI connection failed" });
   res.json({ ok: true });
 });
 
@@ -2377,11 +2418,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
   } catch (err) {
     const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    req.log.error({ err }, "KinfolkAI chat failed");
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const is401 = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
+    const isConnRefused = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND") || errMsg.includes("connect");
+    req.log.error({ err, errMsg, is401, isConnRefused }, "KinfolkAI chat failed");
+    // Bust the health cache so next /kinfolk/health probe reflects the real state
+    _kinfolkHealthCache = null;
     res.status(isTimeout ? 504 : 500).json({
       error: isTimeout
         ? "Kinfolk took too long to respond. Please try again in a moment."
-        : "Failed to generate response",
+        : is401
+          ? "KinfolkAI is temporarily unavailable — authentication error. Our team has been notified."
+          : isConnRefused
+            ? "KinfolkAI is temporarily unavailable — connection error. Our team has been notified."
+            : "Kinfolk is having trouble answering that right now. Please try again in a moment.",
     });
   }
 });
