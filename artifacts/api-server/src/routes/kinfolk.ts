@@ -1845,7 +1845,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           } catch { /* non-critical — geo-radius fallback failed */ }
         }
       } catch (catalogErr) {
-        req.log?.error({ catalogErr, destination }, "[kinfolk-catalog] outer catch — pool.query or mapping failed");
+        const errMsg = catalogErr instanceof Error ? catalogErr.message : String(catalogErr);
+        req.log?.error(`[kinfolk-catalog] FAIL dest="${destination}" err="${errMsg}"`);
       }
     }
 
