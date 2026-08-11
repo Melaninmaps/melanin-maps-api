@@ -172,6 +172,8 @@ const MEDICAL_SIGNALS = [
 
 const LEGAL_SIGNALS = [
   /\b(lawsuit|sue|suing|court|judge|attorney|lawyer|legal|rights|contract|agreement|lease|tenant|landlord|eviction|discrimination|discriminated|discriminating|discriminatory|harassment|civil rights|employment law|labor law|copyright|trademark|patent|intellectual property|immigration|visa|asylum|deportation|citizenship|naturalization|divorce|custody|child support|alimony|will|trust|estate|probate|bankruptcy|debt|garnishment|arrest|warrant|bail|criminal|felony|misdemeanor|prison|parole|probation|restraining order|protective order|wrongful termination|workplace violation|wage theft|hostile work|retaliation)\b/i,
+  // Travel policy phrases — must route to legal regardless of destination signal
+  /\b(visa requirement|entry requirement|travel document|documentation requirement|border requirement|border crossing|entry policy|travel policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|country requirement|passport requirement)\b/i,
 ];
 
 const FINANCIAL_SIGNALS = [

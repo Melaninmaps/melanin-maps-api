@@ -24,7 +24,7 @@ import {
 } from "@workspace/db";
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
-import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt } from "../kinfolk/intent-router";
+import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, type KinfolkIntent } from "../kinfolk/intent-router";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 
@@ -1501,6 +1501,8 @@ When you mention any of these businesses, be specific: use their actual name, sh
 // 1. Maps preferredOwnershipTypes (DB col) → ownershipTypes (frontend Prefs key).
 // 2. Coerces every array field that may be NULL in older rows to [].
 // This prevents the ChipSet "t.includes is not a function" crash for returning users.
+// 3. Also reads kinfolk_delivery_profiles and returns deliveryProfile + responseStyle
+//    so the Taste Profile UI can restore the persisted style on hard-refresh.
 router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
@@ -1510,12 +1512,28 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
     const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
-    // Read kinfolk_voice separately (column added by startup migration, not in Drizzle schema)
-    const voiceRow = await pool.query(
-      `SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`,
-      [req.user.id]
-    );
+    // Read kinfolk_voice + delivery profile in parallel
+    const [voiceRow, deliveryRow] = await Promise.all([
+      pool.query(`SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`, [req.user.id]),
+      pool.query(`SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`, [req.user.id]),
+    ]);
     const kinfolkVoice: string = voiceRow.rows[0]?.kinfolk_voice ?? "onyx";
+    const dp = deliveryRow.rows[0] ?? null;
+
+    // Map delivery profile columns back to the legacy response-style label used by the UI
+    let responseStyle = "conversational";
+    if (dp) {
+      if (dp.tone_preference === "professional") responseStyle = "professional";
+      else if (dp.detail_level === "deep") responseStyle = "detailed";
+      else if (dp.detail_level === "quick") responseStyle = "concise";
+      else responseStyle = "conversational";
+    } else if (prefs?.communicationStyle) {
+      // Fall back to taste profile communicationStyle until delivery profile is saved
+      responseStyle = prefs.communicationStyle === "detailed" ? "detailed"
+        : prefs.communicationStyle === "professional" ? "professional"
+        : prefs.communicationStyle === "concise" ? "concise"
+        : "conversational";
+    }
 
     const normalized = prefs ? {
       ...prefs,
@@ -1538,7 +1556,16 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
       kinfolkVoice: "onyx",
     };
-    res.json({ preferences: normalized });
+    res.json({
+      preferences: normalized,
+      responseStyle,
+      ...(dp && {
+        deliveryProfile: {
+          detailLevel: dp.detail_level,
+          tonePreference: dp.tone_preference,
+        },
+      }),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch preferences");
     res.status(500).json({ error: "Failed to fetch preferences" });
@@ -1611,10 +1638,72 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         [kinfolkVoice, req.user.id]
       );
     }
+    // Mirror communicationStyle → kinfolk_delivery_profiles so the persisted
+    // delivery profile survives hard-refresh (Manus audit fix #3).
+    if (typeof communicationStyle === "string") {
+      const styleMap: Record<string, { detail_level: string; tone_preference: string }> = {
+        detailed:      { detail_level: "deep",     tone_preference: "default" },
+        concise:       { detail_level: "quick",    tone_preference: "default" },
+        professional:  { detail_level: "standard", tone_preference: "professional" },
+        friendly:      { detail_level: "standard", tone_preference: "warm" },
+        conversational:{ detail_level: "standard", tone_preference: "warm" },
+      };
+      const dp = styleMap[communicationStyle];
+      if (dp) {
+        await pool.query(
+          `INSERT INTO kinfolk_delivery_profiles
+             (user_id, detail_level, tone_preference, updated_at)
+           VALUES ($1, $2, $3, now())
+           ON CONFLICT (user_id) DO UPDATE SET
+             detail_level   = EXCLUDED.detail_level,
+             tone_preference = EXCLUDED.tone_preference,
+             updated_at     = now()`,
+          [req.user.id, dp.detail_level, dp.tone_preference]
+        );
+      }
+    }
     res.json({ preferences: prefs });
   } catch (err) {
     req.log.error({ err }, "Failed to update preferences");
     res.status(500).json({ error: "Failed to update preferences" });
+  }
+});
+
+// ─── PUT /api/kinfolk/preferences/response-style ───────────────────────────────
+// Transitional endpoint: saves the selected response-style button directly to
+// kinfolk_delivery_profiles without requiring the full taste-profile form.
+// Acceptance test: select Detailed → save → hard-refresh → Detailed must remain.
+router.put("/kinfolk/preferences/response-style", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const { responseStyle } = req.body as { responseStyle?: unknown };
+  const VALID_STYLES = ["conversational", "concise", "detailed", "professional"] as const;
+  type ResponseStyle = typeof VALID_STYLES[number];
+  if (!VALID_STYLES.includes(responseStyle as ResponseStyle)) {
+    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: VALID_STYLES });
+    return;
+  }
+  const styleMap: Record<ResponseStyle, { detail_level: string; tone_preference: string }> = {
+    detailed:      { detail_level: "deep",     tone_preference: "default" },
+    concise:       { detail_level: "quick",    tone_preference: "default" },
+    professional:  { detail_level: "standard", tone_preference: "professional" },
+    conversational:{ detail_level: "standard", tone_preference: "warm" },
+  };
+  const dp = styleMap[responseStyle as ResponseStyle];
+  try {
+    await pool.query(
+      `INSERT INTO kinfolk_delivery_profiles
+         (user_id, detail_level, tone_preference, updated_at)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (user_id) DO UPDATE SET
+         detail_level    = EXCLUDED.detail_level,
+         tone_preference = EXCLUDED.tone_preference,
+         updated_at      = now()`,
+      [req.user.id, dp.detail_level, dp.tone_preference]
+    );
+    res.json({ responseStyle, deliveryProfile: { detailLevel: dp.detail_level, tonePreference: dp.tone_preference } });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save response style");
+    res.status(500).json({ error: "KINFOLK_RESPONSE_STYLE_SAVE_FAILED" });
   }
 });
 
@@ -1888,7 +1977,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Intent classification ────────────────────────────────────────────────
     // Runs before catalog fetch so high-consequence intents can adjust what
     // gets injected. No extra API call — deterministic keyword classifier.
-    const intentClass = classifyIntent(message, !!destination);
+    const rawIntentClass = classifyIntent(message, !!destination);
+    // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
+    // always resolve to legal_regulated even when hasDestination caused the keyword
+    // classifier to return business_discovery. Catches live mis-routes without
+    // requiring a classifier retrain.
+    const TRAVEL_POLICY_OVERRIDE = /\b(visa requirement|entry requirement|travel document|documentation requirement|border requirement|border crossing|entry policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|passport requirement)\b/i;
+    const intentClass: KinfolkIntent = (
+      rawIntentClass === "business_discovery" &&
+      TRAVEL_POLICY_OVERRIDE.test(message)
+    ) ? "legal_regulated" : rawIntentClass;
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
 
