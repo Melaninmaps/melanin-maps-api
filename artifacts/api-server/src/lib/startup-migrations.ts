@@ -18,6 +18,7 @@ import { MIDWEST_WEST_DIASPORA_V1 } from "./seeds/midwest-west-diaspora-v1.js";
 import { PHUKET_INTERNATIONAL_CULTURAL_V1 } from "../data/phuket-international-cultural-v1.js";
 import { PHUKET_KNOWLEDGE_TOPICS_V1 } from "./seeds/phuket-knowledge-topics-v1.js";
 import { PRIORITY_CULTURAL_V1 } from "../data/priority-cities-cultural-v1.js";
+import { PRIORITY_PRACTICAL_V1 } from "./seeds/priority-practical-v1.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
@@ -795,6 +796,52 @@ ON CONFLICT (city_slug) DO UPDATE SET
   brief_context     = EXCLUDED.brief_context,
   historical_context = EXCLUDED.historical_context,
   city_name         = EXCLUDED.city_name`,
+  },
+  {
+    // Trusted Safety Share — main share configuration table.
+    // owner_id = traveler who enables the feature.
+    // contact can be MWM user (contact_type='mwm_user'), SMS (phone), or email.
+    // status lifecycle: pending → active (contact accepts) → paused_home / revoked.
+    // invite_token is used for non-MWM contacts to accept via a link.
+    name: "create_trusted_safety_shares",
+    sql: `CREATE TABLE IF NOT EXISTS trusted_safety_shares (
+      id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      owner_id          VARCHAR     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      contact_type      VARCHAR(20) NOT NULL DEFAULT 'phone',
+      contact_user_id   VARCHAR     REFERENCES users(id) ON DELETE SET NULL,
+      contact_name      VARCHAR(100) NOT NULL,
+      contact_phone     VARCHAR(50),
+      contact_email     VARCHAR(255),
+      owner_enabled     BOOLEAN     NOT NULL DEFAULT true,
+      contact_accepted  BOOLEAN     NOT NULL DEFAULT false,
+      status            VARCHAR(30) NOT NULL DEFAULT 'pending',
+      invite_token      UUID        UNIQUE DEFAULT gen_random_uuid(),
+      invite_expires_at TIMESTAMPTZ,
+      activated_at      TIMESTAMPTZ,
+      revoked_at        TIMESTAMPTZ,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    // Audit log of every alert sent via Trusted Safety Share.
+    // One row per contact notified per alert event.
+    name: "create_trusted_safety_alert_log",
+    sql: `CREATE TABLE IF NOT EXISTS trusted_safety_alert_log (
+      id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      share_id              UUID        NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+      owner_id              VARCHAR     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      alert_type            VARCHAR(50) NOT NULL,
+      alert_source          VARCHAR(50) NOT NULL DEFAULT 'mwm_community',
+      alert_title           TEXT        NOT NULL,
+      alert_body            TEXT        NOT NULL,
+      location_city         VARCHAR(100),
+      location_region       VARCHAR(100),
+      contact_delivery_method VARCHAR(20),
+      delivery_status       VARCHAR(20) NOT NULL DEFAULT 'pending',
+      error_message         TEXT,
+      created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
   },
   {
     // Normalize HBCU category casing — all HBCU records should use uppercase
@@ -2129,6 +2176,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["midwest west diaspora", () => runSeedBatch("Midwest/West Diaspora", MIDWEST_WEST_DIASPORA_V1, log, warn)],
     // ── Priority cities cultural heritage sites (Philly, DC, Richmond, Charlotte, etc.) ──
     ["priority cultural sites", () => runTourCulturalSitesBatch("Priority Cultural V1", PRIORITY_CULTURAL_V1, log, warn)],
+    // ── Priority practical services — dentists, daycares, plumbers, bars ───────
+    ["priority practical v1", () => runSeedBatch("Priority Practical V1", PRIORITY_PRACTICAL_V1, log, warn)],
     // ── Phuket + International cultural heritage sites ──────────────────────────
     ["phuket intl cultural sites", () => runTourCulturalSitesBatch("Phuket/Intl Cultural V1", PHUKET_INTERNATIONAL_CULTURAL_V1, log, warn)],
     // ── Phuket + Thailand knowledge topics ────────────────────────────────────

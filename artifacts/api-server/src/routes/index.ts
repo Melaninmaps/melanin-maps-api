@@ -129,6 +129,7 @@ import archiveRouter from "./archive";
 import revenuecatRouter from "./revenuecat";
 import kinfolkIntelligenceRouter from "./kinfolk-intelligence";
 import hiddenGemsRouter from "./hidden-gems";
+import trustedSafetyShareRouter from "./trusted-safety-share";
 import resourcesRouter from "./resources";
 import marketplaceRouter from "./marketplace";
 import wellnessTrackerRouter from "./wellness-tracker";
@@ -333,5 +334,6 @@ router.use(passportRouter);
 router.use(safetyHeatmapRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);
+router.use(trustedSafetyShareRouter);
 
 export default router;
