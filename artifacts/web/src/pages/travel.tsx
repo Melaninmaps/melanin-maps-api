@@ -11,8 +11,20 @@ import {
 } from "@/components/icons/mwm-icons";
 import { Link } from "wouter";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
+import { getWebToken } from "@/lib/webAuth";
 
 const BASE = import.meta.env.BASE_URL;
+
+// Bearer token helper — all kinfolk API calls must send Authorization header.
+// The api-client-react library adds this automatically for all other web routes;
+// travel.tsx uses raw fetch(), so we attach it explicitly here.
+function kinfolkAuthHeaders(extra?: HeadersInit): HeadersInit {
+  const token = getWebToken();
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {}),
+  };
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Business { name: string; category: string; description: string; neighborhood: string; mustTry: string }
@@ -552,7 +564,7 @@ function TravelPage() {
   const loadPrefs = useCallback(async () => {
     if (!isLoggedIn) return;
     try {
-      const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include" });
+      const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (r.ok) {
         const d = await r.json() as { preferences: Record<string, unknown> };
         const raw = d.preferences ?? {};
@@ -584,7 +596,7 @@ function TravelPage() {
     // Map ownershipTypes → preferredOwnershipTypes (API field name)
     await fetch(`${BASE}api/kinfolk/preferences`, {
       method: "PUT", credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
     });
   }, []);
@@ -603,7 +615,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/speak`, {
         method: "POST", credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ text: content.slice(0, 600), voice: prefs.kinfolkVoice || "onyx" }),
       });
       if (!r.ok) { setPlayingId(null); return; }
@@ -622,7 +634,7 @@ function TravelPage() {
     if (!isLoggedIn) return;
     setSessionsLoading(true);
     try {
-      const r = await fetch(`${BASE}api/kinfolk/sessions`, { credentials: "include" });
+      const r = await fetch(`${BASE}api/kinfolk/sessions`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
     } finally { setSessionsLoading(false); }
   }, [isLoggedIn]);
@@ -658,7 +670,7 @@ function TravelPage() {
 
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+        method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
         body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true }),
         signal: controller.signal,
       });
@@ -703,7 +715,7 @@ function TravelPage() {
 
   const loadSession = useCallback(async (id: string) => {
     try {
-      const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include" });
+      const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (!r.ok) return;
       const d = await r.json() as { session: { id: string; messages: Message[] } };
       setSessionId(d.session.id); setMessages(d.session.messages ?? []);
@@ -724,7 +736,7 @@ function TravelPage() {
     try {
       await fetch(`${BASE}api/kinfolk/roots`, {
         method: "POST", credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ community, action: "add" }),
       });
     } catch { /* non-critical — the member can always update preferences later */ }
@@ -735,7 +747,7 @@ function TravelPage() {
     if (!isLoggedIn) return;
     await fetch(`${BASE}api/kinfolk/feedback`, {
       method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ sessionId, businessName: name, category: cat, reaction }),
     });
   };
@@ -745,6 +757,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions/${sessionId}/share`, {
         method: "POST", credentials: "include",
+        headers: kinfolkAuthHeaders(),
       });
       if (r.ok) {
         const { shareId } = await r.json() as { shareId: string; shareUrl: string };
