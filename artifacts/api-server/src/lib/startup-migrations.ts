@@ -1197,6 +1197,25 @@ END $seed$`,
             profile_setup_complete = EXCLUDED.profile_setup_complete,
             updated_at            = NOW()`,
   },
+  // ── business_identity columns missing from Railway prod DB ─────────────────
+  // These three columns were added to the Drizzle schema after Railway's last
+  // migration. The KinfolkAI catalog pool.query was failing with error 42703
+  // ("column does not exist") until these were added here. Safe: IF NOT EXISTS.
+  {
+    name: "business_identity_audience_type_col_v1",
+    sql: `ALTER TABLE business_identity
+      ADD COLUMN IF NOT EXISTS audience_type VARCHAR(30) NOT NULL DEFAULT 'unknown'`,
+  },
+  {
+    name: "business_identity_environment_tags_col_v1",
+    sql: `ALTER TABLE business_identity
+      ADD COLUMN IF NOT EXISTS environment_tags JSONB NOT NULL DEFAULT '[]'::jsonb`,
+  },
+  {
+    name: "business_identity_amenity_tags_col_v1",
+    sql: `ALTER TABLE business_identity
+      ADD COLUMN IF NOT EXISTS amenity_tags JSONB NOT NULL DEFAULT '[]'::jsonb`,
+  },
   // ── Must-change-password column ────────────────────────────────────────────
   // Enables a forced password-change flow on first login for pre-seeded tester
   // accounts. Safe to run on every boot (IF NOT EXISTS).

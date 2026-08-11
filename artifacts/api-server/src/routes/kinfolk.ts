@@ -1732,9 +1732,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       try {
         // Use pool.query (raw SQL) — Drizzle db.select() with leftJoin silently
         // fails in the esbuild bundle on Railway; pool.query is proven to work.
-        // NOTE: only select columns confirmed to exist on the Railway prod DB.
-        // audience_type, environment_tags, amenity_tags were added post-migration
-        // and are absent from Railway — selecting them causes a 42703 error.
         const CATALOG_SQL = `
           SELECT b.name, b.category, b.city, b.description, b.verified,
                  b.tags, b.profile_status,
@@ -1742,7 +1739,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                  bi.what_customers_should_know, bi.ownership_badges,
                  bi.community_values, bi.audiences_served, bi.vibes,
                  bi.accessibility_features, bi.community_initiatives,
-                 bi.growth_goals
+                 bi.growth_goals, bi.audience_type,
+                 bi.environment_tags, bi.amenity_tags
           FROM businesses b
           LEFT JOIN business_identity bi ON bi.business_id = b.id
           WHERE b.status = 'active'
@@ -1769,9 +1767,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           accessibilityFeatures: r.accessibility_features,
           communityInitiatives: r.community_initiatives,
           growthGoals: r.growth_goals,
+          audienceType: r.audience_type,
+          environmentTags: r.environment_tags,
+          amenityTags: r.amenity_tags,
         })) as unknown as typeof businessCatalog;
-        // Diagnostic log: confirm catalog row count on Railway
-        req.log?.info(`[kinfolk-catalog] city ilike complete dest="${destination}" rows=${businessCatalog.length}`);
 
         // City-name ILIKE returned 0 — destination may be a province/region
         // whose businesses are stored under sub-area city names (e.g. "Phuket"
@@ -1795,8 +1794,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             if (hit) {
               const destLat = parseFloat(hit.lat);
               const destLng = parseFloat(hit.lon);
-              // Same column set as primary query — exclude audience_type/environment_tags/amenity_tags
-              // which don't exist on Railway prod DB (added post-migration).
               const geoRows = await pool.query(
                 `SELECT b.name, b.category, b.city, b.description, b.verified,
                         b.tags, b.profile_status,
@@ -1804,7 +1801,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                         bi.what_customers_should_know, bi.ownership_badges,
                         bi.community_values, bi.audiences_served, bi.vibes,
                         bi.accessibility_features, bi.community_initiatives,
-                        bi.growth_goals
+                        bi.growth_goals, bi.audience_type,
+                        bi.environment_tags, bi.amenity_tags
                  FROM businesses b
                  LEFT JOIN business_identity bi ON bi.business_id = b.id
                  WHERE b.status = 'active'
@@ -1817,7 +1815,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                  LIMIT 25`,
                 [destLat, destLng],
               );
-              req.log?.info(`[kinfolk-catalog] geo-radius rows=${geoRows.rowCount} dest="${destination}"`);
               businessCatalog = geoRows.rows.map((r: Record<string, unknown>) => ({
                 name: r.name,
                 category: r.category,
@@ -1837,14 +1834,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                 accessibilityFeatures: r.accessibility_features,
                 communityInitiatives: r.community_initiatives,
                 growthGoals: r.growth_goals,
+                audienceType: r.audience_type,
+                environmentTags: r.environment_tags,
+                amenityTags: r.amenity_tags,
               })) as unknown as typeof businessCatalog;
             }
           } catch { /* non-critical — geo-radius fallback failed */ }
         }
-      } catch (catalogErr) {
-        const errMsg = catalogErr instanceof Error ? catalogErr.message : String(catalogErr);
-        req.log?.error(`[kinfolk-catalog] FAIL dest="${destination}" err="${errMsg}"`);
-      }
+      } catch { /* non-critical — proceed without catalog */ }
     }
 
     // No destination or destination yielded no listings — load from user's home city so
