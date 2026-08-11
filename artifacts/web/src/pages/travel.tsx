@@ -39,6 +39,8 @@ interface Message {
   content: string; recommendations?: Recommendations | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
+  intentClass?: string | null;
+  provenanceNote?: string | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -694,7 +696,7 @@ function TravelPage() {
         return;
       }
 
-      const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[]; cultureAction?: CultureAction | null };
+      const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[]; cultureAction?: CultureAction | null; intentClass?: string | null; provenanceNote?: string | null };
 
       // Guard: if reply is somehow missing, show a recoverable message rather than blank
       const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
@@ -705,6 +707,8 @@ function TravelPage() {
         content: replyContent, recommendations: data.recommendations ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
+        intentClass: data.intentClass ?? null,
+        provenanceNote: data.provenanceNote ?? null,
       }]);
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "AbortError";
@@ -1020,6 +1024,15 @@ function TravelPage() {
                               <MessageSquare size={10} className="text-[#CA922B]" />{s}
                             </button>
                           ))}
+                        </div>
+                      )}
+                      {/* Provenance disclaimer — rendered for medical, legal, financial, and emergency intents */}
+                      {msg.role === "assistant" && msg.provenanceNote && (
+                        <div className="mt-2 flex items-start gap-1.5 px-3 py-2 rounded-xl bg-[#FFF8EC] border border-[#CA922B]/20">
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-[1px]" stroke="#CA922B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="#CA922B" stroke="none"/>
+                          </svg>
+                          <p className="text-[10px] leading-relaxed text-[#3A1F0E]/60">{msg.provenanceNote}</p>
                         </div>
                       )}
                       {/* Culture & Roots consent prompt — only for assistant messages with a detected community */}

@@ -576,6 +576,14 @@ function AiMessageBubble({
           </ScrollView>
         )}
 
+        {/* Provenance disclaimer — shown for medical, legal, financial, and emergency intents */}
+        {msg.provenanceNote ? (
+          <View style={[aiStyles.provenanceBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
+            <Ionicons name="information-circle-outline" size={12} color="#CA922B" style={{ marginTop: 1 }} />
+            <Text style={[aiStyles.provenanceText, { color: "#3A1F0E99" }]}>{msg.provenanceNote}</Text>
+          </View>
+        ) : null}
+
         <Text style={[aiStyles.timestamp, { color: colors.mutedForeground }]}>
           {formatTime(msg.timestamp)}
         </Text>
@@ -609,6 +617,8 @@ const aiStyles = StyleSheet.create({
   chipsScroll: { marginBottom: 8 },
   chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
   chipText: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
+  provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 

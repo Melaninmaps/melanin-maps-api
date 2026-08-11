@@ -1081,6 +1081,19 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
+          {/* Welcoming Environment badge — shown when ≥70% of respondents say they'd return alone */}
+          {business.wouldReturnAlone != null && business.wouldReturnAlone >= 70 && (
+            <View style={[styles.welcomingBadge, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F40" }]}>
+              <View style={styles.welcomingIconWrap}>
+                <Feather name="check-circle" size={15} color="#2D7A4F" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.welcomingTitle, { color: "#2D7A4F" }]}>Welcoming Environment</Text>
+                <Text style={[styles.welcomingSub, { color: "#2D7A4F99" }]}>{business.wouldReturnAlone}% of visitors say they'd return here alone or with loved ones.</Text>
+              </View>
+            </View>
+          )}
+
           {/* Rate Safety Experience */}
           <TouchableOpacity
             style={[styles.rateSafetyBanner, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}
@@ -2341,6 +2354,29 @@ const styles = StyleSheet.create({
   minorityDisclaimer: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 4, fontStyle: "italic" },
   category: { fontFamily: "Inter_500Medium", fontSize: 13 },
   price: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  welcomingBadge: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginTop: 6,
+  },
+  welcomingIconWrap: {
+    marginTop: 1,
+  },
+  welcomingTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  welcomingSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   rateSafetyBanner: {
     flexDirection: "row",
     alignItems: "center",

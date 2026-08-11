@@ -79,6 +79,8 @@ export type ChatMessage = {
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
+  intentClass?: string | null;
+  provenanceNote?: string | null;
 };
 
 export type SessionSummary = {
@@ -145,6 +147,8 @@ export function useKinfolk() {
           taskAction?: TaskAction | null;
           queriesUsed?: number;
           queriesLimit?: number;
+          intentClass?: string | null;
+          provenanceNote?: string | null;
         };
 
         setSessionId(data.sessionId);
@@ -161,6 +165,8 @@ export function useKinfolk() {
           taskAction: data.taskAction ?? null,
           timestamp: new Date(),
           feedback: {},
+          intentClass: data.intentClass ?? null,
+          provenanceNote: data.provenanceNote ?? null,
         };
         setMessages((prev) => [...prev, aiMsg]);
       } else if (res.status === 429) {

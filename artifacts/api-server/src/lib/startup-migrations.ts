@@ -2331,6 +2331,28 @@ ON CONFLICT (city_slug) DO UPDATE SET
     )`,
   },
 
+  // ── kinfolk_delivery_profiles — stores explicit member delivery preferences.
+  // Used by loadAdaptiveDeliveryProfile(); falls back to safe defaults when absent.
+  // Columns mirror AdaptiveDeliveryProfile in adaptive-tone-and-audience-filter.ts.
+  {
+    name: "kinfolk_delivery_profiles_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_delivery_profiles (
+      user_id                          VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      detail_level                     VARCHAR(20)  NOT NULL DEFAULT 'standard',
+      tone_preference                  VARCHAR(30)  NOT NULL DEFAULT 'default',
+      learning_mode                    VARCHAR(20)  NOT NULL DEFAULT 'guided',
+      notification_cadence             VARCHAR(30)  NOT NULL DEFAULT 'essential_only',
+      age_band                         VARCHAR(20)  NOT NULL DEFAULT 'unknown',
+      regional_language_opt_in         BOOLEAN      NOT NULL DEFAULT false,
+      regional_reference               VARCHAR(100),
+      allow_related_branches           BOOLEAN      NOT NULL DEFAULT false,
+      allow_non_sensitive_recommendations BOOLEAN   NOT NULL DEFAULT false,
+      allow_civic_safety_updates       BOOLEAN      NOT NULL DEFAULT false,
+      created_at                       TIMESTAMPTZ  NOT NULL DEFAULT now(),
+      updated_at                       TIMESTAMPTZ  NOT NULL DEFAULT now()
+    )`,
+  },
+
   // ── Mapping With Melanin — canonical platform listing in the production directory
   // The MWM platform itself should appear in its own community directory.
   // Uses a stable deterministic ID so ON CONFLICT self-heals on every deploy.
