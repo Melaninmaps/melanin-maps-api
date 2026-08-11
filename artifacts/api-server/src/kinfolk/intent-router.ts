@@ -171,7 +171,7 @@ const MEDICAL_SIGNALS = [
 ];
 
 const LEGAL_SIGNALS = [
-  /\b(lawsuit|sue|suing|court|judge|attorney|lawyer|legal|rights|contract|agreement|lease|tenant|landlord|eviction|discrimination|harassment|civil rights|employment law|labor law|copyright|trademark|patent|intellectual property|immigration|visa|asylum|deportation|citizenship|naturalization|divorce|custody|child support|alimony|will|trust|estate|probate|bankruptcy|debt|garnishment|arrest|warrant|bail|criminal|felony|misdemeanor|prison|parole|probation|restraining order|protective order)\b/i,
+  /\b(lawsuit|sue|suing|court|judge|attorney|lawyer|legal|rights|contract|agreement|lease|tenant|landlord|eviction|discrimination|discriminated|discriminating|discriminatory|harassment|civil rights|employment law|labor law|copyright|trademark|patent|intellectual property|immigration|visa|asylum|deportation|citizenship|naturalization|divorce|custody|child support|alimony|will|trust|estate|probate|bankruptcy|debt|garnishment|arrest|warrant|bail|criminal|felony|misdemeanor|prison|parole|probation|restraining order|protective order|wrongful termination|workplace violation|wage theft|hostile work|retaliation)\b/i,
 ];
 
 const FINANCIAL_SIGNALS = [
