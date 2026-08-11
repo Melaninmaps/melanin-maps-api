@@ -212,6 +212,40 @@ export default function BusinessDetailScreen() {
       .catch(() => {});
   };
 
+  const handleSafetySubmit = async (data: import("@/components/SafetyExperienceSurvey").SafetySurveyData) => {
+    if (!id) return;
+    try {
+      const { getItemAsync } = await import("expo-secure-store");
+      const token = await getItemAsync("auth_session_token");
+      if (!token) return;
+      const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+      const res = await fetch(`${base}/api/businesses/${id}/safety-experience`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          overallSafety:      data.overallSafety,
+          returnAlone:        data.returnAlone,
+          wouldRecommend:     data.wouldRecommend,
+          belongingRating:    data.belongingRating,
+          timeOfDay:          data.timeOfDay,
+          groupType:          data.groupType,
+          incidentOccurred:   data.incidentOccurred,
+          incidentCategories: data.incidentCategories,
+          incidentSeverity:   data.incidentSeverity,
+          comments:           data.comments,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        Alert.alert("Could not save", err.error ?? "Please try again.");
+      } else {
+        addLocal(10, "Shared safety experience");
+      }
+    } catch {
+      Alert.alert("Error", "Could not reach the server. Your response was not saved.");
+    }
+  };
+
   const submitCaptionVotes = async () => {
     if (!id || pendingCaptions.length === 0) return;
     setCaptionSubmitting(true);
@@ -2005,6 +2039,7 @@ export default function BusinessDetailScreen() {
         businessName={business.name}
         businessCategory={business.category}
         onClose={() => setShowSafetySurvey(false)}
+        onSubmit={handleSafetySubmit}
       />
 
       {/* Hidden Gem Nomination Sheet */}

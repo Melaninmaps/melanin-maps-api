@@ -799,6 +799,29 @@ ON CONFLICT (city_slug) DO UPDATE SET
   city_name         = EXCLUDED.city_name`,
   },
   {
+    // Business safety experience submissions — one row per user per business per visit.
+    // The displayed safety stats on every business page are live aggregates from this table.
+    // Fields mirror SafetySurveyData from the mobile app.
+    name: "create_business_safety_submissions",
+    sql: `CREATE TABLE IF NOT EXISTS business_safety_submissions (
+      id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id         VARCHAR     NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      user_id             VARCHAR     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      overall_safety      INTEGER     NOT NULL CHECK (overall_safety BETWEEN 1 AND 5),
+      return_alone        INTEGER     NOT NULL CHECK (return_alone BETWEEN 1 AND 5),
+      would_recommend     INTEGER     NOT NULL CHECK (would_recommend BETWEEN 1 AND 5),
+      belonging_rating    INTEGER     CHECK (belonging_rating BETWEEN 1 AND 5),
+      time_of_day         VARCHAR(20),
+      group_type          VARCHAR(30),
+      incident_occurred   BOOLEAN     NOT NULL DEFAULT false,
+      incident_categories TEXT[],
+      incident_severity   VARCHAR(20),
+      comments            TEXT,
+      submitted_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (user_id, business_id, DATE(submitted_at))
+    )`,
+  },
+  {
     // Trusted Safety Share — main share configuration table.
     // owner_id = traveler who enables the feature.
     // contact can be MWM user (contact_type='mwm_user'), SMS (phone), or email.
