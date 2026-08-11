@@ -1,0 +1,549 @@
+Yes. I think this is the right next move.
+
+Before touching the Library again, Replit should explain **what it believes KinfolkAI actually is in the current system**, not what was planned. That will let us compare the architecture against your intended flywheel and expose where the Library is disconnected, underused, or being bypassed.
+
+Send Replit this:
+
+```text
+READ-ONLY ARCHITECTURE EXPLANATION — KINFOLKAI + LIBRARY + FLYWHEEL
+
+Do NOT change code.
+Do NOT fix anything.
+Do NOT create tasks yet.
+
+I want you to explain, in plain language, what you believe KinfolkAI is
+TODAY in the actual Mapping With Melanin production architecture.
+
+This is an architecture review so we can identify gaps between what was
+intended and what is really implemented.
+
+============================================================
+PART 1 — WHAT IS KINFOLKAI?
+============================================================
+
+Explain KinfolkAI as if you were explaining it to the founder, not another
+engineer.
+
+Answer:
+
+1. What is KinfolkAI supposed to do for a member?
+
+2. What makes KinfolkAI different from a normal chatbot?
+
+3. What information can KinfolkAI currently use when generating an answer?
+
+4. Which of those information sources are actually live in production today?
+
+5. Which capabilities are:
+   - fully implemented
+   - partially implemented
+   - backend only
+   - UI only
+   - planned but not implemented
+
+Do not describe an intended future architecture as though it is live.
+
+============================================================
+PART 2 — EXACT ANSWER PIPELINE
+============================================================
+
+Walk me through exactly what happens when a member asks:
+
+"Where should I eat in Philadelphia?"
+
+Then separately:
+
+"Tell me about IVF."
+
+Then:
+
+"Does Johannesburg have beaches?"
+
+Then:
+
+"I'm going to Phuket with my friends. Where should we go tonight?"
+
+For EACH question show the actual pipeline:
+
+USER QUESTION
+→ intent detection
+→ location/destination extraction
+→ user personalization
+→ saved places
+→ business search
+→ Library lookup
+→ Knowledge Graph lookup
+→ community/context lookup
+→ external/general AI knowledge
+→ prompt construction
+→ model request
+→ response
+→ citations/provenance if any
+→ memory/update behavior
+
+Tell me which stages are actually invoked today and which are skipped.
+
+============================================================
+PART 3 — KINFOLK INFORMATION HIERARCHY
+============================================================
+
+I need the actual current priority order Kinfolk uses.
+
+For example, is it:
+
+1. MWM businesses
+2. MWM Library
+3. MWM Knowledge Graph
+4. MWM community data
+5. user memory/preferences
+6. general model knowledge
+
+Or something else?
+
+Show the REAL current precedence from code.
+
+Also answer:
+
+If two sources conflict, which wins?
+
+If MWM has no answer, what happens?
+
+If MWM has partial information, what happens?
+
+If Kinfolk knows something generally but the Library has nothing, can it still
+answer?
+
+If the answer involves current information, does Kinfolk research live sources
+or rely on model knowledge?
+
+============================================================
+PART 4 — WHAT EXACTLY IS THE LIBRARY?
+============================================================
+
+Explain what the Library is in the current architecture.
+
+Is it:
+
+- a user-facing content area only?
+- a retrieval source for Kinfolk?
+- a Knowledge Graph front end?
+- a topic taxonomy?
+- a research repository?
+- a source/citation system?
+- all of the above?
+
+Show the actual tables, APIs, relationships, and services involved.
+
+Explain:
+
+knowledge_topics
+collections
+books
+sources
+topic_relationships
+entity connections
+follows
+community contributions
+Knowledge Graph connections
+
+Use the actual schema/code, not product assumptions.
+
+============================================================
+PART 5 — HOW KINFOLK USES THE LIBRARY
+============================================================
+
+This is the most important section.
+
+Show exactly how a Library topic becomes available to Kinfolk.
+
+Example:
+
+Library has:
+"IVF"
+
+Member asks:
+"Tell me about IVF."
+
+Trace:
+
+Library record
+→ retrieval
+→ ranking
+→ source content
+→ Kinfolk prompt
+→ response
+
+Then do the same for:
+
+"Philadelphia Black History"
+
+"Bangkok"
+
+"Alpha Kappa Alpha"
+
+If Kinfolk does NOT currently retrieve Library content directly, state that
+clearly.
+
+If it only retrieves topic titles/descriptions but not actual source content,
+state that clearly.
+
+If it retrieves content only under certain intents, explain those conditions.
+
+============================================================
+PART 6 — LIBRARY RENDERING VS KINFOLK RETRIEVAL
+============================================================
+
+We are currently experiencing a major issue where Library topics exist but
+users sometimes open them and see little/no meaningful content.
+
+Determine whether there are TWO separate problems:
+
+A. Library UI rendering
+B. Kinfolk retrieval from Library
+
+Answer separately:
+
+Can Kinfolk use Library information that the UI does not render?
+
+Can the Library UI show a topic that Kinfolk cannot use?
+
+Can a topic exist in knowledge_topics without sources/content?
+
+Can a "Book" exist as a shell with no evidence?
+
+How many current Library topics are:
+
+- fully sourced
+- partially sourced
+- shell/topic only
+- collection only
+
+Do not approximate if exact counts can be obtained.
+
+============================================================
+PART 7 — KNOWLEDGE GRAPH CONNECTION
+============================================================
+
+Explain how the Knowledge Graph relates to:
+
+Library
+Kinfolk
+businesses
+cultural sites
+cities
+HBCUs
+events
+community contributions
+
+Show:
+
+ENTITY
+→ RELATIONSHIP
+→ SOURCE
+→ KINFOLK
+
+Example:
+
+Philadelphia
+→ Mother Bethel AME
+→ Black history topic
+→ source/evidence
+→ Kinfolk answer
+
+Does this relationship actually work today?
+
+Use one live production example.
+
+============================================================
+PART 8 — USER PERSONALIZATION
+============================================================
+
+Explain how Kinfolk combines Library/knowledge with what it knows about the
+member.
+
+Include:
+
+stable preferences
+current chapter/life journey
+saved businesses
+saved places
+Library follows
+search history
+conversation history
+travel destination
+vibes
+communication style
+location/home city
+
+For each, state whether it is currently injected into Kinfolk's prompt.
+
+============================================================
+PART 9 — THE MWM FLYWHEEL
+============================================================
+
+Explain what you believe the Mapping With Melanin flywheel is based on the
+current implementation.
+
+I expect something conceptually similar to:
+
+DISCOVER
+→ EXPERIENCE
+→ SAVE / REVIEW / VIBE / CONTRIBUTE
+→ COMMUNITY KNOWLEDGE GROWS
+→ LIBRARY / KNOWLEDGE GRAPH GROWS
+→ KINFOLK GETS SMARTER
+→ BETTER PERSONALIZED DISCOVERY
+→ MORE BUSINESS ENGAGEMENT
+→ MORE COMMUNITY CONTRIBUTION
+→ cycle repeats
+
+But DO NOT simply repeat this because I wrote it.
+
+Tell me what the system actually does TODAY.
+
+For every step identify:
+
+INPUT
+ACTION
+DATABASE TABLE
+DOWNSTREAM EFFECT
+VISIBLE USER BENEFIT
+
+============================================================
+PART 10 — DOES COMMUNITY ACTIVITY ACTUALLY IMPROVE KINFOLK?
+============================================================
+
+This is critical.
+
+When a member:
+
+- saves a business
+- leaves a review
+- adds THE REAL
+- adds a vibe
+- submits social content
+- follows a Library topic
+- contributes evidence
+- adds a missing place
+- checks in
+
+What happens downstream?
+
+Does Kinfolk actually see/use that signal?
+
+Does the business profile change?
+
+Does the Library change?
+
+Does the Knowledge Graph change?
+
+Does search ranking change?
+
+Does another member benefit?
+
+Create a matrix:
+
+USER ACTION
+→ STORED WHERE
+→ USED BY SEARCH?
+→ USED BY KINFOLK?
+→ USED BY LIBRARY?
+→ USED BY BUSINESS PAGE?
+→ USED BY OTHER MEMBERS?
+
+============================================================
+PART 11 — RESEARCH CAPABILITY
+============================================================
+
+Explain whether Kinfolk today can independently research an answer.
+
+For example:
+
+"Does Johannesburg have beaches?"
+
+Can Kinfolk:
+
+A. answer from general model knowledge only
+B. search MWM Library
+C. search Knowledge Graph
+D. search current external authoritative sources
+E. cite those sources
+F. save useful researched knowledge back into MWM
+
+State YES / NO / PARTIAL for each.
+
+Then explain what would happen today if the user asks:
+
+"What are the current visa requirements for Thailand?"
+
+This is a good test because current information should not rely solely on model
+memory.
+
+============================================================
+PART 12 — SOURCE PROVENANCE
+============================================================
+
+Explain exactly how Kinfolk knows whether something came from:
+
+- MWM verified business record
+- Library authoritative source
+- professional source
+- community contribution
+- Cultural Ambassador
+- general AI knowledge
+- live external research
+
+Can Kinfolk label these distinctions in an answer today?
+
+Can it cite sources?
+
+Can it tell the user:
+"This is an MWM-listed place"
+versus
+"This is a broader recommendation"?
+
+============================================================
+PART 13 — FAILURE MODES
+============================================================
+
+List the actual ways this architecture can currently fail.
+
+Examples:
+
+Library topic exists but has no content
+Kinfolk does not retrieve Library
+business exists but search does not find it
+destination extraction fails
+user preference saved but not injected
+community contribution never reaches Kinfolk
+Knowledge Graph relationship exists but isn't queried
+general AI knowledge overrides MWM data
+empty Library shell appears complete
+
+For every known failure mode state:
+
+EXISTS TODAY: YES/NO
+SEVERITY
+CURRENT USER IMPACT
+
+============================================================
+PART 14 — CURRENT ARCHITECTURE DIAGRAM
+============================================================
+
+Give me a plain-text architecture diagram showing:
+
+USER
+↓
+WEB / MOBILE
+↓
+SEARCH / MAP / LIBRARY / KINFOLK
+↓
+APIs
+↓
+BUSINESSES
+LIBRARY
+KNOWLEDGE GRAPH
+COMMUNITY
+USER MEMORY
+SAFETY
+EVENTS
+↓
+KINFOLK PROMPT BUILDER
+↓
+OPENAI
+↓
+ANSWER
+↓
+MEMORY / CONTRIBUTION / FLYWHEEL
+
+Use the REAL implementation.
+
+============================================================
+PART 15 — GAP ANALYSIS
+============================================================
+
+Only after explaining the architecture, compare:
+
+WHAT THE FOUNDER INTENDS KINFOLK TO BE
+
+versus
+
+WHAT KINFOLK ACTUALLY IS TODAY.
+
+Return gaps under:
+
+1. Discovery intelligence
+2. Library intelligence
+3. Knowledge Graph
+4. Personalization
+5. Community flywheel
+6. Research capability
+7. Source/citation transparency
+8. International intelligence
+9. Memory
+10. User contribution loop
+
+Do NOT fix anything yet.
+
+============================================================
+FINAL ANSWERS
+============================================================
+
+End with clear answers to these questions:
+
+IS KINFOLK MORE THAN A CHATBOT TODAY?
+YES / PARTIAL / NO
+
+DOES KINFOLK ACTUALLY USE THE LIBRARY TODAY?
+YES / PARTIAL / NO
+
+DOES THE LIBRARY ACTUALLY POWER KINFOLK ANSWERS?
+YES / PARTIAL / NO
+
+DO USER CONTRIBUTIONS MAKE KINFOLK SMARTER TODAY?
+YES / PARTIAL / NO
+
+DO SAVES / REVIEWS / VIBES FEED THE FLYWHEEL TODAY?
+YES / PARTIAL / NO
+
+CAN KINFOLK RESEARCH SOMETHING IT DOES NOT ALREADY KNOW?
+YES / PARTIAL / NO
+
+CAN KINFOLK DISTINGUISH MWM KNOWLEDGE FROM GENERAL AI KNOWLEDGE?
+YES / PARTIAL / NO
+
+IS THE THREE-LAYER MEMORY ARCHITECTURE ACTUALLY COMPLETE?
+YES / PARTIAL / NO
+
+IS THE LIBRARY CURRENTLY A TRUE KNOWLEDGE ENGINE OR MOSTLY A USER-FACING
+TOPIC SYSTEM?
+KNOWLEDGE ENGINE / PARTIAL / TOPIC SYSTEM
+
+MOST IMPORTANT ARCHITECTURAL GAP:
+
+MOST IMPORTANT LIBRARY GAP:
+
+MOST IMPORTANT FLYWHEEL GAP:
+
+Do not propose implementation tasks yet.
+
+STOP and return the architecture report to the founder.
+```
+
+The specific thing I want to learn from Replit is whether the Library is truly **inside Kinfolk's retrieval path** or merely sitting beside it.
+
+Because those are very different products.
+
+If today the architecture is effectively:
+
+**User → Kinfolk → OpenAI**
+
+with a few business/preferences injected, while the Library sits in another part of the application, then that explains why you can have hundreds of Library topics and still not feel that Kinfolk is becoming more knowledgeable.
+
+What we actually want eventually is closer to:
+
+**User question → understand intent → retrieve MWM business/community/Library/Knowledge Graph evidence → add personalized context → use AI to synthesize → answer with provenance → user acts/contributes → those signals enrich MWM → next answer gets better.**
+
+And the flywheel only exists if the **last arrow actually comes back around**. If someone saves a place, follows IVF, adds a vibe, contributes a Bangkok video, or leaves a review and none of those signals meaningfully influence future discovery or Kinfolk, then we have pieces of a flywheel but not yet a functioning flywheel.
+
+That architecture report should tell us exactly where the loop breaks.
