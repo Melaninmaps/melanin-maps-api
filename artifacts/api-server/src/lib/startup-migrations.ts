@@ -3744,10 +3744,10 @@ async function ensureLibraryContentActivation_v1(
     for (const [cat, collId] of catToCollection) {
       await pool.query(
         `INSERT INTO topic_relationships (id, parent_topic_id, child_topic_id, relationship_type, weight)
-         SELECT gen_random_uuid()::text, $1, kt.id, 'contains', 0.8
+         SELECT gen_random_uuid()::text, $1::text, kt.id, 'contains', 0.8
          FROM knowledge_topics kt
-         WHERE kt.category=$2 AND kt.topic_type='general' AND kt.enabled=true
-           AND NOT EXISTS (SELECT 1 FROM topic_relationships tr WHERE tr.parent_topic_id=$1 AND tr.child_topic_id=kt.id AND tr.relationship_type='contains')`,
+         WHERE kt.category=$2::text AND kt.topic_type='general' AND kt.enabled=true
+           AND NOT EXISTS (SELECT 1 FROM topic_relationships tr WHERE tr.parent_topic_id=$1::text AND tr.child_topic_id=kt.id AND tr.relationship_type='contains')`,
         [collId, cat],
       );
     }
