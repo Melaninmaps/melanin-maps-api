@@ -181,6 +181,7 @@ router.use(externalClicksRouter); // anonymous outbound click tracking
 router.use(crashReportsRouter);   // anonymous crash reports from app clients
 router.use(monitorBuild97Router); // internal health monitoring endpoint
 router.use(feedbackRouter);       // in-app feedback (submitted before session check)
+router.use(impactRouter);         // public platform stats (homepage "Growing Every Day" section)
 
 // ── Member wall — ALL platform data requires an authenticated session ───────
 // MWM serves communities that face real harm. Business locations, HBCU records,
@@ -226,7 +227,6 @@ router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(mapsRouter);
 router.use(jobsRouter);
-router.use(impactRouter);
 router.use(submitBusinessRouter);
 router.use(contentReportsRouter);
 router.use(verificationRouter);

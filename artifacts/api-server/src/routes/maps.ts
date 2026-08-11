@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { mapsLimiter } from "../middleware/rateLimiter";
 import { requireAuth } from "../middlewares/requireAuth";
+import { pool } from "@workspace/db";
 
 const router: IRouter = Router();
 router.use(requireAuth);
@@ -241,6 +242,35 @@ router.get("/maps/geo-extract", mapsLimiter, async (req: Request, res: Response)
   if (!locationQuery) {
     res.json({ hasLocation: false, locationQuery: null, contentQuery: raw, lat: null, lng: null, formattedAddress: null });
     return;
+  }
+
+  // ── BUSINESS-FIRST GATE ─────────────────────────────────────────────────────
+  // Before calling an external geocoder, verify the candidate location string
+  // doesn't match an existing MWM business or cultural site by name.
+  //
+  // Example: "Amina" is a restaurant in Philadelphia. Without this check, the
+  // geocoder returns "Amina, Dominican Republic" (a real place), the map pans
+  // there, and the DB search finds nothing — showing "No MWM listings in AMINA."
+  //
+  // Rule: ≤3-word candidates only, to avoid blocking "restaurants in Phuket"
+  // where "Phuket" is a legitimate destination with no MWM business by that name.
+  const locationWordCount = locationQuery.trim().split(/\s+/).length;
+  if (locationWordCount <= 3) {
+    try {
+      const bizCheck = await pool.query<{ id: string }>(
+        `SELECT id FROM businesses
+         WHERE name ILIKE $1 AND status = 'active'
+         LIMIT 1`,
+        [locationQuery],
+      );
+      if (bizCheck.rows.length > 0) {
+        // Our DB has a business named this — treat as a business search, not geography.
+        res.json({ hasLocation: false, locationQuery, contentQuery: raw, lat: null, lng: null, formattedAddress: null });
+        return;
+      }
+    } catch {
+      // DB unavailable — fall through to geocoder
+    }
   }
 
   try {
