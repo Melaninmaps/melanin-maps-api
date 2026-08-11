@@ -2018,42 +2018,68 @@ ON CONFLICT (city_slug) DO NOTHING`,
       DO $$
       DECLARE
         canonical_id TEXT;
+        nc_ids       TEXT[];
       BEGIN
+        -- Helper pattern for each topic:
+        --   1. Find canonical (oldest) id.
+        --   2. Collect non-canonical ids.
+        --   3. Delete topic_relationships that would conflict after re-parenting
+        --      (i.e. the canonical already owns that child/parent pair).
+        --   4. Delete remaining non-canonical topic_relationships outright.
+        --   5. Migrate library_entity_connections and knowledge_sources.
+        --   6. Delete non-canonical topic rows.
+        -- All steps are safe no-ops when only 1 copy exists.
+
         -- Bangkok
         SELECT id INTO canonical_id FROM knowledge_topics
-        WHERE topic_name = 'Bangkok' ORDER BY created_at ASC LIMIT 1;
+          WHERE topic_name = 'Bangkok' ORDER BY created_at ASC LIMIT 1;
         IF canonical_id IS NOT NULL THEN
-          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
-          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
-          UPDATE topic_relationships SET parent_topic_id = canonical_id WHERE parent_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
-          UPDATE topic_relationships SET child_topic_id = canonical_id WHERE child_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id);
-          DELETE FROM knowledge_topics WHERE topic_name = 'Bangkok' AND id <> canonical_id;
+          SELECT ARRAY(SELECT id FROM knowledge_topics WHERE topic_name='Bangkok' AND id<>canonical_id) INTO nc_ids;
+          IF array_length(nc_ids,1) > 0 THEN
+            DELETE FROM topic_relationships
+              WHERE (parent_topic_id = ANY(nc_ids) OR child_topic_id = ANY(nc_ids));
+            UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            DELETE FROM knowledge_topics WHERE id = ANY(nc_ids);
+          END IF;
         END IF;
+
         -- Phuket
         SELECT id INTO canonical_id FROM knowledge_topics
-        WHERE topic_name = 'Phuket' ORDER BY created_at ASC LIMIT 1;
+          WHERE topic_name = 'Phuket' ORDER BY created_at ASC LIMIT 1;
         IF canonical_id IS NOT NULL THEN
-          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
-          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
-          UPDATE topic_relationships SET parent_topic_id = canonical_id WHERE parent_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
-          UPDATE topic_relationships SET child_topic_id = canonical_id WHERE child_topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id);
-          DELETE FROM knowledge_topics WHERE topic_name = 'Phuket' AND id <> canonical_id;
+          SELECT ARRAY(SELECT id FROM knowledge_topics WHERE topic_name='Phuket' AND id<>canonical_id) INTO nc_ids;
+          IF array_length(nc_ids,1) > 0 THEN
+            DELETE FROM topic_relationships
+              WHERE (parent_topic_id = ANY(nc_ids) OR child_topic_id = ANY(nc_ids));
+            UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            DELETE FROM knowledge_topics WHERE id = ANY(nc_ids);
+          END IF;
         END IF;
+
         -- Sickle Cell Disease
         SELECT id INTO canonical_id FROM knowledge_topics
-        WHERE topic_name = 'Sickle Cell Disease' ORDER BY created_at ASC LIMIT 1;
+          WHERE topic_name = 'Sickle Cell Disease' ORDER BY created_at ASC LIMIT 1;
         IF canonical_id IS NOT NULL THEN
-          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id);
-          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id);
-          DELETE FROM knowledge_topics WHERE topic_name = 'Sickle Cell Disease' AND id <> canonical_id;
+          SELECT ARRAY(SELECT id FROM knowledge_topics WHERE topic_name='Sickle Cell Disease' AND id<>canonical_id) INTO nc_ids;
+          IF array_length(nc_ids,1) > 0 THEN
+            UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            DELETE FROM knowledge_topics WHERE id = ANY(nc_ids);
+          END IF;
         END IF;
+
         -- Faith & Spirituality
         SELECT id INTO canonical_id FROM knowledge_topics
-        WHERE topic_name = 'Faith & Spirituality' ORDER BY created_at ASC LIMIT 1;
+          WHERE topic_name = 'Faith & Spirituality' ORDER BY created_at ASC LIMIT 1;
         IF canonical_id IS NOT NULL THEN
-          UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id);
-          UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id IN (SELECT id FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id);
-          DELETE FROM knowledge_topics WHERE topic_name = 'Faith & Spirituality' AND id <> canonical_id;
+          SELECT ARRAY(SELECT id FROM knowledge_topics WHERE topic_name='Faith & Spirituality' AND id<>canonical_id) INTO nc_ids;
+          IF array_length(nc_ids,1) > 0 THEN
+            UPDATE library_entity_connections SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            UPDATE knowledge_sources SET topic_id = canonical_id WHERE topic_id = ANY(nc_ids);
+            DELETE FROM knowledge_topics WHERE id = ANY(nc_ids);
+          END IF;
         END IF;
       END $$;
     `,
