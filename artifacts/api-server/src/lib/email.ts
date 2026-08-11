@@ -55,6 +55,50 @@ async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   return data;
 }
 
+// ─── Tester Issue Report → Founder direct alert ───────────────────────────────
+export async function sendTesterReportEmail({
+  userId, userEmail, firstName, page, action, message, timestamp,
+}: {
+  userId: string;
+  userEmail: string;
+  firstName: string | null;
+  page: string;
+  action: string;
+  message: string;
+  timestamp: string;
+}): Promise<void> {
+  if (!resend) return; // graceful no-op if Resend not configured
+  const adminTo = process.env.ADMIN_EMAILS?.split(",").map((e) => e.trim()).filter(Boolean)[0]
+    ?? "hello@mappingwithmelanin.com";
+  const displayName = firstName ? `${firstName} (${userEmail})` : userEmail;
+  await sendEmail({
+    from: FROM,
+    to: adminTo,
+    subject: `🚨 Tester Issue Report — ${displayName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+        <div style="background:#CA922B;padding:16px 24px;border-radius:8px 8px 0 0">
+          <h2 style="color:#fff;margin:0;font-size:18px">🚨 Tester Issue Report</h2>
+        </div>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:24px;border-radius:0 0 8px 8px">
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr><td style="padding:6px 0;color:#6b7280;width:120px">Time</td><td style="padding:6px 0;font-weight:600">${timestamp}</td></tr>
+            <tr><td style="padding:6px 0;color:#6b7280">From</td><td style="padding:6px 0;font-weight:600">${displayName}</td></tr>
+            <tr><td style="padding:6px 0;color:#6b7280">User ID</td><td style="padding:6px 0;font-family:monospace;font-size:12px">${userId}</td></tr>
+            <tr><td style="padding:6px 0;color:#6b7280">Page</td><td style="padding:6px 0">${page}</td></tr>
+            <tr><td style="padding:6px 0;color:#6b7280">Action</td><td style="padding:6px 0">${action || "—"}</td></tr>
+          </table>
+          <div style="margin-top:16px;padding:16px;background:#f9fafb;border-radius:6px;border-left:3px solid #CA922B">
+            <p style="margin:0;font-size:14px;color:#111827;white-space:pre-wrap">${message}</p>
+          </div>
+          <p style="margin-top:16px;font-size:12px;color:#9ca3af">
+            Sent via in-app tester feedback · MWM Build ${process.env.__BUILT_FROM_SHA__?.slice(0, 8) ?? "unknown"}
+          </p>
+        </div>
+      </div>`,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, firstName: string | null) {
   if (!resend) return;
   const name = firstName ?? "there";

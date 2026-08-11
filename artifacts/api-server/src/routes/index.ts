@@ -156,6 +156,7 @@ import citiesRouter from "./cities";
 import feedbackRouter from "./feedback";
 import universalSearchRouter from "./universal-search";
 import knowledgeGraphRouter from "./knowledge-graph";
+import testerReportRouter from "./tester-report";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -193,6 +194,9 @@ router.use(impactRouter);         // public platform stats (homepage "Growing Ev
 router.use(requireAuth);
 
 // ── Everything below requires authentication ────────────────────────────────
+
+// Tester direct-to-founder issue reports
+router.use(testerReportRouter);
 
 // Membership / billing
 router.use("/membership", membershipRouter);

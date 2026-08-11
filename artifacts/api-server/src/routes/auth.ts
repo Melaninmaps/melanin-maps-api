@@ -1367,4 +1367,11 @@ router.get("/auth/apple/config-check", (req: Request, res: Response) => {
   res.json({ allPresent, vars: result });
 });
 
+// ── GET /api/auth/status — unauthenticated server liveness check for UptimeRobot ──
+// Returns 200 when the server is up. Does NOT hit the DB — pure process health.
+// Register BEFORE requireAuth in routes/index.ts so monitors don't need a session.
+router.get("/auth/status", (_req, res) => {
+  res.json({ ok: true, ts: new Date().toISOString() });
+});
+
 export default router;

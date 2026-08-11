@@ -49,6 +49,7 @@ import {
 installCrashLogger();
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
+import { TesterReportButton } from "@/components/TesterReportButton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -817,6 +818,7 @@ function _RootLayout() {
                   <RootLayoutNav />
                   <AIChatWidget />
                   <OfflineBanner />
+                  <TesterReportButton />
                 </View>
               </KeyboardProviderWrapper>
             </GestureHandlerRootView>
