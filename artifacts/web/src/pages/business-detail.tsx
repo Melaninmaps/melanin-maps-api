@@ -137,6 +137,55 @@ export default function BusinessDetail() {
   const [vibeLoading, setVibeLoading] = useState<string | null>(null);
   const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
   const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
+  const [myEndorsedTags, setMyEndorsedTags] = useState<string[]>([]);
+  const [endorseLoading, setEndorseLoading] = useState<string | null>(null);
+
+  // ── Community photo upload state ─────────────────────────────────────────────
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [photoSubmitting, setPhotoSubmitting] = useState(false);
+  const [photoSuccess, setPhotoSuccess] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+
+  function resetPhotoModal() {
+    setShowPhotoModal(false);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setPhotoCaption("");
+    setPhotoSubmitting(false);
+    setPhotoSuccess(false);
+    setPhotoError(null);
+  }
+
+  async function handlePhotoSubmit() {
+    if (!auth?.user) {
+      resetPhotoModal();
+      toast({ title: "Sign in to add photos", description: "Create a free account to contribute photos." });
+      return;
+    }
+    if (!photoFile) { setPhotoError("Please select a photo."); return; }
+    setPhotoSubmitting(true);
+    setPhotoError(null);
+    try {
+      const formData = new FormData();
+      formData.append("photo", photoFile);
+      if (photoCaption.trim()) formData.append("caption", photoCaption.trim());
+      const res = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, "")}/api/businesses/${id}/community-photos`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (res.ok) {
+        setPhotoSuccess(true);
+      } else {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        setPhotoError(body.error ?? "Something went wrong. Try again.");
+      }
+    } catch { setPhotoError("Unable to submit. Check your connection."); }
+    finally { setPhotoSubmitting(false); }
+  }
 
   // ── Community media contribution state ──────────────────────────────────────
   const search = useSearch();
@@ -254,9 +303,12 @@ export default function BusinessDetail() {
   useEffect(() => {
     if (!id) return;
     const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/vibes/endorsements/${id}`)
+    fetch(`${apiBase}/api/vibes/endorsements/${id}`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (Array.isArray(d?.tags)) setEndorsementTags(d.tags); })
+      .then((d) => {
+        if (Array.isArray(d?.tags)) setEndorsementTags(d.tags);
+        if (Array.isArray(d?.userTags)) setMyEndorsedTags(d.userTags);
+      })
       .catch(() => {});
   }, [id]);
 
@@ -287,6 +339,31 @@ export default function BusinessDetail() {
   }
 
   async function handleHiddenGem() { return handleVibe("hidden_gem"); }
+
+  async function handleEndorseTag(tagKey: string) {
+    if (!auth?.user) {
+      toast({ title: "Sign in to endorse", description: "Create a free account to tag what you love about this business." });
+      return;
+    }
+    if (endorseLoading) return;
+    const isActive = myEndorsedTags.includes(tagKey);
+    setEndorseLoading(tagKey);
+    try {
+      const res = await fetch(`${BASE_URL}/api/vibes/endorse`, {
+        method: isActive ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ businessId: id, tagKey }),
+      });
+      if (res.ok) {
+        setMyEndorsedTags((prev) => isActive ? prev.filter((t) => t !== tagKey) : [...prev, tagKey]);
+        setEndorsementTags((prev) => prev.map((t) =>
+          t.tagKey === tagKey ? { ...t, count: Math.max(0, t.count + (isActive ? -1 : 1)) } : t
+        ));
+      }
+    } catch { /**/ }
+    finally { setEndorseLoading(null); }
+  }
 
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimName, setClaimName] = useState("");
@@ -574,6 +651,114 @@ export default function BusinessDetail() {
         </div>
       )}
 
+      {/* Community Photo Upload Modal */}
+      {showPhotoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#CA922B]/20 relative">
+            <button onClick={resetPhotoModal} className="absolute top-4 right-4 text-[#3A1F0E]/40 hover:text-[#3A1F0E] transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+
+            {photoSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-green-200 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-xl font-serif font-bold text-[#2B1507] mb-2">Photo Submitted</h3>
+                <p className="text-[#3A1F0E]/70 text-sm leading-relaxed mb-6">
+                  Your photo will appear here after a quick review — usually within 24 hours. Thank you for helping the community see this place.
+                </p>
+                <button onClick={resetPhotoModal} className="py-3 px-8 rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-bold text-sm transition-colors">
+                  Done
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-[#CA922B]/10 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-[#CA922B]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-serif font-bold text-[#2B1507]">Add a Photo</h3>
+                    <p className="text-xs text-[#3A1F0E]/60">Help the community see what this place is really like</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* File picker */}
+                  <div>
+                    <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">Photo</label>
+                    {photoPreview ? (
+                      <div className="relative rounded-xl overflow-hidden border border-[#CA922B]/20" style={{ aspectRatio: "4/3" }}>
+                        <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                          className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#CA922B]/30 bg-[#FAF6EF] hover:border-[#CA922B]/60 hover:bg-[#CA922B]/5 cursor-pointer transition-colors">
+                        <Camera className="w-8 h-8 text-[#CA922B]/60" />
+                        <span className="text-sm text-[#3A1F0E]/60 font-medium">Tap to choose a photo</span>
+                        <span className="text-xs text-[#3A1F0E]/40">JPG or PNG, max 10MB</span>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 10 * 1024 * 1024) { setPhotoError("Photo must be under 10MB."); return; }
+                            setPhotoFile(file);
+                            setPhotoError(null);
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Caption */}
+                  <div>
+                    <label className="block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5">
+                      Caption <span className="normal-case text-[#3A1F0E]/35 font-normal">(optional)</span>
+                    </label>
+                    <textarea
+                      value={photoCaption}
+                      onChange={(e) => setPhotoCaption(e.target.value)}
+                      placeholder="What made this place special for you?"
+                      rows={2}
+                      maxLength={280}
+                      className="w-full px-4 py-3 rounded-xl border border-[#2B1507]/15 bg-[#FAF6EF] text-sm text-[#2B1507] placeholder-[#3A1F0E]/35 focus:outline-none focus:border-[#CA922B] focus:ring-2 focus:ring-[#CA922B]/10 resize-none transition"
+                    />
+                  </div>
+
+                  <div className="bg-[#FAF6EF] rounded-xl p-3 border border-[#2B1507]/8">
+                    <p className="text-[10px] text-[#3A1F0E]/50 leading-relaxed">
+                      <strong className="text-[#3A1F0E]/70">Community photos are reviewed before appearing.</strong> By submitting you confirm this is your own photo or you have rights to share it.
+                    </p>
+                  </div>
+
+                  {photoError && <p className="text-red-600 text-xs font-medium">{photoError}</p>}
+
+                  <button
+                    onClick={handlePhotoSubmit}
+                    disabled={photoSubmitting || !photoFile}
+                    className="w-full py-3 rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-white font-bold text-sm transition-colors"
+                  >
+                    {photoSubmitting ? "Uploading…" : "Submit Photo"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Upgrade Modal */}
       {showUpgrade && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -814,24 +999,42 @@ export default function BusinessDetail() {
                     ...(business.imageUrl ? [business.imageUrl] : []),
                     ...photos.filter(p => p !== business.imageUrl),
                   ];
-                  if (allPhotos.length <= 1) return null;
                   return (
                     <div>
-                      <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-4 flex items-center gap-2">
-                        <span>Photos</span>
-                        <span className="text-sm font-sans font-normal text-[#3A1F0E]/40">({allPhotos.length})</span>
-                      </h3>
-                      <div className={`grid gap-2 ${allPhotos.length === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
-                        {allPhotos.map((src, i) => (
-                          <a key={i} href={src} target="_blank" rel="noopener noreferrer"
-                            className={`block relative overflow-hidden rounded-2xl bg-[#3A1F0E]/5 group ${i === 0 && allPhotos.length >= 3 ? "col-span-2 md:col-span-1 md:row-span-2" : ""}`}
-                            style={{ aspectRatio: i === 0 && allPhotos.length >= 3 ? "16/9" : "4/3" }}>
-                            <img src={src} alt={`${business.name ?? ""} photo ${i + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                          </a>
-                        ))}
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-serif font-bold text-xl text-[#3A1F0E] flex items-center gap-2">
+                          <span>Photos</span>
+                          {allPhotos.length > 1 && <span className="text-sm font-sans font-normal text-[#3A1F0E]/40">({allPhotos.length})</span>}
+                        </h3>
+                        <button
+                          onClick={() => { setPhotoSuccess(false); setPhotoError(null); setShowPhotoModal(true); }}
+                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:border-[#CA922B] px-3 py-1 rounded-full transition-colors"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          Add a Photo
+                        </button>
                       </div>
+                      {allPhotos.length > 1 ? (
+                        <div className={`grid gap-2 ${allPhotos.length === 2 ? "grid-cols-2" : "grid-cols-2 md:grid-cols-3"}`}>
+                          {allPhotos.map((src, i) => (
+                            <a key={i} href={src} target="_blank" rel="noopener noreferrer"
+                              className={`block relative overflow-hidden rounded-2xl bg-[#3A1F0E]/5 group ${i === 0 && allPhotos.length >= 3 ? "col-span-2 md:col-span-1 md:row-span-2" : ""}`}
+                              style={{ aspectRatio: i === 0 && allPhotos.length >= 3 ? "16/9" : "4/3" }}>
+                              <img src={src} alt={`${business.name ?? ""} photo ${i + 1}`}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setPhotoSuccess(false); setPhotoError(null); setShowPhotoModal(true); }}
+                          className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded-2xl border border-dashed border-[#CA922B]/30 text-[#CA922B]/60 hover:border-[#CA922B]/60 hover:text-[#CA922B] hover:bg-[#CA922B]/5 transition-colors"
+                        >
+                          <Camera className="w-8 h-8" />
+                          <span className="text-sm font-semibold">Be the first to add a photo</span>
+                        </button>
+                      )}
                     </div>
                   );
                 })()}
@@ -885,31 +1088,41 @@ export default function BusinessDetail() {
                   );
                 })()}
 
-                {/* Community Says — Endorsement Tags */}
+                {/* Community Says — Endorsement Tags (THE REAL / tappable) */}
                 <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <Heart className="w-4 h-4 text-[#CA922B]" />
                       <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Says</h3>
                     </div>
-                    <button
-                      onClick={() => { const el = document.querySelector<HTMLElement>('[data-state="active"][role="tab"]'); el?.closest('[role="tablist"]')?.querySelector<HTMLElement>('[value="reviews"]')?.click(); }}
-                      className="text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:border-[#CA922B] px-3 py-1 rounded-full transition-colors"
-                    >
-                      + Add Yours
-                    </button>
+                    <span className="text-xs text-[#3A1F0E]/40 font-medium">
+                      {auth?.user ? "Tap to endorse" : "Sign in to endorse"}
+                    </span>
                   </div>
+                  <p className="text-xs text-[#3A1F0E]/40 mb-4">Real words from people who've been here</p>
                   {endorsementTags.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {endorsementTags.map((tag) => (
-                        <div
-                          key={tag.tagKey}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-[#FAF6EF] border border-[#2B1507]/10 text-[#3A1F0E]/80"
-                        >
-                          <span className="text-[#CA922B] font-bold">{tag.count}</span>
-                          <span>said "{tag.label}"</span>
-                        </div>
-                      ))}
+                      {endorsementTags.map((tag) => {
+                        const tapped = myEndorsedTags.includes(tag.tagKey);
+                        const loading = endorseLoading === tag.tagKey;
+                        return (
+                          <button
+                            key={tag.tagKey}
+                            onClick={() => handleEndorseTag(tag.tagKey)}
+                            disabled={loading}
+                            title={tapped ? `You endorsed "${tag.label}" — tap to remove` : `Tap to endorse "${tag.label}"`}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
+                              tapped
+                                ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
+                                : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/80 hover:border-[#CA922B] hover:text-[#CA922B]"
+                            } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          >
+                            <span className={`font-bold text-xs ${tapped ? "text-white/80" : "text-[#CA922B]"}`}>{tag.count}</span>
+                            <span>said "{tag.label}"</span>
+                            {tapped && <CheckCircle2 className="w-3.5 h-3.5 text-white/80" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-[#3A1F0E]/40 italic">Be the first to add a community caption for this business.</p>
