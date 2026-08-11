@@ -1732,6 +1732,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       try {
         // Use pool.query (raw SQL) — Drizzle db.select() with leftJoin silently
         // fails in the esbuild bundle on Railway; pool.query is proven to work.
+        // NOTE: only select columns confirmed to exist on the Railway prod DB.
+        // audience_type, environment_tags, amenity_tags were added post-migration
+        // and are absent from Railway — selecting them causes a 42703 error.
         const CATALOG_SQL = `
           SELECT b.name, b.category, b.city, b.description, b.verified,
                  b.tags, b.profile_status,
@@ -1739,8 +1742,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                  bi.what_customers_should_know, bi.ownership_badges,
                  bi.community_values, bi.audiences_served, bi.vibes,
                  bi.accessibility_features, bi.community_initiatives,
-                 bi.growth_goals, bi.audience_type,
-                 bi.environment_tags, bi.amenity_tags
+                 bi.growth_goals
           FROM businesses b
           LEFT JOIN business_identity bi ON bi.business_id = b.id
           WHERE b.status = 'active'
@@ -1767,9 +1769,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           accessibilityFeatures: r.accessibility_features,
           communityInitiatives: r.community_initiatives,
           growthGoals: r.growth_goals,
-          audienceType: r.audience_type,
-          environmentTags: r.environment_tags,
-          amenityTags: r.amenity_tags,
         })) as unknown as typeof businessCatalog;
         // Diagnostic: pino logger so this appears in Railway logs (console.log is swallowed)
         req.log?.info({ destination, ilike_rows: businessCatalog.length }, "[kinfolk-catalog] city ilike query complete");
