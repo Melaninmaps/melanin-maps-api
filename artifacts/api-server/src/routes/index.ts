@@ -26,7 +26,7 @@ import eventsRouter from "./events";
 import usersRouter from "./users";
 import groupsRouter from "./groups";
 import adminRouter from "./admin";
-import kinfolkRouter from "./kinfolk";
+import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
 import wishlistRouter from "./wishlist";
 import claimsRouter from "./claims";
 import notificationsRouter from "./notifications";
@@ -185,6 +185,20 @@ router.use(crashReportsRouter);   // anonymous crash reports from app clients
 router.use(monitorBuild97Router); // internal health monitoring endpoint
 router.use(feedbackRouter);       // in-app feedback (submitted before session check)
 router.use(impactRouter);         // public platform stats (homepage "Growing Every Day" section)
+
+// ── Public KinfolkAI health probe — must be before the member wall ────────────
+// /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health
+// checks) and the mobile app before showing the KinfolkAI chat UI.
+// It probes the real OpenAI connection (cached 5 min) and returns ok/503.
+// Safe to expose publicly: no user data, no platform data, no session required.
+router.get("/kinfolk/health", async (_req, res) => {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
+    return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
+  }
+  const { ok, reason } = await probeKinfolkAI();
+  if (!ok) return void res.status(503).json({ ok: false, reason: reason ?? "AI connection failed" });
+  res.json({ ok: true });
+});
 
 // ── Member wall — ALL platform data requires an authenticated session ───────
 // MWM serves communities that face real harm. Business locations, HBCU records,

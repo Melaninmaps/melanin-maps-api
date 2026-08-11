@@ -38,7 +38,7 @@ type KinfolkHealthResult = { ok: boolean; reason?: string; checkedAt: number };
 let _kinfolkHealthCache: KinfolkHealthResult | null = null;
 const KINFOLK_HEALTH_CACHE_MS = 5 * 60 * 1000;
 
-async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }> {
+export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }> {
   const now = Date.now();
   if (_kinfolkHealthCache && now - _kinfolkHealthCache.checkedAt < KINFOLK_HEALTH_CACHE_MS) {
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
