@@ -1,0 +1,238 @@
+Yes. **Your screenshot proves the search behavior is still wrong, and it also exposes a major problem with Manus's conclusion.**
+
+You typed **AMINA**, intending the Philadelphia restaurant. Instead, the map interpreted **Amina as a geographic location** and moved you to Amina in the Dominican Republic. Then it says **“No MWM listings in AMINA yet.”** That is not acceptable behavior for Mapping With Melanin.
+
+More importantly, Manus called Business Directory Search the platform's “strongest feature” and said natural-language search was working, while its own report simultaneously says international search/routing is failing.  
+
+### What is actually wrong
+
+The system is still treating your search box partly like a **world geocoder** instead of a **Mapping With Melanin discovery engine**.
+
+For **“Amina”**, the order should be:
+
+**1. Search our database first.**
+If an MWM business named Amina exists, return **Amina restaurant in Philadelphia**.
+
+**2. Search our database semantically.**
+Maybe Amina is in a business name, description, category, neighborhood, etc.
+
+**3. Only interpret something as geography when there is clear geographic intent.**
+Examples: “Phuket,” “businesses in Phuket,” “restaurants near Bangkok,” “take me to Atlanta.”
+
+It should **never ask an outside geocoder what “Amina” means before checking whether Amina is one of our businesses.**
+
+And your principle from earlier is exactly right:
+
+> **The web may help the system understand where a known geographic place is so the map can move there. It must NOT become the source of businesses shown to members. Businesses shown as MWM results must come from the MWM database.**
+
+Send Replit this:
+
+```text
+CRITICAL SEARCH DEFECT — DIAGNOSE FIRST, THEN FIX.
+
+Founder performed a real authenticated production test.
+
+Search entered:
+
+AMINA
+
+Expected:
+
+The MWM database contains Amina, a restaurant/business in Philadelphia.
+The platform should return the MWM listing for Amina and allow the user
+to view/navigate to that business.
+
+Actual:
+
+The map interpreted "Amina" as a geographic place and moved the map to
+Amina in the Dominican Republic.
+
+The UI then displayed:
+
+"No MWM listings in AMINA yet."
+
+THIS PROVES THE SEARCH PRIORITY IS STILL WRONG.
+
+==================================================
+CORE MWM SEARCH RULE
+==================================================
+
+Mapping With Melanin is NOT a generic world directory.
+
+External geocoding may be used ONLY to determine coordinates for genuine
+geographic navigation.
+
+It must NEVER outrank our own database when interpreting a search.
+
+SEARCH PRIORITY MUST BE:
+
+1. Exact MWM business/place name
+2. Partial MWM business/place name
+3. MWM category/subcategory/specialty
+4. MWM tags/vibes/ownership/cultural attributes
+5. MWM city/neighborhood/country fields
+6. Recognized geographic navigation intent
+7. KinfolkAI assistance when intent remains ambiguous
+
+Before geocoding ANY free-text query, determine whether the query matches
+an existing MWM entity.
+
+Example:
+
+"Amina"
+
+If MWM contains:
+
+Amina
+Philadelphia, PA
+Restaurant
+
+then Amina MUST be surfaced.
+
+DO NOT send "Amina" to Nominatim merely because Nominatim knows a place
+called Amina.
+
+==================================================
+GEOGRAPHY MUST BE INTENTIONAL
+==================================================
+
+Examples:
+
+"Amina"
+→ search MWM entities first
+→ Amina restaurant in Philadelphia
+
+"Hakim's"
+→ Hakim's MWM business listing
+
+"Mother Bethel"
+→ Mother Bethel MWM listing
+
+"Phuket"
+→ geographic navigation may be appropriate IF no exact MWM entity named
+Phuket outranks it
+
+"Phuket restaurants"
+→ geography = Phuket
+→ intent/category = restaurants
+→ display ONLY MWM database businesses matching that geography/category
+
+"restaurants near me"
+→ user's location + MWM database
+
+"Bangkok nightlife"
+→ geography = Bangkok
+→ intent = nightlife
+→ ONLY MWM-listed Bangkok results
+
+"Ethiopian restaurant"
+→ MWM database category/cuisine/specialty search
+
+==================================================
+IMPORTANT EXTERNAL DATA RULE
+==================================================
+
+Nominatim/Google/external geocoding may return coordinates.
+
+They may NOT supply businesses displayed as Mapping With Melanin results.
+
+The external service answers:
+
+"Where is Phuket?"
+
+It does NOT answer:
+
+"What businesses should Mapping With Melanin recommend in Phuket?"
+
+Our database answers the second question.
+
+==================================================
+DIAGNOSE THE AMINA FAILURE FIRST
+==================================================
+
+Trace the exact production request for:
+
+AMINA
+
+Report:
+
+1. Did frontend search the MWM DB?
+2. Did DB return the Philadelphia Amina record?
+3. If yes, why was it discarded?
+4. At what point was Nominatim called?
+5. Why was geographic interpretation given priority?
+6. What exact result did Nominatim return?
+7. Why did the map recenter instead of displaying the MWM business?
+8. Is this same logic responsible for Phuket/Bangkok failures?
+
+Then implement the smallest architecture-level correction.
+
+DO NOT create an "Amina" special case.
+
+This must solve the CLASS of problem.
+
+==================================================
+MANDATORY PRODUCTION REGRESSION TEST
+==================================================
+
+After deployment, use the REAL authenticated website UI.
+
+Test manually:
+
+Amina
+Hakim's Bookstore
+Mother Bethel
+Ethiopian restaurant
+braider
+church
+OB-GYN
+Philadelphia restaurants
+Bangkok
+Bangkok restaurants
+Phuket
+Phuket restaurants
+Phuket nightlife
+Jamaica
+Jamaican restaurant
+Atlanta church
+Houston OB-GYN
+a deliberately nonexistent business
+
+For every query report:
+
+QUERY
+INTERPRETED INTENT
+EXPECTED
+ACTUAL
+MWM RESULTS COUNT
+MAP LOCATION
+EXTERNAL GEOCODER CALLED? YES/NO
+PASS/FAIL
+
+For nonexistent businesses, do NOT substitute random web businesses.
+
+Instead provide the MWM empty state / Add a Place path.
+
+==================================================
+VISUAL PROOF REQUIRED
+==================================================
+
+API results are insufficient.
+
+Provide screenshots from the deployed authenticated website proving:
+
+Amina → Philadelphia MWM listing
+Phuket restaurants → Phuket + MWM restaurant listings
+Bangkok restaurants → Bangkok + MWM listings
+Ethiopian restaurant → relevant MWM businesses
+Nonexistent business → correct empty state
+
+Do not mark this PASS based on source code, database counts, API calls,
+or unit tests.
+
+PASS requires the user-facing production website to behave correctly.
+```
+
+And I would make **this a release blocker**. Manus itself found Phuket business search failed despite records existing at API level, and that Bangkok/Phuket map navigation was not functioning.  So its overall “launch-ready” verdict is too generous for the specific proof-of-concept you're trying to demonstrate.
+
+The good part is that your screenshot has finally given us a **very specific reproducible defect**. This isn't “businesses aren't showing” anymore. We now know at least one fundamental cause: **external geographic interpretation is outranking your own MWM business data.** That is fixable, and Replit should fix the architecture rather than patching Amina.
