@@ -835,8 +835,12 @@ function buildSystemPrompt(opts: {
   /** When true: sensitive topic detected — suppress Library cross-pollination and
    *  Circle context injection. Engage the topic privately in this conversation only. */
   privacySuppressed?: boolean;
+  /** Tracks how the catalog was populated — used to produce a server-authoritative
+   *  grounding block so the model cannot emit contradictory "no listings" disclaimers. */
+  catalogSource?: "city" | "radius" | "home" | "none";
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
 
@@ -2317,6 +2321,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       libraryInterests,
       circleContext,
       privacySuppressed: sensitiveTopicDetected,
+      catalogSource,
     }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)

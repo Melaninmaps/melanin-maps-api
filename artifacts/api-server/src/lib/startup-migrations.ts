@@ -2337,24 +2337,24 @@ ON CONFLICT (city_slug) DO UPDATE SET
   {
     name: "mwm_platform_listing_v1",
     sql: `INSERT INTO businesses
-            (id, name, category, subcategory, address, city, state, country,
+            (id, name, category, subcategory, address, city, state,
              latitude, longitude, website, instagram, tiktok,
              description, status, verified, black_owned, confidence_score,
-             profile_status, approved, business_status)
+             profile_status, business_status)
           VALUES
             ('c678e359-0000-4000-8000-000000000001',
              'Mapping With Melanin',
              'Community Organization',
              'Community Tech Platform',
              '1600 Market St',
-             'Philadelphia', 'PA', 'US',
+             'Philadelphia', 'PA',
              39.9526, -75.1652,
              'https://mappingwithmelanin.com',
              'mapping_with_melanin',
              'mapping.with.mela',
              'Mapping With Melanin™ is a community-powered platform connecting Black travelers and residents with verified Black-owned businesses, cultural heritage sites, community events, and safety resources across the United States and beyond.',
              'active', true, true, 100,
-             'complete', true, 'community')
+             'complete', 'community')
           ON CONFLICT (id) DO UPDATE SET
             name         = EXCLUDED.name,
             website      = EXCLUDED.website,
