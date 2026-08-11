@@ -834,27 +834,48 @@ async function searchBusinesses(opts: {
       (w) => w.length >= 3 && !GEO_STOP_WORDS.has(w) && !CONCEPT_TO_CATEGORY[w] && !/^\d+$/.test(w),
     );
     if (geoTokens.length > 0) {
-      try {
-        const geoQ = geoTokens.join(" ");
-        const geoResp = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQ)}&format=json&limit=3&addressdetails=0`,
-          {
-            headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
-            signal: AbortSignal.timeout(3000),
-          },
-        );
-        const geoHits = (await geoResp.json()) as Array<{
-          lat: string; lon: string; class: string; type: string;
-        }>;
-        const VALID_GEO = new Set(["place","boundary","natural","landuse","administrative"]);
-        const INVALID_GEO = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop"]);
-        const hit = geoHits.find((h) => VALID_GEO.has(h.class) && !INVALID_GEO.has(h.type));
-        if (hit) {
-          effectiveLat = parseFloat(hit.lat);
-          effectiveLng = parseFloat(hit.lon);
-          serverExtractedGeo = true;
-        }
-      } catch { /* non-fatal — proceed without server geo-extract */ }
+      const geoQ = geoTokens.join(" ");
+
+      // ── BUSINESS-FIRST GATE (mirrors geo-extract endpoint) ──────────────────
+      // Before calling Nominatim, check whether the geo candidate matches an MWM
+      // business name. "Amina" is a Philadelphia restaurant — geocoding it as
+      // "Amina, Dominican Republic" and then discarding the Pass-1 result in
+      // Pass 3b is the root cause of the Amina search defect.
+      // Only apply for short candidates (≤ 3 words) that could plausibly be
+      // business names; longer strings like "Phuket nightlife scene" are geography.
+      let skipGeocode = false;
+      if (geoQ.split(/\s+/).length <= 3) {
+        try {
+          const bizGate = await pool.query<{ id: string }>(
+            `SELECT id FROM businesses WHERE name ILIKE $1 AND status = 'active' LIMIT 1`,
+            [geoQ],
+          );
+          if (bizGate.rows.length > 0) skipGeocode = true;
+        } catch { /* DB unavailable — fall through to geocode */ }
+      }
+
+      if (!skipGeocode) {
+        try {
+          const geoResp = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQ)}&format=json&limit=3&addressdetails=0`,
+            {
+              headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
+              signal: AbortSignal.timeout(3000),
+            },
+          );
+          const geoHits = (await geoResp.json()) as Array<{
+            lat: string; lon: string; class: string; type: string;
+          }>;
+          const VALID_GEO = new Set(["place","boundary","natural","landuse","administrative"]);
+          const INVALID_GEO = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop"]);
+          const hit = geoHits.find((h) => VALID_GEO.has(h.class) && !INVALID_GEO.has(h.type));
+          if (hit) {
+            effectiveLat = parseFloat(hit.lat);
+            effectiveLng = parseFloat(hit.lon);
+            serverExtractedGeo = true;
+          }
+        } catch { /* non-fatal — proceed without server geo-extract */ }
+      }
     }
   }
 
