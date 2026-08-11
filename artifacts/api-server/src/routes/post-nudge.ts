@@ -298,7 +298,7 @@ Return ONLY a JSON array of 3 strings, no markdown, no keys, just the array:
 ["caption 1", "caption 2", "caption 3"]`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.85,
       max_tokens: 300,

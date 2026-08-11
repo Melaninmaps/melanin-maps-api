@@ -44,7 +44,7 @@ router.get("/ai/for-you", async (req: Request, res: Response) => {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",

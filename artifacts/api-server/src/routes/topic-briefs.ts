@@ -145,7 +145,7 @@ router.get("/topic-brief/:topic", async (req: Request, res: Response) => {
     const { system, user } = buildPrompt(topic, tier);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },

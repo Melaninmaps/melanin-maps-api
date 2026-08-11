@@ -30,7 +30,7 @@ router.post("/knowledge/hubs/resolve", async (req: Request, res: Response) => {
     // Step 1: AI resolution (abbreviations, common names, entity classification)
     if (openai) {
       const aiResult = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{
           role: "system",
           content: `You are a topic resolver for a community hub app focused on Black travel, culture, business, health, and opportunity. Users search for topics like companies, countries, cities, health conditions, employers, sports teams, car brands, and organizations — NOT casual phrases or slang. Resolve abbreviations and short names to their most likely formal entity.`,
@@ -282,7 +282,7 @@ router.get("/knowledge/hubs/:topicId/recommendations", async (req: Request, res:
     if (!topic || !openai) { res.json({ recommendations: [] }); return; }
 
     const aiResult = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [{
         role: "system",
         content: "You suggest related community hubs for a Black community discovery app. Return ONLY a JSON array of topic names — no explanation.",

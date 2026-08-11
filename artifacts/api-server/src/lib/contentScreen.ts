@@ -19,7 +19,7 @@ const WARNING_LABELS: Record<ContentWarningType, string> = {
 export async function screenImageUrl(imageUrl: string): Promise<ScreenResult> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "user",

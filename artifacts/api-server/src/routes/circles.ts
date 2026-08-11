@@ -490,7 +490,7 @@ Return ONLY valid JSON in this exact shape:
 Include 5–8 stops that flow naturally. Keep times realistic. Prioritize minority-owned businesses and spaces that celebrate melanated culture when possible.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" },
     temperature: curatorMode === "random" ? 1.0 : 0.8,

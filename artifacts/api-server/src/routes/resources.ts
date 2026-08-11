@@ -333,7 +333,7 @@ router.post("/resources/ai-search", async (req: Request, res: Response) => {
   try {
     // Step 1: Use AI to classify the query into structured search params
     const classifyResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",

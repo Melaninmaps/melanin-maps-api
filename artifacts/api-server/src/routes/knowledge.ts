@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { type Request, type Response, Router } from "express";
-import { db } from "@workspace/db";
+import { db, pool } from "@workspace/db";
 import {
   businessesTable,
   communityPostsTable,
@@ -501,6 +501,21 @@ router.post("/knowledge/topics/:topicId/follow", async (req: Request, res: Respo
     }
 
     await db.insert(userTopicFollowsTable).values({ userId, topicId });
+
+    // Cross-pollination: sync to user_library_interests so KinfolkAI knows what this user follows
+    void pool.query<{ topic_name: string }>(
+      `SELECT topic_name FROM knowledge_topics WHERE id = $1 LIMIT 1`, [topicId]
+    ).then((r) => {
+      const topicName = r.rows[0]?.topic_name;
+      if (topicName) {
+        return pool.query(
+          `INSERT INTO user_library_interests (user_id, topic_name, created_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (user_id, topic_name) DO NOTHING`,
+          [userId, topicName],
+        );
+      }
+    }).catch(() => {});
 
     // Record credibility signal and recalculate asynchronously
     void db.insert(topicCredibilitySignalsTable).values({

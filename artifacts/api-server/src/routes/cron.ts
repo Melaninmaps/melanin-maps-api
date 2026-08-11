@@ -390,7 +390,7 @@ Return ONLY a JSON object with this exact shape:
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         max_tokens: 1200,
@@ -650,7 +650,7 @@ Return ONLY this JSON (no markdown):
 }`;
 
             const completion = await openai.chat.completions.create({
-              model: "gpt-4o-mini",
+              model: "gpt-5-mini",
               messages: [{ role: "user", content: prompt }],
               temperature: 0.7,
               max_tokens: 200,
@@ -788,7 +788,7 @@ router.post("/cron/founding-anniversary", async (req, res): Promise<void> => {
         let aiMessage = `Your ${foundingFeePercent}% founding rate — compared to the standard ${standardFeePercent}% — means every dollar you earn on the platform goes further. That's real money reinvested directly back into ${biz.name}.`;
         try {
           const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-5-mini",
             max_tokens: 120,
             messages: [
               {

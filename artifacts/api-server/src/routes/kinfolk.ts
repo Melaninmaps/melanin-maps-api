@@ -762,6 +762,7 @@ function buildSystemPrompt(opts: {
   cityContext?: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
   culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
   knowledgeGraphContext?: KnowledgeGraphContext | null;
+  libraryInterests?: string[];
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -964,6 +965,14 @@ ${lifestyleServices.map((s) => `- ${s.replace(/_/g, " ")}`).join("\n")}
 PROACTIVE LIFESTYLE RULE: Any time they ask about a new city, trip, or stay of any length — automatically surface minority-owned providers for their services without being asked. Make the connection feel like magic: "Since you keep your locs tight, here's the best loctician I found in Atlanta..." or "I already lined up a Black barber near your hotel." This is what separates a search engine from a friend who actually knows you.`
     : "";
 
+  // ── Library cross-pollination (user's followed topics) ───────────────────
+  const libraryInterestsSection = (opts.libraryInterests?.length ?? 0) > 0
+    ? `\nLIBRARY INTERESTS — CROSS-POLLINATION (what this user follows in the MWM Library):
+${opts.libraryInterests!.map((t) => `- ${t}`).join("\n")}
+
+CROSS-POLLINATION RULE: When the user asks about travel, food, culture, or recommendations, proactively connect to their library interests. If they follow "Ethiopia" in the Library and ask where to eat, surface Ethiopian restaurants. If they follow "Maternal Health" and ask for an OBGYN, lead with that context. Make the connection feel like a friend who pays attention — natural, never mechanical.`
+    : "";
+
   const smartPromoSection = `
 SMART PROMOTION ENGINE — contextual minority-owned business cross-sell:
 Based on what the user is doing RIGHT NOW in this conversation, surface a single highly-relevant minority-owned business category they haven't thought of yet. Only return "smartPromotion" when there's a genuine, confident fit — quality over frequency. Skip it (set null) if nothing naturally applies.
@@ -1015,7 +1024,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${lifestyleSection}${tierSection}${smartPromoSection}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -2069,7 +2078,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Never blocks a Kinfolk response.
     const kgContext = await getKnowledgeGraphContext(message, destination).catch(() => null);
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext }) + ownerBusinessContext;
+    // Fetch user's library interests for cross-pollination into KinfolkAI context
+    let libraryInterests: string[] = [];
+    if (req.user?.id) {
+      try {
+        const liRes = await pool.query<{ topic_name: string }>(
+          `SELECT topic_name FROM user_library_interests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+          [req.user.id],
+        );
+        libraryInterests = liRes.rows.map((r) => r.topic_name);
+      } catch { /* non-critical — table may not exist yet */ }
+    }
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext, libraryInterests }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
@@ -2087,13 +2108,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI — gpt-4o-mini matches all other routes in this file and is confirmed
+    // Call AI — gpt-5-mini matches all other routes in this file and is confirmed
     // working through the Replit AI Integrations proxy. response_format json_object
     // guarantees valid JSON every response. AbortSignal.timeout(25000) caps the
     // OpenAI call so a provider stall can never leave the browser spinning forever.
     const completion = await openai.chat.completions.create(
       {
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         max_tokens: 1000,
         messages: aiMessages,
         response_format: { type: "json_object" },
@@ -2383,7 +2404,7 @@ Include exactly ${MAX_ITEMS} action items. Prioritize accessibility (ADA complia
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
       max_tokens: isTrailblazer ? 2000 : 1000,
@@ -2525,7 +2546,7 @@ Include 2–4 city opportunities and 3–4 strategic insights. Focus on cities w
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
       max_tokens: 1500,
@@ -2756,7 +2777,7 @@ ${businessCatalog}`;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         { role: "system", content: systemPrompt },
         ...(messages as Array<{ role: string; content: string }>).map(m => ({

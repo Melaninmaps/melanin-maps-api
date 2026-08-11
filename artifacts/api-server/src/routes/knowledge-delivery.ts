@@ -444,7 +444,7 @@ router.get("/knowledge/digest", async (req: Request, res: Response) => {
     const topicList = topics.map((t) => t.topicName).join(", ");
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       max_tokens: 400,
       messages: [
         {

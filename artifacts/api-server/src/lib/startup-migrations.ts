@@ -1617,7 +1617,7 @@ END $seed$`,
          'Thailand''s most celebrated island — sun-soaked beaches, vibrant night markets, and a growing reputation as one of Southeast Asia''s most welcoming destinations for Black travelers.')
       ) AS v(n, d)
       WHERE NOT EXISTS (
-        SELECT 1 FROM knowledge_topics WHERE topic_name = v.n AND category = 'country'
+        SELECT 1 FROM knowledge_topics WHERE topic_name = v.n
       )
     `,
   },
@@ -1817,6 +1817,21 @@ ON CONFLICT (city_slug) DO NOTHING`,
   // why no tester could log in. Tester accounts are now managed exclusively by
   // tester_accounts_restore_v1 (UPSERT above). Do not add any DELETE FROM users
   // logic to this array — it will execute on every deploy and every crash-restart.
+  {
+    // user_library_interests — tracks which topics a user has followed or saved.
+    // Powers KinfolkAI cross-pollination: when a user follows "Ethiopia" in the Library,
+    // KinfolkAI surfaces Ethiopian businesses and events in travel/businesses conversations.
+    name: "user_library_interests_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS user_library_interests (
+        user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        topic_name TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        PRIMARY KEY (user_id, topic_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_library_interests_user ON user_library_interests(user_id);
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
