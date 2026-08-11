@@ -2293,6 +2293,35 @@ ON CONFLICT (city_slug) DO UPDATE SET
   brief_context       = EXCLUDED.brief_context,
   historical_context  = EXCLUDED.historical_context`,
   },
+
+  // ── family_ai_usage — tracks AI quota consumption per circle/user per month.
+  // Required by checkAiPool() (called on every non-free KinfolkAI chat request).
+  // Missing table causes an instant "KinfolkAI chat failed" for all navigator/
+  // trailblazer users. CREATE IF NOT EXISTS is safe to run every boot.
+  {
+    name: "family_ai_usage_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS family_ai_usage (
+      circle_id   VARCHAR NOT NULL,
+      year_month  VARCHAR(7) NOT NULL,
+      requests_used INTEGER NOT NULL DEFAULT 0,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (circle_id, year_month)
+    )`,
+  },
+
+  // ── voice_usage — tracks TTS character consumption per user per month.
+  // Required by checkVoiceUsage() / incrementVoiceChars(). Missing table causes
+  // "KinfolkAI chat failed" when the TTS speak endpoint is called by paid users.
+  {
+    name: "voice_usage_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS voice_usage (
+      user_id     VARCHAR NOT NULL,
+      year_month  VARCHAR(7) NOT NULL,
+      chars_used  INTEGER NOT NULL DEFAULT 0,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, year_month)
+    )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

@@ -1766,19 +1766,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
       // ── Paid-tier AI pool check ────────────────────────────────────────────
       if (!isFree) {
-        const poolStatus = await checkAiPool(req.user.id, effectiveTier);
-        if (!poolStatus.allowed) {
-          const month = new Date().toLocaleDateString("en-US", { month: "long" });
-          res.status(429).json({
-            error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
-            code: "AI_POOL_EXHAUSTED",
-            used: poolStatus.used,
-            limit: poolStatus.limit,
-            upgradeUrl: "/membership",
-          });
-          return;
+        try {
+          const poolStatus = await checkAiPool(req.user.id, effectiveTier);
+          if (!poolStatus.allowed) {
+            const month = new Date().toLocaleDateString("en-US", { month: "long" });
+            res.status(429).json({
+              error: `Your KinfolkAI pool of ${poolStatus.limit} conversations has been used for ${month}. Upgrade your plan or wait until next month.`,
+              code: "AI_POOL_EXHAUSTED",
+              used: poolStatus.used,
+              limit: poolStatus.limit,
+              upgradeUrl: "/membership",
+            });
+            return;
+          }
+          aiPoolCircleId = poolStatus.circleId;
+        } catch (poolErr) {
+          // family_ai_usage table may not exist on this deployment — treat as unlimited
+          // rather than blocking the user. The startup migration will create it on next boot.
+          console.error("[kinfolk-pool-check] checkAiPool failed, treating as unlimited:", poolErr instanceof Error ? poolErr.message : String(poolErr));
         }
-        aiPoolCircleId = poolStatus.circleId;
       }
       } // closes: if (!hasActiveTesterEntitlement(user))
     }
@@ -1790,36 +1796,42 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedPlaces: string[] = [];
 
     if (req.user?.id) {
-      // User preferences
-      const prefsResult = await db
-        .select()
-        .from(userPreferencesTable)
-        .where(eq(userPreferencesTable.userId, req.user.id))
-        .limit(1);
-      prefs = prefsResult[0] ?? null;
+      // User preferences — wrapped individually so a schema mismatch never kills the chat
+      try {
+        const prefsResult = await db
+          .select()
+          .from(userPreferencesTable)
+          .where(eq(userPreferencesTable.userId, req.user.id))
+          .limit(1);
+        prefs = prefsResult[0] ?? null;
+      } catch { /* non-critical — proceed without personalization prefs */ }
 
       // Feedback history
-      const feedback = await db
-        .select()
-        .from(kinfolkFeedbackTable)
-        .where(eq(kinfolkFeedbackTable.userId, req.user.id))
-        .orderBy(desc(kinfolkFeedbackTable.createdAt))
-        .limit(40);
+      try {
+        const feedback = await db
+          .select()
+          .from(kinfolkFeedbackTable)
+          .where(eq(kinfolkFeedbackTable.userId, req.user.id))
+          .orderBy(desc(kinfolkFeedbackTable.createdAt))
+          .limit(40);
 
-      likedSpots = feedback
-        .filter((f) => f.reaction === "like")
-        .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
-      dislikedSpots = feedback
-        .filter((f) => f.reaction === "dislike")
-        .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
+        likedSpots = feedback
+          .filter((f) => f.reaction === "like")
+          .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
+        dislikedSpots = feedback
+          .filter((f) => f.reaction === "dislike")
+          .map((f) => `${f.businessName}${f.city ? ` (${f.city})` : ""}${f.category ? ` — ${f.category}` : ""}`);
+      } catch { /* non-critical — proceed without feedback history */ }
 
       // Saved places
-      const saved = await db
-        .select()
-        .from(savedPlacesTable)
-        .where(eq(savedPlacesTable.userId, req.user.id))
-        .limit(15);
-      savedPlaces = saved.map((s) => s.businessId);
+      try {
+        const saved = await db
+          .select()
+          .from(savedPlacesTable)
+          .where(eq(savedPlacesTable.userId, req.user.id))
+          .limit(15);
+        savedPlaces = saved.map((s) => s.businessId);
+      } catch { /* non-critical — proceed without saved places */ }
 
       // Respect personalisedSuggestions setting — if false, strip all taste profile data
       try {
