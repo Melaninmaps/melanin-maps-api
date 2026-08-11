@@ -239,7 +239,7 @@ export function FullMapView() {
   const [selectedTourEvent, setSelectedTourEvent] = useState<TourRecurringEvent | null>(null);
   const isFetchingTourEvents = useRef(false);
 
-  const [showTourSites, setShowTourSites] = useState(false);
+  const [showTourSites, setShowTourSites] = useState(true);
   const [tourSites, setTourSites] = useState<TourHeritageSite[]>([]);
   const [selectedTourSite, setSelectedTourSite] = useState<TourHeritageSite | null>(null);
   const isFetchingTourSites = useRef(false);

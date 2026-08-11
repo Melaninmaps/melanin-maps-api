@@ -641,10 +641,40 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE tour_cultural_sites ALTER COLUMN state TYPE TEXT USING state::text`,
   },
   {
-    // Hardcoded coordinates for all 25 Phuket cultural sites seeded from
-    // phuket-international-cultural-v1.ts — Nominatim fails on Thai addresses
-    // so we supply accurate coordinates directly. WHERE latitude IS NULL makes
-    // this idempotent; runs once then no-ops on every subsequent boot.
+    // Hardcoded coordinates for all 20 international diaspora sites seeded from
+    // phuket-international-cultural-v1.ts — Nominatim fails on many of these
+    // addresses. WHERE latitude IS NULL makes this idempotent.
+    name: "intl_diaspora_sites_coords_v1",
+    sql: `
+      UPDATE tour_cultural_sites AS t
+      SET latitude = c.lat, longitude = c.lng
+      FROM (VALUES
+        ('elmina castle',                                                                        5.0845,   -1.3504),
+        ('maison des esclaves (house of slaves) — gorée island',                               14.6686,  -17.3997),
+        ('robben island',                                                                      -33.8072,  18.3679),
+        ('bob marley museum',                                                                   17.9926,  -76.7837),
+        ('marcus garvey birthplace and monument',                                               18.4337,  -77.2027),
+        ('soweto — vilakazi street and the hector pieterson museum',                           -26.2498,  27.8537),
+        ('bois caïman — birthplace of the haitian revolution',                                  19.6450,  -72.1780),
+        ('alhambra palace — monument to african islamic civilization in europe',                37.1760,   -3.5880),
+        ('siddis of india — african descendants in gujarat and karnataka',                      21.1500,   70.7500),
+        ('great zimbabwe — the ancient african city that embarrassed colonialism',             -20.2671,   30.9332),
+        ('timbuktu — city of 700,000 manuscripts and the university of sankore',               16.7714,   -3.0079),
+        ('angkor wat and the khmer empire heritage',                                            13.4125,  103.8670),
+        ('chichen itza — maya astronomical city',                                               20.6843,  -88.5678),
+        ('zócalo (constitution square) — built on tenochtitlan',                               19.4326,  -99.1332),
+        ('machu picchu — inca city in the clouds',                                             -13.1631,  -72.5449),
+        ('zeitz mocaa — museum of contemporary art africa, cape town',                        -33.9041,   18.4213),
+        ('alhambra''s broader context — the north african church fathers and early christianity',37.1760,  -3.5880),
+        ('toussaint l''ouverture memorial — place du champ de mars, port-au-prince',           18.5432,  -72.3395),
+        ('cape coast castle',                                                                    5.1042,   -1.2476),
+        ('medina of fez — the world''s oldest living university city',                         34.0643,   -5.0073)
+      ) AS c(name_lower, lat, lng)
+      WHERE LOWER(t.name) = c.name_lower
+        AND t.latitude IS NULL
+    `,
+  },
+  {
     name: "phuket_cultural_sites_coords_v1",
     sql: `
       UPDATE tour_cultural_sites AS t
