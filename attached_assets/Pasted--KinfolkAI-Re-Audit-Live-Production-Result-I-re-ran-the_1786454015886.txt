@@ -1,0 +1,21 @@
+## KinfolkAI Re-Audit — Live Production Result
+
+I re-ran the test after the interruption, including the requested recovery steps: I signed out from the profile, cleared browser storage, returned through the authentication flow, and verified that the active account session remained available across the Map and KinfolkAI screens.
+
+| Test | Result | What happened |
+|---|---:|---|
+| Production bundle | ✅ Pass | The live homepage references `index-C7wmaFAn.js`; it returns `text/javascript` at **2.3 MB**, so the app bundle is loading correctly. |
+| Authenticated navigation | ✅ Pass | The account remained signed in on Map and after returning to `/travel`; there was **no re-login prompt**. |
+| Phuket birthday itinerary | ❌ Fail | KinfolkAI displayed: *“Kinfolk is having trouble answering that right now. Try again.”* |
+| Basic general knowledge | ❌ Fail | I asked **“What is 12 times 8?”** and received the same failure message. This confirms it is **not a Phuket-content issue**. |
+| Preference adaptation / domestic recommendations | ⏸️ Blocked | These cannot be meaningfully evaluated while Kinfolk fails on both a travel question and basic math. |
+
+> **Definitive conclusion:** KinfolkAI is still failing globally in the live production experience. The session is active and stable, but the chat request is still not completing successfully. The prior fix did not resolve the end-to-end issue.
+
+### What Replit should investigate next
+
+The frontend is correctly sending chat requests with `credentials: "include"`, and the user session remains active elsewhere in the product. The remaining problem is therefore likely **inside the Kinfolk chat route after authentication**, rather than the browser’s stale token alone.
+
+Replit should add temporary server-side request tracing to `/api/kinfolk/chat` and capture, for one failing request: whether cookie authentication succeeds, whether the Kinfolk session is created/found, whether the AI provider call begins, the provider response status/body, and the final exception returned to the UI. The UI currently hides all of that behind the same generic error, so this single trace will isolate the real failure quickly.
+
+The correct release gate is: a cleanly authenticated tester must receive successful answers for **one Phuket itinerary question, one Philadelphia recommendation, and one basic question** before Kinfolk is considered ready for testers. The rest of the authenticated platform and navigation are functioning, but I cannot mark Kinfolk launch-ready yet.

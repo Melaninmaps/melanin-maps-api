@@ -1,0 +1,44 @@
+Tell Replit to treat my audit as an **independent acceptance test**, not as the only test. Before they say a fix is ready, they should run their own **production smoke test**, save the evidence, and send you the results.
+
+You can paste this instruction directly to them:
+
+> **Do not mark a fix complete until you have performed and documented a production self-audit. Test the live URL—not localhost, Preview, or a development database—using a clean browser session and a real tester account. For each check, provide the UTC/ET timestamp, production URL, HTTP status, screenshot or screen recording, and the exact result. If any check fails, do not ask Manus to re-audit yet. Fix it, redeploy, and repeat the full checklist.**
+
+For **KinfolkAI**, require this exact release gate:
+
+| Required self-test | Pass condition |
+|---|---|
+| Confirm deployment | The production homepage references the current asset bundle, and the bundle returns `200` with `Content-Type: text/javascript`—not HTML. |
+| Clean-session test | Log out, clear site storage, close/reopen the browser or use an incognito session, then log in as `manus@mappingwithmelanin.com`. |
+| Auth test | `GET /api/auth/user` or the app’s equivalent returns the authenticated tester—not a 401. |
+| Kinfolk Phuket test | Ask the Phuket birthday question. Kinfolk returns a substantive answer, not the generic error. |
+| Kinfolk basic test | Ask `What is 12 times 8?` Kinfolk returns `96`. This proves the AI route works beyond destination data. |
+| Kinfolk domestic test | Ask for a Philadelphia recommendation. Kinfolk returns a substantive answer. |
+| Continuity test | Navigate Map → Profile → KinfolkAI; confirm no login prompt and send one more successful message. |
+| Error-observability test | Confirm server logs show no unhandled error, 401, or provider failure for the successful requests. |
+
+Require them to provide a one-page sign-off in this format:
+
+```text
+MWM Production Self-Audit — [date/time ET]
+Deployment / bundle: [filename + deployment ID]
+Environment tested: https://www.mappingwithmelanin.com
+Account: manus@mappingwithmelanin.com
+Browser / session: Incognito or cleared-storage fresh session
+
+1. Login: PASS / FAIL — evidence link
+2. Authenticated user endpoint: PASS / FAIL — HTTP status + evidence
+3. Kinfolk Phuket birthday query: PASS / FAIL — screenshot + server request ID
+4. Kinfolk “12 × 8” query: PASS / FAIL — screenshot + server request ID
+5. Kinfolk Philadelphia query: PASS / FAIL — screenshot + server request ID
+6. Map → Profile → Kinfolk persistence: PASS / FAIL — screen recording
+7. Server log review: PASS / FAIL — no 401 / no provider error
+
+Engineer sign-off: [name]
+Owner verification: [name]
+Status: READY FOR INDEPENDENT MANUS RE-AUDIT / NOT READY
+```
+
+The key rule is: **Replit should not tell you “it’s fixed” based on code changes alone. They should say “it passed the production checklist,” then attach proof.** After that, I can perform the independent audit as the final approval layer.
+
+For the long term, have them automate this checklist in a release pipeline: deployment is blocked if the authenticated Kinfolk smoke test fails, and you receive the same failure alert that Replit receives.
