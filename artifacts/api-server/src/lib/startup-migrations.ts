@@ -1153,7 +1153,7 @@ END $seed$`,
   {
     // Manus AI audit account — pre-approved tester for full web UX audit.
     // member_type='founding' gives top-tier access to every feature without
-    // a Stripe subscription. Password: MWM-Manus-2026!
+    // a Stripe subscription. Password: MWM-invite-2026!
     // ON CONFLICT DO NOTHING — safe to run on every boot.
     name: "ensure_manus_tester_account_v1",
     sql: `INSERT INTO users
@@ -1164,7 +1164,7 @@ END $seed$`,
             (gen_random_uuid(),
              'tester@mwm.com',
              'Manus', 'Tester',
-             '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2',
+             '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO',
              true, true, true,
              'founding', true, 'tester', 'Philadelphia')
           ON CONFLICT (email) DO NOTHING`,
@@ -1225,17 +1225,17 @@ END $seed$`,
   },
   // ── Pre-approved tester accounts with universal first-time password ────────
   // Creates accounts for every tester email that hasn't self-registered yet.
-  // Universal password: MWM-Manus-2026! (bcrypt cost=8)
+  // Universal password: MWM-invite-2026! (bcrypt cost=8)
   // must_change_password=true so they are forced to set their own password on
   // first login. Also sets must_change_password=true on the Manus tester.
   // ON CONFLICT DO NOTHING — never overwrites a user who already set their own password.
   {
     name: "tester_universal_accounts_v1",
     sql: `
-      -- Universal password hash: bcrypt(cost=8) of "MWM-Manus-2026!"
+      -- Universal password hash: bcrypt(cost=8) of "MWM-invite-2026!"
       DO $$
       DECLARE
-        universal_hash TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+        universal_hash TEXT := '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO';
         tester_emails TEXT[] := ARRAY[
           'tlindsay428@gmail.com',
           'tlindsay428@aol.com',
@@ -1300,7 +1300,7 @@ END $seed$`,
     name: "tester_password_force_reset_v1",
     sql: `
       UPDATE users SET
-        password_hash        = '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2',
+        password_hash        = '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO',
         must_change_password = true,
         approved             = true,
         email_verified       = true,
@@ -1361,7 +1361,7 @@ END $seed$`,
     sql: `
       DO $$
       DECLARE
-        h TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+        h TEXT := '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO';
         tester_emails TEXT[] := ARRAY[
           'tlindsay428@gmail.com',
           'tlindsay428@aol.com',
@@ -1765,7 +1765,7 @@ ON CONFLICT (city_slug) DO NOTHING`,
     sql: `
       DO $$
       DECLARE
-        h TEXT := '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+        h TEXT := '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO';
       BEGIN
         INSERT INTO users (id, email, first_name, last_name, password_hash,
                            email_verified, agree_to_terms, profile_setup_complete,
@@ -2873,8 +2873,8 @@ async function ensureTesterUniversalAccounts(
   log: (msg: string) => void,
   warn: (msg: string) => void
 ): Promise<void> {
-  // bcrypt(cost=8) of "MWM-Manus-2026!" — same hash used by tester_universal_accounts_v1
-  const UNIVERSAL_HASH = '$2b$08$Vy2RWYFJTtkYY5xWoI1X/e1goZq8HLlCtW0vPWBo3HpQCV3jd0/T2';
+  // bcrypt(cost=8) of "MWM-invite-2026!" — same hash used by tester_universal_accounts_v1
+  const UNIVERSAL_HASH = '$2b$08$ofLtRbXbdrBoQm4nfLz.fut.KCmGZyMBGWVJx4U/4FOfzIOfZ1prO';
   const emails = PRE_APPROVED_TESTER_EMAILS.map(e => e.toLowerCase().trim());
   try {
     // A: create missing accounts
