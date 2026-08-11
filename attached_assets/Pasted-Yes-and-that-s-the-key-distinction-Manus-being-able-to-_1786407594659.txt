@@ -1,0 +1,68 @@
+Yes — and that's the key distinction. **Manus being able to test does not prove that your `tlindsay428@gmail.com` account still exists.**
+
+Manus was given separate dedicated tester credentials. Replit's own final verification said those Manus accounts existed and could authenticate. Then, separately, you authorized Replit to perform the **tester clean-slate deletion**, preserving only your founder account and the Apple reviewer account. So both things can be true:
+
+**Manus can log in with its dedicated account → PASS.**
+**Your old Gmail tester account was deleted → “Invalid email or password.”**
+
+The part I want to correct from my last response is this: **we should not automatically assume this screenshot proves everything is behaving correctly.** Before you create a new account, I'd have Replit confirm exactly what happened to this specific email. We have had too many situations today where assumptions cost us time.
+
+Send this:
+
+```text
+READ-ONLY AUTH CHECK — DO NOT CHANGE ANYTHING
+
+I am testing the production website as a real new tester.
+
+Email:
+tlindsay428@gmail.com
+
+Login currently returns:
+"Invalid email or password."
+
+Before I create a new account, confirm directly against the CURRENT
+RAILWAY PRODUCTION DATABASE:
+
+1. Does tlindsay428@gmail.com currently exist in users?
+   YES / NO
+
+2. Was this account included in the tester clean-slate deletion?
+   YES / NO
+
+3. If it does not exist, confirm that this is EXPECTED because we
+   intentionally deleted tester accounts so they could register again
+   as brand-new users.
+
+4. Confirm the dedicated Manus testing account(s) were NOT part of this
+   deletion and explain which account Manus used for its most recent
+   production test.
+
+5. Confirm the Apple reviewer account still exists and authenticates.
+   DO NOT modify it.
+
+6. Confirm my protected founder account still exists.
+   DO NOT modify it.
+
+7. If tlindsay428@gmail.com no longer exists, test the registration
+   PRECHECK only and confirm the production system will allow this
+   exact email to create a brand-new account.
+
+IMPORTANT:
+DO NOT recreate this account.
+DO NOT reset its password.
+DO NOT insert a user.
+DO NOT modify authentication.
+DO NOT deploy anything.
+
+This is READ-ONLY verification.
+
+Return the actual production DB evidence and tell me:
+
+SAFE FOR FOUNDER TO CREATE NEW TEST ACCOUNT: YES / NO
+```
+
+If Replit comes back with **“NO — `tlindsay428@gmail.com` does not exist, it was intentionally deleted, and registration accepts it,”** then you should create the account yourself.
+
+And that is actually the test I want. You shouldn't receive a prebuilt account experience. **You should experience the exact registration and onboarding journey tomorrow's testers will experience.**
+
+If *you* can't get from zero → account → onboarding → Mapping With Melanin without assistance from Replit, we don't send everyone else in yet.

@@ -1,0 +1,267 @@
+I reviewed the Manus report. This is actually a **very useful audit because Manus independently reproduced the exact international problem you were seeing**, rather than accepting Replit's API checks as proof that the experience worked.
+
+The most important finding is: **the data is there, but the user experience is not reliably reaching it.** Manus confirmed that Phuket listings exist in the database, yet searching “restaurant Phuket Thailand” returned 30 results that were essentially all U.S. results.  That validates your concern: database counts and API responses were being treated as proof of a working map/search experience when they were not.
+
+Manus also found the same problem in KinfolkAI. Kinfolk correctly understood a destination change from Phuket to Bangkok, but then claimed it did not have specific community listings and fell back to generic tourist information—even though MWM has international data. 
+
+There are two other findings I would address now. Los Angeles has essentially no normal business coverage in Manus's test, despite strong results in DC and Columbia.  And the Sundown Town layer works visually, but Manus did **not** receive a proactive location-triggered warning when testing Levittown. 
+
+So I would **not release the broader tester group quite yet**. We are much closer than this report may sound, because this is not “the whole platform is broken.” Manus explicitly found strong domestic search and map capability.  The critical blocker is the routing architecture connecting destination → MWM database → map → Kinfolk.
+
+And I want to slightly modify Manus's proposed fix because of something **you clarified after this audit**: MWM should **not become an internet directory**. Searching Phuket should reposition/search against Phuket, but the results displayed as MWM places should come from **our database**, not whatever Nominatim/Google happens to find.
+
+Send Replit this:
+
+```text
+MANUS INDEPENDENT AUDIT — P0 CORRECTION WORKSTREAM
+
+We now have independent visual testing from Manus.
+
+IMPORTANT:
+Do not dispute these findings using database counts, API counts, route
+existence, or code inspection.
+
+Manus reproduced the actual member experience.
+
+========================================================
+P0 — INTERNATIONAL SEARCH
+========================================================
+
+Manus searched:
+
+"restaurant Phuket Thailand"
+
+and received 30 results, essentially all US businesses, despite Phuket
+records existing in our database.
+
+This is a confirmed production UX failure.
+
+Mapping With Melanin is NOT a general internet directory.
+
+External geocoding may ONLY be used to understand geography and reposition
+the map.
+
+It must NEVER supply businesses as MWM search results.
+
+Correct architecture:
+
+USER QUERY
+     ↓
+PARSE
+     ↓
+GEOGRAPHY + INTENT
+     ↓
+Example:
+"Phuket restaurants"
+Geography = Phuket, Thailand
+Intent = restaurants
+     ↓
+Resolve Phuket coordinates / geographic boundary
+     ↓
+QUERY MWM DATABASE
+     ↓
+Return ONLY qualifying MWM records associated with Phuket
+     ↓
+MAP MOVES TO PHUKET
+     ↓
+DISPLAY THOSE MWM RECORDS
+
+If MWM has zero matching records:
+
+DO NOT substitute random internet businesses.
+
+Say clearly:
+
+"We don't have a match for that yet."
+
+Then provide appropriate MWM actions such as:
+
+• Try another category
+• Ask KinfolkAI
+• Add a Place
+
+========================================================
+SEARCH LANGUAGE TEST MATRIX
+========================================================
+
+The system cannot depend on users typing database terminology.
+
+Visually test production with:
+
+Phuket
+Phuket restaurants
+restaurants Phuket
+restaurant Phuket Thailand
+Phuket nightlife
+nightlife in Phuket
+Black owned Phuket
+things to do Phuket
+Phuket spa
+Phuket hotel
+Bangkok restaurants
+restaurants in Bangkok
+Bangkok nightlife
+Jamaica restaurants
+Kingston Jamaica restaurants
+Philadelphia restaurants
+restaurants near me
+
+For every query report:
+
+1. Geography extracted
+2. Intent extracted
+3. Number of MWM DB matches
+4. Map destination
+5. Visible results
+6. Screenshot/visual verification
+
+A result is FAIL if the correct records exist in MWM but the member
+cannot discover them naturally.
+
+========================================================
+P0 — KINFOLKAI
+========================================================
+
+Manus confirmed Kinfolk understands destination context but failed to
+retrieve MWM international businesses.
+
+Trace the COMPLETE Kinfolk retrieval pipeline.
+
+When someone asks:
+
+"I'm going to Phuket. Where should we go tonight?"
+
+Kinfolk should search the SAME authoritative MWM business data available
+to Map/Discover.
+
+Required priority:
+
+1. Mapping With Melanin database
+2. MWM community contributions / cultural intelligence
+3. MWM Knowledge Graph / Library
+4. Clearly identified general knowledge ONLY when appropriate
+
+Kinfolk must distinguish these.
+
+It must NEVER say:
+
+"We don't have listings"
+
+when qualifying MWM records actually exist.
+
+Test:
+
+"Find me restaurants in Phuket."
+
+"Where can we go out tonight in Phuket?"
+
+"I'm a Black woman traveling to Phuket with friends. What would you
+recommend?"
+
+"Actually we're going to Bangkok tomorrow."
+
+"Find us dinner in Bangkok."
+
+"Do we have anything from our community there?"
+
+Verify the actual businesses returned against the production database.
+
+========================================================
+P0 — MAP + SEARCH CONSISTENCY
+========================================================
+
+There must be ONE authoritative discovery layer.
+
+If the database says Phuket has X qualifying records:
+
+Map
+Discover
+Search
+KinfolkAI
+
+must all be capable of retrieving those same records when relevant.
+
+They cannot behave like four unrelated discovery products.
+
+========================================================
+P1 — LOS ANGELES
+========================================================
+
+Manus found ZERO standard LA business listings in its test.
+
+Audit this independently.
+
+If confirmed, perform a targeted proof-of-concept seed using the same
+real-business verification standards previously approved.
+
+Do not add demo/test businesses.
+
+========================================================
+P1 — SUNDOWN / HISTORICAL EXCLUSION ALERT
+========================================================
+
+Manus confirmed the map layer works but did not receive a proactive
+geo-triggered warning in simulated Levittown, PA.
+
+Determine whether proactive location alerts are:
+
+A. already built but malfunctioning
+B. partially built
+C. planned but never implemented
+
+DO NOT implement until classification is reported if implementation
+would destabilize this release.
+
+========================================================
+NEAR ME PERMISSION
+========================================================
+
+Manus also found that denying location permission initially may require
+refreshing the page before another location request occurs.
+
+Confirm this behavior.
+
+A member should have an obvious way to retry location permission without
+having to know to refresh the website.
+
+========================================================
+RELEASE RULE
+========================================================
+
+Do not declare this fixed based on:
+
+✓ DB records existing
+✓ endpoint returning 200
+✓ coordinates existing
+✓ unit test passing
+✓ code looking correct
+
+For the international P0, PASS requires:
+
+REAL PRODUCTION WEBSITE
++
+AUTHENTICATED TEST ACCOUNT
++
+NATURAL-LANGUAGE SEARCH
++
+MAP VISUALLY MOVES TO DESTINATION
++
+CORRECT MWM BUSINESSES VISIBLY APPEAR
++
+BUSINESS CARD OPENS
++
+KINFOLK CAN RETRIEVE THE SAME DATA
+
+Freeze unrelated development while this is being corrected.
+
+Return a before/after matrix and the production SHA.
+
+Do not seed additional international businesses merely to make the test
+pass. We already know records exist. Fix retrieval first.
+```
+
+One thing I **would not do now is add those two extra Phuket businesses**. The report proves that more inventory isn't the immediate problem. Five, 13, 26, or 60 Phuket businesses are useless if a traveler can't retrieve them. Fixing that connection is the priority.
+
+Once Replit says this is repaired, I would give **the exact same test back to Manus without telling Manus what Replit changed**. If Manus independently types “Phuket restaurants,” lands in Phuket, sees your MWM listings, opens one, and then asks Kinfolk for Phuket recommendations and gets those same MWM places—that is the evidence I would use to release testers.
+
+That is a much stronger release gate than another Replit self-audit.

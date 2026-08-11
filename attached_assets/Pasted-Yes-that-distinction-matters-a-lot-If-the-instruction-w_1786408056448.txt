@@ -1,0 +1,126 @@
+Yes — that distinction matters a lot.
+
+If the instruction was to **reset tester data so everyone could start fresh**, Replit should have cleared the user-owned test state while preserving the actual account identity. Deleting the accounts themselves changes the login experience and creates exactly the confusion you’re seeing now.
+
+The correct reset model should have been: keep the tester user record and email, keep tester approval/access, keep the ability to log in with the expected tester credential or reset flow, but clear things like onboarding completion, saved places, reviews, Kinfolk preferences, test posts, check-ins, follows, and other tester-created activity so the account behaves like a fresh user after authentication.
+
+I would send Replit this correction immediately:
+
+```text
+CORRECTION — TESTER RESET SCOPE WAS MISUNDERSTOOD
+
+The founder’s intended reset was:
+
+RESET TESTER DATA / EXPERIENCE
+
+NOT:
+
+DELETE TESTER ACCOUNTS
+
+The tester email identities should have remained intact.
+
+The purpose was to let existing approved testers start fresh without losing
+their ability to authenticate.
+
+============================================================
+EXPECTED STATE
+============================================================
+
+For approved tester accounts:
+
+PRESERVE:
+
+- user account
+- email identity
+- tester approval
+- tester/member entitlement
+- canonical user_id
+- auth eligibility
+- Apple-linked identity where applicable
+- any app-review identity
+- account-level role/access
+
+RESET / CLEAR:
+
+- onboarding completion
+- Kinfolk preferences
+- saved places
+- check-ins
+- reviews
+- follows
+- test community posts
+- test contributions
+- test activity
+- any other non-critical tester-owned proof-of-concept data
+
+The account should behave like:
+
+existing approved tester
+→ login succeeds
+→ first-time onboarding appears again
+→ fresh member experience
+
+============================================================
+AUDIT WHAT WAS DELETED
+============================================================
+
+Do NOT make further changes yet.
+
+First report:
+
+1. Which tester user accounts were actually deleted?
+2. Which tester-owned data was deleted?
+3. Were canonical user IDs lost?
+4. Were any Apple-linked accounts affected?
+5. Were any founder/admin or reviewer accounts affected?
+6. Can deleted tester accounts be safely restored without duplicating users?
+7. Are there backups / migration logs / prior rows available to restore identity only?
+
+============================================================
+RESTORE STRATEGY
+============================================================
+
+If tester accounts were deleted but the identity list is known:
+
+restore the tester user identities safely
+WITHOUT restoring their old test activity.
+
+Goal:
+
+same tester email
+same approved access
+fresh onboarding/data state
+
+Do not create duplicate user rows.
+
+Do not overwrite accounts that still exist.
+
+Do not touch founder/admin or Apple reviewer accounts.
+
+============================================================
+ACCEPTANCE
+============================================================
+
+After restoration, visually test two real tester accounts:
+
+login
+→ succeeds
+→ onboarding appears
+→ complete onboarding
+→ member access works
+→ logout
+→ login again
+→ account persists
+
+Then verify Apple reviewer login again.
+
+Final report:
+
+TESTER ACCOUNTS PRESERVED/RESTORED: YES/NO
+TESTER DATA RESET: YES/NO
+DUPLICATES CREATED: YES/NO
+APPLE REVIEWER SAFE: YES/NO
+FOUNDER SAFE: YES/NO
+```
+
+I would pause any further tester cleanup until Replit answers that. The priority now is to **restore identity, not restore old activity**. That gives you the fresh-start experience you wanted without forcing every tester to recreate an account from scratch.

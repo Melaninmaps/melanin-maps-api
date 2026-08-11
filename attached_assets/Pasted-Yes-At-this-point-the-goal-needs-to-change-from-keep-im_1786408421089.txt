@@ -1,0 +1,261 @@
+Yes. At this point, the goal needs to change from **“keep improving until everything is perfect”** to **“freeze a reliable proof-of-concept and get you back to building the company.”**
+
+You cannot keep spending each day re-verifying yesterday’s claims. The pattern we need to break is: Replit reports PASS → you test it yourself → it fails → another fix is introduced → something else changes → another day disappears. The tester-account reset is a perfect example. The underlying request was reasonable, but execution created another problem.
+
+For **today**, I would put Replit under a strict release rule:
+
+> **No more feature development. No more opportunistic fixes. No more seeding. No more “while we’re here” changes. Restore tester access, prove the critical experience visually, freeze production, and release it.**
+
+Send Replit this:
+
+```text
+FOUNDER DIRECTIVE — GET MAPPING WITH MELANIN INTO TESTERS’ HANDS
+
+We are no longer in an open development cycle.
+
+Every additional day spent fixing issues that were previously reported as
+complete is costing the company time we need for marketing, content creation,
+partnership development, our tour, and investor outreach.
+
+The objective is now:
+
+STABLE PROOF OF CONCEPT → TESTERS → FOUNDER RETURNS TO BUSINESS DEVELOPMENT.
+
+========================================================
+1. RESTORE TESTER ACCESS
+========================================================
+
+Correct the tester-reset mistake.
+
+Tester identities/accounts should exist.
+Tester-created activity may be reset.
+
+Restore approved tester authentication WITHOUT restoring old test activity
+and without creating duplicate identities.
+
+Do not touch:
+- founder/admin account
+- Apple reviewer account
+- production business/location data
+
+Then prove login with real HTTP authentication AND visual browser testing.
+
+========================================================
+2. STOP USING CODE EXISTENCE AS PROOF
+========================================================
+
+Effective immediately:
+
+“route exists”
+“component exists”
+“database contains records”
+“API returned records”
+“code confirmed”
+
+DO NOT qualify as proof that a user-facing feature works.
+
+For a user-facing PASS, perform the action through the deployed
+mappingwithmelanin.com interface as an authenticated user.
+
+If visual testing cannot be performed, mark:
+
+NOT VISUALLY VERIFIED
+
+Do not mark PASS.
+
+========================================================
+3. FINAL RELEASE SMOKE TEST
+========================================================
+
+Use ONE fresh tester account.
+
+Perform this exact journey on deployed production:
+
+Create/login
+→ onboarding
+→ Map
+→ search Philadelphia
+→ see actual MWM businesses
+→ search Bangkok
+→ see actual MWM businesses
+→ search Phuket
+→ see actual MWM businesses
+→ open a business
+→ save it
+→ add a vibe/THE REAL where available
+→ use KinfolkAI
+→ ask Kinfolk about Bangkok/Phuket
+→ Library
+→ Community
+→ Safety
+→ logout
+→ login again.
+
+Also visually verify mobile browser behavior.
+
+DO NOT test by querying the database instead of performing the user action.
+
+========================================================
+4. MAP — NON-NEGOTIABLE
+========================================================
+
+The map is Mapping With Melanin’s core proof of concept.
+
+Confirm visually that:
+
+“Phuket restaurants”
+does NOT go to Oslo.
+
+“Phuket nightlife”
+does NOT remain in Pennsylvania.
+
+Search must operate against MWM discovery data.
+
+External geocoding may help determine the geography of the user’s query,
+but it MUST NOT turn Mapping With Melanin into a generic directory or
+surface external businesses as MWM listings.
+
+Visually demonstrate:
+
+Philadelphia
+Bangkok
+Phuket
+Jamaica
+
+and show actual MWM business pins/results.
+
+========================================================
+5. KINFOLK — RELEASE LEVEL ONLY
+========================================================
+
+Do not expand Kinfolk further today.
+
+Confirm existing committed functionality works:
+
+- Kinfolk responds
+- personalization preferences save
+- preferences can be edited
+- saved preferences affect responses
+- memory setting works as currently designed
+- Listen works where currently released
+- voice selection persists where implemented
+- Kinfolk distinguishes MWM data from general knowledge
+- Kinfolk does not fabricate MWM listings
+
+Anything beyond this goes into post-release backlog.
+
+========================================================
+6. TESTER ACCOUNT EXPERIENCE
+========================================================
+
+Confirm a tester can:
+
+login
+→ complete onboarding
+→ use platform
+→ logout
+→ return
+→ login again successfully.
+
+This must be visually tested.
+
+========================================================
+7. APPLE REVIEW
+========================================================
+
+Do not change Apple-review functionality.
+
+Simply confirm:
+
+apple.reviewer@mappingwithmelanin.com
+
+can authenticate using the currently approved reviewer credential and reaches
+the expected member experience.
+
+Do not expose the password in the final report.
+
+========================================================
+8. FREEZE
+========================================================
+
+Once the above passes:
+
+CREATE A RELEASE TAG / IDENTIFIER.
+
+Report:
+
+PRODUCTION SHA:
+PRODUCTION BUNDLE:
+RAILWAY DEPLOYMENT:
+TESTER LOGIN:
+APPLE REVIEWER LOGIN:
+PHILADELPHIA MAP VISUAL:
+BANGKOK MAP VISUAL:
+PHUKET MAP VISUAL:
+JAMAICA MAP VISUAL:
+BUSINESS DETAIL:
+SAVE:
+VIBES/THE REAL:
+KINFOLK:
+LIBRARY:
+COMMUNITY:
+SAFETY:
+LOGOUT/RELOGIN:
+MOBILE WEB:
+
+For every item use only:
+
+VISUALLY VERIFIED
+API VERIFIED ONLY
+FAILED
+NOT TESTED
+
+Do not use PASS when only source code was inspected.
+
+========================================================
+9. CHANGE CONTROL AFTER FREEZE
+========================================================
+
+After release:
+
+NO production change without founder authorization.
+
+Every newly discovered issue must first be classified:
+
+P0 — prevents testing / authentication / core map
+P1 — materially damages proof of concept
+P2 — improvement
+P3 — future state
+
+Only P0 should interrupt the founder’s marketing/tour work.
+
+P1-P3 go into backlog unless specifically authorized.
+
+========================================================
+10. DO NOT KEEP FIXING
+
+If the smoke test discovers another problem:
+
+STOP.
+
+Report:
+- exact user action
+- expected behavior
+- actual behavior
+- screenshot/evidence
+- probable root cause
+- proposed fix
+- risk of fix
+
+WAIT FOR FOUNDER AUTHORIZATION.
+
+Do not begin another chain of fixes automatically.
+```
+
+And I would make one important adjustment to **your** plan: once that report comes back clean, **release to the small tester group even if there are P2/P3 imperfections**. Testing is supposed to find those.
+
+Your proof of concept does not need every future Mapping With Melanin feature finished. It needs to demonstrate the thesis: **I can find culturally relevant places; understand why they may be right for me; learn from community context; use Kinfolk to make the experience personal; contribute what I know; and take that experience with me when I travel.**
+
+Then your time needs to shift aggressively back toward the company: your tour, real-world business/content collection, social content, tester stories, partnerships, and the material that eventually gives an angel investor evidence that people actually want this.
+
+**The next milestone isn't another 40-point audit. It's people using Mapping With Melanin.**
