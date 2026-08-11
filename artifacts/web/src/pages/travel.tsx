@@ -15,15 +15,13 @@ import { getWebToken } from "@/lib/webAuth";
 
 const BASE = import.meta.env.BASE_URL;
 
-// Bearer token helper — all kinfolk API calls must send Authorization header.
-// The api-client-react library adds this automatically for all other web routes;
-// travel.tsx uses raw fetch(), so we attach it explicitly here.
+// Header helper for kinfolk fetch() calls.
+// Auth is handled via the HttpOnly `sid` session cookie (credentials: "include").
+// Do NOT inject a Bearer token here — the localStorage token can go stale after
+// a Railway redeploy / rolling session renewal and will override the valid cookie
+// in getSessionId(), causing 401s for logged-in users.
 function kinfolkAuthHeaders(extra?: HeadersInit): HeadersInit {
-  const token = getWebToken();
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(extra ?? {}),
-  };
+  return extra ?? {};
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
