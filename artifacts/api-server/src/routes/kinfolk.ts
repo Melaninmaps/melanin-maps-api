@@ -2035,10 +2035,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — proceed without catalog */ }
     }
 
-    // No destination or destination yielded no listings — load from user's home city so
-    // Kinfolk can always recommend real MWM businesses for local queries ("find me somewhere
-    // near me", "where can we go tonight", etc.)
-    if (!businessCatalog.length && req.user?.id) {
+    // No destination set — load from user's home city so Kinfolk can recommend real MWM
+    // businesses for local queries ("find me somewhere near me", "where can we go tonight").
+    // IMPORTANT: only fire when destination is null. If a destination is set (e.g. Phuket)
+    // and geo-radius returned 0, do NOT inject home-city businesses — that causes Kinfolk to
+    // recommend Philadelphia restaurants for a Phuket birthday query.
+    if (!businessCatalog.length && req.user?.id && !destination) {
       try {
         const [userRow] = await db
           .select({ homeCity: usersTable.homeCity })
