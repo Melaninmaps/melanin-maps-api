@@ -9,6 +9,7 @@
 - [Kinfolk Community Intelligence](kinfolk-community-intelligence.md) — two ambassador roles (Cultural vs Journey); Opportunity AI; creator dashboard Community Impact; Community Intelligence ecosystem; trust model; "Algorithms chase engagement. Kinfolk cultivates contribution."
 - [Web-static sync order — MANDATORY sequence](web-static-sync-order.md) — wrong order embeds stale bundle; root web-static/index.html is what static-server serves from filesystem, not the Express bundle.
 - [Railway nixpacks deploy checklist](nixpacks-deploy-checklist.md) — MANDATORY per push: build → sync root dist/ → update echo token → commit all 5 dist files + nixpacks.toml → push → rebuild from HEAD → push again.
+- [nixpacks echo token pattern](nixpacks-echo-token-pattern.md) — PERMANENT: changing the echo token causes 60-90 min FULL outage (Railway rebuilds from scratch). Avoid unless required. Correct sed pattern and format inside.
 - [Railway nixpacks build cache bypass](railway-build-cache.md) — TWO root causes: (1) nixpacks echo token must change per push; (2) root dist/index.mjs (not artifacts/api-server/dist/) is what Railway serves — must be committed explicitly.
 - [Web build pipeline — web-static sync required](web-build-pipeline.md) — Vite output must be synced to api-server/web-static before api-server build; nixpacks now does this automatically.
 - [Railway production architecture — definitive](railway-architecture.md) — node static-server.mjs is the start cmd; it spawns ROOT dist/index.mjs (not artifacts/api-server/dist/); every build must cp to root.
