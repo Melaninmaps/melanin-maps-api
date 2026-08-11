@@ -18,6 +18,7 @@ import { MIDWEST_WEST_DIASPORA_V1 } from "./seeds/midwest-west-diaspora-v1.js";
 import { PHUKET_INTERNATIONAL_CULTURAL_V1 } from "../data/phuket-international-cultural-v1.js";
 import { PHUKET_KNOWLEDGE_TOPICS_V1 } from "./seeds/phuket-knowledge-topics-v1.js";
 import { PRIORITY_CULTURAL_V1 } from "../data/priority-cities-cultural-v1.js";
+import { SOUTH_CULTURAL_V1 } from "../data/south-cities-cultural-v1.js";
 import { PRIORITY_PRACTICAL_V1 } from "./seeds/priority-practical-v1.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
@@ -2176,6 +2177,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["midwest west diaspora", () => runSeedBatch("Midwest/West Diaspora", MIDWEST_WEST_DIASPORA_V1, log, warn)],
     // ── Priority cities cultural heritage sites (Philly, DC, Richmond, Charlotte, etc.) ──
     ["priority cultural sites", () => runTourCulturalSitesBatch("Priority Cultural V1", PRIORITY_CULTURAL_V1, log, warn)],
+    // ── South cities cultural heritage sites (ATL, NOLA, Houston, Miami, Birmingham, etc.) ──
+    ["south cultural sites", () => runTourCulturalSitesBatch("South Cultural V1", SOUTH_CULTURAL_V1, log, warn)],
     // ── Priority practical services — dentists, daycares, plumbers, bars ───────
     ["priority practical v1", () => runSeedBatch("Priority Practical V1", PRIORITY_PRACTICAL_V1, log, warn)],
     // ── Phuket + International cultural heritage sites ──────────────────────────
