@@ -918,7 +918,7 @@ export default function BusinessDetail() {
 
         {/* Row 3: Community Safety Stats */}
         <div className="rounded-2xl border border-[#2B1507]/8 bg-[#2B1507]/[0.03] p-5 mb-3">
-          {parseInt((business as any).reportCount ?? "0") > 0 ? (
+          {(parseInt((business as any).reportCount ?? "0") > 0 || (business as any).safetyRating != null || (business as any).wouldReturnAlone != null || (business as any).recommendationRate != null) ? (
             <>
               <div className="flex items-center gap-2 mb-4">
                 <Shield className="w-4 h-4 text-[#CA922B]" />
