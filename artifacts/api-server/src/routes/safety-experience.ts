@@ -123,7 +123,7 @@ router.post("/businesses/:id/safety-experience", requireAuth, async (req, res) =
           belonging_rating, time_of_day, group_type, incident_occurred,
           incident_categories, incident_severity, comments)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-       ON CONFLICT (user_id, business_id, DATE(submitted_at)) DO UPDATE SET
+       ON CONFLICT (user_id, business_id) DO UPDATE SET
          overall_safety      = EXCLUDED.overall_safety,
          return_alone        = EXCLUDED.return_alone,
          would_recommend     = EXCLUDED.would_recommend,
@@ -133,7 +133,8 @@ router.post("/businesses/:id/safety-experience", requireAuth, async (req, res) =
          incident_occurred   = EXCLUDED.incident_occurred,
          incident_categories = EXCLUDED.incident_categories,
          incident_severity   = EXCLUDED.incident_severity,
-         comments            = EXCLUDED.comments`,
+         comments            = EXCLUDED.comments,
+         submitted_at        = NOW()`,
       [
         businessId,
         userId,

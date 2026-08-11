@@ -799,7 +799,7 @@ ON CONFLICT (city_slug) DO UPDATE SET
   city_name         = EXCLUDED.city_name`,
   },
   {
-    // Business safety experience submissions — one row per user per business per visit.
+    // Business safety experience submissions — one row per user per business.
     // The displayed safety stats on every business page are live aggregates from this table.
     // Fields mirror SafetySurveyData from the mobile app.
     name: "create_business_safety_submissions",
@@ -818,7 +818,7 @@ ON CONFLICT (city_slug) DO UPDATE SET
       incident_severity   VARCHAR(20),
       comments            TEXT,
       submitted_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (user_id, business_id, DATE(submitted_at))
+      UNIQUE (user_id, business_id)
     )`,
   },
   {

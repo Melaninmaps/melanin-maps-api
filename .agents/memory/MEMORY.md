@@ -56,6 +56,7 @@
 - [Railway production deployment](railway-deployment.md) — Full setup: static-server.mjs proxy, Railway Postgres (service 7bb11d12), SSL logic, wildcard route fix, data migration pattern all documented.
 - [Railway deploy verification — MANDATORY after every push](railway-deploy-verification.md) — PERMANENT GATE: 5-step SHA verification required after every push; serviceInstanceRedeploy ≠ new code; executeSql "production" ≠ Railway DB.
 - [Trusted Safety Share](trusted-safety-share.md) — mirrors severe safety alerts to trusted contacts; alert library + API routes + mobile screen built Aug 11 2026; 3 integration gaps remain (#242-244).
+- [Safety Experience Submissions](safety-experience-submissions.md) — business_safety_submissions table + POST route + dynamic confidence_score; mobile onSubmit wired Aug 11 2026; before this, survey data was silently discarded.
 - [Railway dist-commit pattern — MANDATORY on every api-server push](railway-dist-commit-pattern.md) — dist/index.mjs is tracked in git; always commit fresh bundle alongside source or Railway serves stale cached bundle.
 - [OTA push preference](ota-push-preference.md) — PERMANENT: always push EAS OTA from Replit (eas CLI at /nix/store path, 300s timeout, cd artifacts/mobile); never ask founder to run locally.
 - [GoDaddy CNAME unlock — REMIND AT SESSION START](railway-deployment-plan.md) — www.mappingwithmelanin.com locked by GoDaddy website builder; must disconnect before mobile app hits live API. Call 1-480-505-8877 or disconnect via GoDaddy dashboard → Website.
