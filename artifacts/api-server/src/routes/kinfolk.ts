@@ -2433,6 +2433,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const errMsg = err instanceof Error ? err.message : String(err);
     const is401 = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
     const isConnRefused = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND") || errMsg.includes("connect");
+    // Plain console.error so Railway log viewer surfaces the actual error (pino JSON payload is hidden in Railway UI)
+    console.error("[kinfolk-chat-error]", errMsg, err instanceof Error ? err.stack : String(err));
     req.log.error({ err, errMsg, is401, isConnRefused }, "KinfolkAI chat failed");
     // Bust the health cache so next /kinfolk/health probe reflects the real state
     _kinfolkHealthCache = null;
