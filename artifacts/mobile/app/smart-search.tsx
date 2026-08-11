@@ -9,6 +9,9 @@ import {
   StyleSheet,
   Pressable,
   Keyboard,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,6 +58,58 @@ export default function SmartSearchScreen() {
   const inputRef = useRef<TextInput>(null);
   const primaryGold = "#CA922B";
   const { history, add: addHistory } = useSearchHistory("smart");
+
+  // Nomination modal state
+  const [showNominate, setShowNominate] = useState(false);
+  const [nominateName, setNominateName] = useState("");
+  const [nominateCity, setNominateCity] = useState("");
+  const [nominateStateField, setNominateStateField] = useState("");
+  const [nominateLoading, setNominateLoading] = useState(false);
+  const [nominateDone, setNominateDone] = useState(false);
+  const [nominateError, setNominateError] = useState<string | null>(null);
+
+  const openNominate = () => {
+    setNominateName("");
+    setNominateCity("");
+    setNominateStateField("");
+    setNominateDone(false);
+    setNominateError(null);
+    setShowNominate(true);
+  };
+
+  const submitNomination = async () => {
+    if (!nominateName.trim() || !nominateCity.trim() || !nominateStateField.trim()) {
+      setNominateError("Please fill in business name, city, and state.");
+      return;
+    }
+    setNominateLoading(true);
+    setNominateError(null);
+    try {
+      const res = await fetch(`${getApiBase()}/api/business-nominations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          businessName: nominateName.trim(),
+          city: nominateCity.trim(),
+          state: nominateStateField.trim(),
+          blackOwned: true,
+        }),
+      });
+      if (res.status === 403) {
+        const data = await res.json() as { error?: string };
+        setNominateError(data.error ?? "Membership required to nominate.");
+      } else if (!res.ok) {
+        setNominateError("Something went wrong. Please try again.");
+      } else {
+        setNominateDone(true);
+      }
+    } catch {
+      setNominateError("Could not connect. Please try again.");
+    } finally {
+      setNominateLoading(false);
+    }
+  };
 
   const getApiBase = () =>
     process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
@@ -290,11 +345,88 @@ export default function SmartSearchScreen() {
                 >
                   <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Ask KinfolkAI™ instead</Text>
                 </TouchableOpacity>
+                <TouchableOpacity activeOpacity={0.85}
+                  style={[styles.nominateBtn, { borderColor: primaryGold }]}
+                  onPress={openNominate}
+                >
+                  <Text style={{ color: primaryGold, fontWeight: "600", fontSize: 13 }}>Know a business that should be here? Nominate them →</Text>
+                </TouchableOpacity>
               </View>
             )}
           </>
         )}
       </ScrollView>
+
+      {/* ── Nominate a Business Modal ── */}
+      <Modal visible={showNominate} transparent animationType="slide" onRequestClose={() => setShowNominate(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)" }} onPress={() => setShowNominate(false)} />
+          <View style={[styles.nominateModal, { backgroundColor: "#fff" }]}>
+            <Text style={styles.nominateTitle}>Nominate a Business</Text>
+            <Text style={styles.nominateSub}>Know a great spot that should be on the map? Tell us about it.</Text>
+
+            {nominateDone ? (
+              <View style={{ alignItems: "center", paddingVertical: 24 }}>
+                <Text style={{ fontSize: 40, marginBottom: 12 }}>✓</Text>
+                <Text style={{ fontSize: 16, fontWeight: "700", marginBottom: 8, color: "#2B1507" }}>Nomination received!</Text>
+                <Text style={{ fontSize: 14, color: "#6B5240", textAlign: "center", lineHeight: 20 }}>
+                  Our team will review it and reach out to the business. Thank you for helping build the map.
+                </Text>
+                <TouchableOpacity
+                  style={[styles.nominateSubmit, { backgroundColor: "#CA922B", marginTop: 20 }]}
+                  onPress={() => setShowNominate(false)}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <Text style={styles.nominateLabel}>Business Name *</Text>
+                <TextInput
+                  style={styles.nominateInput}
+                  value={nominateName}
+                  onChangeText={setNominateName}
+                  placeholder="e.g. Auntie Grace's Soul Kitchen"
+                  placeholderTextColor="#B09070"
+                  autoFocus
+                />
+                <Text style={styles.nominateLabel}>City *</Text>
+                <TextInput
+                  style={styles.nominateInput}
+                  value={nominateCity}
+                  onChangeText={setNominateCity}
+                  placeholder="e.g. Los Angeles"
+                  placeholderTextColor="#B09070"
+                />
+                <Text style={styles.nominateLabel}>State *</Text>
+                <TextInput
+                  style={styles.nominateInput}
+                  value={nominateStateField}
+                  onChangeText={setNominateStateField}
+                  placeholder="e.g. CA"
+                  placeholderTextColor="#B09070"
+                  autoCapitalize="characters"
+                  maxLength={2}
+                />
+                {nominateError && (
+                  <Text style={{ color: "#C0392B", fontSize: 13, marginBottom: 8, lineHeight: 18 }}>{nominateError}</Text>
+                )}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={[styles.nominateSubmit, { backgroundColor: nominateLoading ? "#C4A060" : "#CA922B" }]}
+                  onPress={() => { void submitNomination(); }}
+                  disabled={nominateLoading}
+                >
+                  {nominateLoading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Submit Nomination</Text>
+                  }
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -337,6 +469,13 @@ const styles = StyleSheet.create({
   noResultsIcon: { fontSize: 40, marginBottom: 12 },
   noResultsTitle: { fontSize: 17, fontWeight: "700", marginBottom: 8 },
   noResultsSub: { fontSize: 14, lineHeight: 20, textAlign: "center", marginBottom: 16 },
+  nominateBtn: { marginTop: 12, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+  nominateModal: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+  nominateTitle: { fontSize: 20, fontWeight: "700", color: "#2B1507", marginBottom: 6 },
+  nominateSub: { fontSize: 14, color: "#6B5240", lineHeight: 20, marginBottom: 20 },
+  nominateLabel: { fontSize: 13, fontWeight: "600", color: "#2B1507", marginBottom: 6, marginTop: 12 },
+  nominateInput: { borderWidth: 1, borderColor: "#DDD0C0", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: "#2B1507", marginBottom: 4 },
+  nominateSubmit: { borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 16 },
   kinfolkBtn: { borderRadius: 10, paddingHorizontal: 20, paddingVertical: 12 },
   recentSection: { marginBottom: 20 },
   recentHeader: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 10 },
