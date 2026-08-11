@@ -3271,6 +3271,8 @@ const TESTER_EMAILS = [
   "lilanarich@gmail.com",
   "jordanwtester@gmail.com",
   "joshuabierd99@gmail.com",
+  // Added Aug 11 2026
+  "aniaylar@gmail.com",
 ];
 
 // ── Pre-approved tester emails (haven't registered yet) ───────────────────────
@@ -3320,6 +3322,8 @@ const PRE_APPROVED_TESTER_EMAILS = [
   "mayagz05@icloud.com",
   // Manus audit tester — added to pending list so self-registration works after clean slate
   "kayla.m.manus@mappingwithmelanin.com",
+  // Added Aug 11 2026 — founder-invited tester
+  "aniaylar@gmail.com",
 ];
 
 async function ensureAdminAccounts(
