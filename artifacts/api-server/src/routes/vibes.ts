@@ -430,6 +430,51 @@ router.delete("/vibes/tag", async (req, res) => {
   }
 });
 
+// POST /vibes/endorse — user taps a THE REAL tag for a business
+// Uses business_endorsement_taps table. One tap per user per tag per business (idempotent).
+router.post("/vibes/endorse", async (req, res) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const userId = req.user.id;
+    const { businessId, tagKey } = req.body as { businessId?: string; tagKey?: string };
+    if (!businessId || !tagKey) { res.status(400).json({ error: "businessId and tagKey required" }); return; }
+
+    await pool.query(
+      `INSERT INTO business_endorsement_taps (business_id, user_id, tag_key)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (business_id, user_id, tag_key) DO NOTHING`,
+      [businessId, userId, tagKey],
+    );
+    const countRes = await pool.query<{ count: number }>(
+      `SELECT COUNT(*)::int AS count FROM business_endorsement_taps WHERE business_id = $1 AND tag_key = $2`,
+      [businessId, tagKey],
+    );
+    res.json({ ok: true, count: countRes.rows[0]?.count ?? 0 });
+  } catch (err) {
+    req.log.error({ err }, "add endorsement tap error");
+    res.status(500).json({ error: "Failed to add endorsement" });
+  }
+});
+
+// DELETE /vibes/endorse — user removes their THE REAL tag tap
+router.delete("/vibes/endorse", async (req, res) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const userId = req.user.id;
+    const { businessId, tagKey } = req.body as { businessId?: string; tagKey?: string };
+    if (!businessId || !tagKey) { res.status(400).json({ error: "businessId and tagKey required" }); return; }
+
+    await pool.query(
+      `DELETE FROM business_endorsement_taps WHERE business_id = $1 AND user_id = $2 AND tag_key = $3`,
+      [businessId, userId, tagKey],
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "remove endorsement tap error");
+    res.status(500).json({ error: "Failed to remove endorsement" });
+  }
+});
+
 // PATCH /vibes/businesses/:id/owner-tags — business owner sets their vibes
 router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
@@ -498,9 +543,25 @@ router.get("/vibes/endorsements/:businessId", async (req, res) => {
       [businessId, DISPLAY_THRESHOLD]
     );
 
+    // Include which tags the current user has already tapped (for web UI active state)
+    let userTags: string[] = [];
+    if (req.user?.id) {
+      const userRes = await pool.query<{ tag_key: string }>(
+        `SELECT tag_key FROM business_endorsement_taps WHERE business_id = $1 AND user_id = $2`,
+        [businessId, req.user.id],
+      );
+      userTags = userRes.rows.map((r) => r.tag_key);
+    }
+
     res.json({
-      tags: result.rows.map((r) => ({ tagKey: r.tag_key, label: r.label, count: r.count })),
+      tags: result.rows.map((r) => ({
+        tagKey: r.tag_key,
+        label: r.label,
+        count: r.count,
+        userTapped: userTags.includes(r.tag_key),
+      })),
       threshold: DISPLAY_THRESHOLD,
+      userTags,
     });
   } catch (err) {
     req.log.error({ err }, "get endorsement counts error");

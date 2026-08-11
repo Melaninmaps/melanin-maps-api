@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from "express";
-import { db } from "@workspace/db";
+import { db, pool } from "@workspace/db";
 import {
   kinfolkCircles,
   circleMembers,
@@ -895,6 +895,180 @@ router.delete("/circles/:id/dates/:dateId", async (req: Request, res: Response) 
   } catch (err) {
     (req as any).log.error({ err }, "DELETE /circles/:id/dates/:dateId error");
     res.status(500).json({ error: "Failed to delete date" });
+  }
+});
+
+// ── Circle Saves — shared wishlist for the Circle ────────────────────────────
+
+router.get("/circles/:id/saves", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const { rows } = await pool.query(
+      `SELECT cs.*, u.first_name, u.last_name
+       FROM circle_saves cs
+       JOIN users u ON u.id = cs.saved_by
+       WHERE cs.circle_id = $1
+       ORDER BY cs.saved_at DESC`,
+      [circleId],
+    );
+    res.json({ saves: rows });
+  } catch (err) {
+    (req as any).log.error({ err }, "GET /circles/:id/saves error");
+    res.status(500).json({ error: "Failed to load circle saves" });
+  }
+});
+
+router.post("/circles/:id/saves", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  const { saveType, referenceId, referenceName, notes } = req.body as Record<string, unknown>;
+  if (!referenceName) { res.status(400).json({ error: "referenceName is required" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const { rows } = await pool.query(
+      `INSERT INTO circle_saves (circle_id, saved_by, save_type, reference_id, reference_name, notes)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [circleId, uid(req), saveType ?? "destination", referenceId ?? null,
+       String(referenceName).trim(), notes ? String(notes).trim() : null],
+    );
+    res.status(201).json({ save: rows[0] });
+  } catch (err) {
+    (req as any).log.error({ err }, "POST /circles/:id/saves error");
+    res.status(500).json({ error: "Failed to add save" });
+  }
+});
+
+router.delete("/circles/:id/saves/:saveId", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  const saveId = parseInt(req.params.saveId as string);
+  if (isNaN(circleId) || isNaN(saveId)) { res.status(400).json({ error: "Invalid id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const existing = await pool.query(`SELECT saved_by FROM circle_saves WHERE id = $1 AND circle_id = $2`, [saveId, circleId]);
+    if (existing.rows.length === 0) { res.status(404).json({ error: "Save not found" }); return; }
+    if ((existing.rows[0] as { saved_by: string }).saved_by !== uid(req) && result.circle.hostUserId !== uid(req)) {
+      res.status(403).json({ error: "Only the person who saved this or the host can remove it" }); return;
+    }
+    await pool.query(`DELETE FROM circle_saves WHERE id = $1`, [saveId]);
+    res.json({ ok: true });
+  } catch (err) {
+    (req as any).log.error({ err }, "DELETE /circles/:id/saves/:saveId error");
+    res.status(500).json({ error: "Failed to remove save" });
+  }
+});
+
+// ── Circle Itineraries — KinfolkAI-generated spine + branch travel plans ─────
+
+router.get("/circles/:id/itineraries", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+    const { rows } = await pool.query(
+      `SELECT * FROM circle_itineraries WHERE circle_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      [circleId],
+    );
+    res.json({ itineraries: rows });
+  } catch (err) {
+    (req as any).log.error({ err }, "GET /circles/:id/itineraries error");
+    res.status(500).json({ error: "Failed to load itineraries" });
+  }
+});
+
+router.post("/circles/:id/itineraries", async (req: Request, res: Response) => {
+  if (!authed(req, res)) return;
+  const circleId = parseInt(req.params.id as string);
+  if (isNaN(circleId)) { res.status(400).json({ error: "Invalid circle id" }); return; }
+  const { destination, startDate, endDate, title } = req.body as Record<string, unknown>;
+  if (!destination) { res.status(400).json({ error: "destination is required" }); return; }
+  try {
+    const result = await getCircleWithAuth(circleId, uid(req), res);
+    if (!result || !result.membership) { res.status(403).json({ error: "Not a member" }); return; }
+
+    // Gather member profiles, shared saves, and upcoming dates in parallel
+    const [membersRes, savesRes, datesRes] = await Promise.all([
+      pool.query(
+        `SELECT u.id, u.first_name, u.last_name, up.favorite_categories, up.dietary_notes, up.lifestyle_services
+         FROM circle_members cm
+         JOIN users u ON u.id = cm.user_id
+         LEFT JOIN user_preferences up ON up.user_id = cm.user_id
+         WHERE cm.circle_id = $1`,
+        [circleId],
+      ),
+      pool.query(`SELECT reference_name, save_type, notes FROM circle_saves WHERE circle_id = $1 ORDER BY saved_at DESC`, [circleId]),
+      pool.query(`SELECT title, target_date FROM circle_important_dates WHERE circle_id = $1 ORDER BY target_date ASC`, [circleId]),
+    ]);
+
+    const memberProfiles = (membersRes.rows as any[]).map((m) => ({
+      name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member",
+      categories: m.favorite_categories ?? [],
+      dietary: m.dietary_notes ?? null,
+    }));
+
+    const systemPrompt = `You are KinfolkAI™ — the world's best travel planner for the Black community. You are planning a Circle trip itinerary.
+
+THE CIRCLE — "${result.circle.name}":
+${memberProfiles.map((m, i) => `${i + 1}. ${m.name}${m.categories?.length ? ` — interests: ${(m.categories as string[]).join(", ")}` : ""}${m.dietary ? ` — dietary: ${m.dietary}` : ""}`).join("\n")}
+
+SHARED SAVES (what the Circle wants to experience):
+${savesRes.rows.length ? (savesRes.rows as any[]).map((s) => `- ${s.reference_name}${s.notes ? ` (note: ${s.notes})` : ""}`).join("\n") : "No shared saves yet"}
+
+IMPORTANT DATES:
+${datesRes.rows.length ? (datesRes.rows as any[]).map((d) => `- ${d.title}: ${d.target_date}`).join("\n") : "None"}
+
+ITINERARY ENGINE RULES:
+1. SPINE: Shared moments everyone experiences together (arrivals, group meals, key experiences)
+2. BRANCHES: Individual tracks off the spine — each person's solo interests during the hours between shared moments
+3. Reconnect every branch at the next spine moment
+4. LEGOLAND RULE: Never return zero results. If something doesn't exist locally, find the closest equivalent and explain why it works.
+5. Prioritize Black-owned and minority-owned businesses for every recommendation.
+6. Name each person individually in their branch. Make the itinerary feel personal.
+
+DESTINATION: ${String(destination).trim()}${startDate ? ` | FROM: ${startDate}` : ""}${endDate ? ` | TO: ${endDate}` : ""}
+
+Return ONLY valid JSON with this structure:
+{"title":"itinerary title","spine":[{"time":"Day 1 Morning","activity":"...","description":"...","businessName":"...","notes":"..."}],"branches":{"[Member Name]":[{"time":"Day 1 Afternoon","activity":"...","description":"...","businessName":"..."}]},"groupMeals":[{"time":"...","restaurant":"...","description":"..."}],"kinfolkNotes":"1-2 sentence personal insight from Kinfolk about why this itinerary works for this specific Circle"}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Plan a complete itinerary for our Circle trip to ${String(destination).trim()}.${startDate ? ` We travel from ${startDate}${endDate ? ` to ${endDate}` : ""}.` : ""}` },
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" },
+    });
+
+    let plan: Record<string, unknown> = {};
+    try { plan = JSON.parse(completion.choices[0]?.message?.content ?? "{}"); } catch { /* use empty */ }
+
+    const itineraryTitle = title ? String(title).trim() : ((plan.title as string) ?? `${String(destination).trim()} Trip`);
+    const { rows } = await pool.query(
+      `INSERT INTO circle_itineraries
+         (circle_id, created_by, title, destination, start_date, end_date, shared_plan, individual_plans)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb)
+       RETURNING *`,
+      [circleId, uid(req), itineraryTitle, String(destination).trim(),
+       startDate ?? null, endDate ?? null,
+       JSON.stringify({ spine: plan.spine ?? [], groupMeals: plan.groupMeals ?? [], kinfolkNotes: plan.kinfolkNotes ?? "" }),
+       JSON.stringify(plan.branches ?? {})],
+    );
+
+    res.status(201).json({ itinerary: rows[0], plan });
+  } catch (err) {
+    (req as any).log.error({ err }, "POST /circles/:id/itineraries error");
+    res.status(500).json({ error: "Failed to generate itinerary" });
   }
 });
 

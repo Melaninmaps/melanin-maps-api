@@ -1883,6 +1883,60 @@ ON CONFLICT (city_slug) DO NOTHING`,
       CREATE INDEX IF NOT EXISTS idx_user_library_interests_user ON user_library_interests(user_id);
     `,
   },
+  {
+    // circle_saves — shared wishlist items added by Circle members (per Manus KinfolkAI Circles spec)
+    // save_type: 'business' | 'destination' | 'experience' | 'library_topic'
+    name: "circle_saves_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS circle_saves (
+        id          SERIAL PRIMARY KEY,
+        circle_id   INTEGER NOT NULL REFERENCES kinfolk_circles(id) ON DELETE CASCADE,
+        saved_by    TEXT NOT NULL,
+        save_type   TEXT NOT NULL DEFAULT 'destination',
+        reference_id TEXT,
+        reference_name TEXT NOT NULL,
+        notes       TEXT,
+        saved_at    TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_circle_saves_circle ON circle_saves(circle_id);
+    `,
+  },
+  {
+    // circle_itineraries — KinfolkAI-generated itineraries for Circles
+    // shared_plan: spine (group moments); individual_plans: keyed by member name
+    name: "circle_itineraries_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS circle_itineraries (
+        id              SERIAL PRIMARY KEY,
+        circle_id       INTEGER NOT NULL REFERENCES kinfolk_circles(id) ON DELETE CASCADE,
+        created_by      TEXT NOT NULL,
+        title           TEXT NOT NULL,
+        destination     TEXT,
+        start_date      TEXT,
+        end_date        TEXT,
+        shared_plan     JSONB DEFAULT '{}'::jsonb,
+        individual_plans JSONB DEFAULT '{}'::jsonb,
+        created_at      TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_circle_itineraries_circle ON circle_itineraries(circle_id);
+    `,
+  },
+  {
+    // business_endorsement_taps — THE REAL tag endorsements by users (idempotent — table may already exist)
+    name: "business_endorsement_taps_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS business_endorsement_taps (
+        id          SERIAL PRIMARY KEY,
+        business_id TEXT NOT NULL,
+        user_id     TEXT NOT NULL,
+        tag_key     TEXT NOT NULL,
+        tapped_at   TIMESTAMP DEFAULT NOW(),
+        UNIQUE (business_id, user_id, tag_key)
+      );
+      CREATE INDEX IF NOT EXISTS idx_endorsement_taps_biz ON business_endorsement_taps(business_id);
+      CREATE INDEX IF NOT EXISTS idx_endorsement_taps_user ON business_endorsement_taps(user_id);
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -4034,6 +4088,25 @@ async function ensureLABusinesses(
 
     // ── Beauty & Personal Care ─────────────────────────────────────────────────
     { name: "Deja Vu Beauty & Hair Salon", category: "Beauty & Personal Care", subcategory: "Black Hair Salon", address: "3815 Crenshaw Blvd", city: "Los Angeles", lat: 34.0096, lng: -118.3378, description: "A Crenshaw District institution for natural hair, relaxers, braids, and locs — Deja Vu is where South LA comes for their crown. The kind of salon where you come for a service and leave with community, conversation, and a style that turns heads." },
+
+    // ── Healthcare & Medical — covering South LA, Watts, Inglewood, Willowbrook ─
+    { name: "MLK Community Medical Center", category: "Health & Wellness", subcategory: "Medical Center", address: "1680 E 120th St", city: "Los Angeles", lat: 33.9311, lng: -118.2476, description: "MLK Community Medical Center was built to restore healthcare access to Willowbrook and South LA — a community that lost its hospital and demanded better. A full-service Level II trauma center with emergency care, surgery, and primary services rooted in the community it was built for. Accepting most insurance plans." },
+    { name: "Watts Healthcare Corporation", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "10300 Compton Ave", city: "Los Angeles", lat: 33.9458, lng: -118.2473, description: "A federally qualified health center serving the Watts community since 1966 — the same year as the Watts Uprising that demanded dignity and better care. Primary care, dental, behavioral health, and pediatrics for patients regardless of ability to pay. Deeply rooted in the Black community it has served for six decades." },
+    { name: "UMMA Community Clinic", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "1001 E 120th St", city: "Los Angeles", lat: 33.9312, lng: -118.2565, description: "UMMA (Unity Mercy Medical Associates) has provided free and low-cost healthcare to the Watts and South LA community since 2007. Primary care, women's health, pediatrics, and mental health services — with a deep commitment to health equity for Black and brown families. No patient is turned away." },
+    { name: "St. John's Well Child and Family Center", category: "Health & Wellness", subcategory: "Pediatric & Family Health", address: "5801 S Figueroa St", city: "Los Angeles", lat: 33.9986, lng: -118.2782, description: "St. John's has been providing pediatric primary care, dental, and behavioral health services to South LA children and families for over 40 years. A trusted partner for parents navigating the healthcare system — delivering culturally competent care to the youngest members of the community with deep roots in South LA." },
+    { name: "Kedren Community Health Center", category: "Health & Wellness", subcategory: "Mental Health & Counseling", address: "4211 S Avalon Blvd", city: "Los Angeles", lat: 33.9895, lng: -118.2732, description: "One of LA's longest-serving mental health centers — Kedren has provided psychiatric and behavioral health services to South LA's Black community since 1966. Therapy, crisis intervention, substance abuse treatment, and outpatient services delivered with cultural competence and decades of community trust." },
+    { name: "Charles R. Drew University Health Sciences Clinic", category: "Health & Wellness", subcategory: "Primary Care Clinic", address: "1731 E 120th St", city: "Los Angeles", lat: 33.9316, lng: -118.2464, description: "The clinical arm of Charles R. Drew University of Medicine and Science — a historically Black university founded after the Watts Uprising to bring medical education and care to South LA. Primary care, OB/GYN, and preventive services for underserved patients with a legacy of health equity research and community service." },
+    { name: "Centinela Hospital Medical Center", category: "Health & Wellness", subcategory: "Hospital", address: "555 E Hardy St", city: "Inglewood", lat: 33.9519, lng: -118.3484, description: "Inglewood's primary hospital serving the community with emergency care, maternity services, orthopedics, and cardiac care. A key healthcare anchor for the Inglewood and South Bay Black community — including maternity services for mothers delivering in the South LA area." },
+    { name: "Maternal Fetal Care Center at MLK", category: "Health & Wellness", subcategory: "OB/GYN & Maternal Health", address: "1680 E 120th St", city: "Los Angeles", lat: 33.9313, lng: -118.2475, description: "Specialized maternal and fetal care within MLK Community Medical Center — serving high-risk pregnancies and delivering culturally competent OB/GYN care to Black mothers in South LA. Part of a broader mission to close the Black maternal mortality gap through community-rooted care." },
+    { name: "The Sycamores South LA Family Resource Center", category: "Health & Wellness", subcategory: "Mental Health & Family Services", address: "10820 S Budlong Ave", city: "Los Angeles", lat: 33.9394, lng: -118.2941, description: "A community mental health organization providing therapy, crisis intervention, and family services to South LA children, teens, and families. Culturally affirming care for the Black community — therapy for kids, parenting support, and trauma-informed counseling for families who have faced systemic barriers to mental healthcare." },
+    { name: "QueensCare Health Centers — West Adams", category: "Health & Wellness", subcategory: "Community Health Clinic", address: "4500 W Adams Blvd", city: "Los Angeles", lat: 34.0280, lng: -118.3474, description: "A nonprofit community health center providing primary care, pediatrics, dental, and behavioral health services on a sliding-scale fee — making care accessible to West Adams and South LA families regardless of income or insurance status. Part of the QueensCare network serving LA's underserved communities." },
+
+    // ── Childcare & Early Education ────────────────────────────────────────────
+    { name: "LAUSD Head Start — Watts Learning Center", category: "Childcare & Early Education", subcategory: "Early Childhood Education", address: "1260 E 111th St", city: "Los Angeles", lat: 33.9434, lng: -118.2508, description: "A Head Start early childhood program in the Watts community providing free preschool education, health screenings, and family support services to children ages 3–5. One of LA's most important investments in Black children's early development — giving Watts families access to the same quality early education as any family in LA." },
+
+    // ── Professional Services ──────────────────────────────────────────────────
+    { name: "Conwell & Kirkpatrick LLP", category: "Professional Services", subcategory: "Law Firm", address: "3699 Wilshire Blvd", city: "Los Angeles", lat: 34.0608, lng: -118.3414, description: "A Black-owned law firm serving the Los Angeles community — specializing in civil rights, employment discrimination, personal injury, and family law. Dedicated to providing quality legal representation to clients who have historically been underrepresented in LA's legal system." },
+    { name: "Crenshaw Tax & Accounting Services", category: "Professional Services", subcategory: "Tax & Accounting", address: "3650 W Martin Luther King Jr Blvd", city: "Los Angeles", lat: 34.0006, lng: -118.3349, description: "A Black-owned accounting and tax preparation firm serving South LA families and small business owners — helping the community keep more of what they earn and build generational wealth. Individual returns, small business bookkeeping, and financial planning with a deep understanding of the community's needs." },
   ];
 
   try {

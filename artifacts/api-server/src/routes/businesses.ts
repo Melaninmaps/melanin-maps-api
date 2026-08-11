@@ -588,6 +588,61 @@ router.post("/businesses/mine/photos", photoUpload.single("photo"), async (req: 
   }
 });
 
+// POST /businesses/:id/community-photos — any authenticated member can submit a photo for moderation.
+// Unlike /businesses/mine/photos (owner-only), this lets community members contribute photos
+// to any business they love. All submissions go into pendingPhotos for admin review.
+router.post("/businesses/:id/community-photos", photoUpload.single("photo"), async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No photo provided" }); return; }
+
+  const businessId = req.params.id as string;
+  try {
+    const [business] = await db
+      .select({ id: businessesTable.id, photos: businessesTable.photos, pendingPhotos: businessesTable.pendingPhotos })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId))
+      .limit(1);
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+
+    const currentPhotos = (business.photos as string[]) ?? [];
+    const currentPending = (business.pendingPhotos as string[]) ?? [];
+    if (currentPhotos.length + currentPending.length >= 20) {
+      res.status(400).json({ error: "This business has reached its photo limit" }); return;
+    }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) { res.status(500).json({ error: "Object storage not configured" }); return; }
+
+    const { originalname, mimetype, buffer } = req.file;
+    const ext = originalname.split(".").pop()?.toLowerCase() ?? "jpg";
+    const safeExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext) ? ext : "jpg";
+    const objectKey = `business-photos-community/${businessId}/${userId}/${randomUUID()}.${safeExt}`;
+
+    const bucket = objectStorageClient.bucket(bucketId);
+    const gcsFile = bucket.file(objectKey);
+    await gcsFile.save(buffer, { contentType: mimetype });
+    await gcsFile.makePublic();
+
+    const photoUrl = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+    const updatedPending = [...currentPending, photoUrl];
+
+    await db
+      .update(businessesTable)
+      .set({ pendingPhotos: updatedPending, updatedAt: new Date() })
+      .where(eq(businessesTable.id, businessId));
+
+    res.status(201).json({
+      url: photoUrl,
+      pending: true,
+      message: "Photo submitted — thank you! It will appear once our team approves it.",
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to upload community business photo");
+    res.status(500).json({ error: "Failed to upload photo" });
+  }
+});
+
 // Admin: list all businesses with photos awaiting review
 router.get("/admin/businesses/pending-photos", async (req: any, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Admin access required" }); return; }

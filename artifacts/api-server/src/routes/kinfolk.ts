@@ -763,6 +763,13 @@ function buildSystemPrompt(opts: {
   culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
   knowledgeGraphContext?: KnowledgeGraphContext | null;
   libraryInterests?: string[];
+  circleContext?: {
+    name: string;
+    type: string;
+    members: Array<{ name: string; savedPlaces?: string[]; vibes?: string[] }>;
+    sharedSaves: string[];
+    upcomingDates: string[];
+  } | null;
 }): string {
   const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
   const aaveLevel = opts.aaveLevel ?? 0;
@@ -973,6 +980,43 @@ ${opts.libraryInterests!.map((t) => `- ${t}`).join("\n")}
 CROSS-POLLINATION RULE: When the user asks about travel, food, culture, or recommendations, proactively connect to their library interests. If they follow "Ethiopia" in the Library and ask where to eat, surface Ethiopian restaurants. If they follow "Maternal Health" and ask for an OBGYN, lead with that context. Make the connection feel like a friend who pays attention — natural, never mechanical.`
     : "";
 
+  // ── Circle Intelligence ──────────────────────────────────────────────────
+  const circleSection = opts.circleContext
+    ? `\nCIRCLE INTELLIGENCE — "${opts.circleContext.name}" (${opts.circleContext.type}):
+You are the silent, always-on member of this Circle. You know everyone's individual preferences AND the group's shared context.
+
+CIRCLE MEMBERS:
+${opts.circleContext.members.map((m, i) => `${i + 1}. ${m.name}${m.vibes?.length ? ` — vibes: ${m.vibes.join(", ")}` : ""}${m.savedPlaces?.length ? ` — saved: ${m.savedPlaces.slice(0, 3).join(", ")}` : ""}`).join("\n")}
+
+SHARED SAVES (what this Circle wants to experience together):
+${opts.circleContext.sharedSaves.length ? opts.circleContext.sharedSaves.map((s) => `- ${s}`).join("\n") : "No shared saves yet."}
+${opts.circleContext.upcomingDates.length ? `\nUPCOMING CIRCLE DATES:\n${opts.circleContext.upcomingDates.map((d) => `- ${d}`).join("\n")}` : ""}
+
+ITINERARY ENGINE — when planning for this Circle:
+- SPINE: Build shared moments everyone experiences together (group arrivals, meals, key experiences)
+- BRANCHES: Build individual tracks off the spine for each person's solo interests based on their profile
+- Reconnect every branch at the next shared spine moment
+- Present: the group spine to all members + each person's individual track, clearly labeled with their name
+
+THE LEGOLAND RULE: NEVER return zero results for a Circle save. If something doesn't exist locally (e.g., Legoland in Utah), find the closest equivalent and say: "There's no [X] here, but [child's name / this person] will love [Y] just as much — here's why." The substitution must match the emotional experience, not just the category.
+
+GROUP SIGNAL RULE: When multiple Circle members save the same thing that doesn't exist in MWM yet, treat this as a HIGH-CONFIDENCE demand signal. Surface alternatives AND note the gap so the community can build around it.
+GROUP WEIGHT RULE: This Circle's collective check-ins, vibe tags, and saves carry more weight than individual actions — factor this into every recommendation.`
+    : "";
+
+  // ── Tone Ladder — always active (overrides voice mode for critical contexts) ─
+  const toneLadder = `
+
+TONE CALIBRATION — KINFOLK READS THE ROOM:
+Your tone shifts automatically based on context. You do not need to be told which register to use — read the message, read the emotion, respond accordingly:
+• Safety / immediate danger → Urgent, clear, zero slang. Action first. No performance.
+• Medical / health → Calm, precise, caring. Lead with real information, not just reassurance.
+• Business / finances / budgeting → Professional, structured, encouraging. Make it actionable.
+• Trip planning / discovery → Warm, enthusiastic, conversational. Lead with excitement.
+• Casual / fun / trivia → Relaxed, playful, culturally fluent. Have a real personality.
+• Comfort / homesickness / loneliness → Gentle, warm, deeply personal. Meet them exactly where they are.
+A medical question gets a calm, precise answer even if the voice mode is casual. A safety alert is always urgent regardless of any other setting. This is non-negotiable.`;
+
   const smartPromoSection = `
 SMART PROMOTION ENGINE — contextual minority-owned business cross-sell:
 Based on what the user is doing RIGHT NOW in this conversation, surface a single highly-relevant minority-owned business category they haven't thought of yet. Only return "smartPromotion" when there's a genuine, confident fit — quality over frequency. Skip it (set null) if nothing naturally applies.
@@ -1024,7 +1068,7 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
 
-${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${lifestyleSection}${tierSection}${smartPromoSection}
+${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -2090,7 +2134,40 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical — table may not exist yet */ }
     }
 
-    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext, libraryInterests }) + ownerBusinessContext;
+    // Circle context injection — when user chats from within a Circle
+    let circleContext: Parameters<typeof buildSystemPrompt>[0]["circleContext"] = null;
+    const bodyCircleId = typeof (req.body as any).circleId === "number" ? (req.body as any).circleId as number : null;
+    if (bodyCircleId && req.user?.id) {
+      try {
+        const cRes = await pool.query<{ name: string; type: string }>(
+          `SELECT k.name, k.type FROM kinfolk_circles k
+           JOIN circle_members cm ON cm.circle_id = k.id
+           WHERE k.id = $1 AND cm.user_id = $2 LIMIT 1`,
+          [bodyCircleId, req.user.id],
+        );
+        if (cRes.rows.length > 0) {
+          const [mRes, sRes, dRes] = await Promise.all([
+            pool.query<{ first_name: string | null; last_name: string | null }>(
+              `SELECT u.first_name, u.last_name FROM circle_members cm
+               JOIN users u ON u.id = cm.user_id WHERE cm.circle_id = $1`, [bodyCircleId]),
+            pool.query<{ reference_name: string }>(
+              `SELECT reference_name FROM circle_saves WHERE circle_id = $1 ORDER BY saved_at DESC LIMIT 20`, [bodyCircleId]),
+            pool.query<{ title: string; target_date: string }>(
+              `SELECT title, target_date FROM circle_important_dates
+               WHERE circle_id = $1 AND target_date::date >= CURRENT_DATE ORDER BY target_date ASC LIMIT 10`, [bodyCircleId]),
+          ]);
+          circleContext = {
+            name: cRes.rows[0].name,
+            type: cRes.rows[0].type,
+            members: mRes.rows.map((m) => ({ name: `${m.first_name ?? ""} ${m.last_name ?? ""}`.trim() || "Member" })),
+            sharedSaves: sRes.rows.map((s) => s.reference_name),
+            upcomingDates: dRes.rows.map((d) => `${d.title} — ${d.target_date}`),
+          };
+        }
+      } catch { /* non-critical — circle tables may not exist yet on this instance */ }
+    }
+
+    const systemPrompt = buildSystemPrompt({ prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode, aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge, weatherContext, tier: userTier, twinRecs, topUserVibes, cityContext, culturalPhrases, knowledgeGraphContext: kgContext, libraryInterests, circleContext }) + ownerBusinessContext;
 
     // Build OpenAI messages (history + new message)
     const historyMessages = existingMessages
