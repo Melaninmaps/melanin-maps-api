@@ -22,6 +22,9 @@ Railway's nixpacks generates a final `COPY . /app` Dockerfile step that copies f
 3. **Update echo token in nixpacks.toml**: change literal string (e.g. `"pre-manus-1754851000"`) — new literal per push
 4. **Stage all dist/ files** (they ARE now tracked after the gitignore fix, no need for `-f`):
    `git add dist/index.mjs dist/pino-worker.mjs dist/pino-file.mjs dist/pino-pretty.mjs dist/thread-stream-worker.mjs dist/BUILD_IDENTITY`
+   ⚠️ CRITICAL: `dist/BUILD_IDENTITY` MUST be committed in the same commit as `dist/index.mjs`.
+   Omitting it leaves the old hash → Railway serves new bundle but BUILD_IDENTITY has old hash → stale_bundle:true.
+   The version endpoint check is: bundle_sha256_self === bundle_sha256 AND stale_bundle:false.
 5. **Commit source + dist + nixpacks.toml together**
 6. **Push**: `git push github main`
 7. **Trigger Railway deploy**: `environmentTriggersDeploy` mutation (Railway auto-deploy webhook may not be reliable)
