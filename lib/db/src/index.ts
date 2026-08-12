@@ -42,8 +42,15 @@ export function setDbLogger(logger: DbLogger): void {
  *   - Combined peak demand exceeded 8 slots → all slots held as zombies
  * 20 provides headroom for: production traffic + Railway healthchecks +
  * healthMonitor probe + any background jobs, without saturation.
+ *
+ * Increased 35→50 (Aug 12 2026) after 30-user canary showed pool exhaustion:
+ *   - 30 simultaneous logins (3–8 s each) + overlapping post-login reads
+ *     saturated 35 slots in a 166 ms burst window → 19/30 journeys failed
+ *   - PostgreSQL max_connections = 112; StripeSync = 2 → 50 leaves 60 spare
+ *   - Auth middleware per-request TTL cache added in same commit to further
+ *     reduce pool pressure during coordinated arrival bursts
  */
-export const POOL_MAX = 35;
+export const POOL_MAX = 50;
 
 let _pool: pg.Pool | null = null;
 let _db: ReturnType<typeof drizzle<typeof schema>> | null = null;

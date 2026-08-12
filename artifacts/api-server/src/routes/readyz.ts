@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { pool, db, getPoolStats, businessesTable } from "@workspace/db";
+import { pool, db, getPoolStats, POOL_MAX, businessesTable } from "@workspace/db";
 
 // ── /api/internal/readyz ──────────────────────────────────────────────────
 // Protected deep-database readiness check for internal tooling and ops use.
@@ -65,6 +65,7 @@ router.get("/readyz", async (req: Request, res: Response) => {
   res.status(ready ? 200 : 503).json({
     ready,
     poolStats,
+    pool_max: POOL_MAX,
     checks: {
       rawSql: rawOk,
       drizzle: drizzleOk,

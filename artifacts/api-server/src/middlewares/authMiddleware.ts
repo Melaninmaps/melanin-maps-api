@@ -17,6 +17,16 @@ import {
 // when many concurrent requests arrive from the same session (e.g. app startup burst).
 const renewalThrottle = new Map<string, number>();
 
+// In-memory role+isLoadTest cache: userId → { role, isLoadTest, cachedAt }.
+// Reduces pool pressure during coordinated arrival bursts (e.g. 30 simultaneous
+// logins) by serving the per-request DB lookup from memory for 60 s per user.
+// Cache is bypassed when a role change is detected so promotions take effect
+// within at most 60 s rather than immediately — acceptable for role changes,
+// which are rare and never happen mid-session for normal users.
+const ROLE_CACHE_TTL_MS = 60_000;
+interface RoleCache { role: string; isLoadTest: boolean; cachedAt: number }
+const roleCache = new Map<string, RoleCache>();
+
 declare global {
   namespace Express {
     interface User extends AuthUser {
@@ -123,18 +133,41 @@ export async function authMiddleware(
     return;
   }
 
-  // Re-read role + is_load_test from DB on every request so role promotions
-  // and load-test suppression take effect immediately without a re-login.
+  // Re-read role + is_load_test from DB so role promotions take effect without
+  // requiring re-login. Results are cached per userId for 60 s to reduce pool
+  // pressure during burst arrivals (e.g. 30 simultaneous logins). Role changes
+  // invalidate the cache entry immediately; load-test flag is stable.
   try {
-    const freshRes = await pool.query<{ role: string; is_load_test: boolean }>(
-      "SELECT role, is_load_test FROM users WHERE id = $1 LIMIT 1",
-      [refreshed.user.id],
-    );
-    const freshUser = freshRes.rows[0];
-    if (freshUser) {
-      const roleChanged = freshUser.role && freshUser.role !== refreshed.user.role;
-      if (roleChanged) refreshed.user.role = freshUser.role as "user" | "tester" | "admin";
-      refreshed.user.isLoadTest = freshUser.is_load_test ?? false;
+    const userId = refreshed.user.id;
+    const cached = roleCache.get(userId);
+    const cacheHit = cached && (Date.now() - cached.cachedAt) < ROLE_CACHE_TTL_MS;
+
+    let freshRole: string | undefined;
+    let freshIsLoadTest: boolean | undefined;
+
+    if (cacheHit) {
+      freshRole = cached.role;
+      freshIsLoadTest = cached.isLoadTest;
+    } else {
+      const freshRes = await pool.query<{ role: string; is_load_test: boolean }>(
+        "SELECT role, is_load_test FROM users WHERE id = $1 LIMIT 1",
+        [userId],
+      );
+      const row = freshRes.rows[0];
+      if (row) {
+        freshRole = row.role;
+        freshIsLoadTest = row.is_load_test ?? false;
+        roleCache.set(userId, { role: freshRole, isLoadTest: freshIsLoadTest, cachedAt: Date.now() });
+      }
+    }
+
+    if (freshRole) {
+      const roleChanged = freshRole !== refreshed.user.role;
+      if (roleChanged) {
+        refreshed.user.role = freshRole as "user" | "tester" | "admin";
+        roleCache.set(userId, { role: freshRole, isLoadTest: freshIsLoadTest ?? false, cachedAt: Date.now() });
+      }
+      refreshed.user.isLoadTest = freshIsLoadTest ?? false;
       if (roleChanged || refreshed.user.isLoadTest) await updateSession(sid, refreshed);
     }
   } catch {
