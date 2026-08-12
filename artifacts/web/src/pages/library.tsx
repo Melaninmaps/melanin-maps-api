@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -718,21 +718,19 @@ export default function Library() {
   const [deepLinkFocus, setDeepLinkFocus] = useState<string | null>(null);
 
   // ── Deep-link: /library?topic=<id>&focus=evidence ──────────────────────────
-  // useLocation() from wouter is reactive to SPA navigation (pushState).
-  // When LibraryActionPill navigates here from the Kinfolk chat page without
-  // a full remount, wLocation changes, the memos re-compute, and the effect
-  // fires against the now-populated topics list.
-  const [wLocation] = useLocation();
+  // useSearch() from wouter 3.x returns the query string (?topic=...&focus=...)
+  // reactively — it updates on every SPA navigation including pushState changes,
+  // unlike useLocation() which tracks only the pathname.
+  const wSearch = useSearch();
 
   const linkTopicId = useMemo<string | null>(() => {
-    const id = new URLSearchParams(window.location.search).get("topic") ?? "";
-    // Accept any non-trivial ID string; invalid values fall through to null
+    const id = new URLSearchParams(wSearch).get("topic") ?? "";
     return id.length >= 8 ? id : null;
-  }, [wLocation]);
+  }, [wSearch]);
 
   const linkFocus = useMemo<string | null>(() => {
-    return new URLSearchParams(window.location.search).get("focus") ?? null;
-  }, [wLocation]);
+    return new URLSearchParams(wSearch).get("focus") ?? null;
+  }, [wSearch]);
 
   // Opens the panel for the matched topic once per navigation.
   // The openBookTopic guard prevents re-opening if the user closes and

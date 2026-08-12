@@ -591,6 +591,10 @@ export async function findMatchingPublishedLibraryNode(
            -- Exact name-in-message matches rank first (0), category-only matches second (1)
            CASE WHEN $2 <> '' AND POSITION(LOWER(topic_name) IN $2) > 0
                 THEN 0 ELSE 1 END ASC,
+           -- Among message-matched rows, prefer the LONGEST topic name so that
+           -- 'African Diaspora History' (25 chars) beats 'History' (7 chars)
+           CASE WHEN $2 <> '' AND POSITION(LOWER(topic_name) IN $2) > 0
+                THEN LENGTH(topic_name) ELSE 0 END DESC,
            credibility_score DESC NULLS LAST,
            id ASC
          LIMIT 1`,
