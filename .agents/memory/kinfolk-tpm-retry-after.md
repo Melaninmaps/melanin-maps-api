@@ -28,3 +28,10 @@ KINFOLK_CONCURRENCY_CAP=10 allows up to 10 simultaneous OpenAI calls. With 30 us
 
 **How to apply:**
 Any future changes to the Kinfolk generation path must preserve `parseRetryAfterMs()` and the `Math.max(retryAfterMs, exponential)` backoff pattern. Do NOT reduce this to a simple exponential backoff.
+
+**Admin visibility (Task #276, commit `4eb2973f`):**
+- `recordTpmEvent()` — in-memory ring buffer, called on every 429 in the retry catch
+- `getKinfolkStats()` — exports activeGenerations, queuedGenerations, tpmEventsLast60m, tpmEventsMostRecentAt
+- `GET /admin/health` includes `kinfolkAI` section with all 4 stats + concurrencyCap + queueMax
+- Admin Production Health tab shows KinfolkAI Generation Queue panel (4 stat cards, amber on any 429 events, warning banner when >5 events/60m)
+- Manus re-audit brief: `docs/audits/MANUS_REAUDIT_BRIEF_AUG12.md`
