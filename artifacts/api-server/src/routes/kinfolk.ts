@@ -30,6 +30,165 @@ import { getUserTier } from "../middleware/requireMembership";
 
 const router: IRouter = Router();
 
+// ─── KinfolkAI Generation Queue ──────────────────────────────────────────────
+// Bounded concurrency limiter wrapping every outbound OpenAI generation call.
+//
+// ROOT CAUSE (Aug 12 2026 — 30-user canary retest):
+//   DB capacity fix resolved all pool-exhaustion failures (no waiters, no 503s).
+//   However 5/30 KinfolkAI chat calls returned HTTP 500. All 5 occurred during
+//   the simultaneous burst arrival of 30 concurrent requests, after login and DB
+//   reads completed successfully. The Replit AI Integrations proxy received 30
+//   parallel openai.chat.completions.create() calls at once and returned transient
+//   429/5xx for 5 of them. The prior catch block mapped every non-timeout error
+//   to HTTP 500 with no retry.
+//   Inferred category: Provider capacity / rate limit (transient upstream error).
+//
+// QUEUE DESIGN:
+//   KINFOLK_CONCURRENCY_CAP = 10  — empirically conservative. With ~3-5 s avg
+//     generation time, 10 permits drain 30 queued callers in ≤ 9 s — well within
+//     the 25 s AbortSignal.timeout. Median wait for the 30th user: ~9 s.
+//   KINFOLK_QUEUE_MAX = 50        — upper bound on in-memory queue depth. A full
+//     queue means genuine overload; return 503+Retry-After rather than OOM.
+//   KINFOLK_QUEUE_WAIT_MS = 20_000 — max wait for a permit. Leaves 5 s headroom
+//     inside the 25 s route deadline.
+//
+// RETRY DESIGN:
+//   Max 2 retries for provider 429/500/502/503/504 + reset errors.
+//   Backoff: 500 ms × 2^attempt + jitter(0–500 ms). Total overhead ≤ ~2 s.
+//   Never retries 401/403/400/422 or AbortError/TimeoutError.
+
+const KINFOLK_CONCURRENCY_CAP = 10;   // max simultaneous OpenAI calls
+const KINFOLK_QUEUE_MAX       = 50;   // max queued requests before 503
+const KINFOLK_QUEUE_WAIT_MS   = 20_000; // max queue wait time (ms)
+const KINFOLK_RETRY_MAX       = 2;    // transient provider retries
+const KINFOLK_RETRY_BASE_MS   = 500;  // exponential backoff base (ms)
+
+// Module-level telemetry — safe to read from any route handler
+export let kinfolkActiveGenerations = 0;
+export let kinfolkQueuedGenerations = 0;
+
+class KinfolkQueue {
+  private active = 0;
+  private readonly waiters: Array<{
+    resolve: () => void;
+    reject:  (e: Error) => void;
+  }> = [];
+
+  private acquire(): Promise<void> {
+    if (this.active < KINFOLK_CONCURRENCY_CAP) {
+      this.active++;
+      kinfolkActiveGenerations = this.active;
+      return Promise.resolve();
+    }
+    if (this.waiters.length >= KINFOLK_QUEUE_MAX) {
+      return Promise.reject(
+        Object.assign(new Error("Generation queue is full"), { code: "KINFOLK_QUEUE_FULL" }),
+      );
+    }
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const idx = this.waiters.findIndex((w) => w.resolve === resolve);
+        if (idx !== -1) this.waiters.splice(idx, 1);
+        kinfolkQueuedGenerations = this.waiters.length;
+        reject(Object.assign(new Error("Queue wait exceeded deadline"), { code: "KINFOLK_QUEUE_TIMEOUT" }));
+      }, KINFOLK_QUEUE_WAIT_MS);
+      this.waiters.push({
+        resolve: () => { clearTimeout(timer); resolve(); },
+        reject,
+      });
+      kinfolkQueuedGenerations = this.waiters.length;
+    });
+  }
+
+  private release(): void {
+    const next = this.waiters.shift();
+    if (next) {
+      // slot passes directly from exiting request to next waiter
+      kinfolkQueuedGenerations = this.waiters.length;
+      next.resolve();
+    } else {
+      this.active--;
+      kinfolkActiveGenerations = this.active;
+    }
+  }
+
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    const queueEnteredAt = Date.now();
+    await this.acquire();
+    const waitMs = Date.now() - queueEnteredAt;
+    if (waitMs > 200) {
+      console.log(`[kinfolk-queue] wait=${waitMs}ms active=${this.active} queued=${this.waiters.length}`);
+    }
+    try {
+      return await fn();
+    } finally {
+      this.release();
+    }
+  }
+}
+
+const kinfolkQueue = new KinfolkQueue();
+
+/** Retryable OpenAI generation call. Retries only documented transient errors. */
+async function callOpenAIWithRetry(
+  messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
+  signal: AbortSignal,
+): ReturnType<typeof openai.chat.completions.create> {
+  // Transient provider conditions that can clear on retry
+  const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+  // Connection-reset strings that may appear in error messages without a numeric status
+  const RETRYABLE_MSG_PATTERNS = ["ECONNRESET", "socket hang up", "ETIMEDOUT"];
+
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= KINFOLK_RETRY_MAX; attempt++) {
+    try {
+      return await openai.chat.completions.create(
+        {
+          model: "gpt-4o-mini",
+          max_tokens: 1000,
+          messages,
+          response_format: { type: "json_object" },
+        },
+        { signal },
+      );
+    } catch (err) {
+      lastErr = err;
+      const status  = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
+      const errMsg  = err instanceof Error ? err.message : String(err);
+      const isAbort = err instanceof Error &&
+        (err.name === "AbortError" || err.name === "TimeoutError");
+
+      // Never retry: client disconnect, auth/policy errors, bad requests, timeouts
+      const isNonRetryable =
+        isAbort ||
+        status === 401 || status === 403 || status === 400 || status === 422;
+
+      if (isNonRetryable || attempt >= KINFOLK_RETRY_MAX) {
+        throw err;
+      }
+
+      const isRetryableStatus = status !== undefined && RETRYABLE_STATUSES.has(status);
+      const isRetryableMsg    = RETRYABLE_MSG_PATTERNS.some((p) => errMsg.includes(p));
+
+      if (!isRetryableStatus && !isRetryableMsg) {
+        // Unknown error type — do not retry blindly; surface immediately
+        throw err;
+      }
+
+      const jitter    = Math.floor(Math.random() * 500);
+      const backoffMs = KINFOLK_RETRY_BASE_MS * Math.pow(2, attempt) + jitter;
+      console.log(
+        `[kinfolk-retry] attempt=${attempt + 1}/${KINFOLK_RETRY_MAX}`,
+        `providerStatus=${status ?? "?"}`,
+        `backoffMs=${backoffMs}`,
+        `err=${errMsg.slice(0, 120)}`,
+      );
+      await new Promise<void>((r) => setTimeout(r, backoffMs));
+    }
+  }
+  throw lastErr;
+}
+
 // ─── KinfolkAI health probe cache ────────────────────────────────────────────
 // Probes the real OpenAI connection at most once every 5 minutes.
 // Result is cached so the /kinfolk/health endpoint can be polled frequently
@@ -2460,18 +2619,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI — gpt-4o-mini is the production model for all routes in this file
-    // working through the Replit AI Integrations proxy. response_format json_object
-    // guarantees valid JSON every response. AbortSignal.timeout(25000) caps the
-    // OpenAI call so a provider stall can never leave the browser spinning forever.
-    const completion = await openai.chat.completions.create(
-      {
-        model: "gpt-4o-mini",
-        max_tokens: 1000,
-        messages: aiMessages,
-        response_format: { type: "json_object" },
-      },
-      { signal: AbortSignal.timeout(25000) },
+    // Call AI — routed through the bounded KinfolkQueue so no more than
+    // KINFOLK_CONCURRENCY_CAP (10) simultaneous OpenAI calls are in flight.
+    // callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX (2)
+    // times with exponential backoff. AbortSignal.timeout(25000) still caps the
+    // total generation wall-time so a stalled provider never hangs the browser.
+    const completion = await kinfolkQueue.run(() =>
+      callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000)),
     );
 
     // Track AI pool usage for paid tiers after successful generation
@@ -2602,15 +2756,52 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }),
     });
   } catch (err) {
-    const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    const errMsg = err instanceof Error ? err.message : String(err);
-    const is401 = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
-    const isConnRefused = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND") || errMsg.includes("connect");
-    // Plain console.error so Railway log viewer surfaces the actual error (pino JSON payload is hidden in Railway UI)
-    console.error("[kinfolk-chat-error]", errMsg, err instanceof Error ? err.stack : String(err));
-    req.log.error({ err, errMsg, is401, isConnRefused }, "KinfolkAI chat failed");
-    // Bust the health cache so next /kinfolk/health probe reflects the real state
+    const errCode        = (err as any)?.code as string | undefined;
+    const providerStatus = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
+    const isTimeout      = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
+    const isQueueFull    = errCode === "KINFOLK_QUEUE_FULL";
+    const isQueueTimeout = errCode === "KINFOLK_QUEUE_TIMEOUT";
+    const isOverload     = isQueueFull || isQueueTimeout;
+    const errMsg         = err instanceof Error ? err.message : String(err);
+    const is401          = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
+    const isConnRefused  = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND");
+
+    // Plain console.error so Railway log viewer surfaces the sanitized record
+    // (pino JSON payload is hidden in Railway UI). Never log prompts, user data,
+    // session content, or API credentials.
+    console.error(
+      "[kinfolk-chat-error]",
+      `code=${errCode ?? "none"}`,
+      `providerStatus=${providerStatus ?? "none"}`,
+      `isOverload=${isOverload}`,
+      `isTimeout=${isTimeout}`,
+      `active=${kinfolkActiveGenerations}`,
+      `queued=${kinfolkQueuedGenerations}`,
+      errMsg.slice(0, 200),
+    );
+    req.log.error(
+      { errCode, providerStatus, isOverload, isTimeout, is401, isConnRefused,
+        kinfolkActiveGenerations, kinfolkQueuedGenerations },
+      "KinfolkAI chat failed",
+    );
+
+    // Bust the health cache so next /kinfolk/health probe reflects real state
     _kinfolkHealthCache = null;
+
+    // ── Response classification ────────────────────────────────────────────
+    // 503 + Retry-After: expected temporary overload (queue full / queue timeout).
+    //   Never return 500 for a condition that is bounded and self-resolving.
+    // 504: confirmed provider stall (AbortError / TimeoutError from AbortSignal).
+    // 500: genuine unexpected server defect that is not overload or timeout.
+    if (isOverload) {
+      res.status(503).set("Retry-After", "5").json({
+        error: "Kinfolk is handling a lot of conversations right now. Please try again in a moment.",
+        code:  "KINFOLK_OVERLOADED",
+        retryAfterSeconds: 5,
+      });
+      return;
+    }
+
     res.status(isTimeout ? 504 : 500).json({
       error: isTimeout
         ? "Kinfolk took too long to respond. Please try again in a moment."
@@ -2619,6 +2810,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : isConnRefused
             ? "KinfolkAI is temporarily unavailable — connection error. Our team has been notified."
             : "Kinfolk is having trouble answering that right now. Please try again in a moment.",
+      code: isTimeout       ? "KINFOLK_TIMEOUT"
+          : is401           ? "KINFOLK_AUTH_ERROR"
+          : isConnRefused   ? "KINFOLK_CONN_ERROR"
+          :                   "KINFOLK_ERROR",
     });
   }
 });

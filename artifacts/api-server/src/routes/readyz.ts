@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, getPoolStats, POOL_MAX, businessesTable } from "@workspace/db";
+import { kinfolkActiveGenerations, kinfolkQueuedGenerations } from "./kinfolk";
 
 // ── /api/internal/readyz ──────────────────────────────────────────────────
 // Protected deep-database readiness check for internal tooling and ops use.
@@ -66,6 +67,12 @@ router.get("/readyz", async (req: Request, res: Response) => {
     ready,
     poolStats,
     pool_max: POOL_MAX,
+    kinfolk: {
+      active:  kinfolkActiveGenerations,
+      queued:  kinfolkQueuedGenerations,
+      cap:     10,  // KINFOLK_CONCURRENCY_CAP — documented in kinfolk.ts
+      queueMax: 50, // KINFOLK_QUEUE_MAX
+    },
     checks: {
       rawSql: rawOk,
       drizzle: drizzleOk,
