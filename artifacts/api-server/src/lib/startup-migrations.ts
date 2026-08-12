@@ -36,6 +36,11 @@ import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
 import { ensureDiasporaFaithSites } from "./ensure-diaspora-faith-sites";
+import {
+  ensureLibraryEvidenceBatchB,
+  ensureLibraryEvidenceBatchC,
+  ensureLibraryEvidenceBatchD,
+} from "./library-evidence-seed.js";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -2484,6 +2489,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["phuket knowledge topics", () => runKnowledgeTopicsBatch("Phuket Knowledge Topics V1", PHUKET_KNOWLEDGE_TOPICS_V1, log, warn)],
     // ── Library evidence — 7 diaspora Books (P0 repair Aug 12 2026) ───────────
     ["library diaspora evidence", () => ensureLibraryDiasporaEvidence(log, warn)],
+    // ── Library evidence — Batches B/C/D (remaining categories Aug 12 2026) ───
+    ["library evidence batch B",  () => ensureLibraryEvidenceBatchB(log, warn)],
+    ["library evidence batch C",  () => ensureLibraryEvidenceBatchC(log, warn)],
+    ["library evidence batch D",  () => ensureLibraryEvidenceBatchD(log, warn)],
     // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
     ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
   ] as [string, () => Promise<void>][]) {
