@@ -3406,10 +3406,19 @@ async function ensureLoadTestAccounts(
     { n:'29', city:'Chicago' },      { n:'30', city:'Miami' },
   ];
   try {
+    // Remove any malformed rows created by the v1 bug (email = "Tester NN" instead of the address)
+    const cleaned = await pool.query(
+      `DELETE FROM users WHERE email ~ '^Tester \\d+$' AND is_load_test = true RETURNING email`
+    );
+    if (cleaned.rowCount && cleaned.rowCount > 0) {
+      warn(`Load-test cleanup: removed ${cleaned.rowCount} malformed row(s) (email was "Tester NN")`);
+    }
+
     let inserted = 0;
     for (const a of accounts) {
       const email = `mwm-loadtest-${a.n}@loadtest.mwm.internal`;
       const username = `loadtest${a.n}_${a.city.toLowerCase().replace(/[^a-z]/g,'')}`;
+      // Param order matches column order: email, last_name, username, home_city, password_hash
       const result = await pool.query(
         `INSERT INTO users
            (email, first_name, last_name, username, home_city,
@@ -3419,7 +3428,7 @@ async function ensureLoadTestAccounts(
          VALUES ($1,'Load',$2,$3,$4,$5,true,true,'free','active','admin_invite',true,NOW(),NOW())
          ON CONFLICT (email) DO UPDATE SET is_load_test = true, updated_at = NOW()
          RETURNING (xmax = 0) AS inserted`,
-        [`Tester ${a.n}`, username, a.city, email, HASH]
+        [email, `Tester ${a.n}`, username, a.city, HASH]
       );
       if (result.rows[0]?.inserted) inserted++;
     }
