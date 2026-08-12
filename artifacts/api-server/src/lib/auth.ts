@@ -25,6 +25,31 @@ export interface SessionData {
 
 let oidcConfig: client.Configuration | null = null;
 
+// ── Session read coalescing cache (5-second TTL) ──────────────────────────────
+// At 30 concurrent users every authenticated request hits the same sessions table.
+// A 5s window coalesces duplicate reads — any two requests for the same SID within
+// a 5-second window share a single DB round-trip via an in-flight promise.
+// On write (updateSession) or delete (deleteSession/clearSession) the entry is
+// invalidated immediately so the next read always sees fresh data.
+const SESSION_CACHE_TTL_MS = 5_000;
+interface SessionCacheEntry {
+  promise: Promise<SessionData | null>;
+  expiresAt: number;
+}
+const sessionCache = new Map<string, SessionCacheEntry>();
+
+function invalidateSessionCache(sid: string): void {
+  sessionCache.delete(sid);
+}
+
+// Evict stale entries periodically (avoid map growth on long-running instances)
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of sessionCache) {
+    if (v.expiresAt <= now) sessionCache.delete(k);
+  }
+}, 30_000).unref();
+
 export async function getOidcConfig(): Promise<client.Configuration> {
   if (!oidcConfig) {
     oidcConfig = await client.discovery(
@@ -46,23 +71,35 @@ export async function createSession(data: SessionData): Promise<string> {
 }
 
 export async function getSession(sid: string): Promise<SessionData | null> {
-  const [row] = await db
-    .select()
-    .from(sessionsTable)
-    .where(eq(sessionsTable.sid, sid));
-
-  if (!row || row.expire < new Date()) {
-    if (row) await deleteSession(sid);
-    return null;
+  const now = Date.now();
+  const cached = sessionCache.get(sid);
+  if (cached && cached.expiresAt > now) {
+    return cached.promise;
   }
+  // Issue a new DB read and cache the in-flight promise so concurrent requests
+  // for the same SID within the TTL window share a single round-trip.
+  const promise = (async (): Promise<SessionData | null> => {
+    const [row] = await db
+      .select()
+      .from(sessionsTable)
+      .where(eq(sessionsTable.sid, sid));
 
-  return row.sess as unknown as SessionData;
+    if (!row || row.expire < new Date()) {
+      if (row) await deleteSession(sid);
+      sessionCache.delete(sid);
+      return null;
+    }
+    return row.sess as unknown as SessionData;
+  })();
+  sessionCache.set(sid, { promise, expiresAt: now + SESSION_CACHE_TTL_MS });
+  return promise;
 }
 
 export async function updateSession(
   sid: string,
   data: SessionData,
 ): Promise<void> {
+  invalidateSessionCache(sid);
   await db
     .update(sessionsTable)
     .set({
@@ -73,6 +110,7 @@ export async function updateSession(
 }
 
 export async function deleteSession(sid: string): Promise<void> {
+  invalidateSessionCache(sid);
   await db.delete(sessionsTable).where(eq(sessionsTable.sid, sid));
 }
 

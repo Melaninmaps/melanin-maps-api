@@ -1,7 +1,7 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import AddPlaceModal from "@/components/AddPlaceModal";
 
 const BASE = import.meta.env.BASE_URL;
@@ -290,6 +290,27 @@ export default function MapPage() {
   // Sundown layer has its own independent toggle (not subject to legendFilter single-select)
   const [showSundownLayer, setShowSundownLayer] = useState(true);
 
+  // ── Directory-to-map handoff — reads ?q= from the URL ───────────────────────
+  // When the directory links to /map?q=restaurant%20in%20Phuket, the map must
+  // automatically run the universal search and pan to Phuket instead of
+  // defaulting to the member's home city. Applied exactly once per distinct query.
+  const locationSearch = useSearch();
+  const handoffQuery = useMemo(
+    () => new URLSearchParams(locationSearch).get("q")?.trim() ?? "",
+    [locationSearch],
+  );
+  const appliedHandoffQueryRef = useRef<string | null>(null);
+
+  // ── Discoverability pins — tour cultural sites, recurring events, orgs ───────
+  type DiscoverabilityPin = {
+    id: string; sourceType: "tour_cultural_site" | "recurring_event" | "community_organization";
+    name: string; city: string; state: string | null;
+    latitude: number; longitude: number;
+    description?: string | null; detailPath: string;
+  };
+  const [discoverabilityPins, setDiscoverabilityPins] = useState<DiscoverabilityPin[]>([]);
+  const discoverabilityMarkersRef = useRef<GMarker[]>([]);
+
   // Near Me mode — radius in miles (null = show all, number = geo-filtered)
   const [nearMeRadius, setNearMeRadius] = useState<number | null>(null);
 
@@ -328,8 +349,8 @@ export default function MapPage() {
   // geocodeAndPan (the old single-step approach) sent the full phrase
   // "Phuket restaurants" to Nominatim, which returned a restaurant
   // named "Phuket" in Oslo. This is the fix.
-  const runUniversalSearch = useCallback(async () => {
-    const q = search.trim();
+  const runUniversalSearch = useCallback(async (queryOverride?: string) => {
+    const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
     setBusinessSearchActive(true);
     setUniversalResults(null);
@@ -396,6 +417,105 @@ export default function MapPage() {
     } catch { /* fall through to client-side filtered list */ }
     finally { setUniversalLoading(false); }
   }, [search, userCoords]);
+
+  // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
+  // Effect runs whenever handoffQuery or map readiness changes.
+  // Guards with appliedHandoffQueryRef so a stable URL doesn't re-trigger the search.
+  useEffect(() => {
+    if (!handoffQuery || !ready || isLoading || !mapRef.current) return;
+    if (appliedHandoffQueryRef.current === handoffQuery) return;
+
+    appliedHandoffQueryRef.current = handoffQuery;
+    setSidebarOpen(true);
+    setLegendFilter("business");
+    setSearch(handoffQuery);
+    void runUniversalSearch(handoffQuery);
+  }, [handoffQuery, ready, isLoading, runUniversalSearch]);
+
+  // ── Fetch discoverability pins after map is ready ─────────────────────────
+  useEffect(() => {
+    if (!ready) return;
+    const base = BASE.replace(/\/$/, "");
+    fetch(`${base}/api/maps/discoverability-pins`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : { pins: [] })
+      .then((d: { pins?: DiscoverabilityPin[] }) => setDiscoverabilityPins(d.pins ?? []))
+      .catch(() => {});
+  }, [ready]);
+
+  // ── Render discoverability markers when pins load ─────────────────────────
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    if (!g || !mapRef.current || discoverabilityPins.length === 0) return;
+
+    discoverabilityMarkersRef.current.forEach(m => m.setMap(null));
+    discoverabilityMarkersRef.current = [];
+
+    discoverabilityPins.forEach(pin => {
+      if (isNaN(pin.latitude) || isNaN(pin.longitude)) return;
+      if (pin.latitude === 0 && pin.longitude === 0) return;
+
+      // Style by source type — reuse existing brand-consistent pin colors
+      let color: string;
+      let label: string;
+      let path: string;
+      if (pin.sourceType === "tour_cultural_site") {
+        color = "#92400E"; label = "Heritage Site"; path = DIAMOND_PATH;
+      } else if (pin.sourceType === "recurring_event") {
+        color = "#EA580C"; label = "Recurring Event"; path = (g.SymbolPath?.CIRCLE ?? "CIRCLE");
+      } else {
+        color = "#D97706"; label = "Community Org"; path = DIAMOND_PATH;
+      }
+
+      const isCircle = pin.sourceType === "recurring_event";
+      const marker: GMarker = new g.Marker({
+        position: { lat: pin.latitude, lng: pin.longitude },
+        map: mapRef.current,
+        title: pin.name,
+        icon: isCircle
+          ? { path: g.SymbolPath.CIRCLE, scale: 6, fillColor: color, fillOpacity: 0.85, strokeColor: "#fff", strokeWeight: 1.5 }
+          : { path: DIAMOND_PATH, scale: 1, fillColor: color, fillOpacity: 0.88, strokeColor: "#fff", strokeWeight: 1.5 },
+        zIndex: 2,
+      });
+
+      marker.addListener("click", () => {
+        const snippet = (pin.description ?? "").slice(0, 120);
+        infoWindowRef.current?.setContent(
+          `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
+            <div style="margin-bottom:4px">
+              <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${label}</span>
+            </div>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${pin.name}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${pin.city}${pin.state ? `, ${pin.state}` : ""}</div>
+            ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
+            <a href="${BASE}${pin.detailPath.replace(/^\//, "")}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">View Details →</a>
+          </div>`
+        );
+        mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
+      });
+
+      discoverabilityMarkersRef.current.push(marker);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discoverabilityPins]);
+
+  // Discoverability marker visibility — responds to legendFilter
+  useEffect(() => {
+    if (!mapRef.current) return;
+    discoverabilityMarkersRef.current.forEach((marker, i) => {
+      const pin = discoverabilityPins[i];
+      if (!pin) { marker.setMap(null); return; }
+      let visible = true;
+      if (legendFilter === "business") {
+        visible = false;
+      } else if (legendFilter === "events") {
+        visible = pin.sourceType === "recurring_event";
+      } else if (legendFilter !== null) {
+        // cultural / hbcu / festival / market / art — show tour_cultural_site and community_organization
+        visible = pin.sourceType !== "recurring_event";
+      }
+      marker.setMap(visible ? mapRef.current : null);
+    });
+  }, [legendFilter, discoverabilityPins]);
 
   const businesses = (mapPins as BizWithCoords[]).filter(
     (b) => b.latitude && b.longitude

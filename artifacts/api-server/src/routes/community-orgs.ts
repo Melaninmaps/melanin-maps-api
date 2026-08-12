@@ -31,6 +31,7 @@ router.get("/community-orgs", async (req: Request, res: Response) => {
       pool.query(
         `SELECT id, name, city, state, category, mission,
                 website, instagram, facebook, phone, address,
+                latitude, longitude,
                 has_pending_edit, created_at, updated_at
          FROM community_organizations
          ${where}

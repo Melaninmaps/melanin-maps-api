@@ -453,4 +453,70 @@ router.post("/maps/nav-voice", mapsLimiter, async (req: Request, res: Response) 
   }
 });
 
+// ── Discoverability pins — tour cultural sites, recurring events, orgs ──────
+// Returns only coordinate-valid active rows from the three non-business
+// map collections. The map client uses this to render additional pin layers
+// without changing the business-pins endpoint payload.
+// All returned pins pass the coordinate validity contract:
+//   lat/lng numeric, non-zero, within geographic ranges.
+router.get("/maps/discoverability-pins", async (req: Request, res: Response) => {
+  const COORD_FILTER = `
+    is_active = true
+    AND latitude IS NOT NULL
+    AND longitude IS NOT NULL
+    AND latitude::numeric BETWEEN -90 AND 90
+    AND longitude::numeric BETWEEN -180 AND 180
+    AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
+  `;
+  try {
+    const { rows } = await pool.query<{
+      id: string; source_type: string; name: string; city: string;
+      state: string | null; latitude: string; longitude: string;
+      description: string | null; detail_path: string;
+    }>(`
+      SELECT id,
+             'tour_cultural_site'    AS source_type,
+             name, city, state, latitude::text, longitude::text,
+             description,
+             '/tour-cultural-sites/' || id AS detail_path
+      FROM tour_cultural_sites
+      WHERE ${COORD_FILTER}
+      UNION ALL
+      SELECT id,
+             'recurring_event'       AS source_type,
+             name, city, state, latitude::text, longitude::text,
+             description,
+             '/recurring-events/' || id AS detail_path
+      FROM recurring_events
+      WHERE ${COORD_FILTER}
+      UNION ALL
+      SELECT id,
+             'community_organization' AS source_type,
+             name, city, state, latitude::text, longitude::text,
+             mission                  AS description,
+             '/community-orgs/' || id AS detail_path
+      FROM community_organizations
+      WHERE ${COORD_FILTER}
+      ORDER BY source_type, city, name
+    `);
+
+    const pins = rows.map(r => ({
+      id:          r.id,
+      sourceType:  r.source_type,
+      name:        r.name,
+      city:        r.city,
+      state:       r.state ?? null,
+      latitude:    parseFloat(r.latitude),
+      longitude:   parseFloat(r.longitude),
+      description: r.description ?? null,
+      detailPath:  r.detail_path,
+    }));
+
+    res.json({ pins });
+  } catch (err) {
+    req.log?.error({ err }, "GET /maps/discoverability-pins failed");
+    res.status(500).json({ error: "Failed to load discoverability pins" });
+  }
+});
+
 export default router;

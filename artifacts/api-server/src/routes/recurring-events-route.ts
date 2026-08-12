@@ -31,6 +31,7 @@ router.get("/recurring-events", async (req: Request, res: Response) => {
       pool.query(
         `SELECT id, name, city, state, venue, address, description,
                 frequency, day_of_week, start_time, end_time, category,
+                latitude, longitude,
                 has_pending_edit, created_at, updated_at
          FROM recurring_events
          ${where}

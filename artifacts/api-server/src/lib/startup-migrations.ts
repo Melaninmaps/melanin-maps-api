@@ -2613,6 +2613,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library evidence batch D",  () => ensureLibraryEvidenceBatchD(log, warn)],
     // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
     ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
+    // ── Discoverability coordinate audit — validate + report per-collection counts ──
+    ["discoverability coords v1", () => ensureDiscoverabilityCoordinatesV1(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -6158,5 +6160,76 @@ async function ensureDemoRemoval(
     }
   } catch (err: unknown) {
     warn(`Demo removal failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Discoverability coordinates audit ─────────────────────────────────────────
+// Validates coordinate coverage for the three non-business map collections and
+// logs a per-collection proof count that appears in Railway boot logs as evidence.
+// Does NOT synthesize city-centroid coordinates — any row missing both a numeric
+// coordinate AND a geocodable address is reported but left null.
+// Runs AFTER geocodeTourContent so it measures the post-geocode state.
+async function ensureDiscoverabilityCoordinatesV1(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const [sitesR, evtsR, orgsR] = await Promise.all([
+      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                            AND latitude  BETWEEN -90  AND 90
+                            AND longitude BETWEEN -180 AND 180
+                            AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0))   AS no_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0)
+                            AND address IS NULL)                    AS no_address
+        FROM tour_cultural_sites WHERE is_active = true
+      `),
+      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                            AND latitude  BETWEEN -90  AND 90
+                            AND longitude BETWEEN -180 AND 180
+                            AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0))   AS no_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0)
+                            AND address IS NULL AND venue IS NULL)  AS no_address
+        FROM recurring_events WHERE is_active = true
+      `),
+      pool.query<{ total: string; with_coords: string; no_coords: string; no_address: string }>(`
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                            AND latitude  BETWEEN -90  AND 90
+                            AND longitude BETWEEN -180 AND 180
+                            AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0))   AS no_coords,
+          COUNT(*) FILTER (WHERE (latitude IS NULL OR longitude IS NULL)
+                            OR (latitude = 0 AND longitude = 0)
+                            AND address IS NULL)                    AS no_address
+        FROM community_organizations WHERE is_active = true
+      `),
+    ]);
+
+    const s = sitesR.rows[0];
+    const e = evtsR.rows[0];
+    const o = orgsR.rows[0];
+
+    log(
+      `Discoverability coords v1 — ` +
+      `cultural_sites: ${s.with_coords}/${s.total} mapped (${s.no_coords} missing, ${s.no_address} no-address) | ` +
+      `recurring_events: ${e.with_coords}/${e.total} mapped (${e.no_coords} missing, ${e.no_address} no-address) | ` +
+      `community_orgs: ${o.with_coords}/${o.total} mapped (${o.no_coords} missing, ${o.no_address} no-address)`
+    );
+  } catch (err: unknown) {
+    warn(`ensureDiscoverabilityCoordinatesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

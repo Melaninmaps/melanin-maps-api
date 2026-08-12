@@ -305,7 +305,12 @@ router.get("/businesses", async (req: Request, res: Response) => {
     //  1. Per-token ILIKE or trigram similarity (multi-word queries)
     //  2. Full-phrase trigram similarity (single-word or short queries)
     // Falls back silently if pg_trgm is absent.
+    //
+    // AUDIT FIX §4.4: both fuzzy SQL branches must carry ALL caller-supplied
+    // restrictive filters (listing_status, city, state, country) so a
+    // city-constrained request never leaks cross-city results.
     let finalResults = withCaptions;
+    let usedFuzzyFallback = false;
     if (search && typeof search === "string" && withCaptions.length === 0) {
       try {
         const cleanSearch = search.replace(/[^\w\s'-]/gi, " ").trim();
@@ -316,37 +321,71 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .map(t => t.replace(/[^a-z0-9'&-]/g, ""))
           .filter(t => t.length >= 3 && !STOP.includes(t));
 
+        // Build scope: carry all restrictive filters from the caller into fuzzy SQL.
+        // Parameterized — no user input ever interpolated into SQL text.
+        const fuzzyScope: string[] = ["b.status = 'active'"];
+        const fuzzyScopeParams: unknown[] = [];
+        if (!isTester) {
+          fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
+        }
+        if (city && typeof city === "string" && city.trim()) {
+          fuzzyScopeParams.push(`%${city.trim()}%`);
+          fuzzyScope.push(`LOWER(b.city) LIKE LOWER($${fuzzyScopeParams.length})`);
+        }
+        if (state && typeof state === "string" && state.trim()) {
+          fuzzyScopeParams.push(`%${state.trim()}%`);
+          fuzzyScope.push(`LOWER(b.state) LIKE LOWER($${fuzzyScopeParams.length})`);
+        }
+        if (country && typeof country === "string" && country.trim()) {
+          fuzzyScopeParams.push(`%${country.trim()}%`);
+          fuzzyScope.push(`LOWER(b.country) LIKE LOWER($${fuzzyScopeParams.length})`);
+        }
+        const fuzzyScopeWhere = fuzzyScope.join(" AND ");
+        // Number of scope params before the search-term params
+        const N = fuzzyScopeParams.length;
+
         let fuzzyRes: { rows: Record<string, unknown>[] } = { rows: [] };
 
         if (tokens.length > 1) {
-          // Multi-token fuzzy: any significant token matches by ILIKE or trigram
-          const orClauses = tokens.flatMap((t, i) => [
-            `b.name ILIKE $${i + 2}`,
-            `similarity(LOWER(b.name), LOWER($${tokens.length + i + 2})) > 0.18`,
+          // Multi-token fuzzy: any significant token matches by ILIKE or trigram,
+          // scoped to all caller filters.
+          const T = tokens.length;
+          const orClauses = tokens.flatMap((_, i) => [
+            `b.name ILIKE $${N + 1 + i}`,
+            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i})) > 0.18`,
           ]).join(" OR ");
-          const simCols = tokens.map((_, i) => `similarity(LOWER(b.name), LOWER($${tokens.length + i + 2}))`).join(", ");
-          const params: unknown[] = [cleanSearch, ...tokens.map(t => `%${t}%`), ...tokens];
+          const simCols = tokens.map((_, i) =>
+            `similarity(LOWER(b.name), LOWER($${N + 1 + T + i}))`
+          ).join(", ");
+          const multiParams: unknown[] = [
+            ...fuzzyScopeParams,
+            ...tokens.map(t => `%${t}%`),
+            ...tokens,
+          ];
           const r = await pool.query<Record<string, unknown>>(
             `SELECT b.*, GREATEST(${simCols}) AS _sim_score
              FROM businesses b
-             WHERE b.status = 'active' AND (${orClauses})
+             WHERE ${fuzzyScopeWhere} AND (${orClauses})
              ORDER BY _sim_score DESC, b.confidence_score DESC
              LIMIT 20`,
-            params,
+            multiParams,
           );
           fuzzyRes = r;
         }
 
-        // Always try full-phrase similarity too (catches misspellings)
+        // Always try full-phrase similarity too (catches misspellings),
+        // also scoped to all caller filters.
         if (fuzzyRes.rows.length === 0) {
+          const phraseParams: unknown[] = [...fuzzyScopeParams, cleanSearch];
+          const phraseIdx = N + 1; // position of cleanSearch in params
           fuzzyRes = await pool.query<Record<string, unknown>>(
-            `SELECT b.*, similarity(LOWER(b.name), LOWER($1)) AS _sim_score
+            `SELECT b.*, similarity(LOWER(b.name), LOWER($${phraseIdx})) AS _sim_score
              FROM businesses b
-             WHERE b.status = 'active'
-               AND similarity(LOWER(b.name), LOWER($1)) > 0.22
+             WHERE ${fuzzyScopeWhere}
+               AND similarity(LOWER(b.name), LOWER($${phraseIdx})) > 0.22
              ORDER BY _sim_score DESC
              LIMIT 15`,
-            [cleanSearch],
+            phraseParams,
           );
         }
 
@@ -358,6 +397,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             promotionType: null,
             culturalMatch: false,
           })) as typeof withCaptions;
+          usedFuzzyFallback = true;
         }
       } catch { /* pg_trgm not available — fine */ }
     }
@@ -379,7 +419,10 @@ router.get("/businesses", async (req: Request, res: Response) => {
         })
       : finalResults;
 
-    res.json({ businesses: withDistance, total: Number(totalCount), page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length });
+    // Truthful total: when fuzzy fallback produced the results, total = those results;
+    // standard pagination may have total > returned list (both are valid, explained by limit).
+    const responseTotal = usedFuzzyFallback ? finalResults.length : Number(totalCount);
+    res.json({ businesses: withDistance, total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");

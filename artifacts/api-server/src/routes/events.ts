@@ -10,7 +10,7 @@ const router: IRouter = Router();
 
 router.get("/events", async (req: Request, res: Response) => {
   try {
-    const { category, search, featured } = req.query;
+    const { category, search, featured, city, state } = req.query;
 
     const conditions = [];
 
@@ -31,6 +31,15 @@ router.get("/events", async (req: Request, res: Response) => {
 
     if (featured === "true") {
       conditions.push(eq(eventsTable.featured, true));
+    }
+
+    // City and state filters — required to prevent cross-city leakage (§4.3 audit fix)
+    // A supplied city must be respected; no fallback to another city if local result is empty.
+    if (city && typeof city === "string" && city.trim()) {
+      conditions.push(ilike(eventsTable.city, `%${city.trim()}%`));
+    }
+    if (state && typeof state === "string" && state.trim()) {
+      conditions.push(ilike(eventsTable.state, `%${state.trim()}%`));
     }
 
     // Show only active events
@@ -97,7 +106,8 @@ router.get("/events", async (req: Request, res: Response) => {
       }
     });
 
-    res.json({ events: upcoming });
+    // Truthful total — count after the active/upcoming filter, not before (§4.3)
+    res.json({ events: upcoming, total: upcoming.length });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch events");
     res.status(500).json({ error: "Failed to fetch events" });

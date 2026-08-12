@@ -34,6 +34,45 @@ import {
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
 
+// ── Per-user preferences cache (30-second TTL) ────────────────────────────────
+// user_preferences is read on every chat turn. At 30 concurrent users this is
+// 30 parallel Drizzle queries against the same table. A 30s TTL means a user's
+// preferences feel instant after the first turn while staying fresh enough that
+// a preferences update (tap-to-save) is reflected within the next turn.
+// Invalidated on any POST/PATCH that writes preferences (see invalidatePrefsCache export).
+interface PrefsCacheEntry {
+  promise: Promise<typeof import("@workspace/db").userPreferencesTable.$inferSelect | null>;
+  expiresAt: number;
+}
+const prefsCache = new Map<string, PrefsCacheEntry>();
+const PREFS_CACHE_TTL_MS = 30_000;
+
+export function invalidatePrefsCache(userId: string): void {
+  prefsCache.delete(userId);
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of prefsCache) if (v.expiresAt <= now) prefsCache.delete(k);
+}, 60_000).unref();
+
+async function getCachedPrefs(
+  userId: string,
+): Promise<typeof import("@workspace/db").userPreferencesTable.$inferSelect | null> {
+  const now = Date.now();
+  const cached = prefsCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.promise;
+  const promise = db
+    .select()
+    .from(userPreferencesTable)
+    .where(eq(userPreferencesTable.userId, userId))
+    .limit(1)
+    .then((rows) => rows[0] ?? null)
+    .catch(() => null);
+  prefsCache.set(userId, { promise, expiresAt: now + PREFS_CACHE_TTL_MS });
+  return promise;
+}
+
 // Maps KinfolkIntent → Library category ALIASES for the server-controlled libraryAction.
 // Multiple aliases per intent allow the resolver to match across related categories
 // (e.g. culture_entertainment covers 'diaspora' where "African Diaspora History" lives).
@@ -2024,14 +2063,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedPlaces: string[] = [];
 
     if (req.user?.id) {
-      // User preferences — wrapped individually so a schema mismatch never kills the chat
+      // User preferences — served from 30s per-user cache to avoid N concurrent
+      // Drizzle round-trips at peak load. getCachedPrefs() is read-through and
+      // never throws — falls back to null which Kinfolk handles gracefully.
       try {
-        const prefsResult = await db
-          .select()
-          .from(userPreferencesTable)
-          .where(eq(userPreferencesTable.userId, req.user.id))
-          .limit(1);
-        prefs = prefsResult[0] ?? null;
+        prefs = await getCachedPrefs(req.user.id);
       } catch { /* non-critical — proceed without personalization prefs */ }
 
       // Feedback history

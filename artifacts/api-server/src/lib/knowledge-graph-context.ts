@@ -22,6 +22,26 @@
 
 import { pool } from "@workspace/db";
 
+// ── Library evidence public cache (5-minute TTL) ──────────────────────────────
+// getKnowledgeGraphContext() is called on every KinfolkAI turn. The Library DB
+// rows it reads (topics, sources, entities) are editorial data that changes only
+// on deploy — not on every chat turn. A 5-minute in-memory cache collapses
+// repeated reads for the same intent+geography into a single DB round-trip and
+// prevents the knowledge-graph queries from competing for pool connections under
+// concurrent load. Cache is keyed by "kg:{intent}|{geographyRef}" — the two
+// dimensions that fully determine the result.
+const KG_CACHE_TTL_MS = 5 * 60_000;
+interface KGCacheEntry {
+  promise: Promise<KnowledgeGraphContext | null>;
+  expiresAt: number;
+}
+const kgCache = new Map<string, KGCacheEntry>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of kgCache) if (v.expiresAt <= now) kgCache.delete(k);
+}, 2 * 60_000).unref();
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface GraphNode {
@@ -427,6 +447,16 @@ export async function getKnowledgeGraphContext(
   userMessage: string,
   geographyRef: string | null,
 ): Promise<KnowledgeGraphContext | null> {
+  // Cache key: first detected intent + geography ref.
+  // Two requests with the same intent and geography always produce the same
+  // DB rows — only live editorial changes invalidate this, which happens on deploy.
+  const intentsForKey = detectIntents(userMessage);
+  const cacheKey = `kg:${intentsForKey.slice(0, 1).join(",")}|${geographyRef ?? ""}`;
+  const now = Date.now();
+  const cachedEntry = kgCache.get(cacheKey);
+  if (cachedEntry && cachedEntry.expiresAt > now) return cachedEntry.promise;
+
+  const freshPromise = (async (): Promise<KnowledgeGraphContext | null> => {
   try {
     // 1. Detect intents from the user message
     const intents = detectIntents(userMessage);
@@ -493,6 +523,10 @@ export async function getKnowledgeGraphContext(
     // Knowledge graph context is enhancement — never block a Kinfolk response
     return null;
   }
+  })(); // end freshPromise IIFE
+
+  kgCache.set(cacheKey, { promise: freshPromise, expiresAt: now + KG_CACHE_TTL_MS });
+  return freshPromise;
 }
 
 // ── Render to system prompt string ────────────────────────────────────────────
