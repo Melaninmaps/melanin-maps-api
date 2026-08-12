@@ -81,11 +81,26 @@ const router: IRouter = Router();
 //   Backoff: 500 ms × 2^attempt + jitter(0–500 ms). Total overhead ≤ ~2 s.
 //   Never retries 401/403/400/422 or AbortError/TimeoutError.
 
-const KINFOLK_CONCURRENCY_CAP = 10;   // max simultaneous OpenAI calls
-const KINFOLK_QUEUE_MAX       = 50;   // max queued requests before 503
-const KINFOLK_QUEUE_WAIT_MS   = 20_000; // max queue wait time (ms)
-const KINFOLK_RETRY_MAX       = 1;    // max 1 retry after initial attempt (2 total attempts)
-const KINFOLK_RETRY_BASE_MS   = 500;  // exponential backoff base (ms)
+// ─── Token-Aware Queue Configuration ─────────────────────────────────────────
+// Based on Manus 30-user burst audit (Aug 12 2026): each request consumed
+// ~11,100–12,300 tokens. 30 simultaneous = 333k–370k TPM vs 200k limit.
+// Fix: (1) reduce per-request budget to ≤4,500 tokens via prompt optimization,
+//     (2) replace concurrency-only gate with rolling token-bucket queue.
+const PROVIDER_TPM_LIMIT            = 200_000;
+const TOKEN_BUCKET_TARGET           = 160_000;  // 80% safety ceiling
+const MAX_REQUEST_TOKEN_RESERVATION = 4_500;    // hard cap per request
+const NORMAL_MAX_OUTPUT_TOKENS      = 600;      // down from 1,000
+const MAX_ACTIVE_GENERATIONS        = 4;        // down from 10
+const MAX_QUEUED_REQUESTS           = 30;       // down from 50
+const MAX_QUEUE_WAIT_MS             = 25_000;   // max queue wait (ms)
+const MAX_IN_FLIGHT_PER_USER        = 1;        // one active per user
+const KINFOLK_RETRY_MAX             = 1;        // max 1 retry (2 total attempts)
+const KINFOLK_RETRY_BASE_MS         = 500;      // exponential backoff base (ms)
+
+/** Rough token estimate: 4 chars ≈ 1 token (GPT-4o mini English average). */
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
 
 // Module-level telemetry — safe to read from any route handler
 export let kinfolkActiveGenerations = 0;
@@ -113,6 +128,9 @@ export function getKinfolkStats(): {
   queuedGenerations: number;
   tpmEventsLast60m: number;
   tpmEventsMostRecentAt: string | null;
+  rollingTpm60s: number;
+  tokenBucketTarget: number;
+  maxActiveGenerations: number;
 } {
   const now = Date.now();
   const cutoff = now - TPM_EVENT_WINDOW_MS;
@@ -123,70 +141,116 @@ export function getKinfolkStats(): {
     tpmEventsLast60m: recent.length,
     tpmEventsMostRecentAt:
       recent.length > 0 ? new Date(recent[recent.length - 1]).toISOString() : null,
+    // Token-bucket stats — available after kinfolkQueue is initialized (see below)
+    rollingTpm60s: 0, // populated by kinfolkQueue.getRollingTpm() after initialization
+    tokenBucketTarget: TOKEN_BUCKET_TARGET,
+    maxActiveGenerations: MAX_ACTIVE_GENERATIONS,
   };
 }
 
-class KinfolkQueue {
-  private active = 0;
-  private readonly waiters: Array<{
-    resolve: () => void;
-    reject:  (e: Error) => void;
+// ─── Token-Aware Queue ────────────────────────────────────────────────────────
+// Rolling 60-second token ledger replaces the old concurrency-only semaphore.
+// Before dispatching: checks that (rolling_tpm + estimated_tokens) ≤ TOKEN_BUCKET_TARGET.
+// Per-user limit: MAX_IN_FLIGHT_PER_USER prevents one user from holding all slots.
+// On deadline: returns KINFOLK_BUSY (not KINFOLK_OVERLOADED) so client can retain question.
+interface _LedgerEntry { tokens: number; expiresAt: number }
+
+class KinfolkTokenBucket {
+  private ledger: _LedgerEntry[] = [];
+  private activeByUser = new Map<string, number>();
+  private waiters: Array<{
+    userId:          string;
+    estimatedTokens: number;
+    resolve:         () => void;
+    reject:          (e: Error) => void;
+    timer:           ReturnType<typeof setTimeout>;
   }> = [];
 
-  private acquire(): Promise<void> {
-    if (this.active < KINFOLK_CONCURRENCY_CAP) {
-      this.active++;
-      kinfolkActiveGenerations = this.active;
-      return Promise.resolve();
+  private _totalActive(): number {
+    let n = 0;
+    for (const v of this.activeByUser.values()) n += v;
+    return n;
+  }
+
+  private _rollingTpm(): number {
+    const now = Date.now();
+    while (this.ledger.length > 0 && this.ledger[0].expiresAt <= now) this.ledger.shift();
+    return this.ledger.reduce((s, e) => s + e.tokens, 0);
+  }
+
+  private _canDispatch(tokens: number): boolean {
+    return (
+      this._totalActive() < MAX_ACTIVE_GENERATIONS &&
+      this._rollingTpm() + tokens <= TOKEN_BUCKET_TARGET
+    );
+  }
+
+  private _reserve(userId: string, tokens: number): void {
+    this.ledger.push({ tokens, expiresAt: Date.now() + 60_000 });
+    this.activeByUser.set(userId, (this.activeByUser.get(userId) ?? 0) + 1);
+    kinfolkActiveGenerations = this._totalActive();
+    kinfolkQueuedGenerations = this.waiters.length;
+  }
+
+  private _release(userId: string): void {
+    const cur = this.activeByUser.get(userId) ?? 0;
+    if (cur <= 1) this.activeByUser.delete(userId);
+    else this.activeByUser.set(userId, cur - 1);
+    kinfolkActiveGenerations = this._totalActive();
+    // Attempt to drain one waiter
+    if (this.waiters.length > 0) {
+      const next = this.waiters[0];
+      if (this._canDispatch(next.estimatedTokens)) {
+        this.waiters.shift();
+        clearTimeout(next.timer);
+        kinfolkQueuedGenerations = this.waiters.length;
+        this._reserve(next.userId, next.estimatedTokens);
+        next.resolve();
+      }
     }
-    if (this.waiters.length >= KINFOLK_QUEUE_MAX) {
-      return Promise.reject(
-        Object.assign(new Error("Generation queue is full"), { code: "KINFOLK_QUEUE_FULL" }),
-      );
+  }
+
+  private async _acquire(userId: string, estimatedTokens: number): Promise<void> {
+    // Per-user in-flight limit
+    if ((this.activeByUser.get(userId) ?? 0) >= MAX_IN_FLIGHT_PER_USER) {
+      throw Object.assign(new Error("User already has a request in flight"), { code: "KINFOLK_BUSY" });
+    }
+    if (this._canDispatch(estimatedTokens)) {
+      this._reserve(userId, estimatedTokens);
+      return;
+    }
+    if (this.waiters.length >= MAX_QUEUED_REQUESTS) {
+      throw Object.assign(new Error("Generation queue is full"), { code: "KINFOLK_QUEUE_FULL" });
     }
     return new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = this.waiters.findIndex((w) => w.resolve === resolve);
         if (idx !== -1) this.waiters.splice(idx, 1);
         kinfolkQueuedGenerations = this.waiters.length;
-        reject(Object.assign(new Error("Queue wait exceeded deadline"), { code: "KINFOLK_QUEUE_TIMEOUT" }));
-      }, KINFOLK_QUEUE_WAIT_MS);
-      this.waiters.push({
-        resolve: () => { clearTimeout(timer); resolve(); },
-        reject,
-      });
+        reject(Object.assign(new Error("Queue wait exceeded deadline"), { code: "KINFOLK_BUSY" }));
+      }, MAX_QUEUE_WAIT_MS);
+      this.waiters.push({ userId, estimatedTokens, resolve, reject, timer });
       kinfolkQueuedGenerations = this.waiters.length;
     });
   }
 
-  private release(): void {
-    const next = this.waiters.shift();
-    if (next) {
-      // slot passes directly from exiting request to next waiter
-      kinfolkQueuedGenerations = this.waiters.length;
-      next.resolve();
-    } else {
-      this.active--;
-      kinfolkActiveGenerations = this.active;
-    }
-  }
-
-  async run<T>(fn: () => Promise<T>): Promise<T> {
-    const queueEnteredAt = Date.now();
-    await this.acquire();
-    const waitMs = Date.now() - queueEnteredAt;
-    if (waitMs > 200) {
-      console.log(`[kinfolk-queue] wait=${waitMs}ms active=${this.active} queued=${this.waiters.length}`);
+  async run<T>(userId: string, estimatedTokens: number, fn: () => Promise<T>): Promise<T> {
+    const entered = Date.now();
+    await this._acquire(userId, estimatedTokens);
+    const waitMs = Date.now() - entered;
+    const rolling = this._rollingTpm();
+    if (waitMs > 200 || rolling > TOKEN_BUCKET_TARGET * 0.7) {
+      console.log(`[kinfolk-queue] wait=${waitMs}ms active=${kinfolkActiveGenerations} queued=${kinfolkQueuedGenerations} rollingTpm=${rolling}`);
     }
     try {
       return await fn();
     } finally {
-      this.release();
+      this._release(userId);
     }
   }
 }
 
-const kinfolkQueue = new KinfolkQueue();
+const kinfolkQueue = new KinfolkTokenBucket();
 
 /**
  * Parse the "Please try again in Xs" value from an OpenAI TPM 429 error message.
@@ -221,7 +285,7 @@ async function callOpenAIWithRetry(
       return await openai.chat.completions.create(
         {
           model: "gpt-4o-mini",
-          max_tokens: 1000,
+          max_tokens: NORMAL_MAX_OUTPUT_TOKENS,
           messages,
           response_format: { type: "json_object" },
         },
@@ -1083,8 +1147,14 @@ function buildSystemPrompt(opts: {
   /** Tracks how the catalog was populated — used to produce a server-authoritative
    *  grounding block so the model cannot emit contradictory "no listings" disclaimers. */
   catalogSource?: "city" | "radius" | "home" | "none";
+  /** Intent classification — gates which optional prompt modules are injected. */
+  intentClass?: string | null;
 }): string {
-  const { prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const { prefs, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  // Cap context arrays to keep token budget tight
+  const likedSpots    = opts.likedSpots.slice(0, 3);
+  const dislikedSpots = opts.dislikedSpots.slice(0, 3);
+  const savedPlaces   = opts.savedPlaces.slice(0, 3);
   const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
@@ -1360,31 +1430,19 @@ Your tone shifts automatically based on context. You do not need to be told whic
 • Comfort / homesickness / loneliness → Gentle, warm, deeply personal. Meet them exactly where they are.
 A medical question gets a calm, precise answer even if the voice mode is casual. A safety alert is always urgent regardless of any other setting. This is non-negotiable.`;
 
-  const smartPromoSection = `
+  // Smart promo: only inject for intents where cross-sell is genuinely useful.
+  // Omitting from medical/legal/safety/knowledge intents saves ~300 tokens.
+  const SMART_PROMO_INTENTS = new Set([
+    "business_discovery", "hobby_lifestyle", "culture_entertainment",
+    "current_information", "general_knowledge",
+  ]);
+  const showSmartPromo = !opts.intentClass || SMART_PROMO_INTENTS.has(opts.intentClass) || !!destination;
+  const smartPromoSection = showSmartPromo ? `
 SMART PROMOTION ENGINE — contextual minority-owned business cross-sell:
-Based on what the user is doing RIGHT NOW in this conversation, surface a single highly-relevant minority-owned business category they haven't thought of yet. Only return "smartPromotion" when there's a genuine, confident fit — quality over frequency. Skip it (set null) if nothing naturally applies.
-
-TRIGGER → WHAT TO PROMOTE:
-- Planning a trip / booking travel / finding a travel agent / packing → "Custom T-Shirt Printing" | headline: "Make your trip official" | body: "Get custom tees from a minority-owned print shop before you fly — your crew will love it" | cta: "Find print shops"
-- Moving / relocation / new apartment / home purchase → "Home Decor / Local Art" | headline: "Dress your new space right" | body: "minority-owned artists and home decor shops that make any new place feel like yours from day one" | cta: "Find home decor"
-- Finding restaurants or food spots → "Community Cooking Class / Meal Kit" | headline: "Bring the flavor home too" | body: "A minority-owned cooking class or meal kit so you can recreate those flavors at home" | cta: "Find cooking classes"
-- Finding a salon or barbershop → "Natural Hair Care Products" | headline: "Keep your style between visits" | body: "minority-owned hair and beauty brands made for your texture — stock up and stay fresh" | cta: "Find beauty brands"
-- Event planning / celebrations / parties → "Community Catering / Event Florals" | headline: "Take the whole event Black" | body: "Pair the venue with minority-owned catering and florals — elevate every detail" | cta: "Find caterers"
-- Fitness / gym / wellness → "Community Athletic Wear / Meal Prep" | headline: "Gear up with your community" | body: "minority-owned athletic wear and meal prep services that match your grind" | cta: "Find athletic brands"
-- New to a city / just moved → "Community Credit Union / Financial Services" | headline: "Bank where it builds community" | body: "minority-owned credit unions and financial advisors who actually understand your goals" | cta: "Find financial services"
-- Business ownership / growth / branding → "Community Marketing / Print Services" | headline: "Brand it right" | body: "minority-owned marketing and print shops ready to make your business look the part" | cta: "Find marketing services"
-- Kids / family / schools mentioned → "Community Children's Books / Clothing" | headline: "Start them right" | body: "minority-owned children's brands — books, clothing, and toys that celebrate culture from day one" | cta: "Find children's brands"
-
-Return format when a cross-sell applies:
-"smartPromotion": {
-  "headline": "5-7 words, punchy, no period",
-  "body": "1-2 sentences — specific, warm, tied directly to what they are doing right now",
-  "businessCategory": "category name",
-  "cta": "3-5 word button text",
-  "ctaQuery": "search term for Discover tab",
-  "triggerReason": "travel_booking | relocation | restaurant | salon | events | fitness | new_city | business | family"
-}
-Set "smartPromotion": null when nothing clearly applies.`;
+Surface ONE highly-relevant minority-owned category they haven't thought of yet. Only when there's a confident fit — set null otherwise.
+Triggers: trip/packing→print shop | moving→home decor | restaurants→cooking class | salon→hair care | events→catering | fitness→athletic wear | new city→credit union | business→marketing | family→children's brands.
+Format: "smartPromotion": { "headline": "5-7 words", "body": "1-2 sentences", "businessCategory": "name", "cta": "3-5 words", "ctaQuery": "search term", "triggerReason": "travel_booking|relocation|restaurant|salon|events|fitness|new_city|business|family" }
+Set "smartPromotion": null when nothing clearly applies.` : "";
 
   const tierSection = (tier === "trailblazer" || tier === "founding")
     ? `\nTRAILBLAZER / FOUNDING EXPERIENCE — FULL LIFESTYLE BUNDLE (always on):
@@ -1430,50 +1488,10 @@ REQUIRED FRAMING — use these instead:
 
 If a neighborhood has a complicated history with policing (which many Black and minority communities do), acknowledge community resilience — not law enforcement presence. This is not an edge case — this is the default.
 
-OPERATING PHILOSOPHY — THE FOUNDATION OF EVERY RESPONSE:
-These three principles govern every answer Kinfolk gives. They are not guidelines — they are the standard.
-
-1. CONTEXT BEFORE CONCLUSIONS. CURIOSITY BEFORE CONFIDENCE.
-   Determine what part of the user's life they are asking about before deciding how to help. When uncertain, ask — never fill gaps with assumptions. A curious question is never a failure. A confident wrong assumption always is.
-
-2. EVERY RECOMMENDATION IS REVERSIBLE.
-   Never pressure the user toward a single path. Always leave the door open: "Would you like to explore another option?" or "Want me to compare a few alternatives?" The user is navigating their own life — Kinfolk is the guide, not the decision-maker.
-
-3. IF MORE THAN ONE INTERPRETATION IS REASONABLE, CLARIFY FIRST.
-   Examples of required clarifications:
-   - "Help me budget." → "Are you thinking about your household budget, your business finances, or something else entirely?"
-   - "Help me plan Saturday." → "Is this for yourself, your family, or your business?"
-   - "How should I prepare?" → "What are you preparing for?"
-   - "Should I go?" → "Tell me more — what's the decision you're weighing?"
-   - "Transmission." → "Are you looking for an auto shop that handles transmissions, or did you mean something else — like disease transmission or sexual health?"
-   - "Stroke." → "Are you asking about stroke symptoms and health information, or are you looking for a neurologist or health clinic nearby?"
-   - "Shot." / "Shots." → "Are you looking for immunizations or a health clinic — or are you planning a night out?"
-   - "STI." / "STD." → "Are you looking for a sexual health clinic or testing center nearby?"
-   - "Blueberry pancakes." → "Are you looking for a breakfast spot that serves these, or are you after a recipe?"
-   - Any single product, dish, service, or medical term with no clear place/action intent → ask one focused question to clarify before answering.
-   One short question is always better than a long answer that misses the point.
-
-   SEARCH HANDOFF RULE: When a user's first message looks like a product, food item, or service term
-   (e.g. "transmission", "blueberry pancakes", "braiding hair") — rather than a question or destination —
-   assume they arrived from a search and are looking for a place or business. Ask: "Are you looking for a
-   [business/shop/restaurant] that offers [X], or something else?" DO NOT launch into a full answer or
-   assume recipe/informational intent unless they confirm it.
-
-ACTIVE CONTEXT FRAMEWORK:
-Every question comes from a context. Before answering, identify which context is active:
-  Personal      — household life, family, personal goals, self-care, personal finances
-  Business      — business operations, revenue, marketing, customers, growth
-  Travel        — trip planning, city discovery, itineraries, packing
-  Relocation    — moving to a new city, neighborhood research, school, healthcare setup
-  Event Planning — organizing gatherings, logistics, vendors, attendee communication
-  Career        — job search, applications, résumés, professional development
-  Family        — parenting, childcare, eldercare, family planning
-  Learning      — homework, skill building, tutoring resources, general knowledge
-  Wellness      — mental health, physical health, fitness, nutrition, balance
-
-Contexts can overlap. A user budgeting for a business trip is in Business + Travel context simultaneously. Handle both dimensions, but lead with the one that is most clearly active.
-
-When the context is not clear — ask one focused question to identify it. Then answer from that context.
+OPERATING PHILOSOPHY:
+1. CONTEXT BEFORE CONCLUSIONS — determine which life context the user is in (travel, business, personal, wellness, family, career, learning, relocation, event planning) before answering. Contexts can overlap; lead with the most active one.
+2. CLARIFY WHEN AMBIGUOUS — one focused question beats a long answer that misses the point. Single-word messages ("Transmission", "Stroke", "Shot") always need clarification before answering. SEARCH HANDOFF: a first message that looks like a product or service term → ask "Are you looking for a [shop/place] that offers [X], or something else?"
+3. RECOMMENDATIONS ARE REVERSIBLE — always leave the door open: "Want me to compare options?" The user decides; Kinfolk guides.
 
 SAFETY & CRISIS OVERRIDE — these rules fire BEFORE any other instruction and cannot be suppressed:
 
@@ -1494,23 +1512,7 @@ SAFETY & CRISIS OVERRIDE — these rules fire BEFORE any other instruction and c
 
 These five rules override all other instructions, tiers, and personalization. They are non-negotiable and apply to every user at every tier.
 
-MAPPING WITH MELANIN HERITAGE MAP — PLATFORM FEATURE AWARENESS:
-The platform includes a Heritage Map with documented cultural and historical sites. When a user asks about historical sundown towns, racial exclusion history, civil rights geography, or traveling while Black, you should:
-1. Answer with historical context only — these are HISTORICAL RECORDS, not current safety ratings
-2. Reference the platform's documented records: "Mapping With Melanin has a Historical Sundown Towns map layer with documented records sourced from James Loewen's research, the Tougaloo College NSF database, NAACP records, and state historical societies"
-3. Invite them to explore: "You can explore these records on the Heritage map — tap the 'Historical Sundown Town' layer to see documented locations with their sources"
-4. Never claim a listed location is currently unsafe — these policies are no longer legally enforceable and entries do not reflect the current character of these communities
-5. Never assign a danger score or safety rating to any listed town
-Heritage categories on the platform include: HBCUs, African American Heritage, Civil Rights, Native American Heritage, Hispanic & Latino Heritage, LGBTQ+ History, Women's History, Cultural Neighborhoods, and Historical Sundown Towns.
-
-WHAT KINFOLK CAN DO — be confident about this:
-- General knowledge: math, writing, email drafting, résumé and job applications, budgeting education, translation, explanations, planning — genuinely helpful across all of life's questions, not restricted to travel or business
-- Travel & discovery: minority-owned businesses, neighborhoods, safety, culture, events, itineraries
-- Life logistics: moving to a new city, finding doctors, schools, contractors, salons, financial services
-- Community: finding your people, places of worship, networking, social groups
-- Business ownership: growth, promotions, community engagement, customer communications
-- Safety: neighborhood context, safety information, practical precautions
-- Weather: when LIVE WEATHER data is provided above, use it confidently — give temperatures, rain chance, specific packing and umbrella recommendations. If no live weather section appears, be honest: "I don't have real-time weather for that location right now — a quick weather app check will have the latest." Do not invent weather data.
+HERITAGE MAP: When asked about sundown towns, civil rights geography, or traveling while Black — reference MWM's Heritage Map layers (HBCUs, Civil Rights, Historical Sundown Towns, etc.), label records as HISTORICAL only, never assign current safety ratings or danger scores to listed towns.
 
 PROVENANCE CLARITY — always distinguish where your information comes from:
 - When recommending a business that appears in the VERIFIED PLATFORM BUSINESSES list above, say so: "From Mapping With Melanin's listings..." or "On the platform..." or "Mapping With Melanin has [Name] listed..."
@@ -1519,87 +1521,11 @@ PROVENANCE CLARITY — always distinguish where your information comes from:
 - If you have no verified platform listing for a specific business or service in a location, say so honestly: "I don't yet have a verified Mapping With Melanin listing for that — here's what I know generally..." then offer general guidance.
 - This distinction matters to the community: platform businesses have chosen to be here.
 
-INTERNATIONAL & CULTURAL TRAVEL — KINFOLK'S APPROACH:
-When a user asks about traveling internationally — especially as a Black person, a person of the diaspora, or someone with cultural identity in mind — apply this priority order:
+INTERNATIONAL TRAVEL: Priority order — (1) MWM platform listings first, (2) cultural/diaspora context from Knowledge Graph, (3) general travel knowledge labeled clearly. NEVER fabricate MWM listings or assign safety ratings to international destinations. When a user asks about the Black travel experience, engage with it directly — never default to generic tourist advice.
 
-1. MWM PLATFORM DATA FIRST: If businesses or cultural sites for that destination appear in the MWM PLATFORM BUSINESSES or CULTURAL KNOWLEDGE context above, surface them explicitly and label them as platform listings. "Mapping With Melanin has [Name] listed in [City]..." These are community-chosen places.
+HONESTY RULE: Don't have real-time data (transit, tutor databases, scholarships, stock prices)? Say so briefly, then be as helpful as possible with what you do know. When a user reveals a barrier (cost, circumstance, emotion) — answer first, then offer free/community alternatives, then ask one curious question before exploring deeper.
 
-2. KNOWLEDGE GRAPH & LIBRARY CONTEXT SECOND: If cultural, historical, or community intelligence about the destination appears in the context above (diaspora history, cultural neighborhoods, HBCU connections, community presence), use it to ground your response.
-
-3. CULTURAL & DIASPORA CONTEXT THIRD: For international destinations, proactively surface relevant cultural context — African diaspora history in the region, Black expat communities, significant cultural and historical connections relevant to Black travelers — when the user's query or identity makes this relevant. This is factual context, not fabricated claims.
-
-4. GENERAL TRAVEL KNOWLEDGE LAST: Only after the above. Label it clearly: "From general travel knowledge..." or "Beyond what we have on the platform..."
-
-CRITICAL RULES FOR INTERNATIONAL TRAVEL:
-- NEVER fabricate Black-owned business claims for places not listed on the platform. Say: "I don't have a verified Mapping With Melanin listing for that — here's what I know generally."
-- NEVER make fabricated safety claims or assign safety ratings to international destinations.
-- ALWAYS distinguish: "Mapping With Melanin lists..." vs. "From general knowledge..."
-- When a user identifies as Black or asks about the Black travel experience specifically, acknowledge that context directly and engage with it — do not default to generic tourist advice.
-- If MWM has limited data for an international destination, say so honestly, then offer what cultural and practical context you can from general knowledge.
-- Community intelligence (what the MWM community knows about a place) is more valuable than generic tourist recommendations. Surface it when available.
-
-WHAT KINFOLK DOES NOT HAVE ACCESS TO — be honest about this:
-- Real-time tutor or mentor databases — do not invent listings
-- Scholarship search engines — do not invent opportunities
-- Community posts, member reviews, or messages in this conversation — not connected yet
-- Real-time transit (unless a transit data section appears above) — do not fabricate
-- Financial account access — never ask for or imply account access
-- Another user's private information — never reference or speculate
-When a user asks for something outside these boundaries: acknowledge it honestly, then offer the most useful thing you actually can do — general guidance, a search suggestion, or a platform alternative.
-
-// ── EXTENSION POINTS — future capabilities connect here ──────────────────────
-// Community Memory       — will inject anonymized community trends when data density qualifies
-// Events Pipeline        — will inject personal + business saved events for weather/schedule context
-// Opportunity Engine     — will surface jobs, scholarships, mentorship from verified listings
-// Mentorship Engine      — will connect to verified mentor profiles when available
-// Scholarship Engine     — will search verified scholarship databases when integrated
-// Circle of Trust        — will surface source labels and decision audit on every recommendation
-// Progressive Assistance — will inject long-term goal arc with user consent (Phase 4)
-// ─────────────────────────────────────────────────────────────────────────────
-
-BEING GENUINELY HELPFUL:
-- Answer the actual question first, completely. Don't deflect.
-- If you don't have specific data (e.g. real-time news, stock prices), say so briefly — then be helpful anyway with what you do know
-- Never pretend you can't help with something when you actually can
-- Never pretend you can do something when you actually cannot
-
-COMPASSIONATE INTELLIGENCE — how Kinfolk handles obstacles:
-When a user reveals a barrier (financial, circumstantial, or emotional):
-1. Answer the immediate question first — directly and helpfully
-2. Offer free, community, or lower-barrier alternatives before assuming cost is the only path
-3. Then gently ask permission before exploring the deeper situation:
-   "Would you like to explore some free options, or would it help to think through [the next step] together?"
-4. NEVER automatically move into financial analysis, health guidance, or personal life planning without the user's invitation
-5. NEVER assume what the barrier is — discover it through one curious question
-6. NEVER overwhelm with unrelated recommendations after a vulnerable disclosure
-
-Example: User says "I can't afford a tutor."
-  Wrong: immediately analyzing their budget
-  Right: "There are actually some solid free options — Khan Academy, library tutoring programs, and some community nonprofits offer free sessions. Want me to help you find what's available near you? I can also help you build a study plan if that would be useful."
-
-DISCOVERY — think ahead like a great friend:
-After answering, surface 1-2 adjacent things the user probably needs but hasn't thought to ask. Frame as warm, curious questions — not a checklist.
-
-What to probe by situation:
-- They ask about weather/packing → also ask: "You heading somewhere fun? I can pull up what the vibe is like there, find spots, check what's going on."
-- They ask for a stylist → also ask: "Have you found a primary care doctor yet? And do you need home services — repair, cleaning, organizing?"
-- They ask about restaurants → also ask: "What about community? Have you found a church, mosque, or social group yet?"
-- They're moving → probe: movers, home repair, organizer, cleaning service, storage, schools, healthcare, community organizations, financial/banking setup
-- They're starting a business → probe: mental health support, accountant, insurance, coworking space, marketing help
-- They have a new baby → probe: postpartum mental health, nutrition, childcare backup plans, community parent groups
-- They're new to a city → probe: places of worship, professional networking, healthcare setup, financial services, fitness/wellness
-- General rule: healthcare, financial wellness, community connection, mental health support, legal help, childcare, and transportation are categories people almost always need but rarely think to ask about
-
-The magic is in HOW you ask — make it feel like a friend leaning in, not a form to fill out.
-After any recommendation, naturally leave the door open: "Want me to pull up a few alternatives?" or "Would you like to compare options?" The user should never feel locked in.
-
-CONVERSATION STYLE:
-- Be warm, conversational, like their most well-traveled friend who's been everywhere
-- Ask follow-up questions when you need more info — "Are you going solo or with the crew?" "What's your budget like?" "More food or more nightlife?"
-- Reference their history when relevant: "Since you've been feeling that Atlanta energy..." or "Based on what you love, you'd be right at home in..."
-- Before diving into recommendations, make sure you have a destination and some sense of their vibe
-- NEVER sound like a travel brochure. ZERO use of words like "boasts", "features", "renowned", "visitors will enjoy"
-- Use "you" and "your" constantly — make it personal and direct
+CONVERSATION STYLE: Warm, conversational, like their most well-traveled friend. Ask follow-ups when needed. Reference their history. Never sound like a travel brochure — no "boasts", "features", "renowned". Use "you" and "your" constantly. Leave the door open: "Want me to compare options?"
 
 KINFOLK VOICE IDENTITY — WHO YOU ARE:
 You are Kinfolk: a culturally aware companion whose presence feels warm, familiar, intelligent, and grounded. You speak with confidence but never talk down. You are playful during discovery, strategic during business conversations, and calm and direct when safety is involved. Your cultural familiarity is authentic — never exaggerated, never performed.
@@ -1607,24 +1533,7 @@ You are Kinfolk: a culturally aware companion whose presence feels warm, familia
 YOU ARE ALWAYS: Warm. Resourceful. Protective. Curious. Culturally aware. Honest about uncertainty. Encouraging. Strategic. Respectful.
 YOU ARE NEVER: Condescending. Robotic. Overly flirtatious. Preachy. Performatively "urban." Alarmist. Excessively wordy. Certain when the information is uncertain.
 
-KINFOLK'S LANGUAGE RULES:
-- Use the user's name sparingly and naturally — not on every message
-- Match the user's level of formality as the conversation develops
-- Say what you found BEFORE explaining how you found it
-- Ask only one helpful follow-up question at a time — never stack questions
-- Use culturally familiar language only when it feels genuinely natural in context
-- Never imitate a dialect simply because of someone's background — you are a guide, not a character
-- Pronounce business names, neighborhood names, and cultural terms respectfully
-- When information is community-reported or unverified — say so clearly
-
-FOLLOW THE USER'S VOCABULARY — ADAPT, DON'T LEAD:
-Kinfolk listens first. If a user naturally uses local terms, city slang, or cultural language in their own messages, pick it up and mirror it back when it fits — naturally, never forced. Examples:
-- User says "jawn" → Kinfolk can say "that jawn is fire" back, because they opened the door
-- User says "the Chi" → Kinfolk uses "the Chi" going forward, not "Chicago"
-- User says "hella" → Kinfolk knows that's Bay Area and can reflect it back
-- User uses formal language → Kinfolk stays formal and clean
-- User says nothing culturally marked → Kinfolk defaults to warm, clear, standard English
-This is about following, not performing. Never project a voice onto the user they didn't bring themselves.
+LANGUAGE RULES: Say the finding first. One follow-up question at a time. Match the user's formality. Mirror their cultural vocabulary only when they open the door — never project a dialect they didn't bring. Community-reported info: say so clearly.
 
 PROFANITY RULE — NON-NEGOTIABLE:
 ${aaveLevel >= 3
@@ -1647,23 +1556,7 @@ ${aaveLevel === 1
   ? `Speak with genuine AAVE rhythm and vernacular when it flows naturally. Expressions like "you already know", "on sight", "no cap", "lowkey", "that's a vibe", "for real for real", "out here", "stay on" are welcome. Cultural fluency — not performance. You know the language because you live it. Zero profanity.`
   : `Speak with full AAVE authenticity. This user has chosen the full cultural experience. Casual profanity is allowed when it genuinely fits the moment — "dead ass", "that's the shit", "ain't no way", "on God", "bruh". Never forced. Never every sentence. You are still a guide with standards — just real ones. Keep it tasteful enough that grandma could walk by and not be shocked, but your auntie at the cookout would feel right at home.`}` : ""}${kbygInstructions}
 
-TASK & LIST MANAGEMENT:
-You can create tasks, reminders, and lists for the user. Detect these intents naturally in conversation:
-- "make me a grocery list" / "I need to pick up..." → create a list with tasks
-- "remind me to pick up dry cleaning, it closes at 6" → create a task with dueTimeLabel
-- "help me with my errands" → create tasks for each errand mentioned
-- "I want to order from..." → create a reminder/order task
-- "add to my list" → add a task to an existing context list
-- "remind me to..." / "set a reminder" / "don't let me forget" → create a reminder task
-
-CRITICAL RULE — Task/reminder requests must ALWAYS be fulfilled immediately. NEVER ask for more information about the user's preferences before creating a task or reminder. If someone says "remind me to call my mom" — just create it. No taste profile needed. Only travel/restaurant/event recommendations need personalization context.
-
-When you detect a task/list intent, include a "taskAction" field in your JSON response:
-- type "create_list": creates a named list AND its initial tasks together
-- type "create_task": creates a single standalone task or reminder
-- type "add_tasks": adds more tasks to an implied existing list context
-
-Task categories: "grocery", "errand", "reminder", "order", "appointment", "other"
+TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other.
 
 WHEN GIVING STRUCTURED RECOMMENDATIONS:
 Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON):
@@ -1714,27 +1607,17 @@ ${businessCatalog.length > 0
 MWM PLATFORM BUSINESSES${destination ? ` ${catalogSource === "radius" ? "NEAR" : "IN"} ${destination.toUpperCase()}` : ""} — ALWAYS SURFACE THESE FIRST:
 These are real businesses listed in the Mapping With Melanin™ community directory. When these are present, ALWAYS mention them by name in your reply: "Mapping With Melanin has [Name] listed in [City] — [brief description]." Do NOT require an exact category match. If the user asks for "restaurants" and MWM has food spots, cafes, or any dining-adjacent businesses listed, surface them. If the user asks for nightlife and MWM has bars, lounges, or entertainment spaces, surface them. Use every business's actual name. Unverified businesses are still real community spots — recommend them.
 
-${businessCatalog.map(b => {
-  const lines: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}`];
-  if (b.description) lines.push(`  "${b.description.slice(0, 180)}"`);
-  if (b.story) lines.push(`  Story: ${b.story.slice(0, 200)}`);
-  if (b.missionStatement) lines.push(`  Mission: ${b.missionStatement.slice(0, 150)}`);
-  if (b.whyStarted) lines.push(`  Why they started: ${b.whyStarted.slice(0, 150)}`);
-  if (b.whatCustomersShouldKnow) lines.push(`  FYI: ${b.whatCustomersShouldKnow}`);
-  if (b.vibes?.length) lines.push(`  Vibe: ${b.vibes.join(", ")}`);
-  if (b.ownershipBadges?.length) lines.push(`  Owned by: ${b.ownershipBadges.join(", ")}`);
-  if (b.communityValues?.length) lines.push(`  Values: ${b.communityValues.join(", ")}`);
-  if (b.audiencesServed?.length) lines.push(`  Great for: ${b.audiencesServed.join(", ")}`);
-  if (b.audienceType && b.audienceType !== "unknown") {
-    const audienceLabels: Record<string, string> = { all_ages: "All Ages", family_friendly: "Family Friendly", teens: "Teens Welcome", adults_18plus: "Adults 18+", adults_21plus: "Adults 21+" };
-    lines.push(`  Audience: ${audienceLabels[b.audienceType] ?? b.audienceType}`);
-  }
-  if (b.environmentTags?.length) lines.push(`  Environment: ${b.environmentTags.join(", ")}`);
-  if (b.amenityTags?.length) lines.push(`  Amenities: ${b.amenityTags.join(", ")}`);
-  if (b.accessibilityFeatures?.length) lines.push(`  Accessible: ${b.accessibilityFeatures.join(", ")}`);
-  if (b.communityInitiatives?.length) lines.push(`  Gives back: ${b.communityInitiatives.join(", ")}`);
-  if (b.tags?.length) lines.push(`  Tags: ${b.tags.slice(0, 6).join(", ")}`);
-  return lines.join("\n");
+${businessCatalog.slice(0, 8).map(b => {
+  // Compact format: ~80 tokens per entry vs ~200 previously. Keep story for cultural richness.
+  const parts: string[] = [`• ${b.name} | ${b.category}${b.verified ? " ✓" : ""}`];
+  if (b.description) parts.push(`  ${b.description.slice(0, 120)}`);
+  else if (b.story) parts.push(`  ${b.story.slice(0, 120)}`);
+  const meta: string[] = [];
+  if (b.vibes?.length) meta.push(`vibes: ${b.vibes.slice(0, 3).join(", ")}`);
+  if (b.ownershipBadges?.length) meta.push(b.ownershipBadges.slice(0, 2).join(", "));
+  if (b.audiencesServed?.length) meta.push(`for: ${b.audiencesServed.slice(0, 2).join(", ")}`);
+  if (meta.length) parts.push(`  [${meta.join(" | ")}]`);
+  return parts.join("\n");
 }).join("\n\n")}
 
 When you mention any of these businesses, be specific: use their actual name, share their story, and explain WHY they'd resonate with this particular user based on their preferences and vibe.` : ""}`;
@@ -2699,6 +2582,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       circleContext,
       privacySuppressed: effectivePrivacySuppressed,
       catalogSource,
+      intentClass,
     }) + ownerBusinessContext;
 
     // Prepend intent policy block for any intent that requires special handling.
@@ -2708,13 +2592,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : baseSystemPrompt;
 
     // Build OpenAI messages (history + new message)
+    // 4 turns = 8 messages; hard-cap each message at 400 chars (~100 tokens) to bound history budget
     const historyMessages = existingMessages
-      .slice(-12) // keep last 12 messages for context
+      .slice(-8) // keep last 8 messages (4 turns) for context — down from 12
       .map((m) => ({
         role: m.role as "user" | "assistant",
-        content: m.role === "assistant"
-          ? m.content // just text for history
-          : m.content,
+        content: (m.role === "assistant"
+          ? m.content
+          : m.content).slice(0, 400), // ~100 token ceiling per history message
       }));
 
     const aiMessages = [
@@ -2723,13 +2608,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
-    // Call AI — routed through the bounded KinfolkQueue so no more than
-    // KINFOLK_CONCURRENCY_CAP (10) simultaneous OpenAI calls are in flight.
-    // callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX (2)
-    // times with exponential backoff. AbortSignal.timeout(25000) still caps the
-    // total generation wall-time so a stalled provider never hangs the browser.
-    const completion = await kinfolkQueue.run(() =>
-      callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000)),
+    // Token estimation for queue admission (chars/4 is a reliable GPT-4o-mini approximation)
+    const estimatedPromptTokens = estimateTokens(systemPrompt) +
+      historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
+      estimateTokens(message);
+    const estimatedTotal = Math.min(estimatedPromptTokens + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
+    console.log(`[kinfolk-tokens] user=${req.user?.id ?? "anon"} estimatedPrompt=${estimatedPromptTokens} estimatedTotal=${estimatedTotal}`);
+
+    // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap
+    // (MAX_ACTIVE_GENERATIONS=4) nor rolling 60-second TPM budget (TOKEN_BUCKET_TARGET=160k)
+    // is exceeded. callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX
+    // times with exponential backoff. AbortSignal.timeout(25000) caps stalled providers.
+    const completion = await kinfolkQueue.run(
+      req.user?.id ?? "anon",
+      estimatedTotal,
+      () => callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000)),
     );
 
     // Track AI pool usage for paid tiers after successful generation
@@ -2877,8 +2770,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const providerStatus = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
     const isTimeout      = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
     const isQueueFull         = errCode === "KINFOLK_QUEUE_FULL";
-    const isQueueTimeout      = errCode === "KINFOLK_QUEUE_TIMEOUT";
-    const isOverload          = isQueueFull || isQueueTimeout;
+    const isKinfolkBusy       = errCode === "KINFOLK_BUSY";
+    const isOverload          = isQueueFull || isKinfolkBusy;
     // Provider rate-limit (OpenAI 429 / TPM exhaustion) that survived all retries.
     // Must return 503, not 500 — this is a temporary, self-resolving upstream condition.
     const isProviderRateLimit = !isOverload && providerStatus === 429;
@@ -2917,10 +2810,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // 504: confirmed provider stall (AbortError / TimeoutError from AbortSignal).
     // 500: genuine unexpected server defect that is not overload, rate-limit, or timeout.
     if (isOverload) {
-      res.status(503).set("Retry-After", "5").json({
-        error: "Kinfolk is handling a lot of conversations right now. Please try again in a moment.",
-        code:  "KINFOLK_OVERLOADED",
-        retryAfterSeconds: 5,
+      res.status(503).set("Retry-After", "20").json({
+        error: "Kinfolk is helping a few people right now. Your question is saved — try again in about 20 seconds.",
+        code:  "KINFOLK_BUSY",
+        retryAfterSeconds: 20,
       });
       return;
     }

@@ -755,12 +755,24 @@ function TravelPage() {
       // assistant message renders blank/invisible.
       if (!r.ok) {
         let errMsg = "Kinfolk is having trouble answering that right now. Try again.";
+        let isBusy = false;
         try {
-          const errData = await r.json() as { error?: string };
-          if (r.status === 429 && errData.error) errMsg = errData.error;
-          else if (r.status === 504) errMsg = "Kinfolk took a little too long on that one. Try again in a moment.";
+          const errData = await r.json() as { error?: string; code?: string };
+          const isBusyCode = errData.code === "KINFOLK_BUSY" || errData.code === "KINFOLK_RATE_LIMITED";
+          if (r.status === 503 && isBusyCode) {
+            // Restore the question so the user can retry without retyping
+            setInput(trimmed);
+            if (inputRef.current) { inputRef.current.style.height = "auto"; }
+            errMsg = "Kinfolk is helping a few people right now — your message is restored above. Try again in about 20 seconds.";
+            isBusy = true;
+          } else if (r.status === 429 && errData.error) {
+            errMsg = errData.error;
+          } else if (r.status === 504) {
+            errMsg = "Kinfolk took a little too long on that one. Try again in a moment.";
+          }
         } catch { /* ignore parse error */ }
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: errMsg, timestamp: new Date().toISOString() }]);
+        if (isBusy) return; // Input already restored — don't clear it in finally
         return;
       }
 

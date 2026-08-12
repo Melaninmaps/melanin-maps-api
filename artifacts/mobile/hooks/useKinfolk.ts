@@ -89,6 +89,9 @@ export type ChatMessage = {
   limitReached?: boolean;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  /** Set on KINFOLK_BUSY/KINFOLK_RATE_LIMITED errors — original question can be retried */
+  retryable?: boolean;
+  retryText?: string;
 };
 
 export type SessionSummary = {
@@ -110,6 +113,8 @@ export function useKinfolk() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [queriesUsed, setQueriesUsed] = useState<number | null>(null);
   const [queriesLimit, setQueriesLimit] = useState<number>(3);
+  /** Holds the original question text when KINFOLK_BUSY fires — lets the UI pre-fill the input for retry. */
+  const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
 
   const sendMessage = useCallback(async (
     text: string,
@@ -178,7 +183,24 @@ export function useKinfolk() {
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
         };
+        setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
+      } else if (res.status === 503) {
+        // KINFOLK_BUSY or KINFOLK_RATE_LIMITED — temporary, user question preserved for retry
+        const errData = await res.json().catch(() => ({})) as { code?: string };
+        const isBusy = errData.code === "KINFOLK_BUSY" || errData.code === "KINFOLK_RATE_LIMITED";
+        const aiMsg: ChatMessage = {
+          id: makeId(),
+          role: "assistant",
+          content: isBusy
+            ? "Kinfolk is helping a few people right now — tap Send to try again in about 20 seconds. Your question is saved below."
+            : "Kinfolk is temporarily unavailable. Please try again in a moment.",
+          timestamp: new Date(),
+          retryable: isBusy,
+          retryText: isBusy ? text : undefined,
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+        if (isBusy) setPendingRetryText(text);
       } else if (res.status === 429) {
         const errData = await res.json().catch(() => ({})) as { code?: string; used?: number; limit?: number };
         const isLimit = errData.code === "KINFOLK_LIMIT_REACHED";
@@ -340,6 +362,8 @@ export function useKinfolk() {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
   }, []);
 
+  const clearPendingRetryText = useCallback(() => setPendingRetryText(null), []);
+
   return {
     messages,
     sessionId,
@@ -347,6 +371,9 @@ export function useKinfolk() {
     sessions,
     queriesUsed,
     queriesLimit,
+    /** When KINFOLK_BUSY/KINFOLK_RATE_LIMITED fires, holds the original question for retry. */
+    pendingRetryText,
+    clearPendingRetryText,
     sendMessage,
     submitFeedback,
     loadSessions,
