@@ -3,8 +3,6 @@ type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/CommunityBoundaries.tsx": () => import("../components/mockups/CommunityBoundaries.tsx"),
   "./components/mockups/Task101PinDemo.tsx": () => import("../components/mockups/Task101PinDemo.tsx"),
-  "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
-  "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
   "./components/mockups/profiles/BizBroadcasts.tsx": () => import("../components/mockups/profiles/BizBroadcasts.tsx"),
   "./components/mockups/profiles/BizFeaturedVideo.tsx": () => import("../components/mockups/profiles/BizFeaturedVideo.tsx"),
   "./components/mockups/profiles/BizIdentity.tsx": () => import("../components/mockups/profiles/BizIdentity.tsx"),
@@ -16,6 +14,8 @@ export const modules: ModuleMap = {
   "./components/mockups/profiles/CommunityPage.tsx": () => import("../components/mockups/profiles/CommunityPage.tsx"),
   "./components/mockups/profiles/CommunityProfile.tsx": () => import("../components/mockups/profiles/CommunityProfile.tsx"),
   "./components/mockups/profiles/CommunityProfileVisitor.tsx": () => import("../components/mockups/profiles/CommunityProfileVisitor.tsx"),
+  "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
+  "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
   "./components/mockups/slides/Slide01Opening.tsx": () => import("../components/mockups/slides/Slide01Opening.tsx"),
   "./components/mockups/slides/Slide05TrustScore.tsx": () => import("../components/mockups/slides/Slide05TrustScore.tsx"),
   "./components/mockups/slides/Slide17WhyNow.tsx": () => import("../components/mockups/slides/Slide17WhyNow.tsx"),
