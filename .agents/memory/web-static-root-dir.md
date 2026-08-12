@@ -1,31 +1,56 @@
 ---
 name: Root web-static directory — what Railway actually serves
-description: static-server.mjs serves from /app/web-static/ (repo root), NOT artifacts/api-server/web-static/ or dist/public/. Must be kept in sync on every Railway deploy.
+description: static-server.mjs serves root /app/web-static/; ALL client bundle updates must go to BOTH artifacts/api-server/web-static/ AND root web-static/ or Railway serves the stale bundle.
 ---
 
-# Root web-static Directory
+# Root web-static — Production Serving Rule
 
-## The Rule
-`static-server.mjs` looks for `web-static/` in `__dirname` or `process.cwd()`. On Railway, this resolves to `/app/web-static/` — the `web-static/` directory **at the repo root**, not `artifacts/api-server/web-static/`.
+## The rule
 
-**Why:** `artifacts/api-server/web-static/` is used by the API server's `build.mjs` to embed the SPA HTML and copy to `dist/public/`. But `static-server.mjs` serves from the root-level `web-static/` which is a separate path.
+`static-server.mjs` serves files from the **repository-root `web-static/`** directory:
 
-## What Goes Wrong Without This
-- Root `web-static/` stays frozen at whatever was last committed to it
-- Railway's nixpacks build correctly regenerates `artifacts/api-server/dist/public/` with new bundle hashes, but the root `web-static/` never updates
-- Users see old JavaScript bundles (e.g., new routes like `/preview` are missing)
-
-## The Fix (already in nixpacks.toml)
-nixpacks.toml step 5 now syncs on every deploy:
-```
-cp -r artifacts/api-server/dist/public/. web-static/
+```js
+const cwdPath = path.join(process.cwd(), "web-static");
+app.use(express.static(WEB_STATIC, ...));
 ```
 
-## Standalone Pages at Clean URLs
-`express.static()` requires `extensions: ['html']` to serve `preview.html` at `/preview` (without the `.html` extension). Without this option, `/preview` falls through to the SPA index.html fallback.
+nixpacks also copies root `web-static/` into the server asset directory during build.
 
-```javascript
-app.use(express.static(WEB_STATIC, { extensions: ["html"] }));
+## Every web bundle update requires TWO directory updates
+
+1. `artifacts/api-server/web-static/` — updated by Vite cp step
+2. **Root `web-static/`** — the directory Railway actually serves — MUST also be updated
+
+```bash
+# After cp -r artifacts/web/dist/public/. artifacts/api-server/web-static/:
+cp artifacts/api-server/web-static/index.html web-static/index.html
+cp artifacts/api-server/web-static/assets/<new-bundle>.js  web-static/assets/<new-bundle>.js
+cp artifacts/api-server/web-static/assets/<new-bundle>.css web-static/assets/<new-bundle>.css
+git add web-static/index.html web-static/assets/<new-bundle>.js web-static/assets/<new-bundle>.css
 ```
 
-**How to apply:** Any time a standalone HTML file needs to be accessible at a clean URL (e.g., `/preview`, `/landing`), this option must be set AND the file must be in the root `web-static/` directory.
+**Why:** Updating only `artifacts/api-server/web-static/` leaves root `web-static/index.html`
+pointing to the OLD bundle name. Browser loads the old JS even though the new one exists.
+
+## Verification before every push
+
+```bash
+grep -o '/assets/index-[A-Za-z0-9_-]*.js' web-static/index.html
+# Must match the bundle currently in artifacts/api-server/web-static/index.html
+```
+
+## Root cause of three consecutive Manus failures (Aug 12 2026)
+
+All three commits (7ff14077, c71e71bd, 7fe9d271) updated `artifacts/api-server/web-static/`
+but NOT root `web-static/`. The bundle fix was correct every time — it just never reached
+the serving directory. Manus saw `index-BU5DZ52C.js` (the pre-fix bundle) in every round
+because that filename was still in root `web-static/index.html`.
+
+Fix applied in `7fe9d271`: copy 3 files (index.html + bundle.js + bundle.css) to root web-static.
+
+## Permanent checklist addition to nixpacks-deploy-checklist.md
+
+After step "sync root dist/":
+- ALSO copy root web-static files: index.html + new JS + new CSS
+- Verify: `grep 'index-' web-static/index.html` matches new bundle
+- Commit ALL changed files in BOTH directories before pushing

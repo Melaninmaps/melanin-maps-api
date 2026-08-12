@@ -1,0 +1,295 @@
+# Mapping With Melanin — Route-Specific /travel Taste Profile Fix
+#
+# VERIFIED ACTIVE COMPONENT TRACE (production bundle index-BU5DZ52C.js)
+#
+# Parent page component (minified Dje; active /travel route):
+#   const [prefs, setPrefs] = useState(DEFAULT_PREFS)
+#   GET /api/kinfolk/preferences → `(await response.json()).preferences ?? {}`
+#   setPrefs({ ...DEFAULT_PREFS, ...preferences, communicationStyle: preferences.communicationStyle || DEFAULT_PREFS.communicationStyle })
+#   <TasteProfilePanel prefs={prefs} onSave={savePrefs} />
+#
+# Child panel component (minified Tje):
+#   const [local, setLocal] = useState(prefs)
+#   useEffect(() => setLocal(prefs), [prefs])
+#   style class: local.communicationStyle === option.id
+#   style options: friendly (label Conversational), concise, detailed, professional
+#
+# ROOT CAUSE
+# The active parent discards the GET envelope's `responseStyle` and
+# `deliveryProfile`, then passes only the legacy `preferences` object. Therefore
+# the active child receives communicationStyle: friendly, renders Conversational,
+# and cannot render aria-pressed because its actual JSX has no accessibility props.
+#
+# IMPORTANT
+# The active internal ID for the label “Conversational” is `friendly`, NOT
+# `conversational`. The prior generic patch targeted the wrong state model.
+#
+# NO-TOUCH BOUNDARY
+# Apply only to the ACTIVE /travel page component and the active Taste Profile
+# slide-over/panel component. Do not modify login/auth, Maps, Safety, Library,
+# business screens, Circles, Marketplace, or native mobile code.
+#
+# PRE-FLIGHT
+#   git grep -n "communicationStyle.*Yo.communicationStyle\|function Tje\|Save Taste Profile" client/src
+# Map `TravelPage` and `TasteProfilePanel` below to those real source names.
+
+--- a/client/src/pages/travel.tsx
++++ b/client/src/pages/travel.tsx
+@@
+ type CommunicationStyle = 'friendly' | 'concise' | 'detailed' | 'professional';
+ type ResponseStyle = 'conversational' | 'concise' | 'detailed' | 'professional';
+ 
++const RESPONSE_STYLE_TO_ACTIVE_ID: Record<ResponseStyle, CommunicationStyle> = {
++  conversational: 'friendly',
++  concise: 'concise',
++  detailed: 'detailed',
++  professional: 'professional',
++};
++
++const ACTIVE_ID_TO_RESPONSE_STYLE: Record<CommunicationStyle, ResponseStyle> = {
++  friendly: 'conversational',
++  concise: 'concise',
++  detailed: 'detailed',
++  professional: 'professional',
++};
++
++type KinfolkPreferenceEnvelope = {
++  preferences?: Partial<KinfolkPreferences>;
++  responseStyle?: ResponseStyle | null;
++  deliveryProfile?: {
++    detailLevel?: 'quick' | 'standard' | 'deep' | null;
++    detail_level?: 'quick' | 'standard' | 'deep' | null;
++    tonePreference?: 'default' | 'warm' | 'professional' | null;
++    tone_preference?: 'default' | 'warm' | 'professional' | null;
++  } | null;
++};
++
++function isResponseStyle(value: unknown): value is ResponseStyle {
++  return value === 'conversational' || value === 'concise' || value === 'detailed' || value === 'professional';
++}
++
++/**
++ * Converts the API envelope to the exact legacy field used by the ACTIVE
++ * Taste Profile component. Explicit API responseStyle wins; deliveryProfile
++ * is its compatibility fallback; legacy communicationStyle is last.
++ */
++function resolveActiveCommunicationStyle(
++  envelope: KinfolkPreferenceEnvelope,
++  legacyStyle: unknown,
++): CommunicationStyle {
++  if (isResponseStyle(envelope.responseStyle)) {
++    return RESPONSE_STYLE_TO_ACTIVE_ID[envelope.responseStyle];
++  }
++
++  const profile = envelope.deliveryProfile;
++  const detailLevel = profile?.detailLevel ?? profile?.detail_level;
++  const tonePreference = profile?.tonePreference ?? profile?.tone_preference;
++  if (tonePreference === 'professional') return 'professional';
++  if (detailLevel === 'deep') return 'detailed';
++  if (detailLevel === 'quick') return 'concise';
++
++  if (legacyStyle === 'friendly' || legacyStyle === 'concise' || legacyStyle === 'detailed' || legacyStyle === 'professional') {
++    return legacyStyle;
++  }
++  return 'friendly';
++}
+@@
+ function TravelPage() {
+   const [prefs, setPrefs] = useState<KinfolkPreferences>(DEFAULT_PREFS);
+-  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
++  const [preferencesHydrated, setPreferencesHydrated] = useState(false);
+@@
+   const loadPrefs = useCallback(async () => {
+     if (!isAuthenticated) return;
+     try {
+       const response = await fetch(`${API_BASE}api/kinfolk/preferences`, {
+         credentials: 'include',
+         headers: authHeaders(),
+       });
+       if (!response.ok) return;
+-
+-      const remote = (await response.json()).preferences ?? {};
++
++      // ACTIVE FIX: retain the entire envelope. The old code took only
++      // `.preferences`, silently discarding responseStyle + deliveryProfile.
++      const envelope = (await response.json()) as KinfolkPreferenceEnvelope;
++      const remote = envelope.preferences ?? {};
+       const list = (value: unknown) => Array.isArray(value) ? value : [];
+       setPrefs({
+         ...DEFAULT_PREFS,
+         ...remote,
+@@
+-        communicationStyle:
+-          typeof remote.communicationStyle === 'string'
+-            ? remote.communicationStyle
+-            : DEFAULT_PREFS.communicationStyle,
++        communicationStyle: resolveActiveCommunicationStyle(
++          envelope,
++          remote.communicationStyle,
++        ),
+@@
+       });
+     } finally {
+-      setPreferencesLoaded(true);
++      setPreferencesHydrated(true);
+     }
+   }, [isAuthenticated]);
+@@
+-  const savePrefs = useCallback(async (nextPrefs: KinfolkPreferences) => {
++  const savePrefs = useCallback(async (nextPrefs: KinfolkPreferences) => {
+     setPrefs(nextPrefs);
+-    await fetch(`${API_BASE}api/kinfolk/preferences`, {
++    // Keep existing legacy preferences persistence intact.
++    const legacyWrite = fetch(`${API_BASE}api/kinfolk/preferences`, {
+       method: 'PUT',
+       credentials: 'include',
+       headers: authHeaders({ 'Content-Type': 'application/json' }),
+       body: JSON.stringify({
+         ...nextPrefs,
+         preferredOwnershipTypes: nextPrefs.ownershipTypes,
+       }),
+     });
+-  }, []);
++
++    // ACTIVE FIX: persist the state selected by the live panel. The panel uses
++    // `friendly` internally for the Conversational label.
++    const responseStyleWrite = fetch(`${API_BASE}api/kinfolk/preferences/response-style`, {
++      method: 'PUT',
++      credentials: 'include',
++      headers: authHeaders({ 'Content-Type': 'application/json' }),
++      body: JSON.stringify({
++        responseStyle: ACTIVE_ID_TO_RESPONSE_STYLE[nextPrefs.communicationStyle],
++      }),
++    });
++
++    const [, styleResponse] = await Promise.all([legacyWrite, responseStyleWrite]);
++    if (!styleResponse.ok) throw new Error(`response-style save failed: ${styleResponse.status}`);
++
++    // Reconcile local state to the server-normalized response without a stale
++    // legacy default overwriting the visual control.
++    const normalized = await styleResponse.json() as Pick<KinfolkPreferenceEnvelope, 'responseStyle' | 'deliveryProfile'>;
++    setPrefs(current => ({
++      ...current,
++      communicationStyle: resolveActiveCommunicationStyle(normalized, current.communicationStyle),
++    }));
++  }, []);
+@@
+-  {isAuthenticated && <TasteProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} prefs={prefs} onSave={savePrefs} />}
++  {isAuthenticated && (
++    <TasteProfilePanel
++      open={profileOpen}
++      onClose={() => setProfileOpen(false)}
++      prefs={prefs}
++      onSave={savePrefs}
++      hydrated={preferencesHydrated}
++    />
++  )}
+ }
+@@
+ type TasteProfilePanelProps = {
+   open: boolean;
+   onClose: () => void;
+   prefs: KinfolkPreferences;
+   onSave: (prefs: KinfolkPreferences) => Promise<void>;
++  hydrated: boolean;
+ };
+@@
+-function TasteProfilePanel({ open, onClose, prefs, onSave }: TasteProfilePanelProps) {
++function TasteProfilePanel({ open, onClose, prefs, onSave, hydrated }: TasteProfilePanelProps) {
+   const [local, setLocal] = useState(prefs);
+@@
+   const save = async () => {
++    if (!hydrated) return;
+     setSaving(true);
+     await onSave(local);
+@@
+-  <div className="flex flex-wrap gap-1.5">
++  <div
++    className="flex flex-wrap gap-1.5"
++    role="group"
++    aria-label="Kinfolk response style"
++    aria-busy={!hydrated}
++  >
+     {RESPONSE_STYLE_OPTIONS.map((option) => {
++      const selected = local.communicationStyle === option.id;
++      const responseStyle = ACTIVE_ID_TO_RESPONSE_STYLE[option.id];
+       return (
+         <button
+           key={option.id}
+           type="button"
++          data-testid={`kinfolk-response-style-${responseStyle}`}
++          aria-pressed={selected}
++          disabled={!hydrated || saving}
+           onClick={() => setLocal(current => ({
+             ...current,
+             communicationStyle: option.id,
+           }))}
+           className={
+-            local.communicationStyle === option.id
++            selected
+               ? 'px-3 py-1.5 rounded-full text-xs font-medium transition-colors bg-[#2B1507] text-[#F5EBD8]'
+               : 'px-3 py-1.5 rounded-full text-xs font-medium transition-colors bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30'
+           }
+@@
+-  <button onClick={save} disabled={saving}>
++  <button
++    type="button"
++    data-testid="kinfolk-save-taste-profile"
++    onClick={save}
++    disabled={!hydrated || saving}
++  >
+     {saved ? 'Saved!' : saving ? 'Saving…' : 'Save Taste Profile'}
+   </button>
+
+# FOCUSED TESTS — add to the active /travel component test file
+#
+# The key assertion is internal-ID-aware: server "conversational" must map to
+# active panel ID "friendly", while server "detailed" maps to "detailed".
+
+--- /dev/null
++++ b/client/src/pages/travel.taste-profile.active-route.test.tsx
+@@
++it('passes persisted detailed responseStyle through the active /travel parent into the panel', async () => {
++  mockFetch('/api/kinfolk/preferences', {
++    preferences: { communicationStyle: 'friendly' },
++    responseStyle: 'detailed',
++    deliveryProfile: { detailLevel: 'deep', tonePreference: 'default' },
++  });
++
++  render(<TravelPage />);
++
++  await waitFor(() => {
++    expect(screen.getByTestId('kinfolk-response-style-detailed')).toHaveAttribute('aria-pressed', 'true');
++  });
++  expect(screen.getByTestId('kinfolk-response-style-conversational')).toHaveAttribute('aria-pressed', 'false');
++});
++
++it('saves active internal detailed style through the response-style endpoint', async () => {
++  mockFetch('/api/kinfolk/preferences', {
++    preferences: { communicationStyle: 'friendly' },
++    responseStyle: 'conversational',
++  });
++  mockPut('/api/kinfolk/preferences/response-style', {
++    responseStyle: 'detailed',
++    deliveryProfile: { detailLevel: 'deep', tonePreference: 'default' },
++  });
++
++  render(<TravelPage />);
++  await user.click(await screen.findByTestId('kinfolk-response-style-detailed'));
++  await user.click(screen.getByTestId('kinfolk-save-taste-profile'));
++
++  expect(lastPutBody('/api/kinfolk/preferences/response-style')).toEqual({ responseStyle: 'detailed' });
++  expect(screen.getByTestId('kinfolk-response-style-detailed')).toHaveAttribute('aria-pressed', 'true');
++});
++
+# REQUIRED LIVE VERIFICATION AFTER DEPLOY
+# 1. Logged-in browser: GET /api/kinfolk/preferences returns
+#      { responseStyle: "detailed", deliveryProfile: { detailLevel: "deep" } }.
+# 2. Hard refresh /travel.
+# 3. Live DOM must contain:
+#      [data-testid="kinfolk-response-style-detailed"][aria-pressed="true"]
+#      [data-testid="kinfolk-response-style-conversational"][aria-pressed="false"]
+# 4. No button may be selected before preferencesHydrated becomes true.
+# 5. Select Conversational, save, refresh; then test the reverse mapping:
+#      responseStyle "conversational" -> internal communicationStyle "friendly" ->
+#      Conversational [aria-pressed="true"].
