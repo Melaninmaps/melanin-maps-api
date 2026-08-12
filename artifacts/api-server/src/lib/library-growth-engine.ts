@@ -517,9 +517,28 @@ export async function publishLibraryNodeWhenEvidenceReady(topicId: string): Prom
  * Returns a typed action for the Kinfolk response, or null if no match.
  * Never reveals candidate status or search demand information.
  */
+/**
+ * Find a single published Library topic matching the given category aliases and
+ * optional message text. Resolution order (deterministic, security-safe):
+ *
+ *   1. If `destination` is set → geography node matching the destination name/ref.
+ *   2. If `messageText` is set → any enabled+published node whose topic_name
+ *      appears as a case-insensitive substring of the message (exact-name match),
+ *      OR whose category is in the `categories` alias list — ordered so name-in-
+ *      message wins, then credibility_score DESC, then stable id ASC.
+ *   3. Category-only fallback if no message supplied.
+ *
+ * Security invariants:
+ *  - Only `enabled = TRUE` and `status = 'published'` rows are returned.
+ *  - Node types are restricted to member-visible types (book / general / chapter
+ *    for category matches; geography for destination matches).
+ *  - Draft candidates, disabled topics, and private signal data can never appear.
+ *  - Returns null (not an error) when no eligible node exists.
+ */
 export async function findMatchingPublishedLibraryNode(
-  category: string,
+  categories: string[],
   destination: string | null,
+  messageText?: string | null,
 ): Promise<{
   type: "open_library_node";
   topicId: string;
@@ -528,29 +547,54 @@ export async function findMatchingPublishedLibraryNode(
 } | null> {
   try {
     let rows: { id: string; topic_name: string }[];
+
     if (destination) {
-      // Try to find a travel/geography node for the destination
+      // ── Destination match: geography node ──────────────────────────────────
       ({ rows } = await pool.query<{ id: string; topic_name: string }>(
         `SELECT id, topic_name FROM knowledge_topics
-         WHERE enabled = TRUE AND status = 'published'
+         WHERE enabled = TRUE
+           AND status = 'published'
            AND node_type = 'geography'
            AND (
              LOWER(topic_name) LIKE LOWER($1)
-             OR LOWER(geography_ref) LIKE LOWER($1)
+             OR LOWER(COALESCE(geography_ref, '')) LIKE LOWER($1)
            )
+         ORDER BY credibility_score DESC NULLS LAST, id ASC
          LIMIT 1`,
         [`%${destination}%`],
       ));
     } else {
-      // Match by category
+      // ── Category + keyword match ────────────────────────────────────────────
+      // Normalise message to lowercase, capped at 500 chars (never stored).
+      // The SQL checks whether the node's topic_name appears in the message —
+      // this surfaces "African Diaspora History" from "Tell me about African
+      // diaspora history" without any hardcoded topic list.
+      const safeMsg =
+        typeof messageText === "string"
+          ? messageText.slice(0, 500).toLowerCase()
+          : "";
+
       ({ rows } = await pool.query<{ id: string; topic_name: string }>(
-        `SELECT id, topic_name FROM knowledge_topics
-         WHERE enabled = TRUE AND status = 'published'
-           AND category = $1
-           AND node_type IN ('book', 'general')
-         ORDER BY credibility_score DESC NULLS LAST
+        `SELECT id, topic_name
+         FROM knowledge_topics
+         WHERE enabled = TRUE
+           AND status = 'published'
+           AND node_type IN ('book', 'general', 'chapter')
+           AND (
+             category = ANY($1::text[])
+             OR (
+               $2 <> ''
+               AND POSITION(LOWER(topic_name) IN $2) > 0
+             )
+           )
+         ORDER BY
+           -- Exact name-in-message matches rank first (0), category-only matches second (1)
+           CASE WHEN $2 <> '' AND POSITION(LOWER(topic_name) IN $2) > 0
+                THEN 0 ELSE 1 END ASC,
+           credibility_score DESC NULLS LAST,
+           id ASC
          LIMIT 1`,
-        [category],
+        [categories, safeMsg],
       ));
     }
 

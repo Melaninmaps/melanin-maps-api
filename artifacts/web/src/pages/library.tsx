@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -706,32 +706,31 @@ export default function Library() {
   const [openBookTopic, setOpenBookTopic] = useState<Topic | null>(null);
 
   // ── Deep-link: /library?topic=<id>&focus=evidence ──────────────────────────
-  // The Kinfolk chat handler emits a `libraryAction` typed object pointing to a
-  // published Library node by topicId. When the user taps "Open in Library",
-  // the web client navigates here with this query param so the topic panel opens
-  // automatically. The ?focus=evidence param is accepted but no extra scroll is
-  // needed — the KnowledgeBookPanel already leads with its sources list.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const linkTopicId = params.get("topic");
-    if (!linkTopicId) return;
-    // Wait until topics are loaded, then open the panel
-    const timer = setInterval(() => {
-      setTopics(prev => {
-        const match = prev.find(t => t.id === linkTopicId);
-        if (match) {
-          setOpenBookTopic(match);
-          setActiveTab("browse");
-          clearInterval(timer);
-        }
-        return prev;
-      });
-    }, 150);
-    // Give up after 5 seconds in case the topic is not yet in dev DB
-    setTimeout(() => clearInterval(timer), 5000);
-    return () => clearInterval(timer);
+  // Parse the URL param once — stable reference across renders.
+  // Only accepted values are non-empty strings (UUID format); anything else
+  // is silently ignored so invalid IDs never trigger an error loop.
+  const linkTopicId = useMemo<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const id = new URLSearchParams(window.location.search).get("topic") ?? "";
+    // Basic sanity: must look like a UUID or short alphanumeric id
+    return id.length >= 8 ? id : null;
   }, []);
+
+  // React to `topics` loading rather than polling with setInterval.
+  // Fires whenever the topic list changes (e.g. after loadData resolves)
+  // and opens the matching panel exactly once. The `openBookTopic` guard
+  // prevents re-firing if the user later closes and the list re-renders.
+  useEffect(() => {
+    if (!linkTopicId || topics.length === 0 || openBookTopic) return;
+    const match = topics.find(t => t.id === linkTopicId);
+    if (match) {
+      setActiveTab("browse");
+      setOpenBookTopic(match);
+    }
+    // Intentionally not listing openBookTopic in deps — we only want this
+    // to trigger when topics load, not every time the user opens/closes panels.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkTopicId, topics]);
 
   const loadData = useCallback(async () => {
     setLoading(true);

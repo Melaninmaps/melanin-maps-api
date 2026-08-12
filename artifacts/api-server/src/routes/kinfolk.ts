@@ -34,17 +34,22 @@ import {
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
 
-// Maps KinfolkIntent → Library category for the server-controlled libraryAction field.
-// Kept close to the import so future intent classes must add an entry here too.
-const INTENT_TO_CATEGORY_MAP: Record<string, string> = {
-  medical_health:       "health",
-  legal_regulated:      "legal",
-  financial_regulated:  "financial",
-  culture_entertainment:"culture",
-  business_discovery:   "business",
-  hobby_lifestyle:      "lifestyle",
-  general_knowledge:    "general",
-  current_information:  "general",
+// Maps KinfolkIntent → Library category ALIASES for the server-controlled libraryAction.
+// Multiple aliases per intent allow the resolver to match across related categories
+// (e.g. culture_entertainment covers 'diaspora' where "African Diaspora History" lives).
+// When the user's message contains a known topic name, name-in-message matching takes
+// priority over category matching — so a specific question about "African diaspora history"
+// returns the exact node even if the category alias list is broad.
+const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
+  medical_health:         ["health"],
+  legal_regulated:        ["legal"],
+  financial_regulated:    ["financial"],
+  culture_entertainment:  ["culture", "diaspora", "heritage", "history", "community_culture"],
+  business_discovery:     ["business"],
+  hobby_lifestyle:        ["lifestyle"],
+  general_knowledge:      ["general", "history", "education", "geography"],
+  current_information:    ["general", "history", "education", "geography"],
+  safety_emergency:       ["safety"],
 };
 
 const router: IRouter = Router();
@@ -2757,9 +2762,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Find a published Library topic matching the intent so the client can offer
     // a direct "Open in Library" link. Only returned for standard/professional tiers;
     // never surfaces internal candidates or raw demand data.
-    const libraryActionCategory = INTENT_TO_CATEGORY_MAP[intentClass] ?? null;
-    const libraryAction = libraryActionCategory
-      ? await findMatchingPublishedLibraryNode(libraryActionCategory, destination ?? null).catch(() => null)
+    const libraryActionCategories = INTENT_TO_CATEGORY_MAP[intentClass] ?? null;
+    // Pass the user message so the resolver can match topic names that appear
+    // verbatim in the text (e.g. "African diaspora history" → "African Diaspora History" node)
+    // before falling back to the broader category alias list.
+    const libraryAction = libraryActionCategories
+      ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
       : null;
 
     res.json({
