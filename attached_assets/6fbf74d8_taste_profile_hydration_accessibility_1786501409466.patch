@@ -1,0 +1,259 @@
+# Mapping With Melanin — Taste Profile Hydration + Accessibility Patch
+#
+# TARGET: the ACTIVE web Taste Profile component that renders:
+#   Conversational | Concise | Detailed | Professional
+#
+# OBSERVED BUG
+# The server returns responseStyle: "detailed" and deliveryProfile.detailLevel:
+# "deep" after save, but the web page restores Conversational after hard refresh.
+# This means a legacy default/communicationStyle assignment is overwriting the
+# new persisted response-style contract during client hydration.
+#
+# NO-TOUCH BOUNDARY
+# Do not modify authentication, Maps, Safety, Library, business pages, Circles,
+# backend routes, or the mobile app in this patch.
+#
+# PRE-FLIGHT
+#   git grep -n "Save Taste Profile\|selectedResponseStyle\|communicationStyle" client/src
+# Apply this to the component returned by the active /travel route. In the
+# current project this is expected to be client/src/pages/travel.tsx.
+
+--- a/client/src/pages/travel.tsx
++++ b/client/src/pages/travel.tsx
+@@
+-import { useEffect, useState } from 'react';
++import { useEffect, useState } from 'react';
+@@
+-type ResponseStyle = 'conversational' | 'concise' | 'detailed' | 'professional';
++type ResponseStyle = 'conversational' | 'concise' | 'detailed' | 'professional';
++
++type KinfolkPreferencesResponse = {
++  preferences: {
++    // Keep the existing legacy preference fields here.
++    communicationStyle?: string | null;
++    [key: string]: unknown;
++  };
++  // New server contract. This is the first-priority display value.
++  responseStyle?: ResponseStyle | null;
++  deliveryProfile?: {
++    detailLevel?: 'quick' | 'standard' | 'deep' | null;
++    detail_level?: 'quick' | 'standard' | 'deep' | null;
++    tonePreference?: 'default' | 'warm' | 'professional' | null;
++    tone_preference?: 'default' | 'warm' | 'professional' | null;
++  } | null;
++};
++
++const RESPONSE_STYLE_OPTIONS: ReadonlyArray<{
++  id: ResponseStyle;
++  label: string;
++}> = [
++  { id: 'conversational', label: 'Conversational' },
++  { id: 'concise', label: 'Concise' },
++  { id: 'detailed', label: 'Detailed' },
++  { id: 'professional', label: 'Professional' },
++];
++
++function isResponseStyle(value: unknown): value is ResponseStyle {
++  return value === 'conversational' || value === 'concise' || value === 'detailed' || value === 'professional';
++}
++
++/**
++ * IMPORTANT PRECEDENCE ORDER
++ * 1. responseStyle is the canonical persisted user choice.
++ * 2. deliveryProfile is the compatibility fallback.
++ * 3. legacy communicationStyle is read only if neither new field exists.
++ *
++ * Never apply legacy communicationStyle after this function. That is what
++ * previously reset Detailed to Conversational after a reload.
++ */
++function resolveResponseStyle(payload: KinfolkPreferencesResponse): ResponseStyle {
++  if (isResponseStyle(payload.responseStyle)) return payload.responseStyle;
++
++  const profile = payload.deliveryProfile;
++  const tone = profile?.tonePreference ?? profile?.tone_preference;
++  const detail = profile?.detailLevel ?? profile?.detail_level;
++
++  if (tone === 'professional') return 'professional';
++  if (detail === 'deep') return 'detailed';
++  if (detail === 'quick') return 'concise';
++
++  // Compatibility only. Map existing backend vocabulary once, before default.
++  if (payload.preferences.communicationStyle === 'professional') return 'professional';
++  if (payload.preferences.communicationStyle === 'concise') return 'concise';
++  if (payload.preferences.communicationStyle === 'detailed') return 'detailed';
++  return 'conversational';
++}
+@@
+-const [selectedResponseStyle, setSelectedResponseStyle] = useState<ResponseStyle>('conversational');
++const [selectedResponseStyle, setSelectedResponseStyle] = useState<ResponseStyle>('conversational');
++const [preferencesHydrated, setPreferencesHydrated] = useState(false);
+@@
+-useEffect(() => {
+-  api.get('/api/kinfolk/preferences').then(({ data }) => {
+-    setTasteProfile(data.preferences);
+-    setSelectedResponseStyle(data.preferences.communicationStyle ?? 'conversational');
+-  });
+-}, []);
++useEffect(() => {
++  let cancelled = false;
++
++  async function loadPreferences() {
++    try {
++      const { data } = await api.get<KinfolkPreferencesResponse>('/api/kinfolk/preferences');
++      if (cancelled) return;
++
++      setTasteProfile(data.preferences);
++      // ACTIVE FIX: use the new persisted server contract. Do NOT later call
++      // setSelectedResponseStyle with preferences.communicationStyle.
++      setSelectedResponseStyle(resolveResponseStyle(data));
++    } catch (error) {
++      console.error('kinfolk_preferences_load_failed', error);
++      // Keep the safe visual default only when the server cannot be reached.
++    } finally {
++      if (!cancelled) setPreferencesHydrated(true);
++    }
++  }
++
++  void loadPreferences();
++  return () => { cancelled = true; };
++}, []);
+@@
+-const saveTasteProfile = async () => {
+-  await api.put('/api/kinfolk/preferences', tasteProfile);
+-  await api.put('/api/kinfolk/preferences/response-style', { responseStyle: selectedResponseStyle });
+-};
++const saveTasteProfile = async () => {
++  await api.put('/api/kinfolk/preferences', tasteProfile);
++  const { data } = await api.put<{
++    responseStyle: ResponseStyle;
++    deliveryProfile: KinfolkPreferencesResponse['deliveryProfile'];
++  }>('/api/kinfolk/preferences/response-style', {
++    responseStyle: selectedResponseStyle,
++  });
++
++  // Preserve the server-normalized result. Do not reset to a legacy default.
++  setSelectedResponseStyle(resolveResponseStyle({
++    preferences: tasteProfile,
++    responseStyle: data.responseStyle,
++    deliveryProfile: data.deliveryProfile,
++  }));
++};
+@@
+-<div className="grid grid-cols-2 gap-2">
+-  {responseStyleOptions.map((option) => (
+-    <button
+-      key={option.id}
+-      type="button"
+-      onClick={() => setSelectedResponseStyle(option.id)}
+-      className={selectedResponseStyle === option.id ? selectedClass : unselectedClass}
+-    >
+-      {option.label}
+-    </button>
+-  ))}
+-</div>
++<div
++  className="grid grid-cols-2 gap-2"
++  role="group"
++  aria-label="Kinfolk response style"
++  aria-busy={!preferencesHydrated}
++>
++  {RESPONSE_STYLE_OPTIONS.map((option) => {
++    const selected = selectedResponseStyle === option.id;
++    return (
++      <button
++        key={option.id}
++        type="button"
++        data-testid={`kinfolk-response-style-${option.id}`}
++        aria-pressed={selected}
++        onClick={() => setSelectedResponseStyle(option.id)}
++        disabled={!preferencesHydrated || isSavingTasteProfile}
++        className={selected ? selectedClass : unselectedClass}
++      >
++        {option.label}
++      </button>
++    );
++  })}
++</div>
+@@
+-<button onClick={saveTasteProfile}>Save Taste Profile</button>
++<button
++  type="button"
++  data-testid="kinfolk-save-taste-profile"
++  onClick={saveTasteProfile}
++  disabled={!preferencesHydrated || isSavingTasteProfile}
++>
++  Save Taste Profile
++</button>
+
+# FOCUSED COMPONENT TEST
+# Create client/src/pages/travel.taste-profile.test.tsx (or merge into the
+# existing /travel component test file).
+
+--- /dev/null
++++ b/client/src/pages/travel.taste-profile.test.tsx
+@@
++import { describe, expect, it, vi } from 'vitest';
++import { render, screen, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import TravelPage from './travel';
++import { api } from '../lib/api';
++
++vi.mock('../lib/api', () => ({
++  api: {
++    get: vi.fn(),
++    put: vi.fn(),
++  },
++}));
++
++describe('Kinfolk Taste Profile response-style hydration', () => {
++  it('hydrates Detailed from the persisted server contract instead of legacy conversational state', async () => {
++    vi.mocked(api.get).mockResolvedValueOnce({
++      data: {
++        preferences: { communicationStyle: 'friendly' },
++        responseStyle: 'detailed',
++        deliveryProfile: { detailLevel: 'deep', tonePreference: 'default' },
++      },
++    });
++
++    render(<TravelPage />);
++
++    await waitFor(() => {
++      expect(screen.getByTestId('kinfolk-response-style-detailed')).toHaveAttribute('aria-pressed', 'true');
++    });
++    expect(screen.getByTestId('kinfolk-response-style-conversational')).toHaveAttribute('aria-pressed', 'false');
++  });
++
++  it('keeps Detailed selected after the Save Taste Profile response is normalized by the server', async () => {
++    const user = userEvent.setup();
++    vi.mocked(api.get).mockResolvedValueOnce({
++      data: { preferences: { communicationStyle: 'friendly' }, responseStyle: 'conversational' },
++    });
++    vi.mocked(api.put)
++      .mockResolvedValueOnce({ data: {} })
++      .mockResolvedValueOnce({
++        data: {
++          responseStyle: 'detailed',
++          deliveryProfile: { detailLevel: 'deep', tonePreference: 'default' },
++        },
++      });
++
++    render(<TravelPage />);
++    await user.click(await screen.findByTestId('kinfolk-response-style-detailed'));
++    await user.click(screen.getByTestId('kinfolk-save-taste-profile'));
++
++    await waitFor(() => {
++      expect(screen.getByTestId('kinfolk-response-style-detailed')).toHaveAttribute('aria-pressed', 'true');
++    });
++  });
++});
+
+# POST-APPLY VERIFICATION
+# 1. pnpm test -- travel.taste-profile.test.tsx
+# 2. Open /travel authenticated with the test account.
+# 3. Select Detailed → Save Taste Profile.
+# 4. Confirm GET /api/kinfolk/preferences returns responseStyle detailed.
+# 5. Perform a hard browser refresh.
+# 6. Confirm Detailed button is visibly selected and:
+#      document.querySelector('[data-testid="kinfolk-response-style-detailed"]')
+#        .getAttribute('aria-pressed') === 'true'
+# 7. Confirm Conversational aria-pressed is false.

@@ -1,0 +1,21 @@
+## Independent Release Gate — Deployment `6fbf74d8`
+
+This is a **major improvement**. The high-consequence Kinfolk path now passes independently. One UI persistence issue remains.
+
+| Release-gate check | Result | Independent live evidence |
+|---|---:|---|
+| Public Kinfolk health | ✅ Pass | `/api/kinfolk/health` returned `{"ok":true}`. |
+| Thailand visa requirements | ✅ Pass | `200`, `intentClass: "legal_regulated"`, non-empty legal/travel provenance note, and `sources: []` as an array. |
+| Thailand stay extension | ✅ Pass | Same required regulated-response contract passed. |
+| Thailand extension documents | ✅ Pass | Same required regulated-response contract passed. |
+| Cultural control: Philadelphia rapper | ✅ Pass | `200`, `intentClass: "culture_entertainment"`, no regulated provenance note, and `sources: []`. |
+| Detailed preference API save/read | ✅ Pass | `PUT` returned `responseStyle: "detailed"` and `deliveryProfile.detailLevel: "deep"`; a fresh `GET` returned the same. |
+| Detailed visible selection after hard refresh | ❌ Fail | The browser still visually selected **Conversational** after refresh, even though the API correctly returned **Detailed**. The style buttons also lacked the expected `aria-pressed` state. |
+
+> **Verdict:** The critical Kinfolk Router, legal safety, provenance, source-schema, and cultural-classification release gate is now **passed**. The remaining issue is isolated to the **Taste Profile UI hydration/accessibility layer**.
+
+Replit’s final small repair should be limited to the initial client preference loader. It must set the selected control from `payload.responseStyle` first—falling back to `payload.deliveryProfile.detailLevel`—and remove any later assignment that restores from the legacy `preferences.communicationStyle` value. The response-style buttons should also render `aria-pressed={selectedResponseStyle === style}`.
+
+This does **not** block Kinfolk’s legal/travel answers or the Phuket experience. It does mean the promised personalized presentation setting is not fully user-visible after a reload, so I would mark the adaptive-style feature as **P1 pending one UI patch**, not complete.
+
+I attached the final evidence notes for Replit.
