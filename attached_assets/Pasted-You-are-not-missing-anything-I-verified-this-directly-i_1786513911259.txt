@@ -1,0 +1,17 @@
+You are **not** missing anything. I verified this directly in the live application, and the screenshot is showing a real gap between what was displayed and what was actually built.
+
+The Library currently has **topic cards and descriptions**, but the evidence layer behind them was not seeded. For **African Diaspora History**, the live API returns a published topic but `sources: []` and `articles: []`. The empty panel is therefore honest: it has nothing verified to display.
+
+The more troubling part is that the topic card already lists Smithsonian NMAAHC, UNESCO, and the Library of Congress as “trusted sources,” but those names exist only as display metadata. They were **not inserted as real source records or mapped to the topic** in the Library graph.
+
+| What appears built | What is actually missing |
+|---|---|
+| Library page, categories, topic cards, descriptions, Follow button, contribution form | Verified source records, source-to-topic mappings, articles/evidence, and the data job that turns trusted-source metadata into usable Library content |
+| African Diaspora History lists 3 trusted institutions | Its live evidence graph returns **0 sources** and **0 articles** |
+| Seven visible diaspora topics are listed | All seven currently return **0 graph sources** |
+
+> In plain English: the Library has been given its **table of contents**, but not its **books**.
+
+I wrote the exact P0 repair ticket. It requires Replit to seed the first three real institutional sources for African Diaspora History—UNESCO, Smithsonian Folklife, and NMAAHC—then seed the other six visible diaspora topics, using actual source records and direct evidence mappings. It also addresses the broader known backlog of 126 published Travel/regional topics with no direct sources.
+
+This repair is **data-only**: it does not touch your login, Kinfolk, map, Safety Hub, business pages, mobile app, or Library layout. Once Replit completes it, I will independently reopen the live topic and confirm that the sources appear after a hard refresh instead of the empty “building this Book” message.
