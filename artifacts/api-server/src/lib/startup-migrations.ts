@@ -2396,6 +2396,15 @@ ON CONFLICT (city_slug) DO UPDATE SET
     name: "add_is_load_test_to_users",
     sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_load_test boolean NOT NULL DEFAULT false`,
   },
+  {
+    // Idempotent: after first run city is 'Horsham', subsequent boots touch 0 rows
+    name: "dukes_cafe_city_fix_v1",
+    sql: `UPDATE businesses
+          SET city='Horsham', state='PA', address='Horsham, PA 19044',
+              black_owned=true,
+              ownership_designations='["black-owned"]'::jsonb
+          WHERE LOWER(name)='duke''s cafe' AND city='Willow Grove'`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
