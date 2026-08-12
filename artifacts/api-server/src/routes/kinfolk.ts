@@ -84,7 +84,7 @@ const router: IRouter = Router();
 const KINFOLK_CONCURRENCY_CAP = 10;   // max simultaneous OpenAI calls
 const KINFOLK_QUEUE_MAX       = 50;   // max queued requests before 503
 const KINFOLK_QUEUE_WAIT_MS   = 20_000; // max queue wait time (ms)
-const KINFOLK_RETRY_MAX       = 2;    // transient provider retries
+const KINFOLK_RETRY_MAX       = 1;    // max 1 retry after initial attempt (2 total attempts)
 const KINFOLK_RETRY_BASE_MS   = 500;  // exponential backoff base (ms)
 
 // Module-level telemetry — safe to read from any route handler
@@ -2876,9 +2876,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const errCode        = (err as any)?.code as string | undefined;
     const providerStatus = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
     const isTimeout      = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-    const isQueueFull    = errCode === "KINFOLK_QUEUE_FULL";
-    const isQueueTimeout = errCode === "KINFOLK_QUEUE_TIMEOUT";
-    const isOverload     = isQueueFull || isQueueTimeout;
+    const isQueueFull         = errCode === "KINFOLK_QUEUE_FULL";
+    const isQueueTimeout      = errCode === "KINFOLK_QUEUE_TIMEOUT";
+    const isOverload          = isQueueFull || isQueueTimeout;
+    // Provider rate-limit (OpenAI 429 / TPM exhaustion) that survived all retries.
+    // Must return 503, not 500 — this is a temporary, self-resolving upstream condition.
+    const isProviderRateLimit = !isOverload && providerStatus === 429;
     const errMsg         = err instanceof Error ? err.message : String(err);
     const is401          = errMsg.includes("401") || errMsg.toLowerCase().includes("unauthorized");
     const isConnRefused  = errMsg.includes("ECONNREFUSED") || errMsg.includes("ENOTFOUND");
@@ -2891,6 +2894,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       `code=${errCode ?? "none"}`,
       `providerStatus=${providerStatus ?? "none"}`,
       `isOverload=${isOverload}`,
+      `isProviderRateLimit=${isProviderRateLimit}`,
       `isTimeout=${isTimeout}`,
       `active=${kinfolkActiveGenerations}`,
       `queued=${kinfolkQueuedGenerations}`,
@@ -2906,15 +2910,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     _kinfolkHealthCache = null;
 
     // ── Response classification ────────────────────────────────────────────
-    // 503 + Retry-After: expected temporary overload (queue full / queue timeout).
-    //   Never return 500 for a condition that is bounded and self-resolving.
+    // 503 + Retry-After: temporary, self-resolving upstream conditions.
+    //   - KINFOLK_OVERLOADED:    internal queue full or wait-timeout
+    //   - KINFOLK_RATE_LIMITED:  provider TPM/RPM 429 survived all retries
+    //   Never return 500 for either of these — they are bounded and self-resolving.
     // 504: confirmed provider stall (AbortError / TimeoutError from AbortSignal).
-    // 500: genuine unexpected server defect that is not overload or timeout.
+    // 500: genuine unexpected server defect that is not overload, rate-limit, or timeout.
     if (isOverload) {
       res.status(503).set("Retry-After", "5").json({
         error: "Kinfolk is handling a lot of conversations right now. Please try again in a moment.",
         code:  "KINFOLK_OVERLOADED",
         retryAfterSeconds: 5,
+      });
+      return;
+    }
+
+    if (isProviderRateLimit) {
+      res.status(503).set("Retry-After", "4").json({
+        error: "Kinfolk is a little busy right now. Please try again in a moment.",
+        code:  "KINFOLK_RATE_LIMITED",
+        retryAfterSeconds: 4,
       });
       return;
     }
