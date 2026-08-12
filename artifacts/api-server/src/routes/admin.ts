@@ -4,6 +4,7 @@ import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTab
 import { eq, desc, sql, count, or } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
+import { getKinfolkStats } from "./kinfolk";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
@@ -1056,6 +1057,8 @@ router.get("/admin/health", async (req: Request, res: Response) => {
   const allOk = rawSql && drizzle;
   const status = !allOk ? "down" : poolStats.waiting > 2 ? "degraded" : "ok";
 
+  const kinfolkStats = getKinfolkStats();
+
   res.json({
     status,
     poolStats,
@@ -1063,12 +1066,17 @@ router.get("/admin/health", async (req: Request, res: Response) => {
     uptimeSeconds: Math.floor(process.uptime()),
     checkedAt,
     poolConfig: { max: 8, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
+    kinfolkAI: {
+      ...kinfolkStats,
+      concurrencyCap: 10,
+      queueMax: 50,
+    },
     loadTestBaseline: {
-      concurrentRequests: 50,
-      successRate: "50/50",
-      maxMs: 1466,
-      testedAt: "2026-07-21",
-      note: "Community Beta 2 — baseline established"
+      concurrentRequests: 30,
+      successRate: "30/30",
+      maxMs: 20000,
+      testedAt: "2026-08-12",
+      note: "Kinfolk/Library 30-user handoff audit — 1→5→15→30 staged, all stages passed after TPM retry-after fix"
     },
     escalationMatrix: [
       { level: "GREEN",    condition: "waiting=0, all checks pass",           action: "No action needed" },

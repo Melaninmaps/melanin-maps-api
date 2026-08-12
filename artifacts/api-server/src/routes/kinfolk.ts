@@ -91,6 +91,41 @@ const KINFOLK_RETRY_BASE_MS   = 500;  // exponential backoff base (ms)
 export let kinfolkActiveGenerations = 0;
 export let kinfolkQueuedGenerations = 0;
 
+// ─── TPM Rate-Limit Event Tracker ─────────────────────────────────────────────
+// Records a timestamp each time OpenAI returns a 429 rate_limit_exceeded.
+// The admin health endpoint reads this to warn the founder before users
+// see failures — instead of after 8 users already got HTTP 500.
+const _tpmEventTimestamps: number[] = [];
+const TPM_EVENT_WINDOW_MS = 60 * 60 * 1000; // 60 minutes rolling window
+
+export function recordTpmEvent(): void {
+  const now = Date.now();
+  _tpmEventTimestamps.push(now);
+  // Trim entries older than the window to bound memory
+  const cutoff = now - TPM_EVENT_WINDOW_MS;
+  while (_tpmEventTimestamps.length > 0 && _tpmEventTimestamps[0] < cutoff) {
+    _tpmEventTimestamps.shift();
+  }
+}
+
+export function getKinfolkStats(): {
+  activeGenerations: number;
+  queuedGenerations: number;
+  tpmEventsLast60m: number;
+  tpmEventsMostRecentAt: string | null;
+} {
+  const now = Date.now();
+  const cutoff = now - TPM_EVENT_WINDOW_MS;
+  const recent = _tpmEventTimestamps.filter((t) => t >= cutoff);
+  return {
+    activeGenerations: kinfolkActiveGenerations,
+    queuedGenerations: kinfolkQueuedGenerations,
+    tpmEventsLast60m: recent.length,
+    tpmEventsMostRecentAt:
+      recent.length > 0 ? new Date(recent[recent.length - 1]).toISOString() : null,
+  };
+}
+
 class KinfolkQueue {
   private active = 0;
   private readonly waiters: Array<{
@@ -215,6 +250,9 @@ async function callOpenAIWithRetry(
         // Unknown error type — do not retry blindly; surface immediately
         throw err;
       }
+
+      // Record TPM rate-limit events for admin health monitoring
+      if (status === 429) recordTpmEvent();
 
       // Floor backoff to provider-declared retry-after so TPM window has time to
       // reset before the next attempt. Without this, retries fire at ~1.1 s which

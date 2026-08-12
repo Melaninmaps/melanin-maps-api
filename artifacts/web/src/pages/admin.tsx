@@ -248,6 +248,14 @@ type HealthData = {
   poolConfig: { max: number; idleTimeoutMs: number; maxLifetimeS: number; connectionTimeoutMs: number };
   loadTestBaseline: { concurrentRequests: number; successRate: string; maxMs: number; testedAt: string; note: string };
   escalationMatrix: { level: string; condition: string; action: string }[];
+  kinfolkAI?: {
+    activeGenerations: number;
+    queuedGenerations: number;
+    tpmEventsLast60m: number;
+    tpmEventsMostRecentAt: string | null;
+    concurrencyCap: number;
+    queueMax: number;
+  };
 };
 
 function statusBadge(status: string) {
@@ -2791,6 +2799,59 @@ export default function Admin() {
                   ))}
                 </div>
               </div>
+
+              {/* KinfolkAI Generation Queue */}
+              {health.kinfolkAI && (
+                <div>
+                  <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">KinfolkAI Generation Queue</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      {
+                        label: "Active Now",
+                        value: health.kinfolkAI.activeGenerations,
+                        sub: `/ ${health.kinfolkAI.concurrencyCap} cap`,
+                        warn: health.kinfolkAI.activeGenerations >= health.kinfolkAI.concurrencyCap,
+                      },
+                      {
+                        label: "Queued",
+                        value: health.kinfolkAI.queuedGenerations,
+                        sub: `/ ${health.kinfolkAI.queueMax} max`,
+                        warn: health.kinfolkAI.queuedGenerations > 10,
+                      },
+                      {
+                        label: "Rate Limits (60m)",
+                        value: health.kinfolkAI.tpmEventsLast60m,
+                        sub: health.kinfolkAI.tpmEventsLast60m === 0 ? "none — good" : "TPM 429 retries",
+                        warn: health.kinfolkAI.tpmEventsLast60m > 0,
+                      },
+                      {
+                        label: "Last Rate Limit",
+                        value: health.kinfolkAI.tpmEventsMostRecentAt
+                          ? new Date(health.kinfolkAI.tpmEventsMostRecentAt).toLocaleTimeString()
+                          : "—",
+                        sub: health.kinfolkAI.tpmEventsMostRecentAt ? "retried automatically" : "no events",
+                        warn: false,
+                      },
+                    ].map((m) => (
+                      <div key={m.label} className={`rounded-xl border p-4 ${m.warn ? "bg-amber-50 border-amber-200" : "bg-white border-[#E8D5B7]"}`}>
+                        <div className={`text-2xl font-bold ${m.warn ? "text-amber-600" : "text-[#CA922B]"}`}>{m.value}</div>
+                        <div className="text-xs font-semibold text-[#3A1F0E]/70 mt-0.5">{m.label}</div>
+                        <div className="text-xs text-[#3A1F0E]/40">{m.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {health.kinfolkAI.tpmEventsLast60m > 5 && (
+                    <div className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 mt-1 shrink-0" />
+                      <p className="text-xs text-amber-800">
+                        <span className="font-bold">{health.kinfolkAI.tpmEventsLast60m} TPM rate-limit events</span> in the past hour.
+                        KinfolkAI is retrying automatically, but sustained load may slow responses.
+                        Consider scheduling heavy usage at off-peak times or requesting a higher OpenAI TPM limit.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <h3 className="text-sm font-bold text-[#3A1F0E]/70 uppercase tracking-wider mb-3">Load Test Baseline</h3>
