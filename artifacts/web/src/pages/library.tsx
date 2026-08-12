@@ -718,9 +718,8 @@ export default function Library() {
   const [deepLinkFocus, setDeepLinkFocus] = useState<string | null>(null);
 
   // ── Deep-link: /library?topic=<id>&focus=evidence ──────────────────────────
-  // useSearch() from wouter 3.x returns the query string (?topic=...&focus=...)
-  // reactively — it updates on every SPA navigation including pushState changes,
-  // unlike useLocation() which tracks only the pathname.
+  // useSearch() from wouter 3.x returns the query string reactively on every
+  // pushState change, unlike useLocation() which only tracks the pathname.
   const wSearch = useSearch();
 
   const linkTopicId = useMemo<string | null>(() => {
@@ -732,19 +731,45 @@ export default function Library() {
     return new URLSearchParams(wSearch).get("focus") ?? null;
   }, [wSearch]);
 
-  // Opens the panel for the matched topic once per navigation.
-  // The openBookTopic guard prevents re-opening if the user closes and
-  // navigates back without changing the URL (same wLocation value).
+  // Track the last processed ID so the fetch fires exactly once per linkTopicId.
+  // A ref avoids the stale-closure problem that arises when reading openBookTopic
+  // inside an effect whose deps don't include openBookTopic.
+  const deepLinkProcessed = useRef<string | null>(null);
+
+  // Fetch the topic directly via the knowledge graph API instead of searching
+  // the topics list. This is more reliable because:
+  //   1. The topics list uses ?excludeType=collection which may exclude this topic
+  //      if its topic_type is unusual (e.g. legacy node_type='topic' rows).
+  //   2. We don't have to wait for the full topics list to finish loading.
+  //   3. The graph API is the same source KnowledgeBookPanel uses internally.
   useEffect(() => {
-    if (!linkTopicId || topics.length === 0 || openBookTopic) return;
-    const match = topics.find(t => t.id === linkTopicId);
-    if (match) {
-      setActiveTab("browse");
-      setOpenBookTopic(match);
-      setDeepLinkFocus(linkFocus);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkTopicId, linkFocus, topics]);
+    if (!linkTopicId || deepLinkProcessed.current === linkTopicId) return;
+    const controller = new AbortController();
+
+    fetch(`${BASE}api/knowledge/graph/${encodeURIComponent(linkTopicId)}?surface=library`, {
+      credentials: "include",
+      signal: controller.signal,
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: GraphData | null) => {
+        if (!d?.node?.topic_name) return; // not found or disabled
+        deepLinkProcessed.current = linkTopicId;
+        const syntheticTopic: Topic = {
+          id: linkTopicId,
+          topicName: d.node.topic_name,
+          category: d.node.category ?? "general",
+          description: d.node.description ?? null,
+          isFollowing: false,
+          newCount: 0,
+        };
+        setActiveTab("browse");
+        setOpenBookTopic(syntheticTopic);
+        setDeepLinkFocus(linkFocus ?? null);
+      })
+      .catch(() => {}); // invalid / network error → stays in browse mode
+
+    return () => controller.abort();
+  }, [linkTopicId, linkFocus]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
