@@ -1,0 +1,24 @@
+## When to add the Kinfolk-to-Map/Library feature
+
+Make it the **next planned feature release only after** the current P0 fixes are independently verified: Kinfolk concurrency reliability, real business-feedback controls, full Library coverage proof, and stable production readiness. It should not be bundled into an emergency patch.
+
+The release should include two connected capabilities:
+
+1. **Kinfolk handoff:** “Show me on the map” opens the real matching pin/business; “Tell me more” opens the exact sourced Library Book/Chapter.
+2. **Governed Library growth:** Kinfolk turns only privacy-safe aggregate demand into curator-reviewed Book, Volume, Chapter, and Subchapter candidates—never raw personal searches.
+
+## 30-person audit after Replit confirms implementation
+
+**Yes.** Once Replit provides the deployment SHA, migration preflight, worker-health proof, Kinfolk handoff proof, Library coverage manifest, and passing automated tests, I can rerun the 30-person audit.
+
+That audit will test the real combined experience: 30 isolated users across the city roster and Phuket, Kinfolk responses, Library source panels, Map/business handoffs, database pool behavior, provider errors, and the critical privacy assertion that load-test traffic creates **zero** Library-growth candidates or public community data. A pass authorizes a monitored tester rollout in cohorts of 5 → 10 → 15 rather than sending all 30 at once.
+
+## Deployment materials ready
+
+| File | Purpose |
+|---|---|
+| **Book/Volume/Chapter API specification** | Complete endpoint, role, hierarchy, relationship, evidence-gate, and deep-link contract |
+| **Replit deployment prompt** | Copy-ready controlled implementation and deployment instructions for the growth engine |
+| **30-person tester audit gate** | Prerequisites, safe traffic scenarios, abort rules, pass criteria, and real-tester release sequence |
+
+Replit should use the deployment prompt with the previously delivered SQL migration and worker implementation. I will independently verify it before calling it complete.
