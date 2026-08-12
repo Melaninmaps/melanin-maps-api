@@ -1,0 +1,32 @@
+## Final Independent Audit — Deployment `9f8dd7ca`
+
+The public deployment is live and the health probe passes, but the authenticated acceptance test is **not fully green**.
+
+| Acceptance check | Result | Independent live result |
+|---|---:|---|
+| Public health probe | ✅ Pass | `GET /api/kinfolk/health` returned `{"ok":true}`. |
+| Current production bundle | ✅ Pass | Production serves `index-BU5DZ52C.js`, last modified at **21:45 UTC**. |
+| Thailand visa requirements | ❌ Fail | Authenticated `POST /api/kinfolk/chat` returned `HTTP 500`. |
+| Thailand stay-extension query | ❌ Fail | Authenticated chat returned `HTTP 500`. |
+| Thailand extension-documents query | ❌ Fail | Authenticated chat returned `HTTP 500`. |
+| Cultural control query: Philadelphia rapper | ✅ Partial pass | Returned `HTTP 200`, `intentClass: "business_discovery"`, `sources: []`, and no provenance note. It correctly did **not** present as legal guidance, but the generic intent label should eventually be refined to a cultural/entertainment class. |
+| Detailed API round-trip | ✅ Pass | `PUT /api/kinfolk/preferences/response-style` returned `200` with `responseStyle: "detailed"` and `deliveryProfile.detailLevel: "deep"`; immediate fresh GET returned the same. |
+| Detailed UI after hard refresh | ❌ Fail | After a full refresh, the page visually selected **Conversational**, not **Detailed**. The UI hydration path still ignores or overwrites the persisted delivery profile. |
+
+> **Bottom line:** The broad chat path works for cultural conversation, and the response-style API now writes and reads the new data. However, the new high-consequence/legal route is throwing before it reaches the model, and the UI does not hydrate the saved Detailed preference after reload. I cannot approve the full Kinfolk Router update until those two issues are resolved.
+
+### Most likely next debugging target
+
+Because all three legal/Thailand prompts failed with the same generic `500` while the cultural query returned `200`, the regression is isolated to the **new legal-regulated code path**. Replit should trace the first exception after `enforceRouterContract`—especially the `legal-authoritative-v1` source-policy lookup, evidence retrieval, or source serialization. The API must return an object like this rather than throw:
+
+```json
+{
+  "intentClass": "legal_regulated",
+  "provenanceNote": "General legal and travel information only. Verify current requirements with an official authority before acting.",
+  "sources": []
+}
+```
+
+For the preference screen, Replit should inspect the client’s initial preference loader. It must set the visible control from `payload.responseStyle` or `payload.deliveryProfile.detailLevel`; it is currently restoring the old `conversational` default after refresh.
+
+I attached the raw audit notes with the exact endpoints and outcomes for the debugging handoff.

@@ -1,0 +1,249 @@
+# Mapping With Melanin — Surgical Repair Patch
+#
+# REPAIRS
+# A. Prevents high-consequence/legal Kinfolk requests from returning HTTP 500
+#    if source-policy lookup or evidence retrieval is unavailable.
+# B. Ensures persisted responseStyle from /api/kinfolk/preferences hydrates
+#    the Taste Profile UI after a full refresh.
+#
+# NO-TOUCH BOUNDARY
+# Apply only to the active Kinfolk chat handler, active Kinfolk preference
+# response, and active Web travel Taste Profile component. Do not modify login,
+# auth middleware, Maps, Safety, Library, business routes, or mobile code here.
+#
+# PRE-FLIGHT
+#   git status --short
+#   git switch -c fix/kinfolk-legal-fallback-ui-hydration
+#   git grep -n "resolveEvidenceForPlan\|legal-authoritative-v1\|router.post.*chat" server
+#   git grep -n "responseStyle\|selectedResponseStyle\|Save Taste Profile" client/src
+#
+# Map the named imports to this repository's active implementation. Do not
+# create a duplicate router or an unused page component.
+
+--- a/server/kinfolk/evidence-retrieval-service.ts
++++ b/server/kinfolk/evidence-retrieval-service.ts
+@@
+ export type EvidenceItem = {
+   id: string;
+   title: string;
+   url: string | null;
+   origin: 'LIBRARY' | 'MWM_DIRECTORY' | 'LIVE_WEB' | 'COMMUNITY';
+   verifiedAt: string | null;
+   permittedForResponse: boolean;
+ };
++
++export type EvidenceResolution = {
++  items: EvidenceItem[];
++  degraded: boolean;
++  failureCode?: 'SOURCE_POLICY_UNAVAILABLE' | 'EVIDENCE_RETRIEVAL_FAILED';
++};
++
++/**
++ * Converts an evidence-layer availability failure into a controlled response
++ * state. It must never turn a legal/medical/travel-policy request into a 500.
++ * `degraded: true` means no source claim may be made in the assistant reply.
++ */
++export async function resolveEvidenceSafely(input: Parameters<typeof resolveEvidenceForPlan>[0]): Promise<EvidenceResolution> {
++  try {
++    const items = await resolveEvidenceForPlan(input);
++    return { items, degraded: false };
++  } catch (error) {
++    input.logger?.warn?.(
++      { err: error, intentClass: input.plan.intent, sourcePolicyId: input.plan.sourcePolicyId },
++      'kinfolk_evidence_resolution_degraded',
++    );
++    return {
++      items: [],
++      degraded: true,
++      failureCode: 'EVIDENCE_RETRIEVAL_FAILED',
++    };
++  }
++}
+
+--- a/server/routes/kinfolk.ts
++++ b/server/routes/kinfolk.ts
+@@
+-import { resolveEvidenceForPlan } from '../kinfolk/evidence-retrieval-service';
++import { resolveEvidenceSafely } from '../kinfolk/evidence-retrieval-service';
+@@
+ const HIGH_CONSEQUENCE = new Set([
+   'legal_regulated',
+   'medical_health',
+   'financial_regulated',
+   'safety_emergency',
+ ]);
++
++function regulatedFallbackReply(intentClass: string): string {
++  if (intentClass === 'legal_regulated') {
++    return 'I can share general information, but I cannot verify the current official requirements right now. Please check the relevant government, immigration, embassy, or consular authority before making travel or legal decisions.';
++  }
++  if (intentClass === 'medical_health') {
++    return 'I can share general health information, but I cannot verify current source material right now. For medical decisions, consult a qualified clinician or an authoritative health source.';
++  }
++  if (intentClass === 'financial_regulated') {
++    return 'I can share general financial information, but I cannot verify current regulatory information right now. Please consult an appropriate licensed professional or official authority before acting.';
++  }
++  return 'I cannot verify current official guidance right now. Please consult local emergency services or an official authority if this is urgent.';
++}
+@@
+ router.post('/chat', requireAuth, async (req, res) => {
+   const requestId = crypto.randomUUID();
+@@
+-    const evidence = await resolveEvidenceForPlan({
++    // ACTIVE FIX: a missing `legal-authoritative-v1` policy record, stale
++    // source table, or retrieval error must not abort the complete chat route.
++    const evidenceResolution = await resolveEvidenceSafely({
+       plan: routerPlan,
+       normalizedQuestion: routerPlan.normalizedQuestion,
++      logger: req.log,
+     });
++
++    const evidence = evidenceResolution.items;
+@@
+-    const completion = await getKinfolkCompletion({
+-      requestId,
+-      sessionId: session.id,
+-      message,
+-      systemPrompt: buildAdaptiveAnswerSystemPrompt(deliveryProfile, routerPlan),
+-      evidence,
+-      permittedTools: routerPlan.permittedTools,
+-    });
++    let completion: { reply: string; followUpSuggestions?: string[]; recommendations?: unknown };
++    try {
++      completion = await getKinfolkCompletion({
++        requestId,
++        sessionId: session.id,
++        message,
++        systemPrompt: buildAdaptiveAnswerSystemPrompt(deliveryProfile, routerPlan, {
++          evidenceDegraded: evidenceResolution.degraded,
++          prohibitUnverifiedClaims: HIGH_CONSEQUENCE.has(routerPlan.intent),
++        }),
++        evidence,
++        permittedTools: routerPlan.permittedTools,
++      });
++    } catch (error) {
++      // Fail closed for regulated content: return a safe, explicit 200 answer
++      // instead of hiding the failure behind the generic Kinfolk 500 response.
++      if (HIGH_CONSEQUENCE.has(routerPlan.intent)) {
++        req.log?.error?.({ requestId, err: error, intent: routerPlan.intent }, 'kinfolk_regulated_completion_degraded');
++        completion = {
++          reply: regulatedFallbackReply(routerPlan.intent),
++          followUpSuggestions: ['Show me the official authority I should check.'],
++          recommendations: null,
++        };
++      } else {
++        throw error;
++      }
++    }
+@@
+-    return res.status(200).json({
++    return res.status(200).json({
+       sessionId: session.id,
+       reply: completion.reply,
+       intentClass: routerPlan.intent,
+-      provenanceNote: provenanceNoteFor(routerPlan.intent, approvedSources.length),
++      provenanceNote: provenanceNoteFor(routerPlan.intent, approvedSources.length),
+       sources: approvedSources,
++      evidenceStatus: evidenceResolution.degraded ? 'degraded' : 'available',
+       followUpSuggestions: HIGH_CONSEQUENCE.has(routerPlan.intent)
+         ? ['Show me the official source for this.', 'What should I verify before I act on this?']
+@@
+-  } catch (error) {
++  } catch (error) {
+     req.log?.error({ requestId, err: error }, 'kinfolk_chat_failed');
+@@
+   }
+ });
+
+--- a/client/src/pages/travel.tsx
++++ b/client/src/pages/travel.tsx
+@@
+ type KinfolkPreferencesResponse = {
+   preferences: LegacyTastePreferences;
+-  responseStyle?: ResponseStyle;
++  responseStyle?: ResponseStyle;
++  deliveryProfile?: {
++    detailLevel?: 'quick' | 'standard' | 'deep';
++    detail_level?: 'quick' | 'standard' | 'deep';
++    tonePreference?: 'default' | 'warm' | 'professional';
++    tone_preference?: 'default' | 'warm' | 'professional';
++  };
+ };
+@@
+ const RESPONSE_STYLES = ['conversational', 'concise', 'detailed', 'professional'] as const;
+ type ResponseStyle = (typeof RESPONSE_STYLES)[number];
++
++function responseStyleFromServer(payload: KinfolkPreferencesResponse): ResponseStyle {
++  // Prefer explicit responseStyle. Do not let legacy communicationStyle reset
++  // the modern control to conversational after a hard refresh.
++  if (payload.responseStyle && RESPONSE_STYLES.includes(payload.responseStyle)) {
++    return payload.responseStyle;
++  }
++  const profile = payload.deliveryProfile;
++  const detailLevel = profile?.detailLevel ?? profile?.detail_level;
++  const tone = profile?.tonePreference ?? profile?.tone_preference;
++  if (tone === 'professional') return 'professional';
++  if (detailLevel === 'deep') return 'detailed';
++  if (detailLevel === 'quick') return 'concise';
++  return 'conversational';
++}
+@@
+-const [selectedResponseStyle, setSelectedResponseStyle] = useState<ResponseStyle>('conversational');
++const [selectedResponseStyle, setSelectedResponseStyle] = useState<ResponseStyle>('conversational');
++const [preferencesHydrated, setPreferencesHydrated] = useState(false);
+@@
+-useEffect(() => {
+-  api.get('/api/kinfolk/preferences').then(({ data }) => {
+-    setTasteProfile(data.preferences);
+-    setSelectedResponseStyle(data.preferences.communicationStyle ?? 'conversational');
+-  });
+-}, []);
++useEffect(() => {
++  let active = true;
++  (async () => {
++    try {
++      const { data } = await api.get<KinfolkPreferencesResponse>('/api/kinfolk/preferences');
++      if (!active) return;
++      setTasteProfile(data.preferences);
++      // ACTIVE FIX: hydrate from the new server response, never from the
++      // legacy `communicationStyle` field.
++      setSelectedResponseStyle(responseStyleFromServer(data));
++    } catch (error) {
++      console.error('kinfolk_preferences_load_failed', error);
++    } finally {
++      if (active) setPreferencesHydrated(true);
++    }
++  })();
++  return () => { active = false; };
++}, []);
+@@
+ const saveTasteProfile = async () => {
+-  await api.put('/api/kinfolk/preferences', tasteProfile);
+-  await api.put('/api/kinfolk/preferences/response-style', { responseStyle: selectedResponseStyle });
++  // Preserve existing taste-profile behavior, then persist the new style.
++  await api.put('/api/kinfolk/preferences', tasteProfile);
++  const { data } = await api.put<{ responseStyle: ResponseStyle; deliveryProfile: unknown }>(
++    '/api/kinfolk/preferences/response-style',
++    { responseStyle: selectedResponseStyle },
++  );
++  // Trust server normalization rather than writing a client default.
++  setSelectedResponseStyle(data.responseStyle);
+ };
+@@
+ <ResponseStyleSelector
+   value={selectedResponseStyle}
+   onChange={setSelectedResponseStyle}
+-  disabled={isSaving}
++  disabled={isSaving || !preferencesHydrated}
+ />
+
+# REQUIRED REGRESSION TESTS
+# 1. Unit: resolveEvidenceSafely returns {items: [], degraded: true} when
+#    `legal-authoritative-v1` lookup fails.
+# 2. Integration: all three Thailand policy prompts return HTTP 200,
+#    `intentClass: legal_regulated`, non-empty provenanceNote, and sources array.
+# 3. Component: server payload {responseStyle: detailed} selects Detailed after
+#    a remount. Legacy communicationStyle must not override it.
+# 4. Component: server payload with deliveryProfile.detailLevel=deep selects
+#    Detailed if explicit responseStyle is absent.
+# 5. Browser: Detailed → Save → hard refresh → Detailed remains selected.
