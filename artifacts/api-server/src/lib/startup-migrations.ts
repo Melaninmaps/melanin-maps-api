@@ -3207,19 +3207,24 @@ async function geocodeTourContent(
   log: (msg: string) => void,
   warn: (msg: string) => void
 ): Promise<void> {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!apiKey) { warn("Geocode tour content: GOOGLE_MAPS_API_KEY not set — skipping"); return; }
+  // Uses Nominatim (OpenStreetMap) — free, no key required, international coverage.
+  // GOOGLE_MAPS_API_KEY returns REQUEST_DENIED for geocoding on this project's key;
+  // Nominatim is the reliable path for both US and international records.
+  // Rate limit: 1 req/second per OSM usage policy → 100ms sleep between requests.
 
-  // Accepts optional country so international entries geocode correctly.
   async function geocodeAddress(address: string, city: string, stateOrProvince: string | null, country?: string | null): Promise<{ lat: number; lng: number } | null> {
-    const query = [address, city, stateOrProvince, country].filter(Boolean).join(", ");
+    const q = [address, city, stateOrProvince, country].filter(Boolean).join(", ");
     try {
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`;
-      const res = await fetch(url);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
+      const res = await fetch(url, {
+        headers: { "User-Agent": "MappingWithMelanin/1.0 (production geocoder; contact mappingwithmelanin.com)" },
+      });
       if (!res.ok) return null;
-      const data = await res.json() as { status: string; results: { geometry: { location: { lat: number; lng: number } } }[] };
-      if (data.status === "OK" && data.results[0]) {
-        return data.results[0].geometry.location;
+      const data = await res.json() as { lat: string; lon: string }[];
+      if (data[0]) {
+        const lat = parseFloat(data[0].lat);
+        const lng = parseFloat(data[0].lon); // Nominatim returns `lon` not `lng`
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) return { lat, lng };
       }
     } catch { /* silent */ }
     return null;
@@ -3227,7 +3232,10 @@ async function geocodeTourContent(
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   let geocoded = 0;
-  const CAP = 60;
+  // Raised from 60 → 800 so a single boot can geocode all 745 records (3 collections).
+  // At 100ms per request this adds at most ~75 seconds to the first post-deploy boot.
+  // Subsequent boots are no-ops (all records have coords).
+  const CAP = 800;
 
   try {
     // Cultural sites with address but no lat/lng — include country for international sites
