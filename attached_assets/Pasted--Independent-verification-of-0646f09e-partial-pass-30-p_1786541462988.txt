@@ -1,0 +1,26 @@
+## Independent verification of `0646f09e`: **partial pass — 30-person handoff audit remains blocked**
+
+The first-time tester login path is working, and the Kinfolk resolver now returns the **correct** Library action for African Diaspora History. However, the web evidence-panel deep link still does not visibly open, and the production worker evidence has not been independently provided.
+
+| Check | Independent result |
+|---|---|
+| First-time tester email/password sign-in | **Pass** — HTTP 200, session token issued, `mustChangePassword: false` |
+| Production deployment | **Pass** — `0646f09e`, correct bundle hash, `stale_bundle: false`, database ready |
+| African Diaspora History Kinfolk action | **Pass** — returns `open_library_node`, correct topic ID `fbfbc161-5121-4eca-a0a4-c35731b010f6`, label **African Diaspora History** |
+| Web `/library?topic=…&focus=evidence` | **Fail** — valid URL still loads the Browse Topics grid, not the selected Book/evidence panel |
+| Mobile action-parameter implementation | **Source pass** — deployed code reads `topic` and routes a matched topic to `/library-topic`; native simulator/TestFlight test is still required |
+| Production worker health / zero load-test growth rows | **Unverified** — the non-admin session correctly receives `403`; Replit must provide the production admin API response and Railway query output |
+
+### What testers should do on first login
+
+They should go to the website, select **Sign In**, and enter the email and password you give them. The verified account does not require a forced password change. If a tester originally used Apple sign-in, they should use **Forgot password** to set a website password for that same account rather than creating a second account.
+
+### Exact remaining gate before the 30-person audit
+
+Replit must provide three things:
+
+1. A fix that makes the valid web URL visibly open **African Diaspora History** and scroll to its sources.
+2. A production administrator response from `GET /api/admin/library-growth/worker-health`.
+3. Production Railway query output proving `erroneous_eligible_load_test_rows = 0` and no growth candidate was derived from load-test traffic.
+
+The Resolver ranking repair is now independently confirmed. The web panel and production worker proof are the remaining blockers before the 30-person Kinfolk/Library handoff audit.
