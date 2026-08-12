@@ -579,7 +579,7 @@ export async function findMatchingPublishedLibraryNode(
          FROM knowledge_topics
          WHERE enabled = TRUE
            AND status = 'published'
-           AND node_type IN ('book', 'general', 'chapter')
+           AND node_type IN ('book', 'general', 'chapter', 'topic')
            AND (
              category = ANY($1::text[])
              OR (

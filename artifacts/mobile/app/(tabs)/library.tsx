@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -265,6 +265,8 @@ export default function LibraryScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  // ── Deep-link from LibraryActionPill: /(tabs)/library?topic=<id>&focus=evidence ──
+  const { topic: deepLinkTopicId } = useLocalSearchParams<{ topic?: string; focus?: string }>();
   const { subscription } = useMembership();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const isPremium = !!subscription;
@@ -389,6 +391,21 @@ export default function LibraryScreen() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Deep-link from LibraryActionPill ─────────────────────────────────────
+  // When Kinfolk returns a libraryAction and the user taps the pill in travel.tsx,
+  // this screen is opened with ?topic=<id> via router.push params. Once topics
+  // load, navigate to the /library-topic screen for the matched topic.
+  // Invalid/missing IDs are silently ignored (no error loop).
+  useEffect(() => {
+    if (!deepLinkTopicId || topics.length === 0) return;
+    const match = topics.find(t => t.id === deepLinkTopicId);
+    if (match) {
+      router.push({ pathname: "/library-topic", params: { topicId: match.id } } as never);
+    }
+    // Only fire once per deepLinkTopicId value — topics re-renders don't re-navigate
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkTopicId, topics]);
 
   const { history: topicSearchHistory, add: addTopicHistory } = useSearchHistory("topic");
 

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { Link } from "wouter";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Link, useLocation } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -233,10 +233,11 @@ const CONF_META: Record<string, { label: string; color: string }> = {
 const ALL_TIERS = ["authoritative", "professional", "community", "ambassador"] as const;
 
 function KnowledgeBookPanel({
-  topic, isAuthenticated, onClose, onToggleFollow,
+  topic, isAuthenticated, onClose, onToggleFollow, focusEvidence,
 }: {
   topic: Topic; isAuthenticated: boolean;
   onClose: () => void; onToggleFollow: (id: string) => void;
+  focusEvidence?: boolean;
 }) {
   const { toast } = useToast();
   const [data, setData] = useState<GraphData | null>(null);
@@ -244,6 +245,16 @@ function KnowledgeBookPanel({
   const [contributeOpen, setContributeOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [contrib, setContrib] = useState({ claimText: "", sourceName: "", sourceUrl: "" });
+  // Ref for focus=evidence scroll — attached to the "What We Know" sources heading div
+  const evidenceSectionRef = useRef<HTMLDivElement>(null);
+
+  // When the panel is opened from a Kinfolk deep link with focus=evidence,
+  // scroll to the sources section after the graph data finishes loading.
+  useEffect(() => {
+    if (!gLoading && focusEvidence && evidenceSectionRef.current) {
+      evidenceSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [gLoading, focusEvidence]);
 
   useEffect(() => {
     setGLoading(true); setData(null);
@@ -351,7 +362,7 @@ function KnowledgeBookPanel({
 
               {/* ── Sources by tier ── */}
               {hasSources && (
-                <div className="space-y-5">
+                <div ref={evidenceSectionRef} className="space-y-5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">What We Know</p>
                   {ALL_TIERS.map(tier => {
                     const srcs = srcByTier(tier);
@@ -704,33 +715,38 @@ export default function Library() {
   const [showSubmitStory, setShowSubmitStory] = useState(false);
   const [digestText, setDigestText] = useState("");
   const [openBookTopic, setOpenBookTopic] = useState<Topic | null>(null);
+  const [deepLinkFocus, setDeepLinkFocus] = useState<string | null>(null);
 
   // ── Deep-link: /library?topic=<id>&focus=evidence ──────────────────────────
-  // Parse the URL param once — stable reference across renders.
-  // Only accepted values are non-empty strings (UUID format); anything else
-  // is silently ignored so invalid IDs never trigger an error loop.
-  const linkTopicId = useMemo<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const id = new URLSearchParams(window.location.search).get("topic") ?? "";
-    // Basic sanity: must look like a UUID or short alphanumeric id
-    return id.length >= 8 ? id : null;
-  }, []);
+  // useLocation() from wouter is reactive to SPA navigation (pushState).
+  // When LibraryActionPill navigates here from the Kinfolk chat page without
+  // a full remount, wLocation changes, the memos re-compute, and the effect
+  // fires against the now-populated topics list.
+  const [wLocation] = useLocation();
 
-  // React to `topics` loading rather than polling with setInterval.
-  // Fires whenever the topic list changes (e.g. after loadData resolves)
-  // and opens the matching panel exactly once. The `openBookTopic` guard
-  // prevents re-firing if the user later closes and the list re-renders.
+  const linkTopicId = useMemo<string | null>(() => {
+    const id = new URLSearchParams(window.location.search).get("topic") ?? "";
+    // Accept any non-trivial ID string; invalid values fall through to null
+    return id.length >= 8 ? id : null;
+  }, [wLocation]);
+
+  const linkFocus = useMemo<string | null>(() => {
+    return new URLSearchParams(window.location.search).get("focus") ?? null;
+  }, [wLocation]);
+
+  // Opens the panel for the matched topic once per navigation.
+  // The openBookTopic guard prevents re-opening if the user closes and
+  // navigates back without changing the URL (same wLocation value).
   useEffect(() => {
     if (!linkTopicId || topics.length === 0 || openBookTopic) return;
     const match = topics.find(t => t.id === linkTopicId);
     if (match) {
       setActiveTab("browse");
       setOpenBookTopic(match);
+      setDeepLinkFocus(linkFocus);
     }
-    // Intentionally not listing openBookTopic in deps — we only want this
-    // to trigger when topics load, not every time the user opens/closes panels.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkTopicId, topics]);
+  }, [linkTopicId, linkFocus, topics]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -1055,10 +1071,10 @@ export default function Library() {
         <KnowledgeBookPanel
           topic={openBookTopic}
           isAuthenticated={isAuthenticated}
-          onClose={() => setOpenBookTopic(null)}
+          focusEvidence={deepLinkFocus === "evidence"}
+          onClose={() => { setOpenBookTopic(null); setDeepLinkFocus(null); }}
           onToggleFollow={(id) => {
             toggleFollow(id);
-            // Keep topic state in sync with follow toggle
             setOpenBookTopic(prev => prev?.id === id ? { ...prev, isFollowing: !prev.isFollowing } : prev);
           }}
         />
