@@ -153,6 +153,23 @@ class KinfolkQueue {
 
 const kinfolkQueue = new KinfolkQueue();
 
+/**
+ * Parse the "Please try again in Xs" value from an OpenAI TPM 429 error message.
+ * Returns milliseconds, or null if not found.
+ *
+ * Root cause (Aug 12 2026 — 30-user burst audit):
+ *   OpenAI TPM 429 messages say "Please try again in 3.459s."  The prior backoff
+ *   of 500ms × 2^attempt peaked at ~1.1 s — well below the required 3.5 s wait.
+ *   Both retry attempts also hit the still-exhausted token budget and all 3
+ *   attempts failed, producing HTTP 500 for 8/30 concurrent users.
+ *   Fix: floor every retry wait to the provider-declared retry-after value.
+ */
+function parseRetryAfterMs(errMsg: string): number | null {
+  // Matches "try again in 3.459s", "try again in 3s", "retry after 3.5 seconds"
+  const m = errMsg.match(/(?:try again in|retry after)\s+(\d+(?:\.\d+)?)\s*s/i);
+  return m ? Math.ceil(parseFloat(m[1]) * 1000) + 200 : null; // +200ms safety margin
+}
+
 /** Retryable OpenAI generation call. Retries only documented transient errors. */
 async function callOpenAIWithRetry(
   messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
@@ -199,11 +216,17 @@ async function callOpenAIWithRetry(
         throw err;
       }
 
-      const jitter    = Math.floor(Math.random() * 500);
-      const backoffMs = KINFOLK_RETRY_BASE_MS * Math.pow(2, attempt) + jitter;
+      // Floor backoff to provider-declared retry-after so TPM window has time to
+      // reset before the next attempt. Without this, retries fire at ~1.1 s which
+      // is still inside the exhausted window → all 3 attempts fail.
+      const retryAfterMs = parseRetryAfterMs(errMsg) ?? 0;
+      const jitter       = Math.floor(Math.random() * 500);
+      const exponential  = KINFOLK_RETRY_BASE_MS * Math.pow(2, attempt) + jitter;
+      const backoffMs    = Math.max(retryAfterMs, exponential);
       console.log(
         `[kinfolk-retry] attempt=${attempt + 1}/${KINFOLK_RETRY_MAX}`,
         `providerStatus=${status ?? "?"}`,
+        `retryAfterMs=${retryAfterMs}`,
         `backoffMs=${backoffMs}`,
         `err=${errMsg.slice(0, 120)}`,
       );
