@@ -105,6 +105,11 @@ interface KnowledgeSource {
   is_primary: boolean;
   status: string;
   last_verified: string | null;
+  /** Derived transport-layer state. "not_checked" = column not yet populated.
+   *  "unavailable" = source flagged needs_review, retired, blocked, or invalid.
+   *  UI should hide clickable links when this is "unavailable". */
+  link_state: "available" | "redirected" | "unavailable" | "not_checked";
+  link_checked_at: string | null;
 }
 
 interface SurfaceMeta {
@@ -271,7 +276,9 @@ async function fetchSources(topicId: string, includeStatus?: string): Promise<Kn
     : `AND status = 'active'`;
   const r = await pool.query(
     `SELECT id, authority_tier, source_name, source_url, claim,
-            evidence_section, confidence, is_primary, status, last_verified
+            evidence_section, confidence, is_primary, status, last_verified,
+            COALESCE(link_status, 'unchecked') AS link_status,
+            last_checked_at
      FROM knowledge_sources
      WHERE topic_id = $1 ${statusFilter}
      ORDER BY
@@ -285,20 +292,28 @@ async function fetchSources(topicId: string, includeStatus?: string): Promise<Kn
        is_primary DESC`,
     [topicId],
   );
-  return r.rows.map((row) => ({
-    id: row.id as string,
-    authority_tier: row.authority_tier as string,
-    source_name: row.source_name as string,
-    source_url: row.source_url as string | null,
-    claim: row.claim as string | null,
-    evidence_section: row.evidence_section as string | null,
-    confidence: row.confidence as string | null,
-    is_primary: Boolean(row.is_primary),
-    status: row.status as string,
-    last_verified: row.last_verified
-      ? String(row.last_verified)
-      : null,
-  }));
+  return r.rows.map((row) => {
+    const rawLinkStatus = (row.link_status ?? "unchecked") as string;
+    let link_state: KnowledgeSource["link_state"];
+    if (rawLinkStatus === "active") link_state = "available";
+    else if (rawLinkStatus === "redirected") link_state = "redirected";
+    else if (rawLinkStatus === "unchecked") link_state = "not_checked";
+    else link_state = "unavailable"; // needs_review | retired | blocked_by_publisher | invalid_url
+    return {
+      id: row.id as string,
+      authority_tier: row.authority_tier as string,
+      source_name: row.source_name as string,
+      source_url: row.source_url as string | null,
+      claim: row.claim as string | null,
+      evidence_section: row.evidence_section as string | null,
+      confidence: row.confidence as string | null,
+      is_primary: Boolean(row.is_primary),
+      status: row.status as string,
+      last_verified: row.last_verified ? String(row.last_verified) : null,
+      link_state,
+      link_checked_at: row.last_checked_at ? String(row.last_checked_at) : null,
+    };
+  });
 }
 
 interface TopicArticle {

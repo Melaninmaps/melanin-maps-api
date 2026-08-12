@@ -6,6 +6,18 @@ import AddPlaceModal from "@/components/AddPlaceModal";
 
 const BASE = import.meta.env.BASE_URL;
 
+/** Guard external URLs before rendering — rejects javascript:, data:, relative,
+ *  and malformed values. Returns the absolute href or null. */
+function safePublicUrl(value?: string | null): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type GMap = any;
 type GMarker = any;
@@ -629,8 +641,8 @@ export default function MapPage() {
             <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.name}</div>
             <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
             ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
-            ${site.externalUrl ? `<a href="${site.externalUrl}" target="_blank" rel="noopener" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block;margin-bottom:4px">Learn More →</a>` : ""}
-            <a href="${BASE}sites/${site.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">View Full Page →</a>
+            ${safePublicUrl(site.externalUrl) ? `<a href="${safePublicUrl(site.externalUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block;margin-bottom:4px">Official website ↗</a>` : ""}
+            <a href="/sites/${site.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -1286,25 +1298,25 @@ export default function MapPage() {
                             {site.description.slice(0, 100)}{site.description.length > 100 ? "…" : ""}
                           </p>
                         )}
-                        {site.externalUrl && (
+                        {safePublicUrl(site.externalUrl) && (
                           <a
-                            href={site.externalUrl}
+                            href={safePublicUrl(site.externalUrl)!}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[10px] font-bold mt-1 block hover:underline"
                             style={{ color }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            Learn More →
+                            Official website ↗
                           </a>
                         )}
-                        <a
-                          href={`${BASE}sites/${site.id}`}
+                        <Link
+                          href={`/sites/${site.id}`}
                           className="text-[10px] font-bold mt-0.5 block hover:underline text-[#CA922B]"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          View Full Page →
-                        </a>
+                          Learn more on MWM →
+                        </Link>
                       </div>
                     </div>
                   </div>

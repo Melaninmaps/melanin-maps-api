@@ -61,6 +61,9 @@ interface KGSource {
   confidence: "verified" | "high" | "medium" | "low" | "unverified" | null;
   is_primary: boolean;
   status: string;
+  /** Transport-layer link state from the server. Missing = old API response; treat as "not_checked". */
+  link_state?: "available" | "redirected" | "unavailable" | "not_checked";
+  link_checked_at?: string | null;
 }
 
 interface KGEntity {
@@ -390,12 +393,25 @@ function KnowledgeBookPanel({
                               {src.claim && (
                                 <p className="text-xs text-[#3A1F0E]/65 mt-1 italic leading-relaxed">"{src.claim}"</p>
                               )}
-                              {src.source_url && (
-                                <a href={src.source_url} target="_blank" rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-[#CA922B] hover:underline mt-1.5">
-                                  <Eye className="w-3 h-3" /> View Source
-                                </a>
-                              )}
+                              {src.source_url && (() => {
+                                // link_state missing means old API response — treat conservatively as not_checked
+                                const ls = src.link_state ?? "not_checked";
+                                // Only render a clickable link when the URL is known to resolve
+                                if (ls === "available" || ls === "redirected" || ls === "not_checked") {
+                                  return (
+                                    <a href={src.source_url} target="_blank" rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs text-[#CA922B] hover:underline mt-1.5">
+                                      <Eye className="w-3 h-3" /> View source ↗
+                                    </a>
+                                  );
+                                }
+                                // unavailable — hide the link, show a curator note
+                                return (
+                                  <p className="text-[10px] text-[#3A1F0E]/45 italic mt-1.5">
+                                    Source link unavailable while this reference is reviewed
+                                  </p>
+                                );
+                              })()}
                             </div>
                           );
                         })}

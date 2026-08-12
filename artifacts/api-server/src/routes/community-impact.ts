@@ -161,42 +161,9 @@ router.get("/businesses/:id/owner-profile", async (req: Request, res: Response) 
   }
 });
 
-// POST /businesses/:id/claim — claim a business listing
-router.post("/businesses/:id/claim", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const { role = "owner" } = req.body as { role?: string };
-  try {
-    const existing = await db
-      .select()
-      .from(businessOwnerLinksTable)
-      .where(
-        and(
-          eq(businessOwnerLinksTable.userId, req.user.id),
-          eq(businessOwnerLinksTable.businessId, String(req.params.id))
-        )
-      )
-      .limit(1);
-
-    if (existing[0]) {
-      res.json({ ok: true, link: existing[0], message: "Claim already exists" });
-      return;
-    }
-
-    const [link] = await db
-      .insert(businessOwnerLinksTable)
-      .values({
-        userId: req.user.id,
-        businessId: String(req.params.id),
-        role: role === "manager" ? "manager" : "owner",
-        status: "pending",
-      })
-      .returning();
-
-    res.status(201).json({ ok: true, link, message: "Claim submitted for review" });
-  } catch (err) {
-    req.log.error({ err }, "Failed to submit business claim");
-    res.status(500).json({ error: "Failed to submit claim" });
-  }
-});
+// NOTE: POST /businesses/:id/claim was previously handled here with no evidence
+// validation. It has been removed. Use POST /businesses/:id/claims (with an 's')
+// in claims.ts — that route requires authentication, evidence, and a verified
+// attestation, and properly enforces the one-open-claim-per-member rule.
 
 export default router;

@@ -2512,6 +2512,149 @@ ON CONFLICT (city_slug) DO UPDATE SET
     CREATE INDEX IF NOT EXISTS library_growth_decisions_candidate_idx
       ON library_growth_decisions (candidate_id, created_at DESC)`,
   },
+
+  // ── Track 2: Library Evidence Link Health ────────────────────────────────
+  // Adds transport-layer health state to knowledge_sources so the Library UI
+  // never directs a member to a known-stale external URL.
+  {
+    name: "knowledge_sources_link_health_v1",
+    sql: `ALTER TABLE knowledge_sources
+      ADD COLUMN IF NOT EXISTS link_status varchar(30) DEFAULT 'unchecked',
+      ADD COLUMN IF NOT EXISTS last_checked_at timestamptz,
+      ADD COLUMN IF NOT EXISTS last_http_status integer,
+      ADD COLUMN IF NOT EXISTS last_final_url text,
+      ADD COLUMN IF NOT EXISTS last_check_error text,
+      ADD COLUMN IF NOT EXISTS link_reviewed_by varchar(255),
+      ADD COLUMN IF NOT EXISTS link_reviewed_at timestamptz,
+      ADD COLUMN IF NOT EXISTS replaced_source_url text`,
+  },
+
+  // ── Track 3: Community Business Listing & Claim Workflow v2 ─────────────
+  // Four independent state dimensions on businesses (additive, never drops data).
+  {
+    name: "community_business_claims_v2_businesses_cols",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS listing_origin varchar(30),
+      ADD COLUMN IF NOT EXISTS publication_status varchar(30),
+      ADD COLUMN IF NOT EXISTS ownership_control_status varchar(30),
+      ADD COLUMN IF NOT EXISTS verification_status varchar(30),
+      ADD COLUMN IF NOT EXISTS contributed_by_user_id varchar(255),
+      ADD COLUMN IF NOT EXISTS source_summary text,
+      ADD COLUMN IF NOT EXISTS service_area varchar(255),
+      ADD COLUMN IF NOT EXISTS public_location_kind varchar(30),
+      ADD COLUMN IF NOT EXISTS public_contact_channel varchar(30),
+      ADD COLUMN IF NOT EXISTS public_contact_value text`,
+  },
+  // Allow service-area, online, and home-based providers without a physical address.
+  {
+    name: "community_business_claims_v2_address_nullable",
+    sql: `ALTER TABLE businesses ALTER COLUMN address DROP NOT NULL`,
+  },
+  {
+    name: "community_business_claims_v2_lat_nullable",
+    sql: `ALTER TABLE businesses ALTER COLUMN latitude DROP NOT NULL`,
+  },
+  {
+    name: "community_business_claims_v2_lng_nullable",
+    sql: `ALTER TABLE businesses ALTER COLUMN longitude DROP NOT NULL`,
+  },
+  // Conservative backfill — only touches rows where the new columns are NULL.
+  // Does NOT migrate contributed_by_user_id from submitted_by_id (requires manual classification).
+  {
+    name: "community_business_claims_v2_backfill",
+    sql: `UPDATE businesses
+      SET
+        listing_origin = COALESCE(listing_origin,
+          CASE data_source
+            WHEN 'community_submission' THEN 'community_added'
+            WHEN 'admin_entry'          THEN 'admin_added'
+            ELSE 'imported'
+          END),
+        publication_status = COALESCE(publication_status,
+          CASE WHEN status = 'active' THEN 'live' ELSE 'pending_review' END),
+        ownership_control_status = COALESCE(ownership_control_status,
+          CASE WHEN listing_status = 'live_claimed' THEN 'claimed' ELSE 'unclaimed' END),
+        verification_status = COALESCE(verification_status,
+          CASE WHEN verified = true THEN 'verified' ELSE 'not_requested' END),
+        public_location_kind = COALESCE(public_location_kind,
+          CASE
+            WHEN latitude IS NOT NULL AND longitude IS NOT NULL
+             AND latitude != 0 AND longitude != 0 THEN 'address'
+            ELSE 'unknown'
+          END)
+      WHERE listing_origin IS NULL
+         OR publication_status IS NULL
+         OR ownership_control_status IS NULL
+         OR verification_status IS NULL`,
+  },
+  // Source provenance table — one row per public source used to support a listing.
+  {
+    name: "community_business_claims_v2_listing_sources",
+    sql: `CREATE TABLE IF NOT EXISTS business_listing_sources (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      source_type varchar(40) NOT NULL,
+      source_url text,
+      source_label varchar(255),
+      field_coverage jsonb NOT NULL DEFAULT '[]'::jsonb,
+      confidence varchar(15) NOT NULL DEFAULT 'medium',
+      captured_at timestamptz NOT NULL DEFAULT now(),
+      captured_by_user_id varchar(255),
+      is_current boolean NOT NULL DEFAULT true
+    );
+    CREATE INDEX IF NOT EXISTS business_listing_sources_business_idx
+      ON business_listing_sources (business_id, is_current)`,
+  },
+  // Outreach records — append-only draft/audit table. SENDING IS DISABLED IN RELEASE 1.
+  {
+    name: "community_business_claims_v2_outreach_table",
+    sql: `CREATE TABLE IF NOT EXISTS business_owner_outreach (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      source_id uuid REFERENCES business_listing_sources(id),
+      channel varchar(30) NOT NULL,
+      public_destination text NOT NULL,
+      status varchar(30) NOT NULL DEFAULT 'draft',
+      prepared_by varchar(255),
+      approved_by varchar(255),
+      template_version varchar(50),
+      message_snapshot text,
+      opt_out_reason text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  // Claim record enrichment — evidence + review audit trail.
+  {
+    name: "community_business_claims_v2_claims_cols",
+    sql: `ALTER TABLE business_claims
+      ADD COLUMN IF NOT EXISTS claim_type varchar(30) NOT NULL DEFAULT 'ownership_control',
+      ADD COLUMN IF NOT EXISTS verification_method varchar(40),
+      ADD COLUMN IF NOT EXISTS evidence_url text,
+      ADD COLUMN IF NOT EXISTS evidence_summary text,
+      ADD COLUMN IF NOT EXISTS attested_at timestamptz,
+      ADD COLUMN IF NOT EXISTS reviewed_by varchar(255),
+      ADD COLUMN IF NOT EXISTS reviewed_at timestamptz,
+      ADD COLUMN IF NOT EXISTS decision_reason text,
+      ADD COLUMN IF NOT EXISTS withdrawn_at timestamptz`,
+  },
+  // Owner link enrichment — approval + revocation audit trail.
+  {
+    name: "community_business_claims_v2_owner_links_cols",
+    sql: `ALTER TABLE business_owner_links
+      ADD COLUMN IF NOT EXISTS claim_id varchar(255),
+      ADD COLUMN IF NOT EXISTS approved_by varchar(255),
+      ADD COLUMN IF NOT EXISTS approved_at timestamptz,
+      ADD COLUMN IF NOT EXISTS revoked_by varchar(255),
+      ADD COLUMN IF NOT EXISTS revoked_at timestamptz,
+      ADD COLUMN IF NOT EXISTS revocation_reason text`,
+  },
+  // Review queue index for admin claim dashboard.
+  {
+    name: "community_business_claims_v2_review_queue_idx",
+    sql: `CREATE INDEX IF NOT EXISTS business_claims_review_queue_idx
+      ON business_claims (status, created_at DESC)`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -2615,6 +2758,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
     // ── Discoverability coordinate audit — validate + report per-collection counts ──
     ["discoverability coords v1", () => ensureDiscoverabilityCoordinatesV1(log, warn)],
+    // ── Library source link health — marks known-stale URLs, runs initial sweep ──
+    ["library link health", () => ensureLibraryLinkHealth(log, warn)],
+    // ── Business claims v2 — conflict report + unique index attempt ─────────
+    ["business claims v2 indexes", () => ensureBusinessClaimsV2ConflictReport(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -6122,6 +6269,120 @@ async function ensureDemoRemoval(
     }
   } catch (err: unknown) {
     warn(`Demo removal failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Library source link health ────────────────────────────────────────────────
+// Phase 1 (Option A): curator-triggered + one-time initial sweep.
+// Marks well-known stale URLs as needs_review so the Library never directs a
+// member to a dead link. Does NOT send HTTP probes (periodic job is Phase 2).
+async function ensureLibraryLinkHealth(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // Known stale: ACS breast cancer page returns 404 as of Aug 2026.
+    // Condition is idempotent: only runs when link_status is NULL or 'unchecked'
+    // so a curator decision to reinstate is never overwritten.
+    const acsFix = await pool.query(
+      `UPDATE knowledge_sources
+       SET link_status = 'needs_review',
+           last_check_error = 'ACS breast cancer URL returned 404 — flagged Aug 2026 audit'
+       WHERE source_url LIKE '%cancer.org%breast-cancer%'
+         AND status = 'active'
+         AND (link_status IS NULL OR link_status = 'unchecked')
+       RETURNING id`
+    );
+    if (acsFix.rowCount && acsFix.rowCount > 0) {
+      log(`Library link health: flagged ${acsFix.rowCount} ACS breast cancer source(s) as needs_review`);
+    } else {
+      log(`Library link health: ACS breast cancer source already reviewed or not found — no change`);
+    }
+
+    // Report overall link health state
+    const summary = await pool.query<{ link_status: string | null; cnt: string }>(
+      `SELECT COALESCE(link_status, 'unchecked') AS link_status, COUNT(*) AS cnt
+       FROM knowledge_sources
+       WHERE status = 'active'
+       GROUP BY COALESCE(link_status, 'unchecked')
+       ORDER BY cnt DESC`
+    );
+    const breakdown = summary.rows.map(r => `${r.link_status}:${r.cnt}`).join(", ");
+    log(`Library link health summary: ${breakdown}`);
+  } catch (err: unknown) {
+    warn(`ensureLibraryLinkHealth failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Business Claims v2 — conflict report + unique index attempt ───────────────
+// Produces a pre-migration conflict report to Railway logs, then attempts to
+// create the unique indexes. If data conflicts exist the indexes will fail
+// gracefully (logged, server continues). Admin must resolve conflicts manually
+// before the indexes succeed.
+async function ensureBusinessClaimsV2ConflictReport(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── Conflict check 1: multiple open claims for the same (business_id, user_id)
+    const claimConflicts = await pool.query<{
+      business_id: string; user_id: string | null; cnt: string;
+    }>(
+      `SELECT business_id, user_id, COUNT(*) AS cnt
+       FROM business_claims
+       WHERE status IN ('pending', 'needs_info')
+       GROUP BY business_id, user_id
+       HAVING COUNT(*) > 1`
+    );
+    if (claimConflicts.rowCount && claimConflicts.rowCount > 0) {
+      const detail = claimConflicts.rows
+        .map(r => `business=${r.business_id} user=${r.user_id ?? "null"} (${r.cnt} open)`)
+        .join("; ");
+      warn(`Business claims v2 — open-claim conflicts (must resolve before unique index applies): ${detail}`);
+    } else {
+      log(`Business claims v2 — no open-claim conflicts found`);
+    }
+
+    // ── Conflict check 2: multiple active primary owner links for same business_id
+    const ownerConflicts = await pool.query<{ business_id: string; cnt: string }>(
+      `SELECT business_id, COUNT(*) AS cnt
+       FROM business_owner_links
+       WHERE role = 'owner' AND status = 'approved' AND revoked_at IS NULL
+       GROUP BY business_id
+       HAVING COUNT(*) > 1`
+    );
+    if (ownerConflicts.rowCount && ownerConflicts.rowCount > 0) {
+      const detail = ownerConflicts.rows
+        .map(r => `business=${r.business_id} (${r.cnt} active owners)`)
+        .join("; ");
+      warn(`Business owner links v2 — duplicate active owner conflicts: ${detail}`);
+    } else {
+      log(`Business owner links v2 — no duplicate active owner conflicts found`);
+    }
+
+    // ── Attempt unique index creation (fails gracefully if conflicts exist)
+    await pool.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS business_claims_one_open_per_member_biz
+       ON business_claims (business_id, user_id)
+       WHERE status IN ('pending', 'needs_info') AND user_id IS NOT NULL`
+    );
+    log(`Business claims v2 — unique index business_claims_one_open_per_member_biz: OK`);
+
+    await pool.query(
+      `CREATE UNIQUE INDEX IF NOT EXISTS business_owner_links_one_active_primary_owner
+       ON business_owner_links (business_id)
+       WHERE role = 'owner' AND status = 'approved' AND revoked_at IS NULL`
+    );
+    log(`Business claims v2 — unique index business_owner_links_one_active_primary_owner: OK`);
+
+    // Total open claims count for ops awareness
+    const totals = await pool.query<{ status: string; cnt: string }>(
+      `SELECT status, COUNT(*) AS cnt FROM business_claims GROUP BY status ORDER BY cnt DESC`
+    );
+    const tStr = totals.rows.map(r => `${r.status}:${r.cnt}`).join(", ");
+    log(`Business claims v2 — claim status distribution: ${tStr}`);
+  } catch (err: unknown) {
+    warn(`ensureBusinessClaimsV2ConflictReport failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
