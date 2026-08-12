@@ -1,0 +1,26 @@
+## Concrete answer: what to change
+
+The current Kinfolk request is too large for a 30-person burst. The provider recorded **about 11,100–12,300 tokens per chat**. Thirty simultaneous chats therefore demand approximately **333,000–370,000 TPM**, while the current production limit is **200,000 TPM**.
+
+| Item | Current | Required for 30-person launch |
+|---|---:|---:|
+| Provider TPM | 200,000 | **500,000 minimum** if the current long prompt remains; **1,000,000 preferred** for real-world headroom |
+| Per-chat reservation | 11,100–12,300 | **4,500 maximum** after prompt optimization |
+| Normal output allowance | 1,000 tokens | **600 tokens**, with a “Go deeper” follow-up for detail |
+| Conversation context | Last 12 raw messages | Last 4 turns or an 800-token cap, plus a compact session summary |
+| Active generations | 10, concurrency-only | **4 active** plus a token-aware queue |
+
+The fastest correct solution is **both** of these changes:
+
+1. **Ask the OpenAI provider to raise the production rate limit to at least 500,000 TPM.** This is the safety cushion for launch.
+2. **Shrink normal Kinfolk requests to 4,500 tokens maximum.** With that cap, 30 users need at most about 135,000 TPM and fit under the current 200,000 TPM limit with room to spare.
+
+A queue alone is not enough. It can stop crashes, but with 12,000-token prompts it would make real people wait too long. The queue must be **token-aware**: reserve tokens before sending the request, allow one active Kinfolk request per member, use a 25-second maximum wait, retain the user’s question, and return an honest `KINFOLK_BUSY` retry state instead of an error if capacity is unavailable.
+
+### Where the tokens are going
+
+The base prompt construction alone is about **22,787 characters**, roughly **5,700 tokens**, before dynamic user context and history. Kinfolk then adds up to 12 prior messages, saves, business/catalog context, city content, Library context, Circle context, promotions, and a 1,000-token response allowance.
+
+The fix is not to make Kinfolk less intelligent. It is to send only the relevant pieces for each request: one intent module, up to four recent turns, three relevant saved places, three relevant sources, and a compact user summary. Save detailed material for an explicit **“Go deeper”** reply.
+
+I prepared the full implementation brief for Replit, including the exact token budget, queue settings, user-visible retry behavior, and required tests.
