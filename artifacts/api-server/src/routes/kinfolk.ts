@@ -27,6 +27,25 @@ import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGr
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, type KinfolkIntent } from "../kinfolk/intent-router";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
+import {
+  captureLibraryGrowthSignal,
+  classifyGrowthSensitivity,
+  deriveGrowthSubject,
+  findMatchingPublishedLibraryNode,
+} from "../lib/library-growth-engine";
+
+// Maps KinfolkIntent → Library category for the server-controlled libraryAction field.
+// Kept close to the import so future intent classes must add an entry here too.
+const INTENT_TO_CATEGORY_MAP: Record<string, string> = {
+  medical_health:       "health",
+  legal_regulated:      "legal",
+  financial_regulated:  "financial",
+  culture_entertainment:"culture",
+  business_discovery:   "business",
+  hobby_lifestyle:      "lifestyle",
+  general_knowledge:    "general",
+  current_information:  "general",
+};
 
 const router: IRouter = Router();
 
@@ -2149,6 +2168,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
 
+    // ── Library Growth signal (fire-and-forget) ─────────────────────────────
+    // Capture only when: user is authenticated, learningEligible, and message is
+    // not excluded. Raw message text is NEVER stored — only derived canonical subject.
+    if (req.user?.id) {
+      const sensitivityTier = classifyGrowthSensitivity(message);
+      const growthSubject = deriveGrowthSubject(intentClass, destination ?? null);
+      const learningEligible = sensitivityTier !== "excluded" && growthSubject !== null;
+      if (learningEligible && growthSubject) {
+        captureLibraryGrowthSignal({
+          ...growthSubject,
+          sourceSurface: "kinfolk_chat",
+          userId: req.user.id,
+          sensitivityTier,
+          learningEligible: true,
+          isLoadTest: (req.user as { isLoadTest?: boolean }).isLoadTest === true,
+        }).catch(() => { /* non-fatal — never block or slow the response */ });
+      }
+    }
+
     // Fetch platform business catalog — destination first, then fall back to user's home city.
     // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
     // not just when a travel destination has been set.
@@ -2715,6 +2753,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // ── Library action (server-controlled, not model-generated) ──────────────
+    // Find a published Library topic matching the intent so the client can offer
+    // a direct "Open in Library" link. Only returned for standard/professional tiers;
+    // never surfaces internal candidates or raw demand data.
+    const libraryActionCategory = INTENT_TO_CATEGORY_MAP[intentClass] ?? null;
+    const libraryAction = libraryActionCategory
+      ? await findMatchingPublishedLibraryNode(libraryActionCategory, destination ?? null).catch(() => null)
+      : null;
+
     res.json({
       sessionId: finalSessionId,
       reply,
@@ -2722,6 +2769,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       followUpSuggestions,
       smartPromotion,
       taskAction,
+      libraryAction,
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,

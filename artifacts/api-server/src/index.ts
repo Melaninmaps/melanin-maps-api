@@ -12,6 +12,7 @@ import { runStartupMigrations } from "./lib/startup-migrations";
 // Railway's log stream in the same JSON format as request logs.
 setDbLogger(logger);
 import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTracker";
+import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -95,6 +96,7 @@ const server = app.listen(port, (err) => {
 
   // Route monitor log events through pino so they appear in Railway's log stream.
   setMonitorLogger(logger);
+  setGrowthWorkerLogger((msg, data) => logger.info(data ?? {}, `[library-growth-worker] ${msg}`));
   // 5-minute synthetic DB health checks — maintains 12-hour evidence ring buffer.
   // Results visible at GET /api/readyz/history.
   startHealthMonitor();
@@ -133,6 +135,10 @@ const server = app.listen(port, (err) => {
 
   startNudgeCronScheduler();
 
+  // Library Growth Worker — aggregates sanitized Kinfolk signals into
+  // curator-reviewed Library candidates every hour. Disabled by LIBRARY_GROWTH_ENABLED=false.
+  startLibraryGrowthWorker();
+
   // Flush per-city request metrics to city_request_log every 5 minutes.
   startCityRequestFlush();
 });
@@ -169,6 +175,7 @@ function gracefulShutdown(signal: string) {
     stopHealthMonitor();
     stopBuild97Monitor();
     stopCityRequestFlush();
+    stopLibraryGrowthWorker();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

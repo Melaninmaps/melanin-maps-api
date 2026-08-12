@@ -705,6 +705,34 @@ export default function Library() {
   const [digestText, setDigestText] = useState("");
   const [openBookTopic, setOpenBookTopic] = useState<Topic | null>(null);
 
+  // ── Deep-link: /library?topic=<id>&focus=evidence ──────────────────────────
+  // The Kinfolk chat handler emits a `libraryAction` typed object pointing to a
+  // published Library node by topicId. When the user taps "Open in Library",
+  // the web client navigates here with this query param so the topic panel opens
+  // automatically. The ?focus=evidence param is accepted but no extra scroll is
+  // needed — the KnowledgeBookPanel already leads with its sources list.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const linkTopicId = params.get("topic");
+    if (!linkTopicId) return;
+    // Wait until topics are loaded, then open the panel
+    const timer = setInterval(() => {
+      setTopics(prev => {
+        const match = prev.find(t => t.id === linkTopicId);
+        if (match) {
+          setOpenBookTopic(match);
+          setActiveTab("browse");
+          clearInterval(timer);
+        }
+        return prev;
+      });
+    }, 150);
+    // Give up after 5 seconds in case the topic is not yet in dev DB
+    setTimeout(() => clearInterval(timer), 5000);
+    return () => clearInterval(timer);
+  }, []);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
