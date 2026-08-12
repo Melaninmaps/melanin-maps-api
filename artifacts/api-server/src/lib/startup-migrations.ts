@@ -2586,6 +2586,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["category normalize",   () => ensureCategoryNormalization(log, warn)],
     ["gap coverage v2",      () => ensureGapCoverageV2(log, warn)],
     ["final micro seed",     () => ensureFinalMicroSeed(log, warn)],
+    // ── Business discoverability — promotes listing_status, sets tags + badges ──
+    ["business discoverability", () => ensureBusinessDiscoverability(log, warn)],
     // ── Demo removal — wipes all [DEMO] businesses (safe, checks for member data) ──
     ["demo removal",          () => ensureDemoRemoval(log, warn)],
     // ── Full diaspora expansion — every community, every city ──────────────────────
@@ -6046,6 +6048,95 @@ async function runSeedBatch(
 // ── Remove all [DEMO] businesses ────────────────────────────────────────────
 // Runs on every boot — idempotent (no-op once demos are gone).
 // Only removes records with no member data attached (reviews, saves, vibe tags).
+// ── Ensure all active businesses are discoverable via the public API ───────────
+// Promotes listing_status to live_unclaimed for any active businesses that are
+// still in demo/live/active status (which the API gate excludes).
+// Creates business_identity rows where missing.
+// Sets ownership_badges and category-based tags where empty.
+// Safe on every boot — all operations are idempotent.
+async function ensureBusinessDiscoverability(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  try {
+    // 1. Promote listing_status so API gate passes
+    const promoted = await pool.query(
+      `UPDATE businesses
+       SET listing_status = 'live_unclaimed'
+       WHERE status = 'active'
+         AND listing_status IN ('demo', 'live', 'active')
+       RETURNING id`
+    );
+    if (promoted.rowCount && promoted.rowCount > 0) {
+      log(`Business discoverability: promoted ${promoted.rowCount} businesses to live_unclaimed`);
+    }
+
+    // 2. Create missing business_identity rows
+    const identityInsert = await pool.query(
+      `INSERT INTO business_identity (business_id)
+       SELECT b.id FROM businesses b
+       LEFT JOIN business_identity bi ON bi.business_id = b.id
+       WHERE b.status = 'active' AND bi.business_id IS NULL
+       ON CONFLICT (business_id) DO NOTHING`
+    );
+    if (identityInsert.rowCount && identityInsert.rowCount > 0) {
+      log(`Business discoverability: created ${identityInsert.rowCount} missing business_identity rows`);
+    }
+
+    // 3. Set ownership_badges where empty
+    await pool.query(
+      `UPDATE business_identity
+       SET ownership_badges = '["black-owned"]'::jsonb
+       WHERE (ownership_badges IS NULL OR ownership_badges = '[]'::jsonb OR ownership_badges::text = 'null')
+         AND business_id IN (SELECT id FROM businesses WHERE status = 'active')`
+    );
+
+    // 4. Set category-based tags where empty
+    await pool.query(
+      `UPDATE businesses
+       SET tags = CASE
+         WHEN category ILIKE '%food%' OR category ILIKE '%restaurant%' OR category ILIKE '%dining%'
+           THEN '["restaurant","food","dining","eat local","community food"]'::jsonb
+         WHEN category ILIKE '%health%' OR category ILIKE '%wellness%'
+           THEN '["health","wellness","self-care","fitness","mental health"]'::jsonb
+         WHEN category ILIKE '%arts%' OR category ILIKE '%art%' OR category ILIKE '%culture%' OR category ILIKE '%entertainment%'
+           THEN '["art","culture","creative","community arts","entertainment"]'::jsonb
+         WHEN category ILIKE '%community%' OR category ILIKE '%organization%' OR category ILIKE '%nonprofit%'
+           THEN '["community","nonprofit","local organization","community support","advocacy"]'::jsonb
+         WHEN category ILIKE '%professional%' OR category ILIKE '%services%'
+           THEN '["professional services","consulting","business services","local expert","services"]'::jsonb
+         WHEN category ILIKE '%retail%' OR category ILIKE '%shopping%'
+           THEN '["shopping","retail","local shop","boutique","community retail"]'::jsonb
+         WHEN category ILIKE '%faith%' OR category ILIKE '%spirit%' OR category ILIKE '%church%'
+           THEN '["faith","church","spiritual","worship","community faith"]'::jsonb
+         WHEN category ILIKE '%beauty%' OR category ILIKE '%personal care%'
+           THEN '["beauty","salon","barber","self-care","grooming","hair"]'::jsonb
+         WHEN category ILIKE '%child%' OR category ILIKE '%education%' OR category ILIKE '%learning%'
+           THEN '["education","childcare","kids","family","learning","children"]'::jsonb
+         WHEN category ILIKE '%travel%' OR category ILIKE '%hospitality%'
+           THEN '["travel","hospitality","lodging","tourism","accommodations"]'::jsonb
+         WHEN category ILIKE '%legal%' OR category ILIKE '%law%'
+           THEN '["legal","attorney","lawyer","legal services","advocacy"]'::jsonb
+         WHEN category ILIKE '%home%' OR category ILIKE '%trade%' OR category ILIKE '%property%'
+           THEN '["home services","contractor","trades","repair","home improvement"]'::jsonb
+         WHEN category ILIKE '%finance%' OR category ILIKE '%financial%'
+           THEN '["finance","financial services","banking","investment","money"]'::jsonb
+         WHEN category ILIKE '%tech%' OR category ILIKE '%software%' OR category ILIKE '%digital%'
+           THEN '["technology","tech","software","digital","IT services"]'::jsonb
+         WHEN category ILIKE '%auto%' OR category ILIKE '%vehicle%'
+           THEN '["automotive","auto repair","cars","vehicle","mechanic"]'::jsonb
+         ELSE '["community business","local","minority-owned","community"]'::jsonb
+       END
+       WHERE status = 'active'
+         AND (tags IS NULL OR tags::text = '[]' OR tags::text = 'null')`
+    );
+
+    log('Business discoverability: tags and ownership badges ensured for all active businesses');
+  } catch (err: unknown) {
+    warn(`Business discoverability guard failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureDemoRemoval(
   log: (msg: string) => void,
   warn: (msg: string) => void

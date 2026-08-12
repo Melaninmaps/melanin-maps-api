@@ -5,7 +5,8 @@ import { getUserTier } from "../middleware/requireMembership";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
-router.use(requireAuth);
+// GET /events and GET /events/:id are public — discoverable without login.
+// POST/PATCH/DELETE check req.user inline.
 
 router.get("/events", async (req: Request, res: Response) => {
   try {

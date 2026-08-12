@@ -4,10 +4,8 @@
  */
 import { Router, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
-import { requireAuth } from "../middlewares/requireAuth";
-
 const router = Router();
-router.use(requireAuth);
+// GET routes are public — community orgs are publicly discoverable.
 
 // GET /community-orgs?city=Philadelphia&state=PA&category=chamber&limit=50&offset=0
 router.get("/community-orgs", async (req: Request, res: Response) => {
