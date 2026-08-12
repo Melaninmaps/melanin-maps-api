@@ -1,0 +1,22 @@
+## Verdict: **not yet—not in the way you mean.**
+
+Kinfolk and the Library have some of the pieces, but they are **not connected into a true learning engine** today.
+
+| Current building block | What it can do | What is missing |
+|---|---|---|
+| `kinfolk_search_events` | Records Kinfolk search activity for analytics | Does not turn aggregate needs into Library candidates |
+| `knowledge_topics` | Stores Library topics | Does not govern Books, volumes, chapters, or subchapters from demand |
+| `topic_relationships` | Can link related topics | No worker decides or creates useful parent/child relationships |
+| `search-or-create` endpoint | Lets one person create a topic immediately | This is not thresholded, evidence-gated, or safe for sensitive searches |
+
+The correct behavior is what you described: a Book can grow into volumes, chapters, subchapters, and a related-topic web—but **only after Kinfolk detects an aggregate, privacy-safe community need**. A single person asking about infertility, HIV, divorce, or another sensitive topic must never create a visible public signal. A new Library node should require at least **10 distinct privacy-protected users**, curator review, and a real source plan before it is published.
+
+I wrote the implementation package. It gives Replit a migration and worker logic for this lifecycle:
+
+> Kinfolk query → safe, anonymized subject signal → 10+ distinct-user threshold → curator review → draft Book/Volume/Chapter/Subchapter → verified sources → publication → future Kinfolk routing.
+
+It uses the existing `knowledge_topics` and `topic_relationships` structures, excludes load-test traffic, uses rotating one-way fingerprints instead of exposed user IDs, and blocks sensitive/private topics from becoming public demand signals.
+
+Example: **Black Women’s Health** can be a Book; **Reproductive & Maternal Health** a Volume; **Infertility Support** a Chapter; **New Mexico Providers and Community Resources** a Subchapter; then it can relate safely to insurance navigation, mental health, and local support resources.
+
+This is a **future governed build**, separate from the current capacity and business-feedback repairs. It should not be rushed into the active release without its own privacy and data-migration review.
