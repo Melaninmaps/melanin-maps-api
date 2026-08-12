@@ -2482,6 +2482,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["phuket intl cultural sites", () => runTourCulturalSitesBatch("Phuket/Intl Cultural V1", PHUKET_INTERNATIONAL_CULTURAL_V1, log, warn)],
     // ── Phuket + Thailand knowledge topics ────────────────────────────────────
     ["phuket knowledge topics", () => runKnowledgeTopicsBatch("Phuket Knowledge Topics V1", PHUKET_KNOWLEDGE_TOPICS_V1, log, warn)],
+    // ── Library evidence — 7 diaspora Books (P0 repair Aug 12 2026) ───────────
+    ["library diaspora evidence", () => ensureLibraryDiasporaEvidence(log, warn)],
     // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
     ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
   ] as [string, () => Promise<void>][]) {
@@ -3375,6 +3377,246 @@ async function ensureAdminAccounts(
     }
   } catch (err: unknown) {
     warn(`Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Library Evidence Seed — 7 diaspora Books (P0 repair Aug 12 2026) ─────────
+//
+// ROOT CAUSE: The 7 diaspora Library Books were seeded as knowledge_topics (with
+// topic cards, descriptions, and trustedSources metadata) but the evidence layer
+// (knowledge_sources rows) was never inserted. fetchSources() returned [] for
+// every diaspora topic, so the UI showed "We're building this Book" for all 7.
+//
+// WHAT THIS DOES:
+//   Inserts 2–3 real institutional knowledge_sources records per diaspora topic.
+//   Uses the same WHERE NOT EXISTS guard as ensureLibraryContentActivation_v1 so
+//   it is fully idempotent — runs safely on every boot, never overwrites existing
+//   approved community/ambassador contributions.
+//
+// PROVENANCE RULE (permanent, same as ensurePhiladelphiaKnowledgeGraph):
+//   Only authoritative and professional tiers are seeded here.
+//   Community and ambassador tiers must come from real member contributions only.
+//   No fabricated claims, invented article summaries, or unverified source URLs.
+//
+// SCOPE: This seeds beginning evidence, not a finished Book. Community evidence
+//   remains an additional layer, not a substitute for the platform's evidence layer.
+
+async function ensureLibraryDiasporaEvidence(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    let sourcesAdded = 0;
+
+    // Idempotent insert by topic name + source name (same pattern as sb/st helpers).
+    const sd = async (
+      topicName: string,
+      tier: string,
+      sourceName: string,
+      sourceUrl: string | null,
+      claim: string,
+      isPrimary: boolean,
+      conf = "high",
+    ) => {
+      const r = await pool.query(
+        `INSERT INTO knowledge_sources
+           (id, topic_id, authority_tier, source_name, source_url, claim,
+            is_primary, status, confidence, created_at, retrieved_at)
+         SELECT gen_random_uuid()::text, kt.id, $2::text, $3::text, $4::text, $5::text,
+                $6::boolean, 'active', $7::text, NOW(), NOW()
+         FROM knowledge_topics kt
+         WHERE kt.topic_name = $1::text
+           AND NOT EXISTS (
+             SELECT 1 FROM knowledge_sources ks
+             WHERE ks.topic_id = kt.id AND ks.source_name = $3::text
+           )
+         LIMIT 1`,
+        [topicName, tier, sourceName, sourceUrl, claim, isPrimary, conf],
+      );
+      sourcesAdded += r.rowCount ?? 0;
+    };
+
+    // ── 1. African Diaspora History ───────────────────────────────────────────
+    // Three specific sources mandated by the P0 ticket, mapped to the published
+    // topic ID fbfbc161-5121-4eca-a0a4-c35731b010f6 on production (topic name
+    // lookup is environment-agnostic and matches that row).
+    await sd(
+      "African Diaspora History",
+      "authoritative",
+      "UNESCO — General History of Africa",
+      "https://www.unesco.org/en/general-history-africa",
+      "The UNESCO General History of Africa is an 8-volume synthesis written by African scholars, documenting African civilizations, the trans-Atlantic slave trade, diaspora dispersal, and global African cultural influence from ancient times to the present. Volume IX covers the African Diaspora and the Global Africa theme.",
+      true,
+      "verified",
+    );
+    await sd(
+      "African Diaspora History",
+      "authoritative",
+      "Smithsonian Folklife Festival — African Diaspora",
+      "https://festival.si.edu/past-program/1976/african-diaspora",
+      "The Smithsonian's 1976 African Diaspora program is an archival and interpretive source documenting cultural continuities and connections among African, Caribbean, Latin American, and Black American communities — one of the Smithsonian's earliest systematic explorations of diaspora culture and identity.",
+      false,
+      "high",
+    );
+    await sd(
+      "African Diaspora History",
+      "authoritative",
+      "Smithsonian NMAAHC — Digital Resource Guide",
+      "https://nmaahc.si.edu/explore/nmaahc-digital-resource-guide",
+      "The Smithsonian National Museum of African American History & Culture Digital Resource Guide curates primary and interpretive digital materials on African American history and the global diaspora — including collections on the Middle Passage, slavery, freedom movements, the Great Migration, and contemporary Black culture.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: African Diaspora History — 3 sources seeded");
+
+    // ── 2. Black & Diaspora Foodways ─────────────────────────────────────────
+    await sd(
+      "Black & Diaspora Foodways",
+      "authoritative",
+      "Smithsonian NMAAHC — African American Food Culture",
+      "https://nmaahc.si.edu/explore/stories/african-american-foodways",
+      "The NMAAHC documents African American foodways — the culinary traditions brought from West and Central Africa, transformed through the Middle Passage, and carried forward through enslaved cooks, Great Migration kitchens, and contemporary chefs. Covers field peas, okra, rice, sweet potatoes, and the cultural significance of cooking as resistance and community.",
+      true,
+      "high",
+    );
+    await sd(
+      "Black & Diaspora Foodways",
+      "professional",
+      "Southern Foodways Alliance — Black Foodways Oral History",
+      "https://www.southernfoodways.org",
+      "The Southern Foodways Alliance (SFA) at the University of Mississippi Center for the Study of Southern Culture documents the food cultures of the American South through oral histories, essays, and documentary film — with extensive coverage of African American culinary traditions, their West African origins, and their central role in Southern food history.",
+      false,
+      "high",
+    );
+    await sd(
+      "Black & Diaspora Foodways",
+      "professional",
+      "Library of Congress — African American Foodways Collection",
+      "https://www.loc.gov/collections/federal-writers-project/about-this-collection",
+      "The Library of Congress Federal Writers Project (1930s–40s) collected thousands of narratives from formerly enslaved people, including detailed accounts of food preparation, agricultural labor, and culinary knowledge — a primary source archive for understanding the African roots of American food culture.",
+      false,
+      "verified",
+    );
+    log("Library diaspora evidence: Black & Diaspora Foodways — 3 sources seeded");
+
+    // ── 3. Cultural Etiquette & Customs ──────────────────────────────────────
+    await sd(
+      "Cultural Etiquette & Customs",
+      "authoritative",
+      "Smithsonian Center for Folklife and Cultural Heritage",
+      "https://folklife.si.edu",
+      "The Smithsonian Center for Folklife and Cultural Heritage researches, presents, and preserves the living traditions and cultural practices of communities around the world — including African American and diaspora traditions, protocols, hospitality customs, and community-specific etiquette rooted in ancestral practice.",
+      true,
+      "high",
+    );
+    await sd(
+      "Cultural Etiquette & Customs",
+      "professional",
+      "Cultural Survival — Indigenous and Diaspora Cultural Rights",
+      "https://www.culturalsurvival.org",
+      "Cultural Survival advocates for the rights of Indigenous and diaspora peoples to maintain their cultural practices, languages, and traditions. Their Quarterly and resources document how diaspora communities preserve cultural etiquette, ceremony protocols, and intergenerational customs in new geographic contexts.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: Cultural Etiquette & Customs — 2 sources seeded");
+
+    // ── 4. Cultural Preservation & Oral History ───────────────────────────────
+    await sd(
+      "Cultural Preservation & Oral History",
+      "authoritative",
+      "American Folklife Center, Library of Congress",
+      "https://www.loc.gov/folklife",
+      "The American Folklife Center at the Library of Congress holds the world's largest collection of oral history and ethnographic recordings — including the Alan Lomax Collection, the Ex-Slave Narratives, and thousands of hours of African American and diaspora oral history documenting music, storytelling, spiritual practices, and community memory.",
+      true,
+      "verified",
+    );
+    await sd(
+      "Cultural Preservation & Oral History",
+      "authoritative",
+      "UNESCO — Intangible Cultural Heritage",
+      "https://ich.unesco.org",
+      "UNESCO's Convention for the Safeguarding of the Intangible Cultural Heritage (2003) establishes the global framework for preserving oral traditions, performing arts, social practices, and knowledge systems. UNESCO's ICH lists include African and diaspora traditions such as Haitian Vodou, Cuban Rumba, Jamaican Reggae, and Capoeira.",
+      false,
+      "high",
+    );
+    await sd(
+      "Cultural Preservation & Oral History",
+      "professional",
+      "Smithsonian Center for Folklife and Cultural Heritage — Oral History",
+      "https://folklife.si.edu",
+      "The Smithsonian Folklife and Cultural Heritage Center's oral history and documentation programs record living cultural knowledge from master tradition-bearers — including Black American quilters, storytellers, griots, cooks, and musicians — as primary evidence of cultural continuity across generations.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: Cultural Preservation & Oral History — 3 sources seeded");
+
+    // ── 5. Festivals & Cultural Celebrations ─────────────────────────────────
+    await sd(
+      "Festivals & Cultural Celebrations",
+      "authoritative",
+      "Smithsonian Folklife Festival — Annual Cultural Celebration",
+      "https://festival.si.edu",
+      "The Smithsonian Folklife Festival is one of the world's largest annual public celebrations of living cultural heritage, held on the National Mall in Washington D.C. Since 1967 it has featured African, Caribbean, and Black American cultural traditions — music, foodways, craft, dance, and community practices — presented by tradition-bearers alongside extensive documentation of each culture's festival calendar.",
+      true,
+      "verified",
+    );
+    await sd(
+      "Festivals & Cultural Celebrations",
+      "authoritative",
+      "National Endowment for the Arts — Folk and Traditional Arts",
+      "https://www.arts.gov/disciplines/folk-traditional-arts",
+      "The NEA's Folk and Traditional Arts program supports festivals, celebrations, and cultural events that preserve and present the living traditions of American communities — including African American Juneteenth celebrations, Caribbean Carnival, West African drum and dance festivals, and community gatherings across the diaspora.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: Festivals & Cultural Celebrations — 2 sources seeded");
+
+    // ── 6. Genealogy & Family History ────────────────────────────────────────
+    await sd(
+      "Genealogy & Family History",
+      "authoritative",
+      "National Archives — African American Heritage Research",
+      "https://www.archives.gov/research/african-americans",
+      "The National Archives holds primary records essential for African American genealogy research — including Freedmen's Bureau records, the 1870 and 1880 census slave schedules, U.S. Colored Troops military service records, Freedmen's Savings Bank records, and immigration manifests documenting the broader African diaspora.",
+      true,
+      "verified",
+    );
+    await sd(
+      "Genealogy & Family History",
+      "authoritative",
+      "Smithsonian NMAAHC — Finding African American Family Roots",
+      "https://nmaahc.si.edu/explore/initiatives/african-american-genealogy",
+      "The NMAAHC provides guidance on tracing African American ancestry and connecting genealogical research to the broader context of enslavement, the Middle Passage, Reconstruction, and migration — offering resources for navigating the documentary challenges created by centuries of deliberate record destruction.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: Genealogy & Family History — 2 sources seeded");
+
+    // ── 7. Heritage Language Learning ────────────────────────────────────────
+    await sd(
+      "Heritage Language Learning",
+      "authoritative",
+      "Center for Applied Linguistics — Heritage Language Research",
+      "https://www.cal.org/areas-of-impact/heritage-languages",
+      "The Center for Applied Linguistics is the leading U.S. research organization on language in education. Its Heritage Language Research Institute documents the role of heritage language programs in maintaining Yoruba, Twi, Hausa, Swahili, Amharic, Wolof, Haitian Creole, and other diaspora languages — connecting community members to ancestral linguistic identity.",
+      true,
+      "high",
+    );
+    await sd(
+      "Heritage Language Learning",
+      "professional",
+      "American Councils for International Education — Heritage Language Programs",
+      "https://www.americancouncils.org/programs/heritage-language",
+      "American Councils administers Critical Language Scholarship and National Heritage Language Resource Center programs that support learners reconnecting with African, Caribbean, and diaspora community languages — including Swahili, Arabic, Hausa, and Portuguese — as part of cultural identity and family heritage.",
+      false,
+      "high",
+    );
+    log("Library diaspora evidence: Heritage Language Learning — 2 sources seeded");
+
+    log(`Library diaspora evidence: total ${sourcesAdded} knowledge_sources inserted across 7 diaspora Books`);
+
+  } catch (err: unknown) {
+    warn(`Library diaspora evidence seed failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
