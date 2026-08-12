@@ -12,6 +12,8 @@ export const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 export interface SessionUser extends AuthUser {
   approved: boolean;
   role: "user" | "tester" | "admin";
+  /** true for mwm-loadtest-* accounts — suppresses community/notification side effects */
+  isLoadTest?: boolean;
 }
 
 export interface SessionData {

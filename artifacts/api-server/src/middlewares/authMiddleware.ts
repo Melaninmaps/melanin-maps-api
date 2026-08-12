@@ -1,8 +1,7 @@
 import * as oidc from "openid-client";
 import { type Request, type Response, type NextFunction } from "express";
 import type { AuthUser } from "@workspace/api-zod";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { pool } from "@workspace/db";
 import {
   clearSession,
   getOidcConfig,
@@ -124,18 +123,19 @@ export async function authMiddleware(
     return;
   }
 
-  // Re-read role from DB on every request to prevent stale session roles.
-  // This ensures role changes (e.g. promoting to admin/tester) take effect
-  // immediately without requiring the user to log out and back in.
+  // Re-read role + is_load_test from DB on every request so role promotions
+  // and load-test suppression take effect immediately without a re-login.
   try {
-    const [freshUser] = await db
-      .select({ role: usersTable.role })
-      .from(usersTable)
-      .where(eq(usersTable.id, refreshed.user.id))
-      .limit(1);
-    if (freshUser && freshUser.role && freshUser.role !== refreshed.user.role) {
-      refreshed.user.role = freshUser.role as "user" | "tester" | "admin";
-      await updateSession(sid, refreshed);
+    const freshRes = await pool.query<{ role: string; is_load_test: boolean }>(
+      "SELECT role, is_load_test FROM users WHERE id = $1 LIMIT 1",
+      [refreshed.user.id],
+    );
+    const freshUser = freshRes.rows[0];
+    if (freshUser) {
+      const roleChanged = freshUser.role && freshUser.role !== refreshed.user.role;
+      if (roleChanged) refreshed.user.role = freshUser.role as "user" | "tester" | "admin";
+      refreshed.user.isLoadTest = freshUser.is_load_test ?? false;
+      if (roleChanged || refreshed.user.isLoadTest) await updateSession(sid, refreshed);
     }
   } catch {
     // If DB lookup fails, serve the existing session role rather than blocking the request

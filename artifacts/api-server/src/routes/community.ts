@@ -293,6 +293,12 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       return;
     }
 
+    // Suppress community post writes for load-test accounts (capacity canary safety)
+    if (req.user.isLoadTest) {
+      res.status(200).json({ id: "load-test-suppressed", suppressed: true });
+      return;
+    }
+
     // Prevent duplicate posts within 30 seconds (double-tap / network retry guard)
     const trimmedContent = ((req.body as { content?: string }).content ?? "").trim();
     if (trimmedContent) {

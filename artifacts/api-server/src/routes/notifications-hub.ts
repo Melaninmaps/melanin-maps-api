@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, notificationsTable, notificationPreferencesTable } from "@workspace/db";
+import { db, pool, notificationsTable, notificationPreferencesTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -114,6 +114,12 @@ export async function createNotification(
   notification: { title: string; body: string; type: any; entityId?: string; entityType?: string; data?: Record<string, unknown> }
 ) {
   try {
+    // Suppress notifications for load-test accounts (capacity canary safety net)
+    const ltCheck = await pool.query<{ is_load_test: boolean }>(
+      "SELECT is_load_test FROM users WHERE id = $1 LIMIT 1",
+      [userId],
+    );
+    if (ltCheck.rows[0]?.is_load_test) return;
     await db.insert(notificationsTable).values({ userId, ...notification });
   } catch { /* non-critical */ }
 }

@@ -2387,6 +2387,10 @@ ON CONFLICT (city_slug) DO UPDATE SET
             status       = EXCLUDED.status,
             updated_at   = NOW()`,
   },
+  {
+    name: "add_is_load_test_to_users",
+    sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_load_test boolean NOT NULL DEFAULT false`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -2478,6 +2482,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["phuket intl cultural sites", () => runTourCulturalSitesBatch("Phuket/Intl Cultural V1", PHUKET_INTERNATIONAL_CULTURAL_V1, log, warn)],
     // ── Phuket + Thailand knowledge topics ────────────────────────────────────
     ["phuket knowledge topics", () => runKnowledgeTopicsBatch("Phuket Knowledge Topics V1", PHUKET_KNOWLEDGE_TOPICS_V1, log, warn)],
+    // ── Capacity canary — 30 tagged load-test accounts ─────────────────────────
+    ["load-test accounts",    () => ensureLoadTestAccounts(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -3369,6 +3375,57 @@ async function ensureAdminAccounts(
     }
   } catch (err: unknown) {
     warn(`Admin account grant failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Capacity canary load-test accounts ────────────────────────────────────────
+// 30 isolated accounts for the controlled 30-user production capacity test.
+// Safe to run on every boot — ON CONFLICT DO NOTHING means zero-impact once seeded.
+// Password: MWM-LoadTest-2026! (bcrypt 12 rounds)
+// Cleanup: DELETE FROM users WHERE email LIKE '%@loadtest.mwm.internal%'
+async function ensureLoadTestAccounts(
+  log: (msg: string) => void,
+  warn: (msg: string) => void
+): Promise<void> {
+  const HASH = '$2b$12$lh9y6/CoZwR57kjmd5RQ7.oB.of6YSL48XQ9RVHiXycxfz4Gs23zC';
+  const accounts = [
+    { n:'01', city:'Philadelphia' }, { n:'02', city:'Atlanta' },
+    { n:'03', city:'Houston' },      { n:'04', city:'Washington' },
+    { n:'05', city:'Los Angeles' },  { n:'06', city:'New York' },
+    { n:'07', city:'Chicago' },      { n:'08', city:'New Orleans' },
+    { n:'09', city:'Detroit' },      { n:'10', city:'Baltimore' },
+    { n:'11', city:'Memphis' },      { n:'12', city:'Dallas' },
+    { n:'13', city:'Miami' },        { n:'14', city:'Charlotte' },
+    { n:'15', city:'Columbia' },     { n:'16', city:'Birmingham' },
+    { n:'17', city:'Oakland' },      { n:'18', city:'Newark' },
+    { n:'19', city:'Richmond' },     { n:'20', city:'Nashville' },
+    { n:'21', city:'Phuket' },       { n:'22', city:'Phuket' },
+    { n:'23', city:'Philadelphia' }, { n:'24', city:'Atlanta' },
+    { n:'25', city:'Houston' },      { n:'26', city:'Washington' },
+    { n:'27', city:'Los Angeles' },  { n:'28', city:'New York' },
+    { n:'29', city:'Chicago' },      { n:'30', city:'Miami' },
+  ];
+  try {
+    let inserted = 0;
+    for (const a of accounts) {
+      const email = `mwm-loadtest-${a.n}@loadtest.mwm.internal`;
+      const username = `loadtest${a.n}_${a.city.toLowerCase().replace(/[^a-z]/g,'')}`;
+      const result = await pool.query(
+        `INSERT INTO users
+           (email, first_name, last_name, username, home_city,
+            password_hash, email_verified, approved, member_type,
+            tester_status, tester_access_source, is_load_test,
+            created_at, updated_at)
+         VALUES ($1,'Load',$2,$3,$4,$5,true,true,'free','active','admin_invite',true,NOW(),NOW())
+         ON CONFLICT (email) DO UPDATE SET is_load_test = true, updated_at = NOW()
+         RETURNING (xmax = 0) AS inserted`,
+        [`Tester ${a.n}`, username, a.city, email, HASH]
+      );
+      if (result.rows[0]?.inserted) inserted++;
+    }
+    log(`Load-test accounts: ${inserted} created, ${accounts.length - inserted} already present`);
+  } catch (err: unknown) {
+    warn(`Load-test account seed failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
