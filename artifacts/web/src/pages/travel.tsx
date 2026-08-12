@@ -304,7 +304,10 @@ function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onC
                 <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Response style</div>
                 <div className="flex flex-wrap gap-1.5">
                   {COMMUNICATION_STYLES.map(o => (
-                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, communicationStyle: o.id }))}
+                    <button key={o.id}
+                      data-testid={`kinfolk-response-style-${o.id === "friendly" ? "conversational" : o.id}`}
+                      aria-pressed={local.communicationStyle === o.id}
+                      onClick={() => setLocal(p => ({ ...p, communicationStyle: o.id }))}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${local.communicationStyle === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
                       {o.label}
                     </button>
@@ -364,6 +367,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onC
 
         <div className="px-5 py-4 border-t border-[#3A1F0E]/8 shrink-0">
           <button onClick={save} disabled={saving}
+            data-testid="kinfolk-save-taste-profile"
             className="w-full h-11 rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors">
             {saving ? <Loader2 size={15} className="animate-spin" /> : saved ? <Check size={15} /> : <Sparkles size={15} />}
             {saved ? "Saved!" : saving ? "Saving…" : "Save Taste Profile"}
@@ -573,9 +577,37 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/preferences`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (r.ok) {
-        const d = await r.json() as { preferences: Record<string, unknown> };
+        const d = await r.json() as {
+          preferences: Record<string, unknown>;
+          // New delivery-profile fields (added with Kinfolk Router)
+          responseStyle?: string;
+          deliveryProfile?: {
+            detailLevel?: string; detail_level?: string;
+            tonePreference?: string; tone_preference?: string;
+          };
+        };
         const raw = d.preferences ?? {};
         const ensureArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
+
+        // Derive communicationStyle from the new responseStyle / deliveryProfile fields first.
+        // The old `communicationStyle` field ("friendly", "concise" etc.) is legacy and must
+        // NOT override a persisted "detailed" preference after a hard reload.
+        const resolvedCommunicationStyle = (() => {
+          const rs = d.responseStyle;
+          if (rs === "detailed")     return "detailed";
+          if (rs === "concise")      return "concise";
+          if (rs === "professional") return "professional";
+          if (rs === "conversational") return "friendly";
+          // Fall back to delivery profile mapping
+          const dl = d.deliveryProfile?.detailLevel ?? d.deliveryProfile?.detail_level;
+          const tp = d.deliveryProfile?.tonePreference ?? d.deliveryProfile?.tone_preference;
+          if (tp === "professional") return "professional";
+          if (dl === "deep")  return "detailed";
+          if (dl === "quick") return "concise";
+          // Finally fall back to legacy stored value
+          return typeof raw.communicationStyle === "string" ? raw.communicationStyle : DEFAULT_PREFS.communicationStyle;
+        })();
+
         setPrefs({
           ...DEFAULT_PREFS,
           ...raw,
@@ -586,8 +618,8 @@ function TravelPage() {
           tripStyle:          ensureArr(raw.tripStyle),
           ownershipTypes:     ensureArr(raw.ownershipTypes),
           lifestyleServices:  ensureArr(raw.lifestyleServices),
-          // Communication style fields with defaults
-          communicationStyle: typeof raw.communicationStyle === "string" ? raw.communicationStyle : DEFAULT_PREFS.communicationStyle,
+          // Prefer new responseStyle/deliveryProfile over legacy communicationStyle
+          communicationStyle: resolvedCommunicationStyle,
           personalityMode:    typeof raw.personalityMode === "string" ? raw.personalityMode : DEFAULT_PREFS.personalityMode,
           emojiLevel:         typeof raw.emojiLevel === "string" ? raw.emojiLevel : DEFAULT_PREFS.emojiLevel,
           humorLevel:         typeof raw.humorLevel === "string" ? raw.humorLevel : DEFAULT_PREFS.humorLevel,
@@ -605,6 +637,20 @@ function TravelPage() {
       method: "PUT", credentials: "include",
       headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
+    });
+    // Also persist to the new delivery-profile table so that responseStyle
+    // survives a hard refresh (the old communicationStyle field is not read back
+    // on load — the new /preferences response.responseStyle field is).
+    const communicationStyleToResponseStyle = (cs: string): string => {
+      if (cs === "detailed")     return "detailed";
+      if (cs === "concise")      return "concise";
+      if (cs === "professional") return "professional";
+      return "conversational";
+    };
+    await fetch(`${BASE}api/kinfolk/preferences/response-style`, {
+      method: "PUT", credentials: "include",
+      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ responseStyle: communicationStyleToResponseStyle(p.communicationStyle) }),
     });
   }, []);
 
@@ -1028,7 +1074,7 @@ function TravelPage() {
                       )}
                       {/* Provenance disclaimer — rendered for medical, legal, financial, and emergency intents */}
                       {msg.role === "assistant" && msg.provenanceNote && (
-                        <div className="mt-2 flex items-start gap-1.5 px-3 py-2 rounded-xl bg-[#FFF8EC] border border-[#CA922B]/20">
+                        <div data-testid="kinfolk-provenance-note" className="mt-2 flex items-start gap-1.5 px-3 py-2 rounded-xl bg-[#FFF8EC] border border-[#CA922B]/20">
                           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-[1px]" stroke="#CA922B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="#CA922B" stroke="none"/>
                           </svg>
@@ -1088,6 +1134,7 @@ function TravelPage() {
               <div className="border-t border-[#3A1F0E]/8 bg-white px-4 py-3 shrink-0">
                 <div className="flex items-end gap-3 max-w-3xl mx-auto">
                   <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
+                    data-testid="kinfolk-chat-input"
                     onKeyDown={handleKeyDown}
                     placeholder="Ask Kinfolk anything — businesses, safety, community, recommendations…"
                     rows={1}
@@ -1096,6 +1143,7 @@ function TravelPage() {
                     onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }}
                   />
                   <button onClick={() => send(input)} disabled={!input.trim() || sending}
+                    data-testid="kinfolk-send"
                     className="w-11 h-11 rounded-2xl bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 flex items-center justify-center transition-colors shrink-0">
                     <Send size={16} className="text-white" />
                   </button>

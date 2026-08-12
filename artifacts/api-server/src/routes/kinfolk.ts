@@ -2573,11 +2573,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
       // Provenance note — required display text for high-consequence intents (legal/medical/
       // financial/emergency). Deterministic from intent class, never from model output.
+      // Provenance note — deterministic per intent class, never derived from model output.
+      // IMPORTANT: do not access `recommendations.length` here — recommendations is
+      // Record<string,unknown>|null (not an array) and would throw a 500 for every
+      // legal_regulated request if we tried to read .length on it.
       provenanceNote: intentPolicy.consequence !== "low"
         ? (intentClass === "legal_regulated"
-            ? (recommendations.length > 0
-                ? "General legal and travel information from MWM listings and general knowledge. Requirements can change — verify with the relevant official authority before acting."
-                : "General legal and travel information only. Entry and visa requirements can change — verify with an official government or embassy source before acting.")
+            ? "General legal and travel information only. Entry and visa requirements can change — verify with an official government or embassy source before acting."
             : intentClass === "medical_health"
             ? "General health information only. It is not medical advice or a diagnosis. Verify decisions with a qualified clinician."
             : intentClass === "financial_regulated"

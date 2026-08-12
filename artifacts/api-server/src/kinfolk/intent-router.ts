@@ -223,11 +223,14 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   // Current information (time-sensitive)
   if (CURRENT_INFO_SIGNALS.some((re) => re.test(msg))) return "current_information";
 
+  // Culture & entertainment — checked BEFORE business_discovery so that queries
+  // about artists, musicians, or cultural figures in a named city (e.g. "best rapper
+  // from Philadelphia") route to culture_entertainment rather than falling through to
+  // hasDestination → business_discovery.
+  if (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(msg))) return "culture_entertainment";
+
   // Business discovery (strong MWM catalog signal)
   if (BUSINESS_DISCOVERY_SIGNALS.some((re) => re.test(msg)) || hasDestination) return "business_discovery";
-
-  // Culture & entertainment
-  if (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(msg))) return "culture_entertainment";
 
   // Hobbies & lifestyle
   if (HOBBY_SIGNALS.some((re) => re.test(msg))) return "hobby_lifestyle";
