@@ -86,7 +86,7 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
     res.status(503).json({
       status: "degraded",
       db: "pool_exhausted",
-      pool: preStats,
+      pool: { ...preStats, max: POOL_MAX },
       detail: `Pool at capacity (total=${preStats.total}/${POOL_MAX}, idle=0, waiting=${preStats.waiting}); not queuing probe.`,
     });
     return;
@@ -100,10 +100,10 @@ app.get("/api/readyz", async (_req: Request, res: Response) => {
   // without any client-side guard needed.
   try {
     await pool.query("SELECT 1");
-    res.json({ status: "ok", db: "ok", pool: getPoolStats() });
+    res.json({ status: "ok", db: "ok", pool: { ...getPoolStats(), max: POOL_MAX } });
   } catch (err: unknown) {
     const detail = err instanceof Error ? err.message : "unknown error";
-    res.status(503).json({ status: "degraded", db: "error", pool: getPoolStats(), detail });
+    res.status(503).json({ status: "degraded", db: "error", pool: { ...getPoolStats(), max: POOL_MAX }, detail });
   }
 });
 

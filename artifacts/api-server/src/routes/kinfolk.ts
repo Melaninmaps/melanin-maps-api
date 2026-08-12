@@ -6,6 +6,7 @@ import crypto from "crypto";
 import {
   db,
   pool,
+  getPoolStats,
   usersTable,
   userPreferencesTable,
   userSettingsTable,
@@ -71,6 +72,82 @@ async function getCachedPrefs(
     .catch(() => null);
   prefsCache.set(userId, { promise, expiresAt: now + PREFS_CACHE_TTL_MS });
   return promise;
+}
+
+// ── Per-user sessions list cache (15-second TTL) ──────────────────────────────
+// Session list is fetched on every Kinfolk bootstrap. At 30 concurrent users
+// the same Drizzle query runs 30 times in parallel. 15s TTL keeps the list
+// fresh enough that a new session created in one browser tab appears quickly.
+// Invalidated after POST /kinfolk/sessions mutations.
+interface SessionsCacheEntry {
+  promise: Promise<Array<{ id: string; title: string | null; destination: string | null; createdAt: Date; updatedAt: Date }>>;
+  expiresAt: number;
+}
+const sessionsCache = new Map<string, SessionsCacheEntry>();
+const SESSIONS_CACHE_TTL_MS = 15_000;
+
+export function invalidateSessionsCache(userId: string): void {
+  sessionsCache.delete(userId);
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of sessionsCache) if (v.expiresAt <= now) sessionsCache.delete(k);
+}, 60_000).unref();
+
+async function getCachedSessions(userId: string): Promise<Array<{ id: string; title: string | null; destination: string | null; createdAt: Date; updatedAt: Date }>> {
+  const now = Date.now();
+  const cached = sessionsCache.get(userId);
+  if (cached && cached.expiresAt > now) return cached.promise;
+  const promise = db
+    .select({
+      id: kinfolkSessionsTable.id,
+      title: kinfolkSessionsTable.title,
+      destination: kinfolkSessionsTable.destination,
+      createdAt: kinfolkSessionsTable.createdAt,
+      updatedAt: kinfolkSessionsTable.updatedAt,
+    })
+    .from(kinfolkSessionsTable)
+    .where(eq(kinfolkSessionsTable.userId, userId))
+    .orderBy(desc(kinfolkSessionsTable.updatedAt))
+    .limit(30)
+    .catch(() => []);
+  sessionsCache.set(userId, { promise, expiresAt: now + SESSIONS_CACHE_TTL_MS });
+  return promise;
+}
+
+// ── Cache metric logging helper ───────────────────────────────────────────────
+// Logs structured cache metadata for every bootstrap-path endpoint.
+// userIdHash: first 8 hex chars of SHA-256(userId) — identifies users for ops
+// without logging PII. Never logs cookie, token, email, or payload content.
+function logCacheMetric(
+  req: Request,
+  opts: {
+    endpoint: string;
+    cacheState: "hit" | "miss" | "coalesced";
+    dbQueryCount: number;
+    durationMs: number;
+    responseStatus: number;
+    poolStats: { total: number; idle: number; waiting: number };
+  }
+): void {
+  const userId = req.user?.id ?? "anon";
+  const userIdHash = crypto.createHash("sha256").update(userId).digest("hex").slice(0, 8);
+  req.log?.info(
+    {
+      endpoint: opts.endpoint,
+      requestId: (req as unknown as { id?: string }).id ?? "unknown",
+      userIdHash,
+      cacheState: opts.cacheState,
+      dbQueryCount: opts.dbQueryCount,
+      durationMs: opts.durationMs,
+      poolTotal: opts.poolStats.total,
+      poolIdle: opts.poolStats.idle,
+      poolWaiting: opts.poolStats.waiting,
+      responseStatus: opts.responseStatus,
+    },
+    "cache_metric"
+  );
 }
 
 // Maps KinfolkIntent → Library category ALIASES for the server-controlled libraryAction.
@@ -1669,19 +1746,28 @@ When you mention any of these businesses, be specific: use their actual name, sh
 // This prevents the ChipSet "t.includes is not a function" crash for returning users.
 // 3. Also reads kinfolk_delivery_profiles and returns deliveryProfile + responseStyle
 //    so the Taste Profile UI can restore the persisted style on hard-refresh.
+// Cache: 30-second per-user single-flight via getCachedPrefs(). Hit/miss logged.
 router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const t0 = Date.now();
+  const userId = req.user.id;
   try {
-    const [prefs] = await db
-      .select()
-      .from(userPreferencesTable)
-      .where(eq(userPreferencesTable.userId, req.user.id))
-      .limit(1);
+    // Determine cache state BEFORE calling getCachedPrefs (which sets the entry on miss)
+    const now = Date.now();
+    const existingEntry = prefsCache.get(userId);
+    const cacheState: "hit" | "miss" | "coalesced" =
+      existingEntry && existingEntry.expiresAt > now ? "hit" : "miss";
+
+    // On miss: getCachedPrefs issues a new Drizzle query and caches the promise.
+    // On hit: returns the cached promise (may still be in-flight → single-flight coalescing).
+    const prefs = await getCachedPrefs(userId);
+
     const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
-    // Read kinfolk_voice + delivery profile in parallel
+    // kinfolk_voice is in user_preferences but not in the Drizzle schema (added via migration).
+    // delivery profile lives in kinfolk_delivery_profiles. Both are quick pool.queries.
     const [voiceRow, deliveryRow] = await Promise.all([
-      pool.query(`SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`, [req.user.id]),
-      pool.query(`SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`, [req.user.id]),
+      pool.query(`SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`, [userId]),
+      pool.query(`SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`, [userId]),
     ]);
     const kinfolkVoice: string = voiceRow.rows[0]?.kinfolk_voice ?? "onyx";
     const dp = deliveryRow.rows[0] ?? null;
@@ -1722,6 +1808,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
       kinfolkVoice: "onyx",
     };
+    const status = 200;
     res.json({
       preferences: normalized,
       responseStyle,
@@ -1731,6 +1818,16 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
           tonePreference: dp.tone_preference,
         },
       }),
+    });
+    logCacheMetric(req, {
+      endpoint: "GET /kinfolk/preferences",
+      cacheState,
+      // On miss: 1 Drizzle query (prefs) + 2 pool.queries (voice + delivery) = 3.
+      // On hit: 0 Drizzle (served from cache) + 2 pool.queries = 2.
+      dbQueryCount: cacheState === "miss" ? 3 : 2,
+      durationMs: Date.now() - t0,
+      responseStatus: status,
+      poolStats: getPoolStats(),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch preferences");
@@ -1898,22 +1995,27 @@ router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
 });
 
 // ─── GET /api/kinfolk/sessions ────────────────────────────────────────────────
+// Cache: 15-second per-user single-flight via getCachedSessions(). Hit/miss logged.
 router.get("/kinfolk/sessions", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const t0 = Date.now();
+  const userId = req.user.id;
   try {
-    const sessions = await db
-      .select({
-        id: kinfolkSessionsTable.id,
-        title: kinfolkSessionsTable.title,
-        destination: kinfolkSessionsTable.destination,
-        createdAt: kinfolkSessionsTable.createdAt,
-        updatedAt: kinfolkSessionsTable.updatedAt,
-      })
-      .from(kinfolkSessionsTable)
-      .where(eq(kinfolkSessionsTable.userId, req.user.id))
-      .orderBy(desc(kinfolkSessionsTable.updatedAt))
-      .limit(30);
+    const now = Date.now();
+    const existingEntry = sessionsCache.get(userId);
+    const cacheState: "hit" | "miss" | "coalesced" =
+      existingEntry && existingEntry.expiresAt > now ? "hit" : "miss";
+
+    const sessions = await getCachedSessions(userId);
     res.json({ sessions });
+    logCacheMetric(req, {
+      endpoint: "GET /kinfolk/sessions",
+      cacheState,
+      dbQueryCount: cacheState === "miss" ? 1 : 0,
+      durationMs: Date.now() - t0,
+      responseStatus: 200,
+      poolStats: getPoolStats(),
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch sessions");
     res.status(500).json({ error: "Failed to fetch sessions" });

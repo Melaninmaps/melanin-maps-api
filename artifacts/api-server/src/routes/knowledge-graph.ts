@@ -23,11 +23,50 @@
  */
 
 import { Router } from "express";
-import { pool } from "@workspace/db";
+import { pool, getPoolStats } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 
 const router = Router();
+
+// ── 5-minute response cache for GET /knowledge/graph/:topicId ─────────────────
+// Library graph data is editorial (deploy-time). A 5-min TTL is safe: a new
+// article publish is visible within 5 minutes without any DB hit under load.
+// Cache errors are NEVER stored — only successful 200 responses are cached.
+// Key: "<topicId>:<surface>". Invalidated implicitly by TTL only.
+interface GraphCacheEntry {
+  data: unknown;
+  expiresAt: number;
+}
+const graphCache = new Map<string, GraphCacheEntry>();
+const GRAPH_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of graphCache) if (v.expiresAt <= now) graphCache.delete(k);
+}, 60_000).unref();
+
+function logGraphCacheMetric(
+  req: { log?: { info?: (obj: object, msg: string) => void }; id?: string; user?: { id?: string } },
+  opts: { topicId: string; surface: string; cacheState: "hit" | "miss"; durationMs: number; responseStatus: number }
+): void {
+  const userId = req.user?.id ?? "anon";
+  const userIdHash = createHash("sha256").update(userId).digest("hex").slice(0, 8);
+  const ps = getPoolStats();
+  req.log?.info?.({
+    endpoint: `GET /knowledge/graph/${opts.topicId}`,
+    requestId: req.id ?? "unknown",
+    userIdHash,
+    cacheState: opts.cacheState,
+    dbQueryCount: opts.cacheState === "miss" ? 5 : 0,
+    durationMs: opts.durationMs,
+    surface: opts.surface,
+    poolTotal: ps.total,
+    poolIdle: ps.idle,
+    poolWaiting: ps.waiting,
+    responseStatus: opts.responseStatus,
+  }, "cache_metric");
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -323,6 +362,17 @@ router.get(
   async (req, res): Promise<void> => {
     const { topicId } = req.params;
     const surface = (req.query.surface as string) ?? "library";
+    const cacheKey = `${topicId}:${surface}`;
+    const t0 = Date.now();
+
+    // Check 5-min cache first (editorial data — safe to serve from memory)
+    const now = Date.now();
+    const cached = graphCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      res.json(cached.data);
+      logGraphCacheMetric(req as Parameters<typeof logGraphCacheMetric>[0], { topicId, surface, cacheState: "hit", durationMs: Date.now() - t0, responseStatus: 200 });
+      return;
+    }
 
     const node = await fetchNode(topicId);
     if (!node) {
@@ -352,7 +402,7 @@ router.get(
       geography = { ref: node.geography_ref, subtopics };
     }
 
-    res.json({
+    const payload = {
       node,
       relationships,
       connectedEntities,
@@ -360,7 +410,13 @@ router.get(
       articles,
       geography,
       surface_meta: surfaceMeta(surface, topicId),
-    });
+    };
+
+    // Cache only successful responses — never cache errors
+    graphCache.set(cacheKey, { data: payload, expiresAt: now + GRAPH_CACHE_TTL_MS });
+
+    res.json(payload);
+    logGraphCacheMetric(req as Parameters<typeof logGraphCacheMetric>[0], { topicId, surface, cacheState: "miss", durationMs: Date.now() - t0, responseStatus: 200 });
   },
 );
 

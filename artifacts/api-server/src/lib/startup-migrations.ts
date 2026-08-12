@@ -3200,103 +3200,57 @@ async function ensureNeighborhoodTiming(
 }
 
 // ── Geocode Tour Content ──────────────────────────────────────────────────────
-// Batch-geocodes tour_cultural_sites, community_organizations, recurring_events
-// that are missing lat/lng using Google Maps Geocoding API.
-// Capped at 60 items per boot to keep startup fast — runs idempotently.
+// Coordinate coverage audit — logs the current coordinate state for all three
+// non-business map collections. Does NOT make any external API calls.
+//
+// NOTE: The public Nominatim batch geocoder that previously ran here was removed
+// because OSM policy prohibits boot-time bulk geocoding at rates above 1 req/sec,
+// and the batch was issuing requests at ~10 req/sec (100ms sleep).
+//
+// Records without coordinates are correctly excluded from /api/maps/discoverability-pins
+// by the coordinate validity check in that route. No city-centroid fabrication is used.
+//
+// To geocode remaining records, a licensed provider (Google Geocoding API once
+// the key has Geocoding API enabled, OpenCage, or Mapbox) must be used with
+// proper credentials, per-request caching, and a one-time offline import — not
+// a boot-time loop.
 async function geocodeTourContent(
   log: (msg: string) => void,
-  warn: (msg: string) => void
+  _warn: (msg: string) => void
 ): Promise<void> {
-  // Uses Nominatim (OpenStreetMap) — free, no key required, international coverage.
-  // GOOGLE_MAPS_API_KEY returns REQUEST_DENIED for geocoding on this project's key;
-  // Nominatim is the reliable path for both US and international records.
-  // Rate limit: 1 req/second per OSM usage policy → 100ms sleep between requests.
-
-  async function geocodeAddress(address: string, city: string, stateOrProvince: string | null, country?: string | null): Promise<{ lat: number; lng: number } | null> {
-    const q = [address, city, stateOrProvince, country].filter(Boolean).join(", ");
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`;
-      const res = await fetch(url, {
-        headers: { "User-Agent": "MappingWithMelanin/1.0 (production geocoder; contact mappingwithmelanin.com)" },
-      });
-      if (!res.ok) return null;
-      const data = await res.json() as { lat: string; lon: string }[];
-      if (data[0]) {
-        const lat = parseFloat(data[0].lat);
-        const lng = parseFloat(data[0].lon); // Nominatim returns `lon` not `lng`
-        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) return { lat, lng };
-      }
-    } catch { /* silent */ }
-    return null;
-  }
-
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  let geocoded = 0;
-  // Raised from 60 → 800 so a single boot can geocode all 745 records (3 collections).
-  // At 100ms per request this adds at most ~75 seconds to the first post-deploy boot.
-  // Subsequent boots are no-ops (all records have coords).
-  const CAP = 800;
-
   try {
-    // Cultural sites with address but no lat/lng — include country for international sites
-    const sites = await pool.query(
-      `SELECT id, name, address, city, state, province, country FROM tour_cultural_sites
-       WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
-       LIMIT $1`,
-      [CAP]
-    );
-    for (const s of sites.rows) {
-      if (geocoded >= CAP) break;
-      const coords = await geocodeAddress(s.address, s.city, s.province || s.state, s.country);
-      if (coords) {
-        await pool.query(`UPDATE tour_cultural_sites SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, s.id]);
-        geocoded++;
-      }
-      await sleep(100);
-    }
-
-    // Community orgs — include country for international orgs
-    if (geocoded < CAP) {
-      const orgs = await pool.query(
-        `SELECT id, name, address, city, state, province, country FROM community_organizations
-         WHERE address IS NOT NULL AND (latitude IS NULL OR longitude IS NULL)
-         LIMIT $1`,
-        [CAP - geocoded]
-      );
-      for (const o of orgs.rows) {
-        if (geocoded >= CAP) break;
-        const coords = await geocodeAddress(o.address, o.city, o.province || o.state, o.country);
-        if (coords) {
-          await pool.query(`UPDATE community_organizations SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, o.id]);
-          geocoded++;
-        }
-        await sleep(100);
-      }
-    }
-
-    // Recurring events with venue + address but no lat/lng
-    if (geocoded < CAP) {
-      const evts = await pool.query(
-        `SELECT id, name, venue, address, city, state, province, country FROM recurring_events
-         WHERE (address IS NOT NULL OR venue IS NOT NULL) AND (latitude IS NULL OR longitude IS NULL)
-         LIMIT $1`,
-        [CAP - geocoded]
-      );
-      for (const e of evts.rows) {
-        if (geocoded >= CAP) break;
-        const addrQuery = e.address || e.venue || "";
-        const coords = await geocodeAddress(addrQuery, e.city, e.province || e.state, e.country);
-        if (coords) {
-          await pool.query(`UPDATE recurring_events SET latitude=$1, longitude=$2 WHERE id=$3`, [coords.lat, coords.lng, e.id]);
-          geocoded++;
-        }
-        await sleep(100);
-      }
-    }
-
-    log(`Geocode tour content: ${geocoded} items geocoded this boot`);
+    const [sites, orgs, events] = await Promise.all([
+      pool.query<{ total: string; with_coords: string; missing: string }>(
+        `SELECT COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                  AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
+                  AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+                COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
+         FROM tour_cultural_sites`
+      ),
+      pool.query<{ total: string; with_coords: string; missing: string }>(
+        `SELECT COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                  AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
+                  AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+                COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
+         FROM community_organizations`
+      ),
+      pool.query<{ total: string; with_coords: string; missing: string }>(
+        `SELECT COUNT(*) AS total,
+                COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+                  AND latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180
+                  AND NOT (latitude = 0 AND longitude = 0)) AS with_coords,
+                COUNT(*) FILTER (WHERE latitude IS NULL OR longitude IS NULL) AS missing
+         FROM recurring_events`
+      ),
+    ]);
+    const s = sites.rows[0];
+    const o = orgs.rows[0];
+    const e = events.rows[0];
+    log(`Coordinate coverage audit — tour_cultural_sites: ${s.with_coords}/${s.total} valid (${s.missing} missing) | community_organizations: ${o.with_coords}/${o.total} valid (${o.missing} missing) | recurring_events: ${e.with_coords}/${e.total} valid (${e.missing} missing)`);
   } catch (err: unknown) {
-    warn(`Geocode tour content failed: ${err instanceof Error ? err.message : String(err)}`);
+    log(`Coordinate coverage audit skipped: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

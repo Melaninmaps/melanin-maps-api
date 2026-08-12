@@ -419,10 +419,13 @@ export default function MapPage() {
   }, [search, userCoords]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
-  // Effect runs whenever handoffQuery or map readiness changes.
+  // Effect runs when handoffQuery or map object readiness changes.
   // Guards with appliedHandoffQueryRef so a stable URL doesn't re-trigger the search.
+  // NOTE: isLoading (initial business-data fetch) is intentionally NOT a guard here —
+  // the handoff must fire as soon as the Google Maps object is ready, regardless of
+  // whether the initial sidebar data has finished loading.
   useEffect(() => {
-    if (!handoffQuery || !ready || isLoading || !mapRef.current) return;
+    if (!handoffQuery || !ready || !mapRef.current) return;
     if (appliedHandoffQueryRef.current === handoffQuery) return;
 
     appliedHandoffQueryRef.current = handoffQuery;
@@ -430,7 +433,7 @@ export default function MapPage() {
     setLegendFilter("business");
     setSearch(handoffQuery);
     void runUniversalSearch(handoffQuery);
-  }, [handoffQuery, ready, isLoading, runUniversalSearch]);
+  }, [handoffQuery, ready, runUniversalSearch]);
 
   // ── Fetch discoverability pins after map is ready ─────────────────────────
   useEffect(() => {
