@@ -1,0 +1,229 @@
+{
+  "version": {
+    "railway_sha": "665c94d388f1b91a40c588c60174b61fd7d13d6c",
+    "deploymentId": "d3114a6f-9b03-476a-ac96-b511094026e7",
+    "release": "Build-98.2",
+    "env": "production",
+    "built_from_sha": "715cf2517b7270f04a5ed100034fc15c90164153",
+    "built_at": "2026-08-12T19:20:50.427Z",
+    "bundle_sha256_self": "fdc91f8dee9dedb36102660c9b5b2bb406bf91922dae11d249ff9ebcadcd1632",
+    "bundle_sha256": "fdc91f8dee9dedb36102660c9b5b2bb406bf91922dae11d249ff9ebcadcd1632",
+    "stale_bundle": false
+  },
+  "readyz": {
+    "status": "ok",
+    "db": "ok",
+    "pool": {
+      "total": 1,
+      "idle": 1,
+      "waiting": 0
+    }
+  },
+  "event_city_filter": {
+    "philadelphia": {
+      "total": 0,
+      "returned": 0,
+      "cities": []
+    },
+    "phuket": {
+      "total": 0,
+      "returned": 0,
+      "cities": []
+    }
+  },
+  "phuket_hair_search": {
+    "total": 0,
+    "returned": 0,
+    "rows": []
+  },
+  "phuket_tour_sites": {
+    "total": 2,
+    "coordinate_fields_present": 2,
+    "valid_coordinates": 2,
+    "missing_or_invalid_coordinates": 0,
+    "samples": [
+      {
+        "id": "79b1c8bc-186f-42f1-9140-22a3595cbe75",
+        "name": "Big Buddha (Phra Puttamingmongkol Akenakkiri)",
+        "city": "Phuket",
+        "state": "Phuket Province",
+        "latitude": 7.8274,
+        "longitude": 98.3106
+      },
+      {
+        "id": "60fc7575-5a78-44bb-be85-05f288610fef",
+        "name": "Wat Chalong (Wat Chaiyathararam)",
+        "city": "Phuket",
+        "state": "Phuket Province",
+        "latitude": 7.8446,
+        "longitude": 98.3378
+      }
+    ]
+  },
+  "all_tour_sites": {
+    "total": 599,
+    "coordinate_fields_present": 599,
+    "valid_coordinates": 95,
+    "missing_or_invalid_coordinates": 504,
+    "samples": [
+      {
+        "id": "97a05589-f3f5-4f26-8741-05cae831026b",
+        "name": "Machu Picchu — Inca City in the Clouds",
+        "city": "Aguas Calientes (Machu Picchu Pueblo)",
+        "state": "Cusco Region, Peru",
+        "latitude": -13.1631,
+        "longitude": -72.5449
+      },
+      {
+        "id": "e71e16ef-6cb5-49cf-ab2f-75aa7c2f36c5",
+        "name": "Allentown Art Museum",
+        "city": "Allentown",
+        "state": "PA",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id": "2712d152-7ab6-41b3-b3cf-58b9df1f64c1",
+        "name": "Allentown's Puerto Rican Community — The Largest Per Capita in Pennsylvania",
+        "city": "Allentown",
+        "state": "PA",
+        "latitude": null,
+        "longitude": null
+      }
+    ]
+  },
+  "all_cultural_sites": {
+    "total": 1000,
+    "coordinate_fields_present": 1000,
+    "valid_coordinates": 624,
+    "missing_or_invalid_coordinates": 376,
+    "samples": [
+      {
+        "id": "35b16629-239e-4df6-b593-673eebbc8026",
+        "name": "Alabama A&M University",
+        "city": "Normal",
+        "state": "AL",
+        "latitude": "34.7825000",
+        "longitude": "-86.5683000"
+      },
+      {
+        "id": "212669b5-7dc7-49de-9a97-1c3c8be1cc23",
+        "name": "Alabama State University",
+        "city": "Montgomery",
+        "state": "AL",
+        "latitude": "32.3668000",
+        "longitude": "-86.3000000"
+      },
+      {
+        "id": "8289422f-26fb-4b11-b6d4-451bb87a8b0e",
+        "name": "Albany State University",
+        "city": "Albany",
+        "state": "GA",
+        "latitude": "31.5784000",
+        "longitude": "-84.1556000"
+      }
+    ]
+  },
+  "recurring_events": {
+    "total": 85,
+    "coordinate_fields_present": 85,
+    "valid_coordinates": 0,
+    "missing_or_invalid_coordinates": 85,
+    "samples": [
+      {
+        "id": "855414e6-e90f-454b-8b4a-f679ae80b764",
+        "name": "First Fridays Art Walks — Atlanta Neighborhoods",
+        "city": "Atlanta",
+        "state": "GA",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id": "e7c58875-8fe2-4202-a437-0f805745dbbf",
+        "name": "Atlanta Indie Market",
+        "city": "Atlanta",
+        "state": "GA",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id": "7b8019ef-100e-4777-b2c6-ebecec82df31",
+        "name": "Open Mic Nights — Atlanta Spoken Word Scene",
+        "city": "Atlanta",
+        "state": "GA",
+        "latitude": null,
+        "longitude": null
+      }
+    ]
+  },
+  "community_organizations": {
+    "total": 61,
+    "coordinate_fields_present": 61,
+    "valid_coordinates": 0,
+    "missing_or_invalid_coordinates": 61,
+    "samples": [
+      {
+        "id": "89fc0b7f-e308-47d7-bc0e-620bddd36a30",
+        "name": "Lehigh Valley Community Foundation",
+        "city": "Allentown",
+        "state": "PA",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id": "7a2a3e36-6c5f-4235-8186-7df2615a2c18",
+        "name": "PA CareerLink Lehigh Valley Reentry Programs",
+        "city": "Allentown",
+        "state": "PA",
+        "latitude": null,
+        "longitude": null
+      },
+      {
+        "id": "c7961bbf-9b2d-4717-8835-4bb5ff73d03c",
+        "name": "Atlanta Black Chambers",
+        "city": "Atlanta",
+        "state": "GA",
+        "latitude": null,
+        "longitude": null
+      }
+    ]
+  },
+  "discoverability_pins": {
+    "total": 82,
+    "by_source_type": {
+      "tour_cultural_site": {
+        "total": 82,
+        "coordinate_fields_present": 82,
+        "valid_coordinates": 82,
+        "missing_or_invalid_coordinates": 0,
+        "samples": [
+          {
+            "id": "97a05589-f3f5-4f26-8741-05cae831026b",
+            "name": "Machu Picchu — Inca City in the Clouds",
+            "city": "Aguas Calientes (Machu Picchu Pueblo)",
+            "state": "Cusco Region, Peru",
+            "latitude": -13.1631,
+            "longitude": -72.5449
+          },
+          {
+            "id": "443e8f5b-246e-4ef0-a1d4-6c2e3f7eae41",
+            "name": "Hammonds House Museum",
+            "city": "Atlanta",
+            "state": "GA",
+            "latitude": 33.7412088,
+            "longitude": -84.4208754
+          },
+          {
+            "id": "3c6fde45-4fe9-439d-bac6-8d1ad469e3b7",
+            "name": "Martin Luther King, Jr. National Historical Park",
+            "city": "Atlanta",
+            "state": "GA",
+            "latitude": 33.7563822,
+            "longitude": -84.3734662
+          }
+        ]
+      }
+    },
+    "all_valid": true
+  }
+}
