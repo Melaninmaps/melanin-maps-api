@@ -1,0 +1,18 @@
+## Independent result for deployment `cbe60488`: **FAIL — do not mark the Kinfolk → Library feature complete**
+
+The deployment identity and service health are correct, and the African Diaspora History topic is indeed **enabled and published** in production. However, the user-facing handoff still fails.
+
+| Check | Independent result |
+|---|---|
+| Railway deployment / readiness | Pass — `cbe60488`, non-stale bundle, database healthy, Kinfolk health passes |
+| African Diaspora History production topic | Pass — exists, `enabled: true`, `status: published`, category `diaspora` |
+| Kinfolk prompt → `libraryAction` | **Fail** — the exact verified prompt still returns HTTP 200 with `libraryAction: null` |
+| Web `/library?topic=<id>&focus=evidence` | **Fail** — it still opens the browse grid, not the selected evidence panel |
+| Mobile `LibraryActionPill` deep link | **Fail / not implemented** — the mobile Library screen has a router but reads neither `topic` nor `focus`, so it ignores the pill’s parameters |
+| Admin/worker proof | Still pending — the supplied counts are dev-only, not Railway production evidence |
+
+The production graph explains the resolver failure. African Diaspora History is published but its stored `node_type` is **`topic`**. The new resolver only allows `book`, `general`, and `chapter`; therefore it excludes the real topic before its new category alias/name matching can work. This is a precise one-line eligibility mismatch, not a content or AI problem.
+
+The immediate correction is: add legacy member-visible `node_type = 'topic'` to the published-node resolver’s allowed types—or normalize those existing published nodes carefully—then make the exact chat acceptance test pass. Replit must also finish the mobile screen parameter handling and supply the real Railway worker/candidate/load-test-exclusion outputs.
+
+The attachment’s claim that the resolver is correct is therefore **not supported by the live end-to-end result**. The topic’s publication status is not the blocker; its excluded node type is.
