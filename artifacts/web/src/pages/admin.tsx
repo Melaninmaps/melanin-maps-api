@@ -171,7 +171,7 @@ type MetricsData = {
   };
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib" | "library-growth";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -1068,6 +1068,7 @@ export default function Admin() {
     { id: "cities", label: "City Launches", icon: <MapPin className="w-4 h-4" /> },
     { id: "feedback", label: "Beta Feedback", icon: <MessageSquarePlus className="w-4 h-4" />, badge: undefined },
     { id: "knowledge-contrib", label: "Knowledge Contributions", icon: <BookOpen className="w-4 h-4" /> },
+    { id: "library-growth", label: "Library Growth", icon: <TrendingUp className="w-4 h-4" /> },
   ];
 
   return (
@@ -3380,6 +3381,12 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === "library-growth" && (
+        <div className="p-6">
+          <LibraryGrowthTab />
+        </div>
+      )}
+
       {/* Edit Business modal */}
       {editingBiz && (
         <AdminEditBusiness
@@ -4293,6 +4300,357 @@ function KnowledgeContribTab() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─── Library Growth Tab ───────────────────────────────────────────────────────
+type GrowthCandidate = {
+  id: string;
+  canonical_subject: string;
+  category: string;
+  desired_node_type: string;
+  distinct_user_count: number;
+  signal_count: number;
+  sensitivity_tier: string;
+  proposed_status: string;
+  first_seen_at: string;
+  last_seen_at: string;
+  parent_topic_id: string | null;
+  geography_scope: string | null;
+};
+
+type WorkerStatus = {
+  running: boolean;
+  health: {
+    lastRunAt: string | null;
+    eligibleSignalsProcessed: number;
+    candidatesCreatedOrUpdated: number;
+    errorCount: number;
+    lastError: string | null;
+  };
+};
+
+function LibraryGrowthTab() {
+  const BASE_URL = import.meta.env.BASE_URL as string;
+  const [workerStatus, setWorkerStatus] = useState<WorkerStatus | null>(null);
+  const [candidates, setCandidates] = useState<GrowthCandidate[]>([]);
+  const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<string>("pending_review");
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [decideModal, setDecideModal] = useState<{ id: string; action: "approved" | "rejected" } | null>(null);
+  const [reason, setReason] = useState("");
+  const [materializeLoading, setMaterializeLoading] = useState<string | null>(null);
+  const [publishLoading, setPublishLoading] = useState<string | null>(null);
+  const [publishTopicId, setPublishTopicId] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+
+  const showNotice = (kind: "ok" | "err", msg: string) => {
+    setNotice({ kind, msg });
+    setTimeout(() => setNotice(null), 4000);
+  };
+
+  const loadWorkerHealth = async () => {
+    try {
+      const r = await fetch(`${BASE_URL}api/admin/library-growth/worker-health`, { credentials: "include" });
+      if (r.ok) setWorkerStatus(await r.json());
+    } catch { /* non-critical */ }
+  };
+
+  const loadCandidates = async (status: string) => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${BASE_URL}api/admin/library-growth/candidates?status=${status}&limit=50`, { credentials: "include" });
+      if (r.ok) {
+        const d = await r.json();
+        setCandidates(d.candidates ?? []);
+        setTotal(d.total ?? 0);
+      }
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => {
+    void loadWorkerHealth();
+    void loadCandidates(statusFilter);
+  }, [statusFilter]);
+
+  const decide = async () => {
+    if (!decideModal || !reason.trim()) return;
+    setActionLoading(decideModal.id);
+    try {
+      const r = await fetch(`${BASE_URL}api/admin/library-growth/candidates/${decideModal.id}/decide`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          decision: decideModal.action,
+          reason: reason.trim(),
+          evidencePlan: decideModal.action === "approved"
+            ? { requiredAuthorityTiers: ["authoritative", "professional"], minimumSources: 2, requiresDomainReviewer: false }
+            : undefined,
+        }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showNotice("ok", `Candidate ${decideModal.action}.`);
+        setDecideModal(null);
+        setReason("");
+        void loadCandidates(statusFilter);
+      } else {
+        showNotice("err", d.error ?? "Action failed.");
+      }
+    } finally { setActionLoading(null); }
+  };
+
+  const materialize = async (candidateId: string) => {
+    setMaterializeLoading(candidateId);
+    try {
+      const r = await fetch(`${BASE_URL}api/admin/library-growth/candidates/${candidateId}/materialize`, {
+        method: "POST", credentials: "include",
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showNotice("ok", `Draft node created. Topic ID: ${d.topicId}`);
+        setPublishTopicId(prev => ({ ...prev, [candidateId]: d.topicId }));
+        void loadCandidates(statusFilter);
+      } else {
+        showNotice("err", d.error ?? "Materialization failed.");
+      }
+    } finally { setMaterializeLoading(null); }
+  };
+
+  const publish = async (candidateId: string, topicId: string) => {
+    setPublishLoading(candidateId);
+    try {
+      const r = await fetch(`${BASE_URL}api/admin/library-growth/topics/${topicId}/publish`, {
+        method: "POST", credentials: "include",
+      });
+      const d = await r.json();
+      if (r.ok) {
+        showNotice("ok", "Library topic published and now visible to members.");
+        void loadCandidates(statusFilter);
+      } else {
+        showNotice("err", d.error ?? "Publish failed.");
+      }
+    } finally { setPublishLoading(null); }
+  };
+
+  const statusOptions = [
+    { value: "pending_review", label: "Needs Review" },
+    { value: "approved", label: "Approved" },
+    { value: "materialized", label: "Draft Nodes" },
+    { value: "rejected", label: "Rejected" },
+  ];
+
+  const tierColors: Record<string, string> = {
+    standard: "bg-green-50 text-green-700",
+    professional: "bg-amber-50 text-amber-700",
+    sensitive: "bg-orange-50 text-orange-700",
+  };
+
+  const statusColors: Record<string, string> = {
+    pending_review: "bg-amber-50 text-amber-700",
+    approved: "bg-blue-50 text-blue-700",
+    materialized: "bg-purple-50 text-purple-700",
+    rejected: "bg-red-50 text-red-700",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#3A1F0E]">Library Growth Engine</h2>
+          <p className="text-sm text-[#3A1F0E]/60 mt-0.5">
+            Governed community-demand pipeline. Candidates require ≥10 distinct members before curator review.
+          </p>
+        </div>
+        <button onClick={() => { void loadWorkerHealth(); void loadCandidates(statusFilter); }}
+          className="text-xs text-[#CA922B] hover:underline flex items-center gap-1">
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh
+        </button>
+      </div>
+
+      {/* Notice banner */}
+      {notice && (
+        <div className={`flex items-center gap-2 p-3 rounded-xl text-sm font-medium ${notice.kind === "ok" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+          {notice.kind === "ok" ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+          {notice.msg}
+        </div>
+      )}
+
+      {/* Worker health card */}
+      {workerStatus && (
+        <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="w-4 h-4 text-[#CA922B]" />
+            <h3 className="font-semibold text-[#3A1F0E] text-sm">Hourly Worker</h3>
+            <span className={`ml-auto px-2 py-0.5 rounded-full text-xs font-bold ${workerStatus.running ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+              {workerStatus.running ? "Running" : "Stopped"}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-[#FAF6EF] rounded-xl p-3">
+              <p className="text-xl font-bold text-[#3A1F0E]">{total}</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-0.5">Total candidates</p>
+            </div>
+            <div className="bg-[#FAF6EF] rounded-xl p-3">
+              <p className="text-xl font-bold text-[#3A1F0E]">{workerStatus.health.candidatesCreatedOrUpdated}</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-0.5">Created/updated</p>
+            </div>
+            <div className="bg-[#FAF6EF] rounded-xl p-3">
+              <p className="text-xl font-bold text-[#CA922B]">{workerStatus.health.errorCount}</p>
+              <p className="text-xs text-[#3A1F0E]/50 mt-0.5">Errors</p>
+            </div>
+          </div>
+          {workerStatus.health.lastRunAt && (
+            <p className="text-xs text-[#3A1F0E]/40 mt-2.5">
+              Last run: {new Date(workerStatus.health.lastRunAt).toLocaleString()}
+            </p>
+          )}
+          {workerStatus.health.lastError && (
+            <p className="text-xs text-red-600 mt-1 font-mono truncate">{workerStatus.health.lastError}</p>
+          )}
+        </div>
+      )}
+
+      {/* Status filter */}
+      <div className="flex gap-2 flex-wrap">
+        {statusOptions.map(opt => (
+          <button key={opt.value} onClick={() => setStatusFilter(opt.value)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${statusFilter === opt.value ? "bg-[#3A1F0E] text-white" : "bg-white border border-[#3A1F0E]/10 text-[#3A1F0E]/70 hover:border-[#CA922B]/40"}`}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Candidates list */}
+      {loading ? (
+        <div className="flex justify-center py-8"><div className="w-6 h-6 rounded-full border-2 border-[#CA922B] border-t-transparent animate-spin" /></div>
+      ) : candidates.length === 0 ? (
+        <div className="text-center py-12 text-[#3A1F0E]/40 text-sm">
+          <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          No candidates with status "{statusFilter}". Growth signals accumulate as members use Kinfolk and Search.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {candidates.map(c => (
+            <div key={c.id} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 space-y-3">
+              {/* Header row */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#3A1F0E] text-sm leading-snug">{c.canonical_subject}</p>
+                  <p className="text-xs text-[#3A1F0E]/50 mt-0.5 capitalize">{c.category} · {c.desired_node_type}</p>
+                </div>
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-bold ${statusColors[c.proposed_status] ?? "bg-gray-50 text-gray-600"}`}>
+                  {c.proposed_status.replace(/_/g, " ")}
+                </span>
+              </div>
+
+              {/* Stats row */}
+              <div className="flex items-center gap-4 text-xs text-[#3A1F0E]/55">
+                <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{c.distinct_user_count} distinct members</span>
+                <span>{c.signal_count} signals</span>
+                {c.geography_scope && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{c.geography_scope}</span>}
+                <span className={`ml-auto px-2 py-0.5 rounded-full font-medium ${tierColors[c.sensitivity_tier] ?? "bg-gray-50 text-gray-600"}`}>
+                  {c.sensitivity_tier}
+                </span>
+              </div>
+
+              {/* Time range */}
+              <p className="text-xs text-[#3A1F0E]/40">
+                First seen: {new Date(c.first_seen_at).toLocaleDateString()} · Last: {new Date(c.last_seen_at).toLocaleDateString()}
+              </p>
+
+              {/* Actions */}
+              {c.proposed_status === "pending_review" && (
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => setDecideModal({ id: c.id, action: "approved" })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#CA922B] text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-opacity">
+                    <Check className="w-3.5 h-3.5" /> Approve
+                  </button>
+                  <button
+                    onClick={() => setDecideModal({ id: c.id, action: "rejected" })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 transition-colors">
+                    <X className="w-3.5 h-3.5" /> Reject
+                  </button>
+                </div>
+              )}
+
+              {c.proposed_status === "approved" && (
+                <div className="pt-1">
+                  <button
+                    onClick={() => void materialize(c.id)}
+                    disabled={materializeLoading === c.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
+                    {materializeLoading === c.id
+                      ? <><div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" />Creating draft…</>
+                      : <><PlusCircle className="w-3.5 h-3.5" />Create Draft Library Node</>}
+                  </button>
+                </div>
+              )}
+
+              {c.proposed_status === "materialized" && (
+                <div className="pt-1 flex items-center gap-2">
+                  {publishTopicId[c.id] ? (
+                    <button
+                      onClick={() => void publish(c.id, publishTopicId[c.id])}
+                      disabled={publishLoading === c.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
+                      {publishLoading === c.id
+                        ? <><div className="w-3 h-3 rounded-full border border-white border-t-transparent animate-spin" />Publishing…</>
+                        : <><CheckCircle className="w-3.5 h-3.5" />Publish (2+ sources verified)</>}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-[#3A1F0E]/50 italic">
+                      Draft node created. Add ≥2 authoritative sources via Knowledge Contributions, then refresh and publish.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Approve / Reject modal */}
+      {decideModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl space-y-4">
+            <h3 className="font-bold text-[#3A1F0E] text-lg capitalize">
+              {decideModal.action === "approved" ? "Approve" : "Reject"} Candidate
+            </h3>
+            <p className="text-sm text-[#3A1F0E]/60">
+              {decideModal.action === "approved"
+                ? "Approving creates a pending-materialization record. You'll need to materialize a draft node and add sources before it publishes."
+                : "Rejecting permanently closes this candidate. It will not be re-raised unless demand crosses the threshold again."}
+            </p>
+            <div>
+              <label className="text-xs font-semibold text-[#3A1F0E]/70 uppercase tracking-wide">Reason (required)</label>
+              <textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="Why are you approving or rejecting this candidate?"
+                rows={3}
+                className="mt-1.5 w-full px-3 py-2 text-sm border border-[#3A1F0E]/15 rounded-xl focus:outline-none focus:border-[#CA922B]/50 resize-none"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => void decide()}
+                disabled={!reason.trim() || actionLoading === decideModal.id}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50 ${decideModal.action === "approved" ? "bg-[#CA922B]" : "bg-red-600"}`}>
+                {actionLoading === decideModal.id ? "Saving…" : `Confirm ${decideModal.action === "approved" ? "Approval" : "Rejection"}`}
+              </button>
+              <button onClick={() => { setDecideModal(null); setReason(""); }}
+                className="px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:bg-[#FAF6EF] transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

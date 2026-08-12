@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -358,6 +358,39 @@ const taStyles = StyleSheet.create({
   skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
 });
 
+// ─── Sub-component: Library Action Pill ──────────────────────────────────────
+function LibraryActionPill({
+  action, colors,
+}: { action: LibraryAction; colors: ReturnType<typeof useColors> }) {
+  return (
+    <TouchableOpacity
+      style={[laStyles.pill, { backgroundColor: colors.card, borderColor: GOLD + "40" }]}
+      activeOpacity={0.82}
+      onPress={() =>
+        router.push({ pathname: "/(tabs)/library" as never, params: { topic: action.topicId, focus: "evidence" } })
+      }
+    >
+      <View style={[laStyles.iconWrap, { backgroundColor: GOLD + "18" }]}>
+        <Ionicons name="book-outline" size={14} color={GOLD} />
+      </View>
+      <Text style={[laStyles.label, { color: colors.text }]} numberOfLines={1}>
+        {action.label}
+      </Text>
+      <Ionicons name="chevron-forward" size={13} color={colors.mutedForeground} />
+    </TouchableOpacity>
+  );
+}
+const laStyles = StyleSheet.create({
+  pill: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderRadius: 12, borderWidth: 1.5,
+    paddingHorizontal: 12, paddingVertical: 9,
+    marginTop: 8,
+  },
+  iconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  label: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
+});
+
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
@@ -418,6 +451,11 @@ function AiMessageBubble({
             onDismiss={() => onDismissTaskAction(msg.id)}
             colors={colors}
           />
+        )}
+
+        {/* Library Action Pill — server-controlled link to a published Library topic */}
+        {msg.libraryAction?.type === "open_library_node" && (
+          <LibraryActionPill action={msg.libraryAction} colors={colors} />
         )}
 
         {/* Recommendations */}

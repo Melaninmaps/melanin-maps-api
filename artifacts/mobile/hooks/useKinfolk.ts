@@ -67,6 +67,13 @@ export type TaskAction = {
   tasks: TaskActionTask[];
 };
 
+export type LibraryAction = {
+  type: "open_library_node";
+  topicId: string;
+  focus: "evidence";
+  label: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -76,6 +83,7 @@ export type ChatMessage = {
   smartPromotion?: SmartPromotion | null;
   taskAction?: TaskAction | null;
   taskActionDone?: boolean;
+  libraryAction?: LibraryAction | null;
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
@@ -145,6 +153,7 @@ export function useKinfolk() {
           followUpSuggestions?: string[];
           smartPromotion?: SmartPromotion | null;
           taskAction?: TaskAction | null;
+          libraryAction?: LibraryAction | null;
           queriesUsed?: number;
           queriesLimit?: number;
           intentClass?: string | null;
@@ -163,6 +172,7 @@ export function useKinfolk() {
           followUpSuggestions: data.followUpSuggestions ?? [],
           smartPromotion: data.smartPromotion ?? null,
           taskAction: data.taskAction ?? null,
+          libraryAction: data.libraryAction ?? null,
           timestamp: new Date(),
           feedback: {},
           intentClass: data.intentClass ?? null,

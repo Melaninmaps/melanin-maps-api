@@ -11,6 +11,21 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { FEATURE_FLAGS } from "../constants/featureFlags";
 import { requireAuth } from "../middlewares/requireAuth";
+import {
+  captureLibraryGrowthSignal,
+  classifyGrowthSensitivity,
+} from "../lib/library-growth-engine";
+
+// Maps universal-search IntentType → Library growth category
+const INTENT_TO_GROWTH_CATEGORY: Partial<Record<string, string>> = {
+  heritage:      "culture",
+  faith:         "culture",
+  library_country: "general",
+  library_topic: "general",
+  food_item:     "lifestyle",
+  specialty_service: "business",
+  general:       "general",
+};
 
 const router: IRouter = Router();
 router.use(requireAuth);
@@ -1683,6 +1698,29 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       heritageGeoMessage,
       results: { businesses, events, heritage, libraryTopics, communityOrgs },
     });
+
+    // ── Library Growth signal (fire-and-forget) ───────────────────────────────
+    // Capture authenticated search queries as community demand signals.
+    // Never blocks or slows the response — errors are swallowed.
+    const growthCategory = INTENT_TO_GROWTH_CATEGORY[intentType];
+    if (user?.id && growthCategory && normalizedConcept && normalizedConcept.length >= 3) {
+      const sensitivityTier = classifyGrowthSensitivity(normalizedConcept);
+      if (sensitivityTier !== "excluded") {
+        const canonicalSubjectKey = normalizedConcept.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 80);
+        captureLibraryGrowthSignal({
+          canonicalSubject: normalizedConcept,
+          canonicalSubjectKey,
+          category: growthCategory,
+          desiredNodeType: intentType === "library_country" ? "geography" : "chapter",
+          geographyScope: city ? `${city}${state ? `, ${state}` : ""}` : null,
+          sourceSurface: "universal_search",
+          userId: user.id,
+          sensitivityTier,
+          learningEligible: true,
+          isLoadTest: (user as { isLoadTest?: boolean }).isLoadTest === true,
+        }).catch(() => { /* non-fatal */ });
+      }
+    }
   } catch (err) {
     req.log?.error({ err }, "Universal search failed");
     res.status(500).json({ error: "Search failed" });

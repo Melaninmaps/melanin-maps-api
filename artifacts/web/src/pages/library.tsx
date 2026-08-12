@@ -755,6 +755,20 @@ export default function Library() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // ── Library search signal (fire-and-forget, debounced) ────────────────────
+  // When an authenticated user searches the Library, send a sanitized signal
+  // via universal search. This lets the Library Growth Engine aggregate demand
+  // from explicit topic searches, not just Kinfolk chat.
+  useEffect(() => {
+    if (!isAuthenticated || topicSearch.length < 3) return;
+    const timer = setTimeout(() => {
+      fetch(`${BASE}api/search/universal?q=${encodeURIComponent(topicSearch)}&surface=library&resultTypes=library_topics`, {
+        credentials: "include",
+      }).catch(() => { /* non-fatal — never block or surface errors from signal capture */ });
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [topicSearch, isAuthenticated]);
+
   const toggleFollow = async (topicId: string) => {
     if (!isAuthenticated) { toast({ title: "Sign in to follow topics" }); return; }
     const topic = topics.find(t => t.id === topicId);
