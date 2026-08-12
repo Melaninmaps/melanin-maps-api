@@ -103,6 +103,7 @@ import circlesRouter from "./circles";
 import communityRequestsRouter from "./community-requests";
 import userAchievementsRouter from "./user-achievements";
 import communitySaysRouter from "./community-says";
+import communityFeedbackRouter from "./community-feedback";
 import communityChallengesNewRouter from "./community-challenges-new";
 import followsRouter from "./follows";
 import pinnedRouter from "./pinned";
@@ -185,6 +186,7 @@ router.use(crashReportsRouter);   // anonymous crash reports from app clients
 router.use(monitorBuild97Router); // internal health monitoring endpoint
 router.use(feedbackRouter);       // in-app feedback (submitted before session check)
 router.use(impactRouter);         // public platform stats (homepage "Growing Every Day" section)
+router.use(communityFeedbackRouter); // GET public (counts); PUT self-authenticates (returns 401 if no session)
 
 // ── Public KinfolkAI health probe — must be before the member wall ────────────
 // /api/kinfolk/health is polled by uptime monitors (UptimeRobot, Railway health

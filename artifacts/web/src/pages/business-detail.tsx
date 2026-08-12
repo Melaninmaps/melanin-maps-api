@@ -133,12 +133,13 @@ export default function BusinessDetail() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
-  const [myVibes, setMyVibes] = useState<string[]>([]);
   const [vibeLoading, setVibeLoading] = useState<string | null>(null);
-  const [vibeToasts, setVibeToasts] = useState<Record<string, number>>({});
-  const [endorsementTags, setEndorsementTags] = useState<{ tagKey: string; label: string; count: number }[]>([]);
-  const [myEndorsedTags, setMyEndorsedTags] = useState<string[]>([]);
-  const [endorseLoading, setEndorseLoading] = useState<string | null>(null);
+  // ── Community Feedback — real member-backed vibes + captions ─────────────
+  const [vibeCounts, setVibeCounts] = useState<Record<string, number>>({});
+  const [captionCounts, setCaptionCounts] = useState<Record<string, number>>({});
+  const [viewerVibeSelections, setViewerVibeSelections] = useState<Set<string>>(new Set());
+  const [viewerCaptionSelections, setViewerCaptionSelections] = useState<Set<string>>(new Set());
+  const [captionLoading, setCaptionLoading] = useState<string | null>(null);
 
   // ── Community photo upload state ─────────────────────────────────────────────
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -256,6 +257,16 @@ export default function BusinessDetail() {
     finally { setContribSubmitting(false); }
   }
 
+  // Canonical Community Says caption chips — backed by business_member_feedback (kind='caption')
+  const COMMUNITY_CAPTIONS = [
+    { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+    { key: "cooks_like_home",     label: "Cooks Like Home" },
+    { key: "worth_the_drive",     label: "Worth the Drive" },
+    { key: "portions_with_love",  label: "Portions With Love" },
+    { key: "grandma_approved",    label: "Grandma Approved" },
+    { key: "seasoned_right",      label: "Seasoned Right" },
+  ] as const;
+
   // Categories that use THE REAL (professional trust tags) instead of Community Vibes.
   // Per the Master Directory and Three-Layer Architecture spec.
   const NO_VIBE_CATEGORIES = new Set([
@@ -291,79 +302,128 @@ export default function BusinessDetail() {
     });
   };
 
-  useEffect(() => {
-    if (!auth?.user || !id) return;
-    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/vibes/businesses/${id}`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (Array.isArray(d?.myTags)) setMyVibes(d.myTags); })
-      .catch(() => {});
-  }, [auth?.user, id]);
-
+  // Load community feedback: counts + viewer selections from business_member_feedback
   useEffect(() => {
     if (!id) return;
     const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
-    fetch(`${apiBase}/api/vibes/endorsements/${id}`, { credentials: "include" })
+    fetch(`${apiBase}/api/businesses/${id}/community-feedback`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
-        if (Array.isArray(d?.tags)) setEndorsementTags(d.tags);
-        if (Array.isArray(d?.userTags)) setMyEndorsedTags(d.userTags);
+        if (!d) return;
+        setVibeCounts(d.vibeCounts ?? {});
+        setCaptionCounts(d.captionCounts ?? {});
+        if (Array.isArray(d.viewerFeedbackSelections)) {
+          const vibeKeys = new Set<string>();
+          const captionKeys = new Set<string>();
+          for (const s of d.viewerFeedbackSelections as { kind: string; key: string }[]) {
+            if (s.kind === "vibe") vibeKeys.add(s.key);
+            else if (s.kind === "caption") captionKeys.add(s.key);
+          }
+          setViewerVibeSelections(vibeKeys);
+          setViewerCaptionSelections(captionKeys);
+        }
       })
       .catch(() => {});
-  }, [id]);
+  }, [auth?.user, id]);
 
-  async function handleVibe(vibe: string) {
+  async function handleCommunityFeedback(kind: "vibe" | "caption", key: string) {
     if (!auth?.user) {
-      toast({ title: "Sign in to add a vibe", description: "Create a free account to interact with businesses." });
+      toast({
+        title: "Sign in to interact",
+        description: "Create a free account to share your community experience.",
+      });
       return;
     }
-    if (vibeLoading) return;
-    const isActive = myVibes.includes(vibe);
-    setVibeLoading(vibe);
-    const apiBase = BASE_URL.replace(/\/$/, "");
+    const isVibe = kind === "vibe";
+    const isSelected = isVibe ? viewerVibeSelections.has(key) : viewerCaptionSelections.has(key);
+    const newSelected = !isSelected;
+
+    // Optimistic update — toggle the chip immediately
+    if (isVibe) {
+      if (vibeLoading) return;
+      setVibeLoading(key);
+      setViewerVibeSelections((prev) => {
+        const n = new Set(prev);
+        newSelected ? n.add(key) : n.delete(key);
+        return n;
+      });
+      setVibeCounts((prev) => ({
+        ...prev,
+        [key]: Math.max(0, (prev[key] ?? 0) + (newSelected ? 1 : -1)),
+      }));
+    } else {
+      if (captionLoading) return;
+      setCaptionLoading(key);
+      setViewerCaptionSelections((prev) => {
+        const n = new Set(prev);
+        newSelected ? n.add(key) : n.delete(key);
+        return n;
+      });
+      setCaptionCounts((prev) => ({
+        ...prev,
+        [key]: Math.max(0, (prev[key] ?? 0) + (newSelected ? 1 : -1)),
+      }));
+    }
+
+    const apiBase = (import.meta.env.BASE_URL as string).replace(/\/$/, "");
     try {
-      const res = await fetch(`${apiBase}/api/vibes/tag`, {
-        method: isActive ? "DELETE" : "POST",
+      const res = await fetch(`${apiBase}/api/businesses/${id}/community-feedback`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ businessId: id, vibe }),
+        body: JSON.stringify({ kind, key, selected: newSelected }),
       });
       if (res.ok) {
-        setMyVibes((prev) => isActive ? prev.filter((v) => v !== vibe) : [...prev, vibe]);
-        if (!isActive) {
-          setVibeToasts((prev) => ({ ...prev, [vibe]: (prev[vibe] ?? 0) + 1 }));
+        const data = await res.json() as {
+          memberSelection: { kind: string; key: string; selected: boolean };
+          aggregates: { vibeCounts: Record<string, number>; captionCounts: Record<string, number> };
+        };
+        // Reconcile counts from server (authoritative)
+        setVibeCounts(data.aggregates?.vibeCounts ?? {});
+        setCaptionCounts(data.aggregates?.captionCounts ?? {});
+        // Reconcile the toggled key's selection state
+        const serverSelected = data.memberSelection?.selected;
+        if (isVibe) {
+          setViewerVibeSelections((prev) => {
+            const n = new Set(prev);
+            serverSelected ? n.add(key) : n.delete(key);
+            return n;
+          });
+        } else {
+          setViewerCaptionSelections((prev) => {
+            const n = new Set(prev);
+            serverSelected ? n.add(key) : n.delete(key);
+            return n;
+          });
         }
+      } else {
+        // Rollback optimistic update
+        if (isVibe) {
+          setViewerVibeSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
+          setVibeCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
+        } else {
+          setViewerCaptionSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
+          setCaptionCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
+        }
+        toast({ title: "Something went wrong", description: "Your selection could not be saved." });
       }
-    } catch { /**/ }
-    finally { setVibeLoading(null); }
-  }
-
-  async function handleHiddenGem() { return handleVibe("hidden_gem"); }
-
-  async function handleEndorseTag(tagKey: string) {
-    if (!auth?.user) {
-      toast({ title: "Sign in to endorse", description: "Create a free account to tag what you love about this business." });
-      return;
+    } catch {
+      // Rollback on network error
+      if (isVibe) {
+        setViewerVibeSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
+        setVibeCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
+      } else {
+        setViewerCaptionSelections((prev) => { const n = new Set(prev); isSelected ? n.add(key) : n.delete(key); return n; });
+        setCaptionCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] ?? 0) + (isSelected ? 1 : -1)) }));
+      }
+      toast({ title: "Connection error", description: "Check your connection and try again." });
+    } finally {
+      if (isVibe) setVibeLoading(null);
+      else setCaptionLoading(null);
     }
-    if (endorseLoading) return;
-    const isActive = myEndorsedTags.includes(tagKey);
-    setEndorseLoading(tagKey);
-    try {
-      const res = await fetch(`${BASE_URL}/api/vibes/endorse`, {
-        method: isActive ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ businessId: id, tagKey }),
-      });
-      if (res.ok) {
-        setMyEndorsedTags((prev) => isActive ? prev.filter((t) => t !== tagKey) : [...prev, tagKey]);
-        setEndorsementTags((prev) => prev.map((t) =>
-          t.tagKey === tagKey ? { ...t, count: Math.max(0, t.count + (isActive ? -1 : 1)) } : t
-        ));
-      }
-    } catch { /**/ }
-    finally { setEndorseLoading(null); }
   }
+
+  async function handleHiddenGem() { return handleCommunityFeedback("vibe", "hidden_gem"); }
 
   const [claimOpen, setClaimOpen] = useState(false);
   const [claimName, setClaimName] = useState("");
@@ -1066,12 +1126,15 @@ export default function BusinessDetail() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {vibesForCategory.map((v) => {
-                          const active = myVibes.includes(v.id);
+                          const active = viewerVibeSelections.has(v.id);
                           const loading = vibeLoading === v.id;
+                          const count = vibeCounts[v.id];
                           return (
                             <button
                               key={v.id}
-                              onClick={() => handleVibe(v.id)}
+                              data-testid={`business-vibe-${v.id.replace(/_/g, "-")}`}
+                              aria-pressed={active}
+                              onClick={() => handleCommunityFeedback("vibe", v.id)}
                               disabled={loading}
                               title={v.helperText}
                               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
@@ -1081,9 +1144,9 @@ export default function BusinessDetail() {
                               } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
                               {v.label}
-                              {vibeToasts[v.id] ? (
+                              {count && count > 0 ? (
                                 <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
-                                  +{vibeToasts[v.id]}
+                                  {count}
                                 </span>
                               ) : null}
                             </button>
@@ -1094,7 +1157,7 @@ export default function BusinessDetail() {
                   );
                 })()}
 
-                {/* Community Says — Endorsement Tags (THE REAL / tappable) */}
+                {/* Community Says — 6 cultural caption chips backed by business_member_feedback */}
                 <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
@@ -1102,36 +1165,42 @@ export default function BusinessDetail() {
                       <h3 className="font-serif font-bold text-xl text-[#3A1F0E]">Community Says</h3>
                     </div>
                     <span className="text-xs text-[#3A1F0E]/40 font-medium">
-                      {auth?.user ? "Tap to endorse" : "Sign in to endorse"}
+                      {auth?.user ? "Tap to add your voice" : "Sign in to add your voice"}
                     </span>
                   </div>
                   <p className="text-xs text-[#3A1F0E]/40 mb-4">Real words from people who've been here</p>
-                  {endorsementTags.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {endorsementTags.map((tag) => {
-                        const tapped = myEndorsedTags.includes(tag.tagKey);
-                        const loading = endorseLoading === tag.tagKey;
-                        return (
-                          <button
-                            key={tag.tagKey}
-                            onClick={() => handleEndorseTag(tag.tagKey)}
-                            disabled={loading}
-                            title={tapped ? `You endorsed "${tag.label}" — tap to remove` : `Tap to endorse "${tag.label}"`}
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
-                              tapped
-                                ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
-                                : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/80 hover:border-[#CA922B] hover:text-[#CA922B]"
-                            } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          >
-                            <span className={`font-bold text-xs ${tapped ? "text-white/80" : "text-[#CA922B]"}`}>{tag.count}</span>
-                            <span>said "{tag.label}"</span>
-                            {tapped && <CheckCircle2 className="w-3.5 h-3.5 text-white/80" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#3A1F0E]/40 italic">Be the first to add a community caption for this business.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMUNITY_CAPTIONS.map((caption) => {
+                      const active = viewerCaptionSelections.has(caption.key);
+                      const loading = captionLoading === caption.key;
+                      const count = captionCounts[caption.key];
+                      return (
+                        <button
+                          key={caption.key}
+                          data-testid={`business-caption-${caption.key.replace(/_/g, "-")}`}
+                          aria-pressed={active}
+                          onClick={() => handleCommunityFeedback("caption", caption.key)}
+                          disabled={loading}
+                          title={active ? `You said "${caption.label}" — tap to remove` : `Tap to say "${caption.label}"`}
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
+                            active
+                              ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
+                              : "bg-[#FAF6EF] border-[#2B1507]/10 text-[#3A1F0E]/80 hover:border-[#CA922B] hover:text-[#CA922B]"
+                          } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          {count && count > 0 ? (
+                            <span className={`font-bold text-xs ${active ? "text-white/80" : "text-[#CA922B]"}`}>{count}</span>
+                          ) : null}
+                          <span>{count && count > 0 ? `said "${caption.label}"` : caption.label}</span>
+                          {active && <CheckCircle2 className="w-3.5 h-3.5 text-white/80" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {Object.values(captionCounts).every((c) => !c || c === 0) && (
+                    <p className="text-sm text-[#3A1F0E]/40 italic mt-3">
+                      Be the first to add a community caption for this business.
+                    </p>
                   )}
                 </div>
 

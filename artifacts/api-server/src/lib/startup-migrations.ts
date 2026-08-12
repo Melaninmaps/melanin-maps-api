@@ -2405,6 +2405,29 @@ ON CONFLICT (city_slug) DO UPDATE SET
               ownership_designations='["black-owned"]'::jsonb
           WHERE LOWER(name)='duke''s cafe' AND city='Willow Grove'`,
   },
+  // ── Community feedback — real member-backed vibes + captions ───────────────
+  {
+    name: "business_member_feedback_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_member_feedback (
+      id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      business_id TEXT        NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      member_id   TEXT        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      kind        TEXT        NOT NULL CHECK (kind IN ('vibe', 'caption')),
+      key         TEXT        NOT NULL,
+      status      TEXT        NOT NULL DEFAULT 'active'
+                              CHECK (status IN ('active', 'pending_review', 'removed')),
+      is_load_test BOOLEAN    NOT NULL DEFAULT FALSE,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (business_id, member_id, kind, key)
+    )`,
+  },
+  {
+    name: "business_member_feedback_index_v1",
+    sql: `CREATE INDEX IF NOT EXISTS idx_bmf_aggregate
+      ON business_member_feedback (business_id, kind, key, status)
+      WHERE status = 'active' AND is_load_test = FALSE`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
