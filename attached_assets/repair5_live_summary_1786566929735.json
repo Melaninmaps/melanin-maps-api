@@ -1,0 +1,84 @@
+{
+  "deployment": {
+    "railway_sha": "4c6380e3f6c68cc68dee04a5126f03e53834783f",
+    "deploymentId": "86092519-9451-45e8-b81f-e83574a0eab9",
+    "release": "Build-98.2",
+    "env": "production",
+    "built_from_sha": "1687ba1b2b701058d8207c9154605d885679fcf8",
+    "built_at": "2026-08-12T20:15:01.977Z",
+    "bundle_sha256_self": "7072410703ceae6db446e0220565084a63aa08dd6921dc3789dc366bb641db4c",
+    "bundle_sha256": "7072410703ceae6db446e0220565084a63aa08dd6921dc3789dc366bb641db4c",
+    "stale_bundle": false
+  },
+  "readyz": {
+    "status": "ok",
+    "db": "ok",
+    "pool": {
+      "total": 1,
+      "idle": 1,
+      "waiting": 0,
+      "max": 50
+    }
+  },
+  "coordinate_state": {
+    "tour": {
+      "total": 599,
+      "coordinate_fields_present": 599,
+      "valid_coordinates": 95,
+      "missing_or_invalid_coordinates": 504
+    },
+    "recurring_events": {
+      "total": 85,
+      "coordinate_fields_present": 85,
+      "valid_coordinates": 8,
+      "missing_or_invalid_coordinates": 77
+    },
+    "community_organizations": {
+      "total": 61,
+      "coordinate_fields_present": 61,
+      "valid_coordinates": 0,
+      "missing_or_invalid_coordinates": 61
+    }
+  },
+  "map_pins": {
+    "total": 103,
+    "all_valid": true,
+    "by_source_type": {
+      "recurring_event": {
+        "total": 8,
+        "coordinate_fields_present": 8,
+        "valid_coordinates": 8,
+        "missing_or_invalid_coordinates": 0
+      },
+      "tour_cultural_site": {
+        "total": 95,
+        "coordinate_fields_present": 95,
+        "valid_coordinates": 95,
+        "missing_or_invalid_coordinates": 0
+      }
+    }
+  },
+  "city_filters": {
+    "philadelphia": {
+      "total": 0,
+      "returned": 0,
+      "cities": []
+    },
+    "houston": {
+      "total": 1,
+      "returned": 1,
+      "cities": [
+        "Houston"
+      ]
+    },
+    "phuket": {
+      "total": 0,
+      "returned": 0,
+      "cities": []
+    }
+  },
+  "phuket_hair": {
+    "total": 0,
+    "returned": []
+  }
+}
