@@ -253,6 +253,12 @@ export default function MapPage() {
   const infoWindowRef = useRef<GInfoWindow>(null);
   const directionsRendererRef = useRef<any>(null);
 
+  // Two-phase map readiness:
+  //   gmLoaded = Google Maps JS API is available in window.google.maps
+  //   ready    = map *object* is created and stored in mapRef.current
+  // Effects that need mapRef.current (handoff, discoverability pins, etc.)
+  // must guard on `ready`, not `gmLoaded`, so they never race against a null ref.
+  const [gmLoaded, setGmLoaded] = useState(false);
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -806,14 +812,14 @@ export default function MapPage() {
 
   // Load Google Maps JS
   useEffect(() => {
-    if (ready) return;
+    if (gmLoaded) return;
     const base = BASE.replace(/\/$/, "");
     fetch(`${base}/api/maps/js-key`)
       .then((r) => r.json())
       .then(({ key }: { key?: string }) => {
         if (!key) { setApiKeyError(true); return; }
-        if (document.getElementById("gmaps-script")) { setReady(true); return; }
-        (window as any).__mwmMapInit = () => setReady(true);
+        if (document.getElementById("gmaps-script")) { setGmLoaded(true); return; }
+        (window as any).__mwmMapInit = () => setGmLoaded(true);
         (window as any).gm_authFailure = () => setApiKeyError(true);
         const script = document.createElement("script");
         script.id = "gmaps-script";
@@ -827,7 +833,7 @@ export default function MapPage() {
 
   // Initialize map
   useEffect(() => {
-    if (!ready || !mapDivRef.current || isLoading) return;
+    if (!gmLoaded || !mapDivRef.current || isLoading) return;
     if (mapRef.current) return;
 
     const onGmError = (e: ErrorEvent) => {
@@ -854,6 +860,9 @@ export default function MapPage() {
         zoomControlOptions: { position: g.ControlPosition.RIGHT_CENTER },
       });
       mapRef.current = map;
+      // `ready` now means the map *object* exists — set it here, not in __mwmMapInit,
+      // so every effect that guards on `ready` is guaranteed mapRef.current !== null.
+      setReady(true);
       infoWindowRef.current = new g.InfoWindow();
 
       // ── Location priority: (1) profile homeCity, then (2) GPS override ─────
