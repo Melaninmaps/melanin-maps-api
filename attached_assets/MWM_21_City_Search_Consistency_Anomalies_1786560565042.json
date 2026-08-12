@@ -1,0 +1,109 @@
+[
+  {
+    "city": "Philadelphia, PA",
+    "field": "vague_restaurant",
+    "reported_total": 30,
+    "returned": 20,
+    "sample_mismatches": []
+  },
+  {
+    "city": "Houston, TX",
+    "field": "vague_restaurant",
+    "reported_total": 22,
+    "returned": 20,
+    "sample_mismatches": []
+  },
+  {
+    "city": "Washington, DC",
+    "field": "vague_restaurant",
+    "reported_total": 28,
+    "returned": 20,
+    "sample_mismatches": []
+  },
+  {
+    "city": "Los Angeles, CA",
+    "field": "vague_restaurant",
+    "reported_total": 37,
+    "returned": 20,
+    "sample_mismatches": []
+  },
+  {
+    "city": "Chicago, IL",
+    "field": "vague_restaurant",
+    "reported_total": 27,
+    "returned": 20,
+    "sample_mismatches": []
+  },
+  {
+    "city": "Memphis, TN",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Dallas, TX",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Miami, FL",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Charlotte, NC",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Oakland, CA",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Richmond, VA",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Nashville, TN",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  },
+  {
+    "city": "Phuket, Thailand",
+    "field": "vague_hair",
+    "reported_total": 0,
+    "returned": 1,
+    "sample_mismatches": [
+      "Hair by Kamaria (Washington)"
+    ]
+  }
+]
