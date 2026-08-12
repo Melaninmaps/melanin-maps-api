@@ -1,0 +1,3433 @@
+{
+  "base_url": "https://www.mappingwithmelanin.com",
+  "started_at": "2026-08-12T14:24:24.660Z",
+  "audit": "final_30_member_kinfolk_library_handoff",
+  "phases": [
+    {
+      "name": "baseline_1",
+      "planned_users": 1,
+      "started_at": "2026-08-12T14:24:24.660Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T14:24:29.962Z",
+          "status": 200,
+          "latency_ms": 5299,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 2,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:32.050Z",
+          "status": 200,
+          "latency_ms": 87,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 2,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:34.051Z",
+          "status": 200,
+          "latency_ms": 87,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 2,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:36.047Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:38.050Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:40.050Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:42.051Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:44.052Z",
+          "status": 200,
+          "latency_ms": 87,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:46.049Z",
+          "status": 200,
+          "latency_ms": 83,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:48.049Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:24:50.052Z",
+          "status": 200,
+          "latency_ms": 87,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:12.969Z",
+          "error": "Error: network_request_failed:/api/readyz:TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T14:25:13.285Z",
+          "status": 200,
+          "latency_ms": 19143,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:14.564Z",
+          "status": 200,
+          "latency_ms": 20598,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T14:24:29.962Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5483,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 109
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 12513
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 13131,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 15804
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2887,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:24:54.142Z"
+        }
+      ],
+      "result": "pass",
+      "failure_count": 0,
+      "library_action_checks": 1,
+      "finished_at": "2026-08-12T14:25:13.285Z"
+    },
+    {
+      "name": "warm_5",
+      "planned_users": 5,
+      "started_at": "2026-08-12T14:25:13.285Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T14:25:26.882Z",
+          "status": 200,
+          "latency_ms": 13597,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:31.746Z",
+          "status": 200,
+          "latency_ms": 2863,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:34.266Z",
+          "status": 200,
+          "latency_ms": 3384,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:35.497Z",
+          "status": 200,
+          "latency_ms": 2614,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 2,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:37.773Z",
+          "status": 200,
+          "latency_ms": 2889,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 7,
+              "idle": 2,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:39.603Z",
+          "status": 200,
+          "latency_ms": 2719,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 9,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:43.285Z",
+          "status": 200,
+          "latency_ms": 4400,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 9,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:52.071Z",
+          "status": 200,
+          "latency_ms": 5186,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:52.972Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 5,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:53.974Z",
+          "status": 200,
+          "latency_ms": 11089,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:54.058Z",
+          "status": 200,
+          "latency_ms": 5172,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:54.973Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:55.969Z",
+          "status": 200,
+          "latency_ms": 11083,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:56.066Z",
+          "status": 200,
+          "latency_ms": 5178,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:56.975Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:57.068Z",
+          "status": 200,
+          "latency_ms": 16183,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:25:58.973Z",
+          "status": 200,
+          "latency_ms": 83,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:00.973Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:02.975Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:04.973Z",
+          "status": 200,
+          "latency_ms": 83,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T14:26:05.902Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T14:25:26.882Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7730,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3228
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 21096
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 21097,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 21083
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2910,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:25:58.622Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T14:25:26.883Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9448,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3280
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 16572
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 21099,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 16568
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4858,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:02.289Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T14:25:26.883Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9964,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2832
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 16547
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 16575,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 16544
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 12394,
+              "intent_class": "safety_emergency",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:05.818Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T14:25:26.883Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10977,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2737
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5366
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5196,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5192
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 20377,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:03.604Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T14:25:26.884Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9439,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3290
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 16577
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 16603,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 16515
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 10177,
+              "intent_class": "current_information",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:03.104Z"
+        }
+      ],
+      "result": "pass",
+      "failure_count": 0,
+      "library_action_checks": 2,
+      "finished_at": "2026-08-12T14:26:05.902Z"
+    },
+    {
+      "name": "mid_15",
+      "planned_users": 15,
+      "started_at": "2026-08-12T14:26:05.902Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T14:26:11.087Z",
+          "status": 200,
+          "latency_ms": 5185,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:13.171Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:15.171Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 6,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:19.633Z",
+          "status": 200,
+          "latency_ms": 2545,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 19,
+              "idle": 2,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:21.174Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 26,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:23.175Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 25,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:24.280Z",
+          "status": 200,
+          "latency_ms": 5191,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 25,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:27.175Z",
+          "status": 200,
+          "latency_ms": 87,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 25,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:29.174Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 25,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:30.275Z",
+          "status": 200,
+          "latency_ms": 5186,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 19,
+              "idle": 12,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:31.174Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 19,
+              "idle": 14,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:33.175Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 19,
+              "idle": 14,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:35.177Z",
+          "status": 200,
+          "latency_ms": 88,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 18,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T14:26:37.041Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 18,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T14:26:11.087Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8613,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 98
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5217
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5236,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5215
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7839,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.776Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T14:26:11.087Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8628,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 89
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5258
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5269,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5245
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7739,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.726Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T14:26:11.088Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8606,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 102
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5136
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5234,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5120
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4937,
+              "intent_class": "safety_emergency",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:29.867Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T14:26:11.088Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8670,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 96
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5274
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5279,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5251
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7702,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.740Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T14:26:11.088Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8667,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 92
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 88
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 89,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 84
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 10960,
+              "intent_class": "current_information",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:30.808Z"
+        },
+        {
+          "account": "06",
+          "city": "New York",
+          "started_at": "2026-08-12T14:26:11.088Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8653,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5270
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5240
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5232,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5211
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2235,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:27.247Z"
+        },
+        {
+          "account": "07",
+          "city": "Chicago",
+          "started_at": "2026-08-12T14:26:11.089Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8642,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5277
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5217
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5237,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5237
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7649,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.657Z"
+        },
+        {
+          "account": "08",
+          "city": "New Orleans",
+          "started_at": "2026-08-12T14:26:11.089Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8674,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5280
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5189
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5185,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5260
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7638,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.681Z"
+        },
+        {
+          "account": "09",
+          "city": "Detroit",
+          "started_at": "2026-08-12T14:26:11.089Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8659,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5288
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5240
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5242,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5246
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3526,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:28.562Z"
+        },
+        {
+          "account": "10",
+          "city": "Baltimore",
+          "started_at": "2026-08-12T14:26:11.090Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8633,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 96
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5242
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5251,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5265
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7437,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.430Z"
+        },
+        {
+          "account": "11",
+          "city": "Memphis",
+          "started_at": "2026-08-12T14:26:11.091Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8614,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 93
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5262
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5278,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5276
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4102,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:29.086Z"
+        },
+        {
+          "account": "12",
+          "city": "Dallas",
+          "started_at": "2026-08-12T14:26:11.091Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8694,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5230
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5260
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5163,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5229
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7429,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:32.476Z"
+        },
+        {
+          "account": "13",
+          "city": "Miami",
+          "started_at": "2026-08-12T14:26:11.091Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8679,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5180
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5180
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5180,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5256
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3120,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:28.150Z"
+        },
+        {
+          "account": "14",
+          "city": "Charlotte",
+          "started_at": "2026-08-12T14:26:11.091Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8685,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5174
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5273
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5265,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5242
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4303,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:29.355Z"
+        },
+        {
+          "account": "15",
+          "city": "Columbia SC",
+          "started_at": "2026-08-12T14:26:11.091Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8645,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5260
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5276
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5256,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5256
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 11943,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "coll_culture",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:36.956Z"
+        }
+      ],
+      "result": "pass",
+      "failure_count": 0,
+      "library_action_checks": 6,
+      "finished_at": "2026-08-12T14:26:37.041Z"
+    },
+    {
+      "name": "full_30",
+      "planned_users": 30,
+      "started_at": "2026-08-12T14:26:37.041Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T14:26:42.165Z",
+          "status": 200,
+          "latency_ms": 5124,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 18,
+              "idle": 2,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:44.250Z",
+          "status": 200,
+          "latency_ms": 84,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 18,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:46.254Z",
+          "status": 200,
+          "latency_ms": 89,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 18,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:54.120Z",
+          "status": 200,
+          "latency_ms": 5954,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 13,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:54.169Z",
+          "status": 200,
+          "latency_ms": 2001,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:54.258Z",
+          "status": 200,
+          "latency_ms": 82,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:55.361Z",
+          "status": 200,
+          "latency_ms": 5194,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:56.259Z",
+          "status": 200,
+          "latency_ms": 82,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:26:58.263Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:00.279Z",
+          "status": 200,
+          "latency_ms": 101,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:02.264Z",
+          "status": 200,
+          "latency_ms": 86,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 30,
+              "idle": 17,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:04.268Z",
+          "status": 200,
+          "latency_ms": 89,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 9,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:06.263Z",
+          "status": 200,
+          "latency_ms": 83,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 9,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:08.268Z",
+          "status": 200,
+          "latency_ms": 89,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 9,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:10.265Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T14:27:12.269Z",
+          "status": 200,
+          "latency_ms": 89,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T14:27:13.431Z",
+          "status": 200,
+          "latency_ms": 85,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 28,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T14:26:42.165Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11714,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 310
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5239
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5235,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5187
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 8021,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:07.140Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T14:26:42.165Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11726,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5179
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5231
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5231,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5180
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7310,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:06.435Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T14:26:42.167Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11586,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 434
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5179
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5186,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5174
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7231,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:06.171Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T14:26:42.167Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11718,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 303
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5230
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5240,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5192
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7469,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:06.596Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T14:26:42.167Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9412,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2600
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5188
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5191,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5114
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 14663,
+              "intent_class": "current_information",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:11.434Z"
+        },
+        {
+          "account": "06",
+          "city": "New York",
+          "started_at": "2026-08-12T14:26:42.167Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8826,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5187
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5213
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5191,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5173
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2183,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:58.391Z"
+        },
+        {
+          "account": "07",
+          "city": "Chicago",
+          "started_at": "2026-08-12T14:26:42.167Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9859,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2153
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5191
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5193,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5182
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3283,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:00.504Z"
+        },
+        {
+          "account": "08",
+          "city": "New Orleans",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10082,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5179
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5115
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5185,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5175
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2251,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:59.689Z"
+        },
+        {
+          "account": "09",
+          "city": "Detroit",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11988,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 86
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5137
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5196,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5194
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 9209,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:08.563Z"
+        },
+        {
+          "account": "10",
+          "city": "Baltimore",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8953,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3050
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5116
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5200,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5174
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3496,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:59.819Z"
+        },
+        {
+          "account": "11",
+          "city": "Memphis",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9415,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2588
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5180
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5183,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5187
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 11342,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:08.115Z"
+        },
+        {
+          "account": "12",
+          "city": "Dallas",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9642,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2369
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5117
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5123,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5113
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 1899,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:58.835Z"
+        },
+        {
+          "account": "13",
+          "city": "Miami",
+          "started_at": "2026-08-12T14:26:42.168Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11816,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 204
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 207
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5177,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5108
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7107,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:06.269Z"
+        },
+        {
+          "account": "14",
+          "city": "Charlotte",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10308,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1703
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5115
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5170,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5174
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 1807,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:59.461Z"
+        },
+        {
+          "account": "15",
+          "city": "Columbia SC",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10532,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1480
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5116
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5190,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5314
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3285,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "coll_culture",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:01.303Z"
+        },
+        {
+          "account": "16",
+          "city": "Birmingham",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 9862,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2149
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5122
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5195,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5188
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3994,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:01.222Z"
+        },
+        {
+          "account": "17",
+          "city": "Oakland",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11946,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 106
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5116
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5116,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5176
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7637,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:06.932Z"
+        },
+        {
+          "account": "18",
+          "city": "Newark",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11001,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1015
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5183
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5339,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5174
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3916,
+              "intent_class": "general_knowledge",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "coll_education",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:02.428Z"
+        },
+        {
+          "account": "19",
+          "city": "Richmond",
+          "started_at": "2026-08-12T14:26:42.169Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10763,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1249
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5187
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5192,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5183
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4716,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:02.843Z"
+        },
+        {
+          "account": "20",
+          "city": "Nashville",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10182,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1827
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5124
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5197,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5172
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2420,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:26:59.971Z"
+        },
+        {
+          "account": "21",
+          "city": "Phuket",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10633,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1378
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5210
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5225,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5168
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3989,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:02.019Z"
+        },
+        {
+          "account": "22",
+          "city": "Phuket",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11982,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 87
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 87
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5144,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5190
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 7755,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:07.099Z"
+        },
+        {
+          "account": "23",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11995,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 86
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 87
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5136,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5190
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 9428,
+              "intent_class": "business_discovery",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:08.785Z"
+        },
+        {
+          "account": "24",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11240,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 776
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5180
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5176,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5175
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7957,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:06.547Z"
+        },
+        {
+          "account": "25",
+          "city": "Houston",
+          "started_at": "2026-08-12T14:26:42.170Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 12002,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5192
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5188
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5193,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5184
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 13979,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "coll_community",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:13.346Z"
+        },
+        {
+          "account": "26",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T14:26:42.171Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11990,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5139
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5194
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5193,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5126
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 500,
+              "latency_ms": 9071,
+              "intent_class": null,
+              "has_reply": false,
+              "library_action": null
+            }
+          ],
+          "result": "fail",
+          "error": "Error: kinfolk_failure_500",
+          "finished_at": "2026-08-12T14:27:08.427Z"
+        },
+        {
+          "account": "27",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T14:26:42.171Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10409,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1602
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5191
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5196,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5175
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3444,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:01.221Z"
+        },
+        {
+          "account": "28",
+          "city": "New York",
+          "started_at": "2026-08-12T14:26:42.172Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 10864,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1148
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5198
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5196,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5189
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 6705,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": null
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:04.940Z"
+        },
+        {
+          "account": "29",
+          "city": "Chicago",
+          "started_at": "2026-08-12T14:26:42.172Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11003,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1007
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5121
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5132,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5117
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 4206,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "fbfbc161-5121-4eca-a0a4-c35731b010f6",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:02.515Z"
+        },
+        {
+          "account": "30",
+          "city": "Miami",
+          "started_at": "2026-08-12T14:26:42.172Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 11585,
+              "must_change_password": false
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 430
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5182
+            },
+            {
+              "step": "library_evidence_graph",
+              "status": 200,
+              "latency_ms": 5180,
+              "source_count": 3,
+              "topic_name": "African Diaspora History"
+            },
+            {
+              "step": "library_deeplink_route",
+              "status": 200,
+              "latency_ms": 5171
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3637,
+              "intent_class": "culture_entertainment",
+              "has_reply": true,
+              "library_action": {
+                "type": "open_library_node",
+                "topic_id": "coll_community",
+                "focus": "evidence"
+              }
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T14:27:02.576Z"
+        }
+      ],
+      "result": "abort",
+      "failure_count": 8,
+      "library_action_checks": 13,
+      "abort_reason": "pool_total_at_or_above_28",
+      "finished_at": "2026-08-12T14:27:13.431Z"
+    }
+  ],
+  "overall_result": "abort",
+  "finished_at": "2026-08-12T14:27:13.431Z"
+}
