@@ -1,0 +1,2524 @@
+{
+  "base_url": "https://www.mappingwithmelanin.com",
+  "started_at": "2026-08-12T05:13:18.710Z",
+  "phases": [
+    {
+      "name": "baseline_1",
+      "planned_users": 1,
+      "started_at": "2026-08-12T05:13:18.720Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T05:13:20.446Z",
+          "status": 200,
+          "latency_ms": 1722,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 2,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:22.999Z",
+          "status": 200,
+          "latency_ms": 552,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:25.023Z",
+          "status": 200,
+          "latency_ms": 577,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:26.996Z",
+          "status": 200,
+          "latency_ms": 550,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T05:13:27.003Z",
+          "status": 200,
+          "latency_ms": 420,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T05:13:20.447Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1900,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 508,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1038,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1587,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2644,
+              "body_bytes": 722,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:26.582Z"
+        }
+      ],
+      "result": "pass",
+      "finished_at": "2026-08-12T05:13:27.003Z"
+    },
+    {
+      "name": "warm_5",
+      "planned_users": 5,
+      "started_at": "2026-08-12T05:13:27.003Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T05:13:27.573Z",
+          "status": 200,
+          "latency_ms": 570,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:30.132Z",
+          "status": 200,
+          "latency_ms": 558,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:31.986Z",
+          "status": 200,
+          "latency_ms": 412,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:33.994Z",
+          "status": 200,
+          "latency_ms": 420,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:35.992Z",
+          "status": 200,
+          "latency_ms": 418,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:37.994Z",
+          "status": 200,
+          "latency_ms": 418,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T05:13:38.081Z",
+          "status": 200,
+          "latency_ms": 423,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T05:13:27.573Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1205,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 859,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1626,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1835,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2673,
+              "body_bytes": 828,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:33.287Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T05:13:27.573Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1137,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 945,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1422,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1016,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3149,
+              "body_bytes": 769,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:33.283Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T05:13:27.574Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1184,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 828,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1503,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1204,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7397,
+              "body_bytes": 3029,
+              "intent_class": "safety_emergency",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:37.658Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T05:13:27.574Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2038,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 463,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 814,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 882,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3610,
+              "body_bytes": 999,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:34.106Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T05:13:27.575Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2074,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 418,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 425,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1862,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3935,
+              "body_bytes": 803,
+              "intent_class": "current_information",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:35.447Z"
+        }
+      ],
+      "result": "pass",
+      "finished_at": "2026-08-12T05:13:38.082Z"
+    },
+    {
+      "name": "mid_15",
+      "planned_users": 15,
+      "started_at": "2026-08-12T05:13:38.082Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T05:13:38.502Z",
+          "status": 200,
+          "latency_ms": 420,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 8,
+              "idle": 7,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:42.209Z",
+          "status": 200,
+          "latency_ms": 1708,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 14,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:42.949Z",
+          "status": 200,
+          "latency_ms": 447,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 23,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:44.900Z",
+          "status": 200,
+          "latency_ms": 398,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 22,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:47.049Z",
+          "status": 200,
+          "latency_ms": 548,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 23,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:49.050Z",
+          "status": 200,
+          "latency_ms": 549,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 23,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:51.074Z",
+          "status": 200,
+          "latency_ms": 573,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 23,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:53.049Z",
+          "status": 200,
+          "latency_ms": 548,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 16,
+              "idle": 5,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:13:54.919Z",
+          "status": 200,
+          "latency_ms": 418,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 15,
+              "idle": 3,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T05:13:55.686Z",
+          "status": 200,
+          "latency_ms": 426,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 15,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T05:13:38.502Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1710,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2532,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2571,
+              "body_bytes": 404
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1606,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2500,
+              "body_bytes": 909,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.283Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T05:13:38.502Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1591,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2711,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2711,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1605,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2459,
+              "body_bytes": 750,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.264Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T05:13:38.502Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3036,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1238,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1274,
+              "body_bytes": 185
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1612,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2865,
+              "body_bytes": 1106,
+              "intent_class": "safety_emergency",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:46.016Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T05:13:38.503Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1197,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3106,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3111,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1608,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 11167,
+              "body_bytes": 4031,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:53.978Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T05:13:38.503Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3758,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 558,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1449,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 969,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 10197,
+              "body_bytes": 4703,
+              "intent_class": "current_information",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:53.908Z"
+        },
+        {
+          "account": "06",
+          "city": "New York",
+          "started_at": "2026-08-12T05:13:38.504Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3710,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 533,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 628,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 693,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3016,
+              "body_bytes": 826,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.924Z"
+        },
+        {
+          "account": "07",
+          "city": "Chicago",
+          "started_at": "2026-08-12T05:13:38.505Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1876,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2442,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2358,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1604,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3145,
+              "body_bytes": 739,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.967Z"
+        },
+        {
+          "account": "08",
+          "city": "New Orleans",
+          "started_at": "2026-08-12T05:13:38.505Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2360,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1990,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1975,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1661,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3042,
+              "body_bytes": 840,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.898Z"
+        },
+        {
+          "account": "09",
+          "city": "Detroit",
+          "started_at": "2026-08-12T05:13:38.505Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3180,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1153,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1464,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1762,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3457,
+              "body_bytes": 950,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:46.907Z"
+        },
+        {
+          "account": "10",
+          "city": "Baltimore",
+          "started_at": "2026-08-12T05:13:38.505Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4290,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 415,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 607,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 408,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3832,
+              "body_bytes": 1570,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:47.235Z"
+        },
+        {
+          "account": "11",
+          "city": "Memphis",
+          "started_at": "2026-08-12T05:13:38.506Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4180,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 613,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 665,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1776,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 10797,
+              "body_bytes": 5098,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:55.259Z"
+        },
+        {
+          "account": "12",
+          "city": "Dallas",
+          "started_at": "2026-08-12T05:13:38.506Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4291,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 601,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1751,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2818,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2393,
+              "body_bytes": 762,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:48.011Z"
+        },
+        {
+          "account": "13",
+          "city": "Miami",
+          "started_at": "2026-08-12T05:13:38.506Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3489,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 808,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 806,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 668,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2753,
+              "body_bytes": 866,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.557Z"
+        },
+        {
+          "account": "14",
+          "city": "Charlotte",
+          "started_at": "2026-08-12T05:13:38.506Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4271,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 341,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 490,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 618,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2255,
+              "body_bytes": 707,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:45.652Z"
+        },
+        {
+          "account": "15",
+          "city": "Columbia SC",
+          "started_at": "2026-08-12T05:13:38.507Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4311,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 603,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 427,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 606,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 9173,
+              "body_bytes": 3308,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:13:52.598Z"
+        }
+      ],
+      "result": "pass",
+      "finished_at": "2026-08-12T05:13:55.686Z"
+    },
+    {
+      "name": "full_30",
+      "planned_users": 30,
+      "started_at": "2026-08-12T05:13:55.686Z",
+      "monitor": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T05:13:56.256Z",
+          "status": 200,
+          "latency_ms": 570,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 15,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:04.718Z",
+          "status": 200,
+          "latency_ms": 6462,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 22,
+              "idle": 4,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:04.733Z",
+          "status": 503,
+          "latency_ms": 2477,
+          "body": {
+            "status": "degraded",
+            "db": "pool_exhausted",
+            "pool": {
+              "total": 35,
+              "idle": 0,
+              "waiting": 8
+            },
+            "detail": "Pool at capacity (total=35/35, idle=0, waiting=8); not queuing probe."
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:04.813Z",
+          "status": 503,
+          "latency_ms": 556,
+          "body": {
+            "status": "degraded",
+            "db": "pool_exhausted",
+            "pool": {
+              "total": 35,
+              "idle": 0,
+              "waiting": 23
+            },
+            "detail": "Pool at capacity (total=35/35, idle=0, waiting=23); not queuing probe."
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:04.850Z",
+          "status": 200,
+          "latency_ms": 4594,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 0,
+              "waiting": 17
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:06.549Z",
+          "status": 200,
+          "latency_ms": 292,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:08.654Z",
+          "status": 200,
+          "latency_ms": 396,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:10.822Z",
+          "status": 200,
+          "latency_ms": 564,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:12.818Z",
+          "status": 200,
+          "latency_ms": 559,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:14.810Z",
+          "status": 200,
+          "latency_ms": 552,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 35,
+              "idle": 21,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T05:14:16.830Z",
+          "status": 200,
+          "latency_ms": 573,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T05:14:18.390Z",
+          "status": 200,
+          "latency_ms": 573,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 24,
+              "idle": 1,
+              "waiting": 0
+            }
+          }
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T05:13:56.256Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3919,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 4646,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 4647,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1592,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.823Z"
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T05:13:56.256Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4719,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 3781,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3908,
+              "body_bytes": 404
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1664,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.884Z"
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "started_at": "2026-08-12T05:13:56.256Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8186,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 580,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1472,
+              "body_bytes": 380
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1553,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 10294,
+              "body_bytes": 4687,
+              "intent_class": "safety_emergency",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:16.292Z"
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T05:13:56.257Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5520,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 3066,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 3065,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 909,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.843Z"
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T05:13:56.257Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4985,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 3588,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 3593,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1458,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.836Z"
+        },
+        {
+          "account": "06",
+          "city": "New York",
+          "started_at": "2026-08-12T05:13:56.257Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5352,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 3231,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 3221,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 713,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.839Z"
+        },
+        {
+          "account": "07",
+          "city": "Chicago",
+          "started_at": "2026-08-12T05:13:56.257Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3849,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 4641,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 4722,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1448,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.828Z"
+        },
+        {
+          "account": "08",
+          "city": "New Orleans",
+          "started_at": "2026-08-12T05:13:56.258Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2589,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5944,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 5955,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1640,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.804Z"
+        },
+        {
+          "account": "09",
+          "city": "Detroit",
+          "started_at": "2026-08-12T05:13:56.259Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3669,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 4892,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 4885,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1675,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3436,
+              "body_bytes": 1106,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:08.256Z"
+        },
+        {
+          "account": "10",
+          "city": "Baltimore",
+          "started_at": "2026-08-12T05:13:56.259Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2651,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5838,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5961,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1503,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 7393,
+              "body_bytes": 2977,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:12.265Z"
+        },
+        {
+          "account": "11",
+          "city": "Memphis",
+          "started_at": "2026-08-12T05:13:56.259Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8528,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 426,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 562,
+              "body_bytes": 208
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 568,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 8337,
+              "body_bytes": 2955,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:13.693Z"
+        },
+        {
+          "account": "12",
+          "city": "Dallas",
+          "started_at": "2026-08-12T05:13:56.259Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4423,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 4078,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 4201,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1658,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.883Z"
+        },
+        {
+          "account": "13",
+          "city": "Miami",
+          "started_at": "2026-08-12T05:13:56.259Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 2043,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 6487,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 6484,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1059,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.789Z"
+        },
+        {
+          "account": "14",
+          "city": "Charlotte",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7640,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 961,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 981,
+              "body_bytes": 209
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 375,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.881Z"
+        },
+        {
+          "account": "15",
+          "city": "Columbia SC",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3297,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5259,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5334,
+              "body_bytes": 195
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1619,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2535,
+              "body_bytes": 797,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:07.425Z"
+        },
+        {
+          "account": "16",
+          "city": "Birmingham",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5885,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 2699,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 2703,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1593,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.849Z"
+        },
+        {
+          "account": "17",
+          "city": "Oakland",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8596,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 434,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 562,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 710,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 11125,
+              "body_bytes": 3394,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:16.692Z"
+        },
+        {
+          "account": "18",
+          "city": "Newark",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7471,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 1130,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 1129,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1872,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:05.604Z"
+        },
+        {
+          "account": "19",
+          "city": "Richmond",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6043,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 2483,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 2557,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1578,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.862Z"
+        },
+        {
+          "account": "20",
+          "city": "Nashville",
+          "started_at": "2026-08-12T05:13:56.260Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4221,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 4400,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 4349,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1671,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.881Z"
+        },
+        {
+          "account": "21",
+          "city": "Phuket",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6421,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 2169,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 2166,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 586,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.851Z"
+        },
+        {
+          "account": "22",
+          "city": "Phuket",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3149,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 5475,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5407,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1487,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3021,
+              "body_bytes": 1083,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:07.906Z"
+        },
+        {
+          "account": "23",
+          "city": "Philadelphia",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8017,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 543,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 605,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1660,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 2612,
+              "body_bytes": 611,
+              "intent_class": "business_discovery",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:08.551Z"
+        },
+        {
+          "account": "24",
+          "city": "Atlanta",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8524,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 461,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 445,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 385,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 11818,
+              "body_bytes": 5383,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:17.064Z"
+        },
+        {
+          "account": "25",
+          "city": "Houston",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5983,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 2605,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 2605,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1037,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.849Z"
+        },
+        {
+          "account": "26",
+          "city": "Washington DC",
+          "started_at": "2026-08-12T05:13:56.261Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8453,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 426,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 578,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1554,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 3056,
+              "body_bytes": 773,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:09.325Z"
+        },
+        {
+          "account": "27",
+          "city": "Los Angeles",
+          "started_at": "2026-08-12T05:13:56.262Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 8520,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 570,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 432,
+              "body_bytes": 15
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 401,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 200,
+              "latency_ms": 12465,
+              "body_bytes": 4643,
+              "intent_class": "culture_entertainment",
+              "has_reply": false
+            }
+          ],
+          "result": "pass",
+          "finished_at": "2026-08-12T05:14:17.817Z"
+        },
+        {
+          "account": "28",
+          "city": "New York",
+          "started_at": "2026-08-12T05:13:56.263Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7117,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 1482,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 1490,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 418,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.871Z"
+        },
+        {
+          "account": "29",
+          "city": "Chicago",
+          "started_at": "2026-08-12T05:13:56.263Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6574,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 2022,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 2010,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 739,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.859Z"
+        },
+        {
+          "account": "30",
+          "city": "Miami",
+          "started_at": "2026-08-12T05:13:56.263Z",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6841,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 503,
+              "latency_ms": 1750,
+              "body_bytes": 85
+            },
+            {
+              "step": "sessions_read",
+              "status": 503,
+              "latency_ms": 1678,
+              "body_bytes": 85
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1548,
+              "body_bytes": 6888
+            }
+          ],
+          "result": "fail",
+          "error": "Error: read_path_failure",
+          "finished_at": "2026-08-12T05:14:04.855Z"
+        }
+      ],
+      "result": "abort",
+      "failure_count": 19,
+      "abort_reason": "pool_total_at_or_above_28",
+      "finished_at": "2026-08-12T05:14:18.390Z"
+    }
+  ],
+  "overall_result": "abort",
+  "finished_at": "2026-08-12T05:14:18.390Z"
+}
