@@ -1,0 +1,27 @@
+## First-time tester login: **confirmed working**
+
+A designated fresh tester account authenticated through the normal live website email/password path with **HTTP 200**, a valid session token, and **`mustChangePassword: false`**. Testers should use the website’s **Sign In** form—not an API route—and enter the email/password you provide them. They should not be sent to a forced-password-change screen.
+
+| First-time tester instruction | Confirmed behavior |
+|---|---|
+| Go to `https://www.mappingwithmelanin.com` | Live website login is available |
+| Select **Sign In** | Use the normal email/password form |
+| Enter the assigned email and password | Authentication succeeds for the verified tester account |
+| If they used Apple previously | Use **Forgot password** to set a website password for that same account; do not create a duplicate account |
+| After successful sign-in | They should reach the member experience without a forced password update |
+
+## Current Library handoff verification: **partial pass, not release-ready**
+
+| Check | Independent result |
+|---|---|
+| Deployment identity | Pass — live `264fb875`, non-stale bundle, healthy database |
+| Kinfolk returns a non-null `libraryAction` | **Pass** |
+| Correct African Diaspora History destination | **Fail** — it returns generic **History** (`topicId: coll_history`) instead of **African Diaspora History** (`fbfbc161-5121-4eca-a0a4-c35731b010f6`) |
+| Web Library deep link | **Fail** — the valid topic URL still loads the browse grid rather than opening the evidence panel |
+| Mobile parameter-handling source | **Present** — the deployed mobile code reads `topic` and, after topics load, routes to `/library-topic` |
+| Native mobile end-to-end test | **Pending** — source inspection is not a TestFlight/simulator confirmation |
+| Production worker-health / load-test rows | **Not independently confirmed** — the member session correctly receives `403` from the admin endpoint, and I do not have direct Railway database access. Replit must supply the required production query output. |
+
+> The resolver is now no longer null, but it still chooses the wrong Book. The ranking must prefer the **longest matching published title** or an exact normalized phrase match, so “African diaspora history” cannot be beaten by the shorter generic title “History.”
+
+Do **not** run the 30-person handoff audit yet. The next narrow repair must correct that ranking and the web deep-link panel. Replit must also provide the real Railway worker-health response and production load-test-exclusion query output. Once those pass, the native Library-action navigation should be tested in TestFlight or an Expo simulator before calling mobile complete.
