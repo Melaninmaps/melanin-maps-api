@@ -70,6 +70,43 @@ const BUDGET_OPTS = [{ id: "budget", label: "Budget 💵" }, { id: "mid", label:
 const TRIP_STYLES = [{ id: "solo", label: "Solo" }, { id: "couple", label: "Couple" }, { id: "family", label: "Family" }, { id: "group", label: "Friend group" }, { id: "business", label: "Work trip" }, { id: "spiritual", label: "Spiritual" }];
 const COMPANIONS = [{ id: "solo", label: "Solo" }, { id: "partner", label: "Partner" }, { id: "family", label: "Family" }, { id: "friends", label: "Friends" }, { id: "colleagues", label: "Colleagues" }];
 const COMMUNICATION_STYLES = [{ id: "friendly", label: "Conversational" }, { id: "concise", label: "Concise" }, { id: "detailed", label: "Detailed" }, { id: "professional", label: "Professional" }];
+
+// ─── Response-style selector (decoupled from legacy communicationStyle) ────────
+type ResponseStyle = "conversational" | "concise" | "detailed" | "professional";
+
+const RESPONSE_STYLE_OPTIONS: ReadonlyArray<{ id: ResponseStyle; label: string }> = [
+  { id: "conversational", label: "Conversational" },
+  { id: "concise",        label: "Concise" },
+  { id: "detailed",       label: "Detailed" },
+  { id: "professional",   label: "Professional" },
+];
+
+/**
+ * Derive the canonical ResponseStyle from the server payload.
+ * PRECEDENCE: responseStyle (new field) → deliveryProfile → legacy communicationStyle.
+ * Never let communicationStyle overwrite a persisted responseStyle after this call.
+ */
+function resolveResponseStyle(payload: {
+  responseStyle?: string | null;
+  deliveryProfile?: { detailLevel?: string | null; detail_level?: string | null; tonePreference?: string | null; tone_preference?: string | null } | null;
+  preferences?: { communicationStyle?: string | null };
+}): ResponseStyle {
+  if (payload.responseStyle === "detailed")     return "detailed";
+  if (payload.responseStyle === "concise")      return "concise";
+  if (payload.responseStyle === "professional") return "professional";
+  if (payload.responseStyle === "conversational") return "conversational";
+  const dl = payload.deliveryProfile?.detailLevel ?? payload.deliveryProfile?.detail_level;
+  const tp = payload.deliveryProfile?.tonePreference ?? payload.deliveryProfile?.tone_preference;
+  if (tp === "professional") return "professional";
+  if (dl === "deep")  return "detailed";
+  if (dl === "quick") return "concise";
+  // Legacy communicationStyle fallback (maps "friendly" → conversational)
+  const cs = payload.preferences?.communicationStyle;
+  if (cs === "professional") return "professional";
+  if (cs === "concise")      return "concise";
+  if (cs === "detailed")     return "detailed";
+  return "conversational";
+}
 const PERSONALITY_MODES = [{ id: "neighborhood_guide", label: "Neighborhood Guide" }, { id: "cultural_curator", label: "Cultural Curator" }, { id: "travel_companion", label: "Travel Companion" }, { id: "community", label: "Community Voice" }];
 const EMOJI_LEVELS = [{ id: "none", label: "None" }, { id: "some", label: "Balanced" }, { id: "lots", label: "Expressive" }];
 const HUMOR_LEVELS = [{ id: "none", label: "Straightforward" }, { id: "light", label: "Light" }, { id: "playful", label: "Playful" }];
@@ -170,7 +207,10 @@ function ChipSet({ options, selected = [], onChange, label }: { options: string[
 }
 
 // ─── Preferences panel ────────────────────────────────────────────────────────
-function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onClose: () => void; prefs: Prefs; onSave: (p: Prefs) => Promise<void> }) {
+function PreferencesPanel({ open, onClose, prefs, onSave, selectedResponseStyle, onResponseStyleChange, preferencesHydrated }: {
+  open: boolean; onClose: () => void; prefs: Prefs; onSave: (p: Prefs) => Promise<void>;
+  selectedResponseStyle: ResponseStyle; onResponseStyleChange: (s: ResponseStyle) => void; preferencesHydrated: boolean;
+}) {
   const [local, setLocal] = useState<Prefs>(prefs);
   const [cityInput, setCityInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -303,13 +343,15 @@ function PreferencesPanel({ open, onClose, prefs, onSave }: { open: boolean; onC
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Response style</div>
                 <div className="flex flex-wrap gap-1.5">
-                  {COMMUNICATION_STYLES.map(o => (
-                    <button key={o.id}
-                      data-testid={`kinfolk-response-style-${o.id === "friendly" ? "conversational" : o.id}`}
-                      aria-pressed={local.communicationStyle === o.id}
-                      onClick={() => setLocal(p => ({ ...p, communicationStyle: o.id }))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${local.communicationStyle === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
-                      {o.label}
+                  {RESPONSE_STYLE_OPTIONS.map(option => (
+                    <button key={option.id}
+                      type="button"
+                      data-testid={`kinfolk-response-style-${option.id}`}
+                      aria-pressed={selectedResponseStyle === option.id}
+                      disabled={!preferencesHydrated}
+                      onClick={() => onResponseStyleChange(option.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-40 ${selectedResponseStyle === option.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      {option.label}
                     </button>
                   ))}
                 </div>
@@ -556,6 +598,11 @@ function TravelPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  // selectedResponseStyle is managed independently of prefs.communicationStyle so
+  // that the persisted server value (responseStyle / deliveryProfile) is never
+  // overwritten by the legacy communicationStyle field on hard refresh.
+  const [selectedResponseStyle, setSelectedResponseStyle] = useState<ResponseStyle>("conversational");
+  const [preferencesHydrated, setPreferencesHydrated] = useState(false);
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   // Pick one welcome headline per mount — stays stable for the session
@@ -589,25 +636,6 @@ function TravelPage() {
         const raw = d.preferences ?? {};
         const ensureArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
 
-        // Derive communicationStyle from the new responseStyle / deliveryProfile fields first.
-        // The old `communicationStyle` field ("friendly", "concise" etc.) is legacy and must
-        // NOT override a persisted "detailed" preference after a hard reload.
-        const resolvedCommunicationStyle = (() => {
-          const rs = d.responseStyle;
-          if (rs === "detailed")     return "detailed";
-          if (rs === "concise")      return "concise";
-          if (rs === "professional") return "professional";
-          if (rs === "conversational") return "friendly";
-          // Fall back to delivery profile mapping
-          const dl = d.deliveryProfile?.detailLevel ?? d.deliveryProfile?.detail_level;
-          const tp = d.deliveryProfile?.tonePreference ?? d.deliveryProfile?.tone_preference;
-          if (tp === "professional") return "professional";
-          if (dl === "deep")  return "detailed";
-          if (dl === "quick") return "concise";
-          // Finally fall back to legacy stored value
-          return typeof raw.communicationStyle === "string" ? raw.communicationStyle : DEFAULT_PREFS.communicationStyle;
-        })();
-
         setPrefs({
           ...DEFAULT_PREFS,
           ...raw,
@@ -618,14 +646,21 @@ function TravelPage() {
           tripStyle:          ensureArr(raw.tripStyle),
           ownershipTypes:     ensureArr(raw.ownershipTypes),
           lifestyleServices:  ensureArr(raw.lifestyleServices),
-          // Prefer new responseStyle/deliveryProfile over legacy communicationStyle
-          communicationStyle: resolvedCommunicationStyle,
+          communicationStyle: typeof raw.communicationStyle === "string" ? raw.communicationStyle : DEFAULT_PREFS.communicationStyle,
           personalityMode:    typeof raw.personalityMode === "string" ? raw.personalityMode : DEFAULT_PREFS.personalityMode,
           emojiLevel:         typeof raw.emojiLevel === "string" ? raw.emojiLevel : DEFAULT_PREFS.emojiLevel,
           humorLevel:         typeof raw.humorLevel === "string" ? raw.humorLevel : DEFAULT_PREFS.humorLevel,
           regionalFlavor:     typeof raw.regionalFlavor === "string" ? raw.regionalFlavor : DEFAULT_PREFS.regionalFlavor,
           kinfolkVoice:       typeof raw.kinfolkVoice === "string" ? raw.kinfolkVoice : DEFAULT_PREFS.kinfolkVoice,
         });
+        // Resolve selectedResponseStyle from the new persisted contract AFTER setting
+        // prefs so that resolveResponseStyle can fall back to communicationStyle if needed.
+        setSelectedResponseStyle(resolveResponseStyle({
+          responseStyle: d.responseStyle,
+          deliveryProfile: d.deliveryProfile,
+          preferences: { communicationStyle: typeof raw.communicationStyle === "string" ? raw.communicationStyle : undefined },
+        }));
+        setPreferencesHydrated(true);
       }
     } finally { setPrefsLoaded(true); }
   }, [isLoggedIn]);
@@ -638,21 +673,15 @@ function TravelPage() {
       headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
     });
-    // Also persist to the new delivery-profile table so that responseStyle
-    // survives a hard refresh (the old communicationStyle field is not read back
-    // on load — the new /preferences response.responseStyle field is).
-    const communicationStyleToResponseStyle = (cs: string): string => {
-      if (cs === "detailed")     return "detailed";
-      if (cs === "concise")      return "concise";
-      if (cs === "professional") return "professional";
-      return "conversational";
-    };
+    // Persist the independent selectedResponseStyle to kinfolk_delivery_profiles.
+    // Use selectedResponseStyle directly — do NOT derive it from p.communicationStyle,
+    // which is the legacy field and may not match what the user selected in the UI.
     await fetch(`${BASE}api/kinfolk/preferences/response-style`, {
       method: "PUT", credentials: "include",
       headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ responseStyle: communicationStyleToResponseStyle(p.communicationStyle) }),
+      body: JSON.stringify({ responseStyle: selectedResponseStyle }),
     });
-  }, []);
+  }, [selectedResponseStyle]);
 
   // TTS playback
   const playMessage = useCallback(async (msgId: string, content: string) => {
@@ -883,7 +912,8 @@ function TravelPage() {
       )}
 
       {/* Preferences panel */}
-      {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={() => setShowPrefs(false)} prefs={prefs} onSave={savePrefs} />}
+      {isLoggedIn && <PreferencesPanel open={showPrefs} onClose={() => setShowPrefs(false)} prefs={prefs} onSave={savePrefs}
+        selectedResponseStyle={selectedResponseStyle} onResponseStyleChange={setSelectedResponseStyle} preferencesHydrated={preferencesHydrated} />}
 
       {/* Header */}
       <div className="bg-[#2B1507] px-4 py-3 flex items-center justify-between shrink-0">
