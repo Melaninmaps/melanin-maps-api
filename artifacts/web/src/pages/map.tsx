@@ -318,6 +318,9 @@ export default function MapPage() {
     [locationSearch],
   );
   const appliedHandoffQueryRef = useRef<string | null>(null);
+  // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
+  const searchViewportLockedRef = useRef(false);
+  const searchViewportSequenceRef = useRef(0);
 
   // ── Discoverability pins — tour cultural sites, recurring events, orgs ───────
   type DiscoverabilityPin = {
@@ -367,6 +370,47 @@ export default function MapPage() {
   // geocodeAndPan (the old single-step approach) sent the full phrase
   // "Phuket restaurants" to Nominatim, which returned a restaurant
   // named "Phuket" in Oslo. This is the fix.
+
+  // Fits the map canvas to the bounding box of returned MWM business coordinates.
+  // Returns true if at least one valid coordinate was found and the map was moved.
+  // Locks searchViewportLockedRef so subsequent home-city/GPS callbacks cannot
+  // override the search-result viewport.
+  const fitMapToBusinessResults = useCallback((businesses: any[]) => {
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!g || !map) return false;
+
+    const points = businesses
+      .map((business) => ({
+        lat: Number(business.latitude),
+        lng: Number(business.longitude),
+      }))
+      .filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lng)
+        && !(point.lat === 0 && point.lng === 0));
+
+    if (points.length === 0) return false;
+
+    searchViewportLockedRef.current = true;
+    const sequence = ++searchViewportSequenceRef.current;
+
+    if (points.length === 1) {
+      map.panTo(points[0]);
+      map.setZoom(14);
+      return true;
+    }
+
+    const bounds = new g.LatLngBounds();
+    points.forEach((point) => bounds.extend(point));
+    map.fitBounds(bounds, { top: 84, right: 32, bottom: 48, left: 352 });
+
+    g.event.addListenerOnce(map, "idle", () => {
+      if (searchViewportSequenceRef.current === sequence && (map.getZoom() ?? 0) > 14) {
+        map.setZoom(14);
+      }
+    });
+    return true;
+  }, []);
+
   const runUniversalSearch = useCallback(async (queryOverride?: string) => {
     const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
@@ -431,10 +475,23 @@ export default function MapPage() {
         p.set("lng", String(userCoords.lng));
       }
       const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
-      if (res.ok) setUniversalResults(await res.json());
+      if (res.ok) {
+        const payload = await res.json();
+        setUniversalResults(payload);
+
+        // Fit canvas to MWM results so the viewport reflects where businesses
+        // actually are, not just the geocoded city center.
+        const fitted = fitMapToBusinessResults(payload?.results?.businesses ?? []);
+        if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
+          // No MWM records with valid coords — keep the geocoded pan.
+          searchViewportLockedRef.current = true;
+          mapRef.current.panTo({ lat: geoLat, lng: geoLng });
+          mapRef.current.setZoom(12);
+        }
+      }
     } catch { /* fall through to client-side filtered list */ }
     finally { setUniversalLoading(false); }
-  }, [search, userCoords]);
+  }, [search, userCoords, fitMapToBusinessResults]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
   // Effect runs when handoffQuery or map object readiness changes.
@@ -913,11 +970,13 @@ export default function MapPage() {
       // ── Location priority: (1) profile homeCity, then (2) GPS override ─────
       // Start by centering on the user's home city immediately from their profile.
       const homeCity = (authData?.user as any)?.homeCity as string | null | undefined;
-      if (homeCity) {
+      // Skip home-city centering if a ?q= handoff search is active or a search
+      // has already locked the viewport to its result coordinates.
+      if (homeCity && !handoffQuery && !searchViewportLockedRef.current) {
         new g.Geocoder().geocode(
           { address: homeCity },
           (results: any[], status: string) => {
-            if (status === "OK" && results?.[0]?.geometry?.location) {
+            if (!searchViewportLockedRef.current && status === "OK" && results?.[0]?.geometry?.location) {
               map.setCenter(results[0].geometry.location);
               map.setZoom(12);
             }
@@ -925,12 +984,15 @@ export default function MapPage() {
         );
       }
 
-      // Geolocation can further refine to the user's exact position if allowed.
+      // Geolocation can further refine to the user's exact position if allowed,
+      // but must not override a search-locked viewport.
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-            map.setZoom(13);
+            if (!searchViewportLockedRef.current) {
+              map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+              map.setZoom(13);
+            }
             setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
           },
           () => { setGeoPermissionDenied(true); /* denied — homeCity is already center */ },
@@ -966,7 +1028,7 @@ export default function MapPage() {
 
     return () => window.removeEventListener("error", onGmError, true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, isLoading]);
+  }, [ready, isLoading, handoffQuery]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);

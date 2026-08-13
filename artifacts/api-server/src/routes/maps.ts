@@ -465,6 +465,19 @@ router.post("/maps/nav-voice", mapsLimiter, async (req: Request, res: Response) 
 // All returned pins pass the coordinate validity contract:
 //   lat/lng numeric, non-zero, within geographic ranges.
 router.get("/maps/discoverability-pins", async (req: Request, res: Response) => {
+  // Optional geo-bounding: lat/lng/radius (miles) OR city name filter.
+  // When a map search lands on a city, the client should pass lat/lng/radius
+  // so pins are scoped to that region rather than returning all 496 pins globally.
+  const reqLat  = parseFloat(String(req.query.lat  ?? ""));
+  const reqLng  = parseFloat(String(req.query.lng  ?? ""));
+  const reqRad  = parseFloat(String(req.query.radius ?? "50"));   // miles, default 50
+  const reqCity = typeof req.query.city === "string" ? req.query.city.trim() : "";
+
+  const hasGeo  = Number.isFinite(reqLat) && Number.isFinite(reqLng) && reqLat !== 0;
+  // 1 degree latitude ≈ 69 miles; longitude shrinks by cos(lat).
+  const latDelta = hasGeo ? reqRad / 69            : null;
+  const lngDelta = hasGeo ? reqRad / (69 * Math.abs(Math.cos(reqLat * Math.PI / 180))) : null;
+
   const COORD_FILTER = `
     is_active = true
     AND latitude IS NOT NULL
@@ -473,6 +486,18 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
     AND longitude::numeric BETWEEN -180 AND 180
     AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
   `;
+
+  // Additional bounding predicates applied per-table (interpolated safely —
+  // all values are numbers or empty strings checked above).
+  const geoPredicate = hasGeo
+    ? `AND latitude::numeric BETWEEN ${reqLat - latDelta!} AND ${reqLat + latDelta!}
+       AND longitude::numeric BETWEEN ${reqLng - lngDelta!} AND ${reqLng + lngDelta!}`
+    : "";
+  const cityPredicate = !hasGeo && reqCity
+    ? `AND lower(city) ILIKE lower('%${reqCity.replace(/'/g, "''")}%')`
+    : "";
+  const spatialFilter = geoPredicate || cityPredicate;
+
   try {
     const { rows } = await pool.query<{
       id: string; source_type: string; name: string; city: string;
@@ -487,6 +512,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              COALESCE(site_type, 'landmark')  AS site_type
       FROM tour_cultural_sites
       WHERE ${COORD_FILTER}
+        ${spatialFilter}
       UNION ALL
       SELECT id,
              'recurring_event'       AS source_type,
@@ -496,6 +522,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              NULL                        AS site_type
       FROM recurring_events
       WHERE ${COORD_FILTER}
+        ${spatialFilter}
         AND (active_until IS NULL OR active_until >= CURRENT_DATE)
       UNION ALL
       SELECT id,
@@ -506,6 +533,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              NULL                      AS site_type
       FROM community_organizations
       WHERE ${COORD_FILTER}
+        ${spatialFilter}
       ORDER BY source_type, city, name
     `);
 

@@ -3800,6 +3800,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["allied partner applications v1", () => ensureAlliedPartnerApplications(log, warn)],
     // ── City-centroid coordinate fallback for events with no address (#100) ──
     ["recurring events city coords v1", () => ensureRecurringEventsCityCoords(log, warn)],
+    // ── Business contact completeness — provenance tracking + data-quality index ──
+    ["business contact completeness v1", () => ensureBusinessContactCompleteness(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -8747,5 +8749,47 @@ async function ensureEducationInstitutions(
     log(`ensureEducationInstitutions: table ready — ${seeds.length} institutions seeded (${seeds.length - hbcuCount} general + ${hbcuCount} HBCUs)`);
   } catch (err: unknown) {
     warn(`ensureEducationInstitutions failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── P1-D: Business contact completeness tracking ─────────────────────────────
+// Adds provenance and data-quality columns so the directory can display honest
+// "Contact details have not been provided" rather than blank fields, and so
+// internal tooling can identify which cities need enrichment attention.
+async function ensureBusinessContactCompleteness(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE public.businesses
+        ADD COLUMN IF NOT EXISTS contact_source_url     text,
+        ADD COLUMN IF NOT EXISTS contact_verified_at    timestamptz,
+        ADD COLUMN IF NOT EXISTS contact_completeness   varchar(24) NOT NULL DEFAULT 'unknown'
+    `);
+
+    await pool.query(`
+      UPDATE public.businesses
+      SET contact_completeness = CASE
+        WHEN coalesce(nullif(trim(phone),   ''), '') <> ''
+         AND coalesce(nullif(trim(website), ''), '') <> ''
+         AND coalesce(nullif(trim(hours),   ''), '') <> '' THEN 'complete'
+        WHEN coalesce(nullif(trim(phone),   ''), '') <> ''
+          OR coalesce(nullif(trim(website), ''), '') <> ''
+          OR coalesce(nullif(trim(hours),   ''), '') <> '' THEN 'partial'
+        ELSE 'unknown'
+      END
+      WHERE contact_completeness = 'unknown'
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_contact_completeness_city_idx
+        ON public.businesses (city, contact_completeness)
+        WHERE status = 'active'
+    `);
+
+    log("ensureBusinessContactCompleteness: contact_source_url, contact_verified_at, contact_completeness columns ready");
+  } catch (err: unknown) {
+    warn(`ensureBusinessContactCompleteness failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
