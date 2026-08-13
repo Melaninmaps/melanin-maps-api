@@ -325,13 +325,13 @@ async function queryEntitiesByAlias(normalizedAlias: string): Promise<EntityRow[
        array_agg(DISTINCT a.normalized_alias)                                    AS normalized_aliases,
        array_agg(DISTINCT a.confidence::text)                                    AS alias_confidences,
        array_agg(DISTINCT a.alias_type)                                          AS alias_types,
-       COUNT(DISTINCT s.id) FILTER (WHERE s.source_status = 'active')::int       AS active_source_count,
+       COUNT(DISTINCT s.id) FILTER (WHERE s.status = 'active')::int       AS active_source_count,
        array_agg(DISTINCT s.canonical_url)
-         FILTER (WHERE s.source_status = 'active')                               AS source_urls,
+         FILTER (WHERE s.status = 'active')                               AS source_urls,
        array_agg(DISTINCT s.tier)
-         FILTER (WHERE s.source_status = 'active')                               AS source_tiers,
+         FILTER (WHERE s.status = 'active')                               AS source_tiers,
        array_agg(DISTINCT s.title)
-         FILTER (WHERE s.source_status = 'active')                               AS source_titles
+         FILTER (WHERE s.status = 'active')                               AS source_titles
      FROM kinfolk_entities e
      JOIN kinfolk_entity_aliases a ON a.entity_id = e.id
      LEFT JOIN kinfolk_entity_source_links esl ON esl.entity_id = e.id

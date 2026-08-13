@@ -294,8 +294,8 @@ export type QueryClass =
 export function getQueryClass(message: string): QueryClass {
   const m = message.toLowerCase();
 
-  // Education discovery — colleges, universities, HBCUs
-  if (/\b(college|university|hbcu|campus|school near me|colleges near|universities near)\b/.test(m)) {
+  // Education discovery — colleges, universities, HBCUs (handle plural forms and "near me" phrasing)
+  if (/\b(colleges?|universities?|universitie|hbcus?|campus|school near me|colleges near|universities near)\b/.test(m)) {
     return "education_nearby";
   }
 

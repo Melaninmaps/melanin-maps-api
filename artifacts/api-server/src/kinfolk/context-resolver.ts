@@ -191,12 +191,16 @@ export async function resolveKinfolkContext(input: {
 
   if (entityResult.state === "needs_clarification") {
     const question = entityResult.clarificationQuestion;
+    // Only suppress business recommendations when we have a specific entity candidate to
+    // disambiguate (person/work/group). For general "tell me about" queries with no matching
+    // entity (e.g. "Tell me about HBCUs"), allow normal results to flow.
+    const hasCandidateEntities = (entityResult.candidates?.length ?? 0) > 0;
     return {
       responseMode: "needs_clarification",
       queryClass,
       entityResolution: null,
       entityContextBlock: "",
-      suppressBusinessRecommendations: true,
+      suppressBusinessRecommendations: hasCandidateEntities,
       shortCircuitReply: question,
       clarificationQuestion: question,
       preferencesUsed: [],
