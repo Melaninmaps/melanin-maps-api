@@ -548,12 +548,17 @@ export async function findMatchingPublishedLibraryNode(
   try {
     let rows: { id: string; topic_name: string }[];
 
+    // Accept both 'published' and 'active' status so topics seeded via startup
+    // migrations (status='active') surface in the handoff before they are
+    // formally promoted to 'published' by an admin.
+    const PUBLISHED_STATUSES = ["published", "active"];
+
     if (destination) {
       // ── Destination match: geography node ──────────────────────────────────
       ({ rows } = await pool.query<{ id: string; topic_name: string }>(
         `SELECT id, topic_name FROM knowledge_topics
          WHERE enabled = TRUE
-           AND status = 'published'
+           AND status = ANY($2::text[])
            AND node_type = 'geography'
            AND (
              LOWER(topic_name) LIKE LOWER($1)
@@ -561,7 +566,7 @@ export async function findMatchingPublishedLibraryNode(
            )
          ORDER BY credibility_score DESC NULLS LAST, id ASC
          LIMIT 1`,
-        [`%${destination}%`],
+        [`%${destination}%`, PUBLISHED_STATUSES],
       ));
     } else {
       // ── Category + keyword match ────────────────────────────────────────────
@@ -578,7 +583,7 @@ export async function findMatchingPublishedLibraryNode(
         `SELECT id, topic_name
          FROM knowledge_topics
          WHERE enabled = TRUE
-           AND status = 'published'
+           AND status = ANY($3::text[])
            AND node_type IN ('book', 'general', 'chapter', 'topic')
            AND (
              category = ANY($1::text[])
@@ -598,7 +603,7 @@ export async function findMatchingPublishedLibraryNode(
            credibility_score DESC NULLS LAST,
            id ASC
          LIMIT 1`,
-        [categories, safeMsg],
+        [categories, safeMsg, PUBLISHED_STATUSES],
       ));
     }
 

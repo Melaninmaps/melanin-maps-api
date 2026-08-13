@@ -143,6 +143,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           LEFT JOIN users u ON u.id = cp.author_id
           WHERE cp.visibility = 'public'
             AND (u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL)
+            AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
             AND cp.created_at > NOW() - INTERVAL '30 days'
             AND cp.requires_moderation = false
           ORDER BY cp.created_at DESC
@@ -222,6 +223,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.visibility = 'public'
           AND cp.requires_moderation = false
+          AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
           AND (
             u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL
             ${followingClause}

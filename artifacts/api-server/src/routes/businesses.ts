@@ -29,6 +29,37 @@ const videoUpload = multer({
 });
 
 const router: IRouter = Router();
+
+/**
+ * Normalize common city alias forms to the canonical city name stored in the DB.
+ * e.g. "Washington DC", "Washington, DC" → "Washington"
+ *      "Columbia SC", "Columbia, SC"     → "Columbia"
+ *      "New York City", "NYC"            → "New York"
+ * Returns the original string (trimmed) when no alias matches.
+ */
+function normalizeCityAlias(city: string): string {
+  const c = city.trim();
+  const lower = c.toLowerCase().replace(/[,.\s]+/g, " ").trim();
+  const ALIASES: Record<string, string> = {
+    "washington dc":   "Washington",
+    "washington d c":  "Washington",
+    "d c":             "Washington",
+    "dc":              "Washington",
+    "columbia sc":     "Columbia",
+    "columbia s c":    "Columbia",
+    "new york city":   "New York",
+    "nyc":             "New York",
+    "la":              "Los Angeles",
+    "nola":            "New Orleans",
+    "philly":          "Philadelphia",
+    "atl":             "Atlanta",
+    "chi":             "Chicago",
+    "hou":             "Houston",
+    "bmore":           "Baltimore",
+    "bmore md":        "Baltimore",
+  };
+  return ALIASES[lower] ?? c;
+}
 router.use(requireAuth);
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
@@ -161,7 +192,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
     }
 
     if (city && typeof city === "string") {
-      conditions.push(ilike(businessesTable.city, `%${city}%`));
+      conditions.push(ilike(businessesTable.city, `%${normalizeCityAlias(city)}%`));
     }
 
     if (state && typeof state === "string") {

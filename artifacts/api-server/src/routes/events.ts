@@ -5,6 +5,21 @@ import { getUserTier } from "../middleware/requireMembership";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
+
+/** Normalize common city alias forms to the canonical city name stored in the DB. */
+function normalizeCityAlias(city: string): string {
+  const c = city.trim();
+  const lower = c.toLowerCase().replace(/[,.\s]+/g, " ").trim();
+  const ALIASES: Record<string, string> = {
+    "washington dc": "Washington", "washington d c": "Washington",
+    "d c": "Washington", "dc": "Washington",
+    "columbia sc": "Columbia", "columbia s c": "Columbia",
+    "new york city": "New York", "nyc": "New York",
+    "la": "Los Angeles", "nola": "New Orleans",
+    "philly": "Philadelphia", "atl": "Atlanta",
+  };
+  return ALIASES[lower] ?? c;
+}
 // GET /events and GET /events/:id are public — discoverable without login.
 // POST/PATCH/DELETE check req.user inline.
 
@@ -35,8 +50,10 @@ router.get("/events", async (req: Request, res: Response) => {
 
     // City and state filters — required to prevent cross-city leakage (§4.3 audit fix)
     // A supplied city must be respected; no fallback to another city if local result is empty.
+    // normalizeCityAlias maps common alias forms (e.g. "Washington DC" → "Washington") to
+    // the canonical city value stored in the database.
     if (city && typeof city === "string" && city.trim()) {
-      conditions.push(ilike(eventsTable.city, `%${city.trim()}%`));
+      conditions.push(ilike(eventsTable.city, `%${normalizeCityAlias(city.trim())}%`));
     }
     if (state && typeof state === "string" && state.trim()) {
       conditions.push(ilike(eventsTable.state, `%${state.trim()}%`));

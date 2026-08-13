@@ -3487,16 +3487,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Plain console.error so Railway log viewer surfaces the sanitized record
     // (pino JSON payload is hidden in Railway UI). Never log prompts, user data,
     // session content, or API credentials.
+    const errName = err instanceof Error ? err.name : "Unknown";
+    const errStack = err instanceof Error ? (err.stack ?? "").slice(0, 600) : "";
     console.error(
       "[kinfolk-chat-error]",
       `code=${errCode ?? "none"}`,
       `providerStatus=${providerStatus ?? "none"}`,
+      `errName=${errName}`,
       `isOverload=${isOverload}`,
       `isProviderRateLimit=${isProviderRateLimit}`,
       `isTimeout=${isTimeout}`,
+      `is401=${is401}`,
+      `isConnRefused=${isConnRefused}`,
       `active=${kinfolkActiveGenerations}`,
       `queued=${kinfolkQueuedGenerations}`,
-      errMsg.slice(0, 200),
+      `msg=${errMsg.slice(0, 300)}`,
+      `stack=${errStack}`,
     );
     req.log.error(
       { errCode, providerStatus, isOverload, isTimeout, is401, isConnRefused,

@@ -1,0 +1,206 @@
+{
+  "baseUrl": "https://www.mappingwithmelanin.com",
+  "startedAt": "2026-08-13T14:06:08.906Z",
+  "guardrails": {
+    "loadTestOnly": true,
+    "writesPerformed": false,
+    "abortOnFirstFailedPhase": true,
+    "poolAbortRule": "pool.waiting > 0 in two consecutive readiness samples",
+    "rateLimitExpectation": "authenticated general API is keyed by member ID; no generic shared-IP 429s"
+  },
+  "deployment": {
+    "version": {
+      "status": 200,
+      "body": {
+        "railway_sha": "df605639b7bcbc3817d6c8eb5b9fbe585f2d8289",
+        "deploymentId": "3bbbdcdb-207e-47f4-80c9-c5172d59259c",
+        "release": "Build-98.2",
+        "env": "production",
+        "built_from_sha": "60c8e69ccd96b293dd6872d9c0c1d05f2f324fa5",
+        "built_at": "2026-08-13T13:45:19.952Z",
+        "bundle_sha256_self": "be9cecf0b1e5988d772cf00e6cfeb599f4b1d95278c82a3bb3f4d01bf6b0f66c",
+        "bundle_sha256": "be9cecf0b1e5988d772cf00e6cfeb599f4b1d95278c82a3bb3f4d01bf6b0f66c",
+        "stale_bundle": false
+      }
+    },
+    "ready": {
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "db": "ok",
+        "pool": {
+          "total": 1,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        }
+      }
+    }
+  },
+  "phases": [
+    {
+      "name": "baseline_1",
+      "plannedUsers": 1,
+      "startedAt": "2026-08-13T14:06:14.314Z",
+      "monitor": [
+        {
+          "point": "before",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 1,
+              "idle": 1,
+              "waiting": 0,
+              "max": 50
+            }
+          },
+          "latencyMs": 769
+        },
+        {
+          "point": "during",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 3,
+              "idle": 3,
+              "waiting": 0,
+              "max": 50
+            }
+          },
+          "latencyMs": 563
+        },
+        {
+          "point": "during",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 4,
+              "waiting": 0,
+              "max": 50
+            }
+          },
+          "latencyMs": 794
+        },
+        {
+          "point": "during",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 4,
+              "waiting": 0,
+              "max": 50
+            }
+          },
+          "latencyMs": 741
+        },
+        {
+          "point": "after",
+          "status": 200,
+          "body": {
+            "status": "ok",
+            "db": "ok",
+            "pool": {
+              "total": 4,
+              "idle": 3,
+              "waiting": 0,
+              "max": 50
+            }
+          },
+          "latencyMs": 749
+        }
+      ],
+      "users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "startedAt": "2026-08-13T14:06:15.084Z",
+          "steps": [
+            {
+              "name": "login",
+              "status": 200,
+              "latencyMs": 968,
+              "bodyBytes": 103,
+              "errorCode": null
+            },
+            {
+              "name": "preferences_read",
+              "status": 200,
+              "latencyMs": 1103,
+              "bodyBytes": 448,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "sessions_read",
+              "status": 200,
+              "latencyMs": 2592,
+              "bodyBytes": 5787,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "library_graph_read",
+              "status": 200,
+              "latencyMs": 2632,
+              "bodyBytes": 3004,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "business_search",
+              "status": 200,
+              "latencyMs": 3427,
+              "bodyBytes": 12297,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "map_discoverability_pins",
+              "status": 200,
+              "latencyMs": 5309,
+              "bodyBytes": 328405,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "travel_route",
+              "status": 200,
+              "latencyMs": 2337,
+              "bodyBytes": 6916,
+              "retryAfter": null,
+              "errorCode": null
+            },
+            {
+              "name": "kinfolk_chat",
+              "status": 500,
+              "latencyMs": 707,
+              "intentClass": null,
+              "hasReply": false,
+              "errorCode": "KINFOLK_ERROR",
+              "retryAfter": null
+            }
+          ],
+          "outcome": "fail",
+          "error": "Error: kinfolk_chat_failed_500_KINFOLK_ERROR",
+          "finishedAt": "2026-08-13T14:06:22.076Z"
+        }
+      ],
+      "outcome": "fail",
+      "failureCount": 1,
+      "abortReason": null,
+      "finishedAt": "2026-08-13T14:06:22.825Z"
+    }
+  ],
+  "overall": "fail",
+  "finishedAt": "2026-08-13T14:06:22.825Z"
+}
