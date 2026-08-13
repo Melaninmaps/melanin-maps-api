@@ -582,6 +582,12 @@ async function searchBusinesses(opts: {
     : "";
 
   // ── PASS 1: Exact name match ──────────────────────────────────────────────
+  // named_business intent: NEVER apply a geo filter here. Someone searching for
+  // "Shawn Hill Homes" from Washington DC must find the LA listing — a 50-mile
+  // geo bound would silently exclude it. Geo filtering belongs in PASS 3 (category
+  // discovery), not in a name-first lookup.
+  const isNamedBusiness = intentType === "named_business";
+
   for (const token of searchTokens.slice(0, 3)) {
     if (token.length < 2) continue;
     try {
@@ -593,7 +599,8 @@ async function searchBusinesses(opts: {
       if (city) { offset++; params.push(`%${city}%`); cityClause = `AND b.city ILIKE $${offset}`; }
       if (state) { offset++; params.push(`%${state}%`); }
 
-      if (lat !== undefined && lng !== undefined) {
+      // Skip geo radius for named-business searches — name lookup is always nationwide.
+      if (!isNamedBusiness && lat !== undefined && lng !== undefined) {
         params.push(lat, lng, radius);
         geoClause = `AND (3959 * acos(GREATEST(-1, LEAST(1, cos(radians($${offset + 1})) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($${offset + 2})) + sin(radians($${offset + 1})) * sin(radians(b.latitude)))))) <= $${offset + 3}`;
         offset += 3;
@@ -933,9 +940,14 @@ async function searchBusinesses(opts: {
       let skipGeocode = false;
       if (geoQ.split(/\s+/).length <= 3) {
         try {
+          // Use prefix match (ILIKE $2) as well as exact — catches "Shawn Hill"
+          // when the business is named "Shawn Hill Homes". Without the prefix
+          // variant the geocoder returns Shawn Hill, IL and geo-bounds the search
+          // to Illinois, silently excluding the LA business.
           const bizGate = await pool.query<{ id: string }>(
-            `SELECT id FROM businesses WHERE name ILIKE $1 AND status = 'active' LIMIT 1`,
-            [geoQ],
+            `SELECT id FROM businesses
+             WHERE (name ILIKE $1 OR name ILIKE $2) AND status = 'active' LIMIT 1`,
+            [geoQ, geoQ + "%"],
           );
           if (bizGate.rows.length > 0) skipGeocode = true;
         } catch { /* DB unavailable — fall through to geocode */ }
