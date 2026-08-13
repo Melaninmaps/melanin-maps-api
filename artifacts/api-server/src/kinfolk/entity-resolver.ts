@@ -1,272 +1,622 @@
 /**
- * Kinfolk Entity Resolver — Phase 1
+ * Kinfolk Entity Resolver — DB-backed (v2)
  *
- * Resolves ambiguous entities (films, people, groups, works) from the user message
- * BEFORE the LLM prompt is assembled. Returns server-authoritative canonical facts
- * so the model cannot contradict or hallucinate them.
+ * Resolves ambiguous named entities (films, people, groups, works) from the user
+ * message using the kinfolk_entities / kinfolk_entity_aliases / kinfolk_source_records
+ * tables. Returns a deterministic resolution state — the language model never decides.
  *
- * Design rules (Manus cultural context spec §4):
- * - Source-attributed facts only — never model memory alone
- * - Never infers member identity, ethnicity, or religion from name/location/behavior
- * - isBiographyMode = true → the query is about a person/work, NOT a place to visit
- * - Phase 2: these records move to kinfolk_entities + kinfolk_entity_aliases DB tables
+ * Three output states (spec §1):
+ *   resolved          — one source-backed candidate clearly wins (score ≥ 120, gap ≥ 25)
+ *   needs_clarification — two+ candidates tie, OR short-name with no qualifier
+ *   unconfirmed       — no active candidate and query pattern indicates named-entity intent
+ *
+ * Scoring algorithm (spec §5.3):
+ *   exactAlias                     * max(alias.confidence) * 100
+ *   explicitQualifierMatch                                  +100
+ *   explicitRoleMatch                                        +80
+ *   explicitYearMatch (match)                                +75
+ *   explicitYearMatch (mismatch)                            -150  ← prevents wrong-era answers
+ *   explicitCountryOrLanguageMatch                           +50
+ *   sourceBackedContemporaryProminence                       +40
+ *   explicitOptInPreferenceMatch                             +20
+ *   verifiedContextTagMatch                                  +10
+ *   ambiguousFirstName guard                         → needs_clarification regardless of score
+ *
+ * Resolution threshold: top.score ≥ 120 AND top.score − next.score ≥ 25
+ *
+ * Privacy rules (spec §0):
+ *   - NEVER infer ethnicity, culture, nationality, or identity from member name/profile
+ *   - optInPreferenceMatch requires member.allowCulturalAffinityRanking === true (explicit)
+ *   - Location used only when permitted and present in input (never inferred from IP)
  */
+
+import { pool } from "@workspace/db";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export type ResolutionState = "resolved" | "needs_clarification" | "unconfirmed";
+
+/** Internal scoring record — hoisted to module scope so helper functions can reference it. */
+export type ScoredCandidate = {
+  entity: EntityRow;
+  score: number;
+  basis: string[];
+  ambiguousFirstName: boolean;
+  matchedAlias: string;
+  matchedAliasConfidence: number;
+  matchedAliasType: string;
+  preferencesUsed: string[];
+};
 
 export type ResolvedEntity = {
   id: string;
   canonicalName: string;
-  entityType: "film" | "person" | "music_group" | "institution" | "work";
-  summary: string;
-  keyFacts: Record<string, string>;
-  culturalContext: string[];
-  resolutionBasis: "explicit_qualifier" | "explicit_role" | "high_confidence_context";
-  assumed: boolean;
-  isBiographyMode: boolean;
-  sourceNote: string;
+  entityType: string;
+  shortSummary: string;
+  contextTags: string[];
+  countryCodes: string[];
+  eraStart: number | null;
+  eraEnd: number | null;
+  normalizedAliases: string[];
+  activeSourceUrls: string[];
+  sourceTiers: string[];
 };
 
-type RegistryEntry = {
+export type EntityResolutionResult =
+  | {
+      state: "resolved";
+      entity: ResolvedEntity;
+      score: number;
+      basis: string;
+      preferencesUsed: string[];
+      sources: Array<{ title: string; url: string; tier: "A" | "B" | "C" }>;
+    }
+  | {
+      state: "needs_clarification";
+      clarificationQuestion: string;
+      candidates: Array<{ canonicalName: string; entityType: string }>;
+      preferencesUsed: string[];
+      sources: never[];
+    }
+  | {
+      state: "unconfirmed";
+      unconfirmedReason: string;
+      qualifier: string;
+      preferencesUsed: string[];
+      sources: never[];
+    };
+
+export type ExplicitMemberPreferences = {
+  allowCulturalAffinityRanking?: boolean;
+  diasporaCountries?: string[]; // ISO-3166-1 alpha-2
+  supportPriorities?: string[];
+  multilingualExpansionMode?: "off" | "ask" | "dual";
+};
+
+// ── DB row types ──────────────────────────────────────────────────────────────
+
+type EntityRow = {
   id: string;
-  canonicalName: string;
-  entityType: ResolvedEntity["entityType"];
-  summary: string;
-  keyFacts: Record<string, string>;
-  culturalContext: string[];
-  sourceNote: string;
-  isBiographyMode: boolean;
-  patterns: Array<{
-    regex: RegExp;
-    qualifier?: RegExp;
-    confidence: number;
-  }>;
+  canonical_name: string;
+  entity_type: string;
+  normalized_name: string;
+  short_summary: string | null;
+  country_codes: string[];
+  language_codes: string[];
+  cultural_context_tags: string[];
+  era_start: number | null;
+  era_end: number | null;
+  normalized_aliases: string[];
+  alias_confidences: number[];
+  alias_types: string[];
+  active_source_count: number;
+  source_urls: string[];
+  source_tiers: string[];
+  source_titles: string[];
 };
 
-// ── In-memory entity registry (Phase 1) ──────────────────────────────────────
-const ENTITY_REGISTRY: RegistryEntry[] = [
-  {
-    id: "sinners_2025_film",
-    canonicalName: "Sinners (2025 film)",
-    entityType: "film",
-    summary:
-      "Sinners is a 2025 horror/drama film written and directed by Ryan Coogler, " +
-      "starring Michael B. Jordan. Released by Warner Bros. and available on HBO Max.",
-    keyFacts: {
-      director: "Ryan Coogler",
-      writer: "Ryan Coogler",
-      lead: "Michael B. Jordan",
-      year: "2025",
-      distributor: "Warner Bros. / HBO Max",
-    },
-    culturalContext: ["Black cinema", "Ryan Coogler filmography", "Michael B. Jordan"],
-    sourceNote: "Sinners official film toolkit (sinnersmovie.com) and HBO Max official listing",
-    isBiographyMode: true,
-    patterns: [
-      {
-        regex: /\bsinners\b/i,
-        qualifier: /\b(movie|film|directed|watch|watched|streaming|horror|saw it|loved it)\b/i,
-        confidence: 95,
-      },
-      {
-        regex: /\bsinners\b/i,
-        qualifier: /\b(who directed|director of|made by|written by|wrote)\b/i,
-        confidence: 95,
-      },
-      { regex: /\bsinners\b/i, confidence: 45 },
-    ],
-  },
-  {
-    id: "michelle_williams_dc_singer",
-    canonicalName: "Michelle Williams (singer, Destiny's Child)",
-    entityType: "person",
-    summary:
-      "Michelle Williams is a singer, actress, and Broadway performer born July 23, 1980, " +
-      "in Rockford, Illinois. She is best known as a member of Destiny's Child alongside " +
-      "Beyoncé and Kelly Rowland. Her gospel and R&B solo career includes Heart to Yours (2002).",
-    keyFacts: {
-      group: "Destiny's Child",
-      genre: "R&B, gospel",
-      born: "July 23, 1980",
-      hometown: "Rockford, Illinois",
-      notableWork: "Survivor, Say My Name (Destiny's Child); Heart to Yours, Do You Know (solo)",
-      broadwayCredits: "Aida, Chicago",
-    },
-    culturalContext: ["Destiny's Child", "R&B", "gospel", "Black music history"],
-    sourceNote: "Michelle Williams official biography (iamtenitra.com/about)",
-    isBiographyMode: true,
-    patterns: [
-      {
-        regex: /\bmichelle williams\b/i,
-        qualifier: /\bdestiny'?s child\b/i,
-        confidence: 100,
-      },
-      {
-        regex: /\bmichelle williams\b/i,
-        qualifier: /\b(singer|r&b|gospel|beyonc[eé]|kelly rowland|dc member|music|group member)\b/i,
-        confidence: 80,
-      },
-      { regex: /\bmichelle williams\b/i, confidence: 30 },
-    ],
-  },
-  {
-    id: "ryan_coogler_director",
-    canonicalName: "Ryan Coogler (film director)",
-    entityType: "person",
-    summary:
-      "Ryan Coogler is an American film director and screenwriter from Oakland, California. " +
-      "Known for Fruitvale Station (2013), Creed (2015), Black Panther (2018), " +
-      "Black Panther: Wakanda Forever (2022), and Sinners (2025).",
-    keyFacts: {
-      filmography:
-        "Fruitvale Station (2013), Creed (2015), Black Panther (2018), " +
-        "Black Panther: Wakanda Forever (2022), Sinners (2025)",
-      hometown: "Oakland, California",
-      genre: "drama, action, horror",
-    },
-    culturalContext: ["Black cinema", "African American directors", "Marvel Cinematic Universe"],
-    sourceNote: "General knowledge — public biographical record",
-    isBiographyMode: true,
-    patterns: [{ regex: /\bryan coogler\b/i, confidence: 95 }],
-  },
-  {
-    id: "destinys_child_group",
-    canonicalName: "Destiny's Child (music group)",
-    entityType: "music_group",
-    summary:
-      "Destiny's Child was an American R&B girl group formed in Houston, Texas. " +
-      "The classic lineup was Beyoncé Knowles, Kelly Rowland, and Michelle Williams. " +
-      "Major hits include Say My Name, Survivor, Bootylicious, and Independent Women Part I.",
-    keyFacts: {
-      members: "Beyoncé Knowles, Kelly Rowland, Michelle Williams",
-      formed: "1990 (as Girl's Tyme); classic lineup 1997–2006",
-      genre: "R&B, pop, soul",
-      hits: "Say My Name, Survivor, Bootylicious, Independent Women Part I",
-      hometown: "Houston, Texas",
-    },
-    culturalContext: ["R&B", "Black music history", "Houston", "girl groups"],
-    sourceNote: "General knowledge — public record",
-    isBiographyMode: true,
-    patterns: [{ regex: /\bdestiny'?s child\b/i, confidence: 95 }],
-  },
-];
+// ── Candidate extraction ──────────────────────────────────────────────────────
+
+function normalizeTerm(s: string): string {
+  return s.toLowerCase().replace(/[''`]/g, "'").replace(/[^a-z0-9\s'.-]/g, "").trim();
+}
+
+/**
+ * Extract candidate search terms from the message.
+ * Returns normalized terms ordered from longest to shortest (bigrams before unigrams).
+ */
+function extractCandidateTerms(message: string): string[] {
+  const words = message.trim().split(/\s+/);
+  const terms = new Set<string>();
+
+  // Whole message (up to 6 words) — for multi-word entity names
+  if (words.length <= 6) terms.add(normalizeTerm(message.trim()));
+
+  // 4-grams
+  for (let i = 0; i <= words.length - 4; i++) {
+    terms.add(normalizeTerm(words.slice(i, i + 4).join(" ")));
+  }
+  // Trigrams
+  for (let i = 0; i <= words.length - 3; i++) {
+    terms.add(normalizeTerm(words.slice(i, i + 3).join(" ")));
+  }
+  // Bigrams
+  for (let i = 0; i <= words.length - 2; i++) {
+    terms.add(normalizeTerm(words.slice(i, i + 2).join(" ")));
+  }
+  // Single words that are capitalized (likely proper nouns)
+  for (const w of words) {
+    if (/^[A-Z]/.test(w)) terms.add(normalizeTerm(w));
+  }
+
+  return [...terms].sort((a, b) => b.length - a.length);
+}
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
 
-function scoreEntry(
-  entry: RegistryEntry,
+const ROLE_PATTERNS: Partial<Record<string, RegExp>> = {
+  person: /\b(who is|who was|who directed|director|singer|artist|actress|actor|musician|author|tell me about|biography|discography|filmography|member of|sang with|played with|career of|life of)\b/i,
+  work: /\b(movie|film|show|series|album|book|song|directed|written by|starring|who made|who wrote|who directed|watch|watched|streaming|saw|loved)\b/i,
+  group: /\b(group|band|members|who is in|who are in|member of|trio|duo|lineup)\b/i,
+  institution: /\b(university|college|school|campus|hbcu|enroll|apply|admissions|located|based in)\b/i,
+};
+
+const COUNTRY_NAME_MAP: Record<string, RegExp> = {
+  NG: /\bnigerian?\b/i,
+  US: /\bamerican?\b/i,
+  GB: /\bbritish\b/i,
+  CA: /\bcanadian?\b/i,
+  GH: /\bghanaian?\b/i,
+  JM: /\bjamaican?\b/i,
+  TT: /\btrinidadian?\b/i,
+  KE: /\bkenyan?\b/i,
+  ZA: /\bsouth african?\b/i,
+  BR: /\bbrazilian?\b/i,
+};
+
+function scoreCandidate(
+  entity: EntityRow,
   message: string,
-): { confidence: number; explicit: boolean } {
-  let best = -1;
-  let explicit = false;
+  normalizedMsg: string,
+  matchedAlias: string,
+  matchedAliasConfidence: number,
+  matchedAliasType: string,
+  memberPreferences: ExplicitMemberPreferences | null,
+): { score: number; basis: string[]; ambiguousFirstName: boolean } {
+  const basis: string[] = [];
+  let score = 0;
 
-  for (const pattern of entry.patterns) {
-    if (!pattern.regex.test(message)) continue;
+  // ── exactAlias (weighted by alias confidence) ──────────────────────────────
+  // Low-confidence first-name aliases (confidence ≤ 0.5) get proportionally less.
+  const aliasScore = Math.round(matchedAliasConfidence * 100);
+  score += aliasScore;
+  basis.push(`alias match (${matchedAlias}, conf=${matchedAliasConfidence}): +${aliasScore}`);
 
-    if (pattern.qualifier) {
-      if (!pattern.qualifier.test(message)) continue;
-      if (pattern.confidence > best) {
-        best = pattern.confidence;
-        explicit = true;
-      }
-    } else {
-      if (pattern.confidence > best) {
-        best = pattern.confidence;
+  // Ambiguous first-name guard — triggers needs_clarification regardless of other scores
+  // when only a low-confidence single-word alias matched and no qualifier present
+  const isShortName = !matchedAlias.includes(" ");
+  const ambiguousFirstName =
+    isShortName &&
+    matchedAliasConfidence <= 0.5 &&
+    matchedAliasType === "stage_name";
+
+  // ── explicitQualifierMatch ─────────────────────────────────────────────────
+  // Message explicitly contains one of the entity's context tags or group/country/era signal
+  const hasQualifier = entity.cultural_context_tags.some(
+    (tag) => normalizedMsg.includes(tag.toLowerCase()),
+  );
+  if (hasQualifier) {
+    score += 100;
+    basis.push("+100 explicitQualifierMatch");
+  }
+
+  // ── explicitRoleMatch ─────────────────────────────────────────────────────
+  const rolePattern = ROLE_PATTERNS[entity.entity_type];
+  if (rolePattern && rolePattern.test(message)) {
+    score += 80;
+    basis.push("+80 explicitRoleMatch");
+  }
+
+  // ── explicitYearMatch ─────────────────────────────────────────────────────
+  const yearMatch = message.match(/\b(19|20)\d{2}\b/);
+  if (yearMatch) {
+    const queryYear = parseInt(yearMatch[0]);
+    const eraStart = entity.era_start;
+    const eraEnd = entity.era_end;
+    if (eraStart) {
+      const inRange = eraEnd
+        ? queryYear >= eraStart && queryYear <= eraEnd
+        : queryYear === eraStart;
+      if (inRange) {
+        score += 75;
+        basis.push(`+75 explicitYearMatch (${queryYear} in [${eraStart}, ${eraEnd ?? eraStart}])`);
+      } else {
+        // Wrong-era penalty — prevents the 2025 Sinners answer for a 1969 query
+        score -= 150;
+        basis.push(`-150 explicitYearMismatch (query=${queryYear}, entity=${eraStart})`);
       }
     }
   }
 
-  return { confidence: best, explicit };
-}
-
-// ── Public API ─────────────────────────────────────────────────────────────────
-
-/**
- * Resolve entities referenced in a user message.
- * Does NOT infer member identity — only resolves what the message names explicitly.
- */
-export function resolveEntities(message: string): ResolvedEntity[] {
-  const resolved: ResolvedEntity[] = [];
-
-  for (const entry of ENTITY_REGISTRY) {
-    const { confidence, explicit } = scoreEntry(entry, message);
-    if (confidence < 0) continue;
-    if (!explicit && confidence < 50) continue;
-    if (explicit && confidence < 45) continue;
-
-    resolved.push({
-      id: entry.id,
-      canonicalName: entry.canonicalName,
-      entityType: entry.entityType,
-      summary: entry.summary,
-      keyFacts: entry.keyFacts,
-      culturalContext: entry.culturalContext,
-      resolutionBasis: explicit ? "explicit_qualifier" : "high_confidence_context",
-      assumed: !explicit || confidence < 90,
-      isBiographyMode: entry.isBiographyMode,
-      sourceNote: entry.sourceNote,
-    });
+  // ── explicitCountryOrLanguageMatch ────────────────────────────────────────
+  const countryMatch = entity.country_codes.some((cc) => COUNTRY_NAME_MAP[cc]?.test(message) ?? false);
+  if (countryMatch) {
+    score += 50;
+    basis.push("+50 explicitCountryOrLanguageMatch");
   }
 
-  return resolved.sort((a, b) => {
-    const aScore = a.resolutionBasis === "explicit_qualifier" ? 200 : 50;
-    const bScore = b.resolutionBasis === "explicit_qualifier" ? 200 : 50;
-    return bScore - aScore;
-  });
+  // ── sourceBackedContemporaryProminence ────────────────────────────────────
+  if (entity.era_start && entity.era_start >= 2000 && entity.active_source_count > 0) {
+    score += 40;
+    basis.push("+40 sourceBackedContemporaryProminence");
+  }
+
+  // ── explicitOptInPreferenceMatch ──────────────────────────────────────────
+  // Requires member.allowCulturalAffinityRanking === true (explicit consent).
+  // NEVER inferred from member name, city, or search behavior.
+  const preferencesUsed: string[] = [];
+  if (
+    memberPreferences?.allowCulturalAffinityRanking &&
+    Array.isArray(memberPreferences.diasporaCountries) &&
+    memberPreferences.diasporaCountries.length > 0
+  ) {
+    const diasporaMatch = entity.country_codes.some((cc) =>
+      memberPreferences.diasporaCountries!.includes(cc),
+    );
+    if (diasporaMatch) {
+      score += 20;
+      basis.push("+20 explicitOptInPreferenceMatch (diaspora)");
+      preferencesUsed.push("diaspora cultural affinity");
+    }
+  }
+
+  // ── verifiedContextTagMatch ───────────────────────────────────────────────
+  const tagScore = entity.cultural_context_tags.filter((t) =>
+    normalizedMsg.includes(t.toLowerCase()),
+  ).length;
+  if (tagScore > 0) {
+    score += 10;
+    basis.push(`+10 verifiedContextTagMatch (${tagScore} tags)`);
+  }
+
+  return { score, basis, ambiguousFirstName };
 }
 
-/**
- * Returns true when the query is about a named person, group, or creative work
- * and is NOT asking to find a place or service.
- */
-export function isBiographyQuery(message: string, resolvedEntities: ResolvedEntity[]): boolean {
-  if (
-    resolvedEntities.some(
-      (e) => e.isBiographyMode && e.resolutionBasis === "explicit_qualifier",
-    )
-  ) {
+// ── Named-entity query detection ──────────────────────────────────────────────
+
+function looksLikeNamedEntityQuery(message: string): boolean {
+  const named_patterns = [
+    /\b(who is|who was|who directed|tell me about|what did .+? do|biography|discography|filmography|member of|sang with|played for|career of)\b/i,
+    /\b(movie|film|director|actor|actress|singer|artist|group|team)\b/i,
+  ];
+  if (named_patterns.some((p) => p.test(message))) return true;
+  // Short message that looks like a name (1–3 capitalized-initial words, no verbs)
+  const trimmed = message.trim();
+  if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(trimmed) && trimmed.split(/\s+/).length <= 3) {
     return true;
   }
-
-  const bioPattern =
-    /\b(tell me about|who is|who was|who directed|what did .+? do|biography|discography|filmography|known for|member of|part of|sang with|played for|played in|starred in|directed by|written by|recorded by|what songs|what albums|career of)\b/i;
-  const placePattern =
-    /\b(restaurant|bar|club|lounge|shop|store|near me|spots|venues|find me|show me places|where can i|visit|go to|book a|reservation|looking for a place)\b/i;
-
-  if (bioPattern.test(message) && !placePattern.test(message)) return true;
-
   return false;
 }
+
+function looksLikeAmbiguousShortName(message: string): boolean {
+  const trimmed = message.trim();
+  // Single capitalized word OR "Tell me about [Name]" pattern where Name is one word
+  if (/^[A-Z][a-z]+$/.test(trimmed)) return true;
+  const aboutMatch = trimmed.match(/\btell me about\s+([A-Z][a-z]+)\s*\.?\s*$/i);
+  if (aboutMatch && !aboutMatch[1].match(/\s/)) return true;
+  return false;
+}
+
+// ── DB query ──────────────────────────────────────────────────────────────────
+
+async function queryEntitiesByAlias(normalizedAlias: string): Promise<EntityRow[]> {
+  const result = await pool.query<EntityRow>(
+    `SELECT
+       e.id,
+       e.canonical_name,
+       e.entity_type,
+       e.normalized_name,
+       e.short_summary,
+       e.country_codes,
+       e.language_codes,
+       e.cultural_context_tags,
+       e.era_start,
+       e.era_end,
+       array_agg(DISTINCT a.normalized_alias)                                    AS normalized_aliases,
+       array_agg(DISTINCT a.confidence::text)                                    AS alias_confidences,
+       array_agg(DISTINCT a.alias_type)                                          AS alias_types,
+       COUNT(DISTINCT s.id) FILTER (WHERE s.source_status = 'active')::int       AS active_source_count,
+       array_agg(DISTINCT s.canonical_url)
+         FILTER (WHERE s.source_status = 'active')                               AS source_urls,
+       array_agg(DISTINCT s.tier)
+         FILTER (WHERE s.source_status = 'active')                               AS source_tiers,
+       array_agg(DISTINCT s.title)
+         FILTER (WHERE s.source_status = 'active')                               AS source_titles
+     FROM kinfolk_entities e
+     JOIN kinfolk_entity_aliases a ON a.entity_id = e.id
+     LEFT JOIN kinfolk_entity_source_links esl ON esl.entity_id = e.id
+     LEFT JOIN kinfolk_source_records s ON s.id = esl.source_id
+     WHERE e.resolution_status = 'active'
+       AND a.normalized_alias = $1
+     GROUP BY e.id`,
+    [normalizedAlias],
+  );
+  return result.rows;
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the named entity referenced in the message.
+ * DB-backed: queries kinfolk_entities + kinfolk_entity_aliases + kinfolk_source_records.
+ * Returns a deterministic resolution state — the LLM never decides.
+ */
+export async function resolveEntity(
+  message: string,
+  memberPreferences: ExplicitMemberPreferences | null,
+): Promise<EntityResolutionResult> {
+  const normalizedMsg = normalizeTerm(message);
+  const candidateTerms = extractCandidateTerms(message);
+
+  // Gather all entity candidates by alias lookup
+  const seenEntityIds = new Set<string>();
+  const scoredCandidates: ScoredCandidate[] = [];
+
+  for (const term of candidateTerms) {
+    let rows: EntityRow[];
+    try {
+      rows = await queryEntitiesByAlias(term);
+    } catch {
+      continue; // kinfolk_entities table may not exist yet — degrade gracefully
+    }
+
+    for (const row of rows) {
+      if (seenEntityIds.has(row.id)) continue;
+      seenEntityIds.add(row.id);
+
+      // Find which alias was matched and its confidence/type
+      const aliasIdx = (row.normalized_aliases ?? []).indexOf(term);
+      const matchedAliasConfidence =
+        aliasIdx >= 0 ? parseFloat(String((row.alias_confidences ?? [])[aliasIdx] ?? "0.7")) : 0.7;
+      const matchedAliasType =
+        aliasIdx >= 0 ? (String((row.alias_types ?? [])[aliasIdx] ?? "stage_name")) : "stage_name";
+
+      const scored = scoreCandidate(
+        row,
+        message,
+        normalizedMsg,
+        term,
+        matchedAliasConfidence,
+        matchedAliasType,
+        memberPreferences,
+      );
+
+      // Extract preferencesUsed from basis strings
+      const preferencesUsed = scored.basis
+        .filter((b) => b.includes("Preference") || b.includes("diaspora"))
+        .map(() => "diaspora cultural affinity");
+
+      scoredCandidates.push({
+        entity: row,
+        score: scored.score,
+        basis: scored.basis,
+        ambiguousFirstName: scored.ambiguousFirstName,
+        matchedAlias: term,
+        matchedAliasConfidence,
+        matchedAliasType,
+        preferencesUsed,
+      });
+    }
+  }
+
+  // Sort by score descending
+  scoredCandidates.sort((a, b) => b.score - a.score);
+
+  const [top, second] = scoredCandidates;
+  const hasTop    = top !== undefined;
+  const topScore  = top?.score ?? 0;
+  const nextScore = second?.score ?? 0;
+
+  // ── Resolution decision ────────────────────────────────────────────────────
+
+  // Ambiguous first-name guard: short first-name with low alias confidence and
+  // no explicit qualifier → always needs_clarification regardless of score.
+  if (hasTop && top.ambiguousFirstName && !hasExplicitQualifier(message, top.entity)) {
+    return {
+      state: "needs_clarification",
+      clarificationQuestion: buildDisambiguationQuestion(message, top.entity),
+      candidates: scoredCandidates.slice(0, 3).map((c) => ({
+        canonicalName: c.entity.canonical_name,
+        entityType: c.entity.entity_type,
+      })),
+      preferencesUsed: [],
+      sources: [],
+    };
+  }
+
+  // Standard resolution threshold
+  const isResolved = topScore >= 120 && topScore - nextScore >= 25;
+
+  if (isResolved && top) {
+    const sources = (top.entity.source_urls ?? [])
+      .filter(Boolean)
+      .map((url, i) => ({
+        title: String((top.entity.source_titles ?? [])[i] ?? url),
+        url,
+        tier: ((top.entity.source_tiers ?? [])[i] as "A" | "B" | "C") ?? "B",
+      }));
+
+    return {
+      state: "resolved",
+      entity: {
+        id: top.entity.id,
+        canonicalName: top.entity.canonical_name,
+        entityType: top.entity.entity_type,
+        shortSummary: top.entity.short_summary ?? "",
+        contextTags: top.entity.cultural_context_tags ?? [],
+        countryCodes: top.entity.country_codes ?? [],
+        eraStart: top.entity.era_start,
+        eraEnd: top.entity.era_end,
+        normalizedAliases: top.entity.normalized_aliases ?? [],
+        activeSourceUrls: top.entity.source_urls ?? [],
+        sourceTiers: top.entity.source_tiers ?? [],
+      },
+      score: topScore,
+      basis: top.basis.join("; "),
+      preferencesUsed: top.preferencesUsed,
+      sources,
+    };
+  }
+
+  if (scoredCandidates.length >= 2 && topScore >= 50) {
+    // Two or more materially plausible candidates — ask which one
+    return {
+      state: "needs_clarification",
+      clarificationQuestion: buildMultiCandidateQuestion(message, scoredCandidates.slice(0, 3)),
+      candidates: scoredCandidates.slice(0, 3).map((c) => ({
+        canonicalName: c.entity.canonical_name,
+        entityType: c.entity.entity_type,
+      })),
+      preferencesUsed: [],
+      sources: [],
+    };
+  }
+
+  if (scoredCandidates.length === 1 && topScore < 120) {
+    // One candidate found but insufficient score — ask for qualifier
+    return {
+      state: "needs_clarification",
+      clarificationQuestion: buildLowScoreQuestion(message, top.entity),
+      candidates: [{ canonicalName: top.entity.canonical_name, entityType: top.entity.entity_type }],
+      preferencesUsed: [],
+      sources: [],
+    };
+  }
+
+  if (scoredCandidates.length === 0 && looksLikeNamedEntityQuery(message)) {
+    const isShortName = looksLikeAmbiguousShortName(message);
+    return {
+      state: "needs_clarification",
+      clarificationQuestion: isShortName
+        ? buildNameDisambiguationQuestion(message)
+        : buildUnconfirmedQuestion(message),
+      candidates: [],
+      preferencesUsed: [],
+      sources: [],
+    };
+  }
+
+  // No named entity in this query — not an entity resolution scenario
+  return {
+    state: "unconfirmed",
+    unconfirmedReason: "No active source-backed candidate found for this query.",
+    qualifier: "Try adding a qualifier — year, group name, country, or professional role.",
+    preferencesUsed: [],
+    sources: [],
+  };
+}
+
+// ── Clarification builders ────────────────────────────────────────────────────
+
+function hasExplicitQualifier(message: string, entity: EntityRow): boolean {
+  const qualifiers = [
+    ...entity.cultural_context_tags,
+    ...entity.country_codes.map((cc) => cc),
+    entity.canonical_name,
+  ];
+  const m = message.toLowerCase();
+  return qualifiers.some((q) => m.includes(q.toLowerCase()) && q.toLowerCase() !== entity.entity_type);
+}
+
+function buildDisambiguationQuestion(message: string, entity: EntityRow): string {
+  const extracted = message.trim().match(/^[A-Z][a-z]+/);
+  const name = extracted?.[0] ?? entity.canonical_name;
+  return (
+    `Which "${name}" are you asking about? ` +
+    `Could you add a bit more context — a field (music, film, sports), country, group, show, or song?`
+  );
+}
+
+function buildMultiCandidateQuestion(message: string, candidates: ScoredCandidate[]): string {
+  const options = candidates
+    .map((c) => `"${c.entity.canonical_name}" (${c.entity.entity_type})`)
+    .join(", or ");
+  return `I want to make sure I have the right person or work — are you asking about ${options}?`;
+}
+
+function buildLowScoreQuestion(message: string, entity: EntityRow): string {
+  return (
+    `I have some information about "${entity.canonical_name}" but I want to make sure ` +
+    `I'm answering about the right one. Could you confirm — are you asking about ` +
+    `${entity.short_summary ? entity.short_summary.split(".")[0] + "?" : "this specific " + entity.entity_type + "?"}`
+  );
+}
+
+function buildNameDisambiguationQuestion(message: string): string {
+  const trimmed = message.trim().replace(/^tell me about\s+/i, "");
+  return (
+    `Could you tell me a bit more about which "${trimmed}" you mean? ` +
+    `A field (music, film, sports, business), country, group, show, or song would help me find the right one.`
+  );
+}
+
+function buildUnconfirmedQuestion(message: string): string {
+  return (
+    `I don't have a verified source for that in my knowledge base right now. ` +
+    `Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?`
+  );
+}
+
+// ── Legacy compatibility exports ───────────────────────────────────────────────
+// These are used by the existing kinfolk.ts route handler during the transition
+// from the Phase-1 in-memory registry. They degrade gracefully if the DB tables
+// are not yet available.
+
+export type LegacyResolvedEntity = {
+  canonicalName: string;
+  entityType: string;
+  summary: string;
+  keyFacts: Record<string, string>;
+  culturalContext: string[];
+  isBiographyMode: boolean;
+  sourceNote: string;
+};
 
 /**
  * Build a server-authoritative entity context block for injection into the system prompt.
  * The LLM must not contradict any fact in this block.
  */
-export function buildEntityContextBlock(entities: ResolvedEntity[]): string {
-  if (entities.length === 0) return "";
+export function buildEntityContextBlock(
+  result: EntityResolutionResult | null,
+): string {
+  if (!result || result.state !== "resolved") return "";
+
+  const { entity, sources } = result;
+  const sourceNote =
+    sources.length > 0
+      ? `Sources: ${sources.map((s) => `${s.title} [Tier ${s.tier}] — ${s.url}`).join("; ")}`
+      : "No active source URLs on record.";
 
   const lines = [
-    "⚡ ENTITY RESOLUTION — SERVER-AUTHORITATIVE (verified facts — do not contradict these):",
+    "⚡ ENTITY RESOLUTION — SERVER-AUTHORITATIVE (source-verified facts — do not contradict these):",
+    ``,
+    `• ${entity.canonicalName} [${entity.entityType}]`,
+    `  ${entity.shortSummary}`,
+    `  Context: ${entity.contextTags.join(", ")}`,
+    `  ${sourceNote}`,
+    ``,
+    `RESOLVED_CONTEXT rule: You may only state factual entity, relationship, location,`,
+    `credential, school, and source claims that appear in this RESOLVED_CONTEXT block.`,
+    `Do not create recommendations unless RESOLVED_CONTEXT.localResults is non-empty.`,
   ];
 
-  for (const entity of entities) {
-    const assumptionNote = entity.assumed
-      ? " [resolved from context — state your assumption transparently if ambiguity remains]"
-      : " [explicitly identified from member's own words]";
-
-    lines.push(`\n• ${entity.canonicalName}${assumptionNote}`);
-    lines.push(`  ${entity.summary}`);
-
-    const factsStr = Object.entries(entity.keyFacts)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join(" | ");
-    if (factsStr) lines.push(`  Key facts — ${factsStr}`);
-    lines.push(`  Source: ${entity.sourceNote}`);
-
-    if (entity.isBiographyMode) {
-      lines.push(
-        `  ⚠ BIOGRAPHY MODE ACTIVE: Member asked about this ${entity.entityType}. ` +
-          "Return recommendations: null unless they explicitly ask for a place to visit.",
-      );
-    }
+  const isBiography = ["person", "group", "work"].includes(entity.entityType);
+  if (isBiography) {
+    lines.push(
+      ``,
+      `⚠ BIOGRAPHY MODE: Member asked about a ${entity.entityType}. ` +
+        `Set "recommendations": null unless they explicitly ask for a place to visit.`,
+    );
   }
 
   return lines.join("\n");

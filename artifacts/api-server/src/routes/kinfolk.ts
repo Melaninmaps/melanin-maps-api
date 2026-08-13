@@ -25,7 +25,7 @@ import {
 } from "@workspace/db";
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
-import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, type KinfolkIntent } from "../kinfolk/intent-router";
+import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
 import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -391,7 +391,9 @@ function parseRetryAfterMs(errMsg: string): number | null {
 async function callOpenAIWithRetry(
   messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
   signal: AbortSignal,
-): ReturnType<typeof openai.chat.completions.create> {
+  /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
+  temperature?: number,
+): Promise<Awaited<ReturnType<typeof openai.chat.completions.create>>> {
   // Transient provider conditions that can clear on retry
   const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
   // Connection-reset strings that may appear in error messages without a numeric status
@@ -406,6 +408,7 @@ async function callOpenAIWithRetry(
           max_tokens: NORMAL_MAX_OUTPUT_TOKENS,
           messages,
           response_format: { type: "json_object" },
+          ...(temperature !== undefined ? { temperature } : {}),
         },
         { signal },
       );
@@ -2261,7 +2264,65 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Context resolution — entity disambiguation + biography mode detection ──
     // Runs before buildSystemPrompt so server-authoritative entity facts (e.g. Ryan Coogler
     // directed Sinners) are injected and biography-mode queries suppress business recs.
-    const contextResolution = resolveKinfolkContext(message, destination, intentClass);
+    // v2: DB-backed resolver with 3 output states (resolved/needs_clarification/unconfirmed).
+    // Non-sensitive preference fields only; allowCulturalAffinityRanking must be explicit.
+    const resolverPrefs = prefs ? {
+      allowCulturalAffinityRanking: Boolean((prefs as Record<string,unknown>).allow_cultural_affinity_ranking ?? false),
+      diasporaCountries: (
+        Array.isArray((prefs as Record<string,unknown>).diaspora_countries)
+          ? (prefs as Record<string,unknown>).diaspora_countries
+          : (Array.isArray((prefs as Record<string,unknown>).diasporaCountries)
+              ? (prefs as Record<string,unknown>).diasporaCountries
+              : [])
+      ) as string[],
+      multilingualExpansionMode: (
+        ((prefs as Record<string,unknown>).multilingual_expansion_mode as string | undefined) ?? "ask"
+      ) as "off" | "ask" | "dual",
+    } : null;
+    const contextResolution = await resolveKinfolkContext({
+      message,
+      userId: req.user?.id ?? null,
+      permittedLocation: destination ? { city: destination } : null,
+      preferences: resolverPrefs,
+      intent: intentClass,
+    });
+
+    // ── Deterministic short-circuit (spec §5.2) ─────────────────────────────
+    // needs_clarification + unconfirmed: return directly — the LLM must not choose the state.
+    // Preserve the member's original query in the response so the client can offer retry.
+    if (
+      (contextResolution.responseMode === "needs_clarification" ||
+       contextResolution.responseMode === "unconfirmed") &&
+      contextResolution.shortCircuitReply
+    ) {
+      res.json({
+        sessionId,
+        reply: contextResolution.shortCircuitReply,
+        recommendations: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass,
+        provenanceNote: undefined,
+        sources: contextResolution.sources,
+        resolution: {
+          state: contextResolution.responseMode,
+          clarificationQuestion: contextResolution.clarificationQuestion ?? undefined,
+          preferencesUsed: contextResolution.preferencesUsed,
+        },
+        // Return the original query so the client can preserve it for retry
+        originalQuery: message,
+      });
+      return;
+    }
+
+    // ── Temperature selection (spec §5.4) ────────────────────────────────────
+    // Entity factual answers: ≤ 0.2. Cultural opinion: ≤ 0.5 max. Others: undefined (model default).
+    const resolverTemperature: number | undefined =
+      contextResolution.isCultureOpinion ? 0.5 :
+      contextResolution.responseMode === "resolved" ? 0.2 :
+      undefined;
 
     // ── Education discovery — structured institution results ──────────────────
     // When intent is education_discovery, query education_institutions table and build
@@ -2802,13 +2863,29 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       educationBlock = lines.join("\n");
     }
 
+    // ── RESOLVED_CONTEXT constraint block (spec §5.4) ────────────────────────
+    // When an entity is resolved, the LLM may only state factual claims present in the block.
+    // When in culture-opinion mode, the opinion envelope constraint replaces entity block.
+    const resolvedContextConstraint =
+      contextResolution.responseMode === "resolved" || contextResolution.isCultureOpinion
+        ? [
+            `RESOLVED_CONTEXT CONSTRAINTS (non-negotiable):`,
+            `You may only state factual entity, relationship, location, credential, school,`,
+            `and source claims that appear in the ENTITY RESOLUTION block above.`,
+            `If no ENTITY RESOLUTION block is present, answer from general knowledge but do not fabricate specific credits, dates, or relationships.`,
+            `Do not create recommendations unless local business results are explicitly provided.`,
+            `Do not mention a member preference unless it appears in RESOLVED_CONTEXT.preferencesUsed.`,
+          ].join("\n")
+        : "";
+
     // Prepend intent policy block for any intent that requires special handling.
     // Empty string for low-consequence general knowledge queries (no overhead).
     const systemPrompt = (intentPolicyPrompt
       ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
       : baseSystemPrompt)
       + (entityBlock ? `\n\n${entityBlock}` : "")
-      + (educationBlock ? `\n\n${educationBlock}` : "");
+      + (educationBlock ? `\n\n${educationBlock}` : "")
+      + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
     // Build OpenAI messages (history + new message)
     // 4 turns = 8 messages; hard-cap each message at 400 chars (~100 tokens) to bound history budget
@@ -2841,7 +2918,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const completion = await kinfolkQueue.run(
       req.user?.id ?? "anon",
       estimatedTotal,
-      () => callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000)),
+      () => callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature),
     );
 
     // Track AI pool usage for paid tiers after successful generation
@@ -3032,7 +3109,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : undefined,
       // sources — empty for now; will be populated when evidence retrieval is wired.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
-      sources: [] as { id: string; label: string; title?: string; url?: string }[],
+      sources: (contextResolution.sources.length > 0
+        ? contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url }))
+        : []) as { id: string; label: string; title?: string; url?: string }[],
+      resolution: contextResolution.responseMode !== "no_entity" ? {
+        state: contextResolution.responseMode,
+        entity: contextResolution.entityResolution?.state === "resolved"
+          ? {
+              canonicalName: contextResolution.entityResolution.entity.canonicalName,
+              entityType: contextResolution.entityResolution.entity.entityType,
+              basis: contextResolution.entityResolution.basis,
+            }
+          : undefined,
+        preferencesUsed: contextResolution.preferencesUsed,
+      } : undefined,
       // Cultural identity detected in this message — offer member the chance to save
       // to their roots (diasporaCountries) with explicit consent. Never auto-saved.
       ...(detectedCulture && {

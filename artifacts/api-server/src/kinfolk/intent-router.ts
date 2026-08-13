@@ -274,6 +274,62 @@ export function getEvidencePolicy(intent: KinfolkIntent): EvidencePolicy {
   return POLICIES[intent];
 }
 
+// ─── Query class (spec §5.1) ───────────────────────────────────────────────────
+// A secondary classifier that determines the resolver path WITHIN a Kinfolk turn.
+// Runs AFTER intent classification — existing high-consequence priority is unchanged.
+
+export type QueryClass =
+  | "named_entity"    // query is about a specific person, work, group, or institution
+  | "culture_opinion" // member is asking for a cultural take or comparison
+  | "education_nearby"// colleges, universities, HBCUs near a location
+  | "local_business"  // finding places, services, businesses
+  | "high_consequence"// medical, legal, financial, safety (maps from KinfolkIntent)
+  | "general";        // general knowledge, hobby, lifestyle
+
+/**
+ * Classify the current message into a QueryClass for the context resolver.
+ * Does NOT use an LLM call — deterministic keyword patterns only.
+ * Spec §5.1: existing medical/legal/financial/safety priority remains ABOVE these flags.
+ */
+export function getQueryClass(message: string): QueryClass {
+  const m = message.toLowerCase();
+
+  // Education discovery — colleges, universities, HBCUs
+  if (/\b(college|university|hbcu|campus|school near me|colleges near|universities near)\b/.test(m)) {
+    return "education_nearby";
+  }
+
+  // Cultural opinion — "what do you think", "your take", "who won", "beef" + music/film
+  if (
+    /\b(what do you think|your take|your opinion|who won|who's better|who is better|beef|i think|opinion on)\b/.test(m) &&
+    /\b(kendrick|drake|music|film|movie|artist|rapper|album|song|beef|battle)\b/.test(m)
+  ) {
+    return "culture_opinion";
+  }
+
+  // Named-entity detection — query is about a specific person, work, or group
+  if (
+    /\b(movie|film|director|actor|actress|singer|artist|group|team|who is|who was|tell me about|directed|discography|filmography|biography|member of|starred in)\b/.test(m)
+  ) {
+    return "named_entity";
+  }
+
+  // Short 1-3 word phrase that looks like a proper name (e.g. "Natalie", "Michelle Williams")
+  const trimmed = message.trim();
+  if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(trimmed) && trimmed.split(/\s+/).length <= 3) {
+    return "named_entity";
+  }
+
+  // Local business discovery
+  if (
+    /\b(restaurant|cafe|barber|salon|spa|nightlife|hotel|shop|store|near me|nearby|find me|show me)\b/.test(m)
+  ) {
+    return "local_business";
+  }
+
+  return "general";
+}
+
 /**
  * Build the intent-specific system prompt block that gets prepended to the
  * Kinfolk system prompt. Returns empty string for low-consequence intents

@@ -2768,6 +2768,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["education institutions",   () => ensureEducationInstitutions(log, warn)],
     // ── Philadelphia murals — site_type column, site_contributions table, 55 seed murals ──
     ["philadelphia murals",      () => ensurePhiladelphiaMurals(log, warn)],
+    // ── Kinfolk cultural context v1 — source registry, entity disambiguation, new columns ──
+    ["kinfolk cultural context v1", () => ensureKinfolkCulturalContextV1(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -6887,6 +6889,337 @@ async function ensurePhiladelphiaMurals(
     log(`Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`);
   } catch (err: unknown) {
     warn(`ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Kinfolk Cultural Context v1 ───────────────────────────────────────────────
+// Creates/alters the entity disambiguation schema and seeds the 8 founder-reviewed
+// source records + 8 entities. All operations are idempotent (IF NOT EXISTS / DO NOTHING).
+// MUST run AFTER ensureKinfolkEntityRegistry (which creates the base tables).
+async function ensureKinfolkCulturalContextV1(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── 1. kinfolk_source_records table ────────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_source_records (
+        id              text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        canonical_url   text        NOT NULL UNIQUE,
+        publisher       text        NOT NULL,
+        title           text        NOT NULL,
+        tier            text        NOT NULL CHECK (tier IN ('A','B','C')),
+        claim_scope     text[]      NOT NULL DEFAULT '{}',
+        status          text        NOT NULL DEFAULT 'active',
+        expected_host   text,
+        http_status     integer,
+        last_checked_at timestamptz,
+        notes           text,
+        created_at      timestamptz NOT NULL DEFAULT now(),
+        updated_at      timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ksr_tier   ON kinfolk_source_records(tier)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ksr_status ON kinfolk_source_records(status)`);
+
+    // ── 2. kinfolk_entities — add missing columns (idempotent) ─────────────────
+    for (const [col, def] of [
+      ["normalized_name",   "text"],
+      ["short_summary",     "text"],
+      ["country_codes",     "text[] NOT NULL DEFAULT '{}'"],
+      ["language_codes",    "text[] NOT NULL DEFAULT '{}'"],
+      ["resolution_status", "text NOT NULL DEFAULT 'active'"],
+    ] as const) {
+      await pool.query(`
+        DO $$ BEGIN
+          ALTER TABLE kinfolk_entities ADD COLUMN IF NOT EXISTS ${col} ${def};
+        END $$
+      `);
+    }
+    // Rename 'summary' → 'short_summary' safely if old column still present
+    await pool.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='kinfolk_entities' AND column_name='summary'
+            AND NOT EXISTS (
+              SELECT 1 FROM information_schema.columns
+              WHERE table_name='kinfolk_entities' AND column_name='short_summary'
+            )
+        ) THEN
+          ALTER TABLE kinfolk_entities RENAME COLUMN summary TO short_summary;
+        END IF;
+      END $$
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_resolution_status ON kinfolk_entities(resolution_status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_normalized_name   ON kinfolk_entities(lower(normalized_name))`);
+
+    // ── 3. kinfolk_entity_aliases — add missing columns ────────────────────────
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE kinfolk_entity_aliases ADD COLUMN IF NOT EXISTS normalized_alias text;
+        ALTER TABLE kinfolk_entity_aliases ADD COLUMN IF NOT EXISTS locale text;
+      END $$
+    `);
+
+    // ── 4. Relationship + join tables ──────────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_entity_relationships (
+        id                text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        subject_entity_id text        NOT NULL REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
+        relationship_type text        NOT NULL,
+        object_entity_id  text        REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
+        object_label      text,
+        source_url        text,
+        created_at        timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ker_subject ON kinfolk_entity_relationships(subject_entity_id)`);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_entity_source_links (
+        id         text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        entity_id  text        NOT NULL REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
+        source_id  text        NOT NULL REFERENCES kinfolk_source_records(id) ON DELETE CASCADE,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE(entity_id, source_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_context_candidates (
+        id          text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        session_id  text        NOT NULL,
+        query_hash  text        NOT NULL,
+        entity_id   text        REFERENCES kinfolk_entities(id) ON DELETE SET NULL,
+        score       integer,
+        basis       text[],
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_kcc_session ON kinfolk_context_candidates(session_id)`);
+
+    // ── 5. education_institutions — add optional tracking columns ─────────────
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_id text;
+        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_status text;
+        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS last_verified_at timestamptz;
+      END $$
+    `);
+
+    // ── 6. user_preferences — add cultural affinity + multilingual columns ─────
+    await pool.query(`
+      DO $$ BEGIN
+        ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS allow_cultural_affinity_ranking boolean NOT NULL DEFAULT false;
+        ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS support_priorities text[] NOT NULL DEFAULT '{}';
+        ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS preferred_response_languages text[] NOT NULL DEFAULT '{}';
+        ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS multilingual_expansion_mode text NOT NULL DEFAULT 'ask';
+      END $$
+    `);
+
+    // ── 7. Seed sources ────────────────────────────────────────────────────────
+    type SrcRow = { canonical_url: string; publisher: string; title: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
+    const SOURCES: SrcRow[] = [
+      { canonical_url: "https://www.sinnersmovie.com/toolkit/",        publisher: "Sinners (Official Film)",                                tier: "A", claim_scope: ["film_credit","director_credit","cast_credit","release_year"],        expected_host: "sinnersmovie.com", notes: "Confirms Ryan Coogler as writer/director; Michael B. Jordan as lead" },
+      { canonical_url: "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96", publisher: "HBO Max",               tier: "A", claim_scope: ["film_credit","streaming_availability","release_year"],                 expected_host: "hbomax.com",       notes: "Official streaming page; may redirect" },
+      { canonical_url: "https://www.iamtenitra.com/about",              publisher: "Michelle Williams (Artist Official Site)",              tier: "A", claim_scope: ["biography","group_membership","discography","career"],               expected_host: "iamtenitra.com",   notes: "Confirms Michelle Williams as Destiny's Child member" },
+      { canonical_url: "https://nollywire.com/names/annie-macaulay-idibia/", publisher: "Nollywire",                                      tier: "B", claim_scope: ["biography","nationality","public_profile"],                           expected_host: "nollywire.com",    notes: "Tier B: reputable Nigerian entertainment publication" },
+      { canonical_url: "https://www.instagram.com/annieidibia1/",       publisher: "Annie Macaulay — Public Instagram",                    tier: "C", claim_scope: ["public_identity","social_presence"],                                  expected_host: "instagram.com",    notes: "Tier C verified public creator profile" },
+      { canonical_url: "https://sites.ed.gov/whhbcu/one-hundred-and-five-historically-black-colleges-and-universities/", publisher: "White House Initiative on HBCUs", tier: "A", claim_scope: ["hbcu_designation","institution_name","institution_location"], expected_host: "sites.ed.gov", notes: "Authoritative federal HBCU list" },
+      { canonical_url: "https://www.temple.edu/",                       publisher: "Temple University",                                    tier: "A", claim_scope: ["institution_name","institution_location","academic_offerings"],       expected_host: "temple.edu",       notes: "Confirms Temple as Philadelphia public research university" },
+      { canonical_url: "https://www.allmusic.com/artist/kendrick-lamar-mn0002683148", publisher: "AllMusic",                              tier: "B", claim_scope: ["discography","career_chronology","genre"],                            expected_host: "allmusic.com",     notes: "Tier B: trade publication for cultural-opinion context" },
+      { canonical_url: "https://www.allmusic.com/artist/drake-mn0000783338",          publisher: "AllMusic",                              tier: "B", claim_scope: ["discography","career_chronology","genre"],                            expected_host: "allmusic.com",     notes: "Tier B: trade publication for cultural-opinion context" },
+    ];
+    for (const s of SOURCES) {
+      await pool.query(
+        `INSERT INTO kinfolk_source_records (canonical_url, publisher, title, tier, claim_scope, status, expected_host, notes)
+         VALUES ($1,$2,$3,$4,$5,'active',$6,$7)
+         ON CONFLICT (canonical_url) DO UPDATE SET
+           publisher=EXCLUDED.publisher, title=EXCLUDED.title, tier=EXCLUDED.tier,
+           claim_scope=EXCLUDED.claim_scope, expected_host=EXCLUDED.expected_host,
+           notes=EXCLUDED.notes, updated_at=now()`,
+        [s.canonical_url, s.publisher, s.canonical_url.split("/").slice(0, 4).join("/"), s.tier, s.claim_scope, s.expected_host, s.notes],
+      );
+    }
+
+    // ── 8. Seed entities + aliases + source links ──────────────────────────────
+    type EntSeed = {
+      cn: string; etype: string; nn: string; ss: string; cc: string[]; lc: string[]; tags: string[];
+      eraStart?: number; eraEnd?: number;
+      aliases: { alias: string; aliasType: string; confidence: number; locale?: string }[];
+      sourceUrls: string[];
+    };
+    const ENTITIES: EntSeed[] = [
+      {
+        cn: "Sinners (2025 film)", etype: "work", nn: "sinners 2025 film",
+        ss: "Sinners is a 2025 horror/drama film written and directed by Ryan Coogler, starring Michael B. Jordan. Released by Warner Bros. and available on HBO Max.",
+        cc: ["US"], lc: ["en"], tags: ["black cinema","ryan coogler filmography","michael b jordan","horror","drama","2025 film"], eraStart: 2025,
+        aliases: [
+          { alias: "Sinners", aliasType: "title", confidence: 0.75 },
+          { alias: "Sinners 2025", aliasType: "title", confidence: 0.92 },
+          { alias: "Sinners film", aliasType: "title", confidence: 0.92 },
+          { alias: "Sinners movie", aliasType: "title", confidence: 0.92 },
+        ],
+        sourceUrls: ["https://www.sinnersmovie.com/toolkit/", "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96"],
+      },
+      {
+        cn: "Ryan Coogler", etype: "person", nn: "ryan coogler",
+        ss: "Ryan Coogler is an American film director and screenwriter from Oakland, California. Known for Fruitvale Station (2013), Creed (2015), Black Panther (2018), Black Panther: Wakanda Forever (2022), and Sinners (2025).",
+        cc: ["US"], lc: ["en"], tags: ["black cinema","film director","african american directors","marvel","ryan coogler"], eraStart: 2013,
+        aliases: [
+          { alias: "Ryan Coogler", aliasType: "full_name", confidence: 0.97 },
+          { alias: "Coogler", aliasType: "stage_name", confidence: 0.82 },
+        ],
+        sourceUrls: ["https://www.sinnersmovie.com/toolkit/"],
+      },
+      {
+        cn: "Michelle Williams (singer)", etype: "person", nn: "michelle williams singer",
+        ss: "Michelle Williams is a singer, actress, and Broadway performer born July 23, 1980, in Rockford, Illinois. Best known as a member of Destiny's Child alongside Beyoncé and Kelly Rowland.",
+        cc: ["US"], lc: ["en"], tags: ["destinys child","r&b","gospel","black music history","beyonce","kelly rowland","singer","broadway"], eraStart: 2000,
+        aliases: [
+          { alias: "Michelle Williams", aliasType: "full_name", confidence: 0.62 },
+          { alias: "Michelle Williams from Destiny's Child", aliasType: "group_context", confidence: 0.99 },
+          { alias: "Michelle Williams Destiny's Child", aliasType: "group_context", confidence: 0.99 },
+          { alias: "Michelle Williams singer", aliasType: "group_context", confidence: 0.95 },
+        ],
+        sourceUrls: ["https://www.iamtenitra.com/about"],
+      },
+      {
+        cn: "Destiny's Child", etype: "group", nn: "destinys child",
+        ss: "Destiny's Child was an American R&B girl group formed in Houston, Texas. Classic lineup: Beyoncé Knowles, Kelly Rowland, and Michelle Williams. Hits include Say My Name, Survivor, Bootylicious, Independent Women Part I.",
+        cc: ["US"], lc: ["en"], tags: ["r&b","black music history","houston","girl groups","beyonce","kelly rowland"], eraStart: 1990, eraEnd: 2006,
+        aliases: [
+          { alias: "Destiny's Child", aliasType: "full_name", confidence: 0.97 },
+          { alias: "Destinys Child", aliasType: "full_name", confidence: 0.97 },
+          { alias: "DC", aliasType: "stage_name", confidence: 0.30 },
+        ],
+        sourceUrls: ["https://www.iamtenitra.com/about"],
+      },
+      {
+        cn: "Annie Macaulay-Idibia", etype: "person", nn: "annie macaulay idibia",
+        ss: "Annie Macaulay-Idibia is a Nigerian-born public figure and entertainer married to 2face Idibia. Publicly known in Nigerian entertainment and social media circles.",
+        cc: ["NG"], lc: ["en","yo"], tags: ["nigerian entertainment","nigeria","nollywood adjacent","public figure","annie idibia"], eraStart: 2010,
+        aliases: [
+          { alias: "Annie", aliasType: "stage_name", confidence: 0.35 },
+          { alias: "Annie Macaulay", aliasType: "full_name", confidence: 0.88 },
+          { alias: "Annie Idibia", aliasType: "stage_name", confidence: 0.90 },
+          { alias: "Annie Macaulay-Idibia", aliasType: "full_name", confidence: 0.95 },
+          { alias: "annieidibia1", aliasType: "stage_name", confidence: 0.90 },
+        ],
+        sourceUrls: ["https://nollywire.com/names/annie-macaulay-idibia/", "https://www.instagram.com/annieidibia1/"],
+      },
+      {
+        cn: "Temple University", etype: "institution", nn: "temple university",
+        ss: "Temple University is a public research university in Philadelphia, Pennsylvania. Founded 1884. Located in North Philadelphia. Home to 17 schools and colleges.",
+        cc: ["US"], lc: ["en"], tags: ["philadelphia","pennsylvania","public university","research university","north philadelphia"], eraStart: 1884,
+        aliases: [
+          { alias: "Temple University", aliasType: "full_name", confidence: 0.97 },
+          { alias: "Temple", aliasType: "stage_name", confidence: 0.75 },
+          { alias: "TU", aliasType: "stage_name", confidence: 0.30 },
+          { alias: "Temple Owls", aliasType: "stage_name", confidence: 0.80 },
+        ],
+        sourceUrls: ["https://www.temple.edu/"],
+      },
+      {
+        cn: "Kendrick Lamar", etype: "person", nn: "kendrick lamar",
+        ss: "Kendrick Lamar is an American rapper, songwriter, and record producer from Compton, California. Pulitzer Prize winner (2018). Albums: TPAB, DAMN., Mr. Morale.",
+        cc: ["US"], lc: ["en"], tags: ["hip hop","rap","compton","black music","pulitzer","tde","pglan","music artist"], eraStart: 2011,
+        aliases: [
+          { alias: "Kendrick Lamar", aliasType: "full_name", confidence: 0.97 },
+          { alias: "Kendrick", aliasType: "stage_name", confidence: 0.80 },
+          { alias: "K.Dot", aliasType: "stage_name", confidence: 0.82 },
+        ],
+        sourceUrls: ["https://www.allmusic.com/artist/kendrick-lamar-mn0002683148"],
+      },
+      {
+        cn: "Drake (rapper)", etype: "person", nn: "drake rapper",
+        ss: "Drake (Aubrey Drake Graham) is a Canadian rapper, singer, songwriter, and actor from Toronto, Ontario. One of the best-selling music artists in history.",
+        cc: ["CA"], lc: ["en"], tags: ["hip hop","rap","toronto","ovo","music artist","r&b","pop rap"], eraStart: 2009,
+        aliases: [
+          { alias: "Drake", aliasType: "stage_name", confidence: 0.83 },
+          { alias: "Aubrey Drake Graham", aliasType: "full_name", confidence: 0.95 },
+          { alias: "Champagne Papi", aliasType: "stage_name", confidence: 0.85 },
+        ],
+        sourceUrls: ["https://www.allmusic.com/artist/drake-mn0000783338"],
+      },
+    ];
+
+    let entitiesInserted = 0;
+    let aliasesInserted = 0;
+    let linksInserted = 0;
+
+    for (const e of ENTITIES) {
+      // Upsert entity
+      const eRes = await pool.query(
+        `INSERT INTO kinfolk_entities
+           (canonical_name, entity_type, normalized_name, short_summary,
+            country_codes, language_codes, cultural_context_tags,
+            era_start, era_end, resolution_status, source_status, last_verified_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',now())
+         ON CONFLICT (id) DO NOTHING
+         RETURNING id`,
+        [e.cn, e.etype, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
+      );
+
+      // If nothing was returned (conflict), find the existing row by canonical_name
+      let entityId: string;
+      if (eRes.rows.length > 0) {
+        entityId = eRes.rows[0].id;
+        entitiesInserted++;
+      } else {
+        const existing = await pool.query(
+          `SELECT id FROM kinfolk_entities WHERE lower(canonical_name)=lower($1) LIMIT 1`,
+          [e.cn],
+        );
+        if (existing.rows.length === 0) continue;
+        entityId = existing.rows[0].id;
+        // Update new columns on existing rows
+        await pool.query(
+          `UPDATE kinfolk_entities SET
+             normalized_name=$1, short_summary=$2, country_codes=$3,
+             language_codes=$4, cultural_context_tags=$5, resolution_status='active', updated_at=now()
+           WHERE id=$6`,
+          [e.nn, e.ss, e.cc, e.lc, e.tags, entityId],
+        );
+      }
+
+      // Insert aliases
+      for (const a of e.aliases) {
+        const normAlias = a.alias.toLowerCase().replace(/[''`]/g, "'").replace(/[^a-z0-9\s'.-]/g, "").trim();
+        const res = await pool.query(
+          `INSERT INTO kinfolk_entity_aliases
+             (entity_id, alias, alias_type, confidence, normalized_alias, locale)
+           VALUES ($1,$2,$3,$4,$5,$6)
+           ON CONFLICT DO NOTHING
+           RETURNING id`,
+          [entityId, a.alias, a.aliasType, a.confidence, normAlias, a.locale ?? null],
+        );
+        if (res.rows.length > 0) aliasesInserted++;
+      }
+
+      // Link sources
+      for (const url of e.sourceUrls) {
+        const srcRes = await pool.query(
+          `SELECT id FROM kinfolk_source_records WHERE canonical_url=$1 LIMIT 1`,
+          [url],
+        );
+        if (srcRes.rows.length === 0) continue;
+        const srcId = srcRes.rows[0].id;
+        const linkRes = await pool.query(
+          `INSERT INTO kinfolk_entity_source_links (entity_id, source_id)
+           VALUES ($1,$2)
+           ON CONFLICT (entity_id, source_id) DO NOTHING
+           RETURNING id`,
+          [entityId, srcId],
+        );
+        if (linkRes.rows.length > 0) linksInserted++;
+      }
+    }
+
+    log(`ensureKinfolkCulturalContextV1: ${entitiesInserted} entities, ${aliasesInserted} aliases, ${linksInserted} source links seeded`);
+  } catch (err: unknown) {
+    warn(`ensureKinfolkCulturalContextV1 failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
