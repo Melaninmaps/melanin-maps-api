@@ -134,7 +134,7 @@ export default function ForBusinessOwners() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <Button onClick={scrollToForm} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Apply for Early Access</Button>
+            <Button onClick={scrollToForm} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Claim Your Free Listing</Button>
             <Button variant="outline" onClick={scrollToHow} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
           </div>
 
@@ -148,8 +148,8 @@ export default function ForBusinessOwners() {
               <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Growing Community</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">94/100</div>
-              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Avg. Confidence Score</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">Free</div>
+              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">No Cost to List</div>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function ForBusinessOwners() {
 
           <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#CA922B]/30 before:to-transparent">
             {[
-              { t: "Apply for Early Access", d: "All minority-owned businesses are welcome — no matter where you are in your journey. Submit your listing and, when you're ready, apply for our special Verified Badge to build even more community trust." },
+              { t: "List Your Business Free", d: "Any qualifying minority-owned business can claim a listing at no cost — no waitlist, no upfront fee. Submit your information and your business will appear on the platform. Listing is separate from community verification: your free listing comes first, and you can pursue a Verified Badge when you are ready." },
               { t: "Build Your Profile", d: "Add photos, hours, menu, services, and your story. Make your listing shine." },
               { t: "Get Discovered", d: "Members searching your city and category will find you first — with your Community Confidence Score front and center." },
               { t: "Grow With the Community", d: "Respond to reviews, engage with members, and track your visibility with the business analytics dashboard." }
@@ -202,10 +202,10 @@ export default function ForBusinessOwners() {
         <div className="container mx-auto px-4 max-w-2xl">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
-              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">APPLY NOW</span>
+              <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">FREE TO LIST</span>
             </div>
             <h2 className="text-4xl font-serif font-bold text-[#3A1F0E] mb-4">Submit Your Business</h2>
-            <p className="text-[#3A1F0E]/70 text-lg">Tell us about your business and we'll be in touch with next steps. Early access spots are limited.</p>
+            <p className="text-[#3A1F0E]/70 text-lg">Tell us about your business. Listing is free — no upfront cost, no waitlist. We'll review your submission and confirm your listing is live.</p>
           </div>
 
           {submitted ? (

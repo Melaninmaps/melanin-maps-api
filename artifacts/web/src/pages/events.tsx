@@ -1,13 +1,30 @@
 import { useListEvents, useRsvpEvent, useGetCurrentAuthUser, type Event as ApiEvent } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar as CalendarIcon, MapPin, Users, Ticket, ArrowUpRight } from "lucide-react";
+import { Calendar as CalendarIcon, MapPin, Users, Ticket, ArrowUpRight, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+
+// Common launch cities for quick selection
+const QUICK_CITIES = [
+  "Philadelphia", "Washington", "Atlanta", "New Orleans",
+  "Houston", "Richmond", "Charlotte", "Birmingham",
+];
 
 export default function Events() {
   const { data: auth } = useGetCurrentAuthUser();
-  const { data: eventsData, isLoading } = useListEvents();
+  const homeCity = (auth?.user as any)?.homeCity as string | undefined;
+
+  // City filter — pre-populated from member's home city once auth loads
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  useEffect(() => {
+    if (homeCity && !selectedCity) setSelectedCity(homeCity);
+  }, [homeCity]);
+
+  const { data: eventsData, isLoading } = useListEvents(
+    selectedCity.trim() ? { city: selectedCity.trim() } : undefined,
+  );
   // API returns { events: [...] } at runtime but TS type says Event[] — handle both
   const events = (Array.isArray(eventsData) ? eventsData : (eventsData as unknown as { events: ApiEvent[] })?.events) ?? [];
   const rsvpEvent = useRsvpEvent();
@@ -36,16 +53,61 @@ export default function Events() {
         <div className="container mx-auto px-4 md:px-6 relative z-10 flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 mb-6">
             <CalendarIcon className="w-3 h-3 text-[#CA922B]" />
-            <span className="text-[10px] font-bold tracking-widest text-[#F5EBD8] uppercase">Gather & Connect</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#F5EBD8] uppercase">Gather &amp; Connect</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Community Events</h1>
-          <p className="text-[#F5EBD8]/80 text-lg max-w-2xl font-light">
+          <p className="text-[#F5EBD8]/80 text-lg max-w-2xl font-light mb-8">
             Discover networking sessions, cultural festivals, pop-ups, and celebrations in your area.
           </p>
+
+          {/* City filter */}
+          <div className="w-full max-w-md">
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2">
+              <MapPin className="w-4 h-4 text-[#CA922B] shrink-0" />
+              <input
+                type="text"
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                placeholder="Filter by city…"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-sm"
+              />
+              {selectedCity && (
+                <button onClick={() => setSelectedCity("")} className="text-white/50 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 mt-3">
+              {QUICK_CITIES.map((city) => (
+                <button
+                  key={city}
+                  onClick={() => setSelectedCity(city === selectedCity ? "" : city)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                    selectedCity === city
+                      ? "bg-[#CA922B] border-[#CA922B] text-white"
+                      : "border-white/30 text-white/70 hover:border-[#CA922B] hover:text-white"
+                  }`}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       <div className="container mx-auto px-4 md:px-6 py-12">
+        {/* Result count */}
+        {!isLoading && (
+          <p className="text-sm text-[#3A1F0E]/50 mb-6">
+            {events.length > 0
+              ? `${events.length} upcoming event${events.length === 1 ? "" : "s"}${selectedCity ? ` in ${selectedCity}` : ""}`
+              : selectedCity
+              ? `No upcoming events found in ${selectedCity}`
+              : "No upcoming events found"}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
@@ -61,7 +123,21 @@ export default function Events() {
           ) : events?.length === 0 ? (
             <div className="col-span-full py-20 text-center bg-white rounded-2xl border border-[#2B1507]/5">
               <CalendarIcon className="mx-auto text-[#2B1507]/20 w-16 h-16 mb-4" />
-              <p className="text-xl text-[#3A1F0E]">No upcoming events found.</p>
+              <p className="text-xl text-[#3A1F0E] mb-2">
+                {selectedCity ? `No upcoming events in ${selectedCity} yet` : "No upcoming events found"}
+              </p>
+              {selectedCity && (
+                <div className="mt-4 flex flex-col items-center gap-3">
+                  <p className="text-sm text-[#3A1F0E]/60">Check back soon, or browse events across all cities.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedCity("")}
+                    className="rounded-full border-[#CA922B] text-[#CA922B]"
+                  >
+                    Show all cities
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             events?.map((event) => (
@@ -82,7 +158,7 @@ export default function Events() {
                     return <img src={src} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />;
                   })()}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/80 to-transparent opacity-60" />
-                  
+
                   {/* Badges */}
                   <div className="absolute top-4 left-4 flex gap-2">
                     {event.isFree ? (
@@ -113,11 +189,11 @@ export default function Events() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Content */}
                 <div className="p-6 flex-1 flex flex-col">
                   <h3 className="font-serif font-bold text-xl text-[#3A1F0E] mb-3 line-clamp-2 leading-tight">{event.title}</h3>
-                  
+
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/70">
                       <MapPin size={14} className="text-[#CA922B] shrink-0" />
@@ -126,21 +202,21 @@ export default function Events() {
                     {event.startDate && (
                       <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/70">
                         <CalendarIcon size={14} className="text-[#CA922B] shrink-0" />
-                        <span>{new Date(event.startDate).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit'})}</span>
+                        <span>{new Date(event.startDate).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
                       </div>
                     )}
                   </div>
-                  
+
                   <p className="text-sm text-[#3A1F0E]/60 line-clamp-2 leading-relaxed mb-6 font-light">
                     {event.description || "Join us for this exciting community event."}
                   </p>
-                  
+
                   <div className="mt-auto pt-4 border-t border-[#2B1507]/10 flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider">
                       <Users size={14} className="text-[#CA922B]" />
                       <span>{(event as any).attendees ?? event.rsvpCount ?? 0} Attending</span>
                     </div>
-                    <Button 
+                    <Button
                       onClick={() => handleRsvp(event.id)}
                       className="rounded-full bg-[#2B1507] hover:bg-[#4a260d] text-white px-5 h-9 text-xs flex items-center gap-1 transition-all"
                     >
