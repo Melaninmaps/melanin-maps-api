@@ -17,7 +17,9 @@
 
 import { pool } from "@workspace/db";
 
-const GOOGLE_PLACES_BASE = "https://maps.googleapis.com/maps/api";
+// Places API (New) — https://places.googleapis.com/v1/
+// Uses X-Goog-Api-Key header + X-Goog-FieldMask instead of legacy ?key= params
+const PLACES_NEW_BASE = "https://places.googleapis.com/v1";
 
 export type EnrichmentConfidence = "HIGH" | "MEDIUM" | "LOW" | "NONE";
 
@@ -68,37 +70,51 @@ const apiKey = () => process.env.GOOGLE_PLACES_SERVER_KEY ?? process.env.GOOGLE_
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Search Google Places by text query.
+ * Search Google Places (New API) by text query.
+ * POST https://places.googleapis.com/v1/places:searchText
  * Returns the top result or null if nothing found.
  */
 export async function searchPlaces(query: string): Promise<PlaceSearchResult | null> {
   const key = apiKey();
   if (!key) return null;
 
-  const url = `${GOOGLE_PLACES_BASE}/place/textsearch/json?query=${encodeURIComponent(query)}&key=${key}`;
+  const fieldMask = "places.id,places.displayName,places.formattedAddress,places.location,places.businessStatus,places.rating";
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(`${PLACES_NEW_BASE}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": fieldMask,
+      },
+      body: JSON.stringify({ textQuery: query }),
+    });
     const data = await resp.json() as {
-      status: string;
-      results: Array<{
-        place_id: string;
-        name: string;
-        formatted_address: string;
-        geometry: { location: { lat: number; lng: number } };
-        business_status?: string;
+      places?: Array<{
+        id: string;
+        displayName?: { text: string };
+        formattedAddress?: string;
+        location?: { latitude: number; longitude: number };
+        businessStatus?: string;
         rating?: number;
       }>;
+      error?: { message: string };
     };
 
-    if (data.status !== "OK" || !data.results.length) return null;
-    const r = data.results[0];
+    if (data.error) {
+      console.warn("[places-new] searchText error:", data.error.message);
+      return null;
+    }
+    if (!data.places?.length) return null;
+
+    const r = data.places[0];
     return {
-      placeId: r.place_id,
-      name: r.name,
-      formattedAddress: r.formatted_address,
-      lat: r.geometry.location.lat,
-      lng: r.geometry.location.lng,
-      businessStatus: r.business_status ?? "UNKNOWN",
+      placeId: r.id,
+      name: r.displayName?.text ?? "",
+      formattedAddress: r.formattedAddress ?? "",
+      lat: r.location?.latitude ?? 0,
+      lng: r.location?.longitude ?? 0,
+      businessStatus: r.businessStatus ?? "UNKNOWN",
       rating: r.rating,
     };
   } catch {
@@ -107,42 +123,59 @@ export async function searchPlaces(query: string): Promise<PlaceSearchResult | n
 }
 
 /**
- * Fetch full details for a known place_id.
+ * Fetch full details for a known place_id via Places API (New).
+ * GET https://places.googleapis.com/v1/places/{place_id}
  */
 export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   const key = apiKey();
   if (!key) return null;
 
-  const fields = "name,formatted_address,formatted_phone_number,website,opening_hours,price_level,business_status,geometry";
-  const url = `${GOOGLE_PLACES_BASE}/place/details/json?place_id=${placeId}&fields=${fields}&key=${key}`;
+  const fieldMask = "displayName,formattedAddress,nationalPhoneNumber,websiteUri,regularOpeningHours,priceLevel,businessStatus,location";
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(`${PLACES_NEW_BASE}/places/${encodeURIComponent(placeId)}`, {
+      method: "GET",
+      headers: {
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": fieldMask,
+      },
+    });
     const data = await resp.json() as {
-      status: string;
-      result: {
-        name: string;
-        formatted_address: string;
-        formatted_phone_number?: string;
-        website?: string;
-        opening_hours?: { weekday_text: string[] };
-        price_level?: number;
-        business_status?: string;
-        geometry: { location: { lat: number; lng: number } };
-      };
+      displayName?: { text: string };
+      formattedAddress?: string;
+      nationalPhoneNumber?: string;
+      websiteUri?: string;
+      regularOpeningHours?: { weekdayDescriptions: string[] };
+      priceLevel?: string; // e.g. "PRICE_LEVEL_MODERATE"
+      businessStatus?: string;
+      location?: { latitude: number; longitude: number };
+      error?: { message: string };
     };
 
-    if (data.status !== "OK" || !data.result) return null;
-    const r = data.result;
+    if (data.error) {
+      console.warn("[places-new] getDetails error:", data.error.message);
+      return null;
+    }
+    if (!data.location) return null;
+
+    // Map priceLevel string to 0-4 number
+    const priceLevelMap: Record<string, number> = {
+      PRICE_LEVEL_FREE: 0,
+      PRICE_LEVEL_INEXPENSIVE: 1,
+      PRICE_LEVEL_MODERATE: 2,
+      PRICE_LEVEL_EXPENSIVE: 3,
+      PRICE_LEVEL_VERY_EXPENSIVE: 4,
+    };
+
     return {
-      name: r.name,
-      formattedAddress: r.formatted_address,
-      phone: r.formatted_phone_number,
-      website: r.website,
-      hours: r.opening_hours?.weekday_text,
-      priceLevel: r.price_level,
-      businessStatus: r.business_status ?? "UNKNOWN",
-      lat: r.geometry.location.lat,
-      lng: r.geometry.location.lng,
+      name: data.displayName?.text ?? "",
+      formattedAddress: data.formattedAddress ?? "",
+      phone: data.nationalPhoneNumber,
+      website: data.websiteUri,
+      hours: data.regularOpeningHours?.weekdayDescriptions,
+      priceLevel: data.priceLevel ? priceLevelMap[data.priceLevel] : undefined,
+      businessStatus: data.businessStatus ?? "UNKNOWN",
+      lat: data.location.latitude,
+      lng: data.location.longitude,
     };
   } catch {
     return null;
