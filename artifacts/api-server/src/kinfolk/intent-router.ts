@@ -24,6 +24,7 @@ export type KinfolkIntent =
   | "general_knowledge"      // math, trivia, stable facts — answer from training
   | "culture_entertainment"  // music, sports, film, food culture — conversational
   | "business_discovery"     // finding places, services, businesses, travel
+  | "education_discovery"    // colleges, universities, HBCUs, degree programs, schools near me
   | "hobby_lifestyle"        // vintage cars, cooking, gardening, gaming
   | "medical_health"         // symptoms, conditions, medications, procedures
   | "legal_regulated"        // legal rights, contracts, court, immigration
@@ -162,6 +163,21 @@ const POLICIES: Record<KinfolkIntent, EvidencePolicy> = {
       "Direct the user to official or authoritative sources for current verification.",
     provenanceLabel: "This information may have changed — verify with official sources before acting",
   },
+  education_discovery: {
+    intent: "education_discovery",
+    consequence: "low",
+    citationMode: "recommended",
+    blockCommunityAsProof: false,
+    allowLibraryInterests: true,
+    flagCurrencyRisk: true,
+    toneOverride:
+      "Answer with specific institution names, locations, and characteristics when available. " +
+      "Distinguish clearly between 'nearby' and 'worth exploring further away'. " +
+      "HBCUs should be presented as an enrichment option when relevant — not as a replacement for local schools. " +
+      "Admissions requirements, tuition, and program availability change frequently: direct the user to verify " +
+      "directly with the institution. Never invent admissions data.",
+    provenanceLabel: "Education information — verify current admissions, tuition, and program details directly with each institution",
+  },
 };
 
 // ─── Classification signals ───────────────────────────────────────────────────
@@ -199,7 +215,14 @@ const HOBBY_SIGNALS = [
 ];
 
 const BUSINESS_DISCOVERY_SIGNALS = [
-  /\b(restaurant|cafe|barber|salon|spa|beauty|hair|nails|nail|braids|braiding|locs|natural hair|massage|chiropractor|gym|fitness|studio|grocery|market|pharmacy|bakery|food|dinner|lunch|breakfast|brunch|bar|lounge|club|nightlife|hotel|motel|airbnb|shop|store|boutique|boutiques|retail|clothes|clothing|shoes|jewelry|book store|flower|florist|auto|car wash|mechanic|dentist|doctor|clinic|school|daycare|church|mosque|temple|service|lawyer|accountant|contractor|realtor|photographer|caterer|event|venue|spot|place|spots|places|near me|nearby|in \w+|around \w+)\b/i,
+  /\b(restaurant|cafe|barber|salon|spa|beauty|hair|nails|nail|braids|braiding|locs|natural hair|massage|chiropractor|gym|fitness|studio|grocery|market|pharmacy|bakery|food|dinner|lunch|breakfast|brunch|bar|lounge|club|nightlife|hotel|motel|airbnb|shop|store|boutique|boutiques|retail|clothes|clothing|shoes|jewelry|book store|flower|florist|auto|car wash|mechanic|dentist|doctor|clinic|daycare|church|mosque|temple|service|lawyer|accountant|contractor|realtor|photographer|caterer|event|venue|spot|place|spots|places|near me|nearby|in \w+|around \w+)\b/i,
+];
+
+// Education discovery — colleges, universities, HBCUs, degree programs, schools.
+// Must be checked BEFORE business_discovery so "colleges near me" doesn't route to
+// business_discovery via the "near me" pattern in BUSINESS_DISCOVERY_SIGNALS.
+const EDUCATION_SIGNALS = [
+  /\b(college|colleges|university|universities|campus|hbcu|historically black college|community college|junior college|trade school|vocational school|degree|major|undergraduate|graduate|grad school|admissions|enrollment|tuition|financial aid|fafsa|scholarship|apply to college|transfer credits|gpa requirement|sat score|act score|colleges near|universities near|schools near me|what schools|what colleges|school options|study near)\b/i,
 ];
 
 // ─── Classifier ───────────────────────────────────────────────────────────────
@@ -228,6 +251,10 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   // from Philadelphia") route to culture_entertainment rather than falling through to
   // hasDestination → business_discovery.
   if (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(msg))) return "culture_entertainment";
+
+  // Education discovery — must precede business_discovery so "colleges near me" or
+  // "what HBCUs are in Pennsylvania" don't route via the "near me" business pattern.
+  if (EDUCATION_SIGNALS.some((re) => re.test(msg))) return "education_discovery";
 
   // Business discovery (strong MWM catalog signal)
   if (BUSINESS_DISCOVERY_SIGNALS.some((re) => re.test(msg)) || hasDestination) return "business_discovery";

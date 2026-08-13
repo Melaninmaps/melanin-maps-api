@@ -26,6 +26,7 @@ import {
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, type KinfolkIntent } from "../kinfolk/intent-router";
+import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 import {
@@ -1550,7 +1551,7 @@ A medical question gets a calm, precise answer even if the voice mode is casual.
   // Omitting from medical/legal/safety/knowledge intents saves ~300 tokens.
   const SMART_PROMO_INTENTS = new Set([
     "business_discovery", "hobby_lifestyle", "culture_entertainment",
-    "current_information", "general_knowledge",
+    "education_discovery", "current_information", "general_knowledge",
   ]);
   const showSmartPromo = !opts.intentClass || SMART_PROMO_INTENTS.has(opts.intentClass) || !!destination;
   const smartPromoSection = showSmartPromo ? `
@@ -1707,6 +1708,7 @@ Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON)
 
 Set "smartPromotion": null when no confident cross-sell clearly applies. Only surface it when it genuinely fits what they're doing right now.
 If you're asking a question or don't have enough info yet, set "recommendations" to null.
+BIOGRAPHY RULE — NON-NEGOTIABLE: If the member is asking about a named person, musical group, film, album, or creative work (biography, discography, filmography, group membership, director credits) and is NOT asking to find a place or service, set "recommendations": null. Never attach city or business recommendations to a biographical or cultural-knowledge query. Examples where recommendations MUST be null: "Who directed Sinners?", "Tell me about Michelle Williams from Destiny's Child", "What albums did Destiny's Child release?". Example where recommendations MAY apply: "Find me a restaurant in Philadelphia".
 "followUpSuggestions" should always be 3 short, natural things the user might say next (e.g., "More food spots", "What's the nightlife like?", "Tell me about the neighborhoods").
 Include 4-6 businesses, 2-3 neighborhoods, 3-4 events, 3-4 safety tips, and 3-4 local insights.
 BUSINESSES ARRAY — PLATFORM ONLY: The "businesses" array MUST ONLY contain businesses from the MWM PLATFORM BUSINESSES list above. Do NOT invent, hallucinate, or include any business not explicitly listed in the MWM PLATFORM BUSINESSES section. When MWM PLATFORM BUSINESSES are listed above, populate the businesses array with the relevant ones and reference them by name in your reply. Only say "Mapping With Melanin doesn't have a listing for [city]" when the MWM PLATFORM BUSINESSES section above is COMPLETELY EMPTY. Never populate the businesses array with invented or hallucinated names.
@@ -2255,6 +2257,49 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
 
+    // ── Context resolution — entity disambiguation + biography mode detection ──
+    // Runs before buildSystemPrompt so server-authoritative entity facts (e.g. Ryan Coogler
+    // directed Sinners) are injected and biography-mode queries suppress business recs.
+    const contextResolution = resolveKinfolkContext(message, destination, intentClass);
+
+    // ── Education discovery — structured institution results ──────────────────
+    // When intent is education_discovery, query education_institutions table and build
+    // a server-authoritative block so the LLM uses real school/HBCU names + sources.
+    let educationResults: Array<{
+      id: string; name: string; institution_type: string; official_url: string | null;
+      city: string; state: string; hbcu_status: boolean; program_tags: string | null;
+    }> = [];
+    let educationQueryCity: string | null = destination;
+
+    if (intentClass === "education_discovery") {
+      try {
+        // Fall back to saved home city if no destination was extracted from the message
+        if (!educationQueryCity && req.user?.id) {
+          const homeRes = await pool.query<{ home_city: string | null }>(
+            `SELECT home_city FROM users WHERE id = $1 LIMIT 1`,
+            [req.user.id],
+          );
+          educationQueryCity = homeRes.rows[0]?.home_city ?? null;
+        }
+        if (educationQueryCity) {
+          const eduRes = await pool.query<{
+            id: string; name: string; institution_type: string; official_url: string | null;
+            city: string; state: string; hbcu_status: boolean; program_tags: string | null;
+          }>(
+            `SELECT id, name, institution_type, official_url, city, state,
+                    hbcu_status, program_tags
+             FROM education_institutions
+             WHERE (lower(city) LIKE lower($1) OR lower(state) LIKE lower($2))
+               AND is_active = true
+             ORDER BY hbcu_status DESC, name ASC
+             LIMIT 20`,
+            [`%${educationQueryCity}%`, `%${educationQueryCity}%`],
+          );
+          educationResults = eduRes.rows;
+        }
+      } catch { /* education query failed — LLM will handle without structured data */ }
+    }
+
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
@@ -2723,11 +2768,46 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
     }) + ownerBusinessContext;
 
+    // Build server-authoritative supplemental blocks from context resolution
+    const entityBlock = contextResolution.entityContextBlock;
+
+    // Build education block when structured institution data is available
+    let educationBlock = "";
+    if (educationResults.length > 0) {
+      const nearby = educationResults.filter((r) => !r.hbcu_status);
+      const hbcus = educationResults.filter((r) => r.hbcu_status);
+      const lines = [`⚡ EDUCATION DISCOVERY — SERVER-AUTHORITATIVE for ${educationQueryCity ?? "this area"}:`];
+      if (nearby.length > 0) {
+        lines.push("\nNEARBY INSTITUTIONS (use these exact names):");
+        nearby.slice(0, 6).forEach((r) => {
+          const url = r.official_url ? ` — ${r.official_url}` : "";
+          const tags = r.program_tags ? ` [${r.program_tags}]` : "";
+          lines.push(`• ${r.name} — ${r.city}, ${r.state} (${r.institution_type})${tags}${url}`);
+        });
+      }
+      if (hbcus.length > 0) {
+        lines.push("\nHBCU OPTIONS TO EXPLORE (label these as 'worth exploring' — not necessarily nearby):");
+        hbcus.slice(0, 6).forEach((r) => {
+          const url = r.official_url ? ` — ${r.official_url}` : "";
+          lines.push(`• ${r.name} — ${r.city}, ${r.state}${url}`);
+        });
+      }
+      lines.push(
+        "\nRULE: Use these institution names in your reply. Clearly distinguish 'nearby' " +
+        "from 'worth exploring further away'. Admissions requirements, tuition, and program " +
+        "availability change — always direct the user to verify directly with the institution. " +
+        "If no location was available, ask the user which city or ZIP code to search."
+      );
+      educationBlock = lines.join("\n");
+    }
+
     // Prepend intent policy block for any intent that requires special handling.
     // Empty string for low-consequence general knowledge queries (no overhead).
-    const systemPrompt = intentPolicyPrompt
+    const systemPrompt = (intentPolicyPrompt
       ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
-      : baseSystemPrompt;
+      : baseSystemPrompt)
+      + (entityBlock ? `\n\n${entityBlock}` : "")
+      + (educationBlock ? `\n\n${educationBlock}` : "");
 
     // Build OpenAI messages (history + new message)
     // 4 turns = 8 messages; hard-cap each message at 400 chars (~100 tokens) to bound history budget
@@ -2808,6 +2888,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (
       recommendations === null &&
       destination &&
+      !contextResolution.suppressBusinessRecommendations &&
       (intentClass === "culture_entertainment" || intentClass === "business_discovery")
     ) {
       try {

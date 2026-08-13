@@ -2762,6 +2762,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["library link health", () => ensureLibraryLinkHealth(log, warn)],
     // ── Business claims v2 — conflict report + unique index attempt ─────────
     ["business claims v2 indexes", () => ensureBusinessClaimsV2ConflictReport(log, warn)],
+    // ── Kinfolk entity registry tables — kinfolk_entities + kinfolk_entity_aliases ──
+    ["kinfolk entity registry", () => ensureKinfolkEntityRegistry(log, warn)],
+    // ── Education institutions — colleges, universities, HBCUs + seed data ──
+    ["education institutions",   () => ensureEducationInstitutions(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -6454,5 +6458,130 @@ async function ensureDiscoverabilityCoordinatesV1(
     );
   } catch (err: unknown) {
     warn(`ensureDiscoverabilityCoordinatesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Kinfolk entity registry tables ────────────────────────────────────────────
+// Phase 1 schema for kinfolk_entities + kinfolk_entity_aliases. The in-memory
+// entity-resolver.ts handles resolution; these tables support Phase 2 DB-backed
+// entity management. Created additive — never alters existing rows.
+async function ensureKinfolkEntityRegistry(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_entities (
+        id                   text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        canonical_name       text        NOT NULL,
+        entity_type          text        NOT NULL,
+        summary              text,
+        era_start            integer,
+        era_end              integer,
+        cultural_context_tags text[],
+        source_status        text        NOT NULL DEFAULT 'active',
+        last_verified_at     timestamptz DEFAULT now(),
+        created_at           timestamptz NOT NULL DEFAULT now(),
+        updated_at           timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_entity_aliases (
+        id          text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        entity_id   text        NOT NULL REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
+        alias       text        NOT NULL,
+        alias_type  text        NOT NULL,
+        confidence  numeric(3,2) NOT NULL DEFAULT 0.90,
+        created_at  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_aliases_entity ON kinfolk_entity_aliases(entity_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_ke_aliases_alias  ON kinfolk_entity_aliases(lower(alias))`);
+    log("ensureKinfolkEntityRegistry: kinfolk_entities + kinfolk_entity_aliases ready");
+  } catch (err: unknown) {
+    warn(`ensureKinfolkEntityRegistry failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Education institutions + HBCU seed data ───────────────────────────────────
+// Creates education_institutions table and seeds Philadelphia-area schools + PA HBCUs
+// + top national HBCUs. All INSERT ON CONFLICT DO NOTHING — safe to re-run every boot.
+// HBCU source: White House Initiative on HBCUs (sites.ed.gov/whhbcu/...)
+async function ensureEducationInstitutions(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS education_institutions (
+        id                          text        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name                        text        NOT NULL,
+        institution_type            text        NOT NULL,
+        official_url                text,
+        city                        text        NOT NULL,
+        state                       text        NOT NULL,
+        country                     text        NOT NULL DEFAULT 'USA',
+        latitude                    numeric(9,6),
+        longitude                   numeric(9,6),
+        hbcu_status                 boolean     NOT NULL DEFAULT false,
+        minority_serving_designations text[],
+        program_tags                text,
+        accreditation_source_url    text,
+        source_status               text        NOT NULL DEFAULT 'active',
+        last_verified_at            timestamptz DEFAULT now(),
+        is_active                   boolean     NOT NULL DEFAULT true,
+        created_at                  timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_city  ON education_institutions(lower(city))`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_state ON education_institutions(lower(state))`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_edu_hbcu  ON education_institutions(hbcu_status) WHERE hbcu_status = true`);
+
+    type SeedRow = { name: string; type: string; url: string; city: string; state: string; lat: number; lng: number; hbcu: boolean; tags: string };
+    const seeds: SeedRow[] = [
+      // Philadelphia area
+      { name: "Temple University",                    type: "university",            url: "https://www.temple.edu",        city: "Philadelphia",   state: "PA", lat: 39.9811, lng: -75.1543, hbcu: false, tags: "business, law, medicine, education, engineering, communications" },
+      { name: "University of Pennsylvania",           type: "university",            url: "https://www.upenn.edu",         city: "Philadelphia",   state: "PA", lat: 39.9522, lng: -75.1932, hbcu: false, tags: "medicine, law, business (Wharton), nursing, engineering" },
+      { name: "Drexel University",                    type: "university",            url: "https://www.drexel.edu",        city: "Philadelphia",   state: "PA", lat: 39.9566, lng: -75.1875, hbcu: false, tags: "engineering, business, nursing, computer science" },
+      { name: "Community College of Philadelphia",    type: "community_college",     url: "https://www.ccp.edu",           city: "Philadelphia",   state: "PA", lat: 39.9583, lng: -75.1613, hbcu: false, tags: "associates degrees, workforce training, transfer pathways" },
+      { name: "La Salle University",                  type: "university",            url: "https://www.lasalle.edu",       city: "Philadelphia",   state: "PA", lat: 40.0333, lng: -75.1667, hbcu: false, tags: "business, nursing, education, liberal arts" },
+      { name: "Saint Joseph's University",            type: "university",            url: "https://www.sju.edu",           city: "Philadelphia",   state: "PA", lat: 40.0094, lng: -75.2313, hbcu: false, tags: "business, education, health sciences, liberal arts" },
+      // PA HBCUs
+      { name: "Cheyney University of Pennsylvania",   type: "university",            url: "https://www.cheyney.edu",       city: "Cheyney",        state: "PA", lat: 39.9359, lng: -75.5227, hbcu: true,  tags: "business, education, social work, liberal arts" },
+      { name: "Lincoln University",                   type: "university",            url: "https://www.lincoln.edu",       city: "Lincoln University", state: "PA", lat: 39.8070, lng: -75.9278, hbcu: true, tags: "business, education, humanities, sciences, nursing" },
+      // National HBCUs
+      { name: "Howard University",                    type: "university",            url: "https://home.howard.edu",       city: "Washington",     state: "DC", lat: 38.9218, lng: -77.0200, hbcu: true,  tags: "medicine, law, business, engineering, fine arts, journalism" },
+      { name: "Spelman College",                      type: "liberal_arts_college",  url: "https://www.spelman.edu",       city: "Atlanta",        state: "GA", lat: 33.7456, lng: -84.4110, hbcu: true,  tags: "STEM, humanities, social sciences, public health (women's college)" },
+      { name: "Morehouse College",                    type: "liberal_arts_college",  url: "https://morehouse.edu",         city: "Atlanta",        state: "GA", lat: 33.7480, lng: -84.4148, hbcu: true,  tags: "business, education, humanities, sciences (men's college)" },
+      { name: "Hampton University",                   type: "university",            url: "https://home.hamptonu.edu",     city: "Hampton",        state: "VA", lat: 37.0206, lng: -76.3428, hbcu: true,  tags: "business, engineering, nursing, education, architecture" },
+      { name: "Clark Atlanta University",             type: "university",            url: "https://www.cau.edu",           city: "Atlanta",        state: "GA", lat: 33.7522, lng: -84.4144, hbcu: true,  tags: "business, education, social work, arts & sciences" },
+      { name: "Florida A&M University",               type: "university",            url: "https://www.famu.edu",          city: "Tallahassee",    state: "FL", lat: 30.4198, lng: -84.2870, hbcu: true,  tags: "pharmacy, engineering, business, law, journalism, agriculture" },
+      { name: "North Carolina A&T State University",  type: "university",            url: "https://www.ncat.edu",          city: "Greensboro",     state: "NC", lat: 36.0803, lng: -79.7848, hbcu: true,  tags: "engineering, agriculture, business, education, nursing" },
+      { name: "Morgan State University",              type: "university",            url: "https://www.morgan.edu",        city: "Baltimore",      state: "MD", lat: 39.3427, lng: -76.5826, hbcu: true,  tags: "engineering, business, education, social work, public health" },
+      { name: "Tuskegee University",                  type: "university",            url: "https://www.tuskegee.edu",      city: "Tuskegee",       state: "AL", lat: 32.4301, lng: -85.7042, hbcu: true,  tags: "engineering, veterinary medicine, nursing, business, agriculture" },
+      { name: "Prairie View A&M University",          type: "university",            url: "https://www.pvamu.edu",         city: "Prairie View",   state: "TX", lat: 30.0919, lng: -95.9827, hbcu: true,  tags: "engineering, nursing, business, education, agriculture" },
+      { name: "Grambling State University",           type: "university",            url: "https://www.gram.edu",          city: "Grambling",      state: "LA", lat: 32.5268, lng: -92.7162, hbcu: true,  tags: "criminal justice, education, business, nursing, social work" },
+      { name: "Bethune-Cookman University",           type: "university",            url: "https://www.cookman.edu",       city: "Daytona Beach",  state: "FL", lat: 29.2111, lng: -81.0203, hbcu: true,  tags: "education, nursing, business, liberal arts" },
+      { name: "Xavier University of Louisiana",       type: "university",            url: "https://www.xula.edu",          city: "New Orleans",    state: "LA", lat: 29.9649, lng: -90.1095, hbcu: true,  tags: "pharmacy, pre-med, education, business" },
+      { name: "Fisk University",                      type: "liberal_arts_college",  url: "https://www.fisk.edu",          city: "Nashville",      state: "TN", lat: 36.1697, lng: -86.8114, hbcu: true,  tags: "arts & sciences, business, education" },
+    ];
+
+    for (const row of seeds) {
+      await pool.query(
+        `INSERT INTO education_institutions
+           (name, institution_type, official_url, city, state,
+            latitude, longitude, hbcu_status,
+            minority_serving_designations, program_tags, is_active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,true)
+         ON CONFLICT DO NOTHING`,
+        [row.name, row.type, row.url, row.city, row.state, row.lat, row.lng, row.hbcu,
+         row.hbcu ? ["HBCU"] : [], row.tags],
+      );
+    }
+
+    const hbcuCount = seeds.filter((r) => r.hbcu).length;
+    log(`ensureEducationInstitutions: table ready — ${seeds.length} institutions seeded (${seeds.length - hbcuCount} general + ${hbcuCount} HBCUs)`);
+  } catch (err: unknown) {
+    warn(`ensureEducationInstitutions failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
