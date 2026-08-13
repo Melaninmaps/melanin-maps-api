@@ -1,0 +1,241 @@
+┌─────────┬─────────────────┬────────────┬───────────────┬─────────────────┬───────────────┬──────┬─────────────────┬────────┐
+│ (index) │ city            │ businesses │ phoneInSample │ websiteInSample │ hoursInSample │ pins │ pinSampleCities │ events │
+├─────────┼─────────────────┼────────────┼───────────────┼─────────────────┼───────────────┼──────┼─────────────────┼────────┤
+│ 0       │ 'Philadelphia'  │ 10         │ 0             │ 2               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 1       │ 'Washington DC' │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 2       │ 'Columbia SC'   │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 3       │ 'Atlanta'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 4       │ 'New Orleans'   │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 5       │ 'Houston'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 1      │
+│ 6       │ 'Chicago'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 7       │ 'Los Angeles'   │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 8       │ 'New York'      │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 9       │ 'Miami'         │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 10      │ 'Baltimore'     │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 11      │ 'Detroit'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 12      │ 'Charlotte'     │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 13      │ 'Dallas'        │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 14      │ 'Las Vegas'     │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 15      │ 'Oakland'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 16      │ 'San Francisco' │ 3          │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 17      │ 'Seattle'       │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 18      │ 'Nashville'     │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+│ 19      │ 'Phuket'        │ 10         │ 0             │ 0               │ 0             │ 496  │ 'Atlanta'       │ 0      │
+└─────────┴─────────────────┴────────────┴───────────────┴─────────────────┴───────────────┴──────┴─────────────────┴────────┘
+{
+  "totals": {
+    "cities": 20,
+    "citiesWithBusinesses": 20,
+    "citiesWithAnyEvents": 1,
+    "distinctPinCounts": [
+      496
+    ],
+    "contactCoverageInFirstThree": {
+      "phone": 0,
+      "website": 2,
+      "hours": 0
+    }
+  },
+  "rows": [
+    {
+      "city": "Philadelphia",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 2,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Washington DC",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Columbia SC",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Atlanta",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "New Orleans",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Houston",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 1
+    },
+    {
+      "city": "Chicago",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Los Angeles",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "New York",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Miami",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Baltimore",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Detroit",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Charlotte",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Dallas",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Las Vegas",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Oakland",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "San Francisco",
+      "businesses": 3,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Seattle",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Nashville",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    },
+    {
+      "city": "Phuket",
+      "businesses": 10,
+      "phoneInSample": 0,
+      "websiteInSample": 0,
+      "hoursInSample": 0,
+      "pins": 496,
+      "pinSampleCities": "Atlanta",
+      "events": 0
+    }
+  ]
+}
