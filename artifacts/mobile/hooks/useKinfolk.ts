@@ -83,6 +83,13 @@ export type LibraryAction = {
   label: string;
 };
 
+export type NearbyNudge = {
+  /** One-sentence conversational suggestion — e.g. "There's a Black-owned bookstore nearby — want to check it out?" */
+  text: string;
+  /** The exact message to send when the user taps — continues the conversation naturally */
+  quickReply: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -94,6 +101,7 @@ export type ChatMessage = {
   taskActionDone?: boolean;
   libraryAction?: LibraryAction | null;
   heritageSites?: HeritageSitePin[];
+  nearbyNudge?: NearbyNudge | null;
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
@@ -170,6 +178,7 @@ export function useKinfolk() {
           taskAction?: TaskAction | null;
           libraryAction?: LibraryAction | null;
           heritageSites?: HeritageSitePin[];
+          nearbyNudge?: NearbyNudge | null;
           queriesUsed?: number;
           queriesLimit?: number;
           intentClass?: string | null;
@@ -190,6 +199,7 @@ export function useKinfolk() {
           taskAction: data.taskAction ?? null,
           libraryAction: data.libraryAction ?? null,
           heritageSites: data.heritageSites ?? [],
+          nearbyNudge: data.nearbyNudge ?? null,
           timestamp: new Date(),
           feedback: {},
           intentClass: data.intentClass ?? null,

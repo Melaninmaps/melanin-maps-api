@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -453,6 +453,39 @@ const hsStyles = StyleSheet.create({
   btnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
 });
 
+// ─── Sub-component: Nearby Nudge Chip ────────────────────────────────────────
+// One sentence, one tap. Server guarantees: single preference-matched category,
+// real DB result confirmed, never shown when businesses already surfaced.
+function NearbyNudgeChip({
+  nudge, onSend, colors,
+}: { nudge: NearbyNudge; onSend: (text: string) => void; colors: ReturnType<typeof useColors> }) {
+  return (
+    <TouchableOpacity
+      style={[nnStyles.chip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+      activeOpacity={0.82}
+      onPress={() => onSend(nudge.quickReply)}
+    >
+      <View style={[nnStyles.iconWrap, { backgroundColor: GOLD + "22" }]}>
+        <Ionicons name="compass-outline" size={14} color={GOLD} />
+      </View>
+      <Text style={[nnStyles.text, { color: colors.text }]} numberOfLines={2}>
+        {nudge.text}
+      </Text>
+      <Ionicons name="chevron-forward" size={13} color={colors.mutedForeground} />
+    </TouchableOpacity>
+  );
+}
+const nnStyles = StyleSheet.create({
+  chip: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderRadius: 12, borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 10,
+    marginTop: 8,
+  },
+  iconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  text: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1, lineHeight: 18 },
+});
+
 // ─── Sub-component: Library Action Pill ──────────────────────────────────────
 function LibraryActionPill({
   action, colors,
@@ -556,6 +589,11 @@ function AiMessageBubble({
         {/* Heritage Site Cards — tap to open on map or view MWM site page */}
         {msg.heritageSites && msg.heritageSites.length > 0 && (
           <HeritageSiteStrip sites={msg.heritageSites} colors={colors} />
+        )}
+
+        {/* Nearby Nudge — one preference-matched follow-up, only when real DB match exists */}
+        {msg.nearbyNudge && !recs && (
+          <NearbyNudgeChip nudge={msg.nearbyNudge} onSend={onQuickReply} colors={colors} />
         )}
 
         {/* Recommendations */}

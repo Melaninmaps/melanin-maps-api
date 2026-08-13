@@ -2455,6 +2455,156 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — Kinfolk answers from general knowledge */ }
     }
 
+    // ── Preference-aware nearby nudge ────────────────────────────────────────
+    // Generates ONE follow-up suggestion when: destination is known, the user has
+    // preference signals matching something in MWM, and the reply didn't already
+    // surface business recs. Never fires on business_discovery intent (redundant).
+    // Never dumps a list — only one category, one sentence, one tap.
+    let nearbyNudge: { text: string; quickReply: string } | null = null;
+    const NUDGE_SKIP_INTENTS = new Set(["business_discovery"]);
+    const recsAlreadyHaveBusinesses =
+      Array.isArray((recommendations as Record<string, unknown> | null)?.businesses) &&
+      (((recommendations as { businesses?: unknown[] } | null)?.businesses)?.length ?? 0) > 0;
+
+    if (destination && req.user?.id && !NUDGE_SKIP_INTENTS.has(intentClass) && !recsAlreadyHaveBusinesses) {
+      try {
+        type NudgeCat = { label: string; regexPattern: string; nudgeText: string; quickReply: string; prefKeywords: string[]; sessionKeywords: string[] };
+
+        const NUDGE_CATEGORIES: NudgeCat[] = [
+          {
+            label: "coffee",
+            regexPattern: "coffee|café|cafe|brew",
+            nudgeText: `There are Black-owned coffee spots in ${destination} — want me to find one that fits your vibe?`,
+            quickReply: `Tell me about Black-owned coffee shops in ${destination}`,
+            prefKeywords: ["coffee", "café", "cafe"],
+            sessionKeywords: ["coffee", "café", "latte", "espresso", "brew"],
+          },
+          {
+            label: "bookstore",
+            regexPattern: "book",
+            nudgeText: `I found a Black-owned bookstore in ${destination} — want to check it out?`,
+            quickReply: `Tell me about bookstores in ${destination}`,
+            prefKeywords: ["book", "bookstore", "reading"],
+            sessionKeywords: ["bookstore", "book store", "books"],
+          },
+          {
+            label: "dining",
+            regexPattern: "restaurant|dining|food|bistro|eatery|kitchen",
+            nudgeText: `There are community restaurants in ${destination} worth knowing about — want a recommendation?`,
+            quickReply: `Recommend a restaurant in ${destination}`,
+            prefKeywords: ["food", "restaurant", "dining", "cuisine"],
+            sessionKeywords: ["restaurant", "food", "eat", "dining", "brunch", "lunch", "dinner", "meal"],
+          },
+          {
+            label: "outdoors",
+            regexPattern: "outdoor|trail|hiking|nature|fitness",
+            nudgeText: `There are outdoor and nature spots near ${destination} — want to explore them?`,
+            quickReply: `What outdoor and nature spots are near ${destination}?`,
+            prefKeywords: ["outdoor", "hiking", "trail", "nature", "outdoors"],
+            sessionKeywords: ["hike", "hiking", "trail", "trails", "outdoor", "nature", "park"],
+          },
+          {
+            label: "wellness",
+            regexPattern: "wellness|spa|yoga|meditation|massage",
+            nudgeText: `There are Black-owned wellness spots in ${destination} — want to see what's around?`,
+            quickReply: `What wellness and spa spots are in ${destination}?`,
+            prefKeywords: ["wellness", "yoga", "meditation", "spa", "health"],
+            sessionKeywords: ["wellness", "spa", "yoga", "meditation", "massage"],
+          },
+          {
+            label: "beauty",
+            regexPattern: "beauty|salon|barber|nail",
+            nudgeText: `There are Black-owned salons in ${destination} — want to explore them?`,
+            quickReply: `Tell me about Black-owned salons in ${destination}`,
+            prefKeywords: ["beauty", "salon", "barber", "hair"],
+            sessionKeywords: ["salon", "nails", "hair", "beauty", "barber"],
+          },
+          {
+            label: "shopping",
+            regexPattern: "boutique|retail|shop|clothing|apparel",
+            nudgeText: `There are community boutiques and shops in ${destination} — want to browse?`,
+            quickReply: `What community shops and boutiques are in ${destination}?`,
+            prefKeywords: ["shopping", "boutique", "shop"],
+            sessionKeywords: ["shop", "boutique", "store", "shopping"],
+          },
+          {
+            label: "art",
+            regexPattern: "art|gallery|creative|studio",
+            nudgeText: `There are art galleries and creative spaces in ${destination} — interested?`,
+            quickReply: `What art galleries and creative spaces are in ${destination}?`,
+            prefKeywords: ["art", "gallery", "creative"],
+            sessionKeywords: ["art", "gallery", "creative", "studio", "exhibit"],
+          },
+          {
+            label: "music",
+            regexPattern: "music|concert|jazz|venue|live",
+            nudgeText: `There are community music spots and venues in ${destination} — want to check them out?`,
+            quickReply: `Tell me about music venues in ${destination}`,
+            prefKeywords: ["music", "concert", "jazz", "live music"],
+            sessionKeywords: ["music", "concert", "jazz", "live music", "venue"],
+          },
+          {
+            label: "nightlife",
+            regexPattern: "lounge|bar|nightlife|cocktail",
+            nudgeText: `There are community lounges and bars in ${destination} — want recommendations?`,
+            quickReply: `What bars and lounges are in ${destination}?`,
+            prefKeywords: ["nightlife", "bar", "lounge"],
+            sessionKeywords: ["bar", "lounge", "nightlife", "cocktail"],
+          },
+        ];
+
+        // ── Score categories by preference + session signal strength ─────────
+        const scores: Record<string, number> = {};
+        const prefLabels = [
+          ...(Array.isArray(prefs?.culturalInterests) ? (prefs!.culturalInterests as string[]) : []),
+          ...(Array.isArray(prefs?.favoriteCategories) ? (prefs!.favoriteCategories as string[]) : []),
+        ].map((s: string) => s.toLowerCase());
+        const recentUserText = existingMessages
+          .filter((m) => m.role === "user")
+          .slice(-5)
+          .map((m) => (typeof m.content === "string" ? m.content : "").toLowerCase())
+          .join(" ");
+
+        for (const cat of NUDGE_CATEGORIES) {
+          // +3 from stored preferences
+          if (cat.prefKeywords.some((kw) => prefLabels.some((pl) => pl.includes(kw)))) {
+            scores[cat.label] = (scores[cat.label] ?? 0) + 3;
+          }
+          // +2 from session message keywords
+          if (cat.sessionKeywords.some((kw) => recentUserText.includes(kw))) {
+            scores[cat.label] = (scores[cat.label] ?? 0) + 2;
+          }
+          // +1 from liked-spot categories
+          if (likedSpots.slice(0, 10).some((s) => cat.prefKeywords.some((kw) => s.toLowerCase().includes(kw)))) {
+            scores[cat.label] = (scores[cat.label] ?? 0) + 1;
+          }
+        }
+
+        // ── Try top-scored categories until one has actual DB results ─────────
+        const ranked = Object.entries(scores)
+          .sort(([, a], [, b]) => b - a)
+          .map(([label]) => label)
+          .filter((_, i) => i < 4); // check at most 4 to keep latency low
+
+        for (const label of ranked) {
+          const cat = NUDGE_CATEGORIES.find((c) => c.label === label);
+          if (!cat) continue;
+          const bRes = await pool.query<{ id: string }>(
+            `SELECT id FROM businesses
+             WHERE LOWER(city) ILIKE $1
+               AND status = 'active'
+               AND LOWER(category) ~* $2
+             LIMIT 1`,
+            [`%${destination.toLowerCase()}%`, cat.regexPattern],
+          );
+          if (bRes.rows.length > 0) {
+            nearbyNudge = { text: cat.nudgeText, quickReply: cat.quickReply };
+            break;
+          }
+        }
+      } catch { /* non-fatal — never block the response */ }
+    }
+
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
@@ -3229,6 +3379,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Map-linkable heritage site pins — only present when the message asked about
       // cultural sites in a known city and matching records exist in tour_cultural_sites.
       heritageSites: heritageSitePins.length > 0 ? heritageSitePins : undefined,
+      // Single preference-matched follow-up — only when destination known, intent
+      // isn't already business_discovery, and a real DB match exists for the category.
+      nearbyNudge: nearbyNudge ?? undefined,
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,
