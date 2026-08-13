@@ -165,6 +165,8 @@ export default function BusinessDetail() {
   const [viewerVibeSelections, setViewerVibeSelections] = useState<Set<string>>(new Set());
   const [viewerCaptionSelections, setViewerCaptionSelections] = useState<Set<string>>(new Set());
   const [captionLoading, setCaptionLoading] = useState<string | null>(null);
+  // ── Endorsement tags ("The Real") — trust-signal tags with community counts ──
+  const [endorsementTags, setEndorsementTags] = useState<Array<{ tagKey: string; label: string; count: number; userTapped: boolean }>>([]);
 
   // ── Community photo upload state ─────────────────────────────────────────────
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -449,6 +451,16 @@ export default function BusinessDetail() {
       })
       .catch(() => {});
   }, [auth?.user, id]);
+
+  // Load endorsement tags — separate from vibes, trust-signal backed
+  useEffect(() => {
+    if (!id) return;
+    const apiBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+    fetch(`${apiBase}/api/vibes/endorsements/${id}`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (Array.isArray(d?.tags)) setEndorsementTags(d.tags); })
+      .catch(() => {});
+  }, [id]);
 
   async function handleCommunityFeedback(kind: "vibe" | "caption", key: string) {
     if (!auth?.user) {
@@ -1346,6 +1358,75 @@ export default function BusinessDetail() {
                     </p>
                   )}
                 </div>
+
+                {/* ── Community Safety & Trust (#240) ─────────────────────────────── */}
+                {(() => {
+                  const safetyRating = (business as any).safetyRating as number | null;
+                  const wouldReturnAlone = (business as any).wouldReturnAlone as number | null;
+                  const recommendationRate = (business as any).recommendationRate as number | null;
+                  const activeEndorsements = endorsementTags.filter(t => t.count > 0);
+                  const hasSafetyData = (safetyRating != null && safetyRating > 0) || wouldReturnAlone != null || recommendationRate != null;
+                  if (!hasSafetyData && activeEndorsements.length === 0) return null;
+                  return (
+                    <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10 space-y-5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
+                        <h3 className="font-serif font-bold text-xl text-white">Community Safety & Trust</h3>
+                      </div>
+
+                      {/* Safety stats */}
+                      {hasSafetyData && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {safetyRating != null && safetyRating > 0 && (
+                            <div className="bg-[#241810] rounded-xl p-3 text-center">
+                              <p className="text-2xl font-serif font-bold text-[#CA922B]">{safetyRating.toFixed(1)}</p>
+                              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mt-0.5">Safety Rating</p>
+                            </div>
+                          )}
+                          {wouldReturnAlone != null && (
+                            <div className="bg-[#241810] rounded-xl p-3 text-center">
+                              <p className="text-2xl font-serif font-bold text-[#CA922B]">{Math.round(wouldReturnAlone)}%</p>
+                              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mt-0.5">Return Alone</p>
+                            </div>
+                          )}
+                          {recommendationRate != null && (
+                            <div className="bg-[#241810] rounded-xl p-3 text-center">
+                              <p className="text-2xl font-serif font-bold text-[#CA922B]">{Math.round(recommendationRate)}%</p>
+                              <p className="text-[10px] text-white/50 font-semibold uppercase tracking-wider mt-0.5">Would Recommend</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Endorsement tags */}
+                      {activeEndorsements.length > 0 && (
+                        <div>
+                          <p className="text-xs text-white/40 font-semibold uppercase tracking-wider mb-3">Community Endorsements</p>
+                          <div className="flex flex-wrap gap-2">
+                            {activeEndorsements.map(tag => (
+                              <span
+                                key={tag.tagKey}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                                  tag.userTapped
+                                    ? "bg-[#CA922B] border-[#CA922B] text-white"
+                                    : "bg-[#241810] border-white/10 text-white/80"
+                                }`}
+                              >
+                                <Award className="w-3 h-3" />
+                                {tag.label}
+                                {tag.count > 0 && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tag.userTapped ? "bg-white/20" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
+                                    {tag.count}
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Flash Deals */}
                 {deals.length > 0 && (
