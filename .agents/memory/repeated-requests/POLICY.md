@@ -27,7 +27,7 @@ When the founder uses any of these signals:
 | Date | Topic | Prior attempts | Current status |
 |---|---|---|---|
 | Aug 13 2026 | Shawn Hill Homes search returns no results | Multiple sessions — code comment showed a prior fix attempt that was incomplete; second fix today applied to wrong file | Fixed Aug 13 2026 in universal-search.ts: named_business skips geo filter; server-side gate uses prefix match. Needs Railway redeploy to be live in production. |
-| Aug 13 2026 | Business count is 2,735 — same as last night; founder says prior session reported MORE websites/phones/hours but same total | Reported again after canonical dedup work was shipped — founder is questioning whether work is real | OPEN. Must run duplicate analysis and website/phone breakdown by city to give honest picture. Founder explicitly questioning value of work done. |
+| Aug 13 2026 | Business count is 2,735 — same as last night; founder says prior session reported MORE websites/phones/hours but same total | Reported again after canonical dedup work was shipped — founder is questioning whether work is real | RESOLVED Aug 13 2026. Real finding: 91 Duke's Cafe duplicates in Horsham PA (seeding loop bug); 3 more LA duplicate pairs; 113 permanently_hidden records are AI-fabricated with no contact data; 101 of 102 phones are on permanently_hidden records not live listings. CSV of all 2,735 rows exported to businesses_export.csv for Manus audit. Tasks #320 and #321 proposed for cleanup. |
 
 ## What NOT to do
 - Do not say "I'll note that for next time" and move on
