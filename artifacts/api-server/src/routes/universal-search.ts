@@ -545,6 +545,14 @@ interface BusinessResult {
   matchTier: MatchTier;
   matchReason: string;
   matchedFields: string[];
+  // Source records retained as contextual provenance after their duplicate cards
+  // are suppressed from this member-facing result set.
+  culturalContextSources?: Array<{
+    id: string;
+    sourceType: "cultural_site" | "tour_cultural_site";
+    reason: "same_canonical_place";
+    officialDomainMatch?: boolean;
+  }>;
 }
 
 async function searchBusinesses(opts: {
@@ -1237,6 +1245,159 @@ async function searchEvents(q: string, city?: string, limit = 6): Promise<unknow
   } catch { return []; }
 }
 
+// ── Cross-source deduplication — canonical place suppression ─────────────────
+// A business and a cultural-site source can represent the same real-world place.
+// These helpers suppress the cultural-site card from member-facing results and
+// retain the source ID as provenance on the canonical business result.
+
+type HeritageResult = {
+  id: string;
+  name: string;
+  city?: string | null;
+  state?: string | null;
+  description?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  verified_source?: string | null;
+  source_table?: "cultural_sites" | "tour_cultural_sites";
+  [key: string]: unknown;
+};
+
+const NON_OFFICIAL_DOMAIN_HOSTS = new Set([
+  "facebook.com", "instagram.com", "tiktok.com", "yelp.com", "google.com",
+  "maps.google.com", "tripadvisor.com", "doordash.com", "ubereats.com",
+  "grubhub.com", "opentable.com", "resy.com", "linktr.ee",
+]);
+
+function normalizePlaceText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeOfficialDomain(value: unknown): string | undefined {
+  const raw = String(value ?? "").trim();
+  if (!raw) return undefined;
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    if (!host.includes(".") || NON_OFFICIAL_DOMAIN_HOSTS.has(host)) return undefined;
+    return host;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizedNameWithoutCity(name: unknown, city: unknown): string {
+  const normalizedName = normalizePlaceText(name);
+  const normalizedCity = normalizePlaceText(city);
+  if (!normalizedCity) return normalizedName;
+  return normalizedName
+    .replace(new RegExp(`\\b${normalizedCity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "g"), "")
+    .trim();
+}
+
+function distancesWithinQuarterMile(
+  leftLatitude: unknown, leftLongitude: unknown,
+  rightLatitude: unknown, rightLongitude: unknown,
+): boolean {
+  const values = [leftLatitude, leftLongitude, rightLatitude, rightLongitude].map(Number);
+  if (!values.every(Number.isFinite)) return false;
+  const [lat1, lng1, lat2, lng2] = values.map((value) => value * Math.PI / 180);
+  const a = Math.sin((lat2 - lat1) / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin((lng2 - lng1) / 2) ** 2;
+  return 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) <= 0.25;
+}
+
+function sameCanonicalPlaceFallback(
+  business: BusinessResult,
+  site: HeritageResult,
+): { matches: boolean; officialDomainMatch: boolean } {
+  const sameCity = normalizePlaceText(business.city) === normalizePlaceText(site.city);
+  if (!sameCity) return { matches: false, officialDomainMatch: false };
+
+  const businessDomain = normalizeOfficialDomain(business.website);
+  const sourceDomain = normalizeOfficialDomain(site.verified_source);
+  const officialDomainMatch = Boolean(businessDomain && sourceDomain && businessDomain === sourceDomain);
+  const sameName = normalizedNameWithoutCity(business.name, business.city)
+    === normalizedNameWithoutCity(site.name, site.city);
+  const sameCoordinates = distancesWithinQuarterMile(
+    business.latitude, business.longitude, site.latitude, site.longitude,
+  );
+  const sameDescription = Boolean(
+    business.description && site.description
+    && normalizePlaceText(business.description) === normalizePlaceText(site.description),
+  );
+
+  // Never suppress based on name alone. Must have official-domain + location,
+  // OR exact normalized name + coordinates, OR exact normalized name + identical description.
+  return {
+    matches: (officialDomainMatch && (sameCoordinates || sameCity))
+      || (sameName && (sameCoordinates || sameDescription)),
+    officialDomainMatch,
+  };
+}
+
+async function canonicalLinksForBusinessResults(
+  businesses: BusinessResult[],
+): Promise<Map<string, Set<string>>> {
+  const businessIds = businesses.map((business) => business.id);
+  if (businessIds.length === 0) return new Map();
+  try {
+    const result = await pool.query<{ business_id: string; cultural_site_id: string }>(
+      `SELECT business_source.source_id AS business_id,
+              cultural_source.source_id AS cultural_site_id
+       FROM public.canonical_place_sources business_source
+       JOIN public.canonical_place_sources cultural_source
+         ON cultural_source.canonical_place_id = business_source.canonical_place_id
+       WHERE business_source.source_type = 'business'
+         AND cultural_source.source_type = 'cultural_site'
+         AND business_source.source_id = ANY($1::text[])`,
+      [businessIds],
+    );
+    const links = new Map<string, Set<string>>();
+    for (const row of result.rows) {
+      const sourceIds = links.get(row.business_id) ?? new Set<string>();
+      sourceIds.add(row.cultural_site_id);
+      links.set(row.business_id, sourceIds);
+    }
+    return links;
+  } catch {
+    // canonical_places tables may not be deployed yet — fall back to runtime matching
+    return new Map();
+  }
+}
+
+async function suppressCrossSourceDuplicates(
+  businesses: BusinessResult[],
+  heritage: HeritageResult[],
+): Promise<HeritageResult[]> {
+  const canonicalLinks = await canonicalLinksForBusinessResults(businesses);
+  return heritage.filter((site) => {
+    for (const business of businesses) {
+      const canonicalLink = canonicalLinks.get(business.id)?.has(site.id) ?? false;
+      const fallback = sameCanonicalPlaceFallback(business, site);
+      if (!canonicalLink && !fallback.matches) continue;
+
+      business.culturalContextSources ??= [];
+      if (!business.culturalContextSources.some((source) => source.id === site.id)) {
+        business.culturalContextSources.push({
+          id: site.id,
+          sourceType: site.source_table === "tour_cultural_sites" ? "tour_cultural_site" : "cultural_site",
+          reason: "same_canonical_place",
+          officialDomainMatch: fallback.officialDomainMatch || undefined,
+        });
+      }
+      return false;
+    }
+    return true;
+  });
+}
+
 // ── Heritage / cultural sites search ─────────────────────────────────────────
 async function searchHeritage(
   q: string,
@@ -1316,7 +1477,7 @@ async function searchHeritage(
          LIMIT ${limit}`,
         params,
       );
-      if (rows.rows.length > 0) return rows.rows as Array<Record<string, unknown>>;
+      if (rows.rows.length > 0) return rows.rows as HeritageResult[];
     } catch { /* table may not exist */ }
   }
   return [];
@@ -1574,7 +1735,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
 
     // ── Correction 3: Distance-ranked heritage geographic expansion ──────────
     // Ladder: exact city → ≤50mi radius → same state → national (distance-sorted)
-    let heritage: unknown[] = [];
+    let heritage: HeritageResult[] = [];
     let heritageGeoExpansion: "city" | "nearby" | "state" | "national" | "none" = "none";
     let heritageGeoMessage: string | undefined;
 
@@ -1646,6 +1807,12 @@ router.get("/search/universal", async (req: Request, res: Response) => {
         }
       }
     }
+
+    // Suppress cultural-site cards that represent the same real-world place as a
+    // returned business. Source provenance is retained on the business result;
+    // no source row is deleted. Runs after all geographic expansion so every
+    // ladder branch is covered; runs before totalResults so the count is accurate.
+    heritage = await suppressCrossSourceDuplicates(businesses, heritage);
 
     // ── Correction 1: Named business — clear "not found" state ───────────────
     // If intent is named_business and no exact name match exists, separate

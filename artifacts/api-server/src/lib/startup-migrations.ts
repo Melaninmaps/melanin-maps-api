@@ -3802,6 +3802,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["recurring events city coords v1", () => ensureRecurringEventsCityCoords(log, warn)],
     // ── Business contact completeness — provenance tracking + data-quality index ──
     ["business contact completeness v1", () => ensureBusinessContactCompleteness(log, warn)],
+    // ── Sabor website correction — founder-confirmed official domain ───────────
+    ["sabor website correction v1", () => ensureSaborWebsiteCorrection(log, warn)],
+    // ── Canonical place deduplication — website-aware, reversible, never deletes ─
+    ["canonical places v1", () => ensureCanonicalPlacesV1(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -8791,5 +8795,359 @@ async function ensureBusinessContactCompleteness(
     log("ensureBusinessContactCompleteness: contact_source_url, contact_verified_at, contact_completeness columns ready");
   } catch (err: unknown) {
     warn(`ensureBusinessContactCompleteness failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Canonical place deduplication — website-aware (v1) ────────────────────────
+// Creates a canonical-place identity layer that links business and cultural-site
+// source records to one member-facing place. Never deletes source rows.
+// Uses official website domain as primary dedup evidence when available;
+// falls back to exact name + city + coordinate matching for the Sabor case and
+// similar same-city same-place duplicates.
+async function ensureCanonicalPlacesV1(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // Extensions
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS unaccent`);
+    await pool.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+
+    // Text normalizer (name + city matching)
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION public.mwm_normalize_place_text(value text)
+      RETURNS text
+      LANGUAGE sql IMMUTABLE PARALLEL SAFE
+      AS $$
+        SELECT trim(regexp_replace(
+          regexp_replace(lower(unaccent(coalesce(value, ''))), '[^a-z0-9]+', ' ', 'g'),
+          '\\s+', ' ', 'g'
+        ));
+      $$
+    `);
+
+    // Official website domain normalizer — strips protocol/www/path/query/fragment,
+    // rejects social, directory, delivery, reservation, and link-aggregator hosts.
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION public.mwm_normalize_website_domain(value text)
+      RETURNS text
+      LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
+      AS $$
+      DECLARE host text;
+      BEGIN
+        IF value IS NULL OR btrim(value) = '' THEN RETURN NULL; END IF;
+        host := lower(btrim(value));
+        host := regexp_replace(host, '^https?://', '');
+        host := regexp_replace(host, '^www\\.', '');
+        host := split_part(host, '/', 1);
+        host := split_part(host, '?', 1);
+        host := split_part(host, '#', 1);
+        host := split_part(host, ':', 1);
+        IF host = ''
+          OR host !~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$'
+          OR host ~ '(^|\\.)(facebook\\.com|instagram\\.com|tiktok\\.com|yelp\\.com|google\\.com|maps\\.google\\.com|tripadvisor\\.com|doordash\\.com|ubereats\\.com|grubhub\\.com|opentable\\.com|resy\\.com|linktr\\.ee)$'
+        THEN RETURN NULL; END IF;
+        RETURN host;
+      END;
+      $$
+    `);
+
+    // Canonical place tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.canonical_places (
+        id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        canonical_name             text NOT NULL,
+        normalized_name            text NOT NULL,
+        city                       text,
+        normalized_city            text,
+        state                      text,
+        country                    text,
+        latitude                   numeric(10,7),
+        longitude                  numeric(10,7),
+        official_domain            text,
+        official_domain_verified_at timestamptz,
+        primary_source_type        varchar(40) NOT NULL,
+        primary_source_id          text NOT NULL,
+        match_status               varchar(24) NOT NULL DEFAULT 'confirmed'
+          CHECK (match_status IN ('confirmed', 'needs_review', 'rejected')),
+        created_at                 timestamptz NOT NULL DEFAULT now(),
+        updated_at                 timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (primary_source_type, primary_source_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.canonical_place_sources (
+        canonical_place_id uuid NOT NULL REFERENCES public.canonical_places(id) ON DELETE CASCADE,
+        source_type        varchar(40) NOT NULL
+          CHECK (source_type IN ('business', 'cultural_site', 'tour_cultural_site', 'community_org', 'event')),
+        source_id          text NOT NULL,
+        source_url         text,
+        normalized_domain  text,
+        domain_verified_at timestamptz,
+        match_confidence   numeric(5,4) NOT NULL DEFAULT 1.0000,
+        match_method       varchar(48) NOT NULL
+          CHECK (match_method IN (
+            'seed_primary', 'exact_name_city', 'exact_name_coordinate',
+            'exact_official_domain_location', 'reviewed_merge', 'manual_split'
+          )),
+        is_primary         boolean NOT NULL DEFAULT false,
+        review_note        text,
+        created_at         timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (source_type, source_id),
+        UNIQUE (canonical_place_id, source_type, source_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.canonical_place_merge_candidates (
+        id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        left_source_type           varchar(40) NOT NULL,
+        left_source_id             text NOT NULL,
+        right_source_type          varchar(40) NOT NULL,
+        right_source_id            text NOT NULL,
+        normalized_name_similarity numeric(5,4) NOT NULL,
+        coordinate_distance_miles  numeric(8,3),
+        city_match                 boolean NOT NULL,
+        left_official_domain       text,
+        right_official_domain      text,
+        official_domain_match      boolean NOT NULL DEFAULT false,
+        proposed_confidence        numeric(5,4) NOT NULL,
+        status                     varchar(24) NOT NULL DEFAULT 'pending'
+          CHECK (status IN ('pending', 'auto_linked', 'approved', 'rejected', 'split')),
+        reviewed_by_id             text,
+        reviewed_at                timestamptz,
+        review_note                text,
+        created_at                 timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (left_source_type, left_source_id, right_source_type, right_source_id)
+      )
+    `);
+
+    // Indexes
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_name_trgm_idx ON public.canonical_places USING gin (normalized_name gin_trgm_ops)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_city_idx ON public.canonical_places (normalized_city, state) WHERE match_status = 'confirmed'`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_places_domain_idx ON public.canonical_places (official_domain) WHERE official_domain IS NOT NULL`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_sources_canonical_idx ON public.canonical_place_sources (canonical_place_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_candidates_status_idx ON public.canonical_place_merge_candidates (status, proposed_confidence DESC)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS canonical_place_candidates_domain_idx ON public.canonical_place_merge_candidates (official_domain_match, status) WHERE official_domain_match = true`);
+
+    // Seed active businesses as primary canonical places (idempotent upsert)
+    const { rowCount: cpRows } = await pool.query(`
+      INSERT INTO public.canonical_places (
+        canonical_name, normalized_name, city, normalized_city, state, country,
+        latitude, longitude, official_domain, official_domain_verified_at,
+        primary_source_type, primary_source_id, match_status
+      )
+      SELECT
+        b.name,
+        public.mwm_normalize_place_text(b.name),
+        b.city,
+        public.mwm_normalize_place_text(b.city),
+        b.state,
+        b.country,
+        b.latitude,
+        b.longitude,
+        public.mwm_normalize_website_domain(b.website),
+        NULL,
+        'business',
+        b.id::text,
+        'confirmed'
+      FROM public.businesses b
+      WHERE b.status = 'active'
+        AND coalesce(b.listing_status, 'live_unclaimed') IN ('live_unclaimed', 'live_claimed')
+      ON CONFLICT (primary_source_type, primary_source_id) DO UPDATE
+      SET
+        canonical_name = EXCLUDED.canonical_name,
+        normalized_name = EXCLUDED.normalized_name,
+        city = EXCLUDED.city,
+        normalized_city = EXCLUDED.normalized_city,
+        state = EXCLUDED.state,
+        country = EXCLUDED.country,
+        latitude = EXCLUDED.latitude,
+        longitude = EXCLUDED.longitude,
+        official_domain = EXCLUDED.official_domain,
+        updated_at = now()
+    `);
+
+    // Seed business sources (idempotent)
+    await pool.query(`
+      INSERT INTO public.canonical_place_sources (
+        canonical_place_id, source_type, source_id, source_url, normalized_domain,
+        domain_verified_at, match_confidence, match_method, is_primary
+      )
+      SELECT
+        cp.id, 'business', b.id::text, b.website,
+        public.mwm_normalize_website_domain(b.website),
+        NULL, 1.0000, 'seed_primary', true
+      FROM public.businesses b
+      JOIN public.canonical_places cp
+        ON cp.primary_source_type = 'business'
+       AND cp.primary_source_id = b.id::text
+      WHERE b.status = 'active'
+      ON CONFLICT (source_type, source_id) DO UPDATE
+      SET
+        source_url = EXCLUDED.source_url,
+        normalized_domain = EXCLUDED.normalized_domain
+    `);
+
+    // Build business ↔ cultural_site merge candidates (idempotent)
+    // Joins on: (1) same city OR same official domain, (2) name similarity >= 0.90
+    // or same official domain. Conservative threshold avoids merging different branches.
+    const { rowCount: candRows } = await pool.query(`
+      INSERT INTO public.canonical_place_merge_candidates (
+        left_source_type, left_source_id, right_source_type, right_source_id,
+        normalized_name_similarity, coordinate_distance_miles, city_match,
+        left_official_domain, right_official_domain, official_domain_match,
+        proposed_confidence, status
+      )
+      WITH pairs AS (
+        SELECT
+          b.id::text AS business_id,
+          cs.id::text AS cultural_site_id,
+          public.mwm_normalize_website_domain(b.website) AS business_domain,
+          public.mwm_normalize_website_domain(cs.verified_source) AS cultural_domain,
+          similarity(
+            public.mwm_normalize_place_text(b.name),
+            public.mwm_normalize_place_text(
+              regexp_replace(
+                cs.name,
+                '\\m' || regexp_replace(cs.city, '([.^$|()[\\]{}*+?\\\\])', '\\\\1', 'g') || '\\M',
+                '', 'gi'
+              )
+            )
+          ) AS name_similarity,
+          public.mwm_normalize_place_text(b.city) = public.mwm_normalize_place_text(cs.city) AS same_city,
+          CASE
+            WHEN b.latitude IS NOT NULL AND b.longitude IS NOT NULL
+             AND cs.latitude IS NOT NULL AND cs.longitude IS NOT NULL
+            THEN 3959 * acos(LEAST(1.0, GREATEST(-1.0,
+              cos(radians(b.latitude::double precision))
+              * cos(radians(cs.latitude::double precision))
+              * cos(radians(cs.longitude::double precision) - radians(b.longitude::double precision))
+              + sin(radians(b.latitude::double precision))
+              * sin(radians(cs.latitude::double precision))
+            )))
+            ELSE NULL
+          END AS distance_miles
+        FROM public.businesses b
+        JOIN public.cultural_sites cs
+          ON public.mwm_normalize_place_text(b.city) = public.mwm_normalize_place_text(cs.city)
+          OR (
+            public.mwm_normalize_website_domain(b.website) IS NOT NULL
+            AND public.mwm_normalize_website_domain(b.website)
+                = public.mwm_normalize_website_domain(cs.verified_source)
+          )
+        WHERE b.status = 'active'
+          AND (
+            similarity(public.mwm_normalize_place_text(b.name), public.mwm_normalize_place_text(cs.name)) >= 0.90
+            OR (
+              public.mwm_normalize_website_domain(b.website) IS NOT NULL
+              AND public.mwm_normalize_website_domain(b.website)
+                  = public.mwm_normalize_website_domain(cs.verified_source)
+            )
+          )
+      )
+      SELECT
+        'business', business_id, 'cultural_site', cultural_site_id,
+        name_similarity, distance_miles, same_city,
+        business_domain, cultural_domain,
+        business_domain IS NOT NULL AND business_domain = cultural_domain,
+        CASE
+          WHEN business_domain IS NOT NULL AND business_domain = cultural_domain
+           AND (same_city OR distance_miles <= 0.25) THEN 0.9990
+          WHEN same_city AND name_similarity >= 0.98 AND distance_miles <= 0.25 THEN 0.9950
+          WHEN business_domain IS NOT NULL AND business_domain = cultural_domain THEN 0.8500
+          WHEN same_city AND name_similarity >= 0.98 THEN 0.9000
+          ELSE 0.0000
+        END,
+        'pending'
+      FROM pairs
+      WHERE name_similarity >= 0.90
+         OR (business_domain IS NOT NULL AND business_domain = cultural_domain)
+      ON CONFLICT (left_source_type, left_source_id, right_source_type, right_source_id) DO UPDATE
+      SET
+        normalized_name_similarity = EXCLUDED.normalized_name_similarity,
+        coordinate_distance_miles  = EXCLUDED.coordinate_distance_miles,
+        city_match                 = EXCLUDED.city_match,
+        left_official_domain       = EXCLUDED.left_official_domain,
+        right_official_domain      = EXCLUDED.right_official_domain,
+        official_domain_match      = EXCLUDED.official_domain_match,
+        proposed_confidence        = EXCLUDED.proposed_confidence
+    `);
+
+    // Auto-link high-confidence candidates (same official domain + location, or
+    // exact name + same city + coordinate distance ≤ 0.25 mi).
+    await pool.query(`
+      WITH auto_approved AS (
+        UPDATE public.canonical_place_merge_candidates c
+        SET
+          status = 'auto_linked',
+          reviewed_at = now(),
+          review_note = CASE
+            WHEN c.official_domain_match
+            THEN 'Auto-linked: same official domain and same city/coordinate area'
+            ELSE 'Auto-linked: exact normalized name, same city, coordinate distance <= 0.25 mi'
+          END
+        WHERE c.status = 'pending'
+          AND (
+            (c.official_domain_match = true AND (c.city_match = true OR c.coordinate_distance_miles <= 0.25))
+            OR (c.official_domain_match = false AND c.city_match = true
+                AND c.normalized_name_similarity >= 0.9800
+                AND c.coordinate_distance_miles <= 0.25)
+          )
+        RETURNING *
+      )
+      INSERT INTO public.canonical_place_sources (
+        canonical_place_id, source_type, source_id, source_url, normalized_domain,
+        domain_verified_at, match_confidence, match_method, is_primary, review_note
+      )
+      SELECT
+        cp.id,
+        'cultural_site',
+        a.right_source_id,
+        cs.verified_source,
+        public.mwm_normalize_website_domain(cs.verified_source),
+        NULL,
+        a.proposed_confidence,
+        CASE WHEN a.official_domain_match THEN 'exact_official_domain_location' ELSE 'exact_name_coordinate' END,
+        false,
+        a.review_note
+      FROM auto_approved a
+      JOIN public.canonical_places cp
+        ON cp.primary_source_type = 'business'
+       AND cp.primary_source_id = a.left_source_id
+      JOIN public.cultural_sites cs ON cs.id::text = a.right_source_id
+      ON CONFLICT (source_type, source_id) DO NOTHING
+    `);
+
+    log(`ensureCanonicalPlacesV1: canonical_places ready (${cpRows ?? 0} businesses seeded), ${candRows ?? 0} merge candidates evaluated`);
+  } catch (err: unknown) {
+    warn(`ensureCanonicalPlacesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Sabor Latin Street Grill website correction ───────────────────────────────
+// Founder-confirmed: https://www.saborlatingrill.com is the official website for
+// the Charlotte NC location. Stored here so canonical-place deduplication and
+// tester search both surface the correct domain.
+async function ensureSaborWebsiteCorrection(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const { rowCount } = await pool.query(`
+      UPDATE public.businesses
+      SET website = 'https://www.saborlatingrill.com',
+          updated_at = now()
+      WHERE lower(name) ILIKE '%sabor latin street grill%'
+        AND lower(city) ILIKE '%charlotte%'
+        AND (website IS NULL OR website = '')
+    `);
+    if ((rowCount ?? 0) > 0) {
+      log(`ensureSaborWebsiteCorrection: website set on ${rowCount} Sabor Latin Street Grill Charlotte record(s)`);
+    }
+  } catch (err: unknown) {
+    warn(`ensureSaborWebsiteCorrection failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
