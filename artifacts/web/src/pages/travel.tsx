@@ -35,11 +35,21 @@ interface Recommendations {
   events: Event[]; safetyTips: string[]; localInsights: string[];
 }
 interface CultureAction { type: "save_roots"; detectedCommunity: string }
+interface LibraryAction {
+  type: "open_library_node" | "suggest_to_library";
+  // open_library_node
+  topicId?: string;
+  label?: string;
+  // suggest_to_library
+  subject?: string;
+  category?: string;
+}
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
+  libraryAction?: LibraryAction | null;
   intentClass?: string | null;
   provenanceNote?: string | null;
   // Adaptive depth fields (Show more / Show less)
@@ -926,7 +936,9 @@ function TravelPage() {
       const data = await r.json() as {
         sessionId?: string; reply: string;
         recommendations?: Recommendations | null; followUpSuggestions?: string[];
-        cultureAction?: CultureAction | null; intentClass?: string | null;
+        cultureAction?: CultureAction | null;
+        libraryAction?: LibraryAction | null;
+        intentClass?: string | null;
         provenanceNote?: string | null;
         // Adaptive depth (Show more / Show less)
         answerPlanId?: string | null;
@@ -944,6 +956,7 @@ function TravelPage() {
         content: replyContent, recommendations: data.recommendations ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
+        libraryAction: data.libraryAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
         answerPlanId: data.answerPlanId ?? null,
@@ -1009,6 +1022,19 @@ function TravelPage() {
 
   // Culture & Roots — track which community prompts the member has already responded to
   const [respondedRoots, setRespondedRoots] = useState<Set<string>>(new Set());
+
+  // Library suggestions — track which message IDs have been responded to
+  const [respondedLibrarySuggestions, setRespondedLibrarySuggestions] = useState<Set<string>>(new Set());
+  const suggestToLibrary = useCallback(async (msgId: string, subject: string, category: string) => {
+    setRespondedLibrarySuggestions(prev => new Set([...prev, msgId]));
+    try {
+      await fetch(`${BASE}api/library/suggest`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject, category }),
+      });
+    } catch { /* non-fatal */ }
+  }, []);
 
   const saveRoots = useCallback(async (community: string, choice: "yes" | "notNow" | "no") => {
     // Mark this prompt as responded regardless of choice so it disappears
@@ -1328,6 +1354,34 @@ function TravelPage() {
                             <circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="#CA922B" stroke="none"/>
                           </svg>
                           <p className="text-[10px] leading-relaxed text-[#3A1F0E]/60">{msg.provenanceNote}</p>
+                        </div>
+                      )}
+                      {/* Library suggestion — shown when Kinfolk identifies a topic not yet in the Library */}
+                      {msg.role === "assistant" && msg.libraryAction?.type === "suggest_to_library" &&
+                       msg.libraryAction.subject && !respondedLibrarySuggestions.has(msg.id) && (
+                        <div className="mt-3 bg-[#F5F0FF] border border-[#7C5CBA]/20 rounded-2xl px-4 py-3">
+                          <div className="flex items-start gap-2 mb-2">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-[1px]" stroke="#7C5CBA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 2h10a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><line x1="5" y1="6" x2="11" y2="6"/><line x1="5" y1="9" x2="8" y2="9"/>
+                            </svg>
+                            <p className="text-xs text-[#3A1F0E]/70 leading-relaxed">
+                              <span className="font-semibold text-[#2B1507]">{msg.libraryAction.subject}</span> isn't in the Community Library yet. Want to suggest it so others can learn from it too?
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              onClick={() => suggestToLibrary(msg.id, msg.libraryAction!.subject!, msg.libraryAction!.category ?? "general")}
+                              className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-[#7C5CBA] text-white hover:bg-[#6A4DA8] transition-colors"
+                            >
+                              Yes, suggest it for the Library
+                            </button>
+                            <button
+                              onClick={() => setRespondedLibrarySuggestions(prev => new Set([...prev, msg.id]))}
+                              className="text-[10px] font-semibold px-3 py-1.5 rounded-full text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors"
+                            >
+                              No thanks
+                            </button>
+                          </div>
                         </div>
                       )}
                       {/* Culture & Roots consent prompt — only for assistant messages with a detected community */}

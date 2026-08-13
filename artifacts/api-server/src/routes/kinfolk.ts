@@ -35,6 +35,7 @@ import {
   deriveGrowthSubject,
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
+import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
 
 // ── Per-user preferences cache (30-second TTL) ────────────────────────────────
 // user_preferences is read on every chat turn. At 30 concurrent users this is
@@ -2362,6 +2363,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* education query failed — LLM will handle without structured data */ }
     }
 
+    // ── Health Intelligence Retrieval (parallel, non-blocking) ───────────────
+    // For medical_health intent: fetch current evidence from NIH MedlinePlus
+    // and inject as a structured evidence block into the system prompt.
+    // Times out in 6s — never delays the response; returns null on any error.
+    let healthEvidenceBlock = "";
+    let healthRetrievalSources: Array<{ title: string; url: string; source: string }> = [];
+    if (intentClass === "medical_health") {
+      try {
+        const healthCtx = await buildHealthRetrievalContext(message, intentClass);
+        if (healthCtx) {
+          healthEvidenceBlock = healthCtx.contextBlock;
+          healthRetrievalSources = healthCtx.sources;
+        }
+      } catch { /* non-fatal — Kinfolk falls back to model knowledge */ }
+    }
+
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
@@ -2883,6 +2900,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const systemPrompt = (intentPolicyPrompt
       ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
       : baseSystemPrompt)
+      + (healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
       + (entityBlock ? `\n\n${entityBlock}` : "")
       + (educationBlock ? `\n\n${educationBlock}` : "")
       + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
@@ -3075,9 +3093,36 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Pass the user message so the resolver can match topic names that appear
     // verbatim in the text (e.g. "African diaspora history" → "African Diaspora History" node)
     // before falling back to the broader category alias list.
-    const libraryAction = libraryActionCategories
+    const existingLibraryMatch = libraryActionCategories
       ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
       : null;
+
+    // ── "Suggest to Library" — when no published match exists ─────────────────
+    // If no Library topic exists yet AND the intent signals durable educational value
+    // (health, education, civic) AND the growth signal was eligible (not sensitive)
+    // → return suggest_to_library so the client can prompt the member.
+    const SUGGEST_ELIGIBLE_INTENTS = new Set(["medical_health", "education_discovery", "legal_regulated"]);
+    let libraryAction: Record<string, unknown> | null = existingLibraryMatch;
+    if (!existingLibraryMatch && req.user?.id && SUGGEST_ELIGIBLE_INTENTS.has(intentClass)) {
+      const sensitivityTier = classifyGrowthSensitivity(message);
+      if (sensitivityTier !== "excluded") {
+        const healthTopic = intentClass === "medical_health"
+          ? extractHealthTopic(message)
+          : null;
+        const growthSubj = deriveGrowthSubject(intentClass, destination ?? null);
+        const subjectLabel = healthTopic
+          ? healthTopic.split(" ").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ").slice(0, 80)
+          : growthSubj?.canonicalSubject ?? null;
+        const category = intentClass === "medical_health"
+          ? "health"
+          : intentClass === "education_discovery"
+          ? "education"
+          : "general";
+        if (subjectLabel) {
+          libraryAction = { type: "suggest_to_library", subject: subjectLabel, category };
+        }
+      }
+    }
 
     res.json({
       sessionId: finalSessionId,
@@ -3107,11 +3152,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ? "For an immediate emergency, contact local emergency services. Confirm current alerts with official local authorities."
             : intentPolicy.provenanceLabel)
         : undefined,
-      // sources — empty for now; will be populated when evidence retrieval is wired.
+      // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
-      sources: (contextResolution.sources.length > 0
-        ? contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url }))
-        : []) as { id: string; label: string; title?: string; url?: string }[],
+      sources: ([
+        ...contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url })),
+        ...healthRetrievalSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
+      ]) as { id: string; label: string; title?: string; url?: string }[],
       resolution: contextResolution.responseMode !== "no_entity" ? {
         state: contextResolution.responseMode,
         entity: contextResolution.entityResolution?.state === "resolved"

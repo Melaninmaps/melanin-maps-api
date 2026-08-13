@@ -134,6 +134,7 @@ import trustedSafetyShareRouter from "./trusted-safety-share";
 import safetyExperienceRouter from "./safety-experience";
 import { whatshappeningRouter } from "./whats-happening";
 import ageAssuranceRouter from "./age-assurance";
+import librarySuggestRouter from "./library-suggest";
 import resourcesRouter from "./resources";
 import marketplaceRouter from "./marketplace";
 import wellnessTrackerRouter from "./wellness-tracker";
@@ -363,5 +364,6 @@ router.use(trustedSafetyShareRouter);
 router.use(safetyExperienceRouter);
 router.use(whatshappeningRouter);
 router.use(ageAssuranceRouter);
+router.use(librarySuggestRouter);
 
 export default router;
