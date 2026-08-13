@@ -1,0 +1,75 @@
+name: Verify Railway Deploy SHA
+
+# Runs after every push to main.
+# Waits for Railway to finish deploying, then confirms the live /api/version
+# SHA matches the commit we just pushed.  If it doesn't match after 10 minutes
+# the workflow fails loudly — no more silent stale deploys (#66, #76).
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  verify-sha:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Wait for Railway deploy to start (60 s)
+        run: sleep 60
+
+      - name: Poll /api/version until SHA matches or timeout
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          PRODUCTION_URL: ${{ secrets.RAILWAY_PRODUCTION_URL }}
+          MAX_ATTEMPTS: "18"         # 18 × 30 s = 9 minutes max
+          SLEEP_SECS: "30"
+        run: |
+          echo "Verifying commit $COMMIT_SHA is live on $PRODUCTION_URL"
+          attempt=0
+          while [ $attempt -lt $MAX_ATTEMPTS ]; do
+            attempt=$((attempt + 1))
+            echo "── Attempt $attempt / $MAX_ATTEMPTS ──"
+
+            # Fetch /api/version; tolerate transient 5xx during deploy rollover
+            response=$(curl -sf --max-time 10 "$PRODUCTION_URL/api/version" 2>/dev/null || echo "{}")
+            live_sha=$(echo "$response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('built_from_sha',''))" 2>/dev/null || echo "")
+            stale=$(echo "$response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('stale_bundle','unknown'))" 2>/dev/null || echo "unknown")
+
+            echo "  Live SHA   : $live_sha"
+            echo "  Commit SHA : ${COMMIT_SHA:0:14}"
+            echo "  Stale flag : $stale"
+
+            if [ -z "$live_sha" ]; then
+              echo "  ⚠ Could not read SHA from /api/version — server may be mid-restart"
+            elif echo "$live_sha" | grep -q "^${COMMIT_SHA:0:12}"; then
+              echo "✅ SHA verified — Railway is serving the correct commit."
+              echo "   stale_bundle=$stale"
+              exit 0
+            else
+              echo "  ⏳ SHA mismatch — Railway is still serving the old build."
+            fi
+
+            if [ $attempt -lt $MAX_ATTEMPTS ]; then
+              echo "  Sleeping ${SLEEP_SECS}s before next check…"
+              sleep $SLEEP_SECS
+            fi
+          done
+
+          echo ""
+          echo "❌ DEPLOY VERIFICATION FAILED after $((MAX_ATTEMPTS * SLEEP_SECS / 60)) minutes."
+          echo "   Railway may have deployed stale code or the build failed silently."
+          echo "   Live SHA: $live_sha"
+          echo "   Expected: ${COMMIT_SHA:0:14}"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Check Railway dashboard for build errors."
+          echo "  2. Verify the nixpacks echo token changed (see railway-build-cache.md)."
+          echo "  3. If stale_bundle=true, re-run the build + sync sequence."
+          exit 1
+
+      - name: Alert on failure
+        if: failure()
+        run: |
+          echo "::error::Railway deploy SHA verification failed for commit ${{ github.sha }}."
+          echo "::error::The live server may be running stale code. Check Railway logs immediately."

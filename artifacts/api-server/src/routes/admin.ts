@@ -2207,6 +2207,26 @@ router.post("/admin/set-user-password", async (req: Request, res: Response) => {
   }
 });
 
+// ── City health alert — manual trigger (#203) ─────────────────────────────────
+// POST /admin/city-health-alert/trigger
+// Runs the city health check immediately without waiting for the 30-min cron.
+// Returns the same result structure the scheduler produces.
+router.post("/admin/city-health-alert/trigger", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  try {
+    const { runCityHealthCheck } = await import("../lib/cityHealthAlertScheduler");
+    const result = await runCityHealthCheck();
+    res.json({
+      ok: true,
+      message: `Checked ${result.checked} cities — ${result.alerted.length} alerted, ${result.skipped.length} skipped (cooldown), ${result.failed.length} failed`,
+      result,
+    });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/city-health-alert/trigger error");
+    res.status(500).json({ error: "Health check failed", detail: String(err) });
+  }
+});
+
 // ── Business Discovery — search Google Places by name + city ──────────────────
 // POST /admin/business-discovery/search
 // body: { queries: string[] }  e.g. ["Crave Houston, Houston TX", "Ador, Houston TX"]

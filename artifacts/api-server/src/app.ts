@@ -59,8 +59,14 @@ app.set("trust proxy", 1);
 // pino, etc.) can block them.
 
 // Process-only liveness: confirms the Node process is alive.
+// Also verifies the web bundle is present and non-empty (#103).
 app.get("/api/healthz", (_req: Request, res: Response) => {
-  res.json({ status: "ok" });
+  const bundleOk = spaHtml && spaHtml.length > 500;
+  if (!bundleOk) {
+    res.status(503).json({ status: "degraded", detail: "Web bundle missing or empty — deploy may be corrupt" });
+    return;
+  }
+  res.json({ status: "ok", bundleBytes: spaHtml.length });
 });
 app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ status: "ok" });

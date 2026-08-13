@@ -91,6 +91,44 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
   }
 });
 
+// ── Admin email correction (#153) ──────────────────────────────────────────────
+// Lets admins update a user's email address — primarily for Apple relay users
+// (abc@privaterelay.appleid.com) who can't log in on web with their real email.
+router.patch("/admin/users/:id/email", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const id = String(req.params.id);
+  const { email } = req.body as { email?: string };
+  if (!email || !email.includes("@")) {
+    return void res.status(400).json({ error: "Valid email required" });
+  }
+  // Prevent overwriting with another Apple relay address
+  if (email.endsWith("@privaterelay.appleid.com")) {
+    return void res.status(400).json({ error: "Cannot set an Apple relay address as the real email" });
+  }
+  try {
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2`,
+      [email.trim(), id],
+    );
+    if (existing.length > 0) {
+      return void res.status(409).json({ error: "Email already used by another account" });
+    }
+    const { rows } = await pool.query(
+      `UPDATE users
+       SET email = $1, email_verified = true, updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, email, first_name, last_name`,
+      [email.trim().toLowerCase(), id],
+    );
+    if (rows.length === 0) return void res.status(404).json({ error: "User not found" });
+    req.log.info({ userId: id, newEmail: email.trim() }, "Admin corrected user email");
+    res.json({ ok: true, user: rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /admin/users/:id/email error");
+    res.status(500).json({ error: "Failed", detail: String(err) });
+  }
+});
+
 router.delete("/admin/users/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
