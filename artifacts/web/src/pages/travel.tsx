@@ -42,6 +42,11 @@ interface Message {
   cultureAction?: CultureAction | null;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  // Adaptive depth fields (Show more / Show less)
+  answerPlanId?: string | null;
+  depth?: "brief" | "standard" | "deep";
+  canShowMore?: boolean;
+  canShowLess?: boolean;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -918,7 +923,17 @@ function TravelPage() {
         return;
       }
 
-      const data = await r.json() as { sessionId?: string; reply: string; recommendations?: Recommendations | null; followUpSuggestions?: string[]; cultureAction?: CultureAction | null; intentClass?: string | null; provenanceNote?: string | null };
+      const data = await r.json() as {
+        sessionId?: string; reply: string;
+        recommendations?: Recommendations | null; followUpSuggestions?: string[];
+        cultureAction?: CultureAction | null; intentClass?: string | null;
+        provenanceNote?: string | null;
+        // Adaptive depth (Show more / Show less)
+        answerPlanId?: string | null;
+        depth?: "brief" | "standard" | "deep";
+        canShowMore?: boolean;
+        canShowLess?: boolean;
+      };
 
       // Guard: if reply is somehow missing, show a recoverable message rather than blank
       const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
@@ -931,6 +946,10 @@ function TravelPage() {
         cultureAction: data.cultureAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
+        answerPlanId: data.answerPlanId ?? null,
+        depth: data.depth,
+        canShowMore: data.canShowMore ?? false,
+        canShowLess: data.canShowLess ?? false,
       }]);
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "AbortError";
@@ -943,6 +962,38 @@ function TravelPage() {
       setSending(false);
     }
   }, [sending, sessionId, loadSessions]);
+
+  // Change the depth of an existing answer (Show more / Show less).
+  // Records the event server-side and updates the local message state optimistically.
+  const changeAnswerDepth = useCallback(async (
+    msgId: string,
+    answerPlanId: string,
+    action: "show_more" | "show_less",
+  ) => {
+    try {
+      await fetch(`${BASE}api/kinfolk/answer-plans/${answerPlanId}/depth`, {
+        method: "PATCH",
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        credentials: "include",
+        body: JSON.stringify({ action }),
+      });
+    } catch { /* non-critical — UI still updates */ }
+    // Optimistic local update
+    setMessages(prev => prev.map(m => {
+      if (m.id !== msgId || !m.depth) return m;
+      const depthOrder: Array<"brief" | "standard" | "deep"> = ["brief", "standard", "deep"];
+      const idx = depthOrder.indexOf(m.depth);
+      const newDepth = action === "show_more"
+        ? depthOrder[Math.min(idx + 1, 2)]
+        : depthOrder[Math.max(idx - 1, 0)];
+      return {
+        ...m,
+        depth: newDepth,
+        canShowMore: newDepth !== "deep",
+        canShowLess: newDepth !== "brief",
+      };
+    }));
+  }, []);
 
   const loadSession = useCallback(async (id: string) => {
     try {
@@ -1247,6 +1298,27 @@ function TravelPage() {
                               <MessageSquare size={10} className="text-[#CA922B]" />{s}
                             </button>
                           ))}
+                        </div>
+                      )}
+                      {/* Show more / Show less — adaptive depth controls */}
+                      {msg.role === "assistant" && msg.answerPlanId && (msg.canShowMore || msg.canShowLess) && (
+                        <div className="flex items-center gap-2 mt-2">
+                          {msg.canShowLess && (
+                            <button
+                              onClick={() => changeAnswerDepth(msg.id, msg.answerPlanId!, "show_less")}
+                              className="flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-medium border border-[#3A1F0E]/10 text-[#3A1F0E]/40 hover:border-[#CA922B]/30 hover:text-[#CA922B] transition-colors bg-white"
+                            >
+                              <ChevronRight size={9} className="rotate-90" />Show less
+                            </button>
+                          )}
+                          {msg.canShowMore && (
+                            <button
+                              onClick={() => changeAnswerDepth(msg.id, msg.answerPlanId!, "show_more")}
+                              className="flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-medium border border-[#3A1F0E]/10 text-[#3A1F0E]/40 hover:border-[#CA922B]/30 hover:text-[#CA922B] transition-colors bg-white"
+                            >
+                              <ChevronRight size={9} className="-rotate-90" />Show more
+                            </button>
+                          )}
                         </div>
                       )}
                       {/* Provenance disclaimer — rendered for medical, legal, financial, and emergency intents */}

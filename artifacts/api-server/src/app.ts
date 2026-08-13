@@ -13,7 +13,7 @@ import privacyRouter from "./routes/privacy";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
-import { generalLimiter } from "./middleware/rateLimiter";
+import { authLimiter, generalLimiter } from "./middleware/rateLimiter";
 import { cityRequestMiddleware } from "./lib/cityRequestTracker";
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 import { getHealthHistory } from "./lib/healthMonitor";
@@ -248,6 +248,9 @@ app.use(express.urlencoded({ extended: true }));
 // Records per-city request counts, error counts, and timing for health metrics.
 app.use(cityRequestMiddleware);
 app.use(authMiddleware);
+// Authentication remains protected by one IP-based limiter.  The general
+// API limiter below is member-keyed after authMiddleware attaches req.user.
+app.use("/api/auth", authLimiter);
 app.use("/api", generalLimiter);
 
 // ── Pool pressure guard ──────────────────────────────────────────────────────

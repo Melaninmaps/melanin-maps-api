@@ -3013,6 +3013,178 @@ ON CONFLICT (city_slug) DO UPDATE SET
     sql: `CREATE INDEX IF NOT EXISTS community_place_aliases_lookup_idx
       ON community_place_aliases (normalized_alias, parent_city, status)`,
   },
+
+  // ── Age Assurance v1 ─────────────────────────────────────────────────────
+  {
+    name: "age_assurance_user_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS user_age_assurance (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      age_band VARCHAR(16) NOT NULL DEFAULT 'unknown'
+        CHECK (age_band IN ('unknown', 'under_13', '13_15', '16_17', '18_plus')),
+      assurance_method VARCHAR(32) NOT NULL DEFAULT 'unconfirmed'
+        CHECK (assurance_method IN (
+          'unconfirmed', 'self_attested_band', 'self_attested_dob',
+          'parental_consent', 'verified_provider'
+        )),
+      policy_version VARCHAR(64) NOT NULL DEFAULT 'age-assurance-v1',
+      assured_at TIMESTAMPTZ,
+      next_recheck_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "age_assurance_band_idx",
+    sql: `CREATE INDEX IF NOT EXISTS idx_user_age_assurance_band ON user_age_assurance(age_band)`,
+  },
+  {
+    name: "content_audience_policy_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS content_audience_policy (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      resource_type VARCHAR(64) NOT NULL CHECK (resource_type IN (
+        'library_topic_version', 'knowledge_article', 'happening_story',
+        'community_post', 'community_media', 'kinfolk_response', 'event', 'business_media'
+      )),
+      resource_id VARCHAR(255) NOT NULL,
+      minimum_age_band VARCHAR(16) NOT NULL DEFAULT '13_15'
+        CHECK (minimum_age_band IN ('13_15', '16_17', '18_plus')),
+      sensitivity_tags TEXT[] NOT NULL DEFAULT '{}',
+      graphic_level VARCHAR(16) NOT NULL DEFAULT 'none'
+        CHECK (graphic_level IN ('none', 'limited', 'graphic')),
+      requires_context_screen BOOLEAN NOT NULL DEFAULT FALSE,
+      policy_reason TEXT,
+      assigned_by_user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(resource_type, resource_id)
+    )`,
+  },
+  {
+    name: "age_delivery_audit_events_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS age_delivery_audit_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      resource_type VARCHAR(64) NOT NULL,
+      resource_id VARCHAR(255),
+      decision VARCHAR(24) NOT NULL
+        CHECK (decision IN ('allowed', 'adapted', 'context_screen', 'blocked')),
+      audience_band_at_decision VARCHAR(16) NOT NULL,
+      policy_version VARCHAR(64) NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "age_delivery_audit_events_idx",
+    sql: `CREATE INDEX IF NOT EXISTS idx_age_delivery_events_user_created
+      ON age_delivery_audit_events(user_id, created_at DESC)`,
+  },
+
+  // ── Kinfolk Depth Learning v1 ────────────────────────────────────────────
+  {
+    name: "kinfolk_delivery_profiles_adaptive_depth_cols",
+    sql: `ALTER TABLE kinfolk_delivery_profiles
+      ADD COLUMN IF NOT EXISTS adaptive_depth_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS adaptive_depth_prompt_dismissed_until TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS depth_updated_from VARCHAR(32) NOT NULL DEFAULT 'taste_profile'`,
+  },
+  {
+    name: "kinfolk_depth_feedback_events_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_depth_feedback_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      domain_class VARCHAR(32) NOT NULL CHECK (domain_class IN (
+        'general', 'culture', 'education', 'local_discovery', 'current_events',
+        'health', 'legal', 'financial', 'safety', 'relationships', 'religion_culture'
+      )),
+      action VARCHAR(16) NOT NULL CHECK (action IN ('show_more', 'show_less')),
+      eligible_for_default_learning BOOLEAN NOT NULL DEFAULT FALSE,
+      age_band_at_action VARCHAR(16) NOT NULL
+        CHECK (age_band_at_action IN ('unknown', 'under_13', '13_15', '16_17', '18_plus')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "kinfolk_depth_feedback_events_idx",
+    sql: `CREATE INDEX IF NOT EXISTS idx_kinfolk_depth_feedback_user_created
+      ON kinfolk_depth_feedback_events(user_id, created_at DESC)`,
+  },
+  {
+    name: "kinfolk_answer_plans_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_answer_plans (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      session_id VARCHAR(255),
+      domain_class VARCHAR(32) NOT NULL,
+      is_sensitive BOOLEAN NOT NULL DEFAULT FALSE,
+      audience_band VARCHAR(16) NOT NULL,
+      plan_json JSONB NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "kinfolk_answer_plans_expiry_idx",
+    sql: `CREATE INDEX IF NOT EXISTS idx_kinfolk_answer_plans_user_expiry
+      ON kinfolk_answer_plans(user_id, expires_at DESC)`,
+  },
+
+  // ── Library Adaptive Content v1 ──────────────────────────────────────────
+  {
+    name: "library_topic_versions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_topic_versions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      topic_id UUID NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+      version_number INTEGER NOT NULL DEFAULT 1,
+      depth VARCHAR(16) NOT NULL DEFAULT 'standard'
+        CHECK (depth IN ('brief', 'standard', 'deep', 'deep_non_graphic')),
+      domain_policy VARCHAR(32) NOT NULL DEFAULT 'general',
+      status VARCHAR(16) NOT NULL DEFAULT 'draft'
+        CHECK (status IN ('draft', 'curator_review', 'published', 'archived')),
+      content_json JSONB,
+      curator_note TEXT,
+      published_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(topic_id, depth, status)
+    )`,
+  },
+  {
+    name: "library_evidence_claims_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_evidence_claims (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      topic_version_id UUID NOT NULL REFERENCES library_topic_versions(id) ON DELETE CASCADE,
+      claim_text TEXT NOT NULL,
+      claim_type VARCHAR(32) NOT NULL DEFAULT 'factual',
+      confidence VARCHAR(16) NOT NULL DEFAULT 'high'
+        CHECK (confidence IN ('high', 'medium', 'low', 'contested')),
+      is_graphic BOOLEAN NOT NULL DEFAULT FALSE,
+      is_adult_detail BOOLEAN NOT NULL DEFAULT FALSE,
+      source_tier VARCHAR(16) NOT NULL DEFAULT 'general',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "library_user_depth_preferences_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_user_depth_preferences (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      default_depth VARCHAR(16) NOT NULL DEFAULT 'standard'
+        CHECK (default_depth IN ('brief', 'standard', 'deep')),
+      updated_from VARCHAR(32) NOT NULL DEFAULT 'default',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "library_depth_events_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_depth_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      topic_id UUID,
+      action VARCHAR(16) NOT NULL CHECK (action IN ('show_more', 'show_less')),
+      depth_after VARCHAR(16) NOT NULL,
+      eligible_for_learning BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

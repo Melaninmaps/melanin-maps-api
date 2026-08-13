@@ -133,6 +133,7 @@ import hiddenGemsRouter from "./hidden-gems";
 import trustedSafetyShareRouter from "./trusted-safety-share";
 import safetyExperienceRouter from "./safety-experience";
 import { whatshappeningRouter } from "./whats-happening";
+import ageAssuranceRouter from "./age-assurance";
 import resourcesRouter from "./resources";
 import marketplaceRouter from "./marketplace";
 import wellnessTrackerRouter from "./wellness-tracker";
@@ -361,5 +362,6 @@ router.use(sundownTownsRouter);
 router.use(trustedSafetyShareRouter);
 router.use(safetyExperienceRouter);
 router.use(whatshappeningRouter);
+router.use(ageAssuranceRouter);
 
 export default router;

@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import net from "node:net";
 import pg from "pg";
+import { createHash } from "node:crypto";
 
 const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -99,18 +100,46 @@ async function runMigration() {
 }
 runMigration();
 
-// ── Build identity: read from dist/BUILD_IDENTITY (written by build.mjs) ─────
-// Pass the values to the spawned API process as env vars so /api/version
-// can return artifact-embedded proof of which code is actually running.
-// This is more reliable than reading the file inside the esbuild bundle,
-// where import.meta.url resolution varies across esbuild configurations.
+// ── Build identity: fail closed on a mixed/stale release ────────────────────
+// Railway must never serve a newer static tree with an older API bundle, or
+// launch dist/index.mjs when BUILD_IDENTITY describes another file.  Refuse
+// startup and let Railway roll back instead of advertising a broken release.
+function sha256File(filePath) {
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function assertReleaseIdentity() {
+  const apiEntry = path.join(__dirname, "dist", "index.mjs");
+  const identityPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
+  if (!fs.existsSync(apiEntry)) {
+    throw new Error(`Release integrity failure: missing API bundle ${apiEntry}`);
+  }
+  if (!fs.existsSync(identityPath)) {
+    throw new Error(`Release integrity failure: missing ${identityPath}`);
+  }
+  const identity = JSON.parse(fs.readFileSync(identityPath, "utf8"));
+  const actualHash = sha256File(apiEntry);
+  if (!identity.bundle_sha256 || identity.bundle_sha256 !== actualHash) {
+    throw new Error(
+      `Release integrity failure: BUILD_IDENTITY hash ${identity.bundle_sha256 || "missing"}` +
+      ` does not match dist/index.mjs hash ${actualHash}`,
+    );
+  }
+  // Verify the SPA entry exists — do not silently fall back to a stale static tree.
+  if (!WEB_STATIC || !fs.existsSync(path.join(WEB_STATIC, "index.html"))) {
+    throw new Error("Release integrity failure: canonical web-static/index.html is missing");
+  }
+  return { identity, apiEntry };
+}
+
 let _buildId = {};
 try {
-  const _idPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
-  _buildId = JSON.parse(fs.readFileSync(_idPath, "utf8"));
+  const verified = assertReleaseIdentity();
+  _buildId = verified.identity;
   process.stderr.write(`BUILD_IDENTITY: sha256=${_buildId.bundle_sha256?.slice(0,16)}... built_from=${_buildId.built_from_sha?.slice(0,10)}...\n`);
 } catch (e) {
-  process.stderr.write(`BUILD_IDENTITY: not found (${e.message}) — /api/version will show "not-embedded"\n`);
+  process.stderr.write(`FATAL_RELEASE_IDENTITY: ${e.message}\n`);
+  process.exit(78);
 }
 
 const api = spawn(process.execPath, ["dist/index.mjs"], {

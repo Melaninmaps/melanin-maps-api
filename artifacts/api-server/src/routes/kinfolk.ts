@@ -3132,6 +3132,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         queriesUsed: queriesUsedThisCall,
         queriesLimit: FREE_MONTHLY_LIMIT,
       }),
+      // Adaptive depth — client uses these to render Show more / Show less controls.
+      // Default depth is "standard"; answerPlanId lets the client record depth events.
+      depth: "standard" as "brief" | "standard" | "deep",
+      canShowMore: true,
+      canShowLess: false,
+      answerPlanId: null as string | null,
     });
   } catch (err) {
     const errCode        = (err as any)?.code as string | undefined;
@@ -4224,6 +4230,41 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to save AAVE level");
     res.status(500).json({ error: "Failed to save AAVE level" });
+  }
+});
+
+// ─── Adaptive Depth — answer plan depth change ───────────────────────────────
+// Records a show_more / show_less event so we can learn the member's preferred
+// depth over time. The client updates the message state optimistically; this
+// endpoint just persists the signal. Never adapts sensitive domains silently.
+router.patch("/kinfolk/answer-plans/:answerPlanId/depth", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  const { answerPlanId } = req.params as { answerPlanId: string };
+  const { action } = req.body as { action?: string };
+  if (action !== "show_more" && action !== "show_less") {
+    return void res.status(400).json({ error: "action must be show_more or show_less" });
+  }
+  try {
+    // Verify the plan belongs to the requesting user
+    const planRow = await pool.query(
+      `SELECT domain_class, is_sensitive, audience_band FROM kinfolk_answer_plans WHERE id = $1 AND user_id = $2`,
+      [answerPlanId, req.user.id],
+    );
+    if (!planRow.rows[0]) return void res.status(404).json({ error: "Answer plan not found" });
+    const { domain_class, is_sensitive, audience_band } = planRow.rows[0] as {
+      domain_class: string; is_sensitive: boolean; audience_band: string;
+    };
+    const eligible = !is_sensitive && !["under_13"].includes(audience_band);
+    await pool.query(
+      `INSERT INTO kinfolk_depth_feedback_events
+         (user_id, domain_class, action, eligible_for_default_learning, age_band_at_action)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [req.user.id, domain_class, action, eligible, audience_band],
+    );
+    res.json({ ok: true, recorded: true, eligibleForLearning: eligible });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "unknown";
+    res.status(500).json({ error: "Failed to record depth event", detail: msg });
   }
 });
 
