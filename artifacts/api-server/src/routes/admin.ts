@@ -80,23 +80,27 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const businesses = await db
-      .select({
-        id: businessesTable.id,
-        name: businessesTable.name,
-        category: businessesTable.category,
-        city: businessesTable.city,
-        state: businessesTable.state,
-        verified: businessesTable.verified,
-        blackOwned: businessesTable.blackOwned,
-        status: businessesTable.status,
-        phone: businessesTable.phone,
-        website: businessesTable.website,
-        createdAt: businessesTable.createdAt,
-      })
-      .from(businessesTable)
-      .orderBy(desc(businessesTable.createdAt))
-      .limit(500);
+    const businesses = await pool.query<{
+      id: string; name: string; category: string; city: string; state: string;
+      verified: boolean; black_owned: boolean; status: string; listing_status: string;
+      phone: string | null; website: string | null; created_at: string;
+      needs_verification: boolean; enrichment_note: string | null;
+    }>(
+      `SELECT id, name, category, city, state, verified, black_owned, status,
+              listing_status, phone, website, created_at,
+              needs_verification, enrichment_note
+       FROM businesses
+       ORDER BY created_at DESC
+       LIMIT 500`,
+    );
+    const bizRows = businesses.rows.map(b => ({
+      id: b.id, name: b.name, category: b.category, city: b.city, state: b.state,
+      verified: b.verified, blackOwned: b.black_owned, status: b.status,
+      listingStatus: b.listing_status, phone: b.phone, website: b.website,
+      createdAt: b.created_at,
+      needsVerification: b.needs_verification,
+      permanentlyClosed: b.enrichment_note?.toLowerCase().includes("permanently closed") ?? false,
+    }));
 
     const invites = await db
       .select({
@@ -115,7 +119,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       }
     }
 
-    const result = businesses.map((b) => ({
+    const result = bizRows.map((b) => ({
       ...b,
       outreach: outreachByBusiness.get(b.id) ?? null,
     }));
@@ -124,6 +128,29 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch admin businesses");
     res.status(500).json({ error: "Failed to fetch businesses" });
+  }
+});
+
+// PATCH /admin/businesses/:id/listing-status — archive or restore a business listing
+router.patch("/admin/businesses/:id/listing-status", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { id } = req.params;
+  const { listingStatus } = req.body as { listingStatus: string };
+  const ALLOWED = ["live_unclaimed", "live_claimed", "archived", "staged"];
+  if (!ALLOWED.includes(listingStatus)) {
+    res.status(400).json({ error: `listingStatus must be one of: ${ALLOWED.join(", ")}` });
+    return;
+  }
+  try {
+    await pool.query(
+      `UPDATE businesses SET listing_status = $1, updated_at = NOW() WHERE id = $2`,
+      [listingStatus, id],
+    );
+    req.log?.info({ id, listingStatus }, "Admin updated business listing_status");
+    res.json({ ok: true, id, listingStatus });
+  } catch (err) {
+    req.log?.error({ err }, "Failed to update business listing_status");
+    res.status(500).json({ error: "Failed to update" });
   }
 });
 

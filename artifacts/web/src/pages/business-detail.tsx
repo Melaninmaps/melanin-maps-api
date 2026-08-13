@@ -18,10 +18,35 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
+// Parse a Google Places JSON hours array (["Monday: 9 AM–5 PM", ...]) or a plain string.
+function parseHoursArray(hours: string | null | undefined): string[] | null {
+  if (!hours) return null;
+  const raw = hours.trim();
+  if (raw.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed as string[];
+    } catch { /* fall through */ }
+  }
+  return null;
+}
+
 function getOpenStatus(hours: string | null | undefined): { open: boolean; label: string } | null {
   if (!hours) return null;
-  const h = hours.toLowerCase().trim();
-  if (h === "closed" || h === "temporarily closed") return { open: false, label: "Temporarily Closed" };
+
+  // Find today's hours line when stored as a JSON array
+  const arr = parseHoursArray(hours);
+  const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const today = DAY_NAMES[new Date().getDay()];
+  const todayLine = arr?.find(l => l.startsWith(today))?.replace(`${today}: `, "") ?? null;
+
+  const h = (todayLine ?? hours).toLowerCase().trim();
+
+  if (h === "open 24 hours") return { open: true, label: "Open 24 Hours" };
+  if (h === "closed") return { open: false, label: "Closed Today" };
+  if (h === "temporarily closed") return { open: false, label: "Temporarily Closed" };
+  if (h === "permanently closed") return { open: false, label: "Permanently Closed" };
+
   const now = new Date();
   const mins = now.getHours() * 60 + now.getMinutes();
   function parseTime(t: string): number | null {
@@ -36,10 +61,10 @@ function getOpenStatus(hours: string | null | undefined): { open: boolean; label
   }
   const rangeMatch = h.match(/(\d{1,2}(?::\d{2})?\s*[ap]m)\s*[-–]\s*(\d{1,2}(?::\d{2})?\s*[ap]m)/i);
   if (!rangeMatch) return null;
-  const open = parseTime(rangeMatch[1]);
-  const close = parseTime(rangeMatch[2]);
-  if (open === null || close === null) return null;
-  const isOpen = mins >= open && mins < close;
+  const openT = parseTime(rangeMatch[1]);
+  const closeT = parseTime(rangeMatch[2]);
+  if (openT === null || closeT === null) return null;
+  const isOpen = mins >= openT && mins < closeT;
   return { open: isOpen, label: isOpen ? "Open Now" : "Closed Now" };
 }
 
@@ -1515,21 +1540,52 @@ export default function BusinessDetail() {
                   </div>
                 )}
 
+                {/* Permanently Closed banner */}
+                {(business as any).enrichment_note?.toLowerCase().includes("permanently closed") && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-950/40 border border-red-500/30 text-red-400 text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                    This location is permanently closed
+                  </div>
+                )}
+
                 <div className="flex items-start gap-4 text-white/80 text-sm pt-5 border-t border-white/10">
                   <Clock className="w-5 h-5 text-[#CA922B] shrink-0 mt-0.5" />
                   <div className="space-y-1.5 w-full">
                     {(() => {
-                      const status = getOpenStatus((business as any).hours);
+                      const rawHours = (business as any).hours as string | null | undefined;
+                      const status = getOpenStatus(rawHours);
+                      const arr = parseHoursArray(rawHours);
                       return (
                         <>
                           {status && (
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${status.open ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                              status.open
+                                ? "bg-green-950/40 text-green-400 border border-green-500/30"
+                                : "bg-red-950/30 text-red-400 border border-red-500/20"
+                            }`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${status.open ? "bg-green-500" : "bg-red-500"}`} />
                               {status.label}
                             </div>
                           )}
-                          {(business as any).hours ? (
-                            <div className="text-white/70 text-xs leading-relaxed">{(business as any).hours}</div>
+                          {arr ? (
+                            // Google Places enriched — render as day-by-day table
+                            <div className="space-y-1 mt-1">
+                              {arr.map((line, i) => {
+                                const colonIdx = line.indexOf(": ");
+                                const day = colonIdx >= 0 ? line.slice(0, colonIdx) : line;
+                                const hrs = colonIdx >= 0 ? line.slice(colonIdx + 2) : "";
+                                const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+                                const isToday = day === DAY_NAMES[new Date().getDay()];
+                                return (
+                                  <div key={i} className={`flex justify-between gap-4 text-xs ${isToday ? "text-white font-semibold" : "text-white/55"}`}>
+                                    <span className="shrink-0">{day}</span>
+                                    <span className="text-right">{hrs || line}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : rawHours ? (
+                            <div className="text-white/70 text-xs leading-relaxed mt-1">{rawHours}</div>
                           ) : (
                             <div className="text-white/50 italic text-xs">Hours not listed — call ahead to confirm</div>
                           )}

@@ -50,6 +50,9 @@ type AdminBusiness = {
   verified: boolean;
   blackOwned: boolean;
   status: string;
+  listingStatus: string;
+  needsVerification: boolean;
+  permanentlyClosed: boolean;
   phone: string | null;
   website: string | null;
   createdAt: string;
@@ -498,6 +501,7 @@ export default function Admin() {
   const [welcomeSending, setWelcomeSending] = useState(false);
   const [welcomeResult, setWelcomeResult] = useState<string | null>(null);
   const [bizSearch, setBizSearch] = useState("");
+  const [bizStatusFilter, setBizStatusFilter] = useState<"all" | "permanently_closed" | "needs_review" | "archived">("all");
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
@@ -972,11 +976,17 @@ export default function Admin() {
   const pendingUsers = users.filter(u => !u.approved).length;
   const contactedCount = businesses.filter(b => b.outreach !== null).length;
 
-  const filteredBiz = businesses.filter(b =>
-    !bizSearch || b.name.toLowerCase().includes(bizSearch.toLowerCase()) ||
-    b.city.toLowerCase().includes(bizSearch.toLowerCase()) ||
-    b.category.toLowerCase().includes(bizSearch.toLowerCase())
-  );
+  const filteredBiz = businesses.filter(b => {
+    if (bizStatusFilter === "permanently_closed" && !b.permanentlyClosed) return false;
+    if (bizStatusFilter === "needs_review" && !b.needsVerification) return false;
+    if (bizStatusFilter === "archived" && b.listingStatus !== "archived") return false;
+    if (!bizSearch) return true;
+    const q = bizSearch.toLowerCase();
+    return b.name.toLowerCase().includes(q) || b.city.toLowerCase().includes(q) || b.category.toLowerCase().includes(q);
+  });
+  const permanentlyClosedCount = businesses.filter(b => b.permanentlyClosed).length;
+  const needsReviewCount = businesses.filter(b => b.needsVerification).length;
+  const archivedCount = businesses.filter(b => b.listingStatus === "archived").length;
 
   // ── Waitlist analytics (all computed client-side) ─────────────────────────
   const referralCounts: Record<string, number> = {};
@@ -1968,6 +1978,41 @@ export default function Admin() {
               />
             </div>
 
+            {/* Status filter tabs */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {([
+                { key: "all", label: `All (${businesses.length})` },
+                { key: "permanently_closed", label: `⚠️ Permanently Closed (${permanentlyClosedCount})`, warn: permanentlyClosedCount > 0 },
+                { key: "needs_review", label: `🔍 Needs Review (${needsReviewCount})`, warn: needsReviewCount > 0 },
+                { key: "archived", label: `📦 Archived (${archivedCount})` },
+              ] as const).map(({ key, label, warn }) => (
+                <button
+                  key={key}
+                  onClick={() => setBizStatusFilter(key)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                    bizStatusFilter === key
+                      ? "bg-[#2B1507] text-white"
+                      : warn
+                        ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                        : "bg-white border border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:border-[#CA922B]/40"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {bizStatusFilter === "permanently_closed" && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <strong>Action needed:</strong> These businesses were marked permanently closed by Google Places during enrichment. Review each one and click <strong>Archive</strong> to remove it from the live directory, or leave it if you believe Google is incorrect.
+              </div>
+            )}
+            {bizStatusFilter === "needs_review" && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
+                These businesses had low-confidence Google Places matches or other data quality flags. Review their contact info before promoting to a claimed listing.
+              </div>
+            )}
+
             <div className="mb-4 bg-[#2B1507]/5 border border-[#2B1507]/10 rounded-xl px-4 py-3 text-sm text-[#3A1F0E]/70">
               <strong className="text-[#3A1F0E]">How to use:</strong> Find a business, click <strong>Send Outreach</strong>, enter their email address, and they'll receive an invitation to claim their profile. Each outreach is logged so you can track who's been contacted.
             </div>
@@ -2007,6 +2052,9 @@ export default function Admin() {
                           <div className="flex flex-wrap gap-1">
                             {biz.verified && <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold"><Check className="w-2.5 h-2.5" /> Verified</span>}
                             {biz.blackOwned && <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">Black-Owned</span>}
+                            {biz.permanentlyClosed && <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">Perm. Closed</span>}
+                            {biz.needsVerification && !biz.permanentlyClosed && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">Needs Review</span>}
+                            {biz.listingStatus === "archived" && <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs font-bold">Archived</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">
@@ -2022,12 +2070,48 @@ export default function Admin() {
                           <OutreachCell business={biz} onSent={loadBusinesses} />
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            onClick={() => setEditingBiz({ id: biz.id, name: biz.name })}
-                            className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            ✏️ Edit
-                          </button>
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              onClick={() => setEditingBiz({ id: biz.id, name: biz.name })}
+                              className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              ✏️ Edit
+                            </button>
+                            {biz.listingStatus !== "archived" ? (
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm(`Archive "${biz.name}"? It will be removed from the live directory but not deleted.`)) return;
+                                  try {
+                                    const r = await fetch(`${BASE}api/admin/businesses/${biz.id}/listing-status`, {
+                                      method: "PATCH", credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ listingStatus: "archived" }),
+                                    });
+                                    if (r.ok) loadBusinesses();
+                                  } catch { /* ignore */ }
+                                }}
+                                className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                📦 Archive
+                              </button>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const r = await fetch(`${BASE}api/admin/businesses/${biz.id}/listing-status`, {
+                                      method: "PATCH", credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ listingStatus: "live_unclaimed" }),
+                                    });
+                                    if (r.ok) loadBusinesses();
+                                  } catch { /* ignore */ }
+                                }}
+                                className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                ♻️ Restore
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
