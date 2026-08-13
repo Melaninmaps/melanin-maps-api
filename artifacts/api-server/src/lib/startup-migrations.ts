@@ -3274,6 +3274,11 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS enrichment_note TEXT,
       ADD COLUMN IF NOT EXISTS enrichment_source VARCHAR(50)`,
   },
+  // ── Widen businesses.hours to TEXT — full weekly schedule exceeds varchar(255) ─
+  {
+    name: "businesses_hours_text_v1",
+    sql: `ALTER TABLE businesses ALTER COLUMN hours TYPE TEXT`,
+  },
   // ── Recurring events: active_until for auto-expiry (#121) ──────────────────
   // Events with a known end date auto-hide from the map when that date passes.
   // NULL means "show indefinitely while is_active = true" (existing behavior).
