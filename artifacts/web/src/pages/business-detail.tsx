@@ -1081,23 +1081,69 @@ export default function BusinessDetail() {
           )}
         </div>
 
-        {/* Welcoming Environment — shown when community confirms it via vibe data.
-            "Rate Your Safety Experience" and "Community Safety Stats" were removed.
-            Asking visitors to rate a Black-owned business for "safety" implies it
-            may be unsafe. The platform's philosophy is welcoming environments, not
-            crime-adjacent safety scores. The Welcoming Environment badge (task #259)
-            will surface here once community vibe data confirms it. */}
-        {(business as any).wouldReturnAlone != null && parseInt((business as any).wouldReturnAlone) >= 70 && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 mb-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg">🤝</span>
+        {/* Community Insights — matches mobile exactly.
+            Labels: "Would Return", "Experience Rating", "Recommend"
+            Color: green (#2D7A4F). Only shown when data exists.
+            NOT "Community Safety Stats" / NOT "Safety Rating" / NOT "Would Return Alone" */}
+        {((business as any).wouldReturnAlone != null || (business as any).safetyRating != null) && (
+          <div className="rounded-2xl border p-5 mb-3" style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "#2D7A4F" }}>Community Insights</span>
             </div>
-            <div>
-              <p className="font-semibold text-emerald-800 text-sm">Welcoming Environment</p>
-              <p className="text-xs text-emerald-700/70">{(business as any).wouldReturnAlone}% of visitors say they'd come back here</p>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              {(business as any).wouldReturnAlone != null && (
+                <div>
+                  <div className="text-2xl font-serif font-bold" style={{ color: "#2D7A4F" }}>{(business as any).wouldReturnAlone}%</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider mt-1 text-[#3A1F0E]/50">Would Return</div>
+                </div>
+              )}
+              {(business as any).safetyRating != null && (
+                <div>
+                  <div className="text-2xl font-serif font-bold" style={{ color: "#2D7A4F" }}>{parseFloat((business as any).safetyRating).toFixed(1)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider mt-1 text-[#3A1F0E]/50">Experience Rating</div>
+                </div>
+              )}
+              {(business as any).recommendationRate != null && (
+                <div>
+                  <div className="text-2xl font-serif font-bold" style={{ color: "#2D7A4F" }}>{(business as any).recommendationRate}%</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider mt-1 text-[#3A1F0E]/50">Recommend</div>
+                </div>
+              )}
             </div>
           </div>
         )}
+
+        {/* Welcoming Environment badge — matches mobile: shown when wouldReturnAlone ≥ 70 */}
+        {(business as any).wouldReturnAlone != null && parseInt((business as any).wouldReturnAlone) >= 70 && (
+          <div className="rounded-2xl border p-4 mb-3 flex items-center gap-3" style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F40" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#2D7A4F20" }}>
+              <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm" style={{ color: "#2D7A4F" }}>Welcoming Environment</p>
+              <p className="text-xs" style={{ color: "#2D7A4F99" }}>{(business as any).wouldReturnAlone}% of visitors say they'd return here</p>
+            </div>
+          </div>
+        )}
+
+        {/* Share Your Experience — matches mobile label exactly. NOT "Rate Your Safety Experience" */}
+        <button
+          onClick={() => document.querySelector<HTMLElement>('[data-value="reviews"]')?.click()}
+          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border mb-8 transition-colors group"
+          style={{ backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#2D7A4F20" }}>
+              <Shield className="w-4 h-4" style={{ color: "#2D7A4F" }} />
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-sm" style={{ color: "#2D7A4F" }}>🛡️ Share Your Experience</p>
+              <p className="text-xs" style={{ color: "#2D7A4F99" }}>Help the community know what to expect</p>
+            </div>
+          </div>
+          <ChevronDown className="w-4 h-4 -rotate-90" style={{ color: "#2D7A4F" }} />
+        </button>
 
       </div>
 
