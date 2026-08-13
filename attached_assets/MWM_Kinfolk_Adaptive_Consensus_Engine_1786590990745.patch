@@ -1,0 +1,321 @@
+diff --git a/artifacts/api-server/src/kinfolk/intent-router.ts b/artifacts/api-server/src/kinfolk/intent-router.ts
+index CURRENT..CONSENSUS 100644
+--- a/artifacts/api-server/src/kinfolk/intent-router.ts
++++ b/artifacts/api-server/src/kinfolk/intent-router.ts
+@@
+ export type KinfolkIntent =
+@@
+   | "current_information";
++
++/**
++ * ResponseMode controls answer composition.  It does not replace the intent
++ * or lower the evidence policy.  An opinion/consensus question remains
++ * culture_entertainment; a diabetes question remains medical_health.
++ */
++export type KinfolkResponseMode =
++  | "general_explainer"
++  | "consensus_analysis"
++  | "cultural_entity"
++  | "local_discovery"
++  | "education_discovery"
++  | "high_consequence_evidence"
++  | "current_events"
++  | "needs_clarification";
++
++const CONSENSUS_PATTERNS = [
++  /\bwho won (?:the )?(?:beef|battle|versus|vs\.?|argument)\b/i,
++  /\bwho (?:is|was) (?:better|the best|the greatest)\b/i,
++  /\bwhat(?:'s| is) the consensus\b/i,
++  /\bhow do (?:people|critics|fans|the public) (?:see|view|feel about)\b/i,
++  /\bwho came out on top\b/i,
++];
++
++const EDUCATION_PATTERNS = [
++  /\bcollege(?:s)?\b/i, /\buniversity|universities\b/i,
++  /\bhbcu(?:s)?\b/i, /\bcampus\b/i,
++];
++
++/**
++ * Must be called after entity resolution but before MWM business retrieval.
++ * Explicit query wording always outranks preference data.
++ */
++export function resolveResponseMode(args: {
++  message: string;
++  intent: KinfolkIntent;
++  hasNamedEntity: boolean;
++  hasExplicitPlace: boolean;
++}): KinfolkResponseMode {
++  const { message, intent, hasNamedEntity, hasExplicitPlace } = args;
++  if (intent === "medical_health" || intent === "legal_regulated" ||
++      intent === "financial_regulated" || intent === "safety_emergency") {
++    return "high_consequence_evidence";
++  }
++  if (intent === "current_information") return "current_events";
++  if (EDUCATION_PATTERNS.some((p) => p.test(message))) return "education_discovery";
++  if (CONSENSUS_PATTERNS.some((p) => p.test(message))) return "consensus_analysis";
++  if (hasNamedEntity && intent === "culture_entertainment") return "cultural_entity";
++  if (hasExplicitPlace && intent === "business_discovery") return "local_discovery";
++  return "general_explainer";
++}
+diff --git a/artifacts/api-server/src/kinfolk/consensus-resolver.ts b/artifacts/api-server/src/kinfolk/consensus-resolver.ts
+new file mode 100644
+--- /dev/null
++++ b/artifacts/api-server/src/kinfolk/consensus-resolver.ts
+@@
++/**
++ * Evidence-led consensus resolver.  It must be invoked before the LLM writes
++ * a conclusion.  It never uses a member's inferred race, ethnicity, age,
++ * religion, political view, or neighborhood to decide what the answer is.
++ */
++export type ConsensusState =
++  | "broad_consensus"
++  | "segmented_consensus"
++  | "contested"
++  | "insufficient_evidence";
++
++export type PerspectiveEvidence = {
++  id: string;
++  canonicalEntityId: string;
++  publisher: string;
++  url: string;
++  publishedAt: string;
++  /** Only categories described by the source itself; never an inferred audience. */
++  audienceScope: "general_public" | "professional_critics" | "fan_community" | "scholarly" | "award_body" | "industry";
++  viewpoint: "supports" | "opposes" | "mixed";
++  factualClaims: string[];
++  sourceTier: "official" | "reputable" | "institutional" | "peer_reviewed";
++  independentPublisherKey: string;
++};
++
++export type ConsensusResolution = {
++  state: ConsensusState;
++  conclusion: string | null;
++  rationale: string[];
++  perspectiveSummary: Array<{
++    audienceScope: PerspectiveEvidence["audienceScope"];
++    conclusion: "supports" | "opposes" | "mixed";
++    sourceIds: string[];
++  }>;
++  sources: PerspectiveEvidence[];
++  needsClarification: boolean;
++};
++
++function independentCount(rows: PerspectiveEvidence[]) {
++  return new Set(rows.map((row) => row.independentPublisherKey)).size;
++}
++
++export function resolveConsensus(
++  entityId: string,
++  evidence: PerspectiveEvidence[],
++): ConsensusResolution {
++  const usable = evidence.filter((e) =>
++    e.canonicalEntityId === entityId &&
++    ["official", "reputable", "institutional", "peer_reviewed"].includes(e.sourceTier),
++  );
++  const supports = usable.filter((e) => e.viewpoint === "supports");
++  const opposes = usable.filter((e) => e.viewpoint === "opposes");
++  const mixed = usable.filter((e) => e.viewpoint === "mixed");
++  const perspectiveSummary = (["general_public", "professional_critics", "fan_community", "scholarly", "award_body", "industry"] as const)
++    .map((audienceScope) => {
++      const rows = usable.filter((e) => e.audienceScope === audienceScope);
++      if (!rows.length) return null;
++      const support = rows.filter((e) => e.viewpoint === "supports").length;
++      const oppose = rows.filter((e) => e.viewpoint === "opposes").length;
++      return {
++        audienceScope,
++        conclusion: support === oppose ? "mixed" : support > oppose ? "supports" : "opposes",
++        sourceIds: rows.map((e) => e.id),
++      } as const;
++    })
++    .filter(Boolean) as ConsensusResolution["perspectiveSummary"];
++
++  if (usable.length < 2 || independentCount(usable) < 2) {
++    return { state: "insufficient_evidence", conclusion: null, rationale: [], perspectiveSummary, sources: usable, needsClarification: false };
++  }
++
++  // If attributable source groups materially differ, surface that divergence;
++  // do not average it into a fictional majority.
++  const scopedConclusions = new Set(perspectiveSummary.map((x) => x.conclusion));
++  if (scopedConclusions.size > 1 || (supports.length > 0 && opposes.length > 0 && mixed.length > 0)) {
++    return {
++      state: "segmented_consensus",
++      conclusion: null,
++      rationale: ["Credible sources describe different conclusions across attributable audiences."],
++      perspectiveSummary,
++      sources: usable,
++      needsClarification: false,
++    };
++  }
++
++  if (independentCount(supports) >= 2 && opposes.length === 0) {
++    return {
++      state: "broad_consensus",
++      conclusion: "supports",
++      rationale: ["Multiple independent credible sources point to the same cultural/public assessment."],
++      perspectiveSummary,
++      sources: usable,
++      needsClarification: false,
++    };
++  }
++
++  return {
++    state: "contested",
++    conclusion: null,
++    rationale: ["Credible evidence does not support one clear public consensus."],
++    perspectiveSummary,
++    sources: usable,
++    needsClarification: false,
++  };
++}
+diff --git a/artifacts/api-server/src/kinfolk/response-composer.ts b/artifacts/api-server/src/kinfolk/response-composer.ts
+new file mode 100644
+--- /dev/null
++++ b/artifacts/api-server/src/kinfolk/response-composer.ts
+@@
++import type { ConsensusResolution } from "./consensus-resolver";
++
++export type DeliveryLevel = "brief" | "standard" | "deep";
++
++export function buildConsensusInstructions(
++  resolution: ConsensusResolution,
++  delivery: DeliveryLevel,
++): string {
++  const sourceList = resolution.sources.map((s) => `[${s.id}] ${s.publisher} (${s.publishedAt})`).join("\n");
++  return [
++    "Write an answer using only the resolution and cited sources below.",
++    "Never state cultural consensus as an objective fact.",
++    "Never claim that a demographic thinks something unless that exact attributable source says so.",
++    "Never infer the member's identity or tailor the conclusion based on identity.",
++    `Consensus state: ${resolution.state}.`,
++    `Perspective summary: ${JSON.stringify(resolution.perspectiveSummary)}.`,
++    `Rationale: ${resolution.rationale.join(" ")}`,
++    `Delivery level: ${delivery}.`,
++    resolution.state === "broad_consensus"
++      ? "Lead with a direct answer followed by ‘This reflects broad public and cultural consensus, not an objective fact.’"
++      : resolution.state === "segmented_consensus"
++        ? "Lead with ‘There is not one single consensus.’ Explain the attributable perspectives side by side without ranking one as universal."
++        : resolution.state === "contested"
++          ? "Lead with ‘There is no clear public consensus.’ Summarize the strongest positions fairly."
++          : "Say that available credible sources do not establish a reliable consensus; offer a narrower follow-up question if useful.",
++    `Sources:\n${sourceList}`,
++  ].join("\n");
++}
++
++export function preserveHighConsequenceSafety(base: string, safetyNotice?: string): string {
++  return safetyNotice ? `${base}\n\n${safetyNotice}` : base;
++}
+diff --git a/artifacts/api-server/src/routes/kinfolk.ts b/artifacts/api-server/src/routes/kinfolk.ts
+index CURRENT..CONSENSUS 100644
+--- a/artifacts/api-server/src/routes/kinfolk.ts
++++ b/artifacts/api-server/src/routes/kinfolk.ts
+@@
+-import { classifyIntent, getEvidencePolicy } from "../kinfolk/intent-router";
++import { classifyIntent, getEvidencePolicy, resolveResponseMode } from "../kinfolk/intent-router";
++import { resolveConsensus } from "../kinfolk/consensus-resolver";
++import { buildConsensusInstructions } from "../kinfolk/response-composer";
+@@
+-const intent = classifyIntent(message, Boolean(destination));
++const intent = classifyIntent(message, Boolean(destination));
++const responseMode = resolveResponseMode({
++  message,
++  intent,
++  hasNamedEntity: Boolean(entityResolution?.entityId),
++  hasExplicitPlace: Boolean(destination),
++});
+ const policy = getEvidencePolicy(intent);
++
++// Critical ordering: cultural entity/consensus resolution occurs before any
++// MWM business search.  A consensus question is never filled with directory
++// results merely because it contains a city, “club”, “food”, or a person name.
++let consensusResolution = null;
++if (responseMode === "consensus_analysis") {
++  const evidence = await retrieveConsensusEvidence({
++    entityId: entityResolution?.entityId,
++    message,
++    // Retrieve only current/reputable evidence according to source policy.
++    minimumIndependentPublishers: 2,
++  });
++  consensusResolution = resolveConsensus(entityResolution?.entityId ?? "", evidence);
++}
++
++const mustSkipBusinessRecommendations =
++  responseMode === "consensus_analysis" ||
++  responseMode === "cultural_entity" ||
++  responseMode === "general_explainer" ||
++  responseMode === "high_consequence_evidence";
++
++const recommendations = mustSkipBusinessRecommendations
++  ? null
++  : await getMwmRecommendations(/* existing constrained local-discovery call */);
+@@
+-const systemPrompt = buildSystemPrompt(/* existing args */);
++const systemPrompt = buildSystemPrompt({
++  /* existing args */
++  responseMode,
++  consensusInstructions: consensusResolution
++    ? buildConsensusInstructions(consensusResolution, deliveryLevel)
++    : null,
++  // Do not inject unrelated MWM catalog entries into culture/entity/medical modes.
++  recommendations,
++});
+@@
+ res.json({
+   /* existing response fields */
++  responseMode,
++  consensus: consensusResolution
++    ? {
++        state: consensusResolution.state,
++        perspectiveSummary: consensusResolution.perspectiveSummary,
++      }
++    : null,
++  recommendations,
+ });
+diff --git a/artifacts/web/src/pages/travel.tsx b/artifacts/web/src/pages/travel.tsx
+index CURRENT..CONSENSUS 100644
+--- a/artifacts/web/src/pages/travel.tsx
++++ b/artifacts/web/src/pages/travel.tsx
+@@
++async function requestDeliveryLevel(messageId: string, level: "brief" | "standard" | "deep") {
++  const response = await apiRequest("POST", `/api/kinfolk/messages/${messageId}/delivery`, { level });
++  return response.json();
++}
+@@
++{/* Render below every non-pending assistant message. */}
++<div aria-label="Response detail controls" className="kinfolk-delivery-controls">
++  {message.canShowLess && <button onClick={() => requestDeliveryLevel(message.id, "brief")}>Show less</button>}
++  {message.canShowMore && <button onClick={() => requestDeliveryLevel(message.id, "deep")}>Show more</button>}
++  <button onClick={() => openDeliveryPreferenceDialog()}>Use this style by default</button>
++</div>
+*** End Patch
+
+# New migration: additive only; do not retain raw query text.
+CREATE TABLE IF NOT EXISTS kinfolk_delivery_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message_id UUID NOT NULL,
+  requested_level TEXT NOT NULL CHECK (requested_level IN ('brief', 'standard', 'deep')),
+  domain_class TEXT NOT NULL CHECK (domain_class IN ('general', 'culture', 'local', 'education', 'high_consequence')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS kinfolk_delivery_events_user_created_idx
+  ON kinfolk_delivery_events (user_id, created_at DESC);
+
+# Never write the raw message, entity, diagnosis, medical category, legal category,
+# city, content text, source text, or community identity to this event table.
+
+# Read-only capability-audit rule for conflicting consensus:
+# For each test query, audit output must include:
+# - Canonical entity/event ID.
+# - Every candidate source, publisher, source tier, date, and cited audience scope.
+# - Whether the scope comes from the source itself or is unsupported.
+# - The independent-publisher count and conclusion state.
+# - A rejection list for non-independent, stale, irrelevant, or unattributed claims.
+# - The raw pre-LLM consensus object and post-LLM answer.
+# No audit output may say “Black people think…” / “Latinos think…” / “women think…”
+# unless the cited source itself supports the exact description, method, date, and scope.
+
+# Required conflict outcomes:
+# 1. broad_consensus: direct qualified conclusion plus dissent/nuance.
+# 2. segmented_consensus: no universal winner; show attributable perspectives side by side.
+# 3. contested: no clear consensus; show strongest documented positions.
+# 4. insufficient_evidence: do not manufacture a consensus; say what cannot be established.

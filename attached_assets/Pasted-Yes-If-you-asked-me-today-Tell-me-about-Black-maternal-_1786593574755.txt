@@ -1,0 +1,60 @@
+Yes. **If you asked me today, “Tell me about Black maternal mortality,” my response would be substantially more developed than the short example I gave you.** And I understand what you're trying to demonstrate for Kinfolk now: not merely *can it answer?*, but **what should a culturally intelligent, web-connected Kinfolk answer look like?**
+
+I would expect Kinfolk to recognize that this is a topic where **current authoritative information matters**, search the web, prioritize sources such as the CDC/NIH rather than random websites, synthesize the information, and then explain it in accessible language.
+
+For example:
+
+### Black Maternal Mortality in the United States
+
+Black maternal mortality refers to the disproportionately high rate at which Black women die from causes related to pregnancy and childbirth in the United States. It is one of the country's most persistent racial health disparities.
+
+The latest finalized CDC maternal-mortality data currently available show that in **2024, non-Hispanic Black women died from maternal causes at a rate of 44.8 deaths per 100,000 live births**, compared with **14.2 for non-Hispanic White women** — more than three times the rate. ([CDC Blogs][1])
+
+And an important part of understanding this issue is that **race itself is not the biological explanation**. NIH describes these disparities as arising from social and structural inequities, including differences in access to high-quality care, rather than intrinsic racial biological differences. ([Office of Disease Prevention][2])
+
+The disparity also isn't adequately explained by education or socioeconomic achievement. CDC research has found racial disparities across education levels; in historical pregnancy-related mortality data, Black women with a college education or higher experienced dramatically higher pregnancy-related mortality than similarly educated White women. ([CDC Archive][3])
+
+### Why does this happen?
+
+There isn't one cause. Research points to interacting factors that include **differences in quality of care, structural racism, implicit bias, access to appropriate care, and whether symptoms and concerns are recognized and acted upon quickly**. CDC also notes that hospitals serving higher proportions of Black women have historically had poorer maternal outcomes. ([CDC][4])
+
+Patient experience matters too. In CDC survey data, about **30% of Black women reported mistreatment during maternity care**, compared with about 20% of women overall in the survey. Almost half of all respondents reported holding back from asking questions or sharing concerns during maternity care. ([CDC][5])
+
+There are also specific medical conditions involved. Cardiovascular conditions, infection, hemorrhage and other complications contribute to pregnancy-related deaths, and CDC research has found racial differences in the contribution of conditions including cardiomyopathy, pulmonary embolism and hypertensive disorders of pregnancy. ([CDC][6])
+
+### The especially troubling part: many deaths are preventable
+
+The CDC reports that **more than 80% of pregnancy-related deaths in the United States are preventable**. That means this isn't simply a discussion about unavoidable complications of pregnancy. Timely recognition of warning signs, appropriate treatment, continuity of care and respectful, high-quality maternity care can save lives. ([CDC][7])
+
+And maternal health doesn't end when someone leaves the delivery room. The CDC defines pregnancy-related deaths as deaths occurring during pregnancy or **within one year after the pregnancy ends** when related to or aggravated by the pregnancy. ([CDC Archive][8])
+
+### What this means for Black women and families
+
+The statistics shouldn't be interpreted as “Black women should be afraid to become pregnant.” A better takeaway is that Black mothers deserve **responsive, respectful and evidence-based care**, and that concerns during pregnancy and postpartum should be taken seriously.
+
+For someone currently pregnant or postpartum, Kinfolk should then be able to move from education into useful resources — for example, explaining recognized urgent maternal warning signs, helping someone prepare questions for an OB-GYN, finding maternal-health resources in their area, or helping locate Black maternal-health organizations or culturally responsive providers.
+
+But if someone said, **“I'm 32 weeks pregnant and having chest pain and trouble breathing—what should I do?”**, Kinfolk should recognize that we've crossed from general cultural/health education into a potentially urgent individual health situation and respond accordingly rather than continuing with an informational article.
+
+---
+
+**That's much closer to what I think you're trying to build.**
+
+Notice what happened behind the answer. I didn't need Mapping with Melanin to already have an article called *Black Maternal Mortality*. I recognized that the question required **fresh factual information**, searched authoritative sources, found the newest finalized CDC statistics, combined those with CDC and NIH information explaining the disparity, and translated all of that into an answer that is **culturally relevant but still evidence-based**.
+
+And Kinfolk shouldn't dump a list of search results on the user. **The web is the evidence layer; Kinfolk is the intelligence layer.**
+
+That suggests an important requirement for the architecture you're discussing with Replit:
+
+> **Kinfolk should determine when a question requires current or externally verifiable information, retrieve trustworthy web information, evaluate source authority and recency, synthesize multiple sources when appropriate, and answer conversationally with source attribution. Mapping with Melanin proprietary data and user context should enhance that response when relevant, but absence of an MWM database record must not prevent Kinfolk from answering a general knowledge question.**
+
+That's considerably different from simply giving Kinfolk “internet search.” It describes **how you expect Kinfolk to reason about when and how to use the web.**
+
+[1]: https://blogs.cdc.gov/nchs/2026/03/04/7885/?utm_source=chatgpt.com "NCHS Releases Final 2024 Maternal Mortality Data | Blogs | CDC"
+[2]: https://prevention.nih.gov/about-odp/directors-messages/2024/addressing-maternal-health-crisis?utm_source=chatgpt.com "Addressing the Maternal Health Crisis | NIH Office of Disease Prevention Website"
+[3]: https://archive.cdc.gov/www_cdc_gov/reproductivehealth/maternal-mortality/disparities-pregnancy-related-deaths/infographic.html?utm_source=chatgpt.com "Infographic: Racial/Ethnic Disparities in Pregnancy-Related Deaths — United States, 2007–2016 | CDC"
+[4]: https://www.cdc.gov/hearher/news-media/article-health-inequities.html?utm_source=chatgpt.com "Matte Article: Addressing Maternal Health Inequities | HEAR HER Campaign | CDC"
+[5]: https://www.cdc.gov/vitalsigns/respectful-maternity-care/index.html?utm_source=chatgpt.com "Many Women Report Mistreatment During Pregnancy and Delivery | VitalSigns | CDC"
+[6]: https://www.cdc.gov/mmwr/volumes/68/wr/mm6835a3.htm?utm_source=chatgpt.com "Racial/Ethnic Disparities in Pregnancy-Related Deaths — United States, 2007–2016 | MMWR"
+[7]: https://www.cdc.gov/womens-health/features/maternal-mortality.html?utm_source=chatgpt.com "Working Together to Reduce Black Maternal Mortality | Women’s Health | CDC"
+[8]: https://archive.cdc.gov/www_cdc_gov/media/releases/2019/p0507-pregnancy-related-deaths.html?utm_source=chatgpt.com "Pregnancy-Related Deaths Happen Before, During, and Up to a Year After Delivery | CDC Online Newsroom | CDC"

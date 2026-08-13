@@ -1,0 +1,387 @@
+# Exact Replit Patch — Age Bands and Kinfolk 13–15 Delivery
+
+**Scope:** Add a privacy-minimizing age-band system and enforce age-aware Kinfolk delivery. This patch does **not** change login, map rendering, business claims, Library source data, Safety Hub behavior, or mobile code. It does not enable under-13 accounts.
+
+**Existing-schema correction:** `users.date_of_birth` already exists in `lib/db/src/schema/auth.ts`, but it is not collected by the live website and must not be exposed to the client, Kinfolk, sessions, or other members. The launch implementation should use a derived `age_band` from a separate table, not begin by requesting date of birth.
+
+---
+
+## Patch 1 — Add an idempotent migration
+
+**New file:** `artifacts/api-server/src/lib/migrations/20260813_age_assurance_v1.sql`
+
+```sql
+-- Age assurance v1: 13+ MWM experience. Additive and idempotent.
+-- No DOB is requested or backfilled in v1.
+
+CREATE TABLE IF NOT EXISTS user_age_assurance (
+  user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+
+  -- Only this derived band is used by normal product policy checks.
+  age_band VARCHAR(16) NOT NULL DEFAULT 'unknown'
+    CHECK (age_band IN ('unknown', 'under_13', '13_15', '16_17', '18_plus')),
+
+  -- v1 records member self-attestation. Future values require a separate,
+  -- counsel-reviewed provider/parent-consent release.
+  assurance_method VARCHAR(32) NOT NULL DEFAULT 'unconfirmed'
+    CHECK (assurance_method IN (
+      'unconfirmed', 'self_attested_band', 'self_attested_dob',
+      'parental_consent', 'verified_provider'
+    )),
+
+  policy_version VARCHAR(64) NOT NULL DEFAULT 'age-assurance-v1',
+  assured_at TIMESTAMPTZ,
+  next_recheck_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_age_assurance_band
+  ON user_age_assurance(age_band);
+
+CREATE TABLE IF NOT EXISTS content_audience_policy (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_type VARCHAR(64) NOT NULL CHECK (resource_type IN (
+    'library_topic_version', 'knowledge_article', 'happening_story',
+    'community_post', 'community_media', 'kinfolk_response', 'event', 'business_media'
+  )),
+  resource_id VARCHAR(255) NOT NULL,
+  minimum_age_band VARCHAR(16) NOT NULL DEFAULT '13_15'
+    CHECK (minimum_age_band IN ('13_15', '16_17', '18_plus')),
+  sensitivity_tags TEXT[] NOT NULL DEFAULT '{}',
+  graphic_level VARCHAR(16) NOT NULL DEFAULT 'none'
+    CHECK (graphic_level IN ('none', 'limited', 'graphic')),
+  requires_context_screen BOOLEAN NOT NULL DEFAULT FALSE,
+  policy_reason TEXT,
+  assigned_by_user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(resource_type, resource_id)
+);
+
+CREATE TABLE IF NOT EXISTS age_delivery_audit_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  resource_type VARCHAR(64) NOT NULL,
+  resource_id VARCHAR(255),
+  decision VARCHAR(24) NOT NULL
+    CHECK (decision IN ('allowed', 'adapted', 'context_screen', 'blocked')),
+  audience_band_at_decision VARCHAR(16) NOT NULL,
+  policy_version VARCHAR(64) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_age_delivery_events_user_created
+  ON age_delivery_audit_events(user_id, created_at DESC);
+```
+
+**Register once:** In `artifacts/api-server/src/lib/startup-migrations.ts`, add the migration key and SQL file using the project’s existing `runStartupMigration(...)` pattern. Do not call raw DDL from request handlers.
+
+```ts
+await runStartupMigration({
+  key: 'age_assurance_v1',
+  sqlFile: '20260813_age_assurance_v1.sql',
+});
+```
+
+---
+
+## Patch 2 — Add the Drizzle tables
+
+**New file:** `lib/db/src/schema/age-assurance.ts`
+
+```ts
+import { sql } from 'drizzle-orm';
+import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core';
+import { usersTable } from './auth';
+
+export const ageBandValues = ['unknown', 'under_13', '13_15', '16_17', '18_plus'] as const;
+export type AgeBand = (typeof ageBandValues)[number];
+
+export const userAgeAssuranceTable = pgTable('user_age_assurance', {
+  userId: varchar('user_id', { length: 255 }).primaryKey()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  ageBand: varchar('age_band', { length: 16, enum: ageBandValues })
+    .notNull().default('unknown'),
+  assuranceMethod: varchar('assurance_method', {
+    length: 32,
+    enum: ['unconfirmed', 'self_attested_band', 'self_attested_dob', 'parental_consent', 'verified_provider'],
+  }).notNull().default('unconfirmed'),
+  policyVersion: varchar('policy_version', { length: 64 }).notNull().default('age-assurance-v1'),
+  assuredAt: timestamp('assured_at', { withTimezone: true }),
+  nextRecheckAt: timestamp('next_recheck_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [index('idx_user_age_assurance_band').on(t.ageBand)]);
+
+export const contentAudiencePolicyTable = pgTable('content_audience_policy', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  resourceType: varchar('resource_type', { length: 64 }).notNull(),
+  resourceId: varchar('resource_id', { length: 255 }).notNull(),
+  minimumAgeBand: varchar('minimum_age_band', { length: 16, enum: ['13_15', '16_17', '18_plus'] as const })
+    .notNull().default('13_15'),
+  sensitivityTags: text('sensitivity_tags').array().notNull().default(sql`'{}'::text[]`),
+  graphicLevel: varchar('graphic_level', { length: 16, enum: ['none', 'limited', 'graphic'] as const })
+    .notNull().default('none'),
+  requiresContextScreen: boolean('requires_context_screen').notNull().default(false),
+  policyReason: text('policy_reason'),
+  assignedByUserId: varchar('assigned_by_user_id', { length: 255 })
+    .references(() => usersTable.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [uniqueIndex('content_audience_policy_resource_uq').on(t.resourceType, t.resourceId)]);
+
+export const ageDeliveryAuditEventsTable = pgTable('age_delivery_audit_events', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar('user_id', { length: 255 }).notNull()
+    .references(() => usersTable.id, { onDelete: 'cascade' }),
+  resourceType: varchar('resource_type', { length: 64 }).notNull(),
+  resourceId: varchar('resource_id', { length: 255 }),
+  decision: varchar('decision', { length: 24, enum: ['allowed', 'adapted', 'context_screen', 'blocked'] as const }).notNull(),
+  audienceBandAtDecision: varchar('audience_band_at_decision', { length: 16, enum: ageBandValues }).notNull(),
+  policyVersion: varchar('policy_version', { length: 64 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index('idx_age_delivery_events_user_created').on(t.userId, t.createdAt)]);
+```
+
+Export these tables from the schema barrel. Do **not** add `ageBand` to public user/profile DTOs or session serialization.
+
+---
+
+## Patch 3 — Central audience context and age assurance API
+
+**New file:** `artifacts/api-server/src/lib/audience-policy.ts`
+
+```ts
+import { pool } from '@workspace/db';
+
+export type AgeBand = 'unknown' | 'under_13' | '13_15' | '16_17' | '18_plus';
+export type AudienceDecision = 'allowed' | 'adapted' | 'context_screen' | 'blocked';
+export type GraphicLevel = 'none' | 'limited' | 'graphic';
+
+const rank: Record<AgeBand, number> = {
+  unknown: 0,
+  under_13: -1,
+  '13_15': 1,
+  '16_17': 2,
+  '18_plus': 3,
+};
+
+export async function getMemberAgeBand(userId: string): Promise<AgeBand> {
+  const r = await pool.query<{ age_band: AgeBand }>(
+    `SELECT age_band FROM user_age_assurance WHERE user_id = $1 LIMIT 1`,
+    [userId],
+  );
+  return r.rows[0]?.age_band ?? 'unknown';
+}
+
+export function decideAudienceAccess(input: {
+  memberBand: AgeBand;
+  minimumAgeBand: '13_15' | '16_17' | '18_plus';
+  graphicLevel: GraphicLevel;
+  requiresContextScreen: boolean;
+  domain: 'kinfolk' | 'library' | 'community' | 'safety' | 'event' | 'business_media';
+}): AudienceDecision {
+  const { memberBand, minimumAgeBand, graphicLevel, requiresContextScreen, domain } = input;
+  if (memberBand === 'under_13') return 'blocked';
+  if (rank[memberBand] < rank[minimumAgeBand]) return 'blocked';
+  if (memberBand !== '18_plus' && graphicLevel === 'graphic') return 'blocked';
+  if (memberBand !== '18_plus' && graphicLevel === 'limited') return 'context_screen';
+  if (requiresContextScreen) return 'context_screen';
+  if (memberBand === '13_15' && (domain === 'kinfolk' || domain === 'library')) return 'adapted';
+  return 'allowed';
+}
+
+export function buildAudienceDeliveryContext(band: AgeBand): {
+  audienceBand: AgeBand;
+  deliveryStyle: 'protective' | 'teen_clear' | 'teen_nuanced' | 'adult_standard';
+  prohibitGraphicDetail: boolean;
+  prohibitAdultSocialMedia: boolean;
+} {
+  if (band === '13_15') return {
+    audienceBand: band,
+    deliveryStyle: 'teen_clear',
+    prohibitGraphicDetail: true,
+    prohibitAdultSocialMedia: true,
+  };
+  if (band === '16_17') return {
+    audienceBand: band,
+    deliveryStyle: 'teen_nuanced',
+    prohibitGraphicDetail: true,
+    prohibitAdultSocialMedia: true,
+  };
+  if (band === '18_plus') return {
+    audienceBand: band,
+    deliveryStyle: 'adult_standard',
+    prohibitGraphicDetail: false,
+    prohibitAdultSocialMedia: false,
+  };
+  return {
+    audienceBand: band,
+    deliveryStyle: 'protective',
+    prohibitGraphicDetail: true,
+    prohibitAdultSocialMedia: true,
+  };
+}
+```
+
+**New route:** `artifacts/api-server/src/routes/age-assurance.ts`
+
+```ts
+import { Router } from 'express';
+import { pool } from '@workspace/db';
+import { requireAuth } from '../middlewares/authMiddleware';
+
+const router = Router();
+router.use(requireAuth);
+
+const permittedBands = new Set(['13_15', '16_17', '18_plus']);
+
+router.get('/age-assurance', async (req, res) => {
+  const userId = req.user!.id;
+  const r = await pool.query(
+    `SELECT age_band, assurance_method, policy_version, assured_at
+       FROM user_age_assurance WHERE user_id = $1`, [userId],
+  );
+  const row = r.rows[0] ?? { age_band: 'unknown', assurance_method: 'unconfirmed', policy_version: 'age-assurance-v1', assured_at: null };
+  // Intentionally never return users.date_of_birth.
+  res.json({ ageBand: row.age_band, assuranceMethod: row.assurance_method, policyVersion: row.policy_version, assuredAt: row.assured_at });
+});
+
+router.put('/age-assurance', async (req, res) => {
+  const userId = req.user!.id;
+  const { ageBand, attested } = req.body ?? {};
+  if (!permittedBands.has(ageBand) || attested !== true) {
+    return res.status(400).json({ error: 'Select a valid age range and confirm it is accurate.' });
+  }
+  await pool.query(
+    `INSERT INTO user_age_assurance (user_id, age_band, assurance_method, policy_version, assured_at)
+     VALUES ($1, $2, 'self_attested_band', 'age-assurance-v1', now())
+     ON CONFLICT (user_id) DO UPDATE SET
+       age_band = EXCLUDED.age_band,
+       assurance_method = EXCLUDED.assurance_method,
+       policy_version = EXCLUDED.policy_version,
+       assured_at = EXCLUDED.assured_at,
+       updated_at = now()`,
+    [userId, ageBand],
+  );
+  res.json({ ok: true, ageBand });
+});
+
+export default router;
+```
+
+Mount this route after the authenticated user shape is populated and before protected delivery routes. Do not accept `under_13` from the standard member flow. If a future app needs that state, it requires the separate parental-consent launch.
+
+---
+
+## Patch 4 — Kinfolk’s exact 13–15 response rules
+
+**File:** `artifacts/api-server/src/routes/kinfolk.ts`
+
+After `requireAuth` and before prompt assembly, call `getMemberAgeBand(req.user.id)` and create only a derived `audienceContext`.
+
+```ts
+import { buildAudienceDeliveryContext, getMemberAgeBand } from '../lib/audience-policy';
+
+const ageBand = await getMemberAgeBand(req.user.id);
+const audienceContext = buildAudienceDeliveryContext(ageBand);
+
+const kinfolkRequestContext = {
+  // Existing non-sensitive delivery settings remain here.
+  responseStyle: preferences.responseStyle,
+  detailLevel: preferences.deliveryProfile?.detailLevel ?? 'standard',
+  audience: audienceContext,
+};
+```
+
+**Hard requirement:** Do not add raw date of birth, actual numeric age, age-assurance method, parent/guardian data, or user-provided sensitive content to the Kinfolk prompt, stored chat history, vector embedding, Library growth signal, Circle, business profile, or community post.
+
+Add this exact policy to the system instruction assembled for Kinfolk:
+
+```text
+AGE-AWARE DELIVERY RULES
+- You receive only a derived audience band, never a member’s date of birth.
+- For audienceBand=13_15: use plain, respectful, age-appropriate language; define unfamiliar terms; avoid graphic detail, adult sexual detail, mature community media, or fear-amplifying wording; never talk down to the member.
+- Keep facts, source standards, uncertainty, and emergency safety guidance identical across audience bands. Adjust presentation, not truth.
+- Do not ask the member to reveal age in a sensitive conversation. If age is unknown, use the protective delivery style.
+- Do not infer maturity, identity, beliefs, health status, or support network from a member’s questions.
+- For medical information, say it is general education, not a diagnosis. If a message includes emergency warning signs, use the emergency response flow before any long explanation.
+```
+
+### Black maternal health fixture: 13–15 response composer
+
+**This is presentation policy, not medical advice.** The content source plan remains the same authoritative CDC/NIH/HHS Library plan. The 13–15 composer must create this response structure:
+
+```ts
+export const BLACK_MATERNAL_HEALTH_13_15_TEMPLATE = `
+Start with a short, calm answer:
+"Black maternal health is about making pregnancy, birth, and the time after birth safer for Black moms and babies. In the U.S., Black women are more likely to die from pregnancy-related causes than white women. Health experts say this is connected to differences in access to care, how seriously symptoms are treated, stress from unfair treatment, and other system-level problems—not because being Black is biologically the problem."
+
+Then provide 2–4 plain-language points:
+- Explain that many pregnancy-related deaths can be prevented with timely, respectful care.
+- Explain that a person deserves to have questions and symptoms taken seriously.
+- Provide a non-graphic list of urgent warning signs only when useful: trouble breathing, chest pain, very heavy bleeding, fainting, seizure, or severe headache/vision changes.
+- State: "If you or someone who is pregnant has one of these symptoms, get urgent medical help right away."
+
+Always include:
+- "This is general health information, not a diagnosis."
+- One or more active, authoritative sources from the Library evidence plan.
+- A `Show more` action that opens the same verified Library topic at standard/deep depth.
+
+Never include:
+- A personal risk score, diagnosis, graphic childbirth details, fatality anecdotes, blame toward a patient/family, or claims that race is a biological cause.
+- Adult relationship/sexual detail.
+- Community posts/media as medical evidence.
+`;
+```
+
+### Show less / Show more
+
+For `13_15`, default to `brief` or `standard` based on the member’s explicit non-sensitive delivery preference. `Show more` may expand definitions, systems context, source explanations, and safe resource navigation. It may **not** remove the health-information boundary or the urgent-warning-sign escalation.
+
+```ts
+function selectDepthForAge(args: {
+  ageBand: AgeBand;
+  requestedDepth?: 'brief' | 'standard' | 'deep';
+  defaultDepth: 'brief' | 'standard' | 'deep';
+  policy: 'health_authoritative' | 'safety_official' | 'general' | 'culture';
+}) {
+  const requested = args.requestedDepth ?? args.defaultDepth;
+  // Teen members can explicitly request deeper factual explanation; the
+  // audience policy transforms prohibited detail instead of silently refusing.
+  if (args.ageBand === '13_15' && args.policy === 'health_authoritative') {
+    return requested === 'deep' ? 'deep_non_graphic' : requested;
+  }
+  return requested;
+}
+```
+
+---
+
+## Patch 5 — Required tests
+
+1. `PUT /api/age-assurance` accepts only `13_15`, `16_17`, or `18_plus` with `attested:true`.
+2. `GET /api/age-assurance` never returns `users.date_of_birth`.
+3. Directly setting `ageBand=18_plus` in a Kinfolk request body does nothing; the server reads the table only.
+4. A 13–15 account asking general Black maternal health questions gets simple evidence-backed education, source labels, safety boundary, and `Show more`.
+5. The same 13–15 account requesting deep detail gets deeper non-graphic evidence context, not adult/graphic content.
+6. A pregnancy/postpartum emergency-symptom prompt invokes the emergency path before a long answer at every band.
+7. An unknown age band uses protective delivery and cannot retrieve adult/graphic community media.
+8. A 13–15 user can read Muslim/Christmas and interracial-relationship Library topics with respectful, non-stereotyped delivery.
+9. Profile, session payload, community API, business dashboard, Kinfolk logs, and vectors do not expose DOB.
+10. The 30-session canary passes after age code is added, using clean bundle identity and member-keyed rate limits.
+
+---
+
+## Replit deployment proof
+
+Provide to Manus before requesting sign-off:
+
+1. Migration output and schema diff.
+2. Redacted API responses for unknown / 13–15 / 16–17 / 18+ test users.
+3. Exact Kinfolk prompt fixture proving only `audienceBand`, not DOB, is supplied.
+4. Screenshots of onboarding, Profile setting, 13–15 Black maternal health response at brief and deep non-graphic depth, and direct API denial for adult media.
+5. Automated test output for the ten cases above.
+6. `/api/version` response with matching hashes and `stale_bundle:false`.
+7. New 1 → 5 → 15 → 30 production canary evidence.

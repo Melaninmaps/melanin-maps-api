@@ -1,0 +1,22 @@
+## Exact Age-Band SQL and 13–15 Kinfolk Patch Ready
+
+I created the requested code-level Replit patch. One important correction from the live schema review: the database already has a `users.date_of_birth` column, but the website does not collect it and must **not** start exposing it to Kinfolk, sessions, profiles, or other members.
+
+The patch therefore adds a separate, privacy-minimizing `user_age_assurance` table and uses only a derived band—`unknown`, `13_15`, `16_17`, or `18_plus`—for delivery decisions.
+
+| Patch component | Exact behavior |
+| --- | --- |
+| SQL migration | Creates `user_age_assurance`, `content_audience_policy`, and delivery-audit tables with indexes and safe constraints. |
+| Drizzle schema | Adds typed tables without adding age to public user/profile/session DTOs. |
+| API | Adds authenticated `GET/PUT /api/age-assurance`; v1 accepts only an attested age range, not a birth date. |
+| Server policy | Reads age band on the server; client request bodies cannot pretend to be adult. |
+| Kinfolk | Receives only `audienceBand`, not a date of birth or actual age. |
+| Testing | Requires direct-API bypass tests, privacy tests, Black maternal-health tests, and the final 30-user canary. |
+
+### Kinfolk behavior for ages 13–15: Black maternal health
+
+Kinfolk begins calmly and plainly, explains that Black maternal health concerns are connected to care access, how symptoms are treated, and other system-level factors—not biology or personal blame—and keeps the response non-graphic. It includes authoritative sources, the sentence **“This is general health information, not a diagnosis,”** and a `Show more` path to the verified Library topic.
+
+If the member describes warning symptoms such as chest pain, trouble breathing, very heavy bleeding, seizure, fainting, or severe headache/vision changes during pregnancy or after birth, Kinfolk switches to urgent-care guidance immediately rather than giving a long educational answer. That emergency behavior remains the same for every age band.
+
+The attachment contains the full SQL, Drizzle schema, routes, audience-policy code, Kinfolk prompt contract, response template, and tests.

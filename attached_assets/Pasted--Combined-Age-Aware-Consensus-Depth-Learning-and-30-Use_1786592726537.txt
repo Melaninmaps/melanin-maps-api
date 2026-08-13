@@ -1,0 +1,23 @@
+## Combined Age-Aware Consensus, Depth Learning, and 30-User Canary Package Ready
+
+I created the three exact artifacts you requested.
+
+| Deliverable | What it contains |
+| --- | --- |
+| **Age-aware adaptive consensus patch** | Exact TypeScript/SQL code that resolves factual consensus first, then applies the 13–15 presentation policy without changing the conclusion or source standard. |
+| **Show less / Show more learning loop** | Server-stored answer plans, current-answer depth changes, privacy-safe feedback events, and an explicit consent prompt after three eligible non-sensitive actions—never silent preference changes. |
+| **Final 30-user canary** | A guarded, write-free staged script for 1 → 5 → 15 → 30 isolated accounts, plus the full Replit deployment checklist and abort criteria. |
+
+### Age 13–15 inside the opinion/consensus engine
+
+The patch makes the order non-negotiable: **classify → retrieve/validate evidence → determine consensus state → build factual answer plan → apply age/depth delivery**. Age cannot change who “won,” which sources count, or whether a consensus exists. It changes only delivery: clearer words, non-graphic evidence, no adult harassment or sexual detail, sources retained, and respectful nuance.
+
+### Show less / Show more
+
+Each control updates only that answer immediately. Kinfolk retains a vetted answer plan for a short time so “Show more” expands the same source-grounded answer rather than asking the model to improvise again. Health, legal, safety, religion/culture, relationships, and financial topics never train a global depth default from interaction behavior. Three non-sensitive taps in the same direction trigger a suggestion; only an explicit confirmation changes the saved default.
+
+### Final canary
+
+The canary refuses to run unless production has `stale_bundle:false`, matching hashes, healthy DB, pool maximum of at least 50, and the member-keyed authenticated rate-limit repair. It performs no product writes and stops on the first failed stage, generic 429, 5xx, timeout, stale bundle, or sustained pool wait. The checklist then defines how to move from 27 to 30, then 35 and 40 only after measured passes.
+
+The canary must be run only after Replit applies the P0 bundle identity and shared-IP rate-limit fix; it is not safe to rerun against the current stale deployment.

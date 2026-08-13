@@ -1,0 +1,27 @@
+## Exact Adaptive Consensus Patch Ready
+
+I created the code-level Replit patch for the opinion and consensus engine. It adds four controlled pieces:
+
+| Patch component | Purpose |
+| --- | --- |
+| `resolveResponseMode()` | Separates cultural consensus, named cultural entity, local discovery, education, current events, and high-consequence evidence before Kinfolk retrieves or writes. |
+| `consensus-resolver.ts` | Builds a deterministic consensus state from independent, attributable sources before the language model can state a conclusion. |
+| `response-composer.ts` | Forces the model to label consensus correctly, explain evidence, preserve nuance, and never invent a universal view. |
+| Delivery controls | Adds `Show less`, `Show more`, and explicit default-style preference persistence without storing sensitive topic content. |
+
+### How Kinfolk handles conflicting consensus
+
+Kinfolk uses **four states**, not a guessed “majority”:
+
+| Evidence state | Kinfolk response |
+| --- | --- |
+| **Broad consensus** | Gives a qualified direct conclusion, explains why, and acknowledges reasonable dissent. |
+| **Segmented consensus** | Says there is no single consensus; shows the differing, source-attributed perspectives side by side. |
+| **Contested** | Says the issue remains contested and fairly summarizes the strongest documented positions. |
+| **Insufficient evidence** | Does not manufacture a consensus; explains that available credible evidence is too thin or unclear. |
+
+> Kinfolk must never infer that a member belongs to a demographic, or choose an answer because of a member’s name, profile image, location, language, or search history. It may describe a community perspective only when a credible source itself identifies that audience, date, and scope.
+
+For example, if documented critics, fan surveys, and award outcomes diverge, Kinfolk does **not** say “everyone agrees.” It says the consensus is split and labels each perspective by its cited source. A member’s explicit cultural interest can affect **language or source expansion**, never the conclusion state.
+
+The patch also includes the exact read-only audit ledger, migration rules, test cases, and production proof requirements.
