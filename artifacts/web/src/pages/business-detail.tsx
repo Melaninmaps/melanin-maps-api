@@ -257,15 +257,114 @@ export default function BusinessDetail() {
     finally { setContribSubmitting(false); }
   }
 
-  // Canonical Community Says caption chips — backed by business_member_feedback (kind='caption')
-  const COMMUNITY_CAPTIONS = [
+  // Community Says caption chips — category-specific so a hair salon never shows
+  // food tags like "Portions With Love" or "Seasoned Right."
+  // Keys must be stable DB identifiers (snake_case); labels are display text.
+  type CaptionDef = { key: string; label: string };
+
+  const CAPTIONS_BY_CATEGORY: Record<string, CaptionDef[]> = {
+    // Food & dining
+    "Food & Dining": [
+      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+      { key: "cooks_like_home",     label: "Cooks Like Home" },
+      { key: "worth_the_drive",     label: "Worth the Drive" },
+      { key: "portions_with_love",  label: "Portions With Love" },
+      { key: "grandma_approved",    label: "Grandma Approved" },
+      { key: "seasoned_right",      label: "Seasoned Right" },
+    ],
+    "Food & Restaurants": [
+      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+      { key: "cooks_like_home",     label: "Cooks Like Home" },
+      { key: "worth_the_drive",     label: "Worth the Drive" },
+      { key: "portions_with_love",  label: "Portions With Love" },
+      { key: "grandma_approved",    label: "Grandma Approved" },
+      { key: "seasoned_right",      label: "Seasoned Right" },
+    ],
+    // Beauty, salons, barbers
+    "Beauty & Personal Care": [
+      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+      { key: "they_knew_my_hair",   label: "They Knew My Hair" },
+      { key: "worth_the_drive",     label: "Worth the Drive" },
+      { key: "felt_like_family",    label: "Felt Like Family" },
+      { key: "my_go_to",           label: "My Go-To" },
+      { key: "left_looking_right",  label: "Left Looking Right" },
+    ],
+    // Health & wellness
+    "Health & Wellness": [
+      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+      { key: "left_feeling_better", label: "Left Feeling Better" },
+      { key: "worth_the_drive",     label: "Worth the Drive" },
+      { key: "they_really_listen",  label: "They Really Listen" },
+      { key: "felt_respected",      label: "Felt Respected" },
+      { key: "came_back_again",     label: "Came Back Again" },
+    ],
+    // Professional / business services
+    "Professional Services": [
+      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
+      { key: "solved_my_problem",       label: "Solved My Problem" },
+      { key: "worth_the_drive",         label: "Worth the Drive" },
+      { key: "came_through",            label: "Came Through" },
+      { key: "handled_their_business",  label: "Handled Their Business" },
+      { key: "they_came_correct",       label: "They Came Correct" },
+    ],
+    "Financial & Business Services": [
+      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
+      { key: "solved_my_problem",       label: "Solved My Problem" },
+      { key: "worth_the_drive",         label: "Worth the Drive" },
+      { key: "came_through",            label: "Came Through" },
+      { key: "they_came_correct",       label: "They Came Correct" },
+      { key: "felt_respected",          label: "Felt Respected" },
+    ],
+    "Legal & Government Services": [
+      { key: "sent_the_group_chat",     label: "Sent the Group Chat" },
+      { key: "solved_my_problem",       label: "Solved My Problem" },
+      { key: "worth_the_drive",         label: "Worth the Drive" },
+      { key: "came_through",            label: "Came Through" },
+      { key: "they_came_correct",       label: "They Came Correct" },
+      { key: "felt_respected",          label: "Felt Respected" },
+    ],
+    // Retail & shopping
+    "Retail & Shopping": [
+      { key: "sent_the_group_chat",  label: "Sent the Group Chat" },
+      { key: "found_what_i_needed",  label: "Found What I Needed" },
+      { key: "worth_the_drive",      label: "Worth the Drive" },
+      { key: "they_had_it",          label: "They Had It" },
+      { key: "supporting_real_ones", label: "Supporting Real Ones" },
+      { key: "came_back_again",      label: "Came Back Again" },
+    ],
+    // Education & childcare
+    "Education & Childcare": [
+      { key: "sent_the_group_chat", label: "Sent the Group Chat" },
+      { key: "treated_like_family", label: "Treated Like Family" },
+      { key: "worth_the_drive",     label: "Worth the Drive" },
+      { key: "community_backed",    label: "Community Backed" },
+      { key: "felt_welcomed",       label: "Felt Welcomed" },
+      { key: "came_back_again",     label: "Came Back Again" },
+    ],
+    // Home services, auto, tech, trades
+    "Home & Property Services": [
+      { key: "sent_the_group_chat",    label: "Sent the Group Chat" },
+      { key: "solved_my_problem",      label: "Solved My Problem" },
+      { key: "worth_the_drive",        label: "Worth the Drive" },
+      { key: "came_through",           label: "Came Through" },
+      { key: "handled_their_business", label: "Handled Their Business" },
+      { key: "they_came_correct",      label: "They Came Correct" },
+    ],
+  };
+
+  const UNIVERSAL_CAPTIONS: CaptionDef[] = [
     { key: "sent_the_group_chat", label: "Sent the Group Chat" },
-    { key: "cooks_like_home",     label: "Cooks Like Home" },
     { key: "worth_the_drive",     label: "Worth the Drive" },
-    { key: "portions_with_love",  label: "Portions With Love" },
-    { key: "grandma_approved",    label: "Grandma Approved" },
-    { key: "seasoned_right",      label: "Seasoned Right" },
-  ] as const;
+    { key: "felt_like_family",    label: "Felt Like Family" },
+    { key: "community_backed",    label: "Community Backed" },
+    { key: "came_correct",        label: "Came Correct" },
+    { key: "real_ones_here",      label: "Real Ones Here" },
+  ];
+
+  // Derive captions from the current business category.
+  // Falls back to universal tags if the category isn't mapped.
+  const COMMUNITY_CAPTIONS: CaptionDef[] =
+    CAPTIONS_BY_CATEGORY[business?.category ?? ""] ?? UNIVERSAL_CAPTIONS;
 
   // Categories that use THE REAL (professional trust tags) instead of Community Vibes.
   // Per the Master Directory and Three-Layer Architecture spec.
