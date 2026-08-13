@@ -82,6 +82,8 @@
 - [Build-Phase Inventory v1.0](../docs/product/MWM-BUILD-PHASE-INVENTORY-v1.0.md) — Complete build-by-build roadmap (Build 97–106+); 189 capabilities placed; all outstanding founder decisions.
 - [Roadmap Reconciliation v1.0](../docs/product/MWM-ROADMAP-RECONCILIATION-v1.0.md) — all 4 structural problems ACCEPTED, all 9 build verdicts ACCEPTED, 20 missing capabilities assigned, Build 103 split into 103a/103b/103c/103d.
 - [IP Framework + trade secrets](../docs/trade-secrets/IP_FRAMEWORK.md) — 3 tiers: Trademark/Brand, Copyright, Trade Secrets; never disclose weights, thresholds, Mirror Twin logic, or orchestration rules.
+- [Allied Partner Journey — 5-stage architecture](allied-partner-journey.md) — DB table, routes, community threshold gate, stage-advance logic, email triggers; no FK constraints (Railway pattern).
+- [Community events expansion — #100](community-events-expansion.md) — 126-event multi-city seed; city-centroid coordinate fallback; current count 209/210 events geocoded; still ~237 short of 509 target.
 - [Community Intelligence Constitution](../docs/vision/COMMUNITY_INTELLIGENCE_CONSTITUTION.md) — 11 permanent principles; #9 purposeful collection; #11 private activity as personal property; 11-question feature test; applies to every feature.
 - [Foundation Build Strategy](../docs/vision/FOUNDATION_BUILD_STRATEGY.md) — Trust-phase model (7 phases); pricing defers until 6mo post-launch; "build should leave platform state you'd be proud of if you stopped for 3 months".
 - [Spec docs index](../docs/product/) — Culture & Roots Spec; Source Trust Framework; Sensitive-Context Privacy Rules; Business Trust & Verification Architecture; Specialties Architecture — all in docs/product/ or docs/vision/.
