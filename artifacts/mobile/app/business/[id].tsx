@@ -1094,24 +1094,9 @@ export default function BusinessDetailScreen() {
             </View>
           )}
 
-          {/* Rate Safety Experience */}
-          <TouchableOpacity
-            style={[styles.rateSafetyBanner, { backgroundColor: "#2D7A4F10", borderColor: "#2D7A4F30" }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowSafetySurvey(true);
-            }}
-            activeOpacity={0.8}
-          >
-            <View style={styles.rateSafetyIconWrap}>
-              <Feather name="shield" size={20} color="#2D7A4F" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.rateSafetyTitle, { color: colors.foreground }]}>🛡️ Share Your Experience</Text>
-              <Text style={[styles.rateSafetySub, { color: colors.mutedForeground }]}>Help the community know what to expect.</Text>
-            </View>
-            <Feather name="chevron-right" size={16} color="#2D7A4F" />
-          </TouchableOpacity>
+          {/* "Rate Safety Experience" removed — asking visitors to rate a Black-owned
+              business for "safety" implies it may be unsafe. The Welcoming Environment
+              badge (task #259) will surface here once community vibe data confirms it. */}
 
           {/* Nominate as Hidden Gem */}
           {gemStatus && !gemStatus.isActive && (

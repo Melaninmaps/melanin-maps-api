@@ -1081,60 +1081,23 @@ export default function BusinessDetail() {
           )}
         </div>
 
-        {/* Row 3: Community Safety Stats */}
-        <div className="rounded-2xl border border-[#2B1507]/8 bg-[#2B1507]/[0.03] p-5 mb-3">
-          {(parseInt((business as any).reportCount ?? "0") > 0 || (business as any).safetyRating != null || (business as any).wouldReturnAlone != null || (business as any).recommendationRate != null) ? (
-            <>
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-4 h-4 text-[#CA922B]" />
-                <span className="text-xs font-bold uppercase tracking-widest text-[#CA922B]">Community Safety Stats</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                {(business as any).wouldReturnAlone != null && (
-                  <div>
-                    <div className="text-2xl font-serif font-bold text-emerald-600">{(business as any).wouldReturnAlone}%</div>
-                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Would Return Alone</div>
-                  </div>
-                )}
-                {(business as any).safetyRating != null && (
-                  <div>
-                    <div className="text-2xl font-serif font-bold text-emerald-600">{parseFloat((business as any).safetyRating).toFixed(1)}</div>
-                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Safety Rating</div>
-                  </div>
-                )}
-                {(business as any).recommendationRate != null && (
-                  <div>
-                    <div className="text-2xl font-serif font-bold text-emerald-600">{(business as any).recommendationRate}%</div>
-                    <div className="text-[10px] text-[#3A1F0E]/50 font-bold uppercase tracking-wider mt-1">Recommend</div>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-[#3A1F0E]/25" />
-                <span className="text-xs font-bold uppercase tracking-widest text-[#3A1F0E]/35">Community Safety Stats</span>
-              </div>
-              <p className="text-sm text-[#3A1F0E]/40">Community safety ratings will appear here once members share their experiences.</p>
-            </>
-          )}
-        </div>
-
-        {/* Row 4: Rate Your Safety Experience CTA */}
-        <button
-          onClick={() => document.querySelector<HTMLElement>('[data-value="reviews"]')?.click()}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border border-[#2B1507]/8 bg-white hover:border-[#CA922B]/30 hover:bg-[#CA922B]/[0.02] transition-colors mb-8 group"
-        >
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-[#3A1F0E]/35 group-hover:text-[#CA922B] transition-colors" />
-            <div className="text-left">
-              <p className="font-semibold text-[#2B1507] text-sm">Rate Your Safety Experience</p>
-              <p className="text-xs text-[#3A1F0E]/50">Help the community know what to expect</p>
+        {/* Welcoming Environment — shown when community confirms it via vibe data.
+            "Rate Your Safety Experience" and "Community Safety Stats" were removed.
+            Asking visitors to rate a Black-owned business for "safety" implies it
+            may be unsafe. The platform's philosophy is welcoming environments, not
+            crime-adjacent safety scores. The Welcoming Environment badge (task #259)
+            will surface here once community vibe data confirms it. */}
+        {(business as any).wouldReturnAlone != null && parseInt((business as any).wouldReturnAlone) >= 70 && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 mb-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">🤝</span>
+            </div>
+            <div>
+              <p className="font-semibold text-emerald-800 text-sm">Welcoming Environment</p>
+              <p className="text-xs text-emerald-700/70">{(business as any).wouldReturnAlone}% of visitors say they'd come back here</p>
             </div>
           </div>
-          <ChevronDown className="w-4 h-4 text-[#3A1F0E]/30 group-hover:text-[#CA922B] -rotate-90 transition-colors" />
-        </button>
+        )}
 
       </div>
 

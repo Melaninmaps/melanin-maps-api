@@ -16,6 +16,8 @@ The goal is zero repeat entries going forward. If a request appears here, it was
 |------|---------|---------------|--------|
 | Aug 8, 2026 | Web and mobile should be mirror experiences — full feature parity, cross-platform sync (Library saves appear on both, every iOS feature on web, web should be MORE advanced) | At least 3+ times this session alone, many prior sessions | IN PROGRESS — full audit + implementation started Aug 8 2026 |
 | Aug 13, 2026 | Confirm visually that searching "Shawn Hill" on the web map finds the business — visual audit was not done | Asked Aug 13 2026 | FIXED Aug 13 2026 — bug root cause: geo-extract exact ILIKE gate missed "Shawn Hill Homes"; map geocoded to Shawn Hill IL instead. Fixed with starts-with wildcard match. Visual audit still pending (no browser access at time of fix) |
+| Aug 13, 2026 | "Rate Your Safety Experience" and "Community Safety Stats" on business pages violates safety philosophy (implies Black-owned businesses are dangerous) and does not work. Was marked done. | Raised Aug 13 2026 as a repeat of the safety philosophy — safety-context.ts was deleted for the same reason | FIXED Aug 13 2026 — both sections removed from web AND mobile. Replaced with Welcoming Environment badge (only shows when community data confirms ≥70% would return). No safety-rating language on any business page. |
+| Aug 13, 2026 | Food tags ("Portions With Love", "Cooks Like Home", "Seasoned Right") showing on a hair salon's Community Says — wrong data, wrong logic | Asked Aug 13 2026 | FIXED Aug 13 2026 — Community Says tags are now category-specific per business type |
 
 ---
 
