@@ -832,3 +832,10 @@ uri = "file://businesses_export.csv"
 type = "table"
 title = "MWM Businesses Export — Aug 13 2026"
 description = "2,735 active business records from Railway production. Includes id, name, city, state, listing_status, category, address, website, phone, lat/lng. Ready for Manus duplicate audit."
+
+[[outputs]]
+id = "KNcPJJ5sBUx5FNZ7qtmx7"
+uri = "file://mwm_businesses_download.html"
+type = "text"
+title = "⬇ Download MWM Businesses CSV"
+description = "Click Open → then click the purple Download CSV button. 2,735 rows, ready for Manus."
