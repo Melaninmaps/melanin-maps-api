@@ -47,6 +47,7 @@
 - [Submission Release Gate](submission-release-gate.md) — PERMANENT: 11 gates required before every EAS submission. Includes Railway log 24h audit, fresh Apple Sign-In on production, iPad test, review account in ASC.
 - [Kinfolk No-Guess resolver release](kinfolk-no-guess-release.md) — SQL column bug: kinfolk_source_records uses `status` not `source_status`; getQueryClass plurals; needs_clarification suppressBiz logic.
 - [What's Happening pipeline + Kinfolk semantic retrieval](whats-happening-pipeline.md) — URL SSRF guard, governed submission pipeline, happening_* tables, vector+lexical recall via kinfolk_cultural_documents; entity dedup fix (UNIQUE canonical_name).
+- [REPEATED REQUESTS POLICY](repeated-requests/POLICY.md) — PERMANENT: "asked before/again/still broken" = check this folder first, log it, fix before moving on.
 - [Shawn Hill Homes — repeated search failure](shawn-hill-homes-repeated-issue.md) — FOUNDER HAS RAISED THIS MULTIPLE TIMES. Named-business geo-bypass + prefix gate fix. Verify Railway DB has the record.
 - [Map handoff race condition fix](map-handoff-race-fix.md) — PERMANENT: ready must be set AFTER mapRef.current=map, not in __mwmMapInit. gmLoaded/ready two-phase split. Fixed d8e25360 Aug 12 2026.
 - [Adaptive depth wiring — incomplete](adaptive-depth-wiring.md) — answerPlanId in chat response is null; kinfolk_answer_plans INSERT not yet wired; depth PATCH returns 404 until fixed (#300).

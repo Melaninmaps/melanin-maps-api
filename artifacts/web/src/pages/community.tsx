@@ -6,7 +6,7 @@ import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
   Plus, AlertCircle, Smile, MoreHorizontal, Bookmark, Flag, Trash2,
-  TrendingUp, RefreshCw, Radio, Shield, Link2
+  TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -602,6 +602,42 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
   );
 }
 
+// ── People Search Result ───────────────────────────────────────────────────
+interface MemberResult {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  profileImageUrl: string | null;
+  bio: string | null;
+}
+
+function MemberCard({ m }: { m: MemberResult }) {
+  const [, navigate] = useLocation();
+  const displayName = [m.firstName, m.lastName].filter(Boolean).join(" ") || m.username || "Community Member";
+  const initials = ((m.firstName?.[0] ?? "") + (m.lastName?.[0] ?? "")) || displayName[0]?.toUpperCase() || "?";
+  return (
+    <button
+      onClick={() => navigate(`/profile/${m.id}`)}
+      className="flex items-center gap-3 w-full p-3 bg-white rounded-2xl border border-[#3A1F0E]/8 hover:border-[#CA922B]/30 hover:shadow-sm transition-all text-left"
+    >
+      {m.profileImageUrl ? (
+        <img src={m.profileImageUrl} alt={displayName} className="w-10 h-10 rounded-full object-cover shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-full bg-[#CA922B] flex items-center justify-center shrink-0">
+          <span className="text-white font-bold text-sm">{initials}</span>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-[#2B1507] text-sm truncate">{displayName}</p>
+        {m.username && <p className="text-[#3A1F0E]/50 text-xs">@{m.username}</p>}
+        {m.bio && <p className="text-[#3A1F0E]/60 text-xs mt-0.5 line-clamp-1">{m.bio}</p>}
+      </div>
+      <UserCircle2 className="w-4 h-4 text-[#3A1F0E]/25 shrink-0" />
+    </button>
+  );
+}
+
 // ── Main Community Page ────────────────────────────────────────────────────
 const TABS = ["Feed", "Events", "Groups"] as const;
 type Tab = typeof TABS[number];
@@ -611,6 +647,41 @@ export default function Community() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const isAuthenticated = !!(auth?.user);
+
+  // People search
+  const [peopleQuery, setPeopleQuery] = useState("");
+  const [peopleResults, setPeopleResults] = useState<MemberResult[]>([]);
+  const [peopleLoading, setPeopleLoading] = useState(false);
+  const [searchActive, setSearchActive] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePeopleSearch = useCallback((q: string) => {
+    setPeopleQuery(q);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!q.trim() || q.trim().length < 2) {
+      setPeopleResults([]);
+      setSearchActive(false);
+      return;
+    }
+    setSearchActive(true);
+    setPeopleLoading(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${BASE}api/users/search?q=${encodeURIComponent(q.trim())}`, { credentials: "include" });
+        if (res.ok) {
+          const d = await res.json() as { users: MemberResult[] };
+          setPeopleResults(d.users ?? []);
+        }
+      } catch { /* ignore */ }
+      finally { setPeopleLoading(false); }
+    }, 350);
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    setPeopleQuery("");
+    setPeopleResults([]);
+    setSearchActive(false);
+  }, []);
 
   const [activeTab, setActiveTab] = useState<Tab>("Feed");
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
@@ -716,23 +787,81 @@ export default function Community() {
             )}
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-1 bg-white/8 rounded-2xl p-1">
-            {TABS.map(tab => (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
-                  activeTab === tab ? "bg-white text-[#2B1507] shadow-sm" : "text-white/70 hover:text-white"
-                }`}>
-                {tab}
-              </button>
-            ))}
-          </div>
+          {/* People search bar */}
+          {isAuthenticated && (
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+              <input
+                type="text"
+                value={peopleQuery}
+                onChange={e => handlePeopleSearch(e.target.value)}
+                placeholder="Search community members…"
+                className="w-full bg-white/10 border border-white/15 rounded-2xl pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#CA922B]/60 focus:bg-white/15 transition-all"
+              />
+              {peopleQuery && (
+                <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Tabs — hidden while search is active */}
+          {!searchActive && (
+            <div className="flex gap-1 bg-white/8 rounded-2xl p-1">
+              {TABS.map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+                    activeTab === tab ? "bg-white text-[#2B1507] shadow-sm" : "text-white/70 hover:text-white"
+                  }`}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-5">
+
+        {/* ── People search results ─────────────────────────────────────── */}
+        {searchActive && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-[#3A1F0E]/40 uppercase tracking-wider">Community Members</p>
+              <Link href={`/businesses?q=${encodeURIComponent(peopleQuery)}`}>
+                <span className="text-xs text-[#CA922B] font-semibold hover:underline cursor-pointer">
+                  Also search businesses →
+                </span>
+              </Link>
+            </div>
+
+            {peopleLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-5 h-5 animate-spin text-[#CA922B]" />
+              </div>
+            ) : peopleResults.length > 0 ? (
+              <div className="space-y-2">
+                {peopleResults.map(m => <MemberCard key={m.id} m={m} />)}
+              </div>
+            ) : peopleQuery.trim().length >= 2 ? (
+              <div className="text-center py-8 bg-white rounded-2xl border border-[#3A1F0E]/8">
+                <UserCircle2 className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-2" />
+                <p className="text-sm text-[#3A1F0E]/50 font-medium">
+                  No members found for "{peopleQuery}"
+                </p>
+                <Link href={`/businesses?q=${encodeURIComponent(peopleQuery)}`}>
+                  <span className="mt-2 inline-block text-sm text-[#CA922B] font-semibold hover:underline cursor-pointer">
+                    Search in business directory →
+                  </span>
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         {/* Feed tab */}
-        {activeTab === "Feed" && (
+        {!searchActive && activeTab === "Feed" && (
           <>
             {/* Feed mode + trending */}
             <div className="space-y-4 mb-5">
@@ -820,8 +949,8 @@ export default function Community() {
           </>
         )}
 
-        {activeTab === "Events" && <EventsTab />}
-        {activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
+        {!searchActive && activeTab === "Events" && <EventsTab />}
+        {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
       </div>
 
       {/* Compose modal */}
