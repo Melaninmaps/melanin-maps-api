@@ -2798,6 +2798,64 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       reply = rawContent;
     }
 
+    // ── Local discovery enrichment ─────────────────────────────────────────
+    // When Kinfolk correctly classifies a culture/entertainment or business
+    // discovery request but the LLM returned no recommendations (e.g. "Show me
+    // Philadelphia nightlife" → intentClass:culture_entertainment, recs:null),
+    // query MWM businesses directly and attach real listings.
+    // This only fires when: (a) recs are null, (b) a destination is known,
+    // (c) the intent is explicitly local discovery.
+    if (
+      recommendations === null &&
+      destination &&
+      (intentClass === "culture_entertainment" || intentClass === "business_discovery")
+    ) {
+      try {
+        const { rows: discBizRows } = await pool.query<{
+          id: string; name: string; category: string; city: string; state: string;
+          description: string | null; rating: string | null; verified: boolean;
+          website: string | null; phone: string | null;
+        }>(
+          `SELECT id, name, category, city, state, description, rating, verified, website, phone
+           FROM businesses
+           WHERE status = 'active'
+             AND lower(city) LIKE lower($1)
+             AND (
+               category ILIKE '%Entertainment%' OR
+               category ILIKE '%Bar%' OR
+               category ILIKE '%Nightlife%' OR
+               category ILIKE '%Music%' OR
+               category ILIKE '%Restaurant%' OR
+               category ILIKE '%Food%' OR
+               category ILIKE '%Recreation%'
+             )
+           ORDER BY verified DESC, rating DESC NULLS LAST
+           LIMIT 6`,
+          [`%${destination}%`],
+        );
+        if (discBizRows.length > 0) {
+          recommendations = {
+            destination,
+            summary: `Here are some MWM-listed spots in ${destination} worth checking out.`,
+            businesses: discBizRows.map((b) => ({
+              name: b.name,
+              category: b.category,
+              city: b.city,
+              description: b.description ?? undefined,
+              rating: b.rating ? parseFloat(b.rating) : undefined,
+              verified: b.verified,
+              website: b.website ?? undefined,
+              phone: b.phone ?? undefined,
+            })),
+            neighborhoods: [],
+            events: [],
+            safetyTips: [],
+            localInsights: [],
+          };
+        }
+      } catch { /* enrichment failed — recommendations stays null */ }
+    }
+
     // Save/update session — skip if user has opted out of memory
     const timestamp = new Date().toISOString();
     const newUserMsg: SessionMessage = { role: "user", content: message, timestamp };

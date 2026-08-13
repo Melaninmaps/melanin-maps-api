@@ -845,8 +845,41 @@ export default function MapPage() {
 
   // Initialize map
   useEffect(() => {
-    if (!gmLoaded || !mapDivRef.current || isLoading) return;
-    if (mapRef.current) return;
+    // Allow early initialization when a ?q= handoff query is waiting — the handoff
+    // must fire as soon as the map object exists, not after the mapPins fetch completes.
+    // Without this guard bypass, /map?q=... stalls 10+ seconds waiting for isLoading=false.
+    if (!gmLoaded || !mapDivRef.current || (isLoading && !handoffQuery)) return;
+
+    if (mapRef.current) {
+      // Map already initialized — place initial mapPins markers if the data just
+      // arrived (happens when the map was created early, before isLoading=false).
+      if (!isLoading && markersRef.current.size === 0) {
+        const g = (window as any).google?.maps;
+        if (g) {
+          businesses.forEach((biz) => {
+            const lat = parseFloat(String(biz.latitude));
+            const lng = parseFloat(String(biz.longitude));
+            if (isNaN(lat) || isNaN(lng)) return;
+            const marker: GMarker = new g.Marker({
+              position: { lat, lng },
+              map: mapRef.current,
+              title: biz.name ?? "",
+              icon: {
+                path: g.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#CA922B",
+                fillOpacity: 0.9,
+                strokeColor: "#2B1507",
+                strokeWeight: 2,
+              },
+            });
+            marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
+            markersRef.current.set(biz.id, marker);
+          });
+        }
+      }
+      return;
+    }
 
     const onGmError = (e: ErrorEvent) => {
       if (e.message?.toLowerCase().includes("invalidkey") || e.message?.toLowerCase().includes("google maps")) {

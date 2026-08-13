@@ -432,6 +432,10 @@ function detectIntentType(q: string): IntentType {
   // named_business, returning fuzzy-name alternatives like employment nonprofits.
   if (/\b(obgyn|ob\/gyn|gynecol|gynecolog|pediatri|physician|psychiatr|urolog|cardiolog|orthoped|dermatolog|optometri|chiropract|doula|midwif|radiolog|oncolog|neurolog|ophthalmol|endocrinol|gastroenterol|pulmonolog|rheumatol|hematolog|nephrolog|anesthesiol|patholog|allergist|immunolog|osteopath)\b/i.test(q)) return "healthcare";
 
+  // Explicit nightlife/venue experience — must fire before isProperNoun so
+  // "Nightlife DC" doesn't get classified as named_business.
+  if (/\b(nightlife|nightclub)\b/i.test(lower)) return "vibe_experience";
+
   // Named business heuristic: title-cased multi-word with no category keywords.
   // Guard: only fire if the query doesn't contain any trade/profession keywords that
   // were mapped via CONCEPT_TO_CATEGORY (those queries have category anchors and
@@ -780,6 +784,10 @@ async function searchBusinesses(opts: {
     } catch { /* community_says may not exist */ }
   }
 
+  // City tokens detected by Pass 2.5 — hoisted so Pass 3 can propagate them as
+  // an explicit city scope and prevent out-of-city results from filling response slots.
+  let pass25CityTokens: string[] = [];
+
   // ── PASS 2.5: Location-aware multi-token search ───────────────────────────
   // Handles queries like "hair store Philadelphia" or "barber DC" where the user
   // embeds a city/state name in the search string without using the ?city= param.
@@ -810,6 +818,9 @@ async function searchBusinesses(opts: {
         const locationTokens = allWords.filter(w =>
           detectedCities.has(w) || (w.length === 2 && STATE_ABBREVS_SET.has(w)),
         );
+        // Capture city-only tokens (not state abbrevs) for Pass 3 scope propagation.
+        // This prevents "Philadelphia nightlife" from leaking Allentown/Elkins Park results.
+        pass25CityTokens = locationTokens.filter(w => detectedCities.has(w));
         const contentTokens = allWords.filter(
           w => !locationTokens.includes(w) && w.length >= 2,
         );
@@ -976,6 +987,12 @@ async function searchBusinesses(opts: {
       let extraClauses = "";
 
       if (city) { params.push(`%${city}%`); extraClauses += ` AND b.city ILIKE $${params.length}`; }
+      // Propagate city detected by Pass 2.5 into Pass 3 so out-of-city results
+      // (e.g. Allentown when searching "Philadelphia nightlife") cannot fill result slots.
+      if (!city && pass25CityTokens.length > 0) {
+        params.push(pass25CityTokens);
+        extraClauses += ` AND lower(b.city) = ANY($${params.length}::text[])`;
+      }
       if (effectiveLat !== undefined && effectiveLng !== undefined) {
         const geoRadius = serverExtractedGeo ? GEO_EXTRACT_RADIUS : radius;
         params.push(effectiveLat, effectiveLng, geoRadius);
