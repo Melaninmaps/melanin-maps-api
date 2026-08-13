@@ -62,7 +62,7 @@ export interface EnrichmentResult {
   note: string;
 }
 
-const apiKey = () => process.env.GOOGLE_MAPS_API_KEY ?? "";
+const apiKey = () => process.env.GOOGLE_PLACES_SERVER_KEY ?? process.env.GOOGLE_MAPS_API_KEY ?? "";
 
 /** Sleep for ms milliseconds — used for rate limiting */
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
