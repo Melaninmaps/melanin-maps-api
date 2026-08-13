@@ -74,6 +74,7 @@
 - [Trusted Safety Share](trusted-safety-share.md) — mirrors severe safety alerts to trusted contacts; alert library + API routes + mobile screen built Aug 11 2026; 3 integration gaps remain (#242-244).
 - [KinfolkAI Privacy Intelligence](kinfolk-privacy-intelligence.md) — sensitive topic classifier, non-leakage rule, Divorce Rule, Circle data boundary, privacy DB cols all live Aug 11 2026.
 - [Railway DB + SSL lessons](railway-db-ssl.md) — Replit's DATABASE_URL uses internal `helium` host (unreachable from Railway). Railway Postgres internal URLs contain `.internal` (no SSL); public proxy needs ssl:{rejectUnauthorized:false}.
+- [Mobile auth + color hook pattern](mobile-hook-patterns.md) — useSession/useColorScheme do NOT exist; use SecureStore("auth_session_token") for tokens, useColors from @/hooks/useColors for theme.
 - [Kinfolk Adaptive Delivery & Audience Filter](kinfolk-adaptive-delivery.md) — explicit-only tone/depth; evaluateAudienceEligibility governs proactive push only; kinfolk_delivery_profiles table needed in Railway.
 - [MWM Foundations Book outline](../docs/MWM-Foundations-Book-Outline-v1.0.md) — 9 Parts · 67 Sections; Level 2 "Constitution" of the 5-level Knowledge System; Review Mode only.
 - [MWM Legacy Collection](../docs/MWM-Legacy-Project-Vision.md) — Level 1 "Vision"; 25-year institutional vision; 5 volumes, city books, documentaries, Sounds of Home, Legacy Spots; Letters to the Future reserved.
