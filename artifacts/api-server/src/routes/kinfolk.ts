@@ -38,6 +38,37 @@ import {
 import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
 import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
 
+// ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
+// Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
+// or 3F000 (invalid_schema_name) is treated as "optional enrichment unavailable".
+// Genuine application errors (wrong query, bad data, network failures) still throw.
+function pgCode(err: unknown): string | undefined {
+  return typeof err === "object" && err !== null && "code" in err
+    ? String((err as { code?: unknown }).code ?? "") || undefined
+    : undefined;
+}
+function isOptionalSchemaGap(err: unknown): boolean {
+  const code = pgCode(err);
+  if (code === "42P01" || code === "42703" || code === "3F000") return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return /relation .* does not exist|column .* does not exist/i.test(msg);
+}
+async function optionalKinfolk<T>(
+  stage: string,
+  fallback: T,
+  work: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await work();
+  } catch (err) {
+    if (isOptionalSchemaGap(err)) {
+      console.warn(`[kinfolk-optional] stage=${stage} pgCode=${pgCode(err)} — enrichment unavailable, continuing`);
+      return fallback;
+    }
+    throw err;
+  }
+}
+
 // ── Per-user preferences cache (30-second TTL) ────────────────────────────────
 // user_preferences is read on every chat turn. At 30 concurrent users this is
 // 30 parallel Drizzle queries against the same table. A 30s TTL means a user's
@@ -2093,8 +2124,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // chatStage tracks which boundary the handler was crossing when an error is
+  // thrown, so the Railway [kinfolk-chat-error] log line pinpoints the exact phase
+  // without needing a full stack trace from every path.
+  let chatStage = "init";
   try {
     // ── Enforce monthly query limits ──────────────────────────────────────────
+    chatStage = "quota_check";
     let queriesUsedThisCall: number | null = null;
     let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
@@ -2227,14 +2263,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     // Load or create session
+    chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
+    let sessionPersistenceAvailable = true;
     if (sessionId && req.user?.id) {
-      const [s] = await db
-        .select()
-        .from(kinfolkSessionsTable)
-        .where(and(eq(kinfolkSessionsTable.id, sessionId), eq(kinfolkSessionsTable.userId, req.user.id)))
-        .limit(1);
-      currentSession = s ?? null;
+      try {
+        const [s] = await db
+          .select()
+          .from(kinfolkSessionsTable)
+          .where(and(eq(kinfolkSessionsTable.id, sessionId), eq(kinfolkSessionsTable.userId, req.user.id)))
+          .limit(1);
+        currentSession = s ?? null;
+      } catch (err) {
+        if (!isOptionalSchemaGap(err)) throw err;
+        sessionPersistenceAvailable = false;
+        console.warn(`[kinfolk-optional] stage=session_read pgCode=${pgCode(err)} — answering without saved session`);
+      }
     }
 
     const existingMessages: SessionMessage[] = currentSession?.messages ?? [];
@@ -3016,7 +3060,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     // Cultural phrases — cached for 6 hours, loaded once per instance
-    const culturalPhrases = await getCachedCulturalPhrases();
+    chatStage = "context_resolution";
+    const culturalPhrases = await optionalKinfolk(
+      "cultural_phrases",
+      [] as Array<{ group_name: string; phrase: string; english_gloss: string }>,
+      () => getCachedCulturalPhrases(),
+    );
 
     // Layer 3 — Knowledge Graph Context retrieval.
     // Resolves the user's message + active geography into structured, provenance-aware
@@ -3201,7 +3250,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const completion = await kinfolkQueue.run(
       req.user?.id ?? "anon",
       estimatedTotal,
-      () => callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature),
+      () => { chatStage = "provider_call"; return callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature); },
     );
 
     // Track AI pool usage for paid tiers after successful generation
@@ -3321,32 +3370,39 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (userSettings?.kinfolkMemoryEnabled === false) memoryEnabled = false;
     }
 
+    chatStage = "session_persist";
     let finalSessionId = sessionId;
-    if (req.user?.id && memoryEnabled) {
-      if (currentSession) {
-        await db
-          .update(kinfolkSessionsTable)
-          .set({
-            messages: updatedMessages,
-            destination: detectedDestination ?? currentSession.destination,
-            updatedAt: new Date(),
-          })
-          .where(eq(kinfolkSessionsTable.id, currentSession.id));
-      } else {
-        const title = detectedDestination
-          ? `${detectedDestination} Trip`
-          : message.length > 40 ? message.slice(0, 40) + "…" : message;
-        const [newSession] = await db
-          .insert(kinfolkSessionsTable)
-          .values({
-            userId: req.user.id,
-            title,
-            destination: detectedDestination,
-            vibes: vibes as string[],
-            messages: updatedMessages,
-          })
-          .returning();
-        finalSessionId = newSession?.id;
+    if (req.user?.id && memoryEnabled && sessionPersistenceAvailable) {
+      try {
+        if (currentSession) {
+          await db
+            .update(kinfolkSessionsTable)
+            .set({
+              messages: updatedMessages,
+              destination: detectedDestination ?? currentSession.destination,
+              updatedAt: new Date(),
+            })
+            .where(eq(kinfolkSessionsTable.id, currentSession.id));
+        } else {
+          const title = detectedDestination
+            ? `${detectedDestination} Trip`
+            : message.length > 40 ? message.slice(0, 40) + "…" : message;
+          const [newSession] = await db
+            .insert(kinfolkSessionsTable)
+            .values({
+              userId: req.user.id,
+              title,
+              destination: detectedDestination,
+              vibes: vibes as string[],
+              messages: updatedMessages,
+            })
+            .returning();
+          finalSessionId = newSession?.id;
+        }
+      } catch (err) {
+        if (!isOptionalSchemaGap(err)) throw err;
+        console.warn(`[kinfolk-optional] stage=session_write pgCode=${pgCode(err)} — answered successfully but could not save session`);
+        finalSessionId = undefined;
       }
     }
 
@@ -3491,6 +3547,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const errStack = err instanceof Error ? (err.stack ?? "").slice(0, 600) : "";
     console.error(
       "[kinfolk-chat-error]",
+      `chatStage=${chatStage}`,
       `code=${errCode ?? "none"}`,
       `providerStatus=${providerStatus ?? "none"}`,
       `errName=${errName}`,

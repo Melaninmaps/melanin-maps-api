@@ -2729,15 +2729,16 @@ ON CONFLICT (city_slug) DO UPDATE SET
   },
 
   // ── Kinfolk Cultural Documents — vector + full-text retrieval store ────────
-  // No FK constraints — Railway Postgres rejects FK constraints referencing
-  // tables that may not exist at migration time (kinfolk_entities is created
-  // by ensureKinfolkEntityRegistry which runs after all migrations).
+  // entity_id/source_id are text (not uuid) to match kinfolk_entities.id and
+  // kinfolk_source_records.id which both use text PKs (gen_random_uuid()::text).
+  // No FK constraints — kinfolk_entities is created by ensureKinfolkEntityRegistry
+  // which runs after all startup migrations; an FK at migration time would fail.
   {
     name: "kinfolk_cultural_documents_v1",
     sql: `CREATE TABLE IF NOT EXISTS kinfolk_cultural_documents (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      entity_id uuid,
-      source_id uuid,
+      entity_id text,
+      source_id text,
       document_type varchar(48) NOT NULL DEFAULT 'summary'
         CHECK (document_type IN ('summary','biography','event','place','topic','factsheet')),
       language_code varchar(16) NOT NULL DEFAULT 'en',
@@ -2793,6 +2794,76 @@ ON CONFLICT (city_slug) DO UPDATE SET
       CREATE TRIGGER kinfolk_content_tsv_update
         BEFORE INSERT OR UPDATE ON kinfolk_cultural_documents
         FOR EACH ROW EXECUTE FUNCTION kinfolk_update_content_tsv()`,
+  },
+
+  // ── Fix kinfolk_cultural_documents entity_id/source_id type mismatch ────────
+  // Earlier deployments created entity_id/source_id as uuid while parent keys
+  // (kinfolk_entities.id, kinfolk_source_records.id) are text. Convert in-place.
+  {
+    name: "kinfolk_cultural_documents_text_type_fix_v1",
+    sql: `DO $$
+      BEGIN
+        IF to_regclass('public.kinfolk_cultural_documents') IS NOT NULL THEN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema='public' AND table_name='kinfolk_cultural_documents'
+              AND column_name='entity_id' AND udt_name<>'text'
+          ) THEN
+            ALTER TABLE public.kinfolk_cultural_documents
+              ALTER COLUMN entity_id TYPE text USING entity_id::text;
+          END IF;
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema='public' AND table_name='kinfolk_cultural_documents'
+              AND column_name='source_id' AND udt_name<>'text'
+          ) THEN
+            ALTER TABLE public.kinfolk_cultural_documents
+              ALTER COLUMN source_id TYPE text USING source_id::text;
+          END IF;
+        END IF;
+      EXCEPTION WHEN others THEN NULL;
+      END
+    $$`,
+  },
+
+  // ── Stripe schema recovery — creates stripe.accounts if stripe-replit-sync  ─
+  // migrations failed or the schema was lost between Railway deploys. The table
+  // shape matches stripe-replit-sync@1.0.0 migration 0046_sync_status_per_account.
+  {
+    name: "stripe_accounts_recovery_v1",
+    sql: `DO $$
+      BEGIN
+        CREATE SCHEMA IF NOT EXISTS stripe;
+        CREATE TABLE IF NOT EXISTS stripe.accounts (
+          id                 text PRIMARY KEY,
+          raw_data           jsonb NOT NULL,
+          first_synced_at    timestamptz NOT NULL DEFAULT now(),
+          last_synced_at     timestamptz NOT NULL DEFAULT now(),
+          updated_at         timestamptz NOT NULL DEFAULT now(),
+          business_name      text GENERATED ALWAYS AS
+                               ((raw_data->'business_profile'->>'name')::text) STORED,
+          email              text GENERATED ALWAYS AS
+                               ((raw_data->>'email')::text) STORED,
+          type               text GENERATED ALWAYS AS
+                               ((raw_data->>'type')::text) STORED,
+          charges_enabled    boolean GENERATED ALWAYS AS
+                               ((raw_data->>'charges_enabled')::boolean) STORED,
+          payouts_enabled    boolean GENERATED ALWAYS AS
+                               ((raw_data->>'payouts_enabled')::boolean) STORED,
+          details_submitted  boolean GENERATED ALWAYS AS
+                               ((raw_data->>'details_submitted')::boolean) STORED,
+          country            text GENERATED ALWAYS AS
+                               ((raw_data->>'country')::text) STORED,
+          default_currency   text GENERATED ALWAYS AS
+                               ((raw_data->>'default_currency')::text) STORED,
+          created            integer GENERATED ALWAYS AS
+                               ((raw_data->>'created')::integer) STORED
+        );
+        CREATE INDEX IF NOT EXISTS idx_stripe_accounts_business_name
+          ON stripe.accounts (business_name);
+      EXCEPTION WHEN others THEN NULL;
+      END
+    $$`,
   },
 
   // ── Kinfolk Embedding Outbox — async embedding queue ─────────────────────

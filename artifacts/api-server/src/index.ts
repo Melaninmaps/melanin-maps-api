@@ -33,6 +33,19 @@ async function initStripe() {
     await runMigrations({ databaseUrl });
     logger.info("Stripe schema ready");
 
+    // Guard: verify stripe.accounts actually exists before using the sync client.
+    // stripe-replit-sync migrations sometimes complete without creating the table
+    // (e.g. ledger thinks it already ran; table was dropped between deploys).
+    // The stripe_accounts_recovery_v1 startup migration creates the table as a
+    // fallback, so this check should only fail in edge-case dev environments.
+    const { rows: [stripeCheck] } = await pool.query<{ exists: boolean }>(
+      `SELECT to_regclass('stripe.accounts') IS NOT NULL AS exists`,
+    );
+    if (!stripeCheck?.exists) {
+      logger.warn("stripe.accounts not present after runMigrations — Stripe sync disabled for this boot");
+      return;
+    }
+
     const stripeSync = await getStripeSync();
 
     const webhookBase = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
