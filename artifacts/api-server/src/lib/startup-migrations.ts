@@ -2655,6 +2655,364 @@ ON CONFLICT (city_slug) DO UPDATE SET
     sql: `CREATE INDEX IF NOT EXISTS business_claims_review_queue_idx
       ON business_claims (status, created_at DESC)`,
   },
+
+  // ── kinfolk_entities UNIQUE(canonical_name) — prevents duplicate seeding ──
+  // Without this, ON CONFLICT (id) on an auto-UUID never fires, and each server
+  // restart creates a new entity row for every seeded entity.
+  {
+    name: "kinfolk_entities_unique_canonical_name",
+    sql: `ALTER TABLE kinfolk_entities
+      ADD CONSTRAINT kinfolk_entities_canonical_name_unique UNIQUE (canonical_name)`,
+  },
+
+  // ── pgvector extension ────────────────────────────────────────────────────
+  // Required for Kinfolk semantic retrieval (task #295).
+  // Stop condition: if this errors on Railway, vector layer is unavailable —
+  // check Railway logs for "pgvector_extension" to verify Railway support.
+  {
+    name: "pgvector_extension",
+    sql: `CREATE EXTENSION IF NOT EXISTS vector`,
+  },
+
+  // ── Kinfolk Cultural Documents — vector + full-text retrieval store ────────
+  {
+    name: "kinfolk_cultural_documents_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_cultural_documents (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      entity_id uuid REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
+      source_id uuid REFERENCES kinfolk_source_records(id) ON DELETE SET NULL,
+      document_type varchar(48) NOT NULL DEFAULT 'summary'
+        CHECK (document_type IN ('summary','biography','event','place','topic','factsheet')),
+      language_code varchar(16) NOT NULL DEFAULT 'en',
+      geography_scope jsonb NOT NULL DEFAULT '{}'::jsonb,
+      category text,
+      sensitivity_tier varchar(24) NOT NULL DEFAULT 'standard'
+        CHECK (sensitivity_tier IN ('standard','public_interest','sensitive','regulated','excluded')),
+      content text NOT NULL,
+      content_tsv tsvector NOT NULL DEFAULT to_tsvector('english', ''),
+      embedding_status varchar(24) NOT NULL DEFAULT 'pending'
+        CHECK (embedding_status IN ('pending','ready','failed','stale','held')),
+      status varchar(24) NOT NULL DEFAULT 'held'
+        CHECK (status IN ('held','active','deprecated','needs_review')),
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: "kinfolk_cultural_documents_embedding_col",
+    sql: `ALTER TABLE kinfolk_cultural_documents
+      ADD COLUMN IF NOT EXISTS embedding vector(1536),
+      ADD COLUMN IF NOT EXISTS embedding_model text,
+      ADD COLUMN IF NOT EXISTS embedding_version text`,
+  },
+  {
+    name: "kinfolk_cultural_documents_tsv_idx",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_cultural_docs_tsv_idx
+      ON kinfolk_cultural_documents USING gin (content_tsv)`,
+  },
+  {
+    name: "kinfolk_cultural_documents_status_idx",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_cultural_docs_status_idx
+      ON kinfolk_cultural_documents (status, embedding_status, language_code)`,
+  },
+  // HNSW index for cosine similarity — only created after vector extension confirmed
+  {
+    name: "kinfolk_cultural_documents_hnsw_idx",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_cultural_docs_hnsw_idx
+      ON kinfolk_cultural_documents USING hnsw (embedding vector_cosine_ops)
+      WHERE status = 'active' AND embedding_status = 'ready'`,
+  },
+  // Trigger to keep content_tsv in sync with content
+  {
+    name: "kinfolk_cultural_documents_tsv_trigger",
+    sql: `CREATE OR REPLACE FUNCTION kinfolk_update_content_tsv()
+      RETURNS trigger AS $$
+      BEGIN
+        NEW.content_tsv := to_tsvector('english', coalesce(NEW.content, ''));
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+      DROP TRIGGER IF EXISTS kinfolk_content_tsv_update ON kinfolk_cultural_documents;
+      CREATE TRIGGER kinfolk_content_tsv_update
+        BEFORE INSERT OR UPDATE ON kinfolk_cultural_documents
+        FOR EACH ROW EXECUTE FUNCTION kinfolk_update_content_tsv()`,
+  },
+
+  // ── Kinfolk Embedding Outbox — async embedding queue ─────────────────────
+  {
+    name: "kinfolk_embedding_outbox_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_embedding_outbox (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      document_id uuid NOT NULL REFERENCES kinfolk_cultural_documents(id) ON DELETE CASCADE,
+      operation varchar(16) NOT NULL CHECK (operation IN ('upsert','delete','reembed')),
+      attempts integer NOT NULL DEFAULT 0,
+      available_at timestamptz NOT NULL DEFAULT now(),
+      locked_at timestamptz,
+      last_error text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (document_id, operation)
+    )`,
+  },
+
+  // ── What's Happening — enum types (idempotent via DO blocks) ─────────────
+  {
+    name: "whats_happening_enum_types",
+    sql: `
+      DO $$ BEGIN
+        CREATE TYPE happening_submission_status AS ENUM (
+          'member_submitted','source_checked','developing',
+          'context_ready','held','rejected','archived'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE happening_source_tier AS ENUM ('A','B','C','D');
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE happening_sensitivity_tier AS ENUM (
+          'standard','public_interest','sensitive','regulated','excluded'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE happening_safety_case_status AS ENUM (
+          'candidate_received','source_checked','needs_corroboration',
+          'active_monitoring','official_imminent','resolved_or_archived','held_or_rejected'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+      DO $$ BEGIN
+        CREATE TYPE happening_safety_case_class AS ENUM (
+          'civil_unrest','armed_conflict_or_terrorism','violent_incident',
+          'natural_disaster_or_severe_weather','public_health_disruption',
+          'transport_or_infrastructure_disruption','travel_advisory','evacuation_or_shelter'
+        );
+      EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+    `,
+  },
+
+  // ── What's Happening — submissions table ─────────────────────────────────
+  {
+    name: "happening_submissions_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_submissions (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      submitted_by_user_id varchar NOT NULL,
+      submitted_url text NOT NULL,
+      canonical_url text,
+      member_note varchar(280),
+      suggested_geography varchar(160),
+      suggested_topic varchar(100),
+      status varchar(24) NOT NULL DEFAULT 'member_submitted'
+        CHECK (status IN ('member_submitted','source_checked','developing',
+                          'context_ready','held','rejected','archived')),
+      sensitivity_tier varchar(24) NOT NULL DEFAULT 'standard'
+        CHECK (sensitivity_tier IN ('standard','public_interest','sensitive','regulated','excluded')),
+      is_load_test boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: "happening_submissions_user_idx",
+    sql: `CREATE INDEX IF NOT EXISTS happening_submissions_user_idx
+      ON happening_submissions (submitted_by_user_id, created_at DESC)`,
+  },
+
+  // ── What's Happening — sources table ─────────────────────────────────────
+  {
+    name: "happening_sources_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_sources (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      submission_id uuid REFERENCES happening_submissions(id) ON DELETE SET NULL,
+      canonical_url text NOT NULL UNIQUE,
+      publisher text,
+      source_title text,
+      source_tier varchar(4) NOT NULL DEFAULT 'D'
+        CHECK (source_tier IN ('A','B','C','D')),
+      source_language varchar(16),
+      published_at timestamptz,
+      checked_at timestamptz,
+      http_status integer,
+      redirect_url text,
+      content_hash text,
+      source_status varchar(24) NOT NULL DEFAULT 'held'
+        CHECK (source_status IN ('held','active','deprecated','needs_review')),
+      attribution_excerpt text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: "happening_sources_status_idx",
+    sql: `CREATE INDEX IF NOT EXISTS happening_sources_status_idx
+      ON happening_sources (source_status, source_tier, checked_at DESC)`,
+  },
+
+  // ── What's Happening — topics table ──────────────────────────────────────
+  {
+    name: "happening_topics_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_topics (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      canonical_title text NOT NULL,
+      canonical_key text NOT NULL UNIQUE,
+      category varchar(80) NOT NULL,
+      geography_scope jsonb NOT NULL DEFAULT '{}'::jsonb,
+      language_codes text[] NOT NULL DEFAULT '{}',
+      sensitivity_tier varchar(24) NOT NULL DEFAULT 'standard'
+        CHECK (sensitivity_tier IN ('standard','public_interest','sensitive','regulated','excluded')),
+      status varchar(24) NOT NULL DEFAULT 'pending_review'
+        CHECK (status IN ('pending_review','active','held','archived','context_ready')),
+      current_summary text,
+      summary_source_count integer NOT NULL DEFAULT 0,
+      first_seen_at timestamptz NOT NULL DEFAULT now(),
+      last_updated_at timestamptz NOT NULL DEFAULT now(),
+      expires_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+
+  // ── What's Happening — topic-source links ────────────────────────────────
+  {
+    name: "happening_topic_sources_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_topic_sources (
+      topic_id uuid NOT NULL REFERENCES happening_topics(id) ON DELETE CASCADE,
+      source_id uuid NOT NULL REFERENCES happening_sources(id) ON DELETE CASCADE,
+      relationship_type varchar(32) NOT NULL
+        CHECK (relationship_type IN ('primary','corroborating','background','contradicting')),
+      PRIMARY KEY (topic_id, source_id)
+    )`,
+  },
+
+  // ── What's Happening — topic-Library links ────────────────────────────────
+  {
+    name: "happening_topic_library_links_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_topic_library_links (
+      topic_id uuid NOT NULL REFERENCES happening_topics(id) ON DELETE CASCADE,
+      library_topic_id varchar NOT NULL,
+      relationship_type varchar(32) NOT NULL
+        CHECK (relationship_type IN ('background','history','civic_process','biography','geography')),
+      created_by varchar NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (topic_id, library_topic_id, relationship_type)
+    )`,
+  },
+
+  // ── Safety Monitoring Cases ───────────────────────────────────────────────
+  {
+    name: "safety_monitoring_cases_v1",
+    sql: `CREATE TABLE IF NOT EXISTS safety_monitoring_cases (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      happening_topic_id uuid REFERENCES happening_topics(id) ON DELETE SET NULL,
+      case_class varchar(48) NOT NULL
+        CHECK (case_class IN ('civil_unrest','armed_conflict_or_terrorism','violent_incident',
+          'natural_disaster_or_severe_weather','public_health_disruption',
+          'transport_or_infrastructure_disruption','travel_advisory','evacuation_or_shelter')),
+      status varchar(32) NOT NULL DEFAULT 'candidate_received'
+        CHECK (status IN ('candidate_received','source_checked','needs_corroboration',
+          'active_monitoring','official_imminent','resolved_or_archived','held_or_rejected')),
+      severity varchar(16) NOT NULL DEFAULT 'info'
+        CHECK (severity IN ('info','elevated','urgent')),
+      canonical_title text NOT NULL,
+      geography jsonb NOT NULL DEFAULT '{}'::jsonb,
+      starts_at timestamptz,
+      ends_at timestamptz,
+      official_action_text varchar(360),
+      official_action_source_id uuid REFERENCES happening_sources(id),
+      confidence_reason jsonb NOT NULL DEFAULT '{}'::jsonb,
+      requires_curator_review boolean NOT NULL DEFAULT true,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      resolved_at timestamptz,
+      UNIQUE (happening_topic_id)
+    )`,
+  },
+
+  // ── Delivery preference tables ────────────────────────────────────────────
+  {
+    name: "happening_delivery_preferences_v1",
+    sql: `CREATE TABLE IF NOT EXISTS happening_delivery_preferences (
+      user_id varchar PRIMARY KEY,
+      followed_topics jsonb NOT NULL DEFAULT '[]'::jsonb,
+      followed_geographies jsonb NOT NULL DEFAULT '[]'::jsonb,
+      followed_categories jsonb NOT NULL DEFAULT '[]'::jsonb,
+      preferred_languages jsonb NOT NULL DEFAULT '["en"]'::jsonb,
+      delivery_mode varchar(16) NOT NULL DEFAULT 'none'
+        CHECK (delivery_mode IN ('none','in_feed','digest')),
+      allow_public_interest_updates boolean NOT NULL DEFAULT false,
+      allow_sensitive_current_events boolean NOT NULL DEFAULT false,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: "safety_monitoring_preferences_v1",
+    sql: `CREATE TABLE IF NOT EXISTS safety_monitoring_preferences (
+      user_id varchar PRIMARY KEY,
+      followed_geographies jsonb NOT NULL DEFAULT '[]'::jsonb,
+      allow_in_app_safety_updates boolean NOT NULL DEFAULT false,
+      allow_sensitive_safety_updates boolean NOT NULL DEFAULT false,
+      allow_external_safety_notifications boolean NOT NULL DEFAULT false,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+
+  // ── Compound tag tokens — Aliases addendum ────────────────────────────────
+  {
+    name: "compound_tag_tokens_v1",
+    sql: `CREATE TABLE IF NOT EXISTS compound_tag_tokens (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      display_tag text NOT NULL,
+      normalized_tag text NOT NULL UNIQUE,
+      tokens text[] NOT NULL DEFAULT '{}',
+      entity_candidates text[] NOT NULL DEFAULT '{}',
+      place_candidates text[] NOT NULL DEFAULT '{}',
+      intent_candidates text[] NOT NULL DEFAULT '{}',
+      parse_status varchar(24) NOT NULL DEFAULT 'pending'
+        CHECK (parse_status IN ('pending','parsed','failed')),
+      post_count integer NOT NULL DEFAULT 1,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`,
+  },
+  {
+    name: "compound_tag_tokens_idx",
+    sql: `CREATE INDEX IF NOT EXISTS compound_tag_tokens_normalized_idx
+      ON compound_tag_tokens (normalized_tag)`,
+  },
+
+  // ── Community place aliases — city-scoped neighborhood nicknames ──────────
+  {
+    name: "community_place_aliases_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_place_aliases (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      alias_text text NOT NULL,
+      normalized_alias text NOT NULL,
+      parent_city varchar(120) NOT NULL,
+      parent_state varchar(80),
+      parent_country_code varchar(4) NOT NULL DEFAULT 'US',
+      canonical_place_name text NOT NULL,
+      canonical_place_id text,
+      confidence numeric(4,3) NOT NULL DEFAULT 0.5
+        CHECK (confidence >= 0 AND confidence <= 1),
+      status varchar(24) NOT NULL DEFAULT 'proposed'
+        CHECK (status IN ('proposed','active','held','deprecated')),
+      provenance text,
+      confirmation_count integer NOT NULL DEFAULT 0,
+      confirmation_fingerprints text[] NOT NULL DEFAULT '{}',
+      proposed_by_user_id varchar NOT NULL,
+      approved_by varchar,
+      approved_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (normalized_alias, parent_city, parent_country_code)
+    )`,
+  },
+  {
+    name: "community_place_aliases_lookup_idx",
+    sql: `CREATE INDEX IF NOT EXISTS community_place_aliases_lookup_idx
+      ON community_place_aliases (normalized_alias, parent_city, status)`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -7157,31 +7515,27 @@ async function ensureKinfolkCulturalContextV1(
             country_codes, language_codes, cultural_context_tags,
             era_start, era_end, resolution_status, source_status, last_verified_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',now())
-         ON CONFLICT (id) DO NOTHING
+         ON CONFLICT (canonical_name) DO UPDATE
+           SET normalized_name=$3, short_summary=$4, country_codes=$5,
+               language_codes=$6, cultural_context_tags=$7,
+               era_start=$8, era_end=$9, resolution_status='active', updated_at=now()
          RETURNING id`,
         [e.cn, e.etype, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
       );
 
-      // If nothing was returned (conflict), find the existing row by canonical_name
+      // ON CONFLICT (canonical_name) always returns the row (via DO UPDATE)
       let entityId: string;
       if (eRes.rows.length > 0) {
         entityId = eRes.rows[0].id;
         entitiesInserted++;
       } else {
+        // Fallback: should never happen after migration adds the UNIQUE constraint
         const existing = await pool.query(
           `SELECT id FROM kinfolk_entities WHERE lower(canonical_name)=lower($1) LIMIT 1`,
           [e.cn],
         );
         if (existing.rows.length === 0) continue;
         entityId = existing.rows[0].id;
-        // Update new columns on existing rows
-        await pool.query(
-          `UPDATE kinfolk_entities SET
-             normalized_name=$1, short_summary=$2, country_codes=$3,
-             language_codes=$4, cultural_context_tags=$5, resolution_status='active', updated_at=now()
-           WHERE id=$6`,
-          [e.nn, e.ss, e.cc, e.lc, e.tags, entityId],
-        );
       }
 
       // Insert aliases

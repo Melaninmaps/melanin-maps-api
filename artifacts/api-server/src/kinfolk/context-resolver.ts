@@ -28,6 +28,8 @@ import {
 } from "./entity-resolver";
 import { getQueryClass, type QueryClass } from "./intent-router";
 import type { KinfolkIntent } from "./intent-router";
+import { parseMessageSignals, fullTextCandidates, vectorCandidates } from "./cultural-retrieval";
+import { rerankCulturalCandidates, buildVectorContextBlock } from "./cultural-reranker";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -234,12 +236,40 @@ export async function resolveKinfolkContext(input: {
     };
   }
 
-  // No entity found for this query — normal LLM flow
+  // ── Vector / lexical enrichment — candidate recall only ─────────────────
+  // When exact alias fails, try vector + full-text candidates to enrich the
+  // LLM context block. Does NOT change responseMode or resolution state.
+  // Spec §E.3: semantic path is candidate recall only — not a resolved entity.
+  let vectorContextBlock = "";
+  if (queryClass === "named_entity" || queryClass === "general") {
+    try {
+      const signals = parseMessageSignals(message);
+      const loc = permittedLocation ?? null;
+      const [lexical, semantic] = await Promise.all([
+        fullTextCandidates(signals, loc),
+        vectorCandidates(signals, loc),
+      ]);
+      const ranked = rerankCulturalCandidates({
+        lexical,
+        semantic,
+        signals,
+        location: loc,
+        preferences: effectivePrefs,
+      });
+      if (ranked.length > 0) {
+        vectorContextBlock = buildVectorContextBlock(ranked);
+      }
+    } catch {
+      // Vector/lexical failure is non-fatal — degrade to empty context block
+    }
+  }
+
+  // No entity found for this query — normal LLM flow (with optional vector context)
   return {
     responseMode: "no_entity",
     queryClass,
     entityResolution: null,
-    entityContextBlock: "",
+    entityContextBlock: vectorContextBlock,
     suppressBusinessRecommendations: false,
     shortCircuitReply: null,
     clarificationQuestion: null,
