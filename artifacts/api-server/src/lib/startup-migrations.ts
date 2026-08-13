@@ -9,6 +9,7 @@
  */
 import { randomUUID } from "crypto";
 import { COVERAGE_EXPANSION, type SeedBiz } from "./seeds/coverage-expansion.js";
+import { LAUNDRY_SEED_V1, type LaundrySeedBiz } from "./seeds/laundry-seed-v1.js";
 import { GAP_COVERAGE_V2 } from "./seeds/gap-coverage-v2.js";
 import { FINAL_MICRO_SEED } from "./seeds/final-micro-seed.js";
 import { LA_DIASPORA_V1 } from "./seeds/la-diaspora-v1.js";
@@ -3185,6 +3186,56 @@ ON CONFLICT (city_slug) DO UPDATE SET
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`,
   },
+  // ── Member Identity Context (sex, gender, pronouns) — Aug 2026 ──────────
+  // Private, voluntary, changeable. Never joined into broad user queries.
+  {
+    name: "user_identity_context_table_v1",
+    sql: `CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE IF NOT EXISTS user_identity_context (
+  user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  sex_assigned_at_birth VARCHAR(24)
+    CHECK (sex_assigned_at_birth IN ('female','male','intersex','prefer_not_to_say')),
+  gender_identity VARCHAR(24)
+    CHECK (gender_identity IN ('woman','man','nonbinary','another_identity','prefer_not_to_say')),
+  pronoun_set VARCHAR(24)
+    CHECK (pronoun_set IN ('she_her','he_him','they_them','use_my_name','custom','prefer_not_to_say')),
+  custom_pronouns_ciphertext TEXT,
+  custom_pronouns_key_version VARCHAR(32),
+  allow_medically_relevant_context BOOLEAN NOT NULL DEFAULT FALSE,
+  allow_pronoun_aware_language BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  version INTEGER NOT NULL DEFAULT 1,
+  CONSTRAINT custom_pronouns_requires_custom_set CHECK (
+    (pronoun_set = 'custom' AND custom_pronouns_ciphertext IS NOT NULL)
+    OR (pronoun_set <> 'custom' AND custom_pronouns_ciphertext IS NULL)
+    OR (pronoun_set IS NULL AND custom_pronouns_ciphertext IS NULL)
+  )
+)`,
+  },
+  {
+    name: "user_identity_context_audit_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS user_identity_context_audit (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  actor_user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+  changed_fields TEXT[] NOT NULL,
+  reason VARCHAR(40) NOT NULL CHECK (reason IN ('member_update','privacy_support','account_deletion')),
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+)`,
+  },
+  {
+    name: "user_identity_context_audit_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS user_identity_context_audit_user_idx
+      ON user_identity_context_audit(user_id, occurred_at DESC)`,
+  },
+  {
+    name: "business_safety_experiences_gender_context_v1",
+    sql: `ALTER TABLE business_safety_experiences
+      ADD COLUMN IF NOT EXISTS voluntary_gender_context VARCHAR(24)
+        CHECK (voluntary_gender_context IN ('woman','man','nonbinary','another_identity','prefer_not_to_say')),
+      ADD COLUMN IF NOT EXISTS gender_context_consent_at TIMESTAMPTZ`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -3300,6 +3351,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["philadelphia murals",      () => ensurePhiladelphiaMurals(log, warn)],
     // ── Kinfolk cultural context v1 — source registry, entity disambiguation, new columns ──
     ["kinfolk cultural context v1", () => ensureKinfolkCulturalContextV1(log, warn)],
+    // ── Minority-owned laundry businesses — every covered city ─────────────────
+    ["laundry businesses v1",    () => ensureLaundryBusinesses(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -7419,6 +7472,81 @@ async function ensurePhiladelphiaMurals(
     log(`Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`);
   } catch (err: unknown) {
     warn(`ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Minority-owned laundry businesses ────────────────────────────────────────
+// Idempotent dedup by name+city+state. Inserts with ownershipDesignations so
+// Kinfolk can surface them by ownership when members search for laundry services.
+async function ensureLaundryBusinesses(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(state,'')) AS k FROM businesses`,
+    );
+    const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
+
+    let inserted = 0;
+    let skipped = 0;
+
+    for (const b of LAUNDRY_SEED_V1) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.state ?? "").toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        const BLACK_DESIGNATIONS = [
+          "Black / African American-Owned", "African-Owned", "West African-Owned",
+          "Nigerian-Owned", "Ghanaian-Owned", "Haitian-Owned",
+          "Caribbean / West Indian-Owned", "Afro-Caribbean-Owned", "Afro-Latino-Owned",
+        ];
+        const isBlack = (b.ownershipDesignations ?? []).some((d: string) => BLACK_DESIGNATIONS.includes(d));
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude, website,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,$10,$11,
+             $12,$13,$14,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address ?? `${b.city}, ${b.state}`,
+            b.city, b.state ?? null, b.country ?? "USA",
+            b.description,
+            JSON.stringify(b.ownershipDesignations ?? []),
+            isBlack,
+            String(b.lat), String(b.lng),
+            b.website ?? null,
+          ],
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  Laundry seed: failed to insert "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Laundry businesses v1: ${inserted} inserted, ${skipped} already present (${LAUNDRY_SEED_V1.length} total)`);
+  } catch (err: unknown) {
+    warn(`Laundry businesses seed failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

@@ -1,4 +1,5 @@
 export * from "./auth";
+export * from "./user-identity-context";
 export * from "./tester-feedback";
 export * from "./pending-tester-emails";
 export * from "./city-archives";
