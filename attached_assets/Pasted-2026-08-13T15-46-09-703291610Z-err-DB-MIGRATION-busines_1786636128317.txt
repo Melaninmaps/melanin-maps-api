@@ -1,0 +1,422 @@
+2026-08-13T15:46:09.703291610Z [err]  DB_MIGRATION: businesses columns ensured
+2026-08-13T15:46:09.703298742Z [err]  DB_MIGRATION: cultural_sites columns ensured
+2026-08-13T15:46:09.703309451Z [err]  Using web-static: /app/web-static
+2026-08-13T15:46:09.703319367Z [err]  BUILD_IDENTITY: sha256=3c98318aaa3ad36c... built_from=d1f0c9369a...
+2026-08-13T15:46:09.703325317Z [err]  Listening on port 8080 — API on 3001
+2026-08-13T15:46:09.703326329Z [err]  DB_MIGRATION: waitlist_signups table ensured
+2026-08-13T15:46:09.703339115Z [err]  DB_MIGRATION: columns backfilled
+2026-08-13T15:46:09.703344683Z [err]  DB_MIGRATION: seeded rows
+2026-08-13T15:46:09.746517255Z [inf]  Starting Container
+2026-08-13T15:46:09.757856805Z [inf]  Server listening
+2026-08-13T15:46:09.788739803Z [inf]  server ready — initial pool state
+2026-08-13T15:46:09.788770153Z [inf]  Initializing Stripe schema…
+2026-08-13T15:46:09.788774888Z [inf]  Running startup schema migrations...
+2026-08-13T15:46:09.788779169Z [inf]  nudge-cron: scheduler started (every Monday 10 AM UTC by default)
+2026-08-13T15:46:09.788783840Z [inf]  [library-growth-worker] Library growth worker started
+2026-08-13T15:46:09.806618051Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:09.808455411Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:09.808460101Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:09.815572735Z [inf]    ✓ create_search_events_table
+2026-08-13T15:46:09.815576262Z [inf]  health-monitor: ok
+2026-08-13T15:46:09.815580227Z [inf]  [library-growth-worker] Library growth aggregation complete
+2026-08-13T15:46:09.815583437Z [inf]    ✓ search_events_idx_created
+2026-08-13T15:46:09.817333526Z [inf]    ✓ search_events_idx_concept
+2026-08-13T15:46:09.824517151Z [inf]    ✓ create_library_entity_connections_table
+2026-08-13T15:46:09.824523987Z [inf]    ✓ seed_diaspora_country_topics_v2
+2026-08-13T15:46:09.826366142Z [inf]  Stripe schema ready
+2026-08-13T15:46:09.833662838Z [inf]  { autoExpandLists: undefined, stripeApiVersion: undefined } StripeSync initialized
+2026-08-13T15:46:09.833667528Z [inf]    ✓ businesses_state_nullable_v1
+2026-08-13T15:46:09.833670806Z [inf]    ✓ businesses_country_col_v1
+2026-08-13T15:46:09.840924541Z [inf]    ✓ businesses_province_col_v1
+2026-08-13T15:46:09.842918379Z [inf]    ✓ businesses_admin_notes_col_v1
+2026-08-13T15:46:09.845015680Z [inf]    ✓ businesses_listing_status_col
+2026-08-13T15:46:09.846770769Z [err]    column: undefined,
+2026-08-13T15:46:09.846778909Z [err]    dataType: undefined,
+2026-08-13T15:46:09.846781771Z [err]  error: relation "stripe.accounts" does not exist
+2026-08-13T15:46:09.846784247Z [err]    constraint: undefined,
+2026-08-13T15:46:09.846790440Z [err]    file: 'parse_relation.c',
+2026-08-13T15:46:09.846790465Z [err]      at file:///app/dist/index.mjs:32934:15
+2026-08-13T15:46:09.846799582Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-08-13T15:46:09.846799832Z [err]    line: '1445',
+2026-08-13T15:46:09.846806840Z [err]      at async PostgresClient.getAccountIdByApiKeyHash (file:///app/dist/index.mjs:418347:24)
+2026-08-13T15:46:09.846808044Z [err]    routine: 'parserOpenTable'
+2026-08-13T15:46:09.846813949Z [err]      at async StripeSync.getAccountId (file:///app/dist/index.mjs:418534:29)
+2026-08-13T15:46:09.846814938Z [err]  } Failed to lookup account by API key hash, falling back to API
+2026-08-13T15:46:09.846818986Z [err]      at async StripeSync.findOrCreateManagedWebhook (file:///app/dist/index.mjs:420096:27)
+2026-08-13T15:46:09.846821931Z [err]      at async initStripe (file:///app/dist/index.mjs:550314:5) {
+2026-08-13T15:46:09.846824577Z [err]    length: 114,
+2026-08-13T15:46:09.846827490Z [err]    severity: 'ERROR',
+2026-08-13T15:46:09.846830500Z [err]    code: '42P01',
+2026-08-13T15:46:09.846833387Z [err]    detail: undefined,
+2026-08-13T15:46:09.846836344Z [err]    hint: undefined,
+2026-08-13T15:46:09.846839849Z [err]    position: '16',
+2026-08-13T15:46:09.846842637Z [err]    internalPosition: undefined,
+2026-08-13T15:46:09.846845357Z [err]    internalQuery: undefined,
+2026-08-13T15:46:09.846848219Z [err]    where: undefined,
+2026-08-13T15:46:09.846852477Z [err]    schema: undefined,
+2026-08-13T15:46:09.846856977Z [err]    table: undefined,
+2026-08-13T15:46:09.853288788Z [inf]    ✓ businesses_email_zip_cols
+2026-08-13T15:46:09.853293605Z [inf]    ✓ create_tester_feedback_table
+2026-08-13T15:46:09.859936041Z [inf]    ✓ users_trial_reminder_cols
+2026-08-13T15:46:09.859941183Z [inf]    ✓ users_auth_cols
+2026-08-13T15:46:09.867263924Z [inf]    ✓ users_notif_cols
+2026-08-13T15:46:09.869307085Z [inf]    ✓ users_quiet_hours_cols
+2026-08-13T15:46:09.871311055Z [inf]    ✓ create_cultural_sites_table
+2026-08-13T15:46:09.878756609Z [inf]    ✓ cultural_sites_tour_guide_cols
+2026-08-13T15:46:09.878760114Z [inf]    ✓ cultural_sites_content_cols
+2026-08-13T15:46:09.880471955Z [inf]    ✓ cultural_sites_lat_lng_nullable
+2026-08-13T15:46:09.884519973Z [inf]    ✓ member_agreements_table
+2026-08-13T15:46:09.886614350Z [inf]    ✓ city_launches_table
+2026-08-13T15:46:09.888798968Z [inf]    ✓ city_launches_auto_advance_col
+2026-08-13T15:46:09.895897693Z [inf]    ✓ city_launch_events_table
+2026-08-13T15:46:09.895902311Z [inf]    ✓ city_launch_events_index
+2026-08-13T15:46:09.897860039Z [inf]    ✓ events_image_url_col
+2026-08-13T15:46:09.905037859Z [inf]    ✓ founder_admin_promotion
+2026-08-13T15:46:09.907340882Z [inf]    ✓ waitlist_referral_system_cols
+2026-08-13T15:46:09.914624684Z [inf]    ✓ business_suggestions_table
+2026-08-13T15:46:09.914629354Z [inf]    ✓ waitlist_safety_reports_table
+2026-08-13T15:46:09.916769513Z [inf]    ✓ city_launches_seed
+2026-08-13T15:46:09.918839612Z [inf]    ✓ city_profiles_table
+2026-08-13T15:46:09.925780568Z [inf]    ✓ cultural_sites_visit_tip_col
+2026-08-13T15:46:09.925786282Z [inf]    ✓ cultural_sites_pin_type_col
+2026-08-13T15:46:09.932162716Z [inf]    ✓ cultural_sites_listing_status_col
+2026-08-13T15:46:09.934243809Z [inf]    ✓ cultural_sites_cultural_community_col
+2026-08-13T15:46:09.936243026Z [inf]    ✓ cultural_sites_approx_location_col
+2026-08-13T15:46:09.943170633Z [inf]    ✓ cultural_sites_philly_live_unclaimed
+2026-08-13T15:46:09.945541085Z [inf]    ✓ cultural_sites_pin_type_backfill
+2026-08-13T15:46:09.949571185Z [inf]    ✓ city_profiles_drop_fk
+2026-08-13T15:46:09.951379208Z [inf]    ✓ city_profiles_add_city_name
+2026-08-13T15:46:09.958047889Z [inf]    ✓ businesses_listing_status_col
+2026-08-13T15:46:09.958052303Z [inf]    ✓ demo_businesses_philly_seed_v2
+2026-08-13T15:46:09.965231686Z [inf]    ✓ businesses_philly_live_unclaimed
+2026-08-13T15:46:09.965237429Z [inf]    ✓ cultural_sites_cheyney_university
+2026-08-13T15:46:09.972599252Z [inf]    ✓ businesses_all_live_unclaimed_tour
+2026-08-13T15:46:09.972602693Z [inf]    ✓ community_organizations_table_v1
+2026-08-13T15:46:09.974625065Z [inf]    ✓ community_organizations_indexes_v1
+2026-08-13T15:46:09.976587638Z [inf]    ✓ recurring_events_table_v1
+2026-08-13T15:46:09.984110784Z [inf]    ✓ edit_suggestions_table_v1
+2026-08-13T15:46:09.984115669Z [inf]    ✓ edit_suggestions_indexes_v1
+2026-08-13T15:46:09.984148694Z [inf]    ✓ recurring_events_indexes_v1
+2026-08-13T15:46:09.987845541Z [inf]    ✓ cultural_phrases_table_v1
+2026-08-13T15:46:09.989739599Z [inf]    ✓ cultural_phrases_unique_idx
+2026-08-13T15:46:09.991739333Z [inf]    ✓ tour_cultural_sites_table_v1
+2026-08-13T15:46:09.993738221Z [inf]    ✓ tour_cultural_sites_idx_v1
+2026-08-13T15:46:10.001105737Z [inf]    ✓ tour_cultural_sites_state_text_v1
+2026-08-13T15:46:10.008634233Z [inf]    ✓ intl_diaspora_sites_coords_v1
+2026-08-13T15:46:10.008636964Z [inf]    ✓ phuket_cultural_sites_coords_v1
+2026-08-13T15:46:10.012144825Z [inf]    ✓ tour_content_intl_cols_v1
+2026-08-13T15:46:10.019452449Z [inf]    ✓ cultural_sites_has_pending_edit_col
+2026-08-13T15:46:10.019457052Z [inf]    ✓ city_profiles_neighborhood_timing_col
+2026-08-13T15:46:10.026768299Z [inf]    ✓ city_profiles_has_pending_edit_col
+2026-08-13T15:46:10.026774091Z [inf]    ✓ user_city_welcome_dismissals_table
+2026-08-13T15:46:10.036448450Z [inf]    ✓ city_profiles_tour_brief_context_v1
+2026-08-13T15:46:10.036452125Z [inf]    ✓ city_profiles_international_v1
+2026-08-13T15:46:10.037902550Z [inf]    ✓ city_profiles_jamaica_v1
+2026-08-13T15:46:10.041734940Z [inf]    ✓ city_profiles_caribbean_v1
+2026-08-13T15:46:10.049108697Z [inf]    ✓ city_profiles_priority_cities_deep_v1
+2026-08-13T15:46:10.056232526Z [inf]    ✓ create_business_safety_submissions
+2026-08-13T15:46:10.056236990Z [inf]    ✓ create_trusted_safety_shares
+2026-08-13T15:46:10.063361048Z [inf]    ✓ create_trusted_safety_alert_log
+2026-08-13T15:46:10.070430032Z [inf]    ✓ cultural_sites_hbcu_category_normalize
+2026-08-13T15:46:10.072270620Z [inf]    ✓ normalize_smoke_and_soul_ownership
+2026-08-13T15:46:10.079346848Z [inf]    ✓ enable_pg_trgm_extension
+2026-08-13T15:46:10.081425399Z [inf]    ✓ seed_mama_js_and_hakims_bookstore_v1
+2026-08-13T15:46:10.088641246Z [inf]    ✓ tester_entitlement_schema
+2026-08-13T15:46:10.088646815Z [inf]    ✓ pending_tester_emails_table
+2026-08-13T15:46:10.090645824Z [inf]    ✓ pending_tester_emails_email_index
+2026-08-13T15:46:10.097840436Z [inf]    ✓ businesses_specialties_col_v1
+2026-08-13T15:46:10.097845678Z [inf]    ✓ specialty_suggestions_table_v1
+2026-08-13T15:46:10.099916730Z [inf]    ✓ specialty_suggestions_indexes_v1
+2026-08-13T15:46:10.101797807Z [inf]    ✓ knowledge_topics_hvac_category_fix_v1
+2026-08-13T15:46:10.108818083Z [inf]    ✓ knowledge_graph_layer1_columns_v1
+2026-08-13T15:46:10.108820631Z [inf]    ✓ topic_relationships_table_v1
+2026-08-13T15:46:10.116006443Z [inf]    ✓ knowledge_sources_table_v1
+2026-08-13T15:46:10.116012255Z [inf]    ✓ knowledge_sources_claim_columns_v1
+2026-08-13T15:46:10.123073622Z [inf]    ✓ knowledge_sources_status_pending_review_v1
+2026-08-13T15:46:10.125050531Z [inf]    ✓ library_entity_connections_extend_types_v1
+2026-08-13T15:46:10.132259331Z [inf]    ✓ cultural_sites_founded_year_col
+2026-08-13T15:46:10.132265893Z [inf]    ✓ cultural_sites_status_col
+2026-08-13T15:46:10.139752267Z [inf]    ✓ cultural_sites_source_col
+2026-08-13T15:46:10.139757876Z [inf]    ✓ cultural_sites_is_featured_col
+2026-08-13T15:46:10.141811573Z [inf]    ✓ the_real_tags_table
+2026-08-13T15:46:10.143827136Z [inf]    ✓ the_real_taps_table
+2026-08-13T15:46:10.146121665Z [inf]    ✓ the_real_taps_business_idx
+2026-08-13T15:46:10.148095903Z [inf]    ✓ business_endorsement_taps_table
+2026-08-13T15:46:10.149789377Z [inf]    ✓ business_endorsement_taps_idx
+2026-08-13T15:46:10.157066534Z [inf]    ✓ fix_church_business_categories_v1
+2026-08-13T15:46:10.157069599Z [inf]    ✓ fix_enon_tabernacle_listing_status_v1
+2026-08-13T15:46:10.164105871Z [inf]    ✓ ensure_apple_reviewer_account_v1
+2026-08-13T15:46:10.164110537Z [inf]    ✓ ensure_manus_tester_account_v1
+2026-08-13T15:46:10.171273157Z [inf]    ✓ ensure_manus_geo_audit_v1
+2026-08-13T15:46:10.178466646Z [inf]    ✓ ensure_manus_ai_tester_v1
+2026-08-13T15:46:10.178471257Z [inf]    ✓ business_identity_audience_type_col_v1
+2026-08-13T15:46:10.185586088Z [inf]    ✓ business_identity_environment_tags_col_v1
+2026-08-13T15:46:10.187466600Z [inf]    ✓ business_identity_amenity_tags_col_v1
+2026-08-13T15:46:10.194816283Z [inf]    ✓ users_must_change_password_col_v1
+2026-08-13T15:46:10.194820866Z [inf]    ✓ tester_universal_accounts_v1
+2026-08-13T15:46:10.202047323Z [inf]    ✓ tester_password_force_reset_v1
+2026-08-13T15:46:10.208731302Z [inf]    ✓ tester_accounts_restore_v1
+2026-08-13T15:46:10.215824605Z [inf]    ✓ tester_batch_v2
+2026-08-13T15:46:10.217843369Z [inf]    ✓ user_preferences_kinfolk_voice_v1
+2026-08-13T15:46:10.224937803Z [inf]    ✓ businesses_schema_sync_v1
+2026-08-13T15:46:10.224942437Z [inf]    ✓ business_captions_table_v1
+2026-08-13T15:46:10.232281348Z [inf]    ✓ philly_nightlife_seed_v1
+2026-08-13T15:46:10.232286612Z [inf]    ✓ seed_southeast_asia_library_topics_v1
+2026-08-13T15:46:10.234295569Z [inf]    ✓ city_profiles_laos_v1
+2026-08-13T15:46:10.241559712Z [inf]    ✓ seed_sea_tourist_sites_v1
+2026-08-13T15:46:10.241563710Z [inf]    ✓ city_request_log_table_v1
+2026-08-13T15:46:10.241566987Z [inf]    ✓ city_request_log_index_v1
+2026-08-13T15:46:10.248896101Z [inf]    ✓ business_contributions_is_public_col_v1
+2026-08-13T15:46:10.248903349Z [inf]    ✓ pre_manus_tester_accounts_v1
+2026-08-13T15:46:10.255795976Z [inf]    ✓ pre_manus_tester_clear_must_change_password_v1
+2026-08-13T15:46:10.747787487Z [inf]    ✓ add_is_load_test_to_users
+2026-08-13T15:46:10.747796330Z [inf]    ✓ dukes_cafe_city_fix_v1
+2026-08-13T15:46:10.747884007Z [inf]    ✓ deduplicate_geography_topics_v1
+2026-08-13T15:46:10.747888210Z [inf]    ✓ user_library_interests_v1
+2026-08-13T15:46:10.747893067Z [inf]    ✓ circle_saves_v1
+2026-08-13T15:46:10.747897582Z [inf]    ✓ circle_itineraries_v1
+2026-08-13T15:46:10.747901868Z [inf]    ✓ business_endorsement_taps_v1
+2026-08-13T15:46:10.747906377Z [inf]    ✓ kinfolk_privacy_settings_v1
+2026-08-13T15:46:10.747910647Z [inf]    ✓ city_profiles_phuket_cultural_v1
+2026-08-13T15:46:10.747915162Z [inf]    ✓ tester_moon_mayes_v1
+2026-08-13T15:46:10.747919455Z [inf]    ✓ family_ai_usage_table_v1
+2026-08-13T15:46:10.747923843Z [inf]    ✓ voice_usage_table_v1
+2026-08-13T15:46:10.747928363Z [inf]    ✓ kinfolk_delivery_profiles_v1
+2026-08-13T15:46:10.747933826Z [inf]    ✓ mwm_platform_listing_v1
+2026-08-13T15:46:10.749214178Z [err]    code: '42P01',
+2026-08-13T15:46:10.749219120Z [err]    detail: undefined,
+2026-08-13T15:46:10.749222516Z [inf]    ✓ library_growth_signals_table_v1
+2026-08-13T15:46:10.749224763Z [err]    hint: undefined,
+2026-08-13T15:46:10.749229324Z [inf]    ✓ library_growth_signals_indices_v1
+2026-08-13T15:46:10.749231377Z [err]    position: '13',
+2026-08-13T15:46:10.749234412Z [inf]    ✓ library_growth_candidates_table_v1
+2026-08-13T15:46:10.749237919Z [err]  error: relation "stripe.accounts" does not exist
+2026-08-13T15:46:10.749242418Z [err]      at file:///app/dist/index.mjs:32934:15
+2026-08-13T15:46:10.749246294Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-08-13T15:46:10.749250609Z [err]      at async PostgresClient.upsertAccount (file:///app/dist/index.mjs:418314:9)
+2026-08-13T15:46:10.749253936Z [err]      at async StripeSync.upsertAccount (file:///app/dist/index.mjs:418563:11)
+2026-08-13T15:46:10.749257334Z [err]      at async StripeSync.getAccountId (file:///app/dist/index.mjs:418553:9)
+2026-08-13T15:46:10.749260868Z [err]      at async StripeSync.findOrCreateManagedWebhook (file:///app/dist/index.mjs:420096:27)
+2026-08-13T15:46:10.749264963Z [err]      at async initStripe (file:///app/dist/index.mjs:550314:5) {
+2026-08-13T15:46:10.749268697Z [err]    length: 114,
+2026-08-13T15:46:10.749272127Z [err]    severity: 'ERROR',
+2026-08-13T15:46:10.749287123Z [inf]    ✓ business_member_feedback_table_v1
+2026-08-13T15:46:10.749289996Z [inf]    ✓ business_member_feedback_index_v1
+2026-08-13T15:46:10.751189100Z [inf]    ✓ library_growth_candidates_trigger_v1
+2026-08-13T15:46:10.751191834Z [err]    dataType: undefined,
+2026-08-13T15:46:10.751199982Z [inf]    ✓ library_growth_decisions_table_v1
+2026-08-13T15:46:10.751200247Z [err]    constraint: undefined,
+2026-08-13T15:46:10.751206662Z [err]    file: 'parse_relation.c',
+2026-08-13T15:46:10.751208679Z [inf]    ✓ knowledge_sources_link_health_v1
+2026-08-13T15:46:10.751211974Z [err]    line: '1445',
+2026-08-13T15:46:10.751216989Z [err]    internalPosition: undefined,
+2026-08-13T15:46:10.751217911Z [err]    routine: 'parserOpenTable'
+2026-08-13T15:46:10.751224735Z [err]  } Failed to upsert account to database
+2026-08-13T15:46:10.751225520Z [err]    internalQuery: undefined,
+2026-08-13T15:46:10.751230313Z [inf]  Stripe init failed
+2026-08-13T15:46:10.751232395Z [err]    where: undefined,
+2026-08-13T15:46:10.751236822Z [err]    schema: undefined,
+2026-08-13T15:46:10.751241469Z [err]    table: undefined,
+2026-08-13T15:46:10.751247277Z [err]    column: undefined,
+2026-08-13T15:46:10.752705465Z [inf]    ✓ community_business_claims_v2_address_nullable
+2026-08-13T15:46:10.752706470Z [inf]    ✗ kinfolk_entities_unique_canonical_name: could not create unique index "kinfolk_entities_canonical_name_unique"
+2026-08-13T15:46:10.752714760Z [inf]    ✓ community_business_claims_v2_lat_nullable
+2026-08-13T15:46:10.752719505Z [inf]    ✓ community_business_claims_v2_review_queue_idx
+2026-08-13T15:46:10.752721732Z [inf]    ✓ community_business_claims_v2_lng_nullable
+2026-08-13T15:46:10.752729039Z [inf]    ✗ community_business_claims_v2_backfill: column "data_source" does not exist
+2026-08-13T15:46:10.752733765Z [inf]    ✓ community_business_claims_v2_listing_sources
+2026-08-13T15:46:10.752736073Z [inf]    ✓ community_business_claims_v2_claims_cols
+2026-08-13T15:46:10.752762611Z [inf]    ✓ community_business_claims_v2_owner_links_cols
+2026-08-13T15:46:10.752766779Z [inf]    ✓ community_business_claims_v2_businesses_cols
+2026-08-13T15:46:10.752779682Z [inf]    ✓ community_business_claims_v2_outreach_table
+2026-08-13T15:46:10.752788477Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.754543600Z [inf]    ✗ kinfolk_cultural_documents_tsv_idx: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.754550633Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.754555045Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.754565629Z [inf]    ✓ pgvector_extension
+2026-08-13T15:46:10.754569997Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.754573761Z [inf]    ✗ kinfolk_cultural_documents_v1: foreign key constraint "kinfolk_cultural_documents_entity_id_fkey" cannot be implemented
+2026-08-13T15:46:10.754577470Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.754581333Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.754584872Z [inf]    ✗ kinfolk_cultural_documents_embedding_col: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.754589606Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.754594721Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.756115520Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.756122047Z [inf]    ✗ kinfolk_cultural_documents_hnsw_idx: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.756127575Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.756131118Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.756134485Z [inf]    ✗ kinfolk_cultural_documents_tsv_trigger: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.756137696Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.756143429Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.756148116Z [inf]    ✗ kinfolk_embedding_outbox_v1: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.756151472Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.756181349Z [inf]    ✗ kinfolk_cultural_documents_status_idx: relation "kinfolk_cultural_documents" does not exist
+2026-08-13T15:46:10.756184551Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.757703322Z [inf]    ✓ happening_topic_sources_v1
+2026-08-13T15:46:10.757712907Z [inf]    ✓ happening_topic_library_links_v1
+2026-08-13T15:46:10.757719495Z [inf]    ✓ safety_monitoring_cases_v1
+2026-08-13T15:46:10.757724067Z [inf]    ✓ happening_delivery_preferences_v1
+2026-08-13T15:46:10.757728019Z [inf]    ✓ safety_monitoring_preferences_v1
+2026-08-13T15:46:10.757732250Z [inf]    ✓ compound_tag_tokens_v1
+2026-08-13T15:46:10.757798276Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.757801741Z [inf]    ✓ whats_happening_enum_types
+2026-08-13T15:46:10.757805478Z [inf]    ✓ happening_submissions_v1
+2026-08-13T15:46:10.757808785Z [inf]    ✓ happening_submissions_user_idx
+2026-08-13T15:46:10.757812441Z [inf]    ✓ happening_sources_v1
+2026-08-13T15:46:10.757817059Z [inf]    ✓ happening_sources_status_idx
+2026-08-13T15:46:10.757820218Z [inf]    ✓ happening_topics_v1
+2026-08-13T15:46:10.759373015Z [inf]    ✓ age_assurance_band_idx
+2026-08-13T15:46:10.759378846Z [inf]    ✓ content_audience_policy_table_v1
+2026-08-13T15:46:10.759382329Z [inf]    ✓ age_delivery_audit_events_table_v1
+2026-08-13T15:46:10.759386335Z [inf]    ✓ age_delivery_audit_events_idx
+2026-08-13T15:46:10.759390335Z [inf]    ✓ kinfolk_delivery_profiles_adaptive_depth_cols
+2026-08-13T15:46:10.759394497Z [inf]    ✓ kinfolk_depth_feedback_events_table_v1
+2026-08-13T15:46:10.759397852Z [inf]    ✓ kinfolk_depth_feedback_events_idx
+2026-08-13T15:46:10.759408187Z [inf]    ✓ kinfolk_answer_plans_table_v1
+2026-08-13T15:46:10.759412418Z [inf]    ✓ kinfolk_answer_plans_expiry_idx
+2026-08-13T15:46:10.759447879Z [inf]    ✓ compound_tag_tokens_idx
+2026-08-13T15:46:10.759451086Z [inf]    ✓ community_place_aliases_v1
+2026-08-13T15:46:10.759453763Z [inf]    ✓ community_place_aliases_lookup_idx
+2026-08-13T15:46:10.759456739Z [inf]    ✓ age_assurance_user_table_v1
+2026-08-13T15:46:10.761122450Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.761129742Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.761133220Z [inf]    ✓ library_user_depth_preferences_table_v1
+2026-08-13T15:46:10.761136634Z [inf]    ✓ library_depth_events_table_v1
+2026-08-13T15:46:10.761142474Z [inf]    ✗ library_topic_versions_table_v1: foreign key constraint "library_topic_versions_topic_id_fkey" cannot be implemented
+2026-08-13T15:46:10.761143748Z [inf]    ✓ user_identity_context_table_v1
+2026-08-13T15:46:10.761146948Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.761151542Z [inf]    ✓ user_identity_context_audit_table_v1
+2026-08-13T15:46:10.761153663Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.761158925Z [inf]    ✗ library_evidence_claims_table_v1: relation "library_topic_versions" does not exist
+2026-08-13T15:46:10.761159492Z [inf]    ✓ user_identity_context_audit_idx_v1
+2026-08-13T15:46:10.762921652Z [inf]  Startup migrations complete: 192 applied, 12 skipped/errored.
+2026-08-13T15:46:10.762926627Z [inf]  HBCU integrity guard: 0 inserted, 103 already present
+2026-08-13T15:46:10.762930474Z [inf]  Cultural sites integrity guard: 0 inserted, 150 already present (seed: 150)
+2026-08-13T15:46:10.762936025Z [inf]    ✗ business_safety_experiences_gender_context_v1: relation "business_safety_experiences" does not exist
+2026-08-13T15:46:10.762938866Z [inf]  [db-pool] client removed
+2026-08-13T15:46:10.762942622Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:10.762946276Z [inf]    ✓ businesses_enrichment_cols_v1
+2026-08-13T15:46:10.762949558Z [inf]    ✓ businesses_hours_text_v1
+2026-08-13T15:46:10.762952811Z [inf]    ✓ businesses_url_cols_text_v1
+2026-08-13T15:46:10.762956154Z [inf]    ✓ recurring_events_active_until_v1
+2026-08-13T15:46:10.762959137Z [inf]    ✓ category_tag_mapping_v1
+2026-08-13T15:46:10.762962071Z [inf]    ✓ category_tag_mapping_seed_v1
+2026-08-13T15:46:10.764784225Z [inf]  Festivals integrity guard: 0 inserted, 63 already present (seed: 63)
+2026-08-13T15:46:10.764787395Z [inf]  Sundown towns integrity guard: 0 inserted, 54 already present (seed: 54)
+2026-08-13T15:46:11.018155046Z [inf]  [kinfolk] AI connectivity check: OK
+2026-08-13T15:46:11.699308978Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:11.699328792Z [inf]  Recurring events guard: 0 inserted, 85 already present (seed: 85)
+2026-08-13T15:46:11.699335819Z [inf]  Community events expansion: 0 inserted, 126 already present (seed: 126)
+2026-08-13T15:46:11.699340830Z [inf]  Tour cultural sites guard: 0 inserted, 177 already present (seed: 177)
+2026-08-13T15:46:11.699344830Z [inf]  Cultural phrases guard: 0 inserted, 47 already present (seed: 47)
+2026-08-13T15:46:11.699349050Z [inf]  Neighborhood timing guard: 0 cities updated (13 in seed)
+2026-08-13T15:46:11.699373606Z [inf]  THE REAL tags: 0 inserted, 299 already present (seed: 310)
+2026-08-13T15:46:11.699377113Z [inf]  Directory businesses integrity guard: 0 inserted, 9 already present (seed: 9)
+2026-08-13T15:46:11.699380628Z [inf]  Tour businesses integrity guard: 1 inserted, 555 already present (seed: 556)
+2026-08-13T15:46:11.699384650Z [inf]  Founder-curated businesses guard: 0 inserted, 23 already present
+2026-08-13T15:46:11.699388533Z [inf]  Community orgs guard: 0 inserted, 61 already present (seed: 61)
+2026-08-13T15:46:11.700683035Z [inf]  [db-pool] new client connected
+2026-08-13T15:46:11.700686023Z [inf]  Coordinate coverage audit — tour_cultural_sites: 290/794 valid (504 missing) | community_organizations: 0/61 valid (61 missing) | recurring_events: 206/211 valid (5 missing)
+2026-08-13T15:46:11.700689418Z [inf]  Knowledge topics integrity guard: 0 inserted, 81 already present
+2026-08-13T15:46:11.700692776Z [inf]  Knowledge graph: Philadelphia node confirmed (id=0388fe7c-11f1-436b-8ab6-f817be0e9f27)
+2026-08-13T15:46:11.700696128Z [inf]  Knowledge graph: subtopics — 0 inserted, 7 already present
+2026-08-13T15:46:11.700699484Z [inf]  Knowledge graph: relationships — 8 upserted
+2026-08-13T15:46:11.700702558Z [inf]  Knowledge graph: Mother Bethel AME connected to 3 topics
+2026-08-13T15:46:11.700706147Z [inf]  Knowledge graph: 0 real knowledge_sources seeded (authoritative + professional; community/ambassador tiers populated only from real contributions)
+2026-08-13T15:46:11.700709932Z [inf]  Admin accounts granted to: tlindsay428@gmail.com, tlindsay428@aol.com
+2026-08-13T15:46:11.700713565Z [inf]  Tester accounts already confirmed for all known testers
+2026-08-13T15:46:11.799906663Z [inf]  Pending tester emails: table ensured, 0 new emails seeded
+2026-08-13T15:46:11.813707567Z [inf]  Diaspora faith sites guard: 0 inserted, 55 already present
+2026-08-13T15:46:11.837409739Z [inf]  Library: 11 Collection nodes seeded
+2026-08-13T15:46:11.879373096Z [inf]  Library: 9 Divine Nine Book nodes seeded
+2026-08-13T15:46:11.959358657Z [inf]  Library: 14 Health Book nodes seeded
+2026-08-13T15:46:12.031365191Z [inf]  Library: 11 Faith Book nodes seeded
+2026-08-13T15:46:12.031370187Z [inf]  Library: existing geography nodes linked to Places collection
+2026-08-13T15:46:12.031373395Z [inf]  Library Collections: foundation complete — 11 Collections, 34 canonical Books
+2026-08-13T15:46:12.044896955Z [inf]  Library activation: geography_refs fixed
+2026-08-13T15:46:12.123608428Z [inf]  Library activation: general topics connected to Collections
+2026-08-13T15:46:12.149706938Z [inf]  Library activation: Divine Nine sources seeded
+2026-08-13T15:46:12.234152336Z [inf]  Library activation: Health Book sources seeded
+2026-08-13T15:46:12.724214897Z [inf]  Library activation: Faith Book sources seeded
+2026-08-13T15:46:12.724218239Z [inf]  Library activation: 2 knowledge_sources seeded across all Tier 1 Books and general topics
+2026-08-13T15:46:12.724223728Z [inf]  Library Content Activation v1: complete
+2026-08-13T15:46:12.948126395Z [inf]  African geography nodes: 0 new countries added, 48 total checked
+2026-08-13T15:46:12.948130689Z [inf]  Bangkok businesses guard: 0 inserted, 15 already present
+2026-08-13T15:46:12.948134109Z [inf]  LA businesses guard: 0 inserted, 42 already present
+2026-08-13T15:46:12.948137415Z [inf]  Test data cleanup: 2 confirmed test records removed
+2026-08-13T15:46:12.954763096Z [inf]  Coverage expansion: 0 inserted, 271 already present (271 total in seed)
+2026-08-13T15:46:12.962753658Z [inf]  Founder churches guard: 0 inserted, 3 already present
+2026-08-13T15:46:12.965751896Z [inf]  Phuket full layer: 0 inserted, 29 already present (29 total)
+2026-08-13T15:46:12.972339744Z [inf]  Category normalization: 0 records normalized
+2026-08-13T15:46:12.978894737Z [inf]  Gap coverage v2: 0 inserted, 116 already present (116 total in seed)
+2026-08-13T15:46:12.985571533Z [inf]  Final micro-seed: 0 inserted, 74 already present (74 total)
+2026-08-13T15:46:12.992251075Z [inf]  Business discoverability: created 1 missing business_identity rows
+2026-08-13T15:46:13.004904195Z [inf]  Business discoverability: tags and ownership badges ensured for all active businesses
+2026-08-13T15:46:13.011005518Z [inf]  Demo removal: platform is clean — no demo listings found
+2026-08-13T15:46:13.016942216Z [inf]  LA Diaspora V1: 0 inserted, 109 already present (109 total in batch)
+2026-08-13T15:46:13.027008833Z [inf]  East Coast Diaspora: 0 inserted, 305 already present (305 total in batch)
+2026-08-13T15:46:13.040579617Z [inf]  South Diaspora: 0 inserted, 255 already present (255 total in batch)
+2026-08-13T15:46:13.047112990Z [inf]  Midwest/West Diaspora: 0 inserted, 267 already present (267 total in batch)
+2026-08-13T15:46:13.062054687Z [inf]  Priority Cultural V1: 0 inserted, 200 already present (200 total in batch)
+2026-08-13T15:46:13.062061039Z [inf]  South Cultural V1: 0 inserted, 200 already present (200 total in batch)
+2026-08-13T15:46:13.067841647Z [inf]  Priority Practical V1: 0 inserted, 381 already present (381 total in batch)
+2026-08-13T15:46:13.074752412Z [inf]  Phuket/Intl Cultural V1: 0 inserted, 45 already present (45 total in batch)
+2026-08-13T15:46:13.074758104Z [inf]  Phuket Knowledge Topics V1: 0 inserted, 14 already present
+2026-08-13T15:46:13.081809906Z [inf]  Library diaspora evidence: African Diaspora History — 3 sources seeded
+2026-08-13T15:46:13.095591840Z [inf]  Library diaspora evidence: Black & Diaspora Foodways — 3 sources seeded
+2026-08-13T15:46:13.095597094Z [inf]  Library diaspora evidence: Cultural Etiquette & Customs — 2 sources seeded
+2026-08-13T15:46:13.109595460Z [inf]  Library diaspora evidence: Cultural Preservation & Oral History — 3 sources seeded
+2026-08-13T15:46:13.109600366Z [inf]  Library diaspora evidence: Festivals & Cultural Celebrations — 2 sources seeded
+2026-08-13T15:46:13.116040563Z [inf]  Library diaspora evidence: Genealogy & Family History — 2 sources seeded
+2026-08-13T15:46:13.122903787Z [inf]  Library diaspora evidence: Heritage Language Learning — 2 sources seeded
+2026-08-13T15:46:13.122910941Z [inf]  Library diaspora evidence: total 0 knowledge_sources inserted across 7 diaspora Books
+2026-08-13T15:46:13.761142071Z [inf]  Library Batch B complete: 0 knowledge_sources inserted
+2026-08-13T15:46:14.769284982Z [inf]  Business claims v2 — unique index business_owner_links_one_active_primary_owner: OK
+2026-08-13T15:46:14.769291188Z [inf]  Business claims v2 — claim status distribution: 
+2026-08-13T15:46:14.769300308Z [inf]  Library link health summary: unchecked:768, needs_review:1
+2026-08-13T15:46:14.769304264Z [inf]  Business claims v2 — no open-claim conflicts found
+2026-08-13T15:46:14.769313749Z [inf]  Load-test accounts: 0 created, 30 already present
+2026-08-13T15:46:14.769327051Z [inf]  Discoverability coords v1 — cultural_sites: 290/794 mapped (504 missing, 504 no-address) | recurring_events: 206/211 mapped (5 missing, 5 no-address) | community_orgs: 0/61 mapped (61 missing, 61 no-address)
+2026-08-13T15:46:14.769328264Z [inf]  Business owner links v2 — no duplicate active owner conflicts found
+2026-08-13T15:46:14.769330973Z [inf]  Library Batch C complete: 0 knowledge_sources inserted
+2026-08-13T15:46:14.769337384Z [inf]  Library link health: ACS breast cancer source already reviewed or not found — no change
+2026-08-13T15:46:14.769339765Z [inf]  Library Batch D complete: 0 knowledge_sources inserted
+2026-08-13T15:46:14.769342004Z [inf]  Business claims v2 — unique index business_claims_one_open_per_member_biz: OK
+2026-08-13T15:46:14.770173247Z [inf]  ensureKinfolkEntityRegistry: kinfolk_entities + kinfolk_entity_aliases ready
+2026-08-13T15:46:14.840259875Z [inf]  ensureEducationInstitutions: table ready — 22 institutions seeded (6 general + 16 HBCUs)
+2026-08-13T15:46:14.995490610Z [inf]  Philadelphia murals: 0 inserted, 56 already present (56 total)
+2026-08-13T15:46:15.149733003Z [inf]  ensureKinfolkCulturalContextV1 failed: there is no unique or exclusion constraint matching the ON CONFLICT specification
+2026-08-13T15:46:15.149736486Z [inf]  [db-pool] client removed
+2026-08-13T15:46:15.149739806Z [inf]  Laundry businesses v1: 0 inserted, 50 already present (50 total)
+2026-08-13T15:46:15.149742819Z [inf]  Murals diaspora v1: 0 inserted, 86 already present (86 total)
+2026-08-13T15:46:15.149746684Z [inf]  Monuments cultural v1: 0 inserted, 61 already present (61 total)
+2026-08-13T15:46:15.149750163Z [inf]  food-trucks-v1: 0 inserted, 47 already present (47 total)
+2026-08-13T15:46:15.149753292Z [inf]  dispensaries-v1: 0 inserted, 33 already present (33 total)
+2026-08-13T15:46:15.149757133Z [inf]  Allied partner applications v1: table + index ready
+2026-08-13T15:46:15.150987182Z [inf]  City-centroid coords: 0 recurring events updated, 5 cities not in map
+2026-08-13T15:46:15.158581036Z [inf]  city-health-alert: scheduler started
+2026-08-13T15:46:24.854667754Z [inf]  [db-pool] client removed
+2026-08-13T15:46:25.213596646Z [inf]  [db-pool] client removed
+2026-08-13T15:47:15.389367183Z [wrn]  
+2026-08-13T15:47:35.134102886Z [inf]  [db-pool] new client connected
+2026-08-13T15:47:35.134106030Z [inf]  request completed
+2026-08-13T15:47:35.134109168Z [inf]  session expiry extended
+2026-08-13T15:47:35.134112598Z [inf]  request completed
+2026-08-13T15:47:38.108603247Z [inf]  request completed
+2026-08-13T15:47:39.803885398Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803892746Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803897258Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803901880Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803905301Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803908505Z [err]  
+2026-08-13T15:47:39.803919198Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803919928Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803928376Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803932836Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.803937383Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.805390548Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.805394255Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.805397487Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.805400758Z [inf]  [db-pool] client removed
+2026-08-13T15:47:39.805403964Z [inf]  [db-pool] client removed
+2026-08-13T15:47:48.126416033Z [inf]  [db-pool] client removed

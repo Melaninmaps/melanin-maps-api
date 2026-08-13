@@ -2683,12 +2683,40 @@ ON CONFLICT (city_slug) DO UPDATE SET
   },
 
   // ── kinfolk_entities UNIQUE(canonical_name) — prevents duplicate seeding ──
-  // Without this, ON CONFLICT (id) on an auto-UUID never fires, and each server
+  // Without this, ON CONFLICT (canonical_name) cannot be used and each server
   // restart creates a new entity row for every seeded entity.
+  // Dedup step runs first because Railway DB accumulated duplicates before this
+  // constraint was introduced — a bare ALTER TABLE would fail with "could not
+  // create unique index … duplicate key value".
   {
-    name: "kinfolk_entities_unique_canonical_name",
-    sql: `ALTER TABLE kinfolk_entities
-      ADD CONSTRAINT kinfolk_entities_canonical_name_unique UNIQUE (canonical_name)`,
+    name: "kinfolk_entities_unique_canonical_name_v2",
+    sql: `DO $$
+      BEGIN
+        -- 1. Remove duplicate canonical_names — keep the oldest row per name
+        IF EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_name = 'kinfolk_entities'
+        ) THEN
+          DELETE FROM kinfolk_entities
+          WHERE id NOT IN (
+            SELECT DISTINCT ON (lower(canonical_name)) id
+            FROM kinfolk_entities
+            ORDER BY lower(canonical_name), created_at ASC NULLS LAST, id ASC
+          );
+          -- 2. Add UNIQUE constraint only if it doesn't already exist
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint
+            WHERE conname = 'kinfolk_entities_canonical_name_unique'
+              AND conrelid = 'kinfolk_entities'::regclass
+          ) THEN
+            ALTER TABLE kinfolk_entities
+              ADD CONSTRAINT kinfolk_entities_canonical_name_unique UNIQUE (canonical_name);
+          END IF;
+        END IF;
+      EXCEPTION WHEN others THEN
+        NULL; -- table may not exist; ignore
+      END
+    $$`,
   },
 
   // ── pgvector extension ────────────────────────────────────────────────────
@@ -2701,12 +2729,15 @@ ON CONFLICT (city_slug) DO UPDATE SET
   },
 
   // ── Kinfolk Cultural Documents — vector + full-text retrieval store ────────
+  // No FK constraints — Railway Postgres rejects FK constraints referencing
+  // tables that may not exist at migration time (kinfolk_entities is created
+  // by ensureKinfolkEntityRegistry which runs after all migrations).
   {
     name: "kinfolk_cultural_documents_v1",
     sql: `CREATE TABLE IF NOT EXISTS kinfolk_cultural_documents (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-      entity_id uuid REFERENCES kinfolk_entities(id) ON DELETE CASCADE,
-      source_id uuid REFERENCES kinfolk_source_records(id) ON DELETE SET NULL,
+      entity_id uuid,
+      source_id uuid,
       document_type varchar(48) NOT NULL DEFAULT 'summary'
         CHECK (document_type IN ('summary','biography','event','place','topic','factsheet')),
       language_code varchar(16) NOT NULL DEFAULT 'en',
@@ -8154,34 +8185,38 @@ async function ensureKinfolkCulturalContextV1(
     let linksInserted = 0;
 
     for (const e of ENTITIES) {
-      // Upsert entity
-      const eRes = await pool.query(
-        `INSERT INTO kinfolk_entities
-           (canonical_name, entity_type, normalized_name, short_summary,
-            country_codes, language_codes, cultural_context_tags,
-            era_start, era_end, resolution_status, source_status, last_verified_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',now())
-         ON CONFLICT (canonical_name) DO UPDATE
-           SET normalized_name=$3, short_summary=$4, country_codes=$5,
-               language_codes=$6, cultural_context_tags=$7,
-               era_start=$8, era_end=$9, resolution_status='active', updated_at=now()
-         RETURNING id`,
-        [e.cn, e.etype, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
-      );
-
-      // ON CONFLICT (canonical_name) always returns the row (via DO UPDATE)
+      // Upsert entity — use SELECT-first pattern to avoid dependency on the
+      // UNIQUE(canonical_name) constraint (which may not exist if the dedup
+      // migration failed on a previous boot due to pre-existing duplicates).
       let entityId: string;
-      if (eRes.rows.length > 0) {
-        entityId = eRes.rows[0].id;
-        entitiesInserted++;
-      } else {
-        // Fallback: should never happen after migration adds the UNIQUE constraint
-        const existing = await pool.query(
-          `SELECT id FROM kinfolk_entities WHERE lower(canonical_name)=lower($1) LIMIT 1`,
-          [e.cn],
-        );
-        if (existing.rows.length === 0) continue;
+      const existing = await pool.query(
+        `SELECT id FROM kinfolk_entities WHERE lower(canonical_name)=lower($1) LIMIT 1`,
+        [e.cn],
+      );
+      if (existing.rows.length > 0) {
         entityId = existing.rows[0].id;
+        // Update the row with latest data
+        await pool.query(
+          `UPDATE kinfolk_entities
+             SET normalized_name=$2, short_summary=$3, country_codes=$4,
+                 language_codes=$5, cultural_context_tags=$6,
+                 era_start=$7, era_end=$8, resolution_status='active', updated_at=now()
+           WHERE id=$1`,
+          [entityId, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
+        );
+      } else {
+        const insRes = await pool.query(
+          `INSERT INTO kinfolk_entities
+             (canonical_name, entity_type, normalized_name, short_summary,
+              country_codes, language_codes, cultural_context_tags,
+              era_start, era_end, resolution_status, source_status, last_verified_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',now())
+           RETURNING id`,
+          [e.cn, e.etype, e.nn, e.ss, e.cc, e.lc, e.tags, e.eraStart ?? null, e.eraEnd ?? null],
+        );
+        if (insRes.rows.length === 0) continue;
+        entityId = insRes.rows[0].id;
+        entitiesInserted++;
       }
 
       // Insert aliases
