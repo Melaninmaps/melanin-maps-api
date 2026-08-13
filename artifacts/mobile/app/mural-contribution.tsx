@@ -27,8 +27,8 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import * as SecureStore from "expo-secure-store";
 import { Feather } from "@expo/vector-icons";
-import { useSession } from "../hooks/useSession";
 import { useColorScheme } from "../hooks/useColorScheme";
 
 const MAX_CHARS = 1000;
@@ -54,7 +54,6 @@ export default function MuralContributionScreen() {
     siteType?: string;
   }>();
   const router = useRouter();
-  const { session } = useSession();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -78,10 +77,10 @@ export default function MuralContributionScreen() {
   const [submitted, setSubmitted]         = useState(false);
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "https://www.mappingwithmelanin.com";
-  const getToken = () =>
-    (session as { sessionToken?: string; id?: string } | null)?.sessionToken ??
-    (session as { sessionToken?: string; id?: string } | null)?.id ??
-    "";
+  const getToken = async (): Promise<string> => {
+    if (Platform.OS === "web") return "";
+    return (await SecureStore.getItemAsync("auth_session_token")) ?? "";
+  };
 
   // ── Photo picker ─────────────────────────────────────────────────────────────
   const pickPhoto = useCallback(async (source: "camera" | "library") => {
@@ -147,7 +146,7 @@ export default function MuralContributionScreen() {
     const form = new FormData();
     form.append("file", { uri: localUri, name: filename, type } as unknown as Blob);
 
-    const token = getToken();
+    const token = await getToken();
     const res = await fetch(`${apiUrl}/api/tour-cultural-sites/${siteId}/upload-photo`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -168,7 +167,8 @@ export default function MuralContributionScreen() {
       Alert.alert("Add something", "Share a memory, a photo, or both — anything helps the community.");
       return;
     }
-    if (!session?.sessionToken && !session?.id) {
+    const token = await getToken();
+    if (!token) {
       Alert.alert("Sign in required", "You need to be signed in to share a memory.");
       return;
     }
@@ -208,7 +208,7 @@ export default function MuralContributionScreen() {
   };
 
   const doPost = async (imageUrl?: string) => {
-    const token = getToken();
+    const token = await getToken();
     const body: Record<string, string | undefined> = {
       comment_text: commentText.trim() || `Visited ${siteName ?? "this site"}.`,
       image_url: imageUrl,
