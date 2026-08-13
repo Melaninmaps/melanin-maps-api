@@ -1,0 +1,162 @@
+{
+  "testedAt": "2026-08-13T00:09:18.941Z",
+  "user": {
+    "homeCity": null,
+    "memberType": null
+  },
+  "results": [
+    {
+      "message": "Who directed the movie Sinners? It was one of my favorites.",
+      "status": 200,
+      "body": {
+        "sessionId": "37cc9cfd-2216-49dc-ba1a-b480012612dd",
+        "reply": "\"Sinners\" was directed by Jason Brown. It's a compelling film that explores deep themes and features strong characters. What specifically did you love most about it?",
+        "recommendations": null,
+        "followUpSuggestions": [
+          "Tell me about other favorites",
+          "What genre do you enjoy?",
+          "Looking for similar movies?"
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": {
+          "type": "open_library_node",
+          "topicId": "coll_culture",
+          "focus": "evidence",
+          "label": "Open \"Culture & Community\" in the Library"
+        },
+        "intentClass": "culture_entertainment",
+        "sources": []
+      }
+    },
+    {
+      "message": "Tell me about Michelle Williams from Destiny's Child.",
+      "status": 200,
+      "body": {
+        "sessionId": "1963c588-b288-4eb7-be79-b2b18200f811",
+        "reply": "Michelle Williams is an iconic member of Destiny's Child, known for her powerful vocals and engaging stage presence. Born on July 23, 1980, in Rockford, Illinois, she joined Destiny's Child in the late 1990s alongside Beyoncé and Kelly Rowland. After the group disbanded, Michelle pursued a successful solo career in music, acting, and Broadway. She has released several albums, showcasing her gospel and R&B influences, and is also recognized for her roles in theatrical productions like 'Aida' and 'Chicago.' Her journey reflects resilience and a deep commitment to her artistry, inspiring many in the music industry.",
+        "recommendations": {
+          "destination": "Chicago",
+          "summary": "Here are some MWM-listed spots in Chicago worth checking out.",
+          "businesses": [
+            {
+              "name": "Lakay Haitian Bakery",
+              "category": "Food",
+              "city": "Chicago",
+              "description": "\"Lakay\" means home in Haitian Creole — and that's exactly the feeling. Patties, pain patate, griot sandwiches, and strong Haitian coffee baked fresh daily by a family that arrived from Port-au-Prince in 2010.",
+              "rating": 4.9,
+              "verified": true,
+              "phone": "(312) 555-9301"
+            },
+            {
+              "name": "South Shore Cultural Center Café",
+              "category": "Food",
+              "city": "Chicago",
+              "description": "Café and event space inside the Chicago Park District's South Shore Cultural Center, a lakefront gem with a stunning Mediterranean-style building and magnificent views.",
+              "rating": 4.8,
+              "verified": true,
+              "phone": "(312) 555-9415"
+            },
+            {
+              "name": "5 Rabanitos",
+              "category": "Food",
+              "city": "Chicago",
+              "description": "5 Rabanitos is a popular spot in Pilsen offering authentic Mexican cuisine, celebrated for its flavorful dishes and deep roots in the local Mexican-American community. Located in the heart of Chicago's Mexican cultural district, this restaurant serves traditional dishes that connect the community to their culinary heritage while attracting food lovers from across the city who seek authentic flavors.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Saigon Sisters",
+              "category": "Food",
+              "city": "Chicago",
+              "description": "Saigon Sisters is a family-owned Vietnamese eatery in the West Loop offering a modern take on traditional street food, including pho and banh mi, reflecting the rich culinary heritage of the Vietnamese diaspora. Founded by a Vietnamese immigrant, this restaurant bridges traditional recipes with contemporary presentation, making Vietnamese cuisine accessible to a broad audience while maintaining the authentic flavors that connect the diaspora to home.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Demera Ethiopian Restaurant",
+              "category": "Food",
+              "city": "Chicago",
+              "description": "Demera Ethiopian Restaurant is a beloved community staple in Uptown serving authentic Ethiopian cuisine, known for its traditional injera and vibrant communal dining experience. This restaurant has become a gathering place for Chicago's Ethiopian community while introducing the broader city to the rich, spice-forward flavors of East African cooking. The communal dining format — where guests share platters of food served on injera — creates an inherently social experience that builds connections.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "South Side Community Art Center",
+              "category": "Arts, Culture & Entertainment",
+              "city": "Chicago",
+              "description": "The only surviving New Deal–era community arts center in the country — founded in Bronzeville in 1940 with the support of Eleanor Roosevelt, the SSCAC has been the cultural backbone of Black Chicago's visual arts scene for over 80 years, nurturing artists and hosting exhibitions, workshops, and cultural programming that keep the community's creative tradition alive.",
+              "rating": 0,
+              "verified": false
+            }
+          ],
+          "neighborhoods": [],
+          "events": [],
+          "safetyTips": [],
+          "localInsights": []
+        },
+        "followUpSuggestions": [
+          "Tell me about her solo career",
+          "What songs is she known for?",
+          "Any behind-the-scenes stories?"
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "business_discovery",
+        "sources": []
+      }
+    },
+    {
+      "message": "What colleges are near me? Include HBCUs if relevant and tell me about Temple University if it is nearby.",
+      "status": 200,
+      "body": {
+        "sessionId": "fc96e744-2681-4de7-8899-dbae9d2d24ed",
+        "reply": "Let's explore some colleges nearby, including HBCUs and Temple University! Temple is a public research university located in Philadelphia, known for its diverse student body and strong programs across various fields, including business, health sciences, and law. It has a vibrant campus life and is integrated into the city, making it a great spot for students seeking an urban experience.",
+        "recommendations": {
+          "destination": "Philadelphia",
+          "summary": "Philadelphia has a mix of colleges and universities that cater to various fields of study with diverse communities.",
+          "businesses": [],
+          "neighborhoods": [
+            {
+              "name": "North Philadelphia",
+              "vibe": "Lively and culturally rich, with plenty of student energy.",
+              "highlights": [
+                "Temple University",
+                "Historic landmarks",
+                "Local dining"
+              ],
+              "safetyNote": "Very active campus area with a strong community presence."
+            }
+          ],
+          "events": [],
+          "safetyTips": [
+            "Check public transport schedules if you plan to visit during peak hours.",
+            "Take advantage of campus tours available at most colleges.",
+            "Be aware of your surroundings, particularly in busy areas."
+          ],
+          "localInsights": [
+            "Many colleges in the area host community events that are open to the public.",
+            "North Philadelphia has a deep historical significance that adds to its character.",
+            "Food trucks and local eateries often cater to the student crowd."
+          ]
+        },
+        "followUpSuggestions": [
+          "Tell me about more colleges",
+          "What programs are offered at Temple?",
+          "Are there community events at colleges?"
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": {
+          "type": "open_library_node",
+          "topicId": "coll_business",
+          "focus": "evidence",
+          "label": "Open \"Business\" in the Library"
+        },
+        "intentClass": "business_discovery",
+        "sources": []
+      }
+    }
+  ]
+}

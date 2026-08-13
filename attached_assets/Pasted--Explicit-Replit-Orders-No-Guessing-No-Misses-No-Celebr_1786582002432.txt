@@ -1,0 +1,23 @@
+## Explicit Replit Orders: No Guessing, No Misses, No Celebrity-List Shortcut
+
+I created the ordered implementation package Replit needs. It is not a vague prompt and it does not treat “50+ cultural celebrities” as the solution.
+
+The package requires Kinfolk to follow one enforced rule for **every** query:
+
+> **Resolve from verified source plus the member’s explicit context; otherwise ask one clarifying question; otherwise say it cannot confirm. Never guess.**
+
+It gives Replit the exact migration tables, seed schemas, source tiers, validation script, deterministic resolver code, ambiguity scoring, bilingual settings, LLM output guard, and required production tests. It also explicitly prevents the errors you described:
+
+| Failure | Required system behavior |
+| --- | --- |
+| *Sinners* | Resolve the source-backed current film and Ryan Coogler; never invent a director. |
+| Michelle Williams | “Destiny’s Child” locks the singer; no unrelated city or restaurant results. |
+| “Natalie” | Ask which Natalie; never default to Natalie Portman. |
+| Nigerian context + “Annie” | Use explicit Nigerian context only as a ranking signal; resolve Annie Macaulay only with verified sources or ask a clarifying question. |
+| Kendrick and Drake | Offer a labeled cultural opinion with facts separated from analysis, not a fabricated winner. |
+| College/HBCU discovery | Return local schools such as Temple by actual location, then a separately labeled HBCU exploration option. |
+| English/Spanish | Use the member’s stated language setting; offer or provide both only under the chosen multilingual setting. |
+
+The document also makes Kinfolk’s “learning” safe: background research can create a **candidate for review**, but it cannot automatically become a live fact. Every active cultural or school record must pass URL, source-tier, entity-alias, relationship, and stale-link validation first.
+
+I will not call this complete when Replit seeds data. It is complete only after I independently rerun all 18 production gates—including the no-guess cases—and see the correct authenticated responses.

@@ -1,0 +1,191 @@
+Yes — you were referring to the **visual/browser acceptance audit** we established, not the broader regression standard.
+
+The important distinction was: **Replit cannot confirm that something “works” simply because the code says it should work, tests pass, or an HTTP request returns 200. It must actually open the running application in the correct environment and visually inspect it like a user.**
+
+This is the standard you mean:
+
+# VISUAL PRODUCTION SELF-AUDIT — REQUIRED
+
+Before declaring any user-facing change **COMPLETE**, you must visually verify the actual application.
+
+## 1. OPEN THE ACTUAL APPLICATION
+
+Use the browser/web-view capability available to you to open the application.
+
+Verify the environment being inspected:
+
+* Replit preview when testing development
+* Production website when validating production
+
+If the task was deployed to production, **production must be visually inspected.**
+
+Do not use the development preview as proof of production functionality.
+
+---
+
+## 2. ACTUALLY USE THE FEATURE
+
+Navigate through the application as a real user would.
+
+Do not simply inspect the source code.
+
+For the feature that was changed:
+
+* Navigate to the correct page.
+* Click the relevant buttons.
+* Open menus and dropdowns.
+* Enter information where applicable.
+* Submit forms where safe.
+* Scroll the page.
+* Follow links.
+* Test the expected user path.
+* Confirm the resulting screen/state.
+
+A button existing in the DOM does not prove the button works.
+
+An endpoint returning `200` does not prove the user experience works.
+
+---
+
+## 3. VISUALLY INSPECT THE RESULT
+
+Look at what is actually rendered.
+
+Specifically check for:
+
+* White screens
+* Blank sections
+* Missing content
+* Broken images
+* Overlapping elements
+* Cut-off text
+* Buttons hidden behind other elements
+* Menus/dropdowns that do not open
+* Incorrect spacing
+* Mobile layout problems
+* Desktop layout problems
+* Unexpected error messages
+* Loading screens that never resolve
+* Links going to blank or incorrect pages
+* Features that technically load but are unusable
+
+---
+
+## 4. TAKE SCREENSHOTS AS PROOF
+
+Capture screenshots of the actual running application after testing.
+
+Screenshots should show enough context to establish:
+
+**WHAT was tested + WHERE it was tested + WHAT the user actually sees.**
+
+For significant user-facing changes, provide:
+
+**BEFORE** — when useful/available
+**AFTER** — showing the implemented result
+**INTERACTION RESULT** — when the feature requires clicking/opening/submitting something
+
+Do not substitute code screenshots for application screenshots.
+
+---
+
+## 5. VERIFY THE CORRECT ENVIRONMENT
+
+Every screenshot/evidence report must identify:
+
+**Environment:** Development / Preview / Production
+**URL tested:** actual URL
+**Build/SHA:** when applicable
+**Device/viewport:** Desktop / Mobile or dimensions when relevant
+
+If you cannot access or visually inspect production, state:
+
+**PRODUCTION VISUAL VERIFICATION NOT COMPLETED**
+
+Do not substitute another environment and call the task complete.
+
+---
+
+## 6. TEST RESPONSIVE BEHAVIOR WHEN RELEVANT
+
+For user-facing web changes, inspect at minimum:
+
+**Desktop view**
+
+and
+
+**Mobile-sized view**
+
+when the feature/layout is used on both.
+
+Pay particular attention to:
+
+* Navigation/hamburger menus
+* Dropdowns
+* Modals
+* Maps
+* Forms
+* Floating buttons
+* Bottom navigation
+* Headers
+* Scrolling
+* Content clipping
+
+---
+
+## 7. SCREENSHOT REVIEW IS PART OF THE TEST
+
+After taking the screenshot, **look at it.**
+
+Do not merely generate a screenshot as a procedural checkbox.
+
+Compare what is visible against the requested behavior/design and ask:
+
+**“If the Founder opened this screen right now, would she reasonably say this request was completed?”**
+
+If not, it is not complete.
+
+---
+
+## 8. NO FALSE VISUAL CONFIRMATION
+
+Never say:
+
+* “Looks good”
+* “Working correctly”
+* “UI verified”
+* “Production verified”
+* “Complete”
+
+unless you actually opened and visually inspected the relevant running application.
+
+If browser access is unavailable, report that limitation explicitly.
+
+---
+
+# REQUIRED COMPLETION EVIDENCE
+
+For user-facing work, the final self-audit must include:
+
+**Environment tested:**
+**URL tested:**
+**Feature/path tested:**
+**Actions performed:**
+**Expected behavior:**
+**Observed behavior:**
+**Visual result:** PASS / FAIL
+**Screenshot(s):** attached
+**Build/SHA:** if applicable
+**Remaining issues:** none OR explicitly listed
+
+### FINAL RULE
+
+**Code inspection proves implementation.
+Runtime testing proves execution.
+Visual inspection proves the user can actually experience it.**
+
+For user-facing Mapping with Melanin™ functionality, all applicable levels are required before declaring the work complete.
+
+**That is the one you were remembering.** We added this specifically because Replit could tell us that something was technically present or responding while you could open the actual site and see a white screen, broken dropdown, bad layout, etc.
+
+I would make this part of the permanent Replit instructions alongside the regression standard — especially the requirement to **open the deployed website, interact with it, take screenshots, and inspect those screenshots before saying PASS**.
