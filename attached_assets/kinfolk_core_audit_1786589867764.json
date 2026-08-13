@@ -1,0 +1,508 @@
+{
+  "runAt": "2026-08-13T02:43:24.333Z",
+  "loginStatus": 200,
+  "results": [
+    {
+      "id": "math",
+      "expected": "basic factual arithmetic",
+      "status": 200,
+      "ms": 3618,
+      "intentClass": "general_knowledge",
+      "reply": "Twelve times eight is ninety-six.",
+      "recommendations": null,
+      "libraryAction": {
+        "type": "open_library_node",
+        "topicId": "coll_education",
+        "focus": "evidence",
+        "label": "Open \"Education\" in the Library"
+      },
+      "sources": [],
+      "error": null,
+      "raw": {
+        "sessionId": "c12f70a8-fc60-4aba-ae6a-3b1112dbc48b",
+        "reply": "Twelve times eight is ninety-six.",
+        "recommendations": null,
+        "followUpSuggestions": [
+          "What's the next math question?",
+          "Need help with anything else?",
+          "Can you give me multiplication tips?"
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": {
+          "type": "open_library_node",
+          "topicId": "coll_education",
+          "focus": "evidence",
+          "label": "Open \"Education\" in the Library"
+        },
+        "intentClass": "general_knowledge",
+        "sources": []
+      }
+    },
+    {
+      "id": "sinners",
+      "expected": "current Ryan Coogler film disambiguation",
+      "status": 200,
+      "ms": 2359,
+      "intentClass": "culture_entertainment",
+      "reply": "I want to make sure I have the right person or work — are you asking about \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work)?",
+      "recommendations": null,
+      "libraryAction": null,
+      "sources": [],
+      "error": null,
+      "raw": {
+        "reply": "I want to make sure I have the right person or work — are you asking about \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work)?",
+        "recommendations": null,
+        "followUpSuggestions": [],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "culture_entertainment",
+        "sources": [],
+        "resolution": {
+          "state": "needs_clarification",
+          "clarificationQuestion": "I want to make sure I have the right person or work — are you asking about \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work)?",
+          "preferencesUsed": []
+        },
+        "originalQuery": "Who directed the movie Sinners?"
+      }
+    },
+    {
+      "id": "michelle",
+      "expected": "singer only, no unrelated businesses",
+      "status": 200,
+      "ms": 777,
+      "intentClass": "business_discovery",
+      "reply": "I want to make sure I have the right person or work — are you asking about \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person)?",
+      "recommendations": null,
+      "libraryAction": null,
+      "sources": [],
+      "error": null,
+      "raw": {
+        "reply": "I want to make sure I have the right person or work — are you asking about \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person)?",
+        "recommendations": null,
+        "followUpSuggestions": [],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "business_discovery",
+        "sources": [],
+        "resolution": {
+          "state": "needs_clarification",
+          "clarificationQuestion": "I want to make sure I have the right person or work — are you asking about \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person)?",
+          "preferencesUsed": []
+        },
+        "originalQuery": "Tell me about Michelle Williams from Destiny's Child."
+      }
+    },
+    {
+      "id": "college",
+      "expected": "local education and HBCU context",
+      "status": 200,
+      "ms": 5137,
+      "intentClass": "education_discovery",
+      "reply": "In Philadelphia, you have some fantastic options for colleges, including Temple University, which is a major public research university known for its diverse programs and vibrant campus life. Other nearby institutions include the University of Pennsylvania, known for its Ivy League status and strong academic programs, and Drexel University, offering cooperative education programs that integrate work and study. \n\nFor HBCUs, Cheyney University of Pennsylvania is a notable option, located just outside Philly. It’s the oldest historically Black university in the U.S. and provides a strong community and dedicated programs for students. Another great option is Lincoln University, located a bit further away but worth exploring — it has a rich history and offers various degree programs. Be sure to verify current information regarding admissions and programs directly on their websites!",
+      "recommendations": null,
+      "libraryAction": null,
+      "sources": [],
+      "error": null,
+      "raw": {
+        "sessionId": "e4b435b4-28af-40bb-bd75-24c830912abc",
+        "reply": "In Philadelphia, you have some fantastic options for colleges, including Temple University, which is a major public research university known for its diverse programs and vibrant campus life. Other nearby institutions include the University of Pennsylvania, known for its Ivy League status and strong academic programs, and Drexel University, offering cooperative education programs that integrate work and study. \n\nFor HBCUs, Cheyney University of Pennsylvania is a notable option, located just outside Philly. It’s the oldest historically Black university in the U.S. and provides a strong community and dedicated programs for students. Another great option is Lincoln University, located a bit further away but worth exploring — it has a rich history and offers various degree programs. Be sure to verify current information regarding admissions and programs directly on their websites!",
+        "recommendations": null,
+        "followUpSuggestions": [
+          "Tell me more about Temple",
+          "Explore more HBCUs",
+          "What's the campus vibe like?"
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "education_discovery",
+        "sources": []
+      }
+    },
+    {
+      "id": "diaspora_history",
+      "expected": "non-null Library action",
+      "status": 200,
+      "ms": 771,
+      "intentClass": "culture_entertainment",
+      "reply": "I don't have a verified source for that in my knowledge base right now. Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?",
+      "recommendations": null,
+      "libraryAction": null,
+      "sources": [],
+      "error": null,
+      "raw": {
+        "reply": "I don't have a verified source for that in my knowledge base right now. Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?",
+        "recommendations": null,
+        "followUpSuggestions": [],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "culture_entertainment",
+        "sources": [],
+        "resolution": {
+          "state": "needs_clarification",
+          "clarificationQuestion": "I don't have a verified source for that in my knowledge base right now. Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?",
+          "preferencesUsed": []
+        },
+        "originalQuery": "Tell me about African Diaspora History."
+      }
+    },
+    {
+      "id": "phuket",
+      "expected": "grounded Phuket results",
+      "status": 200,
+      "ms": 5949,
+      "intentClass": "business_discovery",
+      "reply": "I found a couple of great spots in Phuket that you're going to love! Check out Suay Restaurant, known for its creative Thai dishes and charming atmosphere. You might also enjoy the vibrant dining scene at Zoe in Yellow, which is perfect for a night out with live music. Both places embody the local flavor and vibe of Phuket!",
+      "recommendations": {
+        "destination": "Phuket",
+        "summary": "Phuket has a lively culinary scene with unique dining experiences.",
+        "businesses": [
+          {
+            "name": "Suay Restaurant — Phuket",
+            "category": "Food",
+            "description": "Beloved Phuket Town restaurant by chef Tamara with creative Thai and fusion dishes.",
+            "neighborhood": "Phuket Town",
+            "mustTry": "Signature dishes crafted with local ingredients.",
+            "knowBeforeYouGo": {
+              "atmosphere": "Inviting and stylish with a warm ambiance.",
+              "parking": "Street parking available but can be limited.",
+              "greatFor": "Those looking for a fusion of local and creative cuisine.",
+              "bestTime": "Dinner for the buzz and lively atmosphere.",
+              "communityInsight": "Reservations recommended during peak dining times."
+            }
+          },
+          {
+            "name": "Zoe in Yellow",
+            "category": "Entertainment & Recreation",
+            "description": "An outdoor bar and music venue in Phuket Town known for its lively atmosphere.",
+            "neighborhood": "Phuket Town",
+            "mustTry": "Cocktails and the casual vibe are must-tries.",
+            "knowBeforeYouGo": {
+              "atmosphere": "Laid-back and festive, great for mingling.",
+              "parking": "Street parking can be found nearby.",
+              "greatFor": "Nightlife lovers and social gatherings.",
+              "bestTime": "Evening for live music and drinks.",
+              "communityInsight": "Perfect spot to meet other travelers and enjoy the nightlife."
+            }
+          }
+        ],
+        "neighborhoods": [],
+        "events": [],
+        "safetyTips": [
+          "Look for reviews and peak hours for busy spots.",
+          "Make reservations where possible, especially on weekends.",
+          "Check if outdoor seating is available if you prefer fresh air."
+        ],
+        "localInsights": [
+          "Explore local street food stalls for an authentic taste of Phuket.",
+          "Don't miss the weekend markets for unique local eats.",
+          "Try to catch live performances at venues like Zoe in Yellow for a vibrant atmosphere."
+        ]
+      },
+      "libraryAction": {
+        "type": "open_library_node",
+        "topicId": "281bf2d8-e386-4a50-b726-d25db398b279",
+        "focus": "evidence",
+        "label": "Open \"Phuket\" in the Library"
+      },
+      "sources": [],
+      "error": null,
+      "raw": {
+        "sessionId": "f1f844e4-8152-4b70-a3de-b376b9334292",
+        "reply": "I found a couple of great spots in Phuket that you're going to love! Check out Suay Restaurant, known for its creative Thai dishes and charming atmosphere. You might also enjoy the vibrant dining scene at Zoe in Yellow, which is perfect for a night out with live music. Both places embody the local flavor and vibe of Phuket!",
+        "recommendations": {
+          "destination": "Phuket",
+          "summary": "Phuket has a lively culinary scene with unique dining experiences.",
+          "businesses": [
+            {
+              "name": "Suay Restaurant — Phuket",
+              "category": "Food",
+              "description": "Beloved Phuket Town restaurant by chef Tamara with creative Thai and fusion dishes.",
+              "neighborhood": "Phuket Town",
+              "mustTry": "Signature dishes crafted with local ingredients.",
+              "knowBeforeYouGo": {
+                "atmosphere": "Inviting and stylish with a warm ambiance.",
+                "parking": "Street parking available but can be limited.",
+                "greatFor": "Those looking for a fusion of local and creative cuisine.",
+                "bestTime": "Dinner for the buzz and lively atmosphere.",
+                "communityInsight": "Reservations recommended during peak dining times."
+              }
+            },
+            {
+              "name": "Zoe in Yellow",
+              "category": "Entertainment & Recreation",
+              "description": "An outdoor bar and music venue in Phuket Town known for its lively atmosphere.",
+              "neighborhood": "Phuket Town",
+              "mustTry": "Cocktails and the casual vibe are must-tries.",
+              "knowBeforeYouGo": {
+                "atmosphere": "Laid-back and festive, great for mingling.",
+                "parking": "Street parking can be found nearby.",
+                "greatFor": "Nightlife lovers and social gatherings.",
+                "bestTime": "Evening for live music and drinks.",
+                "communityInsight": "Perfect spot to meet other travelers and enjoy the nightlife."
+              }
+            }
+          ],
+          "neighborhoods": [],
+          "events": [],
+          "safetyTips": [
+            "Look for reviews and peak hours for busy spots.",
+            "Make reservations where possible, especially on weekends.",
+            "Check if outdoor seating is available if you prefer fresh air."
+          ],
+          "localInsights": [
+            "Explore local street food stalls for an authentic taste of Phuket.",
+            "Don't miss the weekend markets for unique local eats.",
+            "Try to catch live performances at venues like Zoe in Yellow for a vibrant atmosphere."
+          ]
+        },
+        "followUpSuggestions": [
+          "More food spots",
+          "What's the nightlife like?",
+          "Tell me about local desserts."
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": {
+          "type": "open_library_node",
+          "topicId": "281bf2d8-e386-4a50-b726-d25db398b279",
+          "focus": "evidence",
+          "label": "Open \"Phuket\" in the Library"
+        },
+        "intentClass": "business_discovery",
+        "sources": []
+      }
+    },
+    {
+      "id": "nightlife",
+      "expected": "Philadelphia-only nightlife relevance",
+      "status": 200,
+      "ms": 3012,
+      "intentClass": "culture_entertainment",
+      "reply": "Philadelphia's nightlife is as vibrant as its history. You can find everything from jazz clubs to lively bars, especially in neighborhoods like Fishtown and South Street. The city is known for its music venues featuring local artists and national acts alike. Are you looking for something chill, a lively spot, or maybe a bit of both?",
+      "recommendations": {
+        "destination": "Los Angeles",
+        "summary": "Here are some MWM-listed spots in Los Angeles worth checking out.",
+        "businesses": [
+          {
+            "name": "Griot's Coffee & Study Hall",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A community coffee house and study space in the heart of Crenshaw. Specialty coffee, African teas, and a safe space for creators, students, and thinkers.",
+            "rating": 4.8,
+            "verified": true,
+            "website": "griotscoffee.com",
+            "phone": "(323) 555-0587"
+          },
+          {
+            "name": "Post & Beam",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A Black-owned restaurant in Baldwin Hills offering California comfort food, serving as a staple for the local community. This restaurant brings farm-to-table sensibility to comfort food traditions, creating a dining experience that reflects both California's food culture and the Black community's culinary heritage.",
+            "rating": 0,
+            "verified": false
+          },
+          {
+            "name": "Earle's on Crenshaw",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A long-standing family-owned business in the Crenshaw District offering hot dogs, Jamaican patties, and vegan options. This multi-generational business represents the kind of community institution that has served the Crenshaw corridor for decades, adapting to changing tastes while maintaining its role as a neighborhood gathering place.",
+            "rating": 0,
+            "verified": false
+          },
+          {
+            "name": "Meals by Genet",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A beloved eatery in Little Ethiopia offering traditional Ethiopian dishes, famous for its intricate dorowat. Located in the heart of LA's Ethiopian community — the largest outside of Ethiopia — this restaurant represents the pinnacle of Ethiopian cooking in America, with dishes prepared with the care and complexity that define the cuisine at its best.",
+            "rating": 0,
+            "verified": false
+          },
+          {
+            "name": "Guelaguetza",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A James Beard Award-winning restaurant in Koreatown known for its authentic Oaxacan cuisine and vibrant cultural atmosphere. This family-owned restaurant has brought the complex, ancient culinary traditions of Oaxaca — including mole, tlayudas, and mezcal — to national prominence, earning recognition as one of the finest Mexican restaurants in the country.",
+            "rating": 0,
+            "verified": false
+          },
+          {
+            "name": "Ayara Thai Cuisine",
+            "category": "Food",
+            "city": "Los Angeles",
+            "description": "A family-owned restaurant in Westchester offering authentic Thai recipes passed down through generations. This restaurant represents the Thai community's culinary heritage in Los Angeles, offering dishes prepared from family recipes that connect diners to the authentic flavors of Thailand.",
+            "rating": 0,
+            "verified": false
+          }
+        ],
+        "neighborhoods": [],
+        "events": [],
+        "safetyTips": [],
+        "localInsights": []
+      },
+      "libraryAction": null,
+      "sources": [],
+      "error": null,
+      "raw": {
+        "sessionId": "fa703e88-aafa-478f-b51e-d546d7d4745b",
+        "reply": "Philadelphia's nightlife is as vibrant as its history. You can find everything from jazz clubs to lively bars, especially in neighborhoods like Fishtown and South Street. The city is known for its music venues featuring local artists and national acts alike. Are you looking for something chill, a lively spot, or maybe a bit of both?",
+        "recommendations": {
+          "destination": "Los Angeles",
+          "summary": "Here are some MWM-listed spots in Los Angeles worth checking out.",
+          "businesses": [
+            {
+              "name": "Griot's Coffee & Study Hall",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A community coffee house and study space in the heart of Crenshaw. Specialty coffee, African teas, and a safe space for creators, students, and thinkers.",
+              "rating": 4.8,
+              "verified": true,
+              "website": "griotscoffee.com",
+              "phone": "(323) 555-0587"
+            },
+            {
+              "name": "Post & Beam",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A Black-owned restaurant in Baldwin Hills offering California comfort food, serving as a staple for the local community. This restaurant brings farm-to-table sensibility to comfort food traditions, creating a dining experience that reflects both California's food culture and the Black community's culinary heritage.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Earle's on Crenshaw",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A long-standing family-owned business in the Crenshaw District offering hot dogs, Jamaican patties, and vegan options. This multi-generational business represents the kind of community institution that has served the Crenshaw corridor for decades, adapting to changing tastes while maintaining its role as a neighborhood gathering place.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Meals by Genet",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A beloved eatery in Little Ethiopia offering traditional Ethiopian dishes, famous for its intricate dorowat. Located in the heart of LA's Ethiopian community — the largest outside of Ethiopia — this restaurant represents the pinnacle of Ethiopian cooking in America, with dishes prepared with the care and complexity that define the cuisine at its best.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Guelaguetza",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A James Beard Award-winning restaurant in Koreatown known for its authentic Oaxacan cuisine and vibrant cultural atmosphere. This family-owned restaurant has brought the complex, ancient culinary traditions of Oaxaca — including mole, tlayudas, and mezcal — to national prominence, earning recognition as one of the finest Mexican restaurants in the country.",
+              "rating": 0,
+              "verified": false
+            },
+            {
+              "name": "Ayara Thai Cuisine",
+              "category": "Food",
+              "city": "Los Angeles",
+              "description": "A family-owned restaurant in Westchester offering authentic Thai recipes passed down through generations. This restaurant represents the Thai community's culinary heritage in Los Angeles, offering dishes prepared from family recipes that connect diners to the authentic flavors of Thailand.",
+              "rating": 0,
+              "verified": false
+            }
+          ],
+          "neighborhoods": [],
+          "events": [],
+          "safetyTips": [],
+          "localInsights": []
+        },
+        "followUpSuggestions": [
+          "More food spots",
+          "What's the club scene like?",
+          "Tell me about live music venues."
+        ],
+        "smartPromotion": null,
+        "taskAction": null,
+        "libraryAction": null,
+        "intentClass": "culture_entertainment",
+        "sources": []
+      }
+    }
+  ],
+  "compact": [
+    {
+      "id": "math",
+      "status": 200,
+      "ms": 3618,
+      "intentClass": "general_knowledge",
+      "replyPreview": "Twelve times eight is ninety-six.",
+      "hasRecommendations": null,
+      "libraryAction": {
+        "type": "open_library_node",
+        "topicId": "coll_education",
+        "focus": "evidence",
+        "label": "Open \"Education\" in the Library"
+      },
+      "error": null
+    },
+    {
+      "id": "sinners",
+      "status": 200,
+      "ms": 2359,
+      "intentClass": "culture_entertainment",
+      "replyPreview": "I want to make sure I have the right person or work — are you asking about \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work), or \"Sinners (2025 film)\" (work)?",
+      "hasRecommendations": null,
+      "libraryAction": null,
+      "error": null
+    },
+    {
+      "id": "michelle",
+      "status": 200,
+      "ms": 777,
+      "intentClass": "business_discovery",
+      "replyPreview": "I want to make sure I have the right person or work — are you asking about \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person), or \"Michelle Williams (singer)\" (person)?",
+      "hasRecommendations": null,
+      "libraryAction": null,
+      "error": null
+    },
+    {
+      "id": "college",
+      "status": 200,
+      "ms": 5137,
+      "intentClass": "education_discovery",
+      "replyPreview": "In Philadelphia, you have some fantastic options for colleges, including Temple University, which is a major public research university known for its diverse programs and vibrant campus life. Other nearby institutions include the University of Pennsylvania, known for its Ivy League status and strong academic programs, and Drexel University, offering cooperative education programs that integrate work and study. \n\nFor HBCUs, Cheyney University of Pennsylvania is a notable option, located just outside Philly. It’s the oldest historically Black university in the U.S. and provides a strong community and dedicated programs for students. Another great option is Lincoln University, located a bit further away but worth exploring — it has a rich history and offers various degree programs. Be sure to verify current information regarding admissions and programs directly on their websites!",
+      "hasRecommendations": null,
+      "libraryAction": null,
+      "error": null
+    },
+    {
+      "id": "diaspora_history",
+      "status": 200,
+      "ms": 771,
+      "intentClass": "culture_entertainment",
+      "replyPreview": "I don't have a verified source for that in my knowledge base right now. Could you add more context — like a year, country, group, or role — so I can give you a confirmed answer?",
+      "hasRecommendations": null,
+      "libraryAction": null,
+      "error": null
+    },
+    {
+      "id": "phuket",
+      "status": 200,
+      "ms": 5949,
+      "intentClass": "business_discovery",
+      "replyPreview": "I found a couple of great spots in Phuket that you're going to love! Check out Suay Restaurant, known for its creative Thai dishes and charming atmosphere. You might also enjoy the vibrant dining scene at Zoe in Yellow, which is perfect for a night out with live music. Both places embody the local flavor and vibe of Phuket!",
+      "hasRecommendations": null,
+      "libraryAction": {
+        "type": "open_library_node",
+        "topicId": "281bf2d8-e386-4a50-b726-d25db398b279",
+        "focus": "evidence",
+        "label": "Open \"Phuket\" in the Library"
+      },
+      "error": null
+    },
+    {
+      "id": "nightlife",
+      "status": 200,
+      "ms": 3012,
+      "intentClass": "culture_entertainment",
+      "replyPreview": "Philadelphia's nightlife is as vibrant as its history. You can find everything from jazz clubs to lively bars, especially in neighborhoods like Fishtown and South Street. The city is known for its music venues featuring local artists and national acts alike. Are you looking for something chill, a lively spot, or maybe a bit of both?",
+      "hasRecommendations": null,
+      "libraryAction": null,
+      "error": null
+    }
+  ]
+}

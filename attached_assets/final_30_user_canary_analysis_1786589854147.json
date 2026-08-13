@@ -1,0 +1,2217 @@
+{
+  "overall_result": "fail",
+  "started_at": "2026-08-12T21:30:53.277Z",
+  "finished_at": "2026-08-12T21:32:11.187Z",
+  "stages": [
+    {
+      "name": "baseline_1",
+      "planned_users": 1,
+      "result": "pass",
+      "failure_count": 0,
+      "errors": {},
+      "step_stats": {
+        "login": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1754,
+          "p95_ms": 1754
+        },
+        "preferences_read": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 468,
+          "p95_ms": 468
+        },
+        "sessions_read": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1718,
+          "p95_ms": 1718
+        },
+        "library_graph_read": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1599,
+          "p95_ms": 1599
+        },
+        "business_search": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1658,
+          "p95_ms": 1658
+        },
+        "map_discoverability_pins": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2729,
+          "p95_ms": 2729
+        },
+        "travel_route": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2054,
+          "p95_ms": 2054
+        },
+        "kinfolk_chat": {
+          "count": 1,
+          "statuses": {
+            "200": 1
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 7610,
+          "p95_ms": 7610
+        }
+      },
+      "pool": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T21:30:55.068Z",
+          "status": 200,
+          "total": 2,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:30:57.536Z",
+          "status": 200,
+          "total": 3,
+          "idle": 2,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:30:59.532Z",
+          "status": 200,
+          "total": 6,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:01.532Z",
+          "status": 200,
+          "total": 6,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:03.528Z",
+          "status": 200,
+          "total": 6,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:05.532Z",
+          "status": 200,
+          "total": 6,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:07.532Z",
+          "status": 200,
+          "total": 6,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T21:31:08.745Z",
+          "status": 200,
+          "total": 5,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        }
+      ],
+      "failure_users": []
+    },
+    {
+      "name": "warm_5",
+      "planned_users": 5,
+      "result": "pass",
+      "failure_count": 0,
+      "errors": {},
+      "step_stats": {
+        "login": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1699,
+          "p95_ms": 1986
+        },
+        "preferences_read": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 470,
+          "p95_ms": 789
+        },
+        "sessions_read": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1325,
+          "p95_ms": 2011
+        },
+        "library_graph_read": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1819,
+          "p95_ms": 1872
+        },
+        "business_search": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1897,
+          "p95_ms": 1976
+        },
+        "map_discoverability_pins": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2330,
+          "p95_ms": 3426
+        },
+        "travel_route": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1787,
+          "p95_ms": 1841
+        },
+        "kinfolk_chat": {
+          "count": 5,
+          "statuses": {
+            "200": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 6253,
+          "p95_ms": 8638
+        }
+      },
+      "pool": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T21:31:09.201Z",
+          "status": 200,
+          "total": 5,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:11.654Z",
+          "status": 200,
+          "total": 11,
+          "idle": 6,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:13.689Z",
+          "status": 200,
+          "total": 11,
+          "idle": 7,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:15.660Z",
+          "status": 200,
+          "total": 11,
+          "idle": 7,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:17.661Z",
+          "status": 200,
+          "total": 11,
+          "idle": 7,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:19.662Z",
+          "status": 200,
+          "total": 11,
+          "idle": 7,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:21.658Z",
+          "status": 200,
+          "total": 8,
+          "idle": 2,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T21:31:23.471Z",
+          "status": 200,
+          "total": 8,
+          "idle": 2,
+          "waiting": 0,
+          "max": 50
+        }
+      ],
+      "failure_users": []
+    },
+    {
+      "name": "mid_15",
+      "planned_users": 15,
+      "result": "pass",
+      "failure_count": 0,
+      "errors": {},
+      "step_stats": {
+        "login": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 4224,
+          "p95_ms": 4363
+        },
+        "preferences_read": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 482,
+          "p95_ms": 1897
+        },
+        "sessions_read": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1804,
+          "p95_ms": 3572
+        },
+        "library_graph_read": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1733,
+          "p95_ms": 3479
+        },
+        "business_search": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1966,
+          "p95_ms": 3869
+        },
+        "map_discoverability_pins": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2399,
+          "p95_ms": 5137
+        },
+        "travel_route": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1727,
+          "p95_ms": 2117
+        },
+        "kinfolk_chat": {
+          "count": 15,
+          "statuses": {
+            "200": 15
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 10941,
+          "p95_ms": 19519
+        }
+      },
+      "pool": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T21:31:25.109Z",
+          "status": 200,
+          "total": 8,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:29.449Z",
+          "status": 200,
+          "total": 18,
+          "idle": 2,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:29.574Z",
+          "status": 200,
+          "total": 33,
+          "idle": 26,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:31.554Z",
+          "status": 200,
+          "total": 33,
+          "idle": 26,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:33.480Z",
+          "status": 200,
+          "total": 33,
+          "idle": 26,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:35.575Z",
+          "status": 200,
+          "total": 33,
+          "idle": 26,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:37.571Z",
+          "status": 200,
+          "total": 33,
+          "idle": 26,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:39.642Z",
+          "status": 200,
+          "total": 23,
+          "idle": 5,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:41.570Z",
+          "status": 200,
+          "total": 21,
+          "idle": 3,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:43.584Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:45.577Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:47.577Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:49.571Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:31:51.574Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T21:31:52.875Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        }
+      ],
+      "failure_users": []
+    },
+    {
+      "name": "full_30",
+      "planned_users": 30,
+      "result": "fail",
+      "failure_count": 27,
+      "errors": {
+        "Error: chat_status_429_unknown": 14,
+        "Error: bootstrap_read_path_failure": 13
+      },
+      "step_stats": {
+        "login": {
+          "count": 30,
+          "statuses": {
+            "200": 30
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 6389,
+          "p95_ms": 7709
+        },
+        "preferences_read": {
+          "count": 30,
+          "statuses": {
+            "200": 28,
+            "429": 2
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 1219,
+          "p95_ms": 4564
+        },
+        "sessions_read": {
+          "count": 30,
+          "statuses": {
+            "200": 28,
+            "429": 2
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2367,
+          "p95_ms": 6709
+        },
+        "library_graph_read": {
+          "count": 30,
+          "statuses": {
+            "200": 26,
+            "429": 4
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2292,
+          "p95_ms": 7193
+        },
+        "business_search": {
+          "count": 30,
+          "statuses": {
+            "200": 25,
+            "429": 5
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2531,
+          "p95_ms": 6988
+        },
+        "map_discoverability_pins": {
+          "count": 30,
+          "statuses": {
+            "200": 19,
+            "429": 11
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 3691,
+          "p95_ms": 8116
+        },
+        "travel_route": {
+          "count": 30,
+          "statuses": {
+            "200": 30
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 2032,
+          "p95_ms": 3112
+        },
+        "kinfolk_chat": {
+          "count": 17,
+          "statuses": {
+            "200": 3,
+            "429": 14
+          },
+          "reply_count": 0,
+          "error_codes": {},
+          "p50_ms": 471,
+          "p95_ms": 5959
+        }
+      },
+      "pool": [
+        {
+          "point": "before",
+          "observed_at": "2026-08-12T21:31:54.590Z",
+          "status": 200,
+          "total": 21,
+          "idle": 1,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:02.058Z",
+          "status": 200,
+          "total": 31,
+          "idle": 4,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:02.299Z",
+          "status": 200,
+          "total": 33,
+          "idle": 6,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:02.447Z",
+          "status": 200,
+          "total": 38,
+          "idle": 8,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:03.254Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:05.075Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:07.056Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:09.052Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "during",
+          "observed_at": "2026-08-12T21:32:11.048Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        },
+        {
+          "point": "after",
+          "observed_at": "2026-08-12T21:32:11.187Z",
+          "status": 200,
+          "total": 38,
+          "idle": 18,
+          "waiting": 0,
+          "max": 50
+        }
+      ],
+      "failure_users": [
+        {
+          "account": "01",
+          "city": "Philadelphia",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 1006,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 532,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 7430,
+              "body_bytes": 5822
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 7341,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 6988,
+              "body_bytes": 12293
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 8178,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1814,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 450,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "611"
+            }
+          ]
+        },
+        {
+          "account": "02",
+          "city": "Atlanta",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7481,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 558,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2367,
+              "body_bytes": 2525
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2950,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 429,
+              "latency_ms": 2250,
+              "body_bytes": 54
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2560,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 3112,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "03",
+          "city": "Houston",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6689,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1329,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1328,
+              "body_bytes": 2819
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2066,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2020,
+              "body_bytes": 11989
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 3691,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2203,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 464,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "609"
+            }
+          ]
+        },
+        {
+          "account": "04",
+          "city": "Washington DC",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7685,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 991,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 937,
+              "body_bytes": 2905
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 970,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 429,
+              "latency_ms": 2252,
+              "body_bytes": 54
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2279,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2611,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "05",
+          "city": "Los Angeles",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6389,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2171,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2169,
+              "body_bytes": 2990
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 1924,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 1769,
+              "body_bytes": 13045
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 2908,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2423,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 508,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "06",
+          "city": "New York",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7709,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 429,
+              "latency_ms": 977,
+              "body_bytes": 54
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 918,
+              "body_bytes": 1964
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 616,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 851,
+              "body_bytes": 12757
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 2777,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2123,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "07",
+          "city": "Chicago",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7718,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 429,
+              "latency_ms": 992,
+              "body_bytes": 54
+            },
+            {
+              "step": "sessions_read",
+              "status": 429,
+              "latency_ms": 2042,
+              "body_bytes": 54
+            },
+            {
+              "step": "library_graph_read",
+              "status": 429,
+              "latency_ms": 1649,
+              "body_bytes": 54
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2450,
+              "body_bytes": 13078
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2037,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2204,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "09",
+          "city": "Detroit",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4608,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3172,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3128,
+              "body_bytes": 1769
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 3465,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 4676,
+              "body_bytes": 13397
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 5463,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1949,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 474,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "10",
+          "city": "Baltimore",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6814,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1192,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2397,
+              "body_bytes": 1729
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2071,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 429,
+              "latency_ms": 1958,
+              "body_bytes": 54
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2071,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2470,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "11",
+          "city": "Memphis",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5074,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2778,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3640,
+              "body_bytes": 1885
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 3591,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 3240,
+              "body_bytes": 13578
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4545,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1828,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 469,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "12",
+          "city": "Dallas",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7696,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 657,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 429,
+              "latency_ms": 1799,
+              "body_bytes": 54
+            },
+            {
+              "step": "library_graph_read",
+              "status": 429,
+              "latency_ms": 1805,
+              "body_bytes": 54
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2211,
+              "body_bytes": 13363
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2233,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2051,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "14",
+          "city": "Charlotte",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7127,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 874,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 933,
+              "body_bytes": 1729
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 910,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 429,
+              "latency_ms": 1790,
+              "body_bytes": 54
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4124,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2090,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "15",
+          "city": "Columbia SC",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5890,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2024,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2863,
+              "body_bytes": 2145
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2894,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2037,
+              "body_bytes": 101
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 3285,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1502,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 472,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "611"
+            }
+          ]
+        },
+        {
+          "account": "16",
+          "city": "Birmingham",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3886,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3894,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3969,
+              "body_bytes": 794
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 4027,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 4097,
+              "body_bytes": 13323
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 5029,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1772,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 494,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "611"
+            }
+          ]
+        },
+        {
+          "account": "17",
+          "city": "Oakland",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3226,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 4480,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 5076,
+              "body_bytes": 356
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 5514,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 4970,
+              "body_bytes": 13205
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 6862,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1354,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 458,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "18",
+          "city": "Newark",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5785,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2153,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2531,
+              "body_bytes": 599
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2878,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2706,
+              "body_bytes": 13172
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 5076,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1435,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 466,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "609"
+            }
+          ]
+        },
+        {
+          "account": "19",
+          "city": "Richmond",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5848,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2004,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2537,
+              "body_bytes": 209
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2463,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2792,
+              "body_bytes": 13130
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4141,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1644,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 450,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "20",
+          "city": "Nashville",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7250,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1199,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2170,
+              "body_bytes": 593
+            },
+            {
+              "step": "library_graph_read",
+              "status": 429,
+              "latency_ms": 1867,
+              "body_bytes": 54
+            },
+            {
+              "step": "business_search",
+              "status": 429,
+              "latency_ms": 1976,
+              "body_bytes": 54
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 1938,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2131,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "22",
+          "city": "Phuket",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 5289,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 2662,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2586,
+              "body_bytes": 794
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 3200,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 3776,
+              "body_bytes": 12450
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4287,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1697,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 466,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "23",
+          "city": "Philadelphia",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7243,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1219,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1021,
+              "body_bytes": 794
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2121,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2107,
+              "body_bytes": 12293
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 2172,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2336,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "24",
+          "city": "Atlanta",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 3116,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 4564,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 4612,
+              "body_bytes": 599
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 5228,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 4940,
+              "body_bytes": 12379
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 6549,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2035,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 499,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "610"
+            }
+          ]
+        },
+        {
+          "account": "25",
+          "city": "Houston",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 4440,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 3389,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 3528,
+              "body_bytes": 550
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 3484,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 4344,
+              "body_bytes": 11989
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4690,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1951,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 471,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "611"
+            }
+          ]
+        },
+        {
+          "account": "26",
+          "city": "Washington DC",
+          "error": "Error: chat_status_429_unknown",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 6690,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1267,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2143,
+              "body_bytes": 794
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 1928,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 1844,
+              "body_bytes": 101
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 200,
+              "latency_ms": 4125,
+              "body_bytes": 109799
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 1972,
+              "body_bytes": 6888
+            },
+            {
+              "step": "kinfolk_chat",
+              "status": 429,
+              "latency_ms": 469,
+              "body_bytes": 54,
+              "intent_class": null,
+              "has_reply": false,
+              "error_code": null,
+              "retry_after": "609"
+            }
+          ]
+        },
+        {
+          "account": "27",
+          "city": "Los Angeles",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7684,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 1214,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 2169,
+              "body_bytes": 778
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2168,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2531,
+              "body_bytes": 13045
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 1853,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2237,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "28",
+          "city": "New York",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7469,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 551,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1065,
+              "body_bytes": 596
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 1704,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 1850,
+              "body_bytes": 12757
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 1916,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 3172,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "29",
+          "city": "Chicago",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7454,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 552,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 806,
+              "body_bytes": 599
+            },
+            {
+              "step": "library_graph_read",
+              "status": 200,
+              "latency_ms": 2245,
+              "body_bytes": 2842
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2715,
+              "body_bytes": 13078
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 1585,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2032,
+              "body_bytes": 6888
+            }
+          ]
+        },
+        {
+          "account": "30",
+          "city": "Miami",
+          "error": "Error: bootstrap_read_path_failure",
+          "steps": [
+            {
+              "step": "login",
+              "status": 200,
+              "latency_ms": 7460,
+              "body_bytes": 103
+            },
+            {
+              "step": "preferences_read",
+              "status": 200,
+              "latency_ms": 546,
+              "body_bytes": 448
+            },
+            {
+              "step": "sessions_read",
+              "status": 200,
+              "latency_ms": 1803,
+              "body_bytes": 766
+            },
+            {
+              "step": "library_graph_read",
+              "status": 429,
+              "latency_ms": 2292,
+              "body_bytes": 54
+            },
+            {
+              "step": "business_search",
+              "status": 200,
+              "latency_ms": 2560,
+              "body_bytes": 13484
+            },
+            {
+              "step": "map_discoverability_pins",
+              "status": 429,
+              "latency_ms": 1924,
+              "body_bytes": 54
+            },
+            {
+              "step": "travel_route",
+              "status": 200,
+              "latency_ms": 2293,
+              "body_bytes": 6888
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
