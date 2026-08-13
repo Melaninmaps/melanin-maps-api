@@ -4,6 +4,7 @@ import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
+  Mic, MicOff, Square,
 } from "lucide-react";
 import {
   MwmHome, MwmPlane, MwmBriefcase, MwmStore,
@@ -618,6 +619,15 @@ function TravelPage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ── Voice input state ──────────────────────────────────────────────────────
+  type VoiceState = "idle" | "notice" | "requesting" | "denied" | "recording" | "processing";
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef   = useRef<Blob[]>([]);
+  const elapsedTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const privacyNoticeSeen = useRef(false); // shown once per session
+
   // Load preferences — always merge with DEFAULT_PREFS so every array field is
   // guaranteed to be an array even if the DB row predates a field addition.
   const loadPrefs = useCallback(async () => {
@@ -675,6 +685,138 @@ function TravelPage() {
       body: JSON.stringify({ responseStyle: ACTIVE_ID_TO_RESPONSE_STYLE[p.communicationStyle] ?? "conversational" }),
     });
   }, []);
+
+  // ── Voice: stop recording and clean up ─────────────────────────────────────
+  const stopRecording = useCallback(() => {
+    if (elapsedTimerRef.current) { clearInterval(elapsedTimerRef.current); elapsedTimerRef.current = null; }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    // Revoke any MediaStream tracks to release the mic indicator
+    mediaRecorderRef.current?.stream?.getTracks().forEach(t => t.stop());
+  }, []);
+
+  // ── Voice: encode captured chunks and call /transcribe ─────────────────────
+  const finishRecording = useCallback(async (chunks: Blob[], mimeType: string) => {
+    setVoiceState("processing");
+    try {
+      const blob = new Blob(chunks, { type: mimeType });
+      if (blob.size < 100) { setVoiceState("idle"); return; }
+
+      // Encode to base64 without persisting to disk
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+      const base64 = btoa(binary);
+
+      // Derive format from MIME type: audio/webm → webm, audio/mp4 → m4a, etc.
+      const rawMime = mimeType.split(";")[0].replace("audio/", "").toLowerCase();
+      const format = rawMime === "mp4" || rawMime === "x-m4a" ? "m4a" : (rawMime || "webm");
+
+      const r = await fetch(`${BASE}api/kinfolk/transcribe`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audio: base64, format }),
+      });
+
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({})) as { error?: string; message?: string };
+        const msg = r.status === 413 ? "That clip is too long — try under 60 seconds."
+          : r.status === 429 ? "Voice input limit reached. Give it a few minutes."
+          : r.status === 400 ? "Couldn't read the audio. Try again."
+          : "Transcription unavailable. You can still type your question.";
+        setInput(`${msg}`);
+        setVoiceState("idle");
+        return;
+      }
+
+      const data = await r.json() as { text?: string; audioRetained?: boolean };
+      const transcript = data.text?.trim() ?? "";
+      if (!transcript) { setVoiceState("idle"); return; }
+
+      // Populate input with transcript for member review — NOT sent automatically
+      setInput(`Kinfolk heard: ${transcript}`);
+      setVoiceState("idle");
+
+      // Focus input so member can edit before sending
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } catch {
+      setInput("Transcription failed — please type your question.");
+      setVoiceState("idle");
+    } finally {
+      audioChunksRef.current = [];
+    }
+  }, []);
+
+  // ── Voice: primary tap handler ──────────────────────────────────────────────
+  const handleVoiceTap = useCallback(async () => {
+    // Stop recording if already recording
+    if (voiceState === "recording") {
+      stopRecording();
+      return;
+    }
+    // Dismiss notice without acting
+    if (voiceState === "notice") { setVoiceState("idle"); return; }
+    if (voiceState === "processing" || voiceState === "requesting") return;
+
+    // Show privacy notice once per session before requesting mic permission
+    if (!privacyNoticeSeen.current) {
+      setVoiceState("notice");
+      return;
+    }
+
+    // Request mic permission
+    setVoiceState("requesting");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Choose the best supported MIME type
+      const preferredTypes = ["audio/webm", "audio/mp4", "audio/wav", "audio/ogg"];
+      const mimeType = preferredTypes.find(t => MediaRecorder.isTypeSupported(t)) ?? "";
+      const options = mimeType ? { mimeType } : {};
+
+      const recorder = new MediaRecorder(stream, options);
+      const chunks: Blob[] = [];
+      audioChunksRef.current = chunks;
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => finishRecording(chunks, mimeType || "audio/webm");
+
+      recorder.start(250); // collect chunks every 250ms
+      setVoiceState("recording");
+      setRecordingElapsed(0);
+
+      elapsedTimerRef.current = setInterval(() => {
+        setRecordingElapsed(prev => {
+          if (prev >= 59) {
+            stopRecording();
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } catch {
+      setVoiceState("denied");
+      setTimeout(() => setVoiceState("idle"), 4000);
+    }
+  }, [voiceState, stopRecording, finishRecording]);
+
+  // ── Voice: proceed from privacy notice ─────────────────────────────────────
+  const handleVoiceNoticeAccept = useCallback(async () => {
+    privacyNoticeSeen.current = true;
+    setVoiceState("idle");
+    // Trigger the actual recording flow immediately
+    await handleVoiceTap();
+  }, [handleVoiceTap]);
+
+  // Cleanup on unmount
+  useEffect(() => () => {
+    stopRecording();
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+  }, [stopRecording]);
 
   // TTS playback
   const playMessage = useCallback(async (msgId: string, content: string) => {
@@ -1167,7 +1309,83 @@ function TravelPage() {
 
               {/* Input bar */}
               <div className="border-t border-[#3A1F0E]/8 bg-white px-4 py-3 shrink-0">
-                <div className="flex items-end gap-3 max-w-3xl mx-auto">
+                {/* Voice privacy notice — shown once before first recording */}
+                {voiceState === "notice" && (
+                  <div role="dialog" aria-label="Voice privacy notice" className="mb-3 max-w-3xl mx-auto bg-[#FFF8EC] border border-[#CA922B]/30 rounded-2xl px-4 py-3">
+                    <p className="text-xs text-[#3A1F0E]/80 leading-relaxed mb-2">
+                      <strong className="text-[#3A1F0E]">Before you speak —</strong> your audio is used only to turn your question into text. It is not posted to your profile, Circle, business page, or Library, and is never stored.
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={handleVoiceNoticeAccept}
+                        className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-[#CA922B] text-white hover:bg-[#B38024] transition-colors">
+                        Got it — open mic
+                      </button>
+                      <button onClick={() => setVoiceState("idle")}
+                        className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white border border-[#3A1F0E]/12 text-[#3A1F0E]/60 hover:border-[#CA922B]/40 transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recording status bar */}
+                {(voiceState === "recording" || voiceState === "processing") && (
+                  <div aria-live="polite" className="mb-3 max-w-3xl mx-auto flex items-center gap-3 px-4 py-2 bg-red-50 border border-red-200 rounded-2xl">
+                    {voiceState === "recording" ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden />
+                        <span className="text-xs text-red-700 font-medium flex-1">
+                          Recording… {recordingElapsed}s / 60s
+                        </span>
+                        <button onClick={stopRecording}
+                          aria-label="Stop recording"
+                          className="flex items-center gap-1.5 text-[11px] font-semibold text-red-600 hover:text-red-800 px-2 py-1 rounded-full hover:bg-red-100 transition-colors">
+                          <Square size={10} fill="currentColor" /> Stop
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 size={12} className="text-[#CA922B] animate-spin shrink-0" aria-hidden />
+                        <span className="text-xs text-[#3A1F0E]/60 italic">Turning your voice into text…</span>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Mic denied fallback */}
+                {voiceState === "denied" && (
+                  <div aria-live="polite" className="mb-3 max-w-3xl mx-auto px-4 py-2 bg-[#FAF6EF] border border-[#3A1F0E]/10 rounded-2xl">
+                    <p className="text-xs text-[#3A1F0E]/60">
+                      <MicOff size={10} className="inline mr-1" aria-hidden />
+                      Microphone access was denied. You can still type your question below.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex items-end gap-2 max-w-3xl mx-auto">
+                  {/* Microphone button */}
+                  {isLoggedIn && (
+                    <button
+                      onClick={handleVoiceTap}
+                      aria-label={voiceState === "recording" ? "Stop recording" : "Speak to Kinfolk"}
+                      aria-pressed={voiceState === "recording"}
+                      disabled={voiceState === "processing" || voiceState === "requesting"}
+                      title={voiceState === "recording" ? "Stop recording" : "Speak to Kinfolk"}
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors shrink-0 ${
+                        voiceState === "recording"
+                          ? "bg-red-500 hover:bg-red-600 text-white"
+                          : voiceState === "processing" || voiceState === "requesting"
+                          ? "bg-[#FAF6EF] text-[#3A1F0E]/30 cursor-wait"
+                          : "bg-[#FAF6EF] hover:bg-[#CA922B]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] border border-[#3A1F0E]/10 hover:border-[#CA922B]/30"
+                      }`}>
+                      {voiceState === "recording"
+                        ? <Square size={15} fill="white" className="text-white" />
+                        : voiceState === "processing" || voiceState === "requesting"
+                        ? <Loader2 size={15} className="animate-spin" />
+                        : <Mic size={15} />}
+                    </button>
+                  )}
+
                   <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
                     data-testid="kinfolk-chat-input"
                     onKeyDown={handleKeyDown}
@@ -1177,13 +1395,34 @@ function TravelPage() {
                     style={{ maxHeight: "120px", overflowY: "auto" }}
                     onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }}
                   />
-                  <button onClick={() => send(input)} disabled={!input.trim() || sending}
+
+                  {/* Discard transcript button — shown when input has "Kinfolk heard:" prefix */}
+                  {input.startsWith("Kinfolk heard:") && (
+                    <button onClick={() => { setInput(""); inputRef.current?.focus(); }}
+                      aria-label="Discard transcript"
+                      title="Discard transcript"
+                      className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-red-50 border border-[#3A1F0E]/10 hover:border-red-200 text-[#3A1F0E]/40 hover:text-red-500 flex items-center justify-center transition-colors shrink-0">
+                      <X size={14} />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      // Strip "Kinfolk heard: " prefix if present before sending
+                      const cleaned = input.startsWith("Kinfolk heard: ")
+                        ? input.slice("Kinfolk heard: ".length)
+                        : input;
+                      send(cleaned);
+                    }}
+                    disabled={!input.trim() || sending}
                     data-testid="kinfolk-send"
                     className="w-11 h-11 rounded-2xl bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 flex items-center justify-center transition-colors shrink-0">
                     <Send size={16} className="text-white" />
                   </button>
                 </div>
-                <p className="text-center text-[10px] text-[#3A1F0E]/25 mt-2">Enter to send · Shift+Enter for new line</p>
+                <p className="text-center text-[10px] text-[#3A1F0E]/25 mt-2">
+                  {isLoggedIn ? "Enter to send · Shift+Enter for new line · Mic to speak" : "Enter to send · Shift+Enter for new line"}
+                </p>
                 <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
               </div>
             </>

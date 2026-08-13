@@ -3990,22 +3990,113 @@ router.get("/kinfolk/proactive", async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /api/kinfolk/transcribe ────────────────────────────────────────────
+// ─── POST /api/kinfolk/transcribe — hardened per Voice Audit spec ─────────────
+// Member-keyed rate limiter: 10 requests / 15 minutes per authenticated user.
+// IP fallback only for unauthenticated edge rejection (separate bucket).
+const transcribeUserBuckets = new Map<string, { count: number; resetAt: number }>();
+const transcribeIpBuckets  = new Map<string, { count: number; resetAt: number }>();
+const TRANSCRIBE_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const TRANSCRIBE_USER_LIMIT = 10;
+const TRANSCRIBE_IP_LIMIT   = 5;  // tighter for unauthenticated edge rejection
+
+function checkTranscribeLimit(key: string, map: Map<string, { count: number; resetAt: number }>, limit: number): { allowed: boolean; retryAfterMs: number } {
+  const now = Date.now();
+  const bucket = map.get(key);
+  if (!bucket || now > bucket.resetAt) {
+    map.set(key, { count: 1, resetAt: now + TRANSCRIBE_WINDOW_MS });
+    return { allowed: true, retryAfterMs: 0 };
+  }
+  if (bucket.count >= limit) {
+    return { allowed: false, retryAfterMs: bucket.resetAt - now };
+  }
+  bucket.count++;
+  return { allowed: true, retryAfterMs: 0 };
+}
+
+const ALLOWED_AUDIO_FORMATS = new Set(["webm", "m4a", "wav", "mp3"]);
+const MAX_DECODED_BYTES = 10 * 1024 * 1024; // 10 MB
+// base64 expands ~33%, so max base64 chars = ceil(10MB / 3 * 4) ≈ 13,981,013
+const MAX_BASE64_CHARS = Math.ceil(MAX_DECODED_BYTES / 3) * 4 + 4;
+
 router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
-    return void res.status(503).json({ error: "AI service unavailable" });
+    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription is temporarily unavailable." });
   }
-  const { audio, format = "m4a" } = req.body as { audio?: string; format?: string };
-  if (!audio) return void res.status(400).json({ error: "audio is required" });
+
+  // 1. Authentication required
+  if (!req.user?.id) {
+    return void res.status(401).json({ error: "AUTHENTICATION_REQUIRED", message: "Sign in to use voice input.", audioRetained: false });
+  }
+
+  // 2. Per-member rate limit (primary)
+  const memberCheck = checkTranscribeLimit(req.user.id, transcribeUserBuckets, TRANSCRIBE_USER_LIMIT);
+  if (!memberCheck.allowed) {
+    const retrySec = Math.ceil(memberCheck.retryAfterMs / 1000);
+    res.set("Retry-After", String(retrySec));
+    return void res.status(429).json({ error: "VOICE_INPUT_RATE_LIMITED", message: `Voice input limit reached. Try again in ${retrySec} seconds.`, audioRetained: false });
+  }
+
+  const { audio, format } = req.body as { audio?: string; format?: string };
+
+  // 3. Audio required
+  if (!audio || typeof audio !== "string" || !audio.trim()) {
+    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
+  }
+
+  // 4. Format allowlist
+  const safeFormat = (format ?? "webm").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!ALLOWED_AUDIO_FORMATS.has(safeFormat)) {
+    return void res.status(400).json({ error: "UNSUPPORTED_AUDIO_FORMAT", message: `Format '${safeFormat}' is not accepted. Use webm, m4a, wav, or mp3.`, audioRetained: false });
+  }
+
+  // 5. Base64 size cap (checked before Buffer.from to avoid OOM)
+  if (audio.length > MAX_BASE64_CHARS) {
+    return void res.status(413).json({ error: "AUDIO_TOO_LARGE", message: "Audio exceeds the 10 MB maximum. Use a shorter clip.", audioRetained: false });
+  }
+
+  // 6. Decoded size check
+  let buffer: Buffer;
   try {
-    const buffer = Buffer.from(audio, "base64");
-    const blob = new Blob([buffer], { type: `audio/${format}` });
-    const file = new File([blob], `voice.${format}`, { type: `audio/${format}` });
-    const transcription = await openai.audio.transcriptions.create({ file, model: "whisper-1" });
-    res.json({ text: transcription.text });
-  } catch (err) {
-    req.log.error({ err }, "Transcription failed");
-    res.status(500).json({ error: "Transcription failed" });
+    buffer = Buffer.from(audio, "base64");
+  } catch {
+    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio data could not be decoded.", audioRetained: false });
+  }
+  if (buffer.length > MAX_DECODED_BYTES) {
+    return void res.status(413).json({ error: "AUDIO_TOO_LARGE", message: "Audio exceeds the 10 MB maximum after decoding.", audioRetained: false });
+  }
+  if (buffer.length < 100) {
+    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio clip is too short.", audioRetained: false });
+  }
+
+  // 7. Transcribe with 15-second timeout — never persist audio blob
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  const startMs = Date.now();
+
+  try {
+    const blob = new Blob([buffer], { type: `audio/${safeFormat}` });
+    const file = new File([blob], `voice.${safeFormat}`, { type: `audio/${safeFormat}` });
+
+    const transcription = await openai.audio.transcriptions.create(
+      { file, model: "whisper-1" },
+      { signal: controller.signal },
+    );
+
+    // Log outcome + latency only — never log audio content, transcript text, or user context
+    req.log.info({ userId: req.user.id, latencyMs: Date.now() - startMs, format: safeFormat }, "kinfolk-transcribe: success");
+
+    return void res.json({ text: transcription.text, audioRetained: false });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "";
+    const isAbort = msg.includes("abort") || msg.includes("timeout");
+    req.log.error({ latencyMs: Date.now() - startMs, format: safeFormat, aborted: isAbort }, "kinfolk-transcribe: failed");
+
+    if (isAbort) {
+      return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription timed out. Try a shorter clip.", audioRetained: false });
+    }
+    return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription failed. Please try again.", audioRetained: false });
+  } finally {
+    clearTimeout(timeout);
   }
 });
 
