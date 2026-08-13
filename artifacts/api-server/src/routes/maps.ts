@@ -472,13 +472,14 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
     const { rows } = await pool.query<{
       id: string; source_type: string; name: string; city: string;
       state: string | null; latitude: string; longitude: string;
-      description: string | null; detail_path: string;
+      description: string | null; detail_path: string; site_type: string | null;
     }>(`
       SELECT id,
              'tour_cultural_site'    AS source_type,
              name, city, state, latitude::text, longitude::text,
              description,
-             '/tour-cultural-sites/' || id AS detail_path
+             '/tour-cultural-sites/' || id AS detail_path,
+             COALESCE(site_type, 'landmark')  AS site_type
       FROM tour_cultural_sites
       WHERE ${COORD_FILTER}
       UNION ALL
@@ -486,7 +487,8 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              'recurring_event'       AS source_type,
              name, city, state, latitude::text, longitude::text,
              description,
-             '/recurring-events/' || id AS detail_path
+             '/recurring-events/' || id AS detail_path,
+             NULL                        AS site_type
       FROM recurring_events
       WHERE ${COORD_FILTER}
       UNION ALL
@@ -494,7 +496,8 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              'community_organization' AS source_type,
              name, city, state, latitude::text, longitude::text,
              mission                  AS description,
-             '/community-orgs/' || id AS detail_path
+             '/community-orgs/' || id AS detail_path,
+             NULL                      AS site_type
       FROM community_organizations
       WHERE ${COORD_FILTER}
       ORDER BY source_type, city, name
@@ -510,6 +513,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
       longitude:   parseFloat(r.longitude),
       description: r.description ?? null,
       detailPath:  r.detail_path,
+      siteType:    r.site_type ?? null,
     }));
 
     res.json({ pins });

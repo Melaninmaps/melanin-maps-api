@@ -2766,6 +2766,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["kinfolk entity registry", () => ensureKinfolkEntityRegistry(log, warn)],
     // ── Education institutions — colleges, universities, HBCUs + seed data ──
     ["education institutions",   () => ensureEducationInstitutions(log, warn)],
+    // ── Philadelphia murals — site_type column, site_contributions table, 55 seed murals ──
+    ["philadelphia murals",      () => ensurePhiladelphiaMurals(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -6465,6 +6467,429 @@ async function ensureDiscoverabilityCoordinatesV1(
 // Phase 1 schema for kinfolk_entities + kinfolk_entity_aliases. The in-memory
 // entity-resolver.ts handles resolution; these tables support Phase 2 DB-backed
 // entity management. Created additive — never alters existing rows.
+// ── Philadelphia murals + site_type column + site_contributions table ─────────
+// Adds site_type discriminator to tour_cultural_sites (default 'landmark'),
+// creates site_contributions for community comments/media, and seeds 55
+// Philadelphia murals from the Mural Arts Program and public art canon.
+async function ensurePhiladelphiaMurals(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── schema ────────────────────────────────────────────────────────────────
+    await pool.query(`
+      ALTER TABLE tour_cultural_sites
+        ADD COLUMN IF NOT EXISTS site_type TEXT NOT NULL DEFAULT 'landmark'
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS site_contributions (
+        id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        site_id       UUID        NOT NULL,
+        user_id       TEXT        NOT NULL,
+        author_name   TEXT,
+        comment_text  TEXT        NOT NULL,
+        image_url     TEXT,
+        video_url     TEXT,
+        status        TEXT        NOT NULL DEFAULT 'pending',
+        helpful_count INTEGER     NOT NULL DEFAULT 0,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_site_contrib_site
+        ON site_contributions(site_id) WHERE status = 'approved'
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_site_contrib_user
+        ON site_contributions(user_id)
+    `);
+
+    // ── seed murals ───────────────────────────────────────────────────────────
+    // 55 Philadelphia murals. Coordinates are approximate neighborhood-level for
+    // all except well-known fixed installations (Magic Gardens, Keith Haring, etc.).
+    // Source: Mural Arts Philadelphia public map + public record.
+    type MuralRow = { name: string; address: string; description: string; lat: number; lng: number };
+    const murals: MuralRow[] = [
+      // ── South Street / South Philadelphia ─────────────────────────────────
+      {
+        name: "Philadelphia's Magic Gardens",
+        address: "1020 South St, Philadelphia, PA",
+        description: "Isaiah Zagar's immersive mosaic mural environment covering an entire city block on South Street. One of the most visited public art destinations in Philadelphia, built over 14 years with found objects, bicycle wheels, mirror shards, and folk art.",
+        lat: 39.9427, lng: -75.1583,
+      },
+      {
+        name: "We The Youth — Keith Haring",
+        address: "22nd St & Ellsworth St, Philadelphia, PA",
+        description: "Painted by Keith Haring in 1987, one of his last outdoor murals before his death in 1990. Bright primary colors on a school wall in South Philadelphia. Restored and landmarked by the city as a permanent public art installation.",
+        lat: 39.9378, lng: -75.1768,
+      },
+      {
+        name: "Tribute to Aretha Franklin",
+        address: "1525 Locust St, Philadelphia, PA",
+        description: "A Mural Arts Philadelphia tribute to the Queen of Soul, Aretha Franklin, painted after her passing in 2018. Part of a national conversation about honoring Black musical legends in public space.",
+        lat: 39.9474, lng: -75.1659,
+      },
+      {
+        name: "William Still — Father of the Underground Railroad",
+        address: "South St & 7th St, Philadelphia, PA",
+        description: "Honors William Still, a free Black Philadelphian who documented the stories of over 800 freedom seekers on the Underground Railroad. His 1872 book 'The Underground Railroad' remains a primary historical record.",
+        lat: 39.9435, lng: -75.1556,
+      },
+      {
+        name: "South Street Stories",
+        address: "South St & 4th St, Philadelphia, PA",
+        description: "A community narrative mural along South Street celebrating the multicultural history of the corridor — from its 1960s counterculture era to its roots as a Black commercial district known as 'the highway' to Baltimore.",
+        lat: 39.9430, lng: -75.1480,
+      },
+      {
+        name: "1947 — Jackie Robinson Integration",
+        address: "S Broad St & Carpenter St, Philadelphia, PA",
+        description: "Commemorates Jackie Robinson's 1947 integration of Major League Baseball and the role of Black Philadelphia fans and athletes in pushing for integration across American sports.",
+        lat: 39.9422, lng: -75.1650,
+      },
+      {
+        name: "Passyunk Pride",
+        address: "E Passyunk Ave & Morris St, Philadelphia, PA",
+        description: "A neighborhood identity mural on East Passyunk Avenue celebrating the multicultural working-class roots of South Philadelphia and the communities who shaped it.",
+        lat: 39.9315, lng: -75.1638,
+      },
+      {
+        name: "Tribute to Frankie Beverly",
+        address: "Washington Ave & 2nd St, Philadelphia, PA",
+        description: "Honoring Frankie Beverly, born in Philadelphia and founder of Maze featuring Frankie Beverly. His anthem 'Before I Let Go' has been a staple of Black family gatherings for generations.",
+        lat: 39.9296, lng: -75.1594,
+      },
+      {
+        name: "Tribute to Sun Ra",
+        address: "Passyunk Ave & Federal St, Philadelphia, PA",
+        description: "Honoring avant-garde jazz musician Sun Ra, who spent formative years in Philadelphia before his career in Chicago and New York. His Arkestra performed frequently in the city's Black cultural spaces.",
+        lat: 39.9390, lng: -75.1592,
+      },
+      {
+        name: "1919 Race Riots Memorial Mural",
+        address: "S 20th St & McKean St, Philadelphia, PA",
+        description: "A sobering memorial to the Philadelphia race riots of 1918–1919, when Black residents were targeted in South Philadelphia neighborhoods. Part of the Mural Arts Program's Truth, Racial Healing & Transformation series.",
+        lat: 39.9287, lng: -75.1583,
+      },
+      {
+        name: "Grays Ferry Neighborhood Roots",
+        address: "Grays Ferry Ave & 28th St, Philadelphia, PA",
+        description: "Celebrates the deep history of the Grays Ferry neighborhood, one of Philadelphia's oldest corridors, and the Black and Irish working-class families who lived side by side along the Schuylkill River.",
+        lat: 39.9255, lng: -75.1825,
+      },
+      {
+        name: "Italian Market Memory",
+        address: "9th St & Washington Ave, Philadelphia, PA",
+        description: "A tribute to the multi-generational story of the 9th Street Italian Market — the oldest and largest working outdoor market in the United States — and the Black, Latino, and immigrant vendors who make it run.",
+        lat: 39.9325, lng: -75.1578,
+      },
+      {
+        name: "Philly Soul",
+        address: "S Broad St & Tasker St, Philadelphia, PA",
+        description: "Celebrating the Philadelphia soul sound — TSOP (The Sound of Philadelphia) — and the city's outsized contribution to American R&B through artists like The Stylistics, The O'Jays, Harold Melvin & the Blue Notes, and Patti LaBelle.",
+        lat: 39.9350, lng: -75.1650,
+      },
+      {
+        name: "Tribute to Patti LaBelle",
+        address: "S 20th St & Wharton St, Philadelphia, PA",
+        description: "Honoring Patti LaBelle, born Patricia Louise Holte in North Philadelphia, as one of the most powerful voices in American soul and gospel music. She remains deeply connected to her Philadelphia roots.",
+        lat: 39.9350, lng: -75.1760,
+      },
+
+      // ── Center City / Spring Garden / Broad Street ─────────────────────────
+      {
+        name: "Hope for the Future — Meg Saligman",
+        address: "1522 Spring Garden St, Philadelphia, PA",
+        description: "A monumental Mural Arts Philadelphia work by Meg Saligman (1999) spanning several stories on a building at Spring Garden and N 16th St. One of the largest murals in Philadelphia, depicting hands reaching upward against a sky of color.",
+        lat: 39.9641, lng: -75.1570,
+      },
+      {
+        name: "Common Thread",
+        address: "N Broad St & Fairmount Ave, Philadelphia, PA",
+        description: "Part of the Avenue of the Arts initiative, this Mural Arts Philadelphia piece explores the shared threads of community identity across Philadelphia's diverse neighborhoods along the Broad Street corridor.",
+        lat: 39.9597, lng: -75.1575,
+      },
+      {
+        name: "MLK — The Dream Lives On",
+        address: "N Broad St & Spring Garden St, Philadelphia, PA",
+        description: "One of several Mural Arts Philadelphia tributes to Dr. Martin Luther King Jr. along the Broad Street corridor, celebrating his Philadelphia connections and the city's Civil Rights movement.",
+        lat: 39.9627, lng: -75.1571,
+      },
+      {
+        name: "Thomas Eakins Tribute",
+        address: "22nd St & Market St, Philadelphia, PA",
+        description: "A tribute to Philadelphia painter Thomas Eakins, whose realist portraits of Black Philadelphia life in the late 19th century were groundbreaking for their time. His studio was a gathering place for the city's artists.",
+        lat: 39.9528, lng: -75.1762,
+      },
+      {
+        name: "Philadelphia Freedom",
+        address: "Chestnut St & 15th St, Philadelphia, PA",
+        description: "A sweeping Center City mural celebrating Philadelphia as the birthplace of American liberty and exploring the contradiction between that founding promise and the lived experience of Black Philadelphians through history.",
+        lat: 39.9496, lng: -75.1634,
+      },
+      {
+        name: "Octavius Catto — Unfinished Revolution",
+        address: "S Broad St & Carpenter St, Philadelphia, PA",
+        description: "Honors Octavius Catto (1839–1871), a Black civil rights leader, educator, and baseball organizer assassinated on Election Day 1871 while trying to vote. A companion to the Catto statue outside City Hall.",
+        lat: 39.9464, lng: -75.1669,
+      },
+
+      // ── Historic District / Old City / Bella Vista ─────────────────────────
+      {
+        name: "Richard Allen & Absalom Jones — Free African Society",
+        address: "6th St & Lombard St, Philadelphia, PA",
+        description: "Honors Richard Allen and Absalom Jones, founders of the Free African Society (1787) — the first independent Black civic organization in the Western Hemisphere — and Mother Bethel AME Church at this location.",
+        lat: 39.9440, lng: -75.1497,
+      },
+      {
+        name: "Free African Society 1787",
+        address: "6th St & Pine St, Philadelphia, PA",
+        description: "Commemorates the founding of the Free African Society in Philadelphia in 1787, celebrating its founders' vision of Black self-determination and mutual aid that predates the U.S. Constitution.",
+        lat: 39.9443, lng: -75.1492,
+      },
+      {
+        name: "Mother Bethel AME Heritage",
+        address: "419 S 6th St, Philadelphia, PA",
+        description: "Depicts the history of Mother Bethel African Methodist Episcopal Church, the oldest parcel of land continuously owned by Black Americans in the United States, established 1794 by Bishop Richard Allen.",
+        lat: 39.9441, lng: -75.1498,
+      },
+      {
+        name: "Harriet Tubman — Moses of Her People",
+        address: "N 8th St & Spring Garden St, Philadelphia, PA",
+        description: "A powerful portrait mural of Harriet Tubman, celebrating her many trips to Philadelphia on the Underground Railroad and her collaboration with William Still and the Philadelphia Vigilance Committee.",
+        lat: 39.9638, lng: -75.1523,
+      },
+
+      // ── North Philadelphia (historically Black) ────────────────────────────
+      {
+        name: "Muhammad Ali — The Greatest",
+        address: "Columbia Ave & Ridge Ave, Philadelphia, PA",
+        description: "A towering portrait of Muhammad Ali in North Philadelphia, honoring his connection to the Black freedom movement and his visits to the city's Black communities during the Civil Rights era.",
+        lat: 39.9780, lng: -75.1720,
+      },
+      {
+        name: "Tribute to John Coltrane",
+        address: "N Broad St & Jefferson St, Philadelphia, PA",
+        description: "Honoring John Coltrane, who moved to Philadelphia in 1943 and shaped his revolutionary jazz sound in the city's clubs and after-hours spaces before moving to New York. A Love Supreme was composed during his Philadelphia years.",
+        lat: 39.9832, lng: -75.1697,
+      },
+      {
+        name: "Cecil B. Moore — Civil Rights Pioneer",
+        address: "N Broad St & Cecil B. Moore Ave, Philadelphia, PA",
+        description: "Honors Cecil B. Moore, the firebrand NAACP Philadelphia chapter president who led the 1963–1964 picket of Girard College (which had barred Black students from its endowment-funded school) — one of the longest civil rights demonstrations in US history.",
+        lat: 39.9803, lng: -75.1577,
+      },
+      {
+        name: "Words, Beats & Life — Hip Hop Heritage",
+        address: "N Broad St & Oxford St, Philadelphia, PA",
+        description: "Celebrating Philadelphia's contribution to hip-hop culture — from DJ Jazzy Jeff & The Fresh Prince (Will Smith) to Meek Mill — and the role of North Philly block parties and rec centers in shaping the genre.",
+        lat: 39.9917, lng: -75.1576,
+      },
+      {
+        name: "Frederick Douglass — Voice of Freedom",
+        address: "N 17th St & Diamond St, Philadelphia, PA",
+        description: "A portrait mural of Frederick Douglass, celebrating his many visits to Philadelphia and his alliances with Black Philadelphia abolitionists. The city was a key stop on his speaking tours.",
+        lat: 39.9870, lng: -75.1590,
+      },
+      {
+        name: "Spirit of Community",
+        address: "Cecil B. Moore Ave & 17th St, Philadelphia, PA",
+        description: "A community-created mural celebrating the resilience of North Philadelphia neighborhoods and the intergenerational bonds that have sustained Black Philadelphia through urban renewal, disinvestment, and rebuilding.",
+        lat: 39.9803, lng: -75.1642,
+      },
+      {
+        name: "Children's Garden Mural",
+        address: "Girard Ave & 18th St, Philadelphia, PA",
+        description: "A vibrant mural outside a North Philadelphia community garden space, depicting children tending plants and celebrating the connection between Black urban communities and food sovereignty.",
+        lat: 39.9736, lng: -75.1695,
+      },
+      {
+        name: "Marcus Garvey — Back to Africa Movement",
+        address: "N Broad St & Susquehanna Ave, Philadelphia, PA",
+        description: "Honoring Marcus Garvey and his Pan-African vision. Philadelphia had one of the strongest UNIA chapters in the northeastern United States during the 1920s, centered in North Philadelphia.",
+        lat: 39.9897, lng: -75.1609,
+      },
+      {
+        name: "Lee Elder — Golf Pioneer",
+        address: "N 18th St & Lehigh Ave, Philadelphia, PA",
+        description: "Celebrating Lee Elder, who in 1975 became the first Black golfer to play in the Masters Tournament. A tribute to Black athletic excellence and the struggle to access sports historically closed to African Americans.",
+        lat: 39.9889, lng: -75.1623,
+      },
+      {
+        name: "Dizzy Gillespie — Bebop Philadelphia",
+        address: "N Broad St & Norris St, Philadelphia, PA",
+        description: "Honoring Dizzy Gillespie, who spent pivotal years of his career in Philadelphia's jazz clubs and mentored many musicians who would define bebop. His collaborations with Philadelphian Charlie Parker changed American music.",
+        lat: 39.9862, lng: -75.1623,
+      },
+      {
+        name: "Nicetown Corridor — Community Resilience",
+        address: "Hunting Park Ave & 18th St, Philadelphia, PA",
+        description: "A community-driven mural in the Nicetown-Tioga neighborhood celebrating the neighborhood's history as a working-class Black community and its ongoing revival through resident-led investment and organizing.",
+        lat: 40.0050, lng: -75.1620,
+      },
+      {
+        name: "North Philly Peace Park Mural",
+        address: "N 19th St & Huntingdon St, Philadelphia, PA",
+        description: "Surrounding the North Philadelphia Peace Park, this large-scale community mural depicts elders, youth, and ancestors in a cycle of knowledge transfer — a visual prayer for the neighborhood's future.",
+        lat: 40.0021, lng: -75.1754,
+      },
+      {
+        name: "Diamond Street Mural",
+        address: "33rd St & Diamond St, Philadelphia, PA",
+        description: "A North Philadelphia mural at the edge of the Strawberry Mansion neighborhood, celebrating the community's cultural heritage and the families who have shaped the corridor for generations.",
+        lat: 39.9920, lng: -75.1860,
+      },
+      {
+        name: "Strawberry Mansion Community Story",
+        address: "N 30th St & Dauphin St, Philadelphia, PA",
+        description: "Depicts the history of the Strawberry Mansion neighborhood — once a prosperous Jewish community, then a thriving Black middle-class enclave, and now a community working to preserve its legacy and rebuild.",
+        lat: 40.0010, lng: -75.1820,
+      },
+      {
+        name: "Strawberry Mansion Bridge Mural",
+        address: "Strawberry Mansion Dr & Edgely Dr, Philadelphia, PA",
+        description: "A mural on the approach to the historic Strawberry Mansion Bridge in Fairmount Park, celebrating the neighborhood's relationship with the Schuylkill River and the natural landscape of North Philadelphia.",
+        lat: 40.0035, lng: -75.1859,
+      },
+
+      // ── West Philadelphia ──────────────────────────────────────────────────
+      {
+        name: "Clark Park Mural — West Philadelphia Roots",
+        address: "Chester Ave & 43rd St, Philadelphia, PA",
+        description: "Near Clark Park in West Philadelphia, this mural celebrates the neighborhood's identity as a diverse, walkable community with deep Black roots centered on Baltimore Avenue and the park itself.",
+        lat: 39.9464, lng: -75.2128,
+      },
+      {
+        name: "West Philly Rising",
+        address: "52nd St & Baltimore Ave, Philadelphia, PA",
+        description: "A mural on the 52nd Street commercial corridor celebrating West Philadelphia's Black business community and the cultural renaissance taking place along Baltimore Avenue.",
+        lat: 39.9487, lng: -75.2168,
+      },
+      {
+        name: "Sankofa — We Must Know Where We Came From",
+        address: "46th St & Woodland Ave, Philadelphia, PA",
+        description: "Based on the Akan concept of Sankofa — looking back to move forward — this West Philadelphia mural depicts ancestors passing knowledge to younger generations through art, music, and community.",
+        lat: 39.9472, lng: -75.2135,
+      },
+      {
+        name: "Malcolm X Park Tribute",
+        address: "51st St & Pine St, Philadelphia, PA",
+        description: "Near Malcolm X Park in West Philadelphia, this mural celebrates the park's role as a community gathering space and the legacy of Malcolm X's vision of Black self-determination in urban America.",
+        lat: 39.9511, lng: -75.2165,
+      },
+      {
+        name: "Tribute to Jazz Masters — West Philadelphia",
+        address: "44th St & Baltimore Ave, Philadelphia, PA",
+        description: "Celebrating Philadelphia's jazz legends with West Philadelphia roots — including Lee Morgan, Jimmy Heath, and Bobby Timmons — who came of age in the clubs and jam sessions of Black West Philadelphia.",
+        lat: 39.9484, lng: -75.2073,
+      },
+      {
+        name: "Roots — Honoring Alex Haley's Legacy",
+        address: "46th St & Baltimore Ave, Philadelphia, PA",
+        description: "A tribute to Alex Haley's Roots and the broader genealogy movement among African Americans. West Philadelphia has one of the most active genealogy communities in Black America.",
+        lat: 39.9462, lng: -75.2100,
+      },
+      {
+        name: "Baltimore Avenue Corridor Mural",
+        address: "Baltimore Ave & 50th St, Philadelphia, PA",
+        description: "A long-running Mural Arts Philadelphia installation along the Baltimore Avenue corridor celebrating the small businesses, cultural institutions, and diverse communities that line one of West Philadelphia's main arteries.",
+        lat: 39.9480, lng: -75.2190,
+      },
+      {
+        name: "Tribute to Bilal — Philadelphia Soul",
+        address: "44th St & Chestnut St, Philadelphia, PA",
+        description: "Honoring Bilal Oliver, a West Philadelphia native and one of the most influential voices in neo-soul music. His debut album First Born Second (2001) is considered a landmark of the Philadelphia sound.",
+        lat: 39.9460, lng: -75.2105,
+      },
+      {
+        name: "Community Garden Mural — Point Breeze",
+        address: "22nd St & Federal St, Philadelphia, PA",
+        description: "Surrounding a community garden in the Point Breeze neighborhood, this mural depicts the African American tradition of urban gardening and food sovereignty as both survival and cultural expression.",
+        lat: 39.9300, lng: -75.1720,
+      },
+
+      // ── Germantown / Mt. Airy / Chestnut Hill ─────────────────────────────
+      {
+        name: "Jump Rope — Eric Okdeh",
+        address: "Germantown Ave & Tulpehocken St, Philadelphia, PA",
+        description: "By muralist Eric Okdeh, this beloved mural in Germantown depicts children jumping rope on a Philadelphia street — a universal image of childhood joy that resonates deeply with the neighborhood's multigenerational families.",
+        lat: 40.0383, lng: -75.1715,
+      },
+      {
+        name: "Germantown Avenue History Mural",
+        address: "Germantown Ave & Chelten Ave, Philadelphia, PA",
+        description: "Documents the layered history of Germantown Avenue — one of the oldest roads in America — from Lenape pathways to colonial settlement to the vibrant Black community that made Germantown a cultural hub in the 20th century.",
+        lat: 40.0297, lng: -75.1684,
+      },
+      {
+        name: "Battle of Germantown Commemorative",
+        address: "Germantown Ave & School House Ln, Philadelphia, PA",
+        description: "Commemorates the 1777 Battle of Germantown and the often-untold stories of enslaved people and free Black Philadelphians who were present during the Revolutionary War era in this neighborhood.",
+        lat: 40.0342, lng: -75.1706,
+      },
+
+      // ── Kensington / Fishtown / Northern Liberties ────────────────────────
+      {
+        name: "Kensington Kindness",
+        address: "Kensington Ave & Lehigh Ave, Philadelphia, PA",
+        description: "A community-driven mural in the Kensington neighborhood created as part of a public health and community resilience initiative. Depicts local faces, stories of recovery, and hope for the neighborhood's future.",
+        lat: 39.9977, lng: -75.1338,
+      },
+      {
+        name: "Fishtown Arts District Mural",
+        address: "Girard Ave & Front St, Philadelphia, PA",
+        description: "Celebrating Fishtown's transformation into an arts district while honoring the longtime working-class families — many of them Black and Puerto Rican — who made the neighborhood before gentrification.",
+        lat: 39.9740, lng: -75.1368,
+      },
+      {
+        name: "Spectrum of Light",
+        address: "Kensington Ave & Somerset St, Philadelphia, PA",
+        description: "A large-scale Mural Arts Philadelphia installation in Kensington using refracted light imagery to explore themes of hope, healing, and the complexity of human experience in one of the city's most challenged neighborhoods.",
+        lat: 39.9983, lng: -75.1298,
+      },
+
+      // ── Fairmount / Art Museum area ────────────────────────────────────────
+      {
+        name: "Fairmount Avenue — Neighborhood Tapestry",
+        address: "Fairmount Ave & N 24th St, Philadelphia, PA",
+        description: "A mural along Fairmount Avenue celebrating the neighborhood's identity as a mixed community — working class, artistic, and rooted in Philadelphia's long tradition of neighborhood identity along the Benjamin Franklin Parkway corridor.",
+        lat: 39.9680, lng: -75.1828,
+      },
+      {
+        name: "Wissahickon Watershed Mural",
+        address: "Germantown Ave & Wissahickon Ave, Philadelphia, PA",
+        description: "A nature-inspired mural celebrating the Wissahickon Creek watershed and the long tradition of Black families enjoying Fairmount Park's Wissahickon Valley — one of the largest urban parks in the United States.",
+        lat: 40.0553, lng: -75.2140,
+      },
+    ];
+
+    let inserted = 0;
+    let skipped  = 0;
+    for (const m of murals) {
+      const existing = await pool.query(
+        `SELECT id FROM tour_cultural_sites
+         WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER('Philadelphia')
+         LIMIT 1`,
+        [m.name],
+      );
+      if (existing.rows.length > 0) { skipped++; continue; }
+
+      await pool.query(
+        `INSERT INTO tour_cultural_sites
+           (name, city, state, address, description, latitude, longitude,
+            site_type, is_active, tour_source, created_at, updated_at)
+         VALUES ($1,'Philadelphia','PA',$2,$3,$4,$5,'mural',true,true,NOW(),NOW())`,
+        [m.name, m.address, m.description, m.lat, m.lng],
+      );
+      inserted++;
+    }
+    log(`Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`);
+  } catch (err: unknown) {
+    warn(`ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureKinfolkEntityRegistry(
   log: (msg: string) => void,
   warn: (msg: string) => void,

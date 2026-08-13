@@ -147,6 +147,7 @@ interface TourHeritageSite {
   description: string | null;
   latitude: string | number | null;
   longitude: string | number | null;
+  siteType?: string; // 'landmark' | 'mural' | etc.
 }
 
 type FeatherIconName = React.ComponentProps<typeof Feather>["name"];
@@ -615,18 +616,19 @@ export function FullMapView() {
           );
         })}
 
-        {/* Tour heritage site pins — amber */}
+        {/* Tour heritage site pins — amber for landmarks, teal for murals/public art */}
         {showTourSites && tourSites.map((site) => {
           const lat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude ?? NaN);
           const lng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude ?? NaN);
           if (isNaN(lat) || isNaN(lng)) return null;
+          const isMural = site.siteType === "mural";
           return (
             <Marker
               key={`tsite-${site.id}`}
               coordinate={{ latitude: lat, longitude: lng }}
               onPress={() => { setSelectedTourSite(site); setSelectedBusiness(null); setSelectedCulturalSite(null); setSelectedMapEvent(null); setSelectedOrg(null); setSelectedTourEvent(null); }}
               tracksViewChanges={false}
-              pinColor="#D97706"
+              pinColor={isMural ? "#0891B2" : "#D97706"}
             />
           );
         })}
@@ -1187,56 +1189,74 @@ export function FullMapView() {
       )}
 
       {/* ── Tour Heritage Site card ── */}
-      {selectedTourSite && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedOrg && !selectedTourEvent && (
-        <View style={[s.card, { backgroundColor: colors.card, borderColor: "#D9770640", paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
-          <View style={s.cardHandle} />
-          <TouchableOpacity style={s.cardClose} onPress={() => setSelectedTourSite(null)}>
-            <Feather name="x" size={18} color={colors.mutedForeground} />
-          </TouchableOpacity>
-          <View style={[s.catPill, { backgroundColor: "#D9770618", marginBottom: 8, alignSelf: "flex-start" }]}>
-            <Feather name="flag" size={11} color="#D97706" />
-            <Text style={[s.catPillTxt, { color: "#D97706" }]}>Heritage Site</Text>
-          </View>
-          <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{selectedTourSite.name}</Text>
-          <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedTourSite.city}, {selectedTourSite.state}</Text>
-          {selectedTourSite.address ? (
-            <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: -4, marginBottom: 6 }]}>{selectedTourSite.address}</Text>
-          ) : null}
-          {selectedTourSite.description ? (
-            <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-              <Text style={[s.culturalDesc, { color: colors.foreground }]}>{selectedTourSite.description}</Text>
-            </ScrollView>
-          ) : null}
-          <View style={[s.cardBtnRow, { marginTop: 10 }]}>
-            <TouchableOpacity
-              style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#D97706" }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                const lat = typeof selectedTourSite.latitude === "string" ? parseFloat(selectedTourSite.latitude) : (selectedTourSite.latitude ?? NaN);
-                const lng = typeof selectedTourSite.longitude === "string" ? parseFloat(selectedTourSite.longitude) : (selectedTourSite.longitude ?? NaN);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                  void Linking.openURL(
-                    Platform.OS === "ios"
-                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
-                      : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
-                  );
-                }
-              }}
-            >
-              <Feather name="navigation" size={14} color="#D97706" />
-              <Text style={[s.cardBtnTxt, { color: "#D97706" }]}>Directions</Text>
+      {selectedTourSite && !selectedBusiness && !selectedCulturalSite && !selectedMapEvent && !selectedOrg && !selectedTourEvent && (() => {
+        const isMural = selectedTourSite.siteType === "mural";
+        const accent   = isMural ? "#0891B2" : "#D97706";
+        const accentBg = isMural ? "#0891B218" : "#D9770618";
+        const pillIcon: React.ComponentProps<typeof Feather>["name"] = isMural ? "edit-2" : "flag";
+        const pillLabel = isMural ? "Public Art & Mural" : "Heritage Site";
+        const lat = typeof selectedTourSite.latitude === "string" ? parseFloat(selectedTourSite.latitude) : (selectedTourSite.latitude ?? NaN);
+        const lng = typeof selectedTourSite.longitude === "string" ? parseFloat(selectedTourSite.longitude) : (selectedTourSite.longitude ?? NaN);
+        return (
+          <View style={[s.card, { backgroundColor: colors.card, borderColor: `${accent}40`, paddingBottom: insets.bottom + 12, bottom: KINFOLK_CLEAR }]}>
+            <View style={s.cardHandle} />
+            <TouchableOpacity style={s.cardClose} onPress={() => setSelectedTourSite(null)}>
+              <Feather name="x" size={18} color={colors.mutedForeground} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[s.cardBtnHalf, { backgroundColor: "#D97706" }]}
-              activeOpacity={0.85}
-              onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "cultural_site", entityId: selectedTourSite.id, entityName: selectedTourSite.name } })}
-            >
-              <Feather name="edit-2" size={14} color="#fff" />
-              <Text style={s.cardBtnTxt}>Suggest Edit</Text>
-            </TouchableOpacity>
+            <View style={[s.catPill, { backgroundColor: accentBg, marginBottom: 8, alignSelf: "flex-start" }]}>
+              <Feather name={pillIcon} size={11} color={accent} />
+              <Text style={[s.catPillTxt, { color: accent }]}>{pillLabel}</Text>
+            </View>
+            <Text style={[s.cardName, { color: colors.foreground }]} numberOfLines={2}>{selectedTourSite.name}</Text>
+            <Text style={[s.cardSub, { color: colors.mutedForeground }]}>{selectedTourSite.city}, {selectedTourSite.state}</Text>
+            {selectedTourSite.address ? (
+              <Text style={[s.cardSub, { color: colors.mutedForeground, marginTop: -4, marginBottom: 6 }]}>{selectedTourSite.address}</Text>
+            ) : null}
+            {selectedTourSite.description ? (
+              <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                <Text style={[s.culturalDesc, { color: colors.foreground }]}>{selectedTourSite.description}</Text>
+              </ScrollView>
+            ) : null}
+            <View style={[s.cardBtnRow, { marginTop: 10 }]}>
+              <TouchableOpacity
+                style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: accent }]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  if (!isNaN(lat) && !isNaN(lng)) {
+                    void Linking.openURL(
+                      Platform.OS === "ios"
+                        ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
+                        : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
+                    );
+                  }
+                }}
+              >
+                <Feather name="navigation" size={14} color={accent} />
+                <Text style={[s.cardBtnTxt, { color: accent }]}>Directions</Text>
+              </TouchableOpacity>
+              {isMural ? (
+                <TouchableOpacity
+                  style={[s.cardBtnHalf, { backgroundColor: accent }]}
+                  activeOpacity={0.85}
+                  onPress={() => router.push({ pathname: "/mural-contribution", params: { siteId: selectedTourSite.id, siteName: selectedTourSite.name, siteAddress: selectedTourSite.address ?? "" } })}
+                >
+                  <Feather name="camera" size={14} color="#fff" />
+                  <Text style={s.cardBtnTxt}>Share Memory</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[s.cardBtnHalf, { backgroundColor: accent }]}
+                  activeOpacity={0.85}
+                  onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "cultural_site", entityId: selectedTourSite.id, entityName: selectedTourSite.name } })}
+                >
+                  <Feather name="edit-2" size={14} color="#fff" />
+                  <Text style={s.cardBtnTxt}>Suggest Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
-      )}
+        );
+      })()}
 
       {/* ── Business bottom card ── */}
       {!selectedCulturalSite && !selectedMapEvent && selectedBusiness && (
