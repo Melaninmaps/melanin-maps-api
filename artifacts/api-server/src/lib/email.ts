@@ -37,7 +37,7 @@ function canSpamFooterHtml(toEmail: string): string {
     `</p></div>`;
 }
 
-async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
+export async function sendEmail(payload: Parameters<Resend["emails"]["send"]>[0]) {
   if (!resend) {
     throw new Error("RESEND_API_KEY is not configured — cannot send email");
   }

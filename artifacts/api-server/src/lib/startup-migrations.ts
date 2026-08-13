@@ -3506,6 +3506,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["food trucks v1",           () => ensureBusinessBatch("food-trucks-v1", FOOD_TRUCKS_V1, log, warn)],
     // ── Minority-owned dispensaries — legal-cannabis jurisdictions only ─────────
     ["dispensaries v1",          () => ensureBusinessBatch("dispensaries-v1", DISPENSARIES_V1, log, warn)],
+    // ── Allied partner applications table — 5-stage partner journey (#84) ────
+    ["allied partner applications v1", () => ensureAlliedPartnerApplications(log, warn)],
+    // ── City-centroid coordinate fallback for events with no address (#100) ──
+    ["recurring events city coords v1", () => ensureRecurringEventsCityCoords(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -8240,6 +8244,137 @@ async function ensureKinfolkEntityRegistry(
 // Creates education_institutions table and seeds Philadelphia-area schools + PA HBCUs
 // + top national HBCUs. All INSERT ON CONFLICT DO NOTHING — safe to re-run every boot.
 // HBCU source: White House Initiative on HBCUs (sites.ed.gov/whhbcu/...)
+// ── Allied partner applications — 5-stage partner journey table ──────────────
+async function ensureAlliedPartnerApplications(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS allied_partner_applications (
+        id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id               UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+        submitted_by_user_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+        stage                     VARCHAR(30) NOT NULL DEFAULT 'applied'
+                                    CHECK (stage IN ('applied','under_review','agreement_pending','active_partner','rejected','withdrawn')),
+        contact_name              TEXT NOT NULL,
+        contact_email             TEXT NOT NULL,
+        contact_phone             TEXT,
+        partnership_goal          TEXT NOT NULL,
+        audience_description      TEXT,
+        additional_info           TEXT,
+        community_score_at_apply  INTEGER NOT NULL DEFAULT 0,
+        admin_notes               TEXT,
+        reviewed_by_admin_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+        stage_advanced_at         TIMESTAMPTZ,
+        rejected_at               TIMESTAMPTZ,
+        rejection_reason          TEXT,
+        partner_confirmed_at      TIMESTAMPTZ,
+        created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    // One open application per business (prevents spam reapply)
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS allied_partner_one_open_per_biz
+        ON allied_partner_applications (business_id)
+        WHERE stage NOT IN ('rejected','withdrawn')
+    `);
+
+    // allied_partner flag on businesses (best-effort — column may already exist)
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS allied_partner       BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS allied_partner_since TIMESTAMPTZ
+    `).catch(() => {/* ignore */});
+
+    log("Allied partner applications v1: table + index ready");
+  } catch (err: unknown) {
+    warn(`ensureAlliedPartnerApplications failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── City-centroid coordinate fallback for recurring events with no address ────
+// Events added via the community-events-expansion-seed have descriptive
+// city/state but no precise address. This migration assigns the city center
+// coordinate so they appear on the discoverability map.
+// Coordinates are intentionally approximate — the event card shows the city name.
+const CITY_CENTROIDS: Record<string, { lat: number; lng: number }> = {
+  "washington|dc":        { lat: 38.9072,  lng: -77.0369  },
+  "washington|md":        { lat: 38.9072,  lng: -77.0369  },
+  "atlanta|ga":           { lat: 33.7490,  lng: -84.3880  },
+  "houston|tx":           { lat: 29.7604,  lng: -95.3698  },
+  "chicago|il":           { lat: 41.8781,  lng: -87.6298  },
+  "los angeles|ca":       { lat: 34.0522,  lng: -118.2437 },
+  "compton|ca":           { lat: 33.8958,  lng: -118.2201 },
+  "inglewood|ca":         { lat: 33.9617,  lng: -118.3531 },
+  "new york|ny":          { lat: 40.7128,  lng: -74.0060  },
+  "brooklyn|ny":          { lat: 40.6782,  lng: -73.9442  },
+  "bronx|ny":             { lat: 40.8448,  lng: -73.8648  },
+  "miami|fl":             { lat: 25.7617,  lng: -80.1918  },
+  "detroit|mi":           { lat: 42.3314,  lng: -83.0458  },
+  "charlotte|nc":         { lat: 35.2271,  lng: -80.8431  },
+  "new orleans|la":       { lat: 29.9511,  lng: -90.0715  },
+  "baltimore|md":         { lat: 39.2904,  lng: -76.6122  },
+  "richmond|va":          { lat: 37.5407,  lng: -77.4360  },
+  "nashville|tn":         { lat: 36.1627,  lng: -86.7816  },
+  "memphis|tn":           { lat: 35.1495,  lng: -90.0490  },
+  "dallas|tx":            { lat: 32.7767,  lng: -96.7970  },
+  "fort worth|tx":        { lat: 32.7555,  lng: -97.3308  },
+  "columbia|sc":          { lat: 34.0007,  lng: -81.0348  },
+  "national harbor|md":   { lat: 38.7873,  lng: -77.0120  },
+  "largo|md":             { lat: 38.8929,  lng: -76.8274  },
+  "raleigh|nc":           { lat: 35.7796,  lng: -78.6382  },
+  "durham|nc":            { lat: 35.9940,  lng: -78.8986  },
+  "greensboro|nc":        { lat: 36.0726,  lng: -79.7920  },
+  "jacksonville|fl":      { lat: 30.3322,  lng: -81.6557  },
+  "las vegas|nv":         { lat: 36.1699,  lng: -115.1398 },
+  "birmingham|al":        { lat: 33.5186,  lng: -86.8104  },
+  "jackson|ms":           { lat: 32.2988,  lng: -90.1848  },
+  "tallahassee|fl":       { lat: 30.4518,  lng: -84.2807  },
+  "hampton|va":           { lat: 37.0299,  lng: -76.3452  },
+  "tuskegee|al":          { lat: 32.4301,  lng: -85.7042  },
+  "prairie view|tx":      { lat: 30.0919,  lng: -95.9827  },
+  "grambling|la":         { lat: 32.5268,  lng: -92.7162  },
+  "daytona beach|fl":     { lat: 29.2108,  lng: -81.0228  },
+  "philadelphia|pa":      { lat: 39.9526,  lng: -75.1652  },
+  "baton rouge|la":       { lat: 30.4515,  lng: -91.1871  },
+};
+
+async function ensureRecurringEventsCityCoords(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // Find events that still have no coordinates
+    const { rows } = await pool.query<{ id: string; city: string; state: string }>(
+      `SELECT id, city, state FROM recurring_events
+       WHERE (latitude IS NULL OR longitude IS NULL OR (latitude = 0 AND longitude = 0))
+         AND is_active = true`
+    );
+    if (rows.length === 0) { log("City-centroid coords: all events already have coordinates"); return; }
+
+    let updated = 0; let skipped = 0;
+    for (const evt of rows) {
+      const key = `${evt.city.toLowerCase()}|${evt.state.toLowerCase()}`;
+      const centroid = CITY_CENTROIDS[key];
+      if (!centroid) { skipped++; continue; }
+      // Jitter slightly so events in the same city don't stack on the exact same pixel
+      const jitterLat = centroid.lat + (Math.random() - 0.5) * 0.015;
+      const jitterLng = centroid.lng + (Math.random() - 0.5) * 0.015;
+      await pool.query(
+        `UPDATE recurring_events SET latitude = $1, longitude = $2, updated_at = NOW() WHERE id = $3`,
+        [jitterLat, jitterLng, evt.id]
+      );
+      updated++;
+    }
+    log(`City-centroid coords: ${updated} recurring events updated, ${skipped} cities not in map`);
+  } catch (err: unknown) {
+    warn(`ensureRecurringEventsCityCoords failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureEducationInstitutions(
   log: (msg: string) => void,
   warn: (msg: string) => void,

@@ -532,35 +532,45 @@ export default function BusinessDetail() {
   const [claimWebsite, setClaimWebsite] = useState("");
   const [claimInstagram, setClaimInstagram] = useState("");
   const [claimInfo, setClaimInfo] = useState("");
+  const [claimVerificationMethod, setClaimVerificationMethod] = useState("manual_review");
+  const [claimAttested, setClaimAttested] = useState(false);
   const [claimLoading, setClaimLoading] = useState(false);
   const [claimSubmitted, setClaimSubmitted] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
 
   async function handleClaimSubmit() {
     if (!claimName.trim() || !claimEmail.trim()) {
-      setClaimError("Name and email are required."); return;
+      setClaimError("Your name and email are required."); return;
+    }
+    if (!claimAttested) {
+      setClaimError("You must confirm that you are authorized to claim this listing."); return;
     }
     setClaimError(null);
     setClaimLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/api/businesses/${id}/claim`, {
+      // Use the authenticated /claims (plural) endpoint which enforces one open
+      // claim per user/business, records verification method, and requires attestation.
+      const res = await fetch(`${BASE_URL}/api/businesses/${id}/claims`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          businessName: business?.name ?? "",
           ownerName: claimName.trim(),
-          email: claimEmail.trim(),
+          businessEmail: claimEmail.trim(),
           phone: claimPhone.trim() || null,
           role: claimRole,
           website: claimWebsite.trim() || null,
           instagramHandle: claimInstagram.replace("@", "").trim() || null,
           additionalInfo: claimInfo.trim() || null,
+          verificationMethod: claimVerificationMethod,
+          attestation: true,
         }),
       });
       if (res.ok) {
         setClaimSubmitted(true);
       } else {
         const body = await res.json().catch(() => ({})) as { error?: string };
+        // Surface useful error messages (e.g. already-pending claim)
         setClaimError(body.error ?? "Something went wrong. Please try again.");
       }
     } catch {
@@ -1734,12 +1744,12 @@ export default function BusinessDetail() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-white mb-1.5">Email address *</label>
+                  <label className="block text-xs font-semibold text-white mb-1.5">Business email *</label>
                   <input
                     type="email"
                     value={claimEmail}
                     onChange={e => setClaimEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder="owner@yourbusiness.com"
                     className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#241810]"
                   />
                 </div>
@@ -1783,30 +1793,59 @@ export default function BusinessDetail() {
                     <option value="owner">Owner</option>
                     <option value="co-owner">Co-owner</option>
                     <option value="manager">Manager</option>
-                    <option value="authorized_rep">Authorized Rep</option>
+                    <option value="authorized_rep">Authorized Representative</option>
                   </select>
                 </div>
               </div>
 
+              {/* How we verify ownership */}
               <div>
-                <label className="block text-xs font-semibold text-white mb-1.5">Anything else? (optional)</label>
+                <label className="block text-xs font-semibold text-white mb-1.5">How can we verify your ownership? *</label>
+                <select
+                  value={claimVerificationMethod}
+                  onChange={e => setClaimVerificationMethod(e.target.value)}
+                  className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#241810]"
+                >
+                  <option value="manual_review">I'll provide details in the notes below</option>
+                  <option value="domain_email">I have an email address at the business domain</option>
+                  <option value="social_account">I manage the business social account</option>
+                  <option value="booking_page">I manage the booking or reservation page</option>
+                  <option value="business_document">I can provide a business license or document</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-white mb-1.5">Additional details (optional)</label>
                 <Textarea
                   value={claimInfo}
                   onChange={e => setClaimInfo(e.target.value)}
-                  placeholder="Any details that help verify your ownership…"
+                  placeholder="Any details that help verify your ownership — e.g. EIN, founding year, Instagram handle, or where we can confirm you run the business…"
                   className="resize-none bg-[#241810] border-white/20 text-white placeholder:text-white/40 focus-visible:ring-[#CA922B]/40"
                   rows={3}
                 />
               </div>
 
+              {/* Attestation — required by the /claims endpoint */}
+              <label className="flex items-start gap-3 cursor-pointer select-none group">
+                <input
+                  type="checkbox"
+                  checked={claimAttested}
+                  onChange={e => setClaimAttested(e.target.checked)}
+                  className="mt-0.5 accent-[#CA922B] w-4 h-4 shrink-0"
+                />
+                <span className="text-xs text-white/70 leading-relaxed group-hover:text-white/90 transition-colors">
+                  I confirm that I am the owner or authorized representative of this business and that the information I have provided is accurate to the best of my knowledge. *
+                </span>
+              </label>
+
               {claimError && (
-                <p className="text-red-600 text-xs font-medium">{claimError}</p>
+                <p className="text-red-500 text-xs font-medium">{claimError}</p>
               )}
 
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleClaimSubmit}
-                  disabled={claimLoading || !claimName.trim() || !claimEmail.trim()}
+                  disabled={claimLoading || !claimName.trim() || !claimEmail.trim() || !claimAttested}
                   className="bg-[#CA922B] hover:bg-[#B07A20] text-white rounded-xl px-6 py-2.5 text-sm font-semibold"
                 >
                   {claimLoading ? "Submitting…" : "Submit Claim"}

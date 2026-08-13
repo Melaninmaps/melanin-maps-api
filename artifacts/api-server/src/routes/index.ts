@@ -136,6 +136,7 @@ import { whatshappeningRouter } from "./whats-happening";
 import ageAssuranceRouter from "./age-assurance";
 import librarySuggestRouter from "./library-suggest";
 import identityContextRouter from "./identity-context";
+import alliedPartnersRouter from "./allied-partners";
 import resourcesRouter from "./resources";
 import marketplaceRouter from "./marketplace";
 import wellnessTrackerRouter from "./wellness-tracker";
@@ -367,5 +368,6 @@ router.use(whatshappeningRouter);
 router.use(ageAssuranceRouter);
 router.use(librarySuggestRouter);
 router.use(identityContextRouter);
+router.use(alliedPartnersRouter);
 
 export default router;
