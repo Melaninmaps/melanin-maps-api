@@ -125,9 +125,19 @@ function assertReleaseIdentity() {
       ` does not match dist/index.mjs hash ${actualHash}`,
     );
   }
-  // Verify the SPA entry exists — do not silently fall back to a stale static tree.
-  if (!WEB_STATIC || !fs.existsSync(path.join(WEB_STATIC, "index.html"))) {
+  // Verify the SPA entry exists and is non-trivial — do not silently serve an
+  // error page or empty file. 1 KB floor guards against zero-byte writes or
+  // a truncated build that deployed an empty index.html.
+  const spaEntry = WEB_STATIC && path.join(WEB_STATIC, "index.html");
+  if (!spaEntry || !fs.existsSync(spaEntry)) {
     throw new Error("Release integrity failure: canonical web-static/index.html is missing");
+  }
+  const spaSize = fs.statSync(spaEntry).size;
+  if (spaSize < 1024) {
+    throw new Error(
+      `Release integrity failure: web-static/index.html is only ${spaSize} bytes — ` +
+      "expected a full SPA bundle (>1 KB). Check the Vite build output."
+    );
   }
   return { identity, apiEntry };
 }

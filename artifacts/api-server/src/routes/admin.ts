@@ -1095,8 +1095,11 @@ router.get("/admin/health", async (req: Request, res: Response) => {
     poolConfig: { max: 8, idleTimeoutMs: 30000, maxLifetimeS: 1800, connectionTimeoutMs: 10000 },
     kinfolkAI: {
       ...kinfolkStats,
-      concurrencyCap: 10,
-      queueMax: 50,
+      // Proactive ceiling warning: flag when rolling TPM exceeds 75% of the
+      // safety ceiling (120k of 160k). Founder sees this in /api/admin/check
+      // before users start hitting KINFOLK_BUSY rejections.
+      approachingCeiling: kinfolkStats.rollingTpm60s > 120_000,
+      ceilingPct: Math.round((kinfolkStats.rollingTpm60s / kinfolkStats.tokenBucketTarget) * 100),
     },
     loadTestBaseline: {
       concurrentRequests: 30,

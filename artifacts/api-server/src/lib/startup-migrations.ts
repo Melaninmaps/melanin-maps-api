@@ -3671,6 +3671,86 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       END
     $$`,
   },
+  {
+    // #121 — Deactivate recurring_events that are past their active_until date.
+    // The discoverability-pins query already filters these out, but leaving
+    // is_active=true on expired events causes them to appear in other queries
+    // (admin lists, search) that only check is_active. Runs every boot; safe
+    // because active_until < CURRENT_DATE is a stable past condition.
+    name: "deactivate_expired_recurring_events_v1",
+    sql: `
+      UPDATE recurring_events
+      SET    is_active = false,
+             updated_at = NOW()
+      WHERE  is_active = true
+        AND  active_until IS NOT NULL
+        AND  active_until < CURRENT_DATE
+    `,
+  },
+  {
+    // #320 — Hide confirmed duplicate business records (seeding loop bugs).
+    // Uses UPDATE SET status='permanently_hidden' (not DELETE) so data is
+    // preserved. Idempotent: once duplicates are hidden the subquery returns
+    // only the surviving record, and id != <its own id> matches nothing.
+    name: "hide_confirmed_duplicate_businesses_v1",
+    sql: `
+      -- Duke's Cafe, Horsham PA — 91 copies from seeding loop (keep oldest)
+      UPDATE businesses SET status = 'permanently_hidden'
+      WHERE  status = 'active'
+        AND  lower(name) LIKE '%duke%cafe%'
+        AND  lower(city) = 'horsham'
+        AND  id != COALESCE(
+               (SELECT id FROM businesses
+                WHERE  status = 'active'
+                  AND  lower(name) LIKE '%duke%cafe%'
+                  AND  lower(city) = 'horsham'
+                ORDER BY created_at ASC LIMIT 1),
+               id
+             );
+
+      -- Harold & Belle's, Los Angeles — 2 copies (keep oldest)
+      UPDATE businesses SET status = 'permanently_hidden'
+      WHERE  status = 'active'
+        AND  lower(name) LIKE '%harold%belle%'
+        AND  lower(state) = 'ca'
+        AND  id != COALESCE(
+               (SELECT id FROM businesses
+                WHERE  status = 'active'
+                  AND  lower(name) LIKE '%harold%belle%'
+                  AND  lower(state) = 'ca'
+                ORDER BY created_at ASC LIMIT 1),
+               id
+             );
+
+      -- Roscoe's House of Chicken & Waffles, Los Angeles — 2 copies (keep oldest)
+      UPDATE businesses SET status = 'permanently_hidden'
+      WHERE  status = 'active'
+        AND  lower(name) LIKE '%roscoe%chicken%'
+        AND  lower(state) = 'ca'
+        AND  id != COALESCE(
+               (SELECT id FROM businesses
+                WHERE  status = 'active'
+                  AND  lower(name) LIKE '%roscoe%chicken%'
+                  AND  lower(state) = 'ca'
+                ORDER BY created_at ASC LIMIT 1),
+               id
+             );
+
+      -- Simply Wholesome, Los Angeles — 2 copies (keep oldest)
+      UPDATE businesses SET status = 'permanently_hidden'
+      WHERE  status = 'active'
+        AND  lower(name) LIKE '%simply wholesome%'
+        AND  lower(state) = 'ca'
+        AND  id != COALESCE(
+               (SELECT id FROM businesses
+                WHERE  status = 'active'
+                  AND  lower(name) LIKE '%simply wholesome%'
+                  AND  lower(state) = 'ca'
+                ORDER BY created_at ASC LIMIT 1),
+               id
+             )
+    `,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
