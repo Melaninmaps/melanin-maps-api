@@ -2969,7 +2969,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     } catch { /* non-fatal */ }
 
-    // Fetch city cultural context for the destination (or user's first favourite city)
+    // Fetch city cultural context for the destination (or user's first favourite city).
+    // Lookup order: (1) exact city_name match, (2) slug match, (3) city_name prefix match.
+    // This supports both domestic cities ("Philadelphia") and international slugs ("phuket",
+    // "cancun", "negril", "jamaica") where city_name is "Phuket, Thailand" etc.
     let cityContext: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null = null;
     const cityLookup = destination ?? (prefs?.favoriteCities as string[] | null)?.[0] ?? null;
     if (cityLookup) {
@@ -2978,6 +2981,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           `SELECT cp.city_name, cp.brief_context, cp.key_neighborhoods, cp.cultural_anchors
            FROM city_profiles cp
            WHERE LOWER(cp.city_name) = LOWER($1)
+              OR LOWER(cp.city_slug) = LOWER($1)
+              OR LOWER(cp.city_slug) = LOWER(REGEXP_REPLACE($1, '[^a-z0-9]', '-', 'gi'))
+              OR LOWER(cp.city_name) LIKE LOWER($1) || ', %'
+           ORDER BY
+             CASE
+               WHEN LOWER(cp.city_name) = LOWER($1) THEN 0
+               WHEN LOWER(cp.city_slug) = LOWER($1) THEN 1
+               ELSE 2
+             END
            LIMIT 1`,
           [cityLookup],
         );
