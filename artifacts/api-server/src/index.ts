@@ -48,34 +48,36 @@ async function initStripe() {
 }
 
 (function checkRequiredConfig() {
-  const warnings: string[] = [];
+  // ── CRITICAL — blocks core functionality or causes crashes ────────────────
+  const critical: string[] = [];
 
-  if (!process.env.RESEND_API_KEY) {
-    warnings.push("RESEND_API_KEY — All transactional emails (trial reminders, membership, welcome) are disabled.");
-  }
   if (!process.env.ADMIN_EMAILS) {
-    warnings.push("ADMIN_EMAILS — No admin email configured. After your first login, call POST /api/admin/bootstrap to promote yourself. Then set ADMIN_EMAILS=your@email.com for future server restarts.");
+    critical.push("ADMIN_EMAILS — No admin email configured. After your first login, call POST /api/admin/bootstrap to promote yourself. Then set ADMIN_EMAILS=your@email.com for future server restarts.");
   }
   if (!process.env.GOOGLE_MAPS_API_KEY) {
-    warnings.push("GOOGLE_MAPS_API_KEY — Map embeds on business profiles will show 'Maps not configured'.");
-  }
-  if (!process.env.WMATA_API_KEY) {
-    warnings.push("WMATA_API_KEY — DC Metro transit data will be unavailable.");
+    critical.push("GOOGLE_MAPS_API_KEY — Map embeds and business enrichment will be unavailable.");
   }
 
-  // Apple Sign-In requires four env vars for new-user authorization-code exchange.
-  // If any is missing, new Apple registrations return HTTP 500 — an instant App Store rejection.
+  // Apple Sign-In requires four env vars. If any is missing, new Apple
+  // registrations return HTTP 500 — an instant App Store rejection.
   const appleVars = ["APPLE_TEAM_ID", "APPLE_KEY_ID", "APPLE_PRIVATE_KEY", "APPLE_TOKEN_ENCRYPTION_KEY"];
   const missingApple = appleVars.filter((v) => !process.env[v]);
   if (missingApple.length > 0) {
-    warnings.push(`Apple Sign-In INCOMPLETE — missing Railway vars: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
+    critical.push(`Apple Sign-In INCOMPLETE — missing: ${missingApple.join(", ")}. New Apple registrations will fail with HTTP 500.`);
   }
 
-  if (warnings.length > 0) {
-    logger.warn("⚠️  Missing environment configuration:");
-    for (const w of warnings) {
-      logger.warn(`   • ${w}`);
-    }
+  if (critical.length > 0) {
+    logger.warn("⚠️  Missing critical configuration:");
+    for (const w of critical) logger.warn(`   • ${w}`);
+  }
+
+  // ── OPTIONAL — degrades specific features, does not break core ────────────
+  const optional: string[] = [];
+  if (!process.env.RESEND_API_KEY) optional.push("RESEND_API_KEY (emails disabled)");
+  if (!process.env.WMATA_API_KEY) optional.push("WMATA_API_KEY (DC transit disabled)");
+
+  if (optional.length > 0) {
+    logger.info(`[config] Optional features not configured: ${optional.join(", ")}`);
   }
 })();
 

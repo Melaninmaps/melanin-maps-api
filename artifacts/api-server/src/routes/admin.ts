@@ -2207,6 +2207,170 @@ router.post("/admin/set-user-password", async (req: Request, res: Response) => {
   }
 });
 
+// ── Business Discovery — search Google Places by name + city ──────────────────
+// POST /admin/business-discovery/search
+// body: { queries: string[] }  e.g. ["Crave Houston, Houston TX", "Ador, Houston TX"]
+// Returns Google Places results for each query so admin can review before approving.
+router.post("/admin/business-discovery/search", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const { queries } = req.body as { queries?: string[] };
+  if (!Array.isArray(queries) || queries.length === 0) {
+    return void res.status(400).json({ error: "queries array required" });
+  }
+  if (queries.length > 20) {
+    return void res.status(400).json({ error: "Max 20 queries per request" });
+  }
+  try {
+    const { searchPlaces, getPlaceDetails } = await import("../lib/googlePlacesEnrichment");
+    const results = [];
+    for (const q of queries) {
+      await new Promise((r) => setTimeout(r, 500)); // 0.5s between calls
+      const found = await searchPlaces(q.trim());
+      if (!found) {
+        results.push({ query: q, found: false });
+        continue;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+      const details = await getPlaceDetails(found.placeId);
+      results.push({
+        query: q,
+        found: true,
+        placeId: found.placeId,
+        name: found.name,
+        address: found.formattedAddress,
+        lat: found.lat,
+        lng: found.lng,
+        businessStatus: found.businessStatus,
+        phone: details?.phone,
+        website: details?.website,
+        hours: details?.hours,
+        priceLevel: details?.priceLevel,
+      });
+    }
+    res.json({ results });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/business-discovery/search error");
+    res.status(500).json({ error: "Search failed", detail: String(err) });
+  }
+});
+
+// ── Business Discovery — approve and insert a business from Places results ────
+// POST /admin/business-discovery/approve
+// body: { name, address, city, state, category, phone?, website?, lat, lng,
+//         ownershipDesignations?, placeId?, blackOwned? }
+router.post("/admin/business-discovery/approve", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const { name, address, city, state, category, phone, website, lat, lng,
+          ownershipDesignations, blackOwned, placeId } = req.body as {
+    name: string; address: string; city: string; state: string; category: string;
+    phone?: string; website?: string; lat: number; lng: number;
+    ownershipDesignations?: string[]; blackOwned?: boolean; placeId?: string;
+  };
+  if (!name || !city || !state || !category) {
+    return void res.status(400).json({ error: "name, city, state, category required" });
+  }
+  try {
+    const id = require("crypto").randomUUID();
+    await pool.query(
+      `INSERT INTO businesses (
+        id, name, address, city, state, category, phone, website,
+        latitude, longitude, listing_status, verified, black_owned,
+        ownership_designations, enrichment_source, enriched_at, enrichment_note, created_at, updated_at
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+        'active', false, $11, $12,
+        'google_places', NOW(), $13, NOW(), NOW()
+      ) ON CONFLICT DO NOTHING RETURNING id`,
+      [
+        id, name, address ?? null, city, state, category,
+        phone ?? null, website ?? null,
+        lat ?? null, lng ?? null,
+        blackOwned ?? false,
+        ownershipDesignations ? JSON.stringify(ownershipDesignations) : null,
+        placeId ? `Imported from Google Places: ${placeId}` : "Admin-approved via business discovery",
+      ]
+    );
+    res.json({ ok: true, id, message: `${name} added to the platform` });
+  } catch (err) {
+    req.log.error({ err }, "POST /admin/business-discovery/approve error");
+    res.status(500).json({ error: "Failed to add business", detail: String(err) });
+  }
+});
+
+// ── Business Enrichment — run Google Places enrichment on existing businesses ─
+// POST /admin/business-enrichment/run
+// body: { city?: string, limit?: number }
+// Runs in background — returns immediately with jobId, poll /status for results.
+const enrichmentJobs = new Map<string, { status: "running"|"done"|"error"; stats?: Record<string, unknown>; startedAt: Date; error?: string }>();
+
+router.post("/admin/business-enrichment/run", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const { city, limit } = req.body as { city?: string; limit?: number };
+
+  const jobId = require("crypto").randomUUID();
+  enrichmentJobs.set(jobId, { status: "running", startedAt: new Date() });
+  res.json({ ok: true, jobId, message: `Enrichment job started — poll GET /admin/business-enrichment/status/${jobId}` });
+
+  // Run in background
+  (async () => {
+    try {
+      const { runEnrichmentBatch } = await import("../lib/googlePlacesEnrichment");
+      const stats = await runEnrichmentBatch({
+        city,
+        limit: limit ?? 50,
+        skipAlreadyEnriched: true,
+      });
+      enrichmentJobs.set(jobId, { status: "done", stats: stats as unknown as Record<string, unknown>, startedAt: enrichmentJobs.get(jobId)!.startedAt });
+      console.log(`[enrichment] Job ${jobId} complete:`, stats);
+    } catch (err) {
+      enrichmentJobs.set(jobId, {
+        status: "error",
+        startedAt: enrichmentJobs.get(jobId)!.startedAt,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  })();
+});
+
+router.get("/admin/business-enrichment/status/:jobId", (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const job = enrichmentJobs.get(req.params.jobId);
+  if (!job) return void res.status(404).json({ error: "Job not found" });
+  res.json(job);
+});
+
+// Summary of enrichment coverage across all businesses
+router.get("/admin/business-enrichment/coverage", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  try {
+    const { rows } = await pool.query<{ total: string; has_phone: string; has_website: string; needs_verification: string; enriched: string }>(`
+      SELECT
+        COUNT(*)                                           AS total,
+        COUNT(*) FILTER (WHERE phone IS NOT NULL AND phone != '')          AS has_phone,
+        COUNT(*) FILTER (WHERE website IS NOT NULL AND website != '')      AS has_website,
+        COUNT(*) FILTER (WHERE needs_verification = true)                  AS needs_verification,
+        COUNT(*) FILTER (WHERE enriched_at IS NOT NULL)                    AS enriched
+      FROM businesses WHERE listing_status = 'active'
+    `);
+    const r = rows[0];
+    const total = parseInt(r.total);
+    res.json({
+      total,
+      hasPhone: parseInt(r.has_phone),
+      hasWebsite: parseInt(r.has_website),
+      missingPhone: total - parseInt(r.has_phone),
+      missingWebsite: total - parseInt(r.has_website),
+      needsVerification: parseInt(r.needs_verification),
+      enriched: parseInt(r.enriched),
+      phoneRate: `${Math.round((parseInt(r.has_phone) / total) * 100)}%`,
+      websiteRate: `${Math.round((parseInt(r.has_website) / total) * 100)}%`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /admin/business-enrichment/coverage error");
+    res.status(500).json({ error: "Failed", detail: String(err) });
+  }
+});
+
 export default router;
 
 

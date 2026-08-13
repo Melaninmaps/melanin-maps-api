@@ -262,7 +262,7 @@ export function getKinfolkStats(): {
     tpmEventsMostRecentAt:
       recent.length > 0 ? new Date(recent[recent.length - 1]).toISOString() : null,
     // Token-bucket stats — available after kinfolkQueue is initialized (see below)
-    rollingTpm60s: 0, // populated by kinfolkQueue.getRollingTpm() after initialization
+    rollingTpm60s: typeof kinfolkQueue !== "undefined" ? (kinfolkQueue as any).getRollingTpm?.() ?? 0 : 0, // populated after initialization
     tokenBucketTarget: TOKEN_BUCKET_TARGET,
     maxActiveGenerations: MAX_ACTIVE_GENERATIONS,
   };
@@ -297,6 +297,9 @@ class KinfolkTokenBucket {
     while (this.ledger.length > 0 && this.ledger[0].expiresAt <= now) this.ledger.shift();
     return this.ledger.reduce((s, e) => s + e.tokens, 0);
   }
+
+  /** Public accessor so health stats and response warnings can read rolling TPM. */
+  getRollingTpm(): number { return this._rollingTpm(); }
 
   private _canDispatch(tokens: number): boolean {
     return (
@@ -3440,6 +3443,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       canShowMore: true,
       canShowLess: false,
       answerPlanId: null as string | null,
+      // Token ceiling warning — included when rolling TPM > 80% of the 160k target.
+      // Lets the client show a non-blocking banner before users hit KINFOLK_BUSY.
+      tpmWarning: (() => {
+        const rolling = kinfolkQueue.getRollingTpm();
+        const pct = Math.round((rolling / TOKEN_BUCKET_TARGET) * 100);
+        if (pct < 80) return undefined;
+        return {
+          level: pct >= 95 ? "critical" : "warning",
+          message: pct >= 95
+            ? "KinfolkAI is at capacity — your next question may be queued briefly."
+            : "KinfolkAI is getting busy — responses may be slightly slower.",
+          utilization: pct,
+        };
+      })(),
     });
   } catch (err) {
     const errCode        = (err as any)?.code as string | undefined;

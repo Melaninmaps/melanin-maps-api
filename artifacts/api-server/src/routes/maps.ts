@@ -496,6 +496,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
              NULL                        AS site_type
       FROM recurring_events
       WHERE ${COORD_FILTER}
+        AND (active_until IS NULL OR active_until >= CURRENT_DATE)
       UNION ALL
       SELECT id,
              'community_organization' AS source_type,

@@ -3240,6 +3240,126 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         CHECK (voluntary_gender_context IN ('woman','man','nonbinary','another_identity','prefer_not_to_say')),
       ADD COLUMN IF NOT EXISTS gender_context_consent_at TIMESTAMPTZ`,
   },
+  // ── Business enrichment columns (Aug 2026) ─────────────────────────────────
+  // needs_verification: true when Google Places cannot confirm this business exists.
+  // enriched_at: timestamp of last enrichment pass.
+  // enrichment_note: human-readable note about enrichment result (e.g. "Could not find online as of 2026-08-13").
+  // enrichment_source: which data source was used ('google_places', 'yelp', 'manual').
+  {
+    name: "businesses_enrichment_cols_v1",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS needs_verification BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS enriched_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS enrichment_note TEXT,
+      ADD COLUMN IF NOT EXISTS enrichment_source VARCHAR(50)`,
+  },
+  // ── Recurring events: active_until for auto-expiry (#121) ──────────────────
+  // Events with a known end date auto-hide from the map when that date passes.
+  // NULL means "show indefinitely while is_active = true" (existing behavior).
+  {
+    name: "recurring_events_active_until_v1",
+    sql: `ALTER TABLE recurring_events
+      ADD COLUMN IF NOT EXISTS active_until DATE`,
+  },
+  // ── Category tag mapping table ──────────────────────────────────────────────
+  // Enforces that Community Says / vibe tags shown on a business page match its category.
+  // category: main business category (e.g. "Food & Drink", "Beauty & Personal Care")
+  // tag_type: 'vibe' or 'endorsement' or 'the_real'
+  // tag_name: the tag label
+  {
+    name: "category_tag_mapping_v1",
+    sql: `CREATE TABLE IF NOT EXISTS category_tag_mapping (
+      id SERIAL PRIMARY KEY,
+      category VARCHAR(100) NOT NULL,
+      tag_type VARCHAR(20) NOT NULL CHECK (tag_type IN ('vibe','endorsement','the_real')),
+      tag_name VARCHAR(100) NOT NULL,
+      UNIQUE(category, tag_type, tag_name)
+    )`,
+  },
+  {
+    name: "category_tag_mapping_seed_v1",
+    sql: `INSERT INTO category_tag_mapping (category, tag_type, tag_name) VALUES
+      -- Food & Drink vibes
+      ('Food & Drink','vibe','Romantic'),('Food & Drink','vibe','Chill'),('Food & Drink','vibe','Turn Up'),
+      ('Food & Drink','vibe','Grown Folks'),('Food & Drink','vibe','Family Time'),('Food & Drink','vibe','Live Music'),
+      ('Food & Drink','vibe','Eat Good'),('Food & Drink','vibe','Date Night'),('Food & Drink','vibe','Sunday Brunch'),
+      ('Food & Drink','vibe','Late Night'),
+      -- Food & Drink endorsements
+      ('Food & Drink','endorsement','Seasoned Right'),('Food & Drink','endorsement','Worth The Wait'),
+      ('Food & Drink','endorsement','Grandma Approved'),('Food & Drink','endorsement','Made From Scratch'),
+      ('Food & Drink','endorsement','Portions Generous'),('Food & Drink','endorsement','Abuela Approved'),
+      ('Food & Drink','endorsement','Worth The Drive'),('Food & Drink','endorsement','Cookout Approved'),
+      -- Beauty & Personal Care vibes
+      ('Beauty & Personal Care','vibe','Soft Life'),('Beauty & Personal Care','vibe','Auntie Energy'),
+      ('Beauty & Personal Care','vibe','Main Character Energy'),('Beauty & Personal Care','vibe','Sunday Best'),
+      ('Beauty & Personal Care','vibe','Chill & Restore'),('Beauty & Personal Care','vibe','Come As You Are'),
+      ('Beauty & Personal Care','vibe','For The Culture'),('Beauty & Personal Care','vibe','Neighborhood Love'),
+      ('Beauty & Personal Care','vibe','Luxury Without The Attitude'),
+      -- Beauty & Personal Care endorsements
+      ('Beauty & Personal Care','endorsement','On Time Every Time'),('Beauty & Personal Care','endorsement','Clean Station'),
+      ('Beauty & Personal Care','endorsement','Worth The Price'),('Beauty & Personal Care','endorsement','Blessed Hands'),
+      ('Beauty & Personal Care','endorsement','They Know Our Hair'),('Beauty & Personal Care','endorsement','Sharpest Lineup'),
+      ('Beauty & Personal Care','endorsement','Fresh To Death'),('Beauty & Personal Care','endorsement','Knows My Texture'),
+      ('Beauty & Personal Care','endorsement','Style Lasted'),('Beauty & Personal Care','endorsement','Didn''t Overbook Me'),
+      -- Health & Wellness "The Real"
+      ('Health & Wellness','the_real','This Doctor Listens'),('Health & Wellness','the_real','Believed My Pain'),
+      ('Health & Wellness','the_real','Bedside Manner On Point'),('Health & Wellness','the_real','Made Me Feel Heard'),
+      ('Health & Wellness','the_real','Fought For Me'),('Health & Wellness','the_real','Culturally Competent'),
+      ('Health & Wellness','the_real','Explained It Plain'),('Health & Wellness','the_real','Didn''t Rush Me'),
+      -- Legal & Government "The Real"
+      ('Legal & Government','the_real','Fought For Me'),('Legal & Government','the_real','Returned My Calls'),
+      ('Legal & Government','the_real','Understood My Situation'),('Legal & Government','the_real','Worth Every Dollar'),
+      ('Legal & Government','the_real','Explained The Process'),('Legal & Government','the_real','Actually Showed Up'),
+      -- Financial & Business "The Real"
+      ('Financial & Business','the_real','Said Yes When Others Said No'),('Financial & Business','the_real','Explained It Plain'),
+      ('Financial & Business','the_real','Helped My Credit'),('Financial & Business','the_real','Transparent Fees'),
+      ('Financial & Business','the_real','No Predatory Terms'),('Financial & Business','the_real','Built My Business Plan'),
+      -- Entertainment & Nightlife vibes
+      ('Entertainment & Nightlife','vibe','Turn Up'),('Entertainment & Nightlife','vibe','Grown Folks'),
+      ('Entertainment & Nightlife','vibe','Chill'),('Entertainment & Nightlife','vibe','Live Music'),
+      ('Entertainment & Nightlife','vibe','Date Night'),('Entertainment & Nightlife','vibe','Late Night'),
+      ('Entertainment & Nightlife','vibe','VIP Energy'),('Entertainment & Nightlife','vibe','No Drama'),
+      ('Entertainment & Nightlife','vibe','Good Energy Only'),
+      -- Entertainment & Nightlife endorsements
+      ('Entertainment & Nightlife','endorsement','DJ Knows The Culture'),
+      ('Entertainment & Nightlife','endorsement','Security Respectful'),
+      ('Entertainment & Nightlife','endorsement','Drinks Worth The Price'),
+      ('Entertainment & Nightlife','endorsement','Always A Good Time'),
+      ('Entertainment & Nightlife','endorsement','Safe Vibes'),
+      -- Retail & Shopping vibes
+      ('Retail & Shopping','vibe','Hidden Gem'),('Retail & Shopping','vibe','Curated'),
+      ('Retail & Shopping','vibe','For The Culture'),('Retail & Shopping','vibe','Neighborhood Love'),
+      ('Retail & Shopping','vibe','Luxury Without The Attitude'),('Retail & Shopping','vibe','Support Small'),
+      -- Retail endorsements
+      ('Retail & Shopping','endorsement','Found Something Unique'),('Retail & Shopping','endorsement','Prices Fair'),
+      ('Retail & Shopping','endorsement','Owner Knows Your Name'),('Retail & Shopping','endorsement','Quality Over Quantity'),
+      -- Travel & Hospitality vibes
+      ('Travel & Hospitality','vibe','Romantic'),('Travel & Hospitality','vibe','Chill'),
+      ('Travel & Hospitality','vibe','Luxury'),('Travel & Hospitality','vibe','Family'),
+      ('Travel & Hospitality','vibe','Solo Traveler Friendly'),('Travel & Hospitality','vibe','Hair Friendly'),
+      -- Travel endorsements
+      ('Travel & Hospitality','endorsement','Felt Safe As A Minority'),('Travel & Hospitality','endorsement','Staff Respectful'),
+      ('Travel & Hospitality','endorsement','Clean'),('Travel & Hospitality','endorsement','Worth The Price'),
+      -- Professional Services "The Real"
+      ('Professional Services','the_real','Delivered On Time'),('Professional Services','the_real','Worth The Investment'),
+      ('Professional Services','the_real','Understood My Vision'),('Professional Services','the_real','Exceeded Expectations'),
+      -- Home & Property "The Real"
+      ('Home & Property','the_real','Fixed It Right The First Time'),('Home & Property','the_real','Fair Price'),
+      ('Home & Property','the_real','Showed Up On Time'),('Home & Property','the_real','Clean Work'),
+      -- Automotive "The Real"
+      ('Automotive & Transportation','the_real','Honest Diagnosis'),('Automotive & Transportation','the_real','Fair Labor Rate'),
+      ('Automotive & Transportation','the_real','Didn''t Assume I Don''t Know Cars'),
+      ('Automotive & Transportation','the_real','Quick Turnaround'),
+      -- Education & Children endorsements (no vibes)
+      ('Education & Children','endorsement','My Kids See Themselves'),('Education & Children','endorsement','Culturally Affirming'),
+      ('Education & Children','endorsement','Safe For My Baby'),('Education & Children','endorsement','Patient With My Child'),
+      -- Faith & Spiritual vibes
+      ('Faith & Spiritual','vibe','The Spirit Lives Here'),('Faith & Spiritual','vibe','Community Not Just Congregation'),
+      ('Faith & Spiritual','vibe','All Are Welcome And Mean It'),('Faith & Spiritual','vibe','Come As You Are'),
+      -- Faith endorsements
+      ('Faith & Spiritual','endorsement','Youth Programs Strong'),('Faith & Spiritual','endorsement','Feeds The Community')
+      ON CONFLICT DO NOTHING`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
