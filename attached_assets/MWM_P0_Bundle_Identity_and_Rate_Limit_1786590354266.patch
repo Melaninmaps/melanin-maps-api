@@ -1,0 +1,171 @@
+diff --git a/artifacts/api-server/src/middleware/rateLimiter.ts b/artifacts/api-server/src/middleware/rateLimiter.ts
+index CURRENT..P0FIX 100644
+--- a/artifacts/api-server/src/middleware/rateLimiter.ts
++++ b/artifacts/api-server/src/middleware/rateLimiter.ts
+@@ -1,12 +1,52 @@
+-import { rateLimit } from "express-rate-limit";
++import type { Request } from "express";
++import { ipKeyGenerator, rateLimit } from "express-rate-limit";
++
++/**
++ * Normal authenticated browsing must be isolated by the stable member ID,
++ * not by a hotel/office/VPN/shared-home IP address.  Login and other
++ * unauthenticated abuse-sensitive routes remain IP limited separately.
++ *
++ * authMiddleware runs before this limiter in app.ts and sets req.user.
++ * ipKeyGenerator is required for the unauthenticated fallback so IPv6
++ * addresses are normalized safely by express-rate-limit.
++ */
++function generalApiKey(req: Request): string {
++  const memberId = req.user?.id;
++  if (memberId) return `member:${memberId}`;
++  return `ip:${ipKeyGenerator(req.ip || "unknown")}`;
++}
++
++function isAuthRoute(req: Request): boolean {
++  // generalLimiter is mounted at /api, therefore req.path is /auth/... here.
++  return req.path === "/auth" || req.path.startsWith("/auth/");
++}
+ 
+ export const generalLimiter = rateLimit({
+   windowMs: 15 * 60 * 1000,
+   limit: 200,
+   standardHeaders: "draft-7",
+   legacyHeaders: false,
+-  message: { error: "Too many requests, please try again later." },
++  keyGenerator: generalApiKey,
++  // Auth routes are protected by authLimiter in app.ts and must never consume
++  // a signed-in member's general browsing budget.
++  skip: isAuthRoute,
++  handler: (_req, res) => {
++    res.status(429).json({
++      error: "Too many requests, please try again later.",
++      code: "GENERAL_MEMBER_RATE_LIMITED",
++      retryAfterSeconds: 15 * 60,
++    });
++  },
+ });
+@@
+ export const authLimiter = rateLimit({
+   windowMs: 15 * 60 * 1000,
+   limit: 30,
+   standardHeaders: "draft-7",
+   legacyHeaders: false,
++  keyGenerator: (req) => `ip:${ipKeyGenerator(req.ip || "unknown")}`,
+   message: { error: "Too many auth requests, please try again later." },
+ });
+diff --git a/artifacts/api-server/src/app.ts b/artifacts/api-server/src/app.ts
+index CURRENT..P0FIX 100644
+--- a/artifacts/api-server/src/app.ts
++++ b/artifacts/api-server/src/app.ts
+@@ -13,7 +13,7 @@ import privacyRouter from "./routes/privacy";
+ import { logger } from "./lib/logger";
+ import { authMiddleware } from "./middlewares/authMiddleware";
+ import { WebhookHandlers } from "./webhookHandlers";
+-import { generalLimiter } from "./middleware/rateLimiter";
++import { authLimiter, generalLimiter } from "./middleware/rateLimiter";
+@@
+ app.use(cityRequestMiddleware);
+ app.use(authMiddleware);
++// Authentication remains protected by one IP-based limiter.  The general
++// API limiter below is member-keyed after authMiddleware attaches req.user.
++app.use("/api/auth", authLimiter);
+ app.use("/api", generalLimiter);
+diff --git a/static-server.mjs b/static-server.mjs
+index CURRENT..P0FIX 100644
+--- a/static-server.mjs
++++ b/static-server.mjs
+@@
+ import fs from "fs";
+ import net from "node:net";
+ import pg from "pg";
++import { createHash } from "node:crypto";
+@@
+-// ── Build identity: read from dist/BUILD_IDENTITY (written by build.mjs) ─────
++// ── Build identity: fail closed on a mixed/stale release ────────────────────
++// Railway must never serve a newer static tree with an older API bundle, or
++// launch dist/index.mjs when BUILD_IDENTITY describes another file.  Refuse
++// startup and let Railway roll back instead of advertising a broken release.
++function sha256(filePath) {
++  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
++}
++
++function assertReleaseIdentity() {
++  const apiEntry = path.join(__dirname, "dist", "index.mjs");
++  const identityPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
++  if (!fs.existsSync(apiEntry)) {
++    throw new Error(`Release integrity failure: missing API bundle ${apiEntry}`);
++  }
++  if (!fs.existsSync(identityPath)) {
++    throw new Error(`Release integrity failure: missing ${identityPath}`);
++  }
++
++  const identity = JSON.parse(fs.readFileSync(identityPath, "utf8"));
++  const actualHash = sha256(apiEntry);
++  if (!identity.bundle_sha256 || identity.bundle_sha256 !== actualHash) {
++    throw new Error(
++      `Release integrity failure: BUILD_IDENTITY hash ${identity.bundle_sha256 || "missing"}` +
++      ` does not match dist/index.mjs hash ${actualHash}`,
++    );
++  }
++
++  // The server must use one known static root.  Verify the SPA entry exists;
++  // do not silently fall back between stale artifact and root folders.
++  if (!WEB_STATIC || !fs.existsSync(path.join(WEB_STATIC, "index.html"))) {
++    throw new Error("Release integrity failure: canonical web-static/index.html is missing");
++  }
++  return { identity, apiEntry };
++}
++
+ let _buildId = {};
+ try {
+-  const _idPath = path.join(__dirname, "dist", "BUILD_IDENTITY");
+-  _buildId = JSON.parse(fs.readFileSync(_idPath, "utf8"));
++  const verified = assertReleaseIdentity();
++  _buildId = verified.identity;
+   process.stderr.write(`BUILD_IDENTITY: sha256=${_buildId.bundle_sha256?.slice(0,16)}... built_from=${_buildId.built_from_sha?.slice(0,10)}...\n`);
+ } catch (e) {
+-  process.stderr.write(`BUILD_IDENTITY: not found (${e.message}) — /api/version will show "not-embedded"\n`);
++  process.stderr.write(`FATAL_RELEASE_IDENTITY: ${e.message}\n`);
++  process.exit(78);
+ }
+*** End Patch
+
+# New file: scripts/verify-release-artifacts.mjs
+# Run this after the production build and before git commit/deploy.
+import fs from "node:fs";
+import path from "node:path";
+import { createHash } from "node:crypto";
+
+const root = process.cwd();
+const apiRoot = path.join(root, "artifacts", "api-server");
+const entry = path.join(apiRoot, "dist", "index.mjs");
+const identityPath = path.join(apiRoot, "dist", "BUILD_IDENTITY");
+const servedStatic = path.join(root, "web-static", "index.html");
+const builtStatic = path.join(apiRoot, "web-static", "index.html");
+
+function die(message) { console.error(`RELEASE_VERIFY_FAIL: ${message}`); process.exit(1); }
+function hash(file) { return createHash("sha256").update(fs.readFileSync(file)).digest("hex"); }
+for (const file of [entry, identityPath, servedStatic, builtStatic]) {
+  if (!fs.existsSync(file)) die(`missing ${path.relative(root, file)}`);
+}
+const identity = JSON.parse(fs.readFileSync(identityPath, "utf8"));
+if (identity.bundle_sha256 !== hash(entry)) die("dist/index.mjs does not match dist/BUILD_IDENTITY");
+if (fs.readFileSync(servedStatic, "utf8") !== fs.readFileSync(builtStatic, "utf8")) {
+  die("root web-static/index.html differs from artifacts/api-server/web-static/index.html");
+}
+console.log(JSON.stringify({ ok: true, built_from_sha: identity.built_from_sha, bundle_sha256: identity.bundle_sha256 }, null, 2));
+
+# package.json deploy/release script addition (adapt the actual existing build command name):
+# "release:verify": "node scripts/verify-release-artifacts.mjs"
+# Railway pre-deploy command: pnpm run release:verify
+
+# Required deployment sequence (do not use empty/cache-busting commits):
+# 1. pnpm --filter @workspace/api-server build  (or the repository's canonical production build command)
+# 2. rsync -a --delete artifacts/api-server/web-static/ web-static/
+# 3. node scripts/verify-release-artifacts.mjs
+# 4. git add artifacts/api-server/dist artifacts/api-server/src/generated web-static static-server.mjs scripts/verify-release-artifacts.mjs
+# 5. git commit -m "fix(release): fail closed on mixed bundle identity"
+# 6. git push origin main
+# 7. After Railway is healthy: curl -fsS https://www.mappingwithmelanin.com/api/version
+#    Acceptance: bundle_sha256_self === bundle_sha256 AND stale_bundle === false.
