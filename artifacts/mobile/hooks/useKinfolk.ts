@@ -13,6 +13,15 @@ async function getToken(): Promise<string | null> {
   catch { return null; }
 }
 
+export type HeritageSitePin = {
+  id: string;
+  name: string;
+  siteType: string;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+};
+
 export type TravelBusiness = {
   name: string;
   category: string;
@@ -84,6 +93,7 @@ export type ChatMessage = {
   taskAction?: TaskAction | null;
   taskActionDone?: boolean;
   libraryAction?: LibraryAction | null;
+  heritageSites?: HeritageSitePin[];
   timestamp: Date;
   feedback?: Record<string, "like" | "dislike">;
   limitReached?: boolean;
@@ -159,6 +169,7 @@ export function useKinfolk() {
           smartPromotion?: SmartPromotion | null;
           taskAction?: TaskAction | null;
           libraryAction?: LibraryAction | null;
+          heritageSites?: HeritageSitePin[];
           queriesUsed?: number;
           queriesLimit?: number;
           intentClass?: string | null;
@@ -178,6 +189,7 @@ export function useKinfolk() {
           smartPromotion: data.smartPromotion ?? null,
           taskAction: data.taskAction ?? null,
           libraryAction: data.libraryAction ?? null,
+          heritageSites: data.heritageSites ?? [],
           timestamp: new Date(),
           feedback: {},
           intentClass: data.intentClass ?? null,

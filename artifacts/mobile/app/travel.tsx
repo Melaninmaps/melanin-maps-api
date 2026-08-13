@@ -21,7 +21,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -358,6 +358,101 @@ const taStyles = StyleSheet.create({
   skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
 });
 
+// ─── Sub-component: Heritage Site Strip ──────────────────────────────────────
+// Shown below an AI reply when Kinfolk finds real cultural sites in the DB.
+// Each card offers two actions: open the site on the map, or view its MWM page.
+function HeritageSiteStrip({
+  sites, colors,
+}: { sites: HeritageSitePin[]; colors: ReturnType<typeof useColors> }) {
+  if (!sites?.length) return null;
+
+  const SITE_TYPE_ICONS: Record<string, string> = {
+    mural: "🎨", monument: "🗿", museum: "🏛", spiritual: "🕌", landmark: "📍",
+  };
+
+  return (
+    <View style={hsStyles.container}>
+      <Text style={[hsStyles.label, { color: colors.mutedForeground }]}>
+        📍 On the MWM map
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={hsStyles.scroll}
+      >
+        {sites.map((site) => (
+          <View
+            key={site.id}
+            style={[hsStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <Text style={hsStyles.typeIcon}>
+              {SITE_TYPE_ICONS[site.siteType] ?? "📍"}
+            </Text>
+            <Text style={[hsStyles.name, { color: colors.text }]} numberOfLines={2}>
+              {site.name}
+            </Text>
+            {site.address ? (
+              <Text style={[hsStyles.addr, { color: colors.mutedForeground }]} numberOfLines={1}>
+                {site.address}
+              </Text>
+            ) : null}
+            <View style={hsStyles.btnRow}>
+              <TouchableOpacity
+                style={[hsStyles.btn, { backgroundColor: colors.primary }]}
+                activeOpacity={0.85}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/map" as never,
+                    params: {
+                      focusSiteId: site.id,
+                      focusLat: String(site.latitude),
+                      focusLng: String(site.longitude),
+                    },
+                  })
+                }
+              >
+                <Ionicons name="map-outline" size={11} color="#fff" />
+                <Text style={[hsStyles.btnTxt, { color: "#fff" }]}>Show on Map</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[hsStyles.btn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}
+                activeOpacity={0.85}
+                onPress={() =>
+                  router.push({
+                    pathname: "/cultural-heritage" as never,
+                    params: { siteId: site.id },
+                  })
+                }
+              >
+                <Ionicons name="information-circle-outline" size={11} color={colors.text} />
+                <Text style={[hsStyles.btnTxt, { color: colors.text }]}>View More</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+const hsStyles = StyleSheet.create({
+  container: { marginTop: 10 },
+  label: { fontFamily: "Inter_500Medium", fontSize: 11, marginBottom: 6, paddingHorizontal: 2 },
+  scroll: { gap: 8, paddingBottom: 4 },
+  card: {
+    width: 180, borderRadius: 12, borderWidth: 1.5,
+    padding: 12, gap: 4,
+  },
+  typeIcon: { fontSize: 18 },
+  name: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
+  addr: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
+  btnRow: { flexDirection: "row", gap: 6, marginTop: 8 },
+  btn: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 4, borderRadius: 8, paddingVertical: 7,
+  },
+  btnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+});
+
 // ─── Sub-component: Library Action Pill ──────────────────────────────────────
 function LibraryActionPill({
   action, colors,
@@ -456,6 +551,11 @@ function AiMessageBubble({
         {/* Library Action Pill — server-controlled link to a published Library topic */}
         {msg.libraryAction?.type === "open_library_node" && (
           <LibraryActionPill action={msg.libraryAction} colors={colors} />
+        )}
+
+        {/* Heritage Site Cards — tap to open on map or view MWM site page */}
+        {msg.heritageSites && msg.heritageSites.length > 0 && (
+          <HeritageSiteStrip sites={msg.heritageSites} colors={colors} />
         )}
 
         {/* Recommendations */}

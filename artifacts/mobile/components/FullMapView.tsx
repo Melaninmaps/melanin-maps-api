@@ -198,7 +198,14 @@ function getCategoryStyle(heritageCategory: string, pinType?: string | null): Ca
 
 import { getApiBase } from "@/lib/api";
 
-export function FullMapView() {
+interface FullMapViewProps {
+  /** When set, the map pans to this tour_cultural_sites ID and opens its card. */
+  focusSiteId?: string;
+  focusLat?: string;
+  focusLng?: string;
+}
+
+export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProps = {}) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -283,6 +290,47 @@ export function FullMapView() {
             ? b.category === "Health & Wellness"
             : b.category === activeCategory)),
   );
+
+  // ── Focus a specific heritage site when navigated from Kinfolk chat ─────────
+  // Runs whenever mapReady, tourSites, or focusSiteId changes so it can resolve
+  // even if tour sites finish loading after the screen first opens.
+  useEffect(() => {
+    if (!focusSiteId || !mapReady) return;
+
+    const site = tourSites.find((s) => s.id === focusSiteId);
+    if (site) {
+      const lat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude ?? NaN);
+      const lng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude ?? NaN);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setShowTourSites(true);
+        setSelectedTourSite(site);
+        setSelectedBusiness(null);
+        setSelectedCulturalSite(null);
+        setSelectedMapEvent(null);
+        setSelectedOrg(null);
+        setSelectedTourEvent(null);
+        setTimeout(() => {
+          mapRef.current?.animateToRegion(
+            { latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 },
+            700,
+          );
+        }, 400);
+      }
+    } else if (focusLat && focusLng) {
+      // Site not loaded yet (tourSites still fetching) — pan to coordinates and
+      // enable the layer; the effect will re-run once tourSites arrives and select it.
+      const lat = parseFloat(focusLat);
+      const lng = parseFloat(focusLng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setShowTourSites(true);
+        mapRef.current?.animateToRegion(
+          { latitude: lat, longitude: lng, latitudeDelta: 0.025, longitudeDelta: 0.025 },
+          700,
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusSiteId, mapReady, tourSites]);
 
   // ── Auto-fit to business pins on first load ────────────────────────────────
   // Build 99 crash-blocker note: this effect previously sat ABOVE the

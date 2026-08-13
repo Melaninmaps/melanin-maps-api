@@ -2388,15 +2388,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // heritage site, cultural site, historical site, church, spiritual, sacred.
     const TOUR_SITE_PATTERN = /\b(murals?|monuments?|museums?|memorial|memorials|statue|statues|landmark|landmarks|heritage\s+site|cultural\s+site|historical\s+site|historic\s+site|sacred\s+site|spiritual\s+site|historically\s+significant|black\s+history\s+museum|civil\s+rights\s+museum|art\s+museum|natural\s+history)\b/i;
     let tourSiteBlock = "";
+    let heritageSitePins: Array<{ id: string; name: string; siteType: string; address: string | null; latitude: number; longitude: number }> = [];
     if (TOUR_SITE_PATTERN.test(message) && destination) {
       try {
         const tsRes = await pool.query<{
           id: string; name: string; city: string; state: string;
           address: string | null; description: string | null;
-          site_type: string;
+          site_type: string; latitude: string | null; longitude: string | null;
         }>(
           `SELECT id, name, city, state, address, description,
-                  COALESCE(site_type, 'landmark') AS site_type
+                  COALESCE(site_type, 'landmark') AS site_type,
+                  latitude, longitude
            FROM tour_cultural_sites
            WHERE LOWER(city) ILIKE $1
              AND is_active = true
@@ -2405,6 +2407,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           [`%${destination.toLowerCase()}%`],
         );
         if (tsRes.rows.length > 0) {
+          // Populate heritageSitePins for the JSON response (client map links)
+          heritageSitePins = tsRes.rows
+            .map(r => ({
+              id: r.id,
+              name: r.name,
+              siteType: r.site_type,
+              address: r.address,
+              latitude: parseFloat(r.latitude ?? ""),
+              longitude: parseFloat(r.longitude ?? ""),
+            }))
+            .filter(r => !isNaN(r.latitude) && !isNaN(r.longitude));
+
           const lines = [
             `⚡ CULTURAL HERITAGE SITES — SERVER-AUTHORITATIVE for ${destination}:`,
             `These are real, verified sites from MWM's database. Use these exact names and addresses.\n`,
@@ -3212,6 +3226,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       smartPromotion,
       taskAction,
       libraryAction,
+      // Map-linkable heritage site pins — only present when the message asked about
+      // cultural sites in a known city and matching records exist in tour_cultural_sites.
+      heritageSites: heritageSitePins.length > 0 ? heritageSitePins : undefined,
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,
