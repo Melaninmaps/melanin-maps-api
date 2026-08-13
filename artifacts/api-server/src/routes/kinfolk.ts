@@ -36,6 +36,7 @@ import {
   findMatchingPublishedLibraryNode,
 } from "../lib/library-growth-engine";
 import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
+import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
 
 // ── Per-user preferences cache (30-second TTL) ────────────────────────────────
 // user_preferences is read on every chat turn. At 30 concurrent users this is
@@ -2379,6 +2380,67 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — Kinfolk falls back to model knowledge */ }
     }
 
+    // ── Tour-site retrieval — murals, monuments, museums, heritage sites ────────
+    // When the member asks about cultural/heritage places by city or site type,
+    // pull matching records from tour_cultural_sites and inject server-authoritative
+    // data so Kinfolk names real sites, not hallucinated ones.
+    // Pattern matches: mural(s), monument(s), museum(s), memorial, statue, landmark,
+    // heritage site, cultural site, historical site, church, spiritual, sacred.
+    const TOUR_SITE_PATTERN = /\b(murals?|monuments?|museums?|memorial|memorials|statue|statues|landmark|landmarks|heritage\s+site|cultural\s+site|historical\s+site|historic\s+site|sacred\s+site|spiritual\s+site|historically\s+significant|black\s+history\s+museum|civil\s+rights\s+museum|art\s+museum|natural\s+history)\b/i;
+    let tourSiteBlock = "";
+    if (TOUR_SITE_PATTERN.test(message) && destination) {
+      try {
+        const tsRes = await pool.query<{
+          id: string; name: string; city: string; state: string;
+          address: string | null; description: string | null;
+          site_type: string;
+        }>(
+          `SELECT id, name, city, state, address, description,
+                  COALESCE(site_type, 'landmark') AS site_type
+           FROM tour_cultural_sites
+           WHERE LOWER(city) ILIKE $1
+             AND is_active = true
+           ORDER BY site_type, name
+           LIMIT 25`,
+          [`%${destination.toLowerCase()}%`],
+        );
+        if (tsRes.rows.length > 0) {
+          const lines = [
+            `⚡ CULTURAL HERITAGE SITES — SERVER-AUTHORITATIVE for ${destination}:`,
+            `These are real, verified sites from MWM's database. Use these exact names and addresses.\n`,
+          ];
+          const grouped: Record<string, typeof tsRes.rows> = {};
+          for (const row of tsRes.rows) {
+            const t = row.site_type ?? "landmark";
+            if (!grouped[t]) grouped[t] = [];
+            grouped[t].push(row);
+          }
+          const TYPE_LABELS: Record<string, string> = {
+            mural: "MURALS & PUBLIC ART",
+            monument: "MONUMENTS & MEMORIALS",
+            museum: "MUSEUMS & CULTURAL INSTITUTIONS",
+            spiritual: "SACRED & SPIRITUAL SITES",
+            landmark: "HISTORIC LANDMARKS",
+          };
+          for (const [type, sites] of Object.entries(grouped)) {
+            lines.push(TYPE_LABELS[type] ?? type.toUpperCase() + "S");
+            for (const s of sites) {
+              const addr = s.address ? ` — ${s.address}` : "";
+              const desc = s.description ? ` · ${s.description.slice(0, 120)}` : "";
+              lines.push(`• ${s.name}${addr}${desc}`);
+            }
+            lines.push("");
+          }
+          lines.push(
+            "RULE: When recommending cultural sites, use these names exactly. " +
+            "Do not invent addresses or descriptions beyond what is listed. " +
+            "Tell the member they can tap any of these on the MWM map to get directions."
+          );
+          tourSiteBlock = lines.join("\n");
+        }
+      } catch { /* non-fatal — Kinfolk answers from general knowledge */ }
+    }
+
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
@@ -2835,6 +2897,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // authoritative evidence for regulated-domain queries.
     const effectivePrivacySuppressed = sensitiveTopicDetected || intentPolicy.blockCommunityAsProof;
 
+    // ── Member identity context (pronoun + reproductive context) ────────────
+    // Minimum-use policy enforced inside loadKinfolkMemberContext.
+    // Returns safe defaults ({ audienceBand:'unknown', pronounMode:'none' }) on any error.
+    const memberCtx = req.user?.id
+      ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
+      : { audienceBand: "unknown" as const, pronounMode: "none" as const };
+
+    // Build member-first-name for pronoun instruction (from existing prefs or users row)
+    const memberFirstName: string | null =
+      (prefs as Record<string, unknown> | null)?.first_name as string | null
+      ?? null;
+
+    const pronounBlock     = buildPronounInstruction(memberCtx, memberFirstName);
+    const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
+
     const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
       aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
@@ -2900,9 +2977,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const systemPrompt = (intentPolicyPrompt
       ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
       : baseSystemPrompt)
+      + (pronounBlock       ? `\n\n${pronounBlock}`       : "")
+      + (reproductiveBlock  ? `\n\n${reproductiveBlock}`  : "")
       + (healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
       + (entityBlock ? `\n\n${entityBlock}` : "")
       + (educationBlock ? `\n\n${educationBlock}` : "")
+      + (tourSiteBlock  ? `\n\n${tourSiteBlock}`  : "")
       + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
     // Build OpenAI messages (history + new message)

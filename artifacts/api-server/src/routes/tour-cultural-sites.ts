@@ -3,9 +3,51 @@
  * GET  /tour-cultural-sites/:id      — single site detail with contribution count
  * GET  /tour-cultural-sites/:id/contributions  — approved community contributions
  * POST /tour-cultural-sites/:id/contributions  — submit comment + optional image/video URL (auth required)
+ * POST /tour-cultural-sites/:id/upload-photo   — upload a photo from device (auth required, returns public URL)
  */
 import { Router, type Request, type Response } from "express";
+import multer from "multer";
+import { Storage } from "@google-cloud/storage";
+import { randomUUID } from "node:crypto";
 import { pool } from "@workspace/db";
+
+// ── GCS photo upload helper ───────────────────────────────────────────────────
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 12 * 1024 * 1024 }, // 12 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images and videos are accepted"));
+    }
+  },
+});
+
+/** Upload a buffer to GCS and return a publicly-accessible URL. */
+async function uploadToGCS(buffer: Buffer, mimetype: string, siteId: string): Promise<string> {
+  const privateDir = process.env.PRIVATE_OBJECT_DIR ?? "";
+  if (!privateDir) throw new Error("PRIVATE_OBJECT_DIR not configured");
+
+  // Parse bucket from path like "/gs://bucket-name/..." or "gs://bucket-name"
+  const match = privateDir.match(/gs:\/\/([^/]+)/);
+  if (!match) throw new Error("Cannot parse bucket from PRIVATE_OBJECT_DIR");
+  const bucketName = match[1];
+
+  const ext = mimetype.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+  const objectName = `site-contributions/${siteId}/${randomUUID()}.${ext}`;
+
+  const gcs = new Storage();
+  const file = gcs.bucket(bucketName).file(objectName);
+
+  await file.save(buffer, {
+    metadata: { contentType: mimetype },
+    resumable: false,
+  });
+  await file.makePublic();
+
+  return `https://storage.googleapis.com/${bucketName}/${objectName}`;
+}
 
 /** Inline auth guard — consistent with other route files in this codebase. */
 function requireAuth(req: Request, res: Response): boolean {
@@ -209,5 +251,42 @@ router.post("/tour-cultural-sites/:id/contributions", requireAuth, async (req: R
     res.status(500).json({ error: "Failed to submit contribution" });
   }
 });
+
+// POST /tour-cultural-sites/:id/upload-photo  — requires auth
+// Accepts multipart/form-data with a "file" field (image or video, max 12 MB).
+// Uploads to GCS and returns a public URL. The caller then includes that URL
+// in a POST to /tour-cultural-sites/:id/contributions.
+router.post(
+  "/tour-cultural-sites/:id/upload-photo",
+  requireAuth,
+  photoUpload.single("file"),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ error: "Authentication required" });
+
+      if (!req.file) return res.status(400).json({ error: "No file provided" });
+
+      // Confirm site exists
+      const siteCheck = await pool.query(
+        `SELECT id FROM tour_cultural_sites WHERE id = $1 AND is_active = true`,
+        [id]
+      );
+      if (!siteCheck.rows[0]) return res.status(404).json({ error: "Site not found" });
+
+      const publicUrl = await uploadToGCS(req.file.buffer, req.file.mimetype, id);
+
+      res.json({ url: publicUrl, mimetype: req.file.mimetype });
+    } catch (err) {
+      req.log?.error({ err }, "POST /tour-cultural-sites/:id/upload-photo failed");
+      // Specific message for config issue vs. upload failure
+      const msg = err instanceof Error && err.message.includes("PRIVATE_OBJECT_DIR")
+        ? "Photo storage is not configured on this server"
+        : "Failed to upload photo";
+      res.status(500).json({ error: msg });
+    }
+  }
+);
 
 export default router;

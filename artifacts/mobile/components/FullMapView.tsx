@@ -1234,25 +1234,22 @@ export function FullMapView() {
                 <Feather name="navigation" size={14} color={accent} />
                 <Text style={[s.cardBtnTxt, { color: accent }]}>Directions</Text>
               </TouchableOpacity>
-              {isMural ? (
                 <TouchableOpacity
-                  style={[s.cardBtnHalf, { backgroundColor: accent }]}
-                  activeOpacity={0.85}
-                  onPress={() => router.push({ pathname: "/mural-contribution", params: { siteId: selectedTourSite.id, siteName: selectedTourSite.name, siteAddress: selectedTourSite.address ?? "" } })}
-                >
-                  <Feather name="camera" size={14} color="#fff" />
-                  <Text style={s.cardBtnTxt}>Share Memory</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={[s.cardBtnHalf, { backgroundColor: accent }]}
-                  activeOpacity={0.85}
-                  onPress={() => router.push({ pathname: "/edit-suggestion", params: { entityType: "cultural_site", entityId: selectedTourSite.id, entityName: selectedTourSite.name } })}
-                >
-                  <Feather name="edit-2" size={14} color="#fff" />
-                  <Text style={s.cardBtnTxt}>Suggest Edit</Text>
-                </TouchableOpacity>
-              )}
+                style={[s.cardBtnHalf, { backgroundColor: accent }]}
+                activeOpacity={0.85}
+                onPress={() => router.push({
+                  pathname: "/mural-contribution",
+                  params: {
+                    siteId: selectedTourSite.id,
+                    siteName: selectedTourSite.name,
+                    siteAddress: selectedTourSite.address ?? "",
+                    siteType: selectedTourSite.siteType ?? "landmark",
+                  },
+                })}
+              >
+                <Feather name="camera" size={14} color="#fff" />
+                <Text style={s.cardBtnTxt}>Share Memory</Text>
+              </TouchableOpacity>
             </View>
           </View>
         );

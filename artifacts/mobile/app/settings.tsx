@@ -48,6 +48,7 @@ export default function SettingsScreen() {
       title: "Account",
       rows: [
         { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
+        { id: "identity", icon: "heart", label: "Gender & Pronouns", sub: "Private — used only by Kinfolk", route: "/identity-context" },
         { id: "password", icon: "lock", label: "Change Password", sub: "Managed via Replit account", route: null },
         { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed via Replit Auth", route: null },
       ],
