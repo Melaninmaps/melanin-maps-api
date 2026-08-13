@@ -27,6 +27,7 @@ When the founder uses any of these signals:
 | Date | Topic | Prior attempts | Current status |
 |---|---|---|---|
 | Aug 13 2026 | Shawn Hill Homes search returns no results | Multiple sessions — code comment showed a prior fix attempt that was incomplete; second fix today applied to wrong file | Fixed Aug 13 2026 in universal-search.ts: named_business skips geo filter; server-side gate uses prefix match. Needs Railway redeploy to be live in production. |
+| Aug 13 2026 | Business count is 2,735 — same as last night; founder says prior session reported MORE websites/phones/hours but same total | Reported again after canonical dedup work was shipped — founder is questioning whether work is real | OPEN. Must run duplicate analysis and website/phone breakdown by city to give honest picture. Founder explicitly questioning value of work done. |
 
 ## What NOT to do
 - Do not say "I'll note that for next time" and move on
