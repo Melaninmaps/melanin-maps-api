@@ -2466,7 +2466,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       Array.isArray((recommendations as Record<string, unknown> | null)?.businesses) &&
       (((recommendations as { businesses?: unknown[] } | null)?.businesses)?.length ?? 0) > 0;
 
-    if (destination && req.user?.id && !NUDGE_SKIP_INTENTS.has(intentClass) && !recsAlreadyHaveBusinesses) {
+    // Nudge only fires when the user is asking about a specific pin or location —
+    // not general cultural/historical conversation where a destination city happens
+    // to be known. Requires explicit geographic anchor in this message.
+    const LOCATION_ANCHOR_RE = /\b(near(by)?|around|close to|in the (area|neighborhood|district|quarter|ward)|what'?s (in|near|around|here)|walking distance|this (area|neighborhood|spot|place|block)|that (area|neighborhood|spot)|what (else|other).{0,30}(near|around|here)|where (else|near|around)|this pin|this spot|on (this|the) block|what.*block)\b/i;
+    const isLocationAnchoredQuery = LOCATION_ANCHOR_RE.test(message) || intentClass === "current_information";
+
+    if (destination && req.user?.id && isLocationAnchoredQuery && !NUDGE_SKIP_INTENTS.has(intentClass) && !recsAlreadyHaveBusinesses) {
       try {
         type NudgeCat = { label: string; regexPattern: string; nudgeText: string; quickReply: string; prefKeywords: string[]; sessionKeywords: string[] };
 
