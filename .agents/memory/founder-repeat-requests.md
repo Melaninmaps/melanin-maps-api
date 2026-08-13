@@ -15,6 +15,7 @@ The goal is zero repeat entries going forward. If a request appears here, it was
 | Date | Request | How Many Times | Status |
 |------|---------|---------------|--------|
 | Aug 8, 2026 | Web and mobile should be mirror experiences — full feature parity, cross-platform sync (Library saves appear on both, every iOS feature on web, web should be MORE advanced) | At least 3+ times this session alone, many prior sessions | IN PROGRESS — full audit + implementation started Aug 8 2026 |
+| Aug 13, 2026 | Confirm visually that searching "Shawn Hill" on the web map finds the business — visual audit was not done | Asked Aug 13 2026 | FIXED Aug 13 2026 — bug root cause: geo-extract exact ILIKE gate missed "Shawn Hill Homes"; map geocoded to Shawn Hill IL instead. Fixed with starts-with wildcard match. Visual audit still pending (no browser access at time of fix) |
 
 ---
 

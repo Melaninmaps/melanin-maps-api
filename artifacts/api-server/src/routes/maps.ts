@@ -252,6 +252,10 @@ router.get("/maps/geo-extract", mapsLimiter, async (req: Request, res: Response)
   // geocoder returns "Amina, Dominican Republic" (a real place), the map pans
   // there, and the DB search finds nothing — showing "No MWM listings in AMINA."
   //
+  // Example: "Shawn Hill" → exact match missed "Shawn Hill Homes"; geocoder
+  // returned Shawn Hill, IL. Fix: use starts-with wildcard so any business whose
+  // name *begins with* the query candidate is caught.
+  //
   // Rule: ≤3-word candidates only, to avoid blocking "restaurants in Phuket"
   // where "Phuket" is a legitimate destination with no MWM business by that name.
   const locationWordCount = locationQuery.trim().split(/\s+/).length;
@@ -259,12 +263,13 @@ router.get("/maps/geo-extract", mapsLimiter, async (req: Request, res: Response)
     try {
       const bizCheck = await pool.query<{ id: string }>(
         `SELECT id FROM businesses
-         WHERE name ILIKE $1 AND status = 'active'
+         WHERE (name ILIKE $1 OR name ILIKE $2) AND status = 'active'
          LIMIT 1`,
-        [locationQuery],
+        [locationQuery, locationQuery + "%"],
       );
       if (bizCheck.rows.length > 0) {
-        // Our DB has a business named this — treat as a business search, not geography.
+        // Our DB has a business named this (or starting with this) — treat as
+        // a business search, not geography.
         res.json({ hasLocation: false, locationQuery, contentQuery: raw, lat: null, lng: null, formattedAddress: null });
         return;
       }
