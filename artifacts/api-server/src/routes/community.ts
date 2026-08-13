@@ -109,15 +109,26 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     let rows: PostRow[];
 
     if (authorId) {
-      // Profile wall — always use Drizzle for this simple case
-      const r = await db.select().from(communityPostsTable)
-        .where(eq(communityPostsTable.authorId, authorId))
-        .orderBy(desc(communityPostsTable.createdAt)).limit(limit).offset(offset);
-      rows = r as unknown as PostRow[];
+      // Profile wall — pool.query with test-content exclusion
+      // Excludes quarantined reviewer/smoke/load-test posts so they never
+      // appear on any member's profile wall.
+      const result = await pool.query<PostRow>(`
+        SELECT cp.*
+        FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
+        WHERE cp.author_id = $1
+          AND COALESCE(cp.internal_test_content, false) = false
+          AND COALESCE(u.is_load_test, false) = false
+        ORDER BY cp.created_at DESC
+        LIMIT $2 OFFSET $3
+      `, [authorId, limit, offset]);
+      rows = result.rows;
     } else if (feedMode === "following" && viewerId) {
       // Following feed — posts from people you follow or are connected with
       const result = await pool.query<PostRow>(`
-        SELECT cp.* FROM community_posts cp
+        SELECT cp.*
+        FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.author_id IN (
           SELECT uf.following_id FROM user_follows uf
             WHERE uf.follower_id = $1 AND uf.status = 'accepted'
@@ -129,6 +140,8 @@ router.get("/community/posts", async (req: Request, res: Response) => {
         )
         AND (cp.visibility = 'public' OR cp.visibility = 'followers_only')
         AND (cp.requires_moderation = false OR cp.author_id = $1)
+        AND COALESCE(cp.internal_test_content, false) = false
+        AND COALESCE(u.is_load_test, false) = false
         ORDER BY cp.created_at DESC
         LIMIT $2 OFFSET $3
       `, [viewerId, limit, offset]);
@@ -144,6 +157,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           WHERE cp.visibility = 'public'
             AND (u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL)
             AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
+            AND COALESCE(cp.internal_test_content, false) = false
             AND cp.created_at > NOW() - INTERVAL '30 days'
             AND cp.requires_moderation = false
           ORDER BY cp.created_at DESC
@@ -224,6 +238,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
         WHERE cp.visibility = 'public'
           AND cp.requires_moderation = false
           AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
+          AND COALESCE(cp.internal_test_content, false) = false
           AND (
             u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL
             ${followingClause}

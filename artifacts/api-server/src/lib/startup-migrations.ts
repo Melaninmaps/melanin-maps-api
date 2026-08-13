@@ -3608,6 +3608,69 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         OR is_load_test = true
       )`,
   },
+
+  // ── P0-B: Community test-content quarantine — column + audit table ─────────
+  // Adds internal_test_content boolean so posts can be excluded from all feed
+  // branches without a hard DELETE. Preserves rollback capability.
+  {
+    name: "community_posts_internal_test_content_col_v1",
+    sql: `ALTER TABLE community_posts
+      ADD COLUMN IF NOT EXISTS internal_test_content boolean NOT NULL DEFAULT false`,
+  },
+  {
+    name: "community_post_internal_quarantine_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_post_internal_quarantine (
+      post_id                    varchar PRIMARY KEY,
+      original_visibility        varchar(32),
+      original_requires_moderation boolean,
+      quarantine_reason          text NOT NULL,
+      quarantined_at             timestamptz NOT NULL DEFAULT now(),
+      quarantined_by             text NOT NULL DEFAULT 'p0_launch_cleanup_20260813'
+    )`,
+  },
+
+  // ── P0-B: Quarantine all review/smoke/load-test posts ─────────────────────
+  // Catches posts whose author_name is 'Apple Reviewer', 'App Reviewer', etc.
+  // even when the user's email address doesn't match the known test-email list
+  // (Apple uses private relay addresses for Review accounts).
+  // Idempotent: ON CONFLICT DO NOTHING + UPDATE only where internal_test_content=false.
+  // Rollback: restore from community_post_internal_quarantine, set internal_test_content=false.
+  {
+    name: "quarantine_test_reviewer_posts_v1",
+    sql: `DO $$
+      BEGIN
+        -- Record original visibility for each test/reviewer post not yet quarantined
+        INSERT INTO community_post_internal_quarantine
+          (post_id, original_visibility, original_requires_moderation, quarantine_reason)
+        SELECT
+          cp.id,
+          cp.visibility,
+          cp.requires_moderation,
+          'load-test/reviewer/smoke-test content excluded from production feed'
+        FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
+        WHERE COALESCE(u.is_load_test, false) = true
+           OR lower(COALESCE(cp.author_name, '')) IN (
+                'apple reviewer', 'app reviewer', 'smoke test', 'load test'
+              )
+           OR lower(btrim(COALESCE(cp.content, ''))) IN (
+                'smoke test post - ignore',
+                'smoke test post — ignore'
+              )
+        ON CONFLICT (post_id) DO NOTHING;
+
+        -- Mark quarantined posts so feed queries can exclude them without re-scanning users
+        UPDATE community_posts cp
+        SET internal_test_content = true,
+            visibility = 'followers_only',
+            requires_moderation = true
+        FROM community_post_internal_quarantine q
+        WHERE q.post_id = cp.id
+          AND cp.internal_test_content = false;
+      EXCEPTION WHEN others THEN NULL;
+      END
+    $$`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

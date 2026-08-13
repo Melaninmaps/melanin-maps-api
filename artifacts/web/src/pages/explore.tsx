@@ -1,7 +1,7 @@
 import { useListBusinesses } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, Grid, Map as MapIcon, Star, X } from "lucide-react";
-import { useState } from "react";
+import { MapPin, Search, Grid, Map as MapIcon, X, LoaderCircle, BadgeCheck } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 
 const OWNERSHIP_OPTIONS = [
@@ -17,138 +17,58 @@ const OWNERSHIP_OPTIONS = [
   { id: "d9-affiliated", label: "D9 Affiliated", emoji: "🐾", color: "#7B1E1E" },
 ];
 
-const CATEGORIES = ["All", "Restaurants & Nightlife", "Hotels & Stays", "Cultural Landmarks", "Professional Services", "Community Events", "Hidden Gems"];
+const normaliseDesignation = (value: string) =>
+  value.trim().toLowerCase().replace(/[_\s]+/g, "-");
+
+function documentedOwnershipTags(business: any): string[] {
+  const verified = Array.isArray(business.verifiedDesignations)
+    ? business.verifiedDesignations.map((value: string) => normaliseDesignation(value))
+    : [];
+  if (business.verified === true && business.blackOwned === true) verified.push("black-owned");
+  return [...new Set(verified)].filter((tag) =>
+    OWNERSHIP_OPTIONS.some((option) => option.id === tag),
+  );
+}
 
 export default function Explore() {
-  const { data: apiBusinesses } = useListBusinesses({ limit: 6 });
   const [, navigate] = useLocation();
 
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedOwnership, setSelectedOwnership] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [submittedSearch, setSubmittedSearch] = useState("");
+
+  const { data, isLoading, isError } = useListBusinesses({
+    limit: 50,
+    search: submittedSearch.trim() || undefined,
+  });
+
+  const liveBusinesses = data?.businesses ?? [];
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(
+      liveBusinesses.map((business: any) => business.category).filter(Boolean),
+    )).sort() as string[]],
+    [liveBusinesses],
+  );
+
+  const filtered = useMemo(() => liveBusinesses.filter((business: any) => {
+    const categoryMatches = activeCategory === "All" || business.category === activeCategory;
+    const ownership = documentedOwnershipTags(business);
+    const ownershipMatches = selectedOwnership.length === 0 ||
+      selectedOwnership.some((tag) => ownership.includes(tag));
+    return categoryMatches && ownershipMatches;
+  }), [liveBusinesses, activeCategory, selectedOwnership]);
+
+  const hasFilters = selectedOwnership.length > 0 || activeCategory !== "All" || submittedSearch.trim().length > 0;
 
   const toggleOwnership = (id: string) => {
-    setSelectedOwnership((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    setSelectedOwnership((previous) =>
+      previous.includes(id) ? previous.filter((tag) => tag !== id) : [...previous, id],
     );
   };
 
-  const staticBusinesses = [
-    {
-      id: "1",
-      name: "The Gathering Table",
-      category: "Restaurants & Nightlife",
-      city: "Atlanta",
-      state: "GA",
-      description: "Award-winning Southern cuisine rooted in community and culture. A must-visit for any Atlanta trip.",
-      confidenceScore: 96,
-      recommend: "97%",
-      returnAlone: "94%",
-      safety: "4.9",
-      featured: true,
-      image: `${import.meta.env.BASE_URL}images/biz-gathering-table.jpg`,
-      tags: ["Community Trusted", "Traveler Favorite", "Soul Food", "Dine-In"],
-      ownershipTags: ["black-owned", "women-owned"],
-    },
-    {
-      id: "2",
-      name: "Heritage Boutique Hotel",
-      category: "Hotels & Stays",
-      city: "New Orleans",
-      state: "LA",
-      description: "A beautifully restored historic property in the heart of the Tremé neighborhood.",
-      confidenceScore: 97,
-      recommend: "98%",
-      returnAlone: "96%",
-      safety: "4.9",
-      featured: true,
-      image: `${import.meta.env.BASE_URL}images/biz-heritage-hotel.jpg`,
-      tags: ["Community Trusted", "Top Rated", "Boutique", "Historic"],
-      ownershipTags: ["black-owned"],
-    },
-    {
-      id: "3",
-      name: "Diaspora Arts Collective",
-      category: "Cultural Landmarks",
-      city: "Harlem",
-      state: "NY",
-      description: "A vibrant gallery and cultural center celebrating African and African-American art and history.",
-      confidenceScore: 98,
-      recommend: "99%",
-      returnAlone: "97%",
-      safety: "5",
-      featured: false,
-      image: `${import.meta.env.BASE_URL}images/biz-diaspora-arts.jpg`,
-      tags: ["Highly Recommended", "Local Gem", "Art", "Culture", "Gallery"],
-      ownershipTags: ["black-owned", "women-owned"],
-    },
-    {
-      id: "4",
-      name: "Afrobeats & Culture Fest",
-      category: "Community Events",
-      city: "Houston",
-      state: "TX",
-      description: "Annual outdoor festival celebrating African and Caribbean music, food, and culture.",
-      confidenceScore: 93,
-      recommend: "95%",
-      returnAlone: "91%",
-      safety: "4.7",
-      featured: false,
-      image: `${import.meta.env.BASE_URL}images/biz-afrobeats-fest.jpg`,
-      tags: ["Traveler Favorite", "Festival", "Music", "Food"],
-      ownershipTags: ["hispanic-owned"],
-    },
-    {
-      id: "5",
-      name: "Carter & Associates Law",
-      category: "Professional Services",
-      city: "Chicago",
-      state: "IL",
-      description: "Full-service law firm specializing in business, real estate, and civil rights law.",
-      confidenceScore: 92,
-      recommend: "94%",
-      returnAlone: "90%",
-      safety: "4.8",
-      featured: false,
-      image: `${import.meta.env.BASE_URL}images/biz-carter-law.jpg`,
-      tags: ["Community Trusted", "Legal", "Business", "Real Estate"],
-      ownershipTags: ["black-owned", "veteran-owned"],
-    },
-    {
-      id: "6",
-      name: "Roots & Routes Café",
-      category: "Restaurants & Nightlife",
-      city: "Washington",
-      state: "D.C.",
-      description: "Pan-African cuisine and specialty coffee in a warm, community-centered space.",
-      confidenceScore: 89,
-      recommend: "91%",
-      returnAlone: "87%",
-      safety: "4.6",
-      featured: false,
-      image: `${import.meta.env.BASE_URL}images/biz-roots-cafe.jpg`,
-      tags: ["Local Gem", "Pan-African", "Coffee", "Brunch"],
-      ownershipTags: ["black-owned", "immigrant-owned"],
-    }
-  ];
-
-  // Search box routes to /map — the real discovery experience.
-  // Static businesses here are showcase cards; filter only by category/ownership chips.
-  const filtered = staticBusinesses.filter((b) => {
-    const matchesCategory = activeCategory === "All" || b.category === activeCategory;
-    const matchesOwnership =
-      selectedOwnership.length === 0 ||
-      selectedOwnership.some((t) => b.ownershipTags.includes(t));
-    return matchesCategory && matchesOwnership;
-  });
-
-  const hasFilters = selectedOwnership.length > 0 || activeCategory !== "All";
-
-  const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set("search", searchQuery.trim());
-    navigate(`/map${params.toString() ? "?" + params.toString() : ""}`);
-  };
+  const handleSearch = () => setSubmittedSearch(searchQuery.trim());
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -177,19 +97,29 @@ export default function Explore() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Search city, business type, or destination…"
+                placeholder="Search business name or type…"
                 className="w-full bg-transparent border-none outline-none text-[#3A1F0E] placeholder:text-gray-400"
               />
+              {submittedSearch && (
+                <button onClick={() => { setSearchQuery(""); setSubmittedSearch(""); }} className="ml-2 text-gray-400 hover:text-[#3A1F0E]">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <Button onClick={handleSearch} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-10">Search</Button>
           </div>
+
+          <p className="mt-4 text-[#F5EBD8]/50 text-xs">
+            Looking for businesses near a specific city?{" "}
+            <button onClick={() => navigate("/map")} className="underline hover:text-[#CA922B]">Open the Map</button>
+          </p>
         </div>
       </section>
 
-      {/* Category Filter Bar */}
+      {/* Category Filter Bar — populated from live directory data */}
       <div className="border-b border-[#3A1F0E]/10 bg-white sticky top-20 z-40">
         <div className="container mx-auto px-4 py-3 flex gap-3 overflow-x-auto no-scrollbar items-center">
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <button
               key={c}
               onClick={() => setActiveCategory(c)}
@@ -245,9 +175,10 @@ export default function Explore() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-            {hasFilters && <span className="text-[#3A1F0E]/50"> · filtered</span>}
-            {!hasFilters && <span className="text-[#3A1F0E]/50"> · Most Relevant</span>}
+            {isLoading
+              ? "Loading live listings…"
+              : `${filtered.length} live listing${filtered.length === 1 ? "" : "s"}`}
+            {!isLoading && hasFilters && <span className="text-[#3A1F0E]/50"> · filtered</span>}
           </h2>
           <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
             <button className="p-2 bg-[#FAF6EF] text-[#3A1F0E] rounded-md"><Grid className="w-4 h-4" /></button>
@@ -255,7 +186,7 @@ export default function Explore() {
           </div>
         </div>
 
-        {/* Active filter pills */}
+        {/* Active ownership filter pills */}
         {selectedOwnership.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {selectedOwnership.map((id) => {
@@ -277,97 +208,91 @@ export default function Explore() {
           </div>
         )}
 
-        {filtered.length > 0 ? (
+        {/* Listings */}
+        {isLoading ? (
+          <div className="flex justify-center items-center gap-3 py-24 text-[#3A1F0E]" aria-live="polite">
+            <LoaderCircle className="h-7 w-7 animate-spin" aria-hidden="true" />
+            <span className="text-sm text-[#3A1F0E]/60">Loading live business listings…</span>
+          </div>
+        ) : isError ? (
+          <div className="py-24 text-center">
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">Live listings are unavailable right now</h3>
+            <p className="mt-2 text-sm text-[#3A1F0E]/70">Please try again shortly or search on the Map.</p>
+            <Button onClick={() => navigate("/map")} className="mt-6 rounded-full bg-[#CA922B] text-white">Open the Map</Button>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {filtered.map(b => (
-              <div key={b.id} className="bg-white rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(43,21,7,0.08)] border border-[#3A1F0E]/5 flex flex-col group cursor-pointer hover:shadow-[0_8px_32px_rgba(43,21,7,0.14)] transition-shadow">
-                <div className="h-52 bg-[#2B1507] relative overflow-hidden">
-                  <img src={b.image} alt={b.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#2B1507]/80 via-[#2B1507]/20 to-transparent" />
-                  <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                    {b.featured && <div className="bg-[#CA922B] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded">Featured</div>}
-                    <div className="bg-white/95 text-[#3A1F0E] text-xs font-bold px-2 py-1 rounded shadow-sm">{b.confidenceScore}/100</div>
+            {filtered.map((business: any) => {
+              const ownership = documentedOwnershipTags(business);
+              return (
+                <article key={business.id} className="bg-white rounded-2xl overflow-hidden border border-[#3A1F0E]/5 shadow-[0_4px_20px_rgba(43,21,7,0.06)] flex flex-col">
+                  <div className="h-52 bg-[#2B1507]/10 relative overflow-hidden">
+                    {business.imageUrl ? (
+                      <img src={business.imageUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-[#2B1507]" aria-hidden="true" />
+                    )}
+                    {business.verified === true && (
+                      <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-white/95 text-[#3A1F0E] text-[10px] font-bold px-2 py-1 rounded">
+                        <BadgeCheck className="w-3 h-3 text-[#CA922B]" aria-hidden="true" /> Verified listing
+                      </span>
+                    )}
                   </div>
-                  {/* Ownership badges */}
-                  {b.ownershipTags.length > 0 && (
-                    <div className="absolute top-3 right-3 flex flex-col gap-1">
-                      {b.ownershipTags.slice(0, 2).map((tag) => {
-                        const opt = OWNERSHIP_OPTIONS.find((o) => o.id === tag);
-                        return opt ? (
-                          <span key={tag} className="text-white text-[10px] font-bold px-2 py-1 rounded" style={{ backgroundColor: opt.color + "CC" }}>
-                            {opt.emoji} {opt.label}
-                          </span>
-                        ) : null;
-                      })}
-                    </div>
-                  )}
-                </div>
-                <div className="p-6 flex flex-col flex-1">
-                  <div className="text-[10px] font-bold text-[#CA922B] uppercase tracking-wider mb-2">{b.category} · {b.city}, {b.state}</div>
-                  <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">{b.name}</h3>
-                  <p className="text-sm text-[#3A1F0E]/70 mb-4 flex-1 leading-relaxed">{b.description}</p>
-                  
-                  <div className="grid grid-cols-3 gap-2 mb-4 bg-[#FAF6EF] p-3 rounded-xl text-center divide-x divide-[#3A1F0E]/10">
-                    <div>
-                      <div className="text-sm font-bold text-[#3A1F0E]">{b.recommend}</div>
-                      <div className="text-[10px] text-[#3A1F0E]/60 uppercase">Recommend</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[#3A1F0E]">{b.returnAlone}</div>
-                      <div className="text-[10px] text-[#3A1F0E]/60 uppercase">Return Alone</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[#3A1F0E] flex items-center justify-center gap-1">{b.safety}<Star className="w-3 h-3 fill-current text-[#CA922B]" /></div>
-                      <div className="text-[10px] text-[#3A1F0E]/60 uppercase">Safety</div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {b.tags.map(t => (
-                      <span key={t} className="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded font-medium">{t}</span>
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Link href={`/businesses/${b.id}`} className="flex-1">
+                  <div className="p-6 flex flex-col flex-1">
+                    <p className="text-[10px] font-bold text-[#CA922B] uppercase tracking-wider mb-2">
+                      {business.category}
+                      {(business.city || business.state) && (
+                        <> · {business.city}{business.state ? `, ${business.state}` : ""}</>
+                      )}
+                    </p>
+                    <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">{business.name}</h3>
+                    {business.description ? (
+                      <p className="text-sm text-[#3A1F0E]/70 mb-4 flex-1 leading-relaxed">{business.description}</p>
+                    ) : null}
+                    {ownership.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mb-5" aria-label="Documented business designations">
+                        {ownership.map((tag) => {
+                          const option = OWNERSHIP_OPTIONS.find((item) => item.id === tag)!;
+                          return (
+                            <span key={tag} className="text-[10px] font-semibold px-2 py-1 rounded bg-[#FAF6EF] text-[#3A1F0E]">
+                              {option.emoji} {option.label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    <Link href={`/businesses/${business.id}`} className="mt-auto">
                       <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">View Details</Button>
                     </Link>
-                    <Link href={`/businesses/${b.id}`}>
-                      <Button variant="outline" className="rounded-full border-gray-200">Review</Button>
-                    </Link>
-                    <Link href="/contact">
-                      <Button variant="outline" className="rounded-full border-gray-200">Report</Button>
-                    </Link>
                   </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">No results found</h3>
-            <p className="text-[#3A1F0E]/60 mb-6 max-w-sm">Try adjusting your filters or search terms to find what you're looking for.</p>
-            <Button onClick={() => { setSelectedOwnership([]); setActiveCategory("All"); setSearchQuery(""); }} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B] mr-2">
-              Clear All Filters
-            </Button>
-            <Button onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">
-              View on Map
-            </Button>
+            <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">
+              {submittedSearch ? `No listings match "${submittedSearch}"` : "No live listings match those filters"}
+            </h3>
+            <p className="text-[#3A1F0E]/60 mb-6 max-w-sm">
+              Try a broader term, clear your filters, or search by city on the Map.
+            </p>
+            <div className="flex gap-3 flex-wrap justify-center">
+              <Button
+                onClick={() => { setSelectedOwnership([]); setActiveCategory("All"); setSearchQuery(""); setSubmittedSearch(""); }}
+                variant="outline"
+                className="rounded-full border-[#CA922B] text-[#CA922B]"
+              >
+                Clear filters
+              </Button>
+              <Button onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">
+                Open the Map
+              </Button>
+            </div>
           </div>
         )}
 
-        {filtered.length > 0 && (
-          <div className="text-center text-[#3A1F0E]/50 text-sm mb-6">Showing {filtered.length} of 200+ results</div>
-        )}
-        
-        <div className="bg-[#2B1507] rounded-3xl p-8 text-center text-white flex flex-col items-center max-w-4xl mx-auto mb-16">
-          <h3 className="text-2xl font-serif font-bold mb-4">Upgrade to See All Results</h3>
-          <p className="text-[#F5EBD8]/70 mb-6 max-w-xl">Get full access to community safety scores, verified business listings, group connections, and more.</p>
-          <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8">See Membership Plans</Button>
-        </div>
-
-        <div className="text-center mb-16">
+        <div className="text-center mt-4 mb-16">
           <h2 className="text-3xl font-serif font-bold text-[#3A1F0E] mb-2">Navigate Beyond the Destination.</h2>
           <h2 className="text-3xl font-serif font-bold text-[#CA922B] italic">Discover the Community.</h2>
         </div>
