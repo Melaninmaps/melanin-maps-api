@@ -9017,7 +9017,9 @@ async function ensureCanonicalPlacesV1(
               )
             )
           ) AS name_similarity,
-          public.mwm_normalize_place_text(b.city) = public.mwm_normalize_place_text(cs.city) AS same_city,
+          (b.city IS NOT NULL AND cs.city IS NOT NULL
+           AND public.mwm_normalize_place_text(b.city)
+               = public.mwm_normalize_place_text(cs.city)) AS same_city,
           CASE
             WHEN b.latitude IS NOT NULL AND b.longitude IS NOT NULL
              AND cs.latitude IS NOT NULL AND cs.longitude IS NOT NULL
@@ -9052,19 +9054,19 @@ async function ensureCanonicalPlacesV1(
         'business', business_id, 'cultural_site', cultural_site_id,
         name_similarity, distance_miles, same_city,
         business_domain, cultural_domain,
-        business_domain IS NOT NULL AND business_domain = cultural_domain,
+        (business_domain IS NOT NULL AND cultural_domain IS NOT NULL AND business_domain = cultural_domain),
         CASE
-          WHEN business_domain IS NOT NULL AND business_domain = cultural_domain
-           AND (same_city OR distance_miles <= 0.25) THEN 0.9990
-          WHEN same_city AND name_similarity >= 0.98 AND distance_miles <= 0.25 THEN 0.9950
-          WHEN business_domain IS NOT NULL AND business_domain = cultural_domain THEN 0.8500
-          WHEN same_city AND name_similarity >= 0.98 THEN 0.9000
+          WHEN business_domain IS NOT NULL AND cultural_domain IS NOT NULL AND business_domain = cultural_domain
+           AND (same_city = true OR distance_miles <= 0.25) THEN 0.9990
+          WHEN same_city = true AND name_similarity >= 0.98 AND distance_miles <= 0.25 THEN 0.9950
+          WHEN business_domain IS NOT NULL AND cultural_domain IS NOT NULL AND business_domain = cultural_domain THEN 0.8500
+          WHEN same_city = true AND name_similarity >= 0.98 THEN 0.9000
           ELSE 0.0000
         END,
         'pending'
       FROM pairs
       WHERE name_similarity >= 0.90
-         OR (business_domain IS NOT NULL AND business_domain = cultural_domain)
+         OR (business_domain IS NOT NULL AND cultural_domain IS NOT NULL AND business_domain = cultural_domain)
       ON CONFLICT (left_source_type, left_source_id, right_source_type, right_source_id) DO UPDATE
       SET
         normalized_name_similarity = EXCLUDED.normalized_name_similarity,
