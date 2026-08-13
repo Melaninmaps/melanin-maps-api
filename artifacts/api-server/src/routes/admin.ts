@@ -4,7 +4,7 @@ import { db, pool, getPoolStats, businessInvitesTable, businessesTable, usersTab
 import { eq, desc, sql, count, or } from "drizzle-orm";
 import { sendBusinessOutreach } from "../lib/email";
 import { isAdmin } from "../lib/adminAuth";
-import { getKinfolkStats } from "./kinfolk";
+import { getKinfolkStats, runKinfolkCanary } from "./kinfolk";
 import { SUNDOWN_TOWNS_SEED } from "../data/sundown-towns-seed";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
@@ -2387,6 +2387,24 @@ router.get("/admin/business-enrichment/status/:jobId", (req: Request, res: Respo
 });
 
 // Summary of enrichment coverage across all businesses
+// ── GET /api/admin/kinfolk/canary ─────────────────────────────────────────────
+// Sends "What is 2+2?" through the real OpenAI backend (gpt-4o-mini) and returns
+// the answer + latency. Use before a canary restart to confirm the full AI
+// pipeline is operational for all account types (the pipeline is account-agnostic
+// at the AI call level; quota enforcement is the only per-account difference).
+router.get("/admin/kinfolk/canary", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const result = await runKinfolkCanary();
+  const statusCode = result.ok ? 200 : 503;
+  res.status(statusCode).json({
+    ...result,
+    testedQuestion: "What is 2+2?",
+    expectedAnswer: "4",
+    pass: result.ok && result.answer?.includes("4"),
+    note: "Answer comes from gpt-4o-mini via the Replit AI Integrations proxy — same path all accounts use.",
+  });
+});
+
 router.get("/admin/business-enrichment/coverage", async (req: Request, res: Response) => {
   if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
   try {

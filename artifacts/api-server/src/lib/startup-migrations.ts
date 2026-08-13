@@ -126,8 +126,14 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   {
     // International address support — make state nullable so non-US businesses
     // don't require a US state code. Existing US rows keep their state values.
+    // Wrapped in DO $$ guard: DROP NOT NULL fails if column is already nullable.
     name: "businesses_state_nullable_v1",
-    sql: `ALTER TABLE businesses ALTER COLUMN state DROP NOT NULL`,
+    sql: `DO $$ BEGIN
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='state') = 'NO' THEN
+        ALTER TABLE businesses ALTER COLUMN state DROP NOT NULL;
+      END IF;
+    END $$`,
   },
   {
     // Add country column — NULL means US (default market). Non-US businesses
@@ -273,10 +279,18 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS practical_tips TEXT`,
   },
   {
+    // Wrapped in DO $$ guard: DROP NOT NULL fails if columns are already nullable.
     name: "cultural_sites_lat_lng_nullable",
-    sql: `ALTER TABLE cultural_sites
-      ALTER COLUMN latitude DROP NOT NULL,
-      ALTER COLUMN longitude DROP NOT NULL`,
+    sql: `DO $$ BEGIN
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='cultural_sites' AND column_name='latitude') = 'NO' THEN
+        ALTER TABLE cultural_sites ALTER COLUMN latitude DROP NOT NULL;
+      END IF;
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='cultural_sites' AND column_name='longitude') = 'NO' THEN
+        ALTER TABLE cultural_sites ALTER COLUMN longitude DROP NOT NULL;
+      END IF;
+    END $$`,
   },
   {
     name: "member_agreements_table",
@@ -648,8 +662,14 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   },
   {
     // Widen state column so international sites (e.g. "Phuket Province") fit.
+    // Wrapped in DO $$ guard: ALTER COLUMN TYPE TEXT fails if column is already TEXT.
     name: "tour_cultural_sites_state_text_v1",
-    sql: `ALTER TABLE tour_cultural_sites ALTER COLUMN state TYPE TEXT USING state::text`,
+    sql: `DO $$ BEGIN
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='tour_cultural_sites' AND column_name='state') != 'text' THEN
+        ALTER TABLE tour_cultural_sites ALTER COLUMN state TYPE TEXT USING state::text;
+      END IF;
+    END $$`,
   },
   {
     // Hardcoded coordinates for all 20 international diaspora sites seeded from
@@ -2573,16 +2593,34 @@ ON CONFLICT (city_slug) DO UPDATE SET
   },
   // Allow service-area, online, and home-based providers without a physical address.
   {
+    // Wrapped in DO $$ guard: DROP NOT NULL fails if column is already nullable.
     name: "community_business_claims_v2_address_nullable",
-    sql: `ALTER TABLE businesses ALTER COLUMN address DROP NOT NULL`,
+    sql: `DO $$ BEGIN
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='address') = 'NO' THEN
+        ALTER TABLE businesses ALTER COLUMN address DROP NOT NULL;
+      END IF;
+    END $$`,
   },
   {
+    // Wrapped in DO $$ guard: DROP NOT NULL fails if column is already nullable.
     name: "community_business_claims_v2_lat_nullable",
-    sql: `ALTER TABLE businesses ALTER COLUMN latitude DROP NOT NULL`,
+    sql: `DO $$ BEGIN
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='latitude') = 'NO' THEN
+        ALTER TABLE businesses ALTER COLUMN latitude DROP NOT NULL;
+      END IF;
+    END $$`,
   },
   {
+    // Wrapped in DO $$ guard: DROP NOT NULL fails if column is already nullable.
     name: "community_business_claims_v2_lng_nullable",
-    sql: `ALTER TABLE businesses ALTER COLUMN longitude DROP NOT NULL`,
+    sql: `DO $$ BEGIN
+      IF (SELECT is_nullable FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='longitude') = 'NO' THEN
+        ALTER TABLE businesses ALTER COLUMN longitude DROP NOT NULL;
+      END IF;
+    END $$`,
   },
   // Conservative backfill — only touches rows where the new columns are NULL.
   // Does NOT migrate contributed_by_user_id from submitted_by_id (requires manual classification).
@@ -3378,24 +3416,69 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
   },
   // ── Widen businesses text columns — URLs/addresses can exceed varchar(255) ─────
   {
+    // Wrapped in DO $$ guard: ALTER COLUMN TYPE TEXT fails if column is already TEXT.
     name: "businesses_hours_text_v1",
-    sql: `ALTER TABLE businesses ALTER COLUMN hours TYPE TEXT`,
+    sql: `DO $$ BEGIN
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='hours') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN hours TYPE TEXT;
+      END IF;
+    END $$`,
   },
   {
+    // Wrapped in DO $$ guard: ALTER COLUMN TYPE TEXT fails if columns are already TEXT.
+    // Each column is checked individually so partial completion on a prior boot doesn't fail the whole block.
     name: "businesses_url_cols_text_v1",
-    sql: `ALTER TABLE businesses
-      ALTER COLUMN website TYPE TEXT,
-      ALTER COLUMN facebook TYPE TEXT,
-      ALTER COLUMN instagram TYPE TEXT,
-      ALTER COLUMN tiktok TYPE TEXT,
-      ALTER COLUMN twitter TYPE TEXT,
-      ALTER COLUMN youtube TYPE TEXT,
-      ALTER COLUMN pinterest TYPE TEXT,
-      ALTER COLUMN address TYPE TEXT,
-      ALTER COLUMN business_tagline TYPE TEXT,
-      ALTER COLUMN hidden_gem_tagline TYPE TEXT,
-      ALTER COLUMN service_area TYPE TEXT,
-      ALTER COLUMN name TYPE TEXT`,
+    sql: `DO $$ BEGIN
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='website') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN website TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='facebook') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN facebook TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='instagram') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN instagram TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='tiktok') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN tiktok TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='twitter') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN twitter TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='youtube') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN youtube TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='pinterest') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN pinterest TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='address') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN address TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='business_tagline') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN business_tagline TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='hidden_gem_tagline') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN hidden_gem_tagline TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='service_area') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN service_area TYPE TEXT;
+      END IF;
+      IF (SELECT udt_name FROM information_schema.columns
+          WHERE table_schema='public' AND table_name='businesses' AND column_name='name') != 'text' THEN
+        ALTER TABLE businesses ALTER COLUMN name TYPE TEXT;
+      END IF;
+    END $$`,
   },
   // ── Recurring events: active_until for auto-expiry (#121) ──────────────────
   // Events with a known end date auto-hide from the map when that date passes.
@@ -3503,6 +3586,27 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       -- Faith endorsements
       ('Faith & Spiritual','endorsement','Youth Programs Strong'),('Faith & Spiritual','endorsement','Feeds The Community')
       ON CONFLICT DO NOTHING`,
+  },
+
+  // ── Delete community posts by test accounts ────────────────────────────────
+  // Apple Reviewer, Manus AI testers, and load-test accounts sometimes post
+  // during UAT. This runs every boot so test posts never accumulate in prod.
+  // The DELETE is scoped to known test emails + is_load_test flag — it is
+  // safe to run on every deploy because real member posts have real user IDs
+  // that do not match any of these conditions.
+  {
+    name: "delete_test_account_community_posts_v1",
+    sql: `DELETE FROM community_posts
+      WHERE author_id IN (
+        SELECT id FROM users
+        WHERE email IN (
+          'apple.reviewer@mappingwithmelanin.com',
+          'tester@mwm.com',
+          'manus@mappingwithmelanin.com',
+          'manus.geo@mappingwithmelanin.com'
+        )
+        OR is_load_test = true
+      )`,
   },
 ];
 

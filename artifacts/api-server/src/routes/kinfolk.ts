@@ -523,6 +523,40 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
   }
 }
 
+// ─── Kinfolk canary — real AI call with a known-answer question ──────────────
+// Used by GET /api/admin/kinfolk/canary before a canary restart.
+// Returns the AI's answer to "What is 2+2?" so the caller can verify the full
+// pipeline is working end-to-end, not just that the env vars are present.
+export async function runKinfolkCanary(): Promise<{
+  ok: boolean;
+  answer?: string;
+  latencyMs?: number;
+  reason?: string;
+}> {
+  if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
+    return { ok: false, reason: "AI env vars not configured" };
+  }
+  const start = Date.now();
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant. Answer concisely and directly.",
+        },
+        { role: "user", content: "What is 2+2? Reply with only the number." },
+      ],
+      max_tokens: 8,
+      temperature: 0,
+    } as Parameters<typeof openai.chat.completions.create>[0]);
+    const answer = completion.choices?.[0]?.message?.content?.trim() ?? "(no content)";
+    return { ok: true, answer, latencyMs: Date.now() - start };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err), latencyMs: Date.now() - start };
+  }
+}
+
 // Run one probe at startup so Railway logs show the AI status immediately.
 void probeKinfolkAI().then(({ ok, reason }) => {
   if (ok) {
