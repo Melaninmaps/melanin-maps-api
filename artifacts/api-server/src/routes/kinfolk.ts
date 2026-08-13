@@ -163,6 +163,7 @@ const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
   financial_regulated:    ["financial"],
   culture_entertainment:  ["culture", "diaspora", "heritage", "history", "community_culture"],
   business_discovery:     ["business"],
+  education_discovery:    ["education", "hbcu", "history"],
   hobby_lifestyle:        ["lifestyle"],
   general_knowledge:      ["general", "history", "education", "geography"],
   current_information:    ["general", "history", "education", "geography"],
