@@ -1,0 +1,428 @@
+# Exact Replit Patch — Source-to-Topic Memory, Author Validation, and Privacy-Safe Partnership Accountability
+
+**Scope:** This patch extends the Library source-memory system and creates an aggregate business impact/outreach candidate program. It does not change login, map rendering, business claim authorization, community feedback, Kinfolk private history, or current launch limits.
+
+**Founder rules encoded below:**
+
+1. A source that answers a Library/Kinfolk question can be remembered for similar future questions only after source validation and topic relevance review.
+2. Author/outlet identity is never guessed from a name, photo, domain, geography, or writing style.
+3. Members may recommend safe non-minority-owned hotels, museums, and spaces; these spaces can receive only privacy-safe aggregate impact information under an approved partner/outreach policy.
+4. Minority-owned businesses may receive a distinct, opt-in **free claim/partnership preview** after human approval. They are never auto-claimed.
+5. No business receives an automated email, DM, notification, contact-form message, or partner offer in this release. The code creates an approved, reviewable outreach candidate only. Sending requires a later founder-approved release.
+6. No report includes member identities, raw searches, sensitive queries, exact travel plans, follower data, individual visits, or unverified booking claims.
+
+---
+
+## Part A — Exact source-to-topic memory migration
+
+**New migration:** `artifacts/api-server/src/lib/migrations/20260813_source_topic_memory_v1.sql`
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Existing production IDs are varchar, not UUID.
+CREATE TABLE IF NOT EXISTS library_source_catalog (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  canonical_url TEXT NOT NULL UNIQUE,
+  current_url TEXT NOT NULL,
+  original_url TEXT NOT NULL,
+  normalized_domain VARCHAR(255) NOT NULL,
+  title TEXT,
+  publisher_name VARCHAR(255),
+  publisher_type VARCHAR(64) NOT NULL DEFAULT 'unknown'
+    CHECK (publisher_type IN (
+      'government', 'public_health', 'medical_association', 'peer_reviewed',
+      'university', 'journalist_outlet', 'cultural_institution',
+      'community_outlet', 'nonprofit', 'official_creator', 'reference', 'unknown'
+    )),
+  author_display TEXT,
+  author_profile_url TEXT,
+  -- Publicly self-described/curator-verified attributes only. No inference.
+  self_described_perspective JSONB NOT NULL DEFAULT '{}'::jsonb,
+  language_code VARCHAR(16),
+  country_code VARCHAR(8),
+  published_at TIMESTAMPTZ,
+  updated_at_source TIMESTAMPTZ,
+  last_validated_at TIMESTAMPTZ,
+  last_http_status INTEGER,
+  validation_state VARCHAR(24) NOT NULL DEFAULT 'pending'
+    CHECK (validation_state IN ('pending', 'active', 'stale', 'held', 'blocked', 'redirect_review', 'removed')),
+  validation_reason TEXT,
+  content_hash VARCHAR(128),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS library_source_catalog_state_idx
+  ON library_source_catalog(validation_state, last_validated_at DESC);
+CREATE INDEX IF NOT EXISTS library_source_catalog_domain_idx
+  ON library_source_catalog(normalized_domain);
+
+CREATE TABLE IF NOT EXISTS library_topic_source_links (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  topic_id VARCHAR(100) NOT NULL REFERENCES knowledge_topics(id) ON DELETE CASCADE,
+  source_id VARCHAR(100) NOT NULL REFERENCES library_source_catalog(id) ON DELETE CASCADE,
+  relation_type VARCHAR(32) NOT NULL
+    CHECK (relation_type IN (
+      'primary_evidence', 'corroborating_evidence', 'current_update',
+      'authoritative_guidance', 'context', 'perspective', 'historical', 'community_discussion'
+    )),
+  topical_relevance NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (topical_relevance BETWEEN 0 AND 1),
+  policy_fit NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (policy_fit BETWEEN 0 AND 1),
+  freshness_score NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (freshness_score BETWEEN 0 AND 1),
+  public_popularity_score NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (public_popularity_score BETWEEN 0 AND 1),
+  perspective_score NUMERIC(5,4) NOT NULL DEFAULT 0 CHECK (perspective_score BETWEEN 0 AND 1),
+  rank_reason JSONB NOT NULL DEFAULT '{}'::jsonb,
+  review_state VARCHAR(24) NOT NULL DEFAULT 'candidate'
+    CHECK (review_state IN ('candidate', 'validated', 'held', 'rejected', 'retired')),
+  valid_from TIMESTAMPTZ NOT NULL DEFAULT now(),
+  valid_until TIMESTAMPTZ,
+  last_evaluated_at TIMESTAMPTZ,
+  created_by VARCHAR(32) NOT NULL DEFAULT 'retrieval_worker'
+    CHECK (created_by IN ('retrieval_worker', 'curator', 'member_link', 'editorial')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(topic_id, source_id)
+);
+CREATE INDEX IF NOT EXISTS library_topic_source_links_topic_rank_idx
+  ON library_topic_source_links(topic_id, review_state, topical_relevance DESC, policy_fit DESC, freshness_score DESC);
+
+CREATE TABLE IF NOT EXISTS library_source_validation_runs (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  source_id VARCHAR(100) NOT NULL REFERENCES library_source_catalog(id) ON DELETE CASCADE,
+  validator_version VARCHAR(64) NOT NULL,
+  canonical_url_observed TEXT,
+  http_status INTEGER,
+  redirect_count INTEGER NOT NULL DEFAULT 0,
+  extraction JSONB NOT NULL DEFAULT '{}'::jsonb,
+  decision VARCHAR(24) NOT NULL CHECK (decision IN ('active', 'stale', 'held', 'blocked', 'redirect_review', 'removed')),
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS library_source_validation_runs_source_created_idx
+  ON library_source_validation_runs(source_id, created_at DESC);
+```
+
+**Drizzle schema:** Add `librarySourceCatalogTable`, `libraryTopicSourceLinksTable`, and `librarySourceValidationRunsTable` to `lib/db/src/schema/knowledge.ts`. Use `varchar(..., { length: 100 })` for `id`, `topicId`, and `sourceId`. Do not create a second Library topic table.
+
+---
+
+## Part B — Non-inferential author/outlet validation code
+
+**New file:** `artifacts/api-server/src/library/source-identity-validator.ts`
+
+```ts
+import { URL } from 'node:url';
+
+export type SourceIdentity = {
+  canonicalUrl: string;
+  currentUrl: string;
+  normalizedDomain: string;
+  title: string | null;
+  publisherName: string | null;
+  publisherType: string;
+  authorDisplay: string | null;
+  authorProfileUrl: string | null;
+  languageCode: string | null;
+  countryCode: string | null;
+  publishedAt: string | null;
+  updatedAtSource: string | null;
+  selfDescribedPerspective: Record<string, string>;
+};
+
+const FORBIDDEN_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
+export function assertPublicHttpsUrl(value: string): URL {
+  const url = new URL(value);
+  if (url.protocol !== 'https:') throw new Error('SOURCE_URL_NOT_HTTPS');
+  if (FORBIDDEN_HOSTS.has(url.hostname) || isPrivateNetworkHost(url.hostname)) {
+    throw new Error('SOURCE_URL_NOT_PUBLIC');
+  }
+  if (url.username || url.password) throw new Error('SOURCE_URL_HAS_CREDENTIALS');
+  return url;
+}
+
+export async function validateSourceIdentity(candidateUrl: string): Promise<SourceIdentity> {
+  const requested = assertPublicHttpsUrl(candidateUrl);
+  const response = await fetch(requested, {
+    redirect: 'follow',
+    signal: AbortSignal.timeout(10_000),
+    headers: { 'user-agent': 'MappingWithMelanin-LibraryValidator/1.0 (+https://www.mappingwithmelanin.com)' },
+  });
+  if (!response.ok) throw new Error(`SOURCE_HTTP_${response.status}`);
+  const finalUrl = assertPublicHttpsUrl(response.url);
+  const html = await response.text();
+  const metadata = extractPublicMetadata(html, finalUrl);
+
+  // IMPORTANT: extractPublicMetadata may read JSON-LD, OpenGraph, citation,
+  // <meta name="author"> and explicit publisher/about metadata. It MUST NOT
+  // infer demographics, religion, political affiliation, nationality, or
+  // credentials from names, images, domains, language, or location.
+  return {
+    canonicalUrl: metadata.canonicalUrl ?? finalUrl.toString(),
+    currentUrl: finalUrl.toString(),
+    normalizedDomain: finalUrl.hostname.toLowerCase().replace(/^www\./, ''),
+    title: metadata.title ?? null,
+    publisherName: metadata.publisherName ?? null,
+    publisherType: classifyPublisherFromApprovedEvidence(metadata, finalUrl),
+    authorDisplay: metadata.authorDisplay ?? null,
+    authorProfileUrl: metadata.authorProfileUrl ?? null,
+    languageCode: metadata.languageCode ?? null,
+    countryCode: metadata.countryCode ?? null,
+    publishedAt: metadata.publishedAt ?? null,
+    updatedAtSource: metadata.updatedAtSource ?? null,
+    selfDescribedPerspective: metadata.selfDescribedPerspective ?? {},
+  };
+}
+
+export function allowPerspectiveTiebreaker(value: Record<string, string>): boolean {
+  // Only a verified public self-description / publisher-supplied about page /
+  // curator-confirmed evidence URL can populate this field.
+  return Boolean(value.label && value.evidence_url);
+}
+```
+
+**Explicit prohibitions:**
+
+```ts
+// NEVER write code like this:
+// inferRace(authorName); inferNationality(authorName); inferGender(photo);
+// inferMinorityOwnership(domain); inferIdentityFromLanguage(authorName);
+```
+
+If metadata lacks an author or self-description, store `NULL`/`{}`. The source may still be valid and rank on policy/relevance/freshness. A public bio that explicitly says an author is a Black obstetrician, or an outlet’s own About page that says it is Venezuelan, may be stored as an attributable source fact only with the bio/about-page URL in `self_described_perspective.evidence_url`.
+
+**Source rank:**
+
+```ts
+export function sourceRank(s: {
+  active: boolean; topicalRelevance: number; policyFit: number;
+  freshness: number; popularity: number; perspective: number;
+  highConsequence: boolean;
+}): number | null {
+  if (!s.active || s.topicalRelevance < 0.60 || s.policyFit < 0.70) return null;
+  return 0.55 * s.topicalRelevance +
+    0.25 * s.policyFit +
+    0.15 * s.freshness +
+    (s.highConsequence ? 0.03 : 0.10) * s.popularity +
+    (s.highConsequence ? 0 : 0.05) * s.perspective;
+}
+```
+
+---
+
+## Part C — Aggregate partnership/accountability migration
+
+**New migration:** `artifacts/api-server/src/lib/migrations/20260813_business_impact_accountability_v1.sql`
+
+```sql
+-- A rotating one-way fingerprint is for daily/weekly distinct-count aggregation.
+-- It is never returned to a business and is never used for behavioral profiling.
+CREATE TABLE IF NOT EXISTS business_impact_events (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  business_id VARCHAR(100) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  event_type VARCHAR(32) NOT NULL CHECK (event_type IN (
+    'saved', 'official_website_opened', 'public_profile_viewed',
+    'voluntary_visit_marked', 'demand_signal'
+  )),
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  member_window_fingerprint VARCHAR(128) NOT NULL,
+  -- For demand only: use a taxonomy term or safe normalized intent key, never
+  -- raw private language. NULL for all other events.
+  safe_demand_key VARCHAR(120),
+  source_surface VARCHAR(32) NOT NULL CHECK (source_surface IN (
+    'directory', 'map', 'kinfolk', 'library', 'community', 'business_page', 'saved_list'
+  )),
+  is_load_test BOOLEAN NOT NULL DEFAULT FALSE,
+  CONSTRAINT impact_event_demand_rule CHECK (
+    (event_type = 'demand_signal' AND safe_demand_key IS NOT NULL) OR
+    (event_type <> 'demand_signal' AND safe_demand_key IS NULL)
+  )
+);
+CREATE INDEX IF NOT EXISTS business_impact_events_rollup_idx
+  ON business_impact_events(business_id, event_type, occurred_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS business_impact_events_daily_dedup
+  ON business_impact_events(business_id, event_type, member_window_fingerprint, date_trunc('day', occurred_at), COALESCE(safe_demand_key, ''));
+
+CREATE TABLE IF NOT EXISTS business_impact_rollups (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  business_id VARCHAR(100) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  metric_type VARCHAR(32) NOT NULL CHECK (metric_type IN (
+    'distinct_saves', 'official_website_opens', 'public_profile_views',
+    'voluntary_visits', 'safe_demand'
+  )),
+  safe_demand_key VARCHAR(120),
+  window_start TIMESTAMPTZ NOT NULL,
+  window_end TIMESTAMPTZ NOT NULL,
+  true_distinct_count INTEGER NOT NULL,
+  displayed_count INTEGER,
+  privacy_threshold_met BOOLEAN NOT NULL DEFAULT FALSE,
+  delayed_until TIMESTAMPTZ NOT NULL,
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(business_id, metric_type, COALESCE(safe_demand_key, ''), window_start, window_end)
+);
+CREATE INDEX IF NOT EXISTS business_impact_rollups_visible_idx
+  ON business_impact_rollups(business_id, privacy_threshold_met, delayed_until DESC);
+
+CREATE TABLE IF NOT EXISTS business_partnership_candidates (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  business_id VARCHAR(100) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  program_type VARCHAR(32) NOT NULL CHECK (program_type IN (
+    'minority_owned_claim_preview', 'minority_owned_partnership_preview',
+    'safe_space_accountability_brief'
+  )),
+  ownership_basis VARCHAR(32) NOT NULL CHECK (ownership_basis IN (
+    'verified_self_designation', 'owner_self_designation', 'unknown'
+  )),
+  snapshot JSONB NOT NULL,
+  status VARCHAR(24) NOT NULL DEFAULT 'draft' CHECK (status IN (
+    'draft', 'admin_review', 'approved_no_send', 'sent', 'responded', 'opted_out', 'expired', 'rejected'
+  )),
+  created_by VARCHAR(32) NOT NULL DEFAULT 'impact_worker',
+  approved_by_user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+  approved_at TIMESTAMPTZ,
+  contact_basis VARCHAR(32) CHECK (contact_basis IN ('owner_opt_in', 'public_business_contact', 'none')),
+  contact_channel VARCHAR(32) CHECK (contact_channel IN ('email', 'website_form', 'instagram', 'other', 'none')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS business_partnership_candidates_status_idx
+  ON business_partnership_candidates(status, created_at DESC);
+```
+
+**Privacy threshold:** A rollup is visible only after **10 distinct privacy-protected members**, a **24-hour reporting delay**, and rounding to the nearest five. A business never receives an exact count below threshold.
+
+```ts
+export function safeDisplayCount(trueDistinctCount: number): number | null {
+  if (trueDistinctCount < 10) return null;
+  return Math.round(trueDistinctCount / 5) * 5;
+}
+```
+
+Thus the dashboard copy is **“About 35 members saved your business”**, not `34 named people saved you`. The system may say **“About 55 opened your official website this week”**, but it must not say **“55 booked”** based on an outbound click. `voluntary_visit_marked` is only permitted when a member explicitly marks a visit; `booking` may be reported only under a later formal partner conversion integration with separate consent and data terms.
+
+---
+
+## Part D — Event capture and aggregate worker
+
+**New file:** `artifacts/api-server/src/analytics/business-impact.ts`
+
+```ts
+import crypto from 'node:crypto';
+
+const IMPACT_SECRET = process.env.BUSINESS_IMPACT_HMAC_SECRET!;
+
+function rotatingFingerprint(userId: string, date = new Date()): string {
+  const period = date.toISOString().slice(0, 10); // daily rotation
+  return crypto.createHmac('sha256', IMPACT_SECRET).update(`${period}:${userId}`).digest('hex');
+}
+
+const SAFE_DEMAND_KEYS = new Set([
+  'fruit_pebble_waffles', 'red_braids', 'natural_hair_care', 'brunch', 'family_activity'
+]);
+
+export async function recordImpact(input: {
+  businessId: string;
+  userId: string;
+  eventType: 'saved' | 'official_website_opened' | 'public_profile_viewed' | 'voluntary_visit_marked' | 'demand_signal';
+  safeDemandKey?: string;
+  surface: 'directory' | 'map' | 'kinfolk' | 'library' | 'community' | 'business_page' | 'saved_list';
+  isLoadTest: boolean;
+}) {
+  if (input.isLoadTest) return; // audits must not influence partnerships
+  if (input.eventType === 'demand_signal' && !SAFE_DEMAND_KEYS.has(input.safeDemandKey ?? '')) return;
+  await pool.query(
+    `INSERT INTO business_impact_events
+       (business_id, event_type, member_window_fingerprint, safe_demand_key, source_surface, is_load_test)
+     VALUES ($1, $2, $3, $4, $5, false)
+     ON CONFLICT DO NOTHING`,
+    [input.businessId, input.eventType, rotatingFingerprint(input.userId), input.safeDemandKey ?? null, input.surface],
+  );
+}
+```
+
+### No-sensitive-demand rule
+
+Before a demand key is eligible, the `classifyGrowthSensitivity`/universal-search policy must return `public`, not `sensitive` or `private`. Block medical, mental health, fertility, HIV/STI, divorce, domestic violence, immigration status, legal risk, financial hardship, exact travel, child, religion, politics, and protected-person queries. Do not create a business demand signal from any blocked class.
+
+---
+
+## Part E — Differentiated partnership behavior
+
+### 1. Non-minority-owned safe spaces (hotel, museum, general venue)
+
+A member can recommend a safe, welcoming non-minority-owned space. It remains discoverable based on real community feedback and safety information. It is **not** pushed to claim, join, ownership programs, ambassador matching, or paid promotion.
+
+The only eligible output is an admin-approved **Safe Space Accountability Brief**, built from thresholded aggregates and explicitly described as community impact—not as a marketing lead. It has no automatic send in this release. If founder later enables contact, the brief must be manually approved and use a public business contact/opt-in basis. It must not disclose exact travel dates, names, demographics, search phrases, bookings, or personal safety/identity data.
+
+### 2. Minority-owned business
+
+Use `black_owned=true` or a designation that is **verified self-designation / owner self-designation**. Do not infer ownership from a business name, neighborhood, product, owner photo, or source outlet.
+
+When the threshold is met, create `minority_owned_claim_preview` or `minority_owned_partnership_preview` in `admin_review`. The approved preview may contain:
+
+```text
+Mapping With Melanin community activity, [window]:
+• About 35 members saved your business.
+• About 55 members opened your official website.
+• A public, non-sensitive demand trend: “fruit pebble waffles” appeared in about 85 local discovery searches.
+
+Your listing remains community-added and unclaimed. Claiming is free and lets you manage your public business details. If you choose to learn more, MWM can show optional partnership resources such as menu brainstorming, content guidance, and cultural ambassador opportunities. No member identities or private searches are shared.
+```
+
+**No message is automatically sent.** Before an outreach-send release exists, Replit stores the candidate preview for founder/admin review only. When a later approved send route is built, it must link to the secure free claim flow; it may not auto-link an owner, auto-designate ownership, or imply a paid obligation.
+
+### 3. Claim flow
+
+A minority-owned business owner who follows the secure claim route enters the existing pending claim/approval system. Only after approval may they see their own thresholded aggregate dashboard. They never gain access to individual events, raw query history, community feedback authors, private media, claims, or non-public data.
+
+---
+
+## Part F — API and authorization
+
+**New member-only outbound route:**
+
+```ts
+router.post('/businesses/:businessId/open-official-site', requireAuth, async (req, res) => {
+  const business = await loadLiveBusiness(req.params.businessId);
+  if (!business?.website) return res.status(404).json({ error: 'OFFICIAL_SITE_UNAVAILABLE' });
+  await recordImpact({
+    businessId: business.id, userId: req.user.id, eventType: 'official_website_opened',
+    surface: 'business_page', isLoadTest: Boolean(req.user.isLoadTest),
+  });
+  res.json({ destinationUrl: business.website });
+});
+```
+
+**New owner/admin aggregate route:**
+
+```ts
+router.get('/businesses/:businessId/impact-summary', requireAuth, requireBusinessOwnerOrAdmin, async (req, res) => {
+  // Verify approved owner link for this business; never use submitted_by_id.
+  const rows = await loadVisibleDelayedRollups(req.params.businessId);
+  res.json({ period: 'last_7_days', metrics: rows.map(toSafeMetricCopy) });
+});
+```
+
+`toSafeMetricCopy` returns only metric label, rounded displayed count, window, and safe demand label. It must never return `true_distinct_count`, raw event row, fingerprint, user ID, user city, source surface, age, source query, or time of interaction.
+
+**Admin-only:** `GET /api/admin/business-partnership-candidates`, approve/reject candidate, and any future send action require `requireAdmin`, not merely `requireAuth`.
+
+---
+
+## Part G — Mandatory tests and independent proof
+
+1. A Library source with no author metadata is valid when source/policy relevance is sufficient; no demographic field is generated.
+2. A self-described Venezuelan outlet is shown with its evidence URL; its identity is not guessed from its name/domain.
+3. A Black doctor’s directly relevant published maternal-health research ranks by topic/evidence; an unrelated doctor’s astrophysics article does not rank for maternal health.
+4. A source with `held`/404 status never appears as a clickable Library card.
+5. Load-test accounts produce no impact events, partnership candidates, source signals, notifications, or outreach.
+6. Nine distinct saves produce no visible metric; ten distinct members after 24 hours produce a rounded display metric.
+7. A website-open event shows **opened official website**, never booked/visited.
+8. A sensitive query cannot create a `demand_signal`.
+9. `fruit_pebble_waffles` requires public classification and threshold before a candidate preview contains it.
+10. Non-minority safe space creates no claim/join/ambassador invitation; it may only create an admin-approved accountability brief.
+11. Minority-owned candidate is created only from verified/self designation and never auto-claimed.
+12. Owner impact endpoint rejects an ordinary member with 403 and returns no raw data to a claimed owner.
+13. Admin candidate routes return 403 to non-admin users.
+14. No outbound business contact is sent in this release; candidates remain `approved_no_send`.
+15. Existing community feedback, safety data, claims, and library links continue to pass their current test suites.

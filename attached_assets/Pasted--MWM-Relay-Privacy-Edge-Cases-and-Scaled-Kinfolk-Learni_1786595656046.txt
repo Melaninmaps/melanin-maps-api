@@ -1,0 +1,34 @@
+## MWM Relay, Privacy Edge Cases, and Scaled Kinfolk Learning Package Ready
+
+I created the exact implementation package for all three items.
+
+### Mutual-consent MWM relay
+
+The relay code requires **creator opt-in → business opt-in → creator acceptance → business acceptance** before an in-app thread exists. Both people see only public partnership profiles and category-level matching rationale. The initial conversation stays inside MWM, is encrypted at rest, rate-limited, excluded from Kinfolk prompts and analytics, and does not reveal email/phone/social contacts. Contact exchange requires two separate later consents.
+
+### k-10 / Laplace edge case
+
+The SQL makes the behavior strict:
+
+| Weekly bounded distinct count | Result |
+| ---:| --- |
+| 0–9 | Fully suppressed. No noise, no rounded value, no candidate, no dashboard metric. |
+| 10+ | Release only after the fixed window closes and a 24-hour delay; add one persisted Laplace draw, clamp at zero, and round to five. |
+
+Noise is applied **after** the k=10 eligibility test, so a count of 9 can never be accidentally displayed as 10. The same released metric always returns the same noisy rounded result; refreshes never redraw the noise.
+
+### Kinfolk intuitive, population-scaled Library learning
+
+The package upgrades the existing growth engine so it can create governed Library candidates and evidence drafts automatically. It uses a geography-aware threshold: seven independent signals can be meaningful in a small Willow Grove scope, while Philadelphia scales with active relevant population. It does not store raw searches, exact locations, or user identities; it creates a candidate only from a canonical topic, privacy-protected distinct count, coarse scope, and safety classification.
+
+> Kinfolk can answer legitimate history now and learn where deeper Library branches are needed later. It will never seed a public topic from harassment, slur attacks, misinformation, or prohibited content.
+
+The Holocaust fixture is included specifically to ensure historical content is not erased. Kinfolk should accurately foreground the genocide of six million Jews and offer rigorously sourced branches on the Nazi regime’s persecution of Roma and Sinti people, disabled people, Black people in Germany, LGBTQ people, Jehovah’s Witnesses, political opponents, and other targeted groups—without flattening their distinct experiences.[1] [2]
+
+The attachment includes all SQL, route code, workers, threshold formulas, relay tables, message flow, safety classifier, tests, and production acceptance requirements.
+
+### References
+
+[1] [United States Holocaust Memorial Museum — What Groups of People did the Nazis Target?](https://encyclopedia.ushmm.org/content/en/article/what-groups-of-people-did-the-nazis-target)
+
+[2] [United States Holocaust Memorial Museum — The Nazi Persecution of Black People in Germany](https://encyclopedia.ushmm.org/content/en/article/afro-germans-during-the-holocaust)

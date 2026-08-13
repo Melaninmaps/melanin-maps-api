@@ -1,0 +1,283 @@
+# Replit Patch — Voluntary, Changeable Sex, Gender, Pronoun, and Age Context
+
+**Scope:** Add private member context for age-appropriate delivery, medically relevant opt-in context, respectful language, and voluntary safety feedback. This patch must not expose a member’s sex, gender, age, or pronouns on public profiles; infer them; use them for advertising/partnerships; or use them in creator/business matching.
+
+> **Data minimization rule:** Store only the member’s explicit selections. Do not infer sex, gender, pronouns, pregnancy status, medical status, culture, ethnicity, or minority status from a name, photo, voice, language, location, searches, behavior, or social graph.
+
+---
+
+## 1. Product terms and user-facing choices
+
+Use **two separate optional questions**, because they serve different purposes:
+
+| Private field | Exact member-facing label | Allowed choices | When it may be used |
+| --- | --- | --- | --- |
+| Sex assigned at birth | `Sex assigned at birth (optional)` | `Female`, `Male`, `Intersex`, `Prefer not to say` | Only for an opted-in medically relevant response where it matters, such as reproductive anatomy or population-health context. |
+| Gender identity | `Gender identity (optional)` | `Woman`, `Man`, `Nonbinary`, `Another identity`, `Prefer not to say` | Respectful language and a separate voluntary safety-feedback aggregation selection. |
+| Pronouns | `Pronouns (optional)` | `She/her`, `He/him`, `They/them`, `Use my name`, `Custom`, `Prefer not to say` | Writing tone only, if the member enables it. |
+| Age range | `Age range` | `13–15`, `16–17`, `18+` | Private age-appropriate delivery policy only. |
+
+Do not require a free-text gender value in release 1. If `Another identity` is selected, store the label only. A custom pronoun string is optional, encrypted at rest, maximum 80 characters, and is never used outside member-facing language.
+
+> **Private by default:** These values do not appear on public profiles, community posts, business pages, Circles, creator cards, business-owner dashboards, notifications, exports, or analytics.
+
+---
+
+## 2. Exact additive SQL migration
+
+**New migration:** `artifacts/api-server/src/lib/migrations/20260813_member_identity_context_v1.sql`
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS user_identity_context (
+  user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+
+  -- Explicit private choices only. NULL means not supplied.
+  sex_assigned_at_birth VARCHAR(24)
+    CHECK (sex_assigned_at_birth IN ('female','male','intersex','prefer_not_to_say')),
+  gender_identity VARCHAR(24)
+    CHECK (gender_identity IN ('woman','man','nonbinary','another_identity','prefer_not_to_say')),
+  pronoun_set VARCHAR(24)
+    CHECK (pronoun_set IN ('she_her','he_him','they_them','use_my_name','custom','prefer_not_to_say')),
+  custom_pronouns_ciphertext TEXT,
+  custom_pronouns_key_version VARCHAR(32),
+
+  -- Separate purpose limitations. Default false is mandatory.
+  allow_medically_relevant_context BOOLEAN NOT NULL DEFAULT FALSE,
+  allow_pronoun_aware_language BOOLEAN NOT NULL DEFAULT FALSE,
+
+  -- Member may update at any time. Do not enforce a cooldown.
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  version INTEGER NOT NULL DEFAULT 1,
+
+  CONSTRAINT custom_pronouns_requires_custom_set CHECK (
+    (pronoun_set = 'custom' AND custom_pronouns_ciphertext IS NOT NULL)
+    OR (pronoun_set <> 'custom' AND custom_pronouns_ciphertext IS NULL)
+  )
+);
+
+-- Append-only audit: privileged privacy staff only. Do not store plaintext custom
+-- pronouns or raw previous values here; store whether fields changed.
+CREATE TABLE IF NOT EXISTS user_identity_context_audit (
+  id VARCHAR(100) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  actor_user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+  changed_fields JSONB NOT NULL,
+  reason VARCHAR(40) NOT NULL CHECK (reason IN ('member_update','privacy_support','account_deletion')),
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS user_identity_context_audit_user_idx
+  ON user_identity_context_audit(user_id, occurred_at DESC);
+
+-- This is separate from user_identity_context. A safety reviewer may answer it
+-- for a single review only; it must not mutate profile gender identity.
+ALTER TABLE business_safety_experiences
+  ADD COLUMN IF NOT EXISTS voluntary_gender_context VARCHAR(24)
+    CHECK (voluntary_gender_context IN ('woman','man','nonbinary','another_identity','prefer_not_to_say')),
+  ADD COLUMN IF NOT EXISTS gender_context_consent_at TIMESTAMPTZ;
+
+-- Never permit public/API roles to read identity rows directly.
+REVOKE ALL ON user_identity_context FROM PUBLIC;
+REVOKE ALL ON user_identity_context_audit FROM PUBLIC;
+```
+
+**Important:** The existing `user_age_assurance` table remains the only age-band storage. Do not add `date_of_birth` to public DTOs, even though a legacy `users.date_of_birth` column exists. The new identity table must not be joined into broad `users`/profile queries.
+
+---
+
+## 3. Drizzle schema
+
+**New file:** `lib/db/src/schema/user-identity-context.ts`
+
+```ts
+import { relations } from 'drizzle-orm';
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { users } from './auth';
+
+export const userIdentityContext = pgTable('user_identity_context', {
+  userId: varchar('user_id', { length: 255 }).primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  sexAssignedAtBirth: varchar('sex_assigned_at_birth', { length: 24 }),
+  genderIdentity: varchar('gender_identity', { length: 24 }),
+  pronounSet: varchar('pronoun_set', { length: 24 }),
+  customPronounsCiphertext: text('custom_pronouns_ciphertext'),
+  customPronounsKeyVersion: varchar('custom_pronouns_key_version', { length: 32 }),
+  allowMedicallyRelevantContext: boolean('allow_medically_relevant_context').notNull().default(false),
+  allowPronounAwareLanguage: boolean('allow_pronoun_aware_language').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  version: integer('version').notNull().default(1),
+});
+
+export const userIdentityContextAudit = pgTable('user_identity_context_audit', {
+  id: varchar('id', { length: 100 }).primaryKey(),
+  userId: varchar('user_id', { length: 255 }).notNull().references(() => users.id, { onDelete: 'cascade' }),
+  actorUserId: varchar('actor_user_id', { length: 255 }).references(() => users.id, { onDelete: 'set null' }),
+  changedFields: jsonb('changed_fields').notNull(),
+  reason: varchar('reason', { length: 40 }).notNull(),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('user_identity_context_audit_user_idx').on(table.userId, table.occurredAt)]);
+
+export const userIdentityContextRelations = relations(userIdentityContext, ({ one }) => ({
+  user: one(users, { fields: [userIdentityContext.userId], references: [users.id] }),
+}));
+```
+
+Export these from `lib/db/src/schema/index.ts`. Do not add the identity context to generic `User` objects or the public profile schema.
+
+---
+
+## 4. Private API and update behavior
+
+**New router:** `artifacts/api-server/src/routes/identity-context.ts`
+
+```ts
+const IdentityPatch = z.object({
+  sexAssignedAtBirth: z.enum(['female', 'male', 'intersex', 'prefer_not_to_say']).nullable().optional(),
+  genderIdentity: z.enum(['woman', 'man', 'nonbinary', 'another_identity', 'prefer_not_to_say']).nullable().optional(),
+  pronounSet: z.enum(['she_her', 'he_him', 'they_them', 'use_my_name', 'custom', 'prefer_not_to_say']).nullable().optional(),
+  customPronouns: z.string().trim().min(1).max(80).nullable().optional(),
+  allowMedicallyRelevantContext: z.boolean().optional(),
+  allowPronounAwareLanguage: z.boolean().optional(),
+  expectedVersion: z.number().int().positive(),
+}).superRefine((value, ctx) => {
+  if (value.pronounSet === 'custom' && !value.customPronouns) {
+    ctx.addIssue({ code: 'custom', path: ['customPronouns'], message: 'Custom pronouns are required when custom is selected.' });
+  }
+  if (value.pronounSet !== 'custom' && value.customPronouns) {
+    ctx.addIssue({ code: 'custom', path: ['customPronouns'], message: 'Custom pronouns may be stored only with custom selection.' });
+  }
+});
+
+router.get('/me/identity-context', requireAuth, async (req, res) => {
+  const context = await loadIdentityContext(req.user.id);
+  // Decrypt custom pronouns only for the same authenticated member.
+  return res.json(toPrivateMemberIdentityDto(context));
+});
+
+router.put('/me/identity-context', requireAuth, async (req, res) => {
+  const patch = IdentityPatch.parse(req.body);
+  await db.transaction(async (tx) => {
+    const current = await loadIdentityContextForUpdate(tx, req.user.id);
+    if (current && current.version !== patch.expectedVersion) {
+      throw new HttpError(409, 'IDENTITY_CONTEXT_CONFLICT');
+    }
+    const next = normalizeIdentityPatch(patch, current);
+    await upsertIdentityContext(tx, req.user.id, next); // increments version
+    await tx.insert(userIdentityContextAudit).values({
+      id: crypto.randomUUID(),
+      userId: req.user.id,
+      actorUserId: req.user.id,
+      changedFields: changedFieldNames(current, next),
+      reason: 'member_update',
+    });
+  });
+  return res.json({ ok: true });
+});
+```
+
+Members can change their selections at any time. The server must invalidate any in-memory Kinfolk profile context for that member immediately. Audit records show only field names, never values. A privacy support change must require a restricted role and include a reason.
+
+---
+
+## 5. Kinfolk minimum-use policy
+
+**New file:** `artifacts/api-server/src/kinfolk/member-context.ts`
+
+```ts
+export type KinfolkMemberContext = {
+  audienceBand: 'unknown' | '13_15' | '16_17' | '18_plus';
+  pronounMode: 'none' | 'she_her' | 'he_him' | 'they_them' | 'use_name' | 'custom';
+  reproductiveContext?: 'female' | 'male' | 'intersex';
+};
+
+export function buildKinfolkMemberContext(input: {
+  ageBand: KinfolkMemberContext['audienceBand'];
+  identity: IdentityContext | null;
+  intentClass: string;
+  topic: string;
+}): KinfolkMemberContext {
+  const out: KinfolkMemberContext = { audienceBand: input.ageBand, pronounMode: 'none' };
+  if (input.identity?.allowPronounAwareLanguage) out.pronounMode = mapPronouns(input.identity);
+
+  // Only use explicit sex-at-birth context when BOTH consent and request-specific
+  // medical relevance are present. Never use it for ranking, ads, culture, safety,
+  // partnerships, business results, or ordinary conversation.
+  if (
+    input.identity?.allowMedicallyRelevantContext &&
+    input.intentClass === 'medical' &&
+    isReproductiveAnatomyRelevant(input.topic) &&
+    ['female', 'male', 'intersex'].includes(input.identity.sexAssignedAtBirth ?? '')
+  ) {
+    out.reproductiveContext = input.identity.sexAssignedAtBirth as KinfolkMemberContext['reproductiveContext'];
+  }
+  return out;
+}
+```
+
+Kinfolk may say, **“If you want, I can explain how this can affect people with the reproductive anatomy you selected in your private settings.”** It must not announce the stored selection, imply a diagnosis, ask the person to defend their identity, use sex/gender to choose political/cultural opinions, or change factual consensus/ranking.
+
+For Black maternal health, sex assigned at birth is not a substitute for the topic’s population-health evidence. The response remains grounded in validated Black maternal health evidence and emphasizes that care needs vary by individual. It uses private reproductive context only if the member explicitly opted in and asks a question where anatomy is relevant.
+
+---
+
+## 6. Voluntary gender safety feedback
+
+When a member submits a safety experience, show a separate optional question:
+
+> **Optional: If you want this to be counted in a privacy-protected safety summary, how do you describe your gender for this experience?**
+
+Choices: Woman, Man, Nonbinary, Another identity, Prefer not to say, or Skip.
+
+Do not prefill this from profile gender identity. Do not ask sex assigned at birth in a nightlife/business safety flow. Store only the voluntary selection on the safety review event with the consent timestamp. A published summary such as **“About 100 women who chose to share a gender context reported feeling safe here”** is allowed only if all controls pass:
+
+1. At least `k=10` distinct eligible members selected `woman` within a fixed, closed window.
+2. A two-dimensional count (gender context plus business) passes the same threshold after contribution bounding.
+3. The displayed result uses persisted noise, delay, and rounding.
+4. The page also displays the total voluntary-feedback context, date window, and the statement: **“Community-reported experiences are not a guarantee of safety.”**
+5. No split by age, race, ethnicity, sexual orientation, disability, neighborhood, follower graph, Circle, time of night, or other additional dimension is released.
+
+Never say “100 women were safe.” Say **“About 100 women who chose to share feedback reported feeling safe.”** This reports a voluntary experience; it does not infer sex/gender, promise safety, or exclude others.
+
+---
+
+## 7. UI placement and copy
+
+### Account setup / Profile → Privacy and personalization
+
+Use an optional card after age range; never block basic use:
+
+> **Private context for safer, more relevant information**  
+> These optional choices are private. They are not shown on your profile or shared with businesses, creators, circles, or other members. You can change them anytime.
+
+Place four fields in this order: age range, sex assigned at birth (optional), gender identity (optional), pronouns (optional), then the two purpose toggles with clear descriptions.
+
+The `allowMedicallyRelevantContext` toggle copy:
+
+> **Use my private sex-assigned-at-birth selection only when I ask a medically relevant question.**  
+> We will not use it for recommendations, ads, business matching, or public profile information.
+
+The `allowPronounAwareLanguage` toggle copy:
+
+> **Use my pronouns in Kinfolk’s language when appropriate.**
+
+### Prohibited UI
+
+Do not display these fields on Profile public view, business pages, community cards, safety report cards, creator cards, Circle member lists, events, marketplace, or lead forms. Do not make a business owner ask a member for demographic context.
+
+---
+
+## 8. Required tests
+
+1. An unauthenticated request to either identity endpoint returns `401`; another authenticated member returns `403`/cannot query another user’s context.
+2. Public profile, business page, community feed, Circle, creator card, and business owner dashboard response JSON contain no identity-context fields.
+3. Member can select, update, clear, and reselect all optional fields; version conflict returns `409`; Kinfolk cache invalidates after update.
+4. Custom pronouns are encrypted; plaintext never appears in logs/audit table/analytics/Kinfolk history.
+5. Kinfolk receives reproductive context only for opted-in, medical, reproductive-anatomy-relevant query; it receives none for cultural, business, safety, partnership, or generic health queries.
+6. Black maternal health remains evidence-grounded across all member contexts and does not assume pregnancy, sex, or gender.
+7. A member can provide `woman` in one safety review without setting any profile gender; this safety event does not update their profile.
+8. Nine voluntary women-context safety reports are suppressed; ten are delayed/noised/rounded; no `0` or raw count appears.
+9. A safety summary includes the voluntary-feedback and non-guarantee labels.
+10. Sensitive fields cannot be selected in creator/business matching, impact reporting, Library growth, Kinfolk prompt analytics, or exports.
+11. The final 30-user canary passes after this feature is added; its results must prove no identity-context endpoint causes pool waits, 429s, or 5xx responses.
