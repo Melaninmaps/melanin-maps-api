@@ -29,7 +29,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { Feather } from "@expo/vector-icons";
-import { useColorScheme } from "../hooks/useColorScheme";
+import { useColors } from "@/hooks/useColors";
 
 const MAX_CHARS = 1000;
 
@@ -54,20 +54,10 @@ export default function MuralContributionScreen() {
     siteType?: string;
   }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const colors = useColors();
 
   const cfg = getSiteConfig(siteType ?? "landmark");
   const ACCENT = cfg.accent;
-
-  const colors = {
-    background: isDark ? "#0F0F0F" : "#FFFFFF",
-    card:       isDark ? "#1A1A1A" : "#F9FAFB",
-    border:     isDark ? "#2A2A2A" : "#E5E7EB",
-    foreground: isDark ? "#F9FAFB" : "#111827",
-    muted:      isDark ? "#9CA3AF" : "#6B7280",
-    input:      isDark ? "#1F1F1F" : "#FFFFFF",
-  };
 
   const [commentText, setCommentText]     = useState("");
   const [videoUrl, setVideoUrl]           = useState("");
@@ -242,7 +232,7 @@ export default function MuralContributionScreen() {
         <View style={[s.successCard, { backgroundColor: colors.card, borderColor: `${ACCENT}30` }]}>
           <View style={s.successIcon}><Feather name="check-circle" size={40} color={ACCENT} /></View>
           <Text style={[s.successTitle, { color: colors.foreground }]}>Memory submitted!</Text>
-          <Text style={[s.successBody, { color: colors.muted }]}>
+          <Text style={[s.successBody, { color: colors.mutedForeground }]}>
             Your memory is under review and will appear on{" "}
             <Text style={{ fontWeight: "700" }}>{siteName}</Text>{" "}
             once approved. Thank you for contributing to the community's story.
@@ -279,11 +269,11 @@ export default function MuralContributionScreen() {
 
         <Text style={[s.title, { color: colors.foreground }]} numberOfLines={2}>{siteName}</Text>
         {siteAddress ? (
-          <Text style={[s.subtitle, { color: colors.muted }]}>{siteAddress}</Text>
+          <Text style={[s.subtitle, { color: colors.mutedForeground }]}>{siteAddress}</Text>
         ) : null}
 
         {/* ── Photo section ── */}
-        <Text style={[s.sectionLabel, { color: colors.muted }]}>Photo</Text>
+        <Text style={[s.sectionLabel, { color: colors.mutedForeground }]}>Photo</Text>
         {photoUri ? (
           <View style={s.photoPreviewWrap}>
             <Image source={{ uri: photoUri }} style={s.photoPreview} resizeMode="cover" />
@@ -292,8 +282,8 @@ export default function MuralContributionScreen() {
               onPress={showPhotoPicker}
               disabled={isBusy}
             >
-              <Feather name="refresh-cw" size={13} color={colors.muted} />
-              <Text style={[s.changePhotoBtnTxt, { color: colors.muted }]}>Change photo</Text>
+              <Feather name="refresh-cw" size={13} color={colors.mutedForeground} />
+              <Text style={[s.changePhotoBtnTxt, { color: colors.mutedForeground }]}>Change photo</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -305,42 +295,42 @@ export default function MuralContributionScreen() {
           >
             <Feather name="camera" size={22} color={ACCENT} />
             <Text style={[s.photoPickerTxt, { color: ACCENT }]}>Take or choose a photo</Text>
-            <Text style={[s.photoPickerSub, { color: colors.muted }]}>Optional — add a photo from your visit</Text>
+            <Text style={[s.photoPickerSub, { color: colors.mutedForeground }]}>Optional — add a photo from your visit</Text>
           </TouchableOpacity>
         )}
 
         {/* ── Memory text ── */}
-        <Text style={[s.sectionLabel, { color: colors.muted, marginTop: 20 }]}>
-          Your memory <Text style={[s.optional, { color: colors.muted }]}>(optional)</Text>
+        <Text style={[s.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
+          Your memory <Text style={[s.optional, { color: colors.mutedForeground }]}>(optional)</Text>
         </Text>
-        <Text style={[s.helpText, { color: colors.muted }]}>{cfg.promptText}</Text>
+        <Text style={[s.helpText, { color: colors.mutedForeground }]}>{cfg.promptText}</Text>
         <TextInput
           style={[s.textArea, { backgroundColor: colors.input, borderColor: colors.border, color: colors.foreground }]}
           multiline
           numberOfLines={5}
           maxLength={MAX_CHARS}
           placeholder="Share your story…"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.mutedForeground}
           value={commentText}
           onChangeText={setCommentText}
           textAlignVertical="top"
           editable={!isBusy}
         />
-        <Text style={[s.charCount, { color: commentText.length > MAX_CHARS * 0.9 ? "#EF4444" : colors.muted }]}>
+        <Text style={[s.charCount, { color: commentText.length > MAX_CHARS * 0.9 ? "#EF4444" : colors.mutedForeground }]}>
           {commentText.length}/{MAX_CHARS}
         </Text>
 
         {/* ── Video link ── */}
-        <Text style={[s.sectionLabel, { color: colors.muted, marginTop: 20 }]}>
-          Video link <Text style={[s.optional, { color: colors.muted }]}>(optional)</Text>
+        <Text style={[s.sectionLabel, { color: colors.mutedForeground, marginTop: 20 }]}>
+          Video link <Text style={[s.optional, { color: colors.mutedForeground }]}>(optional)</Text>
         </Text>
-        <Text style={[s.helpText, { color: colors.muted }]}>
+        <Text style={[s.helpText, { color: colors.mutedForeground }]}>
           YouTube, Instagram Reel, TikTok, or any public video URL.
         </Text>
         <TextInput
           style={[s.urlInput, { backgroundColor: colors.input, borderColor: colors.border, color: colors.foreground }]}
           placeholder="https://youtube.com/watch?v=..."
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colors.mutedForeground}
           value={videoUrl}
           onChangeText={setVideoUrl}
           autoCapitalize="none"
@@ -349,7 +339,7 @@ export default function MuralContributionScreen() {
           editable={!isBusy}
         />
 
-        <Text style={[s.modNote, { color: colors.muted, borderColor: colors.border }]}>
+        <Text style={[s.modNote, { color: colors.mutedForeground, borderColor: colors.border }]}>
           Memories are reviewed by the community before appearing publicly.
         </Text>
 
