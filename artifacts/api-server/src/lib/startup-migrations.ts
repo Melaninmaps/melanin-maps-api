@@ -10,6 +10,10 @@
 import { randomUUID } from "crypto";
 import { COVERAGE_EXPANSION, type SeedBiz } from "./seeds/coverage-expansion.js";
 import { LAUNDRY_SEED_V1, type LaundrySeedBiz } from "./seeds/laundry-seed-v1.js";
+import { MURALS_DIASPORA_V1, type MuralSite } from "./seeds/murals-diaspora-v1.js";
+import { MONUMENTS_CULTURAL_V1, type CulturalTourSite } from "./seeds/monuments-cultural-v1.js";
+import { FOOD_TRUCKS_V1 } from "./seeds/food-trucks-v1.js";
+import { DISPENSARIES_V1 } from "./seeds/dispensaries-v1.js";
 import { GAP_COVERAGE_V2 } from "./seeds/gap-coverage-v2.js";
 import { FINAL_MICRO_SEED } from "./seeds/final-micro-seed.js";
 import { LA_DIASPORA_V1 } from "./seeds/la-diaspora-v1.js";
@@ -3353,6 +3357,14 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["kinfolk cultural context v1", () => ensureKinfolkCulturalContextV1(log, warn)],
     // ── Minority-owned laundry businesses — every covered city ─────────────────
     ["laundry businesses v1",    () => ensureLaundryBusinesses(log, warn)],
+    // ── Diaspora murals — all cities except Philadelphia (already seeded) ───────
+    ["murals diaspora v1",       () => ensureMuralsBatch(log, warn)],
+    // ── Monuments, museums, spiritual sites — all cities ───────────────────────
+    ["monuments cultural v1",    () => ensureCulturalTourSiteBatch(log, warn)],
+    // ── Minority-owned food trucks — all cities ────────────────────────────────
+    ["food trucks v1",           () => ensureBusinessBatch("food-trucks-v1", FOOD_TRUCKS_V1, log, warn)],
+    // ── Minority-owned dispensaries — legal-cannabis jurisdictions only ─────────
+    ["dispensaries v1",          () => ensureBusinessBatch("dispensaries-v1", DISPENSARIES_V1, log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -7472,6 +7484,150 @@ async function ensurePhiladelphiaMurals(
     log(`Philadelphia murals: ${inserted} inserted, ${skipped} already present (${murals.length} total)`);
   } catch (err: unknown) {
     warn(`ensurePhiladelphiaMurals failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Generic tour-site batch insert for murals ─────────────────────────────────
+// Dedup by LOWER(name)|LOWER(city). site_type always 'mural'.
+async function ensureMuralsBatch(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city) AS k FROM tour_cultural_sites`,
+    );
+    const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0; let skipped = 0;
+    for (const m of MURALS_DIASPORA_V1) {
+      const key = `${m.name.toLowerCase()}|${m.city.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO tour_cultural_sites
+             (name, city, state, address, description, latitude, longitude,
+              site_type, is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,'mural',true,true,NOW(),NOW())`,
+          [m.name, m.city, m.state, m.address, m.description, m.lat, m.lng],
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  murals-diaspora-v1: failed "${m.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Murals diaspora v1: ${inserted} inserted, ${skipped} already present (${MURALS_DIASPORA_V1.length} total)`);
+  } catch (err: unknown) {
+    warn(`ensureMuralsBatch failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Generic tour-site batch insert for monuments/museums/spiritual ────────────
+// Dedup by LOWER(name)|LOWER(city). Uses each site's own siteType field.
+async function ensureCulturalTourSiteBatch(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city) AS k FROM tour_cultural_sites`,
+    );
+    const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
+    let inserted = 0; let skipped = 0;
+    for (const s of MONUMENTS_CULTURAL_V1) {
+      const key = `${s.name.toLowerCase()}|${s.city.toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO tour_cultural_sites
+             (name, city, state, address, description, latitude, longitude,
+              site_type, is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true,true,NOW(),NOW())`,
+          [s.name, s.city, s.state, s.address, s.description, s.lat, s.lng, s.siteType],
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  monuments-cultural-v1: failed "${s.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`Monuments cultural v1: ${inserted} inserted, ${skipped} already present (${MONUMENTS_CULTURAL_V1.length} total)`);
+  } catch (err: unknown) {
+    warn(`ensureCulturalTourSiteBatch failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Generic business batch insert for food trucks, dispensaries, etc. ─────────
+// Uses the full ensureDirectoryBusinesses pattern (ownershipDesignations supported).
+// Dedup by LOWER(name)|LOWER(city)|LOWER(state).
+async function ensureBusinessBatch(
+  label: string,
+  businesses: LaundrySeedBiz[],
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(name)||'|'||LOWER(city)||'|'||LOWER(COALESCE(state,'')) AS k FROM businesses`,
+    );
+    const existing = new Set<string>(r.rows.map((row: { k: string }) => row.k));
+    const BLACK_DESIGNATIONS = [
+      "Black / African American-Owned", "African-Owned", "West African-Owned",
+      "Nigerian-Owned", "Ghanaian-Owned", "Haitian-Owned",
+      "Caribbean / West Indian-Owned", "Afro-Caribbean-Owned", "Afro-Latino-Owned",
+    ];
+    let inserted = 0; let skipped = 0;
+    for (const b of businesses) {
+      const key = `${b.name.toLowerCase()}|${b.city.toLowerCase()}|${(b.state ?? "").toLowerCase()}`;
+      if (existing.has(key)) { skipped++; continue; }
+      try {
+        const isBlack = (b.ownershipDesignations ?? []).some((d: string) => BLACK_DESIGNATIONS.includes(d));
+        await pool.query(
+          `INSERT INTO businesses
+            (id, name, category, subcategory, address, city, state, country,
+             description, ownership_designations, black_owned,
+             latitude, longitude, website,
+             listing_status, profile_status, status,
+             rating, review_count, verified, featured,
+             confidence_score, tags, photos, pending_photos, videos,
+             trust_badges, flag_count, flag_status, hidden_gem_nominations,
+             marketplace_tier, business_status, marketplace_fee_locked,
+             promotion_eligible, feedback_opt_in, show_availability,
+             community_audience_type, is_reference_only,
+             created_at, updated_at)
+           VALUES
+            ($1,$2,$3,$4,$5,$6,$7,$8,
+             $9,$10,$11,
+             $12,$13,$14,
+             'live_unclaimed','community_listed','active',
+             0,0,false,false,
+             0,'[]','[]','[]','[]',
+             '[]',0,'none',0,
+             'free','community',false,
+             true,false,false,
+             'unknown',false,
+             NOW(),NOW())`,
+          [
+            randomUUID(),
+            b.name, b.category, b.subcategory,
+            b.address ?? `${b.city}, ${b.state}`,
+            b.city, b.state ?? null, b.country ?? "USA",
+            b.description,
+            JSON.stringify(b.ownershipDesignations ?? []),
+            isBlack,
+            String(b.lat), String(b.lng),
+            b.website ?? null,
+          ],
+        );
+        existing.add(key);
+        inserted++;
+      } catch (err: unknown) {
+        warn(`  ${label}: failed "${b.name}": ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    log(`${label}: ${inserted} inserted, ${skipped} already present (${businesses.length} total)`);
+  } catch (err: unknown) {
+    warn(`${label} seed failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
