@@ -2436,38 +2436,6 @@ router.get("/admin/business-enrichment/coverage", async (req: Request, res: Resp
   }
 });
 
-// ── TEMPORARY: one-shot business CSV export for duplicate audit ───────────────
-// Remove after CSV is downloaded. Auth: x-cron-secret header.
-router.get("/admin/export/businesses-csv", async (req: Request, res: Response) => {
-  const secret = (req.headers["x-cron-secret"] as string) ?? "";
-  if (!secret || secret !== process.env.CRON_SECRET) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-  try {
-    const { rows } = await pool.query(`
-      SELECT
-        id, name, city, state,
-        coalesce(listing_status, 'live_unclaimed') AS listing_status,
-        status, category, subcategory,
-        address, website, phone,
-        ROUND(latitude::numeric, 6)  AS latitude,
-        ROUND(longitude::numeric, 6) AS longitude,
-        created_at::date AS created_date
-      FROM businesses
-      WHERE status = 'active'
-      ORDER BY lower(city), lower(name)
-    `);
-    const headers = ["id","name","city","state","listing_status","status","category","subcategory","address","website","phone","latitude","longitude","created_date"];
-    const escape = (v: unknown) => v == null ? "" : `"${String(v).replace(/"/g, '""')}"`;
-    const csv = [headers.join(","), ...rows.map(r => headers.map(h => escape(r[h as keyof typeof r])).join(","))].join("\n");
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="mwm_businesses_${new Date().toISOString().slice(0,10)}.csv"`);
-    return res.send(csv);
-  } catch (err) {
-    return res.status(500).json({ error: String(err) });
-  }
-});
-
 export default router;
 
 
