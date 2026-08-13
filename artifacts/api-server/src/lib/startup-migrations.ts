@@ -8250,11 +8250,13 @@ async function ensureAlliedPartnerApplications(
   warn: (msg: string) => void,
 ): Promise<void> {
   try {
+    // No FK constraints — same pattern as other tables in this codebase
+    // (Railway Postgres rejects FK constraints in some configurations)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS allied_partner_applications (
         id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        business_id               UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
-        submitted_by_user_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+        business_id               UUID NOT NULL,
+        submitted_by_user_id      UUID,
         stage                     VARCHAR(30) NOT NULL DEFAULT 'applied'
                                     CHECK (stage IN ('applied','under_review','agreement_pending','active_partner','rejected','withdrawn')),
         contact_name              TEXT NOT NULL,
@@ -8265,7 +8267,7 @@ async function ensureAlliedPartnerApplications(
         additional_info           TEXT,
         community_score_at_apply  INTEGER NOT NULL DEFAULT 0,
         admin_notes               TEXT,
-        reviewed_by_admin_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_by_admin_id      UUID,
         stage_advanced_at         TIMESTAMPTZ,
         rejected_at               TIMESTAMPTZ,
         rejection_reason          TEXT,
