@@ -84,7 +84,7 @@ async function getPlaceDetails(placeId) {
 
 // ── Confidence scoring ────────────────────────────────────────────────────────
 function calcConfidence(dbName, dbCity, dbState, placeName, placeAddr) {
-  const norm = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+  const norm = s => (s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
   const dbN = norm(dbName), pN = norm(placeName), pA = norm(placeAddr);
   const cityN = norm(dbCity), stateN = norm(dbState);
   const nameMatch = pN === dbN || pN.includes(dbN) || dbN.includes(pN);

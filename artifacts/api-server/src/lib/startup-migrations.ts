@@ -3274,10 +3274,26 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS enrichment_note TEXT,
       ADD COLUMN IF NOT EXISTS enrichment_source VARCHAR(50)`,
   },
-  // ── Widen businesses.hours to TEXT — full weekly schedule exceeds varchar(255) ─
+  // ── Widen businesses text columns — URLs/addresses can exceed varchar(255) ─────
   {
     name: "businesses_hours_text_v1",
     sql: `ALTER TABLE businesses ALTER COLUMN hours TYPE TEXT`,
+  },
+  {
+    name: "businesses_url_cols_text_v1",
+    sql: `ALTER TABLE businesses
+      ALTER COLUMN website TYPE TEXT,
+      ALTER COLUMN facebook TYPE TEXT,
+      ALTER COLUMN instagram TYPE TEXT,
+      ALTER COLUMN tiktok TYPE TEXT,
+      ALTER COLUMN twitter TYPE TEXT,
+      ALTER COLUMN youtube TYPE TEXT,
+      ALTER COLUMN pinterest TYPE TEXT,
+      ALTER COLUMN address TYPE TEXT,
+      ALTER COLUMN business_tagline TYPE TEXT,
+      ALTER COLUMN hidden_gem_tagline TYPE TEXT,
+      ALTER COLUMN service_area TYPE TEXT,
+      ALTER COLUMN name TYPE TEXT`,
   },
   // ── Recurring events: active_until for auto-expiry (#121) ──────────────────
   // Events with a known end date auto-hide from the map when that date passes.
