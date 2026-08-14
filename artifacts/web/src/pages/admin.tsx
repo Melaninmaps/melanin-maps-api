@@ -174,7 +174,7 @@ type MetricsData = {
   };
 };
 
-type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib" | "library-growth";
+type Tab = "waitlist" | "leaderboard" | "metrics" | "users" | "businesses" | "members" | "reviews" | "reports" | "challenges" | "category-waitlist" | "global-recs" | "health" | "cities" | "feedback" | "knowledge-contrib" | "library-growth" | "biz-review";
 
 type ChecklistSection = {
   pre_launch: Record<string, boolean>;
@@ -1087,6 +1087,7 @@ export default function Admin() {
     { id: "feedback", label: "Beta Feedback", icon: <MessageSquarePlus className="w-4 h-4" />, badge: undefined },
     { id: "knowledge-contrib", label: "Knowledge Contributions", icon: <BookOpen className="w-4 h-4" /> },
     { id: "library-growth", label: "Library Growth", icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "biz-review", label: "Business Review Queue", icon: <Store className="w-4 h-4" /> },
   ];
 
   return (
@@ -3529,6 +3530,17 @@ export default function Admin() {
       {tab === "library-growth" && (
         <div className="p-6">
           <LibraryGrowthTab />
+        </div>
+      )}
+
+      {tab === "biz-review" && (
+        <div className="p-6">
+          <iframe
+            src="/admin/business-review"
+            className="w-full border-0"
+            style={{ height: "calc(100vh - 200px)" }}
+            title="Business Review Queue"
+          />
         </div>
       )}
 

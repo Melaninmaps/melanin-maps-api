@@ -14,6 +14,7 @@ import { ENDORSEMENT_TAGS } from "@workspace/db";
 import { ENDORSEMENT_TAG_VARIANTS } from "@workspace/db";
 import { THE_REAL_TAGS } from "@workspace/db";
 import { createSession } from "../lib/auth";
+import { dedupeKey as _dedupeKey, normalizeText as _normalizeText } from "../lib/business-dedup.js";
 
 const router: IRouter = Router();
 
@@ -2559,8 +2560,7 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
 
     if (action === "approve") {
       // Create the business in the active table
-      const { dedupeKey, normalizeText } = await import("../lib/business-dedup.js");
-      const key = dedupeKey({
+      const key = _dedupeKey({
         name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
         address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
       });
@@ -2575,7 +2575,7 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
           item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
           item.candidate_website ?? "", item.candidate_phone ?? "",
           item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
-          item.candidate_source_provider ?? "", key, normalizeText(item.candidate_name),
+          item.candidate_source_provider ?? "", key, _normalizeText(item.candidate_name),
         ],
       );
     } else if (action === "merge" && item.matched_business_id) {
@@ -2583,8 +2583,7 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
       // (no new business row created — matched is canonical)
     } else if (action === "keep_both") {
       // Mark both as independent — approve the candidate
-      const { dedupeKey, normalizeText } = await import("../lib/business-dedup.js");
-      const key = dedupeKey({
+      const key = _dedupeKey({
         name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
         address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
       });
@@ -2599,7 +2598,7 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
           item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
           item.candidate_website ?? "", item.candidate_phone ?? "",
           item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
-          item.candidate_source_provider ?? "", key, normalizeText(item.candidate_name),
+          item.candidate_source_provider ?? "", key, _normalizeText(item.candidate_name),
         ],
       );
     }
