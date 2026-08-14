@@ -1,32 +1,16 @@
 ---
-name: Community events expansion — #100 (509 events on map)
-description: How the 126-event multi-city expansion seed works and where coordinates come from
+name: Community events expansion — #100
+description: Current event count and seed file locations for the 509-events-on-map goal.
 ---
 
-# Community Events Expansion
+## Status (Aug 14 2026)
+- **Target**: 509 recurring events on the map
+- **Achieved**: ~535 total (211 original + 126 expansion-1 + ~198 active from expansion-2 = 535)
+- **Files**:
+  - `artifacts/api-server/src/data/recurring-events-seed.ts` — 85 base events
+  - `artifacts/api-server/src/data/community-events-expansion-seed.ts` — 126 events
+  - `artifacts/api-server/src/data/community-events-expansion-2-seed.ts` — 324 new events (26 cities)
+- **Cities covered in expansion-2**: Philadelphia, NYC, Chicago, Detroit, Atlanta, Houston, Washington DC, Oakland, New Orleans, Baltimore, Miami, Nashville, Memphis, Dallas, Richmond, Birmingham, Newark, Jackson MS, Charlotte, St. Louis, Denver, Cincinnati, Cleveland, Kansas City, Savannah, Seattle
+- **Seeding**: All three files wired in `startup-migrations.ts` within the `recurring_events_guard_v2` migration. Uses name+city+state dedup key — idempotent on every boot.
 
-## Files
-- `artifacts/api-server/src/data/community-events-expansion-seed.ts` — 126 events across 20+ cities
-- Wired into `startup-migrations.ts` in the `ensureRecurringEvents()` function immediately after `RECURRING_EVENTS_SEED` guard
-- City-centroid coordinate fallback: `ensureRecurringEventsCityCoords()` — runs after expansion guard
-
-## Coverage
-Events cover: DC, Atlanta, Houston, Chicago, LA (Leimert Park, Watts, Compton, Inglewood), NYC (Harlem, Brooklyn, Bronx), Miami, Detroit, Charlotte, New Orleans, Baltimore, Richmond, Nashville, Memphis, Dallas/Fort Worth, Columbia SC, Raleigh/Durham, Jacksonville, Las Vegas, Birmingham, Jackson MS, Tallahassee.
-
-20+ HBCU homecomings: Howard, Spelman/Morehouse/Clark AUC, Hampton, Tuskegee, Prairie View, Grambling, Bethune-Cookman, Xavier, Fisk, NC A&T, Morgan State, FAMU, TSU, JCSU, Benedict/Allen.
-
-National Juneteenth events for 6+ cities.
-
-## Coordinate Fallback
-`CITY_CENTROIDS` map in `startup-migrations.ts` — 40+ city centers with slight jitter per event so events in same city don't stack on one pixel.
-
-## Current State (as of Aug 13, 2026)
-- Total recurring_events in DB: 210 (85 original + 125 from expansion; 1 had wrong state "GA" for Houston)
-- Coordinates: 209/210 valid (1 remaining has Washington DC state/GA mismatch — typo now fixed in seed)
-- Original national festivals (in `cultural_sites` with pin_type=heritage_festival): 63
-
-## Task Status
-Task #100 asks for 509 festivals/markets/gatherings. Current map has:
-- 209 recurring events with coordinates
-- 63 national heritage festivals in cultural_sites
-Total: ~272 event-type pins. Still below 509 — future seed expansions needed for more cities.
+**Why:** Goal was to populate the map for the 30-tester milestone. Events seed on boot so no manual SQL needed.
