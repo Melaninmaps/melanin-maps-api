@@ -38,6 +38,7 @@ import { TOUR_BUSINESSES_SEED } from "../data/tour-businesses-seed";
 import { COMMUNITY_ORGANIZATIONS_SEED } from "../data/community-organizations-seed";
 import { RECURRING_EVENTS_SEED } from "../data/recurring-events-seed";
 import { COMMUNITY_EVENTS_EXPANSION_SEED } from "../data/community-events-expansion-seed";
+import { COMMUNITY_EVENTS_EXPANSION_2_SEED } from "../data/community-events-expansion-2-seed";
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
@@ -4651,6 +4652,30 @@ async function ensureRecurringEvents(
       }
     }
     log(`Community events expansion: ${expInserted} inserted, ${expSkipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_SEED.length})`);
+
+    // ── Community events expansion 2 — 324 events across 26 more cities (#100) ──
+    // Brings total from ~211 → 535 (exceeds 509 goal).
+    let exp2Inserted = 0; let exp2Skipped = 0;
+    for (const e of COMMUNITY_EVENTS_EXPANSION_2_SEED) {
+      const key = `${e.name.toLowerCase()}|${e.city.toLowerCase()}|${e.state.toLowerCase()}`;
+      if (existing.has(key)) { exp2Skipped++; continue; }
+      try {
+        await pool.query(
+          `INSERT INTO recurring_events
+            (name, city, state, venue, address, description,
+             frequency, day_of_week, start_time, end_time, category,
+             is_active, tour_source, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, true, true, NOW(), NOW())`,
+          [e.name, e.city, e.state, e.venue, e.address, e.description,
+           e.frequency, e.day_of_week, e.start_time, e.end_time, e.category]
+        );
+        existing.add(key);
+        exp2Inserted++;
+      } catch (err2: unknown) {
+        warn(`Community events expansion 2: failed to insert ${e.name}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+      }
+    }
+    log(`Community events expansion 2: ${exp2Inserted} inserted, ${exp2Skipped} already present (seed: ${COMMUNITY_EVENTS_EXPANSION_2_SEED.length})`);
   } catch (err: unknown) {
     warn(`Recurring events guard failed: ${err instanceof Error ? err.message : String(err)}`);
   }
