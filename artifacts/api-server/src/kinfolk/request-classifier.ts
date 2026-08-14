@@ -31,13 +31,16 @@ export type KinfolkRequestDecision = {
   reason: string;
 };
 
-const LOCATION_RE = /\b(?:in|near|around|at|for)\s+([A-Za-z][A-Za-z .'-]{1,50}?)(?=\s+(?:this weekend|tonight|tomorrow|for|with|that|and)\b|[?.!,]|$)/i;
+// "to DC for the weekend" — add "to" with a negative lookahead that skips
+// articles and common verbs so "to the", "to do", "to see" don't parse as locations.
+const LOCATION_RE = /\b(?:in|near|around|at|for|to)\s+(?!(?:the|a|an|do|see|find|get|go|be|make|visit|use|take|have|my|your|our|their|his|her|me|us|you|them|it)\b)([A-Za-z][A-Za-z .'-]{1,50}?)(?=\s+(?:this weekend|tonight|tomorrow|for|with|that|and|the)\b|[?.!,]|$)/i;
 const OWNERSHIP_RE = /\b(black|african[- ]american|minority|women|woman|veteran|immigrant|lgbtq|indigenous|latino|disability|family)[- ]owned\b/i;
 const BRUNCH_RE = /\bbrunch\b|post[- ]church\s+(?:brunch|meal)|after\s+(?:church|service)\s+(?:brunch|meal)|sunday\s+(?:brunch|dining|food)/i;
 const FOOD_RE = /\b(food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?)\b/i;
 const NIGHTLIFE_RE = /\b(nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party)\b/i;
 const TRAVEL_RE = /\b(heading|going|traveling|travelling|visit|visiting|trip|weekend|getaway|staying|hotel|spots? in|things to do)\b/i;
-const BUSINESS_RE = /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?|brunch)\b/i;
+// "brunch" is intentionally excluded — handled by the brunch-specific block above.
+const BUSINESS_RE = /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?)\b/i;
 
 // Pure cultural/informational brunch phrases that should fall through to general_knowledge.
 // "Tell me about brunch as a cultural tradition" should NOT become a discovery request.
@@ -56,11 +59,23 @@ export function classifyKinfolkRequest(message: string): KinfolkRequestDecision 
   const ownershipPreference = text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];
 
+  // Pure cultural/informational brunch queries short-circuit to general_knowledge
+  // BEFORE any discovery routing so they never fall into the clarification branch.
+  if (BRUNCH_CULTURAL_RE.test(lower)) {
+    return {
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: null,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "brunch_cultural_question_routes_to_general_knowledge",
+    };
+  }
+
   // Brunch is intentionally high precedence. It must never fall through to
   // culture/pop-culture classification merely because the word is ambiguous.
-  // Exception: pure cultural enquiries ("Tell me about brunch as a tradition")
-  // are informational and should fall through to general_knowledge.
-  if (BRUNCH_RE.test(lower) && !BRUNCH_CULTURAL_RE.test(lower)) {
+  if (BRUNCH_RE.test(lower)) {
     culturalContext.push("diaspora_brunch", "post_church_social_meal");
     if (location) {
       return {
