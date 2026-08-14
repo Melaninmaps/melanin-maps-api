@@ -839,3 +839,10 @@ uri = "file://mwm_businesses_download.html"
 type = "text"
 title = "⬇ Download MWM Businesses CSV"
 description = "Click Open → then click the purple Download CSV button. 2,735 rows, ready for Manus."
+
+[[outputs]]
+id = "naZGEKy6uhUaJ5Jrdyc9D"
+uri = "file://mwm-audit-package.zip"
+type = "unspecified"
+title = "MWM Audit Package — Source Code for Manus"
+description = "17 source files + full audit doc (528KB ZIP): startup-migrations.ts, admin.ts, admin.tsx, admin-business-review.tsx, business-ingest.ts, business-dedup.ts, businesses.ts, vibes.ts, community.ts, claims.ts, allied-partners.ts, kinfolk.ts, knowledge-graph.ts, events.ts, circles.ts, verification.ts, trusted-safety-share.ts, business-detail.tsx, map.tsx, library.tsx, index.ts — plus MANUS_PLATFORM_AUDIT_v1.0.md"

@@ -9369,12 +9369,12 @@ async function ensureBusinessDeduplication(
         const { rowCount } = await pool.query(
           `UPDATE businesses
            SET is_duplicate = true,
-               duplicate_of_id = $2::uuid,
+               duplicate_of_id = $2,
                duplicate_reason = $3,
                duplicate_marked_at = COALESCE(duplicate_marked_at, NOW()),
                status = CASE WHEN status = 'permanently_hidden' THEN 'permanently_hidden' ELSE 'duplicate' END,
                updated_at = NOW()
-           WHERE id = $1::uuid
+           WHERE id = $1
              AND (is_duplicate IS NULL OR is_duplicate = false)`,
           [id, canonicalId, reason],
         );
