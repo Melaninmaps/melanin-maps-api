@@ -7,9 +7,75 @@
  * stream captures the full 12-hour evidence window.
  *
  * Accessed via GET /api/readyz/history for evidence file generation.
+ *
+ * Twilio SMS alerts (Aug 14 2026):
+ *   Sends a critical SMS after 3 consecutive DB errors.
+ *   Sends a recovery SMS after 3 consecutive successes following an alert.
+ *   Requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and MWM_ALERT_TO_PHONE.
+ *   MWM_ALERT_FROM_PHONE must be a purchased Twilio number.
+ *   If secrets are missing, SMS is silently skipped (monitoring still runs).
  */
 
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
+import https from "https";
+import querystring from "querystring";
+
+// ── Twilio SMS alert state ─────────────────────────────────────────────────────
+let _consecutiveErrors    = 0;
+let _consecutiveSuccesses = 0;
+let _inAlertState         = false;
+const ALERT_THRESHOLD     = 3;  // failures before sending critical SMS
+const RECOVERY_THRESHOLD  = 3;  // successes before sending recovery SMS
+
+function _twilioSms(body: string): void {
+  const sid      = process.env.TWILIO_ACCOUNT_SID;
+  const token    = process.env.TWILIO_AUTH_TOKEN;
+  const toPhone  = process.env.MWM_ALERT_TO_PHONE;
+  const fromPhone= process.env.MWM_ALERT_FROM_PHONE;
+  if (!sid || !token || !toPhone || !fromPhone) return; // silently skip if unconfigured
+  const postData = querystring.stringify({ From: fromPhone, To: toPhone, Body: body });
+  const req = https.request({
+    hostname: "api.twilio.com",
+    path: `/2010-04-01/Accounts/${sid}/Messages.json`,
+    method: "POST",
+    auth: `${sid}:${token}`,
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(postData) },
+  }, (res) => {
+    res.resume(); // drain the response
+    if (res.statusCode && res.statusCode >= 400) {
+      console.warn(`[health-monitor] Twilio SMS error: HTTP ${res.statusCode}`);
+    }
+  });
+  req.on("error", (e) => console.warn("[health-monitor] Twilio SMS request failed:", e.message));
+  req.write(postData);
+  req.end();
+}
+
+function _handleAlertState(status: "ok" | "degraded" | "error"): void {
+  if (status === "error") {
+    _consecutiveErrors++;
+    _consecutiveSuccesses = 0;
+    if (!_inAlertState && _consecutiveErrors >= ALERT_THRESHOLD) {
+      _inAlertState = true;
+      const ts = new Date().toISOString();
+      _twilioSms(
+        `MWM PRODUCTION ALERT\nSeverity: CRITICAL\nMonitor: db-health\nDetected UTC: ${ts}\n` +
+        `Consecutive failures: ${_consecutiveErrors}\nAction: Check Railway deployment and DB health.`,
+      );
+    }
+  } else {
+    _consecutiveErrors = 0;
+    _consecutiveSuccesses++;
+    if (_inAlertState && _consecutiveSuccesses >= RECOVERY_THRESHOLD) {
+      _inAlertState = false;
+      _consecutiveSuccesses = 0;
+      const ts = new Date().toISOString();
+      _twilioSms(
+        `MWM PRODUCTION RECOVERY\nMonitor: db-health\nRecovered UTC: ${ts}\nThree consecutive successful checks. Service healthy.`,
+      );
+    }
+  }
+}
 
 export interface HealthCheckEntry {
   ts: string;
@@ -123,6 +189,7 @@ async function runHealthCheck(): Promise<void> {
       pool: getPoolStats(),
     };
     _push(entry);
+    _handleAlertState("ok");
     _logger.info(
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: ok",
@@ -138,6 +205,7 @@ async function runHealthCheck(): Promise<void> {
       detail,
     };
     _push(entry);
+    _handleAlertState("error");
     _logger.error(
       { event: "HEALTH_MONITOR_CHECK", ...entry },
       "health-monitor: error",

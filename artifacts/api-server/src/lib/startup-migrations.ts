@@ -3905,10 +3905,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // Runs once to invalidate tokens that were exposed in gate-result JSON (Aug 14 2026)
     ["manus audit session revocation v1", () => revokeManusAuditSessions(log, warn)],
     // ── Beta safety columns — permanently_hidden boolean + public_businesses view ─
-    // Adds permanently_hidden boolean (distinct from status='permanently_hidden') so
-    // public queries can use COALESCE(permanently_hidden, false) = false consistently.
-    // Also adds lower(name) index and public_businesses view for safe list/map queries.
     ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
+    // ── Dedicated monitoring account — health-check user; no-op until secrets set ─
+    ["monitoring account v1", () => ensureMonitoringAccount(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9848,6 +9847,58 @@ async function ensureAtlantaBlackGroceryStores(
     }
   }
   log(`ensureAtlantaBlackGroceryStores: ${inserted} inserted, ${skipped} already present`);
+}
+
+// ── Dedicated monitoring account ─────────────────────────────────────────────
+// Creates a single non-tester monitoring user whose credentials are stored
+// exclusively in MWM_MONITOR_EMAIL and MWM_MONITOR_PASSWORD Replit Secrets.
+// Grants tester entitlement so the pre-tour health gate can call KinfolkAI.
+// No-op when the secrets are not configured (safe to run on every boot).
+async function ensureMonitoringAccount(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  const email = process.env.MWM_MONITOR_EMAIL?.trim();
+  const password = process.env.MWM_MONITOR_PASSWORD?.trim();
+  if (!email || !password) {
+    // Silently skip — secrets not yet configured.
+    return;
+  }
+  try {
+    // Check if already exists.
+    const { rows } = await pool.query<{ id: string }>(
+      `SELECT id FROM users WHERE lower(email) = lower($1) LIMIT 1`,
+      [email],
+    );
+    if (rows.length > 0) {
+      log(`ensureMonitoringAccount: already exists (${email})`);
+      return;
+    }
+    // Hash password at runtime using the same cost factor as auth/register.
+    const bcrypt = await import("bcryptjs");
+    const passwordHash = await bcrypt.hash(password, 8);
+    const { v4: uuidv4 } = await import("uuid");
+    const userId = uuidv4();
+    // Insert the monitoring user with tester member_type (bypasses Kinfolk quota).
+    await pool.query(
+      `INSERT INTO users
+         (id, email, password_hash, name, username, member_type, created_at, updated_at)
+       VALUES
+         ($1, $2, $3, 'MWM Health Monitor', 'mwm_health_monitor', 'tester', NOW(), NOW())
+       ON CONFLICT (email) DO NOTHING`,
+      [userId, email.toLowerCase(), passwordHash],
+    );
+    // Seed a tester entitlement row so Kinfolk quota checks pass.
+    await pool.query(
+      `INSERT INTO tester_entitlements (user_id, entitlement_type, granted_at, is_active)
+       VALUES ($1, 'beta_tester', NOW(), true)
+       ON CONFLICT DO NOTHING`,
+      [userId],
+    ).catch(() => {}); // Table may not exist yet; non-fatal.
+    log(`ensureMonitoringAccount: created (${email})`);
+  } catch (err: unknown) {
+    warn(`ensureMonitoringAccount failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 // ── Sabor Latin Street Grill website correction ───────────────────────────────

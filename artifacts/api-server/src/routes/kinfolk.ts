@@ -257,6 +257,49 @@ function estimateTokens(text: string): number {
 export let kinfolkActiveGenerations = 0;
 export let kinfolkQueuedGenerations = 0;
 
+// ── KinfolkAI degraded-rate telemetry ─────────────────────────────────────────
+// Records every generation result (degraded or not) to a rolling 15-minute
+// window. Emits a structured log warning when the degraded rate exceeds 5%
+// over at least 20 requests — catches transient provider issues before they
+// affect a meaningful portion of users.
+// NOTE: Railway runs one instance; if multi-instance, replace with Redis/metrics.
+type KinfolkTelemetry = {
+  requestId: string; questionClass: string; status: number;
+  degraded: boolean; degradedReason: string | null;
+  providerStatus: number | null; latencyMs: number;
+};
+const _kinfolkDegradedWindow: Array<{ at: number; degraded: boolean }> = [];
+const _KINFOLK_DEGRADED_WINDOW_MS = 15 * 60 * 1000;
+const _KINFOLK_DEGRADED_MIN       = 20;
+const _KINFOLK_DEGRADED_ALERT_PCT = 5;
+function recordKinfolkTelemetry(event: KinfolkTelemetry): void {
+  const now = Date.now();
+  _kinfolkDegradedWindow.push({ at: now, degraded: event.degraded });
+  // Evict entries older than the rolling window
+  while (_kinfolkDegradedWindow.length && _kinfolkDegradedWindow[0].at < now - _KINFOLK_DEGRADED_WINDOW_MS) {
+    _kinfolkDegradedWindow.shift();
+  }
+  const total          = _kinfolkDegradedWindow.length;
+  const degradedCount  = _kinfolkDegradedWindow.filter((e) => e.degraded).length;
+  const degradedPct    = total ? (degradedCount / total) * 100 : 0;
+  console.info("[kinfolk_generation_result]", JSON.stringify({
+    requestId: event.requestId, questionClass: event.questionClass,
+    status: event.status, degraded: event.degraded,
+    degradedReason: event.degradedReason, providerStatus: event.providerStatus,
+    latencyMs: event.latencyMs,
+    degradedWindowRequests: total,
+    degradedWindowPercent: Number(degradedPct.toFixed(2)),
+  }));
+  if (total >= _KINFOLK_DEGRADED_MIN && degradedPct > _KINFOLK_DEGRADED_ALERT_PCT) {
+    console.warn("[kinfolk_degraded_rate_threshold_exceeded]", JSON.stringify({
+      requestId: event.requestId, windowMinutes: 15,
+      requestCount: total, degradedCount,
+      degradedPercent: Number(degradedPct.toFixed(2)),
+      thresholdPercent: _KINFOLK_DEGRADED_ALERT_PCT,
+    }));
+  }
+}
+
 // ─── TPM Rate-Limit Event Tracker ─────────────────────────────────────────────
 // Records a timestamp each time OpenAI returns a 429 rate_limit_exceeded.
 // The admin health endpoint reads this to warn the founder before users
@@ -2273,6 +2316,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // to avoid a TDZ ReferenceError in the nudge section. Initialized to null;
   // set to the parsed AI response object after the provider call completes.
   let recommendations: Record<string, unknown> | null = null;
+  // Per-request telemetry identifiers — set once, used in all three recording
+  // sites (success, library fallback, and rethrown provider error).
+  const _kinfolkReqId     = crypto.randomUUID();
+  const _kinfolkStartedAt = Date.now();
+  let   _kinfolkQClass    = "unknown";
   try {
     // ── Enforce monthly query limits ──────────────────────────────────────────
     chatStage = "quota_check";
@@ -2454,6 +2502,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     ) ? "legal_regulated" : rawIntentClass;
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
+    _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
     // ── Context resolution — entity disambiguation + biography mode detection ──
     // Runs before buildSystemPrompt so server-authoritative entity facts (e.g. Ryan Coogler
@@ -3421,6 +3470,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         const fallbackSources = libraryTopic.trustedSources.map((s) => ({
           id: s.url, label: "library_topic", title: s.title, url: s.url,
         }));
+        const _pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId, questionClass: _kinfolkQClass || "library",
+          status: 200, degraded: true,
+          degradedReason: "provider_transient_error_library_fallback",
+          providerStatus: Number(_pStatus) || null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+        });
         res.status(200).json({
           sessionId: sessionId ?? null,
           reply: fallbackReply,
@@ -3437,6 +3494,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         });
         return;
       }
+      // Non-library error — record as failed (status = provider status or 500)
+      const _pStatusFail = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+      recordKinfolkTelemetry({
+        requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
+        status: Number(_pStatusFail) || 500, degraded: false,
+        degradedReason: null,
+        providerStatus: Number(_pStatusFail) || null,
+        latencyMs: Date.now() - _kinfolkStartedAt,
+      });
       throw providerError;
     }
 
@@ -3641,6 +3707,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // ── Telemetry: successful generation ──────────────────────────────────────
+    recordKinfolkTelemetry({
+      requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
+      status: 200, degraded: false, degradedReason: null, providerStatus: null,
+      latencyMs: Date.now() - _kinfolkStartedAt,
+    });
     res.json({
       sessionId: finalSessionId,
       reply,
