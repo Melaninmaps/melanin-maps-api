@@ -3899,6 +3899,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["visibility and dedupe hardening v1", () => ensureVisibilityAndDedupeHardening(log, warn)],
     // ── Atlanta Black-owned grocery stores — 4 verified stores with full profiles ─
     ["atlanta black grocery stores v1", () => ensureAtlantaBlackGroceryStores(log, warn)],
+    // ── Manus audit tester accounts — 30 pre-seeded email/password accounts ─────
+    ["manus audit accounts v1", () => ensureManusAuditAccounts(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9610,6 +9612,60 @@ async function ensureBusinessReviewItems(
   }
 
   log(`ensureBusinessReviewItems: ${inserted} manual-review pairs seeded, ${skipped} already present`);
+}
+
+// ── Manus audit tester accounts — 30 pre-seeded email/password accounts ──────────
+// Password: ManusAudit@2026!  (bcrypt cost 8)
+// These accounts are created by the founder for Manus AI audit sessions.
+// tester_access_source must be 'admin_invite' (check constraint).
+// Idempotent: ON CONFLICT (email) DO NOTHING.
+async function ensureManusAuditAccounts(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  const PW_HASH = "$2b$08$n9R7qWA/PLR0rWtrXNRf6uq9aVUoUaP2lziZOvYwR.e.Y8zAhSZKS";
+  let inserted = 0;
+  let skipped = 0;
+  for (let i = 1; i <= 30; i++) {
+    const n = String(i).padStart(2, "0");
+    const email = `manus.tester.${n}@mwm.audit`;
+    const username = `manustester${n}`;
+    const refCode = `MANUS${String(i).padStart(3, "0")}`;
+    try {
+      const { rowCount } = await pool.query(
+        `INSERT INTO users (
+           id, email, first_name, last_name, username, handle,
+           password_hash, role, tester_status, tester_access_source,
+           tester_granted_at, tester_granted_by,
+           approved, email_verified, member_type,
+           profile_setup_complete, must_change_password,
+           is_load_test, trust_level, reputation_score,
+           failed_login_attempts, referral_code, referral_count,
+           is_private, show_city, allow_dm, display_name_format,
+           marketing_opt_out, agree_to_terms,
+           created_at, updated_at
+         ) VALUES (
+           gen_random_uuid(), $1, 'Manus', $2, $3, $3,
+           $4, 'tester', 'active', 'admin_invite',
+           NOW(), 'founder',
+           true, true, 'individual',
+           true, false,
+           false, 1, 0,
+           0, $5, 0,
+           false, true, true, 'full',
+           false, true,
+           NOW(), NOW()
+         )
+         ON CONFLICT (email) DO NOTHING`,
+        [email, `Tester ${n}`, username, PW_HASH, refCode],
+      );
+      if ((rowCount ?? 0) > 0) inserted++;
+      else skipped++;
+    } catch (err: unknown) {
+      warn(`ensureManusAuditAccounts: failed for ${email}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  log(`ensureManusAuditAccounts: ${inserted} inserted, ${skipped} already present`);
 }
 
 // ── Atlanta Black-owned grocery stores — 4 verified stores (August 2026) ────────
