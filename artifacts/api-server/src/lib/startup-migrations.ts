@@ -3897,6 +3897,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["user handles v1", () => ensureUserHandles(log, warn)],
     // ── Visibility hardening — public view + canonical dedupe index ───────────
     ["visibility and dedupe hardening v1", () => ensureVisibilityAndDedupeHardening(log, warn)],
+    // ── Atlanta Black-owned grocery stores — 4 verified stores with full profiles ─
+    ["atlanta black grocery stores v1", () => ensureAtlantaBlackGroceryStores(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9608,6 +9610,114 @@ async function ensureBusinessReviewItems(
   }
 
   log(`ensureBusinessReviewItems: ${inserted} manual-review pairs seeded, ${skipped} already present`);
+}
+
+// ── Atlanta Black-owned grocery stores — 4 verified stores (August 2026) ────────
+// Idempotent: ON CONFLICT (name, address, city, state) DO NOTHING
+// All 4 stores were research-verified: website URLs tested live, Black ownership
+// confirmed via EatOkra, The Atlanta Voice, AJC, Storm's Mama directory.
+async function ensureAtlantaBlackGroceryStores(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  type StoreRow = {
+    name: string; address: string; city: string; state: string;
+    phone: string | null; website: string; latitude: number; longitude: number;
+    subcategory: string; description: string; normalized_name: string;
+    dedupe_key: string; ownership_designations: string;
+  };
+  const stores: StoreRow[] = [
+    {
+      name: "Wadada Healthy Market & Juice Bar",
+      address: "878 Ralph David Abernathy Blvd SW",
+      city: "Atlanta", state: "GA",
+      phone: "(678) 974-7330",
+      website: "https://www.wadadaatl.com",
+      latitude: 33.7381695, longitude: -84.4055093,
+      subcategory: "Health Food Market",
+      description: "Atlanta's first Black woman-owned vegan health food market and juice bar. Founded in 2019 by Jeanette Sellers (Sister Nilajah Ma'at) to address the health crisis in the Black community. Over 90% of products come from other local Black-owned businesses. Specializes in superfood sea moss smoothies, fresh-pressed juices, organic teas, and a curated selection of natural groceries, health products, and wellness items. Located in the historic West End neighborhood. Hours: Mon–Thu 9am–9pm, Fri–Sat 9am–10pm, Sun 9am–9pm.",
+      normalized_name: "wadada healthy market juice bar",
+      dedupe_key: "wadada healthy market juice bar|geo:33.73817,-84.40551",
+      ownership_designations: '["Black / African American-Owned","Woman-Owned"]',
+    },
+    {
+      name: "Sevananda Natural Foods Market",
+      address: "467 Moreland Ave NE",
+      city: "Atlanta", state: "GA",
+      phone: "(404) 681-2831",
+      website: "https://sevananda.coop",
+      latitude: 33.7670328, longitude: -84.3485013,
+      subcategory: "Natural Foods Co-op",
+      description: "A community-owned natural foods co-op serving Atlanta since 1974. Located in the heart of Little Five Points — one of CNN's top 25 neighborhoods — Sevananda offers vegan and vegetarian products, fresh local and organic produce, exotic fruits, bulk herbs and spices, and wellness products. As Atlanta's longest-running natural foods market, it supports local farmers and businesses by prioritizing locally sourced, organic food. Member-owned and operated; membership open to all. Hours: Daily 8am–9pm.",
+      normalized_name: "sevananda natural foods market",
+      dedupe_key: "sevananda natural foods market|geo:33.76703,-84.34850",
+      ownership_designations: '["Community-Owned Co-op","Black / African American-Owned"]',
+    },
+    {
+      name: "Nourish + Bloom Market — Cascade",
+      address: "2287 Cascade Rd",
+      city: "Atlanta", state: "GA",
+      phone: null,
+      website: "https://www.nourishandbloommarket.com",
+      latitude: 33.7223603, longitude: -84.4639829,
+      subcategory: "Autonomous Grocery Market",
+      description: "The first 24-hour AI-powered, frictionless grocery store in the United States — and the first African American-owned autonomous grocery store in the world. Co-founded by husband-and-wife duo Jilea and Jamie Hemmings. Located in historic Cascade Heights in Southwest Atlanta, it offers locally sourced groceries, prepared meals, everyday essentials, and fresh produce with a contactless, staff-free shopping experience using a smartphone app for entry. Hours: Open 24/7/365.",
+      normalized_name: "nourish bloom market cascade",
+      dedupe_key: "nourish bloom market cascade|geo:33.72236,-84.46398",
+      ownership_designations: '["Black / African American-Owned"]',
+    },
+    {
+      name: "Goodr Community Market on Edgewood",
+      address: "381 Edgewood Ave SE",
+      city: "Atlanta", state: "GA",
+      phone: null,
+      website: "https://goodr.co",
+      latitude: 33.7509, longitude: -84.3769,
+      subcategory: "Community Grocery Store",
+      description: "A Black woman-owned community grocery store and deli in Atlanta's historic Sweet Auburn District. Founded by tech entrepreneur and food justice activist Jasmine Crowe-Houston, the market opened in July 2025 to bring affordable fresh groceries back to a neighborhood that had gone without a full grocery option for years. Features Little Loaf Deli with $5 deli meals, 2-for-1 pricing for SNAP users, and provides free monthly groceries to approximately 200 families in Atlanta's District 5. Hours: Mon–Sat 9am–8pm, Sun Closed.",
+      normalized_name: "goodr community market on edgewood",
+      dedupe_key: "goodr community market on edgewood|geo:33.75090,-84.37690",
+      ownership_designations: '["Black / African American-Owned","Woman-Owned"]',
+    },
+  ];
+
+  let inserted = 0;
+  let skipped = 0;
+  for (const s of stores) {
+    try {
+      const { rowCount } = await pool.query(
+        `INSERT INTO businesses (
+           id, name, address, city, state, category, subcategory,
+           phone, website, latitude, longitude,
+           listing_status, status, verified, black_owned,
+           ownership_designations, description,
+           normalized_name, dedupe_key,
+           source_provider, source_url, confidence_score,
+           created_at, updated_at
+         ) VALUES (
+           gen_random_uuid(),$1,$2,$3,$4,'Grocery',$5,
+           $6,$7,$8,$9,
+           'live_unclaimed','active',false,true,
+           $10::jsonb,$11,
+           $12,$13,
+           'mwm_curated',$7,0.95,
+           NOW(),NOW()
+         )
+         ON CONFLICT (name, address, city, state) DO NOTHING`,
+        [
+          s.name, s.address, s.city, s.state, s.subcategory,
+          s.phone, s.website, s.latitude, s.longitude,
+          s.ownership_designations, s.description,
+          s.normalized_name, s.dedupe_key,
+        ],
+      );
+      if ((rowCount ?? 0) > 0) inserted++;
+      else skipped++;
+    } catch (err: unknown) {
+      warn(`ensureAtlantaBlackGroceryStores: failed for ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  log(`ensureAtlantaBlackGroceryStores: ${inserted} inserted, ${skipped} already present`);
 }
 
 // ── Sabor Latin Street Grill website correction ───────────────────────────────
