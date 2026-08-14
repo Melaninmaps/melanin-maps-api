@@ -2439,6 +2439,190 @@ router.get("/admin/business-enrichment/coverage", async (req: Request, res: Resp
   }
 });
 
+
+// ── Business Review Queue ─────────────────────────────────────────────────────
+
+router.get("/admin/business-review", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { status, type } = req.query as { status?: string; type?: string };
+  try {
+    let whereClause = "WHERE 1=1";
+    const params: unknown[] = [];
+    if (status) { params.push(status); whereClause += ` AND bri.status = $${params.length}`; }
+    if (type) { params.push(type); whereClause += ` AND bri.review_type = $${params.length}`; }
+
+    const { rows: items } = await pool.query<{
+      id: string; review_type: string; status: string;
+      candidate_name: string; candidate_address: string; candidate_city: string;
+      candidate_state: string; candidate_website: string | null; candidate_phone: string | null;
+      candidate_latitude: number | null; candidate_longitude: number | null;
+      candidate_category: string | null; candidate_source_provider: string | null;
+      candidate_source_url: string | null; score: number | null; reason: string | null;
+      requested_attribute: string | null; matched_business_id: string | null;
+      matched_business_name: string | null; matched_business_address: string | null;
+      matched_business_website: string | null; resolved_by: string | null;
+      resolved_at: string | null; created_at: string;
+    }>(
+      `SELECT bri.id, bri.review_type, bri.status,
+              bri.candidate_name, bri.candidate_address, bri.candidate_city,
+              bri.candidate_state, bri.candidate_website, bri.candidate_phone,
+              bri.candidate_latitude, bri.candidate_longitude, bri.candidate_category,
+              bri.candidate_source_provider, bri.candidate_source_url,
+              bri.score, bri.reason, bri.requested_attribute, bri.matched_business_id,
+              b.name AS matched_business_name, b.address AS matched_business_address,
+              b.website AS matched_business_website,
+              bri.resolved_by, bri.resolved_at, bri.created_at
+       FROM business_review_items bri
+       LEFT JOIN businesses b ON b.id = bri.matched_business_id::uuid
+       ${whereClause}
+       ORDER BY bri.created_at DESC
+       LIMIT 200`,
+      params,
+    );
+
+    const { rows: statRows } = await pool.query<{ pending: string; total: string }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+         COUNT(*) AS total
+       FROM business_review_items`,
+    );
+
+    res.json({
+      items: items.map((r) => ({
+        id: r.id,
+        reviewType: r.review_type,
+        status: r.status,
+        candidateName: r.candidate_name,
+        candidateAddress: r.candidate_address,
+        candidateCity: r.candidate_city,
+        candidateState: r.candidate_state,
+        candidateWebsite: r.candidate_website,
+        candidatePhone: r.candidate_phone,
+        candidateLatitude: r.candidate_latitude,
+        candidateLongitude: r.candidate_longitude,
+        candidateCategory: r.candidate_category,
+        candidateSourceProvider: r.candidate_source_provider,
+        candidateSourceUrl: r.candidate_source_url,
+        score: r.score,
+        reason: r.reason,
+        requestedAttribute: r.requested_attribute,
+        matchedBusinessId: r.matched_business_id,
+        matchedBusinessName: r.matched_business_name,
+        matchedBusinessAddress: r.matched_business_address,
+        matchedBusinessWebsite: r.matched_business_website,
+        resolvedBy: r.resolved_by,
+        resolvedAt: r.resolved_at,
+        createdAt: r.created_at,
+      })),
+      stats: {
+        pending: parseInt(statRows[0]?.pending ?? "0"),
+        total: parseInt(statRows[0]?.total ?? "0"),
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /admin/business-review error");
+    res.status(500).json({ error: "Failed", detail: String(err) });
+  }
+});
+
+router.patch("/admin/business-review/:id", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const { id } = req.params;
+  const { action } = req.body as { action: string };
+  const allowed = ["approve", "reject", "merge", "keep_both", "needs_research"];
+  if (!allowed.includes(action)) {
+    res.status(400).json({ error: `action must be one of: ${allowed.join(", ")}` });
+    return;
+  }
+  try {
+    // Fetch the review item
+    const { rows } = await pool.query<{
+      id: string; review_type: string; status: string; candidate_name: string;
+      candidate_address: string; candidate_city: string; candidate_state: string;
+      candidate_website: string | null; candidate_phone: string | null;
+      candidate_latitude: number | null; candidate_longitude: number | null;
+      candidate_category: string | null; candidate_source_provider: string | null;
+      matched_business_id: string | null;
+    }>(
+      `SELECT id, review_type, status, candidate_name, candidate_address, candidate_city,
+              candidate_state, candidate_website, candidate_phone, candidate_latitude,
+              candidate_longitude, candidate_category, candidate_source_provider,
+              matched_business_id
+       FROM business_review_items WHERE id = $1`,
+      [id],
+    );
+    const item = rows[0];
+    if (!item) { res.status(404).json({ error: "Review item not found" }); return; }
+    if (item.status !== "pending") { res.status(409).json({ error: "Already resolved" }); return; }
+
+    const adminId = (req.session as Record<string, unknown>)?.userId as string | undefined;
+
+    if (action === "approve") {
+      // Create the business in the active table
+      const { dedupeKey, normalizeText } = await import("../lib/business-dedup.js");
+      const key = dedupeKey({
+        name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
+        address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
+      });
+      await pool.query(
+        `INSERT INTO businesses
+          (id, name, address, city, state, website, phone, latitude, longitude,
+           category, status, listing_status, source_provider, dedupe_key, normalized_name,
+           created_at, updated_at)
+         VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',$10,$11,$12,NOW(),NOW())
+         ON CONFLICT DO NOTHING`,
+        [
+          item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
+          item.candidate_website ?? "", item.candidate_phone ?? "",
+          item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
+          item.candidate_source_provider ?? "", key, normalizeText(item.candidate_name),
+        ],
+      );
+    } else if (action === "merge" && item.matched_business_id) {
+      // Soft-mark this candidate as duplicate of matched_business_id
+      // (no new business row created — matched is canonical)
+    } else if (action === "keep_both") {
+      // Mark both as independent — approve the candidate
+      const { dedupeKey, normalizeText } = await import("../lib/business-dedup.js");
+      const key = dedupeKey({
+        name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
+        address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
+      });
+      await pool.query(
+        `INSERT INTO businesses
+          (id, name, address, city, state, website, phone, latitude, longitude,
+           category, status, listing_status, source_provider, dedupe_key, normalized_name,
+           created_at, updated_at)
+         VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',$10,$11,$12,NOW(),NOW())
+         ON CONFLICT DO NOTHING`,
+        [
+          item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
+          item.candidate_website ?? "", item.candidate_phone ?? "",
+          item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
+          item.candidate_source_provider ?? "", key, normalizeText(item.candidate_name),
+        ],
+      );
+    }
+    // For reject and needs_research: just update status
+
+    const newStatus = action === "approve" ? "approved"
+      : action === "reject" ? "rejected"
+      : action === "merge" ? "merged"
+      : action === "keep_both" ? "keep_both"
+      : "needs_research";
+
+    await pool.query(
+      `UPDATE business_review_items
+       SET status = $1, resolved_by = $2, resolved_at = NOW(), updated_at = NOW()
+       WHERE id = $3`,
+      [newStatus, adminId ?? null, id],
+    );
+
+    res.json({ ok: true, status: newStatus });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /admin/business-review/:id error");
+    res.status(500).json({ error: "Failed", detail: String(err) });
+  }
+});
+
 export default router;
-
-

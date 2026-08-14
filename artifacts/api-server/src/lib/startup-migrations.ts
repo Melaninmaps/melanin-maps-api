@@ -3887,6 +3887,12 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["sabor website correction v1", () => ensureSaborWebsiteCorrection(log, warn)],
     // ── Canonical place deduplication — website-aware, reversible, never deletes ─
     ["canonical places v1", () => ensureCanonicalPlacesV1(log, warn)],
+    // ── Business dedup schema — adds dedupe_key, normalized_name, is_duplicate cols ─
+    ["business dedup schema v1", () => ensureBusinessDedupSchema(log, warn)],
+    // ── Business dedup marking — soft-marks 17 known duplicate groups by audit ID ─
+    ["business dedup marking v1", () => ensureBusinessDeduplication(log, warn)],
+    // ── Business review items — seeds 8 manual-review records + creates table ──────
+    ["business review items v1", () => ensureBusinessReviewItems(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9232,6 +9238,272 @@ async function ensureCanonicalPlacesV1(
   } catch (err: unknown) {
     warn(`ensureCanonicalPlacesV1 failed: ${err instanceof Error ? err.message : String(err)}`);
   }
+}
+
+// ── Business dedup schema ─────────────────────────────────────────────────────
+// Adds dedupe_key, normalized_name, is_duplicate, duplicate_of_id, and source
+// tracking columns. Creates business_review_items table. Idempotent (IF NOT EXISTS).
+async function ensureBusinessDedupSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // Schema columns for businesses table
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS normalized_name    text,
+        ADD COLUMN IF NOT EXISTS dedupe_key         text,
+        ADD COLUMN IF NOT EXISTS duplicate_of_id    uuid,
+        ADD COLUMN IF NOT EXISTS is_duplicate       boolean NOT NULL DEFAULT false,
+        ADD COLUMN IF NOT EXISTS duplicate_reason   text,
+        ADD COLUMN IF NOT EXISTS duplicate_marked_at timestamptz,
+        ADD COLUMN IF NOT EXISTS source_provider    text,
+        ADD COLUMN IF NOT EXISTS source_record_id   text,
+        ADD COLUMN IF NOT EXISTS source_url         text,
+        ADD COLUMN IF NOT EXISTS retrieved_at       timestamptz,
+        ADD COLUMN IF NOT EXISTS evidence           jsonb
+    `);
+
+    // Partial unique index: one active canonical row per dedupe_key.
+    // ON CONFLICT suppressed — index may already exist.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS businesses_active_dedupe_key_unique
+      ON businesses (dedupe_key)
+      WHERE coalesce(is_duplicate, false) = false
+        AND coalesce(status, 'active') NOT IN ('duplicate','permanently_hidden')
+        AND dedupe_key IS NOT NULL
+    `);
+
+    // business_review_items table — holds candidates that need human review
+    // before publication. Includes possible duplicates, ownership-unverified
+    // candidates, and low-evidence candidates.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_review_items (
+        id                      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        review_type             text NOT NULL DEFAULT 'insufficient_evidence',
+        status                  text NOT NULL DEFAULT 'pending',
+        candidate_name          text NOT NULL,
+        candidate_address       text NOT NULL DEFAULT '',
+        candidate_city          text NOT NULL DEFAULT '',
+        candidate_state         text NOT NULL DEFAULT '',
+        candidate_website       text,
+        candidate_phone         text,
+        candidate_latitude      double precision,
+        candidate_longitude     double precision,
+        candidate_category      text,
+        candidate_source_provider text,
+        candidate_source_url    text,
+        evidence                jsonb,
+        score                   integer,
+        reason                  text,
+        requested_attribute     text,
+        matched_business_id     text,
+        resolved_by             text,
+        resolved_at             timestamptz,
+        created_at              timestamptz NOT NULL DEFAULT now(),
+        updated_at              timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+
+    await pool.query(`CREATE INDEX IF NOT EXISTS bri_status_idx ON business_review_items(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS bri_review_type_idx ON business_review_items(review_type)`);
+
+    log("ensureBusinessDedupSchema: schema ready");
+  } catch (err: unknown) {
+    warn(`ensureBusinessDedupSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Business deduplication marking ───────────────────────────────────────────
+// Soft-marks the 17 confirmed duplicate groups identified by the Manus full-DB
+// audit (2,736 rows). Also backfills is_duplicate=true on Duke's Cafe duplicates
+// that were previously marked permanently_hidden. All IDs are from the audit CSV.
+async function ensureBusinessDeduplication(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // 17 confirmed duplicate pairs: { id: duplicate, canonicalId: keep }
+    const CONFIRMED_DUPLICATES: Array<{ id: string; canonicalId: string; name: string }> = [
+      // Shiloh Baptist Church DC — 2 duplicates
+      { id: "b64ebade-3908-48f4-b64f-c997f95b2e8d", canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333", name: "Shiloh Baptist Church DC (variant)" },
+      { id: "0c049dbe-65cc-4005-ae1d-f2bce2ec793e", canonicalId: "531bc3a2-b142-4b25-8a58-95ccd5f76333", name: "Shiloh Baptist Church" },
+      // Greater Allen A.M.E. Cathedral
+      { id: "bd6991b8-50ad-41b5-b84d-02aa8b2ed474", canonicalId: "16f4ea6a-8398-4c7d-b064-ce013e8e8588", name: "Greater Allen AME Cathedral (variant)" },
+      // CARECEN DC
+      { id: "52ae0d76-dfac-4510-8dbb-bb5c983d9417", canonicalId: "2741dbd9-dacc-4495-8290-e0cf69a8151d", name: "CARECEN DC (variant)" },
+      // National Center for Civil and Human Rights
+      { id: "ea9e99a7-fe1d-4b39-9e2e-6c839dd433ce", canonicalId: "34de569d-c58b-42fe-95ce-bb103bd157e4", name: "National Center Civil Rights Atlanta (variant)" },
+      // Ethiopian Orthodox Tewahedo Church
+      { id: "3bc5cd51-fc8d-411b-bd2f-1f4550869f5b", canonicalId: "3ab5ae6d-3c62-4482-b303-f040eb63a7b4", name: "Ethiopian Orthodox Tewahedo Church Bronx (variant)" },
+      // People's Community Clinic Austin
+      { id: "a0d1a36d-1b8b-4899-808a-90b3e43f92c1", canonicalId: "3f4fb4d6-f316-423c-aa5e-4d6ec0959adb", name: "People's Community Clinic Austin (variant)" },
+      // Simply Wholesome
+      { id: "5cb738c1-4663-4b0a-a428-0cfaa5b5c093", canonicalId: "39fa282e-d634-415a-a782-313f7475a3b2", name: "Simply Wholesome (variant)" },
+      // Masjid Al-Jamia Philadelphia
+      { id: "665313ea-4406-433a-a187-ca88a0eceffe", canonicalId: "697dfcaf-daf9-46ed-8d62-647c0c9ccd76", name: "Masjid Al-Jamia Philadelphia (variant)" },
+      // DuSable Black History Museum
+      { id: "a22cd6c8-c548-4433-8408-527f938ce3fc", canonicalId: "79368b78-162e-4d86-adde-6156f07e42bc", name: "DuSable Museum (variant)" },
+      // APEX Museum
+      { id: "3b5d5181-5304-4143-bb7a-7a8468a39674", canonicalId: "96a162a9-8a75-46f7-99f7-d0b54bb9d69a", name: "APEX Museum (variant)" },
+      // Harold & Belle's Restaurant
+      { id: "c19a012f-1718-4612-af3b-261eaa93b6d7", canonicalId: "9e3d9475-8886-4185-b10e-66d8c3c4b90e", name: "Harold & Belle's Restaurant (variant)" },
+      // Legacy Museum — Equal Justice Initiative
+      { id: "c8e47b91-a13d-42f2-bb03-15b1f2f2c5c0", canonicalId: "9fe78afa-f490-4e46-81b0-15757e882570", name: "Legacy Museum EJI (variant)" },
+      // First Baptist Church Montgomery
+      { id: "c6191fa7-381a-474d-af0b-66d84fb8c1ec", canonicalId: "a14acf1e-9db8-47a9-bace-f71123088dea", name: "First Baptist Church of Montgomery (variant)" },
+      // National Civil Rights Museum at the Lorraine Motel
+      { id: "d1001e39-7b1f-446d-9007-0260939c0067", canonicalId: "a6e09d44-c4cc-4a55-ac42-0524ad079fea", name: "National Civil Rights Museum Lorraine Motel (variant)" },
+      // National Memorial for Peace and Justice — EJI
+      { id: "4893139f-511e-4412-af72-77bcf0f159dc", canonicalId: "d20dc8e0-2ac7-42de-a657-1aa0e5576b11", name: "National Memorial for Peace and Justice EJI (variant)" },
+      // National Museum of African American History and Culture
+      { id: "6713556a-e66c-4c1a-8d15-1a1b1c7d71ea", canonicalId: "d9b40522-5887-4475-b197-d5fc69aaf597", name: "NMAAHC (variant)" },
+    ];
+
+    let marked = 0;
+    let skipped = 0;
+    const reason = "Confirmed duplicate by full-DB audit (Manus, Aug 2026) — same normalized name and identical coordinates or exact address/city/state";
+
+    for (const { id, canonicalId } of CONFIRMED_DUPLICATES) {
+      try {
+        const { rowCount } = await pool.query(
+          `UPDATE businesses
+           SET is_duplicate = true,
+               duplicate_of_id = $2::uuid,
+               duplicate_reason = $3,
+               duplicate_marked_at = COALESCE(duplicate_marked_at, NOW()),
+               status = CASE WHEN status = 'permanently_hidden' THEN 'permanently_hidden' ELSE 'duplicate' END,
+               updated_at = NOW()
+           WHERE id = $1::uuid
+             AND (is_duplicate IS NULL OR is_duplicate = false)`,
+          [id, canonicalId, reason],
+        );
+        if ((rowCount ?? 0) > 0) marked++;
+        else skipped++;
+      } catch (err2: unknown) {
+        warn(`ensureBusinessDeduplication: failed to mark ${id}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+      }
+    }
+
+    // Duke's Cafe: 93 duplicates were already marked permanently_hidden.
+    // Backfill is_duplicate=true + duplicate_of_id so they're consistent with the new schema.
+    const DUKES_CANONICAL = "056404ec-1890-4bbd-aa1c-3e293c80ad92";
+    const { rowCount: dukesCount } = await pool.query(
+      `UPDATE businesses
+       SET is_duplicate = true,
+           duplicate_of_id = $1::uuid,
+           duplicate_reason = $2,
+           duplicate_marked_at = COALESCE(duplicate_marked_at, NOW()),
+           updated_at = NOW()
+       WHERE status = 'permanently_hidden'
+         AND lower(name) ILIKE '%duke%cafe%'
+         AND id::text <> $1
+         AND (is_duplicate IS NULL OR is_duplicate = false)`,
+      [DUKES_CANONICAL, reason],
+    );
+
+    log(`ensureBusinessDeduplication: ${marked} non-Duke's duplicates soft-marked, ${skipped} already done, ${dukesCount ?? 0} Duke's Cafe records backfilled`);
+  } catch (err: unknown) {
+    warn(`ensureBusinessDeduplication failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Business review items seed ────────────────────────────────────────────────
+// Seeds the 8 manual-review records identified by the audit: 4 pairs that share
+// a name but have different coordinates or addresses. Kept visible and active;
+// placed here so admins can confirm merge/keep-both via the review queue UI.
+async function ensureBusinessReviewItems(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  // Verify the business_review_items table exists before seeding
+  try {
+    const { rows } = await pool.query(
+      `SELECT to_regclass('public.business_review_items') AS t`,
+    );
+    if (!rows[0]?.t) { warn("ensureBusinessReviewItems: table not yet created, skipping"); return; }
+  } catch {
+    warn("ensureBusinessReviewItems: cannot check table existence, skipping");
+    return;
+  }
+
+  const MANUAL_REVIEW_PAIRS: Array<{
+    nameA: string; idA: string; addressA: string; latA: number; lngA: number;
+    nameB: string; idB: string; addressB: string; latB: number; lngB: number;
+    city: string; state: string; category: string; reason: string;
+  }> = [
+    {
+      nameA: "Busy Bee Cafe", idA: "d6789c0a-c678-4d86-8014-03c347008f83",
+      addressA: "810 Martin Luther King Jr Dr SW, Atlanta, GA 30314", latA: 33.749000, lngA: -84.388000,
+      nameB: "Busy Bee Café", idB: "771b7789-00f8-4163-91f7-82d5bb04bb65",
+      addressB: "810 Martin Luther King Jr Dr SW", latB: 33.750100, lngB: -84.412900,
+      city: "Atlanta", state: "GA", category: "Food",
+      reason: "Same Atlanta address text but coordinates differ materially. May be one business or two listings of the same location.",
+    },
+    {
+      nameA: "Mrs. White's Golden Rule Cafe", idA: "0f331f0d-917d-4eb4-be84-c852aa237a65",
+      addressA: "Downtown Phoenix", latA: 33.448400, lngA: -112.074000,
+      nameB: "Mrs. White's Golden Rule Café", idB: "7d447753-7eeb-46aa-9b71-dc89aef4f28a",
+      addressB: "808 E Jefferson St", latB: 33.443700, lngB: -112.064800,
+      city: "Phoenix", state: "AZ", category: "Food",
+      reason: "Similar names; one lists 'Downtown Phoenix' as address, the other gives 808 E Jefferson St with different coordinates.",
+    },
+    {
+      nameA: "Roscoe's House of Chicken & Waffles", idA: "9816d35e-06c4-450f-a430-70c96cc2ccd1",
+      addressA: "1514 N Gower St", latA: 34.098900, lngA: -118.327100,
+      nameB: "Roscoe's House of Chicken & Waffles", idB: "21091f4c-a545-4031-bcf5-88693acce89c",
+      addressB: "1518 N Gower St", latB: 34.098500, lngB: -118.326200,
+      city: "Los Angeles", state: "CA", category: "Food",
+      reason: "1514 vs 1518 N Gower St — may be two separate entrances or a data error. Coordinates are nearly identical.",
+    },
+    {
+      nameA: "Scotchies Jerk Centre — Kingston", idA: "3fccfabe-9685-4728-aa66-959a0db297cd",
+      addressA: "Shop 7, Sovereign Centre, Hope Rd", latA: 17.987600, lngA: -76.770700,
+      nameB: "Scotchies Jerk Centre Kingston", idB: "c5f3eb48-d233-4b12-9383-e949d94ce02c",
+      addressB: "130 E Kings House Rd", latB: 18.005300, lngB: -76.767600,
+      city: "Kingston", state: "", category: "Food",
+      reason: "Same Kingston name, different addresses and coordinates — may be two real Scotchies locations.",
+    },
+  ];
+
+  let inserted = 0;
+  let skipped = 0;
+
+  for (const pair of MANUAL_REVIEW_PAIRS) {
+    // Only insert if neither ID already appears as a matched_business_id or candidate in the queue
+    const { rows: existing } = await pool.query(
+      `SELECT id FROM business_review_items
+       WHERE review_type = 'possible_duplicate'
+         AND (matched_business_id = $1 OR matched_business_id = $2
+              OR (candidate_name ILIKE $3 AND candidate_city ILIKE $4))
+       LIMIT 1`,
+      [pair.idA, pair.idB, `%${pair.nameA.split(" ").slice(0, 2).join(" ")}%`, `%${pair.city}%`],
+    );
+    if (existing.length > 0) { skipped++; continue; }
+
+    try {
+      await pool.query(
+        `INSERT INTO business_review_items
+          (review_type, status, candidate_name, candidate_address, candidate_city,
+           candidate_state, candidate_latitude, candidate_longitude, candidate_category,
+           candidate_source_provider, reason, matched_business_id, evidence, created_at, updated_at)
+         VALUES ('possible_duplicate','pending',$1,$2,$3,$4,$5,$6,$7,'audit',$8,$9,$10::jsonb,NOW(),NOW())`,
+        [
+          pair.nameA, pair.addressA, pair.city, pair.state,
+          pair.latA, pair.lngA, pair.category, pair.reason, pair.idB,
+          JSON.stringify([
+            { nameA: pair.nameA, idA: pair.idA, addressA: pair.addressA, latA: pair.latA, lngA: pair.lngA },
+            { nameB: pair.nameB, idB: pair.idB, addressB: pair.addressB, latB: pair.latB, lngB: pair.lngB },
+          ]),
+        ],
+      );
+      inserted++;
+    } catch (err2: unknown) {
+      warn(`ensureBusinessReviewItems: failed to insert ${pair.nameA}: ${err2 instanceof Error ? err2.message : String(err2)}`);
+    }
+  }
+
+  log(`ensureBusinessReviewItems: ${inserted} manual-review pairs seeded, ${skipped} already present`);
 }
 
 // ── Sabor Latin Street Grill website correction ───────────────────────────────

@@ -34,6 +34,7 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import Profile from "@/pages/profile";
 import Admin from "@/pages/admin";
+import AdminBusinessReview from "@/pages/admin-business-review";
 import PendingApproval from "@/pages/pending-approval";
 import Waitlist from "@/pages/waitlist";
 import Preview from "@/pages/preview";
@@ -264,6 +265,9 @@ function Router() {
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
       <Route path="/admin">
         <ProtectedRoute><Admin /></ProtectedRoute>
+      </Route>
+      <Route path="/admin/business-review">
+        <ProtectedRoute><AdminBusinessReview /></ProtectedRoute>
       </Route>
 
       {/* ── Member discovery — authentication required ───────────────────────── */}

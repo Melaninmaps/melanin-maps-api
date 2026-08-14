@@ -1,0 +1,61 @@
+Of course. Here is what all four points mean in plain language.
+
+## 1. Duke’s Cafe records
+
+The 93 duplicate Duke’s Cafe records are already marked `permanently_hidden` from an earlier migration. That means they are already hidden from the public website, so Replit should not accidentally make them visible again.
+
+The new database design uses another label, `is_duplicate = true`, to identify duplicate records. The two labels serve different purposes:
+
+| Field | Meaning |
+|---|---|
+| `permanently_hidden` | Do not show this record publicly. |
+| `is_duplicate = true` | This record is a duplicate of another record. |
+
+The safest approach is to keep the records permanently hidden **and** add `is_duplicate = true`, with `duplicate_of_id` pointing to the one canonical Duke’s Cafe record. Nothing should be deleted permanently until there is a backup and a rollback plan.
+
+## 2. The eight possible duplicate records
+
+These are four pairs that look similar but are not proven duplicates:
+
+| Pair | Why Replit should not automatically delete one |
+|---|---|
+| Busy Bee Cafe / Busy Bee Café | Same Atlanta address text, but different map coordinates. |
+| Mrs. White’s Golden Rule Cafe / Café | Similar names, but different location descriptions and coordinates. |
+| Roscoe’s House of Chicken & Waffles | Same name, but addresses 1514 and 1518 N Gower St may be separate nearby locations. |
+| Scotchies Jerk Centre | Same Kingston name, but two different addresses. |
+
+A review queue is simply a private admin list where Replit places these eight records side by side. It would show the name, address, website, coordinates, category, and source. An administrator would choose **Merge**, **Keep both**, or **Leave unresolved**. Until someone decides, the records remain visible and active.
+
+This is not an accusation that they are wrong. It is a safety mechanism so Replit does not delete a legitimate second location.
+
+## 3. The external provider keys
+
+The ingestion code needs outside services to perform different jobs:
+
+| Job | Provider mentioned | What it does |
+|---|---|---|
+| Maps and business details | Google Places | Finds businesses, addresses, coordinates, phone numbers, websites, ratings, and place IDs. |
+| Image and OCR extraction | OpenAI vision through `AI_INTEGRATIONS_OPENAI_API_KEY` | Reads business names and details from uploaded images. It should treat the image as a lead, not as proof. |
+| General web search | A search provider still needs to be selected | Finds official websites, directories, articles, and ownership/category evidence. |
+
+The code should not invent a general web-search provider. Replit needs one configured provider and its API key. Google Places is appropriate for location-based business discovery. OpenAI vision is appropriate for extracting text and candidates from images. A separate web-search service is useful for finding official websites and supporting evidence that Google Places may not contain.
+
+## 4. The `business_review_items` table
+
+This is a private holding area for candidates that are not safe to publish automatically. For example, if someone asks for “Black-owned grocery stores in Atlanta,” Replit might find a grocery store but fail to find reliable evidence that it is Black-owned. Instead of publishing an unverified claim, it places the candidate in this table for review.
+
+The table would store the candidate’s name, address, website, category, requested attribute, confidence score, source URLs, evidence, reason for review, and review status. An admin screen would allow the reviewer to choose **Approve and add**, **Reject**, **Already exists**, or **Needs more research**.
+
+The 8 possible duplicates would also use this same review area, or a small related duplicate-review screen. They would be marked `possible_duplicate` rather than deleted.
+
+## Recommended decisions
+
+My recommended setup is:
+
+1. Keep Duke’s Cafe records permanently hidden and also mark them `is_duplicate = true`.
+2. Add a lightweight review queue for the 8 uncertain records.
+3. Use Google Places for location discovery and OpenAI vision for image/OCR extraction.
+4. Add one general web-search provider for official websites and supporting evidence.
+5. Create the review table and a simple admin screen before enabling automatic business additions.
+
+This gives Replit a safe rule: **confirmed duplicates are hidden automatically; uncertain records are held for review; verified new businesses are added only after passing the evidence checks.**
