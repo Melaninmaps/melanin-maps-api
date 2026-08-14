@@ -412,6 +412,41 @@ router.post("/businesses/ingest", async (req: Request, res: Response) => {
   res.json({ results, total: results.length });
 });
 
+// ── POST /businesses/hotel-stay ───────────────────────────────────────────────
+// Hotel-stay ingestion: resolves name + address through Nominatim, enforces
+// evidence gates (name match, complete address, hotel category, score ≥ 0.85),
+// deduplicates, then adds or merges. Unresolved leads go to manual review.
+// Requires admin or CRON_SECRET authentication.
+import { ingestHotelStay, nominatimGeocodeHotel } from "../lib/hotel-stay-ingestion";
+
+router.post("/businesses/hotel-stay", async (req: Request, res: Response) => {
+  if (!isAdmin(req, res)) return;
+  try {
+    const { name, address, sourceInput } = req.body as {
+      name?: string;
+      address?: string;
+      sourceInput?: string;
+    };
+    if (!name?.trim() || !address?.trim()) {
+      res.status(400).json({ error: "name and address are required" });
+      return;
+    }
+    const result = await ingestHotelStay(
+      { name, address, sourceInput: sourceInput ?? "hotel_stay" },
+      nominatimGeocodeHotel,
+    );
+    const statusCode = result.status === "VERIFIED_ADD" ? 201 : 200;
+    res.status(statusCode).json(result);
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      res.status(422).json({ error: "Invalid input", details: err.errors });
+      return;
+    }
+    logger.error({ err }, "hotel-stay ingestion failed");
+    res.status(500).json({ error: err?.message ?? "Ingestion failed" });
+  }
+});
+
 // ── POST /businesses/social-first ─────────────────────────────────────────────
 // Social-first ingestion: accepts TikTok, Instagram, Facebook, screenshot, or
 // any social-URL sourced business candidate. Enforces evidence gates, dedupes,

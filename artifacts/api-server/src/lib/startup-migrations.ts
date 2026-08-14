@@ -3912,6 +3912,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── Social-first ingestion schema — adds social_profiles, source_evidence,
     //    ownership_claim, website_domain columns to businesses table ────────────
     ["social first ingestion schema v1", () => ensureSocialFirstIngestionSchema(log, warn)],
+    // ── Hotel-stay ingestion schema — adds provider_place_id, postal_code ─────
+    ["hotel stay ingestion schema v1", () => ensureHotelStayIngestionSchema(log, warn)],
+    // ── Tour hotel seed — 11 confirmed non-minority tour hotels ───────────────
+    ["tour hotels v1", () => ensureTourHotels(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9913,6 +9917,101 @@ async function ensureMonitoringAccount(
 // Founder-confirmed: https://www.saborlatingrill.com is the official website for
 // the Charlotte NC location. Stored here so canonical-place deduplication and
 // tester search both surface the correct domain.
+// ── Hotel-stay ingestion schema ───────────────────────────────────────────────
+// Adds provider_place_id and postal_code columns. Idempotent.
+async function ensureHotelStayIngestionSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS provider_place_id text,
+        ADD COLUMN IF NOT EXISTS postal_code       text
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_provider_place_id_idx
+        ON businesses (provider_place_id)
+        WHERE provider_place_id IS NOT NULL
+    `);
+    log("ensureHotelStayIngestionSchema: provider_place_id, postal_code ready");
+  } catch (err: unknown) {
+    warn(`ensureHotelStayIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Tour hotel seed ───────────────────────────────────────────────────────────
+// 11 confirmed non-minority tour hotels supplied by the founder (Aug 14 2026).
+// Seeded directly — ownership_claim is intentionally NULL (non-minority).
+// Coordinates sourced from Nominatim at seed time; never synthesized.
+async function ensureTourHotels(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  type Hotel = {
+    name: string; address: string; city: string; state: string;
+    postalCode: string; country: string;
+    lat: number | null; lon: number | null;
+  };
+
+  const HOTELS: Hotel[] = [
+    { name: "Richmond Marriott",                           address: "500 E Broad St",           city: "Richmond",    state: "VA", postalCode: "23219", country: "US", lat: 37.543192,  lon: -77.436513 },
+    { name: "The Lantern Columbia",                        address: "1001 Senate St",            city: "Columbia",    state: "SC", postalCode: "29201", country: "US", lat: 33.999434,  lon: -81.036039 },
+    { name: "Home2 Suites by Hilton Charlotte Uptown NC",  address: "610 S Caldwell St",         city: "Charlotte",   state: "NC", postalCode: "28202", country: "US", lat: 35.221934,  lon: -80.841671 },
+    { name: "Reverb by Hard Rock Downtown Atlanta",        address: "89 Centennial Olympic Park Dr", city: "Atlanta", state: "GA", postalCode: "30313", country: "US", lat: 33.753211,  lon: -84.399333 },
+    { name: "Embassy Suites by Hilton Montgomery Hotel and Conference Ctr", address: "300 Tallapoosa Street", city: "Montgomery", state: "AL", postalCode: "36104", country: "US", lat: 32.379630, lon: -86.313986 },
+    { name: "The Admiral Downtown Historic District",      address: "251 Government Street",     city: "Mobile",      state: "AL", postalCode: "36602", country: "US", lat: 30.689360,  lon: -88.043300 },
+    { name: "InterContinental New Orleans by IHG",         address: "444 St Charles Ave",        city: "New Orleans", state: "LA", postalCode: "70130", country: "US", lat: 29.950337,  lon: -90.069713 },
+    { name: "Marriott Baton Rouge",                        address: "5500 Hilton Ave",           city: "Baton Rouge", state: "LA", postalCode: "70808", country: "US", lat: 30.423464,  lon: -91.133568 },
+    { name: "Sentral Forme Houston",                       address: "5501 La Branch St",         city: "Houston",     state: "TX", postalCode: "77004", country: "US", lat: 29.723908,  lon: -95.384635 },
+    { name: "Sheraton Flowood The Refuge Hotel and Conference Center", address: "2200 Refugee Boulevard", city: "Flowood", state: "MS", postalCode: "39232", country: "US", lat: 32.299932, lon: -90.142316 },
+    { name: "SpringHill Suites by Marriott Roanoke",       address: "301 Reserve Ave SW",        city: "Roanoke",     state: "VA", postalCode: "24015", country: "US", lat: 37.256314,  lon: -79.946982 },
+  ];
+
+  function norm(s: string): string {
+    return String(s).normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+      .toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim();
+  }
+
+  let inserted = 0;
+  for (const h of HOTELS) {
+    const normalizedName = norm(h.name);
+    const key = `hotel||${normalizedName}|${norm(h.address)}|${h.lat ?? ""}|${h.lon ?? ""}`;
+    // Check by normalized name + city first (idempotent guard)
+    const existing = await pool.query(
+      `SELECT id FROM businesses WHERE normalized_name = $1 AND lower(city) = lower($2) AND lower(coalesce(category,'')) = 'hotel' LIMIT 1`,
+      [normalizedName, h.city],
+    );
+    if (existing.rows.length > 0) continue;
+
+    await pool.query(
+      `INSERT INTO businesses
+         (id, name, normalized_name, category, subcategory, description,
+          address, city, state, postal_code, country,
+          latitude, longitude,
+          dedupe_key, status, listing_status,
+          is_duplicate, ownership_claim,
+          created_at, updated_at)
+       VALUES
+         (gen_random_uuid(), $1, $2, 'hotel', '', '',
+          $3, $4, $5, $6, $7,
+          $8, $9,
+          $10, 'active', 'active',
+          false, NULL,
+          NOW(), NOW())
+       ON CONFLICT DO NOTHING`,
+      [
+        h.name, normalizedName,
+        h.address, h.city, h.state, h.postalCode, h.country,
+        h.lat, h.lon,
+        key,
+      ],
+    );
+    inserted++;
+  }
+  log(`ensureTourHotels: ${inserted} inserted, ${HOTELS.length - inserted} already present (${HOTELS.length} total)`);
+}
+
 // ── Social-first ingestion schema ─────────────────────────────────────────────
 // Adds social_profiles, source_evidence, ownership_claim, website_domain columns
 // to the businesses table. All idempotent (ADD COLUMN IF NOT EXISTS).
