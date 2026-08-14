@@ -116,7 +116,10 @@ export async function loadKinfolkMemberContext(
       ).then((r) => r.rows[0] ?? null),
     ]);
 
-    const audienceBand: AudienceBand = ageRow?.age_band ?? "unknown";
+    // Null means the user signed up before age assurance was introduced.
+    // Default to "adult" so pre-existing users are not silently given
+    // child-safe responses. Only a confirmed "under_13" record is protected.
+    const audienceBand: AudienceBand = ageRow?.age_band ?? "adult";
 
     const out: KinfolkMemberContext = {
       audienceBand,

@@ -54,3 +54,4 @@ Thumbs.db
 test-results/
 playwright-report/
 .cache/ms-playwright/
+.github/workflows/railway-sha-verify.yml

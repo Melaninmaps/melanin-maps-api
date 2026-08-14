@@ -1251,6 +1251,8 @@ router.post("/businesses/community-reference", async (req: any, res: Response) =
         referenceCategory: cat,
         website: typeof website === "string" ? website.trim() : null,
         status: "active",
+        // pending_review: community references must pass admin review before going live
+        listingStatus: "pending_review",
         submittedById: req.user.id,
         ownershipDesignations: ["non-minority-owned"],
         featured: false,
@@ -1260,8 +1262,29 @@ router.post("/businesses/community-reference", async (req: any, res: Response) =
       })
       .returning();
 
-    req.log.info({ businessId: business.id, submittedBy: req.user.id }, "Community reference listing created");
-    res.status(201).json({ business });
+    // ── Queue for admin review ────────────────────────────────────────────────
+    await pool.query(
+      `INSERT INTO business_review_items
+         (review_type, status, candidate_name, candidate_city, candidate_state,
+          candidate_website, candidate_category, candidate_source_provider,
+          matched_business_id, reason)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        "community_reference",
+        "pending",
+        (name as string).trim(),
+        (city as string).trim(),
+        (state as string).trim(),
+        typeof website === "string" ? website.trim() : null,
+        cat,
+        "member_reference",
+        business.id,
+        `Community reference submitted by member ${req.user.id}`,
+      ]
+    );
+
+    req.log.info({ businessId: business.id, submittedBy: req.user.id }, "Community reference listing queued for review");
+    res.status(201).json({ business, pendingReview: true });
   } catch (err) {
     req.log.error({ err }, "Failed to create community reference listing");
     res.status(500).json({ error: "Failed to create reference listing" });
@@ -1348,8 +1371,8 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
       blackOwned: false,
       isReferenceOnly: false,
       status: "active",
-      // live_unclaimed makes the place immediately visible to all approved members
-      listingStatus: "live_unclaimed",
+      // pending_review: community submissions must pass admin review before going live
+      listingStatus: "pending_review",
       verified: false,
       featured: false,
       promotionEligible: false,
@@ -1367,11 +1390,36 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
       .values(insertValues as any)
       .returning();
 
+    // ── Queue for admin review ────────────────────────────────────────────────
+    // Community submissions are not publicly visible until an admin approves.
+    await pool.query(
+      `INSERT INTO business_review_items
+         (review_type, status, candidate_name, candidate_address, candidate_city,
+          candidate_state, candidate_website, candidate_latitude, candidate_longitude,
+          candidate_category, candidate_source_provider, matched_business_id, reason)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+      [
+        "community_submission",
+        "pending",
+        name.trim(),
+        resolvedAddress,
+        city.trim(),
+        resolvedState ?? "",
+        website?.trim() ?? null,
+        parseFloat(lat) || null,
+        parseFloat(lng) || null,
+        resolvedCategory,
+        "member_suggest",
+        business.id,
+        `Submitted by member ${req.user.id}`,
+      ]
+    );
+
     req.log.info(
       { businessId: business.id, submittedBy: req.user.id, city, country: resolvedCountry },
-      "Member-submitted place created"
+      "Member-submitted place queued for review"
     );
-    res.status(201).json({ businessId: business.id, name: business.name, isNew: true });
+    res.status(201).json({ businessId: business.id, name: business.name, isNew: true, pendingReview: true });
   } catch (err) {
     req.log.error({ err }, "Failed to create member-submitted place");
     res.status(500).json({ error: "Failed to create place. Please try again." });

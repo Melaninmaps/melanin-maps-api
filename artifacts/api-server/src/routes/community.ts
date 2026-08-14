@@ -628,11 +628,34 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     }
 
     // ── Notify @mentioned users ──────────────────────────────────────────────
-    const mentionedUserIds: string[] = Array.isArray((req.body as any).mentionedUserIds)
+    // Start with any user IDs the client explicitly sent (mobile app resolves
+    // handles client-side). Then augment with server-side @handle extraction so
+    // web posts and any missed handles are also covered.
+    const clientMentionedIds: string[] = Array.isArray((req.body as any).mentionedUserIds)
       ? ((req.body as any).mentionedUserIds as unknown[])
           .filter((id): id is string => typeof id === "string" && id !== req.user?.id)
           .slice(0, 10)
       : [];
+
+    // Extract @handle patterns from post content server-side
+    const handleMatches = trimmedContent.match(/@([a-zA-Z0-9_]{2,30})/g) ?? [];
+    const handles = [...new Set(handleMatches.map((m) => m.slice(1).toLowerCase()))];
+    let serverMentionedIds: string[] = [];
+    if (handles.length > 0) {
+      try {
+        const placeholders = handles.map((_, i) => `$${i + 1}`).join(",");
+        const lookupRes = await pool.query<{ id: string }>(
+          `SELECT id FROM users WHERE LOWER(handle) = ANY(ARRAY[${placeholders}]::text[]) AND id <> $${handles.length + 1} LIMIT 20`,
+          [...handles, req.user.id],
+        );
+        serverMentionedIds = lookupRes.rows.map((r) => r.id);
+      } catch { /* non-fatal — handle lookup failure should not block post creation */ }
+    }
+
+    const mentionedUserIds = [
+      ...new Set([...clientMentionedIds, ...serverMentionedIds]),
+    ].slice(0, 10);
+
     if (mentionedUserIds.length > 0 && post) {
       for (const uid of mentionedUserIds) {
         sendPushToUser(uid, {

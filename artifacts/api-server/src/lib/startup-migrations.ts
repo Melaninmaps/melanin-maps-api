@@ -3893,6 +3893,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["business dedup marking v1", () => ensureBusinessDeduplication(log, warn)],
     // ── Business review items — seeds 8 manual-review records + creates table ──────
     ["business review items v1", () => ensureBusinessReviewItems(log, warn)],
+    // ── User handles — short @mention identifier for community posts ──────────
+    ["user handles v1", () => ensureUserHandles(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9311,6 +9313,49 @@ async function ensureBusinessDedupSchema(
     log("ensureBusinessDedupSchema: schema ready");
   } catch (err: unknown) {
     warn(`ensureBusinessDedupSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── User handles — short @mention identifier ──────────────────────────────────
+// Adds a `handle` column to users, auto-populated from the email prefix so
+// existing users immediately have an @mentionable identity without any action.
+async function ensureUserHandles(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS handle text`);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS users_handle_unique ON users(handle)
+      WHERE handle IS NOT NULL
+    `);
+    // Back-fill handles for existing users: email prefix, lower-cased,
+    // non-alphanumeric characters replaced with underscores, max 30 chars.
+    // On collision append a 4-digit suffix from the user ID.
+    const { rowCount } = await pool.query(`
+      UPDATE users
+      SET handle = sub.safe_handle
+      FROM (
+        SELECT
+          id,
+          CASE
+            WHEN EXISTS (
+              SELECT 1 FROM users u2
+              WHERE u2.handle = LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 30)
+                AND u2.id <> users.id
+            )
+            THEN LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 26)
+                 || '_' || LEFT(REPLACE(id::text,'-',''), 3)
+            ELSE LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 30)
+          END AS safe_handle
+        FROM users
+        WHERE handle IS NULL AND email IS NOT NULL
+      ) sub
+      WHERE users.id = sub.id
+    `);
+    log(`ensureUserHandles: handle column ready, ${rowCount ?? 0} users back-filled`);
+  } catch (err: unknown) {
+    warn(`ensureUserHandles failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
