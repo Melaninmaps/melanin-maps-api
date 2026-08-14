@@ -142,7 +142,7 @@ export function safetyEnvelope(intentClass: string, sources: SafeSource[]): stri
   const official = sources.some((s) => s.label === "official_safety");
   return official
     ? "Safety information can change. Verify current alerts with official local authorities. For an immediate emergency, contact local emergency services. Community reports are experiences, not guarantees."
-    : "I do not have a current official safety alert attached to this answer. Treat community information as context, verify with local authorities, and contact emergency services for immediate danger."
+    : "I do not have a current official safety alert attached to this answer. Treat community information as context, verify with official local authorities, and contact emergency services for immediate danger."
 }
 
 /**
