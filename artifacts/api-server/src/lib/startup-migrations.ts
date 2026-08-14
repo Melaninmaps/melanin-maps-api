@@ -3916,6 +3916,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["hotel stay ingestion schema v1", () => ensureHotelStayIngestionSchema(log, warn)],
     // ── Tour hotel seed — 11 confirmed non-minority tour hotels ───────────────
     ["tour hotels v1", () => ensureTourHotels(log, warn)],
+    // ── Kinfolk four-purpose schema — flywheel events, answer sources, promotion cols ─
+    ["kinfolk four-purpose schema v1", () => ensureKinfolkFourPurposeSchema(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -10051,6 +10053,90 @@ async function ensureSocialFirstIngestionSchema(
     log("ensureSocialFirstIngestionSchema: social_profiles, source_evidence, ownership_claim, website_domain ready");
   } catch (err: unknown) {
     warn(`ensureSocialFirstIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Kinfolk four-purpose schema ────────────────────────────────────────────────
+// Creates kinfolk_flywheel_events (idempotent, deduped by day/user/subject/surface),
+// kinfolk_answer_sources (evidence audit trail), and adds promotion + evidence
+// columns to businesses / business_review_items. All additive and idempotent.
+async function ensureKinfolkFourPurposeSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // kinfolk_flywheel_events — one row per user/event/subject/surface/day
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_flywheel_events (
+        id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id          uuid NOT NULL,
+        event_type       text NOT NULL CHECK (event_type IN (
+                           'business_view','business_save','business_checkin','business_vibe',
+                           'library_follow','library_open','kinfolk_query')),
+        canonical_subject text NOT NULL,
+        source_surface   text NOT NULL,
+        event_day        date NOT NULL DEFAULT CURRENT_DATE,
+        learning_eligible boolean NOT NULL DEFAULT false,
+        is_load_test     boolean NOT NULL DEFAULT false,
+        created_at       timestamptz NOT NULL DEFAULT now()
+      )
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS kinfolk_flywheel_event_dedupe_idx
+        ON kinfolk_flywheel_events(user_id, event_type, canonical_subject, source_surface, event_day)
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS kinfolk_flywheel_subject_idx
+        ON kinfolk_flywheel_events(canonical_subject, event_type, event_day)
+    `);
+
+    // kinfolk_answer_sources — evidence audit trail per request
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_answer_sources (
+        id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        request_id   text NOT NULL,
+        user_id      uuid,
+        purpose      text NOT NULL CHECK (purpose IN ('education','safety','promotion')),
+        title        text NOT NULL,
+        url          text NOT NULL,
+        source_label text NOT NULL,
+        fetched_at   timestamptz NOT NULL DEFAULT now(),
+        UNIQUE(request_id, url)
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS kinfolk_answer_sources_request_idx
+        ON kinfolk_answer_sources(request_id, purpose)
+    `);
+
+    // businesses — promotion metadata columns
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS promotion_status     text NOT NULL DEFAULT 'organic',
+        ADD COLUMN IF NOT EXISTS promotion_source_url text,
+        ADD COLUMN IF NOT EXISTS promotion_disclosure text
+    `);
+
+    // business_review_items — evidence tracking columns
+    await pool.query(`
+      ALTER TABLE business_review_items
+        ADD COLUMN IF NOT EXISTS evidence_status  text NOT NULL DEFAULT 'pending',
+        ADD COLUMN IF NOT EXISTS source_evidence  jsonb NOT NULL DEFAULT '[]'::jsonb,
+        ADD COLUMN IF NOT EXISTS review_reason    text
+    `);
+
+    // Partial index for fast public-catalog lookups (avoids full scans in Kinfolk)
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_public_kinfolk_idx
+        ON businesses(city, category, verified)
+        WHERE status = 'active'
+          AND COALESCE(is_duplicate, false) = false
+          AND COALESCE(permanently_hidden, false) = false
+    `);
+
+    log("ensureKinfolkFourPurposeSchema: flywheel events, answer sources, promotion cols ready");
+  } catch (err: unknown) {
+    warn(`ensureKinfolkFourPurposeSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

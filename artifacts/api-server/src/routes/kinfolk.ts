@@ -39,6 +39,7 @@ import {
 } from "../lib/library-growth-engine";
 import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
 import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
+import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -1412,6 +1413,7 @@ function getCityLocalTerms(destination: string): CityLocalData | null {
 
 // ─── Build personalized system prompt ─────────────────────────────────────────
 type BusinessCatalogEntry = {
+  id?: string;
   name: string;
   category: string;
   city: string;
@@ -2903,6 +2905,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           isLoadTest: (req.user as { isLoadTest?: boolean }).isLoadTest === true,
         }).catch(() => { /* non-fatal — never block or slow the response */ });
       }
+      // ── Idempotent flywheel event ─────────────────────────────────────────────────
+      // ON CONFLICT DO NOTHING ensures repeated questions or retries produce
+      // exactly one row per user/event/subject/surface/day. Raw message text
+      // is NEVER stored — only the derived canonical subject.
+      if (growthSubject) {
+        const flywheelEvent = buildFlywheelEvent({
+          userId: req.user.id,
+          eventType: "kinfolk_query",
+          canonicalSubject: growthSubject.canonicalSubject,
+          sourceSurface: "kinfolk_chat",
+          sensitive: sensitivityTier === "excluded",
+          isLoadTest: (req.user as { isLoadTest?: boolean }).isLoadTest === true,
+        });
+        pool.query(
+          `INSERT INTO kinfolk_flywheel_events
+             (user_id, event_type, canonical_subject, source_surface, event_day, learning_eligible, is_load_test, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+           ON CONFLICT (user_id, event_type, canonical_subject, source_surface, event_day)
+           DO NOTHING`,
+          [
+            flywheelEvent.userId, flywheelEvent.eventType, flywheelEvent.canonicalSubject,
+            flywheelEvent.sourceSurface, flywheelEvent.eventDay, flywheelEvent.learningEligible,
+            flywheelEvent.isLoadTest, flywheelEvent.createdAt,
+          ],
+        ).catch(() => { /* non-fatal */ });
+      }
     }
 
     // Fetch platform business catalog — destination first, then fall back to user's home city.
@@ -2943,7 +2971,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // Use pool.query (raw SQL) — Drizzle db.select() with leftJoin silently
         // fails in the esbuild bundle on Railway; pool.query is proven to work.
         const CATALOG_SQL = `
-          SELECT b.name, b.category, b.city, b.description, b.verified,
+          SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
                  b.tags, b.profile_status,
                  bi.business_story, bi.mission_statement, bi.why_started,
                  bi.what_customers_should_know, bi.ownership_badges,
@@ -2954,11 +2982,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           FROM businesses b
           LEFT JOIN business_identity bi ON bi.business_id = b.id
           WHERE b.status = 'active'
+            AND COALESCE(b.is_duplicate, false) = false
+            AND COALESCE(b.permanently_hidden, false) = false
             AND b.city ILIKE $1
           ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
           LIMIT 25`;
         const catalogRows = await pool.query(CATALOG_SQL, [`%${destination}%`]);
         businessCatalog = catalogRows.rows.map((r: Record<string, unknown>) => ({
+          id: r.id,
           name: r.name,
           category: r.category,
           city: r.city,
@@ -3006,7 +3037,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               const destLat = parseFloat(hit.lat);
               const destLng = parseFloat(hit.lon);
               const geoRows = await pool.query(
-                `SELECT b.name, b.category, b.city, b.description, b.verified,
+                `SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
                         b.tags, b.profile_status,
                         bi.business_story, bi.mission_statement, bi.why_started,
                         bi.what_customers_should_know, bi.ownership_badges,
@@ -3017,6 +3048,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                  FROM businesses b
                  LEFT JOIN business_identity bi ON bi.business_id = b.id
                  WHERE b.status = 'active'
+                   AND COALESCE(b.is_duplicate, false) = false
+                   AND COALESCE(b.permanently_hidden, false) = false
                    AND (3959 * acos(GREATEST(-1, LEAST(1,
                      cos(radians($1)) * cos(radians(b.latitude::float))
                      * cos(radians(b.longitude::float) - radians($2))
@@ -3027,6 +3060,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                 [destLat, destLng],
               );
               businessCatalog = geoRows.rows.map((r: Record<string, unknown>) => ({
+                id: r.id,
                 name: r.name,
                 category: r.category,
                 city: r.city,
@@ -3070,15 +3104,51 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           .limit(1);
         const homeCity = userRow?.homeCity;
         if (homeCity) {
-          const homeBizRows = await db
-            .select(bizSelectShape)
-            .from(businessesTable)
-            .leftJoin(businessIdentityTable, eq(businessIdentityTable.businessId, businessesTable.id))
-            .where(and(
-              ilike(businessesTable.city, `%${homeCity}%`),
-              eq(businessesTable.status, "active"),
-            ))
-            .limit(20);
+          // Use pool.query (not Drizzle) for consistency with the destination
+          // catalog path and to include the is_duplicate/permanently_hidden guards.
+          const homeRows = await pool.query(
+            `SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
+                    b.tags, b.profile_status,
+                    bi.business_story, bi.mission_statement, bi.why_started,
+                    bi.what_customers_should_know, bi.ownership_badges,
+                    bi.community_values, bi.audiences_served, bi.vibes,
+                    bi.accessibility_features, bi.community_initiatives,
+                    bi.growth_goals, bi.audience_type,
+                    bi.environment_tags, bi.amenity_tags
+             FROM businesses b
+             LEFT JOIN business_identity bi ON bi.business_id = b.id
+             WHERE b.status = 'active'
+               AND COALESCE(b.is_duplicate, false) = false
+               AND COALESCE(b.permanently_hidden, false) = false
+               AND b.city ILIKE $1
+             ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
+             LIMIT 20`,
+            [`%${homeCity}%`],
+          );
+          const homeBizRows = homeRows.rows.map((r: Record<string, unknown>) => ({
+            id: r.id,
+            name: r.name,
+            category: r.category,
+            city: r.city,
+            description: r.description,
+            verified: r.verified,
+            tags: r.tags,
+            profileStatus: r.profile_status,
+            story: r.business_story,
+            missionStatement: r.mission_statement,
+            whyStarted: r.why_started,
+            whatCustomersShouldKnow: r.what_customers_should_know,
+            ownershipBadges: r.ownership_badges,
+            communityValues: r.community_values,
+            audiencesServed: r.audiences_served,
+            vibes: r.vibes,
+            accessibilityFeatures: r.accessibility_features,
+            communityInitiatives: r.community_initiatives,
+            growthGoals: r.growth_goals,
+            audienceType: r.audience_type,
+            environmentTags: r.environment_tags,
+            amenityTags: r.amenity_tags,
+          })) as unknown as BusinessCatalogEntry[];
           businessCatalog = homeBizRows;
           if (businessCatalog.length) catalogSource = "home";
         }
@@ -3746,6 +3816,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // ── Four-purpose enforcement ───────────────────────────────────────────────
+    // Assemble the sources array before enforcement so the educator/safety checks
+    // have access to the same source list that will be returned to the client.
+    const assembledSources: SafeSource[] = [
+      ...contextResolution.sources.map((s) => ({
+        id: s.url, label: s.tier as SafeSource["label"], title: s.title, url: s.url,
+      })),
+      ...healthRetrievalSources.map((s) => ({
+        id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
+      })),
+    ];
+    const safeCatalog = businessCatalog.map((b) => ({
+      id: b.id ?? `${b.name}|${b.city}`,
+      name: b.name, category: b.category, city: b.city,
+      description: b.description ?? undefined, verified: b.verified,
+    }));
+    const enforced = enforceKinfolkResponse({
+      reply,
+      modelRecommendations: (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
+      catalog: safeCatalog,
+      sources: assembledSources,
+      libraryAction,
+      intentClass,
+    });
+    reply = enforced.reply;
+    if (enforced.recommendations !== null) recommendations = enforced.recommendations as Record<string, unknown>;
+
     // ── Telemetry: successful generation ──────────────────────────────────────
     recordKinfolkTelemetry({
       requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
@@ -3818,6 +3915,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       canShowMore: true,
       canShowLess: false,
       answerPlanId: null as string | null,
+      // Four-purpose enforcement fields — always present so clients can branch on them.
+      // educationalStatus: how well this answer is backed by sources.
+      // safetyNotice: required display text for safety/emergency intents.
+      // promotionDisclosure: per-business paid/claimed disclosure strings.
+      // rejectedRecommendations: count of model proposals not in the server catalog.
+      educationalStatus: enforced.educationalStatus,
+      safetyNotice: enforced.safetyNotice ?? undefined,
+      promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
+      rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
       // Token ceiling warning — included when rolling TPM > 80% of the 160k target.
       // Lets the client show a non-blocking banner before users hit KINFOLK_BUSY.
       tpmWarning: (() => {
