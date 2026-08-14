@@ -860,3 +860,10 @@ uri = "file://attached_assets/manus-audit-package-v3-atlanta-grocery.zip"
 type = "unspecified"
 title = "Manus Audit Package v3 — Atlanta Black-Owned Grocery Stores"
 description = "3 files: README with audit scope + store profiles, 8-query SQL verification suite, and full UX test protocol with step-by-step checkpoint list for all 4 stores. Hand this to Manus and ask them to confirm all 4 stores are visible, website URLs open correctly, and profiles are complete."
+
+[[outputs]]
+id = "SB8UrsuodafgctiReOn3E"
+uri = "file://attached_assets/manus-audit-package-full.zip"
+type = "unspecified"
+title = "Manus Full Audit Package"
+description = "30 tester credentials + complete MWM feature audit guide (13 feature sections, A–M, with step-by-step test cases and expected results)"
