@@ -1228,5 +1228,52 @@ router.post("/cron/grant-admin-tester-roles", async (req: any, res: any): Promis
   }
 });
 
+// ── POST /cron/create-monitor-account ────────────────────────────────────────
+// One-time idempotent endpoint: creates the dedicated health-check monitoring
+// account, bypassing the invite-only gate. Protected by CRON_SECRET header.
+// Safe to call repeatedly — returns ok:true whether the account was created
+// or already existed. Accepts email + password in the request body.
+router.post("/cron/create-monitor-account", async (req: any, res: any) => {
+  if (!verifyCronSecret(req, res)) return;
+  try {
+    const { email, password } = req.body as { email?: string; password?: string };
+    if (!email?.trim() || !password?.trim()) {
+      res.status(400).json({ error: "email and password are required" });
+      return;
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    // Check for existing account
+    const existing = await pool.query<{ id: string }>(
+      `SELECT id FROM users WHERE lower(email) = $1 LIMIT 1`,
+      [normalizedEmail],
+    );
+    if (existing.rows.length > 0) {
+      res.json({ ok: true, created: false, reason: "already_exists" });
+      return;
+    }
+    const { randomUUID } = await import("crypto");
+    const userId = randomUUID();
+    const passwordHash = await bcrypt.hash(password.trim(), 8);
+    await pool.query(
+      `INSERT INTO users
+         (id, email, password_hash, name, username, member_type, created_at, updated_at)
+       VALUES ($1,$2,$3,'MWM Health Monitor','mwm_health_monitor','tester',NOW(),NOW())
+       ON CONFLICT (email) DO NOTHING`,
+      [userId, normalizedEmail, passwordHash],
+    );
+    // Grant tester entitlement so Kinfolk quota is bypassed
+    await pool.query(
+      `INSERT INTO tester_entitlements (user_id, entitlement_type, granted_at, is_active)
+       VALUES ($1,'beta_tester',NOW(),true) ON CONFLICT DO NOTHING`,
+      [userId],
+    ).catch(() => {});
+    logger.info({ event: "MONITOR_ACCOUNT_CREATED", email: normalizedEmail }, "monitoring account created");
+    res.json({ ok: true, created: true });
+  } catch (err: any) {
+    logger.error({ err }, "create-monitor-account failed");
+    res.status(500).json({ error: err?.message ?? "Failed" });
+  }
+});
+
 export default router;
 
