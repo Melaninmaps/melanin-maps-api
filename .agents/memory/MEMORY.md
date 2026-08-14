@@ -86,6 +86,7 @@
 - [IP Framework + trade secrets](../docs/trade-secrets/IP_FRAMEWORK.md) — 3 tiers: Trademark/Brand, Copyright, Trade Secrets; never disclose weights, thresholds, Mirror Twin logic, or orchestration rules.
 - [Atlanta Black-Owned Grocery Stores](atlanta-grocery-stores.md) — 4 stores seeded (Wadada, Sevananda, Nourish+Bloom Cascade, Goodr); idempotent startup migration; Manus v3 audit package built.
 - [KinfolkAI recommendations TDZ fix](kinfolk-recommendations-tzdfix.md) — let recommendations declared after nudge section reference; hoist above outer try block.
+- [Replit secrets vs Railway env vars](replit-secrets-vs-railway-env.md) — Replit secrets NOT injected into Railway; use CRON_SECRET endpoint pattern instead of startup-migration env reads.
 - [Startup migration INSERT pattern](startup-migration-insert-pattern.md) — INSERT...SELECT...WHERE NOT EXISTS silently fails for businesses table; use two-step pre-check Set pattern.
 - [Allied Partner Journey — 5-stage architecture](allied-partner-journey.md) — DB table, routes, community threshold gate, stage-advance logic, email triggers; no FK constraints (Railway pattern).
 - [Community events expansion — #100](community-events-expansion.md) — 126-event multi-city seed; city-centroid coordinate fallback; current count 209/210 events geocoded; still ~237 short of 509 target.
