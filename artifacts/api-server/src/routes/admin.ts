@@ -2311,40 +2311,130 @@ router.post("/admin/business-discovery/search", async (req: Request, res: Respon
 //         ownershipDesignations?, placeId?, blackOwned? }
 router.post("/admin/business-discovery/approve", async (req: Request, res: Response) => {
   if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+
   const { name, address, city, state, category, phone, website, lat, lng,
           ownershipDesignations, blackOwned, placeId } = req.body as {
-    name: string; address: string; city: string; state: string; category: string;
-    phone?: string; website?: string; lat: number; lng: number;
-    ownershipDesignations?: string[]; blackOwned?: boolean; placeId?: string;
+    name?: string; address?: string | null; city?: string; state?: string; category?: string;
+    phone?: string | null; website?: string | null; lat?: number | null; lng?: number | null;
+    ownershipDesignations?: string[] | null; blackOwned?: boolean; placeId?: string | null;
   };
-  if (!name || !city || !state || !category) {
+
+  const cleanName     = name?.trim() ?? "";
+  const cleanAddress  = address?.trim() || null;
+  const cleanCity     = city?.trim() ?? "";
+  const cleanState    = state?.trim() ?? "";
+  const cleanCategory = category?.trim() ?? "";
+  const cleanPhone    = phone?.trim() || null;
+  const cleanWebsite  = website?.trim() || null;
+  const latitude      = Number.isFinite(lat) ? lat! : null;
+  const longitude     = Number.isFinite(lng) ? lng! : null;
+
+  if (!cleanName || !cleanCity || !cleanState || !cleanCategory) {
     return void res.status(400).json({ error: "name, city, state, category required" });
   }
+
+  // Canonical identity used by all write paths — same as governed ingestion.
+  const normalizedName = _normalizeText(cleanName);
+  const key = _dedupeKey({ name: cleanName, address: cleanAddress, city: cleanCity, state: cleanState, latitude, longitude });
+  const sourceProvider = "google_places";
+  const sourceUrl = placeId
+    ? `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`
+    : cleanWebsite;
+
+  const client = await pool.connect();
   try {
-    const id = require("crypto").randomUUID();
-    await pool.query(
-      `INSERT INTO businesses (
-        id, name, address, city, state, category, phone, website,
-        latitude, longitude, listing_status, verified, black_owned,
-        ownership_designations, enrichment_source, enriched_at, enrichment_note, created_at, updated_at
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-        'active', false, $11, $12,
-        'google_places', NOW(), $13, NOW(), NOW()
-      ) ON CONFLICT DO NOTHING RETURNING id`,
-      [
-        id, name, address ?? null, city, state, category,
-        phone ?? null, website ?? null,
-        lat ?? null, lng ?? null,
-        blackOwned ?? false,
-        ownershipDesignations ? JSON.stringify(ownershipDesignations) : null,
-        placeId ? `Imported from Google Places: ${placeId}` : "Admin-approved via business discovery",
-      ]
+    await client.query("BEGIN");
+
+    // Lock the identity key before deciding whether this is new.
+    // The unique partial index on dedupe_key remains the final race-condition defense.
+    const existing = await client.query(
+      `SELECT id, name, city, state, listing_status FROM businesses
+        WHERE dedupe_key = $1
+          AND COALESCE(is_duplicate, false) = false
+          AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+        FOR UPDATE`,
+      [key],
     );
-    res.json({ ok: true, id, message: `${name} added to the platform` });
-  } catch (err) {
+
+    if (existing.rows[0]) {
+      const row = existing.rows[0];
+      // Preserve any missing enrichment fields from this duplicate submission.
+      await client.query(
+        `UPDATE businesses
+            SET website       = COALESCE(NULLIF($1, ''), website),
+                phone         = COALESCE(NULLIF($2, ''), phone),
+                source_provider = COALESCE(source_provider, $3),
+                source_url    = COALESCE(source_url, $4),
+                normalized_name = $5,
+                updated_at    = NOW()
+          WHERE id = $6`,
+        [cleanWebsite, cleanPhone, sourceProvider, sourceUrl, normalizedName, row.id],
+      );
+      await client.query("COMMIT");
+      res.status(200).json({
+        ok: true, id: row.id, existingId: row.id, isDuplicate: true,
+        action: "EXISTING_CANONICAL",
+        message: `${cleanName} already exists; no duplicate was created`,
+      });
+      return;
+    }
+
+    const newId = require("crypto").randomUUID();
+    const inserted = await client.query(
+      `INSERT INTO businesses (
+         id, name, address, city, state, category, phone, website,
+         latitude, longitude, listing_status, status, verified, black_owned,
+         ownership_designations, source_provider, source_url,
+         normalized_name, dedupe_key, created_at, updated_at
+       ) VALUES (
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+         'live_unclaimed','active',false,$11,$12,$13,$14,$15,$16,NOW(),NOW()
+       )
+       ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL
+         AND COALESCE(is_duplicate, false) = false
+         AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+       DO UPDATE SET
+         website = COALESCE(NULLIF(EXCLUDED.website, ''), businesses.website),
+         phone   = COALESCE(NULLIF(EXCLUDED.phone, ''), businesses.phone),
+         updated_at = NOW()
+       RETURNING id, (xmax = 0) AS inserted`,
+      [
+        newId, cleanName, cleanAddress, cleanCity, cleanState, cleanCategory,
+        cleanPhone, cleanWebsite, latitude, longitude,
+        blackOwned ?? false, ownershipDesignations ?? [],
+        sourceProvider, sourceUrl, normalizedName, key,
+      ],
+    );
+
+    const canonical = inserted.rows[0];
+    await client.query("COMMIT");
+    res.status(canonical.inserted ? 201 : 200).json({
+      ok: true,
+      id: canonical.id,
+      existingId: canonical.inserted ? null : canonical.id,
+      isDuplicate: !canonical.inserted,
+      action: canonical.inserted ? "CREATED_CANONICAL" : "EXISTING_CANONICAL",
+      message: canonical.inserted
+        ? `${cleanName} added to the platform`
+        : `${cleanName} already exists; no duplicate was created`,
+    });
+  } catch (err: any) {
+    await client.query("ROLLBACK");
+    // A concurrent request may win the unique-key race — return the canonical row instead of 500.
+    if (err?.code === "23505") {
+      const winner = await pool.query(
+        `SELECT id FROM businesses WHERE dedupe_key = $1 AND COALESCE(is_duplicate, false) = false LIMIT 1`,
+        [key],
+      );
+      if (winner.rows[0]) {
+        res.status(200).json({ ok: true, id: winner.rows[0].id, isDuplicate: true, action: "EXISTING_CANONICAL" });
+        return;
+      }
+    }
     req.log.error({ err }, "POST /admin/business-discovery/approve error");
     res.status(500).json({ error: "Failed to add business", detail: String(err) });
+  } finally {
+    client.release();
   }
 });
 
@@ -2526,6 +2616,38 @@ router.get("/admin/business-review", async (req: Request, res: Response) => {
   }
 });
 
+// Finds the physical candidate row for a review item by matching fields,
+// excluding the canonical matched_business_id from results.
+async function findDuplicateReviewCandidate(client: any, item: {
+  candidate_name: string; candidate_address: string | null; candidate_city: string;
+  candidate_state: string; candidate_latitude: number | null; candidate_longitude: number | null;
+  matched_business_id: string | null;
+}) {
+  const { rows } = await client.query(
+    `SELECT id, duplicate_of_id, is_duplicate, status, listing_status
+       FROM businesses
+      WHERE id <> COALESCE($1, '')
+        AND lower(regexp_replace(name, '[^a-z0-9]+', '', 'gi')) =
+            lower(regexp_replace($2, '[^a-z0-9]+', '', 'gi'))
+        AND lower(coalesce(city, '')) = lower(coalesce($3, ''))
+        AND lower(coalesce(state, '')) = lower(coalesce($4, ''))
+        AND (
+          ($5::double precision IS NOT NULL AND $6::double precision IS NOT NULL
+           AND round(latitude::numeric, 5) = round($5::numeric, 5)
+           AND round(longitude::numeric, 5) = round($6::numeric, 5))
+          OR (coalesce($7, '') <> '' AND lower(coalesce(address, '')) = lower($7))
+        )
+      ORDER BY COALESCE(is_duplicate, false) ASC, created_at DESC
+      LIMIT 1`,
+    [
+      item.matched_business_id, item.candidate_name, item.candidate_city,
+      item.candidate_state, item.candidate_latitude, item.candidate_longitude,
+      item.candidate_address,
+    ],
+  );
+  return rows[0] ?? null;
+}
+
 router.patch("/admin/business-review/:id", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   const { id } = req.params;
@@ -2535,92 +2657,174 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
     res.status(400).json({ error: `action must be one of: ${allowed.join(", ")}` });
     return;
   }
+
+  const client = await pool.connect();
   try {
-    // Fetch the review item
-    const { rows } = await pool.query<{
-      id: string; review_type: string; status: string; candidate_name: string;
-      candidate_address: string; candidate_city: string; candidate_state: string;
-      candidate_website: string | null; candidate_phone: string | null;
-      candidate_latitude: number | null; candidate_longitude: number | null;
-      candidate_category: string | null; candidate_source_provider: string | null;
-      matched_business_id: string | null;
-    }>(
-      `SELECT id, review_type, status, candidate_name, candidate_address, candidate_city,
-              candidate_state, candidate_website, candidate_phone, candidate_latitude,
-              candidate_longitude, candidate_category, candidate_source_provider,
-              matched_business_id
-       FROM business_review_items WHERE id = $1`,
+    await client.query("BEGIN");
+
+    // Lock the review item to prevent concurrent action on the same item.
+    const itemResult = await client.query(
+      `SELECT id, review_type, status, candidate_name, candidate_address,
+              candidate_city, candidate_state, candidate_website, candidate_phone,
+              candidate_latitude, candidate_longitude, candidate_category,
+              candidate_source_provider, candidate_source_url, matched_business_id
+         FROM business_review_items
+        WHERE id = $1
+        FOR UPDATE`,
       [id],
     );
-    const item = rows[0];
-    if (!item) { res.status(404).json({ error: "Review item not found" }); return; }
-    if (item.status !== "pending") { res.status(409).json({ error: "Already resolved" }); return; }
-
-    const adminId = (req.session as Record<string, unknown>)?.userId as string | undefined;
-
-    if (action === "approve") {
-      // Create the business in the active table
-      const key = _dedupeKey({
-        name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
-        address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
-      });
-      await pool.query(
-        `INSERT INTO businesses
-          (id, name, address, city, state, website, phone, latitude, longitude,
-           category, status, listing_status, source_provider, dedupe_key, normalized_name,
-           created_at, updated_at)
-         VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',$10,$11,$12,NOW(),NOW())
-         ON CONFLICT DO NOTHING`,
-        [
-          item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
-          item.candidate_website ?? "", item.candidate_phone ?? "",
-          item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
-          item.candidate_source_provider ?? "", key, _normalizeText(item.candidate_name),
-        ],
-      );
-    } else if (action === "merge" && item.matched_business_id) {
-      // Soft-mark this candidate as duplicate of matched_business_id
-      // (no new business row created — matched is canonical)
-    } else if (action === "keep_both") {
-      // Mark both as independent — approve the candidate
-      const key = _dedupeKey({
-        name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
-        address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
-      });
-      await pool.query(
-        `INSERT INTO businesses
-          (id, name, address, city, state, website, phone, latitude, longitude,
-           category, status, listing_status, source_provider, dedupe_key, normalized_name,
-           created_at, updated_at)
-         VALUES (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7,$8,$9,'active','active',$10,$11,$12,NOW(),NOW())
-         ON CONFLICT DO NOTHING`,
-        [
-          item.candidate_name, item.candidate_address, item.candidate_city, item.candidate_state,
-          item.candidate_website ?? "", item.candidate_phone ?? "",
-          item.candidate_latitude, item.candidate_longitude, item.candidate_category ?? "",
-          item.candidate_source_provider ?? "", key, _normalizeText(item.candidate_name),
-        ],
-      );
+    const item = itemResult.rows[0];
+    if (!item) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "Review item not found" });
+      return;
     }
-    // For reject and needs_research: just update status
+    if (item.status !== "pending") {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Review item already resolved", status: item.status });
+      return;
+    }
+
+    const adminId = ((req.session as Record<string, unknown>)?.userId as string | undefined) ?? null;
+
+    // ── Merge ──────────────────────────────────────────────────────────────────
+    if (action === "merge") {
+      if (!item.matched_business_id) {
+        await client.query("ROLLBACK");
+        res.status(422).json({ error: "Cannot merge without a canonical matched_business_id" });
+        return;
+      }
+
+      const canonical = await client.query(
+        `SELECT id, is_duplicate, status FROM businesses WHERE id = $1 FOR UPDATE`,
+        [item.matched_business_id],
+      );
+      if (!canonical.rows[0]) {
+        await client.query("ROLLBACK");
+        res.status(422).json({ error: "Canonical business does not exist" });
+        return;
+      }
+      if (canonical.rows[0].is_duplicate === true) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Canonical target is itself marked duplicate" });
+        return;
+      }
+
+      const candidate = await findDuplicateReviewCandidate(client, item);
+      if (!candidate) {
+        await client.query("ROLLBACK");
+        res.status(422).json({
+          error: "Could not identify a physical candidate row to merge; no business row was changed",
+        });
+        return;
+      }
+      if (candidate.id === item.matched_business_id) {
+        await client.query("ROLLBACK");
+        res.status(422).json({ error: "Candidate and canonical IDs are identical" });
+        return;
+      }
+
+      // Mark candidate as duplicate + permanently hidden.
+      await client.query(
+        `UPDATE businesses
+            SET is_duplicate        = true,
+                duplicate_of_id     = $1::uuid,
+                duplicate_reason    = 'manual_review_merge',
+                duplicate_marked_at = NOW(),
+                listing_status      = 'permanently_hidden',
+                status              = 'permanently_hidden',
+                updated_at          = NOW()
+          WHERE id = $2`,
+        [item.matched_business_id, candidate.id],
+      );
+
+      await client.query(
+        `UPDATE business_review_items
+            SET status             = 'merged',
+                resolved_by        = $1,
+                resolved_at        = NOW(),
+                updated_at         = NOW(),
+                matched_business_id = $2
+          WHERE id = $3`,
+        [adminId, item.matched_business_id, id],
+      );
+
+      await client.query("COMMIT");
+      res.json({ ok: true, status: "merged", duplicateId: candidate.id, canonicalId: item.matched_business_id });
+      return;
+    }
+
+    // ── Approve / Keep-both ────────────────────────────────────────────────────
+    if (action === "approve" || action === "keep_both") {
+      if (
+        (item.review_type === "community_submission" || item.review_type === "community_reference")
+        && item.matched_business_id
+      ) {
+        // Community submissions already have a business row (pending_review status).
+        // Promoting it to live avoids creating a second row.
+        await client.query(
+          `UPDATE businesses
+              SET listing_status = 'live_unclaimed',
+                  status         = 'active',
+                  updated_at     = NOW()
+            WHERE id = $1
+              AND COALESCE(is_duplicate, false) = false`,
+          [item.matched_business_id],
+        );
+      } else {
+        // Generic ingestion-pipeline items: create canonical row from candidate fields.
+        const key = _dedupeKey({
+          name: item.candidate_name, city: item.candidate_city, state: item.candidate_state,
+          address: item.candidate_address, latitude: item.candidate_latitude, longitude: item.candidate_longitude,
+        });
+        const newId = require("crypto").randomUUID();
+        const inserted = await client.query(
+          `INSERT INTO businesses
+             (id, name, address, city, state, website, phone, latitude, longitude,
+              category, status, listing_status, source_provider, source_url,
+              normalized_name, dedupe_key, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'active','live_unclaimed',
+                   $11,$12,$13,$14,NOW(),NOW())
+           ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL
+             AND COALESCE(is_duplicate, false) = false
+             AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+           DO UPDATE SET updated_at = NOW()
+           RETURNING id`,
+          [
+            newId, item.candidate_name, item.candidate_address,
+            item.candidate_city, item.candidate_state,
+            item.candidate_website ?? null, item.candidate_phone ?? null,
+            item.candidate_latitude, item.candidate_longitude,
+            item.candidate_category ?? "",
+            item.candidate_source_provider ?? null,
+            item.candidate_source_url ?? null,
+            _normalizeText(item.candidate_name), key,
+          ],
+        );
+        if (!inserted.rows[0]) throw new Error("Business approval did not return a canonical row");
+      }
+    }
 
     const newStatus = action === "approve" ? "approved"
       : action === "reject" ? "rejected"
-      : action === "merge" ? "merged"
       : action === "keep_both" ? "keep_both"
       : "needs_research";
 
-    await pool.query(
+    await client.query(
       `UPDATE business_review_items
-       SET status = $1, resolved_by = $2, resolved_at = NOW(), updated_at = NOW()
-       WHERE id = $3`,
-      [newStatus, adminId ?? null, id],
+          SET status = $1, resolved_by = $2, resolved_at = NOW(), updated_at = NOW()
+        WHERE id = $3`,
+      [newStatus, adminId, id],
     );
 
+    await client.query("COMMIT");
     res.json({ ok: true, status: newStatus });
   } catch (err) {
+    await client.query("ROLLBACK");
     req.log.error({ err }, "PATCH /admin/business-review/:id error");
     res.status(500).json({ error: "Failed", detail: String(err) });
+  } finally {
+    client.release();
   }
 });
 

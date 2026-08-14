@@ -1,0 +1,87 @@
+2026-08-14T04:39:47.893798462Z | info | server ready — initial pool state
+2026-08-14T04:39:47.893810210Z | info | Running startup schema migrations...
+2026-08-14T04:39:47.893939332Z | error | Listening on port 8080 — API on 3001
+2026-08-14T04:39:47.893945306Z | error | DB_MIGRATION: waitlist_signups table ensured
+2026-08-14T04:39:47.893949404Z | error | DB_MIGRATION: columns backfilled
+2026-08-14T04:39:47.893953498Z | error | DB_MIGRATION: seeded rows
+2026-08-14T04:39:47.893957463Z | error | DB_MIGRATION: businesses columns ensured
+2026-08-14T04:39:47.893961128Z | error | DB_MIGRATION: cultural_sites columns ensured
+2026-08-14T04:39:47.893965293Z | info | Server listening
+2026-08-14T04:39:47.895035090Z | info |   ✓ businesses_state_nullable_v1
+2026-08-14T04:39:47.895038302Z | info |   ✓ businesses_country_col_v1
+2026-08-14T04:39:47.895041998Z | info |   ✓ businesses_province_col_v1
+2026-08-14T04:39:47.896209026Z | error |   constraint: undefined,
+2026-08-14T04:39:47.896219814Z | error |   file: 'parse_relation.c',
+2026-08-14T04:39:47.896242971Z | error |   severity: 'ERROR',
+2026-08-14T04:39:47.896261094Z | info |   ✓ businesses_admin_notes_col_v1
+2026-08-14T04:39:47.896266971Z | info |   ✓ businesses_listing_status_col
+2026-08-14T04:39:47.896271702Z | error | error: column "api_key_hashes" does not exist
+2026-08-14T04:39:47.897630707Z | error |   routine: 'errorMissingColumn'
+2026-08-14T04:39:47.897638137Z | error | } Failed to lookup account by API key hash, falling back to API
+2026-08-14T04:39:47.897643943Z | info |   ✓ businesses_email_zip_cols
+2026-08-14T04:39:47.919022997Z | info |   ✓ business_suggestions_table
+2026-08-14T04:39:47.964896915Z | info |   ✓ businesses_listing_status_col
+2026-08-14T04:39:47.971062472Z | info |   ✓ demo_businesses_philly_seed_v2
+2026-08-14T04:39:47.977056992Z | info |   ✓ businesses_philly_live_unclaimed
+2026-08-14T04:39:47.984825399Z | info |   ✓ businesses_all_live_unclaimed_tour
+2026-08-14T04:39:48.052266441Z | info |   ✓ create_business_safety_submissions
+2026-08-14T04:39:48.089481323Z | info |   ✓ businesses_specialties_col_v1
+2026-08-14T04:39:48.112094147Z | info |   ✓ knowledge_sources_status_pending_review_v1
+2026-08-14T04:39:48.133500699Z | info |   ✓ the_real_taps_business_idx
+2026-08-14T04:39:48.139600143Z | info |   ✓ business_endorsement_taps_table
+2026-08-14T04:39:48.139605416Z | info |   ✓ business_endorsement_taps_idx
+2026-08-14T04:39:48.142516139Z | info |   ✓ fix_church_business_categories_v1
+2026-08-14T04:39:48.148863290Z | info |   ✓ ensure_apple_reviewer_account_v1
+2026-08-14T04:39:48.162291512Z | info |   ✓ business_identity_audience_type_col_v1
+2026-08-14T04:39:48.167929004Z | info |   ✓ business_identity_environment_tags_col_v1
+2026-08-14T04:39:48.167933789Z | info |   ✓ business_identity_amenity_tags_col_v1
+2026-08-14T04:39:48.195790814Z | info |   ✓ businesses_schema_sync_v1
+2026-08-14T04:39:48.198144693Z | info |   ✓ business_captions_table_v1
+2026-08-14T04:39:48.219281134Z | info |   ✓ business_contributions_is_public_col_v1
+2026-08-14T04:39:48.231413693Z | info |   ✓ deduplicate_geography_topics_v1
+2026-08-14T04:39:48.237203025Z | info |   ✓ business_endorsement_taps_v1
+2026-08-14T04:39:48.271962701Z | info |   ✓ business_member_feedback_table_v1
+2026-08-14T04:39:48.278061537Z | info |   ✓ business_member_feedback_index_v1
+2026-08-14T04:39:48.287658421Z | error | error: column "_raw_data" of relation "accounts" does not exist
+2026-08-14T04:39:48.287694899Z | error |   severity: 'ERROR',
+2026-08-14T04:39:48.287737393Z | error |   constraint: undefined,
+2026-08-14T04:39:48.288881769Z | error | } Failed to upsert account to database
+2026-08-14T04:39:48.288886700Z | info | Stripe init failed
+2026-08-14T04:39:48.298066648Z | info |   ✓ community_business_claims_v2_businesses_cols
+2026-08-14T04:39:48.305957012Z | info |   ✓ community_business_claims_v2_address_nullable
+2026-08-14T04:39:48.305960027Z | info |   ✓ community_business_claims_v2_lat_nullable
+2026-08-14T04:39:48.311741567Z | info |   ✓ community_business_claims_v2_lng_nullable
+2026-08-14T04:39:48.311746070Z | info |   ✗ community_business_claims_v2_backfill: column "data_source" does not exist
+2026-08-14T04:39:48.318066854Z | info |   ✓ community_business_claims_v2_listing_sources
+2026-08-14T04:39:48.318070241Z | info |   ✓ community_business_claims_v2_outreach_table
+2026-08-14T04:39:48.324053833Z | info |   ✓ community_business_claims_v2_claims_cols
+2026-08-14T04:39:48.324058347Z | info |   ✓ community_business_claims_v2_owner_links_cols
+2026-08-14T04:39:48.325539502Z | info |   ✓ community_business_claims_v2_review_queue_idx
+2026-08-14T04:39:48.430537990Z | info |   ✗ library_topic_versions_table_v1: foreign key constraint "library_topic_versions_topic_id_fkey" cannot be implemented
+2026-08-14T04:39:48.465935818Z | info |   ✗ business_safety_experiences_gender_context_v1: relation "business_safety_experiences" does not exist
+2026-08-14T04:39:48.480825505Z | info |   ✓ businesses_enrichment_cols_v1
+2026-08-14T04:39:48.487147599Z | info |   ✓ businesses_hours_text_v1
+2026-08-14T04:39:48.506275289Z | info |   ✓ businesses_url_cols_text_v1
+2026-08-14T04:39:48.526604693Z | info |   ✓ quarantine_test_reviewer_posts_v1
+2026-08-14T04:39:48.555053590Z | info |   ✓ hide_confirmed_duplicate_businesses_v1
+2026-08-14T04:39:48.555057343Z | info | Startup migrations complete: 208 applied, 4 skipped/errored.
+2026-08-14T04:39:49.341467669Z | info | Directory businesses integrity guard: 0 inserted, 9 already present (seed: 9)
+2026-08-14T04:39:49.364493216Z | info | Tour businesses integrity guard: 1 inserted, 555 already present (seed: 556)
+2026-08-14T04:39:49.365908754Z | info | Founder-curated businesses guard: 0 inserted, 23 already present
+2026-08-14T04:39:50.916023995Z | info | Bangkok businesses guard: 0 inserted, 15 already present
+2026-08-14T04:39:50.916028053Z | info | LA businesses guard: 0 inserted, 42 already present
+2026-08-14T04:39:50.916059045Z | info | Business discoverability: created 1 missing business_identity rows
+2026-08-14T04:39:50.916062445Z | info | Business discoverability: tags and ownership badges ensured for all active businesses
+2026-08-14T04:39:52.315545624Z | info | Library link health: ACS breast cancer source already reviewed or not found — no change
+2026-08-14T04:39:52.315548661Z | info | Library link health summary: unchecked:802, needs_review:1
+2026-08-14T04:39:52.315551823Z | info | Business claims v2 — no open-claim conflicts found
+2026-08-14T04:39:52.315554765Z | info | Business owner links v2 — no duplicate active owner conflicts found
+2026-08-14T04:39:52.316833548Z | info | Business claims v2 — unique index business_claims_one_open_per_member_biz: OK
+2026-08-14T04:39:52.323162433Z | info | Business claims v2 — unique index business_owner_links_one_active_primary_owner: OK
+2026-08-14T04:39:52.323167466Z | info | Business claims v2 — claim status distribution: 
+2026-08-14T04:39:52.908581919Z | info | Laundry businesses v1: 0 inserted, 50 already present (50 total)
+2026-08-14T04:39:52.974598878Z | info | ensureBusinessContactCompleteness: contact_source_url, contact_verified_at, contact_completeness columns ready
+2026-08-14T04:40:00.070225997Z | info | ensureBusinessDeduplication: 17 non-Duke's duplicates soft-marked, 0 already done, 1 Duke's Cafe records backfilled
+2026-08-14T04:40:00.070234409Z | info | ensureBusinessReviewItems: 0 manual-review pairs seeded, 4 already present
+2026-08-14T04:40:00.070297175Z | info | ensureCanonicalPlacesV1 failed: invalid regular expression: invalid backreference number
+2026-08-14T04:40:00.070305399Z | info | ensureBusinessDedupSchema: schema ready

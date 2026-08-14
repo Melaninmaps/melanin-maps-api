@@ -3895,6 +3895,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["business review items v1", () => ensureBusinessReviewItems(log, warn)],
     // ── User handles — short @mention identifier for community posts ──────────
     ["user handles v1", () => ensureUserHandles(log, warn)],
+    // ── Visibility hardening — public view + canonical dedupe index ───────────
+    ["visibility and dedupe hardening v1", () => ensureVisibilityAndDedupeHardening(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9356,6 +9358,61 @@ async function ensureUserHandles(
     log(`ensureUserHandles: handle column ready, ${rowCount ?? 0} users back-filled`);
   } catch (err: unknown) {
     warn(`ensureUserHandles failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Visibility hardening — public view + canonical dedupe index ───────────────
+// Creates the canonical visibility rule as a PG function, a public_businesses
+// view, a filtered index for fast map/list queries, and a unique partial index
+// that prevents two non-duplicate rows from sharing the same dedupe_key.
+// All statements are idempotent (CREATE OR REPLACE / IF NOT EXISTS).
+async function ensureVisibilityAndDedupeHardening(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION public.business_is_public(
+        p_status text,
+        p_listing_status text,
+        p_is_duplicate boolean
+      ) RETURNS boolean
+      LANGUAGE sql
+      IMMUTABLE
+      AS $$
+        SELECT COALESCE(p_is_duplicate, false) = false
+           AND COALESCE(p_status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+           AND COALESCE(p_listing_status, '') IN ('live_unclaimed', 'live_claimed');
+      $$
+    `);
+
+    await pool.query(`
+      CREATE OR REPLACE VIEW public.public_businesses AS
+      SELECT b.*
+      FROM public.businesses b
+      WHERE public.business_is_public(b.status, b.listing_status, b.is_duplicate)
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_public_visibility_idx
+        ON public.businesses (listing_status, status, is_duplicate, created_at DESC)
+        WHERE COALESCE(is_duplicate, false) = false
+          AND listing_status IN ('live_unclaimed', 'live_claimed')
+          AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+    `);
+
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS businesses_canonical_dedupe_key_unique
+        ON public.businesses (dedupe_key)
+        WHERE dedupe_key IS NOT NULL
+          AND btrim(dedupe_key) <> ''
+          AND COALESCE(is_duplicate, false) = false
+          AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
+    `);
+
+    log("ensureVisibilityAndDedupeHardening: public_businesses view + indexes ready");
+  } catch (err: unknown) {
+    warn(`ensureVisibilityAndDedupeHardening failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

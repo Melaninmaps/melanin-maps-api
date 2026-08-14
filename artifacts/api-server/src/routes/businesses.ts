@@ -89,6 +89,8 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
 // The small payload (id/name/lat/lng/category/city/country) keeps it fast.
 router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
   try {
+    // Uses public.public_businesses view so duplicates and hidden records are
+    // never included — the view enforces is_duplicate=false + live listing_status.
     const { rows } = await pool.query<{
       id: string; name: string; latitude: string; longitude: string;
       category: string | null; subcategory: string | null;
@@ -97,13 +99,12 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
     }>(`
       SELECT id, name, latitude, longitude, category, subcategory,
              city, state, country, listing_status
-      FROM businesses
-      WHERE status = 'active'
-        AND latitude IS NOT NULL
+      FROM public.public_businesses
+      WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND latitude != 0
-        AND longitude != 0
-      ORDER BY confidence_score DESC, created_at DESC
+        AND latitude::numeric != 0
+        AND longitude::numeric != 0
+      ORDER BY confidence_score DESC NULLS LAST, created_at DESC
     `);
     res.json({ pins: rows });
   } catch (err) {
@@ -127,6 +128,16 @@ router.get("/businesses", async (req: Request, res: Response) => {
     const hasGeoFilter = geoLat !== null && geoLng !== null && !isNaN(geoLat) && !isNaN(geoLng);
 
     const conditions = [];
+
+    // ── Visibility gate — always exclude duplicates and hidden records ────────
+    // is_duplicate rows exist only for admin/audit queries, never public results.
+    // status IN (...) catches rows that were hidden via the admin panel.
+    conditions.push(
+      sql`COALESCE(${businessesTable}.is_duplicate, false) = false`
+    );
+    conditions.push(
+      sql`COALESCE(${businessesTable}.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')`
+    );
 
     // ── listing_status gate — real users only see live listings ──────────────
     // Tester accounts see everything; regular users see only live_unclaimed + live_claimed.
@@ -354,7 +365,11 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
         // Build scope: carry all restrictive filters from the caller into fuzzy SQL.
         // Parameterized — no user input ever interpolated into SQL text.
-        const fuzzyScope: string[] = ["b.status = 'active'"];
+        // Fuzzy fallback must mirror the same visibility rules as the main query.
+        const fuzzyScope: string[] = [
+          "COALESCE(b.is_duplicate, false) = false",
+          "COALESCE(b.status, 'active') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')",
+        ];
         const fuzzyScopeParams: unknown[] = [];
         if (!isTester) {
           fuzzyScope.push("b.listing_status IN ('live_unclaimed', 'live_claimed')");
@@ -1151,6 +1166,20 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
       .where(eq(businessesTable.id, id));
 
     if (!business) {
+      res.status(404).json({ error: "Business not found" });
+      return;
+    }
+
+    // Visibility guard: is_duplicate and permanently_hidden rows return 404.
+    // The businesses Drizzle schema may not include is_duplicate (added via raw migration),
+    // so we do a targeted pool.query check rather than trusting the typed result.
+    const { rows: visRows } = await pool.query<{ is_duplicate: boolean | null; status: string | null }>(
+      `SELECT is_duplicate, status FROM businesses WHERE id = $1 LIMIT 1`,
+      [id],
+    );
+    const vis = visRows[0];
+    if (!vis || vis.is_duplicate === true ||
+        ["duplicate", "permanently_hidden", "removed", "deleted"].includes(vis.status ?? "")) {
       res.status(404).json({ error: "Business not found" });
       return;
     }
