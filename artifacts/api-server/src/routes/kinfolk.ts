@@ -2269,6 +2269,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // thrown, so the Railway [kinfolk-chat-error] log line pinpoints the exact phase
   // without needing a full stack trace from every path.
   let chatStage = "init";
+  // recommendations must be declared here (before any code that references it)
+  // to avoid a TDZ ReferenceError in the nudge section. Initialized to null;
+  // set to the parsed AI response object after the provider call completes.
+  let recommendations: Record<string, unknown> | null = null;
   try {
     // ── Enforce monthly query limits ──────────────────────────────────────────
     chatStage = "quota_check";
@@ -3444,7 +3448,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const rawContent = completion.choices[0]?.message?.content ?? "{}";
 
     let reply = "Let me think on that for a second — something went sideways on my end.";
-    let recommendations: Record<string, unknown> | null = null;
+    recommendations = null; // re-initialized after AI response parse
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
     let taskAction: Record<string, unknown> | null = null;
@@ -3787,8 +3791,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
 
-    // TEMP DEBUG (Aug 14 2026 Manus audit): expose chatStage + error for tester accounts
-    const isTesterRequest = (req.user as any)?.role === "tester" || (req.user as any)?.role === "admin";
     res.status(isTimeout ? 504 : 500).json({
       error: isTimeout
         ? "Kinfolk took too long to respond. Please try again in a moment."
@@ -3801,13 +3803,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : is401           ? "KINFOLK_AUTH_ERROR"
           : isConnRefused   ? "KINFOLK_CONN_ERROR"
           :                   "KINFOLK_ERROR",
-      ...(isTesterRequest ? {
-        _debug_stage: chatStage,
-        _debug_errName: errName,
-        _debug_errMsg: errMsg.slice(0, 400),
-        _debug_errCode: errCode ?? "none",
-        _debug_providerStatus: providerStatus ?? "none",
-      } : {}),
     });
   }
 });
