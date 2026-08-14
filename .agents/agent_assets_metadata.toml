@@ -888,3 +888,10 @@ uri = "file://attached_assets/manus-railway-gate-pass.zip"
 type = "unspecified"
 title = "MWM Deployment Gate — RAILWAY PRODUCTION PASS (6/6, 30/30)"
 description = "deployment-gate-railway-result.json — Exit 0. URL: https://api-server-production-a991.up.railway.app. All 30 Manus accounts confirmed on Railway production."
+
+[[outputs]]
+id = "NA2DQ7knTng34drjLNhGJ"
+uri = "file://attached_assets/manus-redacted-gate-pass.zip"
+type = "unspecified"
+title = "MWM Gate — REDACTED (no tokens) · Railway Production · 6/6 PASS"
+description = "deployment-gate-railway-result-redacted.json — All tokens removed. URL: https://api-server-production-a991.up.railway.app. Notes inside explain the Replit-dev-domain 502 vs Railway distinction."

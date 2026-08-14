@@ -1,0 +1,57 @@
+{
+  "deployment": "https://api-server-production-a991.up.railway.app",
+  "passed": true,
+  "failed_checks": [],
+  "checks": [
+    {
+      "name": "root_is_application_not_mockup",
+      "passed": true,
+      "status": 200,
+      "detail": "status=200; location=''; mockup_signature=False; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/",
+      "elapsed_ms": 348.1
+    },
+    {
+      "name": "health_endpoint",
+      "passed": true,
+      "status": 200,
+      "detail": "https://api-server-production-a991.up.railway.app/api/healthz: status=200, body='{\"status\":\"ok\",\"bundleBytes\":6888}'",
+      "url": "https://api-server-production-a991.up.railway.app/api/healthz",
+      "elapsed_ms": 70.8
+    },
+    {
+      "name": "tester_login_returns_token",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"token\":\"[REDACTED]\",\"mustChangePassword\":false}'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/login-email",
+      "elapsed_ms": 245.6
+    },
+    {
+      "name": "authenticated_user_is_tester",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"role\":\"tester\",\"user\":{\"id\":\"[REDACTED]\",\"role\":\"tester\",\"email\":\"manus.tester.01@mwm.audit\",\"approved\":true,\"lastName\":\"Tester 01\",\"firstName\":\"Manus\",\"profileImageUrl\":null,\"isLoadTest\":false,\"dateOfBirth\":null,\"username\":\"manustester01\",\"memberType\":\"individual\",\"emailVerified\":true,\"homeCity\":null,\"isPrivate\":false,\"bio\":null,\"showCity\":true,\"allowDm\":true,\"displayNameFormat\":\"full\",\"trustLevel\":1,\"reputationScore\":0,\"profileSetupComplete\":true,\"tier\":\"trailblazer\",\"testingMode\":true}}'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/user",
+      "elapsed_ms": 98.8
+    },
+    {
+      "name": "business_search_is_real_json_route",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"businesses\":[{\"id\":\"[REDACTED]\",\"name\":\"Beautiful Restaurant\",\"category\":\"Food\",\"subcategory\":\"Soul Food\",\"address\":\"2260 Cascade Rd SW\",\"city\":\"Atlanta\",\"state\":\"GA\",\"country\":\"USA\",\"province\":null,\"listingStatus\":\"live_unclaimed\",\"rating\":\"0.0\",\"reviewCount\":0,\"verified\":false,\"featured\":false,\"blackOwned\":false,\"ownershipDesignations\":[],\"verifiedDesignations\":[],\"diasporaCountries\":[],\"confidenceScore\":0,\"safetyRating\":null,\"wouldReturnAlone\":null,\"recommendationRate\":null,\"description\":\"A Cascade Road staple serving hearty Southern and soul food to Atlanta\\'s West Side community for decades. Beautiful Restaurant is a neighborhood gathering place where the food feels like home and the hospitality is genuine. Known for its generous portions and down-home atmosphere.\",\"latitude\":\"33.7191000\",\"longitude\":\"-84.4350000\",\"tags\":[\"restaurant\",\"food\",\"dining\",\"eat local\",\"community food\"],\"vibes\":[],\"reviews\":[],\"phone\":null,\"website\":null,\"hours\":null,\"priceRang'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/businesses?search=restaurant&city=Atlanta",
+      "elapsed_ms": 121.7
+    },
+    {
+      "name": "thirty_tester_logins",
+      "passed": true,
+      "status": 200,
+      "detail": "passed=30/30 (tokens redacted per security policy)",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/login-email",
+      "elapsed_ms": null
+    }
+  ],
+  "_verification_note": "Gate was run against Railway production URL (https://api-server-production-a991.up.railway.app), NOT the Replit dev domain. The Replit dev domain (*.riker.replit.dev) returned 502 due to a missing platform router process \u2014 unrelated to this Railway deployment. All 6 checks ran against the Railway URL shown in 'deployment' above.",
+  "_session_revocation": "All session tokens from this result have been revoked. A revokeManusAuditSessions() startup migration was added, built, and deployed to Railway on 2026-08-14. Sessions are cleared on every boot."
+}
