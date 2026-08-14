@@ -201,6 +201,8 @@ describe("MWM non-minority hotel-stay ingestion", () => {
       place: providerPlace,
       score: 0.98,
     }));
+    // Atlanta fixture must have its own phone and website — real hotels in
+    // different cities never share a phone number or a property-specific URL.
     const atlantaPlace = {
       ...providerPlace,
       providerPlaceId: `${TEST_PREFIX}example-grand-atlanta`,
@@ -210,6 +212,8 @@ describe("MWM non-minority hotel-stay ingestion", () => {
       postalCode: "30303",
       latitude: 33.749,
       longitude: -84.388,
+      phone: "+1 404 555 0200",
+      website: "https://example-grand-atlanta.invalid",
     };
     const second = await ingestHotelStay(
       {

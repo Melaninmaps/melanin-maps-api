@@ -180,7 +180,7 @@ function distanceMeters(
   return 6_371_000 * 2 * Math.asin(Math.sqrt(h));
 }
 
-async function findCanonicalHotel(place: ProviderPlace): Promise<{
+type CanonicalHotelRow = {
   id: string;
   latitude: number | null;
   longitude: number | null;
@@ -194,40 +194,65 @@ async function findCanonicalHotel(place: ProviderPlace): Promise<{
   state: string | null;
   postal_code: string | null;
   country: string | null;
-} | null> {
+};
+
+const HOTEL_SELECT = `
+  SELECT id, latitude, longitude, provider_place_id,
+         source_evidence, website, website_domain, phone,
+         address, city, state, postal_code, country
+  FROM businesses
+  WHERE coalesce(is_duplicate, false) = false
+    AND coalesce(status, 'active') NOT IN ('duplicate', 'permanently_hidden')`;
+
+async function findCanonicalHotel(
+  place: ProviderPlace,
+): Promise<CanonicalHotelRow | null> {
   const providerId = place.providerPlaceId;
-  const name = normalize(place.name);
   const phone = phoneKey(place.phone);
   const webDomain = domainOf(place.website);
+  const name = normalize(place.name);
 
-  const { rows } = await pool.query(
-    `SELECT id, latitude, longitude, provider_place_id,
-            source_evidence, website, website_domain, phone,
-            address, city, state, postal_code, country
-     FROM businesses
-     WHERE coalesce(is_duplicate, false) = false
-       AND coalesce(status, 'active') NOT IN ('duplicate', 'permanently_hidden')
-       AND (
-         ($1::text IS NOT NULL AND provider_place_id = $1)
-         OR ($2::text IS NOT NULL AND phone = $2)
-         OR ($3::text IS NOT NULL AND website_domain = $3)
-         OR (normalized_name = $4 AND lower(coalesce(category,'')) = 'hotel')
-       )
-     LIMIT 10`,
-    [providerId, phone, webDomain, name],
+  // Phase 1: guaranteed-unique identifiers — provider place ID and phone.
+  // Neither requires a distance check (each uniquely identifies one physical place).
+  if (providerId || phone) {
+    const { rows } = await pool.query<CanonicalHotelRow>(
+      `${HOTEL_SELECT}
+         AND (
+           ($1::text IS NOT NULL AND provider_place_id = $1)
+           OR ($2::text IS NOT NULL AND phone = $2)
+         )
+       LIMIT 5`,
+      [providerId, phone],
+    );
+    if (rows.length) return rows[0];
+  }
+
+  // Phase 2: website domain and name — NOT unique across a chain, so distance ≤ 150 m required.
+  // (Multiple Marriotts share marriott.com; "Example Grand Hotel" may exist in two cities.)
+  const conditions: string[] = [];
+  const params: (string | null)[] = [];
+  let i = 1;
+
+  if (webDomain) {
+    conditions.push(`website_domain = $${i++}`);
+    params.push(webDomain);
+  }
+  conditions.push(`(normalized_name = $${i++} AND lower(coalesce(category,'')) = 'hotel')`);
+  params.push(name);
+
+  const { rows: fuzzyRows } = await pool.query<CanonicalHotelRow>(
+    `${HOTEL_SELECT} AND (${conditions.join(" OR ")}) LIMIT 10`,
+    params,
   );
 
-  if (!rows.length) return null;
-
-  // Prefer a row within 150 m; otherwise fall back to first strong match.
-  const nearby = rows.find((row: any) => {
+  const nearby = fuzzyRows.find((row) => {
     const d = distanceMeters(place, {
-      latitude: row.latitude ? parseFloat(row.latitude) : null,
-      longitude: row.longitude ? parseFloat(row.longitude) : null,
+      latitude: row.latitude ? parseFloat(String(row.latitude)) : null,
+      longitude: row.longitude ? parseFloat(String(row.longitude)) : null,
     });
     return d !== null && d <= 150;
   });
-  return (nearby ?? rows[0]) as any;
+  return nearby ?? null; // no fallback — different-city hotels must stay separate
 }
 
 // ── Resolution ────────────────────────────────────────────────────────────────
