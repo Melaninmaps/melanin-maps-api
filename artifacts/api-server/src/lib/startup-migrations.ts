@@ -9645,19 +9645,19 @@ async function ensureManusAuditAccounts(
            marketing_opt_out, agree_to_terms,
            created_at, updated_at
          ) VALUES (
-           gen_random_uuid(), $1, 'Manus', $2, $3, $3,
-           $4, 'tester', 'active', 'admin_invite',
+           gen_random_uuid(), $1, 'Manus', $2, $3, $4,
+           $5, 'tester', 'active', 'admin_invite',
            NOW(), 'founder',
            true, true, 'individual',
            true, false,
            false, 1, 0,
-           0, $5, 0,
+           0, $6, 0,
            false, true, true, 'full',
            false, true,
            NOW(), NOW()
          )
          ON CONFLICT (email) DO NOTHING`,
-        [email, `Tester ${n}`, username, PW_HASH, refCode],
+        [email, `Tester ${n}`, username, username, PW_HASH, refCode],
       );
       if ((rowCount ?? 0) > 0) inserted++;
       else skipped++;
