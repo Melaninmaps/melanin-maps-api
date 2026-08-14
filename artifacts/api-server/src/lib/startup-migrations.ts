@@ -9803,43 +9803,46 @@ async function ensureAtlantaBlackGroceryStores(
     },
   ];
 
+  // Pre-load existing names in Atlanta to avoid any ON CONFLICT / unique index issues.
+  // This mirrors the proven two-step pattern used by ensureDirectoryBusinesses and
+  // ensureTourBusinesses — check first, INSERT only when missing.
+  let existingNames: Set<string>;
+  try {
+    const existRes = await pool.query<{ name: string }>(
+      `SELECT lower(name) AS name FROM businesses WHERE lower(city) = 'atlanta' AND status = 'active'`,
+    );
+    existingNames = new Set(existRes.rows.map((r) => r.name));
+  } catch {
+    existingNames = new Set();
+  }
+
   let inserted = 0;
   let skipped = 0;
   for (const s of stores) {
+    if (existingNames.has(s.name.toLowerCase())) { skipped++; continue; }
     try {
-      const { rowCount } = await pool.query(
-        `INSERT INTO businesses (
-           id, name, address, city, state, category, subcategory,
-           phone, website, latitude, longitude,
-           listing_status, status, verified, black_owned,
-           ownership_designations, description,
-           normalized_name, dedupe_key,
-           source_provider, source_url, confidence_score,
-           created_at, updated_at
-         )
-         SELECT
-           gen_random_uuid(),$1,$2,$3,$4,'Grocery',$5,
-           $6,$7,$8,$9,
-           'live_unclaimed','active',false,true,
-           $10::jsonb,$11,
-           $12,$13,
-           'mwm_curated',$7,0.95,
-           NOW(),NOW()
-         WHERE NOT EXISTS (
-           SELECT 1 FROM businesses
-           WHERE lower(name) = lower($1)
-             AND lower(city) = lower($3)
-             AND lower(state) = lower($4)
-         )`,
+      await pool.query(
+        `INSERT INTO businesses
+           (id, name, address, city, state, category, subcategory,
+            phone, website, latitude, longitude,
+            listing_status, status, verified, black_owned,
+            ownership_designations, description,
+            source_provider, source_url, confidence_score,
+            created_at, updated_at)
+         VALUES
+           (gen_random_uuid(),$1,$2,$3,$4,'Grocery',$5,
+            $6,$7,$8,$9,
+            'live_unclaimed','active',false,true,
+            $10,$11,
+            'mwm_curated',$7,0.95,
+            NOW(),NOW())`,
         [
           s.name, s.address, s.city, s.state, s.subcategory,
           s.phone, s.website, s.latitude, s.longitude,
           s.ownership_designations, s.description,
-          s.normalized_name, s.dedupe_key,
         ],
       );
-      if ((rowCount ?? 0) > 0) inserted++;
-      else skipped++;
+      inserted++;
     } catch (err: unknown) {
       warn(`ensureAtlantaBlackGroceryStores: failed for ${s.name}: ${err instanceof Error ? err.message : String(err)}`);
     }
