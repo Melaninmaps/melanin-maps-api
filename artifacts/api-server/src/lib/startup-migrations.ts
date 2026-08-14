@@ -3901,6 +3901,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["atlanta black grocery stores v1", () => ensureAtlantaBlackGroceryStores(log, warn)],
     // ── Manus audit tester accounts — 30 pre-seeded email/password accounts ─────
     ["manus audit accounts v1", () => ensureManusAuditAccounts(log, warn)],
+    // ── Manus audit session revocation — clears all live sessions for audit accounts ─
+    // Runs once to invalidate tokens that were exposed in gate-result JSON (Aug 14 2026)
+    ["manus audit session revocation v1", () => revokeManusAuditSessions(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9666,6 +9669,25 @@ async function ensureManusAuditAccounts(
     }
   }
   log(`ensureManusAuditAccounts: ${inserted} inserted, ${skipped} already present`);
+}
+
+// ── Manus audit session revocation — invalidates tokens exposed in gate result JSON ─
+// Runs once on boot; clears all active sessions belonging to manus audit accounts.
+// This is a one-time cleanup after session tokens were included in audit evidence.
+async function revokeManusAuditSessions(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const result = await pool.query(
+      `DELETE FROM sessions
+       WHERE sess->'user'->>'email' LIKE 'manus.tester.%@mwm.audit'
+          OR sess->'user'->>'email' = 'manus.biz.owner@mwm.audit'`,
+    );
+    log(`revokeManusAuditSessions: ${result.rowCount ?? 0} session(s) revoked`);
+  } catch (err: unknown) {
+    warn(`revokeManusAuditSessions: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 // ── Atlanta Black-owned grocery stores — 4 verified stores (August 2026) ────────
