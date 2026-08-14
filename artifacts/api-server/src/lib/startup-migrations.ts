@@ -9332,26 +9332,28 @@ async function ensureUserHandles(
       WHERE handle IS NOT NULL
     `);
     // Back-fill handles for existing users: email prefix, lower-cased,
-    // non-alphanumeric characters replaced with underscores, max 30 chars.
-    // On collision append a 4-digit suffix from the user ID.
+    // non-alphanumeric characters replaced with underscores, max 26 chars.
+    // ROW_NUMBER() partitioned by base handle guarantees uniqueness when
+    // multiple users share the same email-prefix (e.g. two "info@…" accounts).
+    // The first user keeps the plain handle; duplicates get _2, _3, etc.
     const { rowCount } = await pool.query(`
       UPDATE users
-      SET handle = sub.safe_handle
+      SET handle = sub.final_handle
       FROM (
         SELECT
           id,
-          CASE
-            WHEN EXISTS (
-              SELECT 1 FROM users u2
-              WHERE u2.handle = LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 30)
-                AND u2.id <> users.id
-            )
-            THEN LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 26)
-                 || '_' || LEFT(REPLACE(id::text,'-',''), 3)
-            ELSE LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(email,'@',1), '[^a-zA-Z0-9]', '_', 'g')), 30)
-          END AS safe_handle
-        FROM users
-        WHERE handle IS NULL AND email IS NOT NULL
+          base_handle || CASE WHEN rn > 1 THEN '_' || rn::text ELSE '' END AS final_handle
+        FROM (
+          SELECT
+            id,
+            LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(COALESCE(email,''), '@', 1), '[^a-zA-Z0-9]', '_', 'g')), 26) AS base_handle,
+            ROW_NUMBER() OVER (
+              PARTITION BY LEFT(LOWER(REGEXP_REPLACE(SPLIT_PART(COALESCE(email,''), '@', 1), '[^a-zA-Z0-9]', '_', 'g')), 26)
+              ORDER BY created_at ASC NULLS LAST, id
+            ) AS rn
+          FROM users
+          WHERE handle IS NULL AND email IS NOT NULL
+        ) ranked
       ) sub
       WHERE users.id = sub.id
     `);
