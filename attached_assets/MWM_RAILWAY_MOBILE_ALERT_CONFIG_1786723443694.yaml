@@ -1,0 +1,108 @@
+# MWM production monitoring configuration template
+# Replace notification destinations and secret references only.
+# Store this in the monitoring provider, not in the application repository.
+version: 1
+service: mapping-with-melanin
+base_url: https://api-server-production-a991.up.railway.app
+health_checks:
+  - name: mwm-health
+    method: GET
+    path: /api/healthz
+    interval_seconds: 60
+    timeout_seconds: 10
+    expected_status: [200]
+    consecutive_failures_for_alert: 3
+  - name: mwm-root
+    method: GET
+    path: /
+    interval_seconds: 60
+    timeout_seconds: 10
+    expected_status: [200, 301, 302]
+    reject_body_signatures: ["Component Preview Server", "/__mockup"]
+    consecutive_failures_for_alert: 3
+  - name: mwm-business-api
+    method: GET
+    path: /api/businesses?limit=1
+    auth_secret_ref: MWM_MONITOR_TOKEN
+    interval_seconds: 120
+    timeout_seconds: 15
+    expected_status: [200]
+    require_json: true
+    consecutive_failures_for_alert: 3
+  - name: mwm-library-api
+    method: GET
+    path: /api/library/topics?limit=1
+    auth_secret_ref: MWM_MONITOR_TOKEN
+    interval_seconds: 120
+    timeout_seconds: 15
+    expected_status: [200]
+    require_json: true
+    consecutive_failures_for_alert: 3
+  - name: mwm-kinfolk-smoke
+    method: POST
+    path: /api/kinfolk/chat
+    auth_secret_ref: MWM_MONITOR_TOKEN
+    body_secret_ref: MWM_MONITOR_KINFOLK_BODY
+    interval_seconds: 300
+    timeout_seconds: 90
+    expected_status: [200]
+    require_json: true
+    require_json_fields: [reply]
+    consecutive_failures_for_alert: 3
+
+thresholds:
+  five_xx:
+    window_minutes: 5
+    alert_when_percentage_at_least: 1
+    alert_when_consecutive: 3
+    severity: critical
+  degraded_kinfolk:
+    rolling_window_minutes: 15
+    minimum_requests: 20
+    alert_when_percentage_greater_than: 5
+    severity: warning
+    escalate_to_critical_percentage: 15
+  latency:
+    rolling_window_minutes: 5
+    p95_ms_greater_than: 3000
+    consecutive_windows: 3
+    severity: warning
+
+secrets:
+  MWM_MONITOR_EMAIL: "<dedicated-monitor-account-email>"
+  MWM_MONITOR_PASSWORD: "<stored-in-provider-secret-vault>"
+  MWM_MONITOR_TOKEN: "<short-lived-token-created-by-secret-backed-login-job>"
+  MWM_MONITOR_KINFOLK_BODY: '{"message":"What can I learn from the Divine Nine library topic?"}'
+  MOBILE_ALERT_WEBHOOK: "<Slack-Discord-PagerDuty-or-SMS-provider-secret>"
+
+notifications:
+  channels:
+    - name: mobile-critical
+      type: webhook
+      secret_ref: MOBILE_ALERT_WEBHOOK
+      severities: [critical]
+    - name: email-primary
+      type: email
+      destination: "<user-email>"
+      severities: [warning, critical, recovery]
+  recovery_after_consecutive_successes: 3
+  weekly_test:
+    enabled: true
+    schedule: "0 15 * * 1"
+    message_prefix: "MWM MONITORING TEST — NOT AN OUTAGE"
+
+alert_payload:
+  include: [service, monitor, path, severity, detected_utc, http_status, latency_ms, consecutive_failures, commit_sha]
+  exclude: [authorization, cookies, passwords, tokens, raw_response_body, user_email, prompts, personal_data]
+
+incident_actions:
+  critical:
+    - acknowledge_incident
+    - check_railway_deployment_and_health
+    - check_recent_commit
+    - rollback_only_if_latest_deploy_is_correlated
+    - notify_recovery_after_three_successes
+  warning:
+    - inspect_provider_and_rate_limits
+    - check_degraded_rate_dashboard
+    - do_not_restart_or_migrate_destructively

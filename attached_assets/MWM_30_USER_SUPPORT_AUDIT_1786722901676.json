@@ -1,0 +1,71 @@
+{
+  "base_url": "https://api-server-production-a991.up.railway.app",
+  "users_attempted": 30,
+  "login_ok": 30,
+  "login_failed": 0,
+  "total_elapsed_ms": 5602.9,
+  "request_status_counts": {
+    "200": 210
+  },
+  "by_path": {
+    "/api/auth/user": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 140.7,
+      "max_ms": 821.4
+    },
+    "/api/businesses?limit=20": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 180.65,
+      "max_ms": 782.4
+    },
+    "/api/businesses/map-pins": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 220.64999999999998,
+      "max_ms": 1112.7
+    },
+    "/api/library/topics?limit=20": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 363.75,
+      "max_ms": 1054.5
+    },
+    "/api/library/collections": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 235.85,
+      "max_ms": 408.7
+    },
+    "/api/events?limit=20": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 121.8,
+      "max_ms": 1897.2
+    },
+    "/api/cultural-sites?limit=20": {
+      "completed": 30,
+      "status_counts": {
+        "200": 30
+      },
+      "median_ms": 129.0,
+      "max_ms": 243.8
+    }
+  },
+  "tokens_redacted": true,
+  "writes_performed": false,
+  "result": "PASS"
+}

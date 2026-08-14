@@ -1,0 +1,29 @@
+{
+  "users_logged_in": 28,
+  "total_responses": 28,
+  "status_counts": {
+    "200": 28
+  },
+  "degraded_rows": [],
+  "failed_rows": [],
+  "class_summary": {
+    "food": {
+      "count": 10,
+      "degraded": 0,
+      "usable": 10
+    },
+    "pop_culture": {
+      "count": 9,
+      "degraded": 0,
+      "usable": 9
+    },
+    "library": {
+      "count": 9,
+      "degraded": 0,
+      "usable": 9
+    }
+  },
+  "tokens_redacted": true,
+  "response_bodies_redacted": true,
+  "writes_performed": false
+}

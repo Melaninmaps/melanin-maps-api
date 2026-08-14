@@ -1,0 +1,34 @@
+I prepared and syntax-validated the complete pre-tour package.
+
+## Included deliverables
+
+| File | Purpose |
+|---|---|
+| `MWM_RAILWAY_MOBILE_ALERT_CONFIG.yaml` | Copyable monitoring configuration for Railway/Replit, including health, root, login, business, Library, and Kinfolk smoke checks; 5xx alerts; degraded-rate alerts above 5% over 15 minutes; mobile webhook; recovery alerts; weekly test alerts; and redaction rules. |
+| `mwm_pre_tour_health_check.py` | Terminal script that exits `0` only when root, health, login, business API, map pins, Library, events, cultural sites, and all three Kinfolk questions are green. It performs no writes and prints no tokens or raw responses. |
+| `MWM_KINFOLK_DEGRADED_TELEMETRY_PATCH.ts` | Backend code for redacted per-request telemetry, rolling degraded-rate measurement, and a warning hook when degraded responses exceed 5% with at least 20 requests. |
+| `MWM_PRE_TOUR_MONITORING_INSTRUCTIONS.md` | Exact setup, deployment, secret handling, proof, rollback, and travel-day instructions. |
+
+## Run the pre-tour health gate
+
+After Replit creates a dedicated monitoring account and stores its credentials securely:
+
+```bash
+export BASE_URL='https://api-server-production-a991.up.railway.app'
+export MWM_MONITOR_EMAIL='dedicated-monitor@example.com'
+export MWM_MONITOR_PASSWORD='read-from-secret-vault'
+python3 mwm_pre_tour_health_check.py > mwm-pre-tour-result.json
+status=$?
+cat mwm-pre-tour-result.json
+exit $status
+```
+
+The deployment is green only if the output ends with:
+
+```json
+"result": "PASS"
+```
+
+Do not use the 30 beta accounts for monitoring. Replit must configure email plus a mobile-capable channel such as SMS, push, Slack, Discord, or PagerDuty. Critical alerts trigger after three consecutive failures or any five consecutive 5xx responses. KinfolkAI degraded alerts trigger when the rolling 15-minute degraded rate is **greater than 5% with at least 20 requests**.
+
+The Python health script passed syntax validation. The telemetry patch also includes an important production note: if Railway runs more than one application instance, the in-memory rolling counter must be replaced with shared metrics, Redis, or the project’s observability system.

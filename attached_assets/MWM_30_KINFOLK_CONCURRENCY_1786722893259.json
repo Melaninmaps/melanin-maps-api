@@ -1,0 +1,39 @@
+{
+  "base_url": "https://api-server-production-a991.up.railway.app",
+  "users_requested": 30,
+  "login_summary": {
+    "count": 30,
+    "status_counts": {
+      "429": 20,
+      "200": 10
+    },
+    "usable_replies": 0,
+    "with_sources_array": 0,
+    "degraded_count": 0,
+    "median_ms": 812.2,
+    "max_ms": 2554.5,
+    "error_types": []
+  },
+  "chat_summary": {
+    "count": 10,
+    "status_counts": {
+      "200": 10
+    },
+    "usable_replies": 10,
+    "with_sources_array": 10,
+    "degraded_count": 0,
+    "median_ms": 11112.25,
+    "max_ms": 28170.9,
+    "error_types": []
+  },
+  "chat_wall_clock_ms": 28183.6,
+  "questions_distributed": {
+    "food": 10,
+    "pop_culture": 10,
+    "library": 10
+  },
+  "tokens_redacted": true,
+  "response_bodies_redacted": true,
+  "writes_performed": false,
+  "result": "FAIL"
+}
