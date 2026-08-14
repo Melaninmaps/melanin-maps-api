@@ -9881,9 +9881,15 @@ async function ensureMonitoringAccount(
     // Insert the monitoring user with tester member_type (bypasses Kinfolk quota).
     await pool.query(
       `INSERT INTO users
-         (id, email, password_hash, name, username, member_type, created_at, updated_at)
+         (id, email, first_name, last_name, username,
+          password_hash, email_verified, approved, member_type,
+          tester_status, tester_access_source,
+          created_at, updated_at)
        VALUES
-         ($1, $2, $3, 'MWM Health Monitor', 'mwm_health_monitor', 'tester', NOW(), NOW())
+         ($1, $2, 'MWM', 'Monitor', 'mwm_health_monitor',
+          $3, true, true, 'tester',
+          'active', 'admin_invite',
+          NOW(), NOW())
        ON CONFLICT (email) DO NOTHING`,
       [userId, email.toLowerCase(), passwordHash],
     );
