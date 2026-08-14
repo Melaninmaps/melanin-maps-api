@@ -353,7 +353,8 @@ export async function ingestSocialFirstCandidate(
   const { rows: inserted } = await pool.query<{ id: string }>(
     `INSERT INTO businesses
        (id, name, normalized_name,
-        category, address, city, state,
+        category, subcategory, description,
+        address, city, state,
         latitude, longitude,
         phone, website, website_domain,
         social_profiles, ownership_claim, source_evidence,
@@ -362,16 +363,15 @@ export async function ingestSocialFirstCandidate(
         created_at, updated_at)
      VALUES
        (gen_random_uuid(), $1, $2,
-        $3, $4, $5, $6,
-        $7, $8,
+        $3, '', '',
+        COALESCE($4,''), COALESCE($5,''), COALESCE($6,''),
+        COALESCE($7::numeric, 0), COALESCE($8::numeric, 0),
         $9, $10, $11,
         $12::jsonb, $13, $14::jsonb,
         $15, 'active', 'active',
         false,
         NOW(), NOW())
-     ON CONFLICT (dedupe_key)
-       WHERE dedupe_key IS NOT NULL AND btrim(dedupe_key) <> ''
-       DO NOTHING
+     ON CONFLICT DO NOTHING
      RETURNING id`,
     [
       candidate.name,
