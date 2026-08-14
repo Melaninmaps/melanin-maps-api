@@ -9816,7 +9816,8 @@ async function ensureAtlantaBlackGroceryStores(
            normalized_name, dedupe_key,
            source_provider, source_url, confidence_score,
            created_at, updated_at
-         ) VALUES (
+         )
+         SELECT
            gen_random_uuid(),$1,$2,$3,$4,'Grocery',$5,
            $6,$7,$8,$9,
            'live_unclaimed','active',false,true,
@@ -9824,8 +9825,12 @@ async function ensureAtlantaBlackGroceryStores(
            $12,$13,
            'mwm_curated',$7,0.95,
            NOW(),NOW()
-         )
-         ON CONFLICT (name, address, city, state) DO NOTHING`,
+         WHERE NOT EXISTS (
+           SELECT 1 FROM businesses
+           WHERE lower(name) = lower($1)
+             AND lower(city) = lower($3)
+             AND lower(state) = lower($4)
+         )`,
         [
           s.name, s.address, s.city, s.state, s.subcategory,
           s.phone, s.website, s.latitude, s.longitude,

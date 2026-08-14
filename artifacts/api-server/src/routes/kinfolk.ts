@@ -3409,13 +3409,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // return a useful 200 with library grounding instead of the generic 500.
       const pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
       const retryable = [429, 500, 502, 503, 504].includes(Number(pStatus));
-      if (libraryTopic && retryable) {
+      // When library topic grounding is available, use it as a fallback for ANY
+      // provider error (not just retryable ones). A 400 context_length_exceeded or
+      // content_filter error should still surface the library grounding rather than 500.
+      if (libraryTopic) {
         const fallbackReply = buildLibraryFallbackReply(libraryTopic);
         const fallbackSources = libraryTopic.trustedSources.map((s) => ({
           id: s.url, label: "library_topic", title: s.title, url: s.url,
         }));
         res.status(200).json({
-          sessionId: finalSessionId,
+          sessionId: sessionId ?? null,
           reply: fallbackReply,
           recommendations: null,
           followUpSuggestions: ["Open this topic in the Library", "Follow this topic for updates"],
