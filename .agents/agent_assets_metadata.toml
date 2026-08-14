@@ -874,3 +874,10 @@ uri = "file://attached_assets/manus-audit-v4.zip"
 type = "unspecified"
 title = "Manus Audit Report v4"
 description = "Complete executable audit guide — connection test, 30 tester credentials, 12 feature test suites with exact curl commands, concurrent load check, and result recording template. No admin access required."
+
+[[outputs]]
+id = "0zjK6bAAvvMix3fCMU1Rs"
+uri = "file://attached_assets/manus-gate-pass.zip"
+type = "unspecified"
+title = "MWM Deployment Gate — PASS (6/6 checks, 30/30 accounts)"
+description = "deployment-gate-result.json + GATE_PASS_NOTES.md. Exit 0. Commit 69e2bbb3. Two fixes made: authLimiter 30→60, /api/auth/user surfaces top-level role field."
