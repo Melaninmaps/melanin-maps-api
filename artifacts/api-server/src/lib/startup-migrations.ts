@@ -8,6 +8,7 @@
  * would be absent.
  */
 import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 import { COVERAGE_EXPANSION, type SeedBiz } from "./seeds/coverage-expansion.js";
 import { LAUNDRY_SEED_V1, type LaundrySeedBiz } from "./seeds/laundry-seed-v1.js";
 import { MURALS_DIASPORA_V1, type MuralSite } from "./seeds/murals-diaspora-v1.js";
@@ -9875,10 +9876,8 @@ async function ensureMonitoringAccount(
       return;
     }
     // Hash password at runtime using the same cost factor as auth/register.
-    const bcrypt = await import("bcryptjs");
     const passwordHash = await bcrypt.hash(password, 8);
-    const { v4: uuidv4 } = await import("uuid");
-    const userId = uuidv4();
+    const userId = randomUUID();
     // Insert the monitoring user with tester member_type (bypasses Kinfolk quota).
     await pool.query(
       `INSERT INTO users
