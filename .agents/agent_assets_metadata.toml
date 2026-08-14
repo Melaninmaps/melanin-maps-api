@@ -867,3 +867,10 @@ uri = "file://attached_assets/manus-audit-package-full.zip"
 type = "unspecified"
 title = "Manus Full Audit Package"
 description = "30 tester credentials + complete MWM feature audit guide (13 feature sections, A–M, with step-by-step test cases and expected results)"
+
+[[outputs]]
+id = "GafTizMrCNSjz4KtKla6E"
+uri = "file://attached_assets/manus-audit-v4.zip"
+type = "unspecified"
+title = "Manus Audit Report v4"
+description = "Complete executable audit guide — connection test, 30 tester credentials, 12 feature test suites with exact curl commands, concurrent load check, and result recording template. No admin access required."
