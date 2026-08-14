@@ -3787,6 +3787,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
 
+    // TEMP DEBUG (Aug 14 2026 Manus audit): expose chatStage + error for tester accounts
+    const isTesterRequest = (req.user as any)?.role === "tester" || (req.user as any)?.role === "admin";
     res.status(isTimeout ? 504 : 500).json({
       error: isTimeout
         ? "Kinfolk took too long to respond. Please try again in a moment."
@@ -3799,6 +3801,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : is401           ? "KINFOLK_AUTH_ERROR"
           : isConnRefused   ? "KINFOLK_CONN_ERROR"
           :                   "KINFOLK_ERROR",
+      ...(isTesterRequest ? {
+        _debug_stage: chatStage,
+        _debug_errName: errName,
+        _debug_errMsg: errMsg.slice(0, 400),
+        _debug_errCode: errCode ?? "none",
+        _debug_providerStatus: providerStatus ?? "none",
+      } : {}),
     });
   }
 });
