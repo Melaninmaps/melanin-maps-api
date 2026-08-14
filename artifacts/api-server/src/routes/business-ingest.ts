@@ -10,6 +10,7 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
+import { logger } from "../lib/logger";
 import { dedupeKey, normalizeText, tokenSimilarity, sameLocation, evidenceScore } from "../lib/business-dedup";
 
 const router = Router();
@@ -409,6 +410,37 @@ router.post("/businesses/ingest", async (req: Request, res: Response) => {
   }
 
   res.json({ results, total: results.length });
+});
+
+// ── POST /businesses/social-first ─────────────────────────────────────────────
+// Social-first ingestion: accepts TikTok, Instagram, Facebook, screenshot, or
+// any social-URL sourced business candidate. Enforces evidence gates, dedupes,
+// and either adds a verified record, merges into an existing one, or queues for
+// manual review. Requires admin or CRON_SECRET authentication.
+import { ingestSocialFirstCandidate } from "../lib/social-first-ingestion";
+
+router.post("/businesses/social-first", async (req: Request, res: Response) => {
+  if (!isAdmin(req, res)) return;
+  try {
+    const { candidate, requestedOwnership = null } = req.body as {
+      candidate: unknown;
+      requestedOwnership?: string | null;
+    };
+    if (!candidate) {
+      res.status(400).json({ error: "candidate is required" });
+      return;
+    }
+    const result = await ingestSocialFirstCandidate(candidate, requestedOwnership);
+    const statusCode = result.status === "VERIFIED_ADD" ? 201 : 200;
+    res.status(statusCode).json(result);
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      res.status(422).json({ error: "Invalid candidate", details: err.errors });
+      return;
+    }
+    logger.error({ err }, "social-first ingestion failed");
+    res.status(500).json({ error: err?.message ?? "Ingestion failed" });
+  }
 });
 
 export default router;

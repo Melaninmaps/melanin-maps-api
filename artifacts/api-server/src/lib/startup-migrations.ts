@@ -3909,6 +3909,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
     // ── Dedicated monitoring account — health-check user; no-op until secrets set ─
     ["monitoring account v1", () => ensureMonitoringAccount(log, warn)],
+    // ── Social-first ingestion schema — adds social_profiles, source_evidence,
+    //    ownership_claim, website_domain columns to businesses table ────────────
+    ["social first ingestion schema v1", () => ensureSocialFirstIngestionSchema(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9910,6 +9913,48 @@ async function ensureMonitoringAccount(
 // Founder-confirmed: https://www.saborlatingrill.com is the official website for
 // the Charlotte NC location. Stored here so canonical-place deduplication and
 // tester search both surface the correct domain.
+// ── Social-first ingestion schema ─────────────────────────────────────────────
+// Adds social_profiles, source_evidence, ownership_claim, website_domain columns
+// to the businesses table. All idempotent (ADD COLUMN IF NOT EXISTS).
+async function ensureSocialFirstIngestionSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS social_profiles  jsonb,
+        ADD COLUMN IF NOT EXISTS source_evidence  jsonb,
+        ADD COLUMN IF NOT EXISTS ownership_claim  text,
+        ADD COLUMN IF NOT EXISTS website_domain   text
+    `);
+
+    // Back-fill website_domain from existing website values where possible.
+    // Uses the same hostname-extraction logic as the ingestion module.
+    await pool.query(`
+      UPDATE businesses
+      SET website_domain = lower(regexp_replace(
+            regexp_replace(website, '^https?://(www\\.)?', ''),
+            '/.*$', ''
+          ))
+      WHERE website IS NOT NULL
+        AND website_domain IS NULL
+        AND website ~ '^https?://'
+    `);
+
+    // Index website_domain for findExisting lookups.
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_website_domain_idx
+        ON businesses (website_domain)
+        WHERE website_domain IS NOT NULL
+    `);
+
+    log("ensureSocialFirstIngestionSchema: social_profiles, source_evidence, ownership_claim, website_domain ready");
+  } catch (err: unknown) {
+    warn(`ensureSocialFirstIngestionSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 async function ensureSaborWebsiteCorrection(
   log: (msg: string) => void,
   warn: (msg: string) => void,
