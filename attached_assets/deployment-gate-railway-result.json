@@ -1,0 +1,57 @@
+{
+  "deployment": "https://api-server-production-a991.up.railway.app",
+  "passed": true,
+  "failed_checks": [],
+  "checks": [
+    {
+      "name": "root_is_application_not_mockup",
+      "passed": true,
+      "status": 200,
+      "detail": "status=200; location=''; mockup_signature=False; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/",
+      "elapsed_ms": 348.1
+    },
+    {
+      "name": "health_endpoint",
+      "passed": true,
+      "status": 200,
+      "detail": "https://api-server-production-a991.up.railway.app/api/healthz: status=200, body='{\"status\":\"ok\",\"bundleBytes\":6888}'",
+      "url": "https://api-server-production-a991.up.railway.app/api/healthz",
+      "elapsed_ms": 70.8
+    },
+    {
+      "name": "tester_login_returns_token",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"token\":\"f1fdb916c1dd6babd9cc0d3232027d41e19ec0f739d3ad7dc9b91db8b1f42a78\",\"mustChangePassword\":false}'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/login-email",
+      "elapsed_ms": 245.6
+    },
+    {
+      "name": "authenticated_user_is_tester",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"role\":\"tester\",\"user\":{\"id\":\"914ad7c5-3751-4916-a882-2ffb818963a0\",\"role\":\"tester\",\"email\":\"manus.tester.01@mwm.audit\",\"approved\":true,\"lastName\":\"Tester 01\",\"firstName\":\"Manus\",\"profileImageUrl\":null,\"isLoadTest\":false,\"dateOfBirth\":null,\"username\":\"manustester01\",\"memberType\":\"individual\",\"emailVerified\":true,\"homeCity\":null,\"isPrivate\":false,\"bio\":null,\"showCity\":true,\"allowDm\":true,\"displayNameFormat\":\"full\",\"trustLevel\":1,\"reputationScore\":0,\"profileSetupComplete\":true,\"tier\":\"trailblazer\",\"testingMode\":true}}'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/user",
+      "elapsed_ms": 98.8
+    },
+    {
+      "name": "business_search_is_real_json_route",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"businesses\":[{\"id\":\"36676b15-6f0f-4ada-be39-63cc9d8c149a\",\"name\":\"Beautiful Restaurant\",\"category\":\"Food\",\"subcategory\":\"Soul Food\",\"address\":\"2260 Cascade Rd SW\",\"city\":\"Atlanta\",\"state\":\"GA\",\"country\":\"USA\",\"province\":null,\"listingStatus\":\"live_unclaimed\",\"rating\":\"0.0\",\"reviewCount\":0,\"verified\":false,\"featured\":false,\"blackOwned\":false,\"ownershipDesignations\":[],\"verifiedDesignations\":[],\"diasporaCountries\":[],\"confidenceScore\":0,\"safetyRating\":null,\"wouldReturnAlone\":null,\"recommendationRate\":null,\"description\":\"A Cascade Road staple serving hearty Southern and soul food to Atlanta\\'s West Side community for decades. Beautiful Restaurant is a neighborhood gathering place where the food feels like home and the hospitality is genuine. Known for its generous portions and down-home atmosphere.\",\"latitude\":\"33.7191000\",\"longitude\":\"-84.4350000\",\"tags\":[\"restaurant\",\"food\",\"dining\",\"eat local\",\"community food\"],\"vibes\":[],\"reviews\":[],\"phone\":null,\"website\":null,\"hours\":null,\"priceRang'; error=None",
+      "url": "https://api-server-production-a991.up.railway.app/api/businesses?search=restaurant&city=Atlanta",
+      "elapsed_ms": 121.7
+    },
+    {
+      "name": "thirty_tester_logins",
+      "passed": true,
+      "status": 200,
+      "detail": "passed=30/30; results=[{\"account\": 1, \"status\": 200, \"token\": true, \"elapsed_ms\": 751.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"4b3db2e688b652fb946ae1f36b17fbe2ed41d5a6b81aee8a429e1e482827f6a1\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 2, \"status\": 200, \"token\": true, \"elapsed_ms\": 1138.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"054a943424289677b8d5d186799639e4c9516d009f34d200575471f026f45cef\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 3, \"status\": 200, \"token\": true, \"elapsed_ms\": 546.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"d1d0bf78c813fe99f162b5c6c2351f139fce75e9fd341427eb2ea0a4f982ce1c\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 4, \"status\": 200, \"token\": true, \"elapsed_ms\": 1167.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"fe47d2fe35d47337e9fbe618ae0486947083719940667cddff37b883bc35c720\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 5, \"status\": 200, \"token\": true, \"elapsed_ms\": 542.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"3d31685adfed866ec852ee632034bb8049726300281f45cdbe65b4b93b3530f2\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 6, \"status\": 200, \"token\": true, \"elapsed_ms\": 1206.4, \"error\": null, \"body\": \"{\\\"token\\\":\\\"45f4aa36bf560609c866c195009b99c528eab3cd07bba59c44c0e38449f04360\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 7, \"status\": 200, \"token\": true, \"elapsed_ms\": 740.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"4ea8a1a99c21af48aae9399b2819679d6a427ca97b05ed069c37004561cecbd9\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 8, \"status\": 200, \"token\": true, \"elapsed_ms\": 1221.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"8e4981be33eb4b5f5bc9fd2701be2ca878be201fca331a6e38055ed98d09ddfa\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 9, \"status\": 200, \"token\": true, \"elapsed_ms\": 961.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"75ec41457e5eeeefb3a0bc422cfc266f6219a49e4310bbc8f5c4fcd319fa9709\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 10, \"status\": 200, \"token\": true, \"elapsed_ms\": 751.4, \"error\": null, \"body\": \"{\\\"token\\\":\\\"e8c956a53072a22150f59414d1f80a81020736e18fa7699ce78b413cd6191ea1\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 11, \"status\": 200, \"token\": true, \"elapsed_ms\": 350.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"58a1256f76ef6f980ba885c2b8bc903b4cbd3372a41bdce6dc82c56cdd8284fb\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 12, \"status\": 200, \"token\": true, \"elapsed_ms\": 1058.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"44c1cebe55b0d90ffa5a34a8fcea386e9c281a8f0b019c57a912a64a92ccd472\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 13, \"status\": 200, \"token\": true, \"elapsed_ms\": 1189.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"c2fc1048ecfa0bc92fafb9f330767d0e104763be110e1eb07a5a590e9dfa68ca\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 14, \"status\": 200, \"token\": true, \"elapsed_ms\": 1079.4, \"error\": null, \"body\": \"{\\\"token\\\":\\\"e5eadf52db6034163595c5954411a347eb10ad6f529a9be449a00b5f8aba3357\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 15, \"status\": 200, \"token\": true, \"elapsed_ms\": 879.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"962a3c73a7b2b351b1f668480f100575d9226279c542bfe72633488e344e278c\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 16, \"status\": 200, \"token\": true, \"elapsed_ms\": 948.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"556597d9997b2acc4543754950585d15b59da5e0a9ab291a799f0581127b4771\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 17, \"status\": 200, \"token\": true, \"elapsed_ms\": 873.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"5ba4934afb6ba6fa0b30f42f21858da51102cb68c262b3538a9fbd18bd1ac691\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 18, \"status\": 200, \"token\": true, \"elapsed_ms\": 1217.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"8b72cd90e4dc21f321c28029586ea586274086a76fe7bd8248fb597cfcb53b3d\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 19, \"status\": 200, \"token\": true, \"elapsed_ms\": 1195.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"19c9870419d639788d05a87d1fa6a70a299bf78275befec0bd0441160de3a33a\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 20, \"status\": 200, \"token\": true, \"elapsed_ms\": 769.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"46970254421a221725eec2616236690a7dc0b6e7d0dd137f322c9e5029388ade\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 21, \"status\": 200, \"token\": true, \"elapsed_ms\": 1184.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"6e4a688bb7108b2fbb63e9c3f4c0108e6b59183f77c4c88aeac1541bb261f23f\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 22, \"status\": 200, \"token\": true, \"elapsed_ms\": 1199.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"1411a483a9d60e32109a5a3e59619791641b0f685125d49236f2072e57b2f59e\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 23, \"status\": 200, \"token\": true, \"elapsed_ms\": 1198.9, \"error\": null, \"body\": \"{\\\"token\\\":\\\"9b89ed211fd44f04b50cac1cfb1ba4e8f4460dbb6f8dadb35f512fe192e14b27\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 24, \"status\": 200, \"token\": true, \"elapsed_ms\": 1096.2, \"error\": null, \"body\": \"{\\\"token\\\":\\\"f19ddae587c34ebccf7e4e4a77b8da8847061c5bc2e833faab979deec4c24f6e\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 25, \"status\": 200, \"token\": true, \"elapsed_ms\": 1128.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"af0b0983a952f0bb124b3ffb2456c852885d03163355e794066db3d89944f4dd\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 26, \"status\": 200, \"token\": true, \"elapsed_ms\": 1054.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"2006dd2ac6e0ee431c73fb321f31e9ba5b4f06a5953bac5778afe1d9d6383df7\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 27, \"status\": 200, \"token\": true, \"elapsed_ms\": 1164.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"db0a997eea9b0cfde88b554b6d4e6078f33f0aa64033298b57dc3c5c654634f5\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 28, \"status\": 200, \"token\": true, \"elapsed_ms\": 1174.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"0886f4e156c527e0974b5e6ecc118b68a19092c581bae4ab90ccbe07aa53b106\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 29, \"status\": 200, \"token\": true, \"elapsed_ms\": 1162.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"ee76bc7a973550276e9dcf580053028d80245e939f9ec2bd35b57b97ae4c6092\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 30, \"status\": 200, \"token\": true, \"elapsed_ms\": 1172.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"52bef89898d2fc54e9fc45de5c0c57d28711772273d06bc85d6adf20bfee3494\\\",\\\"mustChangePassword\\\":false}\"}]",
+      "url": "https://api-server-production-a991.up.railway.app/api/auth/login-email",
+      "elapsed_ms": null
+    }
+  ]
+}
+DEPLOYMENT GATE: PASS
+

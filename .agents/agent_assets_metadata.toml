@@ -881,3 +881,10 @@ uri = "file://attached_assets/manus-gate-pass.zip"
 type = "unspecified"
 title = "MWM Deployment Gate — PASS (6/6 checks, 30/30 accounts)"
 description = "deployment-gate-result.json + GATE_PASS_NOTES.md. Exit 0. Commit 69e2bbb3. Two fixes made: authLimiter 30→60, /api/auth/user surfaces top-level role field."
+
+[[outputs]]
+id = "NGmZe-meO1v1i8eUyj8GC"
+uri = "file://attached_assets/manus-railway-gate-pass.zip"
+type = "unspecified"
+title = "MWM Deployment Gate — RAILWAY PRODUCTION PASS (6/6, 30/30)"
+description = "deployment-gate-railway-result.json — Exit 0. URL: https://api-server-production-a991.up.railway.app. All 30 Manus accounts confirmed on Railway production."
