@@ -846,3 +846,10 @@ uri = "file://mwm-audit-package.zip"
 type = "unspecified"
 title = "MWM Audit Package — Source Code for Manus"
 description = "17 source files + full audit doc (528KB ZIP): startup-migrations.ts, admin.ts, admin.tsx, admin-business-review.tsx, business-ingest.ts, business-dedup.ts, businesses.ts, vibes.ts, community.ts, claims.ts, allied-partners.ts, kinfolk.ts, knowledge-graph.ts, events.ts, circles.ts, verification.ts, trusted-safety-share.ts, business-detail.tsx, map.tsx, library.tsx, index.ts — plus MANUS_PLATFORM_AUDIT_v1.0.md"
+
+[[outputs]]
+id = "XX8ZetgwUjTKvdEXQm9D2"
+uri = "file://mwm-audit-package-v2.zip"
+type = "unspecified"
+title = "MWM Manus Audit Package v2"
+description = "16 source files + Railway duplicate test protocol + updated README. Includes all three follow-up implementations: #324 submission gating, #325 @mention notifications, #326 audienceBand null fix."
