@@ -1,0 +1,38 @@
+I created the surgical implementation package for Replit. It goes beyond a list of problems: it includes source-level patch code, SQL, regression tests, deployment instructions, rollback/proof requirements, and exact file/line targets.
+
+### Included fixes
+
+| Area | Surgical action included |
+|---|---|
+| KinfolkAI Library-topic 500 | Deterministic Divine Nine topic lookup, grounded prompt block, trusted-source response fields, provider-failure fallback returning HTTP 200, structured error-stage logging, and no conversion of optional Library failures into 500s. |
+| Map placeholder | Replace the `apiKeyError` “Interactive map coming soon” branch with a useful search/list fallback, configure the Railway browser-safe Google Maps key, and render filtered pins when available. |
+| Map phrase search | Parse ownership, category, and city from phrases such as “Black-owned grocery stores in Atlanta,” call the real business endpoint, and return a meaningful zero-result explanation. |
+| Duplicate map leakage | SQL and endpoint predicates exclude active duplicates, permanently hidden rows, archived rows, and inactive rows. |
+| Wadada exact search | Regression test and canonical search requirement so exact business-name searches cannot silently return zero. |
+| Events | Compatibility route for both `/api/events` and the currently failing `/api/community/events` path. |
+| Business claims | Align frontend claim fields with backend fields: `officialUrl`, `socialHandle`, and `notes`, while preserving pending verification. |
+| Free beta | SQL safety checks, payment isolation requirements, and no billing dependency on startup. |
+| Proof | Redacted regression suite covering the three Kinfolk questions, Wadada, Atlanta grocery search, map pins, events, and 30 concurrent logins. |
+
+The exact failing Kinfolk request and response are included in the master brief:
+
+```http
+POST https://api-server-production-a991.up.railway.app/api/kinfolk/chat
+Content-Type: application/json
+Authorization: Bearer <REDACTED>
+
+{"message":"What can I learn from the Divine Nine library topic?"}
+```
+
+```json
+{
+  "http_status": 500,
+  "elapsed_ms": 833.4,
+  "body": {
+    "code": "KINFOLK_ERROR",
+    "error": "Kinfolk is having trouble answering that right now. Please try again in a moment."
+  }
+}
+```
+
+The package is an implementation handoff for Replit; it is **not a claim that these fixes are already deployed**. Replit must apply the patches to the current source, run the regression suite against Railway, return the deployed commit SHA, and provide redacted HTTP/browser evidence. The release gate rejects local-only success.
