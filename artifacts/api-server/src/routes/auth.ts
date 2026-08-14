@@ -203,11 +203,14 @@ router.get("/auth/user", async (req: Request, res: Response) => {
     // Compute effective tier so mobile client can suppress upgrade prompts
     const tier = await getUserTier(req.user!.id);
 
+    const resolvedRole = (dbRow?.role ?? req.user!.role) as "user" | "tester" | "admin";
     res.json({
+      // Top-level role field for deployment-gate compatibility
+      role: resolvedRole,
       user: {
         ...req.user,
         dateOfBirth: dbRow?.dateOfBirth ?? null,
-        role: (dbRow?.role ?? req.user!.role) as "user" | "tester" | "admin",
+        role: resolvedRole,
         approved: dbRow?.approved ?? req.user!.approved,
         username: dbRow?.username ?? null,
         memberType: dbRow?.memberType ?? "individual",

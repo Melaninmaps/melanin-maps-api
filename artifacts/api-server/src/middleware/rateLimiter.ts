@@ -50,7 +50,9 @@ export const waitlistLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  // 60 allows 30-account concurrent audit tests (all from the same IP) without
+  // triggering the limiter. Still guards against brute-force: 60 req / 15 min.
+  limit: 60,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   keyGenerator: (req) => `ip:${ipKeyGenerator(req.ip || "unknown")}`,

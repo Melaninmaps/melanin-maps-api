@@ -1,0 +1,57 @@
+{
+  "deployment": "http://localhost:8080",
+  "passed": true,
+  "failed_checks": [],
+  "checks": [
+    {
+      "name": "root_is_application_not_mockup",
+      "passed": true,
+      "status": 200,
+      "detail": "status=200; location=''; mockup_signature=False; error=None",
+      "url": "http://localhost:8080/",
+      "elapsed_ms": 9.9
+    },
+    {
+      "name": "health_endpoint",
+      "passed": true,
+      "status": 200,
+      "detail": "http://localhost:8080/api/healthz: status=200, body='{\"status\":\"ok\",\"bundleBytes\":6888}'",
+      "url": "http://localhost:8080/api/healthz",
+      "elapsed_ms": 3.8
+    },
+    {
+      "name": "tester_login_returns_token",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"token\":\"a00520a0371fc1cfc4526fc9c1ac3b8f240d0f937c28031f5ab7d222b42e5ea8\",\"mustChangePassword\":false}'; error=None",
+      "url": "http://localhost:8080/api/auth/login-email",
+      "elapsed_ms": 77.0
+    },
+    {
+      "name": "authenticated_user_is_tester",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"role\":\"tester\",\"user\":{\"id\":\"1262b941-d04c-4101-8496-d51bbb0eb001\",\"role\":\"tester\",\"email\":\"manus.tester.01@mwm.audit\",\"approved\":true,\"lastName\":\"Tester 01\",\"firstName\":\"Manus\",\"profileImageUrl\":null,\"isLoadTest\":false,\"dateOfBirth\":null,\"username\":\"manustester01\",\"memberType\":\"individual\",\"emailVerified\":true,\"homeCity\":null,\"isPrivate\":false,\"bio\":null,\"showCity\":true,\"allowDm\":true,\"displayNameFormat\":\"full\",\"trustLevel\":1,\"reputationScore\":0,\"profileSetupComplete\":true,\"tier\":\"free\",\"testingMode\":false}}'; error=None",
+      "url": "http://localhost:8080/api/auth/user",
+      "elapsed_ms": 6.2
+    },
+    {
+      "name": "business_search_is_real_json_route",
+      "passed": true,
+      "status": 200,
+      "detail": "body='{\"businesses\":[{\"id\":\"71510c3d-7b72-460d-8d72-baa91f402223\",\"name\":\"Pho 79 Restaurant\",\"category\":\"Food\",\"subcategory\":\"Vietnamese\",\"address\":\"4166 Buford Hwy NE\",\"city\":\"Atlanta\",\"state\":\"GA\",\"country\":\"USA\",\"province\":null,\"listingStatus\":\"live_unclaimed\",\"rating\":\"0.0\",\"reviewCount\":0,\"verified\":false,\"featured\":false,\"blackOwned\":false,\"ownershipDesignations\":[],\"verifiedDesignations\":[],\"diasporaCountries\":[],\"confidenceScore\":0,\"safetyRating\":null,\"wouldReturnAlone\":null,\"recommendationRate\":null,\"description\":\"A beloved Vietnamese restaurant on Buford Highway, Pho 79 serves steaming bowls of traditional pho and Vietnamese comfort dishes to Atlanta\\'s vibrant Vietnamese community. The Buford Highway location has been a community gathering spot for decades.\",\"latitude\":\"33.8641000\",\"longitude\":\"-84.3239000\",\"tags\":[\"restaurant\",\"food\",\"dining\",\"eat local\",\"community food\"],\"vibes\":[],\"reviews\":[],\"phone\":null,\"website\":null,\"hours\":null,\"priceRange\":null,\"imageUrl\":null,\"photos\":[]'; error=None",
+      "url": "http://localhost:8080/api/businesses?search=restaurant&city=Atlanta",
+      "elapsed_ms": 130.3
+    },
+    {
+      "name": "thirty_tester_logins",
+      "passed": true,
+      "status": 200,
+      "detail": "passed=30/30; results=[{\"account\": 1, \"status\": 200, \"token\": true, \"elapsed_ms\": 226.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"28d2025834bb105f0255fc5849e4f767d9aa8d8b0a69517055e82dc6924fbb84\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 2, \"status\": 200, \"token\": true, \"elapsed_ms\": 224.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"31744ba5913c987d42dfe9d4927a776058f1a0cd961f2f7abfd1069b7c38bfb0\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 3, \"status\": 200, \"token\": true, \"elapsed_ms\": 223.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"d8ee905b3527c6e8db056805ecbaee4696d43855b3c8f960d1ef568de8ff955c\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 4, \"status\": 200, \"token\": true, \"elapsed_ms\": 326.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"d15d02c76e7fa471a2a3fb59507b3b8f6611a3e25fe493959745a8dbf27f5853\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 5, \"status\": 200, \"token\": true, \"elapsed_ms\": 325.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"0c34ffc4877fb096aa36c4c574156ed47b3cbe3366c97ccd01bc70b5768cb4c4\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 6, \"status\": 200, \"token\": true, \"elapsed_ms\": 580.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"c0fa0467883c8d0fb1fb62754677db048c88e7bb917c6f351ec12d10de6fafe6\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 7, \"status\": 200, \"token\": true, \"elapsed_ms\": 364.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"216a4371539df8e999cf9e6f7fcf9fe386781f8d7d8a6c54f0cb791a9e26381b\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 8, \"status\": 200, \"token\": true, \"elapsed_ms\": 411.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"781dd78609c637c33e42f2578264f2c45dc6572a2f83320c206e13a725e04abd\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 9, \"status\": 200, \"token\": true, \"elapsed_ms\": 408.9, \"error\": null, \"body\": \"{\\\"token\\\":\\\"c8cff02c36a2e1140727970b501c6a903b43678afb90b129315ee60976d961e2\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 10, \"status\": 200, \"token\": true, \"elapsed_ms\": 406.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"025ba658f21cde317006411aebe0cd497ff546d7128c8c53e4def41b61a7bdcb\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 11, \"status\": 200, \"token\": true, \"elapsed_ms\": 552.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"12cd227bbabebe7c54fb7780dfb97298b31371a159f30fc3864c8144df955e9a\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 12, \"status\": 200, \"token\": true, \"elapsed_ms\": 589.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"45cb54eea5117daec69f6d7790f711ea649c06f47d56e4da7086f17e2a366486\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 13, \"status\": 200, \"token\": true, \"elapsed_ms\": 550.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"ae13d0f63cc7590c9488807192676799ac2409a3bd389061fb7df02f4c9ae91d\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 14, \"status\": 200, \"token\": true, \"elapsed_ms\": 584.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"4af65ced39ba74e4969e50e7419048849017e111557690a649dead568e385ce1\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 15, \"status\": 200, \"token\": true, \"elapsed_ms\": 380.3, \"error\": null, \"body\": \"{\\\"token\\\":\\\"78e3afe6ffd368c05b458fec73d5689de001fad4d87dca48c9a132b788544d01\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 16, \"status\": 200, \"token\": true, \"elapsed_ms\": 397.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"db73df9825e63b1854bf0afba6e1380f2d37c1ec8a988a52b6c1d45b79abc79f\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 17, \"status\": 200, \"token\": true, \"elapsed_ms\": 397.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"f01b059c47e3993ef79d0419821e78b74672a374a3974ddc3f67e3aff82d187a\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 18, \"status\": 200, \"token\": true, \"elapsed_ms\": 542.1, \"error\": null, \"body\": \"{\\\"token\\\":\\\"854a692dbe613e00d10048726de1711fe9bb581e55ed39a956801ba6ac68b28d\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 19, \"status\": 200, \"token\": true, \"elapsed_ms\": 579.9, \"error\": null, \"body\": \"{\\\"token\\\":\\\"8b3b29bd3a561ab221e7a032c90c3423c78efa16b700c999847c9c7b1c553782\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 20, \"status\": 200, \"token\": true, \"elapsed_ms\": 580.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"9478d14c0dd15910fe3d4ee4e8bd058f5ac46a3d5ab6d3dce3a66e3f398ea58a\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 21, \"status\": 200, \"token\": true, \"elapsed_ms\": 594.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"ab0ee9d0f3fc360295162f493388282be855b164e9895ab473d998fa09e2f06e\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 22, \"status\": 200, \"token\": true, \"elapsed_ms\": 573.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"0f504a2df1d681c725b6ad1cbb68d8140f728bf9dc9f77fe59f02f9c7043c845\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 23, \"status\": 200, \"token\": true, \"elapsed_ms\": 583.8, \"error\": null, \"body\": \"{\\\"token\\\":\\\"f14ab1b3a496263dcdfb7050646db7c727b336390667764229bd0a77d5700ef3\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 24, \"status\": 200, \"token\": true, \"elapsed_ms\": 570.0, \"error\": null, \"body\": \"{\\\"token\\\":\\\"4bc67367b484a955978defd15797b600a41dbdd9132a57a0b4a51220369a6cf4\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 25, \"status\": 200, \"token\": true, \"elapsed_ms\": 569.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"bd1900b3c63be7783438c35944bcf11fc155a6263e17aa7d08549ec8a1fa8d6b\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 26, \"status\": 200, \"token\": true, \"elapsed_ms\": 569.6, \"error\": null, \"body\": \"{\\\"token\\\":\\\"bef22f2b01031173395cc10270ec88d8ccb887491f7ae0ba0008024099b4ed2e\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 27, \"status\": 200, \"token\": true, \"elapsed_ms\": 568.9, \"error\": null, \"body\": \"{\\\"token\\\":\\\"0b785e804a2ecdcc09a2c7c7e34dd57a3f8d76485e652312b31cedcaa6374b02\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 28, \"status\": 200, \"token\": true, \"elapsed_ms\": 569.5, \"error\": null, \"body\": \"{\\\"token\\\":\\\"555d0bc5d49148dabd2b7c4055c3cd260913ab4baf40464b1e95579ffcf54c36\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 29, \"status\": 200, \"token\": true, \"elapsed_ms\": 567.7, \"error\": null, \"body\": \"{\\\"token\\\":\\\"1e9f5a9eeb504e53894f52162c0594129676f33610aa17faedbfa069ff468a83\\\",\\\"mustChangePassword\\\":false}\"}, {\"account\": 30, \"status\": 200, \"token\": true, \"elapsed_ms\": 592.9, \"error\": null, \"body\": \"{\\\"token\\\":\\\"da562915ed24a66a3f760da612592a1d1c3340541fe03f3413f823699978f9a4\\\",\\\"mustChangePassword\\\":false}\"}]",
+      "url": "http://localhost:8080/api/auth/login-email",
+      "elapsed_ms": null
+    }
+  ]
+}
+DEPLOYMENT GATE: PASS
+
