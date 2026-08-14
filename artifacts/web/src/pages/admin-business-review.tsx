@@ -64,7 +64,7 @@ const TYPE_LABELS: Record<string, string> = {
   insufficient_evidence: "Insufficient Evidence",
 };
 
-export default function AdminBusinessReview() {
+export default function AdminBusinessReview({ embedded }: { embedded?: boolean } = {}) {
   const { data: auth, isLoading } = useGetCurrentAuthUser();
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,11 +119,11 @@ export default function AdminBusinessReview() {
     }
   }
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /></div>;
-  if (!auth?.user || auth.user.role !== "admin") return <Redirect to="/admin" />;
+  if (isLoading) return <div className="flex items-center justify-center py-16"><div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /></div>;
+  if (!embedded && (!auth?.user || auth.user.role !== "admin")) return <Redirect to="/admin" />;
 
   return (
-    <div className="min-h-screen bg-background p-6 max-w-6xl mx-auto">
+    <div className={`${embedded ? "" : "min-h-screen bg-background p-6"} max-w-6xl mx-auto`}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Business Review Queue</h1>

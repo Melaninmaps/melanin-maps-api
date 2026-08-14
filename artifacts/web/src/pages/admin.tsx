@@ -7,6 +7,7 @@ import { Check, X, Clock, Users, Mail, MapPin, Briefcase, Download, RefreshCw, S
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
+import AdminBusinessReview from "@/pages/admin-business-review";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from "recharts";
@@ -3535,12 +3536,7 @@ export default function Admin() {
 
       {tab === "biz-review" && (
         <div className="p-6">
-          <iframe
-            src="/admin/business-review"
-            className="w-full border-0"
-            style={{ height: "calc(100vh - 200px)" }}
-            title="Business Review Queue"
-          />
+          <AdminBusinessReview embedded />
         </div>
       )}
 
