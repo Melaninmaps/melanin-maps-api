@@ -853,3 +853,10 @@ uri = "file://mwm-audit-package-v2.zip"
 type = "unspecified"
 title = "MWM Manus Audit Package v2"
 description = "16 source files + Railway duplicate test protocol + updated README. Includes all three follow-up implementations: #324 submission gating, #325 @mention notifications, #326 audienceBand null fix."
+
+[[outputs]]
+id = "upTFSW-j81RonuvYfyuZu"
+uri = "file://attached_assets/manus-audit-package-v3-atlanta-grocery.zip"
+type = "unspecified"
+title = "Manus Audit Package v3 — Atlanta Black-Owned Grocery Stores"
+description = "3 files: README with audit scope + store profiles, 8-query SQL verification suite, and full UX test protocol with step-by-step checkpoint list for all 4 stores. Hand this to Manus and ask them to confirm all 4 stores are visible, website URLs open correctly, and profiles are complete."
