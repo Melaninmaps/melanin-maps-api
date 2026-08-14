@@ -26,6 +26,8 @@ import {
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
+import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
+import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -2487,10 +2489,42 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const detectedCulture = detectCulturalIdentity(message);
     const destination = sessionDestination ?? messageDestination;
 
+    // ── Kinfolk pre-classifier (brunch / food / travel precedence) ───────────
+    // Runs BEFORE classifyIntent to enforce brunch→business_discovery routing
+    // and issue clarification without an LLM call when location is missing.
+    // Fixes: "Brunch in DC" was misclassified as pop culture.
+    const earlyDecision = classifyKinfolkRequest(message);
+    if (earlyDecision.route === "clarification") {
+      res.json({
+        sessionId,
+        reply: earlyDecision.clarification,
+        recommendations: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "clarification",
+        sources: [],
+        needsClarification: true,
+        discoveryKind: earlyDecision.discoveryKind,
+        originalQuery: message,
+      });
+      return;
+    }
+    const _discoveryInstruction = buildDiscoveryInstruction(earlyDecision);
+
     // ── Intent classification ────────────────────────────────────────────────
     // Runs before catalog fetch so high-consequence intents can adjust what
     // gets injected. No extra API call — deterministic keyword classifier.
-    const rawIntentClass = classifyIntent(message, !!destination);
+    // When the pre-classifier is definitive (brunch/travel), override the
+    // raw result so the LLM never reclassifies back to pop culture.
+    const rawIntentClassFromLLM = classifyIntent(message, !!destination);
+    const rawIntentClass: KinfolkIntent =
+      earlyDecision.route === "business_discovery" && rawIntentClassFromLLM !== "legal_regulated"
+        ? "business_discovery"
+        : earlyDecision.route === "travel_planning" && rawIntentClassFromLLM !== "legal_regulated"
+        ? "travel_planning"
+        : rawIntentClassFromLLM;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
     // always resolve to legal_regulated even when hasDestination caused the keyword
     // classifier to return business_discovery. Catches live mis-routes without
@@ -3401,9 +3435,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "";
 
     // Prepend intent policy block for any intent that requires special handling.
+    // Also prepend any brunch/discovery instruction from the pre-classifier.
     // Empty string for low-consequence general knowledge queries (no overhead).
-    const systemPrompt = (intentPolicyPrompt
-      ? `${intentPolicyPrompt}\n\n${baseSystemPrompt}`
+    const combinedPolicyPrompt = [
+      _discoveryInstruction || null,
+      intentPolicyPrompt || null,
+    ].filter(Boolean).join("\n\n");
+    const systemPrompt = (combinedPolicyPrompt
+      ? `${combinedPolicyPrompt}\n\n${baseSystemPrompt}`
       : baseSystemPrompt)
       + (pronounBlock       ? `\n\n${pronounBlock}`       : "")
       + (reproductiveBlock  ? `\n\n${reproductiveBlock}`  : "")
@@ -4704,9 +4743,23 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     return void res.status(429).json({ error: "VOICE_INPUT_RATE_LIMITED", message: `Voice input limit reached. Try again in ${retrySec} seconds.`, audioRetained: false });
   }
 
-  const { audio, format } = req.body as { audio?: string; format?: string };
+  const { audio, format, durationSeconds } = req.body as {
+    audio?: string;
+    format?: string;
+    durationSeconds?: number | null;
+  };
 
-  // 3. Audio required
+  // 3. Duration validation — only reject when client explicitly reports > 60 s.
+  //    An 11-second recording must always reach transcription; a timeout is a
+  //    provider failure, not a clip-length failure.
+  if (durationSeconds !== undefined && durationSeconds !== null) {
+    const dv = validateVoiceRecording({ durationSeconds, base64Audio: audio ?? "" });
+    if (!dv.ok && dv.code === "VOICE_CLIP_TOO_LONG") {
+      return void res.status(400).json({ error: dv.code, message: dv.message, audioRetained: false });
+    }
+  }
+
+  // 4. Audio required
   if (!audio || typeof audio !== "string" || !audio.trim()) {
     return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
   }
@@ -4753,14 +4806,24 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     // Log outcome + latency only — never log audio content, transcript text, or user context
     req.log.info({ userId: req.user.id, latencyMs: Date.now() - startMs, format: safeFormat }, "kinfolk-transcribe: success");
 
-    return void res.json({ text: transcription.text, audioRetained: false });
+    // Empty transcript — provider returned no text (silence, background noise, etc.)
+    const transcriptText = normalizeTranscript(transcription.text);
+    if (!transcriptText) {
+      return void res.status(422).json({
+        error: "EMPTY_TRANSCRIPT",
+        message: "I couldn't hear any words. Please try again or type your question.",
+        audioRetained: false,
+      });
+    }
+
+    return void res.json({ text: transcriptText, audioRetained: false });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "";
     const isAbort = msg.includes("abort") || msg.includes("timeout");
     req.log.error({ latencyMs: Date.now() - startMs, format: safeFormat, aborted: isAbort }, "kinfolk-transcribe: failed");
 
     if (isAbort) {
-      return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription timed out. Try a shorter clip.", audioRetained: false });
+      return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription timed out. Please try again or type your question.", audioRetained: false });
     }
     return void res.status(503).json({ error: "TRANSCRIPTION_UNAVAILABLE", message: "Transcription failed. Please try again.", audioRetained: false });
   } finally {
@@ -4818,6 +4881,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     res.json({
       audio: audioBuffer.toString("base64"),
       format: "wav",
+      voice,          // returned so the UI can confirm which voice was used
       charsUsed: newUsed,
       charsLimit: usage.limit,
       percentRemaining,
