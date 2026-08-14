@@ -495,6 +495,113 @@ async function callOpenAIWithRetry(
   throw lastErr;
 }
 
+// ─── Library grounding — isolates library-topic DB lookup from the main flow ──
+// Enriches KinfolkAI with structured Library topic data when the user asks
+// about a specific topic. Failures here must NEVER propagate as HTTP 500.
+type LibraryGrounding = {
+  id: string;
+  topicName: string;
+  category: string | null;
+  description: string | null;
+  keywords: string[];
+  trustedSources: Array<{ title: string; url: string }>;
+};
+
+function normalizeTopicText(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isLibraryTopicQuestion(message: string): boolean {
+  const text = normalizeTopicText(message);
+  return /\b(library|learn|topic|history|what can i learn|tell me about)\b/.test(text)
+    || /\b(divine nine|alpha kappa alpha|alpha phi alpha|delta sigma theta|omega psi phi|kappa alpha psi|sigma gamma rho|zeta phi beta|iota phi theta|phi beta sigma)\b/.test(text);
+}
+
+async function loadLibraryGrounding(message: string): Promise<LibraryGrounding | null> {
+  if (!isLibraryTopicQuestion(message)) return null;
+  const normalized = normalizeTopicText(message);
+  const tokens = normalized.split(" ").filter((t) => t.length >= 4);
+  const searchTerms = Array.from(new Set([
+    normalized,
+    ...tokens,
+    ...(normalized.includes("divine nine") ? ["divine nine", "divine"] : []),
+  ])).slice(0, 12);
+  try {
+    const result = await pool.query<{
+      id: string; topic_name: string; category: string | null;
+      description: string | null; keywords: unknown; trusted_sources: unknown;
+    }>(
+      `SELECT id, topic_name, category, description, keywords, trusted_sources
+       FROM knowledge_topics
+       WHERE enabled = true
+         AND (
+           lower(topic_name) LIKE ANY($1::text[])
+           OR EXISTS (
+             SELECT 1 FROM unnest(COALESCE(keywords, ARRAY[]::text[])) AS kw
+             WHERE lower(kw) LIKE ANY($1::text[])
+           )
+           OR lower(COALESCE(category, '')) LIKE ANY($1::text[])
+         )
+       ORDER BY
+         CASE WHEN lower(topic_name) LIKE '%divine nine%' THEN 0 ELSE 1 END,
+         length(topic_name)
+       LIMIT 1`,
+      [searchTerms.map((t) => `%${t}%`)],
+    );
+    const row = result.rows[0];
+    if (!row) return null;
+    const sources = Array.isArray(row.trusted_sources) ? row.trusted_sources : [];
+    const trustedSources = sources
+      .map((s: any) => ({ title: String(s?.title ?? s?.name ?? "Source"), url: String(s?.url ?? "") }))
+      .filter((s) => /^https?:\/\//i.test(s.url));
+    return {
+      id: row.id,
+      topicName: row.topic_name,
+      category: row.category,
+      description: row.description,
+      keywords: Array.isArray(row.keywords) ? row.keywords.map(String) : [],
+      trustedSources,
+    };
+  } catch (err) {
+    // Library grounding is enrichment. It must never convert a valid chat into HTTP 500.
+    console.warn("[kinfolk-library-grounding-failed]", {
+      code: (err as any)?.code ?? "unknown",
+      message: err instanceof Error ? err.message.slice(0, 240) : String(err).slice(0, 240),
+    });
+    return null;
+  }
+}
+
+function buildLibraryGroundingBlock(topic: LibraryGrounding | null): string {
+  if (!topic) return "";
+  const sourceLines = topic.trustedSources.length
+    ? topic.trustedSources.map((s) => `- ${s.title}: ${s.url}`).join("\n")
+    : "No verified source URL is attached to this topic; do not invent one.";
+  return [
+    "LIBRARY_TOPIC_GROUNDING — SERVER CONTROLLED",
+    `Topic: ${topic.topicName}`,
+    `Category: ${topic.category ?? "general"}`,
+    `Description: ${topic.description ?? "No description is available in the Library."}`,
+    `Keywords: ${topic.keywords.join(", ") || "none"}`,
+    "Sources:",
+    sourceLines,
+    "Rules: Use the topic name exactly. Distinguish database facts from general background knowledge. Do not invent source URLs, dates, founders, or organizations.",
+  ].join("\n");
+}
+
+function buildLibraryFallbackReply(topic: LibraryGrounding | null): string {
+  if (!topic) {
+    return "I can help you explore that Library topic, but I could not load its Library card right now. Please try again, or open the Library and search for the topic directly.";
+  }
+  return `The Library topic **${topic.topicName}** is a place to learn through the topic description and related community knowledge. ${topic.description ?? "The topic is currently available in the Library for further exploration."} Open the Library card to continue learning and follow it for future updates.`;
+}
+
 // ─── KinfolkAI health probe cache ────────────────────────────────────────────
 // Probes the real OpenAI connection at most once every 5 minutes.
 // Result is cached so the /kinfolk/health endpoint can be polled frequently
@@ -3264,14 +3371,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : m.content).slice(0, 400), // ~100 token ceiling per history message
       }));
 
+    // ── Library topic grounding (non-blocking enrichment) ────────────────────
+    // Load structured Library topic data when the user asks about a library topic.
+    // Returns null on any error — must never cause a 500.
+    const libraryTopic = await loadLibraryGrounding(message);
+    const libraryGroundingBlock = buildLibraryGroundingBlock(libraryTopic);
+    const systemPromptWithLibrary = libraryGroundingBlock
+      ? `${systemPrompt}\n\n${libraryGroundingBlock}`
+      : systemPrompt;
+
     const aiMessages = [
-      { role: "system" as const, content: systemPrompt },
+      { role: "system" as const, content: systemPromptWithLibrary },
       ...historyMessages,
       { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
     ];
 
     // Token estimation for queue admission (chars/4 is a reliable GPT-4o-mini approximation)
-    const estimatedPromptTokens = estimateTokens(systemPrompt) +
+    const estimatedPromptTokens = estimateTokens(systemPromptWithLibrary) +
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
     const estimatedTotal = Math.min(estimatedPromptTokens + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
@@ -3281,11 +3397,41 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // (MAX_ACTIVE_GENERATIONS=4) nor rolling 60-second TPM budget (TOKEN_BUCKET_TARGET=160k)
     // is exceeded. callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX
     // times with exponential backoff. AbortSignal.timeout(25000) caps stalled providers.
-    const completion = await kinfolkQueue.run(
-      req.user?.id ?? "anon",
-      estimatedTotal,
-      () => { chatStage = "provider_call"; return callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature); },
-    );
+    let completion: Awaited<ReturnType<typeof callOpenAIWithRetry>>;
+    try {
+      completion = await kinfolkQueue.run(
+        req.user?.id ?? "anon",
+        estimatedTotal,
+        () => { chatStage = "provider_call"; return callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature); },
+      );
+    } catch (providerError) {
+      // For library topic questions: if the provider fails with a retryable error,
+      // return a useful 200 with library grounding instead of the generic 500.
+      const pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
+      const retryable = [429, 500, 502, 503, 504].includes(Number(pStatus));
+      if (libraryTopic && retryable) {
+        const fallbackReply = buildLibraryFallbackReply(libraryTopic);
+        const fallbackSources = libraryTopic.trustedSources.map((s) => ({
+          id: s.url, label: "library_topic", title: s.title, url: s.url,
+        }));
+        res.status(200).json({
+          sessionId: finalSessionId,
+          reply: fallbackReply,
+          recommendations: null,
+          followUpSuggestions: ["Open this topic in the Library", "Follow this topic for updates"],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: { type: "open_topic", topicId: libraryTopic.id, topicName: libraryTopic.topicName },
+          intentClass,
+          sources: fallbackSources,
+          resolution: { state: "resolved", preferencesUsed: [] },
+          degraded: true,
+          degradedReason: "provider_transient_error_library_fallback",
+        });
+        return;
+      }
+      throw providerError;
+    }
 
     // Track AI pool usage for paid tiers after successful generation
     if (aiPoolCircleId) {
@@ -3448,9 +3594,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Pass the user message so the resolver can match topic names that appear
     // verbatim in the text (e.g. "African diaspora history" → "African Diaspora History" node)
     // before falling back to the broader category alias list.
-    const existingLibraryMatch = libraryActionCategories
-      ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
-      : null;
+    let existingLibraryMatch: Record<string, unknown> | null = null;
+    try {
+      existingLibraryMatch = libraryActionCategories
+        ? await findMatchingPublishedLibraryNode(libraryActionCategories, destination ?? null, message).catch(() => null)
+        : null;
+    } catch (libraryMatchErr) {
+      console.warn("[kinfolk-library-match-failed]", libraryMatchErr instanceof Error ? libraryMatchErr.message.slice(0, 240) : String(libraryMatchErr).slice(0, 240));
+      // Fall back to the DB-loaded grounding topic if the published-node lookup fails
+      existingLibraryMatch = libraryTopic
+        ? { type: "open_topic", topicId: libraryTopic.id, topicName: libraryTopic.topicName }
+        : null;
+    }
 
     // ── "Suggest to Library" — when no published match exists ─────────────────
     // If no Library topic exists yet AND the intent signals durable educational value

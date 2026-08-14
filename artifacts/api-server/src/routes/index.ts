@@ -244,6 +244,8 @@ router.use(pushTokenRouter);
 router.use(communityRouter);
 router.use(conversationsRouter);
 router.use(eventsRouter);
+// /community/events compat — canonical path is /api/events; audit found /api/community/events 404
+router.use("/community", eventsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
@@ -296,6 +298,15 @@ router.use(disputesRouter);
 router.use(docusignRouter);
 router.use(smartPathwaysRouter);
 router.use(knowledgeRouter);
+// /library/collections and /library/topics compat aliases —
+// the Library UI uses /api/knowledge/topics; audit tested non-existent paths.
+router.get("/library/collections", (_req: Request, res: Response) =>
+  res.redirect(307, "/api/collections"),
+);
+router.get("/library/topics", (req: Request, res: Response) => {
+  const qs = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+  res.redirect(307, `/api/knowledge/topics${qs}`);
+});
 router.use(marketplaceFeesRouter);
 router.use(trustRouter);
 router.use(journeysRouter);

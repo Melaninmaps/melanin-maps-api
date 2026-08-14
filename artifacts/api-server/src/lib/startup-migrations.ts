@@ -3904,6 +3904,11 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── Manus audit session revocation — clears all live sessions for audit accounts ─
     // Runs once to invalidate tokens that were exposed in gate-result JSON (Aug 14 2026)
     ["manus audit session revocation v1", () => revokeManusAuditSessions(log, warn)],
+    // ── Beta safety columns — permanently_hidden boolean + public_businesses view ─
+    // Adds permanently_hidden boolean (distinct from status='permanently_hidden') so
+    // public queries can use COALESCE(permanently_hidden, false) = false consistently.
+    // Also adds lower(name) index and public_businesses view for safe list/map queries.
+    ["beta safety columns v1", () => ensureBetaSafetyColumns(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9669,6 +9674,45 @@ async function ensureManusAuditAccounts(
     }
   }
   log(`ensureManusAuditAccounts: ${inserted} inserted, ${skipped} already present`);
+}
+
+// ── Beta safety columns — permanently_hidden boolean + public_businesses view ────
+// Manus audit (Aug 14 2026) requires public queries to COALESCE(permanently_hidden,false).
+// is_duplicate + duplicate_of_id already exist from business dedup schema migration.
+// This adds permanently_hidden boolean and a safe public_businesses view.
+async function ensureBetaSafetyColumns(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS permanently_hidden boolean NOT NULL DEFAULT false
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_public_visibility_idx
+        ON businesses (status, listing_status, is_duplicate, permanently_hidden)
+        WHERE status = 'active'
+          AND COALESCE(is_duplicate, false) = false
+          AND COALESCE(permanently_hidden, false) = false
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_search_name_lower_idx
+        ON businesses (lower(name))
+    `);
+    await pool.query(`
+      CREATE OR REPLACE VIEW public_businesses AS
+      SELECT b.*
+      FROM businesses b
+      WHERE b.status = 'active'
+        AND COALESCE(b.is_duplicate, false) = false
+        AND COALESCE(b.permanently_hidden, false) = false
+        AND COALESCE(b.listing_status, 'live_unclaimed') IN ('live_unclaimed', 'live_claimed')
+    `);
+    log("ensureBetaSafetyColumns: permanently_hidden column, indexes, and public_businesses view confirmed");
+  } catch (err: unknown) {
+    warn(`ensureBetaSafetyColumns: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 // ── Manus audit session revocation — invalidates tokens exposed in gate result JSON ─

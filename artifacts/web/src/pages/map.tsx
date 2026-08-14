@@ -356,6 +356,30 @@ export default function MapPage() {
     lat: number; lng: number; name: string;
   } | null>(null);
 
+  // Parses structured phrases like "Black-owned grocery stores in Atlanta"
+  // into discrete API parameters so the business endpoint returns real results
+  // instead of a universal-search zero-result fallback.
+  function parseMapSearchPhrase(input: string): {
+    search: string; city?: string; ownership?: "black-owned"; category?: string;
+  } {
+    const lower = input.toLowerCase().trim();
+    const cityMatch = lower.match(/\bin\s+([a-z][a-z .'-]+?)(?:\s*$|\s+(?:near|around)\b)/);
+    const city = cityMatch?.[1]?.trim().replace(/[.,]+$/, "");
+    const ownership: "black-owned" | undefined = /\bblack[- ]owned\b/i.test(input) ? "black-owned" : undefined;
+    const category =
+      /\bgrocery\s+stores?\b/i.test(input) ? "Grocery" :
+      /\brestaurants?\b|\bdining\b/i.test(input) ? "Food" :
+      /\bbarber|salon|beauty\b/i.test(input) ? "Beauty & Personal Care" :
+      undefined;
+    const search = input
+      .replace(/\bblack[- ]owned\b/gi, "")
+      .replace(/\bgrocery\s+stores?\b/gi, "")
+      .replace(/\bin\s+[a-z][a-z .'-]+?\s*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return { search, city, ownership, category };
+  }
+
   // Universal Search — triggered on Enter or button click.
   //
   // ARCHITECTURE:
@@ -477,11 +501,45 @@ export default function MapPage() {
       const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
       if (res.ok) {
         const payload = await res.json();
-        setUniversalResults(payload);
+        const universalBusinesses: any[] = payload?.results?.businesses ?? [];
+
+        // Phrase-search fallback: when universal search returns 0 businesses for a
+        // structured phrase ("Black-owned grocery stores in Atlanta"), also call the
+        // direct businesses endpoint with parsed ownership/category/city params.
+        let phraseBusinesses: any[] = [];
+        if (universalBusinesses.length === 0) {
+          try {
+            const parsed = parseMapSearchPhrase(q);
+            if (parsed.ownership || parsed.category || parsed.city) {
+              const bp = new URLSearchParams({ limit: "200" });
+              if (parsed.search) bp.set("search", parsed.search);
+              if (parsed.city) bp.set("city", parsed.city);
+              if (parsed.ownership) bp.set("ownership", parsed.ownership);
+              if (parsed.category) bp.set("category", parsed.category);
+              const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
+              if (bizRes.ok) {
+                const bizPayload = await bizRes.json();
+                phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
+              }
+            }
+          } catch { /* phrase fallback failed — continue with universal results */ }
+        }
+
+        const finalBusinesses = phraseBusinesses.length > 0 ? phraseBusinesses : universalBusinesses;
+        const finalPayload = phraseBusinesses.length > 0
+          ? {
+              ...payload,
+              results: { ...payload.results, businesses: phraseBusinesses },
+              totalResults: phraseBusinesses.length,
+              fallbackMessage: null,
+            }
+          : payload;
+
+        setUniversalResults(finalPayload);
 
         // Fit canvas to MWM results so the viewport reflects where businesses
         // actually are, not just the geocoded city center.
-        const fitted = fitMapToBusinessResults(payload?.results?.businesses ?? []);
+        const fitted = fitMapToBusinessResults(finalBusinesses);
         if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
           // No MWM records with valid coords — keep the geocoded pan.
           searchViewportLockedRef.current = true;
@@ -1648,9 +1706,9 @@ export default function MapPage() {
           <div className="w-20 h-20 rounded-full bg-[#CA922B]/15 flex items-center justify-center mb-5">
             <MapPin className="w-9 h-9 text-[#CA922B]" />
           </div>
-          <h2 className="text-xl font-serif font-bold text-[#2B1507] mb-2">Interactive map coming soon</h2>
-          <p className="text-sm text-[#3A1F0E]/50 max-w-xs leading-relaxed">
-            Browse businesses from the list on the left. The full map with location pins will be available in production.
+          <h2 className="text-xl font-serif font-bold text-[#2B1507] mb-2">Map view unavailable</h2>
+          <p className="text-sm text-[#3A1F0E]/60 max-w-sm leading-relaxed">
+            Search and business results remain available in the list. The map provider key is not configured in this deployment.
           </p>
         </div>
       </div>
