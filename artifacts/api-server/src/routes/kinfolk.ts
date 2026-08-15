@@ -862,24 +862,65 @@ function isWeatherQuery(msg: string): boolean {
 // ─── City extraction from user message ────────────────────────────────────────
 // Aliases and shorthand that the platform's community commonly uses
 const CITY_ALIASES: Record<string, string> = {
+  // ── Philadelphia ────────────────────────────────────────────────────────────
   "philly": "Philadelphia", "the city of brotherly love": "Philadelphia",
-  "nyc": "New York", "new york city": "New York", "the big apple": "New York", "brooklyn": "New York", "manhattan": "New York", "the bronx": "New York",
+  // ── New York ────────────────────────────────────────────────────────────────
+  "nyc": "New York", "new york city": "New York", "the big apple": "New York",
+  "brooklyn": "New York", "manhattan": "New York", "the bronx": "New York",
+  // ── Atlanta ─────────────────────────────────────────────────────────────────
   "atl": "Atlanta", "the a": "Atlanta", "hotlanta": "Atlanta",
-  "dc": "Washington", "d.c.": "Washington", "washington dc": "Washington", "dmv": "Washington",
-  "la": "Los Angeles", "l.a.": "Los Angeles", "lax": "Los Angeles", "south central": "Los Angeles", "compton": "Los Angeles", "inglewood": "Los Angeles",
+  // ── Washington DC ───────────────────────────────────────────────────────────
+  "dc": "Washington", "d.c.": "Washington", "washington dc": "Washington",
+  "dmv": "Washington", "chocolate city": "Washington",
+  // ── Los Angeles ─────────────────────────────────────────────────────────────
+  "la": "Los Angeles", "l.a.": "Los Angeles", "lax": "Los Angeles",
+  "south central": "Los Angeles", "compton": "Los Angeles", "inglewood": "Los Angeles",
+  // ── San Francisco / Bay Area ─────────────────────────────────────────────────
+  "sf": "San Francisco", "san fran": "San Francisco", "the city by the bay": "San Francisco",
+  "the bay": "Oakland", "oak": "Oakland", "the town": "Oakland",
+  // ── Chicago ─────────────────────────────────────────────────────────────────
   "chi": "Chicago", "the chi": "Chicago", "chitown": "Chicago", "chi-town": "Chicago",
+  "wind city": "Chicago", "the windy city": "Chicago",
+  // ── Houston ─────────────────────────────────────────────────────────────────
   "h-town": "Houston", "space city": "Houston", "bayou city": "Houston",
+  "clutch city": "Houston", "third coast": "Houston",
+  // ── New Orleans ─────────────────────────────────────────────────────────────
   "nola": "New Orleans", "the crescent city": "New Orleans", "the big easy": "New Orleans",
-  "bmore": "Baltimore", "charm city": "Baltimore",
-  "detroit": "Detroit", "the d": "Detroit", "motor city": "Detroit",
-  "oak": "Oakland", "the town": "Oakland",
-  "nashville": "Nashville", "nash vegas": "Nashville", "music city": "Nashville",
-  "memphis": "Memphis", "bluff city": "Memphis",
-  "jackson": "Jackson",
-  "richmond": "Richmond", "rva": "Richmond",
-  "charlotte": "Charlotte", "the queen city": "Charlotte",
-  "birmingham": "Birmingham", "the magic city": "Birmingham",
+  "nawlins": "New Orleans", "n'awlins": "New Orleans",
   "no": "New Orleans", // texting shorthand
+  // ── Baltimore ───────────────────────────────────────────────────────────────
+  "bmore": "Baltimore", "charm city": "Baltimore",
+  // ── Detroit ─────────────────────────────────────────────────────────────────
+  "detroit": "Detroit", "the d": "Detroit", "motor city": "Detroit",
+  // ── Nashville ───────────────────────────────────────────────────────────────
+  "nashville": "Nashville", "nash vegas": "Nashville", "music city": "Nashville",
+  // ── Memphis ─────────────────────────────────────────────────────────────────
+  "memphis": "Memphis", "bluff city": "Memphis",
+  // ── Jackson ─────────────────────────────────────────────────────────────────
+  "jackson": "Jackson",
+  // ── Richmond ────────────────────────────────────────────────────────────────
+  "richmond": "Richmond", "rva": "Richmond",
+  // ── Charlotte ───────────────────────────────────────────────────────────────
+  "charlotte": "Charlotte", "the queen city": "Charlotte", "clt": "Charlotte",
+  // ── Birmingham ──────────────────────────────────────────────────────────────
+  "birmingham": "Birmingham", "the magic city": "Birmingham", "b-ham": "Birmingham",
+  "the ham": "Birmingham", "bham": "Birmingham",
+  // ── Miami ───────────────────────────────────────────────────────────────────
+  "305": "Miami", "the 305": "Miami", "magic city": "Miami",
+  // ── Dallas ──────────────────────────────────────────────────────────────────
+  "big d": "Dallas", "dfw": "Dallas",
+  // ── Pittsburgh ──────────────────────────────────────────────────────────────
+  "steel city": "Pittsburgh", "the burgh": "Pittsburgh", "pgh": "Pittsburgh",
+  // ── Cincinnati ──────────────────────────────────────────────────────────────
+  "cincy": "Cincinnati", "the nati": "Cincinnati",
+  // ── Indianapolis ────────────────────────────────────────────────────────────
+  "indy": "Indianapolis", "naptown": "Indianapolis",
+  // ── Kansas City ─────────────────────────────────────────────────────────────
+  "kc": "Kansas City", "kck": "Kansas City",
+  // ── St. Louis ───────────────────────────────────────────────────────────────
+  "stl": "St. Louis", "the lou": "St. Louis",
+  // ── Louisville ──────────────────────────────────────────────────────────────
+  "derby city": "Louisville", "the ville": "Louisville", "lou": "Louisville",
 };
 
 /**
@@ -979,6 +1020,10 @@ const CITY_TO_STATE: Record<string, string> = {
   "Tucson": "AZ",
   "Albuquerque": "NM",
   "El Paso": "TX",
+  "San Francisco": "CA",
+  "Pittsburgh": "PA",
+  "Cincinnati": "OH",
+  "Miami": "FL",
 };
 
 // ─── Cultural Identity Detection ─────────────────────────────────────────────

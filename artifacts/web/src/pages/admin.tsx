@@ -541,6 +541,8 @@ export default function Admin() {
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [cityHealth, setCityHealth] = useState<CityHealth | null>(null);
   const [cityHealthLoading, setCityHealthLoading] = useState(false);
+  const [cityAlertRunning, setCityAlertRunning] = useState(false);
+  const [cityAlertResult, setCityAlertResult] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCity) { setCityTrend([]); setCityHealth(null); return; }
@@ -684,6 +686,24 @@ export default function Admin() {
       })
       .catch(() => {})
       .finally(() => setCityLaunchesLoading(false));
+  }, []);
+
+  // #203 — Run city health alert scheduler immediately (no 30-min wait).
+  // Calls POST /admin/city-health-alert/trigger and shows the summary result.
+  const runCityHealthAlerts = useCallback(async () => {
+    setCityAlertRunning(true);
+    setCityAlertResult(null);
+    try {
+      const r = await fetch(`${BASE}api/admin/city-health-alert/trigger`, {
+        method: "POST", credentials: "include",
+      });
+      const data = await r.json() as { ok?: boolean; message?: string; error?: string };
+      setCityAlertResult(data.ok ? (data.message ?? "Done") : (data.error ?? "Unknown error"));
+    } catch {
+      setCityAlertResult("Network error — check Railway logs");
+    } finally {
+      setCityAlertRunning(false);
+    }
   }, []);
 
   const refreshAll = useCallback(() => {
@@ -2816,8 +2836,17 @@ export default function Admin() {
               <Button size="sm" variant="outline" onClick={() => void loadHealth()} disabled={healthLoading} className="gap-2">
                 <RefreshCw className={`w-3.5 h-3.5 ${healthLoading ? "animate-spin" : ""}`} /> Check Now
               </Button>
+              <Button size="sm" variant="outline" onClick={() => void runCityHealthAlerts()} disabled={cityAlertRunning} className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50">
+                <RefreshCw className={`w-3.5 h-3.5 ${cityAlertRunning ? "animate-spin" : ""}`} />
+                {cityAlertRunning ? "Running…" : "Run City Alerts Now"}
+              </Button>
             </div>
           </div>
+          {cityAlertResult && (
+            <div className={`rounded-xl px-4 py-3 text-sm border ${cityAlertResult.startsWith("Network") || cityAlertResult.toLowerCase().includes("error") ? "bg-red-50 border-red-200 text-red-700" : "bg-green-50 border-green-200 text-green-700"}`}>
+              <span className="font-semibold">City Health Alerts:</span> {cityAlertResult}
+            </div>
+          )}
 
           {healthLoading && !health && (
             <div className="text-center py-12 text-[#3A1F0E]/40 text-sm">Running health checks…</div>

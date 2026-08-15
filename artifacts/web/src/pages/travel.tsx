@@ -57,6 +57,10 @@ interface Message {
   depth?: "brief" | "standard" | "deep";
   canShowMore?: boolean;
   canShowLess?: boolean;
+  // Resolved location — present when Kinfolk resolved a city from this message
+  // (alias, explicit mention, or session carry-forward)
+  location?: { city: string; state: string | null; source: string } | null;
+  locationSource?: string | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -972,6 +976,9 @@ function TravelPage() {
         depth?: "brief" | "standard" | "deep";
         canShowMore?: boolean;
         canShowLess?: boolean;
+        // Resolved location — present when a city was resolved from this message
+        location?: { city: string; state: string | null; source: string } | null;
+        locationSource?: string | null;
       };
 
       // Guard: if reply is somehow missing, show a recoverable message rather than blank
@@ -990,6 +997,8 @@ function TravelPage() {
         depth: data.depth,
         canShowMore: data.canShowMore ?? false,
         canShowLess: data.canShowLess ?? false,
+        location: data.location ?? null,
+        locationSource: data.locationSource ?? null,
       }]);
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "AbortError";
@@ -1339,6 +1348,16 @@ function TravelPage() {
                           <Volume2 size={10} />
                           {playingId === msg.id ? "Stop" : "Listen"}
                         </button>
+                      )}
+                      {/* Location resolution pill — shows which city Kinfolk resolved
+                          so the member never wonders if their alias was understood */}
+                      {msg.role === "assistant" && msg.location?.city && (
+                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#3A1F0E]/40 font-medium">
+                          <MapPin size={9} className="text-[#CA922B] shrink-0" />
+                          <span>
+                            Searching {msg.location.city}{msg.location.state ? `, ${msg.location.state}` : ""}
+                          </span>
+                        </div>
                       )}
                       {msg.recommendations && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />

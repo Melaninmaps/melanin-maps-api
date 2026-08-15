@@ -47,6 +47,13 @@ import {
 } from "@/lib/crashLogger";
 
 installCrashLogger();
+// ── Sentry preview-build startup verification ─────────────────────────────────
+// This console.info line confirms: (a) the JS bundle reached this point without
+// crashing, (b) the crash logger initialized, and (c) Sentry native SDK is
+// intentionally absent (removed Build 100 — pre-JS native crash).
+// If this appears in Railway logs / Expo DevTools after a preview build, the
+// build launched cleanly. Task #206 — confirm before testers receive the build.
+console.info("[MWM] Crash logger active. Sentry native SDK: intentionally disabled. Build launched cleanly.");
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { TesterReportButton } from "@/components/TesterReportButton";
