@@ -4130,6 +4130,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       safetyNotice: enforced.safetyNotice ?? undefined,
       promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
       rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
+      // Local resolution metadata — present when a city was resolved from the message
+      // or session. Lets clients and tests confirm alias resolution worked without
+      // reading server logs (e.g. "Philly" → { city:"Philadelphia", state:"PA", source:"alias" }).
+      ...(destination && {
+        location: {
+          city: destination,
+          state: CITY_TO_STATE[destination] ?? null,
+          source: locationSource,
+        },
+        locationSource,
+      }),
       // Token ceiling warning — included when rolling TPM > 80% of the 160k target.
       // Lets the client show a non-blocking banner before users hit KINFOLK_BUSY.
       tpmWarning: (() => {
