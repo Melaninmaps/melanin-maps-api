@@ -40,6 +40,10 @@ import {
 import { buildHealthRetrievalContext, extractHealthTopic } from "../kinfolk/health-retrieval";
 import { loadKinfolkMemberContext, buildPronounInstruction, buildReproductiveContextInstruction } from "../kinfolk/member-context";
 import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../kinfolk/four-purpose-enforcement";
+import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
+import { searchAllQueries } from "../kinfolk/web-search";
+import { rankResults } from "../kinfolk/web-ranker";
+import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -2657,6 +2661,101 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — Kinfolk falls back to model knowledge */ }
     }
 
+    // ── Profile-first web search (Kinfolk lens layer) ─────────────────────────
+    // For health, image, and entity queries: build a community-primary query plan
+    // using the member's voluntarily saved diasporaCountries as the active lens,
+    // then fetch live Tavily results ranked by credibility + community relevance.
+    // Degrades gracefully to empty results when TAVILY_API_KEY is not configured.
+    // The member lens is applied BEFORE any call to the LLM — never as a post-filter.
+    let webSearchBlock = "";
+    let webResourceCards: ResourceCard[] = [];
+    let webEntityCandidates: EntityCandidate[] | undefined;
+    let kinfolkLensDisclosure = "";
+    let kinfolkUrgentMessage: string | undefined;
+    const LENS_ELIGIBLE_INTENTS = new Set(["medical_health", "safety_emergency"]);
+    const lensEligible = LENS_ELIGIBLE_INTENTS.has(intentClass) ||
+      /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety)\b/i.test(message);
+    const isEntityQuery = ENTITY_INDEX[normalizeLensQuery(message)] !== undefined;
+
+    if (lensEligible || isEntityQuery) {
+      try {
+        const diasporaCountries = resolverPrefs?.diasporaCountries ?? [];
+        const memberProfile = buildMemberProfile({
+          userId: req.user?.id ?? "anon",
+          diasporaCountries: diasporaCountries.length ? diasporaCountries : null,
+          culturalBackground: (prefs as Record<string, unknown> | null)?.cultural_background as string | null ?? null,
+        });
+
+        const searchPlan = buildSearchPlan(message, memberProfile, ENTITY_INDEX);
+        kinfolkLensDisclosure = activeLensDisclosure(memberProfile);
+        kinfolkUrgentMessage = urgentHealthMessage(searchPlan.urgentHealthFlag);
+
+        // Entity disambiguation — culture-first candidate ranking
+        if (isEntityQuery) {
+          const lensLabels = memberProfile.lenses.flatMap((l) => [l.label, ...l.searchTerms]);
+          webEntityCandidates = findEntityCandidates(normalizeLensQuery(message), lensLabels);
+        }
+
+        // Reviewed resource cards (no API key required)
+        const lensLabels = memberProfile.lenses.flatMap((l) => [l.label, ...l.searchTerms]);
+        const libraryIntent = searchPlan.intent === "image" ? "image" : searchPlan.intent;
+        webResourceCards = [
+          ...findReviewedResources(normalizeLensQuery(message), libraryIntent, lensLabels),
+          ...(searchPlan.imageRequested && libraryIntent !== "image"
+            ? findReviewedResources(normalizeLensQuery(message), "image", lensLabels)
+            : []),
+        ].filter((card, idx, arr) => arr.findIndex((c) => c.id === card.id) === idx);
+
+        // Live Tavily web search — degrades to [] when key absent
+        if (searchPlan.queries.length > 0 && process.env.TAVILY_API_KEY) {
+          const liveResults = await searchAllQueries(searchPlan.queries, searchPlan.imageRequested);
+          const ranked = rankResults(liveResults, memberProfile, searchPlan.activeLenses);
+
+          if (ranked.length > 0) {
+            const top = ranked.slice(0, 6);
+            webSearchBlock = [
+              kinfolkUrgentMessage ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n` : "",
+              kinfolkLensDisclosure ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}` : "",
+              `WEB SOURCES (profile-first ranked, highest community relevance first):`,
+              top.map((r, i) =>
+                `[${i + 1}] ${r.title}\n    URL: ${r.url}\n    Score: ${r.finalScore} (credibility ${r.credibilityScore}, community ${r.communityScore})\n    ${r.content.slice(0, 300)}`
+              ).join("\n\n"),
+              `\nRULE: Lead with sources that match the member's active community lens. State population-level health data as context for the group, never as an individual diagnosis or prediction. For images, state they are educational only.`,
+            ].filter(Boolean).join("\n");
+
+            // Add ranked web results to healthRetrievalSources so they appear in the response sources array
+            for (const r of top) {
+              healthRetrievalSources.push({ title: r.title, url: r.url, source: "kinfolk_web" });
+            }
+          }
+        }
+
+        // Inject resource cards into the web block even without live search
+        if (webResourceCards.length > 0 && !webSearchBlock) {
+          webSearchBlock = [
+            kinfolkUrgentMessage ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n` : "",
+            kinfolkLensDisclosure ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}` : "",
+            `REVIEWED KINFOLK RESOURCES (always surface these when relevant):`,
+            webResourceCards.map((c) =>
+              `- ${c.title}: ${c.url}${c.safetyNote ? `\n  NOTE: ${c.safetyNote}` : ""}`
+            ).join("\n"),
+          ].filter(Boolean).join("\n");
+        }
+
+        // Entity disambiguation block
+        if (webEntityCandidates?.length) {
+          const candidateBlock = [
+            `ENTITY DISAMBIGUATION — community-lens candidate first:`,
+            webEntityCandidates.map((c, i) =>
+              `${i + 1}. "${c.disambiguator}" — ${c.verifiedSummary}`
+            ).join("\n"),
+            `RULE: Do not merge these candidates. Ask the member which person they mean if intent is unclear.`,
+          ].join("\n");
+          webSearchBlock = webSearchBlock ? `${candidateBlock}\n\n${webSearchBlock}` : candidateBlock;
+        }
+      } catch { /* non-fatal — profile-first web layer degrades gracefully */ }
+    }
+
     // ── Tour-site retrieval — murals, monuments, museums, heritage sites ────────
     // When the member asks about cultural/heritage places by city or site type,
     // pull matching records from tour_cultural_sites and inject server-authoritative
@@ -3520,6 +3619,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       + (entityBlock ? `\n\n${entityBlock}` : "")
       + (educationBlock ? `\n\n${educationBlock}` : "")
       + (tourSiteBlock  ? `\n\n${tourSiteBlock}`  : "")
+      + (webSearchBlock ? `\n\n${webSearchBlock}` : "")
       + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
     // Build OpenAI messages (history + new message)
@@ -3938,6 +4038,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           utilization: pct,
         };
       })(),
+      // ── Profile-first web search fields ──────────────────────────────────────
+      // lensDisclosure: "Searched with your Kinfolk lens first: Black woman / …"
+      //   visible to member so they can correct how their lens was used.
+      // resourceCards: clinician-reviewed external resources (eczema gallery, CDC).
+      // entityCandidates: disambiguation options ranked community-lens-first.
+      // urgentSafetyMessage: immediate care instruction for pregnancy/danger language.
+      ...(kinfolkLensDisclosure && { lensDisclosure: kinfolkLensDisclosure }),
+      ...(webResourceCards.length > 0 && { resourceCards: webResourceCards }),
+      ...(webEntityCandidates?.length && { entityCandidates: webEntityCandidates }),
+      ...(kinfolkUrgentMessage && { urgentSafetyMessage: kinfolkUrgentMessage }),
     });
   } catch (err) {
     const errCode        = (err as any)?.code as string | undefined;
