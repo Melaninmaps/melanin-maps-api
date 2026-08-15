@@ -1543,11 +1543,12 @@ END $seed$`,
   },
   {
     // Manus monitor account — full Trailblazer-tier access for live site testing.
-    // Email:    monitor@mappingwithmelanin.com
-    // Password: MWM-Monitor-2026!
-    // Role:     tester (sees tester-only demo businesses + all live listings)
+    // Email:    monitor@mappingwithmelanin.com  (same as MWM_MONITOR_EMAIL secret)
+    // Password: stored in MWM_MONITOR_PASSWORD Railway + Replit secret — NOT overridden here.
+    //           The hash below is only used on the very first insert (account doesn't exist yet).
+    //           ON CONFLICT deliberately skips password_hash so the secret-managed password
+    //           is never clobbered by a deploy.
     // Tier:     founding (top-tier, covers all Trailblazer features — no Stripe needed)
-    // ON CONFLICT DO UPDATE so it self-heals if manually edited between deploys.
     name: "ensure_manus_monitor_account_v1",
     sql: `INSERT INTO users
             (id, email, first_name, last_name, password_hash,
@@ -1561,7 +1562,6 @@ END $seed$`,
              true, true, true,
              'founding', true, 'tester', 'Philadelphia', false)
           ON CONFLICT (email) DO UPDATE SET
-            password_hash          = EXCLUDED.password_hash,
             first_name             = EXCLUDED.first_name,
             last_name              = EXCLUDED.last_name,
             role                   = EXCLUDED.role,
