@@ -88,6 +88,7 @@
 - [KinfolkAI recommendations TDZ fix](kinfolk-recommendations-tzdfix.md) — let recommendations declared after nudge section reference; hoist above outer try block.
 - [Replit secrets vs Railway env vars](replit-secrets-vs-railway-env.md) — Replit secrets NOT injected into Railway; use CRON_SECRET endpoint pattern instead of startup-migration env reads.
 - [Startup migration INSERT pattern](startup-migration-insert-pattern.md) — INSERT...SELECT...WHERE NOT EXISTS silently fails for businesses table; use two-step pre-check Set pattern.
+- [Kinfolk profile-first web search](kinfolk-profile-first-web-search.md) — lens-planner+Tavily+ranker+library wired into kinfolk.ts; degrades gracefully without TAVILY_API_KEY; response adds resourceCards/lensDisclosure/entityCandidates/urgentSafetyMessage.
 - [Allied Partner Journey — 5-stage architecture](allied-partner-journey.md) — DB table, routes, community threshold gate, stage-advance logic, email triggers; no FK constraints (Railway pattern).
 - [Community events expansion — #100](community-events-expansion.md) — 126-event multi-city seed; city-centroid coordinate fallback; current count 209/210 events geocoded; still ~237 short of 509 target.
 - [Community Intelligence Constitution](../docs/vision/COMMUNITY_INTELLIGENCE_CONSTITUTION.md) — 11 permanent principles; #9 purposeful collection; #11 private activity as personal property; 11-question feature test; applies to every feature.
