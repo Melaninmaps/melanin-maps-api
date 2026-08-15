@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
   ActivityIndicator,
@@ -774,7 +775,7 @@ const aiStyles = StyleSheet.create({
   avatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   contentCol: { flex: 1 },
   bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8 },
-  bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20 },
+  bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20, flexShrink: 1 },
   speakBtn: { alignSelf: "flex-end", marginTop: 6, padding: 4 },
   recsContainer: { marginBottom: 8 },
   destBar: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 8, flexWrap: "wrap" },
@@ -1651,7 +1652,7 @@ export default function TravelScreen() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+  const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
   useEffect(() => {
@@ -1679,11 +1680,7 @@ export default function TravelScreen() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-    }
-  }, [messages.length, isLoading]);
+  // Scroll is managed entirely by useKinfolkChatScroll — no direct scrollToEnd here.
 
   useEffect(() => {
     if (!voiceOutput || isLoading) return;
@@ -1705,8 +1702,9 @@ export default function TravelScreen() {
       return;
     }
     setInputText("");
+    onUserSend(); // scroll to bottom, suppress jump button for this send
     await sendMessage(msg, { voiceMode });
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -1956,8 +1954,22 @@ export default function TravelScreen() {
           ) : null}
           ListFooterComponent={isLoading ? <TypingIndicator colors={colors} /> : null}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onScroll={onChatScroll}
+          scrollEventThrottle={16}
+          onContentSizeChange={onChatContentSizeChange}
         />
+
+        {/* Jump to latest — appears when user has scrolled up-thread */}
+        {!isAtBottom && messages.length > 0 && (
+          <TouchableOpacity
+            style={[jumpStyles.btn, { backgroundColor: colors.primary }]}
+            onPress={() => scrollToBottom(true)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="chevron-down" size={14} color="#fff" />
+            <Text style={jumpStyles.label}>Jump to latest</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Compare bar */}
         {compareMode && (
@@ -2114,4 +2126,9 @@ const styles = StyleSheet.create({
   input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
   voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
+});
+
+const jumpStyles = StyleSheet.create({
+  btn: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "center", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 6, marginTop: 2 },
+  label: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
 });

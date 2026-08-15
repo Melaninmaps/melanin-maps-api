@@ -4,7 +4,8 @@ import * as Haptics from "expo-haptics";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import {
   Alert,
   Animated,
@@ -204,6 +205,17 @@ export function AIChatWidget() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
   const listRef = useRef<FlatList>(null);
+  // Scroll state — mirrors useKinfolkChatScroll for the widget's own FlatList
+  const [widgetAtBottom, setWidgetAtBottom] = useState(true);
+  const NEAR_BOTTOM_PX = 120;
+  const onWidgetScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const dist = contentSize.height - layoutMeasurement.height - contentOffset.y;
+    setWidgetAtBottom(dist <= NEAR_BOTTOM_PX);
+  }, []);
+  const onWidgetContentSizeChange = useCallback(() => {
+    if (widgetAtBottom) listRef.current?.scrollToEnd({ animated: false });
+  }, [widgetAtBottom]);
   const pulse = useRef(new Animated.Value(1)).current;
   const fabTranslateY = useRef(new Animated.Value(0)).current;
   const fabOpacity = useRef(new Animated.Value(1)).current;
@@ -541,10 +553,9 @@ export function AIChatWidget() {
       setMessages((m) => [...m, errMsg]);
     } finally {
       setTyping(false);
+      setWidgetAtBottom(true);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
     }
-
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   const goToTasks = () => {
@@ -659,7 +670,9 @@ export function AIChatWidget() {
             keyExtractor={(m) => m.id}
             contentContainerStyle={[styles.msgList, { paddingBottom: 16 }]}
             showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+            onScroll={onWidgetScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={onWidgetContentSizeChange}
             renderItem={({ item }) => (
               <View>
                 <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
@@ -720,6 +733,17 @@ export function AIChatWidget() {
               </View>
             ) : null}
           />
+
+          {/* Jump to latest — appears when user has scrolled up-thread */}
+          {!widgetAtBottom && messages.length > 0 && (
+            <TouchableOpacity
+              onPress={() => { setWidgetAtBottom(true); listRef.current?.scrollToEnd({ animated: true }); }}
+              style={[wStyles.jumpBtn, { backgroundColor: colors.primary }]}
+              activeOpacity={0.85}
+            >
+              <Text style={wStyles.jumpTxt}>↓ Jump to latest</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Quick-reply suggestion chips */}
           {suggestions.length > 0 && !typing && (
@@ -1052,4 +1076,9 @@ const styles = StyleSheet.create({
   },
   aaveLockTxt: { fontSize: 9, fontFamily: "Inter_600SemiBold" },
   aaveNote: { fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", marginTop: 12, textAlign: "center" },
+});
+
+const wStyles = StyleSheet.create({
+  jumpBtn: { alignSelf: "center", flexDirection: "row", alignItems: "center", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, marginVertical: 4 },
+  jumpTxt: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
 });
