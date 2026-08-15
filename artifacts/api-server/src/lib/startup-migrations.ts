@@ -1541,6 +1541,37 @@ END $seed$`,
             must_change_password   = false,
             updated_at             = NOW()`,
   },
+  {
+    // Manus monitor account — full Trailblazer-tier access for live site testing.
+    // Email:    monitor@mappingwithmelanin.com
+    // Password: MWM-Monitor-2026!
+    // Role:     tester (sees tester-only demo businesses + all live listings)
+    // Tier:     founding (top-tier, covers all Trailblazer features — no Stripe needed)
+    // ON CONFLICT DO UPDATE so it self-heals if manually edited between deploys.
+    name: "ensure_manus_monitor_account_v1",
+    sql: `INSERT INTO users
+            (id, email, first_name, last_name, password_hash,
+             email_verified, agree_to_terms, profile_setup_complete,
+             member_type, approved, role, home_city, must_change_password)
+          VALUES
+            (gen_random_uuid(),
+             'monitor@mappingwithmelanin.com',
+             'Manus', 'Monitor',
+             '$2b$08$CTntHmHYZWhScTV3nJCzb.XyXRz1Hp4g4Iq6Ce1y9OmqYPqg749RK',
+             true, true, true,
+             'founding', true, 'tester', 'Philadelphia', false)
+          ON CONFLICT (email) DO UPDATE SET
+            password_hash          = EXCLUDED.password_hash,
+            first_name             = EXCLUDED.first_name,
+            last_name              = EXCLUDED.last_name,
+            role                   = EXCLUDED.role,
+            member_type            = EXCLUDED.member_type,
+            approved               = EXCLUDED.approved,
+            email_verified         = EXCLUDED.email_verified,
+            profile_setup_complete = EXCLUDED.profile_setup_complete,
+            must_change_password   = false,
+            updated_at             = NOW()`,
+  },
   // ── business_identity columns missing from Railway prod DB ─────────────────
   // These three columns were added to the Drizzle schema after Railway's last
   // migration. The KinfolkAI catalog pool.query was failing with error 42703
