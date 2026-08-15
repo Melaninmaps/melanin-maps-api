@@ -886,6 +886,7 @@ const CITY_ALIASES: Record<string, string> = {
  * Extract a city name from free-form user text.
  * Checks common aliases first, then looks for "in/to/visiting [City]" patterns
  * against the platform's known city list.
+ * Returns the canonical city name, or null if no city is detected.
  */
 function extractCityFromUserMessage(msg: string): string | null {
   const lower = msg.toLowerCase().trim();
@@ -908,6 +909,77 @@ function extractCityFromUserMessage(msg: string): string | null {
 
   return null;
 }
+
+/**
+ * Classify how a city was resolved from the user's message.
+ * "alias"    — matched a CITY_ALIASES entry ("philly" → "Philadelphia")
+ * "explicit" — matched a grammar pattern ("in Atlanta", "Atlanta restaurants")
+ */
+function getLocationSource(msg: string): "alias" | "explicit" {
+  const lower = msg.toLowerCase().trim();
+  for (const alias of Object.keys(CITY_ALIASES)) {
+    if (lower.includes(alias.toLowerCase())) return "alias";
+  }
+  return "explicit";
+}
+
+/** Canonical city → US state abbreviation for the kinfolk_local_resolution log. */
+const CITY_TO_STATE: Record<string, string> = {
+  "Philadelphia": "PA",
+  "New York": "NY",
+  "Washington": "DC",
+  "Los Angeles": "CA",
+  "Chicago": "IL",
+  "Houston": "TX",
+  "New Orleans": "LA",
+  "Baltimore": "MD",
+  "Detroit": "MI",
+  "Oakland": "CA",
+  "Nashville": "TN",
+  "Memphis": "TN",
+  "Jackson": "MS",
+  "Richmond": "VA",
+  "Charlotte": "NC",
+  "Birmingham": "AL",
+  "Atlanta": "GA",
+  "Miami": "FL",
+  "Dallas": "TX",
+  "San Antonio": "TX",
+  "Denver": "CO",
+  "Seattle": "WA",
+  "Portland": "OR",
+  "Minneapolis": "MN",
+  "Cleveland": "OH",
+  "Cincinnati": "OH",
+  "Columbus": "OH",
+  "Pittsburgh": "PA",
+  "Indianapolis": "IN",
+  "Kansas City": "MO",
+  "St. Louis": "MO",
+  "Milwaukee": "WI",
+  "Louisville": "KY",
+  "Tampa": "FL",
+  "Orlando": "FL",
+  "Jacksonville": "FL",
+  "Raleigh": "NC",
+  "Durham": "NC",
+  "Greensboro": "NC",
+  "Columbia": "SC",
+  "Charleston": "SC",
+  "Savannah": "GA",
+  "Montgomery": "AL",
+  "Mobile": "AL",
+  "Baton Rouge": "LA",
+  "Shreveport": "LA",
+  "Little Rock": "AR",
+  "Oklahoma City": "OK",
+  "Tulsa": "OK",
+  "Las Vegas": "NV",
+  "Phoenix": "AZ",
+  "Tucson": "AZ",
+  "Albuquerque": "NM",
+  "El Paso": "TX",
+};
 
 // ─── Cultural Identity Detection ─────────────────────────────────────────────
 // Pattern-matches statements like "I'm Ethiopian", "My family is from Jamaica",
@@ -1872,6 +1944,11 @@ PROVENANCE CLARITY — always distinguish where your information comes from:
 
 INTERNATIONAL TRAVEL: Priority order — (1) MWM platform listings first, (2) cultural/diaspora context from Knowledge Graph, (3) general travel knowledge labeled clearly. NEVER fabricate MWM listings or assign safety ratings to international destinations. When a user asks about the Black travel experience, engage with it directly — never default to generic tourist advice.
 
+LOCAL DISCOVERY RULE — NON-NEGOTIABLE:
+When the server resolves a city for you (via the DIRECTORY RETRIEVAL block or any context tagged as server-authoritative), that resolution is valid and final. You MUST NEVER say "I need a city", "Which neighborhood or metro area?", or any variant of a location request. A resolved city alias such as "Philly" → Philadelphia, PA is a real, confirmed location. Respond with local results immediately.
+For example: "Tell me about Philly nightlife" → you have Philadelphia, PA. Return Philadelphia nightlife recommendations. Do NOT ask what city the member means.
+If a member's voluntary community profile (Black woman, diaspora, etc.) is active, lead your retrieval and ranking with culturally relevant community results — Black-owned, Black cultural, and diaspora-relevant results first. Do not require the member to ask again for minority-owned results.
+
 HONESTY RULE: Don't have real-time data (transit, tutor databases, scholarships, stock prices)? Say so briefly, then be as helpful as possible with what you do know. When a user reveals a barrier (cost, circumstance, emotion) — answer first, then offer free/community alternatives, then ask one curious question before exploring deeper.
 
 CONVERSATION STYLE: Warm, conversational, like their most well-traveled friend. Ask follow-ups when needed. Reference their history. Never sound like a travel brochure — no "boasts", "features", "renowned". Use "you" and "your" constantly. Leave the door open: "Want me to compare options?"
@@ -2489,6 +2566,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ("Best restaurants in Philly" should immediately surface Philly listings).
     const sessionDestination = currentSession?.destination ?? null;
     const messageDestination = sessionDestination ? null : extractCityFromUserMessage(message);
+    // Track how the location was resolved for structured logging and the system prompt context.
+    const locationSource: "session" | "alias" | "explicit" | null =
+      sessionDestination ? "session"
+      : messageDestination ? getLocationSource(message)
+      : null;
 
     // Detect explicit cultural identity statements ("I'm Ethiopian", "my family is from Ghana")
     // Only fires on clear first-person declarations — never infers from searches or behavior.
@@ -2521,6 +2603,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
     const _discoveryInstruction = buildDiscoveryInstruction(earlyDecision);
+
+    // ── kinfolk_local_resolution structured log ────────────────────────────
+    // Fires whenever a local discovery request has a resolved city, enabling
+    // Manus's 5-minute live checklist to confirm alias resolution is working.
+    // Required fields: city, state, locationSource, category, resultCount (0 at this point).
+    if (earlyDecision.route === "business_discovery" && destination) {
+      const resolvedState = CITY_TO_STATE[destination] ?? null;
+      req.log.info(
+        {
+          kinfolk_local_resolution: true,
+          message,
+          intentClass: "local_discovery",
+          city: destination,
+          state: resolvedState,
+          locationSource,
+          category: earlyDecision.discoveryKind ?? "general",
+          resultCount: 0, // updated below after business catalog fetch
+        },
+        "kinfolk_local_resolution",
+      );
+    }
 
     // ── Intent classification ────────────────────────────────────────────────
     // Runs before catalog fetch so high-consequence intents can adjust what
