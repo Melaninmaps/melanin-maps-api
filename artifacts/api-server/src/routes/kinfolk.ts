@@ -2498,8 +2498,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Kinfolk pre-classifier (brunch / food / travel precedence) ───────────
     // Runs BEFORE classifyIntent to enforce brunch→business_discovery routing
     // and issue clarification without an LLM call when location is missing.
-    // Fixes: "Brunch in DC" was misclassified as pop culture.
-    const earlyDecision = classifyKinfolkRequest(message);
+    // Pass the already-resolved `destination` so alias lookups ("Philly" →
+    // "Philadelphia") take priority over the classifier's regex-only LOCATION_RE.
+    // Without this, "Tell me about Philly nightlife" fires a false clarification
+    // because the regex requires a preposition before the city name.
+    const earlyDecision = classifyKinfolkRequest(message, destination ?? null);
     if (earlyDecision.route === "clarification") {
       res.json({
         sessionId,
@@ -4940,6 +4943,35 @@ const ALLOWED_AUDIO_FORMATS = new Set(["webm", "m4a", "wav", "mp3"]);
 const MAX_DECODED_BYTES = 10 * 1024 * 1024; // 10 MB
 // base64 expands ~33%, so max base64 chars = ceil(10MB / 3 * 4) ≈ 13,981,013
 const MAX_BASE64_CHARS = Math.ceil(MAX_DECODED_BYTES / 3) * 4 + 4;
+const MAX_VOICE_DURATION_MS = 60_000;
+const MAX_VOICE_PAYLOAD_BYTES = 4 * 1024 * 1024; // 4 MB binary cap for multipart path
+
+// Multer — memory storage, accept only audio fields, 4 MB binary limit.
+// Used for the new multipart/form-data upload path. The legacy JSON path
+// (base64-in-JSON) is preserved for backwards compatibility.
+import multer from "multer";
+const transcribeUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
+    cb(ok ? null : new Error("UNSUPPORTED_FIELD"), ok);
+  },
+}).single("audio");
+
+function runMulter(req: Request, res: Response): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transcribeUpload(req, res, (err) => {
+      if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        reject(Object.assign(new Error("AUDIO_PAYLOAD_TOO_LARGE"), { isPayloadTooLarge: true }));
+      } else if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
 router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]) {
@@ -4959,48 +4991,98 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     return void res.status(429).json({ error: "VOICE_INPUT_RATE_LIMITED", message: `Voice input limit reached. Try again in ${retrySec} seconds.`, audioRetained: false });
   }
 
-  const { audio, format, durationSeconds } = req.body as {
-    audio?: string;
-    format?: string;
-    durationSeconds?: number | null;
-  };
+  // ── Detect upload path: multipart/form-data (new) vs JSON (legacy) ───────
+  const isMultipart = req.is("multipart/form-data");
+  let buffer: Buffer;
+  let safeFormat: string;
 
-  // 3. Duration validation — only reject when client explicitly reports > 60 s.
-  //    An 11-second recording must always reach transcription; a timeout is a
-  //    provider failure, not a clip-length failure.
-  if (durationSeconds !== undefined && durationSeconds !== null) {
-    const dv = validateVoiceRecording({ durationSeconds, base64Audio: audio ?? "" });
-    if (!dv.ok && dv.code === "VOICE_CLIP_TOO_LONG") {
-      return void res.status(400).json({ error: dv.code, message: dv.message, audioRetained: false });
+  if (isMultipart) {
+    // New path: binary FormData upload — no base64 expansion, separate
+    // duration and payload size checks so a 2-second clip is never
+    // falsely labelled "over 60 seconds" due to a proxy byte limit.
+    try {
+      await runMulter(req, res);
+    } catch (multerErr: unknown) {
+      if ((multerErr as { isPayloadTooLarge?: boolean }).isPayloadTooLarge) {
+        return void res.status(413).json({
+          error: "AUDIO_PAYLOAD_TOO_LARGE",
+          message: "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
+          audioRetained: false,
+        });
+      }
+      return void res.status(400).json({ error: "AUDIO_UNREADABLE", message: "Kinfolk could not read that audio. Please try again or type your question.", audioRetained: false });
     }
-  }
 
-  // 4. Audio required
-  if (!audio || typeof audio !== "string" || !audio.trim()) {
-    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
-  }
+    if (!req.file?.buffer?.length) {
+      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
+    }
 
-  // 4. Format allowlist
-  const safeFormat = (format ?? "webm").toLowerCase().replace(/[^a-z0-9]/g, "");
+    // Duration check — uses wall-clock ms reported by client (never inferred from bytes)
+    const rawDurationMs = Number((req.body as Record<string, string>).durationMs ?? -1);
+    if (Number.isFinite(rawDurationMs) && rawDurationMs >= 0 && rawDurationMs > MAX_VOICE_DURATION_MS) {
+      return void res.status(400).json({
+        error: "AUDIO_DURATION_EXCEEDED",
+        message: "That recording is over 60 seconds. Please send a shorter clip.",
+        audioRetained: false,
+      });
+    }
+
+    // Payload size gate (4 MB binary)
+    if (req.file.buffer.length > MAX_VOICE_PAYLOAD_BYTES) {
+      return void res.status(413).json({
+        error: "AUDIO_PAYLOAD_TOO_LARGE",
+        message: "This voice clip is too large to upload. Please try a shorter or lower-quality recording.",
+        audioRetained: false,
+      });
+    }
+
+    buffer = req.file.buffer;
+    const rawMime = ((req.body as Record<string, string>).mimeType ?? req.file.mimetype ?? "audio/webm")
+      .split(";")[0].replace("audio/", "").toLowerCase();
+    safeFormat = (rawMime === "mp4" || rawMime === "x-m4a" ? "m4a" : (rawMime || "webm")).replace(/[^a-z0-9]/g, "");
+
+  } else {
+    // Legacy JSON path (base64 audio) — kept for backwards compatibility
+    const { audio, format, durationSeconds } = req.body as {
+      audio?: string;
+      format?: string;
+      durationSeconds?: number | null;
+    };
+
+    // Duration validation — only reject when client explicitly reports > 60 s
+    if (durationSeconds !== undefined && durationSeconds !== null) {
+      const dv = validateVoiceRecording({ durationSeconds, base64Audio: audio ?? "" });
+      if (!dv.ok && dv.code === "VOICE_CLIP_TOO_LONG") {
+        return void res.status(400).json({ error: "AUDIO_DURATION_EXCEEDED", message: dv.message, audioRetained: false });
+      }
+    }
+
+    if (!audio || typeof audio !== "string" || !audio.trim()) {
+      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "No audio data provided.", audioRetained: false });
+    }
+
+    safeFormat = (format ?? "webm").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    // Base64 size cap (checked before Buffer.from to avoid OOM)
+    if (audio.length > MAX_BASE64_CHARS) {
+      return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "Audio exceeds the 10 MB maximum. Use a shorter clip.", audioRetained: false });
+    }
+
+    try {
+      buffer = Buffer.from(audio, "base64");
+    } catch {
+      return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio data could not be decoded.", audioRetained: false });
+    }
+    if (buffer.length > MAX_DECODED_BYTES) {
+      return void res.status(413).json({ error: "AUDIO_PAYLOAD_TOO_LARGE", message: "Audio exceeds the 10 MB maximum after decoding.", audioRetained: false });
+    }
+  } // end legacy JSON path
+
+  // Format allowlist — applied after both upload paths resolve safeFormat
   if (!ALLOWED_AUDIO_FORMATS.has(safeFormat)) {
     return void res.status(400).json({ error: "UNSUPPORTED_AUDIO_FORMAT", message: `Format '${safeFormat}' is not accepted. Use webm, m4a, wav, or mp3.`, audioRetained: false });
   }
 
-  // 5. Base64 size cap (checked before Buffer.from to avoid OOM)
-  if (audio.length > MAX_BASE64_CHARS) {
-    return void res.status(413).json({ error: "AUDIO_TOO_LARGE", message: "Audio exceeds the 10 MB maximum. Use a shorter clip.", audioRetained: false });
-  }
-
-  // 6. Decoded size check
-  let buffer: Buffer;
-  try {
-    buffer = Buffer.from(audio, "base64");
-  } catch {
-    return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio data could not be decoded.", audioRetained: false });
-  }
-  if (buffer.length > MAX_DECODED_BYTES) {
-    return void res.status(413).json({ error: "AUDIO_TOO_LARGE", message: "Audio exceeds the 10 MB maximum after decoding.", audioRetained: false });
-  }
   if (buffer.length < 100) {
     return void res.status(400).json({ error: "AUDIO_REQUIRED", message: "Audio clip is too short.", audioRetained: false });
   }

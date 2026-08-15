@@ -638,8 +638,9 @@ function TravelPage() {
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "recording" | "processing";
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [recordingElapsed, setRecordingElapsed] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef   = useRef<Blob[]>([]);
+  const mediaRecorderRef        = useRef<MediaRecorder | null>(null);
+  const audioChunksRef          = useRef<Blob[]>([]);
+  const recordingStartedAtRef   = useRef<number | null>(null); // wall-clock ms for duration
   const elapsedTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const privacyNoticeSeen = useRef(false); // shown once per session
 
@@ -712,37 +713,62 @@ function TravelPage() {
   }, []);
 
   // ── Voice: encode captured chunks and call /transcribe ─────────────────────
+  // Uses multipart/form-data (binary — no base64 expansion) + wall-clock
+  // duration so a 2-second clip is never labelled "over 60 seconds" due to
+  // a proxy payload size limit. Error classification reads the response body
+  // `error` code, not the HTTP status alone.
+  const MAX_VOICE_DURATION_MS = 60_000;
+  const MAX_VOICE_BYTES = 4 * 1024 * 1024; // 4 MB binary
+
+  function classifyVoiceError(status: number, body: { error?: string; message?: string }): string {
+    if (body.error === "AUDIO_DURATION_EXCEEDED") return "That recording is over 60 seconds. Please send a shorter clip.";
+    if (body.error === "AUDIO_PAYLOAD_TOO_LARGE" || status === 413) return "This voice clip is too large to upload. Please try a shorter or lower-quality recording.";
+    if (body.error === "AUDIO_UNREADABLE" || status === 400) return "Kinfolk could not read that audio. Please try again or type your question.";
+    if (status === 429) return "Voice input limit reached. Give it a few minutes.";
+    return "Voice transcription is unavailable right now. You can still type your question.";
+  }
+
   const finishRecording = useCallback(async (chunks: Blob[], mimeType: string) => {
     setVoiceState("processing");
+    // Wall-clock duration from the ref set when recording started
+    const durationMs = recordingStartedAtRef.current !== null
+      ? Math.max(0, Math.round(performance.now() - recordingStartedAtRef.current))
+      : 0;
+    recordingStartedAtRef.current = null;
+
     try {
       const blob = new Blob(chunks, { type: mimeType });
       if (blob.size < 100) { setVoiceState("idle"); return; }
 
-      // Encode to base64 without persisting to disk
-      const arrayBuffer = await blob.arrayBuffer();
-      const uint8 = new Uint8Array(arrayBuffer);
-      let binary = "";
-      for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
-      const base64 = btoa(binary);
+      // Client-side preflight: reject before sending
+      if (durationMs > MAX_VOICE_DURATION_MS) {
+        setInput("That recording is over 60 seconds. Please send a shorter clip.");
+        setVoiceState("idle");
+        return;
+      }
+      if (blob.size > MAX_VOICE_BYTES) {
+        setInput("This voice clip is too large to upload. Please try a shorter or lower-quality recording.");
+        setVoiceState("idle");
+        return;
+      }
 
-      // Derive format from MIME type: audio/webm → webm, audio/mp4 → m4a, etc.
-      const rawMime = mimeType.split(";")[0].replace("audio/", "").toLowerCase();
-      const format = rawMime === "mp4" || rawMime === "x-m4a" ? "m4a" : (rawMime || "webm");
+      // Multipart binary upload — avoids base64 expansion that causes spurious 413s
+      const ext = mimeType.includes("mp4") ? "m4a" : "webm";
+      const form = new FormData();
+      form.append("audio", blob, `kinfolk-voice.${ext}`);
+      form.append("durationMs", String(durationMs));
+      form.append("mimeType", mimeType || "audio/webm");
 
       const r = await fetch(`${BASE}api/kinfolk/transcribe`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: base64, format }),
+        // Do NOT set Content-Type manually — browser must supply the multipart boundary
+        body: form,
       });
 
       if (!r.ok) {
-        const err = await r.json().catch(() => ({})) as { error?: string; message?: string };
-        const msg = r.status === 413 ? "That clip is too long — try under 60 seconds."
-          : r.status === 429 ? "Voice input limit reached. Give it a few minutes."
-          : r.status === 400 ? "Couldn't read the audio. Try again."
-          : "Transcription unavailable. You can still type your question.";
-        setInput(`${msg}`);
+        const body = await r.json().catch(() => ({})) as { error?: string; message?: string };
+        setInput(classifyVoiceError(r.status, body));
         setVoiceState("idle");
         return;
       }
@@ -801,6 +827,7 @@ function TravelPage() {
       recorder.onstop = () => finishRecording(chunks, mimeType || "audio/webm");
 
       recorder.start(250); // collect chunks every 250ms
+      recordingStartedAtRef.current = performance.now(); // wall-clock start for duration
       setVoiceState("recording");
       setRecordingElapsed(0);
 

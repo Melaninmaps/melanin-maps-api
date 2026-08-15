@@ -52,10 +52,22 @@ function cleanLocation(raw: string | undefined): string | null {
   return value.length >= 2 && value.length <= 60 ? value : null;
 }
 
-export function classifyKinfolkRequest(message: string): KinfolkRequestDecision {
+/**
+ * @param resolvedDestination — pass the already-resolved city from
+ * `extractCityFromUserMessage` / `sessionDestination` so alias lookups
+ * ("Philly" → "Philadelphia") take priority over the regex-only LOCATION_RE.
+ * When provided, it replaces the regex extraction as the canonical location.
+ */
+export function classifyKinfolkRequest(
+  message: string,
+  resolvedDestination?: string | null,
+): KinfolkRequestDecision {
   const text = message.trim();
   const lower = text.toLowerCase();
-  const location = cleanLocation(text.match(LOCATION_RE)?.[1]);
+  // Use server-resolved city (alias-aware) when available; fall back to regex.
+  const location = resolvedDestination
+    ? resolvedDestination
+    : cleanLocation(text.match(LOCATION_RE)?.[1]);
   const ownershipPreference = text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];
 
