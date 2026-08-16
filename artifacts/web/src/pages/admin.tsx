@@ -970,6 +970,41 @@ export default function Admin() {
     }
   };
 
+  // ── loadHealth must live ABOVE early returns to satisfy the Rules of Hooks ──
+  const loadHealth = useCallback(async () => {
+    setHealthLoading(true);
+    try {
+      const token = getWebToken();
+      const r = await fetch(`${BASE}api/admin/health`, {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (r.ok) {
+        const data = await r.json() as HealthData;
+        setHealth(data);
+        const next = Date.now() + 60 * 60 * 1000;
+        setHealthNextRefresh(next);
+      }
+    } catch { /* silent */ }
+    setHealthLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isAdmin || tab !== "health") return;
+    if (!health) void loadHealth();
+    const autoRefresh = setInterval(() => void loadHealth(), 60 * 60 * 1000);
+    return () => clearInterval(autoRefresh);
+  }, [tab, isAdmin, health, loadHealth]);
+
+  useEffect(() => {
+    if (!healthNextRefresh) return;
+    const tick = setInterval(() => {
+      const secs = Math.max(0, Math.round((healthNextRefresh - Date.now()) / 1000));
+      setHealthCountdown(secs);
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [healthNextRefresh]);
+
   if (authLoading || isAdmin === null) {
     return (
       <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center">
@@ -1056,40 +1091,6 @@ export default function Admin() {
       (e.referredBy ?? "").toLowerCase().includes(q)
     );
   });
-
-  const loadHealth = useCallback(async () => {
-    setHealthLoading(true);
-    try {
-      const token = getWebToken();
-      const r = await fetch(`${BASE}api/admin/health`, {
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (r.ok) {
-        const data = await r.json() as HealthData;
-        setHealth(data);
-        const next = Date.now() + 60 * 60 * 1000;
-        setHealthNextRefresh(next);
-      }
-    } catch { /* silent */ }
-    setHealthLoading(false);
-  }, []);
-
-  useEffect(() => {
-    if (!isAdmin || tab !== "health") return;
-    if (!health) void loadHealth();
-    const autoRefresh = setInterval(() => void loadHealth(), 60 * 60 * 1000);
-    return () => clearInterval(autoRefresh);
-  }, [tab, isAdmin, health, loadHealth]);
-
-  useEffect(() => {
-    if (!healthNextRefresh) return;
-    const tick = setInterval(() => {
-      const secs = Math.max(0, Math.round((healthNextRefresh - Date.now()) / 1000));
-      setHealthCountdown(secs);
-    }, 1000);
-    return () => clearInterval(tick);
-  }, [healthNextRefresh]);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "waitlist", label: "Waitlist", icon: <Mail className="w-4 h-4" />, badge: pendingWaitlistCount || undefined },
