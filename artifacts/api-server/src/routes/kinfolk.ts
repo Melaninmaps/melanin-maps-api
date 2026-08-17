@@ -1021,9 +1021,6 @@ const CITY_TO_STATE: Record<string, string> = {
   "Albuquerque": "NM",
   "El Paso": "TX",
   "San Francisco": "CA",
-  "Pittsburgh": "PA",
-  "Cincinnati": "OH",
-  "Miami": "FL",
 };
 
 // ─── Cultural Identity Detection ─────────────────────────────────────────────
