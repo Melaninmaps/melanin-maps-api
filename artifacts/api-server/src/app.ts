@@ -30,6 +30,11 @@ import {
 } from "./kinfolk/capabilities/postgresCapabilityStores";
 import { registerKinfolkCapabilityRoutes } from "./kinfolk/capabilities/registerCapabilityRoutes";
 import { registerKinfolkToneRoute } from "./profile/registerKinfolkToneRoute";
+import { registerHairCareRoutes } from "./kinfolk/hairCare/registerHairCareRoutes";
+import { createPostgresHairCareRepository, createPostgresMemberLocationRepository } from "./kinfolk/hairCare/postgresHairCareRepository";
+import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTranscriptionRoute";
+import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
+import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -328,6 +333,22 @@ registerKinfolkCapabilityRoutes(app, {
 
 // ── Kinfolk tone preference route ────────────────────────────────────────────
 registerKinfolkToneRoute(app, pool);
+
+// ── Kinfolk hair-care intelligence routes ────────────────────────────────────
+registerHairCareRoutes(app, {
+  hairCareRepository: createPostgresHairCareRepository(pool),
+  memberLocationRepository: createPostgresMemberLocationRepository(pool),
+});
+
+// ── Kinfolk voice transcription route ────────────────────────────────────────
+registerVoiceTranscriptionRoute(app, {
+  transcriptionProvider: createOpenAiTranscriptionProvider({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+    model: process.env.VOICE_TRANSCRIPTION_MODEL ?? "whisper-1",
+  }),
+  diagnostics: createPostgresVoiceDiagnostics(pool),
+});
 
 // Serve the web app static files from whichever dir has index.html
 app.use(express.static(spaServeDir));

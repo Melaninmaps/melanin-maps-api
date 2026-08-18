@@ -3882,6 +3882,64 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     sql: `CREATE INDEX IF NOT EXISTS kinfolk_capability_turns_member_expires_idx
           ON kinfolk_capability_turns (member_id, expires_at DESC)`,
   },
+  // ── Hair-care community signal schema (Aug 2026) ─────────────────────────
+  {
+    name: "care_provider_profiles_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS care_provider_profiles (
+      business_id UUID PRIMARY KEY,
+      provider_type TEXT NOT NULL CHECK (provider_type IN ('dermatologist', 'hair_care_professional')),
+      professional_verification TEXT NOT NULL CHECK (
+        professional_verification IN ('board_certified', 'licensed', 'directory_verified', 'unverified')
+      ),
+      verification_reviewed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "provider_community_signals_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS provider_community_signals (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id UUID NOT NULL,
+      label TEXT NOT NULL CHECK (label IN (
+        'growing_hands', 'hair_loss_support', 'scalp_care',
+        'protective_style_care', 'gentle_detangling',
+        'stylist_listens', 'culturally_knowledgeable'
+      )),
+      confirmed_member_count INTEGER NOT NULL DEFAULT 0,
+      recent_confirmed_member_count INTEGER NOT NULL DEFAULT 0,
+      moderation_status TEXT NOT NULL DEFAULT 'pending' CHECK (
+        moderation_status IN ('approved', 'pending', 'rejected')
+      ),
+      last_reviewed_at TIMESTAMPTZ,
+      UNIQUE (business_id, label)
+    )`,
+  },
+  {
+    name: "provider_community_signals_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS provider_community_signals_recommendation_idx
+          ON provider_community_signals (business_id, moderation_status, label)
+          WHERE moderation_status = 'approved'`,
+  },
+  // ── Voice diagnostic events schema (Aug 2026) ─────────────────────────────
+  {
+    name: "kinfolk_voice_diagnostic_events_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_voice_diagnostic_events (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      member_id  TEXT,
+      stage      TEXT NOT NULL CHECK (stage IN ('received', 'rejected', 'transcribed', 'failed')),
+      code       TEXT NOT NULL,
+      mime_type  TEXT,
+      byte_count INTEGER,
+      detail     TEXT,
+      occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "kinfolk_voice_diagnostic_events_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_voice_diagnostic_events_recent_idx
+          ON kinfolk_voice_diagnostic_events (occurred_at DESC, code)`,
+  },
   // ── Living Library seed topics (7 community books) ────────────────────────
   {
     name: "living_library_seed_topics_v1",
