@@ -451,6 +451,63 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     sql: `ALTER TABLE cultural_sites ADD COLUMN IF NOT EXISTS approximate_location BOOLEAN DEFAULT FALSE`,
   },
   {
+    // Adds slug + is_published + website_url to cultural_sites, and slug to businesses.
+    // Fixes "column slug does not exist" from location-first search and directory endpoints.
+    // is_published defaults to TRUE (all existing records remain live).
+    // slug is backfilled as mwm_slugify(name) + first 8 chars of ID so it is unique
+    // even when two sites share a name. Businesses get the same treatment so the
+    // directory bookstore query (which already SELECTs slug) does not crash.
+    name: "canonical_slugs_20260818",
+    sql: `
+      CREATE OR REPLACE FUNCTION public.mwm_slugify(input text)
+      RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+        SELECT trim(both '-' FROM regexp_replace(lower(coalesce(input, '')), '[^a-z0-9]+', '-', 'g'));
+      $$;
+
+      ALTER TABLE public.cultural_sites
+        ADD COLUMN IF NOT EXISTS slug        text,
+        ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE,
+        ADD COLUMN IF NOT EXISTS website_url  VARCHAR(500);
+
+      UPDATE public.cultural_sites
+      SET slug = left(
+        CASE
+          WHEN nullif(public.mwm_slugify(name), '') IS NOT NULL
+            THEN public.mwm_slugify(name) || '-' || left(id::text, 8)
+          ELSE 'cultural-site-' || left(id::text, 8)
+        END, 220
+      )
+      WHERE nullif(trim(coalesce(slug, '')), '') IS NULL;
+
+      DO $$ BEGIN
+        IF (SELECT is_nullable FROM information_schema.columns
+            WHERE table_schema='public' AND table_name='cultural_sites' AND column_name='slug') = 'YES' THEN
+          ALTER TABLE public.cultural_sites ALTER COLUMN slug SET NOT NULL;
+        END IF;
+      END $$;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS cultural_sites_slug_key
+        ON public.cultural_sites (slug);
+
+      ALTER TABLE public.businesses
+        ADD COLUMN IF NOT EXISTS slug text;
+
+      UPDATE public.businesses
+      SET slug = left(
+        CASE
+          WHEN nullif(public.mwm_slugify(name), '') IS NOT NULL
+            THEN public.mwm_slugify(name) || '-' || left(id::text, 8)
+          ELSE 'business-' || left(id::text, 8)
+        END, 220
+      )
+      WHERE nullif(trim(coalesce(slug, '')), '') IS NULL;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS businesses_slug_key
+        ON public.businesses (slug)
+        WHERE slug IS NOT NULL;
+    `,
+  },
+  {
     // Backfill: Philadelphia sites go live_unclaimed so the unclaimed banner shows
     name: "cultural_sites_philly_live_unclaimed",
     sql: `UPDATE cultural_sites SET listing_status = 'live_unclaimed'

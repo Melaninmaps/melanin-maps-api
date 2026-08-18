@@ -407,6 +407,28 @@ registerLocationFirstDiscoveryRoutes(
 // ── Release status + schema-status verification endpoints ─────────────────────
 registerReleaseStatusRoutes(app, pool);
 
+// ── Legacy cultural-site slug redirect ────────────────────────────────────────
+// Before static serving: /cultural-sites/:slug (old-format single-segment URL)
+// tries to resolve to the canonical /cultural-sites/:id/:slug.
+// UUID segments are passed through to the SPA. Unknown slugs fall through too.
+app.get("/cultural-sites/:legacySlug", async (req: Request, res: Response, next: NextFunction) => {
+  const seg = req.params["legacySlug"] ?? "";
+  // If it looks like a UUID, the SPA handles /cultural-sites/:id or /cultural-sites/:id/:slug
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (UUID_RE.test(seg)) { next(); return; }
+  try {
+    const { rows } = await pool.query<{ id: string; slug: string }>(
+      "SELECT id, slug FROM cultural_sites WHERE slug = $1 LIMIT 1",
+      [seg],
+    );
+    if (rows[0]) {
+      res.redirect(301, `/cultural-sites/${encodeURIComponent(rows[0].id)}/${encodeURIComponent(rows[0].slug)}`);
+      return;
+    }
+  } catch { /* fall through to SPA */ }
+  next();
+});
+
 // Serve the web app static files from whichever dir has index.html
 app.use(express.static(spaServeDir));
 
@@ -428,6 +450,7 @@ const SPA_EXPLICIT = [
   "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
   "/membership", "/map", "/discover", "/community", "/profile",
   "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
+  "/cultural-sites",
 ];
 for (const p of SPA_EXPLICIT) {
   app.get(p, serveSpa);

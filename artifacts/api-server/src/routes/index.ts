@@ -86,6 +86,7 @@ import journeysRouter from "./journeys";
 import entityConnectionsRouter from "./entity-connections";
 import passportRouter from "./passport";
 import safetyHeatmapRouter from "./safety-heatmap";
+import canonicalCulturalSitesRouter from "./canonical-cultural-sites";
 import culturalSitesRouter from "./cultural-sites";
 import sundownTownsRouter from "./sundown-towns";
 import externalClicksRouter from "./external-clicks";
@@ -379,6 +380,10 @@ router.use(tourCulturalSitesRouter);
 router.use(culturalPhrasesRouter);
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);
+// Public canonical GET routes must come first — no requireAuth so map cards
+// and deep links work for any visitor. The auth-protected culturalSitesRouter
+// still handles stories, moderation, and contribution routes.
+router.use(canonicalCulturalSitesRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);
 router.use(trustedSafetyShareRouter);
