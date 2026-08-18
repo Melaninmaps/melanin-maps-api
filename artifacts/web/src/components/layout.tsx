@@ -233,6 +233,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Discover</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
                 <li><Link href="/businesses"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Businesses</span></Link></li>
+                <li><Link href="/submit-business"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Submit a Business</span></Link></li>
                 <li><Link href="/map"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Explore the Map</span></Link></li>
                 <li><Link href="/cities"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">City Spotlights</span></Link></li>
                 {isMember && (

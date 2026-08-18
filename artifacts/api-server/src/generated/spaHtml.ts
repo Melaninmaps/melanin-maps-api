@@ -7,7 +7,7 @@ export const SPA_HTML = `<!DOCTYPE html>
 
     <!-- Primary SEO -->
     <title>Mapping With Melanin™ — Find Minority-Owned Businesses &amp; Community</title>
-    <meta name="description" content="Discover minority-owned businesses, access Community Intelligence from people who've been there, and plan journeys with confidence. Mapping with Melanin™ connects you to trusted businesses, events, and community across the country." />
+    <meta name="description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Mapping with Melanin™ connects you to trusted businesses, events, and community across the country." />
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#2B1507" />
     <link rel="canonical" href="https://mappingwithmelanin.com/" />
@@ -17,7 +17,7 @@ export const SPA_HTML = `<!DOCTYPE html>
     <meta property="og:url" content="https://mappingwithmelanin.com/" />
     <meta property="og:site_name" content="Mapping With Melanin™" />
     <meta property="og:title" content="Mapping With Melanin™ — Find Minority-Owned Businesses &amp; Community" />
-    <meta property="og:description" content="Discover minority-owned businesses, access Community Intelligence from people who've been there, and plan journeys with confidence. Join the waitlist for early access." />
+    <meta property="og:description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Join the waitlist for early access." />
     <meta property="og:image" content="https://mappingwithmelanin.com/images/og-share.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -28,7 +28,7 @@ export const SPA_HTML = `<!DOCTYPE html>
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@melaninmaps" />
     <meta name="twitter:title" content="Mapping With Melanin™ — Find Minority-Owned Businesses &amp; Community" />
-    <meta name="twitter:description" content="Discover minority-owned businesses, access Community Intelligence from people who've been there, and plan journeys with confidence. Join the waitlist for early access." />
+    <meta name="twitter:description" content="Discover minority-owned businesses, get community safety intel, and plan journeys with confidence. Join the waitlist for early access." />
     <meta name="twitter:image" content="https://mappingwithmelanin.com/images/og-share.jpg" />
 
     <!-- Favicon -->
@@ -83,8 +83,8 @@ export const SPA_HTML = `<!DOCTYPE html>
         _reportErr('UnhandledRejection: ' + (err && err.message ? err.message : String(err)), location.href, 0, 0, err);
       });
     </script>
-    <script type="module" crossorigin src="/assets/index-CkKhwFFT.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BelAo2kC.css">
+    <script type="module" crossorigin src="/assets/index-B55rofvM.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DRmKeDWR.css">
   </head>
   <body>
     <div id="root"></div>

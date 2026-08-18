@@ -4594,6 +4594,14 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     //    the Map, Businesses, Explore, and Events pages have a shared location index. ─
     ["location first discovery v1", () => ensureLocationFirstDiscovery(log, warn)],
     ["living library foundation topics v1", () => ensureLivingLibraryFoundationTopics(log, warn)],
+    // ── Community business intake queue — review-first submission pipeline ─
+    // community_business_submissions + business_submission_audit_events tables.
+    // All community tips enter pending_review; nothing goes live until approved.
+    ["community business submissions schema v1", () => ensureCommunityBusinessSubmissionsSchema(log, warn)],
+    // ── Media assets + business claims schema ──────────────────────────────
+    // media_assets, entity_media_assets, business_claim_requests tables +
+    // owner_claim_status / added_via / added_by_member_id columns on businesses.
+    ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -11095,6 +11103,150 @@ async function ensureLivingLibraryFoundationTopics(
     warn(
       `ensureLivingLibraryFoundationTopics failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+async function ensureCommunityBusinessSubmissionsSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS community_business_submissions (
+        id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name                  TEXT NOT NULL,
+        category              TEXT NOT NULL,
+        subcategory           TEXT,
+        description           TEXT,
+        address               TEXT,
+        city                  TEXT NOT NULL,
+        state                 TEXT,
+        country               TEXT,
+        website               TEXT,
+        phone                 TEXT,
+        ownership_designations JSONB NOT NULL DEFAULT '[]',
+        source_campaign       TEXT,
+        source_channel        TEXT,
+        submitter_note        TEXT,
+        submitted_by_id       TEXT,
+        status                TEXT NOT NULL DEFAULT 'pending_review'
+                              CHECK (status IN ('pending_review','approved','declined','needs_info')),
+        reviewed_by_id        TEXT,
+        review_note           TEXT,
+        matched_business_id   TEXT,
+        created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    log("ensureCommunityBusinessSubmissionsSchema: community_business_submissions OK");
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_submission_audit_events (
+        id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        submission_id  UUID NOT NULL,
+        actor_id       TEXT,
+        event_type     TEXT NOT NULL,
+        note           TEXT,
+        created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    log("ensureCommunityBusinessSubmissionsSchema: business_submission_audit_events OK");
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_community_business_submissions_status
+        ON community_business_submissions(status, created_at DESC)
+    `);
+  } catch (err: unknown) {
+    warn(`ensureCommunityBusinessSubmissionsSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureMediaAndClaimsSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS media_assets (
+        id           UUID PRIMARY KEY,
+        uploader_id  TEXT NOT NULL,
+        purpose      TEXT NOT NULL DEFAULT 'general',
+        mime_type    TEXT NOT NULL,
+        byte_size    BIGINT,
+        object_key   TEXT NOT NULL,
+        public_url   TEXT NOT NULL,
+        status       TEXT NOT NULL DEFAULT 'ready'
+                     CHECK (status IN ('ready','processing','deleted')),
+        created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    log("ensureMediaAndClaimsSchema: media_assets OK");
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS entity_media_assets (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entity_type   TEXT NOT NULL,
+        entity_id     TEXT NOT NULL,
+        asset_id      UUID NOT NULL,
+        display_order INT NOT NULL DEFAULT 0,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (entity_type, entity_id, asset_id)
+      )
+    `);
+    log("ensureMediaAndClaimsSchema: entity_media_assets OK");
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_claim_requests (
+        id                    UUID PRIMARY KEY,
+        business_id           TEXT NOT NULL,
+        claimant_member_id    TEXT NOT NULL,
+        claimant_name         TEXT,
+        claimant_title        TEXT,
+        claimant_phone        TEXT,
+        verification_note     TEXT,
+        verification_files    JSONB NOT NULL DEFAULT '[]',
+        status                TEXT NOT NULL DEFAULT 'pending_verification'
+                              CHECK (status IN ('pending_verification','approved','rejected')),
+        reviewed_by_id        TEXT,
+        review_note           TEXT,
+        created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    log("ensureMediaAndClaimsSchema: business_claim_requests OK");
+
+    // Add new columns to businesses table (safe — all use IF NOT EXISTS pattern)
+    const alterStmts = [
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS owner_claim_status TEXT DEFAULT 'unclaimed' CHECK (owner_claim_status IN ('unclaimed','pending_verification','claimed','rejected'))`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS claimed_owner_member_id TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS added_by_member_id TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS added_via TEXT`,
+      `ALTER TABLE businesses ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`,
+    ];
+
+    for (const stmt of alterStmts) {
+      try {
+        await pool.query(stmt);
+      } catch (alterErr: unknown) {
+        // Ignore duplicate column errors — they are safe
+        const msg = alterErr instanceof Error ? alterErr.message : String(alterErr);
+        if (!msg.includes("already exists")) {
+          warn(`ensureMediaAndClaimsSchema ALTER warning: ${msg}`);
+        }
+      }
+    }
+    log("ensureMediaAndClaimsSchema: businesses columns OK");
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_business_claim_requests_business
+        ON business_claim_requests(business_id, status)
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_business_claim_requests_claimant
+        ON business_claim_requests(claimant_member_id, status)
+    `);
+  } catch (err: unknown) {
+    warn(`ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

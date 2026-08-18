@@ -231,9 +231,34 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [mediaUrlInput, setMediaUrlInput] = useState("");
-  // file refs kept to avoid breaking hidden reference but not used for upload
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadMediaFile = async (file: File) => {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const resp = await fetch(`${BASE}api/media/upload?purpose=community_post`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await resp.json() as { url?: string; error?: string };
+      if (!resp.ok || !data.url) {
+        setUploadError(data.error ?? "Upload failed. Please try again.");
+        return;
+      }
+      if (!mediaUrls.includes(data.url)) setMediaUrls(u => [...u, data.url!]);
+    } catch {
+      setUploadError("Upload failed. Check your connection and try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const addMediaUrl = () => {
     const url = mediaUrlInput.trim();
@@ -442,15 +467,54 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
             </div>
           )}
 
+          {/* Upload error */}
+          {uploadError && (
+            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+              {uploadError}
+            </div>
+          )}
+
           {/* Actions row */}
           <div className="flex items-center justify-between pt-2 border-t border-[#3A1F0E]/8">
             <div className="flex items-center gap-2">
-              {/* Hidden file inputs kept to avoid ref errors but not used for upload in production */}
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" />
-              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" />
+              {/* Photo upload — wired to real server upload */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }}
+              />
+              {/* Video upload */}
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }}
+              />
+              {/* Photo button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className={`p-2 rounded-xl hover:bg-[#FAF6EF] transition-colors ${uploading ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"} disabled:opacity-40`}
+                title="Add photo"
+              >
+                {uploading ? <div className="w-5 h-5 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" /> : <ImageIcon className="w-5 h-5" />}
+              </button>
+              {/* Video button */}
+              <button
+                onClick={() => videoInputRef.current?.click()}
+                disabled={uploading}
+                className="p-2 rounded-xl hover:bg-[#FAF6EF] transition-colors text-[#3A1F0E]/50 hover:text-[#CA922B] disabled:opacity-40"
+                title="Add video"
+              >
+                <Video className="w-5 h-5" />
+              </button>
+              {/* URL paste — kept for YouTube / social embeds */}
               <button onClick={() => setShowMediaInput(v => !v)}
                 className={`p-2 rounded-xl hover:bg-[#FAF6EF] transition-colors ${showMediaInput ? "text-[#CA922B]" : "text-[#3A1F0E]/50 hover:text-[#CA922B]"}`}
-                title="Add media link (image, video, YouTube, Instagram, TikTok)">
+                title="Add media link (YouTube, Instagram, TikTok)">
                 <Link2 className="w-5 h-5" />
               </button>
               <button onClick={() => setVisibility(v => v === "public" ? "followers_only" : "public")}

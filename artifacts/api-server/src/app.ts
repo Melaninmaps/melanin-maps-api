@@ -50,6 +50,9 @@ import {
 import { registerLocationFirstDiscoveryRoutes } from "./discovery/registerLocationFirstDiscoveryRoutes";
 import { createPostgresFlywheelRepository } from "./discovery/postgresFlywheelRepository";
 import { findExactRecords, findNearestAvailableLocation } from "./discovery/postgresLocationFirstRepository";
+import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRoutes";
+import { registerMediaRoutes } from "./media/registerMediaRoutes";
+import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -348,6 +351,22 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   }
   next();
 });
+
+// ── Intake, media, and claim routes (registered BEFORE aggregate router) ──────
+// IMPORTANT: These must come before app.use("/api", router) because the aggregate
+// router has router.use(requireAuth) at line ~220 of routes/index.ts which returns
+// HTTP 401 for any unauthenticated request — including the PUBLIC community
+// submission endpoint. Registering here ensures Express matches these routes first.
+//
+// POST /api/community/business-submissions — public (no auth required)
+// GET|POST /api/founder/business-submissions[/:id/decision] — admin only (auth checked in handler)
+// POST /api/media/upload — authenticated (auth checked in handler)
+// POST /api/admin/businesses — admin only (auth checked in handler)
+// POST /api/businesses/:id/claim — authenticated (auth checked in handler)
+// POST /api/admin/business-claims/:id/decision — admin only (auth checked in handler)
+registerSubmissionRoutes(app);
+registerMediaRoutes(app);
+registerAdminPublishAndClaimRoutes(app);
 
 app.use("/api", router);
 app.use(webSsrRouter);

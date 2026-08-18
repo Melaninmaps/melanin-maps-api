@@ -78,6 +78,10 @@ import Marketplace from "@/pages/marketplace";
 import Wellness from "@/pages/wellness";
 import Connections from "@/pages/connections";
 import Guides from "@/pages/guides";
+import SubmitBusiness from "@/pages/submit-business";
+import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
+import FounderBusinessesNew from "@/pages/founder-businesses-new";
+import BusinessClaim from "@/pages/business-claim";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -372,6 +376,26 @@ function Router() {
       </Route>
       <Route path="/guides">
         <Layout><ProtectedRoute><Guides /></ProtectedRoute></Layout>
+      </Route>
+
+      {/* ── Community business submission — Task #360 ─────────────────── */}
+      <Route path="/submit-business">
+        <SubmitBusiness />
+      </Route>
+
+      {/* ── Founder review queue — Task #360 ─────────────────────────── */}
+      <Route path="/founder/business-submissions">
+        <FounderBusinessSubmissions />
+      </Route>
+
+      {/* ── Founder direct-publish — Task #362 ───────────────────────── */}
+      <Route path="/founder/businesses/new">
+        <FounderBusinessesNew />
+      </Route>
+
+      {/* ── Business ownership claim — Task #362 ─────────────────────── */}
+      <Route path="/businesses/:id/claim">
+        <BusinessClaim />
       </Route>
 
       <Route component={NotFound} />
