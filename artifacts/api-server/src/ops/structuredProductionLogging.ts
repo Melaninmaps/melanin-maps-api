@@ -27,17 +27,20 @@ export function requestCorrelationLogging(logger: Logger): RequestHandler {
       request.header("x-request-id") || crypto.randomUUID();
     const start = performance.now();
     response.setHeader("x-request-id", requestId);
+    // Propagate audit session marker so Railway logs can be filtered by session.
+    const auditSession = request.header("x-audit-session");
+    if (auditSession) response.setHeader("x-audit-session", auditSession);
+
     response.on("finish", () => {
-      logger.info(
-        {
-          requestId,
-          method: request.method,
-          route: request.route?.path ?? request.path,
-          statusCode: response.statusCode,
-          responseTimeMs: Math.round(performance.now() - start),
-        },
-        "request completed",
-      );
+      const payload: Record<string, unknown> = {
+        requestId,
+        method: request.method,
+        route: request.route?.path ?? request.path,
+        statusCode: response.statusCode,
+        responseTimeMs: Math.round(performance.now() - start),
+      };
+      if (auditSession) payload.auditSession = auditSession;
+      logger.info(payload, "request completed");
     });
     next();
   };
