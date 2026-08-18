@@ -1,0 +1,19 @@
+By **location-specific topic**, I mean a **location-tagged entry inside the broader topic book**—not a separate, isolated Library category.
+
+For example, Kinfolk should work like this:
+
+| Member asks | Kinfolk does | Library keeps |
+|---|---|---|
+| “What opportunities are there for women in STEM?” | Applies the Black/minority-women research lens, finds approved sources, and gives a concise answer. | An entry in the **STEM** book, tagged as **national/general**. |
+| “What STEM opportunities are there in Charlotte?” | Recognizes **STEM** as the subject and **Charlotte** as the location, then searches for reputable, location-relevant sources and opportunities. | Another entry in the **same STEM book**, tagged **Charlotte, NC**. |
+| “I want Black women in STEM programs near me.” | Uses the same lens, resolves the member’s stated location or asks for it only if missing, and researches the best verified sources. | A reusable STEM entry with the applicable city/region tag and citations. |
+
+The key point is that **STEM remains one living book**. Within it, Kinfolk can surface national guidance, prior Charlotte research, Atlanta research, scholarships, local organizations, and other source-cited entries. It does not force all STEM knowledge into a “Charlotte only” folder, and it does not lose the earlier answer.
+
+> **What Kinfolk should be:** a community research companion that understands the question, applies the MWM community lens before research, uses subject-appropriate reputable sources, gives a readable answer with citations, and continuously strengthens the Library so future members can retrieve that knowledge.
+
+The intended sequence is: **understand the member’s question → resolve topic and location → apply the Black/minority-women context where the member has not already specified it → search approved sources → answer with citations → save the reusable explanation into the relevant living book → make it discoverable through Library search, topic pages, and Read More.**
+
+For highly personal, sensitive, or urgent matters, Kinfolk should provide educational information and reliable next-step resources—not pretend to diagnose, give personal legal advice, or replace a qualified professional.
+
+This means the implementation should store the **research entry and its sources**, not a private member’s full raw conversation. If several members ask similar questions, Kinfolk can reuse a current cited entry, refresh it when it becomes stale, and add new local context when a city is named.
