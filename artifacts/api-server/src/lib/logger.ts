@@ -54,6 +54,11 @@ export const logger = pino({
     "req.headers.cookie",
     "res.headers['set-cookie']",
   ],
+  // Ensure every log line has a non-empty message so Railway log viewer
+  // never shows blank [err] or [wrn] entries.
+  formatters: {
+    level(label: string) { return { level: label }; },
+  },
   ...(isProduction
     ? {}
     : {

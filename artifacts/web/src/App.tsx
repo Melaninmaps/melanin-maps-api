@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
+import { LocationContextProvider } from "@/features/discovery/LocationContext";
 
 // Scroll to top on every route change so pages always open at the correct position
 function ScrollToTop() {
@@ -21,12 +22,12 @@ import Home from "@/pages/home";
 import About from "@/pages/about";
 import Features from "@/pages/features";
 import Contact from "@/pages/contact";
-import Explore from "@/pages/explore";
+import { LocationFirstExplore } from "@/features/explore/LocationFirstExplore";
 import Discover from "@/pages/discover";
 import BusinessDetail from "@/pages/business-detail";
 import Safety from "@/pages/safety";
 import Community from "@/pages/community";
-import Businesses from "@/pages/businesses";
+import { LocationFirstBusinessDirectory } from "@/features/businesses/LocationFirstBusinessDirectory";
 import ForBusinessOwners from "@/pages/for-business-owners";
 import Roadmap from "@/pages/roadmap";
 import Membership from "@/pages/membership";
@@ -40,7 +41,7 @@ import Waitlist from "@/pages/waitlist";
 import Preview from "@/pages/preview";
 import Travel from "@/pages/travel";
 import MapPage from "@/pages/map";
-import Events from "@/pages/events";
+import { LocationFirstEvents } from "@/features/events/LocationFirstEvents";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import Terms from "@/pages/terms";
 import CommunityGuidelines from "@/pages/community-guidelines";
@@ -270,13 +271,13 @@ function Router() {
       {/* safety intelligence, and sundown-town records must never be reachable   */}
       {/* by unauthenticated visitors. Redirect to entry flow on all data routes. */}
       <Route path="/explore">
-        <Layout><PreLaunchRoute><Explore /></PreLaunchRoute></Layout>
+        <Layout><PreLaunchRoute><LocationFirstExplore /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/discover">
         <Layout><PreLaunchRoute><Discover /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/businesses">
-        <Layout><PreLaunchRoute><Businesses /></PreLaunchRoute></Layout>
+        <Layout><PreLaunchRoute><LocationFirstBusinessDirectory /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/businesses/:id">
         <Layout><PreLaunchRoute><BusinessDetail /></PreLaunchRoute></Layout>
@@ -313,7 +314,7 @@ function Router() {
         <Layout><PreLaunchRoute><Community /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/events">
-        <Layout><PreLaunchRoute><Events /></PreLaunchRoute></Layout>
+        <Layout><PreLaunchRoute><LocationFirstEvents /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
@@ -382,12 +383,14 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <WouterRouter base={BASE.replace(/\/$/, "")}>
-            <ScrollToTop />
-            <OgRedirectHandler />
-            <Router />
-          </WouterRouter>
-          <Toaster />
+          <LocationContextProvider>
+            <WouterRouter base={BASE.replace(/\/$/, "")}>
+              <ScrollToTop />
+              <OgRedirectHandler />
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </LocationContextProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

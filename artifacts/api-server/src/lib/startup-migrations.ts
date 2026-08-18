@@ -4352,6 +4352,11 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── Kinfolk nightlife retrieval telemetry — aggregate service-quality signal;
     //    never stores member ID, full transcript, or precise coordinates ──────────
     ["kinfolk retrieval events v1", () => ensureKinfolkRetrievalEvents(log, warn)],
+    // ── Location-first discovery — canonical_record_locations, business_specialties,
+    //    discovery_coverage_gaps, discovery_flywheel_daily_signals.
+    //    Backfills from existing businesses, cultural sites, and events so that
+    //    the Map, Businesses, Explore, and Events pages have a shared location index. ─
+    ["location first discovery v1", () => ensureLocationFirstDiscovery(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -10653,6 +10658,178 @@ async function ensureKinfolkRetrievalEvents(
     log("ensureKinfolkRetrievalEvents: table and index ready");
   } catch (err: unknown) {
     warn(`ensureKinfolkRetrievalEvents failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureLocationFirstDiscovery(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // ── canonical_record_locations ──────────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS canonical_record_locations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
+        record_id UUID NOT NULL,
+        city_name TEXT NOT NULL,
+        state_code TEXT,
+        neighborhood_name TEXT,
+        latitude NUMERIC(9,6),
+        longitude NUMERIC(9,6),
+        is_primary BOOLEAN NOT NULL DEFAULT TRUE,
+        verified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_city_idx
+        ON canonical_record_locations (record_type, LOWER(city_name))
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS canonical_record_locations_coord_idx
+        ON canonical_record_locations (latitude, longitude)
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    `);
+
+    // ── business_specialties ────────────────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_specialties (
+        business_id UUID NOT NULL,
+        specialty_slug TEXT NOT NULL CHECK (specialty_slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+        verified_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (business_id, specialty_slug)
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_specialties_lookup_idx
+        ON business_specialties (specialty_slug, business_id)
+    `);
+    // Seed barber specialty from existing businesses
+    await pool.query(`
+      INSERT INTO business_specialties (business_id, specialty_slug)
+      SELECT id::uuid, 'barber'
+      FROM businesses
+      WHERE LOWER(COALESCE(category, '')) IN ('barber', 'barbershop', 'barbers')
+      ON CONFLICT DO NOTHING
+    `);
+
+    // ── discovery_coverage_gaps ─────────────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS discovery_coverage_gaps (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        city_name TEXT NOT NULL DEFAULT '',
+        state_code TEXT NOT NULL DEFAULT '',
+        record_type TEXT NOT NULL CHECK (record_type IN ('business','cultural_site','event','community_place','resource')),
+        category TEXT NOT NULL DEFAULT '',
+        specialty_slug TEXT NOT NULL DEFAULT '',
+        first_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        observation_count INTEGER NOT NULL DEFAULT 1,
+        UNIQUE (city_name, state_code, record_type, category, specialty_slug)
+      )
+    `);
+
+    // ── discovery_flywheel_daily_signals ────────────────────────────────────
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS discovery_flywheel_daily_signals (
+        day DATE NOT NULL DEFAULT CURRENT_DATE,
+        surface TEXT NOT NULL CHECK (surface IN ('map','businesses','explore','events','kinfolk')),
+        action TEXT NOT NULL,
+        city_name TEXT NOT NULL DEFAULT '',
+        state_code TEXT NOT NULL DEFAULT '',
+        record_type TEXT NOT NULL DEFAULT 'none',
+        category TEXT NOT NULL DEFAULT '',
+        specialty_slug TEXT NOT NULL DEFAULT '',
+        count INTEGER NOT NULL DEFAULT 1,
+        PRIMARY KEY (day, surface, action, city_name, state_code, record_type, category, specialty_slug)
+      )
+    `);
+
+    // ── Backfill canonical_record_locations from existing businesses ────────
+    // Uses direct city/state columns (businesses does not have a city_id FK).
+    // Skips records with no city, no coordinates, or duplicate entries.
+    const bizResult = await pool.query(`
+      INSERT INTO canonical_record_locations
+        (record_type, record_id, city_name, state_code, neighborhood_name, latitude, longitude, is_primary, verified_at)
+      SELECT
+        'business',
+        id::uuid,
+        LOWER(TRIM(city)),
+        UPPER(TRIM(COALESCE(state, ''))),
+        neighborhood,
+        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
+        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
+        TRUE,
+        verified_at
+      FROM businesses
+      WHERE city IS NOT NULL AND TRIM(city) != ''
+        AND is_active = TRUE
+        AND listing_status IN ('live_unclaimed', 'live_claimed')
+      ON CONFLICT DO NOTHING
+    `);
+    log(`ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows inserted`);
+
+    // ── Backfill from tour_cultural_sites ───────────────────────────────────
+    const siteResult = await pool.query(`
+      INSERT INTO canonical_record_locations
+        (record_type, record_id, city_name, state_code, latitude, longitude, is_primary)
+      SELECT
+        'cultural_site',
+        id::uuid,
+        LOWER(TRIM(city)),
+        UPPER(TRIM(COALESCE(state, ''))),
+        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
+        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
+        TRUE
+      FROM tour_cultural_sites
+      WHERE city IS NOT NULL AND TRIM(city) != '' AND is_active = TRUE
+      ON CONFLICT DO NOTHING
+    `);
+    log(`ensureLocationFirstDiscovery: cultural sites backfill — ${siteResult.rowCount ?? 0} rows inserted`);
+
+    // ── Backfill from recurring_events ──────────────────────────────────────
+    const evtResult = await pool.query(`
+      INSERT INTO canonical_record_locations
+        (record_type, record_id, city_name, state_code, latitude, longitude, is_primary)
+      SELECT
+        'event',
+        id::uuid,
+        LOWER(TRIM(city)),
+        UPPER(TRIM(COALESCE(state, ''))),
+        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
+        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
+        TRUE
+      FROM recurring_events
+      WHERE city IS NOT NULL AND TRIM(city) != '' AND is_active = TRUE
+      ON CONFLICT DO NOTHING
+    `);
+    log(`ensureLocationFirstDiscovery: events backfill — ${evtResult.rowCount ?? 0} rows inserted`);
+
+    // ── Backfill from community_organizations ───────────────────────────────
+    const orgResult = await pool.query(`
+      INSERT INTO canonical_record_locations
+        (record_type, record_id, city_name, state_code, latitude, longitude, is_primary)
+      SELECT
+        'community_place',
+        id::uuid,
+        LOWER(TRIM(city)),
+        UPPER(TRIM(COALESCE(state, ''))),
+        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
+        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
+        TRUE
+      FROM community_organizations
+      WHERE city IS NOT NULL AND TRIM(city) != ''
+      ON CONFLICT DO NOTHING
+    `);
+    log(`ensureLocationFirstDiscovery: community orgs backfill — ${orgResult.rowCount ?? 0} rows inserted`);
+
+    log("ensureLocationFirstDiscovery: all tables and backfills complete");
+  } catch (err: unknown) {
+    warn(`ensureLocationFirstDiscovery failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

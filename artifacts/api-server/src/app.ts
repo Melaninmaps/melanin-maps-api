@@ -36,6 +36,9 @@ import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTr
 import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
 import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
 import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
+import { registerLocationFirstDiscoveryRoutes } from "./discovery/registerLocationFirstDiscoveryRoutes";
+import { createPostgresFlywheelRepository } from "./discovery/postgresFlywheelRepository";
+import { findExactRecords, findNearestAvailableLocation } from "./discovery/postgresLocationFirstRepository";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -206,17 +209,44 @@ app.get("/api/version", (_req: Request, res: Response) => {
 app.use(
   pinoHttp({
     logger,
+    // Suppress successful 2xx/3xx request logs in production — only errors and
+    // warnings matter in Railway's log viewer. This removes the "request completed"
+    // noise that was burying real errors.
+    customLogLevel: (_req, res, err) => {
+      if (err || res.statusCode >= 500) return "error";
+      if (res.statusCode >= 400) return "warn";
+      return process.env.NODE_ENV === "production" ? "silent" : "info";
+    },
+    // Guarantee a non-empty msg field so Railway never shows a blank [err]/[wrn] line.
+    customErrorMessage: (req, _res, err) =>
+      `${(req as any).method} ${String((req as any).url ?? "").split("?")[0]} — ${err?.message ?? "request error"}`,
+    customSuccessMessage: (req, res) =>
+      `${(req as any).method} ${String((req as any).url ?? "").split("?")[0]} ${res.statusCode}`,
     serializers: {
       req(req) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
+          // Include route path so errors are traceable without a stack trace.
+          route: (req as any).route?.path ?? undefined,
         };
       },
       res(res) {
+        return { statusCode: res.statusCode };
+      },
+      err(err) {
+        // Supplement the logger-level err serializer with status code so
+        // HTTP errors (e.g. 400 validation failures) are distinguishable
+        // from 500 infrastructure errors in Railway log queries.
+        if (!err || typeof err !== "object") return err;
+        const e = err as Record<string, unknown>;
         return {
-          statusCode: res.statusCode,
+          type: (err as any)?.constructor?.name ?? "Error",
+          message: e.message,
+          status: e.status ?? e.statusCode,
+          stack: typeof e.stack === "string" ? e.stack.slice(0, 600) : undefined,
+          code: e.code,
         };
       },
     },
@@ -350,6 +380,21 @@ registerVoiceTranscriptionRoute(app, {
   }),
   diagnostics: createPostgresVoiceDiagnostics(pool),
 });
+
+// ── Location-First Discovery — single endpoint for Map, Businesses, Explore, Events ─
+// Replaces independent category-global queries with one typed, location-scoped endpoint.
+// Returns exact local records or a coverage gap with next-action options — never
+// a silent national fallback.
+registerLocationFirstDiscoveryRoutes(
+  app,
+  createPostgresFlywheelRepository(
+    { query: (...args) => pool.query(...args) },
+    {
+      findExact: (q) => findExactRecords(pool, q),
+      findNearestAvailableLocation: (q) => findNearestAvailableLocation(pool, q),
+    },
+  ),
+);
 
 // ── Release status + schema-status verification endpoints ─────────────────────
 registerReleaseStatusRoutes(app, pool);
