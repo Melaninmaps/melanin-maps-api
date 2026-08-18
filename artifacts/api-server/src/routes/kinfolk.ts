@@ -864,14 +864,20 @@ function isWeatherQuery(msg: string): boolean {
 const CITY_ALIASES: Record<string, string> = {
   // ── Philadelphia ────────────────────────────────────────────────────────────
   "philly": "Philadelphia", "the city of brotherly love": "Philadelphia",
+  "philadelphia pa": "Philadelphia", "philadelphia, pa": "Philadelphia",
+  "philadelphia pennsylvania": "Philadelphia",
   // ── New York ────────────────────────────────────────────────────────────────
   "nyc": "New York", "new york city": "New York", "the big apple": "New York",
   "brooklyn": "New York", "manhattan": "New York", "the bronx": "New York",
   // ── Atlanta ─────────────────────────────────────────────────────────────────
   "atl": "Atlanta", "the a": "Atlanta", "hotlanta": "Atlanta",
+  "atlanta ga": "Atlanta", "atlanta, ga": "Atlanta",
+  "atlanta georgia": "Atlanta", "atlanta, georgia": "Atlanta",
   // ── Washington DC ───────────────────────────────────────────────────────────
   "dc": "Washington", "d.c.": "Washington", "washington dc": "Washington",
   "dmv": "Washington", "chocolate city": "Washington",
+  "washington d.c.": "Washington", "washington, dc": "Washington",
+  "washington, d.c.": "Washington",
   // ── Los Angeles ─────────────────────────────────────────────────────────────
   "la": "Los Angeles", "l.a.": "Los Angeles", "lax": "Los Angeles",
   "south central": "Los Angeles", "compton": "Los Angeles", "inglewood": "Los Angeles",
@@ -881,19 +887,27 @@ const CITY_ALIASES: Record<string, string> = {
   // ── Chicago ─────────────────────────────────────────────────────────────────
   "chi": "Chicago", "the chi": "Chicago", "chitown": "Chicago", "chi-town": "Chicago",
   "wind city": "Chicago", "the windy city": "Chicago",
+  "chicago il": "Chicago", "chicago, il": "Chicago",
+  "chicago illinois": "Chicago",
   // ── Houston ─────────────────────────────────────────────────────────────────
   "h-town": "Houston", "space city": "Houston", "bayou city": "Houston",
   "clutch city": "Houston", "third coast": "Houston",
+  "houston tx": "Houston", "houston, tx": "Houston",
+  "houston texas": "Houston", "houston, texas": "Houston",
   // ── New Orleans ─────────────────────────────────────────────────────────────
   "nola": "New Orleans", "the crescent city": "New Orleans", "the big easy": "New Orleans",
   "nawlins": "New Orleans", "n'awlins": "New Orleans",
   "no": "New Orleans", // texting shorthand
+  "new orleans la": "New Orleans", "new orleans, la": "New Orleans",
+  "new orleans louisiana": "New Orleans",
   // ── Baltimore ───────────────────────────────────────────────────────────────
   "bmore": "Baltimore", "charm city": "Baltimore",
+  "baltimore md": "Baltimore", "baltimore, md": "Baltimore",
   // ── Detroit ─────────────────────────────────────────────────────────────────
   "detroit": "Detroit", "the d": "Detroit", "motor city": "Detroit",
   // ── Nashville ───────────────────────────────────────────────────────────────
   "nashville": "Nashville", "nash vegas": "Nashville", "music city": "Nashville",
+  "nashville tn": "Nashville", "nashville, tn": "Nashville",
   // ── Memphis ─────────────────────────────────────────────────────────────────
   "memphis": "Memphis", "bluff city": "Memphis",
   // ── Jackson ─────────────────────────────────────────────────────────────────
@@ -902,13 +916,19 @@ const CITY_ALIASES: Record<string, string> = {
   "richmond": "Richmond", "rva": "Richmond",
   // ── Charlotte ───────────────────────────────────────────────────────────────
   "charlotte": "Charlotte", "the queen city": "Charlotte", "clt": "Charlotte",
+  "charlotte nc": "Charlotte", "charlotte, nc": "Charlotte",
+  "charlotte north carolina": "Charlotte", "charlotte, north carolina": "Charlotte",
   // ── Birmingham ──────────────────────────────────────────────────────────────
   "birmingham": "Birmingham", "the magic city": "Birmingham", "b-ham": "Birmingham",
   "the ham": "Birmingham", "bham": "Birmingham",
   // ── Miami ───────────────────────────────────────────────────────────────────
   "305": "Miami", "the 305": "Miami", "magic city": "Miami",
+  "miami fl": "Miami", "miami, fl": "Miami",
+  "miami florida": "Miami",
   // ── Dallas ──────────────────────────────────────────────────────────────────
   "big d": "Dallas", "dfw": "Dallas",
+  "dallas tx": "Dallas", "dallas, tx": "Dallas",
+  "dallas texas": "Dallas",
   // ── Pittsburgh ──────────────────────────────────────────────────────────────
   "steel city": "Pittsburgh", "the burgh": "Pittsburgh", "pgh": "Pittsburgh",
   // ── Cincinnati ──────────────────────────────────────────────────────────────

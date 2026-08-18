@@ -6,6 +6,7 @@ import {
   BookOpen, TrendingUp, Radio, Search, X, Loader2, Star, Clock,
   ChevronRight, AlertCircle, CheckCircle, Users, MapPin, Plus, Eye
 } from "lucide-react";
+import { GoldFeatherIcon } from "@/components/brand/GoldFeatherIcon";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -850,20 +851,9 @@ export default function Library() {
 
   const categoryKeys = ["all", ...Array.from(new Set(topics.map(t => t.category)))];
 
-  // Collection icon mapping (emoji fallback — clean and reliable across browsers)
-  const COLLECTION_ICONS: Record<string, string> = {
-    "Places": "📍",
-    "Culture & Community": "🌍",
-    "History": "📖",
-    "Health": "❤️",
-    "Faith & Spirituality": "✨",
-    "Careers & Professional": "💼",
-    "Travel": "✈️",
-    "Community": "🤝",
-    "Education": "🎓",
-    "Business": "📊",
-    "Divine Nine": "🔱",
-  };
+  // Collection icons use the MWM gold feather — not Unicode emoji.
+  // The feather is the unified MWM-owned accent for all system chrome.
+  // (Member-authored content may still use emoji freely.)
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -983,12 +973,13 @@ export default function Library() {
                     <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/40 mb-3">Browse by</p>
                     <div className="grid grid-cols-2 gap-3">
                       {collections.map(col => {
-                        const icon = COLLECTION_ICONS[col.topicName] ?? "📚";
                         const topicCount = topics.filter(t => t.category === col.category).length;
                         return (
                           <button key={col.id} onClick={() => setSelectedCollection(col)}
                             className="text-left bg-[#2B1507] rounded-2xl p-4 hover:bg-[#3A1F0E] transition-colors group border border-transparent hover:border-[#CA922B]/40">
-                            <span className="text-2xl mb-2 block">{icon}</span>
+                            <span className="mb-2 block text-[#CA922B]">
+                              <GoldFeatherIcon size={24} label={`${col.topicName} category`} className="mwm-gold-feather--on-dark" />
+                            </span>
                             <p className="font-bold text-white text-sm leading-tight mb-1">{col.topicName}</p>
                             {topicCount > 0 && (
                               <p className="text-[10px] text-[#CA922B]/70 font-semibold">{topicCount} topic{topicCount !== 1 ? "s" : ""}</p>

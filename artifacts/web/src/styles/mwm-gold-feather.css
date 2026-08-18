@@ -1,0 +1,28 @@
+/* MWM Gold Feather Visual Language
+ *
+ * Import this once in the app entry point (main.tsx or index.css).
+ * All MWM-owned UI accents use the .mwm-gold-feather class; this
+ * file only sets the shared color and shadow treatment.
+ *
+ * Members may freely use emoji in their own content — do not apply
+ * this CSS to member-authored text or posts.
+ */
+
+:root {
+  --mwm-gold: #ca922b;
+  --mwm-gold-bright: #e4b64d;
+  --mwm-ink: #2b1507;
+}
+
+.mwm-gold-feather {
+  color: var(--mwm-gold);
+  display: inline-block;
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.12));
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.mwm-gold-feather--on-dark {
+  color: var(--mwm-gold-bright);
+  filter: drop-shadow(0 1px 4px rgb(202 146 43 / 0.28));
+}

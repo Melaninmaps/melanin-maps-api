@@ -3952,6 +3952,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── Directory discovery schema — online_bookstores, directory_search_signals,
     //    lat/lng columns on businesses for location-first bookstore discovery ─────
     ["directory discovery schema v1", () => ensureDirectoryDiscoverySchema(log, warn)],
+    // ── Kinfolk nightlife retrieval telemetry — aggregate service-quality signal;
+    //    never stores member ID, full transcript, or precise coordinates ──────────
+    ["kinfolk retrieval events v1", () => ensureKinfolkRetrievalEvents(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -10228,6 +10231,31 @@ async function ensureDirectoryDiscoverySchema(
     log("ensureDirectoryDiscoverySchema: directory tables and columns ready");
   } catch (err: unknown) {
     warn(`ensureDirectoryDiscoverySchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureKinfolkRetrievalEvents(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS public.kinfolk_retrieval_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        intent TEXT NOT NULL,
+        resolved_city TEXT,
+        query TEXT NOT NULL,
+        result_count INTEGER NOT NULL DEFAULT 0,
+        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS kinfolk_retrieval_events_quality_idx
+        ON public.kinfolk_retrieval_events (intent, resolved_city, occurred_at DESC)
+    `);
+    log("ensureKinfolkRetrievalEvents: table and index ready");
+  } catch (err: unknown) {
+    warn(`ensureKinfolkRetrievalEvents failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

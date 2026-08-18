@@ -318,22 +318,48 @@ export function AIChatWidget() {
     try {
       await recorder.stop();
       const uri = recorder.uri;
-      if (uri) {
-        const base = getApiBase();
-        const token = await getToken();
-        const ext = uri.split(".").pop() ?? "m4a";
-        const fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        const r = await fetch(`${base}/api/kinfolk/transcribe`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ audio: fileContent, format: ext }),
-        });
-        if (r.ok) {
-          const { text } = await r.json() as { text?: string };
-          if (text) setInput(text);
-        }
+      if (!uri) return;
+
+      const base = getApiBase();
+      const token = await getToken();
+      const ext = uri.split(".").pop() ?? "m4a";
+      let fileContent: string;
+      try {
+        fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      } catch {
+        Alert.alert("Voice Input", "Couldn't read the recording — please try again.");
+        return;
       }
-    } catch { /* non-critical */ }
+
+      const r = await fetch(`${base}/api/kinfolk/transcribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ audio: fileContent, format: ext }),
+      });
+
+      if (r.ok) {
+        const { text } = await r.json() as { text?: string };
+        if (text) {
+          setInput(text);
+        } else {
+          Alert.alert("Voice Input", "I couldn't hear that clearly — please try again or type your question.");
+        }
+      } else {
+        // Surface the server's error message so the founder can see exactly what failed
+        let serverMessage = "Voice transcription failed — please try again or type your question.";
+        try {
+          const errBody = await r.json() as { message?: string; error?: string };
+          if (errBody.message) serverMessage = errBody.message;
+        } catch { /* ignore parse error */ }
+        Alert.alert("Voice Input", serverMessage);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
+    }
   };
 
   // ── Load saved voice + AAVE preferences on mount ─────────────────────────
@@ -536,7 +562,15 @@ export function AIChatWidget() {
         }
       }
 
-      const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated, location, locationSource };
+      const aiMsg: Message = {
+        id: String(Date.now() + 1),
+        text: reply,
+        fromUser: false,
+        ts: Date.now(),
+        taskCreated,
+        location,
+        locationSource,
+      };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
     } catch (err) {
