@@ -3949,6 +3949,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["tour hotels v1", () => ensureTourHotels(log, warn)],
     // ── Kinfolk four-purpose schema — flywheel events, answer sources, promotion cols ─
     ["kinfolk four-purpose schema v1", () => ensureKinfolkFourPurposeSchema(log, warn)],
+    // ── Directory discovery schema — online_bookstores, directory_search_signals,
+    //    lat/lng columns on businesses for location-first bookstore discovery ─────
+    ["directory discovery schema v1", () => ensureDirectoryDiscoverySchema(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -10168,6 +10171,63 @@ async function ensureKinfolkFourPurposeSchema(
     log("ensureKinfolkFourPurposeSchema: flywheel events, answer sources, promotion cols ready");
   } catch (err: unknown) {
     warn(`ensureKinfolkFourPurposeSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureDirectoryDiscoverySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    // Verified online bookstores — editorially approved; no preloaded entries.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS online_bookstores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        description TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 100,
+        is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT online_bookstores_url_unique UNIQUE (url)
+      )
+    `);
+
+    // Anonymous coverage-signal table — no member ID, raw IP, or exact coords.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS directory_search_signals (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        intent TEXT NOT NULL CHECK (intent IN ('bookstore')),
+        normalized_query TEXT NOT NULL,
+        outcome TEXT NOT NULL CHECK (outcome IN ('nearby_match', 'online_fallback', 'location_required')),
+        location_cell TEXT,
+        nearest_distance_miles NUMERIC(6,1),
+        nearby_result_count INTEGER NOT NULL DEFAULT 0,
+        radius_miles INTEGER NOT NULL,
+        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS directory_search_signals_bookstore_gap_idx
+        ON directory_search_signals (intent, outcome, occurred_at DESC, location_cell)
+        WHERE outcome = 'online_fallback'
+    `);
+
+    // Geospatial columns for location-first bookstore ranking.
+    await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION`);
+    await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION`);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS businesses_active_coordinates_idx
+        ON businesses (is_active, latitude, longitude)
+        WHERE is_active = TRUE AND latitude IS NOT NULL AND longitude IS NOT NULL
+    `);
+
+    log("ensureDirectoryDiscoverySchema: directory tables and columns ready");
+  } catch (err: unknown) {
+    warn(`ensureDirectoryDiscoverySchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

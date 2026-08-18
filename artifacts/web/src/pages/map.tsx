@@ -757,7 +757,7 @@ export default function MapPage() {
             <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
             ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
             ${safePublicUrl(site.externalUrl) ? `<a href="${safePublicUrl(site.externalUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block;margin-bottom:4px">Official website ↗</a>` : ""}
-            <a href="/sites/${site.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
+            <a href="/cultural-sites/${encodeURIComponent(site.id)}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -1464,7 +1464,7 @@ export default function MapPage() {
                           </a>
                         )}
                         <Link
-                          href={`/sites/${site.id}`}
+                          href={`/cultural-sites/${encodeURIComponent(site.id)}`}
                           className="text-[10px] font-bold mt-0.5 block hover:underline text-[#CA922B]"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -1534,7 +1534,7 @@ export default function MapPage() {
                               </p>
                               {site.id && (
                                 <a
-                                  href={`/sites/${site.id}`}
+                                  href={`/cultural-sites/${encodeURIComponent(site.id)}`}
                                   className="shrink-0 text-[10px] text-[#CA922B] font-bold hover:underline"
                                   onClick={(e) => e.stopPropagation()}
                                 >

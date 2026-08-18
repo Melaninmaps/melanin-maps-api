@@ -47,6 +47,7 @@ import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
 import CulturalSiteDetail from "@/pages/cultural-site-detail";
+import CulturalSiteDetailsPage from "@/pages/cultural-site-details-page";
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
 import Billing from "@/pages/billing";
@@ -120,12 +121,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-/** Redirects legacy /cultural-sites/:id URLs to the canonical /sites/:id route */
-function CulturalSiteRedirect() {
-  const [, params] = useRoute("/cultural-sites/:id");
-  return <Redirect to={`/sites/${params?.id ?? ""}`} />;
-}
 
 /**
  * /referral-redirect — linked from the Profile "Refer a Friend" card.
@@ -305,9 +300,12 @@ function Router() {
       <Route path="/sites/:id">
         <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
-      {/* Legacy URL alias — redirect /cultural-sites/:id to /sites/:id (auth enforced there) */}
+      {/* Canonical cultural-site URL: /cultural-sites/:id/:slug (slug optional for legacy links) */}
+      <Route path="/cultural-sites/:id/:slug">
+        <Layout><PreLaunchRoute><CulturalSiteDetailsPage /></PreLaunchRoute></Layout>
+      </Route>
       <Route path="/cultural-sites/:id">
-        <CulturalSiteRedirect />
+        <Layout><PreLaunchRoute><CulturalSiteDetailsPage /></PreLaunchRoute></Layout>
       </Route>
 
       {/* ── Account required — identity makes these features meaningful ──────── */}

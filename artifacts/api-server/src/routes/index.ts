@@ -163,6 +163,7 @@ import libraryGrowthAdminRouter from "./library-growth-admin";
 import citiesRouter from "./cities";
 import feedbackRouter from "./feedback";
 import universalSearchRouter from "./universal-search";
+import directoryRouter from "./directory";
 import knowledgeGraphRouter from "./knowledge-graph";
 import testerReportRouter from "./tester-report";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -313,6 +314,9 @@ router.use(journeysRouter);
 router.use(entityConnectionsRouter);
 router.use(signalsRouter);
 router.use(smartSearchRouter);
+// ── Directory — location-first discovery (BEFORE universal search) ─────────
+// Bookstore intent must be intercepted here so it never reaches the AI path.
+router.use(directoryRouter);
 router.use(universalSearchRouter);
 router.use(knowledgeGraphRouter);
 router.use(notificationsHubRouter);

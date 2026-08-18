@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
+import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
 
 const BASE = import.meta.env.BASE_URL;
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
@@ -306,6 +307,8 @@ export default function Businesses() {
   const [universalResult, setUniversalResult] = useState<UniversalResult | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState("");
+  // bookstore intent bypasses universal search and shows the discovery panel
+  const [searchMode, setSearchMode] = useState<"default" | "bookstore">("default");
   // Detected geography — set when geo-extract identifies a destination in the query
   const [detectedLocation, setDetectedLocation] = useState<{ name: string } | null>(null);
 
@@ -333,6 +336,17 @@ export default function Businesses() {
     const query = q.trim();
     if (!query || query.length < 2) return;
     setSearchedQuery(query);
+
+    // Bookstore intent is location-first — never goes to universal search.
+    if (/\b(bookstore|book\s*-?\s*store|bookshop)\b/i.test(query)) {
+      setSearchMode("bookstore");
+      setUniversalResult(null);
+      setUniversalLoading(false);
+      setDetectedLocation(null);
+      return;
+    }
+
+    setSearchMode("default");
     setUniversalLoading(true);
     setUniversalResult(null);
     setDetectedLocation(null);
@@ -399,6 +413,7 @@ export default function Businesses() {
     setSearchedQuery("");
     setUniversalResult(null);
     setDetectedLocation(null);
+    setSearchMode("default");
     inputRef.current?.focus();
   };
 
@@ -407,7 +422,7 @@ export default function Businesses() {
   };
 
   // Determine what to display
-  const isSearchMode = !!universalResult || universalLoading;
+  const isSearchMode = !!universalResult || universalLoading || searchMode === "bookstore";
   const universalBusinesses = universalResult?.results.businesses ?? [];
   const universalHeritage = universalResult?.results.heritage ?? [];
   const universalCommunityOrgs = universalResult?.results.communityOrgs ?? [];
@@ -516,6 +531,11 @@ export default function Businesses() {
               className="flex items-center gap-1.5 text-xs font-bold text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors mb-6">
               ← Back to directory
             </button>
+
+            {/* ── Bookstore discovery panel — location-first, never goes to AI ── */}
+            {searchMode === "bookstore" && (
+              <BookstoreDiscoveryPanel key={searchedQuery} query={searchedQuery} />
+            )}
 
             {/* Loading */}
             {universalLoading && (
