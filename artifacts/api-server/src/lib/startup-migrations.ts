@@ -508,6 +508,78 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     `,
   },
   {
+    // Dynamic community vibes — evidence-backed member signals.
+    // No FK constraints per Railway pattern: integrity enforced in application code.
+    // The approved_business_vibes view is the only public read model — it exposes
+    // aggregate counts only, never contributor identity or raw review text.
+    name: "dynamic_community_vibes_20260818",
+    sql: `
+      CREATE TABLE IF NOT EXISTS public.community_vibe_definitions (
+        vibe_key text PRIMARY KEY,
+        display_label text NOT NULL,
+        eligible_categories text[] NOT NULL DEFAULT '{}',
+        active boolean NOT NULL DEFAULT true,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        CHECK (btrim(vibe_key) <> ''),
+        CHECK (btrim(display_label) <> '')
+      );
+
+      CREATE TABLE IF NOT EXISTS public.business_vibe_evidence (
+        id uuid PRIMARY KEY,
+        business_id uuid NOT NULL,
+        vibe_key text NOT NULL,
+        source_type text NOT NULL CHECK (source_type IN ('review', 'checkin', 'member_tag')),
+        source_id uuid NOT NULL,
+        contributor_id uuid NOT NULL,
+        moderation_status text NOT NULL DEFAULT 'pending'
+          CHECK (moderation_status IN ('pending', 'approved', 'rejected', 'removed')),
+        weight numeric(5,2) NOT NULL DEFAULT 1.00 CHECK (weight > 0 AND weight <= 5),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        moderated_at timestamptz,
+        UNIQUE (source_type, source_id, vibe_key)
+      );
+
+      CREATE INDEX IF NOT EXISTS business_vibe_evidence_lookup
+        ON public.business_vibe_evidence (business_id, moderation_status, created_at DESC);
+      CREATE INDEX IF NOT EXISTS business_vibe_evidence_contributor
+        ON public.business_vibe_evidence (contributor_id, created_at DESC);
+
+      CREATE OR REPLACE VIEW public.approved_business_vibes AS
+      SELECT
+        evidence.business_id,
+        evidence.vibe_key,
+        definition.display_label,
+        count(*)::int AS evidence_count,
+        count(DISTINCT evidence.contributor_id)::int AS voice_count,
+        round(sum(evidence.weight)::numeric, 2) AS weighted_score,
+        max(evidence.created_at) AS last_evidence_at,
+        CASE
+          WHEN count(DISTINCT evidence.contributor_id) >= 3 THEN 'established'
+          WHEN count(DISTINCT evidence.contributor_id) = 2 THEN 'growing'
+          ELSE 'emerging'
+        END AS confidence
+      FROM public.business_vibe_evidence AS evidence
+      JOIN public.community_vibe_definitions AS definition
+        ON definition.vibe_key = evidence.vibe_key
+      WHERE evidence.moderation_status = 'approved'
+        AND definition.active = true
+      GROUP BY evidence.business_id, evidence.vibe_key, definition.display_label;
+
+      INSERT INTO public.community_vibe_definitions (vibe_key, display_label, eligible_categories)
+      VALUES
+        ('locals-know',             'Locals Know',                 ARRAY['bookstore', 'restaurant', 'barbershop', 'salon']),
+        ('auntie-energy',           'Auntie Energy',               ARRAY['bookstore', 'salon', 'barbershop', 'restaurant']),
+        ('hood-classic',            'Hood Classic',                ARRAY['bookstore', 'restaurant', 'barbershop', 'salon']),
+        ('soft-life',               'Soft Life',                   ARRAY['salon', 'spa', 'restaurant', 'hotel']),
+        ('neighborhood-love',       'Neighborhood Love',           ARRAY['bookstore', 'restaurant', 'barbershop', 'salon']),
+        ('history-lives-here',      'History Lives Here',          ARRAY['bookstore', 'cultural_site', 'museum']),
+        ('take-somebody-out-of-town','Take Somebody From Out of Town', ARRAY['restaurant', 'cultural_site', 'museum'])
+      ON CONFLICT (vibe_key) DO UPDATE
+        SET display_label        = EXCLUDED.display_label,
+            eligible_categories  = EXCLUDED.eligible_categories;
+    `,
+  },
+  {
     // Backfill: Philadelphia sites go live_unclaimed so the unclaimed banner shows
     name: "cultural_sites_philly_live_unclaimed",
     sql: `UPDATE cultural_sites SET listing_status = 'live_unclaimed'

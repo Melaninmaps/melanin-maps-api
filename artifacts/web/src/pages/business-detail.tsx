@@ -1,4 +1,5 @@
 import { useRoute, Link, useSearch } from "wouter";
+import { CommunityVibes } from "@/features/businesses/CommunityVibes";
 import { VIBES_BY_CATEGORY } from "@workspace/constants";
 import { 
   useGetBusiness, 
@@ -1266,51 +1267,15 @@ export default function BusinessDetail() {
                 
                 {/* Ownership designations shown above tabs in community intelligence header */}
 
-                {/* Community Vibes — hidden for professional/service categories that use THE REAL instead.
-                    Per Master Directory: Professional Services, Home & Property, Automotive, etc. use
-                    endorsement tags only. Vibes are for experience-based categories. */}
-                {!NO_VIBE_CATEGORIES.has(business.category ?? "") && (() => {
-                  const vibesForCategory = getVibesForCat(business.category ?? "");
-                  return (
-                    <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-serif font-bold text-xl text-white">Community Vibes</h3>
-                        <span className="text-xs text-white/40 font-medium">
-                          {auth?.user ? "Tap to tag your experience" : "Sign in to add vibes"}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {vibesForCategory.map((v) => {
-                          const active = viewerVibeSelections.has(v.id);
-                          const loading = vibeLoading === v.id;
-                          const count = vibeCounts[v.id];
-                          return (
-                            <button
-                              key={v.id}
-                              data-testid={`business-vibe-${v.id.replace(/_/g, "-")}`}
-                              aria-pressed={active}
-                              onClick={() => handleCommunityFeedback("vibe", v.id)}
-                              disabled={loading}
-                              title={v.helperText}
-                              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-150 ${
-                                active
-                                  ? "bg-[#CA922B] border-[#CA922B] text-white shadow-sm"
-                                  : "bg-[#241810] border-white/10 text-white/70 hover:border-[#CA922B] hover:text-[#CA922B]"
-                              } ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                            >
-                              {v.label}
-                              {count && count > 0 ? (
-                                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-white/20 text-white" : "bg-[#CA922B]/10 text-[#CA922B]"}`}>
-                                  {count}
-                                </span>
-                              ) : null}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })()}
+                {/* Community Vibes — dynamic, evidence-backed signals fetched from the API.
+                    Hidden for professional/service categories (THE REAL endorsement tags instead).
+                    Shows honest empty state when no approved evidence exists — never static defaults. */}
+                {!NO_VIBE_CATEGORIES.has(business.category ?? "") && (
+                  <CommunityVibes
+                    businessId={business.id}
+                    isAuthenticated={Boolean(auth?.user)}
+                  />
+                )}
 
                 {/* Community Says — 6 cultural caption chips backed by business_member_feedback */}
                 <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10">

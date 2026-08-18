@@ -36,6 +36,8 @@ import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTr
 import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
 import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
 import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
+import { CommunityVibesRepository } from "./communityVibes/communityVibesRepository";
+import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunityVibesRoutes";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -403,6 +405,11 @@ registerLocationFirstDiscoveryRoutes(
     },
   ),
 );
+
+// ── Community Vibes — evidence-backed member signals ─────────────────────────
+// Public GET returns aggregate approved vibes (never contributor identity).
+// Authenticated POST writes pending evidence; moderation promotes to approved.
+registerCommunityVibesRoutes(app, new CommunityVibesRepository(pool));
 
 // ── Release status + schema-status verification endpoints ─────────────────────
 registerReleaseStatusRoutes(app, pool);
