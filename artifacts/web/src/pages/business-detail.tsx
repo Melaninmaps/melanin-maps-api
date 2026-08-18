@@ -1336,7 +1336,7 @@ export default function BusinessDetail() {
                     <div className="bg-[#1E1510] rounded-2xl p-6 border border-white/10 space-y-5">
                       <div className="flex items-center gap-2 mb-1">
                         <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
-                        <h3 className="font-serif font-bold text-xl text-white">Community Safety & Trust</h3>
+                        <h3 className="font-serif font-bold text-xl text-white">Community Intelligence & Trust</h3>
                       </div>
 
                       {/* Safety stats */}
@@ -1645,7 +1645,7 @@ export default function BusinessDetail() {
                   <div className="pt-5 border-t border-white/10 space-y-3">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="w-4 h-4 text-[#CA922B]" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-white/60">Community Safety</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-white/60">Community Intelligence</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {(business as any).safetyRating != null && (

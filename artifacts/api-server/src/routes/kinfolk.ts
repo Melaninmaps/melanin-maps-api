@@ -4691,7 +4691,7 @@ router.post("/kinfolk/expansion-analysis", async (req: Request, res: Response) =
     const citySummary = Object.entries(cityMap)
       .map(([city, { safetySum, count }]) => `${city}: avg safety ${(safetySum / count).toFixed(1)}/5 (${count} community reports)`)
       .join(", ");
-    if (citySummary) surveyContext = `Platform community safety data by city: ${citySummary}`;
+    if (citySummary) surveyContext = `Platform Community Intelligence data by city (member-sourced context, not crime statistics): ${citySummary}`;
   } catch { /* non-critical */ }
 
   const prompt = `You are a business expansion strategist advising a minority-owned ${businessCategory ?? "business"} called "${businessName ?? "this business"}" currently based in ${businessCity ?? "their city"}.${expansionIdentityContext}

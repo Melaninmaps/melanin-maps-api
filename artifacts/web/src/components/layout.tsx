@@ -243,7 +243,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-serif font-bold text-xl mb-6 text-white">Community</h3>
               <ul className="space-y-3 text-sm text-[#F5EBD8]/80">
-                <li><Link href="/safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Safety Hub</span></Link></li>
+                <li><Link href="/safety"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Community Intelligence</span></Link></li>
                 {isMember ? (
                   <>
                     <li><Link href="/community"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Groups & Meetups</span></Link></li>

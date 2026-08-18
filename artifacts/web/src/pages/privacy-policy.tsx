@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
             <li><strong>Account Information:</strong> Name, email address, profile photo, and city when you register.</li>
             <li><strong>Usage Data:</strong> Pages visited, search queries, businesses saved, reviews written, and events RSVP'd.</li>
             <li><strong>Location Data:</strong> City and general location if you choose to share it, to provide relevant local results.</li>
-            <li><strong>Survey Responses:</strong> Community safety reports and neighborhood feedback you voluntarily submit.</li>
+            <li><strong>Survey Responses:</strong> Community Intelligence reports and neighborhood context you voluntarily submit.</li>
             <li><strong>Device Information:</strong> Browser type, IP address, operating system, and device identifiers for analytics and security.</li>
             <li><strong>Payment Information:</strong> Processed securely through Stripe. We do not store full card numbers.</li>
           </ul>
@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
           <ul className="space-y-2 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
             <li>To provide, personalize, and improve our services</li>
             <li>To connect you with relevant minority-owned businesses and community events</li>
-            <li>To compute and display community safety insights</li>
+            <li>To compute and display Community Intelligence insights</li>
             <li>To process membership payments and manage subscriptions</li>
             <li>To send platform updates, safety alerts, and community notifications (with your consent)</li>
             <li>To detect fraud, enforce our terms, and maintain platform security</li>
@@ -55,9 +55,9 @@ export default function PrivacyPolicy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">5. Community Safety Data</h2>
+          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">5. Community Intelligence Data</h2>
           <p className="leading-relaxed text-[#3A1F0E]/80">
-            Safety reports and survey responses are used to generate community-level safety scores. Individual responses are anonymized before being incorporated into scores. We never share your personal identity alongside a safety report.
+            Community Intelligence reports and survey responses are used to generate community-sourced context. Individual responses are anonymized. We never share your personal identity alongside a report. Community Intelligence describes shared member experiences — it is not a neighborhood safety score based on who lives there.
           </p>
         </section>
 

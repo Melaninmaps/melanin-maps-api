@@ -501,8 +501,8 @@ export default function Safety() {
               <Shield className="w-5 h-5 text-red-400" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-xl text-white">Safety Hub</h1>
-              <p className="text-[#F5EBD8]/60 text-xs">Community-powered, experience-based safety</p>
+              <h1 className="font-serif font-bold text-xl text-white">Community Intelligence</h1>
+              <p className="text-[#F5EBD8]/60 text-xs">Community-sourced context for informed choices</p>
             </div>
           </div>
           {!isAuthenticated && (
@@ -627,7 +627,7 @@ export default function Safety() {
         </div>
 
         <p className="text-[10px] text-[#3A1F0E]/30 text-center pb-4">
-          In a life-threatening emergency, always call 911. Community safety data is experience-based and does not reflect current conditions or official crime statistics.
+          In a life-threatening emergency, always call 911. Community Intelligence is experience-based context shared by community members — it does not reflect current conditions or official crime statistics, and is not a neighborhood safety rating.
         </p>
       </div>
 

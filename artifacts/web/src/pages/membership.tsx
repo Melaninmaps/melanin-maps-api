@@ -51,7 +51,7 @@ const EXPLORER_FEATURES = [
 
 const NAVIGATOR_DISCOVERY = [
   "Unlimited saved favorites — never lose a recommendation",
-  "Advanced filters by safety score, rating, and category",
+  "Advanced filters by Community Intelligence, rating, and category",
   "Enhanced event discovery and cultural experiences",
   "Personalized recommendations based on your interests",
 ];
@@ -554,8 +554,8 @@ export default function Membership() {
               section: "Safety Intelligence",
               rows: [
                 { label: "Basic safety alerts", explorer: true, navigator: true, trailblazer: true },
-                { label: "Community safety reports", explorer: true, navigator: true, trailblazer: true },
-                { label: "Enhanced neighborhood ratings", explorer: false, navigator: true, trailblazer: true },
+                { label: "Community Intelligence reports", explorer: true, navigator: true, trailblazer: true },
+                { label: "Enhanced Community Intelligence ratings", explorer: false, navigator: true, trailblazer: true },
                 { label: "Travel advisories for saved places", explorer: false, navigator: true, trailblazer: true },
               ],
             },

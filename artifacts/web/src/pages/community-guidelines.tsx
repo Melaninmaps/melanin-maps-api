@@ -71,14 +71,14 @@ export default function CommunityGuidelines() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">Safety Reporting</h2>
-          <p className="leading-relaxed text-[#3A1F0E]/80 mb-4">Community safety data is one of our most powerful features. To protect its integrity:</p>
+          <h2 className="text-2xl font-serif font-bold text-[#2B1507] mb-4">Community Intelligence Reporting</h2>
+          <p className="leading-relaxed text-[#3A1F0E]/80 mb-4">Community Intelligence is one of our most powerful features — shared context that helps members make informed choices. To protect its integrity:</p>
           <ul className="space-y-3 list-disc pl-6 text-[#3A1F0E]/80 leading-relaxed">
-            <li>Only submit safety reports for locations you have personally experienced.</li>
+            <li>Only submit context from locations you have personally experienced.</li>
             <li>Reports should be factual — describe what you observed, not rumors or hearsay.</li>
-            <li>Do not submit false reports to manipulate a neighborhood's safety score.</li>
-            <li>Safety scores are anonymized aggregates. Your individual report is never publicly attributed to you.</li>
-            <li>Abuse of the safety reporting system will result in account suspension.</li>
+            <li>Do not submit false reports. Community Intelligence represents real shared experience, not neighborhood judgments.</li>
+            <li>Submissions are anonymized aggregates. Your individual report is never publicly attributed to you.</li>
+            <li>Abuse of the reporting system will result in account suspension.</li>
           </ul>
         </section>
 

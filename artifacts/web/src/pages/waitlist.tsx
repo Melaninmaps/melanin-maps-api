@@ -6,14 +6,14 @@ const BASE = import.meta.env.BASE_URL;
 const SITE_URL = "https://mappingwithmelanin.com";
 
 const BENEFITS = [
-  { icon: Shield, label: "Safety Intelligence", desc: "Community-powered neighborhood safety scores and verified reviews" },
+  { icon: Shield, label: "Community Intelligence", desc: "Community-sourced context from members who've actually been there — arrival experiences and practical local conditions" },
   { icon: MapPin, label: "2,400+ Businesses", desc: "Verified minority-owned businesses across 48 states" },
   { icon: Users, label: "10K+ Members", desc: "A growing community of travelers, entrepreneurs, and creators" },
   { icon: Sparkles, label: "KinfolkAI™", desc: "AI travel planning that understands your culture and community" },
 ];
 
 function openShare(platform: string, url: string) {
-  const text = encodeURIComponent("Join me on Mapping with Melanin™ — find trusted businesses, safety intel, and community everywhere you go:");
+  const text = encodeURIComponent("Join me on Mapping with Melanin™ — find trusted businesses, Community Intelligence, and community everywhere you go:");
   const encodedUrl = encodeURIComponent(url);
   const links: Record<string, string> = {
     X: `https://twitter.com/intent/tweet?text=${text}&url=${encodedUrl}`,

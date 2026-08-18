@@ -58,13 +58,13 @@ export default function Features() {
               {
                 title: "Real-Time Safety Alerts",
                 desc: "Receive real-time alerts about incidents, travel disruptions, weather events, public safety concerns, and community-reported conditions that may impact your journey.",
-                bullets: ["Real-time notifications", "Community safety reports", "Travel disruption alerts", "Location-based warnings", "Emergency resource information"],
+                bullets: ["Real-time notifications", "Community experience reports", "Travel disruption alerts", "Location-based warnings", "Emergency resource information"],
                 label: "Key Differentiator"
               },
               {
-                title: "Community Safety Intelligence",
-                desc: "Access insights from community members who share experiences, recommendations, and observations that help others travel more confidently.",
-                bullets: ["Neighborhood insights", "Local recommendations", "Community ratings", "Traveler experiences", "Trusted perspectives"],
+                title: "Community Intelligence™",
+                desc: "Access community-sourced context from members who share arrival experiences, practical conditions, and local observations that help others make informed choices.",
+                bullets: ["Arrival & access experiences", "Local practical context", "Community-sourced observations", "Traveler insights", "Trusted member perspectives"],
                 label: "Powered By Real Experiences"
               },
               {
@@ -313,7 +313,7 @@ export default function Features() {
               <div className="space-y-3 mb-10">
                 {[
                   "Plan a full weekend itinerary with minority-owned spots only",
-                  "Get neighborhood safety scores before you arrive",
+                  "Get community-sourced context before you arrive",
                   "Discover hidden gems your family will actually love",
                   "Personalized to your vibe, budget & dietary needs",
                 ].map(item => (
@@ -392,7 +392,7 @@ export default function Features() {
                   { f: "Business Discovery", t: "✓", m: "✓" },
                   { f: "Community Reviews", t: "✓", m: "✓" },
                   { f: "Real-Time Safety Alerts", t: "Limited", m: "✓" },
-                  { f: "Community Safety Insights", t: "✗", m: "✓" },
+                  { f: "Community Intelligence", t: "✗", m: "✓" },
                   { f: "Community Confidence Ratings", t: "✗", m: "✓" },
                   { f: "Verified Business Network", t: "Limited", m: "✓" },
                   { f: "Emergency Resources", t: "✗", m: "✓" },
@@ -524,12 +524,12 @@ export default function Features() {
               </div>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">Know Before You Go. Every Time.</h2>
               <p className="text-lg text-[#3A1F0E]/70 mb-10">
-                Most travel apps focus on where to go. Mapping with Melanin™ focuses on helping you make informed decisions before you arrive. Community-driven safety intelligence means real people sharing real experiences.
+                Most travel apps focus on where to go. Mapping with Melanin™ focuses on helping you make informed decisions before you arrive. Community Intelligence means real people sharing real experiences — arrival context, practical conditions, and what members have actually observed.
               </p>
               <div className="space-y-6">
                 {[
                   { title: "Real-Time Safety Alerts", desc: "Incidents, disruptions, and community-reported conditions delivered instantly" },
-                  { title: "Community Safety Scores", desc: "Aggregated ratings for neighborhoods, cities, and destinations" },
+                  { title: "Community Intelligence", desc: "Community-sourced context: arrival experiences, practical conditions, and shared local observations" },
                   { title: "Verified Member Program", desc: "Trusted interactions with authenticated members through anti-fraud protection" },
                   { title: "Emergency Resource Hub", desc: "Hospitals, urgent care, emergency services, and support services — one tap away" }
                 ].map((item, i) => (

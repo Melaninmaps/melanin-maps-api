@@ -553,7 +553,7 @@ Return ONLY valid JSON matching this exact TypeScript type — no markdown, no p
       "theme": "string — 3–5 word vibe e.g. 'Culture, Jazz & Soul Food'",
       "budget": "$X–$Y/person",
       "whyItWorks": "string — 1–2 sentences on why this option fits the group's combined preferences",
-      "safetyNote": "string — 1 sentence on community safety or Black-friendly reputation of destination",
+      "safetyNote": "string — 1 sentence on Community Intelligence signals or Black-friendly reputation of destination (based on member experiences, not crime statistics)",
       "days": [
         {
           "day": "Day 1",

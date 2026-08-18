@@ -253,7 +253,7 @@ export default function RateNeighborhood() {
         <div className="container mx-auto px-4 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#CA922B]/50 bg-[#CA922B]/10 mb-6">
             <Shield className="w-3.5 h-3.5 text-[#CA922B]" />
-            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Community Safety Survey</span>
+            <span className="text-xs font-bold tracking-widest text-[#CA922B] uppercase">Community Intelligence Survey</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Rate a Neighborhood</h1>
           <p className="text-white/70 text-lg">
@@ -664,7 +664,7 @@ export default function RateNeighborhood() {
         </div>
 
         <p className="text-center text-xs text-[#3A1F0E]/40 mt-6">
-          All survey responses are anonymous and used only to generate community safety scores.
+          All survey responses are anonymous and contribute to Community Intelligence — shared context for the community. They are not safety scores or neighborhood judgments.
         </p>
       </div>
     </div>

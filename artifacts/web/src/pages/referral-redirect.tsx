@@ -88,7 +88,7 @@ export default function ReferralLanding() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: MapPin, label: "Find trusted minority-owned businesses nearby" },
-              { icon: Shield, label: "Community safety intel for every neighborhood" },
+              { icon: Shield, label: "Community Intelligence for every neighborhood" },
               { icon: Star, label: "KinfolkAI™ plans trips around your culture" },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center space-y-2">

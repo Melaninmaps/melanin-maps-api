@@ -140,8 +140,8 @@ export async function sendWelcomeEmail(to: string, firstName: string | null) {
                 <span style="font-size:20px">🛡️</span>
               </td>
               <td style="padding:10px 0 10px 12px;border-bottom:1px solid rgba(245,235,216,0.1)">
-                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Community Safety Intel</p>
-                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Read and submit neighborhood safety reports from real community members.</p>
+                <p style="color:#F5EBD8;font-size:15px;font-weight:700;margin:0 0 2px">Community Intelligence</p>
+                <p style="color:#F5EBD8;font-size:13px;margin:0;opacity:0.7">Read and share community-sourced context from members who've actually been there.</p>
               </td>
             </tr>
             <tr>
@@ -463,7 +463,7 @@ export async function sendApprovalNotification(to: string, firstName: string | n
         <img src="https://mappingwithmelanin.com/images/brand/logo.png" alt="Mapping With Melanin" style="height:40px;margin-bottom:32px" />
         <h1 style="font-size:28px;color:#2B1507;margin:0 0 12px">You're in, ${name}! 🎉</h1>
         <p style="color:#3A1F0E;opacity:0.7;font-size:16px;line-height:1.6;margin:0 0 28px">
-          Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Minority-owned businesses, community events, and safety intel in your area.
+          Your early access to <strong>Mapping With Melanin™</strong> has been approved. Sign in now to start discovering Minority-owned businesses, community events, and Community Intelligence for your area.
         </p>
         <a href="https://mappingwithmelanin.com/login" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
           Sign In Now →
@@ -540,7 +540,7 @@ export async function sendTrialStarted(
         <p style="color:#2B1507;font-size:16px;font-weight:700;margin:0 0 12px">Here's what you can do right now:</p>
         <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
           <li>Explore Minority-owned businesses and cultural gems in your city</li>
-          <li>Check community safety scores for neighborhoods</li>
+          <li>Access Community Intelligence — context shared by members who've been there</li>
           <li>Save your favorite businesses and build collections</li>
           <li>Submit reviews and safety reports to help the community</li>
           <li>Plan your next trip with KinfolkAI</li>
@@ -610,7 +610,7 @@ export async function sendTrialEndingSoon(
         <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">What you'll keep with a paid membership:</p>
         <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 24px;padding-left:20px">
           <li>Unlimited business listings & full profiles</li>
-          <li>Complete neighborhood safety scores</li>
+          <li>Community Intelligence for your area</li>
           <li>Submit reviews, reports & community content</li>
           <li>KinfolkAI travel planning</li>
           <li>Save businesses & build personal collections</li>
@@ -683,7 +683,7 @@ export async function sendTrialExpired(
         <p style="color:#2B1507;font-size:15px;font-weight:700;margin:0 0 12px">What you'll get back:</p>
         <ul style="color:#3A1F0E;font-size:15px;line-height:2;margin:0 0 28px;padding-left:20px">
           <li>Unlimited business listings & full profiles</li>
-          <li>Complete neighborhood safety scores</li>
+          <li>Community Intelligence for your area</li>
           <li>Submit reviews, reports & community content</li>
           <li>KinfolkAI travel planning assistance</li>
           <li>Save businesses & build personal collections</li>
@@ -2316,7 +2316,7 @@ export async function sendBetaAnnouncementBlast(
         <p style="color:#3A1F0E;font-size:16px;line-height:1.6;margin:0 0 24px">
           In the meantime, we're looking for passionate community members to join our
           <strong style="color:#CA922B">beta testing program</strong> — get early access, help shape the experience,
-          and be among the very first to discover minority-owned businesses and community safety intel on the app.
+          and be among the very first to discover minority-owned businesses and Community Intelligence on the app.
         </p>
 
         <div style="background:#F5EBD8;border-radius:12px;padding:20px 24px;margin-bottom:28px">

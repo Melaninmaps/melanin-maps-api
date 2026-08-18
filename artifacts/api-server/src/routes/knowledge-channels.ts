@@ -16,7 +16,7 @@ const DEFAULT_CHANNELS = [
   { slug: "culture", label: "Culture & History", icon: "🎭", description: "Cultural events, history, arts, and community storytelling", color: "#8B5CF6", sortOrder: 8 },
   { slug: "food", label: "Food & Dining", icon: "🍽️", description: "Restaurant reviews, recipes, food culture, and culinary events", color: "#EF4444", sortOrder: 9 },
   { slug: "law", label: "Legal & Rights", icon: "⚖️", description: "Know your rights, legal resources, and community advocacy", color: "#64748B", sortOrder: 10 },
-  { slug: "safety", label: "Safety & Community", icon: "🛡️", description: "Community safety insights, resources, and neighborhood guides", color: "#DC2626", sortOrder: 11 },
+  { slug: "safety", label: "Community Intelligence", icon: "🛡️", description: "Community-sourced context, local resources, and shared member experiences", color: "#DC2626", sortOrder: 11 },
   { slug: "spirituality", label: "Faith & Spirituality", icon: "🙏🏾", description: "Houses of worship, spiritual wellness, and community gatherings", color: "#A16207", sortOrder: 12 },
 ];
 

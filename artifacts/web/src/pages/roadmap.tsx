@@ -66,7 +66,7 @@ export default function Roadmap() {
           <div className="space-y-6">
             {[
               { s: "green", t: "Business Discovery Map", c: "Core", d: "Interactive map with minority-owned business pins, search, and city shortcuts." },
-              { s: "green", t: "Community Safety Scores", c: "Core", d: "Real-time safety intelligence, neighborhood scores, and the 'Would Return Alone' metric." },
+              { s: "green", t: "Community Intelligence", c: "Core", d: "Community-sourced context: arrival experiences, practical local conditions, and shared member observations." },
               { s: "green", t: "Explore & Search", c: "Core", d: "Real-time search with category filters, sort, and SPA navigation to business listings." },
               { s: "green", t: "Personalized For You Feed", c: "Core", d: "AI-curated picks and itinerary generator based on onboarding identity, interests, and goals." },
               { s: "green", t: "Community Reviews & Ratings", c: "Core", d: "Multi-category ratings, verified reviews, and the Community Confidence Score." },

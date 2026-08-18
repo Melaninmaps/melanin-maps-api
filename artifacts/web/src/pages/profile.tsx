@@ -1357,7 +1357,7 @@ export default function Profile() {
           <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#CA922B]" /> Safety Alerts
           </h3>
-          <p className="text-xs text-[#3A1F0E]/50 mb-5">Control which community safety alerts you receive. These are community-reported — not connected to police databases.</p>
+          <p className="text-xs text-[#3A1F0E]/50 mb-5">Control which community alerts you receive. These are community-reported — not connected to police databases.</p>
           <div className="space-y-3">
             {/* Police activity */}
             <div className="flex items-center justify-between p-4 bg-[#FAF6EF] rounded-2xl">

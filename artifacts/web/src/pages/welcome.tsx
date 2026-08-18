@@ -19,15 +19,15 @@ const STEPS = [
   },
   {
     icon: Shield,
-    title: "Check Community Safety Before You Go",
-    body: "Our neighborhood safety scores are powered by real community reports — not police data. Know what to expect before you arrive.",
-    cta: "View Safety Scores",
+    title: "Know What to Expect Before You Arrive",
+    body: "Community Intelligence gives you real context from people who've actually been there — arrival experiences, practical conditions, and what members have shared firsthand.",
+    cta: "View Community Intelligence",
     action: "/safety",
     color: "#2B6CB0",
     checks: [
-      "Daytime and nighttime safety ratings",
-      "Community atmosphere and walkability scores",
-      "Tips from people who actually live and work there",
+      "Member-sourced arrival and access experiences",
+      "Community atmosphere and practical local context",
+      "Shared observations from people who live and work there",
     ],
   },
   {

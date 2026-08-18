@@ -183,8 +183,8 @@ function buildSuggestions(
     suggestions.push({
       priority: "low",
       icon: "shield-off",
-      title: "No community safety rating yet",
-      body: "Encourage customers to complete safety surveys for your location. A strong safety rating builds trust with new visitors.",
+      title: "No community context yet",
+      body: "Encourage customers to share their experiences at your location. Community Intelligence helps new visitors know what to expect.",
     });
   }
 

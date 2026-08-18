@@ -391,7 +391,7 @@ export default function Home() {
             <div>
               <div className="flex flex-wrap gap-3 mb-8">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#CA922B]/40 bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold tracking-widest uppercase">
-                  <Shield className="w-3 h-3" /> Safety-First Community Intelligence
+                  <Shield className="w-3 h-3" /> Community Intelligence™
                 </div>
               </div>
 
@@ -1092,7 +1092,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-6">
             {[
               {
-                quote: "Finally a platform that actually understands what it means to travel while Minority. The safety scores alone are worth it — I checked three cities before my last trip and felt genuinely prepared.",
+                quote: "Finally a platform that actually understands what it means to travel while Minority. The Community Intelligence alone is worth it — I checked three cities before my last trip and felt genuinely prepared.",
                 name: "Aaliyah T.", role: "Frequent Traveler", loc: "Atlanta, GA",
                 img: "https://images.pexels.com/photos/4427622/pexels-photo-4427622.jpeg?auto=compress&cs=tinysrgb&w=96&h=96&dpr=1"
               },
