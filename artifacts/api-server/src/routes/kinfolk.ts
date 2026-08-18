@@ -65,6 +65,7 @@ import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealth
 import { searchAllQueries } from "../kinfolk/web-search";
 import { rankResults } from "../kinfolk/web-ranker";
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
+import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -2760,6 +2761,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
 
+    // ── Diaspora-first research plan ──────────────────────────────────────────
+    // Permanently enriches every retrieval query with community-first context so
+    // Black women and minority community sources surface before generic results.
+    // researchQuery replaces the raw message in external searches only —
+    // it never changes Kinfolk's spoken answer or identifies the member.
+    // clarification is an optional offer rendered AFTER the general answer.
+    const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
+
     // ── Living Library research branch ────────────────────────────────────────
     // For non-local general_knowledge and medical_health questions, use the
     // Living Library (Tavily + OpenAI synthesis + DB archive) INSTEAD of the
@@ -2773,7 +2782,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       try {
         const deps = getLivingLibraryDeps();
         const result = await answerWithLivingLibrary({
-          memberQuestion: message,
+          memberQuestion: researchPlan.researchQuery,
           locationLabel: null,
           repository: deps.repository,
           researchProvider: deps.researchProvider,
@@ -2793,6 +2802,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           provenanceNote: result.disclaimer ?? null,
           needsClarification: false,
           originalQuery: message,
+          // Optional personalization offer — rendered after the general answer, never a gate.
+          clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
         });
         return;
       } catch (libraryErr: unknown) {
@@ -4284,6 +4295,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       safetyNotice: enforced.safetyNotice ?? undefined,
       promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
       rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
+      // Optional personalization offer — present for health/travel domains, never for
+      // business_discovery or legal. Rendered after the general answer, never a gate.
+      clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
       // Local resolution metadata — present when a city was resolved from the message
       // or session. Lets clients and tests confirm alias resolution worked without
       // reading server logs (e.g. "Philly" → { city:"Philadelphia", state:"PA", source:"alias" }).

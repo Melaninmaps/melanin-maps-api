@@ -1,0 +1,17 @@
+/* MWM Topic Icon — gold-outline SVG icons for Library domain cards.
+   The feather remains the brand mark. These are content navigation icons. */
+
+.mwm-topic-icon {
+  flex-shrink: 0;
+  color: #d4af37;
+}
+
+/* On dark library hero backgrounds, icons remain gold */
+.living-library-page .mwm-topic-icon {
+  color: #f0cf63;
+}
+
+/* On light topic card backgrounds, icons use the standard gold */
+.living-library-topic-card .mwm-topic-icon {
+  color: #c5951a;
+}

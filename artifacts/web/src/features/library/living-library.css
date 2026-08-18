@@ -1,0 +1,202 @@
+/* Living Library — dark hero + warm parchment content
+   Hero text must remain high-contrast ivory on the dark surface.
+   Never inherit dark-brown color or low opacity for .living-library-hero h1
+   or .living-library-introduction. */
+
+.living-library-page {
+  min-height: 100vh;
+  background: #2a0f05;
+  color: #fffaf0;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.living-library-hero {
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: 4.5rem 1.5rem 3rem;
+  text-align: center;
+}
+
+.living-library-eyebrow {
+  margin: 0 0 0.8rem;
+  color: #f0cf63;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.living-library-hero h1 {
+  margin: 0;
+  /* Explicit ivory — never inherited dark-brown */
+  color: #fffdf7 !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  line-height: 1.08;
+  text-shadow: 0 1px 16px rgb(0 0 0 / 25%);
+}
+
+.living-library-introduction {
+  max-width: 46rem;
+  margin: 1.25rem auto 0;
+  /* Warm-light — always legible on dark hero; never low-opacity inherited text */
+  color: #f1dfcc !important;
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.7;
+  opacity: 1;
+}
+
+/* ── Search bar ───────────────────────────────────────────────────────────── */
+.living-library-search {
+  display: flex;
+  gap: 0.75rem;
+  margin: 2rem auto 0;
+  max-width: 44rem;
+}
+
+.living-library-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 3rem;
+  border: 1px solid #f1dfcc;
+  border-radius: 0.8rem;
+  background: #fffdf9;
+  color: #2a0f05;
+  -webkit-text-fill-color: #2a0f05;
+  padding: 0.75rem 0.95rem;
+  font: inherit;
+}
+
+.living-library-search input::placeholder {
+  color: #6d625a;
+  opacity: 1;
+}
+
+.living-library-search button {
+  min-height: 3rem;
+  border: 1px solid #d4af37;
+  border-radius: 0.8rem;
+  background: #4b230d;
+  color: #fff8e6;
+  padding: 0.75rem 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.living-library-search button:hover {
+  background: #5e2d10;
+}
+
+/* ── Content area ─────────────────────────────────────────────────────────── */
+.living-library-content {
+  background: #fdf9f0;
+  color: #2a0f05;
+  padding: 2.75rem max(1.5rem, calc((100vw - 72rem) / 2));
+}
+
+.living-library-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.living-library-section-heading p {
+  margin: 0 0 0.35rem;
+  color: #936719;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.living-library-section-heading h2 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.65rem, 3vw, 2.4rem);
+}
+
+.living-library-section-heading a {
+  color: #70480f;
+  font-weight: 800;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.living-library-section-heading a:hover {
+  text-decoration: underline;
+}
+
+/* ── Topic grid ───────────────────────────────────────────────────────────── */
+.living-library-topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.living-library-topic-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95rem;
+  min-height: 11rem;
+  border: 1px solid #e7d7bf;
+  border-radius: 1rem;
+  background: #fffdf8;
+  color: inherit;
+  padding: 1.2rem;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgb(66 30 10 / 6%);
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.living-library-topic-card:hover {
+  border-color: #d4af37;
+  transform: translateY(-1px);
+}
+
+.living-library-topic-card h3 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.05rem;
+  color: #2a0f05;
+}
+
+.living-library-topic-card p {
+  margin: 0.45rem 0 0;
+  color: #66574d;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.living-library-topic-card span {
+  display: block;
+  margin-top: 0.75rem;
+  color: #855913;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* ── State messages ───────────────────────────────────────────────────────── */
+.living-library-state {
+  color: #4d3e33;
+  padding: 1rem 0;
+}
+
+.living-library-state--error {
+  color: #9d2525;
+  font-weight: 700;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .living-library-search {
+    flex-direction: column;
+  }
+  .living-library-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

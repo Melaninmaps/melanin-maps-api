@@ -18,6 +18,8 @@ import { cityRequestMiddleware } from "./lib/cityRequestTracker";
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 import { getHealthHistory } from "./lib/healthMonitor";
 import { registerLivingLibraryRoutes } from "./library/registerLivingLibraryRoutes";
+import { registerFoundationTopicRoutes } from "./library/registerFoundationTopicRoutes";
+import { FoundationTopicRepository } from "./library/foundationTopicRepository";
 import { createPostgresLibraryRepository } from "./library/postgresLibraryRepository";
 import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
 import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
@@ -363,6 +365,9 @@ registerLivingLibraryRoutes(app, {
     model: process.env.LIBRARY_RESEARCH_MODEL ?? "gpt-4o-mini",
   }),
 });
+
+// ── Foundation topics (28 durable library foundations, separate endpoint) ────
+registerFoundationTopicRoutes(app, new FoundationTopicRepository(pool));
 
 // ── Purposeful Explore routes ────────────────────────────────────────────────
 registerExploreRoutes(app);

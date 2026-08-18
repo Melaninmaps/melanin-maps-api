@@ -15,6 +15,7 @@ import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
+import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -54,6 +55,14 @@ interface HairLossCarePlan {
   sourceLinks: KinfolkSource[];
   optionalPaths: Array<{ id: string; title: string; question: string; supportingText: string }>;
 }
+// ClarificationStep matches the server type from kinfolk/intentClarification.ts.
+// Kept as a local interface to avoid importing server code into the web bundle.
+interface ClarificationOption { value: string; label: string }
+interface ClarificationStep {
+  id: string; question: string; explanation?: string;
+  options: ClarificationOption[]; skippable: boolean;
+  persistence: "temporary" | "optional_member_memory";
+}
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
@@ -76,6 +85,8 @@ interface Message {
   // (alias, explicit mention, or session carry-forward)
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  // Optional personalization offer — rendered after general answer, never a gate.
+  clarificationSteps?: ClarificationStep[];
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -651,6 +662,9 @@ function TravelPage() {
 
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
+  // Tracks which assistant message ID has pending clarification steps to offer.
+  // Null when no clarifier is active. Cleared on any answer or skip.
+  const [pendingClarificationMsgId, setPendingClarificationMsgId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Voice input state ──────────────────────────────────────────────────────
@@ -991,6 +1005,8 @@ function TravelPage() {
         libraryEntry?: KinfolkLibraryEntry | null;
         // Hair-loss care plan
         hairLossCarePlan?: HairLossCarePlan | null;
+        // Optional personalization clarifier steps
+        clarificationSteps?: ClarificationStep[] | null;
         // Adaptive depth (Show more / Show less)
         answerPlanId?: string | null;
         depth?: "brief" | "standard" | "deep";
@@ -1005,8 +1021,10 @@ function TravelPage() {
       const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
+      // Capture the ID so we can wire the clarifier to this specific message.
+      const assistantMsgId = crypto.randomUUID();
       setMessages(prev => [...prev, {
-        id: crypto.randomUUID(), role: "assistant",
+        id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
@@ -1022,7 +1040,12 @@ function TravelPage() {
         canShowLess: data.canShowLess ?? false,
         location: data.location ?? null,
         locationSource: data.locationSource ?? null,
+        clarificationSteps: data.clarificationSteps ?? undefined,
       }]);
+      // Show the optional clarifier if steps were returned.
+      if (data.clarificationSteps && data.clarificationSteps.length > 0) {
+        setPendingClarificationMsgId(assistantMsgId);
+      }
     } catch (err) {
       const isTimeout = err instanceof Error && err.name === "AbortError";
       const msg = isTimeout
@@ -1482,6 +1505,34 @@ function TravelPage() {
                               No thanks
                             </button>
                           </div>
+                        </div>
+                      )}
+                      {/* Diaspora-first context clarifier — optional offer after general answers.
+                          Only shown for the specific message that returned clarification steps.
+                          Every step is skippable. Answers are sent as a follow-up message,
+                          never stored to member memory automatically. */}
+                      {msg.role === "assistant" && msg.id === pendingClarificationMsgId &&
+                       msg.clarificationSteps && msg.clarificationSteps.length > 0 && (
+                        <div className="mt-3">
+                          <KinfolkContextClarifier
+                            steps={msg.clarificationSteps}
+                            onComplete={(answers) => {
+                              setPendingClarificationMsgId(null);
+                              // Format non-skipped answers into a brief context sentence.
+                              const contextParts = msg.clarificationSteps!
+                                .filter(s => answers[s.id] && answers[s.id] !== "skip")
+                                .map(s => {
+                                  const chosen = s.options.find(o => o.value === answers[s.id]);
+                                  return chosen?.label ?? answers[s.id];
+                                })
+                                .join(" · ");
+                              // Only send a follow-up when the member chose something.
+                              // Pure skips just close the clarifier silently.
+                              if (contextParts) {
+                                void send(`For my last question — ${contextParts}`);
+                              }
+                            }}
+                          />
                         </div>
                       )}
                       {/* Culture & Roots consent prompt — only for assistant messages with a detected community */}

@@ -28,6 +28,7 @@ import { SOUTH_CULTURAL_V1 } from "../data/south-cities-cultural-v1.js";
 import { PRIORITY_PRACTICAL_V1 } from "./seeds/priority-practical-v1.js";
 import { pool, THE_REAL_TAGS } from "@workspace/db";
 import type { Logger } from "pino";
+import { seedFoundationalTopics } from "../library/seedFoundationalTopics";
 import { HBCU_COMPLETE_SEED } from "../data/hbcu-complete-seed";
 import { CULTURAL_SITES_SEED } from "../data/cultural-sites-seed";
 import { NATIONAL_FESTIVALS_SEED } from "../data/national-festivals-seed";
@@ -4310,6 +4311,112 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ('general',   'Community Resources',     'general',   'Black women and minority women')
     ON CONFLICT (slug) DO NOTHING`,
   },
+  // ── Living Library Foundation — new columns on library_topics ─────────────
+  {
+    name: "living_library_foundation_columns_v1",
+    sql: `ALTER TABLE library_topics
+          ADD COLUMN IF NOT EXISTS summary        text,
+          ADD COLUMN IF NOT EXISTS icon_key       text,
+          ADD COLUMN IF NOT EXISTS is_foundational boolean DEFAULT false,
+          ADD COLUMN IF NOT EXISTS is_featured    boolean DEFAULT false,
+          ADD COLUMN IF NOT EXISTS sort_order     int     DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS active         boolean DEFAULT true,
+          ADD COLUMN IF NOT EXISTS updated_at     timestamptz DEFAULT now()`,
+  },
+  // ── Library facet definitions ─────────────────────────────────────────────
+  {
+    name: "library_facet_definitions_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_facet_definitions (
+      id          uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+      facet_key   text         NOT NULL UNIQUE,
+      label       text         NOT NULL,
+      dimension   text         NOT NULL,
+      active      boolean      NOT NULL DEFAULT true,
+      created_at  timestamptz  NOT NULL DEFAULT now()
+    )`,
+  },
+  // ── Entry → topic link table ──────────────────────────────────────────────
+  {
+    name: "library_entry_topic_links_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_entry_topic_links (
+      entry_id   uuid    NOT NULL,
+      topic_id   uuid    NOT NULL,
+      relevance  numeric NOT NULL DEFAULT 1,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (entry_id, topic_id)
+    )`,
+  },
+  {
+    name: "library_entry_topic_links_topic_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS library_entry_topic_links_topic_idx ON library_entry_topic_links (topic_id)`,
+  },
+  // ── Entry facets ──────────────────────────────────────────────────────────
+  {
+    name: "library_entry_facets_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_entry_facets (
+      entry_id   uuid NOT NULL,
+      facet_key  text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (entry_id, facet_key)
+    )`,
+  },
+  // ── Topic relationships (siblings/children) ───────────────────────────────
+  {
+    name: "library_topic_relationships_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_topic_relationships (
+      from_topic_id uuid NOT NULL,
+      to_topic_id   uuid NOT NULL,
+      relationship  text NOT NULL DEFAULT 'related',
+      weight        numeric NOT NULL DEFAULT 1,
+      created_at    timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (from_topic_id, to_topic_id, relationship)
+    )`,
+  },
+  // ── Kinfolk member memory — explicit consent only ─────────────────────────
+  {
+    name: "kinfolk_member_memory_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_member_memory (
+      id                    uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+      member_id             text         NOT NULL,
+      attribute_key         text         NOT NULL,
+      attribute_value       text         NOT NULL,
+      remember_approved_at  timestamptz  NOT NULL,
+      forget_requested_at   timestamptz,
+      created_at            timestamptz  NOT NULL DEFAULT now(),
+      UNIQUE (member_id, attribute_key)
+    )`,
+  },
+  {
+    name: "kinfolk_member_memory_member_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_member_memory_member_idx ON kinfolk_member_memory (member_id)`,
+  },
+  // ── Kinfolk search context — 24 h TTL, never linked to member identity ────
+  {
+    name: "kinfolk_search_context_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_search_context (
+      id             uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+      session_token  text         NOT NULL,
+      context_key    text         NOT NULL,
+      context_value  text         NOT NULL,
+      expires_at     timestamptz  NOT NULL,
+      created_at     timestamptz  NOT NULL DEFAULT now(),
+      CONSTRAINT kinfolk_search_context_ttl
+        CHECK (expires_at <= created_at + interval '24 hours')
+    )`,
+  },
+  {
+    name: "kinfolk_search_context_session_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_search_context_session_idx ON kinfolk_search_context (session_token, expires_at)`,
+  },
+  // ── Library seed state tracker ────────────────────────────────────────────
+  {
+    name: "library_seed_state_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_seed_state (
+      seed_name    text         PRIMARY KEY,
+      seed_version text         NOT NULL,
+      applied_at   timestamptz  NOT NULL DEFAULT now()
+    )`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -4486,6 +4593,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     //    Backfills from existing businesses, cultural sites, and events so that
     //    the Map, Businesses, Explore, and Events pages have a shared location index. ─
     ["location first discovery v1", () => ensureLocationFirstDiscovery(log, warn)],
+    ["living library foundation topics v1", () => ensureLivingLibraryFoundationTopics(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -10959,6 +11067,28 @@ async function ensureLocationFirstDiscovery(
     log("ensureLocationFirstDiscovery: all tables and backfills complete");
   } catch (err: unknown) {
     warn(`ensureLocationFirstDiscovery failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function ensureLivingLibraryFoundationTopics(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    const result = await seedFoundationalTopics(pool);
+    if (result.ok) {
+      log(
+        `ensureLivingLibraryFoundationTopics: ${result.actualTopicCount}/${result.expectedTopicCount} foundation topics present`,
+      );
+    } else {
+      warn(
+        `ensureLivingLibraryFoundationTopics: verification failed — missing: [${result.missing.join(", ")}], missingFeatured: [${result.missingFeatured.join(", ")}]`,
+      );
+    }
+  } catch (err: unknown) {
+    warn(
+      `ensureLivingLibraryFoundationTopics failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
