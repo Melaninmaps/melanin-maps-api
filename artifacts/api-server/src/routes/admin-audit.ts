@@ -21,7 +21,7 @@
 
 import { Router, type Request, type Response } from "express";
 import crypto from "node:crypto";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
 
