@@ -1,0 +1,85 @@
+/**
+ * KinfolkContextClarifier — optional research personalization widget.
+ * Rendered below a Kinfolk answer; never blocks the answer from appearing.
+ */
+
+.kinfolk-context-clarifier {
+  margin-top: 12px;
+  padding: 14px 16px 12px;
+  background: rgba(202, 146, 43, 0.07);
+  border: 1px solid rgba(202, 146, 43, 0.25);
+  border-radius: 10px;
+}
+
+.kinfolk-context-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #CA922B;
+  margin: 0 0 6px;
+}
+
+.kinfolk-context-clarifier h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+
+.kinfolk-context-explanation {
+  font-size: 11px;
+  color: #6b6b6b;
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
+.kinfolk-context-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.kinfolk-context-option {
+  padding: 5px 12px;
+  background: #fff;
+  border: 1px solid rgba(202, 146, 43, 0.4);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1;
+}
+
+.kinfolk-context-option:hover {
+  background: rgba(202, 146, 43, 0.12);
+  border-color: #CA922B;
+}
+
+.kinfolk-context-skip {
+  display: block;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: #8a8a8a;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 8px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.kinfolk-context-skip:hover {
+  color: #555;
+}
+
+.kinfolk-context-privacy {
+  font-size: 10px;
+  color: #aaa;
+  margin: 0;
+  line-height: 1.4;
+}

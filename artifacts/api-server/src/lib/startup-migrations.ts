@@ -10861,10 +10861,11 @@ async function ensureDirectoryDiscoverySchema(
     await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION`);
     await pool.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION`);
 
+    // businesses table does not have is_active; index on coordinates only.
     await pool.query(`
       CREATE INDEX IF NOT EXISTS businesses_active_coordinates_idx
-        ON businesses (is_active, latitude, longitude)
-        WHERE is_active = TRUE AND latitude IS NOT NULL AND longitude IS NOT NULL
+        ON businesses (latitude, longitude)
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
     `);
 
     log("ensureDirectoryDiscoverySchema: directory tables and columns ready");
@@ -10917,9 +10918,13 @@ async function ensureLocationFirstDiscovery(
         is_primary BOOLEAN NOT NULL DEFAULT TRUE,
         verified_at TIMESTAMPTZ,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `);
+    // COALESCE() is not valid inside an inline UNIQUE constraint — use a unique index instead.
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS canonical_record_locations_unique_idx
+        ON canonical_record_locations (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
     `);
     await pool.query(`
       CREATE INDEX IF NOT EXISTS canonical_record_locations_city_idx
@@ -10989,23 +10994,24 @@ async function ensureLocationFirstDiscovery(
     // ── Backfill canonical_record_locations from existing businesses ────────
     // Uses direct city/state columns (businesses does not have a city_id FK).
     // Skips records with no city, no coordinates, or duplicate entries.
+    // businesses table has no neighborhood, is_active, or verified_at columns.
+    // Guard id::uuid cast — some legacy rows have integer IDs; skip them.
     const bizResult = await pool.query(`
       INSERT INTO canonical_record_locations
-        (record_type, record_id, city_name, state_code, neighborhood_name, latitude, longitude, is_primary, verified_at)
+        (record_type, record_id, city_name, state_code, neighborhood_name, latitude, longitude, is_primary)
       SELECT
         'business',
         id::uuid,
         LOWER(TRIM(city)),
         UPPER(TRIM(COALESCE(state, ''))),
-        neighborhood,
-        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
-        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
-        TRUE,
-        verified_at
+        NULL,
+        CASE WHEN latitude IS NOT NULL AND latitude::text ~ '^-?[0-9]+\\.?[0-9]*$' THEN latitude::numeric ELSE NULL END,
+        CASE WHEN longitude IS NOT NULL AND longitude::text ~ '^-?[0-9]+\\.?[0-9]*$' THEN longitude::numeric ELSE NULL END,
+        TRUE
       FROM businesses
       WHERE city IS NOT NULL AND TRIM(city) != ''
-        AND is_active = TRUE
         AND listing_status IN ('live_unclaimed', 'live_claimed')
+        AND id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       ON CONFLICT DO NOTHING
     `);
     log(`ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows inserted`);

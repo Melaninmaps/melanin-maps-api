@@ -1100,7 +1100,7 @@ function TravelPage() {
     } catch { /* ignore */ }
   }, []);
 
-  const newChat = () => { setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); };
+  const newChat = () => { setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null); };
 
   // Culture & Roots — track which community prompts the member has already responded to
   const [respondedRoots, setRespondedRoots] = useState<Set<string>>(new Set());
