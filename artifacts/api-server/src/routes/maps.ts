@@ -3,6 +3,7 @@ import { openai } from "@workspace/integrations-openai-ai-server";
 import { mapsLimiter } from "../middleware/rateLimiter";
 import { requireAuth } from "../middlewares/requireAuth";
 import { pool } from "@workspace/db";
+import { sendDynamicJson } from "../lib/dynamicResponseCache";
 
 const router: IRouter = Router();
 router.use(requireAuth);
@@ -550,7 +551,7 @@ router.get("/maps/discoverability-pins", async (req: Request, res: Response) => 
       siteType:    r.site_type ?? null,
     }));
 
-    res.json({ pins });
+    sendDynamicJson(res, { pins });
   } catch (err) {
     req.log?.error({ err }, "GET /maps/discoverability-pins failed");
     res.status(500).json({ error: "Failed to load discoverability pins" });

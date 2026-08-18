@@ -10,6 +10,7 @@ import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { requireAuth } from "../middlewares/requireAuth";
+import { sendDynamicJson } from "../lib/dynamicResponseCache";
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -106,7 +107,7 @@ router.get("/businesses/map-pins", async (_req: Request, res: Response) => {
         AND longitude::numeric != 0
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
     `);
-    res.json({ pins: rows });
+    sendDynamicJson(res, { pins: rows });
   } catch (err) {
     res.status(500).json({ error: "Failed to load map pins" });
   }
@@ -468,7 +469,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
     // Truthful total: when fuzzy fallback produced the results, total = those results;
     // standard pagination may have total > returned list (both are valid, explained by limit).
     const responseTotal = usedFuzzyFallback ? finalResults.length : Number(totalCount);
-    res.json({ businesses: withDistance, total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
+    sendDynamicJson(res, { businesses: withDistance, total: responseTotal, page: { offset, limit: pageLimit }, featuredCount: withDistance.filter((b: any) => b.featured).length, usedFuzzyFallback });
     }, req.log, "GET /businesses");
   } catch (err) {
     req.log.error({ err }, "Failed to fetch businesses");
@@ -1215,7 +1216,7 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
         .catch(() => {});
     })();
 
-    res.json({
+    sendDynamicJson(res, {
       business: {
         ...business,
         // Normalize array fields so the web/mobile clients always receive [] not null.

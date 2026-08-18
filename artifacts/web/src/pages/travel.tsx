@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
+import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -45,6 +46,14 @@ interface LibraryAction {
   subject?: string;
   category?: string;
 }
+interface KinfolkSource { title: string; url: string }
+interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
+interface HairLossCarePlan {
+  educationalMessage: string;
+  medicalDisclaimer: string;
+  sourceLinks: KinfolkSource[];
+  optionalPaths: Array<{ id: string; title: string; question: string; supportingText: string }>;
+}
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
@@ -53,6 +62,11 @@ interface Message {
   libraryAction?: LibraryAction | null;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  // Research sources + library entry link (Living Library branch)
+  sources?: KinfolkSource[] | null;
+  libraryEntry?: KinfolkLibraryEntry | null;
+  // Hair-loss / alopecia care paths
+  hairLossCarePlan?: HairLossCarePlan | null;
   // Adaptive depth fields (Show more / Show less)
   answerPlanId?: string | null;
   depth?: "brief" | "standard" | "deep";
@@ -972,6 +986,11 @@ function TravelPage() {
         libraryAction?: LibraryAction | null;
         intentClass?: string | null;
         provenanceNote?: string | null;
+        // Research sources + library entry link
+        sources?: KinfolkSource[] | null;
+        libraryEntry?: KinfolkLibraryEntry | null;
+        // Hair-loss care plan
+        hairLossCarePlan?: HairLossCarePlan | null;
         // Adaptive depth (Show more / Show less)
         answerPlanId?: string | null;
         depth?: "brief" | "standard" | "deep";
@@ -994,6 +1013,9 @@ function TravelPage() {
         libraryAction: data.libraryAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
+        sources: data.sources ?? null,
+        libraryEntry: data.libraryEntry ?? null,
+        hairLossCarePlan: data.hairLossCarePlan ?? null,
         answerPlanId: data.answerPlanId ?? null,
         depth: data.depth,
         canShowMore: data.canShowMore ?? false,
@@ -1402,6 +1424,37 @@ function TravelPage() {
                           </svg>
                           <p className="text-[10px] leading-relaxed text-[#3A1F0E]/60">{msg.provenanceNote}</p>
                         </div>
+                      )}
+                      {/* Source citations — shown for Living Library research answers */}
+                      {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
+                        <div className="mt-3 space-y-1">
+                          {msg.sources.map((src) => (
+                            <a
+                              key={src.url}
+                              href={src.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1.5 text-[10px] font-semibold text-[#8D5C17] hover:text-[#CA922B] transition-colors"
+                            >
+                              <GoldFeatherMark label="Source" size={11} />
+                              {src.title}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      {/* Library entry link — "Read the full source-cited entry" */}
+                      {msg.role === "assistant" && msg.libraryEntry && (
+                        <Link
+                          href={msg.libraryEntry.url}
+                          className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-[#8D5C17] underline hover:text-[#CA922B] transition-colors"
+                        >
+                          <GoldFeatherMark label="Library" size={10} />
+                          {msg.libraryEntry.readMoreLabel}
+                        </Link>
+                      )}
+                      {/* Hair-loss care paths — rendered when Kinfolk detects an alopecia/hair-loss question */}
+                      {msg.role === "assistant" && msg.intentClass === "hair_loss_care" && msg.hairLossCarePlan && (
+                        <KinfolkHairLossCarePaths />
                       )}
                       {/* Library suggestion — shown when Kinfolk identifies a topic not yet in the Library */}
                       {msg.role === "assistant" && msg.libraryAction?.type === "suggest_to_library" &&

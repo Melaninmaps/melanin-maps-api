@@ -29,6 +29,26 @@ import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryCla
 import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
 import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
+import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
+import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
+import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
+import { createOpenAiLibraryWriter } from "../library/openAiLibraryWriter";
+
+// ── Living Library lazy singleton instances ────────────────────────────────────
+// Created once on first research request; degrade gracefully when Tavily key is absent.
+let _libraryRepo: ReturnType<typeof createPostgresLibraryRepository> | null = null;
+let _researchProvider: ReturnType<typeof createTavilyResearchProvider> | null = null;
+let _libraryWriter: ReturnType<typeof createOpenAiLibraryWriter> | null = null;
+function getLivingLibraryDeps() {
+  if (!_libraryRepo) _libraryRepo = createPostgresLibraryRepository(pool);
+  if (!_researchProvider) _researchProvider = createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? "");
+  if (!_libraryWriter) _libraryWriter = createOpenAiLibraryWriter({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+    model: process.env.LIBRARY_RESEARCH_MODEL ?? "gpt-4o-mini",
+  });
+  return { repository: _libraryRepo, researchProvider: _researchProvider, writer: _libraryWriter };
+}
 import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -2739,6 +2759,50 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
+
+    // ── Living Library research branch ────────────────────────────────────────
+    // For non-local general_knowledge and medical_health questions, use the
+    // Living Library (Tavily + OpenAI synthesis + DB archive) INSTEAD of the
+    // main LLM call. Returns source-cited answer + "Read more" library link.
+    // Falls through to standard LLM path on any error — never blocks the user.
+    if (
+      (intentClass === "general_knowledge" || intentClass === "medical_health") &&
+      !destination &&
+      message.trim().length > 15
+    ) {
+      try {
+        const deps = getLivingLibraryDeps();
+        const result = await answerWithLivingLibrary({
+          memberQuestion: message,
+          locationLabel: null,
+          repository: deps.repository,
+          researchProvider: deps.researchProvider,
+          writer: deps.writer,
+        });
+        res.json({
+          sessionId,
+          reply: result.message,
+          recommendations: null,
+          followUpSuggestions: [],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: null,
+          intentClass,
+          sources: result.sources,
+          libraryEntry: result.libraryEntry,
+          provenanceNote: result.disclaimer ?? null,
+          needsClarification: false,
+          originalQuery: message,
+        });
+        return;
+      } catch (libraryErr: unknown) {
+        req.log?.warn(
+          { err: libraryErr },
+          "[kinfolk] Living Library branch failed — falling through to LLM",
+        );
+        // Fall through to standard LLM path below
+      }
+    }
 
     // ── Context resolution — entity disambiguation + biography mode detection ──
     // Runs before buildSystemPrompt so server-authoritative entity facts (e.g. Ryan Coogler
