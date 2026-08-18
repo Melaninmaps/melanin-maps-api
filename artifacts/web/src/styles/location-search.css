@@ -1,0 +1,91 @@
+/* MWM location search — scoped readable-input styles.
+   Imported once in main.tsx. Prevents dark-page inherited color from making
+   white-surface search text invisible on Businesses, Explore, and Events. */
+
+.mwm-location-search {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(12rem, 10rem) auto auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.mwm-location-field { display: block; min-width: 0; }
+
+.mwm-readable-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.9rem;
+  border: 1px solid #c8bdb1;
+  border-radius: 0.9rem;
+  background-color: #ffffff !important;
+  color: #28140a !important;
+  -webkit-text-fill-color: #28140a !important;
+  caret-color: #c8952e;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 0.7rem 0.9rem;
+  opacity: 1;
+}
+.mwm-readable-input::placeholder {
+  color: #756861 !important;
+  -webkit-text-fill-color: #756861 !important;
+  opacity: 1;
+}
+.mwm-readable-input:focus-visible {
+  border-color: #8d5c16;
+  outline: 3px solid rgb(200 149 46 / 35%);
+  outline-offset: 2px;
+}
+.mwm-readable-input:-webkit-autofill,
+.mwm-readable-input:-webkit-autofill:hover,
+.mwm-readable-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #28140a !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+}
+
+.mwm-location-submit,
+.mwm-location-current {
+  min-height: 2.9rem;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.mwm-location-submit {
+  border: 1px solid #351407;
+  background: #351407;
+  color: #fff;
+}
+.mwm-location-current {
+  border: 1px solid #c8952e;
+  background: #fffdf8;
+  color: #5a370f;
+}
+.mwm-location-submit:disabled,
+.mwm-location-current:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.mwm-location-status {
+  grid-column: 1 / -1;
+  min-height: 1.25rem;
+  font-size: 0.875rem;
+}
+.mwm-location-error  { color: #9c1c1c; font-weight: 600; }
+.mwm-location-success { color: #256d47; font-weight: 600; }
+
+@media (max-width: 860px) {
+  .mwm-location-search { grid-template-columns: 1fr 1fr; }
+  .mwm-location-field--query { grid-column: 1 / -1; }
+  .mwm-location-submit,
+  .mwm-location-current { width: 100%; }
+}
+@media (max-width: 480px) {
+  .mwm-location-search { grid-template-columns: 1fr; }
+  .mwm-location-field--query { grid-column: auto; }
+}

@@ -38,6 +38,7 @@ import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDia
 import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
 import { CommunityVibesRepository } from "./communityVibes/communityVibesRepository";
 import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunityVibesRoutes";
+import { registerLocationResolutionRoutes } from "./location/registerLocationResolutionRoutes";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -405,6 +406,12 @@ registerLocationFirstDiscoveryRoutes(
     },
   ),
 );
+
+// ── Location resolution — backs LocationSearchBar on Businesses, Explore, Events ──
+// GET /api/locations/resolve?q=  — text → nearest community_locations row
+// GET /api/locations/reverse?lat=&lng=  — coords → nearest area within 80 km
+// Both are public; neither reveals individual user location data.
+registerLocationResolutionRoutes(app, pool);
 
 // ── Community Vibes — evidence-backed member signals ─────────────────────────
 // Public GET returns aggregate approved vibes (never contributor identity).

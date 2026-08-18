@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
+import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import type { DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 
@@ -17,12 +18,11 @@ const OWNERSHIP_FILTERS = [
 ];
 
 export function LocationFirstBusinessDirectory() {
-  const { location, setExplicitLocation, requestDeviceLocation } = useDiscoveryLocation();
+  const { location, setExplicitLocation } = useDiscoveryLocation();
   const [category, setCategory] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [ownership, setOwnership] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [cityInput, setCityInput] = useState(location.city ?? "");
   const [response, setResponse] = useState<LocationFirstResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -73,11 +73,6 @@ export function LocationFirstBusinessDirectory() {
     setOwnership((prev) => prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]);
   }
 
-  function handleCitySubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const parts = cityInput.split(",").map((s) => s.trim());
-    setExplicitLocation({ city: parts[0] || null, stateCode: parts[1] || null, neighborhood: null });
-  }
 
   return (
     <main className="bg-[#FBF6EC] pb-16">
@@ -93,33 +88,23 @@ export function LocationFirstBusinessDirectory() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-8">
-        {/* Search + location row */}
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            className="min-w-[220px] flex-1 rounded-full border border-[#3A1F0E]/15 bg-white px-5 py-3 text-sm"
-            placeholder="Search barber, OB-GYN, tax attorney, restaurant…"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <form onSubmit={handleCitySubmit} className="flex gap-2">
-            <input
-              className="rounded-full border border-[#3A1F0E]/15 bg-white px-4 py-3 text-sm w-44"
-              placeholder="City, State"
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-            />
-            <button type="submit" className="rounded-full bg-[#3A1F0E] px-4 py-3 text-sm font-semibold text-white">
-              Search area
-            </button>
-          </form>
-          <button
-            type="button"
-            className="rounded-full border border-[#CA922B] bg-white px-4 py-3 text-sm font-semibold text-[#8D5C17]"
-            onClick={() => void requestDeviceLocation()}
-          >
-            Use my location
-          </button>
-        </div>
+        {/* Search + location — single shared control with visible foreground, resolver states, and geolocation */}
+        <LocationSearchBar
+          queryLabel="What are you looking for?"
+          queryPlaceholder="Search barber, OB-GYN, tax attorney, restaurant…"
+          areaPlaceholder="City, neighborhood, or ZIP"
+          initialQuery={searchText}
+          initialAreaLabel={locationLabel}
+          submitLabel="Search area"
+          onResolved={({ query, area }) => {
+            setSearchText(query);
+            setExplicitLocation({
+              city: area.cityName,
+              stateCode: area.stateCode ?? null,
+              neighborhood: area.neighborhoodName ?? null,
+            });
+          }}
+        />
 
         <p className="mt-4 text-sm font-semibold text-[#2B1507]">{countLabel}</p>
         <p className="mt-1 text-xs text-[#3A1F0E]/60">
@@ -218,7 +203,7 @@ function LocationNeededState() {
     <section className="mt-8 rounded-2xl border border-[#CA922B]/35 bg-white p-6">
       <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Choose an area to begin</h2>
       <p className="mt-2 max-w-xl leading-7 text-[#3A1F0E]/70">
-        Enter a city above or use your location to see nearby businesses and services. We will not show a nationwide list and label it local.
+        Enter a city above or use your location to see nearby businesses and services.
       </p>
     </section>
   );

@@ -5,6 +5,7 @@ import { Component, type ReactNode, type ErrorInfo } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import App from "./App";
 import "./index.css";
+import "./styles/location-search.css";
 import { getWebToken } from "./lib/webAuth";
 
 setAuthTokenGetter(getWebToken);

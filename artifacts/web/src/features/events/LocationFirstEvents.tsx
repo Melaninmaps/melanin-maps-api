@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
+import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import type { DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
 
 const BASE = import.meta.env.BASE_URL;
@@ -16,7 +17,6 @@ const TIME_FILTERS: Array<{ id: DateRange; label: string }> = [
 export function LocationFirstEvents() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [dateRange, setDateRange] = useState<DateRange>(null);
-  const [cityInput, setCityInput] = useState(location.city ?? "");
   const [response, setResponse] = useState<LocationFirstResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -59,11 +59,6 @@ export function LocationFirstEvents() {
 
   const locationLabel = [location.neighborhood, location.city, location.stateCode].filter(Boolean).join(", ");
 
-  function handleCitySubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const parts = cityInput.split(",").map((s) => s.trim());
-    setExplicitLocation({ city: parts[0] || null, stateCode: parts[1] || null, neighborhood: null });
-  }
 
   return (
     <main className="bg-[#FBF6EC] pb-16">
@@ -95,20 +90,24 @@ export function LocationFirstEvents() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-8">
-        {/* Location setter */}
-        {!location.city && (
-          <form onSubmit={handleCitySubmit} className="mb-6 flex flex-wrap gap-2 items-center">
-            <input
-              className="rounded-full border border-[#3A1F0E]/15 bg-white px-5 py-2.5 text-sm w-56"
-              placeholder="City, State (e.g. Charlotte, NC)"
-              value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
-            />
-            <button type="submit" className="rounded-full bg-[#3A1F0E] px-5 py-2.5 text-sm font-semibold text-white">
-              Find events here
-            </button>
-          </form>
-        )}
+        {/* Location — visible input, geolocation, and resolver states from LocationSearchBar */}
+        <div className="mb-6">
+          <LocationSearchBar
+            queryLabel="Event search"
+            queryPlaceholder=""
+            areaPlaceholder="City or neighborhood"
+            initialAreaLabel={locationLabel}
+            showQuery={false}
+            submitLabel="Show events"
+            onResolved={({ area }) => {
+              setExplicitLocation({
+                city: area.cityName,
+                stateCode: area.stateCode ?? null,
+                neighborhood: area.neighborhoodName ?? null,
+              });
+            }}
+          />
+        </div>
 
         {/* States */}
         {!location.city && (
