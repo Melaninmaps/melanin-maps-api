@@ -110,6 +110,10 @@ export type ChatMessage = {
   /** Set on KINFOLK_BUSY/KINFOLK_RATE_LIMITED errors — original question can be retried */
   retryable?: boolean;
   retryText?: string;
+  /** City Kinfolk resolved for this response — shown as a location pill so the member
+   *  knows their alias (e.g. "Philly", "nawlins") was understood correctly. */
+  location?: { city: string; state: string | null; source: string } | null;
+  locationSource?: string | null;
 };
 
 export type SessionSummary = {
@@ -183,6 +187,8 @@ export function useKinfolk() {
           queriesLimit?: number;
           intentClass?: string | null;
           provenanceNote?: string | null;
+          location?: { city: string; state: string | null; source: string } | null;
+          locationSource?: string | null;
         };
 
         setSessionId(data.sessionId);
@@ -204,6 +210,8 @@ export function useKinfolk() {
           feedback: {},
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
+          location: data.location ?? null,
+          locationSource: data.locationSource ?? null,
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);

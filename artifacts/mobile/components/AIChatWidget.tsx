@@ -31,6 +31,8 @@ interface Message {
   fromUser: boolean;
   ts: number;
   taskCreated?: { listName?: string; taskCount?: number; taskTitle?: string };
+  location?: { city: string; state: string | null; source: string } | null;
+  locationSource?: string | null;
 }
 
 interface TaskActionPayload {
@@ -101,6 +103,8 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
   followUpSuggestions: string[];
+  location?: { city: string; state: string | null; source: string } | null;
+  locationSource?: string | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -128,12 +132,16 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     taskAction?: TaskActionPayload | null;
     sessionId?: string;
     followUpSuggestions?: string[];
+    location?: { city: string; state: string | null; source: string } | null;
+    locationSource?: string | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
     reply: data.reply ?? "Sorry, something went sideways on my end.",
     taskAction: data.taskAction,
     followUpSuggestions: data.followUpSuggestions ?? [],
+    location: data.location ?? null,
+    locationSource: data.locationSource ?? null,
   };
 }
 
@@ -517,7 +525,7 @@ export function AIChatWidget() {
 
     try {
       const token = await getToken();
-      const { reply, taskAction, followUpSuggestions } = await sendToKinfolk(text, token);
+      const { reply, taskAction, followUpSuggestions, location, locationSource } = await sendToKinfolk(text, token);
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -528,7 +536,7 @@ export function AIChatWidget() {
         }
       }
 
-      const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated };
+      const aiMsg: Message = { id: String(Date.now() + 1), text: reply, fromUser: false, ts: Date.now(), taskCreated, location, locationSource };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
     } catch (err) {
@@ -692,6 +700,15 @@ export function AIChatWidget() {
                     </Text>
                   </View>
                 </View>
+                {/* Location resolution pill — shows which city Kinfolk resolved */}
+                {!item.fromUser && item.location?.city && (
+                  <View style={[styles.locationPill, { marginLeft: 42 }]}>
+                    <Feather name="map-pin" size={10} color={colors.primary} />
+                    <Text style={[styles.locationPillTxt, { color: colors.primary }]}>
+                      Searching {item.location.city}{item.location.state ? `, ${item.location.state}` : ""}
+                    </Text>
+                  </View>
+                )}
                 {!item.fromUser && (
                   <TouchableOpacity
                     onPress={() => void speakMessage(item.id, item.text)}
@@ -1024,6 +1041,8 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
     borderWidth: 1,
   },
+  locationPill: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 3, marginBottom: 1, alignSelf: "flex-start" },
+  locationPillTxt: { fontSize: 10, fontFamily: "Inter_500Medium", opacity: 0.75 },
   listenBtn: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, paddingLeft: 2, alignSelf: "flex-start" },
   listenTxt: { fontSize: 11, fontFamily: "Inter_400Regular" },
   voiceMeter: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 1 },

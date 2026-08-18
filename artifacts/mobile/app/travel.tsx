@@ -572,6 +572,17 @@ function AiMessageBubble({
           </TouchableOpacity>
         </View>
 
+        {/* Location resolution pill — shows which city Kinfolk resolved so the member
+            never wonders whether their alias (e.g. "Philly", "nawlins") was understood */}
+        {msg.role === "assistant" && msg.location?.city && (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, marginBottom: 2 }}>
+            <Ionicons name="location-outline" size={11} color={GOLD} />
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: GOLD + "BB" }}>
+              Searching {msg.location.city}{msg.location.state ? `, ${msg.location.state}` : ""}
+            </Text>
+          </View>
+        )}
+
         {/* Task Action Card — shown when AI wants to create tasks */}
         {msg.taskAction && !msg.taskActionDone && msg.taskAction.tasks.length > 0 && (
           <TaskActionCard
