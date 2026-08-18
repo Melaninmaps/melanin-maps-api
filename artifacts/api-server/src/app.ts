@@ -36,6 +36,10 @@ import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTr
 import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
 import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
 import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
+import {
+  requestCorrelationLogging,
+  structuredErrorHandler,
+} from "./ops/structuredProductionLogging";
 import { registerLocationFirstDiscoveryRoutes } from "./discovery/registerLocationFirstDiscoveryRoutes";
 import { createPostgresFlywheelRepository } from "./discovery/postgresFlywheelRepository";
 import { findExactRecords, findNearestAvailableLocation } from "./discovery/postgresLocationFirstRepository";
@@ -299,6 +303,10 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Structured request correlation — attaches x-request-id header to every
+// response and logs method + route + statusCode + responseTimeMs on finish.
+// Must come before routes so every request gets an ID.
+app.use(requestCorrelationLogging(logger));
 // City request tracker — runs after body parsing so home_city is available.
 // Records per-city request counts, error counts, and timing for health metrics.
 app.use(cityRequestMiddleware);
@@ -437,22 +445,24 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   serveSpa(req, res, next);
 });
 
-app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
-  const message = (err as any)?.message ?? "Internal server error";
-
-  // Pool connection timeout → 503 so clients get a bounded error rather than
-  // an indefinite spinner. This fires when connectionTimeoutMillis expires
-  // (pool is saturated) or when a route explicitly passes the error to next().
+// Pool-timeout handler — must come before structuredErrorHandler so that
+// 503 responses are returned with the right status before the generic handler fires.
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
   if (isPoolTimeoutError(err)) {
     logger.warn({ url: req.url, method: req.method, pool: getPoolStats() }, "db-pool connection timeout — 503");
-    res.status(503).json({ error: "Service temporarily unavailable. Please try again in a moment." });
+    if (!res.headersSent) {
+      res.status(503).json({ error: "Service temporarily unavailable. Please try again in a moment." });
+    }
     return;
   }
-
-  const statusCode = (err as any)?.status ?? (err as any)?.statusCode ?? 500;
-  logger.error({ err, url: req.url, method: req.method }, "Unhandled error");
-  res.status(statusCode).json({ error: message });
+  next(err);
 });
+
+// Structured error handler — replaces the old inline handler.
+// Logs requestId + method + route + statusCode + serialized error on every
+// unhandled exception, and returns a safe JSON error to the client.
+// Never leaks stack traces or member data to the response.
+app.use(structuredErrorHandler(logger));
 
 function isPoolTimeoutError(err: unknown): boolean {
   const msg = ((err as Error)?.message ?? "").toLowerCase();
