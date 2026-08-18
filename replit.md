@@ -46,6 +46,35 @@ Community discovery, travel, and business platform celebrating Black culture —
 - **Profile** — auth state, saved businesses, settings, membership
 - **Events & Community** — event listings, community feed
 
+## Community Intelligence Rule (Permanent)
+
+**Never use "Community Safety" as a product term.** The product term is **Community Intelligence**.
+
+Community Intelligence = community-sourced context for informed choices. It describes moderated shared experiences about arrival, access, atmosphere, practical conditions, business experience, events, and verified local resources.
+
+**Prohibited:** Implying or calculating that a location is unsafe because it has minority residents, is predominantly minority, has a particular race/ethnicity, is diverse, or lacks diversity. Demographic composition is NOT a safety signal and must never be an input to map pins, recommendations, rankings, labels, filters, Kinfolk responses, or neighborhood scores. Search terms are not identity disclosure.
+
+**Use:** Community Intelligence · Community-sourced context · Community-sourced insight · Shared local experience · Practical local context · What community members have shared.
+
+**Avoid:** Community Safety · safety score · safe/unsafe neighborhood labels · diverse/less-diverse as risk proxy · blanket neighborhood judgments.
+
+Emergency help remains accurately labeled as emergency help (pointing to official emergency services or official alerts). It is separate from Community Intelligence and must never be rebranded as Community Intelligence.
+
+## Mobile Parity Rules (Permanent)
+
+The native iOS/Android app is a client of the same MWM API — not a second source of truth. These 8 rules are non-negotiable:
+
+1. **Local search is server-authoritative:** 5-mile default, ≤2 results, same response drives both list cards and map pins. Never inject national/global results or auto-expand to a farther city.
+2. **Location is member-initiated and foreground-only.** Show clear states: locating · success · denied · disabled · manual fallback. Never request background location.
+3. Use the same seeded Living Library foundations, topic icons, Kinfolk research-memory policy, Community Vibes evidence, and canonical cultural-site records as the website.
+4. **Kinfolk applies the diaspora-first lens**, preserves `KINFOLK_BUSY` for retry, and never infers identity from search terms. Sensitive context is optional; someone-else context stays temporary.
+5. **Voice recording uses `expo-audio`; the member controls stop.** Show stage-specific errors (permission / capture / transcription) — never a fake length error.
+6. Canonical web cultural-site URLs open the same native record via Universal Links / Android App Links. Use stable IDs.
+7. **Polished gold-outline subject-specific icons, not colorful or cartoon emoji.** The feather is a brand mark, not a topic icon.
+8. **All native input text must be visibly readable.** Never inherit dark-surface colors into light input fields.
+
+Every preview build must pass the native acceptance checklist (see `.agents/memory/mobile-parity-rules.md`) before promoting to production.
+
 ## Platform Language Rule (Permanent)
 
 Mapping With Melanin™ serves minority communities, the global melanated diaspora, and other underrepresented communities. Do not use "Black-owned" as the automatic generic default. Use specific demographic language only when supported by user intent, preferences, verified identity, or the cultural subject.

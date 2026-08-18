@@ -4,6 +4,8 @@
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
 - [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs in cultural_sites; guard needs columns: founded_year, status, source, is_featured (all added Aug 9 2026 via startup migrations).
 - [Safety Philosophy — Locked Decision](safety-philosophy.md) — Community experience-based safety, NOT crime statistics. "Welcoming neighborhoods" not "safe neighborhoods". safety-context.ts deleted (pulled live police crime data).
+- [Community Intelligence Rule — PERMANENT](community-intelligence-rule.md) — Product term is "Community Intelligence" NOT "Community Safety". Demographic composition is never a safety signal. Full rename scope + implementation sequence inside.
+- [Mobile Parity Rules — PERMANENT](mobile-parity-rules.md) — 8 non-negotiable native app rules + acceptance checklist; server-authoritative local search; foreground-only location; gold icons not emoji; readable input text on dark surfaces.
 - [Inclusive platform language](inclusive-language.md) — Contextual rule: "Black-owned" only when verified or user-chosen; generic copy uses "minority-owned"/"community businesses". Hook: .husky/pre-commit-language-check.
 - [Ship priority](ship-priority.md) — every decision must optimize for fastest path to published, highest quality App Store submission. No dead ends, no exploratory back-and-forth.
 - [Interruption handling — PERMANENT](interruption-handling.md) — address concern, return to implementation list immediately; original authorization stays active.
