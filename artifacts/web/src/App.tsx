@@ -68,7 +68,7 @@ import ResetPassword from "@/pages/reset-password";
 import ForgotPassword from "@/pages/forgot-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
 import BusinessGrowthCenter from "@/pages/business-growth-center";
-import Library from "@/pages/library";
+import Library, { LibraryHomePage, LibraryTopicPage } from "@/pages/library";
 import Circles from "@/pages/circles";
 import Collections from "@/pages/collections";
 import FinancialHub from "@/pages/financial-hub";
@@ -344,8 +344,11 @@ function Router() {
       <Route path="/notifications">
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
       </Route>
+      <Route path="/library/topics/:slug">
+        <Layout><PreLaunchRoute><LibraryTopicPage /></PreLaunchRoute></Layout>
+      </Route>
       <Route path="/library">
-        <Layout><PreLaunchRoute><Library /></PreLaunchRoute></Layout>
+        <Layout><PreLaunchRoute><LibraryHomePage /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/circles">
         <Layout><ProtectedRoute><Circles /></ProtectedRoute></Layout>

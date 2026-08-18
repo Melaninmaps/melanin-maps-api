@@ -17,6 +17,19 @@ import { authLimiter, generalLimiter } from "./middleware/rateLimiter";
 import { cityRequestMiddleware } from "./lib/cityRequestTracker";
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 import { getHealthHistory } from "./lib/healthMonitor";
+import { registerLivingLibraryRoutes } from "./library/registerLivingLibraryRoutes";
+import { createPostgresLibraryRepository } from "./library/postgresLibraryRepository";
+import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
+import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
+import { registerExploreRoutes } from "./explore/registerExploreRoutes";
+import {
+  createPostgresLocalContextRepository,
+  createPostgresMemberContextRepository,
+  createPostgresProfessionalDirectoryRepository,
+  createPostgresCapabilityTurnStore,
+} from "./kinfolk/capabilities/postgresCapabilityStores";
+import { registerKinfolkCapabilityRoutes } from "./kinfolk/capabilities/registerCapabilityRoutes";
+import { registerKinfolkToneRoute } from "./profile/registerKinfolkToneRoute";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -288,6 +301,33 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api", router);
 app.use(webSsrRouter);
 app.use(privacyRouter);
+
+// ── Living Library routes ──────────────────────────────────────────────────
+// Registered directly on `app` (not the sub-router) because they need
+// dependency instances built with env vars available at boot time.
+registerLivingLibraryRoutes(app, {
+  repository: createPostgresLibraryRepository(pool),
+  researchProvider: createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? ""),
+  writer: createOpenAiLibraryWriter({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+    model: process.env.LIBRARY_RESEARCH_MODEL ?? "gpt-4o-mini",
+  }),
+});
+
+// ── Purposeful Explore routes ────────────────────────────────────────────────
+registerExploreRoutes(app);
+
+// ── Kinfolk capability-turn and consent routes ───────────────────────────────
+registerKinfolkCapabilityRoutes(app, {
+  localContext: createPostgresLocalContextRepository(pool),
+  memberContext: createPostgresMemberContextRepository(pool),
+  professionalDirectory: createPostgresProfessionalDirectoryRepository(pool),
+  capabilityTurnStore: createPostgresCapabilityTurnStore(pool),
+});
+
+// ── Kinfolk tone preference route ────────────────────────────────────────────
+registerKinfolkToneRoute(app, pool);
 
 // Serve the web app static files from whichever dir has index.html
 app.use(express.static(spaServeDir));

@@ -11,6 +11,7 @@ import {
   MwmCommunity, MwmShield, MwmHeart, MwmGraduationCap,
 } from "@/components/icons/mwm-icons";
 import { Link } from "wouter";
+import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
 
@@ -1325,7 +1326,7 @@ function TravelPage() {
                   <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "assistant" && (
                       <div className="w-7 h-7 rounded-lg bg-[#2B1507] flex items-center justify-center shrink-0 mr-2 mt-0.5">
-                        <Sparkles size={13} className="text-[#CA922B]" />
+                        <GoldFeatherMark size={15} label="Kinfolk" />
                       </div>
                     )}
                     <div className={msg.role === "user" ? "max-w-[70%]" : "max-w-[85%]"}>

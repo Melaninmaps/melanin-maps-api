@@ -10,6 +10,7 @@ import {
   Settings, ChevronRight, Eye, EyeOff, KeyRound, Trash2, Sparkles, X
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import KinfolkTonePreference from "@/components/kinfolk/KinfolkTonePreference";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1628,6 +1629,11 @@ export default function Profile() {
               )}
             </div>
           )}
+        </div>
+
+        {/* ── Kinfolk Voice Preference ────────────────────────────────────── */}
+        <div className="mt-8">
+          <KinfolkTonePreference initialValue={null} />
         </div>
 
         {/* ── My Community Impact ─────────────────────────────────────────── */}

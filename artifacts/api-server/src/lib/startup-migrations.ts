@@ -3784,6 +3784,117 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
              )
     `,
   },
+  // ── Living Library schema (Aug 2026) ──────────────────────────────────────
+  {
+    name: "living_library_topics_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_topics (
+      id   UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+      slug TEXT    NOT NULL UNIQUE,
+      title TEXT   NOT NULL,
+      domain TEXT  NOT NULL,
+      community_lens TEXT NOT NULL DEFAULT 'Black women and minority women',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "living_library_entries_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_entries (
+      id                  UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+      topic_id            UUID  NOT NULL,
+      question            TEXT  NOT NULL,
+      normalized_question TEXT  NOT NULL,
+      title               TEXT  NOT NULL,
+      summary             TEXT  NOT NULL,
+      body                TEXT  NOT NULL,
+      domain              TEXT  NOT NULL,
+      community_lens      TEXT  NOT NULL DEFAULT 'Black women and minority women',
+      location_label      TEXT,
+      disclaimer          TEXT,
+      source_count        INTEGER NOT NULL DEFAULT 0,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      refreshed_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "living_library_entries_idx_topic_refreshed_v1",
+    sql: `CREATE INDEX IF NOT EXISTS library_entries_topic_refreshed_idx
+          ON library_entries (topic_id, refreshed_at DESC)`,
+  },
+  {
+    name: "living_library_entries_idx_norm_question_v1",
+    sql: `CREATE INDEX IF NOT EXISTS library_entries_norm_question_idx
+          ON library_entries (normalized_question, domain, community_lens)`,
+  },
+  {
+    name: "living_library_entry_sources_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_entry_sources (
+      id           UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+      entry_id     UUID  NOT NULL,
+      url          TEXT  NOT NULL,
+      title        TEXT  NOT NULL,
+      publisher    TEXT,
+      excerpt      TEXT  NOT NULL DEFAULT '',
+      source_tier  TEXT  NOT NULL DEFAULT 'public-service',
+      published_at TIMESTAMPTZ,
+      retrieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (entry_id, url)
+    )`,
+  },
+  {
+    name: "living_library_topic_follows_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_topic_follows (
+      topic_id  UUID NOT NULL,
+      member_id TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (topic_id, member_id)
+    )`,
+  },
+  // ── Kinfolk capability layer schema (Aug 2026) ────────────────────────────
+  {
+    name: "users_kinfolk_tone_column_v1",
+    sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS kinfolk_tone TEXT DEFAULT 'warm_standard'`,
+  },
+  {
+    name: "local_place_aliases_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS local_place_aliases (
+      id           UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
+      city_id      UUID  NOT NULL,
+      phrase       TEXT  NOT NULL,
+      neighborhood TEXT,
+      place_meaning TEXT NOT NULL,
+      confidence   NUMERIC NOT NULL DEFAULT 0.9,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (city_id, phrase)
+    )`,
+  },
+  {
+    name: "kinfolk_capability_turns_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_capability_turns (
+      id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      member_id  TEXT NOT NULL,
+      intent     JSONB NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "kinfolk_capability_turns_idx_member_expires_v1",
+    sql: `CREATE INDEX IF NOT EXISTS kinfolk_capability_turns_member_expires_idx
+          ON kinfolk_capability_turns (member_id, expires_at DESC)`,
+  },
+  // ── Living Library seed topics (7 community books) ────────────────────────
+  {
+    name: "living_library_seed_topics_v1",
+    sql: `INSERT INTO library_topics (slug, title, domain, community_lens) VALUES
+      ('medical',   'Health & Wellness',       'medical',   'Black women and minority women'),
+      ('legal',     'Know Your Rights',        'legal',     'Black women and minority women'),
+      ('financial', 'Money & Financial Power', 'financial', 'Black women and minority women'),
+      ('education', 'Education & Scholarships','education', 'Black women and minority women'),
+      ('stem',      'STEM Pathways',           'stem',      'Black women and minority women'),
+      ('history',   'Our History & Heritage',  'history',   'Black women and minority women'),
+      ('general',   'Community Resources',     'general',   'Black women and minority women')
+    ON CONFLICT (slug) DO NOTHING`,
+  },
 ];
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
