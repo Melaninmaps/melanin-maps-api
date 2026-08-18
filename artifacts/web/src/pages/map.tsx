@@ -2,6 +2,8 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, useSearch } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
+import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import AddPlaceModal from "@/components/AddPlaceModal";
 
 const BASE = import.meta.env.BASE_URL;
@@ -281,6 +283,9 @@ export default function MapPage() {
   const [routingBizId, setRoutingBizId] = useState<string | null>(null);
   const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
+  // Local search pin layer — separate from global discovery markers.
+  // Cleared whenever a new local search begins or the search is reset.
+  const localSearchMarkersRef = useRef<GMarker[]>([]);
 
   // Sundown towns — ALWAYS ON per Gate 5 Map UX Spec non-negotiable rule #2
   const [sundownTowns, setSundownTowns] = useState<SundownTown[]>([]);
@@ -317,7 +322,14 @@ export default function MapPage() {
     () => new URLSearchParams(locationSearch).get("q")?.trim() ?? "",
     [locationSearch],
   );
+  // ?area=charlotte-nc — resolved via /api/locations/resolve to set detectedLocation,
+  // which then activates LocalBusinessResults for the business results section.
+  const handoffArea = useMemo(
+    () => new URLSearchParams(locationSearch).get("area")?.trim() ?? "",
+    [locationSearch],
+  );
   const appliedHandoffQueryRef = useRef<string | null>(null);
+  const appliedHandoffAreaRef = useRef<string | null>(null);
   // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
   const searchViewportLockedRef = useRef(false);
   const searchViewportSequenceRef = useRef(0);
@@ -539,10 +551,20 @@ export default function MapPage() {
 
         // Fit canvas to MWM results so the viewport reflects where businesses
         // actually are, not just the geocoded city center.
-        const fitted = fitMapToBusinessResults(finalBusinesses);
-        if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
-          // No MWM records with valid coords — keep the geocoded pan.
-          searchViewportLockedRef.current = true;
+        // When coordinates are available, LocalBusinessResults.onPinsChange → applyLocalMapViewport
+        // manages the business viewport. Skip fitMapToBusinessResults to avoid overriding it.
+        const useLocalSearch = (geoLat !== null && geoLng !== null) || userCoords !== null;
+        if (!useLocalSearch) {
+          const fitted = fitMapToBusinessResults(finalBusinesses);
+          if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
+            // No MWM records with valid coords — keep the geocoded pan.
+            searchViewportLockedRef.current = true;
+            mapRef.current.panTo({ lat: geoLat, lng: geoLng });
+            mapRef.current.setZoom(12);
+          }
+        } else if (!searchViewportLockedRef.current && geoLat !== null && geoLng !== null && mapRef.current) {
+          // Geo-extract found a city; pan there for immediate feedback.
+          // Local search will then fit to the 1-2 results via applyLocalMapViewport.
           mapRef.current.panTo({ lat: geoLat, lng: geoLng });
           mapRef.current.setZoom(12);
         }
@@ -567,6 +589,32 @@ export default function MapPage() {
     setSearch(handoffQuery);
     void runUniversalSearch(handoffQuery);
   }, [handoffQuery, ready, runUniversalSearch]);
+
+  // ── Resolve ?area= handoff once after the map is ready ───────────────────
+  // Parses a slug like "charlotte-nc" via /api/locations/resolve and sets
+  // detectedLocation, which activates LocalBusinessResults in the sidebar.
+  useEffect(() => {
+    if (!handoffArea || !ready) return;
+    if (appliedHandoffAreaRef.current === handoffArea) return;
+    appliedHandoffAreaRef.current = handoffArea;
+    const apiBase = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+    fetch(`${apiBase}/api/locations/resolve?q=${encodeURIComponent(handoffArea)}`, {
+      credentials: "include",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.latitude && data?.longitude) {
+          const lat = Number(data.latitude);
+          const lng = Number(data.longitude);
+          setDetectedLocation({ lat, lng, name: data.label ?? handoffArea });
+          if (mapRef.current && !searchViewportLockedRef.current) {
+            mapRef.current.panTo({ lat, lng });
+            mapRef.current.setZoom(12);
+          }
+        }
+      })
+      .catch(() => { /* area resolve failed — continue without it */ });
+  }, [handoffArea, ready]);
 
   // ── Fetch discoverability pins after map is ready ─────────────────────────
   useEffect(() => {
@@ -1222,6 +1270,57 @@ export default function MapPage() {
 
   const legendTileLabel = LEGEND_TILES.find((t) => t.key === legendFilter)?.label ?? "";
 
+  // ── MapViewportAdapter backed by the live Google Maps instance ──────────────
+  // Passed to applyLocalMapViewport(makeMapAdapter(), area, pins) inside the
+  // LocalBusinessResults onPinsChange callback. Keeps local search pins on their
+  // own layer so they are never mixed with global discovery or business markers.
+  function makeMapAdapter(): MapViewportAdapter {
+    return {
+      clearSearchPins() {
+        localSearchMarkersRef.current.forEach((m) => m.setMap(null));
+        localSearchMarkersRef.current = [];
+      },
+      renderSearchPins(pins: Array<{ id: string; latitude: number; longitude: number }>) {
+        const g = (window as any).google?.maps;
+        const map = mapRef.current;
+        if (!g || !map) return;
+        pins.forEach((pin) => {
+          const marker = new g.Marker({
+            position: { lat: pin.latitude, lng: pin.longitude },
+            map,
+            title: pin.id,
+            icon: {
+              path: g.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: "#CA922B",
+              fillOpacity: 1,
+              strokeColor: "#2B1507",
+              strokeWeight: 2.5,
+            },
+          });
+          localSearchMarkersRef.current.push(marker);
+        });
+      },
+      setView([lat, lng]: [number, number], zoom: number) {
+        if (mapRef.current) { mapRef.current.panTo({ lat, lng }); mapRef.current.setZoom(zoom); }
+      },
+      fitBounds(
+        [[minLat, minLng], [maxLat, maxLng]]: [[number, number], [number, number]],
+        { maxZoom }: { padding: [number, number]; maxZoom: number },
+      ) {
+        const g = (window as any).google?.maps;
+        const map = mapRef.current;
+        if (!g || !map) return;
+        const bounds = new g.LatLngBounds({ lat: minLat, lng: minLng }, { lat: maxLat, lng: maxLng });
+        map.fitBounds(bounds, { top: 84, right: 32, bottom: 48, left: 352 });
+        g.event.addListenerOnce(map, "idle", () => {
+          if ((map.getZoom() ?? 0) > maxZoom) map.setZoom(maxZoom);
+        });
+        searchViewportLockedRef.current = true;
+      },
+    };
+  }
+
   const renderSidebar = () => {
     // Content when a cultural legend filter is active
     const showingCultural = legendFilter && legendFilter !== "business";
@@ -1263,6 +1362,8 @@ export default function MapPage() {
                     if (businessSearchActive) setBusinessSearchActive(false);
                     if (universalResults) setUniversalResults(null);
                     if (detectedLocation) setDetectedLocation(null);
+                    localSearchMarkersRef.current.forEach((m) => m.setMap(null));
+                    localSearchMarkersRef.current = [];
                   }}
                   onKeyDown={(e) => { if (e.key === "Enter") runUniversalSearch(); }}
                   placeholder="Search businesses, heritage, events — press Enter"
@@ -1270,7 +1371,10 @@ export default function MapPage() {
                 />
                 {search && (
                   <button
-                    onClick={() => { setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null); }}
+                    onClick={() => {
+                      setSearch(""); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
+                      localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
+                    }}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5"
                   >
                     <X className="w-3.5 h-3.5 text-[#3A1F0E]/40" />
@@ -1571,8 +1675,18 @@ export default function MapPage() {
                   </div>
                 )}
 
-                {/* Business results */}
-                {(universalResults?.results?.businesses ?? filtered).length === 0 ? (
+                {/* Business results — local-scoped endpoint when coordinates are known */}
+                {businessSearchActive && (detectedLocation ?? userCoords) ? (
+                  <LocalBusinessResults
+                    query={search}
+                    area={
+                      detectedLocation
+                        ? { latitude: detectedLocation.lat, longitude: detectedLocation.lng, label: detectedLocation.name }
+                        : { latitude: userCoords!.lat, longitude: userCoords!.lng, label: "your location" }
+                    }
+                    onPinsChange={(pins, area) => applyLocalMapViewport(makeMapAdapter(), area, pins)}
+                  />
+                ) : (universalResults?.results?.businesses ?? filtered).length === 0 ? (
                   <div className="p-8 text-center">
                     <Search className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-3" />
                     {detectedLocation ? (
@@ -1619,7 +1733,10 @@ export default function MapPage() {
                       Add a Place
                     </button>
                     <button
-                      onClick={() => { setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null); }}
+                      onClick={() => {
+                        setSearch(""); setCategory("All"); setBusinessSearchActive(false); setUniversalResults(null); setDetectedLocation(null);
+                        localSearchMarkersRef.current.forEach((m) => m.setMap(null)); localSearchMarkersRef.current = [];
+                      }}
                       className="text-xs font-bold text-[#CA922B] hover:underline"
                     >
                       Clear Search

@@ -39,6 +39,8 @@ import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
 import { CommunityVibesRepository } from "./communityVibes/communityVibesRepository";
 import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunityVibesRoutes";
 import { registerLocationResolutionRoutes } from "./location/registerLocationResolutionRoutes";
+import { LocalBusinessSearch } from "./map/localBusinessSearch";
+import { registerLocalBusinessSearchRoute } from "./map/registerLocalBusinessSearchRoute";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -406,6 +408,11 @@ registerLocationFirstDiscoveryRoutes(
     },
   ),
 );
+
+// ── Local business search — scoped map results (≤ 2 within 5 mi, no national fallback) ─
+// GET /api/map/local-business-search?q=&lat=&lng=&radius=5&expand=0
+// Constrained by Haversine radius server-side; pins == results (no independent source).
+registerLocalBusinessSearchRoute(app, new LocalBusinessSearch(pool));
 
 // ── Location resolution — backs LocationSearchBar on Businesses, Explore, Events ──
 // GET /api/locations/resolve?q=  — text → nearest community_locations row
