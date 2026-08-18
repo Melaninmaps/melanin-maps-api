@@ -1591,6 +1591,234 @@ END $seed$`,
     sql: `ALTER TABLE business_identity
       ADD COLUMN IF NOT EXISTS amenity_tags JSONB NOT NULL DEFAULT '[]'::jsonb`,
   },
+  // ── Schema repair: age_restriction_reasons (observed missing in Railway prod) ─
+  {
+    name: "business_identity_age_restriction_reasons_col_v1",
+    sql: `ALTER TABLE business_identity
+      ADD COLUMN IF NOT EXISTS age_restriction_reasons TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`,
+  },
+  // ── Schema repair: reviews.author_id (observed missing in Railway prod) ──────
+  // Uses a PL/pgSQL block so we can detect and copy an existing user-id column
+  // (user_id / member_id / reviewer_id / created_by) before falling back to NULL.
+  // Idempotent — entire block is guarded by NOT EXISTS.
+  {
+    name: "reviews_author_id_col_v1",
+    sql: `DO $$
+DECLARE source_col TEXT;
+BEGIN
+  IF to_regclass('public.reviews') IS NOT NULL THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='reviews' AND column_name='author_id'
+    ) THEN
+      ALTER TABLE reviews ADD COLUMN author_id UUID;
+      SELECT column_name INTO source_col
+      FROM information_schema.columns
+      WHERE table_schema='public' AND table_name='reviews'
+        AND column_name IN ('user_id','member_id','reviewer_id','created_by')
+        AND data_type='uuid'
+      ORDER BY CASE column_name
+        WHEN 'user_id'     THEN 1
+        WHEN 'member_id'   THEN 2
+        WHEN 'reviewer_id' THEN 3
+        WHEN 'created_by'  THEN 4
+        ELSE 99 END
+      LIMIT 1;
+      IF source_col IS NOT NULL THEN
+        EXECUTE format('UPDATE reviews SET author_id = %I WHERE author_id IS NULL', source_col);
+      END IF;
+    END IF;
+    CREATE INDEX IF NOT EXISTS reviews_author_id_idx ON reviews (author_id);
+  END IF;
+END $$`,
+  },
+  // ── Schema migration ledger (for /api/system/schema-status endpoint) ─────────
+  {
+    name: "schema_migrations_ledger_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS schema_migrations (
+      filename   TEXT PRIMARY KEY,
+      checksum   TEXT NOT NULL,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  // ── Community location + dynamic tag tables (Aug 2026) ────────────────────────
+  {
+    name: "community_locations_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_locations (
+      id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      country_code     CHAR(2) NOT NULL DEFAULT 'US',
+      state_code       TEXT,
+      city_name        TEXT NOT NULL,
+      neighborhood_name  TEXT,
+      neighborhood_slug  TEXT,
+      latitude         NUMERIC(9,6),
+      longitude        NUMERIC(9,6),
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "community_locations_unique_idx_v1",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS community_locations_unique_context_idx
+      ON community_locations (
+        country_code,
+        COALESCE(UPPER(state_code), ''),
+        LOWER(city_name),
+        COALESCE(LOWER(neighborhood_slug), '')
+      )`,
+  },
+  {
+    name: "community_locations_city_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS community_locations_city_idx
+      ON community_locations (LOWER(city_name), UPPER(state_code))`,
+  },
+  {
+    name: "community_location_aliases_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_location_aliases (
+      id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      location_id       UUID NOT NULL,
+      alias             TEXT NOT NULL,
+      moderation_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (moderation_status IN ('approved','pending','rejected')),
+      confidence        NUMERIC(3,2) NOT NULL DEFAULT 0.90
+        CHECK (confidence >= 0 AND confidence <= 1),
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (location_id, alias)
+    )`,
+  },
+  {
+    name: "community_location_aliases_lookup_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS community_location_aliases_lookup_idx
+      ON community_location_aliases (LOWER(alias))
+      WHERE moderation_status = 'approved'`,
+  },
+  {
+    name: "community_tag_definitions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_tag_definitions (
+      id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      slug                TEXT NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+      display_name        TEXT NOT NULL,
+      category            TEXT NOT NULL,
+      description         TEXT NOT NULL,
+      recommendation_scope TEXT NOT NULL DEFAULT 'experience'
+        CHECK (recommendation_scope IN ('experience','service','accessibility','safety','cultural_context')),
+      is_medical_claim    BOOLEAN NOT NULL DEFAULT FALSE,
+      moderation_status   TEXT NOT NULL DEFAULT 'pending'
+        CHECK (moderation_status IN ('approved','pending','rejected')),
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+  },
+  {
+    name: "business_location_contexts_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_location_contexts (
+      id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id         UUID NOT NULL,
+      location_id         UUID NOT NULL,
+      is_primary_location BOOLEAN NOT NULL DEFAULT TRUE,
+      service_radius_miles NUMERIC(6,2),
+      verified_at         TIMESTAMPTZ,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (business_id, location_id)
+    )`,
+  },
+  {
+    name: "business_location_contexts_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS business_location_contexts_location_idx
+      ON business_location_contexts (location_id, business_id)`,
+  },
+  {
+    name: "business_location_community_tags_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_location_community_tags (
+      id                            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_location_context_id  UUID NOT NULL,
+      tag_id                        UUID NOT NULL,
+      confirmed_member_count        INTEGER NOT NULL DEFAULT 0
+        CHECK (confirmed_member_count >= 0),
+      recent_confirmed_member_count INTEGER NOT NULL DEFAULT 0
+        CHECK (recent_confirmed_member_count >= 0),
+      confidence                    NUMERIC(3,2) NOT NULL DEFAULT 0
+        CHECK (confidence >= 0 AND confidence <= 1),
+      moderation_status             TEXT NOT NULL DEFAULT 'pending'
+        CHECK (moderation_status IN ('approved','pending','rejected')),
+      last_confirmed_at             TIMESTAMPTZ,
+      last_reviewed_at              TIMESTAMPTZ,
+      created_at                    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at                    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (business_location_context_id, tag_id)
+    )`,
+  },
+  {
+    name: "business_location_community_tags_rec_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS business_location_community_tags_recommendation_idx
+      ON business_location_community_tags (business_location_context_id, confidence DESC)
+      WHERE moderation_status = 'approved'`,
+  },
+  {
+    name: "community_tag_submissions_table_v1",
+    sql: `CREATE TABLE IF NOT EXISTS community_tag_submissions (
+      id                            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      member_id                     UUID,
+      business_location_context_id  UUID NOT NULL,
+      tag_id                        UUID NOT NULL,
+      evidence_note                 TEXT,
+      status                        TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending','approved','rejected')),
+      submitted_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      reviewed_at                   TIMESTAMPTZ,
+      reviewed_by                   UUID
+    )`,
+  },
+  {
+    name: "community_tag_submissions_moderation_idx_v1",
+    sql: `CREATE INDEX IF NOT EXISTS community_tag_submissions_moderation_idx
+      ON community_tag_submissions (status, submitted_at DESC)`,
+  },
+  {
+    name: "approved_location_community_tags_view_v1",
+    sql: `CREATE OR REPLACE VIEW approved_location_community_tags AS
+      SELECT
+        blc.business_id,
+        blc.location_id,
+        cl.city_name,
+        cl.state_code,
+        cl.neighborhood_name,
+        ctd.slug               AS tag_slug,
+        ctd.display_name       AS tag_name,
+        ctd.category,
+        ctd.recommendation_scope,
+        blct.confirmed_member_count,
+        blct.recent_confirmed_member_count,
+        blct.confidence,
+        blct.last_confirmed_at
+      FROM business_location_community_tags blct
+      JOIN business_location_contexts blc ON blc.id = blct.business_location_context_id
+      JOIN community_locations cl ON cl.id = blc.location_id
+      JOIN community_tag_definitions ctd ON ctd.id = blct.tag_id
+      WHERE blct.moderation_status = 'approved'
+        AND ctd.moderation_status  = 'approved'
+        AND blct.confirmed_member_count >= 3`,
+  },
+  {
+    name: "community_tag_growing_hands_seed_v1",
+    sql: `INSERT INTO community_tag_definitions (
+        slug, display_name, category, description, recommendation_scope,
+        is_medical_claim, moderation_status
+      ) VALUES (
+        'growing-hands',
+        'Growing hands',
+        'hair-care',
+        'Approved community language for a hair-care professional repeatedly described as supporting healthy-feeling hair care. It is not a medical claim or a growth guarantee.',
+        'experience',
+        FALSE,
+        'approved'
+      ) ON CONFLICT (slug) DO UPDATE
+        SET display_name      = EXCLUDED.display_name,
+            description       = EXCLUDED.description,
+            moderation_status = EXCLUDED.moderation_status,
+            updated_at        = NOW()`,
+  },
   // ── Must-change-password column ────────────────────────────────────────────
   // Enables a forced password-change flow on first login for pre-seeded tester
   // accounts. Safe to run on every boot (IF NOT EXISTS).

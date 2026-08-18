@@ -28,6 +28,7 @@ import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGr
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
 import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
 import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
+import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
 import { resolveKinfolkContext } from "../kinfolk/context-resolver";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
@@ -2664,6 +2665,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
       return;
     }
+
+    // ── Hair-loss / alopecia detection — pre-LLM care path ────────────────────
+    // When the member asks about hair loss, alopecia, or thinning hair, Kinfolk
+    // does NOT return a generic salon list. It returns a structured care plan with
+    // three consent-gated paths: educational context, optional dermatology search,
+    // optional community hair-care professional search.
+    // The client renders <KinfolkHairLossCarePaths> when it sees intentClass "hair_loss_care".
+    const HAIR_LOSS_RE = /\b(alopecia|hair[- ]?loss|losing[- ]my[- ]hair|losing[- ]hair|hair[- ]thinning|thinning[- ]hair|bald(?:ing|ness)|scalp[- ]condition|hair[- ]shedding|shedding[- ]hair|traction[- ]alopecia|central[- ]centrifugal|cicatricial|androgenetic[- ]alopecia|female[- ]pattern[- ](hair[- ])?loss|male[- ]pattern[- ](hair[- ])?loss)\b/i;
+    if (HAIR_LOSS_RE.test(message)) {
+      const carePlan = buildHairLossCarePlan();
+      res.json({
+        sessionId,
+        reply: carePlan.educationalMessage,
+        recommendations: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "hair_loss_care",
+        sources: carePlan.sourceLinks,
+        needsClarification: false,
+        hairLossCarePlan: carePlan,
+        originalQuery: message,
+      });
+      return;
+    }
+
     const _discoveryInstruction = buildDiscoveryInstruction(earlyDecision);
 
     // ── kinfolk_local_resolution structured log ────────────────────────────

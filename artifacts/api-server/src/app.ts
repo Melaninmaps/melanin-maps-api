@@ -35,6 +35,7 @@ import { createPostgresHairCareRepository, createPostgresMemberLocationRepositor
 import { registerVoiceTranscriptionRoute } from "./kinfolk/voice/registerVoiceTranscriptionRoute";
 import { createOpenAiTranscriptionProvider } from "./kinfolk/voice/openAiTranscriptionProvider";
 import { createPostgresVoiceDiagnostics } from "./kinfolk/voice/postgresVoiceDiagnostics";
+import { registerReleaseStatusRoutes } from "./ops/registerReleaseStatusRoutes";
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const webPublicDir = path.join(_dirname, "public");
@@ -349,6 +350,9 @@ registerVoiceTranscriptionRoute(app, {
   }),
   diagnostics: createPostgresVoiceDiagnostics(pool),
 });
+
+// ── Release status + schema-status verification endpoints ─────────────────────
+registerReleaseStatusRoutes(app, pool);
 
 // Serve the web app static files from whichever dir has index.html
 app.use(express.static(spaServeDir));
