@@ -107,7 +107,7 @@ export function LivingLibraryHome() {
             <p>Start here</p>
             <h2 id="start-here-heading">Foundations for everyday life and possibility</h2>
           </div>
-          <Link href="/library/topics">Browse all foundations</Link>
+          <Link href="/library">Browse all foundations</Link>
         </div>
 
         {state === "loading" && (

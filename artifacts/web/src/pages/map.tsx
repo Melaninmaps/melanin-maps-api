@@ -38,71 +38,42 @@ type BizWithCoords = {
   description?: string | null;
 };
 
-type CulturalSiteWeb = {
+type UniversalMapEntity = {
   id: string;
-  name: string;
-  description?: string | null;
-  heritageCategory?: string | null;
-  pinType?: string | null;
-  listingStatus?: string | null;
-  culturalCommunity?: string | null;
-  visitTip?: string | null;
+  entity_kind: "cultural_site" | "hbcu" | "festival" | "community_event" | "market" | "public_art" | "heritage_marker";
+  title: string;
+  slug: string;
+  summary?: string | null;
   city: string;
-  state: string;
-  latitude: string;
-  longitude: string;
-  externalUrl?: string | null;
+  state_region?: string | null;
+  latitude: number;
+  longitude: number;
+  detail_url: string;
 };
 
 // ── Pin colour helpers ──────────────────────────────────────────────────────
-function getCulturalPinColor(site: CulturalSiteWeb): string {
-  const pt = site.pinType ?? "";
-  const hc = site.heritageCategory ?? "";
-  // Heritage festivals & cultural celebrations — warm gold, communicates reverence
-  if (pt === "heritage_festival" || pt === "cultural_celebration" || pt === "community_tradition") return "#C8960C";
-  if (pt === "farmers_market" || pt === "pop_up_market" || pt === "market") return "#16A34A";
-  if (pt === "mural_or_public_art") return "#0891B2";
-  if (pt === "community_org" || pt === "cultural_organization") return "#D97706";
-  // community_event / festival_or_event = community-created pop-ups (not annual heritage events)
-  if (pt === "festival_or_event" || pt === "community_event") return "#EA580C";
-  if (pt === "park_or_outdoor") return "#15803D";
-  if (hc === "HBCU") return "#7C3AED";
-  if (hc === "Civil Rights") return "#DC2626";
-  if (hc === "Religious Heritage") return "#78716C";
+function getCulturalPinColor(site: UniversalMapEntity): string {
+  if (site.entity_kind === "hbcu") return "#7C3AED";
+  if (site.entity_kind === "festival") return "#C8960C";
+  if (site.entity_kind === "market") return "#16A34A";
+  if (site.entity_kind === "public_art") return "#0891B2";
+  if (site.entity_kind === "community_event") return "#EA580C";
+  if (site.entity_kind === "heritage_marker") return "#DC2626";
   return "#92400E";
 }
 
-function getCulturalPinLabel(site: CulturalSiteWeb): string {
-  const pt = site.pinType ?? "";
-  const hc = site.heritageCategory ?? "";
-  if (pt === "heritage_festival")    return "Heritage Festival";
-  if (pt === "cultural_celebration") return "Cultural Celebration";
-  if (pt === "community_tradition")  return "Community Tradition";
-  if (pt === "farmers_market" || pt === "pop_up_market") return "Farmers Market";
-  if (pt === "market") return "Market";
-  if (pt === "mural_or_public_art") return "Public Art";
-  if (pt === "community_org" || pt === "cultural_organization") return "Community Org";
-  if (pt === "festival_or_event" || pt === "community_event") return "Community Event";
-  if (hc === "HBCU") return "HBCU";
-  if (hc === "Civil Rights") return "Civil Rights";
-  return hc || "Cultural Site";
+function getCulturalPinLabel(site: UniversalMapEntity): string {
+  return site.entity_kind.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 // Which cultural sites match the active legend filter?
-function siteMatchesFilter(site: CulturalSiteWeb, filter: string): boolean {
-  const pt = site.pinType ?? "";
-  const hc = site.heritageCategory ?? "";
-  const isHbcu     = hc.toUpperCase() === "HBCU";
-  const isFestival = pt === "heritage_festival" || pt === "cultural_celebration" || pt === "community_tradition";
-  const isEvent    = pt === "festival_or_event" || pt === "community_event";
-  const isMarket   = pt === "farmers_market" || pt === "pop_up_market" || pt === "market";
-  const isArt      = pt === "mural_or_public_art";
-  if (filter === "hbcu")     return isHbcu;
-  if (filter === "festival") return isFestival;
-  if (filter === "events")   return isEvent;
-  if (filter === "market")   return isMarket;
-  if (filter === "art")      return isArt;
-  if (filter === "cultural") return !isHbcu && !isFestival && !isEvent && !isMarket && !isArt;
+function siteMatchesFilter(site: UniversalMapEntity, filter: string): boolean {
+  if (filter === "hbcu") return site.entity_kind === "hbcu";
+  if (filter === "festival") return site.entity_kind === "festival";
+  if (filter === "events") return site.entity_kind === "community_event";
+  if (filter === "market") return site.entity_kind === "market";
+  if (filter === "art") return site.entity_kind === "public_art";
+  if (filter === "cultural") return site.entity_kind === "cultural_site" || site.entity_kind === "heritage_marker";
   return true;
 }
 
@@ -281,7 +252,9 @@ export default function MapPage() {
   const [isPaidMember, setIsPaidMember] = useState(false);
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routingBizId, setRoutingBizId] = useState<string | null>(null);
-  const [culturalSites, setCulturalSites] = useState<CulturalSiteWeb[]>([]);
+  // The universal API response is the sole source for non-business pins and
+  // the category side panel. Never blend in a second global collection here.
+  const [culturalSites, setCulturalSites] = useState<UniversalMapEntity[]>([]);
   const culturalMarkersRef = useRef<GMarker[]>([]);
   // Local search pin layer — separate from global discovery markers.
   // Cleared whenever a new local search begins or the search is reset.
@@ -291,13 +264,15 @@ export default function MapPage() {
   const [sundownTowns, setSundownTowns] = useState<SundownTown[]>([]);
   const sundownMarkersRef = useRef<GMarker[]>([]);
 
+  // Kept as an empty compatibility layer while the legacy marker effect winds
+  // down below; event records are now rendered from `culturalSites` only.
   type MapEvent = {
     id: string; title: string; city: string; state: string;
     latitude: string | null; longitude: string | null;
     category: string; date?: string | null; location?: string | null;
     isFree?: boolean | null;
   };
-  const [mapEvents, setMapEvents] = useState<MapEvent[]>([]);
+  const [mapEvents] = useState<MapEvent[]>([]);
   const eventMarkersRef = useRef<GMarker[]>([]);
 
   // User's confirmed geolocation — set when browser grants permission
@@ -616,14 +591,15 @@ export default function MapPage() {
       .catch(() => { /* area resolve failed — continue without it */ });
   }, [handoffArea, ready]);
 
-  // ── Fetch discoverability pins after map is ready ─────────────────────────
+  // The legacy discoverability endpoint is intentionally not rendered here.
+  // Its former pins were independent of the side panel and could point to
+  // different data than the category count. The canonical entity collection
+  // below owns all non-business rendering.
   useEffect(() => {
     if (!ready) return;
-    const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/maps/discoverability-pins`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : { pins: [] })
-      .then((d: { pins?: DiscoverabilityPin[] }) => setDiscoverabilityPins(d.pins ?? []))
-      .catch(() => {});
+    discoverabilityMarkersRef.current.forEach((marker) => marker.setMap(null));
+    discoverabilityMarkersRef.current = [];
+    setDiscoverabilityPins([]);
   }, [ready]);
 
   // ── Render discoverability markers when pins load ─────────────────────────
@@ -739,29 +715,25 @@ export default function MapPage() {
     });
   })();
 
-  // Cultural sites for the active city (starts with Philadelphia; updates on legend filter)
+  // One canonical `items` array drives every non-business pin and its matching
+  // category row. A panel can never truthfully show zero while these records
+  // remain visible as an unrelated marker layer.
   useEffect(() => {
     if (!ready) return;
     const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/cultural-sites?limit=2000`)
-      .then((r) => r.json())
-      .then((d: any) => { if (Array.isArray(d.sites)) setCulturalSites(d.sites as CulturalSiteWeb[]); })
+    fetch(`${base}/api/map/entities`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : { items: [] })
+      .then((d: { items?: UniversalMapEntity[] }) => setCulturalSites(d.items ?? []))
       .catch(() => {});
   }, [ready]);
 
-  // Fetch active events with coordinates for map pins
+  // Older event markers used a separate endpoint from the category panel.
+  // Clear any prior instances; recurring events now arrive through the same
+  // universal collection as festivals, markets, art, HBCUs, and cultural sites.
   useEffect(() => {
     if (!ready) return;
-    const base = BASE.replace(/\/$/, "");
-    fetch(`${base}/api/events`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((d: any) => {
-        const evts = (d.events ?? []).filter(
-          (e: any) => e.latitude != null && e.longitude != null,
-        );
-        setMapEvents(evts);
-      })
-      .catch(() => {});
+    eventMarkersRef.current.forEach((marker) => marker.setMap(null));
+    eventMarkersRef.current = [];
   }, [ready]);
 
   // Render cultural site markers whenever sites load
@@ -772,8 +744,8 @@ export default function MapPage() {
     culturalMarkersRef.current = [];
 
     culturalSites.forEach((site) => {
-      const lat = parseFloat(site.latitude);
-      const lng = parseFloat(site.longitude);
+      const lat = site.latitude;
+      const lng = site.longitude;
       if (isNaN(lat) || isNaN(lng)) return;
 
       const color = getCulturalPinColor(site);
@@ -782,7 +754,7 @@ export default function MapPage() {
       const marker: GMarker = new g.Marker({
         position: { lat, lng },
         map: mapRef.current,
-        title: site.name,
+        title: site.title,
         icon: {
           path: DIAMOND_PATH,
           scale: 1,
@@ -795,17 +767,16 @@ export default function MapPage() {
       });
 
       marker.addListener("click", () => {
-        const snippet = (site.visitTip ?? site.description ?? "").slice(0, 120);
+        const snippet = (site.summary ?? "").slice(0, 120);
         infoWindowRef.current?.setContent(
           `<div style="font-family:serif;padding:4px 2px;min-width:180px;max-width:240px">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
               <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:sans-serif">${label}</span>
             </div>
-            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.name}</div>
-            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}, ${site.state}</div>
+            <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px;line-height:1.3">${site.title}</div>
+            <div style="font-size:11px;color:#3A1F0E80;margin-bottom:4px">${site.city}${site.state_region ? `, ${site.state_region}` : ""}</div>
             ${snippet ? `<div style="font-size:11px;color:#3A1F0E;line-height:1.45;font-style:italic;margin-bottom:5px">${snippet}${snippet.length === 120 ? "…" : ""}</div>` : ""}
-            ${safePublicUrl(site.externalUrl) ? `<a href="${safePublicUrl(site.externalUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:${color};font-weight:bold;text-decoration:none;display:block;margin-bottom:4px">Official website ↗</a>` : ""}
-            <a href="/cultural-sites/${encodeURIComponent(site.id)}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
+            <a href="${site.detail_url}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;display:block;margin-top:2px">Learn more on MWM →</a>
           </div>`
         );
         mapRef.current && infoWindowRef.current?.open(mapRef.current, marker);
@@ -1522,8 +1493,8 @@ export default function MapPage() {
               activeCulturalSites.map((site) => {
                 const color = getCulturalPinColor(site);
                 const label = getCulturalPinLabel(site);
-                const siteLat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude as number);
-                const siteLng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude as number);
+                const siteLat = site.latitude;
+                const siteLng = site.longitude;
                 const canFly = mapRef.current && !isNaN(siteLat) && !isNaN(siteLng) && (siteLat !== 0 || siteLng !== 0);
                 return (
                   <div
@@ -1533,7 +1504,7 @@ export default function MapPage() {
                       if (!canFly) return;
                       mapRef.current!.panTo({ lat: siteLat, lng: siteLng });
                       // HBCUs and cultural heritage use city-level zoom; specific addresses use street level
-                      mapRef.current!.setZoom((site.heritageCategory ?? "").toUpperCase() === "HBCU" || !site.address ? 14 : 16);
+                      mapRef.current!.setZoom(site.entity_kind === "hbcu" ? 14 : 16);
                       setSidebarOpen(false);
                     }}
                     title={canFly ? `Fly to ${site.name}` : undefined}
@@ -1544,31 +1515,19 @@ export default function MapPage() {
                         style={{ background: color }}
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold text-[#2B1507] text-sm leading-tight">{site.name}</div>
+                        <div className="font-bold text-[#2B1507] text-sm leading-tight">{site.title}</div>
                         <div className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color }}>{label}</div>
                         <div className="text-xs text-[#3A1F0E]/50 mt-0.5 flex items-center gap-1">
                           <MapPin className="w-3 h-3 shrink-0" />
-                          {site.city}, {site.state}
+                          {site.city}{site.state_region ? `, ${site.state_region}` : ""}
                         </div>
-                        {site.description && (
+                        {site.summary && (
                           <p className="text-xs text-[#3A1F0E]/60 mt-1 leading-relaxed line-clamp-2">
-                            {site.description.slice(0, 100)}{site.description.length > 100 ? "…" : ""}
+                            {site.summary.slice(0, 100)}{site.summary.length > 100 ? "…" : ""}
                           </p>
                         )}
-                        {safePublicUrl(site.externalUrl) && (
-                          <a
-                            href={safePublicUrl(site.externalUrl)!}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[10px] font-bold mt-1 block hover:underline"
-                            style={{ color }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Official website ↗
-                          </a>
-                        )}
                         <Link
-                          href={`/cultural-sites/${encodeURIComponent(site.id)}`}
+                          href={site.detail_url}
                           className="text-[10px] font-bold mt-0.5 block hover:underline text-[#CA922B]"
                           onClick={(e) => e.stopPropagation()}
                         >

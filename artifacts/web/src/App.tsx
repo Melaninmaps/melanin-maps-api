@@ -48,7 +48,7 @@ import CommunityGuidelines from "@/pages/community-guidelines";
 import Cities from "@/pages/cities";
 import CitySpotlight from "@/pages/city-spotlight";
 import CulturalSiteDetail from "@/pages/cultural-site-detail";
-import CulturalSiteDetailsPage from "@/pages/cultural-site-details-page";
+import UniversalPlaceDetailPage, { LegacyPlaceRedirect } from "@/pages/universal-place-detail";
 import CityStoryPage from "@/pages/city-story";
 import Jobs from "@/pages/jobs";
 import Billing from "@/pages/billing";
@@ -310,12 +310,26 @@ function Router() {
       <Route path="/sites/:id">
         <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
-      {/* Canonical cultural-site URL: /cultural-sites/:id/:slug (slug optional for legacy links) */}
+      {/* Published non-business map entities resolve through one canonical detail route. */}
+      <Route path="/places/:id/:slug">
+        <Layout><PreLaunchRoute><UniversalPlaceDetailPage /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/places/:id">
+        <Layout><PreLaunchRoute><UniversalPlaceDetailPage /></PreLaunchRoute></Layout>
+      </Route>
+      {/* Legacy cultural-site and HBCU paths retain their incoming IDs, then redirect
+          to the canonical route which resolves and repairs the readable slug. */}
       <Route path="/cultural-sites/:id/:slug">
-        <Layout><PreLaunchRoute><CulturalSiteDetailsPage /></PreLaunchRoute></Layout>
+        <LegacyPlaceRedirect />
       </Route>
       <Route path="/cultural-sites/:id">
-        <Layout><PreLaunchRoute><CulturalSiteDetailsPage /></PreLaunchRoute></Layout>
+        <LegacyPlaceRedirect />
+      </Route>
+      <Route path="/hbcus/:id/:slug">
+        <LegacyPlaceRedirect />
+      </Route>
+      <Route path="/hbcus/:id">
+        <LegacyPlaceRedirect />
       </Route>
 
       {/* ── Account required — identity makes these features meaningful ──────── */}
@@ -355,10 +369,10 @@ function Router() {
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
       </Route>
       <Route path="/library/topics/:slug">
-        <Layout><PreLaunchRoute><LibraryTopicPage /></PreLaunchRoute></Layout>
+        <Layout><LibraryTopicPage /></Layout>
       </Route>
       <Route path="/library">
-        <Layout><PreLaunchRoute><LivingLibraryHome /></PreLaunchRoute></Layout>
+        <Layout><LivingLibraryHome /></Layout>
       </Route>
       <Route path="/circles">
         <Layout><ProtectedRoute><Circles /></ProtectedRoute></Layout>

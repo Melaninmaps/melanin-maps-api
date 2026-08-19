@@ -44,6 +44,7 @@ import { COMMUNITY_EVENTS_EXPANSION_2_SEED } from "../data/community-events-expa
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
+import { ensureUniversalMapEntities } from "../map/ensureUniversalMapEntities";
 import { ensureDiasporaFaithSites } from "./ensure-diaspora-faith-sites";
 import {
   ensureLibraryEvidenceBatchB,
@@ -4602,6 +4603,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // media_assets, entity_media_assets, business_claim_requests tables +
     // owner_claim_status / added_via / added_by_member_id columns on businesses.
     ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
+    // ── Universal non-business map entities ────────────────────────────────
+    // One published source supplies the map pin, panel row, and canonical place URL.
+    ["universal map entities v1", () => ensureUniversalMapEntities(pool, { log, warn })],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();

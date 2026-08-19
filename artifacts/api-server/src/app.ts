@@ -43,6 +43,7 @@ import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunity
 import { registerLocationResolutionRoutes } from "./location/registerLocationResolutionRoutes";
 import { LocalBusinessSearch } from "./map/localBusinessSearch";
 import { registerLocalBusinessSearchRoute } from "./map/registerLocalBusinessSearchRoute";
+import { registerUniversalMapEntityRoutes } from "./map/registerUniversalMapEntityRoutes";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -368,13 +369,10 @@ registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
 
-app.use("/api", router);
-app.use(webSsrRouter);
-app.use(privacyRouter);
-
-// ── Living Library routes ──────────────────────────────────────────────────
-// Registered directly on `app` (not the sub-router) because they need
-// dependency instances built with env vars available at boot time.
+// ── Living Library public read routes ──────────────────────────────────────
+// Register before the aggregate /api router: its global requireAuth middleware
+// would otherwise block the public Library home and topic-book GET requests.
+// Follow/research mutations still enforce authentication in their own handlers.
 registerLivingLibraryRoutes(app, {
   repository: createPostgresLibraryRepository(pool),
   researchProvider: createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? ""),
@@ -385,8 +383,17 @@ registerLivingLibraryRoutes(app, {
   }),
 });
 
-// ── Foundation topics (28 durable library foundations, separate endpoint) ────
+// 28 durable foundations shown on the public Library home.
 registerFoundationTopicRoutes(app, new FoundationTopicRepository(pool));
+
+// ── Universal non-business map entities ─────────────────────────────────────
+// Public read-only routes are registered before the aggregate /api router so a
+// map pin's list record and canonical detail URL remain directly resolvable.
+registerUniversalMapEntityRoutes(app, pool);
+
+app.use("/api", router);
+app.use(webSsrRouter);
+app.use(privacyRouter);
 
 // ── Purposeful Explore routes ────────────────────────────────────────────────
 registerExploreRoutes(app);
@@ -495,7 +502,7 @@ const SPA_EXPLICIT = [
   "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
   "/membership", "/map", "/discover", "/community", "/profile",
   "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
-  "/cultural-sites",
+  "/cultural-sites", "/hbcus", "/places",
 ];
 for (const p of SPA_EXPLICIT) {
   app.get(p, serveSpa);
