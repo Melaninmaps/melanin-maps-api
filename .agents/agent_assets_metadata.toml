@@ -965,3 +965,31 @@ uri = "file://screenshots/task-367-audit-public-preview.png"
 type = "image"
 title = "Public preview audit — full seven-panel page"
 description = "Full-page capture from the public Replit /preview URL."
+
+[[outputs]]
+id = "c9-LGHVU85CfroxicFpWQ"
+uri = "file://screenshots/production-preview-original-five-desktop.png"
+type = "image"
+title = "Production desktop — protected original preview"
+description = "Public production capture from www.mappingwithmelanin.com/preview after the isolated release."
+
+[[outputs]]
+id = "jHM6t9OgqYnOJshrNV-80"
+uri = "file://screenshots/production-preview-additive-panels-desktop.png"
+type = "image"
+title = "Production desktop — Living Library and Kinfolk AI"
+description = "Public production capture showing the two approved additive panels after the original five cards."
+
+[[outputs]]
+id = "F2FL4keuRQGplWZ3drE-D"
+uri = "file://screenshots/production-preview-mobile-original-card.png"
+type = "image"
+title = "Production mobile — original preview card"
+description = "Focused public mobile capture of the existing phone-frame preview design."
+
+[[outputs]]
+id = "8YdsiVvLa2CMuuV9yoV-D"
+uri = "file://screenshots/production-preview-mobile-living-library.png"
+type = "image"
+title = "Production mobile — Living Library"
+description = "Focused public mobile capture of the new Living Library panel."
