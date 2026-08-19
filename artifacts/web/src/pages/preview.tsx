@@ -1,2 +1,3 @@
-// /preview — the permanent QR-stable outcome demonstration.
-export { OutcomeLedPreview as default } from "@/features/preview/OutcomeLedPreview";
+import { VisitorStory } from "@/features/preview/VisitorStory";
+
+export default VisitorStory;
