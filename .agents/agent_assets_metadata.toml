@@ -923,3 +923,45 @@ uri = "file://screenshots/task-367-kinfolk-ai.png"
 type = "image"
 title = "Kinfolk AI preview panel"
 description = "Browser-verified additive Kinfolk AI panel on the existing Mapping With Melanin preview."
+
+[[outputs]]
+id = "pFfnuvcBMX-_OLm2Ehpzm"
+uri = "file://screenshots/task-367-audit-original-five-card-grid.png"
+type = "image"
+title = "Audit — original five-card preview"
+description = "Desktop capture of the protected original five-card preview grid from the current local /preview route."
+
+[[outputs]]
+id = "8yab9E-fsQfez5lqqvK-0"
+uri = "file://screenshots/task-367-audit-additive-panels.png"
+type = "image"
+title = "Audit — additive Living Library and Kinfolk panels"
+description = "Desktop capture of the two Task #367 additive phone-frame panels placed after the original five cards."
+
+[[outputs]]
+id = "Ma1V1mhkoDQjY-4I-u6zK"
+uri = "file://screenshots/task-367-audit-full-preview-body.png"
+type = "image"
+title = "Audit — full seven-panel preview body"
+description = "Full-page desktop capture of the current local preview body containing the original five cards plus the two additive panels."
+
+[[outputs]]
+id = "QOH5T2ze3fhsX9U8lLEDJ"
+uri = "file://screenshots/task-367-audit-public-original-five-card-grid.png"
+type = "image"
+title = "Public preview audit — original five cards"
+description = "Captured from the public Replit /preview URL after the Preview binding refreshed."
+
+[[outputs]]
+id = "jasxfeBkzwCjJj0HESbI_"
+uri = "file://screenshots/task-367-audit-public-additive-panels.png"
+type = "image"
+title = "Public preview audit — Living Library and Kinfolk"
+description = "Captured from the public Replit /preview URL; these two panels appear after the protected original five cards."
+
+[[outputs]]
+id = "uThagH_Qz8NfHFe2D9S7l"
+uri = "file://screenshots/task-367-audit-public-preview.png"
+type = "image"
+title = "Public preview audit — full seven-panel page"
+description = "Full-page capture from the public Replit /preview URL."
