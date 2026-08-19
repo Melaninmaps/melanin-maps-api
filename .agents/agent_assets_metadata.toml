@@ -993,3 +993,45 @@ uri = "file://screenshots/production-preview-mobile-living-library.png"
 type = "image"
 title = "Production mobile — Living Library"
 description = "Focused public mobile capture of the new Living Library panel."
+
+[[outputs]]
+id = "wAJd31BbaQR-qENvGz2S5"
+uri = "file://docs/audits/public-art-stage-1-report.md"
+type = "text"
+title = "Stage 1 Schema and Route Audit"
+description = "Original read-only schema, route, duplicate, and minimal-change analysis."
+
+[[outputs]]
+id = "3fjUFJ-nYxGoqeyi4WJYe"
+uri = "file://docs/audits/public-art-stage-1-inclusive-manifest.json"
+type = "unspecified"
+title = "Inclusive Public-Art Pilot Manifest"
+description = "Initial three-candidate, non-public inclusive manifest, updated with missing-evidence reasons."
+
+[[outputs]]
+id = "aGvaUVF2ka8SSNF0uFOqC"
+uri = "file://docs/audits/public-art-stage-1-verified-context-report.md"
+type = "text"
+title = "Stage 1 Verified-Context Addendum"
+description = "Updated with the near-coordinate hold and no-merge recommendation for the Atlanta candidate."
+
+[[outputs]]
+id = "kaC9-7qKvB12t3pWEHS-E"
+uri = "file://docs/audits/public-art-stage-1-african-american-manifest.json"
+type = "unspecified"
+title = "African American Candidate Manifest"
+description = "Updated with the Atlanta near-coordinate review hold; all records remain non-public and in review."
+
+[[outputs]]
+id = "8DT4Iyq0LngS8XEX4wdsf"
+uri = "file://docs/audits/public-art-stage-1-caribbean-manifest.json"
+type = "unspecified"
+title = "Caribbean Candidate Manifest"
+description = "One high-confidence, non-public Haitian-community-context candidate from Philadelphia."
+
+[[outputs]]
+id = "BZquwBHd9-_8yMUe8jUAN"
+uri = "file://docs/audits/public-art-stage-1-indigenous-hispanic-latine-review-manifest.json"
+type = "unspecified"
+title = "Indigenous/Hispanic-Latine Review Manifest"
+description = "Two explicit-source, non-public review candidates; no inferred identities or context."
