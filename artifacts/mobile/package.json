@@ -17,7 +17,8 @@
     "prebuild:android": "node scripts/pre-build-check.js android",
     "build:android": "eas build --platform android --profile production",
     "build:record:ios": "node scripts/pre-build-check.js --record ios",
-    "build:record:android": "node scripts/pre-build-check.js --record android"
+    "build:record:android": "node scripts/pre-build-check.js --record android",
+    "lint": "expo lint"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -35,6 +36,8 @@
     "babel-plugin-react-compiler": "^19.0.0-beta-e993439-20250117",
     "dotenv": "~16.4.5",
     "dotenv-expand": "~11.0.6",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.1",
     "expo": "~57.0.6",
     "expo-blur": "~57.0.2",
     "expo-constants": "~57.0.5",
