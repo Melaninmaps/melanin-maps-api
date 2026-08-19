@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Choose Your Preview — Mapping With Melanin</title>
+<meta name="description" content="Choose your preview and see how Mapping With Melanin is built for you."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brown:#2B1507;--gold:#CA922B;--cream:#F5F0E8;
+  --surface:#3C1E0A;--muted:rgba(245,240,232,.55);
+}
+html,body{background:var(--brown);color:var(--cream);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Playfair Display',serif}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:'DM Sans',sans-serif}
+a{color:var(--gold);text-decoration:none}
+
+/* ── Page shell ── */
+.page{max-width:900px;margin:0 auto;padding:0 20px}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(202,146,43,.14) 0%,transparent 65%)}
+
+/* ── Header ── */
+.site-header{padding:36px 0 28px;text-align:center}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:32px}
+.logo-text{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.hero-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+.hero-title{font-size:clamp(30px,8vw,52px);font-weight:700;line-height:1.1;margin-bottom:16px}
+.hero-sub{font-size:16px;color:var(--muted);line-height:1.65;max-width:480px;margin:0 auto 10px}
+.hero-note{font-size:13px;color:rgba(245,240,232,.3)}
+
+/* ── Preview grid ── */
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px 24px;padding:40px 0 0}
+@media(max-width:600px){.preview-grid{grid-template-columns:1fr;gap:48px 0}}
+.preview-card-wrap{display:flex;flex-direction:column;align-items:center}
+.ambassador-wrap{grid-column:1/-1;width:100%;display:flex;flex-direction:column;align-items:center}
+
+/* ── Phone frame (spec-exact) ── */
+.phone-frame{
+  width:220px;height:440px;border-radius:36px;
+  border:6px solid #2B1507;background:#1a0e04;
+  position:relative;overflow:hidden;
+  box-shadow:0 20px 60px rgba(43,21,7,.5),inset 0 0 0 2px #CA922B33;
+  margin:0 auto;flex-shrink:0
+}
+.phone-frame::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:80px;height:24px;background:#2B1507;border-radius:0 0 16px 16px;z-index:10
+}
+.phone-screen{width:100%;height:100%;background:#F5F0E8;position:relative;overflow:hidden}
+
+/* ── Progress dots (spec-exact) ── */
+.preview-dots{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#F5F0E8;opacity:.4;
+  transition:background .3s,opacity .3s,transform .3s}
+.dot.active{background:#CA922B;opacity:1;transform:scale(1.3)}
+
+/* ── Card label ── */
+.card-label{text-align:center;padding:14px 12px 0;max-width:260px}
+.card-label h3{font-size:17px;font-weight:700;color:var(--cream);margin-bottom:6px;line-height:1.2}
+.card-label p{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+.card-select-btn{
+  padding:9px 22px;border-radius:10px;font-size:12px;font-weight:700;
+  background:rgba(202,146,43,.12);border:1.5px solid rgba(202,146,43,.35);
+  color:var(--gold);transition:all .2s;letter-spacing:.01em
+}
+.card-select-btn:hover{background:var(--gold);color:var(--brown);border-color:var(--gold)}
+.card-select-btn.selected-btn{background:var(--gold);color:var(--brown);border-color:var(--gold)}
+
+/* ── Slide base (spec-exact) ── */
+.preview-slide{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  opacity:0;pointer-events:none;
+  transition:opacity .6s ease-in-out;overflow:hidden
+}
+
+/* ── Shared animations (spec-exact) ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideInFromTop{from{transform:translateY(-80px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes slideInFromBottom{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes dropPin{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+@keyframes blink{50%{opacity:0}}
+@keyframes pulse{0%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(3);opacity:0}}
+.fade-up{opacity:0;animation:fadeUp .5s ease-out forwards}
+.slide-in-top{animation:slideInFromTop .5s ease-out forwards}
+.slide-in-bottom{animation:slideInFromBottom .5s ease-out forwards}
+
+/* ════════ CARD 1 — SAFETY ════════ */
+/* Slide 1-A: Community Alert */
+.map-bg-dark{width:100%;height:100%;background:#1a2e1a;position:relative}
+.map-grid{position:absolute;inset:0;
+  background-image:repeating-linear-gradient(0deg,rgba(202,146,43,.06) 0,rgba(202,146,43,.06) 1px,transparent 1px,transparent 28px),
+                   repeating-linear-gradient(90deg,rgba(202,146,43,.06) 0,rgba(202,146,43,.06) 1px,transparent 1px,transparent 28px)}
+.alert-banner{
+  position:absolute;top:32px;left:8px;right:8px;background:#2B1507;
+  border-left:4px solid #CA922B;border-radius:10px;padding:10px 12px;
+  display:flex;align-items:flex-start;gap:8px;color:#F5F0E8;
+  font-family:'DM Sans',sans-serif;font-size:11px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);transform:translateY(-80px);opacity:0
+}
+.alert-banner.slide-in-top{animation:slideInFromTop .5s ease-out .8s forwards}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.alert-title{font-weight:700;font-size:12px;color:#CA922B;margin-bottom:3px}
+.alert-text{line-height:1.4}
+.alert-verify{
+  position:absolute;bottom:20px;left:0;right:0;text-align:center;
+  font-size:10px;color:#CA922B;font-family:'DM Sans',sans-serif;font-weight:600;
+  opacity:0;animation:fadeUp .4s ease-out 1.5s forwards
+}
+/* Slide 1-B: Business Redirect */
+.redirect-bg{width:100%;height:100%;background:#F5F0E8;padding:28px 10px 10px;overflow:hidden}
+.business-warning-card,.recommendation-card{
+  margin:0 0 8px;padding:12px;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:11px;opacity:0
+}
+.business-warning-card{background:#fff0f0;border:1px solid #e57373;animation:fadeUp .5s ease-out .3s forwards}
+.recommendation-card{background:#2B1507;color:#F5F0E8;animation:fadeUp .5s ease-out .7s forwards}
+.warning-badge{color:#c0392b;font-weight:700;font-size:10px}
+.warning-biz-name{font-weight:700;font-size:12px;color:#2B1507;margin:4px 0}
+.warning-snippet{font-size:10px;color:#555;font-style:italic;margin-bottom:3px;line-height:1.4}
+.warning-count{font-size:9px;color:#c0392b}
+.divider-arrow{text-align:center;color:#CA922B;font-size:14px;margin:4px 0;opacity:0;animation:fadeUp .4s ease-out .6s forwards}
+.rec-label{color:#CA922B;font-weight:700;font-size:10px;margin-bottom:4px}
+.rec-biz-name{font-weight:700;font-size:12px;color:#F5F0E8;margin-bottom:2px}
+.rec-meta{font-size:10px;color:rgba(245,240,232,.7)}
+.rec-cta{color:#CA922B;font-weight:700;margin-top:6px;font-size:11px}
+/* Slide 1-C: Journey Care */
+.route-bg{width:100%;height:100%;background:#F5F0E8;position:relative;overflow:hidden}
+.route-line{position:absolute;left:50%;top:15%;bottom:20%;width:3px;background:rgba(43,21,7,.15);transform:translateX(-50%)}
+.route-pin{position:absolute;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;border:3px solid #2B1507;background:#F5F0E8}
+.route-pin-start{top:14%}
+.route-pin-end{bottom:19%}
+.route-care-label{
+  position:absolute;top:36px;left:0;right:0;text-align:center;
+  font-size:10px;color:#CA922B;font-style:italic;font-family:'DM Sans',sans-serif;font-weight:600;
+  opacity:0;animation:fadeUp .4s ease-out 1.2s forwards
+}
+.route-alert{
+  position:absolute;bottom:24px;left:8px;right:8px;background:#2B1507;
+  border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;
+  color:#F5F0E8;font-family:'DM Sans',sans-serif;font-size:10px;
+  transform:translateY(100px);opacity:0;animation:slideInFromBottom .5s ease-out .8s forwards
+}
+.route-alert-icon{font-size:18px;flex-shrink:0}
+.route-alert-title{font-weight:700;font-size:11px;color:#CA922B;margin-bottom:2px}
+.route-alert-action{margin-left:auto;background:#CA922B;color:#2B1507;font-weight:700;font-size:10px;padding:5px 10px;border-radius:8px;white-space:nowrap}
+
+/* ════════ CARD 2 — BUSINESS OWNER ════════ */
+/* Slide 2-A: Dashboard */
+.dashboard-screen{width:100%;height:100%;background:#1a0d05;padding:28px 10px 10px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+.dashboard-header{font-family:'DM Sans',sans-serif}
+.dash-greeting{font-size:12px;font-weight:700;color:#F5F0E8;margin-bottom:2px}
+.dash-date{font-size:10px;color:rgba(245,240,232,.5)}
+.stats-row{display:flex;gap:8px}
+.stat-card{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(202,146,43,.2);border-radius:10px;padding:8px 10px;font-family:'DM Sans',sans-serif;opacity:0}
+.stat-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.stat-number{font-size:22px;font-weight:700;color:#CA922B;font-family:'Playfair Display',serif}
+.stat-label{font-size:9px;color:rgba(245,240,232,.55);margin-top:2px}
+.chart-area{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.15);border-radius:10px;padding:10px;opacity:0}
+.chart-area.fade-up{animation:fadeUp .5s ease-out forwards}
+.chart-svg{width:100%;height:50px;display:block}
+.chart-line{fill:none;stroke:#CA922B;stroke-width:2.5;stroke-dasharray:400;stroke-dashoffset:400;animation:drawLine 1.2s ease-out .6s forwards}
+.chart-label{font-size:9px;color:#CA922B;font-weight:600;font-family:'DM Sans',sans-serif;margin-top:4px}
+.flash-deal-badge{background:#CA922B;color:#2B1507;font-weight:700;font-size:10px;padding:6px 12px;border-radius:20px;text-align:center;opacity:0}
+.flash-deal-badge.fade-up{animation:fadeUp .5s ease-out forwards}
+/* Slide 2-B: Customer Drive */
+.drive-screen{width:100%;height:100%;background:#F5F0E8;position:relative;overflow:hidden}
+.drive-map-bg{position:absolute;inset:0;opacity:.07;
+  background:repeating-linear-gradient(0deg,#2B1507 0,#2B1507 1px,transparent 1px,transparent 24px),
+             repeating-linear-gradient(90deg,#2B1507 0,#2B1507 1px,transparent 1px,transparent 24px)}
+.drive-notification{
+  position:absolute;top:32px;left:8px;right:8px;background:white;
+  border-radius:14px;padding:14px;box-shadow:0 12px 40px rgba(43,21,7,.2);
+  font-family:'DM Sans',sans-serif;transform:translateY(-100px);opacity:0;
+  animation:slideInFromTop .5s ease-out .6s forwards
+}
+.notif-app-label{font-size:9px;color:#CA922B;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.notif-title{font-size:12px;font-weight:700;color:#2B1507;margin-bottom:4px}
+.notif-body{font-size:10px;color:#555;margin-bottom:8px;line-height:1.4}
+.notif-cta{font-size:11px;font-weight:700;color:#CA922B}
+.heatmap{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  width:120px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(202,146,43,.5) 0%,rgba(202,146,43,.2) 40%,transparent 70%);
+  opacity:0;animation:fadeUp .5s ease-out 1.4s forwards
+}
+.heatmap-label{
+  position:absolute;bottom:20px;left:0;right:0;text-align:center;
+  font-size:9px;color:#CA922B;font-weight:700;font-family:'DM Sans',sans-serif;
+  opacity:0;animation:fadeUp .4s ease-out 1.6s forwards
+}
+/* Slide 2-C: Kinfolk AI */
+.kinfolk-screen{width:100%;height:100%;background:#F5F0E8;padding:28px 10px 10px;overflow:hidden}
+.review-incoming{margin-bottom:10px;padding:10px 12px;background:white;border-radius:10px;border:1px solid #e0d8d0;font-family:'DM Sans',sans-serif;opacity:0}
+.review-incoming.fade-up{animation:fadeUp .5s ease-out .2s forwards}
+.review-stars{font-size:12px;color:#CA922B;margin-bottom:4px}
+.review-text{font-size:10px;color:#333;font-style:italic;line-height:1.45;margin-bottom:3px}
+.review-author{font-size:9px;color:#888}
+.kinfolk-ai-panel{background:#2B1507;border-radius:12px;padding:12px;color:#F5F0E8;font-family:'DM Sans',sans-serif;font-size:10px;opacity:0}
+.kinfolk-ai-panel.fade-up{animation:fadeUp .5s ease-out .8s forwards}
+.kinfolk-label{color:#CA922B;font-weight:700;font-size:11px;margin-bottom:3px}
+.kinfolk-subtext{color:rgba(245,240,232,.53);font-size:9px;margin-bottom:8px}
+.kinfolk-typing{font-size:10px;color:#F5F0E8;line-height:1.55;min-height:40px}
+.typing-cursor{display:inline;color:#CA922B;animation:blink .8s step-end infinite}
+
+/* ════════ CARD 3 — DISCOVERY ════════ */
+/* Slide 3-A: Search Filters */
+.search-screen{width:100%;height:100%;background:#F5F0E8;overflow:hidden}
+.search-bar{
+  margin:36px 10px 10px;background:white;border-radius:24px;padding:10px 14px;
+  display:flex;align-items:center;gap:8px;font-family:'DM Sans',sans-serif;
+  font-size:12px;color:#999;box-shadow:0 2px 12px rgba(0,0,0,.1);opacity:0
+}
+.search-bar.fade-up{animation:fadeUp .5s ease-out forwards}
+.filter-label{font-family:'DM Sans',sans-serif;font-size:10px;color:#888;margin:0 10px 5px;opacity:0}
+.filter-label.fade-up{animation:fadeUp .5s ease-out forwards}
+.filter-chips{display:flex;gap:6px;margin:0 10px 6px;flex-wrap:wrap;opacity:0}
+.filter-chips.fade-up{animation:fadeUp .5s ease-out forwards}
+.chip{background:white;border:1px solid #ddd;border-radius:20px;padding:4px 10px;font-size:10px;font-family:'DM Sans',sans-serif;color:#2B1507}
+.chip.active{background:#2B1507;color:#CA922B;border-color:#2B1507;font-weight:700}
+.results-preview{margin:6px 10px 0;opacity:0}
+.results-preview.fade-up{animation:fadeUp .5s ease-out forwards}
+.results-count{font-family:'Playfair Display',serif;font-size:12px;color:#CA922B;font-style:italic}
+/* Slide 3-B: Community Reviews */
+.review-screen{width:100%;height:100%;background:#F5F0E8;overflow:hidden}
+.business-header{margin:36px 12px 10px}
+.biz-name{font-family:'Playfair Display',serif;font-size:14px;color:#2B1507;font-weight:700}
+.biz-meta{font-family:'DM Sans',sans-serif;font-size:10px;color:#777;margin-top:2px}
+.community-review-card{
+  margin:0 10px 8px;background:#2B1507;border-radius:12px;padding:12px;
+  color:#F5F0E8;font-family:'DM Sans',sans-serif;opacity:0
+}
+.community-review-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.community-badge{color:#CA922B;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.community-quote{font-size:11px;line-height:1.5;font-style:italic;margin-bottom:4px}
+.community-author{font-size:9px;color:rgba(245,240,232,.53)}
+/* Slide 3-C: Travel Mode */
+.travel-screen{background:#1a1a2e;height:100%;position:relative;overflow:hidden}
+.travel-banner{
+  position:absolute;top:32px;left:8px;right:8px;background:#CA922B;border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;gap:10px;
+  transform:translateY(-80px);opacity:0;animation:slideInFromTop .5s ease-out .3s forwards
+}
+.travel-icon{font-size:20px}
+.travel-title{font-family:'Playfair Display',serif;font-size:14px;color:#2B1507;font-weight:700}
+.travel-sub{font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(43,21,7,.7);margin-top:2px}
+.travel-card{
+  position:absolute;left:10px;right:10px;background:rgba(255,255,255,.1);
+  border:1px solid rgba(202,146,43,.3);border-radius:12px;padding:12px;
+  color:#F5F0E8;font-family:'DM Sans',sans-serif;opacity:0
+}
+.travel-card:nth-of-type(2){top:108px}
+.travel-card:nth-of-type(3){top:190px}
+.travel-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.travel-biz-name{font-size:12px;font-weight:700;margin-bottom:2px}
+.travel-biz-meta{font-size:10px;color:rgba(245,240,232,.67);margin-bottom:4px}
+.travel-biz-tag{font-size:9px;color:#CA922B;font-weight:700}
+
+/* ════════ CARD 4 — COMMUNITY ════════ */
+/* Slide 4-A: Events */
+.events-screen{width:100%;height:100%;background:#F5F0E8;overflow:hidden}
+.events-header{margin:36px 12px 12px;opacity:0}
+.events-header.fade-up{animation:fadeUp .5s ease-out forwards}
+.events-title{font-family:'Playfair Display',serif;font-size:15px;color:#2B1507;font-weight:700}
+.events-sub{font-family:'DM Sans',sans-serif;font-size:10px;color:#888;margin-top:2px}
+.event-card{
+  margin:0 10px 8px;background:white;border-radius:12px;padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);font-family:'DM Sans',sans-serif;opacity:0
+}
+.event-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.event-date{font-size:9px;font-weight:700;color:#CA922B;text-align:center;width:44px;flex-shrink:0;line-height:1.3}
+.event-name{font-size:11px;font-weight:700;color:#2B1507}
+.event-location{font-size:9px;color:#888;margin-top:2px}
+.event-badge{margin-left:auto;background:#F5F0E8;color:#2B1507;font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px;white-space:nowrap}
+/* Slide 4-B: Heritage Sites */
+.heritage-screen{background:#1a2e1a;height:100%;position:relative;overflow:hidden}
+.heritage-map-grid{position:absolute;inset:0;
+  background-image:repeating-linear-gradient(0deg,rgba(202,146,43,.05) 0,rgba(202,146,43,.05) 1px,transparent 1px,transparent 28px),
+                   repeating-linear-gradient(90deg,rgba(202,146,43,.05) 0,rgba(202,146,43,.05) 1px,transparent 1px,transparent 28px)}
+.heritage-label{
+  position:absolute;top:36px;left:0;right:0;text-align:center;
+  font-family:'Playfair Display',serif;font-size:13px;color:#CA922B;font-style:italic;opacity:0
+}
+.heritage-label.fade-up{animation:fadeUp .5s ease-out forwards}
+.heritage-marker{position:absolute;transform:translateY(-20px);opacity:0;animation:dropPin .5s cubic-bezier(.34,1.56,.64,1) forwards}
+.heritage-pin{
+  width:28px;height:28px;background:#CA922B;border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;
+  color:#2B1507;font-size:12px
+}
+.heritage-tooltip{
+  position:absolute;top:-28px;left:50%;transform:translateX(-50%);
+  background:#2B1507;color:#F5F0E8;font-family:'DM Sans',sans-serif;font-size:9px;
+  padding:3px 8px;border-radius:6px;white-space:nowrap
+}
+/* Slide 4-C: Cultural Detail */
+.cultural-screen{width:100%;height:100%;background:#F5F0E8;overflow:hidden}
+.cultural-business-card{margin:36px 12px 12px;font-family:'DM Sans',sans-serif;opacity:0}
+.cultural-business-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.cultural-biz-name{font-family:'Playfair Display',serif;font-size:14px;color:#2B1507;font-weight:700}
+.cultural-biz-meta{font-size:10px;color:#888;margin-top:2px}
+.cultural-detail-marker{
+  margin:0 10px;background:#2B1507;border-radius:14px;padding:14px;
+  display:flex;gap:10px;align-items:flex-start;color:#F5F0E8;
+  font-family:'DM Sans',sans-serif;font-size:10px;opacity:0
+}
+.cultural-detail-marker.fade-up{animation:fadeUp .5s ease-out forwards}
+.cultural-marker-icon{color:#CA922B;font-size:18px;flex-shrink:0;margin-top:2px}
+.cultural-marker-title{color:#CA922B;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.cultural-marker-text{font-size:11px;line-height:1.6}
+.cultural-learn-more{margin:10px 12px 0;font-family:'DM Sans',sans-serif;font-size:10px;color:#CA922B;font-weight:700;opacity:0}
+.cultural-learn-more.fade-up{animation:fadeUp .5s ease-out forwards}
+
+/* ════════ CARD 5 — AMBASSADOR ════════ */
+/* Slide 5-A: Demand-Matched Opportunity */
+.amb-screen-a{width:100%;height:100%;background:#F5F0E8;position:relative;overflow:hidden}
+.amb-map-bg{position:absolute;inset:0;opacity:.06;
+  background:repeating-linear-gradient(0deg,#2B1507 0,#2B1507 1px,transparent 1px,transparent 24px),
+             repeating-linear-gradient(90deg,#2B1507 0,#2B1507 1px,transparent 1px,transparent 24px)}
+.ambassador-notification{
+  position:absolute;top:32px;left:8px;right:8px;background:#2B1507;border-radius:14px;padding:14px;
+  box-shadow:0 12px 40px rgba(43,21,7,.3);font-family:'DM Sans',sans-serif;color:#F5F0E8;
+  transform:translateY(-100px);opacity:0;animation:slideInFromTop .5s ease-out .6s forwards
+}
+.ambassador-ai-label{font-size:9px;color:#CA922B;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.ambassador-notif-title{font-size:12px;font-weight:700;color:#CA922B;margin-bottom:4px}
+.ambassador-notif-body{font-size:10px;color:#ddd;margin-bottom:10px;line-height:1.4}
+.ambassador-notif-cta{font-size:11px;font-weight:700;color:#2B1507;background:#CA922B;display:inline-block;padding:6px 12px;border-radius:8px}
+/* Slide 5-B: Analytics + Trip */
+.amb-screen-b{width:100%;height:100%;position:relative;overflow:hidden}
+.amb-top{height:50%;background:#1a1a2e;padding:36px 16px 16px}
+.amb-bottom{height:50%;background:#F5F0E8;padding:12px}
+.ambassador-analytics{opacity:0}
+.ambassador-analytics.fade-up{animation:fadeUp .5s ease-out forwards}
+.analytics-stat-row{margin-bottom:4px}
+.stat-val{font-size:28px;font-weight:700;color:#CA922B;font-family:'Playfair Display',serif}
+.stat-desc{font-size:11px;color:#aaa;margin-top:4px;font-family:'DM Sans',sans-serif}
+.ambassador-trip-card{background:white;border-radius:12px;padding:14px;box-shadow:0 4px 12px rgba(0,0,0,.05);font-family:'DM Sans',sans-serif;opacity:0}
+.ambassador-trip-card.fade-up{animation:fadeUp .5s ease-out forwards}
+.trip-card-label{font-size:9px;color:#888;text-transform:uppercase;font-weight:700;letter-spacing:.04em;margin-bottom:4px}
+.trip-card-title{font-size:13px;font-weight:700;color:#2B1507;margin-bottom:4px}
+.trip-card-body{font-size:10px;color:#555;margin-bottom:10px;line-height:1.45}
+.trip-card-action{font-size:10px;font-weight:700;color:#CA922B;text-align:center;border-top:1px solid #f0ece4;padding-top:8px}
+/* Slide 5-C: Content Gap */
+.amb-screen-c{width:100%;height:100%;background:#F5F0E8;position:relative;overflow:hidden}
+.radar-pulse{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:rgba(202,146,43,.2);border-radius:50%;animation:pulse 2s infinite}
+.gap-alert-card{
+  position:absolute;bottom:24px;left:10px;right:10px;background:white;
+  border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(43,21,7,.15);
+  font-family:'DM Sans',sans-serif;transform:translateY(100px);opacity:0;
+  animation:slideInFromBottom .5s ease-out .8s forwards
+}
+.gap-alert-header{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.gap-icon{font-size:14px}
+.gap-title{font-size:11px;font-weight:700;color:#c0392b}
+.gap-alert-body{font-size:11px;color:#333;margin-bottom:12px;line-height:1.5}
+.gap-biz-target{background:#F5F0E8;padding:8px;border-radius:8px;margin-bottom:10px}
+.gap-biz-name{font-size:11px;font-weight:700;color:#2B1507}
+.gap-biz-meta{font-size:9px;color:#666;margin-top:2px}
+.gap-alert-cta{font-size:11px;font-weight:700;color:#CA922B;text-align:center}
+
+/* ════════ Form section ════════ */
+.form-section{padding:60px 0 80px;max-width:480px;margin:0 auto;position:relative}
+.form-divider{text-align:center;margin-bottom:40px}
+.form-divider-line{border:none;border-top:1px solid rgba(202,146,43,.2);margin-bottom:32px}
+.form-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px}
+.form-title{font-size:clamp(24px,6vw,34px);font-weight:700;line-height:1.15;margin-bottom:12px}
+.form-sub{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:8px}
+.selected-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 14px;
+  background:rgba(202,146,43,.12);border:1px solid rgba(202,146,43,.35);
+  border-radius:20px;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:22px
+}
+.field{
+  width:100%;padding:13px 16px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(202,146,43,.3);border-radius:10px;color:var(--cream);
+  font-size:15px;outline:none;display:block;margin-bottom:12px;transition:border .2s
+}
+.field:focus{border-color:var(--gold)}
+.field::placeholder{color:var(--muted)}
+.error-msg{font-size:13px;color:#ff8080;margin-bottom:10px}
+.submit-btn{
+  width:100%;padding:15px 24px;background:var(--gold);color:var(--brown);
+  border-radius:12px;font-size:15px;font-weight:700;font-family:'Playfair Display',serif;
+  border:none;cursor:pointer;margin-top:4px;transition:background .2s
+}
+.submit-btn:hover:not(:disabled){background:#daa83a}
+.submit-btn:disabled{background:rgba(202,146,43,.4);cursor:not-allowed}
+
+/* ════════ Success section ════════ */
+.success-section{display:none;padding:80px 20px;text-align:center;max-width:480px;margin:0 auto}
+.success-seal{width:72px;height:72px;border-radius:50%;background:rgba(202,146,43,.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 0 40px rgba(202,146,43,.3)}
+.success-title{font-size:32px;font-weight:700;margin-bottom:14px}
+.position-badge{display:inline-block;padding:6px 18px;background:rgba(202,146,43,.15);border:1px solid rgba(202,146,43,.4);border-radius:24px;font-size:13px;color:var(--gold);font-weight:600;margin-bottom:20px}
+.success-sub{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:32px}
+.share-box{background:rgba(255,255,255,.04);border:1px solid rgba(202,146,43,.2);border-radius:14px;padding:18px 20px;text-align:left}
+.share-eyebrow{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.share-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+.share-btns{display:flex;gap:10px}
+.share-btn{flex:1;padding:9px 12px;background:rgba(202,146,43,.12);border:1px solid rgba(202,146,43,.3);border-radius:10px;color:var(--gold);font-size:12px;font-weight:600;text-align:center;display:block}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════ -->
+<div class="page">
+  <header class="site-header">
+    <div class="logo-row">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" stroke="#CA922B" stroke-width="1.5"/>
+        <path d="M8 18 C8 10 20 10 20 18" stroke="#CA922B" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="14" cy="11" r="2.5" fill="#CA922B"/>
+      </svg>
+      <span class="logo-text">Mapping With Melanin</span>
+    </div>
+    <div class="hero-eyebrow">See it before it launches</div>
+    <h1 class="hero-title">What brings you<br>to the map?</h1>
+    <p class="hero-sub">Watch what Mapping With Melanin does for people like you. Then tell us you need it.</p>
+    <p class="hero-note">Built for us, by us. Free to explore.</p>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════
+       PREVIEW CARDS GRID
+  ═══════════════════════════════════════════════════ -->
+  <div class="preview-grid">
+
+    <!-- ─── CARD 1: SAFETY ─── -->
+    <div class="preview-card-wrap">
+      <div class="preview-card" id="card-safety">
+        <div class="phone-frame">
+          <div class="phone-screen">
+
+            <!-- Slide 1-A: Community Alert -->
+            <div class="preview-slide">
+              <div class="map-bg-dark">
+                <div class="map-grid"></div>
+                <div class="alert-banner slide-in-top">
+                  <div class="alert-icon">🚨</div>
+                  <div class="alert-body">
+                    <div class="alert-title">Community Alert</div>
+                    <div class="alert-text">ICE activity reported 0.3 mi away. Community-verified · 12 members</div>
+                  </div>
+                </div>
+                <div class="alert-verify">12 community members verified this alert</div>
+              </div>
+            </div>
+
+            <!-- Slide 1-B: Business Redirect -->
+            <div class="preview-slide">
+              <div class="redirect-bg">
+                <div class="business-warning-card">
+                  <div class="warning-badge">⚠ Discrimination Reported</div>
+                  <div class="warning-biz-name">QuikStop Gas Station</div>
+                  <div class="warning-snippet">"Staff followed me around the entire time." — Community</div>
+                  <div class="warning-count">3 similar reports in the last 30 days</div>
+                </div>
+                <div class="divider-arrow">↓</div>
+                <div class="recommendation-card">
+                  <div class="rec-label">✦ Recommended Instead</div>
+                  <div class="rec-biz-name">Amara's Corner Store</div>
+                  <div class="rec-meta">Minority-owned · 0.5 mi away · ★ 4.9</div>
+                  <div class="rec-cta">Get Directions →</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 1-C: Whole Journey Care -->
+            <div class="preview-slide">
+              <div class="route-bg">
+                <div class="route-line"></div>
+                <div class="route-pin route-pin-start"></div>
+                <div class="route-pin route-pin-end"></div>
+                <div class="route-care-label">Mapping with Melanin cares about your whole journey</div>
+                <div class="route-alert">
+                  <div class="route-alert-icon">⛈</div>
+                  <div>
+                    <div class="route-alert-title">Weather Alert on Your Route</div>
+                    <div>Severe thunderstorm warning between exits 14–18</div>
+                  </div>
+                  <div class="route-alert-action">Reroute</div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- phone-screen -->
+        </div><!-- phone-frame -->
+        <div class="preview-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="card-label">
+        <h3>Stay Safe Everywhere You Go</h3>
+        <p>Real-time community alerts, safety-rated businesses, and route intelligence — all in one place.</p>
+        <button class="card-select-btn" onclick="selectCard('safety',this)">This is me →</button>
+      </div>
+    </div>
+
+    <!-- ─── CARD 2: BUSINESS OWNER ─── -->
+    <div class="preview-card-wrap">
+      <div class="preview-card" id="card-business">
+        <div class="phone-frame">
+          <div class="phone-screen">
+
+            <!-- Slide 2-A: Dashboard -->
+            <div class="preview-slide">
+              <div class="dashboard-screen">
+                <div class="dashboard-header fade-up">
+                  <div class="dash-greeting">Good morning, Amara ☀️</div>
+                  <div class="dash-date">Tuesday, Aug 4</div>
+                </div>
+                <div class="stats-row">
+                  <div class="stat-card fade-up">
+                    <div class="stat-number" data-target="247">0</div>
+                    <div class="stat-label">Profile Views</div>
+                  </div>
+                  <div class="stat-card fade-up" style="animation-delay:.15s">
+                    <div class="stat-number" data-target="89">0</div>
+                    <div class="stat-label">Saves This Week</div>
+                  </div>
+                </div>
+                <div class="chart-area fade-up" style="animation-delay:.3s">
+                  <svg viewBox="0 0 180 60" class="chart-svg">
+                    <polyline class="chart-line" points="0,55 30,40 60,45 90,25 120,30 150,15 180,10"/>
+                  </svg>
+                  <div class="chart-label">Views this month ↑ 34%</div>
+                </div>
+                <div class="flash-deal-badge fade-up" style="animation-delay:.5s">⚡ Flash Deal Active · Ends in 2h 14m</div>
+              </div>
+            </div>
+
+            <!-- Slide 2-B: Customer Drive -->
+            <div class="preview-slide">
+              <div class="drive-screen">
+                <div class="drive-map-bg"></div>
+                <div class="drive-notification">
+                  <div class="notif-app-label">Mapping with Melanin</div>
+                  <div class="notif-title">Supporters are looking for brunch near you</div>
+                  <div class="notif-body">12 people searched "brunch" within 2 miles of your location in the last hour.</div>
+                  <div class="notif-cta">Let's create a menu →</div>
+                </div>
+                <div class="heatmap"></div>
+                <div class="heatmap-label">Demand near you right now</div>
+              </div>
+            </div>
+
+            <!-- Slide 2-C: Kinfolk AI Review Response -->
+            <div class="preview-slide">
+              <div class="kinfolk-screen">
+                <div class="review-incoming fade-up">
+                  <div class="review-stars">★★★☆☆</div>
+                  <div class="review-text">"Good food but the wait was really long. Not sure I'd come back."</div>
+                  <div class="review-author">— Marcus T., 2 hours ago</div>
+                </div>
+                <div class="kinfolk-ai-panel fade-up" style="animation-delay:.8s">
+                  <div class="kinfolk-label">✦ Kinfolk AI</div>
+                  <div class="kinfolk-subtext">Crafting a response in your brand voice...</div>
+                  <div class="kinfolk-typing">
+                    <span class="typing-cursor">|</span><span id="kinfolk-text"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="preview-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="card-label">
+        <h3>Grow Your Business with Your Community</h3>
+        <p>Real-time insights, AI-powered tools, and a customer base that's already rooting for you.</p>
+        <button class="card-select-btn" onclick="selectCard('business',this)">This is me →</button>
+      </div>
+    </div>
+
+    <!-- ─── CARD 3: DISCOVERY ─── -->
+    <div class="preview-card-wrap">
+      <div class="preview-card" id="card-discovery">
+        <div class="phone-frame">
+          <div class="phone-screen">
+
+            <!-- Slide 3-A: Intelligent Search Filters -->
+            <div class="preview-slide">
+              <div class="search-screen">
+                <div class="search-bar fade-up">
+                  <span>🔍</span>
+                  <span class="search-placeholder">Find a spot...</span>
+                </div>
+                <div class="filter-label fade-up" style="animation-delay:.3s">Filter by what matters to you</div>
+                <div class="filter-chips fade-up" style="animation-delay:.5s">
+                  <div class="chip active">Vibe: Chill ✓</div>
+                  <div class="chip">Upscale</div>
+                  <div class="chip">Family</div>
+                </div>
+                <div class="filter-chips fade-up" style="animation-delay:.7s">
+                  <div class="chip active">$$ ✓</div>
+                  <div class="chip">$</div>
+                  <div class="chip">$$$</div>
+                </div>
+                <div class="filter-chips fade-up" style="animation-delay:.9s">
+                  <div class="chip active">Within 5 mi ✓</div>
+                  <div class="chip">10 mi</div>
+                  <div class="chip">Any</div>
+                </div>
+                <div class="results-preview fade-up" style="animation-delay:1.1s">
+                  <div class="results-count">14 businesses match your vibe</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3-B: Community Voice Reviews -->
+            <div class="preview-slide">
+              <div class="review-screen">
+                <div class="business-header fade-up">
+                  <div class="biz-name">Soulful Bites Kitchen</div>
+                  <div class="biz-meta">Soul Food · $$ · 4.8 ★ (142 reviews)</div>
+                </div>
+                <div class="community-review-card fade-up" style="animation-delay:.4s">
+                  <div class="community-badge">✦ Community Voice</div>
+                  <div class="community-quote">"Put your people on — this spot is legit. The mac and cheese? Unmatched."</div>
+                  <div class="community-author">— Keisha R. · Verified Local</div>
+                </div>
+                <div class="community-review-card fade-up" style="animation-delay:.8s">
+                  <div class="community-badge">✦ Community Voice</div>
+                  <div class="community-quote">"Felt like Sunday dinner at grandma's. This is what the app is for."</div>
+                  <div class="community-author">— DeShawn M. · Verified Local</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 3-C: Travel Mode -->
+            <div class="preview-slide">
+              <div class="travel-screen">
+                <div class="travel-banner">
+                  <div class="travel-icon">✈️</div>
+                  <div>
+                    <div class="travel-title">Welcome to Atlanta</div>
+                    <div class="travel-sub">Here are the top spots for you</div>
+                  </div>
+                </div>
+                <div class="travel-card fade-up" style="animation-delay:.8s">
+                  <div class="travel-biz-name">The Busy Bee Cafe</div>
+                  <div class="travel-biz-meta">Soul Food · Historic West End · ★ 4.9</div>
+                  <div class="travel-biz-tag">Landmark · Black-owned since 1947</div>
+                </div>
+                <div class="travel-card fade-up" style="animation-delay:1.1s">
+                  <div class="travel-biz-name">Slutty Vegan ATL</div>
+                  <div class="travel-biz-meta">Vegan · Old Fourth Ward · ★ 4.7</div>
+                  <div class="travel-biz-tag">Community Favorite · Black-owned</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="preview-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="card-label">
+        <h3>Discover Businesses That Get You</h3>
+        <p>Filter by vibe, not just distance. Find places that feel like home — in any city.</p>
+        <button class="card-select-btn" onclick="selectCard('discovery',this)">This is me →</button>
+      </div>
+    </div>
+
+    <!-- ─── CARD 4: COMMUNITY ─── -->
+    <div class="preview-card-wrap">
+      <div class="preview-card" id="card-community">
+        <div class="phone-frame">
+          <div class="phone-screen">
+
+            <!-- Slide 4-A: Events -->
+            <div class="preview-slide">
+              <div class="events-screen">
+                <div class="events-header fade-up">
+                  <div class="events-title">Community Events</div>
+                  <div class="events-sub">Near Charlotte, NC</div>
+                </div>
+                <div class="event-card fade-up" style="animation-delay:.3s">
+                  <div class="event-date">SAT<br>AUG 8</div>
+                  <div class="event-info">
+                    <div class="event-name">Black Business Brunch</div>
+                    <div class="event-location">NoDa Brewing Co. · 10am</div>
+                  </div>
+                  <div class="event-badge">Free</div>
+                </div>
+                <div class="event-card fade-up" style="animation-delay:.6s">
+                  <div class="event-date">SUN<br>AUG 9</div>
+                  <div class="event-info">
+                    <div class="event-name">Juneteenth Heritage Walk</div>
+                    <div class="event-location">Romare Bearden Park · 2pm</div>
+                  </div>
+                  <div class="event-badge">Community</div>
+                </div>
+                <div class="event-card fade-up" style="animation-delay:.9s">
+                  <div class="event-date">FRI<br>AUG 14</div>
+                  <div class="event-info">
+                    <div class="event-name">Afrobeats Night Market</div>
+                    <div class="event-location">Camp North End · 6pm</div>
+                  </div>
+                  <div class="event-badge">Ticketed</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 4-B: Heritage Sites -->
+            <div class="preview-slide">
+              <div class="heritage-screen">
+                <div class="heritage-map-grid"></div>
+                <div class="heritage-label fade-up">Heritage Sites Near You</div>
+                <div class="heritage-marker" style="top:30%;left:30%;animation-delay:.4s">
+                  <div class="heritage-pin">✦</div>
+                  <div class="heritage-tooltip">Brooklyn Arts District</div>
+                </div>
+                <div class="heritage-marker" style="top:50%;left:55%;animation-delay:.8s">
+                  <div class="heritage-pin">✦</div>
+                  <div class="heritage-tooltip">Historic Biddle University</div>
+                </div>
+                <div class="heritage-marker" style="top:65%;left:25%;animation-delay:1.2s">
+                  <div class="heritage-pin">✦</div>
+                  <div class="heritage-tooltip">Second Ward High School</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 4-C: Cultural Detail -->
+            <div class="preview-slide">
+              <div class="cultural-screen">
+                <div class="cultural-business-card fade-up">
+                  <div class="cultural-biz-name">Habesha Bakery &amp; Cafe</div>
+                  <div class="cultural-biz-meta">Ethiopian Bakery · ★ 4.9 · Little Ethiopia, LA</div>
+                </div>
+                <div class="cultural-detail-marker fade-up" style="animation-delay:.6s">
+                  <div class="cultural-marker-icon">✦</div>
+                  <div>
+                    <div class="cultural-marker-title">Cultural Detail</div>
+                    <div class="cultural-marker-text">"These cookies are called <strong>dabo kolo</strong> — a traditional Ethiopian snack made during festivals."</div>
+                  </div>
+                </div>
+                <div class="cultural-learn-more fade-up" style="animation-delay:1.2s">Learn more about Ethiopian food traditions →</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="preview-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="card-label">
+        <h3>Connect with Your Culture</h3>
+        <p>Events, heritage sites, and cultural stories — the app that knows where you come from.</p>
+        <button class="card-select-btn" onclick="selectCard('community',this)">This is me →</button>
+      </div>
+    </div>
+
+    <!-- ─── CARD 5: AMBASSADOR (full width) ─── -->
+    <div class="ambassador-wrap">
+      <div class="preview-card" id="card-ambassador">
+        <div class="phone-frame">
+          <div class="phone-screen">
+
+            <!-- Slide 5-A: Demand-Matched Opportunity -->
+            <div class="preview-slide">
+              <div class="amb-screen-a">
+                <div class="amb-map-bg"></div>
+                <div class="ambassador-notification">
+                  <div class="ambassador-ai-label">✦ Kinfolk AI Intelligence</div>
+                  <div class="ambassador-notif-title">High Demand Alert: Cabo San Lucas</div>
+                  <div class="ambassador-notif-body">1,200+ supporters are searching for luxury travel guides in your area. Your content matches perfectly.</div>
+                  <div class="ambassador-notif-cta">Accept Mission →</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 5-B: Analytics + Trip -->
+            <div class="preview-slide">
+              <div class="amb-screen-b">
+                <div class="amb-top">
+                  <div class="ambassador-analytics fade-up">
+                    <div class="analytics-stat-row">
+                      <div class="stat-val">+340%</div>
+                      <div class="stat-desc">Museum Content Engagement</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="amb-bottom">
+                  <div class="ambassador-trip-card fade-up" style="animation-delay:.5s">
+                    <div class="trip-card-label">Upcoming Trip: Atlanta</div>
+                    <div class="trip-card-title">LGBTQIA+ History Museum</div>
+                    <div class="trip-card-body">Your audience loves this content. We found a perfect match for your next guide.</div>
+                    <div class="trip-card-action">Book Ticket &amp; Add to Itinerary</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Slide 5-C: Content Gap -->
+            <div class="preview-slide">
+              <div class="amb-screen-c">
+                <div class="radar-pulse"></div>
+                <div class="gap-alert-card">
+                  <div class="gap-alert-header">
+                    <span class="gap-icon">🔥</span>
+                    <span class="gap-title">Community Content Gap</span>
+                  </div>
+                  <div class="gap-alert-body">"Authentic cuisine" is being searched <strong>900+ times</strong> in your area with no creator coverage.</div>
+                  <div class="gap-biz-target">
+                    <div class="gap-biz-name">Lucy's Ethiopian Kitchen</div>
+                    <div class="gap-biz-meta">0.8 mi away · Highly Rated</div>
+                  </div>
+                  <div class="gap-alert-cta">Visit &amp; Review →</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="preview-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+      <div class="card-label">
+        <h3>Create what your people are looking for</h3>
+        <p>Your voice. Their search. Our businesses. Kinfolk AI matches your expertise with real community demand.</p>
+        <button class="card-select-btn" onclick="selectCard('ambassador',this)">This is me →</button>
+      </div>
+    </div>
+
+  </div><!-- /.preview-grid -->
+
+  <!-- ═══════════════════════════════════════════════════
+       WAITLIST FORM
+  ═══════════════════════════════════════════════════ -->
+  <div class="form-section" id="form-section">
+    <hr class="form-divider-line"/>
+    <div class="form-eyebrow" id="form-eyebrow">Join the waitlist</div>
+    <h2 class="form-title">I Need This Today —<br>Save My Spot</h2>
+    <p class="form-sub" id="form-sub">We'll notify you the second your city goes live. No spam — just your community.</p>
+    <div class="selected-badge" id="selected-badge" style="display:none">
+      <span>✦</span><span id="selected-badge-text"></span>
+    </div>
+    <form id="signup-form" onsubmit="submitForm(event)">
+      <input class="field" type="email" id="field-email" placeholder="Your email address *" required autocomplete="email"/>
+      <input class="field" type="text" id="field-name" placeholder="First name (optional)" autocomplete="given-name"/>
+      <input class="field" type="text" id="field-city" placeholder="Your city (optional)" autocomplete="address-level2"/>
+      <div id="form-error" class="error-msg" style="display:none"></div>
+      <button type="submit" class="submit-btn" id="submit-btn">Save My Spot →</button>
+    </form>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       SUCCESS
+  ═══════════════════════════════════════════════════ -->
+  <div class="success-section" id="success-section">
+    <div class="success-seal">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M6 16l7 7L26 9" stroke="#CA922B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="success-title">You're on the list, family.</h2>
+    <div class="position-badge" id="position-badge" style="display:none"></div>
+    <p class="success-sub">We're building this for us, by us. We'll notify you the second your city goes live. Until then, keep the community strong.</p>
+    <div class="share-box">
+      <div class="share-eyebrow">Spread the word</div>
+      <p class="share-sub">Know someone who needs this? Share the map.</p>
+      <div class="share-btns">
+        <a class="share-btn" id="share-x" href="#" target="_blank" rel="noopener">Share on X</a>
+        <a class="share-btn" href="https://www.mappingwithmelanin.com/preview" target="_blank" rel="noopener">Copy Link</a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<!-- ═══════════════════════════════════════════════════
+     CYCLE ENGINE (spec-exact)
+═══════════════════════════════════════════════════ -->
+<script>
+(function() {
+  const CYCLE_INTERVAL_MS = 3500;
+
+  const onSlideActivate = {
+    'card-business': {
+      0: function(slideEl) { animateCounters(slideEl); },
+      2: function(slideEl) { typeKinfolkResponse(slideEl); }
+    },
+    'card-ambassador': {}
+  };
+
+  function getSlides(card) {
+    return card.querySelectorAll('.preview-slide');
+  }
+  function getDots(card) {
+    return card.querySelectorAll('.preview-dots .dot');
+  }
+
+  function activateSlide(card, index) {
+    var slides = getSlides(card);
+    var dots = getDots(card);
+    var cardId = card.id;
+
+    slides.forEach(function(slide, i) {
+      var isActive = i === index;
+      slide.style.opacity = isActive ? '1' : '0';
+      slide.style.pointerEvents = isActive ? 'auto' : 'none';
+      if (isActive) {
+        // Re-trigger CSS animations by cloning and replacing
+        var clone = slide.cloneNode(true);
+        slide.parentNode.replaceChild(clone, slide);
+        // Run any JS animation callbacks
+        if (onSlideActivate[cardId] && onSlideActivate[cardId][i]) {
+          setTimeout(function() {
+            var freshSlide = getSlides(card)[i];
+            onSlideActivate[cardId][i](freshSlide);
+          }, 100);
+        }
+      }
+    });
+
+    dots.forEach(function(dot, i) {
+      dot.classList.toggle('active', i === index);
+    });
+  }
+
+  function startCycle(card) {
+    var current = 0;
+    var total = getSlides(card).length;
+    activateSlide(card, 0);
+    setInterval(function() {
+      current = (current + 1) % total;
+      activateSlide(card, current);
+    }, CYCLE_INTERVAL_MS);
+  }
+
+  function animateCounters(slideEl) {
+    slideEl.querySelectorAll('[data-target]').forEach(function(el) {
+      var target = parseInt(el.dataset.target);
+      var current = 0;
+      var step = Math.ceil(target / 30);
+      var timer = setInterval(function() {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+      }, 40);
+    });
+  }
+
+  function typeKinfolkResponse(slideEl) {
+    var el = slideEl.querySelector('#kinfolk-text');
+    if (!el) return;
+    var text = "Hey Marcus, we truly appreciate your honesty. We had an unusual rush that afternoon and our team is working hard to improve. We'd love another chance to show you who we really are.";
+    var i = 0;
+    el.textContent = '';
+    var timer = setInterval(function() {
+      if (i < text.length) {
+        el.textContent += text[i];
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 28);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.preview-card').forEach(function(card) {
+      startCycle(card);
+    });
+  });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     FORM + SELECTION LOGIC
+═══════════════════════════════════════════════════ -->
+<script>
+// ── UTM capture (preserved) ─────────────────────────────────────────────
+var selectedCard = null;
+var utmParams = {};
+(function(){
+  var p = new URLSearchParams(location.search);
+  if(p.get('utm_source')) utmParams.utmSource = p.get('utm_source');
+  if(p.get('utm_medium')) utmParams.utmMedium = p.get('utm_medium');
+  if(p.get('utm_campaign')) utmParams.utmCampaign = p.get('utm_campaign');
+})();
+
+var CARD_LABELS = {
+  safety: 'Stay Safe Everywhere',
+  business: 'Business Owner',
+  discovery: 'Find Businesses',
+  community: 'Connect with Culture',
+  ambassador: 'Cultural Ambassador'
+};
+
+function selectCard(id, btn) {
+  selectedCard = id;
+  // Update all select buttons
+  document.querySelectorAll('.card-select-btn').forEach(function(b) {
+    b.classList.remove('selected-btn');
+    b.textContent = 'This is me →';
+  });
+  if (btn) {
+    btn.classList.add('selected-btn');
+    btn.textContent = 'Selected ✓';
+  }
+  // Update form badge
+  var badge = document.getElementById('selected-badge');
+  var badgeText = document.getElementById('selected-badge-text');
+  badge.style.display = 'inline-flex';
+  badgeText.textContent = CARD_LABELS[id];
+  // Update form submit label
+  document.getElementById('submit-btn').textContent = 'Save My Spot →';
+  // Scroll to form
+  document.getElementById('form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Form submission (preserved logic) ─────────────────────────────────────
+async function submitForm(e) {
+  e.preventDefault();
+  var errEl = document.getElementById('form-error');
+  var btn = document.getElementById('submit-btn');
+  errEl.style.display = 'none';
+  var email = document.getElementById('field-email').value.trim();
+  var firstName = document.getElementById('field-name').value.trim();
+  var city = document.getElementById('field-city').value.trim();
+  if (!email) { errEl.textContent = 'Email is required.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Joining…';
+  try {
+    var body = Object.assign({ email: email, previewChoice: selectedCard || null }, utmParams);
+    if (firstName) body.firstName = firstName;
+    if (city) body.city = city;
+    var res = await fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Something went wrong.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Save My Spot →';
+      return;
+    }
+    var pos = data.position || 0;
+    var posBadge = document.getElementById('position-badge');
+    if (pos > 0) { posBadge.textContent = '#' + pos.toLocaleString() + ' in line'; posBadge.style.display = 'inline-block'; }
+    var shareText = 'I just joined the Mapping With Melanin waitlist — a community directory for finding trusted businesses and safe routes.';
+    document.getElementById('share-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent('https://www.mappingwithmelanin.com/preview');
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('success-section').style.display = 'block';
+    document.getElementById('success-section').scrollIntoView({ behavior: 'smooth' });
+  } catch(err) {
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Save My Spot →';
+  }
+}
+</script>
+</body>
+</html>

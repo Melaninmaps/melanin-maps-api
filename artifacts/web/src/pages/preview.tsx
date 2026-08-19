@@ -1,3 +1,3 @@
-import { VisitorStory } from "@/features/preview/VisitorStory";
+import { ApprovedAnimatedPreview } from "@/features/preview/ApprovedAnimatedPreview";
 
-export default VisitorStory;
+export default ApprovedAnimatedPreview;
