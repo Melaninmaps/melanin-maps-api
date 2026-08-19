@@ -1,5 +1,10 @@
 {pkgs}: {
   deps = [
+    pkgs.systemd
+    pkgs.libxkbcommon
+    pkgs.expat
+    pkgs.mesa
+    pkgs.nspr
     pkgs.jdk
     pkgs.fontconfig
     pkgs.freetype
