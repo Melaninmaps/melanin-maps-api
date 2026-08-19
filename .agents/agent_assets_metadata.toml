@@ -895,3 +895,17 @@ uri = "file://attached_assets/manus-redacted-gate-pass.zip"
 type = "unspecified"
 title = "MWM Gate — REDACTED (no tokens) · Railway Production · 6/6 PASS"
 description = "deployment-gate-railway-result-redacted.json — All tokens removed. URL: https://api-server-production-a991.up.railway.app. Notes inside explain the Replit-dev-domain 502 vs Railway distinction."
+
+[[outputs]]
+id = "XgoCZVFtmGRGDT20_UHIO"
+uri = "file://screenshots/restored-preview-replit-workflow-desktop.png"
+type = "image"
+title = "Restored preview — Replit workflow desktop"
+description = "Captured from the still-running Replit web workflow at /preview, 1440×900."
+
+[[outputs]]
+id = "0bHORyvvwymI9Z85W8cqq"
+uri = "file://screenshots/restored-preview-replit-workflow-mobile.png"
+type = "image"
+title = "Restored preview — Replit workflow mobile"
+description = "Captured from the still-running Replit web workflow at /preview, 390×844."
