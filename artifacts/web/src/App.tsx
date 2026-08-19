@@ -257,7 +257,11 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/signup" component={Signup} />
       <Route path="/waitlist" component={Waitlist} />
+      {/* /preview is the permanent QR-stable tour route — do not change this path */}
       <Route path="/preview" component={Preview} />
+      {/* Legacy redirects — keep so any printed QR pointing to these still works */}
+      <Route path="/app-preview"><Redirect to="/preview" /></Route>
+      <Route path="/tour"><Redirect to="/preview" /></Route>
       <Route path="/pending-approval" component={PendingApproval} />
       <Route path="/welcome" component={Welcome} />
       <Route path="/r/:code" component={ReferralRedirect} />

@@ -1,0 +1,31 @@
+export const QR_STABLE_PREVIEW_PATH = "/preview";
+// Preserve this exact canonical path. Existing printed QR codes continue to resolve here.
+
+export type PreviewExperience = "community-member" | "business" | "cultural-ambassador" | "library" | "kinfolk";
+export type PreviewDemo = { id: string; experience: PreviewExperience; label: string; title: string; description: string; actionLabel: string; destination: string; visual: "map" | "post" | "alert" | "listing" | "claim" | "insight" | "itinerary" | "campaign" | "topic" | "research" | "voice" | "connection" };
+
+export const PREVIEW_EXPERIENCES: { id: PreviewExperience; label: string; description: string }[] = [
+  { id: "community-member", label: "Community Member", description: "Find, share, and connect through community-sourced context." },
+  { id: "business", label: "Business", description: "Be discovered, publish your story, and claim your listing." },
+  { id: "cultural-ambassador", label: "Cultural Ambassador", description: "Share the culture, create a trail, and grow local reach." },
+  { id: "library", label: "Living Library", description: "Explore diaspora-relevant knowledge that grows with the community." },
+  { id: "kinfolk", label: "Kinfolk AI", description: "Ask context-aware questions and discover practical next steps." },
+];
+
+export const PREVIEW_DEMOS: PreviewDemo[] = [
+  { id: "member-local-discovery", experience: "community-member", label: "Discover nearby", title: "Find who you need, where you are", description: "Local results begin with nearby community businesses and services—never a national dump disguised as local.", actionLabel: "See local discovery", destination: "/businesses", visual: "map" },
+  { id: "member-community-share", experience: "community-member", label: "Share context", title: "Put your people on", description: "Share a recommendation, conversation, photo, or practical experience with the community.", actionLabel: "Open Community", destination: "/community", visual: "post" },
+  { id: "member-alerts", experience: "community-member", label: "Official alerts", title: "Stay informed with context", description: "See official alerts alongside community-sourced local context—without judging a neighborhood or its residents.", actionLabel: "View Community Intelligence", destination: "/community-intelligence", visual: "alert" },
+  { id: "business-create-listing", experience: "business", label: "Get discovered", title: "Build a business presence", description: "Add a business profile with services, location, story, and rich media so the right local members can find it.", actionLabel: "Add a business", destination: "/submit-business", visual: "listing" },
+  { id: "business-claim", experience: "business", label: "Claim a listing", title: "Claim what is yours", description: "Owners can request verification and manage an existing community or admin-added listing after approval.", actionLabel: "See claim process", destination: "/businesses", visual: "claim" },
+  { id: "business-community-intelligence", experience: "business", label: "Understand your community", title: "Learn from community-sourced insight", description: "See moderated experience signals and practical feedback without reducing people or places to a score.", actionLabel: "Explore insights", destination: "/community-intelligence", visual: "insight" },
+  { id: "ambassador-cultural-trail", experience: "cultural-ambassador", label: "Create a cultural trail", title: "Guide people to what matters", description: "Connect heritage, living culture, events, and community businesses into an experience people can follow.", actionLabel: "Explore with purpose", destination: "/explore", visual: "itinerary" },
+  { id: "ambassador-share-story", experience: "cultural-ambassador", label: "Share a story", title: "Make local knowledge visible", description: "Publish a source-aware cultural highlight that helps visitors and neighbors understand the place.", actionLabel: "Share with Community", destination: "/community", visual: "post" },
+  { id: "ambassador-campaign", experience: "cultural-ambassador", label: "Grow a campaign", title: "Invite your community in", description: "Use a shareable link or QR code to bring people directly to your place, story, or curated trail.", actionLabel: "Open the Map", destination: "/map", visual: "campaign" },
+  { id: "library-foundations", experience: "library", label: "Start with foundations", title: "Find a durable place to begin", description: "Start with foundational topics including Housing, Education, Trades, Health, Money, and Community Resources.", actionLabel: "Open Library", destination: "/library", visual: "topic" },
+  { id: "library-search", experience: "library", label: "Search what matters", title: "Search prior Kinfolk research", description: "Find readable, source-cited research instead of losing knowledge after one conversation.", actionLabel: "Search the Library", destination: "/library", visual: "research" },
+  { id: "library-grow", experience: "library", label: "Grow the knowledge", title: "Let useful research become reusable", description: "Kinfolk research connects to multiple living topics and facets so the Library becomes wiser over time.", actionLabel: "Explore topics", destination: "/library", visual: "insight" },
+  { id: "kinfolk-ask", experience: "kinfolk", label: "Ask with context", title: "Ask Kinfolk what matters", description: "Kinfolk searches through the diaspora-first research lens and offers clarification only when it makes the answer better.", actionLabel: "Ask Kinfolk", destination: "/kinfolk", visual: "research" },
+  { id: "kinfolk-voice", experience: "kinfolk", label: "Speak your question", title: "Use your voice", description: "Record a question, stop when you are ready, and receive a real capture or transcription status—not a generic length message.", actionLabel: "Try voice input", destination: "/kinfolk", visual: "voice" },
+  { id: "kinfolk-connections", experience: "kinfolk", label: "Choose next steps", title: "Connect when you want to", description: "Kinfolk can offer relevant local professionals or resources as an option, never as a forced choice.", actionLabel: "Explore Kinfolk", destination: "/kinfolk", visual: "connection" },
+];
