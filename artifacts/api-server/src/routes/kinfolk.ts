@@ -4320,10 +4320,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       answerPlanId: null as string | null,
       // Four-purpose enforcement fields — always present so clients can branch on them.
       // educationalStatus: how well this answer is backed by sources.
+      // sourceNote: quiet attribution-style note only when a material source
+      // limitation affects a source-sensitive answer.
       // safetyNotice: required display text for safety/emergency intents.
       // promotionDisclosure: per-business paid/claimed disclosure strings.
       // rejectedRecommendations: count of model proposals not in the server catalog.
       educationalStatus: enforced.educationalStatus,
+      sourceNote: enforced.sourceNote ?? undefined,
       safetyNotice: enforced.safetyNotice ?? undefined,
       promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
       rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,

@@ -772,6 +772,14 @@ function AiMessageBubble({
           </View>
         ) : null}
 
+        {/* Quiet attribution — present only when the server found a material
+            source limitation for the answer. Kept below the response content. */}
+        {msg.sourceNote ? (
+          <Text style={[aiStyles.sourceNoteText, { color: colors.mutedForeground }]}>
+            {msg.sourceNote}
+          </Text>
+        ) : null}
+
         <Text style={[aiStyles.timestamp, { color: colors.mutedForeground }]}>
           {formatTime(msg.timestamp)}
         </Text>
@@ -807,6 +815,7 @@ const aiStyles = StyleSheet.create({
   chipText: { fontFamily: "Inter_400Regular", fontSize: 12 },
   provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
   provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
+  sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 

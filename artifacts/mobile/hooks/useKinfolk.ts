@@ -107,6 +107,8 @@ export type ChatMessage = {
   limitReached?: boolean;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  /** Quiet source attribution, returned only when a material detail lacks support. */
+  sourceNote?: string | null;
   /** Set on KINFOLK_BUSY/KINFOLK_RATE_LIMITED errors — original question can be retried */
   retryable?: boolean;
   retryText?: string;
@@ -187,6 +189,7 @@ export function useKinfolk() {
           queriesLimit?: number;
           intentClass?: string | null;
           provenanceNote?: string | null;
+          sourceNote?: string | null;
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
         };
@@ -210,6 +213,7 @@ export function useKinfolk() {
           feedback: {},
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
+          sourceNote: data.sourceNote ?? null,
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
         };

@@ -33,6 +33,7 @@ interface Message {
   taskCreated?: { listName?: string; taskCount?: number; taskTitle?: string };
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  sourceNote?: string | null;
 }
 
 interface TaskActionPayload {
@@ -105,6 +106,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   followUpSuggestions: string[];
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  sourceNote?: string | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -134,6 +136,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     followUpSuggestions?: string[];
     location?: { city: string; state: string | null; source: string } | null;
     locationSource?: string | null;
+    sourceNote?: string | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -142,6 +145,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     followUpSuggestions: data.followUpSuggestions ?? [],
     location: data.location ?? null,
     locationSource: data.locationSource ?? null,
+    sourceNote: data.sourceNote ?? null,
   };
 }
 
@@ -551,7 +555,7 @@ export function AIChatWidget() {
 
     try {
       const token = await getToken();
-      const { reply, taskAction, followUpSuggestions, location, locationSource } = await sendToKinfolk(text, token);
+      const { reply, taskAction, followUpSuggestions, location, locationSource, sourceNote } = await sendToKinfolk(text, token);
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -570,6 +574,7 @@ export function AIChatWidget() {
         taskCreated,
         location,
         locationSource,
+        sourceNote,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -771,6 +776,11 @@ export function AIChatWidget() {
                     </Text>
                   </TouchableOpacity>
                 )}
+                {!item.fromUser && item.sourceNote ? (
+                  <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>
+                    {item.sourceNote}
+                  </Text>
+                ) : null}
               </View>
             )}
             ListFooterComponent={typing ? (
@@ -1050,6 +1060,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
   chipsScroll: { borderTopWidth: 1, maxHeight: 56 },

@@ -71,6 +71,7 @@ interface Message {
   libraryAction?: LibraryAction | null;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  sourceNote?: string | null;
   // Research sources + library entry link (Living Library branch)
   sources?: KinfolkSource[] | null;
   libraryEntry?: KinfolkLibraryEntry | null;
@@ -1000,6 +1001,7 @@ function TravelPage() {
         libraryAction?: LibraryAction | null;
         intentClass?: string | null;
         provenanceNote?: string | null;
+        sourceNote?: string | null;
         // Research sources + library entry link
         sources?: KinfolkSource[] | null;
         libraryEntry?: KinfolkLibraryEntry | null;
@@ -1031,6 +1033,7 @@ function TravelPage() {
         libraryAction: data.libraryAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
+        sourceNote: data.sourceNote ?? null,
         sources: data.sources ?? null,
         libraryEntry: data.libraryEntry ?? null,
         hairLossCarePlan: data.hairLossCarePlan ?? null,
@@ -1564,6 +1567,16 @@ function TravelPage() {
                             </button>
                           </div>
                         </div>
+                      )}
+                      {/* Quiet source attribution — only returned when a material
+                          factual or local detail could not be independently verified. */}
+                      {msg.role === "assistant" && msg.sourceNote && (
+                        <p
+                          data-testid="kinfolk-source-note"
+                          className="mt-3 border-t border-[#3A1F0E]/8 pt-2 text-[10px] italic leading-relaxed text-[#3A1F0E]/50"
+                        >
+                          {msg.sourceNote}
+                        </p>
                       )}
                     </div>
                   </div>
