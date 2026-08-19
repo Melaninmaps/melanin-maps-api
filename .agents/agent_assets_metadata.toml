@@ -909,3 +909,17 @@ uri = "file://screenshots/restored-preview-replit-workflow-mobile.png"
 type = "image"
 title = "Restored preview — Replit workflow mobile"
 description = "Captured from the still-running Replit web workflow at /preview, 390×844."
+
+[[outputs]]
+id = "so93lYic3xdlTtybKaz_1"
+uri = "file://screenshots/task-367-living-library.png"
+type = "image"
+title = "Living Library preview panel"
+description = "Browser-verified additive Living Library panel on the existing Mapping With Melanin preview."
+
+[[outputs]]
+id = "OraQlSimodFu0fd1sRQ_-"
+uri = "file://screenshots/task-367-kinfolk-ai.png"
+type = "image"
+title = "Kinfolk AI preview panel"
+description = "Browser-verified additive Kinfolk AI panel on the existing Mapping With Melanin preview."
