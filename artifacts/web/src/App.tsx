@@ -320,10 +320,10 @@ function Router() {
       {/* Legacy cultural-site and HBCU paths retain their incoming IDs, then redirect
           to the canonical route which resolves and repairs the readable slug. */}
       <Route path="/cultural-sites/:id/:slug">
-        <LegacyPlaceRedirect />
+        <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/cultural-sites/:id">
-        <LegacyPlaceRedirect />
+        <Layout><PreLaunchRoute><CulturalSiteDetail /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/hbcus/:id/:slug">
         <LegacyPlaceRedirect />
