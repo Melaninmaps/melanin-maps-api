@@ -1035,3 +1035,66 @@ uri = "file://docs/audits/public-art-stage-1-indigenous-hispanic-latine-review-m
 type = "unspecified"
 title = "Gate 1 — Indigenous/Hispanic-Latine Review Manifest"
 description = "Exact source-level Indigenous and Hispanic/Latine evidence, including the two records that require careful review."
+
+[[outputs]]
+id = "7-UIXG4AC93AOTT3vcHxG"
+uri = "file://docs/audits/public-art-stage1-revised-candidate-manifest.json"
+type = "unspecified"
+title = "Revised Six-Candidate Manifest"
+description = "All six non-public candidates with field-level before/after notes and unresolved-evidence reasons."
+
+[[outputs]]
+id = "V0LlQK1OxLwGwonHZYex4"
+uri = "file://docs/audits/public-art-stage1-revised-evidence-matrix.md"
+type = "text"
+title = "Revised Evidence Matrix"
+description = "One source-level row for every candidate, including title, artist, location, access, work status, and documented context."
+
+[[outputs]]
+id = "a1MXEuU1o4DKKsttwSSro"
+uri = "file://docs/audits/public-art-stage1-atlanta-conflict-report.md"
+type = "text"
+title = "Atlanta Conflict Report"
+description = "Split mapping, coordinate conflict, distance to Café Circa, and explicit no-merge decision."
+
+[[outputs]]
+id = "u_MjSbh-745c7tVg--v6c"
+uri = "file://docs/audits/public-art-stage1-philadelphia-corroboration-report.md"
+type = "text"
+title = "Philadelphia Corroboration Report"
+description = "Independent-source findings and exact reasons each Philadelphia record remains in review."
+
+[[outputs]]
+id = "uApKJBxjlA4nett9CZbfI"
+uri = "file://docs/audits/public-art-stage1-chicago-access-pin-report.md"
+type = "text"
+title = "Chicago Access and Pin Report"
+description = "Official Dunbar point and access basis plus unresolved Foster underpass pin analysis."
+
+[[outputs]]
+id = "48qYYs0QAB4G6CRSRGgw1"
+uri = "file://docs/audits/public-art-stage1-canonical-route-dry-run.md"
+type = "text"
+title = "Canonical Route Dry Run"
+description = "Format-only future universal routes and current 404 risks for all six candidates."
+
+[[outputs]]
+id = "wqD5_70LoByfRtxZV3Mex"
+uri = "file://docs/audits/public-art-stage1-local-map-dry-run.md"
+type = "text"
+title = "Local Map Dry Run"
+description = "Correct future city/category placement and confirmation that no map behavior was changed."
+
+[[outputs]]
+id = "DrseqUE7ORUnJ99-d4P0-"
+uri = "file://docs/audits/public-art-stage1-revised-dedupe-report.md"
+type = "text"
+title = "Revised Dedupe Report"
+description = "Read-only proximity checks against universal entities, cultural collections, tour sites, and businesses."
+
+[[outputs]]
+id = "PiHDSXEqhgxZIKzl5yx_9"
+uri = "file://docs/audits/public-art-stage1-changed-file-list.txt"
+type = "text"
+title = "Changed-File List"
+description = "Required application/data/configuration changed-file declaration: none."
