@@ -1012,26 +1012,26 @@ description = "Initial three-candidate, non-public inclusive manifest, updated w
 id = "aGvaUVF2ka8SSNF0uFOqC"
 uri = "file://docs/audits/public-art-stage-1-verified-context-report.md"
 type = "text"
-title = "Stage 1 Verified-Context Addendum"
-description = "Updated with the near-coordinate hold and no-merge recommendation for the Atlanta candidate."
+title = "Gate 1 — Candidate Evidence Matrix"
+description = "Consolidated evidence matrix, deduplication report, route dry run, coverage gaps, and changed-file declaration."
 
 [[outputs]]
 id = "kaC9-7qKvB12t3pWEHS-E"
 uri = "file://docs/audits/public-art-stage-1-african-american-manifest.json"
 type = "unspecified"
-title = "African American Candidate Manifest"
-description = "Updated with the Atlanta near-coordinate review hold; all records remain non-public and in review."
+title = "Gate 1 — African American Candidate Manifest"
+description = "Exact candidate IDs, source URLs, artist credit/status, locations, access/work status, context evidence, and hold reasons."
 
 [[outputs]]
 id = "8DT4Iyq0LngS8XEX4wdsf"
 uri = "file://docs/audits/public-art-stage-1-caribbean-manifest.json"
 type = "unspecified"
-title = "Caribbean Candidate Manifest"
-description = "One high-confidence, non-public Haitian-community-context candidate from Philadelphia."
+title = "Gate 1 — Caribbean Candidate Manifest"
+description = "Exact candidate ID and source-level Haitian community evidence."
 
 [[outputs]]
 id = "BZquwBHd9-_8yMUe8jUAN"
 uri = "file://docs/audits/public-art-stage-1-indigenous-hispanic-latine-review-manifest.json"
 type = "unspecified"
-title = "Indigenous/Hispanic-Latine Review Manifest"
-description = "Two explicit-source, non-public review candidates; no inferred identities or context."
+title = "Gate 1 — Indigenous/Hispanic-Latine Review Manifest"
+description = "Exact source-level Indigenous and Hispanic/Latine evidence, including the two records that require careful review."
