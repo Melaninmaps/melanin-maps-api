@@ -207,8 +207,14 @@ interface SupportLink {
 }
 
 export default function CulturalSiteDetail() {
-  const [, params] = useRoute("/sites/:id");
-  const id = params?.id;
+  const [, legacyParams] = useRoute("/sites/:id");
+  const [, canonicalParams] = useRoute("/cultural-sites/:id");
+  const [, canonicalSlugParams] = useRoute("/cultural-sites/:id/:slug");
+  const id =
+    canonicalSlugParams?.id ??
+    canonicalParams?.id ??
+    legacyParams?.id ??
+    "";
   const { data: auth } = useGetCurrentAuthUser();
   const { toast } = useToast();
 
