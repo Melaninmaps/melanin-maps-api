@@ -1,7 +1,5 @@
 import { BlurView } from "expo-blur";
-import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -9,50 +7,7 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 import { useColors } from "@/hooks/useColors";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
-function NativeTabLayout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="community">
-        <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
-        <Label>Community</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: "safari", selected: "safari.fill" }} />
-        <Label>Discover</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="map">
-        <Icon sf={{ default: "map", selected: "map.fill" }} />
-        <Label>Map</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="safety-hub">
-        <Icon sf={{ default: "shield", selected: "shield.fill" }} />
-        <Label>Safety</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="events">
-        <Icon sf={{ default: "calendar", selected: "calendar.circle.fill" }} />
-        <Label>Events</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="library">
-        <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
-        <Label>Library</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="resources">
-        <Icon sf={{ default: "heart.text.square", selected: "heart.text.square.fill" }} />
-        <Label>Resources</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
-        <Label>Profile</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
+import { getApiBase } from "@/lib/api";
 
 function ClassicTabLayout() {
   const colors = useColors();

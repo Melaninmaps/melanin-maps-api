@@ -7,10 +7,10 @@
  */
 export function parseMediaUrls(value: unknown): string[] | undefined {
   let candidate: unknown = value;
-
-  if (typeof value === "string") {
+  for (let depth = 0; depth < 3 && typeof candidate === "string"; depth += 1) {
+    if (!candidate.trim()) return undefined;
     try {
-      candidate = JSON.parse(value);
+      candidate = JSON.parse(candidate);
     } catch {
       return undefined;
     }
@@ -18,10 +18,13 @@ export function parseMediaUrls(value: unknown): string[] | undefined {
 
   if (!Array.isArray(candidate)) return undefined;
 
-  const urls = candidate
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const unique = new Set<string>();
+  for (const item of candidate) {
+    if (typeof item !== "string") continue;
+    const url = item.trim();
+    if (url) unique.add(url);
+  }
+  const urls = Array.from(unique).slice(0, 5);
 
   return urls.length > 0 ? urls : undefined;
 }

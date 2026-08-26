@@ -19,11 +19,7 @@ import { useColors } from "@/hooks/useColors";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import type { CommunityPost } from "@/constants/types";
 import { parseMediaUrls } from "@/lib/mediaUrls";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+import { getApiBase } from "@/lib/api";
 
 function timeAgo(date: Date | string): string {
   const d = new Date(date);

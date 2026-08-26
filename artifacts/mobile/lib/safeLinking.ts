@@ -1,29 +1,63 @@
 import { Alert, Linking, Platform } from "react-native";
+import { getApiBase } from "@/lib/api";
 import { normalizeExternalUrl } from "@/lib/urlSafety";
 
 export { normalizeExternalUrl } from "@/lib/urlSafety";
 
-function showUnavailable(message = "This link is unavailable right now."): void {
-  Alert.alert("Link unavailable", message);
+export type OpenExternalUrlOptions = {
+  kind?: "web" | "device";
+  unavailableTitle?: string;
+  unavailableMessage?: string;
+};
+
+function showUnavailable(
+  message = "This link is unavailable right now.",
+  title = "Link unavailable",
+): void {
+  Alert.alert(title, message);
 }
 
-export async function openExternalUrl(value: unknown): Promise<boolean> {
-  const url = normalizeExternalUrl(value);
+function normalizeDeviceUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const candidate = trimmed.startsWith("/") ? `${getApiBase()}${trimmed}` : trimmed;
+  try {
+    const parsed = new URL(candidate);
+    return new Set(["http:", "https:", "maps:", "geo:", "tel:", "sms:", "mailto:"])
+      .has(parsed.protocol.toLowerCase())
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function openExternalUrl(
+  value: unknown,
+  options: OpenExternalUrlOptions = {},
+): Promise<boolean> {
+  const {
+    kind = "web",
+    unavailableTitle = "Link unavailable",
+    unavailableMessage = "This link is invalid or cannot be opened on this device.",
+  } = options;
+  const url = kind === "device" ? normalizeDeviceUrl(value) : normalizeExternalUrl(value);
   if (!url) {
-    showUnavailable("This link is invalid or incomplete.");
+    showUnavailable(unavailableMessage, unavailableTitle);
     return false;
   }
 
   try {
     const supported = await Linking.canOpenURL(url);
     if (!supported) {
-      showUnavailable();
+      showUnavailable(unavailableMessage, unavailableTitle);
       return false;
     }
     await Linking.openURL(url);
     return true;
   } catch {
-    showUnavailable();
+    showUnavailable(unavailableMessage, unavailableTitle);
     return false;
   }
 }

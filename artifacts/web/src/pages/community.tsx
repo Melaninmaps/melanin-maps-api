@@ -88,6 +88,29 @@ function categoryLabel(cat: string): string {
   return map[cat] ?? cat;
 }
 
+function normalizeMediaUrls(value: unknown): string[] | undefined {
+  let current = value;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (Array.isArray(current)) {
+      const unique = new Set<string>();
+      for (const item of current) {
+        if (typeof item !== "string") continue;
+        const url = item.trim();
+        if (url) unique.add(url);
+      }
+      const urls = Array.from(unique).slice(0, 5);
+      return urls.length > 0 ? urls : undefined;
+    }
+    if (typeof current !== "string" || !current.trim()) return undefined;
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
 // ── Post Card ──────────────────────────────────────────────────────────────
 function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick }: {
   post: Post; onLike: (id: string) => void; onDelete: (id: string) => void;
@@ -300,7 +323,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         postType,
         category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
         visibility,
-        mediaUrls: mediaUrls.length ? JSON.stringify(mediaUrls) : undefined,
+        mediaUrls: mediaUrls.length ? mediaUrls : undefined,
         hashtags: hashtags.length ? hashtags : undefined,
       };
       const res = await fetch(`${BASE}api/community/posts`, {
@@ -777,12 +800,7 @@ export default function Community() {
           createdAt: p.createdAt as string,
           category: (p.category as string) ?? "general",
           postType: (p.postType as string) ?? "community",
-          mediaUrls: (() => {
-            const mu = p.mediaUrls;
-            if (!mu) return undefined;
-            if (Array.isArray(mu)) return mu as string[];
-            try { return JSON.parse(mu as string) as string[]; } catch { return undefined; }
-          })(),
+          mediaUrls: normalizeMediaUrls(p.mediaUrls),
           businessName: p.businessName as string | undefined,
           businessId: p.businessId as string | undefined,
           locationVenueName: p.locationVenueName as string | undefined,

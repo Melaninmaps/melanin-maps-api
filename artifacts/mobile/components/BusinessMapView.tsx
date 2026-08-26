@@ -20,6 +20,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
+import { getApiBase } from "@/lib/api";
 
 const GOLD = "#CA922B";
 const CULTURAL_COLOR = "#7C3AED";
@@ -52,11 +53,6 @@ interface CulturalSite {
   longitude: string;
   era: string | null;
   significance: string | null;
-}
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
 }
 
 export function BusinessMapView(_props: { latitude?: number | null; longitude?: number | null; name?: string }) {

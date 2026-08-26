@@ -10,6 +10,7 @@ import { ReportButton } from "@/components/ReportButton";
 import AudienceRatingBadge from "@/components/AudienceRatingBadge";
 import type { CommunityPost } from "@/constants/types";
 import { openExternalUrl } from "@/lib/safeLinking";
+import { getApiBase } from "@/lib/api";
 
 interface Props {
   post: CommunityPost;
@@ -39,11 +40,6 @@ const POST_TYPE_ACCENT: Record<string, string> = {
   saved_place: "#1D4ED8",
   community: "#C4622D",
 };
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 const WARNING_LABELS: Record<string, string> = {
   violence: "Graphic Violence",
@@ -94,10 +90,15 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
       {mediaUrls.map((url, i) => {
         const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
         return isVideo ? (
-          <View key={i} style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}>
+          <TouchableOpacity
+            key={i}
+            style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
+            onPress={() => { void openExternalUrl(url, { unavailableMessage: "This video is unavailable." }); }}
+            activeOpacity={0.8}
+          >
             <Feather name="play-circle" size={36} color="#fff" />
-            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Video</Text>
-          </View>
+            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Open Video</Text>
+          </TouchableOpacity>
         ) : (
           <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
         );

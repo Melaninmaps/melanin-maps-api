@@ -9,7 +9,6 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   RefreshControl,
@@ -35,6 +34,8 @@ import { useEvents } from "@/hooks/useEvents";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
+import { openExternalUrl } from "@/lib/safeLinking";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { RecommendationNudge } from "@/components/RecommendationNudge";
 import { parseMediaUrls } from "@/lib/mediaUrls";
@@ -76,11 +77,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   health: "activity",
   general: "grid",
 };
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 function formatTimeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -430,7 +426,7 @@ export default function CommunityScreen() {
 
   const pickAndUploadMedia = async (kind: "image" | "video") => {
     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
-    const remainingSlots = 5 - mediaAttachments.length;
+    const remainingSlots = Math.max(0, 5 - mediaAttachments.length);
     if (remainingSlots <= 0) {
       Alert.alert("Attachment limit reached", "Remove an attachment before adding another.");
       return;
@@ -447,21 +443,18 @@ export default function CommunityScreen() {
     });
     if (result.canceled || !result.assets.length) return;
     setUploadingMedia(true);
-    const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
-    const preserveUploaded = () => {
-      if (uploaded.length === 0) return;
-      const completed = uploaded.splice(0, uploaded.length);
-      setMediaAttachments((prev) => [...prev, ...completed].slice(0, 5));
-    };
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      for (const asset of result.assets) {
+      for (const asset of result.assets.slice(0, remainingSlots)) {
         const formData = new FormData();
-        const fieldName = kind === "image" ? "image" : "video";
         const mime = asset.mimeType ?? (kind === "image" ? "image/jpeg" : "video/mp4");
         const ext = mime.split("/")[1] ?? (kind === "image" ? "jpg" : "mp4");
-        formData.append(fieldName, { uri: asset.uri, type: mime, name: `${fieldName}.${ext}` } as unknown as Blob);
-        const res = await fetch(`${getApiBase()}/api/community/media/upload/${kind}`, {
+        formData.append("file", {
+          uri: asset.uri,
+          type: mime,
+          name: asset.fileName ?? `${kind}.${ext}`,
+        } as unknown as Blob);
+        const res = await fetch(`${getApiBase()}/api/media/upload?purpose=community_post`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
@@ -469,14 +462,22 @@ export default function CommunityScreen() {
         if (res.ok) {
           const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
           if (!data.url) {
-            preserveUploaded();
             Alert.alert("Upload failed", "The server did not return a media URL. Please try again.");
             return;
           }
-          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url, isGraphic: data.isGraphic, warningType: data.warningType });
+          const attachment = {
+            uri: asset.uri,
+            type: kind,
+            uploaded: data.url,
+            isGraphic: data.isGraphic,
+            warningType: data.warningType,
+          };
+          setMediaAttachments((current) => {
+            if (current.some((item) => item.uploaded === attachment.uploaded)) return current;
+            return [...current, attachment].slice(0, 5);
+          });
         } else {
           const err = await res.json().catch(() => ({})) as { error?: string; code?: string };
-          preserveUploaded();
           if (err.code === "TIER_LIMIT_REACHED") {
             setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
             setShowUpgrade(true);
@@ -486,10 +487,8 @@ export default function CommunityScreen() {
           return;
         }
       }
-      preserveUploaded();
     } catch {
-      preserveUploaded();
-      Alert.alert("Upload failed", "Please try again.");
+      Alert.alert("Upload failed", "Your completed attachments were kept. Check your connection and retry.");
     } finally {
       setUploadingMedia(false);
     }
@@ -1130,11 +1129,11 @@ export default function CommunityScreen() {
             </View>
           </View>
           <View style={styles.resRow}>
-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => { void openExternalUrl("tel:988", { kind: "device" }); }}>
               <Feather name="phone-call" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Call / Text 988</Text>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => { void openExternalUrl("sms:741741", { kind: "device" }); }}>
               <Feather name="message-circle" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Text HOME to 741741</Text>
             </TouchableOpacity>
@@ -1152,7 +1151,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1173,7 +1172,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1191,7 +1190,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1213,7 +1212,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />

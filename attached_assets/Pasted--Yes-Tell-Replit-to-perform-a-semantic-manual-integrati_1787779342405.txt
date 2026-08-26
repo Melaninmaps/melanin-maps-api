@@ -1,0 +1,18 @@
+**Yes. Tell Replit to perform a semantic/manual integration—do not force-apply the patch.** Paste the following into Replit Agent:
+
+> Integrate the Manus crash/parity repairs into the **current workspace**, preserving all existing merged mobile work. Do **not** run `git apply --reject`, do not reset files, and do not overwrite whole files from the snapshot. Create a checkpoint/backup first, then compare `replit/mwm-crash-parity-fixes.patch` hunk by hunk against the current code and manually merge only missing behavior.
+>
+> Required outcomes:
+> 1. In the community API, normalize `mediaUrls` supplied as arrays, JSON strings, malformed values, and legacy double-encoded strings; return a stable array and limit it to five URLs.
+> 2. On the website, submit `mediaUrls` as an array—not `JSON.stringify(mediaUrls)`—and defensively normalize old values while loading posts.
+> 3. In the canonical cultural-site repository, stop depending on a missing `slug` column; derive a stable slug from the existing site name with an ID fallback.
+> 4. Make cultural-site API responses backward-compatible with both the flat canonical response and the current `{ site: ... }` consumer envelope, including `state`/`stateCode` and `externalUrl`/`learnMoreUrl` aliases.
+> 5. On mobile cultural heritage, accept both `sites` and `items` list envelopes, distinguish load failure from an empty result, and show a working **Try Again** action.
+> 6. Remove unavailable `Icon`, `Label`, and `NativeTabs` imports/usages from `expo-router/unstable-native-tabs` if they remain. Preserve the active tab implementation.
+> 7. Inspect every other hunk in the Manus patch and semantically merge any missing crash-prevention, upload-contract, media-parser, API-base, and safe-external-link repairs without reverting newer code.
+>
+> After editing, run formatting/linting, the complete workspace typecheck, existing tests, Expo config validation, iOS and Android pre-build checks, and `replit/validate-source-contracts.mjs`. If the source-contract checker fails only because the merged implementation is equivalent but textually different, update the checker to test behavior rather than exact source strings. Fix every new error caused by these edits. Do not deploy or submit app builds.
+>
+> Finally, report: files changed, which Manus hunks were already present, which were manually integrated, all command results, remaining pre-existing failures, and exact manual journeys still needed for authenticated image posting, MLK House links, and physical iOS/Android devices.
+
+If the bundle is not yet in the Replit workspace, upload/extract it at the repository root first. Before approving Replit’s changes, make sure it shows a **file-by-file diff** and confirms that no existing merged mobile work was removed.

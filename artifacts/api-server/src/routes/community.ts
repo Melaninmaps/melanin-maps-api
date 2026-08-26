@@ -32,6 +32,28 @@ const VIDEO_TIER_TABLE = [
   { tier: "legacy_member",     label: "Premium Creator", videoMonthly: 200 },
 ];
 
+function normalizeCommunityMediaUrls(value: unknown): string[] {
+  let current = value;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (Array.isArray(current)) {
+      const unique = new Set<string>();
+      for (const item of current) {
+        if (typeof item !== "string") continue;
+        const url = item.trim();
+        if (url) unique.add(url);
+      }
+      return Array.from(unique).slice(0, 5);
+    }
+    if (typeof current !== "string" || !current.trim()) return [];
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 // Split long content into thread segments at natural sentence boundaries
 // 300 words per segment — a full, complete thought per post
 function splitIntoThread(content: string, maxWords = 300): string[] {
@@ -254,7 +276,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
       authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
-      mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id,
+      mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
@@ -372,7 +394,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessId?: string;
       businessName?: string;
       businessLink?: string;
-      mediaUrls?: string[];
+      mediaUrls?: unknown;
       savedPlaceId?: string;
       visibility?: "public" | "followers_only";
       locationTag?: string;
@@ -407,6 +429,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       res.status(400).json({ error: "content is required" });
       return;
     }
+
+    const normalizedMediaUrls = normalizeCommunityMediaUrls(mediaUrls);
 
     // Extract hashtags from content
     const extractedHashtags = extractHashtags(content.trim());
@@ -571,7 +595,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessId: businessId ?? null,
       businessName: resolvedBusinessName,
       businessLink: businessLink?.trim() ?? null,
-      mediaUrls: (i === 0 && mediaUrls?.length) ? JSON.stringify(mediaUrls) : null,
+      mediaUrls: (i === 0 && normalizedMediaUrls.length > 0) ? JSON.stringify(normalizedMediaUrls) : null,
       savedPlaceId: savedPlaceId ?? null,
       locationTag: locationTag?.trim() || null,
       locationVenueName: locationVenueName?.trim() || null,
