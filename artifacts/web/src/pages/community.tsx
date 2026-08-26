@@ -363,7 +363,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <div data-testid="community-compose-modal" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#3A1F0E]/8">
@@ -388,6 +388,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Text area */}
           <textarea
+            data-testid="community-compose-content"
             autoFocus
             value={content}
             onChange={e => setContent(e.target.value)}
@@ -401,7 +402,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Media preview */}
           {mediaUrls.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
+            <div data-testid="community-media-previews" className="flex gap-2 flex-wrap">
               {mediaUrls.map((url, i) => {
                 const ytEmbed = getYouTubeEmbed(url);
                 const isSocial = url.includes("tiktok.com") || url.includes("instagram.com");
@@ -492,7 +493,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Upload error */}
           {uploadError && (
-            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            <div data-testid="community-upload-error" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
               {uploadError}
             </div>
           )}
@@ -503,6 +504,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
               {/* Photo upload — wired to real server upload */}
               <input
                 ref={fileInputRef}
+                data-testid="community-photo-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                 className="hidden"
@@ -511,6 +513,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
               {/* Video upload */}
               <input
                 ref={videoInputRef}
+                data-testid="community-video-input"
                 type="file"
                 accept="video/mp4,video/quicktime,video/webm"
                 className="hidden"
@@ -861,7 +864,7 @@ export default function Community() {
               <p className="text-[#F5EBD8]/60 text-sm">Connect with the community</p>
             </div>
             {isAuthenticated && (
-              <button onClick={() => setShowCompose(true)}
+              <button data-testid="community-compose-open" onClick={() => setShowCompose(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-[#CA922B] hover:bg-[#B38024] text-white rounded-full font-bold text-sm transition-colors">
                 <Plus className="w-4 h-4" />
                 Post

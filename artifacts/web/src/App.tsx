@@ -84,6 +84,15 @@ import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
 
 const BASE = import.meta.env.BASE_URL;
+const ROUTER_BASE = (() => {
+  const configuredBase = BASE.replace(/\/$/, "");
+  if (configuredBase) return configuredBase;
+  if (typeof window !== "undefined") {
+    const pathname = window.location.pathname;
+    if (pathname === "/web" || pathname.startsWith("/web/")) return "/web";
+  }
+  return "";
+})();
 
 function Spinner() {
   return (
@@ -427,7 +436,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <LocationContextProvider>
-            <WouterRouter base={BASE.replace(/\/$/, "")}>
+            <WouterRouter base={ROUTER_BASE}>
               <ScrollToTop />
               <OgRedirectHandler />
               <Router />

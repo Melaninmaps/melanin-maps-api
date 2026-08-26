@@ -93,7 +93,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sticky Top Navbar */}
       <header className="sticky top-0 z-50 w-full bg-[#2B1507] text-[#F5EBD8] shadow-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 md:gap-3 shrink-0 mr-4">
+          <Link
+            href="/"
+            aria-label="Mapping with Melanin home"
+            data-testid="logo-home-link"
+            className="flex items-center gap-2 md:gap-3 shrink-0 mr-4"
+          >
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#FAF6EF] border-2 border-[#CA922B] shrink-0 overflow-hidden">
               <img
                 src={`${import.meta.env.BASE_URL}images/logo-transparent.png`}
@@ -109,11 +114,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop Nav */}
-          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-3">
+          <nav aria-label="Main navigation" data-testid="desktop-navigation" className="hidden xl:flex items-center gap-3">
             {navItems.map((item) => {
               const isActive = location === item.href || location.startsWith(item.href + "/");
               return (
-                <Link key={item.href} href={item.href}>
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  data-testid={`desktop-nav-link-${item.href.slice(1).replaceAll("/", "-") || "home"}`}
+                  data-nav-item={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                >
                   <span
                     aria-current={isActive ? "page" : undefined}
                     className={`text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
@@ -136,6 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label="Toggle light/dark mode"
+                data-testid="desktop-theme-toggle"
               className="w-9 h-9 rounded-full flex items-center justify-center border border-white/20 bg-white/5 hover:bg-white/15 transition-colors text-[#F5EBD8]"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -145,10 +157,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="w-20 h-8" aria-hidden="true" />
             ) : auth?.user ? (
               <>
-                <Link href="/notifications">
+                <Link href="/notifications" aria-label="Notifications" data-testid="desktop-notifications-link">
                   <Bell className="w-5 h-5 text-[#F5EBD8] cursor-pointer hover:text-[#CA922B] transition-colors" />
                 </Link>
-                <Link href="/profile">
+                <Link href="/profile" data-testid="desktop-profile-link">
                   <span className="text-sm font-medium hover:text-[#CA922B] transition-colors cursor-pointer">Profile</span>
                 </Link>
               </>
@@ -170,6 +182,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={isMobileMenuOpen}
             aria-controls="mobile-nav-menu"
+            data-testid="mobile-menu-toggle"
             className="xl:hidden flex items-center justify-center w-10 h-10 rounded-lg border border-white/20 bg-white/5 hover:bg-white/15 transition-colors text-[#F5EBD8] shrink-0"
           >
             {isMobileMenuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
@@ -182,10 +195,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
             id="mobile-nav-menu"
             role="navigation"
             aria-label="Mobile navigation"
+            data-testid="mobile-navigation"
             className="xl:hidden bg-[#2B1507] border-t border-white/10 px-5 py-5 flex flex-col gap-1 absolute w-full shadow-xl z-40 max-h-[80dvh] overflow-y-auto"
           >
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                data-testid={`mobile-nav-link-${item.href.slice(1).replaceAll("/", "-") || "home"}`}
+                data-nav-item={item.href}
+              >
                 <span className={`block py-3 text-[15px] font-medium cursor-pointer hover:text-[#CA922B] border-b border-white/5 transition-colors ${item.featured ? "text-[#CA922B] font-semibold" : "text-[#F5EBD8]"}`}>
                   {item.label}
                 </span>
@@ -194,21 +214,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="pt-4 mt-2 flex flex-col gap-3">
               <button
                 onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setIsMobileMenuOpen(false); }}
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                data-testid="mobile-theme-toggle"
                 className="flex items-center gap-3 py-3 text-[15px] font-medium text-[#F5EBD8] border-b border-white/5"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               </button>
               {authLoading ? null : auth?.user ? (
-                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} data-testid="mobile-profile-link">
                   <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
                 </Link>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} data-testid="mobile-login-link">
                     <span className="block text-center text-[15px] font-medium text-[#F5EBD8]/80 cursor-pointer py-2 border border-white/20 rounded-full hover:border-[#CA922B]/50">Log In</span>
                   </Link>
-                  <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)}>
+                  <a href="/#waitlist-form" onClick={() => setIsMobileMenuOpen(false)} data-testid="mobile-waitlist-link">
                     <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white font-semibold py-3 text-base">
                       Join the Waitlist
                     </Button>
@@ -324,6 +346,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Members get the full 6-tab bar; guests get Map / Businesses / Safety / Sign In */}
       <nav
         aria-label="Mobile bottom navigation"
+        data-testid="mobile-bottom-navigation"
         className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#2B1507] border-t border-white/10 flex items-stretch"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
@@ -338,7 +361,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ].map(({ href, Icon, label }) => {
             const active = location === href || (href !== "/explore" && location.startsWith(href));
             return (
-              <Link key={href} href={href} className="flex-1">
+              <Link
+                key={href}
+                href={href}
+                className="flex-1"
+                data-testid={`mobile-bottom-nav-link-${href.slice(1).replaceAll("/", "-")}`}
+                data-nav-item={href}
+                aria-current={active ? "page" : undefined}
+              >
                 <div className={`flex flex-col items-center justify-center gap-0.5 py-2 w-full transition-colors cursor-pointer ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"}`}>
                   <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                   <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>{label}</span>
@@ -356,7 +386,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ].map(({ href, Icon, label }) => {
             const active = location === href || (href !== "/login" && location.startsWith(href));
             return (
-              <Link key={href} href={href} className="flex-1">
+              <Link
+                key={href}
+                href={href}
+                className="flex-1"
+                data-testid={`mobile-bottom-nav-link-${href.slice(1).replaceAll("/", "-")}`}
+                data-nav-item={href}
+                aria-current={active ? "page" : undefined}
+              >
                 <div className={`flex flex-col items-center justify-center gap-0.5 py-2 w-full transition-colors cursor-pointer ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/50"}`}>
                   <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
                   <span className={`text-[9px] font-bold leading-none ${active ? "text-[#CA922B]" : "text-[#F5EBD8]/40"}`}>{label}</span>
