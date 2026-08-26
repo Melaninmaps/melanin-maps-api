@@ -4,7 +4,6 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -23,6 +22,7 @@ import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useAuth } from "@/lib/auth";
+import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
 
 const GOLD = "#CA922B";
 // KinfolkAI restore tab lives at bottom: insets.bottom + 90 in the root layout.
@@ -1035,11 +1035,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 onPress={() => {
                   const lat = parseFloat(site.latitude);
                   const lng = parseFloat(site.longitude);
-                  void Linking.openURL(
-                    Platform.OS === "ios"
-                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(site.name)}`
-                      : `geo:${lat},${lng}?q=${encodeURIComponent(site.name)}`
-                  );
+                  void openMapDirections(lat, lng, site.name);
                 }}
               >
                 <Feather name="navigation" size={14} color={cs.color} />
@@ -1064,7 +1060,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             <View style={{ flexDirection: "row", gap: 16, marginTop: 8, paddingHorizontal: 2 }}>
               {site.externalUrl ? (
                 <TouchableOpacity
-                  onPress={() => void Linking.openURL(site.externalUrl!)}
+                  onPress={() => void openExternalUrl(site.externalUrl)}
                   style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                 >
                   <Feather name="external-link" size={12} color={cs.color} />
@@ -1138,11 +1134,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 const lat = parseFloat(evt.latitude ?? "");
                 const lng = parseFloat(evt.longitude ?? "");
                 if (!isNaN(lat) && !isNaN(lng)) {
-                  void Linking.openURL(
-                    Platform.OS === "ios"
-                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(evt.title)}`
-                      : `geo:${lat},${lng}?q=${encodeURIComponent(evt.title)}`
-                  );
+                  void openMapDirections(lat, lng, evt.title);
                 }
               }}
             >
@@ -1177,7 +1169,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
               <TouchableOpacity
                 style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#7C3AED" }]}
                 activeOpacity={0.85}
-                onPress={() => void Linking.openURL(selectedOrg.website!)}
+                onPress={() => void openExternalUrl(selectedOrg.website)}
               >
                 <Feather name="external-link" size={14} color="#7C3AED" />
                 <Text style={[s.cardBtnTxt, { color: "#7C3AED" }]}>Website</Text>
@@ -1271,11 +1263,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 activeOpacity={0.85}
                 onPress={() => {
                   if (!isNaN(lat) && !isNaN(lng)) {
-                    void Linking.openURL(
-                      Platform.OS === "ios"
-                        ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
-                        : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
-                    );
+                    void openMapDirections(lat, lng, selectedTourSite.name);
                   }
                 }}
               >

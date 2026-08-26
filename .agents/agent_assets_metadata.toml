@@ -1098,3 +1098,10 @@ uri = "file://docs/audits/public-art-stage1-changed-file-list.txt"
 type = "text"
 title = "Changed-File List"
 description = "Required application/data/configuration changed-file declaration: none."
+
+[[outputs]]
+id = "52pGTqieqlFEiL4euzXRl"
+uri = "file://deliverables/mwm-manus-mobile-crash-parity-audit-2026-08-26.zip"
+type = "unspecified"
+title = "Updated Manus Mobile Crash & Parity Audit Package"
+description = "Final focused handoff with repaired source snapshots, checksums, 31 passing tests, audit preflight output, live-preview evidence, effective Expo config, and the unhidden 29-error full TypeScript report."

@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { Alert, Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import { useColors } from "@/hooks/useColors";
@@ -9,6 +9,7 @@ import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/Busine
 import { ReportButton } from "@/components/ReportButton";
 import AudienceRatingBadge from "@/components/AudienceRatingBadge";
 import type { CommunityPost } from "@/constants/types";
+import { openExternalUrl } from "@/lib/safeLinking";
 
 interface Props {
   post: CommunityPost;
@@ -116,7 +117,7 @@ function LinkPreviewCard({ linkUrl, linkTitle, linkDescription, linkDomain, link
   return (
     <TouchableOpacity
       style={[s.linkPreview, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-      onPress={() => Linking.openURL(linkUrl).catch(() => {})}
+      onPress={() => { void openExternalUrl(linkUrl); }}
       activeOpacity={0.8}
     >
       <View style={[s.linkPreviewAccent, { backgroundColor: "#C4622D" }]} />
@@ -504,7 +505,7 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
       {isBusinessPost && post.businessLink && (
         <TouchableOpacity
           style={[s.linkRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-          onPress={() => { if (post.businessLink) Linking.openURL(post.businessLink).catch(() => {}); }}
+          onPress={() => { if (post.businessLink) void openExternalUrl(post.businessLink); }}
           activeOpacity={0.8}
         >
           <Feather name="external-link" size={13} color={colors.primary} />

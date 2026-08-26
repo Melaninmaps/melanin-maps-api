@@ -18,6 +18,7 @@
     "build:android": "eas build --platform android --profile production",
     "build:record:ios": "node scripts/pre-build-check.js --record ios",
     "build:record:android": "node scripts/pre-build-check.js --record android",
+    "audit": "node scripts/audit.js",
     "lint": "expo lint"
   },
   "devDependencies": {

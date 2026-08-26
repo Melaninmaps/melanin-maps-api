@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { openExternalUrl } from "@/lib/safeLinking";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -277,7 +277,7 @@ export default function CulturalHeritagePage() {
                   city: item.city,
                   state: item.state,
                 });
-                void Linking.openURL(item.externalUrl!);
+                void openExternalUrl(item.externalUrl);
               }}
             >
               <Feather name="external-link" size={12} color={colors.mutedForeground} />
@@ -828,7 +828,7 @@ function DetailModal({
                           city: site.city,
                           state: site.state,
                         });
-                        void Linking.openURL(link.url);
+                        void openExternalUrl(link.url);
                       }}
                       activeOpacity={0.75}
                     >
@@ -902,7 +902,7 @@ function DetailModal({
                 city: site.city,
                 state: site.state,
               });
-              void Linking.openURL(site.externalUrl!);
+              void openExternalUrl(site.externalUrl);
             }}
             activeOpacity={0.85}
           >

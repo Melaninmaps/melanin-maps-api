@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import type { CommunityPost } from "@/constants/types";
+import { parseMediaUrls } from "@/lib/mediaUrls";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -125,7 +126,7 @@ export default function VisitorProfileScreen() {
         businessId: p.businessId,
         businessName: p.businessName,
         businessLink: p.businessLink,
-        mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : undefined,
+        mediaUrls: parseMediaUrls(p.mediaUrls),
         savedPlaceId: p.savedPlaceId,
         locationTag: p.locationTag,
         locationType: p.locationType,

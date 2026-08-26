@@ -37,6 +37,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { RecommendationNudge } from "@/components/RecommendationNudge";
+import { parseMediaUrls } from "@/lib/mediaUrls";
 
 const TABS = ["Feed", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
 
@@ -92,10 +93,7 @@ function formatTimeAgo(iso: string): string {
 }
 
 function toPostCard(raw: Record<string, unknown>): CommunityPost {
-  let mediaUrls: string[] | undefined;
-  if (raw.mediaUrls && typeof raw.mediaUrls === "string") {
-    try { mediaUrls = JSON.parse(raw.mediaUrls) as string[]; } catch { /* ignore */ }
-  }
+  const mediaUrls = parseMediaUrls(raw.mediaUrls);
   return {
     id: raw.id as string,
     author: (raw.authorName as string) ?? "Community Member",
@@ -432,21 +430,31 @@ export default function CommunityScreen() {
 
   const pickAndUploadMedia = async (kind: "image" | "video") => {
     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
+    const remainingSlots = 5 - mediaAttachments.length;
+    if (remainingSlots <= 0) {
+      Alert.alert("Attachment limit reached", "Remove an attachment before adding another.");
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library."); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: kind === "video" ? ["videos"] : ["images"],
       allowsMultipleSelection: kind === "image",
-      selectionLimit: kind === "image" ? 5 : 1,
+      selectionLimit: kind === "image" ? remainingSlots : 1,
       allowsEditing: kind === "video" ? false : false,
       quality: 0.85,
       videoMaxDuration: 120,
     });
     if (result.canceled || !result.assets.length) return;
     setUploadingMedia(true);
+    const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
+    const preserveUploaded = () => {
+      if (uploaded.length === 0) return;
+      const completed = uploaded.splice(0, uploaded.length);
+      setMediaAttachments((prev) => [...prev, ...completed].slice(0, 5));
+    };
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
       for (const asset of result.assets) {
         const formData = new FormData();
         const fieldName = kind === "image" ? "image" : "video";
@@ -460,9 +468,15 @@ export default function CommunityScreen() {
         });
         if (res.ok) {
           const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
+          if (!data.url) {
+            preserveUploaded();
+            Alert.alert("Upload failed", "The server did not return a media URL. Please try again.");
+            return;
+          }
           uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url, isGraphic: data.isGraphic, warningType: data.warningType });
         } else {
-          const err = await res.json() as { error?: string; code?: string };
+          const err = await res.json().catch(() => ({})) as { error?: string; code?: string };
+          preserveUploaded();
           if (err.code === "TIER_LIMIT_REACHED") {
             setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
             setShowUpgrade(true);
@@ -472,8 +486,9 @@ export default function CommunityScreen() {
           return;
         }
       }
-      setMediaAttachments((prev) => [...prev, ...uploaded].slice(0, 5));
+      preserveUploaded();
     } catch {
+      preserveUploaded();
       Alert.alert("Upload failed", "Please try again.");
     } finally {
       setUploadingMedia(false);
