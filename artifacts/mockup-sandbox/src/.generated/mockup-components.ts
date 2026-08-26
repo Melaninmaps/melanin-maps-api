@@ -16,11 +16,11 @@ export const modules: ModuleMap = {
   "./components/mockups/profiles/CommunityPage.tsx": () => import("../components/mockups/profiles/CommunityPage.tsx"),
   "./components/mockups/profiles/CommunityProfile.tsx": () => import("../components/mockups/profiles/CommunityProfile.tsx"),
   "./components/mockups/profiles/CommunityProfileVisitor.tsx": () => import("../components/mockups/profiles/CommunityProfileVisitor.tsx"),
+  "./components/mockups/slides/Slide01Opening.tsx": () => import("../components/mockups/slides/Slide01Opening.tsx"),
+  "./components/mockups/slides/Slide05TrustScore.tsx": () => import("../components/mockups/slides/Slide05TrustScore.tsx"),
+  "./components/mockups/slides/Slide17WhyNow.tsx": () => import("../components/mockups/slides/Slide17WhyNow.tsx"),
   "./components/mockups/surveys/BlackOwnedSurvey.tsx": () => import("../components/mockups/surveys/BlackOwnedSurvey.tsx"),
   "./components/mockups/surveys/GeneralSurvey.tsx": () => import("../components/mockups/surveys/GeneralSurvey.tsx"),
   "./components/mockups/theme-compare/DarkModeHero.tsx": () => import("../components/mockups/theme-compare/DarkModeHero.tsx"),
-  "./components/mockups/theme-compare/LightModeHero.tsx": () => import("../components/mockups/theme-compare/LightModeHero.tsx"),
-  "./components/mockups/slides/Slide01Opening.tsx": () => import("../components/mockups/slides/Slide01Opening.tsx"),
-  "./components/mockups/slides/Slide05TrustScore.tsx": () => import("../components/mockups/slides/Slide05TrustScore.tsx"),
-  "./components/mockups/slides/Slide17WhyNow.tsx": () => import("../components/mockups/slides/Slide17WhyNow.tsx")
+  "./components/mockups/theme-compare/LightModeHero.tsx": () => import("../components/mockups/theme-compare/LightModeHero.tsx")
 };
