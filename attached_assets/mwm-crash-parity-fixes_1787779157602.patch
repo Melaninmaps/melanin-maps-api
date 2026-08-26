@@ -1,0 +1,1061 @@
+diff --git a/artifacts/api-server/src/routes/canonical-cultural-sites.ts b/artifacts/api-server/src/routes/canonical-cultural-sites.ts
+index 491fa0d..dd1e7b8 100644
+--- a/artifacts/api-server/src/routes/canonical-cultural-sites.ts
++++ b/artifacts/api-server/src/routes/canonical-cultural-sites.ts
+@@ -33,7 +33,12 @@ router.get("/cultural-sites", async (req: Request, res: Response, next) => {
+   try {
+     const cityId = typeof req.query.cityId === "string" ? req.query.cityId : undefined;
+     res.setHeader("Cache-Control", "no-store");
+-    res.json({ items: await repository.listMapCards(cityId) });
++    const items = (await repository.listMapCards(cityId)).map((site) => ({
++      ...site,
++      state: site.stateCode,
++      externalUrl: site.learnMoreUrl,
++    }));
++    res.json({ items });
+   } catch (error) {
+     next(error);
+   }
+@@ -52,7 +57,15 @@ router.get("/cultural-sites/:id", async (req: Request, res: Response, next) => {
+       return;
+     }
+     res.setHeader("Cache-Control", "no-store");
+-    res.json({ ...site, detailUrl: canonicalCulturalSitePath(site) });
++    const detail = {
++      ...site,
++      state: site.stateCode,
++      externalUrl: site.learnMoreUrl,
++      detailUrl: canonicalCulturalSitePath(site),
++    };
++    // Keep the flat canonical shape while retaining the legacy `site` envelope
++    // used by the current website detail screen.
++    res.json({ ...detail, site: detail });
+   } catch (error) {
+     next(error);
+   }
+diff --git a/artifacts/api-server/src/routes/community.ts b/artifacts/api-server/src/routes/community.ts
+index 17a70ec..823cdc2 100644
+--- a/artifacts/api-server/src/routes/community.ts
++++ b/artifacts/api-server/src/routes/community.ts
+@@ -34,6 +34,26 @@ const VIDEO_TIER_TABLE = [
+ 
+ // Split long content into thread segments at natural sentence boundaries
+ // 300 words per segment — a full, complete thought per post
++function normalizeCommunityMediaUrls(value: unknown): string[] {
++  let current = value;
++  for (let depth = 0; depth < 3; depth += 1) {
++    if (Array.isArray(current)) {
++      return current
++        .filter((item): item is string => typeof item === "string")
++        .map((item) => item.trim())
++        .filter(Boolean)
++        .slice(0, 5);
++    }
++    if (typeof current !== "string" || !current.trim()) return [];
++    try {
++      current = JSON.parse(current);
++    } catch {
++      return [];
++    }
++  }
++  return [];
++}
++
+ function splitIntoThread(content: string, maxWords = 300): string[] {
+   const words = content.split(/\s+/).filter(Boolean);
+   if (words.length <= maxWords) return [content.trim()];
+@@ -254,7 +274,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
+       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
+       authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
+       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
+-      mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id,
++      mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
+       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
+       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
+       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
+@@ -372,7 +392,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
+       businessId?: string;
+       businessName?: string;
+       businessLink?: string;
+-      mediaUrls?: string[];
++      mediaUrls?: unknown;
+       savedPlaceId?: string;
+       visibility?: "public" | "followers_only";
+       locationTag?: string;
+@@ -408,6 +428,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
+       return;
+     }
+ 
++    const normalizedMediaUrls = normalizeCommunityMediaUrls(mediaUrls);
++
+     // Extract hashtags from content
+     const extractedHashtags = extractHashtags(content.trim());
+     upsertHashtags(extractedHashtags).catch(() => {});
+@@ -571,7 +593,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
+       businessId: businessId ?? null,
+       businessName: resolvedBusinessName,
+       businessLink: businessLink?.trim() ?? null,
+-      mediaUrls: (i === 0 && mediaUrls?.length) ? JSON.stringify(mediaUrls) : null,
++      mediaUrls: (i === 0 && normalizedMediaUrls.length > 0) ? JSON.stringify(normalizedMediaUrls) : null,
+       savedPlaceId: savedPlaceId ?? null,
+       locationTag: locationTag?.trim() || null,
+       locationVenueName: locationVenueName?.trim() || null,
+diff --git a/artifacts/api-server/src/routes/directory/canonicalCulturalSiteRepository.ts b/artifacts/api-server/src/routes/directory/canonicalCulturalSiteRepository.ts
+index a341ec0..8af8ea8 100644
+--- a/artifacts/api-server/src/routes/directory/canonicalCulturalSiteRepository.ts
++++ b/artifacts/api-server/src/routes/directory/canonicalCulturalSiteRepository.ts
+@@ -17,12 +17,20 @@ export function canonicalCulturalSitePath(site: Pick<CanonicalCulturalSite, "id"
+   return `/cultural-sites/${encodeURIComponent(site.id)}/${encodeURIComponent(site.slug)}`;
+ }
+ 
++// Production does not currently have a cultural_sites.slug column. Derive the
++// canonical slug from the authoritative display name so list/detail routes do
++// not fail while preserving UUID as the stable lookup key.
++const DERIVED_SLUG_SQL = `COALESCE(
++  NULLIF(TRIM(BOTH '-' FROM REGEXP_REPLACE(LOWER(name), '[^a-z0-9]+', '-', 'g')), ''),
++  id::text
++)`;
++
+ export class CanonicalCulturalSiteRepository {
+   constructor(private readonly pool: Pool) {}
+ 
+   async findById(id: string): Promise<CanonicalCulturalSite | null> {
+     const { rows } = await this.pool.query<CanonicalCulturalSite>(
+-      `SELECT id, slug, name, description, city, state AS "stateCode",
++      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, city, state AS "stateCode",
+               latitude, longitude, image_url AS "imageUrl",
+               COALESCE(website_url, external_url) AS "learnMoreUrl"
+        FROM cultural_sites
+@@ -35,7 +43,10 @@ export class CanonicalCulturalSiteRepository {
+ 
+   async findBySlug(slug: string): Promise<Pick<CanonicalCulturalSite, "id" | "slug"> | null> {
+     const { rows } = await this.pool.query<Pick<CanonicalCulturalSite, "id" | "slug">>(
+-      `SELECT id, slug FROM cultural_sites WHERE slug = $1 LIMIT 1`,
++      `SELECT id, ${DERIVED_SLUG_SQL} AS slug
++       FROM cultural_sites
++       WHERE ${DERIVED_SLUG_SQL} = $1
++       LIMIT 1`,
+       [slug],
+     );
+     return rows[0] ?? null;
+@@ -44,8 +55,9 @@ export class CanonicalCulturalSiteRepository {
+   async listMapCards(cityId?: string) {
+     // cityId filter is optional — when absent returns all geocoded sites.
+     // Note: cultural_sites uses a city text column, not a city_id FK in production.
++    void cityId;
+     const { rows } = await this.pool.query<CanonicalCulturalSite>(
+-      `SELECT id, slug, name, description, city, state AS "stateCode",
++      `SELECT id, ${DERIVED_SLUG_SQL} AS slug, name, description, city, state AS "stateCode",
+               latitude, longitude, image_url AS "imageUrl",
+               COALESCE(website_url, external_url) AS "learnMoreUrl"
+        FROM cultural_sites
+diff --git a/artifacts/mobile/app/(tabs)/_layout.tsx b/artifacts/mobile/app/(tabs)/_layout.tsx
+index fe50863..9d4d580 100644
+--- a/artifacts/mobile/app/(tabs)/_layout.tsx
++++ b/artifacts/mobile/app/(tabs)/_layout.tsx
+@@ -1,7 +1,5 @@
+ import { BlurView } from "expo-blur";
+-import { isLiquidGlassAvailable } from "expo-glass-effect";
+ import { Tabs } from "expo-router";
+-import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
+ import { SymbolView } from "expo-symbols";
+ import { Feather } from "@expo/vector-icons";
+ import React, { useEffect, useState } from "react";
+@@ -9,50 +7,7 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+ import * as SecureStore from "expo-secure-store";
+ 
+ import { useColors } from "@/hooks/useColors";
+-
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
+-
+-function NativeTabLayout() {
+-  return (
+-    <NativeTabs>
+-      <NativeTabs.Trigger name="community">
+-        <Icon sf={{ default: "person.3", selected: "person.3.fill" }} />
+-        <Label>Community</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="index">
+-        <Icon sf={{ default: "safari", selected: "safari.fill" }} />
+-        <Label>Discover</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="map">
+-        <Icon sf={{ default: "map", selected: "map.fill" }} />
+-        <Label>Map</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="safety-hub">
+-        <Icon sf={{ default: "shield", selected: "shield.fill" }} />
+-        <Label>Safety</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="events">
+-        <Icon sf={{ default: "calendar", selected: "calendar.circle.fill" }} />
+-        <Label>Events</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="library">
+-        <Icon sf={{ default: "books.vertical", selected: "books.vertical.fill" }} />
+-        <Label>Library</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="resources">
+-        <Icon sf={{ default: "heart.text.square", selected: "heart.text.square.fill" }} />
+-        <Label>Resources</Label>
+-      </NativeTabs.Trigger>
+-      <NativeTabs.Trigger name="profile">
+-        <Icon sf={{ default: "person.circle", selected: "person.circle.fill" }} />
+-        <Label>Profile</Label>
+-      </NativeTabs.Trigger>
+-    </NativeTabs>
+-  );
+-}
++import { getApiBase } from "@/lib/api";
+ 
+ function ClassicTabLayout() {
+   const colors = useColors();
+diff --git a/artifacts/mobile/app/(tabs)/community.tsx b/artifacts/mobile/app/(tabs)/community.tsx
+index c8981c8..f790b9f 100644
+--- a/artifacts/mobile/app/(tabs)/community.tsx
++++ b/artifacts/mobile/app/(tabs)/community.tsx
+@@ -9,7 +9,6 @@ import {
+   Alert,
+   FlatList,
+   KeyboardAvoidingView,
+-  Linking,
+   Modal,
+   Platform,
+   RefreshControl,
+@@ -35,6 +34,9 @@ import { useEvents } from "@/hooks/useEvents";
+ import { useGroups, type Group } from "@/hooks/useGroups";
+ import { useBusinesses } from "@/hooks/useBusinesses";
+ import { useAuth } from "@/lib/auth";
++import { getApiBase } from "@/lib/api";
++import { normalizeMediaUrls } from "@/lib/mediaUrls";
++import { openExternalUrl } from "@/lib/openExternalUrl";
+ import { UpgradeModal } from "@/components/UpgradeModal";
+ import { RecommendationNudge } from "@/components/RecommendationNudge";
+ 
+@@ -76,11 +78,6 @@ const CATEGORY_ICONS: Record<string, string> = {
+   general: "grid",
+ };
+ 
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
+-
+ function formatTimeAgo(iso: string): string {
+   const diff = Date.now() - new Date(iso).getTime();
+   const m = Math.floor(diff / 60000);
+@@ -92,10 +89,7 @@ function formatTimeAgo(iso: string): string {
+ }
+ 
+ function toPostCard(raw: Record<string, unknown>): CommunityPost {
+-  let mediaUrls: string[] | undefined;
+-  if (raw.mediaUrls && typeof raw.mediaUrls === "string") {
+-    try { mediaUrls = JSON.parse(raw.mediaUrls) as string[]; } catch { /* ignore */ }
+-  }
++  const mediaUrls = normalizeMediaUrls(raw.mediaUrls);
+   return {
+     id: raw.id as string,
+     author: (raw.authorName as string) ?? "Community Member",
+@@ -432,49 +426,76 @@ export default function CommunityScreen() {
+ 
+   const pickAndUploadMedia = async (kind: "image" | "video") => {
+     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
++
++    const remainingSlots = Math.max(0, 5 - mediaAttachments.length);
++    if (remainingSlots === 0) {
++      Alert.alert("Attachment limit reached", "Remove an attachment before adding another.");
++      return;
++    }
++
+     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+     if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library."); return; }
+     const result = await ImagePicker.launchImageLibraryAsync({
+       mediaTypes: kind === "video" ? ["videos"] : ["images"],
+       allowsMultipleSelection: kind === "image",
+-      selectionLimit: kind === "image" ? 5 : 1,
+-      allowsEditing: kind === "video" ? false : false,
++      selectionLimit: kind === "image" ? remainingSlots : 1,
++      allowsEditing: false,
+       quality: 0.85,
+       videoMaxDuration: 120,
+     });
+     if (result.canceled || !result.assets.length) return;
++
+     setUploadingMedia(true);
+     try {
+       const token = await SecureStore.getItemAsync("auth_session_token");
+-      const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
+-      for (const asset of result.assets) {
++      for (const asset of result.assets.slice(0, remainingSlots)) {
+         const formData = new FormData();
+-        const fieldName = kind === "image" ? "image" : "video";
+         const mime = asset.mimeType ?? (kind === "image" ? "image/jpeg" : "video/mp4");
+         const ext = mime.split("/")[1] ?? (kind === "image" ? "jpg" : "mp4");
+-        formData.append(fieldName, { uri: asset.uri, type: mime, name: `${fieldName}.${ext}` } as unknown as Blob);
+-        const res = await fetch(`${getApiBase()}/api/community/media/upload/${kind}`, {
++        formData.append("file", {
++          uri: asset.uri,
++          type: mime,
++          name: asset.fileName ?? `${kind}.${ext}`,
++        } as unknown as Blob);
++
++        const res = await fetch(`${getApiBase()}/api/media/upload?purpose=community_post`, {
+           method: "POST",
+           headers: token ? { Authorization: `Bearer ${token}` } : {},
+           body: formData,
+         });
+-        if (res.ok) {
+-          const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
+-          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url, isGraphic: data.isGraphic, warningType: data.warningType });
+-        } else {
+-          const err = await res.json() as { error?: string; code?: string };
+-          if (err.code === "TIER_LIMIT_REACHED") {
+-            setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
+-            setShowUpgrade(true);
+-            return;
+-          }
+-          Alert.alert("Upload failed", err.error ?? "Please try again.");
++        const data = await res.json().catch(() => ({})) as {
++          url?: string;
++          error?: string;
++          code?: string;
++          isGraphic?: boolean;
++          warningType?: string;
++        };
++
++        if (res.ok && data.url) {
++          const attachment = {
++            uri: asset.uri,
++            type: kind,
++            uploaded: data.url,
++            isGraphic: data.isGraphic,
++            warningType: data.warningType,
++          };
++          setMediaAttachments((current) => {
++            if (current.some((item) => item.uploaded === attachment.uploaded)) return current;
++            return [...current, attachment].slice(0, 5);
++          });
++          continue;
++        }
++
++        if (data.code === "TIER_LIMIT_REACHED") {
++          setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
++          setShowUpgrade(true);
+           return;
+         }
++        Alert.alert("Upload failed", data.error ?? "The upload service returned an invalid response. Please try again.");
++        return;
+       }
+-      setMediaAttachments((prev) => [...prev, ...uploaded].slice(0, 5));
+     } catch {
+-      Alert.alert("Upload failed", "Please try again.");
++      Alert.alert("Upload failed", "Your selected attachments were kept. Check your connection and retry.");
+     } finally {
+       setUploadingMedia(false);
+     }
+@@ -553,9 +574,8 @@ export default function CommunityScreen() {
+           setShowKinfolkSuggest(true);
+         }
+       } else {
+-        const err = await res.json() as { error?: string; code?: string };
++        const err = await res.json().catch(() => ({})) as { error?: string; code?: string };
+         if (err.code === "TIER_LIMIT_REACHED") {
+-          setShowCompose(false);
+           setUpgradeFeature(newPostType === "business" ? "Business Posts" : "Unlimited Community Posts");
+           setShowUpgrade(true);
+         } else {
+@@ -1115,11 +1135,11 @@ export default function CommunityScreen() {
+             </View>
+           </View>
+           <View style={styles.resRow}>
+-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
++            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => { void openExternalUrl("tel:988", { kind: "device" }); }}>
+               <Feather name="phone-call" size={16} color="#FFF" />
+               <Text style={styles.resCrisisBtnText}>Call / Text 988</Text>
+             </TouchableOpacity>
+-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
++            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => { void openExternalUrl("sms:741741", { kind: "device" }); }}>
+               <Feather name="message-circle" size={16} color="#FFF" />
+               <Text style={styles.resCrisisBtnText}>Text HOME to 741741</Text>
+             </TouchableOpacity>
+@@ -1137,7 +1157,7 @@ export default function CommunityScreen() {
+             <TouchableOpacity
+               key={r.name}
+               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+-              onPress={() => Linking.openURL(r.url).catch(() => {})}
++              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
+               activeOpacity={0.75}
+             >
+               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+@@ -1158,7 +1178,7 @@ export default function CommunityScreen() {
+             <TouchableOpacity
+               key={r.name}
+               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+-              onPress={() => Linking.openURL(r.url).catch(() => {})}
++              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
+               activeOpacity={0.75}
+             >
+               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+@@ -1176,7 +1196,7 @@ export default function CommunityScreen() {
+             <TouchableOpacity
+               key={r.name}
+               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+-              onPress={() => Linking.openURL(r.url).catch(() => {})}
++              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
+               activeOpacity={0.75}
+             >
+               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+@@ -1198,7 +1218,7 @@ export default function CommunityScreen() {
+             <TouchableOpacity
+               key={r.name}
+               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+-              onPress={() => Linking.openURL(r.url).catch(() => {})}
++              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
+               activeOpacity={0.75}
+             >
+               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
+diff --git a/artifacts/mobile/app/cultural-heritage.tsx b/artifacts/mobile/app/cultural-heritage.tsx
+index d29889a..99da4c7 100644
+--- a/artifacts/mobile/app/cultural-heritage.tsx
++++ b/artifacts/mobile/app/cultural-heritage.tsx
+@@ -5,7 +5,6 @@ import {
+   ActivityIndicator,
+   Animated,
+   FlatList,
+-  Linking,
+   Modal,
+   Platform,
+   Pressable,
+@@ -18,11 +17,8 @@ import {
+ } from "react-native";
+ import { useSafeAreaInsets } from "react-native-safe-area-context";
+ import { useColors } from "@/hooks/useColors";
+-
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
++import { getApiBase } from "@/lib/api";
++import { openExternalUrl } from "@/lib/openExternalUrl";
+ 
+ function trackExternalClick(params: {
+   institutionName: string;
+@@ -82,6 +78,9 @@ type CulturalSite = {
+   audioGuide: boolean;
+   verifiedSource: string | null;
+   isVerified: boolean;
++  learnMoreUrl?: string | null;
++  detailUrl?: string | null;
++  stateCode?: string | null;
+ };
+ 
+ type HeritageCategoryMeta = {
+@@ -137,6 +136,7 @@ export default function CulturalHeritagePage() {
+ 
+   const [sites, setSites] = useState<CulturalSite[]>([]);
+   const [loading, setLoading] = useState(true);
++  const [loadError, setLoadError] = useState<string | null>(null);
+   const [searchInput, setSearchInput] = useState("");
+   const [selectedHeritage, setSelectedHeritage] = useState(params.initialCategory ?? "");
+   const [selectedSite, setSelectedSite] = useState<CulturalSite | null>(null);
+@@ -148,17 +148,47 @@ export default function CulturalHeritagePage() {
+ 
+   const fetchSites = useCallback(async (heritage: string, search: string) => {
+     setLoading(true);
++    setLoadError(null);
+     try {
+       const params = new URLSearchParams();
+       if (heritage) params.set("heritageCategory", heritage);
+       if (search) params.set("search", search);
+       const resp = await fetch(`${getApiBase()}/api/cultural-sites?${params.toString()}`);
+-      if (!resp.ok) throw new Error("Failed");
++      if (!resp.ok) throw new Error(`Cultural-site request failed with ${resp.status}`);
+       const data = (await resp.json()) as {
+-        sites: CulturalSite[];
++        sites?: CulturalSite[];
++        items?: Array<Partial<CulturalSite> & { id: string; name: string }>;
+         categories?: Array<{ label: string; count: number }>;
+       };
+-      setSites(data.sites ?? []);
++      const rawSites = data.sites ?? data.items ?? [];
++      const normalizedSites: CulturalSite[] = rawSites.map((site) => ({
++        id: site.id,
++        name: site.name,
++        description: site.description ?? "",
++        category: site.category ?? "Cultural Heritage",
++        heritageCategory: site.heritageCategory ?? null,
++        subcategory: site.subcategory ?? null,
++        ethnicCommunity: site.ethnicCommunity ?? null,
++        city: site.city ?? "",
++        state: site.state ?? site.stateCode ?? "",
++        address: site.address ?? null,
++        latitude: String(site.latitude ?? ""),
++        longitude: String(site.longitude ?? ""),
++        era: site.era ?? null,
++        significance: site.significance ?? null,
++        externalUrl: site.externalUrl ?? site.learnMoreUrl ?? null,
++        yearEstablished: site.yearEstablished ?? null,
++        isAccessible: site.isAccessible ?? false,
++        isFamilyFriendly: site.isFamilyFriendly ?? false,
++        admissionFree: site.admissionFree ?? false,
++        audioGuide: site.audioGuide ?? false,
++        verifiedSource: site.verifiedSource ?? null,
++        isVerified: site.isVerified ?? false,
++        learnMoreUrl: site.learnMoreUrl ?? null,
++        detailUrl: site.detailUrl ?? null,
++        stateCode: site.stateCode ?? null,
++      }));
++      setSites(normalizedSites);
+       if (data.categories) {
+         const map: Record<string, number> = {};
+         for (const c of data.categories) map[c.label] = c.count;
+@@ -166,6 +196,7 @@ export default function CulturalHeritagePage() {
+       }
+     } catch {
+       setSites([]);
++      setLoadError("We could not load cultural sites. Check your connection and try again.");
+     } finally {
+       setLoading(false);
+     }
+@@ -277,7 +308,9 @@ export default function CulturalHeritagePage() {
+                   city: item.city,
+                   state: item.state,
+                 });
+-                void Linking.openURL(item.externalUrl!);
++                void openExternalUrl(item.externalUrl ?? item.learnMoreUrl, {
++                  unavailableMessage: "The official website for this cultural site is unavailable.",
++                });
+               }}
+             >
+               <Feather name="external-link" size={12} color={colors.mutedForeground} />
+@@ -360,6 +393,19 @@ export default function CulturalHeritagePage() {
+             Loading heritage sites…
+           </Text>
+         </View>
++      ) : loadError ? (
++        <View style={styles.emptyWrap}>
++          <Feather name="alert-circle" size={48} color={colors.error} />
++          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sites unavailable</Text>
++          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>{loadError}</Text>
++          <TouchableOpacity
++            style={[styles.websiteBtn, { borderColor: colors.primary }]}
++            onPress={() => { void fetchSites(selectedHeritage, debouncedSearch); }}
++          >
++            <Feather name="refresh-cw" size={13} color={colors.primary} />
++            <Text style={[styles.websiteBtnText, { color: colors.primary }]}>Try Again</Text>
++          </TouchableOpacity>
++        </View>
+       ) : sites.length === 0 ? (
+         <View style={styles.emptyWrap}>
+           <Feather name="map" size={48} color={colors.mutedForeground} />
+@@ -828,7 +874,9 @@ function DetailModal({
+                           city: site.city,
+                           state: site.state,
+                         });
+-                        void Linking.openURL(link.url);
++                        void openExternalUrl(link.url, {
++                          unavailableMessage: "This resource link is unavailable.",
++                        });
+                       }}
+                       activeOpacity={0.75}
+                     >
+@@ -902,7 +950,9 @@ function DetailModal({
+                 city: site.city,
+                 state: site.state,
+               });
+-              void Linking.openURL(site.externalUrl!);
++              void openExternalUrl(site.externalUrl ?? site.learnMoreUrl, {
++                unavailableMessage: "The official website for this cultural site is unavailable.",
++              });
+             }}
+             activeOpacity={0.85}
+           >
+diff --git a/artifacts/mobile/app/user/[id].tsx b/artifacts/mobile/app/user/[id].tsx
+index 806c2ff..4bf5eee 100644
+--- a/artifacts/mobile/app/user/[id].tsx
++++ b/artifacts/mobile/app/user/[id].tsx
+@@ -18,11 +18,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
+ import { useColors } from "@/hooks/useColors";
+ import { CommunityPostCard } from "@/components/CommunityPostCard";
+ import type { CommunityPost } from "@/constants/types";
+-
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
++import { getApiBase } from "@/lib/api";
++import { normalizeMediaUrls } from "@/lib/mediaUrls";
+ 
+ function timeAgo(date: Date | string): string {
+   const d = new Date(date);
+@@ -125,7 +122,7 @@ export default function VisitorProfileScreen() {
+         businessId: p.businessId,
+         businessName: p.businessName,
+         businessLink: p.businessLink,
+-        mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : undefined,
++        mediaUrls: normalizeMediaUrls(p.mediaUrls),
+         savedPlaceId: p.savedPlaceId,
+         locationTag: p.locationTag,
+         locationType: p.locationType,
+diff --git a/artifacts/mobile/components/BusinessMapView.tsx b/artifacts/mobile/components/BusinessMapView.tsx
+index c4644da..f06a502 100644
+--- a/artifacts/mobile/components/BusinessMapView.tsx
++++ b/artifacts/mobile/components/BusinessMapView.tsx
+@@ -20,6 +20,7 @@ import { useBusinesses } from "@/hooks/useBusinesses";
+ import { useColors } from "@/hooks/useColors";
+ import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
+ import { useSafetyProximity } from "@/hooks/useSafetyProximity";
++import { getApiBase } from "@/lib/api";
+ 
+ const GOLD = "#CA922B";
+ const CULTURAL_COLOR = "#7C3AED";
+@@ -54,11 +55,6 @@ interface CulturalSite {
+   significance: string | null;
+ }
+ 
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
+-
+ export function BusinessMapView(_props: { latitude?: number | null; longitude?: number | null; name?: string }) {
+   const colors = useColors();
+   const insets = useSafeAreaInsets();
+diff --git a/artifacts/mobile/components/CommunityPostCard.tsx b/artifacts/mobile/components/CommunityPostCard.tsx
+index be74a9b..ad5b730 100644
+--- a/artifacts/mobile/components/CommunityPostCard.tsx
++++ b/artifacts/mobile/components/CommunityPostCard.tsx
+@@ -1,7 +1,7 @@
+ import { Feather } from "@expo/vector-icons";
+ import * as Haptics from "expo-haptics";
+ import * as SecureStore from "expo-secure-store";
+-import { Alert, Image, Linking, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
++import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+ import React, { useState } from "react";
+ import { useRouter } from "expo-router";
+ import { useColors } from "@/hooks/useColors";
+@@ -9,6 +9,8 @@ import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/Busine
+ import { ReportButton } from "@/components/ReportButton";
+ import AudienceRatingBadge from "@/components/AudienceRatingBadge";
+ import type { CommunityPost } from "@/constants/types";
++import { getApiBase } from "@/lib/api";
++import { openExternalUrl } from "@/lib/openExternalUrl";
+ 
+ interface Props {
+   post: CommunityPost;
+@@ -39,11 +41,6 @@ const POST_TYPE_ACCENT: Record<string, string> = {
+   community: "#C4622D",
+ };
+ 
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
+-
+ const WARNING_LABELS: Record<string, string> = {
+   violence: "Graphic Violence",
+   nudity: "Explicit Content",
+@@ -93,10 +90,15 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
+       {mediaUrls.map((url, i) => {
+         const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
+         return isVideo ? (
+-          <View key={i} style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}>
++          <TouchableOpacity
++            key={i}
++            style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
++            onPress={() => { void openExternalUrl(url, { unavailableMessage: "This video is unavailable." }); }}
++            activeOpacity={0.8}
++          >
+             <Feather name="play-circle" size={36} color="#fff" />
+-            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Video</Text>
+-          </View>
++            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Open Video</Text>
++          </TouchableOpacity>
+         ) : (
+           <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
+         );
+@@ -116,7 +118,7 @@ function LinkPreviewCard({ linkUrl, linkTitle, linkDescription, linkDomain, link
+   return (
+     <TouchableOpacity
+       style={[s.linkPreview, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+-      onPress={() => Linking.openURL(linkUrl).catch(() => {})}
++      onPress={() => { void openExternalUrl(linkUrl, { unavailableMessage: "This shared link is unavailable." }); }}
+       activeOpacity={0.8}
+     >
+       <View style={[s.linkPreviewAccent, { backgroundColor: "#C4622D" }]} />
+@@ -504,7 +506,7 @@ export function CommunityPostCard({ post, currentUserId, onCommentPress, onLikeC
+       {isBusinessPost && post.businessLink && (
+         <TouchableOpacity
+           style={[s.linkRow, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+-          onPress={() => { if (post.businessLink) Linking.openURL(post.businessLink).catch(() => {}); }}
++          onPress={() => { if (post.businessLink) void openExternalUrl(post.businessLink, { unavailableMessage: "This business website is unavailable." }); }}
+           activeOpacity={0.8}
+         >
+           <Feather name="external-link" size={13} color={colors.primary} />
+diff --git a/artifacts/mobile/components/FullMapView.tsx b/artifacts/mobile/components/FullMapView.tsx
+index bfd2b5b..a454326 100644
+--- a/artifacts/mobile/components/FullMapView.tsx
++++ b/artifacts/mobile/components/FullMapView.tsx
+@@ -4,7 +4,6 @@ import { useRouter, useFocusEffect } from "expo-router";
+ import React, { useCallback, useEffect, useRef, useState } from "react";
+ import {
+   ActivityIndicator,
+-  Linking,
+   Platform,
+   ScrollView,
+   StyleSheet,
+@@ -197,6 +196,7 @@ function getCategoryStyle(heritageCategory: string, pinType?: string | null): Ca
+ }
+ 
+ import { getApiBase } from "@/lib/api";
++import { openExternalUrl } from "@/lib/openExternalUrl";
+ 
+ interface FullMapViewProps {
+   /** When set, the map pans to this tour_cultural_sites ID and opens its card. */
+@@ -1035,10 +1035,11 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
+                 onPress={() => {
+                   const lat = parseFloat(site.latitude);
+                   const lng = parseFloat(site.longitude);
+-                  void Linking.openURL(
++                  void openExternalUrl(
+                     Platform.OS === "ios"
+                       ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(site.name)}`
+-                      : `geo:${lat},${lng}?q=${encodeURIComponent(site.name)}`
++                      : `geo:${lat},${lng}?q=${encodeURIComponent(site.name)}`,
++                    { kind: "device", unavailableMessage: "Directions are unavailable for this site." },
+                   );
+                 }}
+               >
+@@ -1064,7 +1065,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
+             <View style={{ flexDirection: "row", gap: 16, marginTop: 8, paddingHorizontal: 2 }}>
+               {site.externalUrl ? (
+                 <TouchableOpacity
+-                  onPress={() => void Linking.openURL(site.externalUrl!)}
++                  onPress={() => { void openExternalUrl(site.externalUrl, { unavailableMessage: "The official website for this site is unavailable." }); }}
+                   style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                 >
+                   <Feather name="external-link" size={12} color={cs.color} />
+@@ -1138,10 +1139,11 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
+                 const lat = parseFloat(evt.latitude ?? "");
+                 const lng = parseFloat(evt.longitude ?? "");
+                 if (!isNaN(lat) && !isNaN(lng)) {
+-                  void Linking.openURL(
++                  void openExternalUrl(
+                     Platform.OS === "ios"
+                       ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(evt.title)}`
+-                      : `geo:${lat},${lng}?q=${encodeURIComponent(evt.title)}`
++                      : `geo:${lat},${lng}?q=${encodeURIComponent(evt.title)}`,
++                    { kind: "device", unavailableMessage: "Directions are unavailable for this event." },
+                   );
+                 }
+               }}
+@@ -1177,7 +1179,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
+               <TouchableOpacity
+                 style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#7C3AED" }]}
+                 activeOpacity={0.85}
+-                onPress={() => void Linking.openURL(selectedOrg.website!)}
++                onPress={() => { void openExternalUrl(selectedOrg.website, { unavailableMessage: "This organization website is unavailable." }); }}
+               >
+                 <Feather name="external-link" size={14} color="#7C3AED" />
+                 <Text style={[s.cardBtnTxt, { color: "#7C3AED" }]}>Website</Text>
+@@ -1271,10 +1273,11 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
+                 activeOpacity={0.85}
+                 onPress={() => {
+                   if (!isNaN(lat) && !isNaN(lng)) {
+-                    void Linking.openURL(
++                    void openExternalUrl(
+                       Platform.OS === "ios"
+                         ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
+-                        : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
++                        : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`,
++                      { kind: "device", unavailableMessage: "Directions are unavailable for this tour site." },
+                     );
+                   }
+                 }}
+diff --git a/artifacts/mobile/components/StatusComposer.tsx b/artifacts/mobile/components/StatusComposer.tsx
+index f64ab51..f84d79a 100644
+--- a/artifacts/mobile/components/StatusComposer.tsx
++++ b/artifacts/mobile/components/StatusComposer.tsx
+@@ -17,6 +17,7 @@ import {
+ import { useColors } from "@/hooks/useColors";
+ import { BusinessMentionPicker, type BusinessResult } from "./BusinessMentionPicker";
+ import { UserMentionPicker } from "./UserMentionPicker";
++import { getApiBase } from "@/lib/api";
+ 
+ type Visibility = "public" | "followers_only" | "only_me";
+ 
+@@ -33,11 +34,6 @@ const STANCE_TAGS: { key: string; label: string; featherIcon: string }[] = [
+   { key: "visited_loved",      label: "Visited & Loved",    featherIcon: "heart" },
+ ];
+ 
+-function getApiBase(): string {
+-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+-  return "";
+-}
+-
+ interface BusinessMention {
+   id: string;
+   name: string;
+diff --git a/artifacts/mobile/lib/mediaUrls.ts b/artifacts/mobile/lib/mediaUrls.ts
+new file mode 100644
+index 0000000..a94315f
+--- /dev/null
++++ b/artifacts/mobile/lib/mediaUrls.ts
+@@ -0,0 +1,26 @@
++export function normalizeMediaUrls(value: unknown): string[] | undefined {
++  let current = value;
++
++  for (let depth = 0; depth < 3; depth += 1) {
++    if (Array.isArray(current)) {
++      const unique = new Set<string>();
++      for (const item of current) {
++        if (typeof item !== "string") continue;
++        const url = item.trim();
++        if (url) unique.add(url);
++      }
++      const urls = Array.from(unique).slice(0, 5);
++      return urls.length > 0 ? urls : undefined;
++    }
++
++    if (typeof current !== "string" || !current.trim()) return undefined;
++
++    try {
++      current = JSON.parse(current);
++    } catch {
++      return undefined;
++    }
++  }
++
++  return undefined;
++}
+diff --git a/artifacts/mobile/lib/openExternalUrl.ts b/artifacts/mobile/lib/openExternalUrl.ts
+new file mode 100644
+index 0000000..2f23558
+--- /dev/null
++++ b/artifacts/mobile/lib/openExternalUrl.ts
+@@ -0,0 +1,62 @@
++import { Alert, Linking } from "react-native";
++import { getApiBase } from "@/lib/api";
++
++const WEB_PROTOCOLS = new Set(["http:", "https:"]);
++const DEVICE_PROTOCOLS = new Set(["http:", "https:", "maps:", "geo:", "tel:", "sms:"]);
++
++export type OpenExternalUrlOptions = {
++  kind?: "web" | "device";
++  unavailableTitle?: string;
++  unavailableMessage?: string;
++};
++
++export function normalizeExternalUrl(value: unknown, kind: "web" | "device" = "web"): string | null {
++  if (typeof value !== "string") return null;
++  const trimmed = value.trim();
++  if (!trimmed) return null;
++
++  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
++  const candidate = trimmed.startsWith("/")
++    ? `${getApiBase()}${trimmed}`
++    : !hasScheme && kind === "web"
++      ? `https://${trimmed}`
++      : trimmed;
++
++  try {
++    const parsed = new URL(candidate);
++    const allowed = kind === "device" ? DEVICE_PROTOCOLS : WEB_PROTOCOLS;
++    return allowed.has(parsed.protocol.toLowerCase()) ? parsed.toString() : null;
++  } catch {
++    return null;
++  }
++}
++
++export async function openExternalUrl(
++  value: unknown,
++  options: OpenExternalUrlOptions = {},
++): Promise<boolean> {
++  const {
++    kind = "web",
++    unavailableTitle = "Link unavailable",
++    unavailableMessage = "This link is invalid or cannot be opened on this device.",
++  } = options;
++  const url = normalizeExternalUrl(value, kind);
++
++  if (!url) {
++    Alert.alert(unavailableTitle, unavailableMessage);
++    return false;
++  }
++
++  try {
++    const supported = await Linking.canOpenURL(url);
++    if (!supported) {
++      Alert.alert(unavailableTitle, unavailableMessage);
++      return false;
++    }
++    await Linking.openURL(url);
++    return true;
++  } catch {
++    Alert.alert(unavailableTitle, unavailableMessage);
++    return false;
++  }
++}
+diff --git a/artifacts/web/src/pages/community.tsx b/artifacts/web/src/pages/community.tsx
+index 6129833..27971f2 100644
+--- a/artifacts/web/src/pages/community.tsx
++++ b/artifacts/web/src/pages/community.tsx
+@@ -88,6 +88,26 @@ function categoryLabel(cat: string): string {
+   return map[cat] ?? cat;
+ }
+ 
++function normalizeMediaUrls(value: unknown): string[] | undefined {
++  let current = value;
++  for (let depth = 0; depth < 3; depth += 1) {
++    if (Array.isArray(current)) {
++      const urls = current
++        .filter((item): item is string => typeof item === "string")
++        .map((item) => item.trim())
++        .filter(Boolean);
++      return urls.length > 0 ? urls : undefined;
++    }
++    if (typeof current !== "string" || !current.trim()) return undefined;
++    try {
++      current = JSON.parse(current);
++    } catch {
++      return undefined;
++    }
++  }
++  return undefined;
++}
++
+ // ── Post Card ──────────────────────────────────────────────────────────────
+ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick }: {
+   post: Post; onLike: (id: string) => void; onDelete: (id: string) => void;
+@@ -252,7 +272,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
+         setUploadError(data.error ?? "Upload failed. Please try again.");
+         return;
+       }
+-      if (!mediaUrls.includes(data.url)) setMediaUrls(u => [...u, data.url!]);
++      setMediaUrls((current) => current.includes(data.url!) ? current : [...current, data.url!]);
+     } catch {
+       setUploadError("Upload failed. Check your connection and try again.");
+     } finally {
+@@ -300,7 +320,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
+         postType,
+         category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
+         visibility,
+-        mediaUrls: mediaUrls.length ? JSON.stringify(mediaUrls) : undefined,
++        mediaUrls: mediaUrls.length ? mediaUrls : undefined,
+         hashtags: hashtags.length ? hashtags : undefined,
+       };
+       const res = await fetch(`${BASE}api/community/posts`, {
+@@ -777,12 +797,7 @@ export default function Community() {
+           createdAt: p.createdAt as string,
+           category: (p.category as string) ?? "general",
+           postType: (p.postType as string) ?? "community",
+-          mediaUrls: (() => {
+-            const mu = p.mediaUrls;
+-            if (!mu) return undefined;
+-            if (Array.isArray(mu)) return mu as string[];
+-            try { return JSON.parse(mu as string) as string[]; } catch { return undefined; }
+-          })(),
++          mediaUrls: normalizeMediaUrls(p.mediaUrls),
+           businessName: p.businessName as string | undefined,
+           businessId: p.businessId as string | undefined,
+           locationVenueName: p.locationVenueName as string | undefined,
+diff --git a/artifacts/web/src/pages/cultural-site-detail.tsx b/artifacts/web/src/pages/cultural-site-detail.tsx
+index 621a30c..62744f5 100644
+--- a/artifacts/web/src/pages/cultural-site-detail.tsx
++++ b/artifacts/web/src/pages/cultural-site-detail.tsx
+@@ -8,6 +8,19 @@ import { useToast } from "@/hooks/use-toast";
+ 
+ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+ 
++function normalizeExternalHttpUrl(value: unknown): string | null {
++  if (typeof value !== "string") return null;
++  const trimmed = value.trim();
++  if (!trimmed) return null;
++  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
++  try {
++    const url = new URL(candidate);
++    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
++  } catch {
++    return null;
++  }
++}
++
+ const HERITAGE_COLORS: Record<string, string> = {
+   HBCU: "#7C3AED",
+   hbcu: "#7C3AED",
+@@ -178,6 +191,9 @@ interface CulturalSite {
+   significance?: string | null;
+   imageUrl?: string | null;
+   externalUrl?: string | null;
++  learnMoreUrl?: string | null;
++  detailUrl?: string | null;
++  stateCode?: string | null;
+   isVerified?: boolean;
+   yearEstablished?: number | null;
+   isAccessible?: boolean;
+@@ -239,8 +255,14 @@ export default function CulturalSiteDetail() {
+       fetch(`${BASE}/api/cultural-sites/${id}/support-links`).then((r) => r.json()),
+     ])
+       .then(([siteData, storyData, linkData]) => {
+-        if (siteData.error || !siteData.site) { setNotFound(true); return; }
+-        setSite(siteData.site);
++        const rawSite = siteData?.site ?? (siteData?.id ? siteData : null);
++        if (siteData?.error || !rawSite) { setNotFound(true); return; }
++        setNotFound(false);
++        setSite({
++          ...rawSite,
++          state: rawSite.state ?? rawSite.stateCode ?? "",
++          externalUrl: rawSite.externalUrl ?? rawSite.learnMoreUrl ?? null,
++        });
+         setStories(storyData.stories ?? []);
+         setLinks(linkData.links ?? []);
+       })
+@@ -299,6 +321,7 @@ export default function CulturalSiteDetail() {
+ 
+   const heritage = site.heritageCategory ?? "";
+   const accentColor = HERITAGE_COLORS[heritage] ?? "#CA922B";
++  const externalSiteUrl = normalizeExternalHttpUrl(site.externalUrl ?? site.learnMoreUrl);
+ 
+   const relLabel = (rt: string) =>
+     RELATIONSHIP_TYPES.find((r) => r.value === rt)?.label ?? rt.replace(/_/g, " ");
+@@ -361,9 +384,9 @@ export default function CulturalSiteDetail() {
+               <p className="text-xs font-semibold text-[#CA922B] mt-1">{site.era}</p>
+             )}
+ 
+-            {site.externalUrl && (
++            {externalSiteUrl && (
+               <a
+-                href={site.externalUrl}
++                href={externalSiteUrl}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold hover:underline"
+@@ -441,10 +464,13 @@ export default function CulturalSiteDetail() {
+           <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
+             <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-4">Resources & Support</h2>
+             <div className="space-y-3">
+-              {links.map((link) => (
++              {links.map((link) => {
++                const supportUrl = normalizeExternalHttpUrl(link.url);
++                if (!supportUrl) return null;
++                return (
+                 <a
+                   key={link.id}
+-                  href={link.url}
++                  href={supportUrl}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 hover:border-[#CA922B]/30 hover:bg-[#CA922B]/5 transition-colors group"
+@@ -457,7 +483,8 @@ export default function CulturalSiteDetail() {
+                     )}
+                   </div>
+                 </a>
+-              ))}
++                );
++              })}
+             </div>
+           </div>
+         )}

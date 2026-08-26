@@ -1,0 +1,17 @@
+PASS  web submits mediaUrls as an array — prevents upload URLs from being JSON-encoded twice
+PASS  web reload parser accepts legacy shapes — supports arrays, JSON strings, and previously double-encoded values
+PASS  web no longer sends double-encoded media — old broken submit expression is absent
+PASS  API normalizes community media input and output — stabilizes the contract while repairing old rows at read time
+PASS  canonical cultural-site slugs are schema-free — avoids the missing cultural_sites.slug column
+PASS  canonical detail response is backward-compatible — supports both current website and canonical clients
+PASS  mobile uses the shared media upload endpoint — matches the website/server multipart contract
+PASS  mobile preserves successful partial uploads — commits each completed upload immediately and prevents over-selection
+PASS  mobile upload errors tolerate non-JSON responses — keeps upload failures inside a recoverable UI path
+PASS  mobile feed normalizes media shapes — renders array and string response shapes consistently
+PASS  mobile profile no longer JSON.parse-crashes — malformed post media cannot abort the entire profile load
+PASS  mobile cultural-site screen accepts canonical list responses — supports legacy and canonical response envelopes
+PASS  mobile cultural-site failures are retryable — distinguishes an outage from an empty result
+PASS  tab layout avoids unavailable unstable exports — removes the supplied TS2305 blocker without changing the active classic tabs
+PASS  audited mobile callers centralize external links — all audited callers use openExternalUrl
+
+15/15 source-contract checks passed.
