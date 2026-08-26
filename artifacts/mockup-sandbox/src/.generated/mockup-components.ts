@@ -3,8 +3,6 @@ type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/CommunityBoundaries.tsx": () => import("../components/mockups/CommunityBoundaries.tsx"),
   "./components/mockups/Task101PinDemo.tsx": () => import("../components/mockups/Task101PinDemo.tsx"),
-  "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
-  "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx"),
   "./components/mockups/profiles/BizBroadcasts.tsx": () => import("../components/mockups/profiles/BizBroadcasts.tsx"),
   "./components/mockups/profiles/BizFeaturedVideo.tsx": () => import("../components/mockups/profiles/BizFeaturedVideo.tsx"),
   "./components/mockups/profiles/BizIdentity.tsx": () => import("../components/mockups/profiles/BizIdentity.tsx"),
@@ -22,5 +20,7 @@ export const modules: ModuleMap = {
   "./components/mockups/surveys/BlackOwnedSurvey.tsx": () => import("../components/mockups/surveys/BlackOwnedSurvey.tsx"),
   "./components/mockups/surveys/GeneralSurvey.tsx": () => import("../components/mockups/surveys/GeneralSurvey.tsx"),
   "./components/mockups/theme-compare/DarkModeHero.tsx": () => import("../components/mockups/theme-compare/DarkModeHero.tsx"),
-  "./components/mockups/theme-compare/LightModeHero.tsx": () => import("../components/mockups/theme-compare/LightModeHero.tsx")
+  "./components/mockups/theme-compare/LightModeHero.tsx": () => import("../components/mockups/theme-compare/LightModeHero.tsx"),
+  "./components/mockups/hero-modes/DarkMode.tsx": () => import("../components/mockups/hero-modes/DarkMode.tsx"),
+  "./components/mockups/hero-modes/LightMode.tsx": () => import("../components/mockups/hero-modes/LightMode.tsx")
 };
