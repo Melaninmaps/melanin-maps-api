@@ -91,7 +91,7 @@ export function useEvents(options: UseEventsOptions = {}) {
   }, [category, search]);
 
   useEffect(() => {
-    fetchEvents();
+    void Promise.resolve().then(fetchEvents);
   }, [fetchEvents]);
 
   return { events, isLoading, error, refetch: fetchEvents };

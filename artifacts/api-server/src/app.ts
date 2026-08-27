@@ -400,10 +400,10 @@ registerExploreRoutes(app);
 
 // ── Kinfolk capability-turn and consent routes ───────────────────────────────
 registerKinfolkCapabilityRoutes(app, {
-  localContext: createPostgresLocalContextRepository(pool),
-  memberContext: createPostgresMemberContextRepository(pool),
-  professionalDirectory: createPostgresProfessionalDirectoryRepository(pool),
-  capabilityTurnStore: createPostgresCapabilityTurnStore(pool),
+  localContextRepository: createPostgresLocalContextRepository(pool),
+  memberContextRepository: createPostgresMemberContextRepository(pool),
+  professionalDirectoryRepository: createPostgresProfessionalDirectoryRepository(pool),
+  turnStore: createPostgresCapabilityTurnStore(pool),
 });
 
 // ── Kinfolk tone preference route ────────────────────────────────────────────
@@ -432,7 +432,10 @@ registerVoiceTranscriptionRoute(app, {
 registerLocationFirstDiscoveryRoutes(
   app,
   createPostgresFlywheelRepository(
-    { query: (...args) => pool.query(...args) },
+    { query: async <T = Record<string, unknown>>(sql: string, params?: unknown[]) => {
+      const result = await pool.query(sql, params);
+      return { rows: result.rows as T[] };
+    } },
     {
       findExact: (q) => findExactRecords(pool, q),
       findNearestAvailableLocation: (q) => findNearestAvailableLocation(pool, q),
@@ -464,7 +467,8 @@ registerReleaseStatusRoutes(app, pool);
 // tries to resolve to the canonical /cultural-sites/:id/:slug.
 // UUID segments are passed through to the SPA. Unknown slugs fall through too.
 app.get("/cultural-sites/:legacySlug", async (req: Request, res: Response, next: NextFunction) => {
-  const seg = req.params["legacySlug"] ?? "";
+  const rawLegacySlug = req.params["legacySlug"];
+  const seg = Array.isArray(rawLegacySlug) ? rawLegacySlug[0] ?? "" : rawLegacySlug ?? "";
   // If it looks like a UUID, the SPA handles /cultural-sites/:id or /cultural-sites/:id/:slug
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (UUID_RE.test(seg)) { next(); return; }

@@ -473,7 +473,7 @@ export default function SignupScreen() {
           <View style={styles.fields}>
             <View>
               <Text style={[styles.label, { color: c.foreground }]}>Date of Birth <Text style={{ color: c.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
-              <Text style={[styles.hint, { color: c.mutedForeground, marginBottom: 8 }]}>Used only to confirm you're 13+. Never shown publicly.</Text>
+              <Text style={[styles.hint, { color: c.mutedForeground, marginBottom: 8 }]}>Used only to confirm you&apos;re 13+. Never shown publicly.</Text>
               <View style={styles.dobRow}>
                 <TextInput
                   style={[styles.dobInput, { color: c.foreground, borderColor: c.border, backgroundColor: c.card, flex: 1 }]}

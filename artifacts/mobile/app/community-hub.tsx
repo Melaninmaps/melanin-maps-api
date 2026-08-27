@@ -85,7 +85,7 @@ export default function CommunityHubScreen() {
     } catch { /* silent */ } finally { setLoading(false); setRefreshing(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const totalItems = guides.length + collections.length + roadmaps.length + (journey ? 1 : 0);
 
@@ -111,7 +111,7 @@ export default function CommunityHubScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[s.headerTitle, { color: colors.foreground }]}>My Hub</Text>
-          {firstName && <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Everything you've built, {firstName}</Text>}
+          {firstName && <Text style={[s.headerSub, { color: colors.mutedForeground }]}>Everything you&apos;ve built, {firstName}</Text>}
         </View>
       </View>
 

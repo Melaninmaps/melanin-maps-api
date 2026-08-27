@@ -20,7 +20,7 @@ export function BrandQuoteBanner({ category, offset = 0, variant = "strip", acce
   if (variant === "inline") {
     return (
       <Text style={[s.inlineText, { color: colors.mutedForeground }, style]}>
-        "{quote.text}"
+        &quot;{quote.text}&quot;
       </Text>
     );
   }
@@ -30,7 +30,7 @@ export function BrandQuoteBanner({ category, offset = 0, variant = "strip", acce
       <View style={[s.card, { backgroundColor: colors.card, borderColor: colors.border }, style]}>
         <View style={[s.cardAccent, { backgroundColor: accent }]} />
         <View style={s.cardBody}>
-          <Text style={[s.cardText, { color: colors.foreground }]}>"{quote.text}"</Text>
+          <Text style={[s.cardText, { color: colors.foreground }]}>&quot;{quote.text}&quot;</Text>
           <Text style={[s.cardBrand, { color: accent }]}>Mapping With Melanin™</Text>
         </View>
       </View>
@@ -39,7 +39,7 @@ export function BrandQuoteBanner({ category, offset = 0, variant = "strip", acce
 
   return (
     <View style={[s.strip, { borderLeftColor: accent }, style]}>
-      <Text style={[s.stripText, { color: colors.mutedForeground }]}>"{quote.text}"</Text>
+      <Text style={[s.stripText, { color: colors.mutedForeground }]}>&quot;{quote.text}&quot;</Text>
     </View>
   );
 }

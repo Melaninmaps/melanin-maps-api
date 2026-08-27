@@ -37,7 +37,7 @@ describe("Philly alias — pre-classifier with resolved destination", () => {
   it("still asks for location when no destination is resolved and no preposition-city pair found", () => {
     const result = classifyKinfolkRequest("Tell me about nightlife", null);
     expect(result.route).toBe("clarification");
-    expect(result.needsLocationClarification ?? result.route === "clarification").toBe(true);
+    expect(result.route === "clarification").toBe(true);
   });
 
   it("routes 'Black-owned nightlife in Philly' correctly when destination resolved", () => {

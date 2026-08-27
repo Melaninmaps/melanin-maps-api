@@ -134,7 +134,7 @@ export default function UserProfileScreen() {
         setConnectionId(data.connectionId);
       }
       if (postsRes.ok) {
-        const data = await postsRes.json() as { posts: Array<Record<string, unknown>> };
+        const data = await postsRes.json() as { posts: Record<string, unknown>[] };
         const now = Date.now();
         const mapped: CommunityPost[] = (data.posts ?? []).map((p) => {
           const ms = now - new Date(p["createdAt"] as string).getTime();
@@ -160,7 +160,7 @@ export default function UserProfileScreen() {
     finally { setLoading(false); }
   }, [userId]);
 
-  useEffect(() => { void loadProfile(); }, [loadProfile]);
+  useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
 
   const handleConnect = async () => {
     if (!isAuthenticated) { router.push("/login" as never); return; }

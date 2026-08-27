@@ -50,12 +50,13 @@ function CircularProgress({ pct, color, size = 64 }: { pct: number; color: strin
 
 function GoalCard({ goal, colors, onCheckin, onDelete }: { goal: FinancialGoal; colors: any; onCheckin: (g: FinancialGoal) => void; onDelete: (id: string) => void; }) {
   const [expanded, setExpanded] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
   const cfg = GOAL_TYPE_CONFIG[goal.type] ?? GOAL_TYPE_CONFIG.other;
   const target = parseFloat(goal.targetAmount);
   const current = parseFloat(goal.currentAmount);
   const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
   const remaining = target - current;
-  const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline).getTime() - Date.now()) / 86_400_000) : null;
+  const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline).getTime() - renderedAt) / 86_400_000) : null;
 
   const fmt = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
@@ -89,7 +90,7 @@ function GoalCard({ goal, colors, onCheckin, onDelete }: { goal: FinancialGoal; 
         <>
           {goal.motivationNote && (
             <View style={[gc.noteBox, { backgroundColor: colors.muted }]}>
-              <Text style={[gc.noteText, { color: colors.mutedForeground }]}>"{goal.motivationNote}"</Text>
+              <Text style={[gc.noteText, { color: colors.mutedForeground }]}>&quot;{goal.motivationNote}&quot;</Text>
             </View>
           )}
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
@@ -167,7 +168,7 @@ export default function FinancialHubScreen() {
     } catch {}
   }, []);
 
-  useEffect(() => { setLoading(true); loadData().finally(() => setLoading(false)); }, [loadData]);
+  useEffect(() => { queueMicrotask(() => { setLoading(true); }); queueMicrotask(() => { loadData().finally(() => setLoading(false)); }); }, [loadData]);
 
   const handleCheckin = (goal: FinancialGoal) => {
     Alert.prompt("Add Savings", `How much are you adding to "${goal.title}"?`, [
@@ -283,7 +284,7 @@ export default function FinancialHubScreen() {
                 <View style={[s.empty, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Feather name="dollar-sign" size={36} color={colors.mutedForeground} />
                   <Text style={[s.emptyTitle, { color: colors.foreground }]}>Start Your First Goal</Text>
-                  <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>Whether you're saving for a home, paying off debt, or building your emergency fund — your journey starts here.</Text>
+                  <Text style={[s.emptyBody, { color: colors.mutedForeground }]}>Whether you&apos;re saving for a home, paying off debt, or building your emergency fund — your journey starts here.</Text>
                   <TouchableOpacity style={s.addBtn} onPress={() => setAddOpen(true)} activeOpacity={0.85}>
                     <Feather name="plus" size={15} color="#1C0E06" />
                     <Text style={s.addBtnText}>Create a Goal</Text>

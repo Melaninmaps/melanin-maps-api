@@ -259,7 +259,7 @@ export default function TopicFeedScreen() {
                 <Feather name="message-square" size={36} color={colors.muted} />
                 <Text style={[s.emptyTitle, { color: colors.foreground }]}>No posts yet on this topic</Text>
                 <Text style={[s.emptySub, { color: colors.mutedForeground }]}>
-                  Tag a post with "{displayTopic}" in the community feed to start the conversation.
+                  Tag a post with &quot;{displayTopic}&quot; in the community feed to start the conversation.
                 </Text>
               </View>
             )}

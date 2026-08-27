@@ -126,13 +126,12 @@ router.get("/surveys", async (req: Request, res: Response) => {
       id: neighborhoodSurveysTable.id,
       city: neighborhoodSurveysTable.city,
       neighborhood: neighborhoodSurveysTable.neighborhood,
-      visitedDaytime: neighborhoodSurveysTable.visitedDaytime,
-      visitedNighttime: neighborhoodSurveysTable.visitedNighttime,
-      daytimeSafetyRating: neighborhoodSurveysTable.daytimeSafetyRating,
-      nighttimeSafetyRating: neighborhoodSurveysTable.nighttimeSafetyRating,
+      visitPurpose: neighborhoodSurveysTable.visitPurpose,
+      visitFreq: neighborhoodSurveysTable.visitFreq,
+      daytimeSafety: neighborhoodSurveysTable.daytimeSafety,
+      nighttimeSafety: neighborhoodSurveysTable.nighttimeSafety,
       atmosphere: neighborhoodSurveysTable.atmosphere,
-      wouldReturn: neighborhoodSurveysTable.wouldReturn,
-      additionalNotes: neighborhoodSurveysTable.additionalNotes,
+      comments: neighborhoodSurveysTable.comments,
       createdAt: neighborhoodSurveysTable.createdAt,
     } as const;
 

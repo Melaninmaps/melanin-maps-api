@@ -103,7 +103,7 @@ export default function CheckinScreen() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchCheckins(); }, [fetchCheckins]);
+  useEffect(() => { queueMicrotask(() => { void fetchCheckins(); }); }, [fetchCheckins]);
 
   const handleCreate = async () => {
     if (!contactName.trim() || !contactEmail.includes("@")) {
@@ -187,7 +187,7 @@ export default function CheckinScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#16A34A0F", borderColor: "#16A34A30" }]}>
             <Feather name="check-circle" size={18} color="#16A34A" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              Schedule a check-in before going somewhere. If you don't tap "I'm Safe" in time, your trusted contact gets an automated email alert.
+              Schedule a check-in before going somewhere. If you don&apos;t tap &quot;I&apos;m Safe&quot; in time, your trusted contact gets an automated email alert.
             </Text>
           </View>
 
@@ -288,7 +288,7 @@ export default function CheckinScreen() {
               <Feather name="check-circle" size={28} color={colors.mutedForeground} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No check-ins yet</Text>
               <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-                Before your next meetup, schedule a check-in so someone you trust always knows you're safe.
+                Before your next meetup, schedule a check-in so someone you trust always knows you&apos;re safe.
               </Text>
             </View>
           ) : (
@@ -328,7 +328,7 @@ export default function CheckinScreen() {
                         activeOpacity={0.85}
                       >
                         <Feather name="check" size={16} color="#fff" />
-                        <Text style={styles.iAmSafeBtnText}>I'm Safe ✓</Text>
+                        <Text style={styles.iAmSafeBtnText}>I&apos;m Safe ✓</Text>
                       </TouchableOpacity>
                     )}
                     <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(c.id)} activeOpacity={0.7}>

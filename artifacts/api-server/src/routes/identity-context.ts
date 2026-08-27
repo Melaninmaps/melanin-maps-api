@@ -108,7 +108,7 @@ router.get("/me/identity-context", async (req, res) => {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to load identity context", detail: msg });
+    return res.status(500).json({ error: "Failed to load identity context", detail: msg });
   }
 });
 
@@ -244,11 +244,11 @@ router.put("/me/identity-context", async (req, res) => {
     }
 
     await client.query("COMMIT");
-    res.json({ ok: true, version: currentVersion + 1 });
+    return res.json({ ok: true, version: currentVersion + 1 });
   } catch (err: unknown) {
     await client.query("ROLLBACK").catch(() => {});
     const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to update identity context", detail: msg });
+    return res.status(500).json({ error: "Failed to update identity context", detail: msg });
   } finally {
     client.release();
   }

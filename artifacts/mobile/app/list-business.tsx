@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Animated,
@@ -273,8 +273,8 @@ export default function ListBusinessScreen() {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistDone, setWaitlistDone] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(1));
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -454,11 +454,11 @@ export default function ListBusinessScreen() {
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              You're on the Map!
+              You&apos;re on the Map!
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
-              {" "}has been submitted for review. Our team will verify your listing within 1–3 business days. You'll receive a confirmation once it goes live.
+              {" "}has been submitted for review. Our team will verify your listing within 1–3 business days. You&apos;ll receive a confirmation once it goes live.
             </Text>
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -624,10 +624,10 @@ export default function ListBusinessScreen() {
                           <View style={{ alignItems: "center", gap: 6 }}>
                             <Text style={{ fontSize: 22 }}>🎉</Text>
                             <Text style={{ fontFamily: "Inter_700Bold", fontSize: 15, color: colors.foreground, textAlign: "center" }}>
-                              You're on the waitlist!
+                              You&apos;re on the waitlist!
                             </Text>
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center" }}>
-                              We'll notify you when {waitlistCat.emoji} {waitlistCat.name} launches on Mapping With Melanin.
+                              We&apos;ll notify you when {waitlistCat.emoji} {waitlistCat.name} launches on Mapping With Melanin.
                             </Text>
                             <TouchableOpacity activeOpacity={0.85} onPress={() => { setWaitlistCat(null); setWaitlistDone(false); }}>
                               <Text style={{ fontSize: 13, color: colors.primary, fontFamily: "Inter_600SemiBold", marginTop: 4 }}>
@@ -641,7 +641,7 @@ export default function ListBusinessScreen() {
                               {waitlistCat.emoji} {waitlistCat.name} — Coming Soon
                             </Text>
                             <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 18 }}>
-                              This category isn't live yet. Drop your email and we'll notify you the moment it launches.
+                              This category isn&apos;t live yet. Drop your email and we&apos;ll notify you the moment it launches.
                             </Text>
                             <TextInput
                               style={{ borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontFamily: "Inter_400Regular", borderColor: colors.border, backgroundColor: colors.background, color: colors.foreground }}

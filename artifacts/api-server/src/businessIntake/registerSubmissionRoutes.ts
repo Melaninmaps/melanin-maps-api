@@ -206,7 +206,8 @@ export function registerSubmissionRoutes(app: Express): void {
         return;
       }
 
-      const submissionId = req.params["id"];
+      const rawSubmissionId = req.params["id"];
+      const submissionId = Array.isArray(rawSubmissionId) ? rawSubmissionId[0] ?? "" : rawSubmissionId;
       const { status, reviewNote } = req.body as {
         status: "approved" | "declined" | "needs_info";
         reviewNote?: string;

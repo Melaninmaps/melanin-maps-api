@@ -38,10 +38,10 @@ export function BusinessMentionPicker({ query, onSelect }: Props) {
   const [nominateState, setNominateState] = useState<NominateState>("idle");
 
   useEffect(() => {
-    setNominateState("idle");
-    if (query.length < 1) { setResults([]); return; }
     let cancelled = false;
     const run = async () => {
+      setNominateState("idle");
+      if (query.length < 1) { setResults([]); return; }
       setLoading(true);
       try {
         const token = await getToken();
@@ -56,7 +56,7 @@ export function BusinessMentionPicker({ query, onSelect }: Props) {
         if (!cancelled) setLoading(false);
       }
     };
-    const timer = setTimeout(() => void run(), 250);
+    const timer = setTimeout(() => void run(), query.length < 1 ? 0 : 250);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [query]);
 
@@ -136,7 +136,7 @@ export function BusinessMentionPicker({ query, onSelect }: Props) {
         <View style={styles.nominateDone}>
           <Feather name="check-circle" size={16} color={colors.primary} />
           <Text style={[styles.nominateDoneText, { color: colors.primary }]}>
-            Got it! We'll look into adding "{query}" to the platform.
+            Got it! We&apos;ll look into adding &quot;{query}&quot; to the platform.
           </Text>
         </View>
       ) : (
@@ -144,7 +144,7 @@ export function BusinessMentionPicker({ query, onSelect }: Props) {
           <View style={styles.emptyRow}>
             <Feather name="search" size={14} color={colors.mutedForeground} />
             <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              "{query}" isn't on our platform yet
+              &quot;{query}&quot; isn&apos;t on our platform yet
             </Text>
           </View>
           <TouchableOpacity

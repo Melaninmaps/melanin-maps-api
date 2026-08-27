@@ -333,7 +333,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     }
 
     // Suppress community post writes for load-test accounts (capacity canary safety)
-    if (req.user.isLoadTest) {
+    if ("isLoadTest" in req.user && req.user.isLoadTest === true) {
       res.status(200).json({ id: "load-test-suppressed", suppressed: true });
       return;
     }

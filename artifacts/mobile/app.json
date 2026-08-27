@@ -23,9 +23,9 @@
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiresFullScreen": true,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
-        "NSCameraUsageDescription": "Mapping With Melanin uses your camera so you can update your profile photo.",
-        "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
-        "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves photos to your library.",
+        "NSCameraUsageDescription": "Mapping With Melanin uses your camera when you choose to take a profile or community photo or video.",
+        "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses only the photos and videos you select for your profile or community posts.",
+        "NSPhotoLibraryAddUsageDescription": "Mapping With Melanin saves media to your library only when you choose to save it.",
         "NSUserNotificationsUsageDescription": "Mapping With Melanin sends notifications about nearby businesses, community safety alerts, and activity in your circles.",
         "NSPrivacyAccessedAPICategoryUserDefaults": [
           {
@@ -65,20 +65,23 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.INTERNET",
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.READ_CONTACTS",
-        "android.permission.WRITE_CONTACTS",
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.READ_MEDIA_VIDEO"
       ],
-      "versionCode": 77
+      "versionCode": 77,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.WRITE_CONTACTS"
+      ]
     },
     "web": {
       "favicon": "./assets/images/icon.png"
@@ -135,8 +138,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Mapping With Melanin accesses your photo library so you can choose a profile picture.",
-          "cameraPermission": "Mapping With Melanin uses your camera so you can update your profile photo."
+          "photosPermission": "Mapping With Melanin accesses only the photos and videos you select for your profile or community posts.",
+          "cameraPermission": "Mapping With Melanin uses your camera when you choose to take a profile or community photo or video."
         }
       ],
       [

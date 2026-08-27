@@ -66,7 +66,7 @@ export function useListings(businessId: string) {
     }
   }, [businessId]);
 
-  useEffect(() => { void fetchListings(); }, [fetchListings]);
+  useEffect(() => { void Promise.resolve().then(fetchListings); }, [fetchListings]);
 
   const openCheckout = async (listing: Listing) => {
     if (!listing.stripePriceId) return null;
@@ -121,7 +121,7 @@ export function useOwnerListings(businessId: string) {
     }
   }, [businessId]);
 
-  useEffect(() => { void fetchAll(); }, [fetchAll]);
+  useEffect(() => { void Promise.resolve().then(fetchAll); }, [fetchAll]);
 
   const startOnboarding = async (): Promise<string | null> => {
     try {

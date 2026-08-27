@@ -77,7 +77,8 @@ async function computeConfidenceScore(businessId: string): Promise<number> {
 // POST /businesses/:id/safety-experience
 // ---------------------------------------------------------------------------
 router.post("/businesses/:id/safety-experience", requireAuth, async (req, res) => {
-  const { id: businessId } = req.params;
+  const rawBusinessId = req.params.id;
+  const businessId = Array.isArray(rawBusinessId) ? rawBusinessId[0] ?? "" : rawBusinessId;
   const userId = (req as any).user?.id;
 
   const {

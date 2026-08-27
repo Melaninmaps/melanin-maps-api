@@ -50,7 +50,7 @@ export function useUserProfile(enabled = true) {
     }
   }, [enabled]);
 
-  useEffect(() => { void fetchProfile(); }, [fetchProfile]);
+  useEffect(() => { void Promise.resolve().then(fetchProfile); }, [fetchProfile]);
 
   const updateProfile = useCallback(async (updates: { firstName?: string; lastName?: string; profileImageUrl?: string }) => {
     const apiBase = getApiBase();

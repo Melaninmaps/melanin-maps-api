@@ -30,7 +30,9 @@ export function registerCommunityVibesRoutes(
     "/api/businesses/:businessId/community-vibes",
     async (request: Request, response: Response, next: NextFunction) => {
       try {
-        const payload = await repository.getForBusiness(request.params["businessId"] ?? "");
+        const rawBusinessId = request.params["businessId"];
+        const businessId = Array.isArray(rawBusinessId) ? rawBusinessId[0] ?? "" : rawBusinessId ?? "";
+        const payload = await repository.getForBusiness(businessId);
         if (!payload) return response.status(404).json({ code: "BUSINESS_NOT_FOUND" });
         response.setHeader("Cache-Control", "no-store");
         return response.json(payload);
@@ -56,8 +58,9 @@ export function registerCommunityVibesRoutes(
         ) {
           return response.status(400).json({ code: "INVALID_VIBE_SUBMISSION" });
         }
+        const rawBusinessId = request.params["businessId"];
         await repository.submitMemberTags({
-          businessId: request.params["businessId"] ?? "",
+          businessId: Array.isArray(rawBusinessId) ? rawBusinessId[0] ?? "" : rawBusinessId ?? "",
           memberId: request.user.id,
           sourceId,
           vibeKeys: vibeKeys as string[],

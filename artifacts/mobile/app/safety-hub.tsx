@@ -130,7 +130,7 @@ export default function SafetyHubScreen() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchData(); }, [fetchData]);
+  useEffect(() => { queueMicrotask(() => { void fetchData(); }); }, [fetchData]);
 
   const moveWidget = (index: number, direction: "up" | "down") => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -238,7 +238,7 @@ export default function SafetyHubScreen() {
                     onPress={() => void handleConfirmCheckin(c.id)}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.imSafeBtnText}>I'm Safe ✓</Text>
+                    <Text style={styles.imSafeBtnText}>I&apos;m Safe ✓</Text>
                   </TouchableOpacity>
                 </View>
               ))}

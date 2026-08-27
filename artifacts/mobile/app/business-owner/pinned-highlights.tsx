@@ -99,7 +99,7 @@ export default function PinnedHighlightsScreen() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void loadPinned(); }, [loadPinned]);
+  useEffect(() => { queueMicrotask(() => { void loadPinned(); }); }, [loadPinned]);
 
   const handleUnpin = async (itemId: number) => {
     setUnpinning(itemId);
@@ -185,7 +185,7 @@ export default function PinnedHighlightsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[s.explainerTitle, { color: colors.foreground }]}>Feature your best reviews</Text>
               <Text style={[s.explainerSub, { color: colors.mutedForeground }]}>
-                Pin up to 1 review and 1 video for 90 days each. They'll appear at the top of your profile so customers see your best first.
+                Pin up to 1 review and 1 video for 90 days each. They&apos;ll appear at the top of your profile so customers see your best first.
               </Text>
             </View>
           </View>
@@ -246,7 +246,7 @@ export default function PinnedHighlightsScreen() {
                       )}
                     </View>
                     <Text style={[s.reviewTextSnippet, { color: colors.foreground }]} numberOfLines={3}>
-                      "{item.reviewText}"
+                      &quot;{item.reviewText}&quot;
                     </Text>
                   </>
                 ) : item.itemType === "video" && item.videoUrl ? (
@@ -304,7 +304,7 @@ export default function PinnedHighlightsScreen() {
                   </View>
                   {item.reviewText ? (
                     <Text style={[s.reviewTextSnippet, { color: colors.mutedForeground }]} numberOfLines={2}>
-                      "{item.reviewText}"
+                      &quot;{item.reviewText}&quot;
                     </Text>
                   ) : null}
                 </View>
@@ -366,7 +366,7 @@ export default function PinnedHighlightsScreen() {
                 </View>
                 {rev.text ? (
                   <Text style={[s.reviewTextSnippet, { color: colors.foreground }]} numberOfLines={3}>
-                    "{rev.text}"
+                    &quot;{rev.text}&quot;
                   </Text>
                 ) : null}
               </TouchableOpacity>
@@ -382,7 +382,7 @@ export default function PinnedHighlightsScreen() {
             <Text style={{ fontSize: 36, textAlign: "center" }}>📌</Text>
             <Text style={[s.expiryTitle, { color: colors.foreground }]}>Keep it fresh?</Text>
             <Text style={[s.expirySub, { color: colors.mutedForeground }]}>
-              We want to make sure we're always presenting your most up-to-date reviews.
+              We want to make sure we&apos;re always presenting your most up-to-date reviews.
               {showExpiryPrompt?.isExpired
                 ? " This pinned review has expired after 90 days."
                 : ` This pinned review expires in ${showExpiryPrompt?.daysLeft} days.`}

@@ -1,9 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import { useEvent } from "expo";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { useColors } from "@/hooks/useColors";
 import { BusinessMiniCard, type BusinessMiniCardData } from "@/components/BusinessMiniCard";
 import { ReportButton } from "@/components/ReportButton";
@@ -48,14 +50,63 @@ const WARNING_LABELS: Record<string, string> = {
   other: "Sensitive Content",
 };
 
+
+function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const colors = useColors();
+  const player = useVideoPlayer({ uri: url, useCaching: true }, (instance) => {
+    instance.play();
+  });
+  const { status } = useEvent(player, "statusChange", { status: player.status });
+
+  const close = () => {
+    player.pause();
+    onClose();
+  };
+
+  return (
+    <Modal visible animationType="fade" presentationStyle="fullScreen" onRequestClose={close}>
+      <View style={{ flex: 1, backgroundColor: "#000000", justifyContent: "center" }}>
+        <VideoView
+          player={player}
+          style={{ width: "100%", aspectRatio: 9 / 16, maxHeight: "80%" }}
+          nativeControls
+          contentFit="contain"
+          fullscreenOptions={{ enable: true }}
+          accessibilityLabel="Community post video"
+        />
+        {status === "error" ? (
+          <View style={{ padding: 20, alignItems: "center", gap: 12 }}>
+            <Text style={{ color: "#FFFFFF", textAlign: "center" }}>This video could not be played in the app.</Text>
+            <TouchableOpacity
+              onPress={() => { void openExternalUrl(url, { unavailableMessage: "This video is unavailable." }); }}
+              style={{ borderColor: "#FFFFFF", borderWidth: 1, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Open video externally"
+            >
+              <Text style={{ color: "#FFFFFF" }}>Open externally</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        <TouchableOpacity
+          onPress={close}
+          style={{ position: "absolute", top: 54, right: 20, backgroundColor: colors.card, borderRadius: 22, padding: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Close video"
+        >
+          <Feather name="x" size={24} color={colors.foreground} />
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+}
+
 function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
   mediaUrls: string[];
   hasContentWarning: boolean;
   contentWarningType?: string;
 }) {
   const [revealed, setRevealed] = useState(false);
-  const colors = useColors();
-
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
   if (hasContentWarning && !revealed) {
     return (
       <TouchableOpacity
@@ -76,7 +127,11 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
   }
 
   return (
-    <View style={s.mediaGrid}>
+    <>
+      {activeVideoUrl ? (
+        <NativeCommunityVideoModal url={activeVideoUrl} onClose={() => setActiveVideoUrl(null)} />
+      ) : null}
+      <View style={s.mediaGrid}>
       {hasContentWarning && revealed && (
         <TouchableOpacity
           style={s.warningBadge}
@@ -93,17 +148,18 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType }: {
           <TouchableOpacity
             key={i}
             style={[s.mediaThumb, { backgroundColor: "#0008", justifyContent: "center", alignItems: "center" }]}
-            onPress={() => { void openExternalUrl(url, { unavailableMessage: "This video is unavailable." }); }}
+            onPress={() => setActiveVideoUrl(url)}
             activeOpacity={0.8}
           >
             <Feather name="play-circle" size={36} color="#fff" />
-            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Open Video</Text>
+            <Text style={{ color: "#fff", fontSize: 11, fontFamily: "Inter_500Medium", marginTop: 4 }}>Play Video</Text>
           </TouchableOpacity>
         ) : (
           <Image key={i} source={{ uri: url }} style={s.mediaThumb} resizeMode="cover" />
         );
       })}
-    </View>
+      </View>
+    </>
   );
 }
 

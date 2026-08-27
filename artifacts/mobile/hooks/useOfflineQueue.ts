@@ -14,6 +14,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getApiBase } from "@/lib/api";
+
 const QUEUE_KEY_PREFIX = "@mwm_offline_queue_";
 
 interface QueuedItem {
@@ -24,8 +26,6 @@ interface QueuedItem {
   queuedAt: string;
   attempts: number;
 }
-
-import { getApiBase } from "@/lib/api";
 const API_BASE = getApiBase();
 
 async function readQueue(namespace: string): Promise<QueuedItem[]> {
@@ -97,8 +97,10 @@ export function useOfflineQueue(namespace: string, options: UseOfflineQueueOptio
   const tokenRef = useRef(options.token ?? null);
   const onFlushedRef = useRef(options.onFlushed);
 
-  tokenRef.current = options.token ?? null;
-  onFlushedRef.current = options.onFlushed;
+  useEffect(() => {
+    tokenRef.current = options.token ?? null;
+    onFlushedRef.current = options.onFlushed;
+  }, [options.onFlushed, options.token]);
 
   // Keep queuedCount in sync
   const refreshCount = useCallback(async () => {
@@ -106,7 +108,7 @@ export function useOfflineQueue(namespace: string, options: UseOfflineQueueOptio
     setQueuedCount(items.length);
   }, [namespace]);
 
-  useEffect(() => { refreshCount(); }, [refreshCount]);
+  useEffect(() => { void Promise.resolve().then(refreshCount); }, [refreshCount]);
 
   // Auto-flush on reconnect
   useEffect(() => {

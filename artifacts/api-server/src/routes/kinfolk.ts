@@ -26,6 +26,12 @@ import {
 import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
+import {
+  RESPONSE_STYLES,
+  deliveryToResponseStyle,
+  responseStyleToDelivery,
+  type ResponseStyle,
+} from "../kinfolk/delivery-profile";
 import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
 import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
@@ -501,7 +507,7 @@ async function callOpenAIWithRetry(
   signal: AbortSignal,
   /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
   temperature?: number,
-): Promise<Awaited<ReturnType<typeof openai.chat.completions.create>>> {
+): Promise<Extract<Awaited<ReturnType<typeof openai.chat.completions.create>>, { choices: unknown }>> {
   // Transient provider conditions that can clear on retry
   const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
   // Connection-reset strings that may appear in error messages without a numeric status
@@ -510,7 +516,7 @@ async function callOpenAIWithRetry(
   let lastErr: unknown;
   for (let attempt = 0; attempt <= KINFOLK_RETRY_MAX; attempt++) {
     try {
-      return await openai.chat.completions.create(
+      const completion = await openai.chat.completions.create(
         {
           model: "gpt-4o-mini",
           max_tokens: NORMAL_MAX_OUTPUT_TOKENS,
@@ -520,6 +526,10 @@ async function callOpenAIWithRetry(
         },
         { signal },
       );
+      if (!("choices" in completion)) {
+        throw new Error("Unexpected streaming response from Kinfolk provider");
+      }
+      return completion;
     } catch (err) {
       lastErr = err;
       const status  = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
@@ -729,7 +739,10 @@ export async function runKinfolkCanary(): Promise<{
       max_tokens: 8,
       temperature: 0,
     } as Parameters<typeof openai.chat.completions.create>[0]);
-    const answer = completion.choices?.[0]?.message?.content?.trim() ?? "(no content)";
+    if (!("choices" in completion)) {
+      return { ok: false, reason: "Unexpected streaming response from AI provider", latencyMs: Date.now() - start };
+    }
+    const answer = completion.choices[0]?.message?.content?.trim() ?? "(no content)";
     return { ok: true, answer, latencyMs: Date.now() - start };
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : String(err), latencyMs: Date.now() - start };
@@ -1655,7 +1668,7 @@ function buildSystemPrompt(opts: {
   /** Intent classification — gates which optional prompt modules are injected. */
   intentClass?: string | null;
 }): string {
-  const { prefs, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const { prefs, destination, voiceMode = "community", businessCatalog = [], activeJourney, crossCityBridge } = opts;
   // Cap context arrays to keep token budget tight
   const likedSpots    = opts.likedSpots.slice(0, 3);
   const dislikedSpots = opts.dislikedSpots.slice(0, 3);
@@ -1875,7 +1888,7 @@ CROSS-POLLINATION RULE: Surface these connections only when genuinely relevant t
   // Privacy Intelligence: suppress when sensitive topic detected (Circle data boundary rule)
   const effectiveCircleContext = opts.privacySuppressed ? null : (opts.circleContext ?? null);
   const circleSection = effectiveCircleContext
-    ? `\nCIRCLE INTELLIGENCE — "${opts.circleContext.name}" (${opts.circleContext.type}):
+    ? `\nCIRCLE INTELLIGENCE — "${effectiveCircleContext.name}" (${effectiveCircleContext.type}):
 You are the silent, always-on member of this Circle. You know everyone's individual preferences AND the group's shared context.
 
 CIRCLE MEMBERS:
@@ -2202,10 +2215,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     // Map delivery profile columns back to the legacy response-style label used by the UI
     let responseStyle = "conversational";
     if (dp) {
-      if (dp.tone_preference === "professional") responseStyle = "professional";
-      else if (dp.detail_level === "deep") responseStyle = "detailed";
-      else if (dp.detail_level === "quick") responseStyle = "concise";
-      else responseStyle = "conversational";
+      responseStyle = deliveryToResponseStyle(dp.detail_level, dp.tone_preference);
     } else if (prefs?.communicationStyle) {
       // Fall back to taste profile communicationStyle until delivery profile is saved
       responseStyle = prefs.communicationStyle === "detailed" ? "detailed"
@@ -2366,19 +2376,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
 router.put("/kinfolk/preferences/response-style", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const { responseStyle } = req.body as { responseStyle?: unknown };
-  const VALID_STYLES = ["conversational", "concise", "detailed", "professional"] as const;
-  type ResponseStyle = typeof VALID_STYLES[number];
-  if (!VALID_STYLES.includes(responseStyle as ResponseStyle)) {
-    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: VALID_STYLES });
+  if (!RESPONSE_STYLES.includes(responseStyle as ResponseStyle)) {
+    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: RESPONSE_STYLES });
     return;
   }
-  const styleMap: Record<ResponseStyle, { detail_level: string; tone_preference: string }> = {
-    detailed:      { detail_level: "deep",     tone_preference: "default" },
-    concise:       { detail_level: "quick",    tone_preference: "default" },
-    professional:  { detail_level: "standard", tone_preference: "professional" },
-    conversational:{ detail_level: "standard", tone_preference: "warm" },
+  const delivery = responseStyleToDelivery(responseStyle as ResponseStyle);
+  const dp = {
+    detail_level: delivery.detailLevel,
+    tone_preference: delivery.tonePreference,
   };
-  const dp = styleMap[responseStyle as ResponseStyle];
   try {
     await pool.query(
       `INSERT INTO kinfolk_delivery_profiles
@@ -2778,7 +2784,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       earlyDecision.route === "business_discovery" && rawIntentClassFromLLM !== "legal_regulated"
         ? "business_discovery"
         : earlyDecision.route === "travel_planning" && rawIntentClassFromLLM !== "legal_regulated"
-        ? "travel_planning"
+        ? "business_discovery"
         : rawIntentClassFromLLM;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
     // always resolve to legal_regulated even when hasDestination caused the keyword
@@ -5272,7 +5278,11 @@ const transcribeUpload = multer({
   limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
-    cb(ok ? null : new Error("UNSUPPORTED_FIELD"), ok);
+    if (!ok) {
+      cb(new Error("UNSUPPORTED_FIELD"));
+      return;
+    }
+    cb(null, true);
   },
 }).single("audio");
 
@@ -5410,7 +5420,8 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const startMs = Date.now();
 
   try {
-    const blob = new Blob([buffer], { type: `audio/${safeFormat}` });
+    const audioBytes = new Uint8Array(buffer);
+    const blob = new Blob([audioBytes], { type: `audio/${safeFormat}` });
     const file = new File([blob], `voice.${safeFormat}`, { type: `audio/${safeFormat}` });
 
     const transcription = await openai.audio.transcriptions.create(

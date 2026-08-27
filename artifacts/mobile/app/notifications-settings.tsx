@@ -73,14 +73,6 @@ export default function NotificationsSettingsScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  useEffect(() => {
-    Notifications.getPermissionsAsync().then(({ status }: { status: string }) => {
-      if (status !== "granted") setPushEnabled(false);
-    }).catch(() => {});
-
-    void loadSettings();
-  }, []);
-
   const loadSettings = async () => {
     try {
       const token = await getAuthToken();
@@ -96,6 +88,14 @@ export default function NotificationsSettingsScreen() {
     } catch {}
     finally { setLoading(false); }
   };
+
+  useEffect(() => {
+    Notifications.getPermissionsAsync().then(({ status }: { status: string }) => {
+      if (status !== "granted") setPushEnabled(false);
+    }).catch(() => {});
+
+    queueMicrotask(() => { void loadSettings(); });
+  }, []);
 
   const saveSettings = (next: UserSettings) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);

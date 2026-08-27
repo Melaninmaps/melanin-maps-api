@@ -122,7 +122,7 @@ export function useBusinesses(options: UseBusinessesOptions = {}): UseBusinesses
   }, [search, category]);
 
   useEffect(() => {
-    fetchBusinesses();
+    void Promise.resolve().then(fetchBusinesses);
   }, [fetchBusinesses]);
 
   return { businesses, isLoading, error, refetch: fetchBusinesses };

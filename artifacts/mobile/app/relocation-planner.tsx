@@ -555,7 +555,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.stepLabel, { color: GOLD }]}>STEP 1 OF 3</Text>
               <Text style={[s.stepHeading, { color: colors.text }]}>Where are you moving?</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                Tell me where you're coming from and where you're headed — I'll tailor everything to your journey.
+                Tell me where you&apos;re coming from and where you&apos;re headed — I&apos;ll tailor everything to your journey.
               </Text>
 
               <Text style={[s.fieldLabel, { color: colors.text }]}>Moving from</Text>
@@ -615,10 +615,10 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.stepLabel, { color: GOLD }]}>STEP 2 OF 3</Text>
               <Text style={[s.stepHeading, { color: colors.text }]}>Tell me about your situation</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                The more I know, the smarter my recommendations. I'll think ahead so you don't have to.
+                The more I know, the smarter my recommendations. I&apos;ll think ahead so you don&apos;t have to.
               </Text>
 
-              <Text style={[s.fieldLabel, { color: colors.text }]}>Who's moving?</Text>
+              <Text style={[s.fieldLabel, { color: colors.text }]}>Who&apos;s moving?</Text>
               <View style={s.chipRow}>
                 {FAMILY_OPTIONS.map(f => (
                   <TouchableOpacity activeOpacity={0.85}
@@ -683,7 +683,7 @@ export default function RelocationPlannerScreen() {
               <Text style={[s.stepLabel, { color: GOLD }]}>STEP 3 OF 3</Text>
               <Text style={[s.stepHeading, { color: colors.text }]}>What do you need?</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                Select everything that applies — I'll prioritize these first and think ahead for the rest.
+                Select everything that applies — I&apos;ll prioritize these first and think ahead for the rest.
               </Text>
 
               <View style={s.needsGrid}>
@@ -957,7 +957,7 @@ export default function RelocationPlannerScreen() {
               <View style={s.emptyTeam}>
                 <Text style={s.emptyEmoji}>🤎</Text>
                 <Text style={[s.emptyText, { color: colors.mutedForeground }]}>
-                  Tap "Add to My Team" on any recommended business to save them here.
+                  Tap &quot;Add to My Team&quot; on any recommended business to save them here.
                 </Text>
               </View>
             )}

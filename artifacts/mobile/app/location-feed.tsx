@@ -128,7 +128,7 @@ export default function LocationFeedScreen() {
 
   useEffect(() => {
     if (!location) return;
-    setLoading(true);
+    queueMicrotask(() => { setLoading(true); });
     fetch(`${getApiBase()}/api/location-feed/${encodeURIComponent(location)}`)
       .then(r => r.json())
       .then((data: { creators?: Creator[]; posts?: Post[] }) => {

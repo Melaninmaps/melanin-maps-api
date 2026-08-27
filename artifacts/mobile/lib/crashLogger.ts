@@ -77,6 +77,8 @@ export interface CrashReport {
     buildNumber: string;
     version: string;
     commitSha: string;
+    releaseChannel: string;
+    environment: string;
   };
   sent: boolean;
 }
@@ -99,6 +101,47 @@ export function injectSentryCaptureException(fn: SentryCaptureFn): void {
   _sentryCaptureException = fn;
 }
 
+
+function redactSensitiveText(value: string): string {
+  return value
+    .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer [REDACTED]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]")
+    .replace(/([?&](?:token|access_token|refresh_token|code|email|key|signature)=)[^&#\s]+/gi, "$1[REDACTED]")
+    .slice(0, 4000);
+}
+
+function sanitizeRoute(route: string): string {
+  return route
+    .split(/[?#]/, 1)[0]
+    .split("/")
+    .map((segment) =>
+      /^[0-9]+$/.test(segment) || /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(segment)
+        ? ":id"
+        : segment,
+    )
+    .join("/");
+}
+
+function sanitizeBreadcrumbUrl(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl, "https://mwm.invalid");
+    const pathname = sanitizeRoute(parsed.pathname);
+    return rawUrl.startsWith("/") ? pathname : parsed.origin + pathname;
+  } catch {
+    return sanitizeRoute(rawUrl);
+  }
+}
+
+function sanitizeMapState(state: Partial<MapState>): Partial<MapState> {
+  return {
+    permissionStatus: typeof state.permissionStatus === "string" ? state.permissionStatus : undefined,
+    loading: typeof state.loading === "boolean" ? state.loading : undefined,
+    lastLat: typeof state.lastLat === "number" ? Number(state.lastLat.toFixed(2)) : undefined,
+    lastLng: typeof state.lastLng === "number" ? Number(state.lastLng.toFixed(2)) : undefined,
+    error: typeof state.error === "string" ? redactSensitiveText(state.error) : undefined,
+  };
+}
+
 // ─── In-memory state ──────────────────────────────────────────────────────────
 
 const MAX_BREADCRUMBS = 20;
@@ -115,7 +158,7 @@ let _mapState: MapState = {};
 
 function getBuildMeta() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const Constants = require("expo-constants").default;
     return {
       version: Constants.expoConfig?.version ?? "unknown",
@@ -124,9 +167,11 @@ function getBuildMeta() {
           ? Constants.expoConfig?.ios?.buildNumber
           : String(Constants.expoConfig?.android?.versionCode)) ?? "unknown",
       commitSha: Constants.expoConfig?.extra?.commitSha ?? "unknown",
+      releaseChannel: Constants.expoConfig?.extra?.releaseChannel ?? "unknown",
+      environment: Constants.expoConfig?.extra?.environment ?? "unknown",
     };
   } catch {
-    return { version: "unknown", buildNumber: "unknown", commitSha: "unknown" };
+    return { version: "unknown", buildNumber: "unknown", commitSha: "unknown", releaseChannel: "unknown", environment: "unknown" };
   }
 }
 
@@ -138,8 +183,9 @@ function pushBreadcrumb(bc: Breadcrumb): void {
 }
 
 export function addNavBreadcrumb(route: string): void {
-  _currentScreen = route;
-  pushBreadcrumb({ type: "navigation", message: `→ ${route}`, ts: new Date().toISOString() });
+  const sanitizedRoute = sanitizeRoute(route);
+  _currentScreen = sanitizedRoute;
+  pushBreadcrumb({ type: "navigation", message: `→ ${sanitizedRoute}`, ts: new Date().toISOString() });
 }
 
 export function setAppStateBreadcrumb(state: string): void {
@@ -152,10 +198,12 @@ export function addMemoryWarningBreadcrumb(): void {
 }
 
 export function setMapState(state: Partial<MapState>): void {
-  _mapState = { ..._mapState, ...state };
+  const sanitizedState = sanitizeMapState(state);
+  _mapState = { ..._mapState, ...sanitizedState };
   pushBreadcrumb({
     type: "map",
-    message: `map: ${JSON.stringify(state)}`,
+    message: "map state updated",
+    data: sanitizedState,
     ts: new Date().toISOString(),
   });
 }
@@ -175,7 +223,7 @@ function installFetchInterceptor(): void {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
     const method = init?.method ?? (input instanceof Request ? input.method : "GET");
     const start = Date.now();
-    const rec: ApiRecord = { url, method, ts: new Date().toISOString() };
+    const rec: ApiRecord = { url: sanitizeBreadcrumbUrl(url), method, ts: new Date().toISOString() };
 
     try {
       const resp = await origFetch(input, init);
@@ -185,7 +233,7 @@ function installFetchInterceptor(): void {
       return resp;
     } catch (err: unknown) {
       rec.durationMs = Date.now() - start;
-      rec.error = err instanceof Error ? err.message : String(err);
+      rec.error = err instanceof Error ? err.name : "NetworkError";
       pushApiRecord(rec);
       throw err;
     }
@@ -212,8 +260,8 @@ function buildReport(
     type,
     error: {
       name: err.name,
-      message: err.message ?? String(err),
-      stack: err.stack ?? "(no stack)",
+      message: redactSensitiveText(err.message ?? String(err)),
+      stack: redactSensitiveText(err.stack ?? "(no stack)"),
     },
     context: {
       currentScreen: _currentScreen,
@@ -226,6 +274,8 @@ function buildReport(
       buildNumber: meta.buildNumber,
       version: meta.version,
       commitSha: meta.commitSha,
+      releaseChannel: meta.releaseChannel,
+      environment: meta.environment,
     },
     sent: false,
   };

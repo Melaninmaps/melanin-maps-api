@@ -289,7 +289,7 @@ export default function CreateGuideScreen() {
             onChangeText={setExperienceContext}
             maxLength={150}
           />
-          <Text style={[s.hint, { color: colors.mutedForeground }]}>This shows under your name — e.g. "4 years at Howard" or "20 years managing diabetes"</Text>
+          <Text style={[s.hint, { color: colors.mutedForeground }]}>This shows under your name — e.g. &quot;4 years at Howard&quot; or &quot;20 years managing diabetes&quot;</Text>
 
           {/* Personal story */}
           <Text style={[s.label, { color: colors.mutedForeground }]}>Your Story</Text>

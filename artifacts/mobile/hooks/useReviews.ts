@@ -69,7 +69,7 @@ export function useReviews(businessId: string) {
     finally { setIsLoading(false); }
   }, [businessId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const submitReview = useCallback(
     async (

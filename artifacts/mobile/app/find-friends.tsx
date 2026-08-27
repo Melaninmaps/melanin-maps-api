@@ -215,7 +215,7 @@ export default function FindFriendsScreen() {
             <View style={s.cardTitleCol}>
               <Text style={[s.cardTitle, { color: colors.foreground }]}>People You Already Know</Text>
               <Text style={[s.cardSub, { color: colors.mutedForeground }]}>
-                We'll check your contacts to find members — nothing is stored
+                We&apos;ll check your contacts to find members — nothing is stored
               </Text>
             </View>
           </View>
@@ -359,7 +359,7 @@ export default function FindFriendsScreen() {
           <View style={[s.nudgeRow, { backgroundColor: "#CA922B12", borderColor: "#CA922B30" }]}>
             <Feather name="heart" size={16} color="#CA922B" />
             <Text style={[s.nudgeText, { color: colors.foreground }]}>
-              You're following <Text style={{ color: "#CA922B", fontFamily: "Inter_700Bold" }}>{following.size}</Text> member{following.size !== 1 ? "s" : ""}. Their posts will show up in your feed!
+              You&apos;re following <Text style={{ color: "#CA922B", fontFamily: "Inter_700Bold" }}>{following.size}</Text> member{following.size !== 1 ? "s" : ""}. Their posts will show up in your feed!
             </Text>
           </View>
         )}

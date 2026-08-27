@@ -1,0 +1,12 @@
+ M artifacts/api-server/package.json
+ M artifacts/mobile/app.config.js
+ M artifacts/mobile/app.json
+ M artifacts/mobile/app/(tabs)/community.tsx
+ M artifacts/mobile/components/CommunityPostCard.tsx
+ M artifacts/mobile/lib/crashLogger.ts
+ M artifacts/mobile/package.json
+ M pnpm-lock.yaml
+?? .task373-backups/
+?? attached_assets/Pasted-Replit-has-only-inspected-the-bundle-it-has-not-started_1787785622155.txt
+?? release-evidence/
+?? replit/task373-surgical/

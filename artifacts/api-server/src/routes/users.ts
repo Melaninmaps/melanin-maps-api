@@ -657,7 +657,8 @@ router.put("/users/settings", async (req: Request, res: Response) => {
 // POST /api/users/:id/block — block a user (Guideline 1.2 UGC safety)
 router.post("/users/:id/block", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
-  const targetId = req.params.id;
+  const rawTargetId = req.params.id;
+  const targetId = Array.isArray(rawTargetId) ? rawTargetId[0] ?? "" : rawTargetId;
   if (targetId === req.user.id) { res.status(400).json({ error: "Cannot block yourself" }); return; }
   try {
     await db.insert(userBlocksTable).values({
@@ -679,8 +680,10 @@ router.post("/users/:id/block", async (req: Request, res: Response) => {
 router.delete("/users/:id/block", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
+    const rawTargetId = req.params.id;
+    const targetId = Array.isArray(rawTargetId) ? rawTargetId[0] ?? "" : rawTargetId;
     await db.delete(userBlocksTable).where(
-      and(eq(userBlocksTable.blockerId, req.user.id), eq(userBlocksTable.blockedId, req.params.id))
+      and(eq(userBlocksTable.blockerId, req.user.id), eq(userBlocksTable.blockedId, targetId))
     );
     res.json({ ok: true, blocked: false });
   } catch (err) {

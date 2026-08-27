@@ -1,5 +1,6 @@
-import { useMemo } from "react";
 import { BRAND_QUOTES, type QuoteCategory, type BrandQuote } from "@/constants/brandQuotes";
+
+const CURRENT_DAY_INDEX = Math.floor(Date.now() / 86_400_000);
 
 interface UseBrandQuoteOptions {
   category: QuoteCategory;
@@ -7,11 +8,8 @@ interface UseBrandQuoteOptions {
 }
 
 export function useBrandQuote({ category, offset = 0 }: UseBrandQuoteOptions): BrandQuote {
-  return useMemo(() => {
-    const quotes = BRAND_QUOTES[category];
-    const dayIndex = Math.floor(Date.now() / 86_400_000);
-    return quotes[(dayIndex + offset) % quotes.length];
-  }, [category, offset]);
+  const quotes = BRAND_QUOTES[category];
+  return quotes[(CURRENT_DAY_INDEX + offset) % quotes.length];
 }
 
 export function useBrandQuoteText({ category, offset = 0 }: UseBrandQuoteOptions): string {

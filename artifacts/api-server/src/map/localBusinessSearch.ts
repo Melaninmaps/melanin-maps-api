@@ -104,7 +104,10 @@ export class LocalBusinessSearch {
     };
   }
 
-  private nextExpansion(radiusMi: number, resultCount: number) {
+  private nextExpansion(
+    radiusMi: number,
+    resultCount: number,
+  ): LocalSearchResponse["expansion"] {
     if (resultCount >= DEFAULT_LIMIT || radiusMi >= 25) {
       return { available: false, nextRadiusMi: null, message: null } as const;
     }

@@ -37,8 +37,8 @@ function makeMapReadyMachine() {
   const pendingLocationRef: { current: { latitude: number; longitude: number } | null } = {
     current: null,
   };
-  const animateCalls: Array<{ latitude: number; longitude: number; when: string }> = [];
-  const markerFetchCalls: Array<{ when: string }> = [];
+  const animateCalls: { latitude: number; longitude: number; when: string }[] = [];
+  const markerFetchCalls: { when: string }[] = [];
 
   function onMapReady() {
     mapReadyRef.current = true;

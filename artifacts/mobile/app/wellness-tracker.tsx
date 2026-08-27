@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator, Alert, Animated, KeyboardAvoidingView, Modal,
   Platform, ScrollView, StyleSheet, Text, TextInput,
@@ -136,7 +136,7 @@ export default function WellnessTrackerScreen() {
   const [sleep, setSleep] = useState("");
   const [gratitude, setGratitude] = useState("");
   const [intention, setIntention] = useState("");
-  const streakAnim = useRef(new Animated.Value(0)).current;
+  const [streakAnim] = useState(() => new Animated.Value(0));
 
   const loadData = useCallback(async () => {
     try {
@@ -166,8 +166,8 @@ export default function WellnessTrackerScreen() {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    loadData().finally(() => setLoading(false));
+    queueMicrotask(() => { setLoading(true); });
+    queueMicrotask(() => { loadData().finally(() => setLoading(false)); });
   }, [loadData]);
 
   useEffect(() => {
@@ -290,7 +290,7 @@ export default function WellnessTrackerScreen() {
             value={sleep} onChangeText={setSleep} keyboardType="decimal-pad"
           />
 
-          <Text style={[s.label, { color: colors.foreground, marginTop: 14 }]}>One thing I'm grateful for</Text>
+          <Text style={[s.label, { color: colors.foreground, marginTop: 14 }]}>One thing I&apos;m grateful for</Text>
           <TextInput
             style={[s.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
             placeholder="What are you thankful for today?"
@@ -298,7 +298,7 @@ export default function WellnessTrackerScreen() {
             value={gratitude} onChangeText={setGratitude} multiline numberOfLines={2}
           />
 
-          <Text style={[s.label, { color: colors.foreground, marginTop: 12 }]}>Today's intention</Text>
+          <Text style={[s.label, { color: colors.foreground, marginTop: 12 }]}>Today&apos;s intention</Text>
           <TextInput
             style={[s.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
             placeholder="What do you want to focus on today?"

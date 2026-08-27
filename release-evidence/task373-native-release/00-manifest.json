@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-08-26T23:08:21.182Z",
+  "branch": "release/task-373-rc",
+  "commitSha": "892edbfeca012bdf46603f61d29bcc2c667a7b63",
+  "treeStatus": "M artifacts/api-server/package.json\n M artifacts/mobile/app.config.js\n M artifacts/mobile/app.json\n M artifacts/mobile/app/(tabs)/community.tsx\n M artifacts/mobile/components/CommunityPostCard.tsx\n M artifacts/mobile/lib/crashLogger.ts\n M artifacts/mobile/package.json\n M pnpm-lock.yaml\n?? .task373-backups/\n?? attached_assets/Pasted-Replit-has-only-inspected-the-bundle-it-has-not-started_1787785622155.txt\n?? replit/task373-surgical/",
+  "ios": {
+    "bundleIdentifier": "com.melaninmaps.app",
+    "version": "1.1.5",
+    "buildNumber": "102",
+    "easBuildId": "BLOCKED",
+    "artifactSha256": "BLOCKED"
+  },
+  "android": {
+    "package": "com.melaninmaps.app",
+    "version": "1.1.5",
+    "versionCode": 77,
+    "easBuildId": "BLOCKED",
+    "artifactSha256": "BLOCKED"
+  }
+}

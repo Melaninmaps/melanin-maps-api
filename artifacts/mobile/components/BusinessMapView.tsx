@@ -86,13 +86,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
       (activeCategory === "All" || b.category === activeCategory),
   );
 
-  const currentWarning = warnings[warningIdx] ?? null;
-
-  useEffect(() => {
-    if (warningIdx >= warnings.length && warnings.length > 0) {
-      setWarningIdx(warnings.length - 1);
-    }
-  }, [warnings.length, warningIdx]);
+  const currentWarning = warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
 
   useEffect(() => {
     void (async () => {
@@ -140,7 +134,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
         } catch {}
       })();
     }
-  }, [showHeatmap]);
+  }, [showHeatmap, heatmapPoints.length]);
 
   useEffect(() => {
     if (showCulturalSites && culturalSites.length === 0) {
@@ -156,7 +150,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
         } catch {}
       })();
     }
-  }, [showCulturalSites]);
+  }, [showCulturalSites, culturalSites.length]);
 
   const recenter = async () => {
     try {

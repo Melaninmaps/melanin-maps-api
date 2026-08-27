@@ -124,7 +124,7 @@ export function useUserPreferences() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const update = useCallback(async (updates: Partial<Omit<UserPreferences, "userId">>): Promise<boolean> => {
     const token = await getToken();

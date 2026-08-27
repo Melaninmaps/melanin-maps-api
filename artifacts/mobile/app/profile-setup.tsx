@@ -183,7 +183,7 @@ export default function ProfileSetupScreen() {
           <View style={styles.stepContent}>
             <Text style={[styles.stepTitle, { color: c.foreground }]}>Where do you call home?</Text>
             <Text style={[styles.stepSub, { color: c.mutedForeground }]}>
-              We'll use this to surface local businesses, events, and community intel near you.
+              We&apos;ll use this to surface local businesses, events, and community intel near you.
             </Text>
             <View style={[styles.inputRow, { backgroundColor: c.card, borderColor: c.border }]}>
               <Feather name="map-pin" size={18} color={c.mutedForeground} style={{ marginRight: 10 }} />
@@ -208,7 +208,7 @@ export default function ProfileSetupScreen() {
         {/* ─── STEP 2: Roles ─── */}
         {step === 2 && (
           <View style={styles.stepContent}>
-            <Text style={[styles.stepTitle, { color: c.foreground }]}>You're joining as a{"\n"}Community Member.</Text>
+            <Text style={[styles.stepTitle, { color: c.foreground }]}>You&apos;re joining as a{"\n"}Community Member.</Text>
             <Text style={[styles.stepSub, { color: c.mutedForeground }]}>
               Do any of these also describe you? Select all that apply — or skip to continue.
             </Text>

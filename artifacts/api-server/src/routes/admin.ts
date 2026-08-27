@@ -2475,7 +2475,9 @@ router.post("/admin/business-enrichment/run", async (req: Request, res: Response
 
 router.get("/admin/business-enrichment/status/:jobId", (req: Request, res: Response) => {
   if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
-  const job = enrichmentJobs.get(req.params.jobId);
+  const rawJobId = req.params.jobId;
+  const jobId = Array.isArray(rawJobId) ? rawJobId[0] ?? "" : rawJobId;
+  const job = enrichmentJobs.get(jobId);
   if (!job) return void res.status(404).json({ error: "Job not found" });
   res.json(job);
 });
@@ -2685,7 +2687,7 @@ router.patch("/admin/business-review/:id", async (req: Request, res: Response) =
       return;
     }
 
-    const adminId = ((req.session as Record<string, unknown>)?.userId as string | undefined) ?? null;
+    const adminId = req.user?.id ?? null;
 
     // ── Merge ──────────────────────────────────────────────────────────────────
     if (action === "merge") {

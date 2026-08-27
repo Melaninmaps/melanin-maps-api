@@ -5,8 +5,7 @@ import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import {
+import { NativeScrollEvent, NativeSyntheticEvent ,
   Alert,
   Animated,
   FlatList,
@@ -39,7 +38,7 @@ interface Message {
 interface TaskActionPayload {
   type: "create_list" | "create_task" | "add_tasks";
   list?: { name: string; icon?: string };
-  tasks?: Array<{ title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }>;
+  tasks?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }[];
   task?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string };
 }
 
@@ -199,7 +198,7 @@ export function AIChatWidget() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(() => [
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
   ]);
   const [input, setInput] = useState("");
@@ -228,24 +227,24 @@ export function AIChatWidget() {
   const onWidgetContentSizeChange = useCallback(() => {
     if (widgetAtBottom) listRef.current?.scrollToEnd({ animated: false });
   }, [widgetAtBottom]);
-  const pulse = useRef(new Animated.Value(1)).current;
-  const fabTranslateY = useRef(new Animated.Value(0)).current;
-  const fabOpacity = useRef(new Animated.Value(1)).current;
+  const [pulse] = useState(() => new Animated.Value(1));
+  const [fabTranslateY] = useState(() => new Animated.Value(0));
+  const [fabOpacity] = useState(() => new Animated.Value(1));
 
   const suppressed = ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const startPulse = () => {
+  const startPulse = useCallback(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1.12, duration: 700, useNativeDriver: true }),
         Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
     ).start();
-  };
+  }, [pulse]);
 
-  React.useEffect(() => { if (!suppressed && !dismissed) startPulse(); }, [suppressed, dismissed]);
+  React.useEffect(() => { if (!suppressed && !dismissed) startPulse(); }, [suppressed, dismissed, startPulse]);
 
   const dismissPill = () => {
     pulse.stopAnimation();
@@ -271,7 +270,7 @@ export function AIChatWidget() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const fabPanResponder = useRef(
+  const [fabPanResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
@@ -292,9 +291,9 @@ export function AIChatWidget() {
         }
       },
     })
-  ).current;
+  );
 
-  const restorePanResponder = useRef(
+  const [restorePanResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
@@ -302,7 +301,7 @@ export function AIChatWidget() {
         if (g.dy > 20) restorePill();
       },
     })
-  ).current;
+  );
 
   const startVoice = async () => {
     if (Platform.OS === "web") return;
@@ -329,7 +328,7 @@ export function AIChatWidget() {
       const ext = uri.split(".").pop() ?? "m4a";
       let fileContent: string;
       try {
-        fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        fileContent = await new FileSystem.File(uri).base64();
       } catch {
         Alert.alert("Voice Input", "Couldn't read the recording — please try again.");
         return;
@@ -404,14 +403,15 @@ export function AIChatWidget() {
     if (listenUri && player.isLoaded) {
       player.play();
     }
-  }, [listenUri, player.isLoaded]);
+  }, [listenUri, player]);
 
   // ── Clear playingId when audio finishes ───────────────────────────────────
   useEffect(() => {
     if (playingId && !player.playing && player.isLoaded) {
-      setPlayingId(null);
+      const timer = setTimeout(() => setPlayingId(null), 0);
+      return () => clearTimeout(timer);
     }
-  }, [player.playing]);
+  }, [player, player.playing, player.isLoaded, playingId]);
 
   // ── Fetch voice usage + play daily signature when chat opens ─────────────
   useEffect(() => {
@@ -445,10 +445,10 @@ export function AIChatWidget() {
             });
             if (sigRes.ok) {
               const { audio, format } = await sigRes.json() as { audio: string; format: string };
-              const sigUri = `${FileSystem.cacheDirectory}kinfolk_sig.${format}`;
-              await FileSystem.writeAsStringAsync(sigUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+              const sigFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_sig.${format}`);
+              sigFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
               setPlayingId("__signature__");
-              setListenUri(sigUri);
+              setListenUri(sigFile.uri);
             }
           } catch { /* non-critical */ }
         }
@@ -469,7 +469,7 @@ export function AIChatWidget() {
         }
       } catch { /* non-critical */ }
     })();
-  }, [open]);
+  }, [open, voicePref]);
 
   const speakMessage = async (msgId: string, text: string) => {
     if (Platform.OS === "web") return;
@@ -507,11 +507,11 @@ export function AIChatWidget() {
         charsLimit: number; percentRemaining: number; tierName: string;
       };
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
-      const tempUri = `${FileSystem.cacheDirectory}kinfolk_${msgId}.${format}`;
-      await FileSystem.writeAsStringAsync(tempUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+      const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
+      tempFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
       setPlayingId(msgId);
-      setListenUri(tempUri);
-      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setListenUri(tempFile.uri);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch { /* non-critical */ }
   };
 
@@ -531,10 +531,10 @@ export function AIChatWidget() {
       });
       if (r.ok) {
         const { audio, format } = await r.json() as { audio: string; format: string };
-        const uri = `${FileSystem.cacheDirectory}kinfolk_preview_${voiceId}.${format}`;
-        await FileSystem.writeAsStringAsync(uri, audio, { encoding: FileSystem.EncodingType.Base64 });
+        const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${voiceId}.${format}`);
+        file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
         setPlayingId(`__preview_${voiceId}__`);
-        setListenUri(uri);
+        setListenUri(file.uri);
       }
     } catch { /* non-critical */ }
     finally { setPreviewingVoice(null); }
@@ -835,7 +835,7 @@ export function AIChatWidget() {
           {messages.length === 1 && !typing && (
             <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
               <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>
-                Ask me anything. I'll always be honest about what I know—and what I don't.
+                Ask me anything. I&apos;ll always be honest about what I know—and what I don&apos;t.
               </Text>
             </View>
           )}
@@ -880,7 +880,7 @@ export function AIChatWidget() {
                 <View style={[styles.voiceSheetPanel, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.voiceSheetHeader}>
                     <View>
-                      <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk's Voice</Text>
+                      <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk&apos;s Voice</Text>
                       <Text style={[styles.voiceSheetSub, { color: colors.mutedForeground }]}>Tap Preview to hear each option</Text>
                     </View>
                     <TouchableOpacity onPress={() => setVoiceSheet(false)}>

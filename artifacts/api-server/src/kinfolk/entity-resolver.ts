@@ -89,6 +89,7 @@ export type EntityResolutionResult =
 export type ExplicitMemberPreferences = {
   allowCulturalAffinityRanking?: boolean;
   diasporaCountries?: string[]; // ISO-3166-1 alpha-2
+  preferredResponseLanguages?: string[];
   supportPriorities?: string[];
   multilingualExpansionMode?: "off" | "ask" | "dual";
 };

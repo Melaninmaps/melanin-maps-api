@@ -17,12 +17,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import * as SecureStore from "expo-secure-store";
 
 export type IntentId =
   | "moving" | "visiting" | "safety" | "trip"
   | "businesses" | "community" | "comparing" | "work";
 
-export const INTENTS: Array<{ id: IntentId; label: string; emoji: string; color: string; description: string }> = [
+export const INTENTS: { id: IntentId; label: string; emoji: string; color: string; description: string }[] = [
   { id: "moving",     label: "I'm moving here",                emoji: "🏡", color: "#16A34A", description: "Find realtors, movers & schools" },
   { id: "visiting",   label: "I'm visiting",                   emoji: "✈️", color: "#2563EB", description: "Local spots, restaurants & stays" },
   { id: "safety",     label: "Looking for safe spaces",        emoji: "🛡️", color: "#7C3AED", description: "Community safety & welcoming spaces" },
@@ -37,7 +38,6 @@ function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
   return "";
 }
-import * as SecureStore from "expo-secure-store";
 async function getToken(): Promise<string | null> {
   try { if (Platform.OS === "web") return null; return await SecureStore.getItemAsync("auth_session_token"); }
   catch { return null; }
@@ -191,7 +191,7 @@ export function IntentModal({ visible, location, onClose, onSaved }: Props) {
             <View style={[styles.previewBanner, { backgroundColor: intent.color + "12", borderColor: intent.color + "30" }]}>
               <Text style={styles.previewEmoji}>{intent.emoji}</Text>
               <Text style={[styles.previewTxt, { color: intent.color }]}>
-                You'll get your {intent.label.replace("I'm ", "").replace("I'm", "")} Smart Pathway™
+                You&apos;ll get your {intent.label.replace("I'm ", "").replace("I'm", "")} Smart Pathway™
               </Text>
             </View>
           )}

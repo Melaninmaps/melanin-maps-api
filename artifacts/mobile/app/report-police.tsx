@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -152,8 +152,8 @@ export default function ReportPoliceScreen() {
     finally { setLocating(false); }
   };
 
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(1));
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -385,7 +385,7 @@ export default function ReportPoliceScreen() {
                 <View>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Be as specific as you're comfortable with. More detail helps the community stay safer.
+                    Be as specific as you&apos;re comfortable with. More detail helps the community stay safer.
                   </Text>
 
                   {selectedType && (

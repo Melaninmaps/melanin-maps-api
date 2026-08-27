@@ -2,19 +2,6 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-
-const AUTH_TOKEN_KEY = "auth_session_token";
-async function getToken(): Promise<string | null> {
-  try {
-    if (Platform.OS === "web") return null;
-    const { getItemAsync } = await import("expo-secure-store");
-    return await getItemAsync(AUTH_TOKEN_KEY);
-  } catch { return null; }
-}
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 import {
   Alert,
   Platform,
@@ -28,6 +15,19 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+
+const AUTH_TOKEN_KEY = "auth_session_token";
+async function getToken(): Promise<string | null> {
+  try {
+    if (Platform.OS === "web") return null;
+    const { getItemAsync } = await import("expo-secure-store");
+    return await getItemAsync(AUTH_TOKEN_KEY);
+  } catch { return null; }
+}
+function getApiBase(): string {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
 
 const EMOJIS = ["📍", "☕", "🍽️", "📚", "💅🏾", "🛍️", "✈️", "👨🏾‍👩🏾‍👧🏾", "🌙", "🎷", "💼", "🏪", "🤎", "🌿", "🎁", "🏋🏾", "🎭", "🌸"];
 const CATEGORIES = ["Food", "Culture", "Travel", "Family", "Wellness", "Shopping", "Nightlife", "Professional"];

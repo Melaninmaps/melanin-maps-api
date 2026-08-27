@@ -7,7 +7,6 @@ import {
   Alert,
   Modal,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   StyleSheet,
@@ -51,13 +52,6 @@ interface Props {
   maxCommentLength?: number;
 }
 
-const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
-  recommendation: { label: "Recommendation", color: "#2D7A4F" },
-  question: { label: "Question", color: "#D4873A" },
-  alert: { label: "Alert", color: "#DC2626" },
-  discussion: { label: "Discussion", color: "#C4622D" },
-};
-
 const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   business: { label: "Business Post", color: "#7B2D8B", icon: "briefcase" },
   question: { label: "Question", color: "#D4873A", icon: "help-circle" },
@@ -95,17 +89,19 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [post?.id]);
+  }, [post]);
 
   useEffect(() => {
-    if (visible && post) {
-      void loadComments();
-      setLocalLiked(post.liked);
-      setLocalLikes(post.likes);
-    } else {
-      setComments([]);
-      setCommentText("");
-    }
+    void Promise.resolve().then(() => {
+      if (visible && post) {
+        void loadComments();
+        setLocalLiked(post.liked);
+        setLocalLikes(post.likes);
+      } else {
+        setComments([]);
+        setCommentText("");
+      }
+    });
   }, [visible, post, loadComments]);
 
   const handleLike = async () => {
@@ -159,8 +155,6 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
   if (!post) return null;
 
   const typeConfig = POST_TYPE_CONFIG[post.postType ?? "community"];
-  const catConfig = CATEGORY_CONFIG[post.category ?? "discussion"];
-
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -205,7 +199,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
                     <Feather name="briefcase" size={13} color={colors.primary} />
                     <Text style={[m.businessBannerText, { color: colors.primary }]}>{post.businessName}</Text>
                     {post.businessLink && (
-                      <TouchableOpacity onPress={() => { if (post.businessLink) { void require("react-native").Linking.openURL(post.businessLink); } }}>
+                      <TouchableOpacity onPress={() => { if (post.businessLink) { void Linking.openURL(post.businessLink); } }}>
                         <Feather name="external-link" size={12} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     )}

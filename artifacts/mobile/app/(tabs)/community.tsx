@@ -2,10 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import * as ImagePicker from "expo-image-picker";
-import { Image } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
+import { Image ,
   Alert,
   FlatList,
   KeyboardAvoidingView,
@@ -21,6 +18,8 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessMentionPicker, type SelectedBusiness } from "@/components/BusinessMentionPicker";
 import { UserMentionPicker } from "@/components/UserMentionPicker";
@@ -234,7 +233,7 @@ export default function CommunityScreen() {
   const [newPostLocationPlaceId, setNewPostLocationPlaceId] = useState<string | undefined>();
   const [newPostLocationType, setNewPostLocationType] = useState("city");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [trendingHashtags, setTrendingHashtags] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
+  const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; weeklyPostCount: number }[]>([]);
   const [followedHashtags, setFollowedHashtags] = useState<string[]>([]);
   const [activeHashtagFilter, setActiveHashtagFilter] = useState<string | null>(null);
   const [newPostTopicTag, setNewPostTopicTag] = useState("");
@@ -250,7 +249,7 @@ export default function CommunityScreen() {
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
-  const [kinfolkSuggestions, setKinfolkSuggestions] = useState<Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }>>([]);
+  const [kinfolkSuggestions, setKinfolkSuggestions] = useState<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }[]>([]);
   const [showKinfolkSuggest, setShowKinfolkSuggest] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupCreateName, setGroupCreateName] = useState("");
@@ -346,7 +345,7 @@ export default function CommunityScreen() {
     }
   }, [feedMode]);
 
-  useEffect(() => { void loadPosts(); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
 
   // Fetch trending hashtags on mount
   useEffect(() => {
@@ -356,7 +355,7 @@ export default function CommunityScreen() {
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(`${getApiBase()}/api/hashtags/trending?limit=12`, { headers });
         if (res.ok) {
-          const data = await res.json() as { hashtags: Array<{ tag: string; weeklyPostCount: number }> };
+          const data = await res.json() as { hashtags: { tag: string; weeklyPostCount: number }[] };
           setTrendingHashtags(data.hashtags ?? []);
         }
         if (token) {
@@ -373,8 +372,9 @@ export default function CommunityScreen() {
 
   useEffect(() => {
     if (params.compose === "true") {
-      if (params.caption) setNewPostText(decodeURIComponent(params.caption));
-      setShowCompose(true);
+      const caption = params.caption;
+      if (caption) queueMicrotask(() => { setNewPostText(decodeURIComponent(caption)); });
+      queueMicrotask(() => { setShowCompose(true); });
     }
   }, [params.compose, params.caption]);
 
@@ -496,6 +496,20 @@ export default function CommunityScreen() {
 
   const submitPost = async () => {
     if (!newPostText.trim()) return;
+    if (uploadingMedia) {
+      Alert.alert("Upload in progress", "Wait for your attachments to finish uploading before posting.");
+      return;
+    }
+
+    const completedMediaUrls = mediaAttachments
+      .map((attachment) => attachment.uploaded)
+      .filter((url): url is string => typeof url === "string" && url.trim().length > 0);
+
+    if (completedMediaUrls.length !== mediaAttachments.length) {
+      Alert.alert("Attachment not ready", "Remove the failed attachment or retry its upload before posting.");
+      return;
+    }
+
     setSubmittingPost(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -517,7 +531,7 @@ export default function CommunityScreen() {
               ? newPostBusinessLink.trim()
               : undefined,
           visibility: newPostVisibility,
-          mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
+          mediaUrls: completedMediaUrls,
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
@@ -536,7 +550,7 @@ export default function CommunityScreen() {
         }),
       });
       if (res.ok) {
-        const data = await res.json() as { post: Record<string, unknown>; kinfolkSuggestions?: Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }> };
+        const data = await res.json() as { post: Record<string, unknown>; kinfolkSuggestions?: { id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }[] };
         setPosts((prev) => [toPostCard(data.post), ...prev]);
         setNewPostText("");
         setNewPostCategory("general");
@@ -1664,9 +1678,14 @@ export default function CommunityScreen() {
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </TouchableOpacity>
               <Text style={[styles.composeTitle, { color: colors.foreground }]}>New Post</Text>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => void submitPost()} disabled={!newPostText.trim() || submittingPost}>
-                <Text style={[styles.composePostText, { color: newPostText.trim() ? colors.primary : colors.muted }]}>
-                  {submittingPost ? "Posting…" : "Post"}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => void submitPost()}
+                disabled={!newPostText.trim() || submittingPost || uploadingMedia}
+                accessibilityState={{ disabled: !newPostText.trim() || submittingPost || uploadingMedia, busy: submittingPost || uploadingMedia }}
+              >
+                <Text style={[styles.composePostText, { color: newPostText.trim() && !uploadingMedia ? colors.primary : colors.muted }]}>
+                  {uploadingMedia ? "Uploading…" : submittingPost ? "Posting…" : "Post"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1929,7 +1948,7 @@ export default function CommunityScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                   <Feather name="repeat" size={11} color={colors.mutedForeground} />
                   <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>
-                    Shows on your feed <Text style={{ fontWeight: "600" }}>+</Text> {taggedBusiness.name}'s vibe page
+                    Shows on your feed <Text style={{ fontWeight: "600" }}>+</Text> {taggedBusiness.name}&apos;s vibe page
                   </Text>
                 </View>
 
@@ -1986,7 +2005,7 @@ export default function CommunityScreen() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: colors.border }}>
                       <Feather name="check-circle" size={12} color="#2D7A4F" />
                       <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1 }}>
-                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}'s vibe page
+                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}&apos;s vibe page
                       </Text>
                       {isPaidMember && (
                         <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: "#7B2D8B18", borderWidth: 1, borderColor: "#7B2D8B30" }}>
@@ -2155,7 +2174,7 @@ function CirclesTab({ colors, router, isAuthenticated, isPaidMember, bottomPad }
     finally { setLoading(false); }
   }, [isAuthenticated]);
 
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -2480,7 +2499,7 @@ function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
     finally { setLoading(false); setRefreshing(false); }
   }, [isAuthenticated]);
 
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleLogProgress = async (challenge: CommunityChallenge) => {
     if (!isAuthenticated || logging) return;

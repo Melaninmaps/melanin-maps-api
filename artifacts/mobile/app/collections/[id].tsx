@@ -59,7 +59,7 @@ export default function CollectionScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   async function toggleFollow() {
     if (!isAuthenticated) { router.push("/login" as never); return; }
@@ -145,7 +145,7 @@ export default function CollectionScreen() {
             <Text style={{ fontSize: 40, marginBottom: 12 }}>📌</Text>
             <Text style={[s.emptyTitle, { color: colors.foreground }]}>Nothing here yet</Text>
             <Text style={[s.emptySub, { color: colors.mutedForeground }]}>
-              The creator of this collection hasn't added anything yet.
+              The creator of this collection hasn&apos;t added anything yet.
             </Text>
           </View>
         )}

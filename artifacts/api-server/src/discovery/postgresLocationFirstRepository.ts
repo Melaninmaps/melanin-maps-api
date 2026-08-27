@@ -6,6 +6,10 @@
 import type { DiscoveryRecord, LocationFirstQuery } from "../shared/discoveryContracts";
 
 type Pool = { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> };
+type SearchableLocationFirstQuery = LocationFirstQuery & {
+  filters: LocationFirstQuery["filters"] & { searchText?: string };
+  searchText?: string;
+};
 
 // ── Haversine distance (miles) helper injected as SQL expression ──────────────
 function haversineMiles(latCol: string, lngCol: string, lat: number, lng: number): string {
@@ -26,7 +30,8 @@ export async function findExactRecords(
   const state = query.location.stateCode ? query.location.stateCode.toUpperCase() : null;
   const specialty = query.filters.specialty ?? null;
   const category = query.filters.category ?? null;
-  const searchText = query.filters.searchText ?? (query as any).searchText ?? null;
+  const searchableQuery = query as SearchableLocationFirstQuery;
+  const searchText = searchableQuery.filters.searchText ?? searchableQuery.searchText ?? null;
   const recordTypes = query.filters.recordTypes;
 
   const results: DiscoveryRecord[] = [];

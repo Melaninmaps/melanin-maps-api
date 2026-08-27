@@ -73,7 +73,7 @@ export function useSpaces(params?: { city?: string; spaceType?: string; q?: stri
     } finally { setIsLoading(false); }
   }, [params?.city, params?.spaceType, params?.q]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const createSpace = useCallback(async (payload: CreateSpacePayload): Promise<CommunitySpace | null> => {
     const token = await getToken();
@@ -112,8 +112,10 @@ export function useSpaceDetail(id: string) {
     if (!id) return;
     const apiBase = getApiBase();
     if (!apiBase) return;
-    setIsLoading(true);
-    fetch(`${apiBase}/api/spaces/${id}`)
+    void Promise.resolve().then(() => {
+      setIsLoading(true);
+      return fetch(`${apiBase}/api/spaces/${id}`);
+    })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setSpace((d as { space: CommunitySpace }).space))
       .finally(() => setIsLoading(false));

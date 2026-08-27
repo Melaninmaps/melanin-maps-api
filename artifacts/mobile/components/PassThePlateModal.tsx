@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import {
   Alert,
-  Animated,
   Modal,
   Platform,
   ScrollView,
@@ -129,7 +128,7 @@ export function PassThePlateModal({ visible, businessId, businessName, onClose, 
                 {selected.length === 1
                   ? SHARE_TYPES.find(s => s.id === selected[0])?.label
                   : `${selected.length} groups`}{" "}
-                about {businessName}. That's how community grows. 🤎
+                about {businessName}. That&apos;s how community grows. 🤎
               </Text>
               <View style={[styles.successCard, { backgroundColor: "#C9922B10", borderColor: "#C9922B30" }]}>
                 <Feather name="trending-up" size={16} color="#C9922B" />

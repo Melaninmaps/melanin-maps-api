@@ -164,7 +164,7 @@ export default function AddGlobalRecommendation() {
             <View style={[styles.badgePill, { backgroundColor: c.primary + "15", borderColor: c.primary + "40" }]}>
               <Feather name="award" size={14} color={c.primary} />
               <Text style={[styles.badgeTxt, { color: c.primary }]}>
-                You've earned: {BADGE_LABELS[earnedBadge] ?? earnedBadge}
+                You&apos;ve earned: {BADGE_LABELS[earnedBadge] ?? earnedBadge}
               </Text>
             </View>
           )}
@@ -376,7 +376,7 @@ export default function AddGlobalRecommendation() {
         </TouchableOpacity>
 
         <Text style={[styles.disclaimer, { color: c.mutedForeground }]}>
-          All recommendations are reviewed before appearing publicly. You'll earn a contributor badge once your first recommendation is approved.
+          All recommendations are reviewed before appearing publicly. You&apos;ll earn a contributor badge once your first recommendation is approved.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

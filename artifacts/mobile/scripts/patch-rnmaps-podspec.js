@@ -17,7 +17,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const projectRoot = path.resolve(__dirname, "..");
+const scriptDir = path.dirname(require.resolve("./patch-rnmaps-podspec.js"));
+const projectRoot = path.resolve(scriptDir, "..");
 const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const PODSPEC_NAME = "react-native-maps.podspec";

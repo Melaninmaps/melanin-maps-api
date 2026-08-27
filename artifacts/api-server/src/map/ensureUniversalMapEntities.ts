@@ -50,6 +50,12 @@ type SourceRow = {
   accreditation_source_url?: string | null;
 };
 
+function coordinate(value: number | string | null): number | null {
+  if (value === null) return null;
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 type Logger = {
   log: (message: string) => void;
   warn: (message: string) => void;
@@ -253,8 +259,8 @@ async function importCulturalSites(pool: Pool): Promise<number> {
       stateRegion: row.state,
       postalCode: null,
       countryCode: countryCode(row.country),
-      latitude: row.latitude,
-      longitude: row.longitude,
+      latitude: coordinate(row.latitude),
+      longitude: coordinate(row.longitude),
       websiteUrl: null,
       sourceUrl: null,
       sourceLabel: "Mapping With Melanin cultural record",
@@ -286,8 +292,8 @@ async function importRecurringEvents(pool: Pool): Promise<number> {
       stateRegion: row.state,
       postalCode: null,
       countryCode: countryCode(row.country),
-      latitude: row.latitude,
-      longitude: row.longitude,
+      latitude: coordinate(row.latitude),
+      longitude: coordinate(row.longitude),
       websiteUrl: null,
       sourceUrl: null,
       sourceLabel: "Mapping With Melanin recurring event",
@@ -318,8 +324,8 @@ async function importCommunityOrganizations(pool: Pool): Promise<number> {
       stateRegion: row.state,
       postalCode: null,
       countryCode: countryCode(row.country),
-      latitude: row.latitude,
-      longitude: row.longitude,
+      latitude: coordinate(row.latitude),
+      longitude: coordinate(row.longitude),
       websiteUrl: row.website ?? null,
       sourceUrl: row.website ?? null,
       sourceLabel: "Community organization",
@@ -352,8 +358,8 @@ async function importExistingHbcus(pool: Pool): Promise<number> {
       stateRegion: row.state,
       postalCode: null,
       countryCode: countryCode(row.country),
-      latitude: row.latitude,
-      longitude: row.longitude,
+      latitude: coordinate(row.latitude),
+      longitude: coordinate(row.longitude),
       websiteUrl: row.official_url ?? null,
       sourceUrl: row.accreditation_source_url ?? null,
       sourceLabel: row.accreditation_source_url ? "Institutional accreditation source" : "Institutional record",

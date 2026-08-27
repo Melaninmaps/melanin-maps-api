@@ -70,7 +70,7 @@ export function useMembership() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        const data = (await res.json()) as { subscription: { id: string; status: string; items?: { data?: Array<{ price?: { product?: string } }> } } | null };
+        const data = (await res.json()) as { subscription: { id: string; status: string; items?: { data?: { price?: { product?: string } }[] } } | null };
         if (data.subscription && ["active", "trialing"].includes(data.subscription.status)) {
           const productId = data.subscription.items?.data?.[0]?.price?.product ?? null;
           const product = productId ? products.find((p) => p.id === productId) : null;
@@ -86,8 +86,10 @@ export function useMembership() {
     } catch {}
   }, [products]);
 
-  useEffect(() => { loadProducts(); }, [loadProducts]);
-  useEffect(() => { if (productsLoaded) loadSubscription(); }, [productsLoaded, loadSubscription]);
+  useEffect(() => { void Promise.resolve().then(loadProducts); }, [loadProducts]);
+  useEffect(() => {
+    if (productsLoaded) void Promise.resolve().then(loadSubscription);
+  }, [productsLoaded, loadSubscription]);
 
   const initiateCheckout = useCallback(async (priceId: string | null, planKey?: string | null): Promise<"ok" | "no_auth" | "no_price" | "error"> => {
     if (!priceId) return "no_price";

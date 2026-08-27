@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 
+import { getApiBase } from "@/lib/api";
+
 const AUTH_TOKEN_KEY = "auth_session_token";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -8,8 +10,6 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   if (token) return { Authorization: `Bearer ${token}` };
   return {};
 }
-
-import { getApiBase } from "@/lib/api";
 const apiBase = getApiBase();
 
 export interface FamilyMember {
@@ -93,7 +93,7 @@ export function useFamilyPlan() {
   }, []);
 
   useEffect(() => {
-    void fetchPlan();
+    void Promise.resolve().then(fetchPlan);
   }, [fetchPlan]);
 
   const addFamilySeat = useCallback(async (): Promise<string | null> => {

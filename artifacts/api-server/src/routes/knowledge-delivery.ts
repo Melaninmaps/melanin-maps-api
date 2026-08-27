@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable } from "@workspace/db";
+import { db, pool, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable } from "@workspace/db";
 import { and, eq, inArray, desc, or } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 
@@ -219,20 +219,20 @@ router.post("/knowledge/topics/request", async (req: Request, res: Response) => 
     }
     const name = topicName.trim();
     // Check if topic already exists (case-insensitive)
-    const existing = await db.execute(
-      `SELECT id FROM knowledge_topics WHERE LOWER(topic_name) = LOWER($1) LIMIT 1` as any,
-      [name]
+    const existing = await pool.query<{ id: string }>(
+      `SELECT id FROM knowledge_topics WHERE LOWER(topic_name) = LOWER($1) LIMIT 1`,
+      [name],
     ).catch(() => null);
-    const rows = (existing as any)?.rows ?? [];
+    const rows = existing?.rows ?? [];
     if (rows.length > 0) {
       res.json({ ok: true, alreadyExists: true, message: "This topic is already in the library or pending review." });
       return;
     }
     // Insert as user-requested — admin will review and re-categorize
-    await db.execute(
+    await pool.query(
       `INSERT INTO knowledge_topics (id, topic_name, category, description, notification_priority, keywords, trusted_sources, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, 'requested', $2, 'digest', '{}', '[]', NOW(), NOW())` as any,
-      [name, `Community-requested topic submitted by member ${req.user!.id}. Pending admin review.`]
+       VALUES (gen_random_uuid(), $1, 'requested', $2, 'digest', '{}', '[]', NOW(), NOW())`,
+      [name, `Community-requested topic submitted by member ${req.user!.id}. Pending admin review.`],
     ).catch(() => null);
     res.json({ ok: true, alreadyExists: false, message: `"${name}" has been submitted for review.` });
   } catch (err) {

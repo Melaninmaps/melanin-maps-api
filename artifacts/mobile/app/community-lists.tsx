@@ -1,6 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
+import {
+  FlatList,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/lib/auth";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 async function getToken(): Promise<string | null> {
@@ -14,18 +26,6 @@ function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
   return "";
 }
-import {
-  FlatList,
-  Platform,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
 
 type CommunityList = {
   id: number;
@@ -93,7 +93,7 @@ export default function CommunityListsScreen() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleSave = async (id: number) => {
     if (!isAuthenticated) { router.push("/login" as never); return; }

@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -111,10 +111,10 @@ export default function KinfolkTasksScreen() {
     }
   }, [fetchLists]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   useEffect(() => {
-    if (view === "list" && activeList) fetchListTasks(activeList.id);
+    if (view === "list" && activeList) queueMicrotask(() => { fetchListTasks(activeList.id); });
   }, [view, activeList, fetchListTasks]);
 
   const openList = (list: TaskList) => {
@@ -286,7 +286,7 @@ export default function KinfolkTasksScreen() {
               <Text style={styles.emptyEmoji}>📋</Text>
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No lists yet</Text>
               <Text style={[styles.emptyBody, { color: colors.mutedForeground }]}>
-                Ask KinfolkAI™ to "make me a grocery list" or tap + to create one.
+                Ask KinfolkAI™ to &quot;make me a grocery list&quot; or tap + to create one.
               </Text>
               <TouchableOpacity activeOpacity={0.85}
                 style={[styles.emptyBtn, { backgroundColor: colors.primary }]}
@@ -499,7 +499,7 @@ function TaskRow({
   onToggle: () => void;
   onDelete: () => void;
 }) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const [scale] = useState(() => new Animated.Value(1));
 
   const handleToggle = () => {
     Animated.sequence([

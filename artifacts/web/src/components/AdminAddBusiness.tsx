@@ -38,6 +38,7 @@ const STEP_LABELS: Record<Step, string> = {
   identity: "Business Identity",
   discovery: "Discovery",
   review: "Review & Save",
+  media: "Media",
 };
 
 interface DuplicateWarning {

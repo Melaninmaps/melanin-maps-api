@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -133,7 +133,7 @@ export default function FeaturedVideoScreen() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
   useEffect(() => {
     if (phase !== "loading") {
       Animated.timing(fadeAnim, { toValue: 1, duration: 320, useNativeDriver: true }).start();
@@ -203,7 +203,7 @@ export default function FeaturedVideoScreen() {
     } catch { }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   // ── Prompt actions ────────────────────────────────────────────────────────────
   const savePromptsAndExit = async () => {
@@ -373,10 +373,10 @@ export default function FeaturedVideoScreen() {
             </View>
             <Text style={[s.kinfolkHeadline, { color: colors.foreground }]}>Need some inspiration?</Text>
             <Text style={[s.kinfolkBody, { color: colors.mutedForeground }]}>
-              People connect with stories more than sales. Talk as if you're welcoming a new neighbor into your business for the first time.
+              People connect with stories more than sales. Talk as if you&apos;re welcoming a new neighbor into your business for the first time.
             </Text>
             <Text style={[s.kinfolkBody, { color: colors.mutedForeground, marginTop: 6 }]}>
-              You don't have to be perfect. Just be yourself.
+              You don&apos;t have to be perfect. Just be yourself.
             </Text>
           </View>
 
@@ -397,7 +397,7 @@ export default function FeaturedVideoScreen() {
           </View>
 
           <Text style={[s.settingHint, { color: colors.mutedForeground }]}>
-            No rush — come back when you're in the setting, lighting, and attire that represents your brand.
+            No rush — come back when you&apos;re in the setting, lighting, and attire that represents your brand.
           </Text>
 
           {/* Actions */}
@@ -407,7 +407,7 @@ export default function FeaturedVideoScreen() {
             onPress={readyToFilm}
           >
             <Feather name="video" size={17} color="#FFF" />
-            <Text style={s.primaryBtnText}>I'm ready — let's film</Text>
+            <Text style={s.primaryBtnText}>I&apos;m ready — let&apos;s film</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={s.ghostBtn} activeOpacity={0.75} onPress={savePromptsAndExit}>

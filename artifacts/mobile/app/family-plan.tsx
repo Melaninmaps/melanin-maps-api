@@ -558,7 +558,7 @@ export default function FamilyPlanScreen() {
               </TouchableOpacity>
             </View>
             <Text style={{ fontSize: 13, color: colors.mutedForeground, lineHeight: 19 }}>
-              They'll receive an email with a link to join your family circle. Once they accept, they'll share your plan's features and AI pool.
+              They&apos;ll receive an email with a link to join your family circle. Once they accept, they&apos;ll share your plan&apos;s features and AI pool.
             </Text>
 
             <TextInput

@@ -160,13 +160,13 @@ export default function CulturalHeritagePage() {
       if (!resp.ok) throw new Error(`Cultural-site request failed with ${resp.status}`);
       const data = (await resp.json()) as {
         sites?: CulturalSite[];
-        items?: Array<Partial<CulturalSite> & {
+        items?: (Partial<CulturalSite> & {
           id: string;
           name: string;
           stateCode?: string | null;
           learnMoreUrl?: string | null;
-        }>;
-        categories?: Array<{ label: string; count: number }>;
+        })[];
+        categories?: { label: string; count: number }[];
       };
       const rawSites = data.sites ?? data.items ?? [];
       const normalizedSites: CulturalSite[] = rawSites.map((site) => ({
@@ -208,7 +208,7 @@ export default function CulturalHeritagePage() {
   }, []);
 
   useEffect(() => {
-    void fetchSites(selectedHeritage, debouncedSearch);
+    queueMicrotask(() => { void fetchSites(selectedHeritage, debouncedSearch); });
   }, [selectedHeritage, debouncedSearch, fetchSites]);
 
   useEffect(() => {
@@ -216,8 +216,8 @@ export default function CulturalHeritagePage() {
       const target = sites.find((s) => s.id === params.siteId);
       if (target) {
         autoOpenedRef.current = true;
-        setSelectedSite(target);
-        setModalVisible(true);
+        queueMicrotask(() => { setSelectedSite(target); });
+        queueMicrotask(() => { setModalVisible(true); });
       }
     }
   }, [loading, params.siteId, sites]);
@@ -632,9 +632,9 @@ function DetailModal({
 
   useEffect(() => {
     if (!site) return;
-    setLoadingStories(true);
-    setLoadingLinks(true);
-    setSubmitSuccess(false);
+    queueMicrotask(() => { setLoadingStories(true); });
+    queueMicrotask(() => { setLoadingLinks(true); });
+    queueMicrotask(() => { setSubmitSuccess(false); });
 
     fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories`)
       .then((r) => r.json())
@@ -1165,7 +1165,7 @@ function SubmitStoryModal({
             />
           </View>
           <Text style={[sStyles.charCount, { color: colors.mutedForeground }]}>
-            Leave blank to appear as "Community Member"
+            Leave blank to appear as &quot;Community Member&quot;
           </Text>
         </View>
 

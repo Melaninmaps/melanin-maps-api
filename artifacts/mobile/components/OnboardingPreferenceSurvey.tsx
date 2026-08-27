@@ -3,7 +3,6 @@ import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -84,7 +83,7 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
     if (visible) {
       try {
         const saved = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-        if (saved) setPrefs(JSON.parse(saved));
+        if (saved) queueMicrotask(() => setPrefs(JSON.parse(saved)));
       } catch {}
     }
   }, [visible]);
@@ -174,8 +173,8 @@ export function OnboardingPreferenceSurvey({ visible, onClose, onSubmit }: Props
             </View>
           ) : step === 0 ? (
             <View style={styles.stepContent}>
-              <Text style={[styles.stepTitle, { color: colors.foreground }]}>What's your travel style?</Text>
-              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Select all that apply — we'll tailor recommendations to match</Text>
+              <Text style={[styles.stepTitle, { color: colors.foreground }]}>What&apos;s your travel style?</Text>
+              <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Select all that apply — we&apos;ll tailor recommendations to match</Text>
               <View style={styles.styleGrid}>
                 {TRAVEL_STYLES.map((s) => {
                   const sel = prefs.travelStyle.includes(s.id);

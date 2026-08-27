@@ -133,6 +133,114 @@ export declare const culturalSitesTable: import("drizzle-orm/pg-core").PgTableWi
         }, {}, {
             length: 100;
         }>;
+        culturalCommunity: import("drizzle-orm/pg-core").PgColumn<{
+            name: "cultural_community";
+            tableName: "cultural_sites";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        visitTip: import("drizzle-orm/pg-core").PgColumn<{
+            name: "visit_tip";
+            tableName: "cultural_sites";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        contentNote: import("drizzle-orm/pg-core").PgColumn<{
+            name: "content_note";
+            tableName: "cultural_sites";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        pinType: import("drizzle-orm/pg-core").PgColumn<{
+            name: "pin_type";
+            tableName: "cultural_sites";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        listingStatus: import("drizzle-orm/pg-core").PgColumn<{
+            name: "listing_status";
+            tableName: "cultural_sites";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 50;
+        }>;
+        approximateLocation: import("drizzle-orm/pg-core").PgColumn<{
+            name: "approximate_location";
+            tableName: "cultural_sites";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: false;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         city: import("drizzle-orm/pg-core").PgColumn<{
             name: "city";
             tableName: "cultural_sites";
@@ -460,9 +568,9 @@ export declare const culturalSitesTable: import("drizzle-orm/pg-core").PgTableWi
 }>;
 export declare const insertCulturalSiteSchema: import("zod/v4").ZodObject<{
     name: import("zod/v4").ZodString;
+    description: import("zod/v4").ZodString;
     city: import("zod/v4").ZodString;
     state: import("zod/v4").ZodString;
-    description: import("zod/v4").ZodString;
     latitude: import("zod/v4").ZodString;
     longitude: import("zod/v4").ZodString;
     category: import("zod/v4").ZodOptional<import("zod/v4").ZodString>;
@@ -471,9 +579,15 @@ export declare const insertCulturalSiteSchema: import("zod/v4").ZodObject<{
     isVerified: import("zod/v4").ZodOptional<import("zod/v4").ZodBoolean>;
     address: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     country: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    listingStatus: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     externalUrl: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     heritageCategory: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     ethnicCommunity: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    culturalCommunity: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    visitTip: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    contentNote: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    pinType: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
+    approximateLocation: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodBoolean>>;
     era: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     significance: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodString>>;
     yearEstablished: import("zod/v4").ZodOptional<import("zod/v4").ZodNullable<import("zod/v4").ZodInt>>;
@@ -618,6 +732,114 @@ export declare const selectCulturalSiteSchema: import("drizzle-zod").BuildSchema
     }, {}, {
         length: 100;
     }>;
+    culturalCommunity: import("drizzle-orm/pg-core").PgColumn<{
+        name: "cultural_community";
+        tableName: "cultural_sites";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    visitTip: import("drizzle-orm/pg-core").PgColumn<{
+        name: "visit_tip";
+        tableName: "cultural_sites";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    contentNote: import("drizzle-orm/pg-core").PgColumn<{
+        name: "content_note";
+        tableName: "cultural_sites";
+        dataType: "string";
+        columnType: "PgText";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    pinType: import("drizzle-orm/pg-core").PgColumn<{
+        name: "pin_type";
+        tableName: "cultural_sites";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    listingStatus: import("drizzle-orm/pg-core").PgColumn<{
+        name: "listing_status";
+        tableName: "cultural_sites";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 50;
+    }>;
+    approximateLocation: import("drizzle-orm/pg-core").PgColumn<{
+        name: "approximate_location";
+        tableName: "cultural_sites";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: false;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     city: import("drizzle-orm/pg-core").PgColumn<{
         name: "city";
         tableName: "cultural_sites";

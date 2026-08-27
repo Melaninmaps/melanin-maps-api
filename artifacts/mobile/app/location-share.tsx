@@ -53,6 +53,7 @@ export default function LocationShareScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [shares, setShares] = useState<LocationShare[]>([]);
+  const [renderedAt] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [label, setLabel] = useState("");
@@ -71,7 +72,7 @@ export default function LocationShareScreen() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchShares(); }, [fetchShares]);
+  useEffect(() => { queueMicrotask(() => { void fetchShares(); }); }, [fetchShares]);
 
   const startLocationUpdates = useCallback((token: string) => {
     if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
@@ -160,7 +161,7 @@ export default function LocationShareScreen() {
 
   const formatExpiry = (iso: string) => {
     const d = new Date(iso);
-    const diffMs = d.getTime() - Date.now();
+    const diffMs = d.getTime() - renderedAt;
     const diffMin = Math.round(diffMs / 60000);
     if (diffMin < 0) return "Expired";
     if (diffMin < 60) return `${diffMin}m remaining`;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
@@ -892,9 +892,9 @@ const umStyles = StyleSheet.create({
 
 // ─── Sub-component: Typing indicator ─────────────────────────────────────────
 function TypingIndicator({ colors }: { colors: ReturnType<typeof useColors> }) {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  const [dot1] = useState(() => new Animated.Value(0));
+  const [dot2] = useState(() => new Animated.Value(0));
+  const [dot3] = useState(() => new Animated.Value(0));
   useEffect(() => {
     const anim = (d: Animated.Value, delay: number) =>
       Animated.loop(
@@ -1041,16 +1041,18 @@ function TasteProfileSheet({
 
   useEffect(() => {
     if (preferences) {
-      setFavCats(preferences.favoriteCategories ?? []);
-      setAvoidCats(preferences.avoidCategories ?? []);
-      setBudget(preferences.budgetRange ?? "any");
-      setTripStyles(preferences.tripStyle ?? []);
-      setCompanion(preferences.travelCompanion ?? "solo");
-      setCommStyle(preferences.communicationStyle ?? "friendly");
-      setEmojiLvl(preferences.emojiLevel ?? "some");
-      setHumor(preferences.humorLevel ?? "light");
-      setCulturalInt((preferences.culturalInterests ?? []) as string[]);
-      setKbyg(preferences.knowBeforeYouGo !== false);
+      queueMicrotask(() => { setFavCats(preferences.favoriteCategories ?? []); });
+      queueMicrotask(() => { setAvoidCats(preferences.avoidCategories ?? []); });
+      queueMicrotask(() => { setBudget(preferences.budgetRange ?? "any"); });
+      queueMicrotask(() => { setTripStyles(preferences.tripStyle ?? []); });
+      queueMicrotask(() => { setCompanion(preferences.travelCompanion ?? "solo"); });
+      queueMicrotask(() => {
+        setCommStyle(preferences.communicationStyle ?? "friendly");
+        setEmojiLvl(preferences.emojiLevel ?? "some");
+        setHumor(preferences.humorLevel ?? "light");
+        setCulturalInt((preferences.culturalInterests ?? []) as string[]);
+        setKbyg(preferences.knowBeforeYouGo !== false);
+      });
     }
   }, [preferences, visible]);
 
@@ -1109,7 +1111,7 @@ function TasteProfileSheet({
           </View>
 
           <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>What do you want to avoid?</Text>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>We'll skip these unless you ask</Text>
+          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>We&apos;ll skip these unless you ask</Text>
           <View style={tpStyles.chips}>
             {AVOID_CATEGORIES.map((c) => {
               const sel = avoidCats.includes(c);
@@ -1142,7 +1144,7 @@ function TasteProfileSheet({
             })}
           </View>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Who's coming with you?</Text>
+          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Who&apos;s coming with you?</Text>
           <View style={tpStyles.optionRow}>
             {COMPANION_OPTIONS.map((c) => (
               <TouchableOpacity activeOpacity={0.85} key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
@@ -1305,7 +1307,7 @@ function SessionHistoryDrawer({
   visible, sessions, onClose, onSelect, onNew, colors,
 }: {
   visible: boolean;
-  sessions: Array<{ id: string; title: string | null; destination: string | null; createdAt: string }>;
+  sessions: { id: string; title: string | null; destination: string | null; createdAt: string }[];
   onClose: () => void;
   onSelect: (id: string) => void;
   onNew: () => void;
@@ -1424,7 +1426,7 @@ function FlightTrackerModal({
     finally { setLoading(false); }
   }, [isAuthenticated]);
 
-  useEffect(() => { if (visible) void loadFlights(); }, [visible, loadFlights]);
+  useEffect(() => { if (visible) queueMicrotask(() => { void loadFlights(); }); }, [visible, loadFlights]);
 
   const handleAdd = async () => {
     if (!flightNum.trim() || !depDate.trim()) {

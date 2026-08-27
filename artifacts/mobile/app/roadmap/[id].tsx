@@ -51,7 +51,7 @@ export default function RoadmapScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   async function toggleStep(stepId: string) {
     if (!id) return;

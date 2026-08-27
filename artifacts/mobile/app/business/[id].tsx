@@ -77,6 +77,7 @@ export default function BusinessDetailScreen() {
   const { isSaved, toggleSave } = useFavorites();
 
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [renderedAt] = useState(() => Date.now());
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editingInitialRating, setEditingInitialRating] = useState<number | undefined>(undefined);
   const [editingInitialText, setEditingInitialText] = useState<string | undefined>(undefined);
@@ -86,16 +87,16 @@ export default function BusinessDetailScreen() {
   const [checkInDone, setCheckInDone] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [pointsToast, setPointsToast] = useState<string | null>(null);
-  const [topCaptions, setTopCaptions] = useState<Array<{ caption: string; count: number }>>([]);
+  const [topCaptions, setTopCaptions] = useState<{ caption: string; count: number }[]>([]);
   const [captionSheetOpen, setCaptionSheetOpen] = useState(false);
   const [pendingCaptions, setPendingCaptions] = useState<string[]>([]);
   const [captionSubmitting, setCaptionSubmitting] = useState(false);
-  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const [toastOpacity] = useState(() => new Animated.Value(0));
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
-  const [userCircles, setUserCircles] = useState<Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }>>([]);
+  const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
   const [suggestingCircleId, setSuggestingCircleId] = useState<number | null>(null);
 
@@ -105,7 +106,7 @@ export default function BusinessDetailScreen() {
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const [directionsFetching, setDirectionsFetching] = useState(false);
   const [directionsSummary, setDirectionsSummary] = useState<{ distance: string; duration: string } | null>(null);
-  const [directionsSteps, setDirectionsSteps] = useState<Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>>([]);
+  const [directionsSteps, setDirectionsSteps] = useState<{ index: number; instruction: string; distance: string; maneuver: string | null }[]>([]);
   const [travelMode, setTravelMode] = useState<"driving" | "walking">("driving");
   const [safetyLoading, setSafetyLoading] = useState(false);
   const userCoordsRef = React.useRef<{ lat: number; lng: number } | null>(null);
@@ -124,7 +125,7 @@ export default function BusinessDetailScreen() {
   } | null>(null);
   const [vibeData, setVibeData] = useState<{
     ownerVibes: string[];
-    communityTags: Array<{ vibe: string; count: number }>;
+    communityTags: { vibe: string; count: number }[];
     myTags: string[];
   } | null>(null);
   const [vibePickerOpen, setVibePickerOpen] = useState(false);
@@ -134,7 +135,7 @@ export default function BusinessDetailScreen() {
   const [refAnalytics, setRefAnalytics] = useState<{
     totalViews: number;
     totalLinkClicks: number;
-    clicksBySource: Array<{ source: string; total: number }>;
+    clicksBySource: { source: string; total: number }[];
   } | null>(null);
 
   const [nomSheetOpen, setNomSheetOpen] = useState(false);
@@ -181,7 +182,7 @@ export default function BusinessDetailScreen() {
         const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
         const res = await fetch(`${base}/api/businesses/${id}/reference-analytics`);
         if (res.ok) {
-          const data = await res.json() as { totalViews: number; totalLinkClicks: number; clicksBySource: Array<{ source: string; total: number }> };
+          const data = await res.json() as { totalViews: number; totalLinkClicks: number; clicksBySource: { source: string; total: number }[] };
           setRefAnalytics(data);
         }
       } catch {}
@@ -206,7 +207,7 @@ export default function BusinessDetailScreen() {
     const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
     fetch(`${base}/api/captions/${id}`)
       .then(r => r.ok ? r.json() : { captions: [] })
-      .then((d: { captions?: Array<{ caption: string; count: number }> }) => {
+      .then((d: { captions?: { caption: string; count: number }[] }) => {
         if (d?.captions) setTopCaptions(d.captions);
       })
       .catch(() => {});
@@ -239,7 +240,7 @@ export default function BusinessDetailScreen() {
         const err = await res.json().catch(() => ({})) as { error?: string };
         Alert.alert("Could not save", err.error ?? "Please try again.");
       } else {
-        addLocal(10, "Shared safety experience");
+        addLocal(10);
       }
     } catch {
       Alert.alert("Error", "Could not reach the server. Your response was not saved.");
@@ -279,7 +280,7 @@ export default function BusinessDetailScreen() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
-          const data = await res.json() as { ownerVibes: string[]; communityTags: Array<{ vibe: string; count: number }>; myTags: string[] };
+          const data = await res.json() as { ownerVibes: string[]; communityTags: { vibe: string; count: number }[]; myTags: string[] };
           setVibeData(data);
         }
       } catch {}
@@ -395,15 +396,15 @@ export default function BusinessDetailScreen() {
   };
 
   const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000;
-  const allReviews: Array<{
+  const allReviews: {
     id: string; author: string; initials: string; color: string;
     rating: number; text: string; timeAgo: string; wouldReturnAlone?: boolean; videoUrl?: string; nowHiringUrl?: string; communitySupport?: number;
     ownerResponse?: string | null; ownerRespondedAt?: string | null; isOwnReview?: boolean;
     verificationBadge?: string | null; moderationLevel?: string | null;
     authorTrustLevel?: TrustLevel;
-  }> = [
+  }[] = [
     ...apiReviews
-      .filter((r) => Date.now() - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
+      .filter((r) => renderedAt - new Date(r.createdAt).getTime() < SIX_MONTHS_MS)
       .map((r) => ({
         id: r.id,
         author: r.authorName,
@@ -565,7 +566,7 @@ export default function BusinessDetailScreen() {
       }
       const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const res = await fetch(`${base}/api/circles`, { headers: { Authorization: `Bearer ${token}` } });
-      const data = await res.json() as { circles: Array<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }> };
+      const data = await res.json() as { circles: { id: number; name: string; city: string | null; state: string | null; memberCount: number }[] };
       setUserCircles(data.circles ?? []);
     } catch { setUserCircles([]); }
     setCirclesLoading(false);
@@ -711,7 +712,7 @@ export default function BusinessDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.name, { color: colors.foreground }]}>{business.name}</Text>
               {(business as any).businessTagline ? (
-                <Text style={[styles.taglineLine, { color: colors.primary }]}>"{(business as any).businessTagline}"</Text>
+                <Text style={[styles.taglineLine, { color: colors.primary }]}>&quot;{(business as any).businessTagline}&quot;</Text>
               ) : null}
               <View style={styles.metaRow}>
                 <Text style={[styles.category, { color: colors.primary }]}>{business.category}</Text>
@@ -981,7 +982,7 @@ export default function BusinessDetailScreen() {
                   </View>
                 ) : (
                   <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, lineHeight: 18 }}>
-                    No vibes tagged yet. Be the first to describe this spot's energy.
+                    No vibes tagged yet. Be the first to describe this spot&apos;s energy.
                   </Text>
                 )}
               </View>
@@ -994,7 +995,7 @@ export default function BusinessDetailScreen() {
               <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setVibePickerOpen(false)} />
               <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: insets.bottom + 16 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>What's the vibe?</Text>
+                  <Text style={{ fontFamily: "Inter_700Bold", fontSize: 16, color: colors.foreground }}>What&apos;s the vibe?</Text>
                   <TouchableOpacity onPress={() => setVibePickerOpen(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                     <Feather name="x" size={20} color={colors.mutedForeground} />
                   </TouchableOpacity>
@@ -1089,7 +1090,7 @@ export default function BusinessDetailScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.welcomingTitle, { color: "#2D7A4F" }]}>Welcoming Environment</Text>
-                <Text style={[styles.welcomingSub, { color: "#2D7A4F99" }]}>{business.wouldReturnAlone}% of visitors say they'd return here alone or with loved ones.</Text>
+                <Text style={[styles.welcomingSub, { color: "#2D7A4F99" }]}>{business.wouldReturnAlone}% of visitors say they&apos;d return here alone or with loved ones.</Text>
               </View>
             </View>
           )}
@@ -1171,7 +1172,7 @@ export default function BusinessDetailScreen() {
                       activeOpacity={0.8}
                     >
                       <Text style={[styles.captionBadgeCount, { color: colors.primary }]}>{c.count}</Text>
-                      <Text style={[styles.captionBadgeText, { color: colors.foreground }]}>said "{c.caption}"</Text>
+                      <Text style={[styles.captionBadgeText, { color: colors.foreground }]}>said &quot;{c.caption}&quot;</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -1486,8 +1487,8 @@ export default function BusinessDetailScreen() {
                   if (resp.ok) {
                     const data = await resp.json() as {
                       totalDistance: string; totalDuration: string;
-                      steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>;
-                      waypoints: Array<{ lat: number; lng: number }>;
+                      steps: { index: number; instruction: string; distance: string; maneuver: string | null }[];
+                      waypoints: { lat: number; lng: number }[];
                     };
                     setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
                     setDirectionsSteps(data.steps);
@@ -1529,7 +1530,7 @@ export default function BusinessDetailScreen() {
             <View style={[styles.pinnedSection, { borderColor: "#C9922B33", backgroundColor: "#C9922B07" }]}>
               <View style={styles.pinnedHeader}>
                 <Text style={{ fontSize: 16 }}>📌</Text>
-                <Text style={[styles.pinnedTitle, { color: "#C9922B" }]}>Owner's Pick</Text>
+                <Text style={[styles.pinnedTitle, { color: "#C9922B" }]}>Owner&apos;s Pick</Text>
               </View>
               {pinnedItems.map((pin) => (
                 <View key={pin.id} style={[styles.pinnedCard, { backgroundColor: colors.card, borderColor: "#C9922B25" }]}>
@@ -1551,7 +1552,7 @@ export default function BusinessDetailScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={[styles.pinnedReviewText, { color: colors.foreground }]}>"{pin.reviewText}"</Text>
+                      <Text style={[styles.pinnedReviewText, { color: colors.foreground }]}>&quot;{pin.reviewText}&quot;</Text>
                     </>
                   ) : pin.itemType === "video" && pin.videoUrl ? (
                     <TouchableOpacity
@@ -1627,7 +1628,7 @@ export default function BusinessDetailScreen() {
                     {rev.wouldReturnAlone === false && (
                       <View style={styles.returnAlone}>
                         <Text style={{ fontSize: 11 }}>👎🏾</Text>
-                        <Text style={[styles.returnAloneText, { color: "#DC2626" }]}>Wouldn't return</Text>
+                        <Text style={[styles.returnAloneText, { color: "#DC2626" }]}>Wouldn&apos;t return</Text>
                       </View>
                     )}
                     {rev.wouldReturnAlone === null && (
@@ -1829,7 +1830,7 @@ export default function BusinessDetailScreen() {
                   });
                   const resp = await fetch(`/api/directions?${params.toString()}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
                   if (resp.ok) {
-                    const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: Array<{ index: number; instruction: string; distance: string; maneuver: string | null }>; waypoints: Array<{ lat: number; lng: number }> };
+                    const data = await resp.json() as { totalDistance: string; totalDuration: string; steps: { index: number; instruction: string; distance: string; maneuver: string | null }[]; waypoints: { lat: number; lng: number }[] };
                     setDirectionsSummary({ distance: data.totalDistance, duration: data.totalDuration });
                     setDirectionsSteps(data.steps);
                     if (data.waypoints?.length) {
@@ -2264,7 +2265,7 @@ export default function BusinessDetailScreen() {
               <View style={{ alignItems: "center", paddingVertical: 24, gap: 12 }}>
                 <Feather name="users" size={32} color={colors.mutedForeground} />
                 <Text style={[styles.captionSheetSub, { color: colors.mutedForeground, textAlign: "center" }]}>
-                  You're not in any circles yet.{"\n"}Create one in the Community tab!
+                  You&apos;re not in any circles yet.{"\n"}Create one in the Community tab!
                 </Text>
                 <TouchableOpacity
                   style={[styles.captionSubmitBtn, { backgroundColor: colors.primary, paddingHorizontal: 24 }]}

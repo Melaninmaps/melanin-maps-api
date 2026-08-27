@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -121,8 +121,8 @@ export default function ReportSpaceScreen() {
     finally { setLocating(false); }
   };
 
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(1));
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -292,7 +292,7 @@ export default function ReportSpaceScreen() {
               <View>
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>What type of space is it?</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                  Select the category that best describes the space you're reporting.
+                  Select the category that best describes the space you&apos;re reporting.
                 </Text>
                 <View style={styles.categoryGrid}>
                   {CATEGORIES.map((cat) => {
@@ -363,7 +363,7 @@ export default function ReportSpaceScreen() {
               <View>
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                  Provide as much detail as you're comfortable sharing.
+                  Provide as much detail as you&apos;re comfortable sharing.
                 </Text>
 
                 {selectedCategory && (

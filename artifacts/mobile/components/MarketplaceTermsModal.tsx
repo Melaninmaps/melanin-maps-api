@@ -156,7 +156,7 @@ export function MarketplaceTermsModal({ visible, onAccepted, onClose }: Props) {
         {/* Footer */}
         <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
-            By tapping "I Understand", you acknowledge you have read and understood these marketplace terms.
+            By tapping &quot;I Understand&quot;, you acknowledge you have read and understood these marketplace terms.
           </Text>
 
           <TouchableOpacity

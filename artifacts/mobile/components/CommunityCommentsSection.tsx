@@ -57,7 +57,8 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   const [submitError, setSubmitError] = useState("");
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const scales = useRef<Record<string, Animated.Value>>({});
+  const [scales, setScales] = useState<Record<string, Animated.Value>>({});
+  const [renderTime] = useState(() => Date.now());
   const inputRef = useRef<TextInput>(null);
 
   const picksUsed = selected.size;
@@ -65,8 +66,11 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   const charsLeft = MAX_CHARS - noteText.length;
 
   const getScale = (id: string) => {
-    if (!scales.current[id]) scales.current[id] = new Animated.Value(1);
-    return scales.current[id];
+    const existing = scales[id];
+    if (existing) return existing;
+    const created = new Animated.Value(1);
+    setScales((current) => ({ ...current, [id]: created }));
+    return created;
   };
 
   const bounce = (id: string) => {
@@ -78,17 +82,20 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
   };
 
   const fetchNotes = useCallback(async () => {
+    await Promise.resolve();
     try {
       const res = await fetch(`${getApiBase()}/api/businesses/${businessId}/community-says`);
       if (res.ok) {
         const data = await res.json() as { loveNotes?: LoveNote[] };
-        setNotes(data.loveNotes ?? []);
+        const nextNotes = data.loveNotes ?? [];
+        setNotes(nextNotes);
+        setScales(Object.fromEntries(nextNotes.map((note) => [note.id, new Animated.Value(1)])));
       }
     } catch { }
     finally { setLoading(false); }
   }, [businessId]);
 
-  useEffect(() => { void fetchNotes(); }, [fetchNotes]);
+  useEffect(() => { void Promise.resolve().then(fetchNotes); }, [fetchNotes]);
 
   const handleToggle = async (noteId: string) => {
     const isSelected = selected.has(noteId);
@@ -100,7 +107,8 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
     bounce(noteId);
     setSelected(prev => {
       const next = new Set(prev);
-      isSelected ? next.delete(noteId) : next.add(noteId);
+      if (isSelected) next.delete(noteId);
+      else next.add(noteId);
       return next;
     });
     setNotes(prev =>
@@ -136,6 +144,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
       const data = await res.json() as { loveNote?: LoveNote; error?: string };
       if (!res.ok || !data.loveNote) { setSubmitError(data.error ?? "Failed to post. Please try again."); return; }
       setNotes(prev => [data.loveNote!, ...prev]);
+      setScales((current) => ({ ...current, [data.loveNote!.id]: new Animated.Value(1) }));
       setNoteText(""); setLinkText("");
       setWriteOpen(false);
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -143,8 +152,8 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
     finally { setSubmitting(false); }
   };
 
-  const timeAgo = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime();
+  const timeAgo = (iso: string, now: number) => {
+    const diff = now - new Date(iso).getTime();
     const m = Math.floor(diff / 60000);
     if (m < 1) return "just now";
     if (m < 60) return `${m}m ago`;
@@ -227,7 +236,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
             {notes.map((n) => {
               const isSelected = selected.has(n.id);
               const isDisabled = !isSelected && picksLeft <= 0;
-              const scale = getScale(n.id);
+              const scale = scales[n.id] ?? 1;
               return (
                 <View
                   key={n.id}
@@ -255,7 +264,7 @@ export default function CommunityCommentsSection({ businessId, businessName }: P
                     </TouchableOpacity>
                   )}
                   <View style={s.noteMeta}>
-                    <Text style={[s.noteTime, { color: colors.mutedForeground }]}>{timeAgo(n.createdAt)}</Text>
+                    <Text style={[s.noteTime, { color: colors.mutedForeground }]}>{timeAgo(n.createdAt, renderTime)}</Text>
                     <TouchableOpacity
                       activeOpacity={0.7}
                       style={[s.heartBtn, isDisabled && { opacity: 0.3 }]}

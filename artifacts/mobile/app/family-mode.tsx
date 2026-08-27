@@ -78,7 +78,7 @@ export default function FamilyModeScreen() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const filteredPosts = category === "all"
     ? posts
@@ -206,7 +206,7 @@ export default function FamilyModeScreen() {
               <View style={styles.empty}>
                 <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No family posts yet</Text>
                 <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  Community posts rated "Everyone" will appear here — travel stories, cultural discoveries, and community highlights.
+                  Community posts rated &quot;Everyone&quot; will appear here — travel stories, cultural discoveries, and community highlights.
                 </Text>
               </View>
             ) : filteredPosts.map(renderPostCard)
@@ -216,7 +216,7 @@ export default function FamilyModeScreen() {
               <View style={styles.empty}>
                 <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No family events yet</Text>
                 <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  Events marked "Everyone" or "Family Friendly" will show here.
+                  Events marked &quot;Everyone&quot; or &quot;Family Friendly&quot; will show here.
                 </Text>
               </View>
             ) : filteredEvents.map(renderEventCard)

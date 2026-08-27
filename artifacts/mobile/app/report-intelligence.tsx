@@ -62,10 +62,6 @@ export default function ReportIntelligenceScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  useEffect(() => {
-    void getLocation();
-  }, []);
-
   const getLocation = async () => {
     setLocLoading(true);
     try {
@@ -92,6 +88,10 @@ export default function ReportIntelligenceScreen() {
       setLocLoading(false);
     }
   };
+
+  useEffect(() => {
+    queueMicrotask(() => { void getLocation(); });
+  }, []);
 
   const handleSubmit = async () => {
     if (!selectedType || !location) return;

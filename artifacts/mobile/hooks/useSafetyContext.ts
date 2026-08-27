@@ -74,7 +74,7 @@ export function useSafetyContext(city: string | null): UseSafetyContextResult {
   }, [city]);
 
   useEffect(() => {
-    void fetchContext();
+    void Promise.resolve().then(fetchContext);
   }, [fetchContext]);
 
   return { context, isLoading, error, refetch: fetchContext };

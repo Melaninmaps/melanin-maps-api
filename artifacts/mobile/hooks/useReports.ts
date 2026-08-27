@@ -66,7 +66,7 @@ export function useReports(statusFilter: string = "pending"): UseReportsResult {
   }, [statusFilter]);
 
   useEffect(() => {
-    void fetchReports();
+    void Promise.resolve().then(fetchReports);
   }, [fetchReports]);
 
   const moderate = useCallback(

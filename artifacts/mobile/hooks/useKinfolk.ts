@@ -330,7 +330,7 @@ export function useKinfolk() {
       });
       if (res.ok) {
         const data = (await res.json()) as {
-          session: { id: string; messages: Array<{ role: string; content: string; recommendations?: unknown; followUpSuggestions?: string[]; timestamp: string }> };
+          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; followUpSuggestions?: string[]; timestamp: string }[] };
         };
         setSessionId(id);
         setMessages(

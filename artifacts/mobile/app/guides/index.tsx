@@ -89,7 +89,7 @@ export default function GuidesIndexScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(activeTab, search); }, [load, activeTab]);
+  useEffect(() => { queueMicrotask(() => { load(activeTab, search); }); }, [load, activeTab]);
 
   const handleSearch = () => load(activeTab, search);
 
@@ -186,7 +186,7 @@ export default function GuidesIndexScreen() {
                       onPress={() => router.push("/guides/create" as never)}
                       activeOpacity={0.75}
                     >
-                      <Text style={[s.promptTxt, { color: colors.foreground }]}>"{p}"</Text>
+                      <Text style={[s.promptTxt, { color: colors.foreground }]}>&quot;{p}&quot;</Text>
                       <Feather name="chevron-right" size={14} color={colors.mutedForeground} />
                     </TouchableOpacity>
                   ))}

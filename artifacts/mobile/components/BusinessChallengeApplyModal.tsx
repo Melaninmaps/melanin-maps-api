@@ -30,6 +30,10 @@ function getApiBase(): string {
   return "";
 }
 
+function createBusinessApplicationId(name: string): string {
+  return `${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+}
+
 type Props = {
   visible: boolean;
   challengeId: string;
@@ -69,7 +73,7 @@ export function BusinessChallengeApplyModal({ visible, challengeId, challengeNam
         method: "POST",
         headers,
         body: JSON.stringify({
-          businessId: businessName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now(),
+          businessId: createBusinessApplicationId(businessName),
           businessName: businessName.trim(),
           businessCity: businessCity.trim() || null,
           businessCategory: businessCategory.trim() || null,
@@ -203,7 +207,7 @@ export function BusinessChallengeApplyModal({ visible, challengeId, challengeNam
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
-                <Text style={[styles.helperTxt, { color: colors.mutedForeground }]}>We'll send your approval decision here</Text>
+                <Text style={[styles.helperTxt, { color: colors.mutedForeground }]}>We&apos;ll send your approval decision here</Text>
               </View>
 
               <View style={styles.formSection}>

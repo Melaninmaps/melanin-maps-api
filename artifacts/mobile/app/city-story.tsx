@@ -6,7 +6,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -62,7 +62,7 @@ export default function CityStoryScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const expandAnim = useRef(new Animated.Value(0)).current;
+  const [expandAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!slug) return;

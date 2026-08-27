@@ -1507,7 +1507,7 @@ export default function MapPage() {
                       mapRef.current!.setZoom(site.entity_kind === "hbcu" ? 14 : 16);
                       setSidebarOpen(false);
                     }}
-                    title={canFly ? `Fly to ${site.name}` : undefined}
+                    title={canFly ? `Fly to ${site.title}` : undefined}
                   >
                     <div className="flex items-start gap-3">
                       <div

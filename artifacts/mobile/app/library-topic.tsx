@@ -225,11 +225,11 @@ export default function CommunityHubScreen() {
   const [volunteerNote, setVolunteerNote] = useState("");
   const [volunteerYears, setVolunteerYears] = useState("");
   const [volunteering, setVolunteering] = useState(false);
-  const [communityVideos, setCommunityVideos] = useState<Array<{
+  const [communityVideos, setCommunityVideos] = useState<{
     id: string; content: string; authorName: string; authorInitials: string;
     authorColor: string; media: string[]; hasVideo: boolean;
     upvotes: number; commentsCount: number; createdAt: string;
-  }>>([]);
+  }[]>([]);
   const [videosLoading, setVideosLoading] = useState(false);
   const tabScrollRef = useRef<ScrollView>(null);
 
@@ -274,15 +274,15 @@ export default function CommunityHubScreen() {
     } catch { /* silent */ }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
   useEffect(() => {
-    if (hub?.topic.topicName) loadBrief(hub.topic.topicName);
-    if (topicId) loadExtras(topicId);
+    if (hub?.topic.topicName) queueMicrotask(() => { loadBrief(hub.topic.topicName); });
+    if (topicId) queueMicrotask(() => { loadExtras(topicId); });
   }, [hub?.topic.topicName, loadBrief, loadExtras, topicId]);
 
   useEffect(() => {
     if (activeTab !== "videos" || !topicId) return;
-    setVideosLoading(true);
+    queueMicrotask(() => { setVideosLoading(true); });
     authHeaders().then((h) =>
       fetch(`${getApiBase()}/api/knowledge/topics/${topicId}/community-videos`, { headers: h })
         .then((r) => r.ok ? r.json() : { posts: [] })
@@ -413,7 +413,7 @@ export default function CommunityHubScreen() {
               activeOpacity={0.75}
             >
               <Text style={[styles.intentCtaTxt, { color: typeMeta.color }]}>
-                What's your connection to {hub?.topic.topicName}? Personalize your hub →
+                What&apos;s your connection to {hub?.topic.topicName}? Personalize your hub →
               </Text>
             </TouchableOpacity>
           )}
@@ -916,7 +916,7 @@ export default function CommunityHubScreen() {
                   {experts.length > 0 && <Text style={[styles.sectionMeta, { color: colors.mutedForeground }]}>{experts.length} experts</Text>}
                 </View>
                 <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-                  People who've lived it, done it, and volunteered to help others on this topic.
+                  People who&apos;ve lived it, done it, and volunteered to help others on this topic.
                 </Text>
               </View>
 
@@ -943,7 +943,7 @@ export default function CommunityHubScreen() {
                       <Text style={[styles.expertBadgeTxt, { color: typeMeta.color }]}>{expert.badgeName}</Text>
                     </View>
                     {expert.experienceNote && (
-                      <Text style={[styles.expertNote, { color: colors.mutedForeground }]} numberOfLines={2}>"{expert.experienceNote}"</Text>
+                      <Text style={[styles.expertNote, { color: colors.mutedForeground }]} numberOfLines={2}>&quot;{expert.experienceNote}&quot;</Text>
                     )}
                     {expert.yearsOfExperience != null && (
                       <Text style={[styles.expertYears, { color: colors.mutedForeground }]}>{expert.yearsOfExperience} year{expert.yearsOfExperience !== 1 ? "s" : ""} of experience</Text>
@@ -989,7 +989,7 @@ export default function CommunityHubScreen() {
               <View style={[styles.infoNote, { backgroundColor: colors.secondary, borderColor: colors.border, marginTop: 16 }]}>
                 <Feather name="info" size={13} color={colors.mutedForeground} />
                 <Text style={[styles.infoNoteTxt, { color: colors.mutedForeground }]}>
-                  Example: "I've lived in Tokyo for 14 years." · "I've restored 40 classic Mustangs." · "I manage Type 2 Diabetes and can help others." Expertise is voluntary and community-verified.
+                  Example: &quot;I&apos;ve lived in Tokyo for 14 years.&quot; · &quot;I&apos;ve restored 40 classic Mustangs.&quot; · &quot;I manage Type 2 Diabetes and can help others.&quot; Expertise is voluntary and community-verified.
                 </Text>
               </View>
             </View>
@@ -1005,7 +1005,7 @@ export default function CommunityHubScreen() {
           <View style={[styles.intentSheet, { backgroundColor: colors.card }]}>
             <View style={styles.intentHandle} />
             <Text style={[styles.intentTitle, { color: colors.foreground }]}>
-              What's your connection to {hub?.topic.topicName}?
+              What&apos;s your connection to {hub?.topic.topicName}?
             </Text>
             <Text style={[styles.intentSub, { color: colors.mutedForeground }]}>
               This personalizes your hub — only you can see this.

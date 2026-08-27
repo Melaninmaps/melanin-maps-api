@@ -69,7 +69,7 @@ export function useShowLove(options: { category?: string; nomineeType?: string; 
     }
   }, [options.category, options.nomineeType, options.search]);
 
-  useEffect(() => { void fetch(); }, [fetch]);
+  useEffect(() => { void Promise.resolve().then(fetch); }, [fetch]);
 
   return { nominations, isLoading, error, total, refetch: fetch };
 }
@@ -92,7 +92,7 @@ export function useShowLoveReceived(userId: string | null) {
     }
   }, [userId]);
 
-  useEffect(() => { void fetch(); }, [fetch]);
+  useEffect(() => { void Promise.resolve().then(fetch); }, [fetch]);
 
   return { nominations, isLoading, refetch: fetch };
 }

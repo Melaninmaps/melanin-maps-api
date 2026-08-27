@@ -102,7 +102,7 @@ function PrivacyToggleCard({
   colors,
 }: {
   user: ReturnType<typeof useAuth>["user"];
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
   colors: ReturnType<typeof useColors>;
 }) {
   const [saving, setSaving] = useState(false);
@@ -486,7 +486,7 @@ function RecommendedSpotsSection() {
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 14 }} keyboardShouldPersistTaps="handled">
               <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 14, color: colors.foreground }}>Add a stance (optional)</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
-                {(Object.entries(STANCE_META) as Array<[string, typeof STANCE_META[string]]>).map(([tag, meta]) => {
+                {(Object.entries(STANCE_META) as [string, typeof STANCE_META[string]][]).map(([tag, meta]) => {
                   const sel = addStance === tag;
                   return (
                     <TouchableOpacity
@@ -764,8 +764,8 @@ export default function ProfileScreen() {
     } catch { /* silent */ }
   }, [isAuthenticated]);
 
-  useEffect(() => { void loadTopics(); }, [loadTopics]);
-  useEffect(() => { void loadTrust(); }, [loadTrust]);
+  useEffect(() => { queueMicrotask(() => { void loadTopics(); }); }, [loadTopics]);
+  useEffect(() => { queueMicrotask(() => { void loadTrust(); }); }, [loadTrust]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : 0;
@@ -831,7 +831,7 @@ export default function ProfileScreen() {
             activeOpacity={0.85}
           >
             <Feather name="user-plus" size={18} color="#FFFFFF" />
-            <Text style={styles.signInBtnText}>Create Account — It's Free</Text>
+            <Text style={styles.signInBtnText}>Create Account — It&apos;s Free</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.signInBtnGhost, { borderColor: colors.primary + "60" }]}
@@ -1059,7 +1059,7 @@ export default function ProfileScreen() {
               <Text style={streakStyles.headerEmoji}>🤎</Text>
               <View>
                 <Text style={streakStyles.headerTitle}>Your Impact This Month</Text>
-                <Text style={streakStyles.headerSub}>You're building something real</Text>
+                <Text style={streakStyles.headerSub}>You&apos;re building something real</Text>
               </View>
             </View>
             <View style={streakStyles.grid}>

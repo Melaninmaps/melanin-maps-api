@@ -70,7 +70,7 @@ export default function OwnerVibeTags() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const toggle = (id: string) => {
     setSelected(prev => {

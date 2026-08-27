@@ -85,6 +85,7 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
   const isOwnProfile = me?.id === userId;
 
   const loadProfile = useCallback(async () => {
+    await Promise.resolve();
     if (!userId) return;
     setLoading(true);
     try {
@@ -109,6 +110,7 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
   }, [userId]);
 
   const loadList = useCallback(async (tab: Tab) => {
+    await Promise.resolve();
     if (!userId || !canSeeContent) return;
     setListLoading(true);
     try {
@@ -128,17 +130,12 @@ export function UserProfileModal({ userId, visible, onClose }: Props) {
 
   useEffect(() => {
     if (visible && userId) {
-      void loadProfile();
-      setActiveTab("followers");
-      setFollowers([]);
-      setFollowing([]);
-    } else {
-      setProfile(null);
+      void Promise.resolve().then(loadProfile);
     }
   }, [visible, userId, loadProfile]);
 
   useEffect(() => {
-    if (canSeeContent) void loadList(activeTab);
+    if (canSeeContent) void Promise.resolve().then(() => loadList(activeTab));
   }, [activeTab, canSeeContent, loadList]);
 
   const handleFollow = async () => {

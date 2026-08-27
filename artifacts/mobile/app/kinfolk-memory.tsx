@@ -72,8 +72,6 @@ export default function KinfolkMemoryScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  useEffect(() => { void load(); }, []);
-
   const load = async () => {
     try {
       const token = await getToken();
@@ -89,6 +87,8 @@ export default function KinfolkMemoryScreen() {
     } catch {}
     finally { setLoading(false); }
   };
+
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, []);
 
   const buildItems = (s: MemorySummary): MemoryItem[] => {
     const items: MemoryItem[] = [];

@@ -9122,7 +9122,7 @@ async function ensureKinfolkCulturalContextV1(
     `);
 
     // ── 7. Seed sources ────────────────────────────────────────────────────────
-    type SrcRow = { canonical_url: string; publisher: string; title: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
+    type SrcRow = { canonical_url: string; publisher: string; title?: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
     const SOURCES: SrcRow[] = [
       { canonical_url: "https://www.sinnersmovie.com/toolkit/",        publisher: "Sinners (Official Film)",                                tier: "A", claim_scope: ["film_credit","director_credit","cast_credit","release_year"],        expected_host: "sinnersmovie.com", notes: "Confirms Ryan Coogler as writer/director; Michael B. Jordan as lead" },
       { canonical_url: "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96", publisher: "HBO Max",               tier: "A", claim_scope: ["film_credit","streaming_availability","release_year"],                 expected_host: "hbomax.com",       notes: "Official streaming page; may redirect" },

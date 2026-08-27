@@ -147,8 +147,8 @@ export default function VisitorProfileScreen() {
     }
   }, [id]);
 
-  useEffect(() => { void loadProfile(); }, [loadProfile]);
-  useEffect(() => { void loadPosts(); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
+  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
   useEffect(() => {
     SecureStore.getItemAsync("auth_session_token").then((token) => {
       if (!token) return;

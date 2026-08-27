@@ -96,7 +96,7 @@ export default function CreatorProfileScreen() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const toggleCategory = (cat: string) => {
     setForm((prev) => ({
@@ -182,7 +182,7 @@ export default function CreatorProfileScreen() {
             <Text style={{ fontSize: 22, marginBottom: 8 }}>🗺️</Text>
             <Text style={[s.bannerTitle, { color: colors.foreground }]}>Support at the Source</Text>
             <Text style={[s.bannerBody, { color: colors.mutedForeground }]}>
-              Mapping With Melanin™ doesn't compete with your platforms — we send people{" "}
+              Mapping With Melanin™ doesn&apos;t compete with your platforms — we send people{" "}
               <Text style={{ fontFamily: "Inter_700Bold", color: colors.primary }}>to</Text> them.
               Connect your channels so the community can discover your content alongside local businesses.
             </Text>
@@ -250,7 +250,7 @@ export default function CreatorProfileScreen() {
           {/* Platform URLs */}
           <View style={[s.group, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[s.groupLabel, { color: colors.foreground }]}>Your Channels</Text>
-            <Text style={[s.groupHelper, { color: colors.mutedForeground }]}>Add the platforms where you create — we'll link people directly to your content</Text>
+            <Text style={[s.groupHelper, { color: colors.mutedForeground }]}>Add the platforms where you create — we&apos;ll link people directly to your content</Text>
             {PLATFORMS.map(({ key, label, icon, placeholder }) => (
               <View key={key} style={[s.socialRow, { borderColor: colors.border, backgroundColor: colors.background }]}>
                 <View style={[s.socialIcon, { backgroundColor: colors.primary + "15" }]}>

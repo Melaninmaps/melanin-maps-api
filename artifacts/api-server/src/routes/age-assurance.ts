@@ -33,7 +33,7 @@ router.get("/age-assurance", async (req, res) => {
       assured_at: null,
     };
     // Intentionally never return users.date_of_birth.
-    res.json({
+    return res.json({
       ageBand: row.age_band,
       assuranceMethod: row.assurance_method,
       policyVersion: row.policy_version,
@@ -41,7 +41,7 @@ router.get("/age-assurance", async (req, res) => {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to load age assurance", detail: msg });
+    return res.status(500).json({ error: "Failed to load age assurance", detail: msg });
   }
 });
 
@@ -69,10 +69,10 @@ router.put("/age-assurance", async (req, res) => {
          updated_at = now()`,
       [userId, ageBand],
     );
-    res.json({ ok: true, ageBand });
+    return res.json({ ok: true, ageBand });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to save age assurance", detail: msg });
+    return res.status(500).json({ error: "Failed to save age assurance", detail: msg });
   }
 });
 

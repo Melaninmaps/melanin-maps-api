@@ -89,7 +89,7 @@ export default function GlobalRecommendationsScreen() {
     }
   }, []);
 
-  useEffect(() => { void fetchRecs(); }, [fetchRecs]);
+  useEffect(() => { queueMicrotask(() => { void fetchRecs(); }); }, [fetchRecs]);
 
   const onRefresh = () => { setRefreshing(true); void fetchRecs(); };
 
@@ -131,7 +131,7 @@ export default function GlobalRecommendationsScreen() {
 
       {!!item.reason && (
         <Text style={[styles.reason, { color: muted }]} numberOfLines={3}>
-          "{item.reason}"
+          &quot;{item.reason}&quot;
         </Text>
       )}
 

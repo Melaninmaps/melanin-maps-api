@@ -44,9 +44,6 @@ export function TesterReportButton() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
-  // Only render for tester-role users
-  if (!user || (user as any).role !== "tester") return null;
-
   const handleSubmit = useCallback(async () => {
     if (!message.trim() || submitting) return;
     setSubmitting(true);
@@ -87,6 +84,9 @@ export function TesterReportButton() {
     setAction("");
     setDone(false);
   }, [submitting]);
+
+  // Only render for tester-role users
+  if (!user || user.role !== "tester") return null;
 
   return (
     <>
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   fabIcon: { fontSize: 16 },
   modalOverlay: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.4)" },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.4)" },
   sheet: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,

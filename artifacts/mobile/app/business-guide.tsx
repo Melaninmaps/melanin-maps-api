@@ -390,7 +390,7 @@ export default function BusinessGuideScreen() {
           </View>
         </View>
         <Text style={[styles.healthNote, { color: colors.mutedForeground }]}>
-          The Business Health Score™ doesn't just give you data — it suggests specific actions that can help your business grow. That's the kind of insight that makes Premium worth it.
+          The Business Health Score™ doesn&apos;t just give you data — it suggests specific actions that can help your business grow. That&apos;s the kind of insight that makes Premium worth it.
         </Text>
       </View>
 

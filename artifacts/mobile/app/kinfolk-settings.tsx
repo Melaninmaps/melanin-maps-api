@@ -56,27 +56,27 @@ const CAPABILITIES = [
   { icon: "users" as const, label: "Community Connections", desc: "Surfaces people, circles, and events aligned with your interests and lifestyle" },
 ];
 
-const VOICE_MODES: Array<{ value: string; label: string; desc: string; icon: "zap" | "briefcase" | "map" | "home" }> = [
+const VOICE_MODES: { value: string; label: string; desc: string; icon: "zap" | "briefcase" | "map" | "home" }[] = [
   { value: "community", label: "Community", desc: "Warm, direct, like a trusted local friend texting you", icon: "zap" },
   { value: "professional", label: "Professional", desc: "Clear, concise, focused on business and opportunities", icon: "briefcase" },
   { value: "local", label: "Local Guide", desc: "Neighborhood-deep, uses local slang and insider knowledge", icon: "map" },
   { value: "home", label: "Home", desc: "Gentle, nurturing, rooted in cultural comfort and care", icon: "home" },
 ];
 
-const COMM_STYLES: Array<{ value: string; label: string }> = [
+const COMM_STYLES: { value: string; label: string }[] = [
   { value: "friendly", label: "Friendly" },
   { value: "casual", label: "Casual" },
   { value: "direct", label: "Direct" },
   { value: "formal", label: "Formal" },
 ];
 
-const EMOJI_LEVELS: Array<{ value: string; label: string }> = [
+const EMOJI_LEVELS: { value: string; label: string }[] = [
   { value: "none", label: "None" },
   { value: "some", label: "Some" },
   { value: "many", label: "Many" },
 ];
 
-const HUMOR_LEVELS: Array<{ value: string; label: string }> = [
+const HUMOR_LEVELS: { value: string; label: string }[] = [
   { value: "none", label: "None" },
   { value: "light", label: "Light" },
   { value: "witty", label: "Witty" },
@@ -94,8 +94,6 @@ export default function KinfolkSettingsScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-
-  useEffect(() => { void loadSettings(); }, []);
 
   const loadSettings = async () => {
     try {
@@ -126,6 +124,8 @@ export default function KinfolkSettingsScreen() {
     } catch {}
     finally { setLoading(false); }
   };
+
+  useEffect(() => { queueMicrotask(() => { void loadSettings(); }); }, []);
 
   const saveBehavior = (next: BehaviorSettings) => {
     if (behaviorSaveTimer.current) clearTimeout(behaviorSaveTimer.current);

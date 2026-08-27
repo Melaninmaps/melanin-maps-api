@@ -19,7 +19,8 @@ const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
 
-const ROOT = path.resolve(__dirname, "..");
+const SCRIPT_DIR = path.dirname(require.resolve("./pre-build-check.js"));
+const ROOT = path.resolve(SCRIPT_DIR, "..");
 const APP_JSON = path.join(ROOT, "app.json");
 const RECORD_FILE = path.join(ROOT, ".build-record.json");
 

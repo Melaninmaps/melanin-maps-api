@@ -235,7 +235,7 @@ export default function MuralContributionScreen() {
           <Text style={[s.successBody, { color: colors.mutedForeground }]}>
             Your memory is under review and will appear on{" "}
             <Text style={{ fontWeight: "700" }}>{siteName}</Text>{" "}
-            once approved. Thank you for contributing to the community's story.
+            once approved. Thank you for contributing to the community&apos;s story.
           </Text>
           <TouchableOpacity style={[s.doneBtn, { backgroundColor: ACCENT }]} onPress={() => router.back()}>
             <Text style={s.doneBtnTxt}>Done</Text>

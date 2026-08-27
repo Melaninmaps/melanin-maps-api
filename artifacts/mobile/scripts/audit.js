@@ -9,8 +9,9 @@
 
 const fs = require("fs");
 const path = require("path");
+const SCRIPT_DIR = path.dirname(require.resolve("./audit.js"));
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(SCRIPT_DIR, "..");
 const APP_DIR = path.join(ROOT, "app");
 const APP_JSON = path.join(ROOT, "app.json");
 const PACKAGE_JSON = path.join(ROOT, "package.json");

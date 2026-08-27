@@ -77,7 +77,7 @@ export function useBiometricSettings() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void Promise.resolve().then(refresh); }, [refresh]);
 
   const toggle = useCallback(async (value: boolean): Promise<boolean> => {
     if (value) {

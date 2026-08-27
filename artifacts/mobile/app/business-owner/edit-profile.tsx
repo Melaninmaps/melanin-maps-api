@@ -139,7 +139,7 @@ export default function EditBusinessProfile() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const isDirty = original !== null && JSON.stringify(form) !== JSON.stringify(original);
 
@@ -546,7 +546,7 @@ export default function EditBusinessProfile() {
             Primary Platform
           </Text>
           <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, marginBottom: 8 }}>
-            Shown first on your profile — send fans where you're most active
+            Shown first on your profile — send fans where you&apos;re most active
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {(["tiktok", "instagram", "youtube", "facebook", "pinterest", "twitter"] as const).map((key) => {
@@ -680,7 +680,7 @@ export default function EditBusinessProfile() {
         {/* ── Business Tagline ── */}
         <View style={styles.group}>
           <Text style={[styles.groupLabel, { color: colors.foreground }]}>Business Tagline</Text>
-          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>A short, punchy phrase that captures your brand's vibe</Text>
+          <Text style={[styles.groupHelper, { color: colors.mutedForeground }]}>A short, punchy phrase that captures your brand&apos;s vibe</Text>
           <TextInput style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
             placeholder="e.g. Where culture meets cuisine" placeholderTextColor={colors.mutedForeground}
             value={form.businessTagline} onChangeText={(t) => t.length <= 120 && update("businessTagline")(t)} />
@@ -758,7 +758,7 @@ export default function EditBusinessProfile() {
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Owner Intro Video</Text>
           <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, marginBottom: 10 }}>
-            Upload a short video (up to 2 min) introducing yourself and your business. Customers will see a "Watch Owner Intro" button on your listing.
+            Upload a short video (up to 2 min) introducing yourself and your business. Customers will see a &quot;Watch Owner Intro&quot; button on your listing.
           </Text>
           {introVideoUrl ? (
             <View style={{ gap: 8 }}>

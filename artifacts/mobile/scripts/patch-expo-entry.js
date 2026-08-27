@@ -15,7 +15,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const projectRoot = path.resolve(__dirname, "..");
+const scriptDir = path.dirname(require.resolve("./patch-expo-entry.js"));
+const projectRoot = path.resolve(scriptDir, "..");
 const workspaceRoot = path.resolve(projectRoot, "../..");
 
 const BROKEN_IMPORT = "import App from '../../App'";

@@ -147,7 +147,7 @@ export function LocationPicker({ visible, onClose, onSelect, initialValue = "" }
                 <TouchableOpacity style={[styles.addRow, { borderTopColor: colors.border }]} onPress={handleManualEntry}>
                   <Feather name="plus-circle" size={16} color={colors.primary} style={{ marginRight: 8 }} />
                   <Text style={[styles.addText, { color: colors.primary }]}>
-                    Add "{query}" as a new place
+                    Add &quot;{query}&quot; as a new place
                   </Text>
                 </TouchableOpacity>
               }
@@ -158,7 +158,7 @@ export function LocationPicker({ visible, onClose, onSelect, initialValue = "" }
             <TouchableOpacity style={[styles.addRowFull, { borderColor: colors.border }]} onPress={handleManualEntry}>
               <Feather name="plus-circle" size={16} color={colors.primary} style={{ marginRight: 8 }} />
               <Text style={[styles.addText, { color: colors.primary }]}>
-                Tag "{query}" as location
+                Tag &quot;{query}&quot; as location
               </Text>
             </TouchableOpacity>
           )}

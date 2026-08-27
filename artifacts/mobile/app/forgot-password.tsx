@@ -161,7 +161,7 @@ export default function ForgotPasswordScreen() {
               </View>
               <Text style={[styles.title, { color: colors.foreground }]}>Forgot Password?</Text>
               <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-                No worries. Enter your email and we'll send you a 6-digit reset code.
+                No worries. Enter your email and we&apos;ll send you a 6-digit reset code.
               </Text>
             </View>
 
@@ -239,7 +239,7 @@ export default function ForgotPasswordScreen() {
             <View style={[styles.tipBox, { backgroundColor: colors.secondary, marginBottom: 20 }]}>
               <Feather name="info" size={15} color={colors.mutedForeground} />
               <Text style={[styles.tipTxt, { color: colors.mutedForeground }]}>
-                Check your spam folder if you don't see it. Codes expire after 15 minutes.
+                Check your spam folder if you don&apos;t see it. Codes expire after 15 minutes.
               </Text>
             </View>
 
@@ -316,7 +316,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <TouchableOpacity activeOpacity={0.85} onPress={() => { setSent(false); setCodeStep(false); setResetError(""); }} style={styles.retrySub}>
-              <Text style={[styles.retryTxt, { color: colors.mutedForeground }]}>Didn't receive it? Try again</Text>
+              <Text style={[styles.retryTxt, { color: colors.mutedForeground }]}>Didn&apos;t receive it? Try again</Text>
             </TouchableOpacity>
           </View>
         )}

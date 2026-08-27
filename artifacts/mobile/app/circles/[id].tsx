@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -200,10 +200,10 @@ export default function CircleDetailScreen() {
     } catch {}
   }, [id]);
 
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { if (activeTab === "memory") void loadAdventures(); }, [activeTab, loadAdventures]);
-  useEffect(() => { if (activeTab === "suggest") void loadNudges(); }, [activeTab, loadNudges]);
-  useEffect(() => { if (activeTab === "members") void loadDates(); }, [activeTab, loadDates]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
+  useEffect(() => { if (activeTab === "memory") queueMicrotask(() => { void loadAdventures(); }); }, [activeTab, loadAdventures]);
+  useEffect(() => { if (activeTab === "suggest") queueMicrotask(() => { void loadNudges(); }); }, [activeTab, loadNudges]);
+  useEffect(() => { if (activeTab === "members") queueMicrotask(() => { void loadDates(); }); }, [activeTab, loadDates]);
 
   const addSuggestion = async () => {
     if (!sugName.trim()) { Alert.alert("Required", "Enter a place name."); return; }
@@ -544,7 +544,7 @@ export default function CircleDetailScreen() {
               <View style={[s.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={{ fontSize: 36 }}>📋</Text>
                 <Text style={[s.emptyTitle, { color: colors.foreground }]}>No plans yet</Text>
-                <Text style={[s.emptyText, { color: colors.mutedForeground }]}>Tap "Build a Plan" and let Kinfolk create the perfect day for your Circle.</Text>
+                <Text style={[s.emptyText, { color: colors.mutedForeground }]}>Tap &quot;Build a Plan&quot; and let Kinfolk create the perfect day for your Circle.</Text>
               </View>
             ) : plans.map((plan) => (
               <View key={plan.id} style={[s.planCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -622,7 +622,7 @@ export default function CircleDetailScreen() {
           {isHost && (
             <View style={[s.hostBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}>
               <Feather name="award" size={14} color={colors.primary} />
-              <Text style={[s.hostBannerText, { color: colors.primary }]}>You're the Circle Host — you can invite, remove members, and manage settings.</Text>
+              <Text style={[s.hostBannerText, { color: colors.primary }]}>You&apos;re the Circle Host — you can invite, remove members, and manage settings.</Text>
             </View>
           )}
           {members.map((m) => (
@@ -803,7 +803,7 @@ export default function CircleDetailScreen() {
             ) : savedPlaces.length === 0 ? (
               <View style={{ alignItems: "center", paddingVertical: 24, gap: 8 }}>
                 <Text style={{ fontSize: 32 }}>🔖</Text>
-                <Text style={[s.emptyText, { color: colors.mutedForeground }]}>You haven't saved any places yet. Heart businesses on the Discover tab to save them here.</Text>
+                <Text style={[s.emptyText, { color: colors.mutedForeground }]}>You haven&apos;t saved any places yet. Heart businesses on the Discover tab to save them here.</Text>
               </View>
             ) : (
               <ScrollView
@@ -873,7 +873,7 @@ export default function CircleDetailScreen() {
               {/* Member picker when by_member mode selected */}
               {curatorMode === "by_member" && (
                 <View style={{ marginTop: 4, marginBottom: 4 }}>
-                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Which member's taste?</Text>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Which member&apos;s taste?</Text>
                   <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {members.map((m) => {
@@ -896,7 +896,7 @@ export default function CircleDetailScreen() {
                   </ScrollView>
                   <View style={[s.memberTasteHint, { backgroundColor: GOLD + "12", borderColor: GOLD + "25" }]}>
                     <Text style={[s.memberTasteHintText, { color: colors.mutedForeground }]}>
-                      ✨ Kinfolk uses this member's personal preferences — favorite categories, budget, dietary notes, and lifestyle services — to build the plan.
+                      ✨ Kinfolk uses this member&apos;s personal preferences — favorite categories, budget, dietary notes, and lifestyle services — to build the plan.
                     </Text>
                   </View>
                 </View>
@@ -905,7 +905,7 @@ export default function CircleDetailScreen() {
               {/* Vibe picker (hidden for random/by_member) */}
               {curatorMode === "votes" && (
                 <>
-                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What's the Vibe?</Text>
+                  <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>What&apos;s the Vibe?</Text>
                   <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                     {VIBES.map((v) => (
@@ -1019,7 +1019,7 @@ export default function CircleDetailScreen() {
               )}
 
               {/* Target member */}
-              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Who's this for?</Text>
+              <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Who&apos;s this for?</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
                 <TouchableOpacity activeOpacity={0.85}
                   style={[s.chip, { backgroundColor: nudgeTarget === null ? colors.primary : colors.card, borderColor: nudgeTarget === null ? colors.primary : colors.border }]}

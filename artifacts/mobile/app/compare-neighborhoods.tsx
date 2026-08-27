@@ -251,7 +251,7 @@ export default function CompareNeighborhoodsScreen() {
                 .replace("these two", `${pin1.label} and ${pin2.label}`)
               )}
             >
-              <Text style={[styles.promptQuote, { color: "#D1D5DB" }]}>"</Text>
+              <Text style={[styles.promptQuote, { color: "#D1D5DB" }]}>&quot;</Text>
               <Text style={[styles.promptTxt, { color: colors.foreground }]} numberOfLines={2}>{p
                 .replace("these two neighborhoods", `${pin1.label} vs ${pin2.label}`)
                 .replace("these two", `${pin1.label} and ${pin2.label}`)

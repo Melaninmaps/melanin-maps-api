@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Animated,
@@ -60,7 +60,7 @@ function ProximityWarningBanner({
   warning: ProximityWarning;
   onDismiss: () => void;
 }) {
-  const slideAnim = useRef(new Animated.Value(-80)).current;
+  const [slideAnim] = useState(() => new Animated.Value(-80));
   const sc = SEVERITY_COLORS[warning.severity] ?? "#EF4444";
 
   useEffect(() => {
@@ -116,10 +116,10 @@ export function MapTabView() {
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
   const [showFlaggedModal, setShowFlaggedModal] = useState(false);
   const [flaggedBizLoading, setFlaggedBizLoading] = useState(false);
-  const [flaggedBizList, setFlaggedBizList] = useState<Array<{
+  const [flaggedBizList, setFlaggedBizList] = useState<{
     id: string; name: string; address: string; city: string; state: string;
     category: string; alertCount: number; distanceMiles: number;
-  }>>([]);
+  }[]>([]);
 
   const { alerts: activityAlerts, reportAlert, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts();
 
@@ -171,19 +171,13 @@ export function MapTabView() {
 
   const flaggedIds = new Set(warnings.map((w) => w.targetId));
 
-  const currentWarning = warnings[warningIdx] ?? null;
+  const currentWarning = warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
 
   const handleDismissCurrent = () => {
     if (!currentWarning) return;
     dismissWarning(currentWarning.targetId);
     setWarningIdx((i) => Math.max(0, i - 1));
   };
-
-  useEffect(() => {
-    if (warningIdx >= warnings.length && warnings.length > 0) {
-      setWarningIdx(warnings.length - 1);
-    }
-  }, [warnings.length, warningIdx]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

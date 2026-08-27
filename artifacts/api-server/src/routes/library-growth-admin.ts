@@ -132,12 +132,22 @@ router.post("/admin/library-growth/candidates/:id/decide", async (req: Request, 
   }
 
   try {
+    const rawCandidateId = req.params.id;
+    const candidateId = Array.isArray(rawCandidateId) ? rawCandidateId[0] ?? "" : rawCandidateId;
+    const authorityTiers = evidencePlan?.requiredAuthorityTiers?.filter(
+      (tier): tier is "authoritative" | "professional" | "contextual" =>
+        tier === "authoritative" || tier === "professional" || tier === "contextual",
+    ) ?? ["authoritative"];
     await recordLibraryGrowthDecision({
-      candidateId: req.params.id,
+      candidateId,
       approvedByUserId: req.user.id,
       decision: decision as "approved" | "rejected",
       reason: reason.trim(),
-      evidencePlan: evidencePlan ?? { requiredAuthorityTiers: ["authoritative"], minimumSources: 2, requiresDomainReviewer: false },
+      evidencePlan: {
+        requiredAuthorityTiers: authorityTiers,
+        minimumSources: evidencePlan?.minimumSources ?? 2,
+        requiresDomainReviewer: evidencePlan?.requiresDomainReviewer ?? false,
+      },
     });
     res.json({ ok: true, decision, candidateId: req.params.id });
   } catch (err: unknown) {
@@ -153,7 +163,9 @@ router.post("/admin/library-growth/candidates/:id/materialize", async (req: Requ
   if (!req.user?.id) { res.status(401).json({ error: "Sign in required" }); return; }
 
   try {
-    const { topicId } = await materializeApprovedLibraryCandidate(req.params.id, req.user.id);
+    const rawCandidateId = req.params.id;
+    const candidateId = Array.isArray(rawCandidateId) ? rawCandidateId[0] ?? "" : rawCandidateId;
+    const { topicId } = await materializeApprovedLibraryCandidate(candidateId, req.user.id);
     res.json({ ok: true, topicId, candidateId: req.params.id });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -168,7 +180,9 @@ router.post("/admin/library-growth/topics/:topicId/publish", async (req: Request
   if (!req.user?.id) { res.status(401).json({ error: "Sign in required" }); return; }
 
   try {
-    await publishLibraryNodeWhenEvidenceReady(req.params.topicId);
+    const rawTopicId = req.params.topicId;
+    const topicId = Array.isArray(rawTopicId) ? rawTopicId[0] ?? "" : rawTopicId;
+    await publishLibraryNodeWhenEvidenceReady(topicId);
     res.json({ ok: true, topicId: req.params.topicId, status: "published" });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

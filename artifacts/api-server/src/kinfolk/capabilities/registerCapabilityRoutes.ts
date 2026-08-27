@@ -71,7 +71,9 @@ export function registerKinfolkCapabilityRoutes(
     async (request: AuthenticatedRequest, response: Response) => {
       try {
         const memberId = requireMemberId(request);
-        const turn = await dependencies.turnStore.find({ id: request.params.turnId, memberId });
+        const rawTurnId = request.params.turnId;
+        const turnId = Array.isArray(rawTurnId) ? rawTurnId[0] ?? "" : rawTurnId;
+        const turn = await dependencies.turnStore.find({ id: turnId, memberId });
         if (!turn) return response.status(404).json({ error: "This optional action has expired. Ask Kinfolk again when you are ready." });
 
         const result = await getConsentBasedProfessionalResults({

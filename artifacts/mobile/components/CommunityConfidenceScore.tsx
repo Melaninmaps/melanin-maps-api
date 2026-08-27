@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type BusinessLike = {
@@ -91,7 +91,7 @@ function confidenceLabel(score: number): string {
 type BarProps = { score: number; delay: number };
 
 function AnimatedBar({ score, delay }: BarProps) {
-  const anim = useRef(new Animated.Value(0)).current;
+  const [anim] = useState(() => new Animated.Value(0));
   useEffect(() => {
     Animated.timing(anim, {
       toValue: score / 100,
@@ -99,7 +99,7 @@ function AnimatedBar({ score, delay }: BarProps) {
       delay,
       useNativeDriver: false,
     }).start();
-  }, [score, delay]);
+  }, [score, delay, anim]);
 
   return (
     <View style={bar.track}>

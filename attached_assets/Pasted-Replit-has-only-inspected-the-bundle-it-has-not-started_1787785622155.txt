@@ -1,0 +1,13 @@
+Replit has only **inspected** the bundle; it has not started Task #373. Paste this exact authorization:
+
+> **AUTHORIZED—proceed now.** Extract the intact bundle at the repository root as `replit/task373-surgical/`. Create/switch to `release/task-373-rc`, preserving all current merged work. Execute `START_HERE.md` in order: apply the guarded core repairs, apply the native-video repair, install the Expo-compatible video dependency if requested, restore `supertest` to its owning API package, review `git diff --check` and the file-specific diff, run the 17 source contracts, generate the 72-row evidence matrix, and run the full precommit code gates.
+>
+> If a guarded repair reports a conflict, do **not** force it; manually integrate only that named behavior into the current file, preserving newer code, and rerun validation. Fix every current typecheck, lint, API-test, Expo, and build failure shown in raw logs. Do not classify failures as unrelated or pre-existing.
+>
+> After precommit gates pass, show the complete diff and code-gate summary, commit intended source on the release branch, confirm a clean tree, and run release-mode gates. Then generate signed candidates using the candidate-only commands—**no auto-submit**—and upload only to TestFlight and Google Play internal testing for Task #373 device validation.
+>
+> I authorize reversible source/configuration/dependency changes, the release branch and commit, signed candidate builds, TestFlight upload, Google internal-testing upload, reviewer/test accounts, and evidence generation. I do **not** authorize public store submission, production release, pricing changes, production-data deletion, destructive database work, or unreviewed production deployment. Stop only for credentials/CAPTCHA, an irreversible action, or a true product decision.
+>
+> Return three checkpoints only: **(1) exact files changed and all code-gate results, (2) signed build IDs ready for device testing, and (3) complete evidence ZIP with final GO/NO-GO. Begin execution now; do not send another inspection summary.**
+
+This removes the ambiguity: Replit is authorized to apply and validate the repairs, but not to publish the apps publicly.

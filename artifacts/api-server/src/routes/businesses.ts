@@ -391,7 +391,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
         // Number of scope params before the search-term params
         const N = fuzzyScopeParams.length;
 
-        let fuzzyRes: { rows: Record<string, unknown>[] } = { rows: [] };
+        let fuzzyRes: { rows: Array<typeof businessesTable.$inferSelect & { _sim_score: number }> } = { rows: [] };
 
         if (tokens.length > 1) {
           // Multi-token fuzzy: any significant token matches by ILIKE or trigram,
@@ -409,7 +409,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             ...tokens.map(t => `%${t}%`),
             ...tokens,
           ];
-          const r = await pool.query<Record<string, unknown>>(
+          const r = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
             `SELECT b.*, GREATEST(${simCols}) AS _sim_score
              FROM businesses b
              WHERE ${fuzzyScopeWhere} AND (${orClauses})
@@ -425,7 +425,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
         if (fuzzyRes.rows.length === 0) {
           const phraseParams: unknown[] = [...fuzzyScopeParams, cleanSearch];
           const phraseIdx = N + 1; // position of cleanSearch in params
-          fuzzyRes = await pool.query<Record<string, unknown>>(
+          fuzzyRes = await pool.query<typeof businessesTable.$inferSelect & { _sim_score: number }>(
             `SELECT b.*, similarity(LOWER(b.name), LOWER($${phraseIdx})) AS _sim_score
              FROM businesses b
              WHERE ${fuzzyScopeWhere}
@@ -443,7 +443,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             featured: false,
             promotionType: null,
             culturalMatch: false,
-          })) as typeof withCaptions;
+          }));
           usedFuzzyFallback = true;
         }
       } catch { /* pg_trgm not available — fine */ }

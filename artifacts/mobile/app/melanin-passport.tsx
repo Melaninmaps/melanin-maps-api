@@ -3,7 +3,7 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as Sharing from "expo-sharing";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -82,12 +82,10 @@ export default function MelaninPassportScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [passport, setPassport] = useState<PassportData | null>(null);
-  const shimmer = useRef(new Animated.Value(0)).current;
+  const [shimmer] = useState(() => new Animated.Value(0));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-
-  useEffect(() => { void load(); }, []);
 
   useEffect(() => {
     Animated.loop(
@@ -113,6 +111,8 @@ export default function MelaninPassportScreen() {
     } catch {}
     finally { setLoading(false); }
   };
+
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, []);
 
   const handleShare = async () => {
     if (!passport) return;
@@ -217,7 +217,7 @@ export default function MelaninPassportScreen() {
           {/* Stats grid */}
           <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>YOUR IMPACT</Text>
           <View style={styles.statsGrid}>
-            {(Object.keys(STAT_LABELS) as Array<keyof PassportStats>).map((key) => (
+            {(Object.keys(STAT_LABELS) as (keyof PassportStats)[]).map((key) => (
               <View key={key} style={[styles.statCell, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.statIcon, { backgroundColor: levelColor + "18" }]}>
                   <Feather name={STAT_ICONS[key]} size={18} color={levelColor} />

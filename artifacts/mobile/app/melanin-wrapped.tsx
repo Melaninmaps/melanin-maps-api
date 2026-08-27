@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import * as Haptics from "expo-haptics";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -52,8 +52,8 @@ const CATEGORY_EMOJI: Record<string, string> = {
 function StatCard({ emoji, value, label, color, delay }: {
   emoji: string; value: string | number; label: string; color: string; delay: number;
 }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(20)).current;
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [translateY] = useState(() => new Animated.Value(20));
 
   useEffect(() => {
     Animated.parallel([
@@ -81,8 +81,8 @@ export default function MelaninWrappedScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const heroOpacity = useRef(new Animated.Value(0)).current;
-  const heroScale = useRef(new Animated.Value(0.85)).current;
+  const [heroOpacity] = useState(() => new Animated.Value(0));
+  const [heroScale] = useState(() => new Animated.Value(0.85));
 
   const load = useCallback(async () => {
     setLoading(true); setError(false);
@@ -103,7 +103,7 @@ export default function MelaninWrappedScreen() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   async function handleShare() {
     if (!data) return;

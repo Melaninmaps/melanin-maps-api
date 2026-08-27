@@ -1,4 +1,4 @@
-import { useListBusinesses } from "@workspace/api-client-react";
+import { useListBusinesses, type Business } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, Grid, Map as MapIcon, X, LoaderCircle, BadgeCheck } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -20,7 +20,12 @@ const OWNERSHIP_OPTIONS = [
 const normaliseDesignation = (value: string) =>
   value.trim().toLowerCase().replace(/[_\s]+/g, "-");
 
-function documentedOwnershipTags(business: any): string[] {
+type BusinessWithVerifiedDesignations = Business & {
+  verifiedDesignations?: string[] | null;
+  verified?: boolean | null;
+};
+
+function documentedOwnershipTags(business: BusinessWithVerifiedDesignations): string[] {
   const verified = Array.isArray(business.verifiedDesignations)
     ? business.verifiedDesignations.map((value: string) => normaliseDesignation(value))
     : [];
@@ -47,12 +52,12 @@ export default function Explore() {
 
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(
-      liveBusinesses.map((business: any) => business.category).filter(Boolean),
+      liveBusinesses.map((business) => business.category).filter(Boolean),
     )).sort() as string[]],
     [liveBusinesses],
   );
 
-  const filtered = useMemo(() => liveBusinesses.filter((business: any) => {
+  const filtered = useMemo(() => liveBusinesses.filter((business) => {
     const categoryMatches = activeCategory === "All" || business.category === activeCategory;
     const ownership = documentedOwnershipTags(business);
     const ownershipMatches = selectedOwnership.length === 0 ||

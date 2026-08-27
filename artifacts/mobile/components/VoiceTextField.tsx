@@ -36,6 +36,7 @@ interface VoiceTextFieldProps {
   /** Max height before scrolling; default 160 */
   maxHeight?: number;
   accessibilityLabel?: string;
+  onClearDraftReady?: (clearDraft: () => void) => void;
 }
 
 export function VoiceTextField({
@@ -46,13 +47,16 @@ export function VoiceTextField({
   style,
   maxHeight = 160,
   accessibilityLabel = "Text field with voice option",
+  onClearDraftReady,
 }: VoiceTextFieldProps) {
   const colors = useColors();
   const [showVoiceHint, setShowVoiceHint] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const latestValue = useRef(value);
 
-  latestValue.current = value;
+  useEffect(() => {
+    latestValue.current = value;
+  }, [value]);
 
   // ── Restore draft on mount ────────────────────────────────────────────────
   useEffect(() => {
@@ -85,9 +89,9 @@ export function VoiceTextField({
     if (draftKey) AsyncStorage.removeItem(draftKey).catch(() => {});
   }, [draftKey]);
 
-  // Expose clearDraft so parent can call after submit
-  // (accessed via ref in parent — kept as stable fn on the component)
-  (VoiceTextField as any)._clearDraft = clearDraft;
+  useEffect(() => {
+    onClearDraftReady?.(clearDraft);
+  }, [clearDraft, onClearDraftReady]);
 
   return (
     <View style={[styles.wrapper, { borderColor: colors.border, backgroundColor: colors.card }, style]}>

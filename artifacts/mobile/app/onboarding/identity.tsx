@@ -119,7 +119,7 @@ export default function OnboardingIdentity() {
         <Text style={styles.title}>{"Who Do You\nWant to"}</Text>
         <Text style={styles.titleGold}>Support?</Text>
         <Text style={styles.subtitle}>
-          Select the business designations you care about most. We'll surface these businesses first — everywhere you explore.
+          Select the business designations you care about most. We&apos;ll surface these businesses first — everywhere you explore.
         </Text>
 
         <View style={styles.grid}>
@@ -149,7 +149,7 @@ export default function OnboardingIdentity() {
           <View style={styles.diasporaSection}>
             <Text style={styles.diasporaSectionTitle}>🌍 Country of Origin</Text>
             <Text style={styles.diasporaSectionSub}>
-              Where is your family from? We'll personalize your experience and connect you with businesses of your heritage.
+              Where is your family from? We&apos;ll personalize your experience and connect you with businesses of your heritage.
             </Text>
             <DiasporaFlagPicker
               selected={diasporaCountries}
@@ -182,7 +182,7 @@ export default function OnboardingIdentity() {
               {selected.size === 1
                 ? "1 preference selected"
                 : `${selected.size} preferences selected`}
-              {" — "}we'll prioritize these everywhere
+              {" — "}we&apos;ll prioritize these everywhere
             </Text>
           </View>
         )}

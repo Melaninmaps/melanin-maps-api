@@ -61,7 +61,7 @@ export default function FamilySettingsScreen() {
     }
   }, []);
 
-  useEffect(() => { void fetchSettings(); }, [fetchSettings]);
+  useEffect(() => { queueMicrotask(() => { void fetchSettings(); }); }, [fetchSettings]);
 
   const save = async (next: FamilySettings) => {
     setSaving(true);

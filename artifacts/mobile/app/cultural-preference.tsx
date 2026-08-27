@@ -80,7 +80,7 @@ export default function CulturalPreferenceScreen() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void loadPreference(); }, [loadPreference]);
+  useEffect(() => { queueMicrotask(() => { void loadPreference(); }); }, [loadPreference]);
 
   const toggle = (key: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -128,7 +128,7 @@ export default function CulturalPreferenceScreen() {
               Mapping With Melanin celebrates all minority communities. Setting your preference helps us surface businesses and groups most relevant to your community — first.
             </Text>
             <Text style={[s.explainerSub, { color: colors.mutedForeground }]}>
-              When no match is found nearby, we'll show you the highest-rated minority-owned alternatives.
+              When no match is found nearby, we&apos;ll show you the highest-rated minority-owned alternatives.
             </Text>
           </View>
 

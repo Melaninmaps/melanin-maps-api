@@ -299,7 +299,12 @@ router.post("/cron/weekly-digest", async (req, res): Promise<void> => {
     for (const user of recipients) {
       if (!user.email) continue;
       try {
-        await sendWeeklyDigest(user.email, user.firstName, newBusinesses, weekLabel);
+        await sendWeeklyDigest(
+          user.email,
+          user.firstName,
+          newBusinesses.map((business) => ({ ...business, state: business.state ?? "" })),
+          weekLabel,
+        );
         sent++;
         await new Promise(r => setTimeout(r, 600));
       } catch (err) {

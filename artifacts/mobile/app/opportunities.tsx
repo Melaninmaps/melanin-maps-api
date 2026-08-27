@@ -283,9 +283,9 @@ export default function OpportunitiesScreen() {
   }, [nearMe, userCoords, specialtyFilter]);
 
   useEffect(() => {
-    if (activeTab === "jobs") loadJobs();
-    else if (activeTab === "mentors") loadMentors();
-    else setLoading(false);
+    if (activeTab === "jobs") queueMicrotask(() => { loadJobs(); });
+    else if (activeTab === "mentors") queueMicrotask(() => { loadMentors(); });
+    else queueMicrotask(() => { setLoading(false); });
   }, [activeTab, loadJobs, loadMentors]);
 
   // ── Near Me ──────────────────────────────────────────────────────────────

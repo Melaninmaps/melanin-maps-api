@@ -1,0 +1,38 @@
+{
+  "createdAt": "2026-08-26T23:07:23.315Z",
+  "workspace": "/home/runner/workspace",
+  "backupRoot": "/home/runner/workspace/.task373-backups/2026-08-26T23-07-23-296Z",
+  "changed": [
+    {
+      "file": "artifacts/mobile/app.json",
+      "reason": "Align media permission descriptions and remove obsolete storage/write-contacts permissions",
+      "beforeSha256": "862d47b24c9995029372e7a80d87c4a45e5261ee7f9cebe637f61c5b78702259",
+      "afterSha256": "7668b5aa9f01d875031f0b472cbddf7527dceeed0b8059025676806630d53088"
+    },
+    {
+      "file": "artifacts/mobile/app.config.js",
+      "reason": "Inject commit, release-channel, and environment metadata into resolved Expo config",
+      "beforeSha256": "872ee3504f658141bcdc03896b2082e93162c79dedb17d1e91fae9cdfbcb42f5",
+      "afterSha256": "58f0e17703ffd0214b481577ebeb1150cc2dcaa34f53eaec0496296607732c94"
+    },
+    {
+      "file": "artifacts/mobile/package.json",
+      "reason": "Remove automatic iOS submission and add explicit candidate-only build commands",
+      "beforeSha256": "2eb75bf1ce00d355f1ca91d9f3f24d369523ebfb6472e2180c002079b4361cf7",
+      "afterSha256": "0d097d1c75ef0fed6b249b6a2659d57dc18aa6ecf7110f38478d814d41f78667"
+    },
+    {
+      "file": "artifacts/mobile/app/(tabs)/community.tsx",
+      "reason": "Prevent posting while uploads are active or attachments are incomplete",
+      "beforeSha256": "f880c9cbf350c48be98f83097de5b69b9abc90e56b88b872f32582f83b840743",
+      "afterSha256": "f6e0576df87b2a50beeec6be3b67e156d5e574c25aef3677e2f3979d3623c63f"
+    },
+    {
+      "file": "artifacts/mobile/lib/crashLogger.ts",
+      "reason": "Redact sensitive crash context and include release identity",
+      "beforeSha256": "bb56cde41c4222661f12229993e861f618b455638db9862bdada749462f168f0",
+      "afterSha256": "d512c0337874807fd57a446305f05c94d21df5319a44faecd81ef0ed122fa0f4"
+    }
+  ],
+  "skipped": []
+}

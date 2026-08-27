@@ -16,8 +16,9 @@
  *    No action is required unless you hear otherwise."
  */
 import { Feather } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -36,12 +37,16 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
-import { getApiUrl } from "@/lib/api";
+import { getApiBase } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ContactType = "mwm_user" | "phone" | "email";
 type ShareStatus = "pending" | "active" | "paused_home" | "paused_manual" | "revoked" | "declined";
+
+async function getAuthToken(): Promise<string | null> {
+  return SecureStore.getItemAsync("auth_session_token");
+}
 
 interface TrustedShare {
   id: string;
@@ -73,7 +78,7 @@ function statusColor(status: ShareStatus, colors: ReturnType<typeof useColors>):
   if (status === "active") return "#2D8B57";
   if (status === "pending") return "#C49A28";
   if (status === "paused_home" || status === "paused_manual") return "#888";
-  return colors.textSecondary;
+  return colors.mutedForeground;
 }
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -82,20 +87,23 @@ export default function TrustedSafetyShareScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [shares, setShares] = useState<TrustedShare[]>([]);
   const [loading, setLoading] = useState(true);
   const [masterEnabled, setMasterEnabled] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const fadeIn = useRef(new Animated.Value(0)).current;
+  const [fadeIn] = useState(() => new Animated.Value(0));
 
   // ── Load shares ─────────────────────────────────────────────────────────────
 
   const loadShares = useCallback(async () => {
     try {
-      const res = await fetch(getApiUrl("/safety/trusted-shares"), {
+      if (!isAuthenticated) return;
+      const token = await getAuthToken();
+      if (!token) return;
+      const res = await fetch(`${getApiBase()}/api/safety/trusted-shares`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -107,9 +115,9 @@ export default function TrustedSafetyShareScreen() {
       setLoading(false);
       Animated.timing(fadeIn, { toValue: 1, duration: 300, useNativeDriver: true }).start();
     }
-  }, [token, fadeIn]);
+  }, [isAuthenticated, fadeIn]);
 
-  useEffect(() => { void loadShares(); }, [loadShares]);
+  useEffect(() => { queueMicrotask(() => { void loadShares(); }); }, [loadShares]);
 
   // ── Revoke ──────────────────────────────────────────────────────────────────
 
@@ -124,7 +132,9 @@ export default function TrustedSafetyShareScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await fetch(getApiUrl(`/safety/trusted-shares/${share.id}`), {
+              const token = await getAuthToken();
+              if (!token) throw new Error("Sign in required");
+              await fetch(`${getApiBase()}/api/safety/trusted-shares/${share.id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
               });
@@ -150,7 +160,7 @@ export default function TrustedSafetyShareScreen() {
         </View>
         <View style={styles.cardInfo}>
           <Text style={[styles.cardName, { color: colors.text }]}>{item.contact_name}</Text>
-          <Text style={[styles.cardDetail, { color: colors.textSecondary }]}>
+          <Text style={[styles.cardDetail, { color: colors.mutedForeground }]}>
             {item.contact_type === "mwm_user"
               ? "MWM Member"
               : item.contact_phone ?? item.contact_email ?? ""}
@@ -167,7 +177,7 @@ export default function TrustedSafetyShareScreen() {
         onPress={() => handleRevoke(item)}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       >
-        <Feather name="x" size={18} color={colors.textSecondary} />
+        <Feather name="x" size={18} color={colors.mutedForeground} />
       </TouchableOpacity>
     </View>
   );
@@ -189,7 +199,7 @@ export default function TrustedSafetyShareScreen() {
       borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
     },
     heroTitle: { fontSize: 16, fontWeight: "700", color: colors.text, marginBottom: 6 },
-    heroBody: { fontSize: 14, lineHeight: 21, color: colors.textSecondary },
+    heroBody: { fontSize: 14, lineHeight: 21, color: colors.mutedForeground },
     toggleRow: {
       flexDirection: "row", alignItems: "center", justifyContent: "space-between",
       marginTop: 16, paddingTop: 16,
@@ -197,7 +207,7 @@ export default function TrustedSafetyShareScreen() {
     },
     toggleLabel: { fontSize: 15, fontWeight: "600", color: colors.text },
     sectionTitle: {
-      fontSize: 13, fontWeight: "600", color: colors.textSecondary,
+      fontSize: 13, fontWeight: "600", color: colors.mutedForeground,
       textTransform: "uppercase", letterSpacing: 0.6,
       marginHorizontal: 20, marginTop: 28, marginBottom: 10,
     },
@@ -209,14 +219,14 @@ export default function TrustedSafetyShareScreen() {
     },
     addBtnText: { fontSize: 15, fontWeight: "600", color: "#fff" },
     capNote: {
-      fontSize: 12, color: colors.textSecondary,
+      fontSize: 12, color: colors.mutedForeground,
       textAlign: "center", marginTop: 8, marginHorizontal: 20,
     },
     howTitle: { fontSize: 15, fontWeight: "700", color: colors.text, marginBottom: 10 },
     howItem: {
       flexDirection: "row", gap: 10, marginBottom: 12, alignItems: "flex-start",
     },
-    howText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.textSecondary },
+    howText: { flex: 1, fontSize: 14, lineHeight: 20, color: colors.mutedForeground },
     closingQuote: {
       fontSize: 14, fontStyle: "italic", lineHeight: 21,
       color: colors.text, textAlign: "center",
@@ -238,7 +248,7 @@ export default function TrustedSafetyShareScreen() {
       <Animated.ScrollView style={{ opacity: fadeIn }} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         {/* Hero explanation */}
         <View style={s.heroCard}>
-          <Text style={s.heroTitle}>Your family's peace of mind. Your privacy. Both.</Text>
+          <Text style={s.heroTitle}>Your family&apos;s peace of mind. Your privacy. Both.</Text>
           <Text style={s.heroBody}>
             When a real emergency alert fires at your location — hurricane, earthquake, civil emergency —
             your trusted contacts receive the same alert automatically.{"\n\n"}
@@ -309,22 +319,22 @@ export default function TrustedSafetyShareScreen() {
           <View style={s.howItem}>
             <Feather name="home" size={16} color={colors.tint} style={{ marginTop: 2 }} />
             <Text style={s.howText}>
-              <Text style={{ fontWeight: "600" }}>Auto-pauses when you're home.</Text>
+              <Text style={{ fontWeight: "600" }}>Auto-pauses when you&apos;re home.</Text>
               {" "}When your location matches your home city, the feature pauses automatically.
             </Text>
           </View>
           <View style={s.howItem}>
             <Feather name="x-circle" size={16} color={colors.tint} style={{ marginTop: 2 }} />
             <Text style={s.howText}>
-              <Text style={{ fontWeight: "600" }}>You're always in control.</Text>
+              <Text style={{ fontWeight: "600" }}>You&apos;re always in control.</Text>
               {" "}Turn it off at any time from this screen. Removal is instant and silent.
             </Text>
           </View>
         </View>
 
         <Text style={s.closingQuote}>
-          "This is the feature that makes a parent feel at peace letting their child travel —
-          without making the child feel watched."
+          &quot;This is the feature that makes a parent feel at peace letting their child travel —
+          without making the child feel watched.&quot;
         </Text>
       </Animated.ScrollView>
 
@@ -332,7 +342,6 @@ export default function TrustedSafetyShareScreen() {
       <AddContactModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        token={token ?? ""}
         onAdded={(share) => {
           setShares((prev) => [share, ...prev]);
           setShowAddModal(false);
@@ -349,14 +358,12 @@ export default function TrustedSafetyShareScreen() {
 function AddContactModal({
   visible,
   onClose,
-  token,
   onAdded,
   colors,
   insets,
 }: {
   visible: boolean;
   onClose: () => void;
-  token: string;
   onAdded: (share: TrustedShare) => void;
   colors: ReturnType<typeof useColors>;
   insets: ReturnType<typeof useSafeAreaInsets>;
@@ -378,7 +385,12 @@ function AddContactModal({
 
     setSaving(true);
     try {
-      const res = await fetch(getApiUrl("/safety/trusted-shares"), {
+      const token = await getAuthToken();
+      if (!token) {
+        Alert.alert("Sign in required", "Please sign in to add a trusted contact.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/safety/trusted-shares`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -416,8 +428,8 @@ function AddContactModal({
       backgroundColor: colors.border, alignSelf: "center", marginBottom: 20,
     },
     title: { fontSize: 18, fontWeight: "700", color: colors.text, marginBottom: 4 },
-    subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20 },
-    label: { fontSize: 13, fontWeight: "600", color: colors.textSecondary, marginBottom: 6 },
+    subtitle: { fontSize: 14, color: colors.mutedForeground, marginBottom: 24, lineHeight: 20 },
+    label: { fontSize: 13, fontWeight: "600", color: colors.mutedForeground, marginBottom: 6 },
     input: {
       borderWidth: 1, borderColor: colors.border, borderRadius: 10,
       paddingHorizontal: 14, paddingVertical: 12,
@@ -428,7 +440,7 @@ function AddContactModal({
       flexDirection: "row", alignItems: "center", marginVertical: 4, marginBottom: 16,
     },
     dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-    dividerText: { fontSize: 12, color: colors.textSecondary, marginHorizontal: 12 },
+    dividerText: { fontSize: 12, color: colors.mutedForeground, marginHorizontal: 12 },
     addBtn: {
       backgroundColor: colors.tint, borderRadius: 12,
       paddingVertical: 14, alignItems: "center",
@@ -437,7 +449,7 @@ function AddContactModal({
     },
     addBtnText: { fontSize: 15, fontWeight: "600", color: "#fff" },
     cancelBtn: { paddingVertical: 14, alignItems: "center", marginTop: 8 },
-    cancelText: { fontSize: 15, color: colors.textSecondary },
+    cancelText: { fontSize: 15, color: colors.mutedForeground },
   });
 
   return (
@@ -450,7 +462,7 @@ function AddContactModal({
           <View style={ms.handle} />
           <Text style={ms.title}>Add Trusted Contact</Text>
           <Text style={ms.subtitle}>
-            They'll receive an invite. Once accepted, they'll get the same safety
+            They&apos;ll receive an invite. Once accepted, they&apos;ll get the same safety
             alerts you receive — nothing else.
           </Text>
 
@@ -460,7 +472,7 @@ function AddContactModal({
             value={name}
             onChangeText={setName}
             placeholder="Mom, Dad, Keisha…"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.mutedForeground}
             autoCapitalize="words"
           />
 
@@ -470,7 +482,7 @@ function AddContactModal({
             value={phone}
             onChangeText={setPhone}
             placeholder="+1 (555) 000-0000"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.mutedForeground}
             keyboardType="phone-pad"
           />
 
@@ -486,7 +498,7 @@ function AddContactModal({
             value={email}
             onChangeText={setEmail}
             placeholder="mom@example.com"
-            placeholderTextColor={colors.textSecondary}
+            placeholderTextColor={colors.mutedForeground}
             keyboardType="email-address"
             autoCapitalize="none"
           />

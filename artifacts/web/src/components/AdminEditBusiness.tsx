@@ -406,18 +406,19 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                       <label className={labelCls}>Vibes — {selectedVibes.length} selected</label>
                       <p className="text-xs text-[#3A1F0E]/40 mb-3">Select the vibes that best describe this place</p>
                       <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
-                        {availableVibes.map((v: string) => (
+                        {availableVibes.map((v) => (
                           <button
-                            key={v}
+                            key={v.label}
                             type="button"
-                            onClick={() => toggleVibe(v)}
+                            onClick={() => toggleVibe(v.label)}
+                            title={v.helperText}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                              selectedVibes.includes(v)
+                              selectedVibes.includes(v.label)
                                 ? "bg-[#CA922B] text-white border-[#CA922B]"
                                 : "bg-white text-[#3A1F0E]/60 border-[#2B1507]/15 hover:border-[#CA922B]/50"
                             }`}
                           >
-                            {v}
+                            {v.label}
                           </button>
                         ))}
                       </div>

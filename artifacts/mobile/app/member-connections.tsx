@@ -164,7 +164,7 @@ export default function MemberConnectionsScreen() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchData(); }, [fetchData]);
+  useEffect(() => { queueMicrotask(() => { void fetchData(); }); }, [fetchData]);
 
   // Debounced watcher search
   const handleWatcherSearch = (text: string) => {
@@ -442,7 +442,7 @@ export default function MemberConnectionsScreen() {
                         <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>📍 {m.location}</Text>
                       )}
                       {m.note && (
-                        <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>"{m.note}"</Text>
+                        <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>&quot;{m.note}&quot;</Text>
                       )}
                       <Text style={[styles.requestMeta, { color: "#6B7280" }]}>
                         Sent {formatDateTime(m.initiatedAt)}
@@ -474,7 +474,7 @@ export default function MemberConnectionsScreen() {
               <View style={[styles.persistNote, { backgroundColor: "#7C3AED0A", borderColor: "#7C3AED30" }]}>
                 <Feather name="shield" size={13} color="#7C3AED" />
                 <Text style={[styles.persistNoteText, { color: colors.mutedForeground }]}>
-                  Records are kept permanently for your safety. Clear them with your code when you're done.
+                  Records are kept permanently for your safety. Clear them with your code when you&apos;re done.
                 </Text>
               </View>
               {myMeetups.map((m) => {
@@ -601,7 +601,7 @@ export default function MemberConnectionsScreen() {
                             ) : (
                               <>
                                 <Text style={{ fontSize: 12 }}>🏠</Text>
-                                <Text style={[styles.checkinBtnText, { color: "#14532D" }]}>I'm Home ✓</Text>
+                                <Text style={[styles.checkinBtnText, { color: "#14532D" }]}>I&apos;m Home ✓</Text>
                               </>
                             )}
                           </TouchableOpacity>
@@ -729,7 +729,7 @@ export default function MemberConnectionsScreen() {
                     <Text style={[styles.modalInfoText, { color: colors.foreground }]}>
                       Sending a verification request to{" "}
                       <Text style={{ fontFamily: "Inter_700Bold" }}>{connName(selectedConn)}</Text>.
-                      Once they confirm, you're both marked as verified.
+                      Once they confirm, you&apos;re both marked as verified.
                     </Text>
                   </View>
 
@@ -899,10 +899,10 @@ export default function MemberConnectionsScreen() {
                       <Text style={[styles.watcherSectionOptional, { color: colors.mutedForeground }]}>(optional)</Text>
                     </View>
                     <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>
-                      Set check-in windows for your meetup. A trusted friend (not the person you're meeting) is alerted only if you miss them.
+                      Set check-in windows for your meetup. A trusted friend (not the person you&apos;re meeting) is alerted only if you miss them.
                     </Text>
 
-                    <Text style={[styles.modalLabel, { color: colors.foreground, marginTop: 8 }]}>📍 I'll arrive in…</Text>
+                    <Text style={[styles.modalLabel, { color: colors.foreground, marginTop: 8 }]}>📍 I&apos;ll arrive in…</Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                       {[{ label: "30 min", minutes: 30 }, { label: "1 hr", minutes: 60 }, { label: "1.5 hrs", minutes: 90 }, { label: "2 hrs", minutes: 120 }, { label: "3 hrs", minutes: 180 }].map((opt) => (
                         <TouchableOpacity
@@ -916,7 +916,7 @@ export default function MemberConnectionsScreen() {
                       ))}
                     </View>
 
-                    <Text style={[styles.modalLabel, { color: colors.foreground }]}>🏠 I'll be home in…</Text>
+                    <Text style={[styles.modalLabel, { color: colors.foreground }]}>🏠 I&apos;ll be home in…</Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
                       {[{ label: "2 hrs", minutes: 120 }, { label: "3 hrs", minutes: 180 }, { label: "4 hrs", minutes: 240 }, { label: "5 hrs", minutes: 300 }, { label: "6 hrs", minutes: 360 }, { label: "8 hrs", minutes: 480 }].map((opt) => (
                         <TouchableOpacity
@@ -932,7 +932,7 @@ export default function MemberConnectionsScreen() {
 
                     {(arrivalMinutes != null || homeMinutes != null) && (
                       <>
-                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend's name</Text>
+                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend&apos;s name</Text>
                         <TextInput
                           style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
                           placeholder="e.g. Mom, Best Friend"
@@ -940,7 +940,7 @@ export default function MemberConnectionsScreen() {
                           value={friendName}
                           onChangeText={setFriendName}
                         />
-                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend's email <Text style={{ color: "#DC2626" }}>*</Text></Text>
+                        <Text style={[styles.modalLabel, { color: colors.foreground }]}>Safety friend&apos;s email <Text style={{ color: "#DC2626" }}>*</Text></Text>
                         <TextInput
                           style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
                           placeholder="friend@example.com"
@@ -952,7 +952,7 @@ export default function MemberConnectionsScreen() {
                         />
                         <View style={[styles.privacyNote, { backgroundColor: "#7C3AED08", borderColor: "#7C3AED25" }]}>
                           <Text style={[styles.privacyNoteText, { color: "#5B21B6" }]}>
-                            🔒 Only you and your safety friend will ever receive alerts. The person you're meeting will never be notified.
+                            🔒 Only you and your safety friend will ever receive alerts. The person you&apos;re meeting will never be notified.
                           </Text>
                         </View>
                       </>
@@ -1041,7 +1041,7 @@ export default function MemberConnectionsScreen() {
             </View>
             <Text style={[styles.centeredTitle, { color: colors.foreground }]}>Share Meetup Details</Text>
             <Text style={[styles.centeredDesc, { color: colors.mutedForeground }]}>
-              Send a safety alert email with this meetup's details to a watcher. They'll know who you're meeting and where.
+              Send a safety alert email with this meetup&apos;s details to a watcher. They&apos;ll know who you&apos;re meeting and where.
             </Text>
             <Text style={[styles.modalLabel, { color: colors.foreground, alignSelf: "flex-start", marginTop: 8 }]}>Email address</Text>
             <TextInput

@@ -89,7 +89,7 @@ export default function NotificationPrefsScreen() {
     }
   }, [businessId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const toggleType = (t: BroadcastType) => {
     if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -162,7 +162,7 @@ export default function NotificationPrefsScreen() {
         keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
 
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-          Saving a business doesn't automatically subscribe you to everything. Choose exactly what you want to hear about.
+          Saving a business doesn&apos;t automatically subscribe you to everything. Choose exactly what you want to hear about.
         </Text>
 
         <Text style={[styles.sectionLabel, { color: colors.foreground }]}>What would you like to hear about?</Text>
@@ -178,7 +178,7 @@ export default function NotificationPrefsScreen() {
               <Text style={styles.optEmoji}>{opt.emoji}</Text>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.optLabel, { color: colors.foreground }]}>{opt.label}</Text>
-                {isEmergency && <Text style={[styles.optHint, { color: colors.mutedForeground }]}>Always on — can't be disabled</Text>}
+                {isEmergency && <Text style={[styles.optHint, { color: colors.mutedForeground }]}>Always on — can&apos;t be disabled</Text>}
               </View>
               <View style={[styles.checkbox, { borderColor: active ? colors.primary : colors.border, backgroundColor: active ? colors.primary : "transparent" }]}>
                 {active && <Feather name="check" size={13} color="#FFF" />}

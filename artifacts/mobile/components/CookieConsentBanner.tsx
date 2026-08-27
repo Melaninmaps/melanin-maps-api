@@ -13,7 +13,7 @@ export function CookieConsentBanner() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const slideAnim = React.useRef(new Animated.Value(120)).current;
+  const [slideAnim] = React.useState(() => new Animated.Value(120));
 
   const suppressedRoutes = ["/onboarding", "/login", "/signup"];
   const suppressed = suppressedRoutes.some((r) => pathname?.startsWith(r));
@@ -26,7 +26,7 @@ export function CookieConsentBanner() {
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 60, friction: 10 }).start();
       }
     });
-  }, [suppressed]);
+  }, [suppressed, slideAnim]);
 
   const dismiss = (accepted: boolean) => {
     AsyncStorage.setItem(STORAGE_KEY, accepted ? "accepted" : "declined");

@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -112,7 +112,7 @@ export default function BusinessVerifyScreen() {
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
+  const [progressAnim] = useState(() => new Animated.Value(1 / TOTAL_STEPS));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -519,7 +519,7 @@ export default function BusinessVerifyScreen() {
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               Our team will review your submission within{" "}
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>2–3 business days</Text>.
-              {"\n\n"}You'll be notified once your business status has been updated.
+              {"\n\n"}You&apos;ll be notified once your business status has been updated.
             </Text>
 
             <View style={[styles.stepsPreview, { backgroundColor: colors.secondary }]}>

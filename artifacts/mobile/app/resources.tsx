@@ -106,9 +106,9 @@ export default function ResourcesScreen() {
         keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         <View style={[styles.heroBanner, { backgroundColor: "#2B1507" }]}>
           <Feather name="heart" size={32} color="rgba(255,255,255,0.9)" />
-          <Text style={styles.heroTitle}>You're Not Alone</Text>
+          <Text style={styles.heroTitle}>You&apos;re Not Alone</Text>
           <Text style={styles.heroSub}>
-            Help is always available. Whether you're in crisis, looking for a therapist, or searching for a recovery meeting — these resources are here for you.
+            Help is always available. Whether you&apos;re in crisis, looking for a therapist, or searching for a recovery meeting — these resources are here for you.
           </Text>
         </View>
 

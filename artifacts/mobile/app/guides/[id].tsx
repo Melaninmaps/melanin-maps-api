@@ -111,7 +111,7 @@ export default function GuideDetailScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   // Check ownership via stored token/user
   useEffect(() => {

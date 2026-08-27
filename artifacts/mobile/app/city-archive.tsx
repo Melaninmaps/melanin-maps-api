@@ -135,7 +135,7 @@ function ContributeModal({
               <Text style={{ fontSize: 60 }}>🤎</Text>
               <Text style={[styles.doneTitle, { color: colors.foreground }]}>Thank you!</Text>
               <Text style={[styles.doneSub, { color: colors.mutedForeground }]}>
-                Your contribution is under review. Once approved, it becomes a permanent part of this city's archive — your words, in your community's story.
+                Your contribution is under review. Once approved, it becomes a permanent part of this city&apos;s archive — your words, in your community&apos;s story.
               </Text>
               <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose} activeOpacity={0.85}>
                 <Text style={[styles.doneBtnTxt, { color: colors.primaryForeground }]}>Done</Text>
@@ -199,7 +199,7 @@ function ContributeModal({
 
               <View style={[styles.privacyNote, { backgroundColor: "#CA922B08", borderColor: "#CA922B25" }]}>
                 <Text style={[styles.privacyNoteText, { color: "#92400E" }]}>
-                  🌍 Your contribution becomes a permanent, community-built record of this city's story — reviewed and preserved in the Welcome Home Archive.
+                  🌍 Your contribution becomes a permanent, community-built record of this city&apos;s story — reviewed and preserved in the Welcome Home Archive.
                 </Text>
               </View>
 
@@ -291,7 +291,7 @@ export default function CityArchiveScreen() {
     finally { setLoading(false); }
   }, [slug]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleUpvote = async (contributionId: string) => {
     if (!slug) return;
@@ -391,7 +391,7 @@ export default function CityArchiveScreen() {
         <View style={[styles.pitchCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.pitchTitle, { color: colors.foreground }]}>A Community-Built Legacy</Text>
           <Text style={[styles.pitchText, { color: colors.mutedForeground }]}>
-            The Welcome Home Archive isn't a travel guide — it's a permanent, living record of Black life in this city. Every interview, recommendation, and memory contributed here belongs to the community, forever.
+            The Welcome Home Archive isn&apos;t a travel guide — it&apos;s a permanent, living record of Black life in this city. Every interview, recommendation, and memory contributed here belongs to the community, forever.
           </Text>
         </View>
 

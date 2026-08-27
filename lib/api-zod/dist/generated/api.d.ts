@@ -34,6 +34,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         firstName: zod.ZodNullable<zod.ZodString>;
         lastName: zod.ZodNullable<zod.ZodString>;
         profileImageUrl: zod.ZodNullable<zod.ZodString>;
+        role: zod.ZodEnum<["user", "tester", "admin"]>;
         approved: zod.ZodOptional<zod.ZodBoolean>;
     }, "strip", zod.ZodTypeAny, {
         id: string;
@@ -41,6 +42,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         firstName: string | null;
         lastName: string | null;
         profileImageUrl: string | null;
+        role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
     }, {
         id: string;
@@ -48,6 +50,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         firstName: string | null;
         lastName: string | null;
         profileImageUrl: string | null;
+        role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
     }>, zod.ZodNull]>;
 }, "strip", zod.ZodTypeAny, {
@@ -57,6 +60,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         firstName: string | null;
         lastName: string | null;
         profileImageUrl: string | null;
+        role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
     } | null;
 }, {
@@ -66,6 +70,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         firstName: string | null;
         lastName: string | null;
         profileImageUrl: string | null;
+        role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
     } | null;
 }>;
@@ -732,16 +737,16 @@ export declare const GetMyProfileResponse: zod.ZodObject<{
     firstName?: string | null | undefined;
     lastName?: string | null | undefined;
     profileImageUrl?: string | null | undefined;
-    createdAt?: Date | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
+    createdAt?: Date | null | undefined;
 }, {
     id: string;
     email?: string | null | undefined;
     firstName?: string | null | undefined;
     lastName?: string | null | undefined;
     profileImageUrl?: string | null | undefined;
-    createdAt?: Date | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
+    createdAt?: Date | null | undefined;
 }>;
 /**
  * @summary Update current user profile
@@ -770,16 +775,16 @@ export declare const UpdateMyProfileResponse: zod.ZodObject<{
     firstName?: string | null | undefined;
     lastName?: string | null | undefined;
     profileImageUrl?: string | null | undefined;
-    createdAt?: Date | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
+    createdAt?: Date | null | undefined;
 }, {
     id: string;
     email?: string | null | undefined;
     firstName?: string | null | undefined;
     lastName?: string | null | undefined;
     profileImageUrl?: string | null | undefined;
-    createdAt?: Date | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
+    createdAt?: Date | null | undefined;
 }>;
 /**
  * @summary List community feed posts
@@ -1190,14 +1195,14 @@ export declare const GetOpenaiConversationResponse: zod.ZodObject<{
         createdAt: zod.ZodDate;
     }, "strip", zod.ZodTypeAny, {
         id: number;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
         conversationId: number;
     }, {
         id: number;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
         conversationId: number;
     }>, "many">;
@@ -1207,8 +1212,8 @@ export declare const GetOpenaiConversationResponse: zod.ZodObject<{
     title: string;
     messages: {
         id: number;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
         conversationId: number;
     }[];
@@ -1218,8 +1223,8 @@ export declare const GetOpenaiConversationResponse: zod.ZodObject<{
     title: string;
     messages: {
         id: number;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
         conversationId: number;
     }[];
@@ -1252,14 +1257,14 @@ export declare const ListOpenaiMessagesResponseItem: zod.ZodObject<{
     createdAt: zod.ZodDate;
 }, "strip", zod.ZodTypeAny, {
     id: number;
-    createdAt: Date;
     role: string;
+    createdAt: Date;
     content: string;
     conversationId: number;
 }, {
     id: number;
-    createdAt: Date;
     role: string;
+    createdAt: Date;
     content: string;
     conversationId: number;
 }>;
@@ -1271,14 +1276,14 @@ export declare const ListOpenaiMessagesResponse: zod.ZodArray<zod.ZodObject<{
     createdAt: zod.ZodDate;
 }, "strip", zod.ZodTypeAny, {
     id: number;
-    createdAt: Date;
     role: string;
+    createdAt: Date;
     content: string;
     conversationId: number;
 }, {
     id: number;
-    createdAt: Date;
     role: string;
+    createdAt: Date;
     content: string;
     conversationId: number;
 }>, "many">;

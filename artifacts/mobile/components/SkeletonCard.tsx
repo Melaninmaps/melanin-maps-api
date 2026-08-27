@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
 function SkeletonBox({ style }: { style?: object }) {
-  const opacity = useRef(new Animated.Value(0.4)).current;
+  const [opacity] = useState(() => new Animated.Value(0.4));
 
   useEffect(() => {
     const anim = Animated.loop(

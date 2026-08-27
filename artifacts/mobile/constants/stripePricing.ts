@@ -40,7 +40,7 @@ const LIVE: Record<string, PriceIds> = {
 // ─── Active environment ────────────────────────────────────────────────────────
 // To switch to production: change "test" → "live". No other file needs changing.
 // This is an OTA-safe change — no App Store resubmission required.
-export const STRIPE_ENV: "test" | "live" = "test";
+export const STRIPE_ENV: "test" | "live" = process.env.EXPO_PUBLIC_STRIPE_ENV === "live" ? "live" : "test";
 
 const PRICES = STRIPE_ENV === "live" ? LIVE : TEST;
 
