@@ -190,7 +190,7 @@ if (blocked) {
   console.log("\n  All checks passed. Safe to run:\n");
   if (checkIos) {
     console.log(
-      `    eas build --platform ios --profile production --auto-submit`
+      `    eas build --platform ios --profile production`
     );
     console.log(
       `\n  After the build completes, record the submitted number:\n`

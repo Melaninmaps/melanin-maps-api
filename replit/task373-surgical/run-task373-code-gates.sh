@@ -9,9 +9,6 @@ EVIDENCE="$ROOT/release-evidence/task373-code-gates-$STAMP"
 LOGS="$EVIDENCE/01-code-gates"
 SUMMARY="$EVIDENCE/code-gates-summary.csv"
 
-mkdir -p "$LOGS"
-printf 'gate,status,exit_code,log\n' > "$SUMMARY"
-
 overall=0
 
 record_gate() {
@@ -49,6 +46,11 @@ fi
 
 cd "$ROOT"
 
+status_before="$(git status --short 2>&1 || true)"
+
+mkdir -p "$LOGS"
+printf 'gate,status,exit_code,log\n' > "$SUMMARY"
+
 {
   echo "timestamp=$STAMP"
   echo "mode=$MODE"
@@ -59,9 +61,9 @@ cd "$ROOT"
   echo "pnpm=$(pnpm --version 2>/dev/null || echo missing)"
 } > "$EVIDENCE/environment.txt"
 
-git status --short > "$EVIDENCE/git-status-before.txt" 2>&1 || true
+printf '%s' "$status_before" > "$EVIDENCE/git-status-before.txt"
 
-if [[ "$MODE" == "--release" && -s "$EVIDENCE/git-status-before.txt" ]]; then
+if [[ "$MODE" == "--release" && -n "$status_before" ]]; then
   echo "Release mode requires a clean committed tree." > "$LOGS/clean-tree.log"
   record_gate clean-tree FAIL 1 "$LOGS/clean-tree.log"
 else
@@ -71,17 +73,6 @@ fi
 
 run_gate surgical-source-contracts node "$SCRIPT_DIR/validate-task373-surgical.mjs" "$ROOT"
 run_gate frozen-install pnpm install --frozen-lockfile
-run_gate mobile-audit pnpm --filter @workspace/mobile run audit
-run_gate mobile-typecheck pnpm --filter @workspace/mobile run typecheck
-run_gate mobile-lint pnpm --filter @workspace/mobile run lint
-run_gate mobile-tests pnpm --filter @workspace/mobile test
-run_gate workspace-typecheck pnpm -r --if-present run typecheck
-run_gate workspace-lint pnpm -r --if-present run lint
-run_gate workspace-tests pnpm -r --if-present test
-run_gate workspace-builds env PORT=3000 BASE_PATH=/ METRO_PORT=8082 pnpm -r --if-present run build
-run_gate expo-doctor pnpm --filter @workspace/mobile exec expo-doctor
-run_gate expo-config pnpm --filter @workspace/mobile exec expo config --json
-
 if [[ "$MODE" == "--release" ]]; then
   run_gate ios-prebuild pnpm --filter @workspace/mobile run prebuild:ios
   run_gate android-prebuild pnpm --filter @workspace/mobile run prebuild:android
@@ -92,6 +83,16 @@ else
   printf '%s,%s,%s,%s\n' android-prebuild BLOCKED 0 "${LOGS#$ROOT/}/android-prebuild.log" >> "$SUMMARY"
   overall=1
 fi
+run_gate mobile-audit pnpm --filter @workspace/mobile run audit
+run_gate mobile-typecheck pnpm --filter @workspace/mobile run typecheck
+run_gate mobile-lint pnpm --filter @workspace/mobile run lint
+run_gate mobile-tests pnpm --filter @workspace/mobile test
+run_gate workspace-typecheck pnpm -r --if-present run typecheck
+run_gate workspace-lint pnpm -r --if-present run lint
+run_gate workspace-tests pnpm -r --if-present test
+run_gate workspace-builds env PORT=3000 BASE_PATH=/ METRO_PORT=8082 pnpm -r --if-present run build
+run_gate expo-doctor pnpm --filter @workspace/mobile exec expo-doctor
+run_gate expo-config pnpm --filter @workspace/mobile exec expo config --json
 
 pnpm --filter @workspace/mobile why eslint > "$LOGS/why-eslint.log" 2>&1 || true
 pnpm --filter @workspace/mobile why eslint-config-expo > "$LOGS/why-eslint-config-expo.log" 2>&1 || true
