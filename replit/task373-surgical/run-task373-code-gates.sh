@@ -29,7 +29,10 @@ run_gate() {
   local log="$LOGS/$id.log"
   echo "\n===== $id =====" | tee "$log"
   set +e
-  "$@" 2>&1 | tee -a "$log"
+  # Expo config output can contain provider keys. Redact secret-shaped JSON
+  # fields before writing or echoing evidence; preserve the wrapped command's
+  # exit code via PIPESTATUS[0].
+  "$@" 2>&1 | sed -E 's/("(apiKey|googleMapsApiKey|sentryDsn|token|secret|password|privateKey)"[[:space:]]*:[[:space:]]*")[^"]*"/\1[REDACTED]"/g' | tee -a "$log"
   local code=${PIPESTATUS[0]}
   set -e
   if [[ $code -eq 0 ]]; then
