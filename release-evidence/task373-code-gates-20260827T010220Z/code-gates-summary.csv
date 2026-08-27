@@ -1,0 +1,16 @@
+gate,status,exit_code,log
+clean-tree,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/clean-tree.log
+surgical-source-contracts,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/surgical-source-contracts.log
+frozen-install,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/frozen-install.log
+mobile-audit,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/mobile-audit.log
+mobile-typecheck,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/mobile-typecheck.log
+mobile-lint,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/mobile-lint.log
+mobile-tests,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/mobile-tests.log
+workspace-typecheck,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/workspace-typecheck.log
+workspace-lint,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/workspace-lint.log
+workspace-tests,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/workspace-tests.log
+workspace-builds,FAIL,1,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/workspace-builds.log
+expo-doctor,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/expo-doctor.log
+expo-config,PASS,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/expo-config.log
+ios-prebuild,BLOCKED,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/ios-prebuild.log
+android-prebuild,BLOCKED,0,release-evidence/task373-code-gates-20260827T010220Z/01-code-gates/android-prebuild.log

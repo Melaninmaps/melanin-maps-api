@@ -1,0 +1,7 @@
+timestamp=20260827T002517Z
+mode=--release
+root=/home/runner/workspace
+branch=release/task-373-rc
+commit=cb937479db04dcb4f7a5db1772285d09b86b2e28
+node=v24.13.0
+pnpm=10.26.1

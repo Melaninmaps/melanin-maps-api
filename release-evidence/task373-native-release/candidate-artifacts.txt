@@ -1,0 +1,29 @@
+Task 373 exact signed candidates
+
+Source commit: cb937479db04dcb4f7a5db1772285d09b86b2e28
+Runtime version: 1.1.5-native.2
+Mobile tree at prebuild/build submission: clean
+
+iOS
+EAS build ID: 615e8a7a-9163-4006-8484-08ed38f6c1c6
+Build details: https://expo.dev/accounts/tlindsay428/projects/mobile/builds/615e8a7a-9163-4006-8484-08ed38f6c1c6
+Artifact: IPA
+Bundle identifier: com.melaninmaps.app
+Version: 1.1.5
+Build number: 102
+Archive SHA-256: 1a574492d007a5db28bf19695b7d53731eb449713840a3703939fecdfc7e6f16
+Archive checks: CodeResources and embedded.mobileprovision present; Info.plist matches identifier/version/build.
+
+Android
+EAS build ID: e2a53b5e-9f04-438a-9e15-f1450aa4e55a
+Build details: https://expo.dev/accounts/tlindsay428/projects/mobile/builds/e2a53b5e-9f04-438a-9e15-f1450aa4e55a
+Artifact: AAB
+Package: com.melaninmaps.app
+Version: 1.1.5
+Version code: 77
+Archive SHA-256: a9447e2418dd7045bc8acabfaa606ce2d47b2ba396b57c064a351d2cd5f8814c
+Archive checks: META-INF/UPLOAD.RSA and MANIFEST.MF present; embedded Expo app.config matches package/version/versionCode.
+
+Native acceptance status: NOT TESTED
+Store/policy acceptance status: NOT TESTED
+Final status: NO-GO
