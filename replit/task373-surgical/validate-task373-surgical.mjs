@@ -31,8 +31,8 @@ const crashLogger = text(path.join("artifacts", "mobile", "lib", "crashLogger.ts
 const permissions = new Set(appJson.expo?.android?.permissions ?? []);
 const blockedPermissions = new Set(appJson.expo?.android?.blockedPermissions ?? []);
 
-check("S01", "iOS identity remains correct", () => appJson.expo.ios.bundleIdentifier === "com.melaninmaps.app" && appJson.expo.ios.buildNumber === "102", appJsonPath);
-check("S02", "Android identity remains correct", () => appJson.expo.android.package === "com.melaninmaps.app" && appJson.expo.android.versionCode === 77, appJsonPath);
+check("S01", "iOS identity remains correct", () => appJson.expo.ios.bundleIdentifier === "com.melaninmaps.app" && appJson.expo.ios.buildNumber === "103", appJsonPath);
+check("S02", "Android identity remains correct", () => appJson.expo.android.package === "com.melaninmaps.app" && appJson.expo.android.versionCode === 78, appJsonPath);
 check("S03", "Camera purpose covers community media", () => /community photo or video/i.test(appJson.expo.ios.infoPlist.NSCameraUsageDescription), appJsonPath);
 check("S04", "Photo-library purpose covers selected photos and videos", () => /photos and videos you select/i.test(appJson.expo.ios.infoPlist.NSPhotoLibraryUsageDescription), appJsonPath);
 check("S05", "Android declares media image and video read access", () => permissions.has("android.permission.READ_MEDIA_IMAGES") && permissions.has("android.permission.READ_MEDIA_VIDEO"), appJsonPath);
