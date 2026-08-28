@@ -45,12 +45,12 @@
       "environment": "production",
       "autoIncrement": false,
       "ios": {
-        "credentialsSource": "local",
+        "credentialsSource": "remote",
         "resourceClass": "m-medium"
       },
       "android": {
         "buildType": "app-bundle",
-        "credentialsSource": "local"
+        "credentialsSource": "remote"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",

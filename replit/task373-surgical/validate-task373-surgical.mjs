@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const ROOT = path.resolve(process.argv[2] ?? process.cwd());
 const MOBILE = path.join(ROOT, "artifacts", "mobile");
@@ -22,14 +23,34 @@ function text(relative) {
   return fs.readFileSync(path.join(ROOT, relative), "utf8");
 }
 
+function trackedFiles(relative) {
+  try {
+    return execFileSync("git", ["ls-files", "--cached", "--", relative], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .split(/\r?\n/)
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 const appJsonPath = path.join("artifacts", "mobile", "app.json");
 const appJson = JSON.parse(text(appJsonPath));
+const easJsonPath = path.join("artifacts", "mobile", "eas.json");
+const easJson = JSON.parse(text(easJsonPath));
 const appConfig = text(path.join("artifacts", "mobile", "app.config.js"));
 const packageJson = JSON.parse(text(path.join("artifacts", "mobile", "package.json")));
 const community = text(path.join("artifacts", "mobile", "app", "(tabs)", "community.tsx"));
 const crashLogger = text(path.join("artifacts", "mobile", "lib", "crashLogger.ts"));
 const permissions = new Set(appJson.expo?.android?.permissions ?? []);
 const blockedPermissions = new Set(appJson.expo?.android?.blockedPermissions ?? []);
+const trackedMobileFiles = trackedFiles("artifacts/mobile");
+const trackedCredentialFiles = trackedMobileFiles.filter((file) => file === "artifacts/mobile/credentials.json");
+const trackedServiceAccountFiles = trackedMobileFiles.filter((file) => file === "artifacts/mobile/google-service-account.json");
+const trackedSigningFiles = trackedMobileFiles.filter((file) => /\.(jks|keystore|p12|mobileprovision|p8|pem|key)$/i.test(file));
 
 check("S01", "iOS identity remains correct", () => appJson.expo.ios.bundleIdentifier === "com.melaninmaps.app" && appJson.expo.ios.buildNumber === "103", appJsonPath);
 check("S02", "Android identity remains correct", () => appJson.expo.android.package === "com.melaninmaps.app" && appJson.expo.android.versionCode === 78, appJsonPath);
@@ -48,6 +69,11 @@ check("S14", "Crash request URLs are sanitized", () => /sanitizeBreadcrumbUrl/.t
 check("S15", "Crash route and coordinate context is minimized", () => /sanitizeRoute/.test(crashLogger) && /sanitizeMapState/.test(crashLogger) && /toFixed\(2\)/.test(crashLogger), "artifacts/mobile/lib/crashLogger.ts");
 check("S16", "Crash reports include release identity", () => /releaseChannel: meta\.releaseChannel/.test(crashLogger) && /environment: meta\.environment/.test(crashLogger), "artifacts/mobile/lib/crashLogger.ts");
 check("S17", "Crash messages and stacks pass through redaction", () => /message: redactSensitiveText/.test(crashLogger) && /stack: redactSensitiveText/.test(crashLogger), "artifacts/mobile/lib/crashLogger.ts");
+check("S18", "Production iOS uses EAS remote credentials", () => easJson.build?.production?.ios?.credentialsSource === "remote", easJsonPath);
+check("S19", "Production Android uses EAS remote credentials", () => easJson.build?.production?.android?.credentialsSource === "remote", easJsonPath);
+check("S20", "Tracked credentials.json is absent", () => trackedCredentialFiles.length === 0, `tracked files: ${trackedCredentialFiles.join(", ") || "none"}`);
+check("S21", "Tracked signing binary count is zero", () => trackedSigningFiles.length === 0, `tracked files: ${trackedSigningFiles.join(", ") || "none"}`);
+check("S22", "Tracked Google service-account JSON is absent", () => trackedServiceAccountFiles.length === 0, `tracked files: ${trackedServiceAccountFiles.join(", ") || "none"}`);
 
 const failures = results.filter((result) => result.status !== "PASS");
 const report = {
