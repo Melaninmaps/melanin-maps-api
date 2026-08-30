@@ -32,8 +32,10 @@ const mobileKinfolk = read("artifacts/mobile/app/travel.tsx");
 const mobileHook = read("artifacts/mobile/hooks/useKinfolk.ts");
 const mobileMemory = read("artifacts/mobile/app/kinfolk-memory.tsx");
 const mobileConfig = JSON.parse(read("artifacts/mobile/app.json"));
+const easConfig = JSON.parse(read("artifacts/mobile/eas.json"));
 
 check("combined candidate identity", mobileConfig.expo?.ios?.buildNumber === "104" && mobileConfig.expo?.android?.versionCode === 79 && mobileConfig.expo?.ios?.bundleIdentifier === "com.melaninmaps.app" && mobileConfig.expo?.android?.package === "com.melaninmaps.app", "combined candidate is uniquely iOS 104 and Android 79 for com.melaninmaps.app");
+check("Expo SDK 57 GitHub build runtime", easConfig.build?.production?.node === "22.23.1" && easConfig.build?.production?.corepack === true && easConfig.build?.production?.pnpm === "10.26.1" && easConfig.build?.production?.ios?.image === "sdk-57" && easConfig.build?.production?.android?.image === "sdk-57", "production GitHub builds pin the Expo SDK 57 images and Node runtime required by Metro");
 check("post comment policy schema", postSchema.includes('commentPolicy: varchar("comment_policy"') && postSchema.includes('status: varchar("status"'), "posts and comments expose governed policy/status fields");
 check("private Kinfolk memory schema", memorySchema.includes("kinfolk_private_memories") && memorySchema.includes("consentGrantedAt") && memorySchema.includes("expiresAt") && memorySchema.includes("revokedAt"), "private memory is owned, consented, expiring, and revocable");
 check("additive startup migration", migrations.includes("comment_policy") && migrations.includes("kinfolk_private_memories") && migrations.includes("source_status"), "runtime migration covers all additive fields");
