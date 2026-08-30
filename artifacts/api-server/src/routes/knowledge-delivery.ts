@@ -1,10 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable, userPreferencesTable, communityPostsTable, contentReportsTable } from "@workspace/db";
+import { db, pool, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, happeningTopicInterestEventsTable, usersTable, userPreferencesTable, communityPostsTable, contentReportsTable } from "@workspace/db";
 import { and, eq, inArray, desc, or, sql } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { checkContent } from "../lib/contentFilter";
 import { scanForFamily } from "../lib/familyFilter";
 import { validatePublicUrl } from "../lib/url-safety-validator";
+import { HAPPENING_CATEGORIES as HAPPENING_CATEGORY_LIST, isLocalStory, normalizeCity, normalizeHappeningCategory, normalizeHomeState } from "../lib/happening-personalization";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdmin(req: Request): boolean {
@@ -24,10 +25,7 @@ function requireAuth(req: Request, res: Response): boolean {
   return true;
 }
 
-const HAPPENING_CATEGORIES = new Set([
-  "politics", "health", "safety", "housing", "education", "economy",
-  "environment", "transportation", "culture", "community", "other",
-]);
+const HAPPENING_CATEGORIES = new Set<string>(HAPPENING_CATEGORY_LIST);
 const HAPPENING_SCOPES = new Set(["local", "state", "national", "global"]);
 
 function normalizeHttpUrl(value: unknown): string | null {
@@ -290,6 +288,71 @@ router.post("/knowledge/topics/request", async (req: Request, res: Response) => 
 
 /* ─── Happening Now ─── */
 
+// Consent is intentionally explicit and this endpoint only accepts governed
+// identifiers. It must not be wired to search, chat, or submission-note events.
+router.get("/knowledge/happening-now/topic-interests", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const interests = await db.select({
+      id: happeningTopicInterestEventsTable.id,
+      category: happeningTopicInterestEventsTable.category,
+      topicId: happeningTopicInterestEventsTable.topicId,
+      consentedAt: happeningTopicInterestEventsTable.consentedAt,
+    }).from(happeningTopicInterestEventsTable)
+      .where(and(eq(happeningTopicInterestEventsTable.userId, req.user!.id), sql`${happeningTopicInterestEventsTable.revokedAt} IS NULL`))
+      .orderBy(desc(happeningTopicInterestEventsTable.createdAt));
+    res.json({ interests });
+  } catch (err) {
+    req.log.error({ err }, "GET /knowledge/happening-now/topic-interests error");
+    res.status(500).json({ error: "Failed to fetch topic interests." });
+  }
+});
+
+router.put("/knowledge/happening-now/topic-interests", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const { consent, category: requestedCategory, topicId } = req.body as { consent?: unknown; category?: unknown; topicId?: unknown };
+    if (consent !== true) { res.status(400).json({ error: "Explicit consent: true is required." }); return; }
+    const category = requestedCategory === undefined ? null : normalizeHappeningCategory(requestedCategory);
+    const canonicalTopicId = typeof topicId === "string" && topicId.trim() ? topicId.trim() : null;
+    if ((requestedCategory !== undefined && !category) || (!category && !canonicalTopicId)) {
+      res.status(400).json({ error: "Provide an approved category or canonical topicId." }); return;
+    }
+    if (canonicalTopicId) {
+      const [topic] = await db.select({ id: knowledgeTopicsTable.id }).from(knowledgeTopicsTable)
+        .where(and(eq(knowledgeTopicsTable.id, canonicalTopicId), eq(knowledgeTopicsTable.enabled, true))).limit(1);
+      if (!topic) { res.status(400).json({ error: "topicId must identify an enabled canonical topic." }); return; }
+    }
+    const [interest] = await db.insert(happeningTopicInterestEventsTable)
+      .values({ userId: req.user!.id, category, topicId: canonicalTopicId }).returning();
+    res.status(201).json({ interest });
+  } catch (err) {
+    req.log.error({ err }, "PUT /knowledge/happening-now/topic-interests error");
+    res.status(500).json({ error: "Failed to save topic interest." });
+  }
+});
+
+router.delete("/knowledge/happening-now/topic-interests", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const { category: requestedCategory, topicId, reset } = req.body as { category?: unknown; topicId?: unknown; reset?: unknown };
+    const category = requestedCategory === undefined ? null : normalizeHappeningCategory(requestedCategory);
+    const canonicalTopicId = typeof topicId === "string" && topicId.trim() ? topicId.trim() : null;
+    if (requestedCategory !== undefined && !category) { res.status(400).json({ error: "category must be approved." }); return; }
+    if (reset !== true && !category && !canonicalTopicId) {
+      res.status(400).json({ error: "Provide an interest identifier or reset: true." }); return;
+    }
+    const clauses = [eq(happeningTopicInterestEventsTable.userId, req.user!.id), sql`${happeningTopicInterestEventsTable.revokedAt} IS NULL`];
+    if (category) clauses.push(eq(happeningTopicInterestEventsTable.category, category));
+    if (canonicalTopicId) clauses.push(eq(happeningTopicInterestEventsTable.topicId, canonicalTopicId));
+    await db.update(happeningTopicInterestEventsTable).set({ revokedAt: new Date() }).where(and(...clauses));
+    res.json({ ok: true, reset: reset === true });
+  } catch (err) {
+    req.log.error({ err }, "DELETE /knowledge/happening-now/topic-interests error");
+    res.status(500).json({ error: "Failed to revoke topic interest." });
+  }
+});
+
 router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -298,6 +361,9 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
     const scopeFilter = typeof req.query.scope === "string" && HAPPENING_SCOPES.has(req.query.scope)
       ? req.query.scope
       : null;
+    // State is the sole supported expansion today. It is opt-in and surfaced
+    // to clients rather than silently mixing unrelated local cities.
+    const expandLocalToState = scopeFilter === "local" && req.query.localExpansion === "state";
 
     const visibility = admin
       ? or(eq(happeningNowStoriesTable.status, "approved"), eq(happeningNowStoriesTable.status, "pending"))
@@ -336,13 +402,18 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
 
     let confirmedIds = new Set<string>();
     let interests = new Set<string>();
+    let avoidCategories = new Set<string>();
     let favoriteCities = new Set<string>();
     let homeCity = "";
+    let homeState: string | null = null;
     if (userId) {
-      const [confs, prefRows, userRows] = await Promise.all([
+      const [confs, prefRows, userRows, interestEvents] = await Promise.all([
         db.select({ storyId: storyConfirmationsTable.storyId }).from(storyConfirmationsTable).where(eq(storyConfirmationsTable.userId, userId)),
         db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, userId)).limit(1),
-        db.select({ homeCity: usersTable.homeCity }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+        db.select({ homeCity: usersTable.homeCity, homeState: usersTable.homeState }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+        db.select({ category: happeningTopicInterestEventsTable.category, topicId: happeningTopicInterestEventsTable.topicId })
+          .from(happeningTopicInterestEventsTable)
+          .where(and(eq(happeningTopicInterestEventsTable.userId, userId), sql`${happeningTopicInterestEventsTable.revokedAt} IS NULL`)),
       ]);
       confirmedIds = new Set(confs.map((c) => c.storyId));
       const prefs = prefRows[0];
@@ -350,14 +421,28 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
         ...(prefs?.favoriteCategories ?? []),
         ...(prefs?.culturalInterests ?? []),
         ...(prefs?.lifestyleServices ?? []),
-      ].map((value) => value.toLowerCase()));
-      favoriteCities = new Set((prefs?.favoriteCities ?? []).map((value) => value.toLowerCase()));
-      homeCity = (userRows[0]?.homeCity ?? "").toLowerCase();
+        ...interestEvents.flatMap((event) => [event.category, event.topicId].filter((value): value is string => !!value)),
+      ].map((value) => normalizeHappeningCategory(value) ?? value.toLowerCase()));
+      // Avoid choices apply explicitly to For You, even where a matching
+      // interest event exists. Latest remains an unpersonalized chronological view.
+      const normalizedAvoids: string[] = [];
+      for (const value of prefs?.avoidCategories ?? []) {
+        const normalized = normalizeHappeningCategory(value);
+        if (normalized) normalizedAvoids.push(normalized);
+      }
+      avoidCategories = new Set(normalizedAvoids);
+      favoriteCities = new Set((prefs?.favoriteCities ?? []).map(normalizeCity).filter(Boolean));
+      homeCity = normalizeCity(userRows[0]?.homeCity);
+      homeState = normalizeHomeState(userRows[0]?.homeState)
+        ?? normalizeHomeState((userRows[0]?.homeCity ?? "").split(",").pop());
     }
+    const localCities = new Set([...favoriteCities, homeCity].filter(Boolean));
 
     const now = Date.now();
     const visibleRows = rows.filter((story) => {
       if (scopeFilter && story.scope !== scopeFilter) return false;
+      if (scopeFilter === "local" && !isLocalStory(story, localCities, homeState, expandLocalToState)) return false;
+      if (feedMode === "foryou" && avoidCategories.has(normalizeHappeningCategory(story.category) ?? story.category.toLowerCase())) return false;
       if (story.status !== "approved") return true;
       return !story.expiresAt || new Date(story.expiresAt).getTime() > now;
     });
@@ -365,16 +450,16 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
     const ranked = visibleRows.map((story) => {
       const reasons: string[] = [];
       let score = 0;
-      const category = story.category.toLowerCase();
+      const category = normalizeHappeningCategory(story.category) ?? story.category.toLowerCase();
       const tags = (story.topicTags ?? []).map((tag) => tag.toLowerCase());
       const city = (story.city ?? "").toLowerCase();
-      const state = (story.state ?? "").toLowerCase();
+      const state = normalizeHomeState(story.state);
       const ageHours = Math.max(0, (now - new Date(story.publishedAt ?? story.createdAt).getTime()) / 3_600_000);
 
       if (story.status === "pending" && story.submittedBy === userId) { score += 1000; reasons.push("Your pending submission"); }
       if (interests.has(category) || tags.some((tag) => interests.has(tag))) { score += 14; reasons.push(`Matches your ${story.category} interests`); }
-      if (city && (homeCity.includes(city) || favoriteCities.has(city))) { score += 12; reasons.push(`Near ${story.city}`); }
-      else if (state && homeCity.includes(state)) { score += 7; reasons.push(`In your state`); }
+      if (city && localCities.has(normalizeCity(city))) { score += 12; reasons.push(`Near ${story.city}`); }
+      else if (state && homeState === state) { score += 7; reasons.push(`In your state`); }
       else if (story.scope === "national") score += 3;
       else if (story.scope === "global") score += 1;
       if (story.sourceStatus === "verified") { score += 5; reasons.push("Verified source"); }
@@ -403,7 +488,12 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
     }
     diverse.push(...deferred);
 
-    res.json({ stories: diverse.slice(0, 50), feedMode, personalized: !!userId && feedMode === "foryou" });
+    res.json({
+      stories: diverse.slice(0, 50), feedMode, personalized: !!userId && feedMode === "foryou",
+      localExpansion: scopeFilter === "local"
+        ? { active: expandLocalToState ? "state" : null, available: homeState ? ["state"] : [] }
+        : undefined,
+    });
   } catch (err) {
     req.log.error({ err }, "GET /knowledge/happening-now error");
     res.status(500).json({ error: "Failed to fetch stories." });

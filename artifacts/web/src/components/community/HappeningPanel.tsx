@@ -36,6 +36,8 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
   const [stories, setStories] = useState<HappeningStory[]>([]);
   const [feed, setFeed] = useState<"foryou" | "latest">("foryou");
   const [scope, setScope] = useState<string>("all");
+  const [localExpansion, setLocalExpansion] = useState<"state" | null>(null);
+  const [stateExpansionAvailable, setStateExpansionAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -47,16 +49,22 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
     try {
       const params = new URLSearchParams({ feed });
       if (scope !== "all") params.set("scope", scope);
+      if (scope === "local" && localExpansion) params.set("localExpansion", localExpansion);
       const response = await fetch(`${BASE}api/knowledge/happening-now?${params.toString()}`, { credentials: "include" });
-      const body = await response.json().catch(() => ({})) as { stories?: HappeningStory[]; error?: string };
+      const body = await response.json().catch(() => ({})) as {
+        stories?: HappeningStory[];
+        error?: string;
+        localExpansion?: { active?: "state" | null; available?: string[] };
+      };
       if (!response.ok) throw new Error(body.error ?? "Could not load community updates.");
       setStories(body.stories ?? []);
+      setStateExpansionAvailable(body.localExpansion?.available?.includes("state") ?? false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load community updates.");
     } finally {
       setLoading(false);
     }
-  }, [feed, scope]);
+  }, [feed, scope, localExpansion]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -98,10 +106,20 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
 
       <div className="flex flex-wrap items-center gap-2">
         {(["foryou", "latest"] as const).map((item) => <button key={item} onClick={() => setFeed(item)} className={`rounded-full px-4 py-2 text-xs font-bold ${feed === item ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/55"}`}>{item === "foryou" ? "For You" : "Latest"}</button>)}
-        <select aria-label="Community update scope" value={scope} onChange={(event) => setScope(event.target.value)} className="ml-auto rounded-full border border-[#3A1F0E]/10 bg-white px-4 py-2 text-xs font-bold text-[#3A1F0E]/65">
+        <select aria-label="Community update scope" value={scope} onChange={(event) => { setScope(event.target.value); setLocalExpansion(null); }} className="ml-auto rounded-full border border-[#3A1F0E]/10 bg-white px-4 py-2 text-xs font-bold text-[#3A1F0E]/65">
           <option value="all">All locations</option>
           {SCOPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
         </select>
+        {scope === "local" && stateExpansionAvailable && (
+          <button
+            type="button"
+            data-testid="happening-local-expansion"
+            onClick={() => setLocalExpansion((current) => current === "state" ? null : "state")}
+            className="rounded-full border border-[#CA922B]/30 bg-[#CA922B]/10 px-4 py-2 text-xs font-bold text-[#8A5A10]"
+          >
+            {localExpansion === "state" ? "Only my cities" : "Expand to my state"}
+          </button>
+        )}
       </div>
 
       {error && <div className={`rounded-2xl border px-4 py-3 text-sm ${error.startsWith("Thanks") ? "border-green-200 bg-green-50 text-green-800" : "border-red-100 bg-red-50 text-red-700"}`}><div className="flex items-center justify-between gap-3"><span>{error}</span><button onClick={() => { setError(null); void load(); }} className="font-bold">Retry</button></div></div>}

@@ -199,6 +199,18 @@ export const userBadgesTable = pgTable("user_badges", {
   expiresAt: timestamp("expires_at"),
 });
 
+// Immutable consented preference events. These contain identifiers only, never
+// search terms, chat text, member notes, or other free-form member content.
+export const happeningTopicInterestEventsTable = pgTable("happening_topic_interest_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  category: varchar("category", { length: 50 }),
+  topicId: varchar("topic_id", { length: 100 }),
+  consentedAt: timestamp("consented_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const badgeHelpfulVotesTable = pgTable("badge_helpful_votes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   badgeId: varchar("badge_id", { length: 100 }).notNull().references(() => userBadgesTable.id, { onDelete: "cascade" }),

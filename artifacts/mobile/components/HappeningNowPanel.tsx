@@ -47,6 +47,8 @@ export function HappeningNowPanel({ isAuthenticated, bottomPadding, onDiscuss }:
   const [stories, setStories] = useState<HappeningNowStory[]>([]);
   const [feed, setFeed] = useState<"foryou" | "latest">("foryou");
   const [scope, setScope] = useState<string>("all");
+  const [localExpansion, setLocalExpansion] = useState<"state" | null>(null);
+  const [stateExpansionAvailable, setStateExpansionAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -60,14 +62,20 @@ export function HappeningNowPanel({ isAuthenticated, bottomPadding, onDiscuss }:
     try {
       const params = new URLSearchParams({ feed });
       if (scope !== "all") params.set("scope", scope);
+      if (scope === "local" && localExpansion) params.set("localExpansion", localExpansion);
       const response = await fetch(`${getApiBase()}/api/knowledge/happening-now?${params.toString()}`, { headers: await authHeaders() });
-      const body = await response.json().catch(() => ({})) as { stories?: HappeningNowStory[]; error?: string };
+      const body = await response.json().catch(() => ({})) as {
+        stories?: HappeningNowStory[];
+        error?: string;
+        localExpansion?: { active?: "state" | null; available?: string[] };
+      };
       if (!response.ok) throw new Error(body.error ?? "Could not load community updates.");
       setStories(body.stories ?? []);
+      setStateExpansionAvailable(body.localExpansion?.available?.includes("state") ?? false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load community updates.");
     } finally { setLoading(false); setRefreshing(false); }
-  }, [feed, scope]);
+  }, [feed, scope, localExpansion]);
 
   useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
@@ -100,7 +108,8 @@ export function HappeningNowPanel({ isAuthenticated, bottomPadding, onDiscuss }:
     </View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>
       {(["foryou", "latest"] as const).map((value) => <TouchableOpacity key={value} onPress={() => setFeed(value)} style={[s.chip, { borderColor: feed === value ? colors.foreground : colors.border, backgroundColor: feed === value ? colors.foreground : colors.card }]}><Text style={[s.chipText, { color: feed === value ? colors.background : colors.mutedForeground }]}>{value === "foryou" ? "For You" : "Latest"}</Text></TouchableOpacity>)}
-      {["all", ...SCOPES].map((value) => <TouchableOpacity key={value} onPress={() => setScope(value)} style={[s.chip, { borderColor: scope === value ? colors.primary : colors.border, backgroundColor: scope === value ? colors.primary + "18" : colors.card }]}><Text style={[s.chipText, { color: scope === value ? colors.primary : colors.mutedForeground }]}>{value === "all" ? "All locations" : value[0].toUpperCase() + value.slice(1)}</Text></TouchableOpacity>)}
+      {["all", ...SCOPES].map((value) => <TouchableOpacity key={value} onPress={() => { setScope(value); setLocalExpansion(null); }} style={[s.chip, { borderColor: scope === value ? colors.primary : colors.border, backgroundColor: scope === value ? colors.primary + "18" : colors.card }]}><Text style={[s.chipText, { color: scope === value ? colors.primary : colors.mutedForeground }]}>{value === "all" ? "All locations" : value[0].toUpperCase() + value.slice(1)}</Text></TouchableOpacity>)}
+      {scope === "local" && stateExpansionAvailable && <TouchableOpacity accessibilityLabel="Expand local updates to my state" onPress={() => setLocalExpansion((current) => current === "state" ? null : "state")} style={[s.chip, { borderColor: colors.primary, backgroundColor: colors.primary + "18" }]}><Text style={[s.chipText, { color: colors.primary }]}>{localExpansion === "state" ? "Only my cities" : "Expand to my state"}</Text></TouchableOpacity>}
     </ScrollView>
     {!!error && <TouchableOpacity onPress={() => void load()} style={s.errorBanner}><Text style={s.errorText}>{error} Tap to retry.</Text></TouchableOpacity>}
   </View>;

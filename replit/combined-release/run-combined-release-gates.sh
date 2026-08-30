@@ -13,6 +13,7 @@ if [[ -z "$ROOT" ]]; then
   exit 2
 fi
 cd "$ROOT"
+INITIAL_DIRTY="$(git status --porcelain)"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE="$ROOT/release-evidence/combined-release-$STAMP"
 mkdir -p "$EVIDENCE/logs"
@@ -30,13 +31,13 @@ run_gate() {
 
 : > "$EVIDENCE/status.tsv"
 printf 'mode\t%s\nbranch\t%s\ncommit\t%s\ndirty\t%s\n' \
-  "$MODE" "$(git branch --show-current)" "$(git rev-parse HEAD)" "$(test -n "$(git status --porcelain)" && echo yes || echo no)" \
+  "$MODE" "$(git branch --show-current)" "$(git rev-parse HEAD)" "$(test -n "$INITIAL_DIRTY" && echo yes || echo no)" \
   > "$EVIDENCE/identity.tsv"
 
 run_gate 01_diff_check git diff --check
 run_gate 02_source_contracts node replit/combined-release/validate-combined-release.mjs
 run_gate 03_frozen_install pnpm install --frozen-lockfile
-run_gate 04_shared_types env NODE_OPTIONS=--max-old-space-size=4096 pnpm run typecheck:libs
+run_gate 04_shared_types env NODE_OPTIONS=--max-old-space-size=4096 pnpm exec tsc --build --force
 run_gate 05_api_typecheck env NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @workspace/api-server typecheck
 run_gate 06_web_typecheck env NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @workspace/web typecheck
 run_gate 07_mobile_typecheck env NODE_OPTIONS=--max-old-space-size=4096 pnpm --filter @workspace/mobile typecheck
@@ -49,7 +50,7 @@ run_gate 13_expo_doctor bash -lc 'cd artifacts/mobile && pnpm exec expo-doctor'
 run_gate 14_expo_config bash -lc 'cd artifacts/mobile && pnpm exec expo config --type public --json'
 
 if [[ "$MODE" == "--release" ]]; then
-  run_gate 15_clean_tree bash -lc 'test -z "$(git status --porcelain)"'
+  run_gate 15_clean_tree test -z "$INITIAL_DIRTY"
   run_gate 16_ios_prebuild pnpm --filter @workspace/mobile prebuild:ios
   run_gate 17_android_prebuild pnpm --filter @workspace/mobile prebuild:android
 fi

@@ -51,6 +51,7 @@ export const usersTable = pgTable("users", {
   followingCount: integer("following_count").notNull().default(0),
   bio: varchar("bio", { length: 300 }),
   homeCity: varchar("home_city", { length: 100 }),
+  homeState: varchar("home_state", { length: 2 }),
   passwordHash: varchar("password_hash"),
   emailVerified: boolean("email_verified").notNull().default(false),
   emailVerificationToken: varchar("email_verification_token"),

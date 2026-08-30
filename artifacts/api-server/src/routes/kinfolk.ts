@@ -73,6 +73,10 @@ import { searchAllQueries } from "../kinfolk/web-search";
 import { rankResults } from "../kinfolk/web-ranker";
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
+import {
+  buildPrivateMemoryPromptBlock,
+  isKinfolkPrivateMemoryEnabled,
+} from "../kinfolk/private-memory";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -2540,6 +2544,9 @@ function isSensitiveMemoryRelevant(memory: string, currentMessage: string): bool
 }
 
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
     const now = new Date();
@@ -2566,6 +2573,9 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
 });
 
 router.post("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
     const body = req.body as Record<string, unknown>;
@@ -2604,6 +2614,9 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
 });
 
 router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
     const [forgotten] = await db.update(kinfolkPrivateMemoriesTable)
@@ -2817,11 +2830,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
+    // When private memory is disabled, do not read historic conversations into
+    // the request or persist this turn. This prevents a disabled production
+    // runtime from retaining or re-injecting Kinfolk session content.
+    const privateMemoryEnabled = isKinfolkPrivateMemoryEnabled();
+
     // Load or create session
     chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
-    let sessionPersistenceAvailable = true;
-    if (sessionId && req.user?.id) {
+    let sessionPersistenceAvailable = privateMemoryEnabled;
+    if (privateMemoryEnabled && sessionId && req.user?.id) {
       try {
         const [s] = await db
           .select()
@@ -4010,7 +4028,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const pronounBlock     = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
 
-    const activePrivateMemories = req.user?.id
+    const activePrivateMemories = privateMemoryEnabled && req.user?.id
       ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
           .from(kinfolkPrivateMemoriesTable)
           .where(and(
@@ -4025,9 +4043,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const relevantPrivateMemories = activePrivateMemories.filter((memory) =>
       !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
     );
-    const privateMemoryBlock = relevantPrivateMemories.length > 0
-      ? `\n\nMEMBER-APPROVED PRIVATE MEMORY (user-provided, not independently verified):\n${relevantPrivateMemories.map((memory) => `• [${memory.purpose}] ${memory.content.slice(0, 240)}`).join("\n")}\nUse only when directly relevant. Never state or imply that another member can see this. Never convert private memory into a community trend or recommendation for anyone else.`
-      : "";
+    const privateMemoryBlock = buildPrivateMemoryPromptBlock(
+      privateMemoryEnabled,
+      relevantPrivateMemories,
+    );
 
     const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
@@ -4317,7 +4336,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
 
-    let memoryEnabled = true;
+    let memoryEnabled = privateMemoryEnabled;
     if (req.user?.id) {
       const [userSettings] = await db
         .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
@@ -4329,7 +4348,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     chatStage = "session_persist";
-    let finalSessionId = sessionId;
+    let finalSessionId = privateMemoryEnabled ? sessionId : undefined;
     if (req.user?.id && memoryEnabled && sessionPersistenceAvailable) {
       try {
         if (currentSession) {
