@@ -1,7 +1,10 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, pool, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable } from "@workspace/db";
-import { and, eq, inArray, desc, or } from "drizzle-orm";
+import { db, pool, userDeliveryPreferencesTable, topicIssuesTable, userIssueFollowsTable, userTopicFollowsTable, knowledgeTopicsTable, happeningNowStoriesTable, storyConfirmationsTable, usersTable, userPreferencesTable, communityPostsTable, contentReportsTable } from "@workspace/db";
+import { and, eq, inArray, desc, or, sql } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { checkContent } from "../lib/contentFilter";
+import { scanForFamily } from "../lib/familyFilter";
+import { validatePublicUrl } from "../lib/url-safety-validator";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdmin(req: Request): boolean {
@@ -19,6 +22,50 @@ function requireAuth(req: Request, res: Response): boolean {
     return false;
   }
   return true;
+}
+
+const HAPPENING_CATEGORIES = new Set([
+  "politics", "health", "safety", "housing", "education", "economy",
+  "environment", "transportation", "culture", "community", "other",
+]);
+const HAPPENING_SCOPES = new Set(["local", "state", "national", "global"]);
+
+function normalizeHttpUrl(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    parsed.hash = "";
+    for (const key of [...parsed.searchParams.keys()]) {
+      if (/^(utm_|fbclid$|gclid$)/i.test(key)) parsed.searchParams.delete(key);
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function normalizeTopicTags(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value
+    .filter((tag): tag is string => typeof tag === "string")
+    .map((tag) => tag.trim().toLowerCase().replace(/[^a-z0-9&+ -]/g, ""))
+    .filter(Boolean))].slice(0, 8);
+}
+
+function sourcePublisherFromUrl(sourceUrl: string | null): string | null {
+  if (!sourceUrl) return null;
+  try { return new URL(sourceUrl).hostname.replace(/^www\./, ""); }
+  catch { return null; }
+}
+
+function defaultStoryExpiry(category: string, from = new Date()): Date {
+  const days = category === "safety" ? 3
+    : category === "politics" || category === "transportation" ? 14
+    : category === "health" || category === "housing" ? 30
+    : 60;
+  return new Date(from.getTime() + days * 86_400_000);
 }
 
 router.get("/knowledge/delivery-preferences", async (req: Request, res: Response) => {
@@ -246,6 +293,17 @@ router.post("/knowledge/topics/request", async (req: Request, res: Response) => 
 router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    const admin = isAdmin(req);
+    const feedMode = req.query.feed === "latest" ? "latest" : "foryou";
+    const scopeFilter = typeof req.query.scope === "string" && HAPPENING_SCOPES.has(req.query.scope)
+      ? req.query.scope
+      : null;
+
+    const visibility = admin
+      ? or(eq(happeningNowStoriesTable.status, "approved"), eq(happeningNowStoriesTable.status, "pending"))
+      : userId
+        ? or(eq(happeningNowStoriesTable.status, "approved"), and(eq(happeningNowStoriesTable.status, "pending"), eq(happeningNowStoriesTable.submittedBy, userId)))
+        : eq(happeningNowStoriesTable.status, "approved");
 
     const rows = await db
       .select({
@@ -253,7 +311,17 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
         title: happeningNowStoriesTable.title,
         summary: happeningNowStoriesTable.summary,
         category: happeningNowStoriesTable.category,
+        topicTags: happeningNowStoriesTable.topicTags,
+        scope: happeningNowStoriesTable.scope,
+        city: happeningNowStoriesTable.city,
+        state: happeningNowStoriesTable.state,
+        country: happeningNowStoriesTable.country,
         sourceUrl: happeningNowStoriesTable.sourceUrl,
+        sourcePublisher: happeningNowStoriesTable.sourcePublisher,
+        sourceStatus: happeningNowStoriesTable.sourceStatus,
+        publishedAt: happeningNowStoriesTable.publishedAt,
+        expiresAt: happeningNowStoriesTable.expiresAt,
+        communityPostId: happeningNowStoriesTable.communityPostId,
         submittedBy: happeningNowStoriesTable.submittedBy,
         submitterName: happeningNowStoriesTable.submitterName,
         status: happeningNowStoriesTable.status,
@@ -262,26 +330,80 @@ router.get("/knowledge/happening-now", async (req: Request, res: Response) => {
         createdAt: happeningNowStoriesTable.createdAt,
       })
       .from(happeningNowStoriesTable)
-      .where(or(eq(happeningNowStoriesTable.status, "approved"), eq(happeningNowStoriesTable.status, "pending")))
+      .where(visibility)
       .orderBy(desc(happeningNowStoriesTable.createdAt))
-      .limit(50);
+      .limit(100);
 
     let confirmedIds = new Set<string>();
+    let interests = new Set<string>();
+    let favoriteCities = new Set<string>();
+    let homeCity = "";
     if (userId) {
-      const confs = await db
-        .select({ storyId: storyConfirmationsTable.storyId })
-        .from(storyConfirmationsTable)
-        .where(eq(storyConfirmationsTable.userId, userId));
+      const [confs, prefRows, userRows] = await Promise.all([
+        db.select({ storyId: storyConfirmationsTable.storyId }).from(storyConfirmationsTable).where(eq(storyConfirmationsTable.userId, userId)),
+        db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, userId)).limit(1),
+        db.select({ homeCity: usersTable.homeCity }).from(usersTable).where(eq(usersTable.id, userId)).limit(1),
+      ]);
       confirmedIds = new Set(confs.map((c) => c.storyId));
+      const prefs = prefRows[0];
+      interests = new Set([
+        ...(prefs?.favoriteCategories ?? []),
+        ...(prefs?.culturalInterests ?? []),
+        ...(prefs?.lifestyleServices ?? []),
+      ].map((value) => value.toLowerCase()));
+      favoriteCities = new Set((prefs?.favoriteCities ?? []).map((value) => value.toLowerCase()));
+      homeCity = (userRows[0]?.homeCity ?? "").toLowerCase();
     }
 
-    res.json({
-      stories: rows.map((s) => ({
-        ...s,
-        hasConfirmed: confirmedIds.has(s.id),
-        isOwnStory: userId ? s.submittedBy === userId : false,
-      })),
+    const now = Date.now();
+    const visibleRows = rows.filter((story) => {
+      if (scopeFilter && story.scope !== scopeFilter) return false;
+      if (story.status !== "approved") return true;
+      return !story.expiresAt || new Date(story.expiresAt).getTime() > now;
     });
+
+    const ranked = visibleRows.map((story) => {
+      const reasons: string[] = [];
+      let score = 0;
+      const category = story.category.toLowerCase();
+      const tags = (story.topicTags ?? []).map((tag) => tag.toLowerCase());
+      const city = (story.city ?? "").toLowerCase();
+      const state = (story.state ?? "").toLowerCase();
+      const ageHours = Math.max(0, (now - new Date(story.publishedAt ?? story.createdAt).getTime()) / 3_600_000);
+
+      if (story.status === "pending" && story.submittedBy === userId) { score += 1000; reasons.push("Your pending submission"); }
+      if (interests.has(category) || tags.some((tag) => interests.has(tag))) { score += 14; reasons.push(`Matches your ${story.category} interests`); }
+      if (city && (homeCity.includes(city) || favoriteCities.has(city))) { score += 12; reasons.push(`Near ${story.city}`); }
+      else if (state && homeCity.includes(state)) { score += 7; reasons.push(`In your state`); }
+      else if (story.scope === "national") score += 3;
+      else if (story.scope === "global") score += 1;
+      if (story.sourceStatus === "verified") { score += 5; reasons.push("Verified source"); }
+      score += Math.max(0, 10 - ageHours / 24);
+      score += Math.log1p(story.confirmCount) * 2;
+
+      return {
+        ...story,
+        hasConfirmed: confirmedIds.has(story.id),
+        isOwnStory: userId ? story.submittedBy === userId : false,
+        rankingScore: feedMode === "latest" ? -new Date(story.createdAt).getTime() : score,
+        rankingReason: reasons.slice(0, 2).join(" · ") || (story.scope === "local" ? "Local community update" : "Current community update"),
+      };
+    });
+
+    ranked.sort((a, b) => feedMode === "latest"
+      ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      : b.rankingScore - a.rankingScore || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const diverse: typeof ranked = [];
+    const deferred: typeof ranked = [];
+    for (const story of ranked) {
+      const lastTwo = diverse.slice(-2);
+      if (lastTwo.length === 2 && lastTwo.every((item) => item.category === story.category)) deferred.push(story);
+      else diverse.push(story);
+    }
+    diverse.push(...deferred);
+
+    res.json({ stories: diverse.slice(0, 50), feedMode, personalized: !!userId && feedMode === "foryou" });
   } catch (err) {
     req.log.error({ err }, "GET /knowledge/happening-now error");
     res.status(500).json({ error: "Failed to fetch stories." });
@@ -292,17 +414,61 @@ router.post("/knowledge/happening-now", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
     const userId = req.user!.id;
-    const { title, summary, category, sourceUrl } = req.body as {
-      title?: string; summary?: string; category?: string; sourceUrl?: string;
-    };
+    const body = req.body as Record<string, unknown>;
+    const title = String(body.title ?? "").trim();
+    const summary = String(body.summary ?? "").trim();
+    const category = String(body.category ?? "other").toLowerCase();
+    const scope = String(body.scope ?? "national").toLowerCase();
+    const city = String(body.city ?? "").trim() || null;
+    const state = String(body.state ?? "").trim() || null;
+    const country = String(body.country ?? "United States").trim() || "United States";
+    const topicTags = normalizeTopicTags(body.topicTags);
+    const rawSourceUrl = String(body.sourceUrl ?? "").trim();
+    let sourceUrl = normalizeHttpUrl(rawSourceUrl);
 
-    if (!title?.trim() || !summary?.trim()) {
-      res.status(400).json({ error: "Title and summary are required." });
+    if (!title || !summary) { res.status(400).json({ error: "Title and summary are required." }); return; }
+    if (title.length > 300) { res.status(400).json({ error: "Title must be 300 characters or fewer." }); return; }
+    if (summary.length > 3000) { res.status(400).json({ error: "Summary must be 3,000 characters or fewer." }); return; }
+    if (!HAPPENING_CATEGORIES.has(category)) { res.status(400).json({ error: "Choose a valid community-impact category." }); return; }
+    if (!HAPPENING_SCOPES.has(scope)) { res.status(400).json({ error: "Choose local, state, national, or global scope." }); return; }
+    if (scope === "local" && !city) { res.status(400).json({ error: "A city is required for local updates." }); return; }
+    if (scope === "state" && !state) { res.status(400).json({ error: "A state is required for state updates." }); return; }
+    if (rawSourceUrl && !sourceUrl) { res.status(400).json({ error: "Enter a valid HTTPS source URL." }); return; }
+    if (sourceUrl) {
+      const sourceValidation = await validatePublicUrl(sourceUrl, { timeoutMs: 8_000, maxRedirects: 3, maxBytes: 262_144 });
+      if (!sourceValidation.safe) {
+        res.status(400).json({ error: sourceValidation.reason, code: "UNSAFE_SOURCE_URL" });
+        return;
+      }
+      sourceUrl = sourceValidation.canonicalUrl;
+    }
+
+    const filter = checkContent(`${title}\n${summary}`);
+    if (!filter.ok) { res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" }); return; }
+    const familyScan = await scanForFamily(`${title}\n${summary}`, userId, "happening_now");
+    if (familyScan.blocked) {
+      res.status(422).json({ error: "This submission contains content that is not permitted.", code: "MINOR_CONTENT_BLOCKED" });
       return;
     }
 
-    const validCategories = ["immigration", "police", "violence", "legislation", "community", "other"];
-    const cat = validCategories.includes(category ?? "") ? category! : "other";
+    if (sourceUrl) {
+      const duplicate = await db
+        .select({ id: happeningNowStoriesTable.id, status: happeningNowStoriesTable.status })
+        .from(happeningNowStoriesTable)
+        .where(eq(happeningNowStoriesTable.sourceUrl, sourceUrl))
+        .limit(1);
+      if (duplicate[0]) {
+        res.status(409).json({ error: "This source has already been shared.", storyId: duplicate[0].id, status: duplicate[0].status });
+        return;
+      }
+    }
+
+    const parsedPublishedAt = body.publishedAt ? new Date(String(body.publishedAt)) : new Date();
+    const publishedAt = Number.isNaN(parsedPublishedAt.getTime()) ? new Date() : parsedPublishedAt;
+    if (publishedAt.getTime() > Date.now() + 86_400_000) {
+      res.status(400).json({ error: "Publication time cannot be in the future." });
+      return;
+    }
 
     const [user] = await db
       .select({ firstName: usersTable.firstName, lastName: usersTable.lastName, email: usersTable.email })
@@ -317,17 +483,26 @@ router.post("/knowledge/happening-now", async (req: Request, res: Response) => {
     const [story] = await db
       .insert(happeningNowStoriesTable)
       .values({
-        title: title.trim(),
-        summary: summary.trim(),
-        category: cat,
-        sourceUrl: sourceUrl?.trim() || null,
+        title,
+        summary,
+        category,
+        topicTags,
+        scope,
+        city,
+        state,
+        country,
+        sourceUrl,
+        sourcePublisher: String(body.sourcePublisher ?? "").trim().slice(0, 180) || sourcePublisherFromUrl(sourceUrl),
+        sourceStatus: sourceUrl ? "unverified" : "community_report",
+        publishedAt,
+        expiresAt: defaultStoryExpiry(category, publishedAt),
         submittedBy: userId,
         submitterName,
         status: "pending",
       })
       .returning();
 
-    res.status(201).json({ story });
+    res.status(201).json({ story, message: "Thanks for looking out for the community. Your update is pending review." });
   } catch (err) {
     req.log.error({ err }, "POST /knowledge/happening-now error");
     res.status(500).json({ error: "Failed to submit story." });
@@ -341,12 +516,15 @@ router.post("/knowledge/happening-now/:id/confirm", async (req: Request, res: Re
     const storyId = String(req.params.id);
 
     const [story] = await db
-      .select({ id: happeningNowStoriesTable.id, submittedBy: happeningNowStoriesTable.submittedBy, confirmCount: happeningNowStoriesTable.confirmCount })
+      .select({ id: happeningNowStoriesTable.id, submittedBy: happeningNowStoriesTable.submittedBy, confirmCount: happeningNowStoriesTable.confirmCount, status: happeningNowStoriesTable.status })
       .from(happeningNowStoriesTable)
       .where(eq(happeningNowStoriesTable.id, storyId))
       .limit(1);
 
-    if (!story) { res.status(404).json({ error: "Story not found." }); return; }
+    if (!story || (story.status !== "approved" && story.submittedBy !== userId && !isAdmin(req))) {
+      res.status(404).json({ error: "Story not found." }); return;
+    }
+    if (story.status !== "approved") { res.status(409).json({ error: "This update is still pending review." }); return; }
     if (story.submittedBy === userId) { res.status(400).json({ error: "Cannot confirm your own story." }); return; }
 
     const [existing] = await db
@@ -379,21 +557,107 @@ router.patch("/knowledge/happening-now/:id/status", async (req: Request, res: Re
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
   try {
     const storyId = String(req.params.id);
-    const { status, adminNote } = req.body as { status?: string; adminNote?: string };
+    const { status, adminNote, sourceStatus } = req.body as { status?: string; adminNote?: string; sourceStatus?: string };
     const validStatuses = ["approved", "rejected", "pending"];
+    const validSourceStatuses = ["unverified", "verified", "community_report", "disputed"];
     if (!status || !validStatuses.includes(status)) {
       res.status(400).json({ error: "status must be approved, rejected, or pending." });
       return;
     }
+    if (sourceStatus && !validSourceStatuses.includes(sourceStatus)) {
+      res.status(400).json({ error: "Choose a valid source verification status." });
+      return;
+    }
 
-    await db.update(happeningNowStoriesTable)
-      .set({ status, adminNote: adminNote ?? null, updatedAt: new Date() })
-      .where(eq(happeningNowStoriesTable.id, storyId));
+    const [story] = await db.select().from(happeningNowStoriesTable).where(eq(happeningNowStoriesTable.id, storyId)).limit(1);
+    if (!story) { res.status(404).json({ error: "Story not found." }); return; }
 
-    res.json({ ok: true, storyId, status });
+    const result = await db.transaction(async (tx) => {
+      let communityPostId = story.communityPostId;
+      if (status === "approved" && !communityPostId) {
+        const authorName = story.submitterName || "MWM Community Desk";
+        const initials = authorName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "MW";
+        const [post] = await tx.insert(communityPostsTable).values({
+          authorId: story.submittedBy,
+          authorName,
+          authorInitials: initials,
+          authorColor: "#CA922B",
+          content: story.summary,
+          category: story.category,
+          postType: "happening",
+          visibility: "public",
+          commentPolicy: "everyone",
+          topicTag: story.topicTags?.[0] ?? story.category,
+          locationTag: story.city ?? story.state ?? (story.scope === "global" ? "Global" : "United States"),
+          locationCity: story.city,
+          locationCountry: story.country,
+          locationType: story.scope,
+          linkUrl: story.sourceUrl,
+          linkTitle: story.title,
+          linkDescription: story.summary.slice(0, 500),
+          linkDomain: story.sourcePublisher,
+          requiresModeration: false,
+          isTrustedAuthor: story.isAdminPost,
+        }).returning({ id: communityPostsTable.id });
+        communityPostId = post?.id ?? null;
+      }
+
+      if (status !== "approved" && communityPostId) {
+        await tx.update(communityPostsTable)
+          .set({ requiresModeration: true, visibility: "followers_only" })
+          .where(eq(communityPostsTable.id, communityPostId));
+      }
+
+      const [updated] = await tx.update(happeningNowStoriesTable)
+        .set({
+          status,
+          adminNote: adminNote?.trim().slice(0, 2000) || null,
+          sourceStatus: sourceStatus && validSourceStatuses.includes(sourceStatus) ? sourceStatus : story.sourceStatus,
+          communityPostId,
+          updatedAt: new Date(),
+        })
+        .where(eq(happeningNowStoriesTable.id, storyId))
+        .returning();
+      return updated;
+    });
+
+    res.json({ ok: true, story: result });
   } catch (err) {
     req.log.error({ err }, "PATCH /knowledge/happening-now/:id/status error");
     res.status(500).json({ error: "Failed to update story status." });
+  }
+});
+
+router.post("/knowledge/happening-now/:id/report", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const storyId = String(req.params.id);
+    const [story] = await db
+      .select({ id: happeningNowStoriesTable.id, status: happeningNowStoriesTable.status, submittedBy: happeningNowStoriesTable.submittedBy })
+      .from(happeningNowStoriesTable)
+      .where(eq(happeningNowStoriesTable.id, storyId))
+      .limit(1);
+    if (!story || (story.status !== "approved" && story.submittedBy !== req.user!.id && !isAdmin(req))) {
+      res.status(404).json({ error: "Story not found." }); return;
+    }
+
+    const allowedReasons = ["spam", "fake", "inappropriate", "harassment", "incorrect_info", "suspicious", "other"] as const;
+    const requestedReason = String((req.body as { reason?: unknown }).reason ?? "incorrect_info");
+    const reason = allowedReasons.includes(requestedReason as typeof allowedReasons[number])
+      ? requestedReason as typeof allowedReasons[number]
+      : "other";
+    const description = String((req.body as { description?: unknown }).description ?? "").trim().slice(0, 1000) || null;
+    const duplicate = await pool.query<{ id: string }>(
+      `SELECT id FROM content_reports WHERE reporter_id = $1 AND target_type = 'happening_story' AND target_id = $2 AND status = 'pending' LIMIT 1`,
+      [req.user!.id, storyId],
+    );
+    if (duplicate.rows.length === 0) {
+      await db.insert(contentReportsTable).values({ reporterId: req.user!.id, targetType: "happening_story", targetId: storyId, reason, description });
+    }
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /knowledge/happening-now/:id/report error");
+    res.status(500).json({ error: "Failed to report story." });
   }
 });
 

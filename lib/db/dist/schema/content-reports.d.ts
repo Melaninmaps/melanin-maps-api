@@ -45,14 +45,14 @@ export declare const contentReportsTable: import("drizzle-orm/pg-core").PgTableW
             tableName: "content_reports";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "user" | "business" | "review" | "survey" | "post";
+            data: "user" | "business" | "review" | "survey" | "post" | "comment" | "happening_story";
             driverParam: string;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: ["review", "survey", "business", "post", "user"];
+            enumValues: ["review", "survey", "business", "post", "comment", "happening_story", "user"];
             baseColumn: never;
             identity: undefined;
             generated: undefined;

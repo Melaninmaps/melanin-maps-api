@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "103",
+      "buildNumber": "104",
       "associatedDomains": [
         "applinks:mappingwithmelanin.com"
       ],
@@ -76,7 +76,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "versionCode": 78,
+      "versionCode": 79,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",

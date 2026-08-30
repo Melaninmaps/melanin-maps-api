@@ -29,6 +29,8 @@ export async function answerWithLivingLibrary(input: {
     message: entry.summary,
     disclaimer: entry.disclaimer,
     sources: entry.sources.map((source) => ({ title: source.title, url: source.url })),
+    sourceCount: entry.sourceCount,
+    isReliable: entry.sourceCount > 0 && entry.sources.length > 0,
     reused,
     libraryEntry: {
       id: entry.id,

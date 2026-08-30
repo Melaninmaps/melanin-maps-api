@@ -11,6 +11,7 @@ import {
   userPreferencesTable,
   userSettingsTable,
   kinfolkSessionsTable,
+  kinfolkPrivateMemoriesTable,
   kinfolkFeedbackTable,
   savedPlacesTable,
   businessesTable,
@@ -23,7 +24,7 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
+import { eq, desc, and, ilike, or, inArray, isNull, gt } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
 import {
@@ -499,6 +500,21 @@ function parseRetryAfterMs(errMsg: string): number | null {
   // Matches "try again in 3.459s", "try again in 3s", "retry after 3.5 seconds"
   const m = errMsg.match(/(?:try again in|retry after)\s+(\d+(?:\.\d+)?)\s*s/i);
   return m ? Math.ceil(parseFloat(m[1]) * 1000) + 200 : null; // +200ms safety margin
+}
+
+function normalizeKinfolkImageUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    try {
+      const parsed = new URL(item.trim());
+      if (parsed.protocol !== "https:") continue;
+      parsed.hash = "";
+      unique.add(parsed.toString());
+    } catch { /* invalid URL */ }
+  }
+  return [...unique].slice(0, 2);
 }
 
 /** Retryable OpenAI generation call. Retries only documented transient errors. */
@@ -1684,7 +1700,19 @@ function buildSystemPrompt(opts: {
   // ── Kinfolk Voices™ — 4 emotional voice modes ─────────────────────────────
   let voiceInstructions = "";
 
-  if (voiceMode === "professional") {
+  if (voiceMode === "professor") {
+    voiceInstructions = `KINFOLK VOICES™ — PROFESSOR MODE:
+Teach with clarity and curiosity. Start with the direct answer, explain the why in plain language, define unfamiliar terms, and use examples or analogies when useful. Ask one thoughtful follow-up only when it would materially improve the answer. Sound like a brilliant college professor who wants the member to win — never condescending or stiff.`;
+
+  } else if (voiceMode === "business_manager") {
+    voiceInstructions = `KINFOLK VOICES™ — BUSINESS MANAGER MODE:
+Be practical, organized, and candid. Translate the answer into priorities, decisions, risks, owners, and next actions. Use concise tables or bullets when they improve execution. Protect the member from avoidable cost or exposure, but do not smother them in disclaimers.`;
+
+  } else if (voiceMode === "best_friend") {
+    voiceInstructions = `KINFOLK VOICES™ — BEST FRIEND MODE:
+Lead with human warmth and emotional awareness, then give an honest useful answer. Write naturally, with contractions and supportive phrasing. Do not manufacture intimacy, use stereotypes, or agree with something false just to sound affirming.`;
+
+  } else if (voiceMode === "professional") {
     voiceInstructions = `KINFOLK VOICES™ — PROFESSIONAL MODE:
 Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
 
@@ -1749,8 +1777,8 @@ This is the user's "take me home" experience — the communication style they ch
 
   } else {
     // community (default — always available)
-    voiceInstructions = `KINFOLK VOICES™ — COMMUNITY MODE:
-Warm. Supportive. Conversational. Speak like someone who genuinely wants to help — a friend who's been where they are. Acknowledge emotional context when it surfaces before diving into recommendations. Celebrate wins. Support through challenges. Never robotic or transactional.
+    voiceInstructions = `KINFOLK VOICES™ — BIG COUSIN MODE:
+Warm, grounded, and conversational. Speak like the capable big cousin who listens, gives the direct answer, explains what matters, and helps the member take the next step. Acknowledge emotional context when it genuinely surfaces, but do not force it into ordinary factual questions. Celebrate wins. Support through challenges. Never robotic, transactional, preachy, or stereotyped.
 
 When someone is struggling or facing something hard, acknowledge it first: "I hear you — let's work through this together." The emotional connection is as important as the information.`;
   }
@@ -2489,6 +2517,107 @@ router.get("/kinfolk/health", async (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+// ─── Kinfolk private memory — explicit consent and ownership only ──────────────
+const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> = [
+  { key: "fertility", pattern: /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i },
+  { key: "skin_health", pattern: /\b(rash|eczema|psoriasis|acne|skin condition|dermatolog(?:y|ist))\b/i },
+  { key: "mental_health", pattern: /\b(depression|anxiety|therapy|therapist|trauma|panic attack|mental health|suicid(?:e|al))\b/i },
+  { key: "sexual_health", pattern: /\b(sexual health|sti|std|hiv|aids|contraception|birth control)\b/i },
+  { key: "safety", pattern: /\b(assault|harass(?:ment|ed)|abuse|stalk(?:er|ing)|unsafe|discrimination|hate crime|domestic violence)\b/i },
+  { key: "financial", pattern: /\b(income|salary|debt|bankruptcy|credit score|foreclosure|eviction|financial hardship)\b/i },
+  { key: "identity", pattern: /\b(sexuality|sexual orientation|gender identity|transgender|nonbinary|religion|immigration status)\b/i },
+];
+
+function sensitiveMemoryTopic(value: string): string | null {
+  return SENSITIVE_MEMORY_TOPICS.find((topic) => topic.pattern.test(value))?.key ?? null;
+}
+
+function isSensitiveMemoryRelevant(memory: string, currentMessage: string): boolean {
+  const memoryTopic = sensitiveMemoryTopic(memory);
+  if (memoryTopic) return memoryTopic === sensitiveMemoryTopic(currentMessage);
+  const currentTokens = new Set(currentMessage.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []);
+  return (memory.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []).some((token) => currentTokens.has(token));
+}
+
+router.get("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const now = new Date();
+    const memories = await db.select({
+      id: kinfolkPrivateMemoriesTable.id,
+      content: kinfolkPrivateMemoriesTable.content,
+      purpose: kinfolkPrivateMemoriesTable.purpose,
+      isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+      expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+      createdAt: kinfolkPrivateMemoriesTable.createdAt,
+    }).from(kinfolkPrivateMemoriesTable)
+      .where(and(
+        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, now)),
+      ))
+      .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+      .limit(50);
+    res.json({ memories });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load Kinfolk memories");
+    res.status(500).json({ error: "Failed to load memories" });
+  }
+});
+
+router.post("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const body = req.body as Record<string, unknown>;
+    if (body.consent !== true) {
+      res.status(400).json({ error: "Explicit consent is required before Kinfolk remembers anything.", code: "MEMORY_CONSENT_REQUIRED" });
+      return;
+    }
+    const content = String(body.content ?? "").trim();
+    if (!content || content.length > 1000) {
+      res.status(400).json({ error: "Memory must be between 1 and 1,000 characters." });
+      return;
+    }
+    const allowedPurposes = ["personalization", "preference", "goal", "ongoing_context"];
+    const requestedPurpose = String(body.purpose ?? "personalization");
+    const purpose = allowedPurposes.includes(requestedPurpose) ? requestedPurpose : "personalization";
+    const requestedDays = Number(body.expiresInDays);
+    const expiresInDays = Number.isFinite(requestedDays) ? Math.min(3650, Math.max(1, Math.floor(requestedDays))) : null;
+    const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 86_400_000) : null;
+
+    const [memory] = await db.insert(kinfolkPrivateMemoriesTable).values({
+      userId: req.user.id,
+      content,
+      purpose,
+      sourceSessionId: typeof body.sessionId === "string" ? body.sessionId : null,
+      isSensitive: body.isSensitive === true || sensitiveMemoryTopic(content) !== null,
+      expiresAt,
+    }).returning();
+    res.status(201).json({
+      memory,
+      message: `I’ll remember that for ${purpose.replace("_", " ")}. You can view or forget it any time in Kinfolk settings.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save Kinfolk memory");
+    res.status(500).json({ error: "Failed to save memory" });
+  }
+});
+
+router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const [forgotten] = await db.update(kinfolkPrivateMemoriesTable)
+      .set({ revokedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)), eq(kinfolkPrivateMemoriesTable.userId, req.user.id)))
+      .returning({ id: kinfolkPrivateMemoriesTable.id });
+    if (!forgotten) { res.status(404).json({ error: "Memory not found" }); return; }
+    res.json({ ok: true, memoryId: forgotten.id });
+  } catch (err) {
+    req.log.error({ err }, "Failed to forget Kinfolk memory");
+    res.status(500).json({ error: "Failed to forget memory" });
+  }
+});
+
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Authentication is required — unauthenticated probes previously triggered
   // full OpenAI calls that were abandoned mid-flight when the HTTP client timed
@@ -2498,11 +2627,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
-  const { sessionId, message, vibes = [], voiceMode = "community" } = req.body as {
+  const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [] } = req.body as {
     sessionId?: string;
     message: string;
     vibes?: string[];
     voiceMode?: string;
+    imageUrls?: unknown;
   };
 
   if (!message?.trim()) {
@@ -2513,6 +2643,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   if (message.length > 2000) {
     res.status(400).json({ error: "Message is too long. Please keep it under 2,000 characters." });
     return;
+  }
+
+  const requestedImageUrls = normalizeKinfolkImageUrls(imageUrls);
+  if (Array.isArray(imageUrls) && imageUrls.length > 2) {
+    res.status(400).json({ error: "Kinfolk can review up to two images at a time." });
+    return;
+  }
+  let verifiedImageUrls: string[] = [];
+  if (requestedImageUrls.length > 0) {
+    const imageAssets = await pool.query<{ public_url: string }>(
+      `SELECT public_url
+         FROM media_assets
+        WHERE uploader_id = $1
+          AND purpose = 'kinfolk_question'
+          AND status = 'ready'
+          AND mime_type LIKE 'image/%'
+          AND public_url = ANY($2::text[])`,
+      [req.user.id, requestedImageUrls],
+    ).catch(() => ({ rows: [] as { public_url: string }[] }));
+    const owned = new Set(imageAssets.rows.map((row) => row.public_url));
+    verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
+    if (verifiedImageUrls.length !== requestedImageUrls.length) {
+      res.status(400).json({ error: "One or more images are invalid, expired, or do not belong to this account." });
+      return;
+    }
   }
 
   // chatStage tracks which boundary the handler was crossing when an error is
@@ -2807,16 +2962,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // clarification is an optional offer rendered AFTER the general answer.
     const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
 
-    // ── Living Library research branch ────────────────────────────────────────
-    // For non-local general_knowledge and medical_health questions, use the
-    // Living Library (Tavily + OpenAI synthesis + DB archive) INSTEAD of the
-    // main LLM call. Returns source-cited answer + "Read more" library link.
-    // Falls through to standard LLM path on any error — never blocks the user.
-    if (
-      (intentClass === "general_knowledge" || intentClass === "medical_health") &&
-      !destination &&
-      message.trim().length > 15
-    ) {
+    // ── Conversational research branch ─────────────────────────────────────────
+    // Stable general knowledge should feel like a normal conversation. Search is
+    // reserved for high-stakes or changing questions; Library publication remains
+    // optional enrichment and may never block an in-chat answer.
+    const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this month|this year|right now|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
+    const shouldResearchInLibrary = intentClass === "medical_health"
+      || intentClass === "legal_regulated"
+      || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
+    if (shouldResearchInLibrary && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
         const result = await answerWithLivingLibrary({
@@ -2826,6 +2980,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           researchProvider: deps.researchProvider,
           writer: deps.writer,
         });
+        if (!result.isReliable) {
+          req.log?.info({ intentClass, sourceCount: result.sourceCount }, "[kinfolk] research coverage insufficient — answering conversationally");
+          throw new Error("KINFOLK_RESEARCH_COVERAGE_INSUFFICIENT");
+        }
         res.json({
           sessionId,
           reply: result.message,
@@ -3852,6 +4010,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const pronounBlock     = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
 
+    const activePrivateMemories = req.user?.id
+      ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
+          .from(kinfolkPrivateMemoriesTable)
+          .where(and(
+            eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+            isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, new Date())),
+          ))
+          .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+          .limit(12)
+          .catch(() => [])
+      : [];
+    const relevantPrivateMemories = activePrivateMemories.filter((memory) =>
+      !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
+    );
+    const privateMemoryBlock = relevantPrivateMemories.length > 0
+      ? `\n\nMEMBER-APPROVED PRIVATE MEMORY (user-provided, not independently verified):\n${relevantPrivateMemories.map((memory) => `• [${memory.purpose}] ${memory.content.slice(0, 240)}`).join("\n")}\nUse only when directly relevant. Never state or imply that another member can see this. Never convert private memory into a community trend or recommendation for anyone else.`
+      : "";
+
     const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
       aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
@@ -3862,7 +4039,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       privacySuppressed: effectivePrivacySuppressed,
       catalogSource,
       intentClass,
-    }) + ownerBusinessContext;
+    }) + ownerBusinessContext + privateMemoryBlock;
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -3947,21 +4124,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Returns null on any error — must never cause a 500.
     const libraryTopic = await loadLibraryGrounding(message);
     const libraryGroundingBlock = buildLibraryGroundingBlock(libraryTopic);
-    const systemPromptWithLibrary = libraryGroundingBlock
+    const visionSafetyBlock = verifiedImageUrls.length > 0
+      ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
+      : "";
+    const systemPromptWithLibrary = (libraryGroundingBlock
       ? `${systemPrompt}\n\n${libraryGroundingBlock}`
-      : systemPrompt;
+      : systemPrompt) + (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "");
 
-    const aiMessages = [
-      { role: "system" as const, content: systemPromptWithLibrary },
+    const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
+    const currentUserContent: Parameters<typeof openai.chat.completions.create>[0]["messages"][number]["content"] = verifiedImageUrls.length > 0
+      ? [
+          { type: "text", text: currentUserText },
+          ...verifiedImageUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "auto" as const } })),
+        ]
+      : currentUserText;
+    const aiMessages: Parameters<typeof openai.chat.completions.create>[0]["messages"] = [
+      { role: "system", content: systemPromptWithLibrary },
       ...historyMessages,
-      { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
+      { role: "user", content: currentUserContent },
     ];
 
     // Token estimation for queue admission (chars/4 is a reliable GPT-4o-mini approximation)
     const estimatedPromptTokens = estimateTokens(systemPromptWithLibrary) +
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
-    const estimatedTotal = Math.min(estimatedPromptTokens + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
+    const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
     console.log(`[kinfolk-tokens] user=${req.user?.id ?? "anon"} estimatedPrompt=${estimatedPromptTokens} estimatedTotal=${estimatedTotal}`);
 
     // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap

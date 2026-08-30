@@ -1,12 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useState } from "react";
+import { getApiBase } from "@/lib/api";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync(AUTH_TOKEN_KEY); }
@@ -116,6 +112,8 @@ export type ChatMessage = {
    *  knows their alias (e.g. "Philly", "nawlins") was understood correctly. */
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  imageUrls?: string[];
+  sources?: Array<{ title: string; url: string }> | null;
 };
 
 export type SessionSummary = {
@@ -142,7 +140,7 @@ export function useKinfolk() {
 
   const sendMessage = useCallback(async (
     text: string,
-    opts?: { vibes?: string[]; voiceMode?: string },
+    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; rememberThis?: boolean },
   ): Promise<void> => {
     const token = await getToken();
     const apiBase = getApiBase();
@@ -151,6 +149,7 @@ export function useKinfolk() {
       id: makeId(),
       role: "user",
       content: text,
+      imageUrls: opts?.imageUrls ?? [],
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -170,6 +169,7 @@ export function useKinfolk() {
           message: text,
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
+          imageUrls: opts?.imageUrls ?? [],
         }),
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));
@@ -190,11 +190,19 @@ export function useKinfolk() {
           intentClass?: string | null;
           provenanceNote?: string | null;
           sourceNote?: string | null;
+          sources?: Array<{ title: string; url: string }> | null;
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
         };
 
         setSessionId(data.sessionId);
+        if (opts?.rememberThis) {
+          fetch(`${apiBase}/api/kinfolk/memories`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ consent: true, content: text, purpose: "ongoing_context", sessionId: data.sessionId }),
+          }).catch(() => {});
+        }
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
         if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
 
@@ -214,6 +222,7 @@ export function useKinfolk() {
           intentClass: data.intentClass ?? null,
           provenanceNote: data.provenanceNote ?? null,
           sourceNote: data.sourceNote ?? null,
+          sources: data.sources ?? null,
           location: data.location ?? null,
           locationSource: data.locationSource ?? null,
         };

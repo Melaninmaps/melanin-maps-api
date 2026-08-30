@@ -490,6 +490,25 @@ export declare const communityPostsTable: import("drizzle-orm/pg-core").PgTableW
         }, {}, {
             length: 20;
         }>;
+        commentPolicy: import("drizzle-orm/pg-core").PgColumn<{
+            name: "comment_policy";
+            tableName: "community_posts";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 20;
+        }>;
         hasContentWarning: import("drizzle-orm/pg-core").PgColumn<{
             name: "has_content_warning";
             tableName: "community_posts";
@@ -1094,6 +1113,59 @@ export declare const communityPostCommentsTable: import("drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        status: import("drizzle-orm/pg-core").PgColumn<{
+            name: "status";
+            tableName: "community_post_comments";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 20;
+        }>;
+        editedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "edited_at";
+            tableName: "community_post_comments";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        deletedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "deleted_at";
+            tableName: "community_post_comments";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "community_post_comments";
@@ -1142,6 +1214,7 @@ export declare const insertCommunityPostSchema: z.ZodObject<{
     topicTag: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     isPrivateTopic: z.ZodOptional<z.ZodBoolean>;
     visibility: z.ZodOptional<z.ZodString>;
+    commentPolicy: z.ZodOptional<z.ZodString>;
     hasContentWarning: z.ZodOptional<z.ZodBoolean>;
     contentWarningType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     linkUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
@@ -1656,6 +1729,25 @@ export declare const selectCommunityPostSchema: import("drizzle-zod").BuildSchem
     }, {}, {
         length: 20;
     }>;
+    commentPolicy: import("drizzle-orm/pg-core").PgColumn<{
+        name: "comment_policy";
+        tableName: "community_posts";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 20;
+    }>;
     hasContentWarning: import("drizzle-orm/pg-core").PgColumn<{
         name: "has_content_warning";
         tableName: "community_posts";
@@ -2124,12 +2216,15 @@ export declare const selectCommunityPostSchema: import("drizzle-zod").BuildSchem
     }, {}, {}>;
 }, undefined, undefined>;
 export declare const insertCommunityPostCommentSchema: z.ZodObject<{
+    status: z.ZodOptional<z.ZodString>;
     content: z.ZodString;
     authorId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     authorName: z.ZodString;
     authorInitials: z.ZodString;
     authorColor: z.ZodOptional<z.ZodString>;
     postId: z.ZodString;
+    editedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    deletedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
 }, {
     out: {};
     in: {};

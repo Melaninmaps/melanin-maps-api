@@ -26,6 +26,7 @@ import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { LocationPicker, type LocationSelection } from "@/components/LocationPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
+import { HappeningNowPanel, type HappeningNowStory } from "@/components/HappeningNowPanel";
 import { EventCard } from "@/components/EventCard";
 import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
@@ -39,7 +40,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { RecommendationNudge } from "@/components/RecommendationNudge";
 import { parseMediaUrls } from "@/lib/mediaUrls";
 
-const TABS = ["Feed", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
+const TABS = ["Feed", "What's Happening", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -98,6 +99,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     content: raw.content as string,
     likes: (raw.upvotes as number) ?? 0,
     comments: (raw.commentsCount as number) ?? 0,
+    commentPolicy: (["everyone", "followers", "off"].includes(String(raw.commentPolicy)) ? raw.commentPolicy : "everyone") as CommunityPost["commentPolicy"],
     timeAgo: formatTimeAgo(raw.createdAt as string),
     category: (raw.category === "recommendation" || raw.category === "alert" || raw.category === "question" ? raw.category : "discussion") as CommunityPost["category"],
     postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place" || (raw.postType as string) === "safety" || (raw.postType as string) === "travel"
@@ -223,6 +225,7 @@ export default function CommunityScreen() {
   const [newPostType, setNewPostType] = useState<"community" | "question" | "business" | "safety" | "travel">("community");
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
+  const [newPostCommentPolicy, setNewPostCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [feedMode, setFeedMode] = useState<"foryou" | "everyone" | "following">(isAuthenticated ? "foryou" : "everyone");
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -531,6 +534,7 @@ export default function CommunityScreen() {
               ? newPostBusinessLink.trim()
               : undefined,
           visibility: newPostVisibility,
+          commentPolicy: newPostCommentPolicy,
           mediaUrls: completedMediaUrls,
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
@@ -557,6 +561,7 @@ export default function CommunityScreen() {
         setNewPostType("community");
         setNewPostBusinessLink("");
         setNewPostVisibility("public");
+        setNewPostCommentPolicy("everyone");
         setNewPostLocationTag("");
         setNewPostLocationVenueName(undefined);
         setNewPostLocationCity(undefined);
@@ -703,7 +708,29 @@ export default function CommunityScreen() {
         ))}
       </ScrollView>
 
-      {activeTab === "Events" ? (
+      {activeTab === "What's Happening" ? (
+        <HappeningNowPanel
+          isAuthenticated={isAuthenticated}
+          bottomPadding={bottomPad}
+          onDiscuss={(story: HappeningNowStory) => {
+            if (!story.communityPostId) return;
+            setSelectedPost({
+              id: story.communityPostId,
+              author: story.submitterName ?? "MWM Community",
+              authorInitials: "MWM",
+              authorColor: "#CA922B",
+              content: `${story.title}\n\n${story.summary}`,
+              likes: 0,
+              comments: 0,
+              commentPolicy: "everyone",
+              timeAgo: "Community update",
+              category: "discussion",
+              postType: "community",
+              liked: false,
+            });
+          }}
+        />
+      ) : activeTab === "Events" ? (
         <View style={{ flex: 1 }}>
           <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
             <ScrollView
@@ -1432,6 +1459,11 @@ export default function CommunityScreen() {
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
         onLike={() => void loadPosts()}
+        onCommentAdded={() => {
+          if (!selectedPost) return;
+          setPosts((items) => items.map((item) => item.id === selectedPost.id ? { ...item, comments: item.comments + 1 } : item));
+          setSelectedPost((item) => item ? { ...item, comments: item.comments + 1 } : item);
+        }}
       />
 
       <UpgradeModal
@@ -1792,7 +1824,11 @@ export default function CommunityScreen() {
               {(["public", "followers_only"] as const).map((v) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={v}
-                  onPress={() => { setNewPostVisibility(v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  onPress={() => {
+                    setNewPostVisibility(v);
+                    if (v === "followers_only" && newPostCommentPolicy === "everyone") setNewPostCommentPolicy("followers");
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
                   style={{
                     paddingHorizontal: 12, paddingVertical: 4, borderRadius: 14,
                     borderWidth: 1,
@@ -1805,6 +1841,18 @@ export default function CommunityScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Comment privacy */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.mutedForeground, marginBottom: 7 }}>Who can comment?</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {(["everyone", "followers", "off"] as const).map((policy) => (
+                  <TouchableOpacity key={policy} activeOpacity={0.85} onPress={() => setNewPostCommentPolicy(policy)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: newPostCommentPolicy === policy ? colors.primary : colors.border, backgroundColor: newPostCommentPolicy === policy ? colors.primary + "18" : "transparent" }}>
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: newPostCommentPolicy === policy ? colors.primary : colors.mutedForeground }}>{policy === "everyone" ? "Everyone" : policy === "followers" ? "Followers" : "Off"}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             {/* Location tag */}

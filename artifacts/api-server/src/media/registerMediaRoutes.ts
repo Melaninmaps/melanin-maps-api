@@ -29,6 +29,10 @@ const DOC_MIMES = new Set([
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50 MB
 const MAX_DOC_BYTES = 10 * 1024 * 1024;   // 10 MB
+const MAX_KINFOLK_IMAGE_BYTES = 5 * 1024 * 1024; // sensitive image questions stay small and short-lived
+const ALLOWED_PURPOSES = new Set([
+  "general", "community_post", "business_submission", "business_claim", "business_photo", "kinfolk_question",
+]);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -74,6 +78,10 @@ export function registerMediaRoutes(app: Express): void {
       }
 
       const purpose = (req.query["purpose"] as string) ?? "general";
+      if (!ALLOWED_PURPOSES.has(purpose)) {
+        res.status(400).json({ error: "Unsupported upload purpose." });
+        return;
+      }
       const mime = req.file.mimetype;
 
       // ── Validate MIME type ──────────────────────────────────────────────
@@ -101,6 +109,12 @@ export function registerMediaRoutes(app: Express): void {
         });
         return;
       }
+      if (purpose === "kinfolk_question" && (!isImage || req.file.size > MAX_KINFOLK_IMAGE_BYTES)) {
+        res.status(!isImage ? 415 : 413).json({ error: !isImage
+          ? "Kinfolk questions currently accept images only."
+          : "Kinfolk images must be under 5 MB." });
+        return;
+      }
 
       const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
       if (!bucketId) {
@@ -110,7 +124,9 @@ export function registerMediaRoutes(app: Express): void {
 
       try {
         const ext = extFromMime(mime);
-        const folder = isVideo
+        const folder = purpose === "kinfolk_question"
+          ? "media-uploads/kinfolk-private"
+          : isVideo
           ? "media-uploads/videos"
           : isDoc
           ? "media-uploads/docs"
@@ -121,8 +137,14 @@ export function registerMediaRoutes(app: Express): void {
         const bucket = objectStorageClient.bucket(bucketId);
         const gcsFile = bucket.file(objectKey);
         await gcsFile.save(req.file.buffer, { contentType: mime });
-        await gcsFile.makePublic();
-        const url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+        let url: string;
+        if (purpose === "kinfolk_question") {
+          const [signedUrl] = await gcsFile.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000 });
+          url = signedUrl;
+        } else {
+          await gcsFile.makePublic();
+          url = `https://storage.googleapis.com/${bucketId}/${objectKey}`;
+        }
 
         // ── Record asset in DB ──────────────────────────────────────────
         await pool.query(
@@ -137,7 +159,12 @@ export function registerMediaRoutes(app: Express): void {
         });
 
         const fileType = isVideo ? "video" : isDoc ? "document" : "image";
-        res.status(201).json({ url, assetId, type: fileType });
+        res.status(201).json({
+          url,
+          assetId,
+          type: fileType,
+          expiresAt: purpose === "kinfolk_question" ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null,
+        });
       } catch (err: unknown) {
         console.error("[media-upload] error:", err);
         res.status(500).json({ error: "Upload failed. Please try again." });

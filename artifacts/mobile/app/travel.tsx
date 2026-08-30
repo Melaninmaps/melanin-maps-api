@@ -6,6 +6,7 @@ import {
   Alert,
   Animated,
   FlatList,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -31,6 +32,9 @@ import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import * as SecureStore from "expo-secure-store";
 import * as Speech from "expo-speech";
+import * as ImagePicker from "expo-image-picker";
+import { getApiBase } from "@/lib/api";
+import { openExternalUrl } from "@/lib/safeLinking";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
@@ -100,10 +104,10 @@ const WELCOME_CHIPS = [
 
 // ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
 const KINFOLK_VOICES = [
-  { id: "community", icon: "🤎", label: "Community", desc: "Warm, supportive, conversational", requiresPaid: false },
-  { id: "home", icon: "🏠", label: "Home", desc: "Your personal comfort style", requiresPaid: true },
-  { id: "local", icon: "🌎", label: "Local", desc: "City expressions & neighborhood names", requiresPaid: true },
-  { id: "professional", icon: "💼", label: "Pro", desc: "Clear, neutral, business-ready", requiresPaid: true },
+  { id: "community", icon: "🤎", label: "Big Cousin", desc: "Warm, grounded, conversational", requiresPaid: false },
+  { id: "professor", icon: "🎓", label: "Professor", desc: "Clear teaching and context", requiresPaid: false },
+  { id: "business_manager", icon: "💼", label: "Business Manager", desc: "Priorities, risks, and next actions", requiresPaid: false },
+  { id: "best_friend", icon: "✨", label: "Best Friend", desc: "Supportive, candid, and natural", requiresPaid: false },
 ] as const;
 
 const COMM_STYLES = [
@@ -780,6 +784,18 @@ function AiMessageBubble({
           </Text>
         ) : null}
 
+        {msg.sources && msg.sources.length > 0 && (
+          <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
+            <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
+            {msg.sources.slice(0, 5).map((source, index) => (
+              <TouchableOpacity key={`${source.url}-${index}`} onPress={() => void openExternalUrl(source.url, { kind: "web" })} style={aiStyles.sourceRow}>
+                <Ionicons name="open-outline" size={12} color={GOLD} />
+                <Text numberOfLines={2} style={[aiStyles.sourceLink, { color: GOLD }]}>{source.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         <Text style={[aiStyles.timestamp, { color: colors.mutedForeground }]}>
           {formatTime(msg.timestamp)}
         </Text>
@@ -816,6 +832,10 @@ const aiStyles = StyleSheet.create({
   provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
   provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
   sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
+  sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
+  sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
+  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
+  sourceLink: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 
@@ -876,6 +896,7 @@ function UserMessageBubble({ msg, colors }: { msg: ChatMessage; colors: ReturnTy
   return (
     <View style={umStyles.wrapper}>
       <View style={[umStyles.bubble, { backgroundColor: colors.primary }]}>
+        {msg.imageUrls && msg.imageUrls.length > 0 && <View style={umStyles.imageRow}>{msg.imageUrls.map((url) => <Image key={url} source={{ uri: url }} style={umStyles.image} accessibilityLabel="Image shared with Kinfolk" />)}</View>}
         <Text style={umStyles.text}>{msg.content}</Text>
       </View>
       <Text style={[umStyles.timestamp, { color: colors.mutedForeground }]}>{formatTime(msg.timestamp)}</Text>
@@ -886,6 +907,8 @@ function UserMessageBubble({ msg, colors }: { msg: ChatMessage; colors: ReturnTy
 const umStyles = StyleSheet.create({
   wrapper: { alignItems: "flex-end", marginBottom: 16, paddingHorizontal: 12 },
   bubble: { borderRadius: 16, borderBottomRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10, maxWidth: "80%" },
+  imageRow: { flexDirection: "row", gap: 6, marginBottom: 8 },
+  image: { width: 120, height: 100, borderRadius: 10 },
   text: { fontFamily: "Inter_400Regular", fontSize: 14, color: "#FFFFFF", lineHeight: 20 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 4 },
 });
@@ -1665,7 +1688,10 @@ export default function TravelScreen() {
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
-  const [voiceMode, setVoiceMode] = useState<"community" | "home" | "local" | "professional">("community");
+  const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
+  const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
+  const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [rememberThis, setRememberThis] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -1716,6 +1742,26 @@ export default function TravelScreen() {
     });
   }, [messages, isLoading, voiceOutput]);
 
+  const pickKinfolkImage = useCallback(async () => {
+    if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) { Alert.alert("Photo access needed", "Allow photo access to ask Kinfolk about an image. You can still type any question."); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.82, allowsMultipleSelection: false });
+    if (result.canceled || !result.assets[0]) return;
+    setUploadingKinfolkImage(true);
+    try {
+      const asset = result.assets[0];
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const form = new FormData();
+      form.append("file", { uri: asset.uri, name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`, type: asset.mimeType ?? "image/jpeg" } as never);
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form });
+      const body = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!response.ok || !body.url) throw new Error(body.error ?? "Could not upload that image.");
+      setKinfolkImages((items) => items.includes(body.url!) ? items : [...items, body.url!].slice(0, 2));
+    } catch (cause) { Alert.alert("Image upload failed", cause instanceof Error ? cause.message : "Please try again."); }
+    finally { setUploadingKinfolkImage(false); }
+  }, [kinfolkImages.length, uploadingKinfolkImage]);
+
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
@@ -1723,10 +1769,14 @@ export default function TravelScreen() {
       setShowUpgrade(true);
       return;
     }
+    const attachedImages = [...kinfolkImages];
+    const shouldRemember = rememberThis;
     setInputText("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
-    await sendMessage(msg, { voiceMode });
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend]);
+    await sendMessage(msg, { voiceMode, imageUrls: attachedImages, rememberThis: shouldRemember });
+    setKinfolkImages([]);
+    setRememberThis(false);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, subscription, onUserSend, kinfolkImages, rememberThis]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2047,8 +2097,28 @@ export default function TravelScreen() {
           </ScrollView>
         </View>
 
+        <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }}>
+              <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
+              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Remember this privately</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
+          </View>
+          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((url) => <View key={url} style={{ marginRight: 8 }}><Image source={{ uri: url }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => setKinfolkImages((items) => items.filter((item) => item !== url))} style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
+        </View>
+
         {/* Input row */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1 }]}
+            onPress={() => void pickKinfolkImage()}
+            disabled={uploadingKinfolkImage || kinfolkImages.length >= 2 || isLoading}
+            accessibilityLabel="Add an image for Kinfolk"
+            activeOpacity={0.75}
+          >
+            {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="image-outline" size={18} color={colors.mutedForeground} />}
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
             onPress={() => {
@@ -2068,12 +2138,12 @@ export default function TravelScreen() {
             multiline
             returnKeyType="send"
             onSubmitEditing={() => void handleSend()}
-            editable={!isLoading}
+            editable={!isLoading && !uploadingKinfolkImage}
           />
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !isLoading ? colors.primary : colors.border }]}
+            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !isLoading && !uploadingKinfolkImage ? colors.primary : colors.border }]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || isLoading}
+            disabled={!inputText.trim() || isLoading || uploadingKinfolkImage}
           >
             <Ionicons name="arrow-up" size={20} color="#fff" />
           </Pressable>
