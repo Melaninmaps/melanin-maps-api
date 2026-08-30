@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { parseMediaUrls } from "../lib/mediaUrls";
 import { normalizeExternalUrl } from "../lib/urlSafety";
+
+describe("Expo config plugin imports", () => {
+  it("uses the supported config-plugins package in the iOS maps plugin", () => {
+    const pluginSource = readFileSync(
+      new URL("../plugins/withRnMapsPodfileFix.js", import.meta.url),
+      "utf8",
+    );
+
+    expect(pluginSource).toContain('require("@expo/config-plugins")');
+    expect(pluginSource).not.toContain('require("expo/config-plugins")');
+  });
+});
 
 describe("community media URL normalization", () => {
   it("accepts direct arrays and historical JSON text", () => {
