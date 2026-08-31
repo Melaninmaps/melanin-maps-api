@@ -86,13 +86,13 @@ describe("enforceEducationalSources", () => {
     );
     expect(result.educationalStatus).toBe("limited");
     expect(result.sources.length).toBe(0);
-    expect(result.reply).toMatch(/verified source/i);
+    expect(result.reply).toBe("An answer without a source.");
   });
 
   it("returns needs_review with no sources and no library action", () => {
     const result = enforceEducationalSources("A general answer.", [], null);
     expect(result.educationalStatus).toBe("needs_review");
-    expect(result.reply).toMatch(/could not verify a source/i);
+    expect(result.reply).toBe("A general answer.");
   });
 });
 
@@ -191,5 +191,57 @@ describe("enforceKinfolkResponse — integration", () => {
     });
     expect(result.safetyNotice).toMatch(/emergency services/i);
     expect(result.reply).toMatch(/emergency services/i);
+  });
+
+  it("returns the quiet source note only for a material local or factual limitation", () => {
+    const result = enforceKinfolkResponse({
+      reply: "Here are a few places to consider.",
+      modelRecommendations: [],
+      catalog: [],
+      sources: [],
+      libraryAction: null,
+      intentClass: "business_discovery",
+    });
+    expect(result.reply).toBe("Here are a few places to consider.");
+    expect(result.sourceNote).toMatch(/^Source note: General information only;/);
+  });
+
+  it("does not add a source note to ordinary community context or suggestions", () => {
+    const result = enforceKinfolkResponse({
+      reply: "That sounds like a great idea for your weekend.",
+      modelRecommendations: [],
+      catalog: [],
+      sources: [],
+      libraryAction: null,
+      intentClass: "culture_entertainment",
+    });
+    expect(result.reply).toBe("That sounds like a great idea for your weekend.");
+    expect(result.sourceNote).toBeNull();
+  });
+
+  it("does not add a source note to a server-validated local recommendation", () => {
+    const result = enforceKinfolkResponse({
+      reply: "Try Verified Community Cafe for brunch.",
+      modelRecommendations: [{ id: "canonical-1", name: "Verified Community Cafe", city: "Washington DC" }],
+      catalog,
+      sources: [],
+      libraryAction: null,
+      intentClass: "business_discovery",
+    });
+    expect(result.recommendations?.businesses).toHaveLength(1);
+    expect(result.sourceNote).toBeNull();
+  });
+
+  it("does not add a source note when strong source support is present", () => {
+    const result = enforceKinfolkResponse({
+      reply: "The source-backed answer is here.",
+      modelRecommendations: [],
+      catalog: [],
+      sources: [{ id: "src-1", title: "Official source", url: "https://example.org/source", label: "official" }],
+      libraryAction: null,
+      intentClass: "current_information",
+    });
+    expect(result.educationalStatus).toBe("grounded");
+    expect(result.sourceNote).toBeNull();
   });
 });

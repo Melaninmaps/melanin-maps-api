@@ -73,7 +73,7 @@ export default function MyCommunityScreen() {
     } finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const handleAdd = async () => {
     setFormError(null);
@@ -194,13 +194,13 @@ export default function MyCommunityScreen() {
                     <Text style={[styles.commCity, { color: colors.foreground }]}>
                       {geoMyComm.label} — {geoMyComm.city}, {geoMyComm.state}{geoMyComm.zipCode ? ` ${geoMyComm.zipCode}` : ""}
                     </Text>
-                    <Text style={[styles.commSub, { color: colors.mutedForeground }]}>You'll get notified about events here</Text>
+                    <Text style={[styles.commSub, { color: colors.mutedForeground }]}>You&apos;ll get notified about events here</Text>
                   </>
                 ) : (
                   <>
                     <Text style={[styles.commLabel, { color: colors.mutedForeground }]}>No community set</Text>
                     <Text style={[styles.commSub, { color: colors.mutedForeground }]}>
-                      Save a location and tap "Set as My Community" to get local event notifications.
+                      Save a location and tap &quot;Set as My Community&quot; to get local event notifications.
                     </Text>
                   </>
                 )}

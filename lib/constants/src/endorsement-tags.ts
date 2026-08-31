@@ -12,7 +12,7 @@
 export interface EndorsementTagDef {
   tag_key: string;
   tag_family: string | null;
-  tag_type: "universal" | "adaptive" | "specific";
+  tag_type: "universal" | "adaptive" | "specific" | "vibe";
   default_label: string;
   helper_text: string;
   category_ids: number[];

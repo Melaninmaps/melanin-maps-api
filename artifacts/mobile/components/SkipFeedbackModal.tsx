@@ -120,7 +120,7 @@ export function SkipFeedbackModal({ visible, businessId, businessName, onClose }
                 Leave a note for {businessName}
               </Text>
               <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-                As we work to build community, if you'd like to offer constructive feedback to the owner to help them improve, please share it here. This is private — only the owner will see it.
+                As we work to build community, if you&apos;d like to offer constructive feedback to the owner to help them improve, please share it here. This is private — only the owner will see it.
               </Text>
 
               <TextInput

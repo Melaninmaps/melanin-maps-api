@@ -103,7 +103,7 @@ export function SafetyPulseWidget() {
             ))}
           </View>
           <Text style={[styles.expandNote, { color: colors.mutedForeground }]}>
-            Powered by community safety reports. Tap "Report Safety" on the home tab to contribute.
+            Powered by community safety reports. Tap &quot;Report Safety&quot; on the home tab to contribute.
           </Text>
         </View>
       )}

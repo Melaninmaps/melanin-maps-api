@@ -1,5 +1,4 @@
 // UpgradeModal — disabled for v1.0 free release. Re-enable in v1.1 with IAP.
-import React from "react";
 
 type Props = {
   visible: boolean;

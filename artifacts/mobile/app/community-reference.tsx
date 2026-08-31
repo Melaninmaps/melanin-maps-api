@@ -237,7 +237,7 @@ export default function CommunityReferenceScreen() {
               </TouchableOpacity>
 
               <Text style={[s.footerNote, { color: colors.mutedForeground }]}>
-                By submitting, you confirm this is a good-faith community recommendation. This listing will appear in search results with a clear "Community Reference" designation and will never be promoted or featured alongside minority-owned businesses.
+                By submitting, you confirm this is a good-faith community recommendation. This listing will appear in search results with a clear &quot;Community Reference&quot; designation and will never be promoted or featured alongside minority-owned businesses.
               </Text>
             </>
           )}

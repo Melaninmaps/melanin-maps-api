@@ -8,6 +8,8 @@ import {
   Plus, AlertCircle, Smile, MoreHorizontal, Bookmark, Flag, Trash2,
   TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2
 } from "lucide-react";
+import { CommentsDialog } from "@/components/community/CommentsDialog";
+import { HappeningPanel } from "@/components/community/HappeningPanel";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -22,6 +24,7 @@ interface Post {
   content: string;
   upvotes: number;
   commentsCount: number;
+  commentPolicy?: "everyone" | "followers" | "off";
   createdAt: string;
   category: string;
   postType: string;
@@ -88,10 +91,34 @@ function categoryLabel(cat: string): string {
   return map[cat] ?? cat;
 }
 
+function normalizeMediaUrls(value: unknown): string[] | undefined {
+  let current = value;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (Array.isArray(current)) {
+      const unique = new Set<string>();
+      for (const item of current) {
+        if (typeof item !== "string") continue;
+        const url = item.trim();
+        if (url) unique.add(url);
+      }
+      const urls = Array.from(unique).slice(0, 5);
+      return urls.length > 0 ? urls : undefined;
+    }
+    if (typeof current !== "string" || !current.trim()) return undefined;
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
 // ── Post Card ──────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick }: {
+function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments }: {
   post: Post; onLike: (id: string) => void; onDelete: (id: string) => void;
   currentUserId?: string; onHashtagClick: (tag: string) => void;
+  onOpenComments: (post: Post) => void;
 }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.upvotes);
@@ -209,9 +236,10 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick }: {
           <Heart className={`w-4 h-4 ${liked ? "fill-current" : ""}`} />
           <span>{likes > 0 ? likes : ""}</span>
         </button>
-        <button className="flex items-center gap-1.5 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors">
+        <button data-testid={`community-post-comments-${post.id}`} onClick={() => onOpenComments(post)}
+          className="flex items-center gap-1.5 text-sm font-medium text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors">
           <MessageSquare className="w-4 h-4" />
-          <span>{post.commentsCount > 0 ? post.commentsCount : ""}</span>
+          <span>{post.commentsCount > 0 ? post.commentsCount : "Comment"}</span>
         </button>
       </div>
     </div>
@@ -225,6 +253,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState<"community" | "recommendation" | "alert">("community");
   const [visibility, setVisibility] = useState<"public" | "followers_only">("public");
+  const [commentPolicy, setCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [hashtagInput, setHashtagInput] = useState("");
@@ -300,7 +329,8 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         postType,
         category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
         visibility,
-        mediaUrls: mediaUrls.length ? JSON.stringify(mediaUrls) : undefined,
+        commentPolicy,
+        mediaUrls: mediaUrls.length ? mediaUrls : undefined,
         hashtags: hashtags.length ? hashtags : undefined,
       };
       const res = await fetch(`${BASE}api/community/posts`, {
@@ -324,6 +354,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         content: content.trim(),
         upvotes: 0,
         commentsCount: 0,
+        commentPolicy,
         createdAt: new Date().toISOString(),
         category: postType === "recommendation" ? "recommendation" : postType === "alert" ? "alert" : "general",
         postType: "community",
@@ -340,7 +371,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+    <div data-testid="community-compose-modal" className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#3A1F0E]/8">
@@ -365,6 +396,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Text area */}
           <textarea
+            data-testid="community-compose-content"
             autoFocus
             value={content}
             onChange={e => setContent(e.target.value)}
@@ -378,7 +410,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Media preview */}
           {mediaUrls.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
+            <div data-testid="community-media-previews" className="flex gap-2 flex-wrap">
               {mediaUrls.map((url, i) => {
                 const ytEmbed = getYouTubeEmbed(url);
                 const isSocial = url.includes("tiktok.com") || url.includes("instagram.com");
@@ -469,7 +501,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Upload error */}
           {uploadError && (
-            <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            <div data-testid="community-upload-error" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
               {uploadError}
             </div>
           )}
@@ -480,6 +512,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
               {/* Photo upload — wired to real server upload */}
               <input
                 ref={fileInputRef}
+                data-testid="community-photo-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                 className="hidden"
@@ -488,6 +521,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
               {/* Video upload */}
               <input
                 ref={videoInputRef}
+                data-testid="community-video-input"
                 type="file"
                 accept="video/mp4,video/quicktime,video/webm"
                 className="hidden"
@@ -517,17 +551,28 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
                 title="Add media link (YouTube, Instagram, TikTok)">
                 <Link2 className="w-5 h-5" />
               </button>
-              <button onClick={() => setVisibility(v => v === "public" ? "followers_only" : "public")}
+              <button onClick={() => {
+                  setVisibility(v => {
+                    const next = v === "public" ? "followers_only" : "public";
+                    if (next === "followers_only" && commentPolicy === "everyone") setCommentPolicy("followers");
+                    return next;
+                  });
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${
                   visibility === "public" ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border-[#3A1F0E]/10" : "bg-[#CA922B]/10 text-[#CA922B] border-[#CA922B]/20"
                 }`}>
                 {visibility === "public" ? <Globe className="w-3 h-3" /> : <Users className="w-3 h-3" />}
                 {visibility === "public" ? "Everyone" : "Followers"}
               </button>
+              <select data-testid="community-comment-policy" value={commentPolicy} onChange={(event) => setCommentPolicy(event.target.value as typeof commentPolicy)} aria-label="Who can comment" className="rounded-full border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-1.5 text-xs font-semibold text-[#3A1F0E]/60">
+                <option value="everyone">Comments: everyone</option>
+                <option value="followers">Comments: followers</option>
+                <option value="off">Comments off</option>
+              </select>
             </div>
             <button
               onClick={submit}
-              disabled={!content.trim() || submitting}
+              disabled={!content.trim() || submitting || uploading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#CA922B] text-white font-bold text-sm hover:bg-[#B38024] transition-colors disabled:opacity-50">
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Post
@@ -703,7 +748,7 @@ function MemberCard({ m }: { m: MemberResult }) {
 }
 
 // ── Main Community Page ────────────────────────────────────────────────────
-const TABS = ["Feed", "Events", "Groups"] as const;
+const TABS = ["Feed", "What's Happening", "Events", "Groups"] as const;
 type Tab = typeof TABS[number];
 
 export default function Community() {
@@ -753,6 +798,7 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+  const [commentTarget, setCommentTarget] = useState<{ postId: string; label: string } | null>(null);
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
   const [trending, setTrending] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -774,15 +820,11 @@ export default function Community() {
           content: p.content as string,
           upvotes: (p.upvotes as number) ?? 0,
           commentsCount: (p.commentsCount as number) ?? 0,
+          commentPolicy: (["everyone", "followers", "off"].includes(String(p.commentPolicy)) ? p.commentPolicy : "everyone") as Post["commentPolicy"],
           createdAt: p.createdAt as string,
           category: (p.category as string) ?? "general",
           postType: (p.postType as string) ?? "community",
-          mediaUrls: (() => {
-            const mu = p.mediaUrls;
-            if (!mu) return undefined;
-            if (Array.isArray(mu)) return mu as string[];
-            try { return JSON.parse(mu as string) as string[]; } catch { return undefined; }
-          })(),
+          mediaUrls: normalizeMediaUrls(p.mediaUrls),
           businessName: p.businessName as string | undefined,
           businessId: p.businessId as string | undefined,
           locationVenueName: p.locationVenueName as string | undefined,
@@ -843,7 +885,7 @@ export default function Community() {
               <p className="text-[#F5EBD8]/60 text-sm">Connect with the community</p>
             </div>
             {isAuthenticated && (
-              <button onClick={() => setShowCompose(true)}
+              <button data-testid="community-compose-open" onClick={() => setShowCompose(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-[#CA922B] hover:bg-[#B38024] text-white rounded-full font-bold text-sm transition-colors">
                 <Plus className="w-4 h-4" />
                 Post
@@ -1006,6 +1048,7 @@ export default function Community() {
                     onLike={handleLike} onDelete={handleDelete}
                     currentUserId={(auth?.user as any)?.id}
                     onHashtagClick={tag => setHashtagFilter(hashtagFilter === tag ? null : tag)}
+                    onOpenComments={selected => setCommentTarget({ postId: selected.id, label: selected.content })}
                   />
                 ))}
               </div>
@@ -1013,12 +1056,20 @@ export default function Community() {
           </>
         )}
 
+        {!searchActive && activeTab === "What's Happening" && <HappeningPanel isAuthenticated={isAuthenticated} onDiscuss={(postId, label) => setCommentTarget({ postId, label })} />}
         {!searchActive && activeTab === "Events" && <EventsTab />}
         {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
       </div>
 
       {/* Compose modal */}
       {showCompose && <ComposeModal onClose={() => setShowCompose(false)} onPost={p => setPosts(ps => [p, ...ps])} />}
+      {commentTarget && <CommentsDialog
+        postId={commentTarget.postId}
+        postLabel={commentTarget.label}
+        currentUserId={(auth?.user as any)?.id}
+        onClose={() => setCommentTarget(null)}
+        onCommentAdded={(postId) => setPosts((items) => items.map((post) => post.id === postId ? { ...post, commentsCount: post.commentsCount + 1 } : post))}
+      />}
     </div>
   );
 }

@@ -21,7 +21,10 @@ export interface AuthUser {
     lastName: string | null;
     /** @nullable */
     profileImageUrl: string | null;
+    role: 'user' | 'tester' | 'admin';
     approved?: boolean;
+    /** False until the member completes the Kinfolk onboarding wizard */
+    profileSetupComplete?: boolean;
 }
 export interface AuthUserEnvelope {
     user: AuthUser | null;

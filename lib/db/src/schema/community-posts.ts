@@ -29,6 +29,9 @@ export const communityPostsTable = pgTable("community_posts", {
   topicTag: varchar("topic_tag", { length: 100 }),
   isPrivateTopic: boolean("is_private_topic").notNull().default(false),
   visibility: varchar("visibility", { length: 20 }).notNull().default("public"),
+  // Who may add comments after they have already passed the post-visibility gate.
+  // everyone | followers | off
+  commentPolicy: varchar("comment_policy", { length: 20 }).notNull().default("everyone"),
   hasContentWarning: boolean("has_content_warning").notNull().default(false),
   contentWarningType: varchar("content_warning_type", { length: 30 }),
   audienceRating: varchar("audience_rating", { length: 20 }).notNull().default("everyone"),
@@ -70,6 +73,10 @@ export const communityPostCommentsTable = pgTable("community_post_comments", {
   authorInitials: varchar("author_initials", { length: 4 }).notNull(),
   authorColor: varchar("author_color", { length: 20 }).notNull().default("#3B1F0E"),
   content: text("content").notNull(),
+  // active comments are visible and counted; hidden/deleted records are retained for moderation.
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  editedAt: timestamp("edited_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

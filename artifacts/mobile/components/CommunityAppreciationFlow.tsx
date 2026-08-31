@@ -301,7 +301,7 @@ export function CommunityAppreciationFlow({ businessId, businessName, reviewId, 
 
       {/* Footer note */}
       <Text style={[s.footerNote, { color: colors.mutedForeground }]}>
-        "Your feedback helps businesses grow and helps communities thrive."
+        &quot;Your feedback helps businesses grow and helps communities thrive.&quot;
       </Text>
 
       {/* Submit */}

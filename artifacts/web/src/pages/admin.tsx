@@ -2004,10 +2004,10 @@ export default function Admin() {
             {/* Status filter tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
               {([
-                { key: "all", label: `All (${businesses.length})` },
+                { key: "all", label: `All (${businesses.length})`, warn: false },
                 { key: "permanently_closed", label: `⚠️ Permanently Closed (${permanentlyClosedCount})`, warn: permanentlyClosedCount > 0 },
                 { key: "needs_review", label: `🔍 Needs Review (${needsReviewCount})`, warn: needsReviewCount > 0 },
-                { key: "archived", label: `📦 Archived (${archivedCount})` },
+                { key: "archived", label: `📦 Archived (${archivedCount})`, warn: false },
               ] as const).map(({ key, label, warn }) => (
                 <button
                   key={key}

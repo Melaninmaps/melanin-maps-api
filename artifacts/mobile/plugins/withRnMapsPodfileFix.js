@@ -42,7 +42,7 @@
  *   83: remove the pod line via withDangerousMod → ran before @generated block existed
  *   84: shim podspec with correct s.name + no source_files (this build)
  */
-const { withDangerousMod } = require("expo/config-plugins");
+const { withDangerousMod } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 

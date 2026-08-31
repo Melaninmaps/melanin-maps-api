@@ -158,7 +158,7 @@ export default function GroupDetailScreen() {
     finally { setIsLoading(false); }
   }, [id]);
 
-  useEffect(() => { void loadGroup(); }, [loadGroup]);
+  useEffect(() => { queueMicrotask(() => { void loadGroup(); }); }, [loadGroup]);
 
   const handleAddSuggestion = async () => {
     if (!suggValue.trim()) { Alert.alert("Required", "Please enter a suggestion."); return; }
@@ -825,7 +825,7 @@ export default function GroupDetailScreen() {
             <View style={[styles.safetyInfoBanner, { backgroundColor: "#16A34A12", borderColor: "#16A34A30" }]}>
               <Feather name="shield" size={18} color="#16A34A" />
               <Text style={[styles.safetyInfoText, { color: colors.foreground }]}>
-                Your trusted contact will receive both your profile and your connection's profile once you both consent. They'll know you're meeting up.
+                Your trusted contact will receive both your profile and your connection&apos;s profile once you both consent. They&apos;ll know you&apos;re meeting up.
               </Text>
             </View>
             <Text style={[styles.modalLabel, { color: colors.foreground }]}>Trusted Contact Name</Text>

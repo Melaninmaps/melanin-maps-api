@@ -65,7 +65,7 @@ export default function JobDetailScreen() {
     }
   }, [id]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleApply = () => {
     if (job?.url) {

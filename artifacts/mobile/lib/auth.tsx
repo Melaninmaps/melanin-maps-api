@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchUser();
+    void Promise.resolve().then(fetchUser);
   }, [fetchUser]);
 
   const login = useCallback(async () => {

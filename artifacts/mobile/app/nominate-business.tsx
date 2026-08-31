@@ -182,7 +182,7 @@ export default function NominateBusinessScreen() {
             <Feather name="check-circle" size={56} color={colors.success} />
             <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank you for the nomination!</Text>
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-              We'll reach out to {selectedPlace?.name ?? "this business"} about joining our community.
+              We&apos;ll reach out to {selectedPlace?.name ?? "this business"} about joining our community.
             </Text>
             <TouchableOpacity
               onPress={() => { setSelectedPlace(null); setWhy(""); setOwnershipDesignations([]); setResult(null); setStage("main"); }}

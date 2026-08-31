@@ -125,7 +125,8 @@ router.get("/admin/feedback", async (req: Request, res: Response) => {
 router.patch("/admin/feedback/:id/status", async (req: Request, res: Response) => {
   if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const { id } = req.params;
+  const rawId = req.params.id;
+  const id = Array.isArray(rawId) ? rawId[0] ?? "" : rawId;
   const { status } = req.body as { status?: string };
 
   if (!status || !["open", "resolved"].includes(status)) {

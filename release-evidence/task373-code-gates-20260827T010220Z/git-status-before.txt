@@ -1,0 +1,59 @@
+ M artifacts/api-server/dist/BUILD_IDENTITY
+ M artifacts/api-server/dist/index.mjs
+ M artifacts/api-server/dist/index.mjs.map
+ M artifacts/api-server/src/generated/buildIdentity.ts
+ D artifacts/mockup-sandbox/dist/assets/BizBroadcasts-CyZdthUe.js
+ D artifacts/mockup-sandbox/dist/assets/BizFeaturedVideo-CBSozp0p.js
+ D artifacts/mockup-sandbox/dist/assets/BizIdentity-D9G9-9Ir.js
+ D artifacts/mockup-sandbox/dist/assets/BizOwnerDashboard-CeHf0UmD.js
+ D artifacts/mockup-sandbox/dist/assets/BizPinnedHighlights-CU4bdNVC.js
+ D artifacts/mockup-sandbox/dist/assets/BlackOwnedSurvey-DMPBkK4Z.js
+ D artifacts/mockup-sandbox/dist/assets/BusinessEditProfile-BZub7gri.js
+ D artifacts/mockup-sandbox/dist/assets/BusinessOwnerProfile-D6XpWwSn.js
+ D artifacts/mockup-sandbox/dist/assets/BusinessOwnerProfileVisitor-Cu5XUkt2.js
+ D artifacts/mockup-sandbox/dist/assets/CommunityBoundaries-BzcD9w_b.js
+ D artifacts/mockup-sandbox/dist/assets/CommunityPage-yVrlz7VY.js
+ D artifacts/mockup-sandbox/dist/assets/CommunityProfile-Gy5w_Hs8.js
+ D artifacts/mockup-sandbox/dist/assets/CommunityProfileVisitor-Bf3EOMuC.js
+ D artifacts/mockup-sandbox/dist/assets/DarkMode-Bzn_bROp.js
+ D artifacts/mockup-sandbox/dist/assets/DarkModeHero-DYBgvSwn.js
+ D artifacts/mockup-sandbox/dist/assets/GeneralSurvey-Dn-e4koD.js
+ D artifacts/mockup-sandbox/dist/assets/LightMode-xoBn29it.js
+ D artifacts/mockup-sandbox/dist/assets/LightModeHero-sqRn9qlW.js
+ D artifacts/mockup-sandbox/dist/assets/Slide01Opening-DpksmWC1.js
+ D artifacts/mockup-sandbox/dist/assets/Slide05TrustScore-Dg9ZhM7s.js
+ D artifacts/mockup-sandbox/dist/assets/Slide17WhyNow-Ck5PVGpo.js
+ D artifacts/mockup-sandbox/dist/assets/Task101PinDemo-6-juhfRj.js
+ D artifacts/mockup-sandbox/dist/assets/index-g73boB0B.js
+ M artifacts/mockup-sandbox/dist/index.html
+ M artifacts/mockup-sandbox/src/.generated/mockup-components.ts
+ M release-evidence/task373-native-release/00-manifest.json
+ M release-evidence/task373-native-release/GO_NO_GO.md
+?? artifacts/mockup-sandbox/dist/assets/BizBroadcasts-Bx9ez3DM.js
+?? artifacts/mockup-sandbox/dist/assets/BizFeaturedVideo-DSq_lhLp.js
+?? artifacts/mockup-sandbox/dist/assets/BizIdentity-D4fwTGJv.js
+?? artifacts/mockup-sandbox/dist/assets/BizOwnerDashboard-DTSuCCKT.js
+?? artifacts/mockup-sandbox/dist/assets/BizPinnedHighlights-DFsIHvln.js
+?? artifacts/mockup-sandbox/dist/assets/BlackOwnedSurvey-DcacYDoy.js
+?? artifacts/mockup-sandbox/dist/assets/BusinessEditProfile-pNe5DlYa.js
+?? artifacts/mockup-sandbox/dist/assets/BusinessOwnerProfile-CmEbo5cJ.js
+?? artifacts/mockup-sandbox/dist/assets/BusinessOwnerProfileVisitor-BGfsf3Ja.js
+?? artifacts/mockup-sandbox/dist/assets/CommunityBoundaries-BDC0-Q__.js
+?? artifacts/mockup-sandbox/dist/assets/CommunityPage-BHHkMQBv.js
+?? artifacts/mockup-sandbox/dist/assets/CommunityProfile-Bp1UpOKi.js
+?? artifacts/mockup-sandbox/dist/assets/CommunityProfileVisitor-DkAzJo47.js
+?? artifacts/mockup-sandbox/dist/assets/DarkMode-Cc1NQHPx.js
+?? artifacts/mockup-sandbox/dist/assets/DarkModeHero-DUa9IWdH.js
+?? artifacts/mockup-sandbox/dist/assets/GeneralSurvey-CyxTySRF.js
+?? artifacts/mockup-sandbox/dist/assets/LightMode-BKjxQLs3.js
+?? artifacts/mockup-sandbox/dist/assets/LightModeHero-DDXsZGa4.js
+?? artifacts/mockup-sandbox/dist/assets/Slide01Opening-cViQfovm.js
+?? artifacts/mockup-sandbox/dist/assets/Slide05TrustScore-Bdbh23P5.js
+?? artifacts/mockup-sandbox/dist/assets/Slide17WhyNow-Ciu4vAUI.js
+?? artifacts/mockup-sandbox/dist/assets/Task101PinDemo-BlAt_8XV.js
+?? artifacts/mockup-sandbox/dist/assets/index-B2RVb6RE.js
+?? "attached_assets/Replit_Start_Prompt_\342\200\224_Personalized_Map_1787791301991.md"
+?? release-evidence/task373-code-gates-20260827T002517Z.zip
+?? release-evidence/task373-code-gates-20260827T002517Z/
+?? release-evidence/task373-code-gates-20260827T010220Z/
+?? release-evidence/task373-native-release/candidate-artifacts.txt

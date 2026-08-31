@@ -168,11 +168,11 @@ export default function HealthHubScreen() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    loadTopics(); loadPosts();
-    if (isAuthenticated) { loadMyTopics(); loadPhysician(); }
+    queueMicrotask(() => { loadTopics(); }); queueMicrotask(() => { loadPosts(); });
+    if (isAuthenticated) { queueMicrotask(() => { loadMyTopics(); }); queueMicrotask(() => { loadPhysician(); }); }
   }, []);
 
-  useEffect(() => { loadPosts(); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { loadPosts(); }); }, [loadPosts]);
 
   // ── Load insights-tab data ─────────────────────────────────────────────────
   const loadInsights = useCallback(async () => {
@@ -200,11 +200,11 @@ export default function HealthHubScreen() {
   }, [selectedDesignations, selectedJournal]);
 
   useEffect(() => {
-    if (hubTab === "insights" && !insightsLoaded) loadInsights();
+    if (hubTab === "insights" && !insightsLoaded) queueMicrotask(() => { loadInsights(); });
   }, [hubTab]);
 
   useEffect(() => {
-    if (hubTab === "insights") loadInsights();
+    if (hubTab === "insights") queueMicrotask(() => { loadInsights(); });
   }, [selectedDesignations, selectedJournal]);
 
   // ── Posts interactions ─────────────────────────────────────────────────────
@@ -505,7 +505,7 @@ export default function HealthHubScreen() {
                 {isPendingPhysician ? (
                   <>
                     <Text style={[styles.physicianCtaTitle, { color: colors.foreground }]}>Application Under Review</Text>
-                    <Text style={[styles.physicianCtaSub, { color: colors.mutedForeground }]}>We're reviewing your credentials. Typical review: 2–5 business days.</Text>
+                    <Text style={[styles.physicianCtaSub, { color: colors.mutedForeground }]}>We&apos;re reviewing your credentials. Typical review: 2–5 business days.</Text>
                   </>
                 ) : (
                   <>

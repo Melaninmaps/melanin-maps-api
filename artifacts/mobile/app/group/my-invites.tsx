@@ -88,7 +88,7 @@ export default function MyInvitesScreen() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const respond = async (inviteId: number, action: "accept" | "decline") => {
     setResponding(inviteId);
@@ -144,7 +144,7 @@ export default function MyInvitesScreen() {
             </View>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No pending invitations</Text>
             <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
-              When someone invites you to a group, it'll show up here.
+              When someone invites you to a group, it&apos;ll show up here.
             </Text>
           </View>
         ) : (
@@ -184,7 +184,7 @@ export default function MyInvitesScreen() {
                 {invite.message ? (
                   <View style={[styles.messageBubble, { backgroundColor: colors.background }]}>
                     <Feather name="message-circle" size={13} color={colors.mutedForeground} style={{ marginTop: 1 }} />
-                    <Text style={[styles.messageText, { color: colors.foreground }]}>"{invite.message}"</Text>
+                    <Text style={[styles.messageText, { color: colors.foreground }]}>&quot;{invite.message}&quot;</Text>
                   </View>
                 ) : null}
 

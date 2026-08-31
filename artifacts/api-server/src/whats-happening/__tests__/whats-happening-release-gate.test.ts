@@ -21,6 +21,13 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { pool } from "@workspace/db";
 import { validatePublicUrl, findExistingSource } from "../../lib/url-safety-validator";
 
+function rejectedReason(
+  result: Awaited<ReturnType<typeof validatePublicUrl>>,
+): string {
+  if (result.safe) throw new Error("Expected URL validation to reject the URL");
+  return result.reason;
+}
+
 afterAll(async () => {
   await Promise.race([pool.end(), new Promise((r) => setTimeout(r, 3000))]);
 }, 10_000);
@@ -56,37 +63,37 @@ describe("WH-02: Localhost/private-IP/metadata URL rejected pre-fetch", () => {
   it("rejects localhost", async () => {
     const result = await validatePublicUrl("https://localhost/api/data");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 
   it("rejects 127.0.0.1", async () => {
     const result = await validatePublicUrl("https://127.0.0.1/secret");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 
   it("rejects 10.x.x.x internal IP", async () => {
     const result = await validatePublicUrl("https://10.0.0.1/internal");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 
   it("rejects 192.168.x.x", async () => {
     const result = await validatePublicUrl("https://192.168.1.1/admin");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 
   it("rejects AWS instance metadata 169.254.169.254", async () => {
     const result = await validatePublicUrl("https://169.254.169.254/latest/meta-data");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 
   it("rejects HTTP (non-HTTPS)", async () => {
     const result = await validatePublicUrl("http://example.com/article");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/https/i);
+    expect(rejectedReason(result)).toMatch(/https/i);
   });
 
   it("rejects malformed URL", async () => {
@@ -102,7 +109,7 @@ describe("WH-03: Redirect to private or unsupported URL", () => {
     // Simulate: if we constructed a URL pointing directly to a private host post-redirect
     const result = await validatePublicUrl("https://172.20.0.1/redirect-target");
     expect(result.safe).toBe(false);
-    expect(result.reason).toMatch(/private|reserved/i);
+    expect(rejectedReason(result)).toMatch(/private|reserved/i);
   });
 });
 

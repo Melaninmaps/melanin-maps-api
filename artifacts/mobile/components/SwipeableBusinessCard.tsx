@@ -1,12 +1,11 @@
 import React, { useRef, useState } from "react";
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, StyleSheet, Text, TouchableOpacity } from "react-native";
 import Swipeable from "react-native-gesture-handler/Swipeable";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import { BusinessCard } from "./BusinessCard";
 import { SkipFeedbackModal } from "./SkipFeedbackModal";
 import type { Business } from "@/constants/types";
-import { useColors } from "@/hooks/useColors";
 
 interface Props {
   business: Business;
@@ -17,7 +16,6 @@ interface Props {
 
 export function SwipeableBusinessCard({ business, onPress, isSaved, onToggleSave }: Props) {
   const swipeRef = useRef<Swipeable>(null);
-  const colors = useColors();
   const [showFeedback, setShowFeedback] = useState(false);
 
   const handleSave = () => {

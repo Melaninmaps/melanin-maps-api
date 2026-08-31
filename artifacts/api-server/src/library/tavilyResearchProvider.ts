@@ -1,4 +1,5 @@
 import type { ExternalResearchProvider, ResearchDocument } from "./types";
+import { enforceDiasporaFirstProviderQuery } from "../kinfolk/diasporaFirstResearchPolicy.js";
 
 type TavilyResult = {
   url: string;
@@ -18,6 +19,7 @@ export function createTavilyResearchProvider(apiKey: string): ExternalResearchPr
   return {
     async search({ query, allowedDomains, maxResults }): Promise<ResearchDocument[]> {
       const concreteDomains = allowedDomains.filter((domain) => !domain.startsWith("*."));
+      const providerQuery = enforceDiasporaFirstProviderQuery(query);
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: {
@@ -25,7 +27,7 @@ export function createTavilyResearchProvider(apiKey: string): ExternalResearchPr
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query,
+          query: providerQuery,
           search_depth: "advanced",
           max_results: maxResults,
           include_raw_content: "markdown",

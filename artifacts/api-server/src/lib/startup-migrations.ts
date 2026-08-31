@@ -44,6 +44,7 @@ import { COMMUNITY_EVENTS_EXPANSION_2_SEED } from "../data/community-events-expa
 import { TOUR_CULTURAL_SITES_SEED } from "../data/tour-cultural-sites-seed";
 import { CULTURAL_PHRASES_SEED } from "../data/cultural-phrases-seed";
 import { FOUNDER_CURATED_BUSINESSES_SEED } from "../data/founder-curated-businesses-seed";
+import { ensureUniversalMapEntities } from "../map/ensureUniversalMapEntities";
 import { ensureDiasporaFaithSites } from "./ensure-diaspora-faith-sites";
 import {
   ensureLibraryEvidenceBatchB,
@@ -4009,6 +4010,84 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS internal_test_content boolean NOT NULL DEFAULT false`,
   },
   {
+    name: "community_comments_and_happening_v2",
+    sql: `DO $$
+      BEGIN
+        IF to_regclass('public.community_posts') IS NOT NULL THEN
+          ALTER TABLE community_posts
+            ADD COLUMN IF NOT EXISTS comment_policy varchar(20) NOT NULL DEFAULT 'everyone';
+        END IF;
+
+        IF to_regclass('public.community_post_comments') IS NOT NULL THEN
+          ALTER TABLE community_post_comments
+            ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'active',
+            ADD COLUMN IF NOT EXISTS edited_at timestamptz,
+            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+          CREATE INDEX IF NOT EXISTS community_post_comments_active_idx
+            ON community_post_comments (post_id, created_at DESC)
+            WHERE status = 'active';
+        END IF;
+
+        IF to_regclass('public.happening_now_stories') IS NOT NULL THEN
+          ALTER TABLE happening_now_stories
+            ADD COLUMN IF NOT EXISTS topic_tags text[],
+            ADD COLUMN IF NOT EXISTS scope varchar(20) NOT NULL DEFAULT 'national',
+            ADD COLUMN IF NOT EXISTS city varchar(120),
+            ADD COLUMN IF NOT EXISTS state varchar(80),
+            ADD COLUMN IF NOT EXISTS country varchar(80) NOT NULL DEFAULT 'United States',
+            ADD COLUMN IF NOT EXISTS source_publisher varchar(180),
+            ADD COLUMN IF NOT EXISTS source_status varchar(24) NOT NULL DEFAULT 'unverified',
+            ADD COLUMN IF NOT EXISTS published_at timestamptz,
+            ADD COLUMN IF NOT EXISTS expires_at timestamptz,
+            ADD COLUMN IF NOT EXISTS community_post_id varchar(100);
+          CREATE INDEX IF NOT EXISTS happening_now_status_scope_created_idx
+            ON happening_now_stories (status, scope, created_at DESC);
+          CREATE INDEX IF NOT EXISTS happening_now_city_state_idx
+            ON happening_now_stories (lower(city), lower(state));
+        END IF;
+      END
+    $$`,
+  },
+  {
+    name: "kinfolk_private_memories_v1",
+    sql: `CREATE TABLE IF NOT EXISTS kinfolk_private_memories (
+      id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id varchar(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content text NOT NULL,
+      purpose varchar(40) NOT NULL DEFAULT 'personalization',
+      source_session_id varchar(100),
+      is_sensitive boolean NOT NULL DEFAULT false,
+      consent_granted_at timestamptz NOT NULL DEFAULT now(),
+      expires_at timestamptz,
+      revoked_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS consent_granted_at timestamptz NOT NULL DEFAULT now();
+    CREATE INDEX IF NOT EXISTS kinfolk_private_memories_user_active_idx
+      ON kinfolk_private_memories (user_id, revoked_at, expires_at)`,
+  },
+  {
+    name: "happening_personalization_privacy_v1",
+    sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS home_state varchar(2);
+    UPDATE users
+    SET home_state = upper((regexp_match(home_city, ',\\s*([A-Za-z]{2})(?:\\s|$)'))[1])
+    WHERE home_state IS NULL AND home_city ~ ',\\s*[A-Za-z]{2}(?:\\s|$)';
+    CREATE TABLE IF NOT EXISTS happening_topic_interest_events (
+      id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id varchar(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      category varchar(50),
+      topic_id varchar(100),
+      consented_at timestamptz NOT NULL DEFAULT now(),
+      revoked_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT happening_topic_interest_identifier CHECK (category IS NOT NULL OR topic_id IS NOT NULL)
+    );
+    CREATE INDEX IF NOT EXISTS happening_topic_interest_events_active_idx
+      ON happening_topic_interest_events (user_id, revoked_at, created_at DESC)`,
+  },
+  {
     name: "community_post_internal_quarantine_table_v1",
     sql: `CREATE TABLE IF NOT EXISTS community_post_internal_quarantine (
       post_id                    varchar PRIMARY KEY,
@@ -4602,6 +4681,9 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // media_assets, entity_media_assets, business_claim_requests tables +
     // owner_claim_status / added_via / added_by_member_id columns on businesses.
     ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
+    // ── Universal non-business map entities ────────────────────────────────
+    // One published source supplies the map pin, panel row, and canonical place URL.
+    ["universal map entities v1", () => ensureUniversalMapEntities(pool, { log, warn })],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -9118,7 +9200,7 @@ async function ensureKinfolkCulturalContextV1(
     `);
 
     // ── 7. Seed sources ────────────────────────────────────────────────────────
-    type SrcRow = { canonical_url: string; publisher: string; title: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
+    type SrcRow = { canonical_url: string; publisher: string; title?: string; tier: string; claim_scope: string[]; expected_host: string; notes: string };
     const SOURCES: SrcRow[] = [
       { canonical_url: "https://www.sinnersmovie.com/toolkit/",        publisher: "Sinners (Official Film)",                                tier: "A", claim_scope: ["film_credit","director_credit","cast_credit","release_year"],        expected_host: "sinnersmovie.com", notes: "Confirms Ryan Coogler as writer/director; Michael B. Jordan as lead" },
       { canonical_url: "https://www.hbomax.com/movies/sinners/2a072173-2bac-43ba-9933-10eba021ed96", publisher: "HBO Max",               tier: "A", claim_scope: ["film_credit","streaming_availability","release_year"],                 expected_host: "hbomax.com",       notes: "Official streaming page; may redirect" },

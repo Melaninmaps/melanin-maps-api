@@ -36,6 +36,7 @@ export function SavedSpotsShare({ savedBusinesses }: Props) {
   const [loading, setLoading] = useState(true);
 
   const loadPublicState = useCallback(async () => {
+    await Promise.resolve();
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const res = await fetch(`${getApiBase()}/api/saved-places/public-state`, {
@@ -50,7 +51,7 @@ export function SavedSpotsShare({ savedBusinesses }: Props) {
     }
   }, []);
 
-  useEffect(() => { void loadPublicState(); }, [loadPublicState]);
+  useEffect(() => { void Promise.resolve().then(loadPublicState); }, [loadPublicState]);
 
   const handleToggle = async (businessId: string, businessName: string) => {
     if (toggling) return;
@@ -115,9 +116,8 @@ export function SavedSpotsShare({ savedBusinesses }: Props) {
       } else {
         setPublicState((prev) => ({ ...prev, [businessId]: data.isPublic }));
         if (Platform.OS !== "web") {
-          data.isPublic
-            ? Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-            : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (data.isPublic) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          else Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
       }
     } catch {

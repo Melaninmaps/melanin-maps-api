@@ -92,7 +92,8 @@ router.delete("/admin/audit-user/:userId", async (req: Request, res: Response) =
     return;
   }
 
-  const { userId } = req.params;
+  const rawUserId = req.params.userId;
+  const userId = Array.isArray(rawUserId) ? rawUserId[0] ?? "" : rawUserId;
 
   // Safety: only allow deletion of accounts with the audit_ prefix.
   if (!userId.startsWith("audit_")) {

@@ -65,7 +65,7 @@ router.post("/library/suggest", async (req, res) => {
     const row = r.rows[0];
     if (!row) throw new Error("No row returned from upsert");
 
-    res.json({
+    return res.json({
       ok: true,
       candidateId: row.id,
       subject: canonicalSubject,
@@ -81,7 +81,7 @@ router.post("/library/suggest", async (req, res) => {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "unknown";
-    res.status(500).json({ error: "Failed to record Library suggestion", detail: msg });
+    return res.status(500).json({ error: "Failed to record Library suggestion", detail: msg });
   }
 });
 

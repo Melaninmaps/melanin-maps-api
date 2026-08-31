@@ -14,7 +14,6 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -141,7 +140,7 @@ export function ProgressiveForm({
             accessibilityRole="button"
           >
             {groupSubmitting ? (
-              <ActivityIndicator color={colors.gold} size="small" />
+              <ActivityIndicator color={colors.primary} size="small" />
             ) : (
               <Text style={[styles.groupButtonLabel, { color: colors.primary }]}>
                 {activeGroup.submitLabel ?? "Add this"}

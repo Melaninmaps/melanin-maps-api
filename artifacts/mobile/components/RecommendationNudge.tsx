@@ -55,7 +55,7 @@ export function RecommendationNudge() {
   }, [businesses, opacity]);
 
   useEffect(() => {
-    void checkAndShow();
+    void Promise.resolve().then(checkAndShow);
   }, [checkAndShow]);
 
   const dismiss = async (snooze: boolean) => {

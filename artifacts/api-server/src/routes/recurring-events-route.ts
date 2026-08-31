@@ -61,10 +61,10 @@ router.get("/recurring-events/:id", async (req: Request, res: Response) => {
       [id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: "Event not found" });
-    res.json(r.rows[0]);
+    return res.json(r.rows[0]);
   } catch (err) {
     req.log?.error({ err }, "GET /recurring-events/:id failed");
-    res.status(500).json({ error: "Failed to fetch event" });
+    return res.status(500).json({ error: "Failed to fetch event" });
   }
 });
 

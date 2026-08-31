@@ -227,7 +227,7 @@ export function SellerAgreementModal({ visible, businessId, businessName, onAcce
           ) : null}
 
           <Text style={[styles.footerNote, { color: colors.mutedForeground }]}>
-            By tapping "I Agree", you ({businessName}) accept all terms above and represent you have authority to bind this business.
+            By tapping &quot;I Agree&quot;, you ({businessName}) accept all terms above and represent you have authority to bind this business.
           </Text>
 
           <TouchableOpacity

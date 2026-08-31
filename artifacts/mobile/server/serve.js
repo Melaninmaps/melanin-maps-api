@@ -13,8 +13,9 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const STATIC_ROOT = path.resolve(__dirname, "..", "static-build");
-const TEMPLATE_PATH = path.resolve(__dirname, "templates", "landing-page.html");
+const SERVER_DIR = path.dirname(require.resolve("./serve.js"));
+const STATIC_ROOT = path.resolve(SERVER_DIR, "..", "static-build");
+const TEMPLATE_PATH = path.resolve(SERVER_DIR, "templates", "landing-page.html");
 const basePath = (process.env.BASE_PATH || "/").replace(/\/+$/, "");
 
 const MIME_TYPES = {
@@ -37,7 +38,7 @@ const MIME_TYPES = {
 
 function getAppName() {
   try {
-    const appJsonPath = path.resolve(__dirname, "..", "app.json");
+    const appJsonPath = path.resolve(SERVER_DIR, "..", "app.json");
     const appJson = JSON.parse(fs.readFileSync(appJsonPath, "utf-8"));
     return appJson.expo?.name || "App Landing Page";
   } catch {

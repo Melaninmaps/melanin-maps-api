@@ -121,8 +121,50 @@ export const KINFOLK_PERMANENT_RESEARCH_LENS = {
   rule: "Apply the cultural research lens to source discovery. Never convert the lens or a search term into a claim about the member's identity.",
 } as const;
 
-function includesBlackWomenContext(query: string): boolean {
-  return /\b(black\s+(women|woman|community|owned)|african\s+american|diaspora)\b/i.test(query);
+function hasExplicitPopulationContext(query: string): boolean {
+  return /\b(black(?:\s+(?:women|woman|men|man|community|owned|people))?|african\s+american|diaspora|caribbean|latinx?|latina|latino|indigenous|native\s+american|asian(?:\s+american)?|south\s+asian|east\s+asian|middle\s+eastern|arab|muslim|jewish|lgbtq\+?|queer|trans(?:gender)?|immigrant|refugee|disabled|disability)\b/i.test(
+    query,
+  );
+}
+
+function explicitlyRequestsGeneralResearch(query: string): boolean {
+  return /\b(general\s+(?:research|information|overview)|broad\s+research|for\s+everyone|general\s+audience)\b/i.test(
+    query,
+  );
+}
+
+function inferProviderTopic(query: string): ResearchContext["topic"] {
+  const normalized = query.toLowerCase();
+  if (/\b(health|medical|disease|caregiv|maternal|pregnan|postpartum|hair|alopecia|wellness|dermat|eczema|blood pressure|hypertension|heart disease|fibroid|lupus|sickle cell|mental health)\b/.test(normalized)) {
+    return "health";
+  }
+  if (/\b(stem|science|technology|engineering|math|scholarship)\b/.test(normalized)) return "stem";
+  if (/\b(education|school|college|university|learning|teacher|student)\b/.test(normalized)) return "education";
+  if (/\b(housing|homeownership|tenant|rent|eviction)\b/.test(normalized)) return "housing";
+  if (/\b(legal|law|attorney|lawyer|court|rights|immigration)\b/.test(normalized)) return "legal";
+  if (/\b(business|restaurant|nightlife|service|professional|shop|store)\b/.test(normalized)) return "business";
+  if (/\b(culture|heritage|history|museum|festival|music|film)\b/.test(normalized)) return "culture";
+  return "other";
+}
+
+/**
+ * enforceDiasporaFirstProviderQuery is the final guard before a query leaves
+ * Kinfolk for an external research provider. It intentionally operates on the
+ * final query string so entity, evidence, image, and future planner paths
+ * cannot bypass the server-side policy.
+ */
+export function enforceDiasporaFirstProviderQuery(query: string): string {
+  const cleanQuery = query.trim().replace(/\s+/g, " ");
+  if (!cleanQuery) throw new Error("QUESTION_REQUIRED");
+
+  if (explicitlyRequestsGeneralResearch(cleanQuery) || hasExplicitPopulationContext(cleanQuery)) {
+    return cleanQuery;
+  }
+
+  return buildDiasporaFirstQuery({
+    question: cleanQuery,
+    topic: inferProviderTopic(cleanQuery),
+  });
 }
 
 /**
@@ -144,10 +186,10 @@ export function buildDiasporaFirstResearchQuery(
     topic: topic === "career" || topic === "travel" || topic === "general" ? "other" : topic,
   };
 
-  // If the question already contains diaspora context, don't double-prefix
-  if (includesBlackWomenContext(cleanQuestion)) {
-    ctx.requestedPopulation = ""; // triggers [" " + topic + place].filter(Boolean) but topic includes the context
-    ctx.explicitlyGeneral = true; // preserve as-is
+  // If the member named a population or explicitly requested general research,
+  // preserve their wording rather than layering the default population over it.
+  if (hasExplicitPopulationContext(cleanQuestion) || explicitlyRequestsGeneralResearch(cleanQuestion)) {
+    ctx.explicitlyGeneral = true;
   }
 
   const base = buildDiasporaFirstQuery(ctx);

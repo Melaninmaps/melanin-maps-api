@@ -55,7 +55,7 @@ router.post("/space-reports", reportLimiter, requireTrust, async (req: any, res:
       spaceName: spaceName.trim().slice(0, 200),
       address: address?.trim().slice(0, 300) || null,
       city: city.trim().slice(0, 100),
-      category: category as typeof VALID_CATEGORIES[number],
+      category: category === "workplace" ? "other" : category as Exclude<typeof VALID_CATEGORIES[number], "workplace">,
       concernTypes: JSON.stringify(concernTypes),
       description: description.trim().slice(0, 2000),
       isAnonymous: effectivelyAnonymous,

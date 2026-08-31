@@ -77,7 +77,9 @@ export function registerLivingLibraryRoutes(
   });
 
   app.get("/api/library/topics/:slug", async (request: Request, response: Response) => {
-    const topic = await repository.findTopicBySlug(request.params.slug);
+    const rawSlug = request.params.slug;
+    const slug = Array.isArray(rawSlug) ? rawSlug[0] ?? "" : rawSlug;
+    const topic = await repository.findTopicBySlug(slug);
     if (!topic) return response.status(404).json({ error: "Library topic not found." });
     const entries = await repository.listTopicEntries({
       topicId: topic.id,
@@ -91,7 +93,9 @@ export function registerLivingLibraryRoutes(
     try {
       const memberId = requireMemberId(request);
       const following = Boolean(request.body?.following);
-      await repository.setTopicFollow({ topicId: request.params.topicId, memberId, following });
+      const rawTopicId = request.params.topicId;
+      const topicId = Array.isArray(rawTopicId) ? rawTopicId[0] ?? "" : rawTopicId;
+      await repository.setTopicFollow({ topicId, memberId, following });
       return response.status(200).json({ following });
     } catch (error) {
       return response.status(401).json({ error: error instanceof Error ? error.message : "Unable to update follow." });

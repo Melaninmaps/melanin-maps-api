@@ -389,6 +389,7 @@ type IntentType =
   | "named_business"
   | "food_item"
   | "specialty_service"
+  | "healthcare"
   | "heritage"
   | "faith"
   | "library_country"
@@ -1409,7 +1410,7 @@ async function searchHeritage(
     radiusMiles?: number;
     limit?: number;
   } = {},
-): Promise<Array<Record<string, unknown>>> {
+): Promise<HeritageResult[]> {
   const { city, state, lat, lng, radiusMiles, limit = 5 } = opts;
   const tableChecks = ["cultural_sites", "tour_cultural_sites"];
 
@@ -1466,7 +1467,7 @@ async function searchHeritage(
           ))))::numeric, 0) AS distance_miles`
         : "";
 
-      const rows = await pool.query(
+      const rows = await pool.query<HeritageResult>(
         `SELECT id, name, city, state, description, heritage_category,
                 latitude, longitude, image_url, verified_source,
                 '${tbl}' as source_table, 'heritage' as result_type,

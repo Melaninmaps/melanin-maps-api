@@ -71,7 +71,7 @@ export default function BusinessSearchScreen() {
   useEffect(() => {
     if (history.length > 0 && !category) {
       const lastCat = history[0]?.categories?.[0];
-      if (lastCat) setCategory(lastCat);
+      if (lastCat) queueMicrotask(() => { setCategory(lastCat); });
     }
   }, [history]);
 
@@ -390,7 +390,7 @@ export default function BusinessSearchScreen() {
             >
               <Feather name="alert-circle" size={15} color={colors.mutedForeground} />
               <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>
-                Not the business you're looking for? Let us know →
+                Not the business you&apos;re looking for? Let us know →
               </Text>
             </TouchableOpacity>
           </View>
@@ -404,7 +404,7 @@ export default function BusinessSearchScreen() {
                   <Feather name="send" size={28} color={primaryGold} />
                 </View>
                 <Text style={[styles.inviteSentTitle, { color: colors.foreground }]}>
-                  We're on it!
+                  We&apos;re on it!
                 </Text>
                 <Text style={[styles.inviteSentBody, { color: colors.mutedForeground }]}>
                   Our team will reach out to{" "}
@@ -438,10 +438,10 @@ export default function BusinessSearchScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.inviteTitle, { color: colors.foreground }]}>
-                      We don't have them yet
+                      We don&apos;t have them yet
                     </Text>
                     <Text style={[styles.inviteSubtitle, { color: colors.mutedForeground }]}>
-                      We'll personally reach out and invite{" "}
+                      We&apos;ll personally reach out and invite{" "}
                       <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>
                         {name || "this business"}
                       </Text>{" "}
@@ -487,7 +487,7 @@ export default function BusinessSearchScreen() {
                 </TouchableOpacity>
 
                 <Text style={[styles.inviteFootnote, { color: colors.mutedForeground }]}>
-                  We'll let you know when they join. Your name won't be shared with them.
+                  We&apos;ll let you know when they join. Your name won&apos;t be shared with them.
                 </Text>
               </>
             )}

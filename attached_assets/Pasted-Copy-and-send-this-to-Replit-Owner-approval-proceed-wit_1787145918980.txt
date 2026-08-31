@@ -1,0 +1,28 @@
+Copy and send this to Replit:
+
+> **Owner approval — proceed with the isolated preview-only production release.**
+>
+> I approve **only** the clean, isolated release described in the release gate. Start from live production revision `c5e6bd7729abfc64df80ab9e3a3b2aac7221491d`; do **not** publish the current workspace or its 198 changed paths.
+>
+> Bring forward from verified workspace revision `a2a09eba28a87d8f90c02d9a76eff979035b7f21` only these three source files:
+>
+> ```text
+> artifacts/web/public/approved-preview-8-5.html
+> artifacts/web/src/features/preview/ApprovedAnimatedPreview.tsx
+> artifacts/web/src/pages/preview.tsx
+> ```
+>
+> The only additional changed files permitted are web build-output files generated directly from those three files. Do not change `App.tsx`, API, Kinfolk, map, library, mobile, database, configuration, QR image, QR destination, any route outside the existing `/preview` route, or the first five protected preview panels.
+>
+> Keep the existing QR destination unchanged: `https://www.mappingwithmelanin.com/preview`. After release, that exact URL must serve the seven-panel, 21-slide phone-frame preview—not the older “See the community in motion” layout, a redirect, or any alternative preview.
+>
+> Before deploying, prove that the isolated release contains no non-generated source changes outside the three files above. Before declaring completion, verify publicly that:
+>
+> 1. `https://www.mappingwithmelanin.com/preview` returns HTTP 200;
+> 2. `https://www.mappingwithmelanin.com/approved-preview-8-5.html` has SHA-256 `acc09ec56a04c5c6d34a12fe202b288a267b68d1ed2eaf3e2a3e4d9a5a10ec9f`;
+> 3. the artifact contains exactly **7** `preview-card` panels and **21** `preview-slide` demonstrations; and
+> 4. public desktop and mobile renders show the protected original five panels followed by **Living Library** and **Kinfolk AI**.
+>
+> If any check fails or any extra non-generated source file appears, stop, roll back to `c5e6bd7729abfc64df80ab9e3a3b2aac7221491d`, and report the exact failure. Do not expand the scope or make a workaround without my written approval.
+>
+> Reply with the final release revision, complete changed-file list, command outputs, and public desktop/mobile proof.

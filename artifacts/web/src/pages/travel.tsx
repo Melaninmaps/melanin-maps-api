@@ -4,7 +4,7 @@ import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
-  Mic, MicOff, Square,
+  Mic, MicOff, Square, ImagePlus,
 } from "lucide-react";
 import {
   MwmHome, MwmPlane, MwmBriefcase, MwmStore,
@@ -15,6 +15,7 @@ import { GoldFeatherMark } from "@/components/brand/GoldFeatherMark";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
+import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
 
 const BASE = import.meta.env.BASE_URL;
@@ -71,6 +72,7 @@ interface Message {
   libraryAction?: LibraryAction | null;
   intentClass?: string | null;
   provenanceNote?: string | null;
+  sourceNote?: string | null;
   // Research sources + library entry link (Living Library branch)
   sources?: KinfolkSource[] | null;
   libraryEntry?: KinfolkLibraryEntry | null;
@@ -87,6 +89,7 @@ interface Message {
   locationSource?: string | null;
   // Optional personalization offer — rendered after general answer, never a gate.
   clarificationSteps?: ClarificationStep[];
+  imageUrls?: string[];
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -641,6 +644,12 @@ function TravelPage() {
   }, []);
 
   const [sending, setSending] = useState(false);
+  const [kinfolkMode, setKinfolkMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [rememberThis, setRememberThis] = useState(false);
+  const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -659,6 +668,7 @@ function TravelPage() {
 
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -942,13 +952,35 @@ function TravelPage() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, sending]);
 
+  const uploadKinfolkImage = useCallback(async (file: File) => {
+    if (imageUrls.length >= 2 || uploadingImage) return;
+    setUploadingImage(true);
+    setImageError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const response = await fetch(`${BASE}api/media/upload?purpose=kinfolk_question`, {
+        method: "POST", credentials: "include", body: form,
+      });
+      const body = await response.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!response.ok || !body.url) throw new Error(body.error ?? "Could not upload that image.");
+      setImageUrls((items) => items.includes(body.url!) ? items : [...items, body.url!].slice(0, 2));
+    } catch (cause) {
+      setImageError(cause instanceof Error ? cause.message : "Could not upload that image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  }, [imageUrls.length, uploadingImage]);
+
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     setInput("");
     if (inputRef.current) { inputRef.current.style.height = "auto"; }
 
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString() };
+    const attachedImages = [...imageUrls];
+    const shouldRemember = rememberThis;
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImages };
     setMessages(prev => [...prev, userMsg]);
     setSending(true);
 
@@ -963,7 +995,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages }),
         signal: controller.signal,
       });
 
@@ -1000,6 +1032,7 @@ function TravelPage() {
         libraryAction?: LibraryAction | null;
         intentClass?: string | null;
         provenanceNote?: string | null;
+        sourceNote?: string | null;
         // Research sources + library entry link
         sources?: KinfolkSource[] | null;
         libraryEntry?: KinfolkLibraryEntry | null;
@@ -1021,6 +1054,14 @@ function TravelPage() {
       const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
+      setImageUrls([]);
+      if (shouldRemember) {
+        fetch(`${BASE}api/kinfolk/memories`, {
+          method: "POST", credentials: "include", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ consent: true, content: trimmed, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId }),
+        }).catch(() => {});
+        setRememberThis(false);
+      }
       // Capture the ID so we can wire the clarifier to this specific message.
       const assistantMsgId = crypto.randomUUID();
       setMessages(prev => [...prev, {
@@ -1031,6 +1072,7 @@ function TravelPage() {
         libraryAction: data.libraryAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
+        sourceNote: data.sourceNote ?? null,
         sources: data.sources ?? null,
         libraryEntry: data.libraryEntry ?? null,
         hairLossCarePlan: data.hairLossCarePlan ?? null,
@@ -1056,7 +1098,7 @@ function TravelPage() {
       clearTimeout(timeoutId);
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -1380,6 +1422,11 @@ function TravelPage() {
                           ? "bg-[#2B1507] text-[#F5EBD8] rounded-br-sm"
                           : "bg-white border border-[#3A1F0E]/8 text-[#3A1F0E] rounded-bl-sm shadow-sm"
                       }`}>
+                        {msg.imageUrls && msg.imageUrls.length > 0 && (
+                          <div className="mb-2 grid grid-cols-2 gap-2">
+                            {msg.imageUrls.map((url) => <img key={url} src={url} alt="Image shared with Kinfolk" className="max-h-44 w-full rounded-xl object-cover" />)}
+                          </div>
+                        )}
                         {msg.content}
                       </div>
                       {msg.role === "assistant" && isLoggedIn && (
@@ -1565,6 +1612,16 @@ function TravelPage() {
                           </div>
                         </div>
                       )}
+                      {/* Quiet source attribution — only returned when a material
+                          factual or local detail could not be independently verified. */}
+                      {msg.role === "assistant" && msg.sourceNote && (
+                        <p
+                          data-testid="kinfolk-source-note"
+                          className="mt-3 border-t border-[#3A1F0E]/8 pt-2 text-[10px] italic leading-relaxed text-[#3A1F0E]/50"
+                        >
+                          {msg.sourceNote}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1639,7 +1696,29 @@ function TravelPage() {
                   </div>
                 )}
 
+                <div className="mb-2 flex max-w-3xl flex-wrap items-center gap-2 mx-auto">
+                  {([[
+                    "community", "Big Cousin"
+                  ], ["professor", "Professor"], ["business_manager", "Business Manager"], ["best_friend", "Best Friend"]] as const).map(([value, label]) => (
+                    <button key={value} onClick={() => setKinfolkMode(value)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold ${kinfolkMode === value ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/50"}`}>{label}</button>
+                  ))}
+                  <div className="ml-auto flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-[11px] text-[#3A1F0E]/55" title="Only this account can use this memory. You can forget it any time.">
+                      <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} />
+                      Remember this privately
+                    </label>
+                    <button onClick={() => setShowMemoryManager(true)} className="text-[11px] font-bold text-[#CA922B] hover:underline">Manage</button>
+                  </div>
+                </div>
+
+                {imageUrls.length > 0 && <div className="mb-2 flex max-w-3xl gap-2 mx-auto">
+                  {imageUrls.map((url) => <div key={url} className="relative"><img src={url} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => setImageUrls((items) => items.filter((item) => item !== url))} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}
+                </div>}
+                {imageError && <p className="mb-2 max-w-3xl mx-auto text-xs text-red-600">{imageError}</p>}
+
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
+                  <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadKinfolkImage(file); event.target.value = ""; }} />
+                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageUrls.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
                   {isLoggedIn && (
                     <button
@@ -1691,16 +1770,17 @@ function TravelPage() {
                         : input;
                       send(cleaned);
                     }}
-                    disabled={!input.trim() || sending}
+                    disabled={!input.trim() || sending || uploadingImage}
                     data-testid="kinfolk-send"
                     className="w-11 h-11 rounded-2xl bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 flex items-center justify-center transition-colors shrink-0">
                     <Send size={16} className="text-white" />
                   </button>
                 </div>
                 <p className="text-center text-[10px] text-[#3A1F0E]/25 mt-2">
-                  {isLoggedIn ? "Enter to send · Shift+Enter for new line · Mic to speak" : "Enter to send · Shift+Enter for new line"}
+                  {isLoggedIn ? "Enter to send · Shift+Enter for new line · Add up to 2 images · Memory is opt-in" : "Enter to send · Shift+Enter for new line"}
                 </p>
                 <DisclaimerBanner type="ai" className="mt-2 mx-auto max-w-3xl" />
+                {showMemoryManager && <KinfolkMemoryManager onClose={() => setShowMemoryManager(false)} />}
               </div>
             </>
           )}

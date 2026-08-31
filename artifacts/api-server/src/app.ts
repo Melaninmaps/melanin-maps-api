@@ -43,6 +43,7 @@ import { registerCommunityVibesRoutes } from "./communityVibes/registerCommunity
 import { registerLocationResolutionRoutes } from "./location/registerLocationResolutionRoutes";
 import { LocalBusinessSearch } from "./map/localBusinessSearch";
 import { registerLocalBusinessSearchRoute } from "./map/registerLocalBusinessSearchRoute";
+import { registerUniversalMapEntityRoutes } from "./map/registerUniversalMapEntityRoutes";
 import {
   requestCorrelationLogging,
   structuredErrorHandler,
@@ -368,13 +369,10 @@ registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
 
-app.use("/api", router);
-app.use(webSsrRouter);
-app.use(privacyRouter);
-
-// ── Living Library routes ──────────────────────────────────────────────────
-// Registered directly on `app` (not the sub-router) because they need
-// dependency instances built with env vars available at boot time.
+// ── Living Library public read routes ──────────────────────────────────────
+// Register before the aggregate /api router: its global requireAuth middleware
+// would otherwise block the public Library home and topic-book GET requests.
+// Follow/research mutations still enforce authentication in their own handlers.
 registerLivingLibraryRoutes(app, {
   repository: createPostgresLibraryRepository(pool),
   researchProvider: createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? ""),
@@ -385,18 +383,27 @@ registerLivingLibraryRoutes(app, {
   }),
 });
 
-// ── Foundation topics (28 durable library foundations, separate endpoint) ────
+// 28 durable foundations shown on the public Library home.
 registerFoundationTopicRoutes(app, new FoundationTopicRepository(pool));
+
+// ── Universal non-business map entities ─────────────────────────────────────
+// Public read-only routes are registered before the aggregate /api router so a
+// map pin's list record and canonical detail URL remain directly resolvable.
+registerUniversalMapEntityRoutes(app, pool);
+
+app.use("/api", router);
+app.use(webSsrRouter);
+app.use(privacyRouter);
 
 // ── Purposeful Explore routes ────────────────────────────────────────────────
 registerExploreRoutes(app);
 
 // ── Kinfolk capability-turn and consent routes ───────────────────────────────
 registerKinfolkCapabilityRoutes(app, {
-  localContext: createPostgresLocalContextRepository(pool),
-  memberContext: createPostgresMemberContextRepository(pool),
-  professionalDirectory: createPostgresProfessionalDirectoryRepository(pool),
-  capabilityTurnStore: createPostgresCapabilityTurnStore(pool),
+  localContextRepository: createPostgresLocalContextRepository(pool),
+  memberContextRepository: createPostgresMemberContextRepository(pool),
+  professionalDirectoryRepository: createPostgresProfessionalDirectoryRepository(pool),
+  turnStore: createPostgresCapabilityTurnStore(pool),
 });
 
 // ── Kinfolk tone preference route ────────────────────────────────────────────
@@ -425,7 +432,10 @@ registerVoiceTranscriptionRoute(app, {
 registerLocationFirstDiscoveryRoutes(
   app,
   createPostgresFlywheelRepository(
-    { query: (...args) => pool.query(...args) },
+    { query: async <T = Record<string, unknown>>(sql: string, params?: unknown[]) => {
+      const result = await pool.query(sql, params);
+      return { rows: result.rows as T[] };
+    } },
     {
       findExact: (q) => findExactRecords(pool, q),
       findNearestAvailableLocation: (q) => findNearestAvailableLocation(pool, q),
@@ -457,7 +467,8 @@ registerReleaseStatusRoutes(app, pool);
 // tries to resolve to the canonical /cultural-sites/:id/:slug.
 // UUID segments are passed through to the SPA. Unknown slugs fall through too.
 app.get("/cultural-sites/:legacySlug", async (req: Request, res: Response, next: NextFunction) => {
-  const seg = req.params["legacySlug"] ?? "";
+  const rawLegacySlug = req.params["legacySlug"];
+  const seg = Array.isArray(rawLegacySlug) ? rawLegacySlug[0] ?? "" : rawLegacySlug ?? "";
   // If it looks like a UUID, the SPA handles /cultural-sites/:id or /cultural-sites/:id/:slug
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (UUID_RE.test(seg)) { next(); return; }
@@ -495,7 +506,7 @@ const SPA_EXPLICIT = [
   "/login", "/signup", "/admin", "/forgot-password", "/reset-password",
   "/membership", "/map", "/discover", "/community", "/profile",
   "/settings", "/onboarding", "/business", "/privacy-policy", "/about",
-  "/cultural-sites",
+  "/cultural-sites", "/hbcus", "/places",
 ];
 for (const p of SPA_EXPLICIT) {
   app.get(p, serveSpa);

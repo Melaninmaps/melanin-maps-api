@@ -110,7 +110,7 @@ export default function FamilyCircleScreen() {
     setLoading(false);
   }, [isAuthenticated]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const createCircle = async () => {
     if (!circleName.trim()) return;
@@ -239,7 +239,7 @@ export default function FamilyCircleScreen() {
             </View>
             <Text style={[s.heroTitle, { color: colors.foreground }]}>Family Profiles</Text>
             <Text style={[s.heroSub, { color: colors.mutedForeground }]}>
-              Because safety doesn't stop when your children grow up.{"\n\n"}Invite family members — children, siblings, grandparents, caregivers — at no additional cost. Each person gets their own profile, saved places, and personalized recommendations while staying safely connected to you.
+              Because safety doesn&apos;t stop when your children grow up.{"\n\n"}Invite family members — children, siblings, grandparents, caregivers — at no additional cost. Each person gets their own profile, saved places, and personalized recommendations while staying safely connected to you.
             </Text>
           </View>
 
@@ -426,7 +426,7 @@ export default function FamilyCircleScreen() {
             {members.filter(m => m.role !== "owner").length === 0 && (
               <View style={s.emptyMembers}>
                 <Text style={[s.emptyText, { color: colors.mutedForeground }]}>
-                  No members yet. Tap "Invite" to add your first family member.
+                  No members yet. Tap &quot;Invite&quot; to add your first family member.
                 </Text>
               </View>
             )}
@@ -436,7 +436,7 @@ export default function FamilyCircleScreen() {
           <View style={[s.taglineCard, { backgroundColor: "#CA922B" }]}>
             <Text style={s.taglineEmoji}>👨‍👩‍👧‍👦</Text>
             <Text style={s.taglineTitle}>Travel with confidence — together.</Text>
-            <Text style={s.taglineSub}>Whether they're heading to college, exploring a new city, or moving into their first apartment — your family stays connected.</Text>
+            <Text style={s.taglineSub}>Whether they&apos;re heading to college, exploring a new city, or moving into their first apartment — your family stays connected.</Text>
           </View>
 
           {myRole === "member" && (
@@ -470,7 +470,7 @@ export default function FamilyCircleScreen() {
             autoCapitalize="none"
           />
           <Text style={[s.inviteHint, { color: colors.mutedForeground }]}>
-            We'll generate a shareable invite link. You can text, email, or share it however works best.
+            We&apos;ll generate a shareable invite link. You can text, email, or share it however works best.
           </Text>
           <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
             <TouchableOpacity activeOpacity={0.85} style={[s.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowInviteForm(false)}>

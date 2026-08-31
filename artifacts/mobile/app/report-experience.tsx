@@ -384,7 +384,7 @@ export default function ReportExperienceScreen() {
 
           {/* Anonymity reassurance */}
           <Text style={[styles.anonymityNote, { color: colors.mutedForeground }]}>
-            This is anonymous. You don't have to explain.
+            This is anonymous. You don&apos;t have to explain.
           </Text>
 
           {/* Experience chips */}

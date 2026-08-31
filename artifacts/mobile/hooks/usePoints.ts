@@ -47,7 +47,7 @@ export function usePoints() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const addLocal = useCallback((pts: number) => {
     setTotal((prev) => prev + pts);

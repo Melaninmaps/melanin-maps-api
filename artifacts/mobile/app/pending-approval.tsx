@@ -43,7 +43,7 @@ export default function PendingApprovalScreen() {
           <Feather name="clock" size={40} color="#D97706" />
         </View>
 
-        <Text style={[styles.title, { color: c.foreground }]}>You're on the list</Text>
+        <Text style={[styles.title, { color: c.foreground }]}>You&apos;re on the list</Text>
         <Text style={[styles.sub, { color: c.mutedForeground }]}>
           {user?.firstName ? `Hi ${user.firstName}! ` : ""}
           Your account is pending approval. Our team reviews new members to keep the community safe and authentic.
@@ -55,7 +55,7 @@ export default function PendingApprovalScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.cardTitle, { color: c.foreground }]}>Check your email</Text>
               <Text style={[styles.cardSub, { color: c.mutedForeground }]}>
-                We'll notify you at {user?.email ?? "your email address"} as soon as you're approved.
+                We&apos;ll notify you at {user?.email ?? "your email address"} as soon as you&apos;re approved.
               </Text>
             </View>
           </View>

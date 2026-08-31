@@ -5,7 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Animated,
@@ -145,7 +145,7 @@ export default function ReportSafetyScreen() {
 
   // Auto-detect city from GPS on mount — user can still edit
   useEffect(() => {
-    setCityDetecting(true);
+    queueMicrotask(() => { setCityDetecting(true); });
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
@@ -162,8 +162,8 @@ export default function ReportSafetyScreen() {
     })();
   }, []);
 
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(1));
+  const [slideAnim] = useState(() => new Animated.Value(0));
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -417,7 +417,7 @@ export default function ReportSafetyScreen() {
                 <View>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Be as specific as you're comfortable with. More detail helps the community stay safer.
+                    Be as specific as you&apos;re comfortable with. More detail helps the community stay safer.
                   </Text>
 
                   {selectedType && (
@@ -471,7 +471,7 @@ export default function ReportSafetyScreen() {
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description</Text>
                     <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
-                      Optional — add context if you're comfortable. Your report submits without it.
+                      Optional — add context if you&apos;re comfortable. Your report submits without it.
                     </Text>
                     <TextInput
                       value={form.description}

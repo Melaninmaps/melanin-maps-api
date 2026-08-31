@@ -1,13 +1,12 @@
 /**
- * Canonical Cultural-Site Routes — PUBLIC (no requireAuth).
+ * Canonical Cultural-Site Routes.
  *
- * These GET endpoints replace the auth-gated versions in cultural-sites.ts for
- * list and detail lookups. Map cards and deep links must resolve for any visitor,
- * not just logged-in members. The auth-protected router still handles stories,
- * moderation, and contribution POST/PATCH routes.
+ * These GET endpoints replace the legacy list/detail handlers in
+ * cultural-sites.ts while remaining behind the global member wall. The legacy
+ * router still handles stories, moderation, and contribution POST/PATCH routes.
  *
  * Registered BEFORE culturalSitesRouter in routes/index.ts so Express matches
- * these public handlers first for GET /cultural-sites and GET /cultural-sites/:id.
+ * these stable handlers first for GET /cultural-sites and GET /cultural-sites/:id.
  *
  * Every response includes a server-built `detailUrl` of the form
  * /cultural-sites/:id/:slug. Clients MUST use this URL for all deep links —
@@ -33,7 +32,12 @@ router.get("/cultural-sites", async (req: Request, res: Response, next) => {
   try {
     const cityId = typeof req.query.cityId === "string" ? req.query.cityId : undefined;
     res.setHeader("Cache-Control", "no-store");
-    res.json({ items: await repository.listMapCards(cityId) });
+    const items = (await repository.listMapCards(cityId)).map((site) => ({
+      ...site,
+      state: site.stateCode,
+      externalUrl: site.learnMoreUrl,
+    }));
+    res.json({ items });
   } catch (error) {
     next(error);
   }
@@ -46,13 +50,20 @@ router.get("/cultural-sites", async (req: Request, res: Response, next) => {
 
 router.get("/cultural-sites/:id", async (req: Request, res: Response, next) => {
   try {
-    const site = await repository.findById(req.params["id"] ?? "");
+    const rawId = req.params["id"];
+    const site = await repository.findById(typeof rawId === "string" ? rawId : "");
     if (!site) {
       res.status(404).json({ code: "CULTURAL_SITE_NOT_FOUND", error: "Cultural site not found." });
       return;
     }
     res.setHeader("Cache-Control", "no-store");
-    res.json({ ...site, detailUrl: canonicalCulturalSitePath(site) });
+    const detail = {
+      ...site,
+      state: site.stateCode,
+      externalUrl: site.learnMoreUrl,
+      detailUrl: canonicalCulturalSitePath(site),
+    };
+    res.json({ ...detail, site: detail });
   } catch (error) {
     next(error);
   }

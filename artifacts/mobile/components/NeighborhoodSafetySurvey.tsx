@@ -217,7 +217,7 @@ export function NeighborhoodSafetySurvey({ visible, onClose, onSubmit }: Props) 
             ) : (
               <View style={styles.stepContent}>
                 <Text style={[styles.stepTitle, { color: colors.foreground }]}>Community Insights</Text>
-                <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Share your experience of this neighborhood's atmosphere</Text>
+                <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>Share your experience of this neighborhood&apos;s atmosphere</Text>
 
                 <Text style={[styles.groupLabel, { color: colors.foreground }]}>
                   How would you describe the community atmosphere?

@@ -61,8 +61,6 @@ export default function PrivacyScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  useEffect(() => { void loadSettings(); }, []);
-
   const loadSettings = async () => {
     try {
       const token = await getAuthToken();
@@ -78,6 +76,8 @@ export default function PrivacyScreen() {
     } catch {}
     finally { setLoading(false); }
   };
+
+  useEffect(() => { queueMicrotask(() => { void loadSettings(); }); }, []);
 
   const saveSettings = (next: PrivacySettings) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);

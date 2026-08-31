@@ -32,7 +32,7 @@ export default function VerifyPhoneScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   useEffect(() => {
-    if (countdown <= 0) { setCanResend(true); return; }
+    if (countdown <= 0) { queueMicrotask(() => { setCanResend(true); }); return; }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [countdown]);
@@ -138,7 +138,7 @@ export default function VerifyPhoneScreen() {
         </TouchableOpacity>
 
         <View style={styles.resendRow}>
-          <Text style={[styles.resendInfo, { color: colors.mutedForeground }]}>Didn't get it? </Text>
+          <Text style={[styles.resendInfo, { color: colors.mutedForeground }]}>Didn&apos;t get it? </Text>
           {canResend ? (
             <TouchableOpacity activeOpacity={0.85} onPress={handleResend}>
               <Text style={[styles.resendLink, { color: colors.primary }]}>Resend code</Text>

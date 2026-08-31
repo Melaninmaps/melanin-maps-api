@@ -13,6 +13,8 @@ import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
 
 const router = Router();
+const routeParam = (value: string | string[]): string =>
+  Array.isArray(value) ? value[0] ?? "" : value;
 
 // ── Submit a suggestion ───────────────────────────────────────────────────────
 router.post("/edit-suggestions", async (req: Request, res: Response) => {
@@ -80,13 +82,13 @@ router.post("/edit-suggestions", async (req: Request, res: Response) => {
       } catch { /* ignore if column doesn't exist */ }
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Thank you — your suggestion has been submitted for review. We'll apply it after verification.",
       suggestion: r.rows[0],
     });
   } catch (err) {
     req.log?.error({ err }, "POST /edit-suggestions failed");
-    res.status(500).json({ error: "Failed to submit suggestion" });
+    return res.status(500).json({ error: "Failed to submit suggestion" });
   }
 });
 
@@ -108,10 +110,10 @@ router.get("/edit-suggestions/my", async (req: Request, res: Response) => {
       [userId, parseInt(limit), parseInt(offset)]
     );
 
-    res.json({ suggestions: r.rows });
+    return res.json({ suggestions: r.rows });
   } catch (err) {
     req.log?.error({ err }, "GET /edit-suggestions/my failed");
-    res.status(500).json({ error: "Failed to fetch your suggestions" });
+    return res.status(500).json({ error: "Failed to fetch your suggestions" });
   }
 });
 
@@ -156,7 +158,7 @@ router.get("/edit-suggestions/admin", async (req: Request, res: Response) => {
       ),
     ]);
 
-    res.json({
+    return res.json({
       suggestions: rows.rows,
       total: parseInt(countRow.rows[0].count),
       pending_count: parseInt(
@@ -165,7 +167,7 @@ router.get("/edit-suggestions/admin", async (req: Request, res: Response) => {
     });
   } catch (err) {
     req.log?.error({ err }, "GET /edit-suggestions/admin failed");
-    res.status(500).json({ error: "Failed to fetch suggestions" });
+    return res.status(500).json({ error: "Failed to fetch suggestions" });
   }
 });
 
@@ -178,13 +180,13 @@ router.get("/edit-suggestions/admin/:id", async (req: Request, res: Response) =>
        FROM edit_suggestions es
        LEFT JOIN users u ON u.id = es.user_id
        WHERE es.id = $1`,
-      [parseInt(req.params.id)]
+      [parseInt(routeParam(req.params.id))]
     );
     if (!r.rows[0]) return res.status(404).json({ error: "Suggestion not found" });
-    res.json(r.rows[0]);
+    return res.json(r.rows[0]);
   } catch (err) {
     req.log?.error({ err }, "GET /edit-suggestions/admin/:id failed");
-    res.status(500).json({ error: "Failed to fetch suggestion" });
+    return res.status(500).json({ error: "Failed to fetch suggestion" });
   }
 });
 
@@ -202,7 +204,7 @@ router.patch("/edit-suggestions/admin/:id", async (req: Request, res: Response) 
     // Fetch the suggestion
     const s = await pool.query(
       `SELECT * FROM edit_suggestions WHERE id = $1`,
-      [parseInt(req.params.id)]
+      [parseInt(routeParam(req.params.id))]
     );
     if (!s.rows[0]) return res.status(404).json({ error: "Suggestion not found" });
     if (s.rows[0].status !== "pending") {
@@ -283,14 +285,14 @@ router.patch("/edit-suggestions/admin/:id", async (req: Request, res: Response) 
       [action === "approve" ? "approved" : "rejected", admin_notes || null, adminUserId, suggestion.id]
     );
 
-    res.json({
+    return res.json({
       message: action === "approve" ? "Suggestion approved and change applied." : "Suggestion rejected.",
       id: suggestion.id,
       action,
     });
   } catch (err) {
     req.log?.error({ err }, "PATCH /edit-suggestions/admin/:id failed");
-    res.status(500).json({ error: "Failed to process suggestion" });
+    return res.status(500).json({ error: "Failed to process suggestion" });
   }
 });
 

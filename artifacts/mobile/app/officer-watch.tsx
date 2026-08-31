@@ -107,7 +107,7 @@ export default function OfficerWatchScreen() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const submitReport = async () => {
     if (!officerName.trim() || !offenseDescription.trim()) {

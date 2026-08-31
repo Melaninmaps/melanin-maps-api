@@ -16,7 +16,8 @@ const { execSync } = require("child_process");
 const fs   = require("fs");
 const path = require("path");
 
-const WORKSPACE_ROOT = path.resolve(__dirname, "../../../");
+const scriptDir = path.dirname(require.resolve("./setup-hermesc.js"));
+const WORKSPACE_ROOT = path.resolve(scriptDir, "../../../");
 
 function resolve(pkg, from) {
   try {
@@ -26,7 +27,7 @@ function resolve(pkg, from) {
   }
 }
 
-const mobileDir = path.resolve(__dirname, "..");
+const mobileDir = path.resolve(scriptDir, "..");
 const rnDir     = resolve("react-native", mobileDir);
 const hcDir     = resolve("hermes-compiler", mobileDir) || resolve("hermes-compiler", WORKSPACE_ROOT);
 

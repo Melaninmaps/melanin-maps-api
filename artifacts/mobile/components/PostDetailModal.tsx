@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -17,20 +18,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
+import { openExternalUrl } from "@/lib/safeLinking";
 import type { CommunityPost } from "@/constants/types";
 
 interface Comment {
   id: string;
+  authorId?: string | null;
   authorName: string;
   authorInitials: string;
   authorColor: string;
   content: string;
   createdAt: string;
-}
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
 }
 
 function formatTimeAgo(iso: string): string {
@@ -48,15 +47,9 @@ interface Props {
   post: CommunityPost | null;
   onClose: () => void;
   onLike?: () => void;
+  onCommentAdded?: () => void;
   maxCommentLength?: number;
 }
-
-const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
-  recommendation: { label: "Recommendation", color: "#2D7A4F" },
-  question: { label: "Question", color: "#D4873A" },
-  alert: { label: "Alert", color: "#DC2626" },
-  discussion: { label: "Discussion", color: "#C4622D" },
-};
 
 const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   business: { label: "Business Post", color: "#7B2D8B", icon: "briefcase" },
@@ -65,10 +58,10 @@ const POST_TYPE_CONFIG: Record<string, { label: string; color: string; icon: str
   community: { label: "Community", color: "#C4622D", icon: "users" },
 };
 
-export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLength = 500 }: Props) {
+export function PostDetailModal({ visible, post, onClose, onLike, onCommentAdded, maxCommentLength = 500 }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const inputRef = useRef<TextInput>(null);
 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -76,6 +69,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [commentAccess, setCommentAccess] = useState<{ canComment: boolean; restrictionReason?: string | null; commentPolicy: "everyone" | "followers" | "off" }>({ canComment: true, commentPolicy: "everyone" });
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(0);
 
@@ -89,23 +83,28 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
       const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      const data = await res.json().catch(() => ({})) as { comments?: Comment[]; access?: { canComment: boolean; restrictionReason?: string | null; commentPolicy: "everyone" | "followers" | "off" }; error?: string };
       if (res.ok) {
-        const data = await res.json() as { comments: Comment[] };
         setComments(data.comments ?? []);
+        setCommentAccess(data.access ?? { canComment: true, commentPolicy: post.commentPolicy ?? "everyone" });
+      } else {
+        setCommentError(data.error ?? "Could not load comments. Pull down and try again.");
       }
     } catch { /* silent */ }
     finally { setLoading(false); }
-  }, [post?.id]);
+  }, [post]);
 
   useEffect(() => {
-    if (visible && post) {
-      void loadComments();
-      setLocalLiked(post.liked);
-      setLocalLikes(post.likes);
-    } else {
-      setComments([]);
-      setCommentText("");
-    }
+    void Promise.resolve().then(() => {
+      if (visible && post) {
+        void loadComments();
+        setLocalLiked(post.liked);
+        setLocalLikes(post.likes);
+      } else {
+        setComments([]);
+        setCommentText("");
+      }
+    });
   }, [visible, post, loadComments]);
 
   const handleLike = async () => {
@@ -123,7 +122,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
   };
 
   const handleSubmitComment = async () => {
-    if (!commentText.trim() || !post) return;
+    if (!commentText.trim() || !post || !commentAccess.canComment) return;
     setCommentError("");
     setSubmitting(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -141,6 +140,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
         const data = await res.json() as { comment: Comment };
         setComments((prev) => [data.comment, ...prev]);
         setCommentText("");
+        onCommentAdded?.();
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
         const data = await res.json() as { error?: string };
@@ -156,11 +156,31 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
     } finally { setSubmitting(false); }
   };
 
+  const handleCommentAction = (comment: Comment) => {
+    const isOwn = comment.authorId === user?.id;
+    Alert.alert(isOwn ? "Manage comment" : "Report comment?", isOwn ? "You can delete your comment permanently." : "The moderation team will review this comment.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: isOwn ? "Delete" : "Report",
+        style: "destructive",
+        onPress: async () => {
+          if (!post) return;
+          const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+          const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments/${comment.id}${isOwn ? "" : "/report"}`, {
+            method: isOwn ? "DELETE" : "POST",
+            headers: { ...(isOwn ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            ...(isOwn ? {} : { body: JSON.stringify({ reason: "inappropriate" }) }),
+          });
+          if (response.ok && isOwn) setComments((items) => items.filter((item) => item.id !== comment.id));
+          Alert.alert(response.ok ? (isOwn ? "Comment deleted" : "Report received") : "Couldn’t complete that action", response.ok && !isOwn ? "Thank you for helping keep the community safe." : undefined);
+        },
+      },
+    ]);
+  };
+
   if (!post) return null;
 
   const typeConfig = POST_TYPE_CONFIG[post.postType ?? "community"];
-  const catConfig = CATEGORY_CONFIG[post.category ?? "discussion"];
-
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -205,7 +225,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
                     <Feather name="briefcase" size={13} color={colors.primary} />
                     <Text style={[m.businessBannerText, { color: colors.primary }]}>{post.businessName}</Text>
                     {post.businessLink && (
-                      <TouchableOpacity onPress={() => { if (post.businessLink) { void require("react-native").Linking.openURL(post.businessLink); } }}>
+                      <TouchableOpacity onPress={() => { if (post.businessLink) { void openExternalUrl(post.businessLink); } }}>
                         <Feather name="external-link" size={12} color={colors.mutedForeground} />
                       </TouchableOpacity>
                     )}
@@ -243,6 +263,9 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
                 <View style={m.commentHeaderRow}>
                   <Text style={[m.commentAuthor, { color: colors.foreground }]}>{c.authorName}</Text>
                   <Text style={[m.commentTime, { color: colors.mutedForeground }]}>{formatTimeAgo(c.createdAt)}</Text>
+                  <TouchableOpacity onPress={() => handleCommentAction(c)} accessibilityLabel={c.authorId === user?.id ? "Manage your comment" : "Report comment"} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Feather name="more-horizontal" size={15} color={colors.mutedForeground} />
+                  </TouchableOpacity>
                 </View>
                 <Text style={[m.commentContent, { color: colors.foreground }]}>{c.content}</Text>
               </View>
@@ -262,7 +285,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
 
         {/* Comment input */}
         <View style={[m.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
-          {isAuthenticated ? (
+          {isAuthenticated && commentAccess.canComment ? (
             <>
               {commentError ? (
                 <View style={[m.commentErrorBanner, { backgroundColor: "#FEF2F2" }]}>
@@ -306,7 +329,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, maxCommentLeng
             </>
           ) : (
             !authLoading
-              ? <Text style={[m.loginPrompt, { color: colors.mutedForeground }]}>Sign in to join the conversation</Text>
+              ? <Text style={[m.loginPrompt, { color: colors.mutedForeground }]}>{isAuthenticated ? (commentAccess.restrictionReason ?? "Comments are not available for this post.") : "Sign in to join the conversation"}</Text>
               : null
           )}
         </View>

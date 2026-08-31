@@ -116,7 +116,7 @@ export function BusinessMiniCard({ business, onClose, compact = false }: Props) 
             <Text style={[s.commentLabel, { color: colors.primary }]}>Community says</Text>
           </View>
           <Text style={[s.commentText, { color: colors.foreground }]} numberOfLines={2}>
-            "{business.topComment}"
+            &quot;{business.topComment}&quot;
           </Text>
           {business.topCommentAuthor && (
             <Text style={[s.commentAuthor, { color: colors.mutedForeground }]}>— {business.topCommentAuthor}</Text>

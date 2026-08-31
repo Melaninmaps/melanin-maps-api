@@ -49,7 +49,7 @@ export function useBusinessInvites() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const updateStatus = useCallback(async (id: string, status: string, notes?: string): Promise<boolean> => {
     const token = await getToken();

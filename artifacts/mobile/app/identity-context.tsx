@@ -45,14 +45,14 @@ interface IdentityContextState {
 }
 
 // ── Option labels ─────────────────────────────────────────────────────────────
-const SEX_OPTIONS: Array<{ value: SexAtBirth; label: string }> = [
+const SEX_OPTIONS: { value: SexAtBirth; label: string }[] = [
   { value: "female",          label: "Female" },
   { value: "male",            label: "Male" },
   { value: "intersex",        label: "Intersex" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
-const GENDER_OPTIONS: Array<{ value: GenderIdentity; label: string }> = [
+const GENDER_OPTIONS: { value: GenderIdentity; label: string }[] = [
   { value: "woman",            label: "Woman" },
   { value: "man",              label: "Man" },
   { value: "nonbinary",        label: "Non-binary" },
@@ -60,7 +60,7 @@ const GENDER_OPTIONS: Array<{ value: GenderIdentity; label: string }> = [
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
-const PRONOUN_OPTIONS: Array<{ value: PronounSet; label: string }> = [
+const PRONOUN_OPTIONS: { value: PronounSet; label: string }[] = [
   { value: "she_her",          label: "She / Her" },
   { value: "he_him",           label: "He / Him" },
   { value: "they_them",        label: "They / Them" },
@@ -69,6 +69,44 @@ const PRONOUN_OPTIONS: Array<{ value: PronounSet; label: string }> = [
 ];
 
 const SECTION_ACCENT = "#7C3AED";
+
+function RadioGroup<T extends string | null>({
+  value, options, onSelect, disabled, colors,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onSelect: (v: T) => void;
+  disabled?: boolean;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={s.radioGroup}>
+      {options.map((opt) => {
+        const selected = value === opt.value;
+        return (
+          <TouchableOpacity
+            key={String(opt.value)}
+            style={[
+              s.radioRow,
+              { borderColor: selected ? SECTION_ACCENT : colors.border,
+                backgroundColor: selected ? `${SECTION_ACCENT}10` : colors.card },
+            ]}
+            onPress={() => !disabled && onSelect(opt.value)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              s.radioCircle,
+              { borderColor: selected ? SECTION_ACCENT : colors.border },
+            ]}>
+              {selected && <View style={[s.radioDot, { backgroundColor: SECTION_ACCENT }]} />}
+            </View>
+            <Text style={[s.radioLabel, { color: colors.foreground }]}>{opt.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function IdentityContextScreen() {
   const colors  = useColors();
@@ -165,43 +203,6 @@ export default function IdentityContextScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  function RadioGroup<T extends string | null>({
-    value, options, onSelect, disabled,
-  }: {
-    value: T;
-    options: Array<{ value: T; label: string }>;
-    onSelect: (v: T) => void;
-    disabled?: boolean;
-  }) {
-    return (
-      <View style={s.radioGroup}>
-        {options.map((opt) => {
-          const selected = value === opt.value;
-          return (
-            <TouchableOpacity
-              key={String(opt.value)}
-              style={[
-                s.radioRow,
-                { borderColor: selected ? SECTION_ACCENT : colors.border,
-                  backgroundColor: selected ? `${SECTION_ACCENT}10` : colors.card },
-              ]}
-              onPress={() => !disabled && onSelect(opt.value)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                s.radioCircle,
-                { borderColor: selected ? SECTION_ACCENT : colors.border },
-              ]}>
-                {selected && <View style={[s.radioDot, { backgroundColor: SECTION_ACCENT }]} />}
-              </View>
-              <Text style={[s.radioLabel, { color: colors.foreground }]}>{opt.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  }
-
   if (loading) {
     return (
       <View style={[s.loadingCenter, { backgroundColor: colors.background }]}>
@@ -251,6 +252,7 @@ export default function IdentityContextScreen() {
             options={PRONOUN_OPTIONS}
             onSelect={(v) => save({ pronounSet: v })}
             disabled={saving}
+            colors={colors}
           />
         </View>
 
@@ -282,6 +284,7 @@ export default function IdentityContextScreen() {
             options={GENDER_OPTIONS}
             onSelect={(v) => save({ genderIdentity: v })}
             disabled={saving}
+            colors={colors}
           />
         </View>
 
@@ -296,6 +299,7 @@ export default function IdentityContextScreen() {
             options={SEX_OPTIONS}
             onSelect={(v) => save({ sexAssignedAtBirth: v })}
             disabled={saving}
+            colors={colors}
           />
         </View>
 

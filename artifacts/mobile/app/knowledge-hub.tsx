@@ -67,7 +67,7 @@ export default function KnowledgeHubScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void loadChannels(); }, [loadChannels]);
+  useEffect(() => { queueMicrotask(() => { void loadChannels(); }); }, [loadChannels]);
 
   const openChannel = async (slug: string) => {
     setChannelLoading(true);

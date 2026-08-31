@@ -11,6 +11,7 @@ import {
   userPreferencesTable,
   userSettingsTable,
   kinfolkSessionsTable,
+  kinfolkPrivateMemoriesTable,
   kinfolkFeedbackTable,
   savedPlacesTable,
   businessesTable,
@@ -23,9 +24,15 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike, or, inArray } from "drizzle-orm";
+import { eq, desc, and, ilike, or, inArray, isNull, gt } from "drizzle-orm";
 import { getKnowledgeGraphContext, renderKnowledgeGraphContext, type KnowledgeGraphContext } from "../lib/knowledge-graph-context";
 import { classifyIntent, getEvidencePolicy, buildIntentPolicyPrompt, getQueryClass, type KinfolkIntent } from "../kinfolk/intent-router";
+import {
+  RESPONSE_STYLES,
+  deliveryToResponseStyle,
+  responseStyleToDelivery,
+  type ResponseStyle,
+} from "../kinfolk/delivery-profile";
 import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
 import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
@@ -66,6 +73,10 @@ import { searchAllQueries } from "../kinfolk/web-search";
 import { rankResults } from "../kinfolk/web-ranker";
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
+import {
+  buildPrivateMemoryPromptBlock,
+  isKinfolkPrivateMemoryEnabled,
+} from "../kinfolk/private-memory";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -495,13 +506,28 @@ function parseRetryAfterMs(errMsg: string): number | null {
   return m ? Math.ceil(parseFloat(m[1]) * 1000) + 200 : null; // +200ms safety margin
 }
 
+function normalizeKinfolkImageUrls(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== "string") continue;
+    try {
+      const parsed = new URL(item.trim());
+      if (parsed.protocol !== "https:") continue;
+      parsed.hash = "";
+      unique.add(parsed.toString());
+    } catch { /* invalid URL */ }
+  }
+  return [...unique].slice(0, 2);
+}
+
 /** Retryable OpenAI generation call. Retries only documented transient errors. */
 async function callOpenAIWithRetry(
   messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
   signal: AbortSignal,
   /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
   temperature?: number,
-): Promise<Awaited<ReturnType<typeof openai.chat.completions.create>>> {
+): Promise<Extract<Awaited<ReturnType<typeof openai.chat.completions.create>>, { choices: unknown }>> {
   // Transient provider conditions that can clear on retry
   const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
   // Connection-reset strings that may appear in error messages without a numeric status
@@ -510,7 +536,7 @@ async function callOpenAIWithRetry(
   let lastErr: unknown;
   for (let attempt = 0; attempt <= KINFOLK_RETRY_MAX; attempt++) {
     try {
-      return await openai.chat.completions.create(
+      const completion = await openai.chat.completions.create(
         {
           model: "gpt-4o-mini",
           max_tokens: NORMAL_MAX_OUTPUT_TOKENS,
@@ -520,6 +546,10 @@ async function callOpenAIWithRetry(
         },
         { signal },
       );
+      if (!("choices" in completion)) {
+        throw new Error("Unexpected streaming response from Kinfolk provider");
+      }
+      return completion;
     } catch (err) {
       lastErr = err;
       const status  = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
@@ -729,7 +759,10 @@ export async function runKinfolkCanary(): Promise<{
       max_tokens: 8,
       temperature: 0,
     } as Parameters<typeof openai.chat.completions.create>[0]);
-    const answer = completion.choices?.[0]?.message?.content?.trim() ?? "(no content)";
+    if (!("choices" in completion)) {
+      return { ok: false, reason: "Unexpected streaming response from AI provider", latencyMs: Date.now() - start };
+    }
+    const answer = completion.choices[0]?.message?.content?.trim() ?? "(no content)";
     return { ok: true, answer, latencyMs: Date.now() - start };
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : String(err), latencyMs: Date.now() - start };
@@ -1655,7 +1688,7 @@ function buildSystemPrompt(opts: {
   /** Intent classification — gates which optional prompt modules are injected. */
   intentClass?: string | null;
 }): string {
-  const { prefs, destination, voiceMode = "community", businessCatalog, activeJourney, crossCityBridge } = opts;
+  const { prefs, destination, voiceMode = "community", businessCatalog = [], activeJourney, crossCityBridge } = opts;
   // Cap context arrays to keep token budget tight
   const likedSpots    = opts.likedSpots.slice(0, 3);
   const dislikedSpots = opts.dislikedSpots.slice(0, 3);
@@ -1671,7 +1704,19 @@ function buildSystemPrompt(opts: {
   // ── Kinfolk Voices™ — 4 emotional voice modes ─────────────────────────────
   let voiceInstructions = "";
 
-  if (voiceMode === "professional") {
+  if (voiceMode === "professor") {
+    voiceInstructions = `KINFOLK VOICES™ — PROFESSOR MODE:
+Teach with clarity and curiosity. Start with the direct answer, explain the why in plain language, define unfamiliar terms, and use examples or analogies when useful. Ask one thoughtful follow-up only when it would materially improve the answer. Sound like a brilliant college professor who wants the member to win — never condescending or stiff.`;
+
+  } else if (voiceMode === "business_manager") {
+    voiceInstructions = `KINFOLK VOICES™ — BUSINESS MANAGER MODE:
+Be practical, organized, and candid. Translate the answer into priorities, decisions, risks, owners, and next actions. Use concise tables or bullets when they improve execution. Protect the member from avoidable cost or exposure, but do not smother them in disclaimers.`;
+
+  } else if (voiceMode === "best_friend") {
+    voiceInstructions = `KINFOLK VOICES™ — BEST FRIEND MODE:
+Lead with human warmth and emotional awareness, then give an honest useful answer. Write naturally, with contractions and supportive phrasing. Do not manufacture intimacy, use stereotypes, or agree with something false just to sound affirming.`;
+
+  } else if (voiceMode === "professional") {
     voiceInstructions = `KINFOLK VOICES™ — PROFESSIONAL MODE:
 Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
 
@@ -1736,8 +1781,8 @@ This is the user's "take me home" experience — the communication style they ch
 
   } else {
     // community (default — always available)
-    voiceInstructions = `KINFOLK VOICES™ — COMMUNITY MODE:
-Warm. Supportive. Conversational. Speak like someone who genuinely wants to help — a friend who's been where they are. Acknowledge emotional context when it surfaces before diving into recommendations. Celebrate wins. Support through challenges. Never robotic or transactional.
+    voiceInstructions = `KINFOLK VOICES™ — BIG COUSIN MODE:
+Warm, grounded, and conversational. Speak like the capable big cousin who listens, gives the direct answer, explains what matters, and helps the member take the next step. Acknowledge emotional context when it genuinely surfaces, but do not force it into ordinary factual questions. Celebrate wins. Support through challenges. Never robotic, transactional, preachy, or stereotyped.
 
 When someone is struggling or facing something hard, acknowledge it first: "I hear you — let's work through this together." The emotional connection is as important as the information.`;
   }
@@ -1875,7 +1920,7 @@ CROSS-POLLINATION RULE: Surface these connections only when genuinely relevant t
   // Privacy Intelligence: suppress when sensitive topic detected (Circle data boundary rule)
   const effectiveCircleContext = opts.privacySuppressed ? null : (opts.circleContext ?? null);
   const circleSection = effectiveCircleContext
-    ? `\nCIRCLE INTELLIGENCE — "${opts.circleContext.name}" (${opts.circleContext.type}):
+    ? `\nCIRCLE INTELLIGENCE — "${effectiveCircleContext.name}" (${effectiveCircleContext.type}):
 You are the silent, always-on member of this Circle. You know everyone's individual preferences AND the group's shared context.
 
 CIRCLE MEMBERS:
@@ -2202,10 +2247,7 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     // Map delivery profile columns back to the legacy response-style label used by the UI
     let responseStyle = "conversational";
     if (dp) {
-      if (dp.tone_preference === "professional") responseStyle = "professional";
-      else if (dp.detail_level === "deep") responseStyle = "detailed";
-      else if (dp.detail_level === "quick") responseStyle = "concise";
-      else responseStyle = "conversational";
+      responseStyle = deliveryToResponseStyle(dp.detail_level, dp.tone_preference);
     } else if (prefs?.communicationStyle) {
       // Fall back to taste profile communicationStyle until delivery profile is saved
       responseStyle = prefs.communicationStyle === "detailed" ? "detailed"
@@ -2366,19 +2408,15 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
 router.put("/kinfolk/preferences/response-style", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const { responseStyle } = req.body as { responseStyle?: unknown };
-  const VALID_STYLES = ["conversational", "concise", "detailed", "professional"] as const;
-  type ResponseStyle = typeof VALID_STYLES[number];
-  if (!VALID_STYLES.includes(responseStyle as ResponseStyle)) {
-    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: VALID_STYLES });
+  if (!RESPONSE_STYLES.includes(responseStyle as ResponseStyle)) {
+    res.status(400).json({ error: "INVALID_RESPONSE_STYLE", valid: RESPONSE_STYLES });
     return;
   }
-  const styleMap: Record<ResponseStyle, { detail_level: string; tone_preference: string }> = {
-    detailed:      { detail_level: "deep",     tone_preference: "default" },
-    concise:       { detail_level: "quick",    tone_preference: "default" },
-    professional:  { detail_level: "standard", tone_preference: "professional" },
-    conversational:{ detail_level: "standard", tone_preference: "warm" },
+  const delivery = responseStyleToDelivery(responseStyle as ResponseStyle);
+  const dp = {
+    detail_level: delivery.detailLevel,
+    tone_preference: delivery.tonePreference,
   };
-  const dp = styleMap[responseStyle as ResponseStyle];
   try {
     await pool.query(
       `INSERT INTO kinfolk_delivery_profiles
@@ -2483,6 +2521,116 @@ router.get("/kinfolk/health", async (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+// ─── Kinfolk private memory — explicit consent and ownership only ──────────────
+const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{ key: string; pattern: RegExp }> = [
+  { key: "fertility", pattern: /\b(fertility|infertility|ivf|iui|egg freezing|pregnan(?:t|cy)|miscarriage|reproductive|ob[- ]?gyn)\b/i },
+  { key: "skin_health", pattern: /\b(rash|eczema|psoriasis|acne|skin condition|dermatolog(?:y|ist))\b/i },
+  { key: "mental_health", pattern: /\b(depression|anxiety|therapy|therapist|trauma|panic attack|mental health|suicid(?:e|al))\b/i },
+  { key: "sexual_health", pattern: /\b(sexual health|sti|std|hiv|aids|contraception|birth control)\b/i },
+  { key: "safety", pattern: /\b(assault|harass(?:ment|ed)|abuse|stalk(?:er|ing)|unsafe|discrimination|hate crime|domestic violence)\b/i },
+  { key: "financial", pattern: /\b(income|salary|debt|bankruptcy|credit score|foreclosure|eviction|financial hardship)\b/i },
+  { key: "identity", pattern: /\b(sexuality|sexual orientation|gender identity|transgender|nonbinary|religion|immigration status)\b/i },
+];
+
+function sensitiveMemoryTopic(value: string): string | null {
+  return SENSITIVE_MEMORY_TOPICS.find((topic) => topic.pattern.test(value))?.key ?? null;
+}
+
+function isSensitiveMemoryRelevant(memory: string, currentMessage: string): boolean {
+  const memoryTopic = sensitiveMemoryTopic(memory);
+  if (memoryTopic) return memoryTopic === sensitiveMemoryTopic(currentMessage);
+  const currentTokens = new Set(currentMessage.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []);
+  return (memory.toLowerCase().match(/[a-z0-9]{5,}/g) ?? []).some((token) => currentTokens.has(token));
+}
+
+router.get("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const now = new Date();
+    const memories = await db.select({
+      id: kinfolkPrivateMemoriesTable.id,
+      content: kinfolkPrivateMemoriesTable.content,
+      purpose: kinfolkPrivateMemoriesTable.purpose,
+      isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+      expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+      createdAt: kinfolkPrivateMemoriesTable.createdAt,
+    }).from(kinfolkPrivateMemoriesTable)
+      .where(and(
+        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, now)),
+      ))
+      .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+      .limit(50);
+    res.json({ memories });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load Kinfolk memories");
+    res.status(500).json({ error: "Failed to load memories" });
+  }
+});
+
+router.post("/kinfolk/memories", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const body = req.body as Record<string, unknown>;
+    if (body.consent !== true) {
+      res.status(400).json({ error: "Explicit consent is required before Kinfolk remembers anything.", code: "MEMORY_CONSENT_REQUIRED" });
+      return;
+    }
+    const content = String(body.content ?? "").trim();
+    if (!content || content.length > 1000) {
+      res.status(400).json({ error: "Memory must be between 1 and 1,000 characters." });
+      return;
+    }
+    const allowedPurposes = ["personalization", "preference", "goal", "ongoing_context"];
+    const requestedPurpose = String(body.purpose ?? "personalization");
+    const purpose = allowedPurposes.includes(requestedPurpose) ? requestedPurpose : "personalization";
+    const requestedDays = Number(body.expiresInDays);
+    const expiresInDays = Number.isFinite(requestedDays) ? Math.min(3650, Math.max(1, Math.floor(requestedDays))) : null;
+    const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 86_400_000) : null;
+
+    const [memory] = await db.insert(kinfolkPrivateMemoriesTable).values({
+      userId: req.user.id,
+      content,
+      purpose,
+      sourceSessionId: typeof body.sessionId === "string" ? body.sessionId : null,
+      isSensitive: body.isSensitive === true || sensitiveMemoryTopic(content) !== null,
+      expiresAt,
+    }).returning();
+    res.status(201).json({
+      memory,
+      message: `I’ll remember that for ${purpose.replace("_", " ")}. You can view or forget it any time in Kinfolk settings.`,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to save Kinfolk memory");
+    res.status(500).json({ error: "Failed to save memory" });
+  }
+});
+
+router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const [forgotten] = await db.update(kinfolkPrivateMemoriesTable)
+      .set({ revokedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)), eq(kinfolkPrivateMemoriesTable.userId, req.user.id)))
+      .returning({ id: kinfolkPrivateMemoriesTable.id });
+    if (!forgotten) { res.status(404).json({ error: "Memory not found" }); return; }
+    res.json({ ok: true, memoryId: forgotten.id });
+  } catch (err) {
+    req.log.error({ err }, "Failed to forget Kinfolk memory");
+    res.status(500).json({ error: "Failed to forget memory" });
+  }
+});
+
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Authentication is required — unauthenticated probes previously triggered
   // full OpenAI calls that were abandoned mid-flight when the HTTP client timed
@@ -2492,11 +2640,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
-  const { sessionId, message, vibes = [], voiceMode = "community" } = req.body as {
+  const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [] } = req.body as {
     sessionId?: string;
     message: string;
     vibes?: string[];
     voiceMode?: string;
+    imageUrls?: unknown;
   };
 
   if (!message?.trim()) {
@@ -2507,6 +2656,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   if (message.length > 2000) {
     res.status(400).json({ error: "Message is too long. Please keep it under 2,000 characters." });
     return;
+  }
+
+  const requestedImageUrls = normalizeKinfolkImageUrls(imageUrls);
+  if (Array.isArray(imageUrls) && imageUrls.length > 2) {
+    res.status(400).json({ error: "Kinfolk can review up to two images at a time." });
+    return;
+  }
+  let verifiedImageUrls: string[] = [];
+  if (requestedImageUrls.length > 0) {
+    const imageAssets = await pool.query<{ public_url: string }>(
+      `SELECT public_url
+         FROM media_assets
+        WHERE uploader_id = $1
+          AND purpose = 'kinfolk_question'
+          AND status = 'ready'
+          AND mime_type LIKE 'image/%'
+          AND public_url = ANY($2::text[])`,
+      [req.user.id, requestedImageUrls],
+    ).catch(() => ({ rows: [] as { public_url: string }[] }));
+    const owned = new Set(imageAssets.rows.map((row) => row.public_url));
+    verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
+    if (verifiedImageUrls.length !== requestedImageUrls.length) {
+      res.status(400).json({ error: "One or more images are invalid, expired, or do not belong to this account." });
+      return;
+    }
   }
 
   // chatStage tracks which boundary the handler was crossing when an error is
@@ -2656,11 +2830,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
+    // When private memory is disabled, do not read historic conversations into
+    // the request or persist this turn. This prevents a disabled production
+    // runtime from retaining or re-injecting Kinfolk session content.
+    const privateMemoryEnabled = isKinfolkPrivateMemoryEnabled();
+
     // Load or create session
     chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
-    let sessionPersistenceAvailable = true;
-    if (sessionId && req.user?.id) {
+    let sessionPersistenceAvailable = privateMemoryEnabled;
+    if (privateMemoryEnabled && sessionId && req.user?.id) {
       try {
         const [s] = await db
           .select()
@@ -2778,7 +2957,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       earlyDecision.route === "business_discovery" && rawIntentClassFromLLM !== "legal_regulated"
         ? "business_discovery"
         : earlyDecision.route === "travel_planning" && rawIntentClassFromLLM !== "legal_regulated"
-        ? "travel_planning"
+        ? "business_discovery"
         : rawIntentClassFromLLM;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
     // always resolve to legal_regulated even when hasDestination caused the keyword
@@ -2801,16 +2980,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // clarification is an optional offer rendered AFTER the general answer.
     const researchPlan = prepareKinfolkResearchPlan(message, { subject: "unknown" });
 
-    // ── Living Library research branch ────────────────────────────────────────
-    // For non-local general_knowledge and medical_health questions, use the
-    // Living Library (Tavily + OpenAI synthesis + DB archive) INSTEAD of the
-    // main LLM call. Returns source-cited answer + "Read more" library link.
-    // Falls through to standard LLM path on any error — never blocks the user.
-    if (
-      (intentClass === "general_knowledge" || intentClass === "medical_health") &&
-      !destination &&
-      message.trim().length > 15
-    ) {
+    // ── Conversational research branch ─────────────────────────────────────────
+    // Stable general knowledge should feel like a normal conversation. Search is
+    // reserved for high-stakes or changing questions; Library publication remains
+    // optional enrichment and may never block an in-chat answer.
+    const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|this week|this month|this year|right now|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
+    const shouldResearchInLibrary = intentClass === "medical_health"
+      || intentClass === "legal_regulated"
+      || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
+    if (shouldResearchInLibrary && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
         const result = await answerWithLivingLibrary({
@@ -2820,6 +2998,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           researchProvider: deps.researchProvider,
           writer: deps.writer,
         });
+        if (!result.isReliable) {
+          req.log?.info({ intentClass, sourceCount: result.sourceCount }, "[kinfolk] research coverage insufficient — answering conversationally");
+          throw new Error("KINFOLK_RESEARCH_COVERAGE_INSUFFICIENT");
+        }
         res.json({
           sessionId,
           reply: result.message,
@@ -3846,6 +4028,26 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const pronounBlock     = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
 
+    const activePrivateMemories = privateMemoryEnabled && req.user?.id
+      ? await db.select({ content: kinfolkPrivateMemoriesTable.content, purpose: kinfolkPrivateMemoriesTable.purpose, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
+          .from(kinfolkPrivateMemoriesTable)
+          .where(and(
+            eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+            isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, new Date())),
+          ))
+          .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+          .limit(12)
+          .catch(() => [])
+      : [];
+    const relevantPrivateMemories = activePrivateMemories.filter((memory) =>
+      !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
+    );
+    const privateMemoryBlock = buildPrivateMemoryPromptBlock(
+      privateMemoryEnabled,
+      relevantPrivateMemories,
+    );
+
     const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
       aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
@@ -3856,7 +4058,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       privacySuppressed: effectivePrivacySuppressed,
       catalogSource,
       intentClass,
-    }) + ownerBusinessContext;
+    }) + ownerBusinessContext + privateMemoryBlock;
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -3941,21 +4143,31 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Returns null on any error — must never cause a 500.
     const libraryTopic = await loadLibraryGrounding(message);
     const libraryGroundingBlock = buildLibraryGroundingBlock(libraryTopic);
-    const systemPromptWithLibrary = libraryGroundingBlock
+    const visionSafetyBlock = verifiedImageUrls.length > 0
+      ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
+      : "";
+    const systemPromptWithLibrary = (libraryGroundingBlock
       ? `${systemPrompt}\n\n${libraryGroundingBlock}`
-      : systemPrompt;
+      : systemPrompt) + (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "");
 
-    const aiMessages = [
-      { role: "system" as const, content: systemPromptWithLibrary },
+    const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
+    const currentUserContent: Parameters<typeof openai.chat.completions.create>[0]["messages"][number]["content"] = verifiedImageUrls.length > 0
+      ? [
+          { type: "text", text: currentUserText },
+          ...verifiedImageUrls.map((url) => ({ type: "image_url" as const, image_url: { url, detail: "auto" as const } })),
+        ]
+      : currentUserText;
+    const aiMessages: Parameters<typeof openai.chat.completions.create>[0]["messages"] = [
+      { role: "system", content: systemPromptWithLibrary },
       ...historyMessages,
-      { role: "user" as const, content: `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}` },
+      { role: "user", content: currentUserContent },
     ];
 
     // Token estimation for queue admission (chars/4 is a reliable GPT-4o-mini approximation)
     const estimatedPromptTokens = estimateTokens(systemPromptWithLibrary) +
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
-    const estimatedTotal = Math.min(estimatedPromptTokens + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
+    const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
     console.log(`[kinfolk-tokens] user=${req.user?.id ?? "anon"} estimatedPrompt=${estimatedPromptTokens} estimatedTotal=${estimatedTotal}`);
 
     // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap
@@ -4124,7 +4336,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
 
-    let memoryEnabled = true;
+    let memoryEnabled = privateMemoryEnabled;
     if (req.user?.id) {
       const [userSettings] = await db
         .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
@@ -4136,7 +4348,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     chatStage = "session_persist";
-    let finalSessionId = sessionId;
+    let finalSessionId = privateMemoryEnabled ? sessionId : undefined;
     if (req.user?.id && memoryEnabled && sessionPersistenceAvailable) {
       try {
         if (currentSession) {
@@ -4320,10 +4532,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       answerPlanId: null as string | null,
       // Four-purpose enforcement fields — always present so clients can branch on them.
       // educationalStatus: how well this answer is backed by sources.
+      // sourceNote: quiet attribution-style note only when a material source
+      // limitation affects a source-sensitive answer.
       // safetyNotice: required display text for safety/emergency intents.
       // promotionDisclosure: per-business paid/claimed disclosure strings.
       // rejectedRecommendations: count of model proposals not in the server catalog.
       educationalStatus: enforced.educationalStatus,
+      sourceNote: enforced.sourceNote ?? undefined,
       safetyNotice: enforced.safetyNotice ?? undefined,
       promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
       rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
@@ -5269,7 +5484,11 @@ const transcribeUpload = multer({
   limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
     const ok = file.fieldname === "audio" && /^audio\//i.test(file.mimetype);
-    cb(ok ? null : new Error("UNSUPPORTED_FIELD"), ok);
+    if (!ok) {
+      cb(new Error("UNSUPPORTED_FIELD"));
+      return;
+    }
+    cb(null, true);
   },
 }).single("audio");
 
@@ -5407,7 +5626,8 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const startMs = Date.now();
 
   try {
-    const blob = new Blob([buffer], { type: `audio/${safeFormat}` });
+    const audioBytes = new Uint8Array(buffer);
+    const blob = new Blob([audioBytes], { type: `audio/${safeFormat}` });
     const file = new File([blob], `voice.${safeFormat}`, { type: `audio/${safeFormat}` });
 
     const transcription = await openai.audio.transcriptions.create(

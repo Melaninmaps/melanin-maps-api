@@ -15,7 +15,7 @@ export function createOpenAiTranscriptionProvider(input: {
     async transcribe({ audio, filename, mimeType }) {
       const form = new FormData();
       form.append("model", input.model);
-      form.append("file", new Blob([audio], { type: mimeType }), filename);
+      form.append("file", new Blob([new Uint8Array(audio)], { type: mimeType }), filename);
       form.append("response_format", "json");
 
       const response = await fetch(`${input.baseUrl.replace(/\/$/, "")}/audio/transcriptions`, {

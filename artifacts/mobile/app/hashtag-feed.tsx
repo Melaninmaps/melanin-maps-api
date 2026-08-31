@@ -15,6 +15,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import type { CommunityPost } from "@/constants/types";
+import { parseMediaUrls } from "@/lib/mediaUrls";
 
 function getApiBase() {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -30,10 +31,7 @@ function formatTimeAgo(ts: string): string {
 }
 
 function toPostCard(raw: Record<string, unknown>): CommunityPost {
-  let mediaUrls: string[] | undefined;
-  if (raw.mediaUrls && typeof raw.mediaUrls === "string") {
-    try { mediaUrls = JSON.parse(raw.mediaUrls) as string[]; } catch { /* ignore */ }
-  }
+  const mediaUrls = parseMediaUrls(raw.mediaUrls);
   return {
     id: (raw.id as string) ?? "",
     author: (raw.authorName as string) ?? "Community Member",

@@ -1,8 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { Platform } from "react-native";
-import React, { useState } from "react";
-import {
+import { Platform ,
   Modal,
   ScrollView,
   StyleSheet,
@@ -11,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import React, { useState } from "react";
 import { useColors } from "@/hooks/useColors";
 
 const REPORT_CATEGORIES = [
@@ -170,7 +169,7 @@ export function ReportContentModal({ visible, businessName, businessId, onClose,
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.label, { color: colors.foreground }]}>What's the issue?</Text>
+              <Text style={[styles.label, { color: colors.foreground }]}>What&apos;s the issue?</Text>
 
               {REPORT_CATEGORIES.map((cat) => (
                 <TouchableOpacity

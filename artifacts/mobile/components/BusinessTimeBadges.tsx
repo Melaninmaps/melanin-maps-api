@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 import {
   getLocationAgeBadge,
@@ -21,7 +21,6 @@ interface Props {
 }
 
 function BadgePill({ badge, onPress }: { badge: BadgeInfo; onPress: (b: BadgeInfo) => void }) {
-  const colors = useColors();
   return (
     <TouchableOpacity
       style={[styles.pill, { backgroundColor: badge.color + "18", borderColor: badge.color + "50" }]}

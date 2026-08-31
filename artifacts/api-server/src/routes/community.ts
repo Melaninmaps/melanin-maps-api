@@ -1,9 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable, communityPlacesTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable, communityPlacesTable, userBlocksTable, userFollowsTable, memberConnections, contentReportsTable } from "@workspace/db";
 import { extractHashtags, upsertHashtags } from "./hashtags";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { eq, desc, sql, and, gte, or } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
@@ -31,6 +31,28 @@ const VIDEO_TIER_TABLE = [
   { tier: "community_builder", label: "Creator",         videoMonthly: 75  },
   { tier: "legacy_member",     label: "Premium Creator", videoMonthly: 200 },
 ];
+
+function normalizeCommunityMediaUrls(value: unknown): string[] {
+  let current = value;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (Array.isArray(current)) {
+      const unique = new Set<string>();
+      for (const item of current) {
+        if (typeof item !== "string") continue;
+        const url = item.trim();
+        if (url) unique.add(url);
+      }
+      return Array.from(unique).slice(0, 5);
+    }
+    if (typeof current !== "string" || !current.trim()) return [];
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
 // Split long content into thread segments at natural sentence boundaries
 // 300 words per segment — a full, complete thought per post
@@ -89,6 +111,104 @@ async function resolveAuthorInfo(userId: string): Promise<{ name: string; initia
   return { name, initials, color };
 }
 
+type CommentPolicy = "everyone" | "followers" | "off";
+
+type CommentAccess = {
+  post: {
+    id: string;
+    authorId: string | null;
+    visibility: string;
+    commentPolicy: CommentPolicy;
+  } | null;
+  canView: boolean;
+  canComment: boolean;
+  reason: string | null;
+};
+
+function normalizeCommentPolicy(value: unknown, visibility: string): CommentPolicy {
+  if (value === "off") return "off";
+  if (value === "followers") return "followers";
+  return visibility === "followers_only" ? "followers" : "everyone";
+}
+
+async function resolveCommentAccess(postId: string, viewerId: string): Promise<CommentAccess> {
+  const [post] = await db
+    .select({
+      id: communityPostsTable.id,
+      authorId: communityPostsTable.authorId,
+      visibility: communityPostsTable.visibility,
+      commentPolicy: communityPostsTable.commentPolicy,
+    })
+    .from(communityPostsTable)
+    .where(eq(communityPostsTable.id, postId))
+    .limit(1);
+
+  if (!post) return { post: null, canView: false, canComment: false, reason: null };
+
+  const policy = normalizeCommentPolicy(post.commentPolicy, post.visibility);
+  const normalizedPost = { ...post, commentPolicy: policy };
+  if (!post.authorId || post.authorId === viewerId) {
+    return {
+      post: normalizedPost,
+      canView: true,
+      canComment: policy !== "off",
+      reason: policy === "off" ? "Comments are turned off for this post." : null,
+    };
+  }
+
+  const [block, acceptedFollow, acceptedConnection, author] = await Promise.all([
+    db
+      .select({ id: userBlocksTable.id })
+      .from(userBlocksTable)
+      .where(or(
+        and(eq(userBlocksTable.blockerId, viewerId), eq(userBlocksTable.blockedId, post.authorId)),
+        and(eq(userBlocksTable.blockerId, post.authorId), eq(userBlocksTable.blockedId, viewerId)),
+      ))
+      .limit(1),
+    db
+      .select({ id: userFollowsTable.id })
+      .from(userFollowsTable)
+      .where(and(
+        eq(userFollowsTable.followerId, viewerId),
+        eq(userFollowsTable.followingId, post.authorId),
+        eq(userFollowsTable.status, "accepted"),
+      ))
+      .limit(1),
+    db
+      .select({ id: memberConnections.id })
+      .from(memberConnections)
+      .where(and(
+        eq(memberConnections.status, "accepted"),
+        or(
+          and(eq(memberConnections.requesterId, viewerId), eq(memberConnections.recipientId, post.authorId)),
+          and(eq(memberConnections.requesterId, post.authorId), eq(memberConnections.recipientId, viewerId)),
+        ),
+      ))
+      .limit(1),
+    db
+      .select({ isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, post.authorId))
+      .limit(1),
+  ]);
+
+  if (block.length > 0) {
+    return { post: normalizedPost, canView: false, canComment: false, reason: null };
+  }
+
+  const isRelated = acceptedFollow.length > 0 || acceptedConnection.length > 0;
+  const canView = post.visibility === "public" && !author[0]?.isPrivate
+    ? true
+    : isRelated;
+
+  if (!canView) return { post: normalizedPost, canView: false, canComment: false, reason: null };
+  if (policy === "off") return { post: normalizedPost, canView: true, canComment: false, reason: "Comments are turned off for this post." };
+  if (policy === "followers" && !isRelated) {
+    return { post: normalizedPost, canView: true, canComment: false, reason: "Only followers and connections can comment on this post." };
+  }
+  return { post: normalizedPost, canView: true, canComment: true, reason: null };
+}
+
 // GET /community/posts — paginated feed with business enrichment
 router.get("/community/posts", async (req: Request, res: Response) => {
   if (!(req as any).user) {
@@ -104,7 +224,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const offset = Number(req.query.offset) || 0;
     const viewerId: string | null = req.user?.id ?? null;
 
-    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; has_content_warning: boolean; content_warning_type: string | null; audience_rating: string; rating_reason: string | null; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
+    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; comment_policy: string; has_content_warning: boolean; content_warning_type: string | null; audience_rating: string; rating_reason: string | null; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
 
     let rows: PostRow[];
 
@@ -254,13 +374,14 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
       authorColor: r.author_color, content: r.content, category: r.category, postType: r.post_type,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
-      mediaUrls: r.media_urls, savedPlaceId: r.saved_place_id,
+      mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
       hashtags: (r as any).hashtags ?? null,
       topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
+      commentPolicy: ["everyone", "followers", "off"].includes(r.comment_policy) ? r.comment_policy : "everyone",
       hasContentWarning: r.has_content_warning ?? false,
       contentWarningType: r.content_warning_type ?? null,
       audienceRating: r.audience_rating ?? "everyone",
@@ -311,7 +432,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     }
 
     // Suppress community post writes for load-test accounts (capacity canary safety)
-    if (req.user.isLoadTest) {
+    if ("isLoadTest" in req.user && req.user.isLoadTest === true) {
       res.status(200).json({ id: "load-test-suppressed", suppressed: true });
       return;
     }
@@ -339,6 +460,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       mediaUrls,
       savedPlaceId,
       visibility = "public",
+      commentPolicy,
       locationTag,
       locationVenueName,
       locationCity,
@@ -372,9 +494,10 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessId?: string;
       businessName?: string;
       businessLink?: string;
-      mediaUrls?: string[];
+      mediaUrls?: unknown;
       savedPlaceId?: string;
       visibility?: "public" | "followers_only";
+      commentPolicy?: CommentPolicy;
       locationTag?: string;
       locationVenueName?: string;
       locationCity?: string;
@@ -407,6 +530,8 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       res.status(400).json({ error: "content is required" });
       return;
     }
+
+    const normalizedMediaUrls = normalizeCommunityMediaUrls(mediaUrls);
 
     // Extract hashtags from content
     const extractedHashtags = extractHashtags(content.trim());
@@ -558,6 +683,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     const postAuthorId = req.user.id; // capture before map callback (TS narrowing)
 
     const visValue = (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only";
+    const safeCommentPolicy = normalizeCommentPolicy(commentPolicy, visValue);
     const safeRating = (["everyone", "teen", "young_adult", "adult"].includes(audienceRating) ? audienceRating : "everyone") as "everyone" | "teen" | "young_adult" | "adult";
 
     const rowsToInsert = segments.map((seg, i) => ({
@@ -571,7 +697,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessId: businessId ?? null,
       businessName: resolvedBusinessName,
       businessLink: businessLink?.trim() ?? null,
-      mediaUrls: (i === 0 && mediaUrls?.length) ? JSON.stringify(mediaUrls) : null,
+      mediaUrls: (i === 0 && normalizedMediaUrls.length > 0) ? JSON.stringify(normalizedMediaUrls) : null,
       savedPlaceId: savedPlaceId ?? null,
       locationTag: locationTag?.trim() || null,
       locationVenueName: locationVenueName?.trim() || null,
@@ -585,6 +711,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       topicTag: topicTag?.trim() || null,
       isPrivateTopic: !!isPrivateTopic,
       visibility: visValue,
+      commentPolicy: safeCommentPolicy,
       hasContentWarning: !!hasContentWarning,
       contentWarningType: hasContentWarning && contentWarningType ? contentWarningType : null,
       audienceRating: safeRating,
@@ -868,15 +995,31 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
 
 // GET /community/posts/:id/comments
 router.get("/community/posts/:id/comments", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
     const postId = req.params["id"] as string;
+    const access = await resolveCommentAccess(postId, req.user.id);
+    // Do not disclose whether a post hidden by privacy or blocking exists.
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Post not found" }); return; }
+
     const comments = await db
       .select()
       .from(communityPostCommentsTable)
-      .where(eq(communityPostCommentsTable.postId, postId))
+      .where(and(
+        eq(communityPostCommentsTable.postId, postId),
+        eq(communityPostCommentsTable.status, "active"),
+      ))
       .orderBy(desc(communityPostCommentsTable.createdAt))
       .limit(100);
-    res.json({ comments });
+
+    res.json({
+      comments,
+      access: {
+        canComment: access.canComment,
+        commentPolicy: access.post.commentPolicy,
+        restrictionReason: access.reason,
+      },
+    });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch comments");
     res.status(500).json({ error: "Failed to fetch comments" });
@@ -885,49 +1028,176 @@ router.get("/community/posts/:id/comments", async (req: Request, res: Response) 
 
 // POST /community/posts/:id/comments
 router.post("/community/posts/:id/comments", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
-    if (!req.user?.id) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
     const postId = req.params["id"] as string;
-    const { content } = req.body as { content?: string };
-    if (!content?.trim()) {
-      res.status(400).json({ error: "content is required" });
+    const content = String((req.body as { content?: unknown }).content ?? "").trim();
+    if (!content) { res.status(400).json({ error: "content is required" }); return; }
+    if (content.length > 500) { res.status(400).json({ error: "Comments must be 500 characters or fewer." }); return; }
+
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Post not found" }); return; }
+    if (!access.canComment) {
+      res.status(403).json({
+        error: access.reason ?? "You cannot comment on this post.",
+        code: "COMMENTS_RESTRICTED",
+        commentPolicy: access.post.commentPolicy,
+      });
       return;
     }
+
+    const recent = await pool.query<{ count: number }>(
+      `SELECT count(*)::int AS count
+         FROM community_post_comments
+        WHERE author_id = $1
+          AND created_at > NOW() - INTERVAL '10 minutes'`,
+      [req.user.id],
+    );
+    if ((recent.rows[0]?.count ?? 0) >= 20) {
+      res.status(429).json({ error: "Please wait before adding more comments.", code: "COMMENT_RATE_LIMITED" });
+      return;
+    }
+
     const filter = checkContent(content);
     if (!filter.ok) {
       res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" });
       return;
     }
+    const familyScan = await scanForFamily(content, req.user.id, "community_comment");
+    if (familyScan.blocked) {
+      res.status(422).json({ error: "This comment contains content that is not permitted.", code: "MINOR_CONTENT_BLOCKED" });
+      return;
+    }
+
     const { name, initials, color } = await resolveAuthorInfo(req.user.id);
-    const [[comment], [updatedPost]] = await Promise.all([
-      db
+    const result = await db.transaction(async (tx) => {
+      const [comment] = await tx
         .insert(communityPostCommentsTable)
-        .values({ postId, authorId: req.user.id, authorName: name, authorInitials: initials, authorColor: color, content: content.trim() })
-        .returning(),
-      db
+        .values({ postId, authorId: req.user!.id, authorName: name, authorInitials: initials, authorColor: color, content })
+        .returning();
+      const [updatedPost] = await tx
         .update(communityPostsTable)
         .set({ commentsCount: sql`${communityPostsTable.commentsCount} + 1` })
         .where(eq(communityPostsTable.id, postId))
-        .returning({ authorId: communityPostsTable.authorId }),
-    ]);
+        .returning({ authorId: communityPostsTable.authorId });
+      return { comment, updatedPost };
+    });
 
-    // Notify post author when someone else comments
-    if (updatedPost?.authorId && updatedPost.authorId !== req.user.id) {
-      const preview = content.trim().length > 60 ? content.trim().slice(0, 60) + "…" : content.trim();
-      sendPushToUser(updatedPost.authorId, {
-        title: `${name} replied to your post 💬`,
+    if (result.updatedPost?.authorId && result.updatedPost.authorId !== req.user.id) {
+      const preview = content.length > 60 ? content.slice(0, 60) + "…" : content;
+      sendPushToUser(result.updatedPost.authorId, {
+        title: `${name} replied to your post`,
         body: preview,
         data: { screen: "community", postId },
       }).catch(() => {});
     }
 
-    res.status(201).json({ comment });
+    res.status(201).json({ comment: result.comment });
   } catch (err) {
     req.log.error({ err }, "Failed to add comment");
     res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+// DELETE /community/posts/:postId/comments/:commentId — comment author, post author, or admin
+router.delete("/community/posts/:postId/comments/:commentId", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = String(req.params.postId);
+    const commentId = String(req.params.commentId);
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Comment not found" }); return; }
+
+    const [comment] = await db
+      .select({ id: communityPostCommentsTable.id, authorId: communityPostCommentsTable.authorId, status: communityPostCommentsTable.status })
+      .from(communityPostCommentsTable)
+      .where(and(eq(communityPostCommentsTable.id, commentId), eq(communityPostCommentsTable.postId, postId)))
+      .limit(1);
+    if (!comment || comment.status !== "active") { res.status(404).json({ error: "Comment not found" }); return; }
+
+    const isAdmin = (req.user as { role?: string }).role === "admin";
+    const mayDelete = comment.authorId === req.user.id || access.post.authorId === req.user.id || isAdmin;
+    if (!mayDelete) { res.status(403).json({ error: "You cannot delete this comment." }); return; }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(communityPostCommentsTable)
+        .set({ status: "deleted", deletedAt: new Date() })
+        .where(eq(communityPostCommentsTable.id, commentId));
+      await tx
+        .update(communityPostsTable)
+        .set({ commentsCount: sql`GREATEST(${communityPostsTable.commentsCount} - 1, 0)` })
+        .where(eq(communityPostsTable.id, postId));
+    });
+
+    res.json({ ok: true, commentId });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete comment");
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+});
+
+// POST /community/posts/:postId/comments/:commentId/report
+router.post("/community/posts/:postId/comments/:commentId/report", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = String(req.params.postId);
+    const commentId = String(req.params.commentId);
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Comment not found" }); return; }
+
+    const [comment] = await db
+      .select({ id: communityPostCommentsTable.id, status: communityPostCommentsTable.status })
+      .from(communityPostCommentsTable)
+      .where(and(eq(communityPostCommentsTable.id, commentId), eq(communityPostCommentsTable.postId, postId)))
+      .limit(1);
+    if (!comment || comment.status !== "active") { res.status(404).json({ error: "Comment not found" }); return; }
+
+    const allowedReasons = ["spam", "inappropriate", "harassment", "incorrect_info", "suspicious", "other"] as const;
+    const requestedReason = String((req.body as { reason?: unknown }).reason ?? "other");
+    const reason = allowedReasons.includes(requestedReason as typeof allowedReasons[number])
+      ? requestedReason as typeof allowedReasons[number]
+      : "other";
+    const description = String((req.body as { description?: unknown }).description ?? "").trim().slice(0, 1000) || null;
+
+    const duplicate = await pool.query<{ id: string }>(
+      `SELECT id FROM content_reports WHERE reporter_id = $1 AND target_type = 'comment' AND target_id = $2 AND status = 'pending' LIMIT 1`,
+      [req.user.id, commentId],
+    );
+    if (duplicate.rows.length === 0) {
+      await db.insert(contentReportsTable).values({
+        reporterId: req.user.id,
+        targetType: "comment",
+        targetId: commentId,
+        reason,
+        description,
+      });
+    }
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to report comment");
+    res.status(500).json({ error: "Failed to report comment" });
+  }
+});
+
+// PATCH /community/posts/:id/comment-policy — author controls who may reply
+router.patch("/community/posts/:id/comment-policy", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = String(req.params.id);
+    const requested = String((req.body as { commentPolicy?: unknown }).commentPolicy ?? "");
+    if (!(["everyone", "followers", "off"] as string[]).includes(requested)) {
+      res.status(400).json({ error: "commentPolicy must be everyone, followers, or off." }); return;
+    }
+    const [updated] = await db.update(communityPostsTable)
+      .set({ commentPolicy: requested as CommentPolicy })
+      .where(and(eq(communityPostsTable.id, postId), eq(communityPostsTable.authorId, req.user.id)))
+      .returning({ id: communityPostsTable.id, commentPolicy: communityPostsTable.commentPolicy });
+    if (!updated) { res.status(404).json({ error: "Post not found" }); return; }
+    res.json({ post: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update comment policy");
+    res.status(500).json({ error: "Failed to update comment settings" });
   }
 });
 

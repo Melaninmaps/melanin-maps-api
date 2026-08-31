@@ -70,7 +70,7 @@ export default function LifeJourneyScreen() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [smartMatches, setSmartMatches] = useState<{
-    matches: Array<{ category: string; fromCity: string; savedCount: number; matches: Array<{ name: string; category: string; city: string; verified: boolean }> }>;
+    matches: { category: string; fromCity: string; savedCount: number; matches: { name: string; category: string; city: string; verified: boolean }[] }[];
     message: string | null;
     destinationCity?: string;
   } | null>(null);
@@ -84,7 +84,7 @@ export default function LifeJourneyScreen() {
   const [upgradeReason, setUpgradeReason] = useState("");
   const [journeyLimit, setJourneyLimit] = useState<{ used: number; limit: number; tier: string } | null>(null);
 
-  const JOURNEY_NEEDS: Record<string, Array<{ label: string; emoji: string }>> = {
+  const JOURNEY_NEEDS: Record<string, { label: string; emoji: string }[]> = {
     moving: [
       { label: "Moving Company", emoji: "🚚" }, { label: "Home Repair", emoji: "🔧" },
       { label: "Home Organizer", emoji: "📦" }, { label: "Cleaning Service", emoji: "🧹" },
@@ -195,15 +195,15 @@ export default function LifeJourneyScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, [isAuthenticated]);
 
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => { queueMicrotask(() => { void loadData(); }); }, [loadData]);
 
   // Apply preset param from business dashboard navigation
   useEffect(() => {
     if (preset && journeyTypes.length > 0) {
       const match = journeyTypes.find((t) => t.id === preset);
       if (match) {
-        setSelectedType(match.id);
-        setView("create");
+        queueMicrotask(() => { setSelectedType(match.id); });
+        queueMicrotask(() => { setView("create"); });
       }
     }
   }, [preset, journeyTypes]);
@@ -344,7 +344,7 @@ export default function LifeJourneyScreen() {
         )}
 
         <View style={{ padding: 16 }}>
-          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>What's happening in your life?</Text>
+          <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>What&apos;s happening in your life?</Text>
 
           <View style={styles.typeGrid}>
             {journeyTypes.map((type) => (
@@ -395,7 +395,7 @@ export default function LifeJourneyScreen() {
                     What do you need help with?
                   </Text>
                   <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
-                    Tap everything that applies — even things you haven't thought about yet
+                    Tap everything that applies — even things you haven&apos;t thought about yet
                   </Text>
                   <View style={styles.chipsWrap}>
                     {JOURNEY_NEEDS[selectedType]!.map((need) => {
@@ -545,7 +545,7 @@ export default function LifeJourneyScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.kinfolkBtnTitle, { color: colors.foreground }]}>Ask KinfolkAI™ about your journey</Text>
-              <Text style={[styles.kinfolkBtnSub, { color: colors.mutedForeground }]}>I know exactly where you are — let's talk next steps</Text>
+              <Text style={[styles.kinfolkBtnSub, { color: colors.mutedForeground }]}>I know exactly where you are — let&apos;s talk next steps</Text>
             </View>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
@@ -649,7 +649,7 @@ export default function LifeJourneyScreen() {
             <Text style={styles.emptyIcon}>🗺️</Text>
             <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Your journey starts here</Text>
             <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-              Tell KinfolkAI™ what's happening in your life and get a personalized step-by-step guide — from finding the right neighborhood to discovering your community.
+              Tell KinfolkAI™ what&apos;s happening in your life and get a personalized step-by-step guide — from finding the right neighborhood to discovering your community.
             </Text>
             <TouchableOpacity
               style={[styles.startBtn, { backgroundColor: primaryGold }]}

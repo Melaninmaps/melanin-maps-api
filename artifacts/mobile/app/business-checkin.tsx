@@ -169,7 +169,7 @@ export default function BusinessCheckinScreen() {
         </View>
         <View style={styles.centerWrap}>
           <Feather name="check-circle" size={56} color={colors.success} />
-          <Text style={[styles.successTitle, { color: colors.foreground }]}>You're all set!</Text>
+          <Text style={[styles.successTitle, { color: colors.foreground }]}>You&apos;re all set!</Text>
           <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
             Thank you — this already helps.
           </Text>
@@ -298,7 +298,7 @@ export default function BusinessCheckinScreen() {
           ) : (
             <>
               <Feather name="map-pin" size={28} color={colors.primaryForeground} />
-              <Text style={[styles.checkinBtnLabel, { color: colors.primaryForeground }]}>I'm here</Text>
+              <Text style={[styles.checkinBtnLabel, { color: colors.primaryForeground }]}>I&apos;m here</Text>
             </>
           )}
         </TouchableOpacity>

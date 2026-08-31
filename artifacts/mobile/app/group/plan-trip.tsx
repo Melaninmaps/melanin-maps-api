@@ -135,7 +135,7 @@ export default function PlanTripScreen() {
               <View style={styles.heroText}>
                 <Text style={[styles.heroTitle, { color: colors.foreground }]}>AI Group Planner</Text>
                 <Text style={[styles.heroSubtitle, { color: colors.mutedForeground }]}>
-                  KinfolkAI will read all {numMembers} members' travel preferences and suggest{" "}
+                  KinfolkAI will read all {numMembers} members&apos; travel preferences and suggest{" "}
                   <Text style={{ fontFamily: "Inter_600SemiBold" }}>3 trip options</Text> tailored to your crew — with
                   community-verified spots, cultural landmarks, and safety ratings.
                 </Text>
@@ -191,7 +191,7 @@ export default function PlanTripScreen() {
             <ActivityIndicator size="large" color="#2D7A4F" />
             <Text style={[styles.loadingTitle, { color: colors.foreground }]}>Analyzing preferences...</Text>
             <Text style={[styles.loadingSubtitle, { color: colors.mutedForeground }]}>
-              KinfolkAI is reading all {numMembers} members' travel preferences and crafting personalized trip options.
+              KinfolkAI is reading all {numMembers} members&apos; travel preferences and crafting personalized trip options.
             </Text>
           </View>
         )}

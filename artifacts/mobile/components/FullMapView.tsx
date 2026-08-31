@@ -4,7 +4,6 @@ import { useRouter, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -23,6 +22,9 @@ import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useAuth } from "@/lib/auth";
+import { openExternalUrl, openMapDirections } from "@/lib/safeLinking";
+
+import { getApiBase } from "@/lib/api";
 
 const GOLD = "#CA922B";
 // KinfolkAI restore tab lives at bottom: insets.bottom + 90 in the root layout.
@@ -196,8 +198,6 @@ function getCategoryStyle(heritageCategory: string, pinType?: string | null): Ca
   return CATEGORY_STYLES[heritageCategory] ?? DEFAULT_CATEGORY_STYLE;
 }
 
-import { getApiBase } from "@/lib/api";
-
 interface FullMapViewProps {
   /** When set, the map pans to this tour_cultural_sites ID and opens its card. */
   focusSiteId?: string;
@@ -253,7 +253,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   const isFetchingTourSites = useRef(false);
 
   const [mapReady, setMapReady] = useState(false);
-  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
+  const [, setContainerSize] = useState({ w: 0, h: 0 });
 
   const [isFocused, setIsFocused] = useState(false);
   useFocusEffect(
@@ -298,6 +298,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     if (!focusSiteId || !mapReady) return;
 
     const site = tourSites.find((s) => s.id === focusSiteId);
+    const timer = setTimeout(() => {
     if (site) {
       const lat = typeof site.latitude === "string" ? parseFloat(site.latitude) : (site.latitude ?? NaN);
       const lng = typeof site.longitude === "string" ? parseFloat(site.longitude) : (site.longitude ?? NaN);
@@ -329,8 +330,9 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
         );
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusSiteId, mapReady, tourSites]);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [focusSiteId, focusLat, focusLng, mapReady, tourSites]);
 
   // ── Auto-fit to business pins on first load ────────────────────────────────
   // Build 99 crash-blocker note: this effect previously sat ABOVE the
@@ -358,13 +360,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
     ? culturalSites.filter((s) => s.heritageCategory === activeCulturalCategory)
     : culturalSites;
 
-  const currentWarning = warnings[warningIdx] ?? null;
-
-  useEffect(() => {
-    if (warningIdx >= warnings.length && warnings.length > 0) {
-      setWarningIdx(warnings.length - 1);
-    }
-  }, [warnings.length, warningIdx]);
+  const currentWarning = warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
 
   useEffect(() => {
     void (async () => {
@@ -406,7 +402,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
         } catch {}
       })();
     }
-  }, [showHeatmap]);
+  }, [showHeatmap, heatmapPoints.length]);
 
   // ── Cultural-sites fetch (resilient) ────────────────────────────────────
   // hasData = true  → refresh in background; keep existing markers on failure
@@ -442,18 +438,16 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
     if (showCulturalSites && culturalSites.length === 0 && mapReady) {
-      void fetchCulturalSites(false);
+      void Promise.resolve().then(() => fetchCulturalSites(false));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showCulturalSites, mapReady]);
+  }, [showCulturalSites, mapReady, culturalSites.length, fetchCulturalSites]);
 
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
     if (isFocused && showCulturalSites && mapReady) {
-      void fetchCulturalSites(culturalSites.length > 0);
+      void Promise.resolve().then(() => fetchCulturalSites(culturalSites.length > 0));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFocused, showCulturalSites, mapReady]);
+  }, [isFocused, showCulturalSites, mapReady, culturalSites.length, fetchCulturalSites]);
 
   useEffect(() => {
     if (!HERITAGE_SITES_ENABLED) return;
@@ -516,7 +510,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
       })
       .catch(() => {})
       .finally(() => { isFetchingMapEvents.current = false; });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [mapReady, isFocused]);
 
   const recenter = async () => {
@@ -1035,11 +1029,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 onPress={() => {
                   const lat = parseFloat(site.latitude);
                   const lng = parseFloat(site.longitude);
-                  void Linking.openURL(
-                    Platform.OS === "ios"
-                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(site.name)}`
-                      : `geo:${lat},${lng}?q=${encodeURIComponent(site.name)}`
-                  );
+                  void openMapDirections(lat, lng, site.name);
                 }}
               >
                 <Feather name="navigation" size={14} color={cs.color} />
@@ -1064,7 +1054,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
             <View style={{ flexDirection: "row", gap: 16, marginTop: 8, paddingHorizontal: 2 }}>
               {site.externalUrl ? (
                 <TouchableOpacity
-                  onPress={() => void Linking.openURL(site.externalUrl!)}
+                  onPress={() => void openExternalUrl(site.externalUrl)}
                   style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                 >
                   <Feather name="external-link" size={12} color={cs.color} />
@@ -1138,11 +1128,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 const lat = parseFloat(evt.latitude ?? "");
                 const lng = parseFloat(evt.longitude ?? "");
                 if (!isNaN(lat) && !isNaN(lng)) {
-                  void Linking.openURL(
-                    Platform.OS === "ios"
-                      ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(evt.title)}`
-                      : `geo:${lat},${lng}?q=${encodeURIComponent(evt.title)}`
-                  );
+                  void openMapDirections(lat, lng, evt.title);
                 }
               }}
             >
@@ -1177,7 +1163,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
               <TouchableOpacity
                 style={[s.cardBtnHalf, { borderWidth: 1.5, borderColor: "#7C3AED" }]}
                 activeOpacity={0.85}
-                onPress={() => void Linking.openURL(selectedOrg.website!)}
+                onPress={() => void openExternalUrl(selectedOrg.website)}
               >
                 <Feather name="external-link" size={14} color="#7C3AED" />
                 <Text style={[s.cardBtnTxt, { color: "#7C3AED" }]}>Website</Text>
@@ -1271,11 +1257,7 @@ export function FullMapView({ focusSiteId, focusLat, focusLng }: FullMapViewProp
                 activeOpacity={0.85}
                 onPress={() => {
                   if (!isNaN(lat) && !isNaN(lng)) {
-                    void Linking.openURL(
-                      Platform.OS === "ios"
-                        ? `maps://?ll=${lat},${lng}&q=${encodeURIComponent(selectedTourSite.name)}`
-                        : `geo:${lat},${lng}?q=${encodeURIComponent(selectedTourSite.name)}`
-                    );
+                    void openMapDirections(lat, lng, selectedTourSite.name);
                   }
                 }}
               >

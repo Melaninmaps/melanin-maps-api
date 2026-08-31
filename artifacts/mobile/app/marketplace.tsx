@@ -192,7 +192,7 @@ function PostListingModal({ visible, onClose, colors, onPosted }: {
         <ScrollView style={{ flex: 1 }} contentContainerStyle={pm.body} keyboardShouldPersistTaps="handled">
           {step === "type" && (
             <>
-              <Text style={[pm.hint, { color: colors.mutedForeground }]}>Choose what you're sharing with the community.</Text>
+              <Text style={[pm.hint, { color: colors.mutedForeground }]}>Choose what you&apos;re sharing with the community.</Text>
               {(Object.entries(TYPE_CONFIG) as [ListingType, typeof TYPE_CONFIG[ListingType]][]).map(([key, cfg]) => (
                 <TouchableOpacity
                   key={key}
@@ -426,7 +426,7 @@ export default function MarketplaceScreen() {
     } catch {}
   }, [activeType, search]);
 
-  useEffect(() => { setLoading(true); fetch_().finally(() => setLoading(false)); }, [fetch_]);
+  useEffect(() => { queueMicrotask(() => { setLoading(true); }); queueMicrotask(() => { fetch_().finally(() => setLoading(false)); }); }, [fetch_]);
 
   const handleReport = async (id: string) => {
     const token = await getToken();

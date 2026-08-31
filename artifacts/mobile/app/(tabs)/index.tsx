@@ -64,7 +64,7 @@ export default function DiscoverScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { alerts: liveAlerts, isLive, refetch: refetchAlerts } = useAlerts("GA");
   const [alerts, setAlerts] = useState(liveAlerts);
-  React.useEffect(() => { setAlerts(liveAlerts); }, [liveAlerts]);
+  React.useEffect(() => { queueMicrotask(() => { setAlerts(liveAlerts); }); }, [liveAlerts]);
   const [filters, setFilters] = useState<FilterState>({
     minScore: 0,
     verifiedOnly: false,
@@ -73,9 +73,9 @@ export default function DiscoverScreen() {
   const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
 
   // Algorithmic twin recommendations
-  const [twinRecs, setTwinRecs] = useState<Array<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }>>([]);
+  const [twinRecs, setTwinRecs] = useState<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }[]>([]);
   const [twinRecsLoading, setTwinRecsLoading] = useState(false);
-  const [spotlights, setSpotlights] = useState<Array<{ id: string; name: string; category: string; city: string; state: string; rating: string; imageUrl: string | null; hiddenGemLabel: string; hiddenGemTagline: string | null; hiddenGemNominations: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }>>([]);
+  const [spotlights, setSpotlights] = useState<{ id: string; name: string; category: string; city: string; state: string; rating: string; imageUrl: string | null; hiddenGemLabel: string; hiddenGemTagline: string | null; hiddenGemNominations: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }[]>([]);
   const [gemsLocked, setGemsLocked] = useState(false);
 
   React.useEffect(() => {
@@ -124,7 +124,7 @@ export default function DiscoverScreen() {
   // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
   React.useEffect(() => {
     if (preferences?.preferredOwnershipTypes?.length && filters.ownershipTypes.length === 0) {
-      setFilters((f) => ({ ...f, ownershipTypes: preferences.preferredOwnershipTypes }));
+      queueMicrotask(() => { setFilters((f) => ({ ...f, ownershipTypes: preferences.preferredOwnershipTypes })); });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences?.preferredOwnershipTypes?.join(",")]);
@@ -134,7 +134,7 @@ export default function DiscoverScreen() {
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
 
   // KinfolkAI banner hide-on-scroll
-  const kinfolkAnim = useRef(new Animated.Value(1)).current;
+  const [kinfolkAnim] = useState(() => new Animated.Value(1));
   const kinfolkVisible = useRef(true);
   const lastScrollY = useRef(0);
 
@@ -505,7 +505,7 @@ export default function DiscoverScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={[styles.noPrefsMatchSub, { color: colors.mutedForeground }]}>
-                  We couldn't find businesses matching your saved preferences in this view. Would you like to explore other community businesses?
+                  We couldn&apos;t find businesses matching your saved preferences in this view. Would you like to explore other community businesses?
                 </Text>
                 <View style={styles.noPrefsMatchBtns}>
                   <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
@@ -528,7 +528,7 @@ export default function DiscoverScreen() {
                     <View style={[styles.minorityOptGold, { backgroundColor: "#CA922B" }]} />
                     <View style={{ flex: 1, padding: 14 }}>
                       <Text style={[styles.minorityOptTitle, { color: colors.foreground }]}>No {selectedLabel} businesses found yet</Text>
-                      <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>We're growing every day. Would you like to explore other community businesses in the meantime?</Text>
+                      <Text style={[styles.minorityOptBody, { color: colors.mutedForeground }]}>We&apos;re growing every day. Would you like to explore other community businesses in the meantime?</Text>
                       <TouchableOpacity style={[styles.minorityOptBtn, { backgroundColor: "#CA922B" }]} onPress={() => setMinorityExpanded(true)} activeOpacity={0.85}>
                         <Feather name="compass" size={14} color="#fff" />
                         <Text style={styles.minorityOptBtnText}>Explore Community Businesses</Text>
@@ -559,7 +559,7 @@ export default function DiscoverScreen() {
                 <View style={styles.empty}>
                   <Feather name="search" size={40} color={colors.muted} />
                   <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No businesses found</Text>
-                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>We're growing every day — try a different search, category, or check back soon.</Text>
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>We&apos;re growing every day — try a different search, category, or check back soon.</Text>
                 </View>
               );
             })()}

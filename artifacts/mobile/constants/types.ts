@@ -98,6 +98,7 @@ export interface CommunityPost {
   content: string;
   likes: number;
   comments: number;
+  commentPolicy?: "everyone" | "followers" | "off";
   timeAgo: string;
   category: PostCategory;
   postType: PostType;

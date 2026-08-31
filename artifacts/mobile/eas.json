@@ -44,13 +44,18 @@
       "channel": "production",
       "environment": "production",
       "autoIncrement": false,
+      "node": "22.23.1",
+      "corepack": true,
+      "pnpm": "10.26.1",
       "ios": {
-        "credentialsSource": "local",
-        "resourceClass": "m-medium"
+        "credentialsSource": "remote",
+        "resourceClass": "m-medium",
+        "image": "sdk-57"
       },
       "android": {
         "buildType": "app-bundle",
-        "credentialsSource": "local"
+        "credentialsSource": "remote",
+        "image": "sdk-57"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",

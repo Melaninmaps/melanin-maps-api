@@ -65,7 +65,7 @@ export function useConversations() {
     }
   }, []);
 
-  useEffect(() => { void fetch_(); }, [fetch_]);
+  useEffect(() => { void Promise.resolve().then(fetch_); }, [fetch_]);
 
   const createConversation = useCallback(async (title: string, participantId?: string, businessId?: string) => {
     const apiBase = getApiBase();

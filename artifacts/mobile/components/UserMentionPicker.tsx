@@ -31,9 +31,9 @@ export function UserMentionPicker({ query, onSelect }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (query.length < 1) { setResults([]); return; }
     let cancelled = false;
     const run = async () => {
+      if (query.length < 1) { setResults([]); return; }
       setLoading(true);
       try {
         const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY).catch(() => null);

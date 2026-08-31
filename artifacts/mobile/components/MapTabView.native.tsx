@@ -57,8 +57,8 @@ async function fetchVoicedSteps(
   return steps;
 }
 
-function decodePolyline(encoded: string): Array<{ latitude: number; longitude: number }> {
-  const coords: Array<{ latitude: number; longitude: number }> = [];
+function decodePolyline(encoded: string): { latitude: number; longitude: number }[] {
+  const coords: { latitude: number; longitude: number }[] = [];
   let index = 0;
   const len = encoded.length;
   let lat = 0;
@@ -197,7 +197,7 @@ function ActiveAlertCard({
   alert: ActiveAlert;
   onDismiss: () => void;
 }) {
-  const slideAnim = useRef(new Animated.Value(-120)).current;
+  const [slideAnim] = useState(() => new Animated.Value(-120));
   const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
   const isConfirmed = (alert.status === "confirmed") || alert.confirmedCount >= 3;
   const statusColor = isConfirmed ? "#16A34A" : "#F59E0B";
@@ -252,7 +252,7 @@ function ProximityWarningCard({
   warning: ProximityWarning;
   onDismiss: () => void;
 }) {
-  const slideAnim = useRef(new Animated.Value(-120)).current;
+  const [slideAnim] = useState(() => new Animated.Value(-120));
   const colors = SEVERITY_COLORS[warning.severity] ?? "#EF4444";
 
   useEffect(() => {
@@ -331,7 +331,7 @@ export function MapTabView() {
 
   const { subscription } = useMembership();
   const isPaidMember = subscription !== null && ["active", "trialing"].includes(subscription.status ?? "");
-  const [routeCoords, setRouteCoords] = useState<Array<{ latitude: number; longitude: number }>>([]);
+  const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
 
   type NavAlert = {
@@ -404,10 +404,10 @@ export function MapTabView() {
 
   const [communityAlertPins, setCommunityAlertPins] = useState<ActiveAlert[]>([]);
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
-  const [alternatives, setAlternatives] = useState<Array<{
+  const [alternatives, setAlternatives] = useState<{
     id: string; name: string; city: string; category: string;
     latitude: number; longitude: number; distanceMiles: number;
-  }>>([]);
+  }[]>([]);
 
   // Fetch active police/ICE/checkpoint pins near the user, refresh every 3 min
   useEffect(() => {
@@ -426,14 +426,11 @@ export function MapTabView() {
     void fetchAlerts();
     const interval = setInterval(fetchAlerts, 3 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [userLocation?.lat, userLocation?.lng]);
+  }, [apiBase, userLocation]);
 
   // When a non-minority business is selected, fetch nearby minority-owned alternatives
   useEffect(() => {
-    if (!selected || selected.blackOwned) {
-      setAlternatives([]);
-      return;
-    }
+    if (!selected || selected.blackOwned) return;
     const fetchAlts = async () => {
       try {
         const res = await fetch(
@@ -446,12 +443,13 @@ export function MapTabView() {
       } catch { /**/ }
     };
     void fetchAlts();
-  }, [selected?.id]);
+  }, [apiBase, selected]);
 
   // Active alerts within 1.5 km that the user hasn't dismissed
   const visibleActiveAlerts = communityAlertPins.filter(
     (a) => !dismissedAlertIds.has(a.id) && a.distanceKm < 1.5
   );
+  const visibleAlternatives = !selected || selected.blackOwned ? [] : alternatives;
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -518,7 +516,7 @@ export function MapTabView() {
 
       if (routeRes.ok) {
         type GStep = { html_instructions: string; distance?: { text: string }; duration?: { text: string } };
-        type GRoute = { overview_polyline?: { points: string }; legs?: Array<{ steps?: GStep[] }> };
+        type GRoute = { overview_polyline?: { points: string }; legs?: { steps?: GStep[] }[] };
         const data = await routeRes.json() as { routes?: GRoute[] };
         const points = data.routes?.[0]?.overview_polyline?.points;
         // Extract plain-text steps for KinfolkAI voice translation
@@ -950,7 +948,7 @@ export function MapTabView() {
           </TouchableOpacity>
 
           {/* Minority-owned alternatives strip — shown when a non-minority business is selected */}
-          {alternatives.length > 0 && routeCoords.length === 0 && (
+          {visibleAlternatives.length > 0 && routeCoords.length === 0 && (
             <View style={[styles.altSection, { borderTopColor: colors.border }]}>
               <Text style={[styles.altTitle, { color: colors.foreground }]}>
                 ✨ Try a minority-owned alternative nearby
@@ -962,7 +960,7 @@ export function MapTabView() {
                 style={{ marginTop: 8 }}
                 contentContainerStyle={{ gap: 8 }}
               >
-                {alternatives.map((alt) => (
+                {visibleAlternatives.map((alt) => (
                   <TouchableOpacity
                     key={alt.id}
                     style={[styles.altChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}

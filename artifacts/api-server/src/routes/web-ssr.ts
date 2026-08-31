@@ -96,7 +96,7 @@ router.get("/web/businesses/:id", async (req: Request, res: Response) => {
   <div style="max-width:480px;text-align:center;">
     <div style="color:#CA922B;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;">Mapping With Melanin™</div>
     <h1 style="font-size:28px;font-weight:700;margin:0 0 8px;color:#F5EBD8;">${escapeHtml(business.name)}</h1>
-    <p style="color:#CA922B;margin:0 0 16px;">${escapeHtml(business.category)} · ${escapeHtml(business.city)}, ${escapeHtml(business.state)}</p>
+    <p style="color:#CA922B;margin:0 0 16px;">${escapeHtml(business.category)} · ${escapeHtml(business.city)}, ${escapeHtml(business.state ?? "")}</p>
     <p style="color:#F5EBD8;opacity:0.7;margin:0 0 28px;">${description}</p>
     <a href="/web/businesses/${encodeURIComponent(id)}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;padding:12px 28px;border-radius:50px;text-decoration:none;">View Full Details →</a>
   </div>

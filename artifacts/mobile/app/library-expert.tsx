@@ -46,7 +46,7 @@ const SAMPLE_EXPERTS: Record<string, {
   displayName: string; specialty: string; badge: string;
   bio: string; credentials: string; followCount: number; articleCount: number;
   kinfolkPrompts: string[];
-  articles: Array<{ id: string; title: string; summary: string; category: string; tier: string; readTimeMinutes: number }>;
+  articles: { id: string; title: string; summary: string; category: string; tier: string; readTimeMinutes: number }[];
 }> = {
   e1: {
     displayName: "Dr. Aisha Matthews",
@@ -283,7 +283,7 @@ export default function LibraryExpertScreen() {
                 onPress={() => router.push({ pathname: "/travel", params: { kinfolkPrompt: prompt } } as never)}
                 activeOpacity={0.75}
               >
-                <Text style={{ fontSize: 18, color: "#D1D5DB" }}>"</Text>
+                <Text style={{ fontSize: 18, color: "#D1D5DB" }}>&quot;</Text>
                 <Text style={[styles.promptTxt, { color: colors.foreground }]}>{prompt}</Text>
                 <Feather name="arrow-right" size={14} color={colors.mutedForeground} />
               </TouchableOpacity>

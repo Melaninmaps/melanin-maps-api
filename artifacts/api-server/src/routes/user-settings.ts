@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, userSettingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { isKinfolkPrivateMemoryEnabled } from "../kinfolk/private-memory";
 
 const router: IRouter = Router();
 
@@ -31,7 +32,8 @@ const DEFAULT_SETTINGS = {
   activityStatus: true,
   usageAnalytics: true,
   personalisedSuggestions: true,
-  kinfolkMemoryEnabled: true,
+  // A missing production setting must not imply consent to persist chat history.
+  kinfolkMemoryEnabled: isKinfolkPrivateMemoryEnabled(),
   profileViewTrackingEnabled: true,
   postNudgesEnabled: true,
   safetyAlertPolice: true,
@@ -51,7 +53,11 @@ router.get("/users/settings", async (req: Request, res: Response) => {
       .where(eq(userSettingsTable.userId, userId))
       .limit(1);
 
-    res.json(row ?? { userId, ...DEFAULT_SETTINGS });
+    const settings = row ?? { userId, ...DEFAULT_SETTINGS };
+    res.json({
+      ...settings,
+      kinfolkMemoryEnabled: isKinfolkPrivateMemoryEnabled() && settings.kinfolkMemoryEnabled,
+    });
   } catch (err) {
     req.log.error({ err }, "GET /users/settings error");
     res.status(500).json({ error: "Failed to load settings." });
@@ -113,6 +119,13 @@ router.put("/users/settings", async (req: Request, res: Response) => {
   const parsed = parseSettingsPatch(req.body);
   if (!parsed.ok) {
     res.status(400).json({ error: "Invalid settings payload." });
+    return;
+  }
+  if (!isKinfolkPrivateMemoryEnabled() && parsed.data.kinfolkMemoryEnabled === true) {
+    res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
     return;
   }
 

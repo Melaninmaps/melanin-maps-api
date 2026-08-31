@@ -11,6 +11,8 @@
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { getApiBase } from "@/lib/api";
+
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface NearbyBusiness {
@@ -41,8 +43,6 @@ interface Cache {
 }
 
 let cache: Cache | null = null;
-
-import { getApiBase } from "@/lib/api";
 const API_BASE = getApiBase();
 
 export function useAutoContext(): AutoContext {
@@ -64,7 +64,7 @@ export function useAutoContext(): AutoContext {
   const detect = useCallback(async () => {
     // Return cached result if still fresh
     if (cache && Date.now() - cache.timestamp < CACHE_TTL_MS) {
-      setCtx({ ...cache.context, refresh: detect });
+      setCtx(cache.context);
       return;
     }
 
@@ -77,7 +77,7 @@ export function useAutoContext(): AutoContext {
         setCtx({
           lat: null, lng: null, city: null, state: null, neighborhood: null,
           nearbyBusinesses: [], label: null, loading: false, denied: true,
-          refresh: detect,
+          refresh: () => {},
         });
         return;
       }
@@ -91,7 +91,7 @@ export function useAutoContext(): AutoContext {
       const [geo] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
       const city = geo?.city ?? geo?.subregion ?? null;
       const state = geo?.region ?? null;
-      const neighborhood = geo?.district ?? geo?.sublocality ?? geo?.street ?? null;
+      const neighborhood = geo?.district ?? geo?.street ?? null;
 
       // Fetch nearest businesses (best-effort — don't block context on failure)
       let nearbyBusinesses: NearbyBusiness[] = [];
@@ -124,20 +124,20 @@ export function useAutoContext(): AutoContext {
         lat, lng, city, state, neighborhood,
         nearbyBusinesses, label,
         loading: false, denied: false,
-        refresh: detect,
+        refresh: () => {},
       };
 
       cache = { context: result, timestamp: Date.now() };
-      if (mounted.current) setCtx({ ...result, refresh: detect });
+      if (mounted.current) setCtx(result);
     } catch {
       if (!mounted.current) return;
-      setCtx((c) => ({ ...c, loading: false, denied: false, refresh: detect }));
+      setCtx((c) => ({ ...c, loading: false, denied: false }));
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
-    detect();
+    void Promise.resolve().then(detect);
     return () => { mounted.current = false; };
   }, [detect]);
 

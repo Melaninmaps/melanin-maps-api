@@ -88,7 +88,7 @@ export function ReviewRequestModal({ visible, videoTitle, onClose }: Props) {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Review Requested</Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Our moderation team will review this content within 3–5 business days. You'll be notified when a decision is made.
+                Our moderation team will review this content within 3–5 business days. You&apos;ll be notified when a decision is made.
               </Text>
             </View>
           ) : (
@@ -111,7 +111,7 @@ export function ReviewRequestModal({ visible, videoTitle, onClose }: Props) {
                 <View style={[styles.infoBox, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="info" size={14} color={colors.mutedForeground} />
                   <Text style={[styles.infoTxt, { color: colors.mutedForeground }]}>
-                    A review request sends this video to our human moderation team. This is separate from a report — it's a formal request for a policy determination. Videos are never automatically removed.
+                    A review request sends this video to our human moderation team. This is separate from a report — it&apos;s a formal request for a policy determination. Videos are never automatically removed.
                   </Text>
                 </View>
 

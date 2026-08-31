@@ -1,0 +1,9 @@
+# Philadelphia Corroboration Report
+
+| Candidate | Independent source checked | What it independently supports | Qualification result | Status |
+|---|---|---|---|---|
+| `stage1-phl-black-family-reunion` | [Historical Marker Database](https://www.hmdb.org/m.asp?m=193893) | A physical marker names the NCNW Black Family Reunion Celebration and records restoration dates. | **Insufficient.** It is a Tier 3 lead and conflicts with Mural Arts on artist attribution; it cannot resolve the record. | `in_review` |
+| `stage1-phl-our-voice-our-strength` | [Partners In Health](https://www.pih.org/article/haitian-earthquake-survivors-recovering-in-the-city-of-brotherly-love) | Haitian earthquake survivors were relocated to Philadelphia. | **Insufficient.** It does not name the mural, identify its team/location, or confirm its current presence. | `in_review` |
+| `stage1-phl-mallkuanka` | [University of Pennsylvania Center for Latin American and Latinx Studies](https://clals.sas.upenn.edu/news/new-mural-bolivian-artist-roberto-mamani-mamani-brings-vibrant-and-powerful-energy-andes) | Title, Roberto Mamani Mamani, Aymara Indigenous descent, Bolivian/Andean context, University partnership, and 2100 Washington Avenue. | **Qualified corroboration found** for artist/context, but location wording conflicts with the Mural Arts Washington/S. 26th label. Its exact source terms are preserved; no generic Hispanic/Latine tag is assigned. | `in_review` |
+
+No Public Art Archive mirror was counted as independent corroboration because its entries identify the Mural Arts Philadelphia collection. No search-result snippet, social post, image, or generated content was used as evidence.

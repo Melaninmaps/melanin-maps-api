@@ -1,6 +1,6 @@
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import React, { useRef } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Animated,
@@ -28,7 +28,7 @@ interface ShareModalProps {
 
 export function ShareModal({ visible, onClose, businessId, businessName, city, state, category }: ShareModalProps) {
   const colors = useColors();
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  const [slideAnim] = useState(() => new Animated.Value(300));
   const profileUrl = `https://mappingwithmelanin.com/business/${businessId}`;
 
   React.useEffect(() => {
@@ -46,7 +46,7 @@ export function ShareModal({ visible, onClose, businessId, businessName, city, s
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, slideAnim]);
 
   const caption = `🖤 Check out ${businessName} on Mapping With Melanin!\n📍 ${city}, ${state} — ${category}\n👉 ${profileUrl}\n\n#MappingWithMelanin #BlackOwned #SupportBlackBusinesses #BlackExcellence`;
 

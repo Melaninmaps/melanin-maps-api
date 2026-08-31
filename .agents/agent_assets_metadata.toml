@@ -895,3 +895,220 @@ uri = "file://attached_assets/manus-redacted-gate-pass.zip"
 type = "unspecified"
 title = "MWM Gate — REDACTED (no tokens) · Railway Production · 6/6 PASS"
 description = "deployment-gate-railway-result-redacted.json — All tokens removed. URL: https://api-server-production-a991.up.railway.app. Notes inside explain the Replit-dev-domain 502 vs Railway distinction."
+
+[[outputs]]
+id = "XgoCZVFtmGRGDT20_UHIO"
+uri = "file://screenshots/restored-preview-replit-workflow-desktop.png"
+type = "image"
+title = "Restored preview — Replit workflow desktop"
+description = "Captured from the still-running Replit web workflow at /preview, 1440×900."
+
+[[outputs]]
+id = "0bHORyvvwymI9Z85W8cqq"
+uri = "file://screenshots/restored-preview-replit-workflow-mobile.png"
+type = "image"
+title = "Restored preview — Replit workflow mobile"
+description = "Captured from the still-running Replit web workflow at /preview, 390×844."
+
+[[outputs]]
+id = "so93lYic3xdlTtybKaz_1"
+uri = "file://screenshots/task-367-living-library.png"
+type = "image"
+title = "Living Library preview panel"
+description = "Browser-verified additive Living Library panel on the existing Mapping With Melanin preview."
+
+[[outputs]]
+id = "OraQlSimodFu0fd1sRQ_-"
+uri = "file://screenshots/task-367-kinfolk-ai.png"
+type = "image"
+title = "Kinfolk AI preview panel"
+description = "Browser-verified additive Kinfolk AI panel on the existing Mapping With Melanin preview."
+
+[[outputs]]
+id = "pFfnuvcBMX-_OLm2Ehpzm"
+uri = "file://screenshots/task-367-audit-original-five-card-grid.png"
+type = "image"
+title = "Audit — original five-card preview"
+description = "Desktop capture of the protected original five-card preview grid from the current local /preview route."
+
+[[outputs]]
+id = "8yab9E-fsQfez5lqqvK-0"
+uri = "file://screenshots/task-367-audit-additive-panels.png"
+type = "image"
+title = "Audit — additive Living Library and Kinfolk panels"
+description = "Desktop capture of the two Task #367 additive phone-frame panels placed after the original five cards."
+
+[[outputs]]
+id = "Ma1V1mhkoDQjY-4I-u6zK"
+uri = "file://screenshots/task-367-audit-full-preview-body.png"
+type = "image"
+title = "Audit — full seven-panel preview body"
+description = "Full-page desktop capture of the current local preview body containing the original five cards plus the two additive panels."
+
+[[outputs]]
+id = "QOH5T2ze3fhsX9U8lLEDJ"
+uri = "file://screenshots/task-367-audit-public-original-five-card-grid.png"
+type = "image"
+title = "Public preview audit — original five cards"
+description = "Captured from the public Replit /preview URL after the Preview binding refreshed."
+
+[[outputs]]
+id = "jasxfeBkzwCjJj0HESbI_"
+uri = "file://screenshots/task-367-audit-public-additive-panels.png"
+type = "image"
+title = "Public preview audit — Living Library and Kinfolk"
+description = "Captured from the public Replit /preview URL; these two panels appear after the protected original five cards."
+
+[[outputs]]
+id = "uThagH_Qz8NfHFe2D9S7l"
+uri = "file://screenshots/task-367-audit-public-preview.png"
+type = "image"
+title = "Public preview audit — full seven-panel page"
+description = "Full-page capture from the public Replit /preview URL."
+
+[[outputs]]
+id = "c9-LGHVU85CfroxicFpWQ"
+uri = "file://screenshots/production-preview-original-five-desktop.png"
+type = "image"
+title = "Production desktop — protected original preview"
+description = "Public production capture from www.mappingwithmelanin.com/preview after the isolated release."
+
+[[outputs]]
+id = "jHM6t9OgqYnOJshrNV-80"
+uri = "file://screenshots/production-preview-additive-panels-desktop.png"
+type = "image"
+title = "Production desktop — Living Library and Kinfolk AI"
+description = "Public production capture showing the two approved additive panels after the original five cards."
+
+[[outputs]]
+id = "F2FL4keuRQGplWZ3drE-D"
+uri = "file://screenshots/production-preview-mobile-original-card.png"
+type = "image"
+title = "Production mobile — original preview card"
+description = "Focused public mobile capture of the existing phone-frame preview design."
+
+[[outputs]]
+id = "8YdsiVvLa2CMuuV9yoV-D"
+uri = "file://screenshots/production-preview-mobile-living-library.png"
+type = "image"
+title = "Production mobile — Living Library"
+description = "Focused public mobile capture of the new Living Library panel."
+
+[[outputs]]
+id = "wAJd31BbaQR-qENvGz2S5"
+uri = "file://docs/audits/public-art-stage-1-report.md"
+type = "text"
+title = "Stage 1 Schema and Route Audit"
+description = "Original read-only schema, route, duplicate, and minimal-change analysis."
+
+[[outputs]]
+id = "3fjUFJ-nYxGoqeyi4WJYe"
+uri = "file://docs/audits/public-art-stage-1-inclusive-manifest.json"
+type = "unspecified"
+title = "Inclusive Public-Art Pilot Manifest"
+description = "Initial three-candidate, non-public inclusive manifest, updated with missing-evidence reasons."
+
+[[outputs]]
+id = "aGvaUVF2ka8SSNF0uFOqC"
+uri = "file://docs/audits/public-art-stage-1-verified-context-report.md"
+type = "text"
+title = "Gate 1 — Candidate Evidence Matrix"
+description = "Consolidated evidence matrix, deduplication report, route dry run, coverage gaps, and changed-file declaration."
+
+[[outputs]]
+id = "kaC9-7qKvB12t3pWEHS-E"
+uri = "file://docs/audits/public-art-stage-1-african-american-manifest.json"
+type = "unspecified"
+title = "Gate 1 — African American Candidate Manifest"
+description = "Exact candidate IDs, source URLs, artist credit/status, locations, access/work status, context evidence, and hold reasons."
+
+[[outputs]]
+id = "8DT4Iyq0LngS8XEX4wdsf"
+uri = "file://docs/audits/public-art-stage-1-caribbean-manifest.json"
+type = "unspecified"
+title = "Gate 1 — Caribbean Candidate Manifest"
+description = "Exact candidate ID and source-level Haitian community evidence."
+
+[[outputs]]
+id = "BZquwBHd9-_8yMUe8jUAN"
+uri = "file://docs/audits/public-art-stage-1-indigenous-hispanic-latine-review-manifest.json"
+type = "unspecified"
+title = "Gate 1 — Indigenous/Hispanic-Latine Review Manifest"
+description = "Exact source-level Indigenous and Hispanic/Latine evidence, including the two records that require careful review."
+
+[[outputs]]
+id = "7-UIXG4AC93AOTT3vcHxG"
+uri = "file://docs/audits/public-art-stage1-revised-candidate-manifest.json"
+type = "unspecified"
+title = "Revised Six-Candidate Manifest"
+description = "All six non-public candidates with field-level before/after notes and unresolved-evidence reasons."
+
+[[outputs]]
+id = "V0LlQK1OxLwGwonHZYex4"
+uri = "file://docs/audits/public-art-stage1-revised-evidence-matrix.md"
+type = "text"
+title = "Revised Evidence Matrix"
+description = "One source-level row for every candidate, including title, artist, location, access, work status, and documented context."
+
+[[outputs]]
+id = "a1MXEuU1o4DKKsttwSSro"
+uri = "file://docs/audits/public-art-stage1-atlanta-conflict-report.md"
+type = "text"
+title = "Atlanta Conflict Report"
+description = "Split mapping, coordinate conflict, distance to Café Circa, and explicit no-merge decision."
+
+[[outputs]]
+id = "u_MjSbh-745c7tVg--v6c"
+uri = "file://docs/audits/public-art-stage1-philadelphia-corroboration-report.md"
+type = "text"
+title = "Philadelphia Corroboration Report"
+description = "Independent-source findings and exact reasons each Philadelphia record remains in review."
+
+[[outputs]]
+id = "uApKJBxjlA4nett9CZbfI"
+uri = "file://docs/audits/public-art-stage1-chicago-access-pin-report.md"
+type = "text"
+title = "Chicago Access and Pin Report"
+description = "Official Dunbar point and access basis plus unresolved Foster underpass pin analysis."
+
+[[outputs]]
+id = "48qYYs0QAB4G6CRSRGgw1"
+uri = "file://docs/audits/public-art-stage1-canonical-route-dry-run.md"
+type = "text"
+title = "Canonical Route Dry Run"
+description = "Format-only future universal routes and current 404 risks for all six candidates."
+
+[[outputs]]
+id = "wqD5_70LoByfRtxZV3Mex"
+uri = "file://docs/audits/public-art-stage1-local-map-dry-run.md"
+type = "text"
+title = "Local Map Dry Run"
+description = "Correct future city/category placement and confirmation that no map behavior was changed."
+
+[[outputs]]
+id = "DrseqUE7ORUnJ99-d4P0-"
+uri = "file://docs/audits/public-art-stage1-revised-dedupe-report.md"
+type = "text"
+title = "Revised Dedupe Report"
+description = "Read-only proximity checks against universal entities, cultural collections, tour sites, and businesses."
+
+[[outputs]]
+id = "PiHDSXEqhgxZIKzl5yx_9"
+uri = "file://docs/audits/public-art-stage1-changed-file-list.txt"
+type = "text"
+title = "Changed-File List"
+description = "Required application/data/configuration changed-file declaration: none."
+
+[[outputs]]
+id = "52pGTqieqlFEiL4euzXRl"
+uri = "file://deliverables/mwm-manus-mobile-crash-parity-audit-2026-08-26.zip"
+type = "unspecified"
+title = "Updated Manus Mobile Crash & Parity Audit Package"
+description = "Final focused handoff with repaired source snapshots, checksums, 31 passing tests, audit preflight output, live-preview evidence, effective Expo config, and the unhidden 29-error full TypeScript report."
+
+[[outputs]]
+id = "IP7wJU7s41V3TVCH-8wwE"
+uri = "file://release-evidence/task373-final-evidence-20260827.zip"
+type = "unspecified"
+title = "Task 373 Native Release Evidence"
+description = "Redacted evidence packet with exact iOS and Android candidate identities, archive checksums, 72-row native matrix, 10 store-policy gates, and final NO-GO decision."

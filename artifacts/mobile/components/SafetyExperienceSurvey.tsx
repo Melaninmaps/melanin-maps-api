@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { getCategoryRatingQuestions, getCategoryExperienceLabel } from "@/lib/categoryQuestions";
 import * as Haptics from "expo-haptics";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -66,6 +66,18 @@ function toggleArr(arr: string[], val: string): string[] {
   return arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
 }
 
+function emptySafetySurveyData(): SafetySurveyData {
+  return {
+    overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
+    belongingRating: 0, wouldRecommendChip: "", wouldReturnChip: "", staffProfessional: "",
+    timeOfDay: "", groupType: "", incidentOccurred: false,
+    incidentCategories: [], incidentParties: [], incidentSeverity: "",
+    reportedToBusiness: "", issueResolved: "", wouldReturn: "",
+    incidentDescription: "", evidenceLinks: "",
+    comments: "", categoryRatings: {},
+  };
+}
+
 function StarRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   const colors = useColors();
   return (
@@ -105,31 +117,22 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
-  const EMPTY_DATA: SafetySurveyData = {
-    overallSafety: 0, returnAlone: 0, wouldRecommend: 0,
-    belongingRating: 0, wouldRecommendChip: "", wouldReturnChip: "", staffProfessional: "",
-    timeOfDay: "", groupType: "", incidentOccurred: false,
-    incidentCategories: [], incidentParties: [], incidentSeverity: "",
-    reportedToBusiness: "", issueResolved: "", wouldReturn: "",
-    incidentDescription: "", evidenceLinks: "",
-    comments: "", categoryRatings: {},
-  };
-  const [data, setData] = useState<SafetySurveyData>({ ...EMPTY_DATA });
+  const [data, setData] = useState<SafetySurveyData>(emptySafetySurveyData);
   const [submitted, setSubmitted] = useState(false);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setStep(0);
-    setData({ ...EMPTY_DATA });
+    setData(emptySafetySurveyData());
     setSubmitted(false);
-  };
+  }, []);
 
-  const handleClose = () => { reset(); onClose(); };
+  const handleClose = useCallback(() => { reset(); onClose(); }, [onClose, reset]);
 
   useEffect(() => {
     if (!submitted) return;
     const t = setTimeout(() => { handleClose(); }, 3500);
     return () => clearTimeout(t);
-  }, [submitted]);
+  }, [submitted, handleClose]);
 
   const canNext = () => {
     if (step === 0) return data.overallSafety > 0 && data.returnAlone > 0;
@@ -147,13 +150,6 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
   const categoryQuestions = getCategoryRatingQuestions(businessCategory);
   const categoryLabel = getCategoryExperienceLabel(businessCategory);
   const STEPS = ["Your Experience", "More Details", "Comments", categoryLabel];
-
-  const isEmployer = (() => {
-    const cat = (businessCategory ?? "").toLowerCase();
-    return cat.includes("staffing") || cat.includes("employment") || cat.includes("recruiting") ||
-      cat.includes("temp agency") || cat.includes("job placement") || cat.includes("workforce") ||
-      cat.includes("hr ") || cat.includes("human resources") || cat.includes("hiring");
-  })();
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
@@ -323,7 +319,7 @@ export function SafetyExperienceSurvey({ visible, businessName, businessCategory
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.incidentPolicyTitle, { color: "#7EB0DD" }]}>How reports work on this platform</Text>
                         <Text style={[styles.incidentPolicyText, { color: "#7EB0DD" }]}>
-                          The business receives your report and may respond publicly. If you agree the issue is resolved, you can update or remove your report. Reports automatically expire after 6 months unless there's ongoing community concern.
+                          The business receives your report and may respond publicly. If you agree the issue is resolved, you can update or remove your report. Reports automatically expire after 6 months unless there&apos;s ongoing community concern.
                         </Text>
                       </View>
                     </View>

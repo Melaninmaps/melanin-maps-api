@@ -10,6 +10,7 @@ import {
 } from "@workspace/api-zod";
 import { db, pool, usersTable, getPoolStats, memberAgreementsTable, waitlistTable, userPreferencesTable } from "@workspace/db";
 import { withDbRetry } from "../lib/db-retry";
+import { normalizeHomeState } from "../lib/happening-personalization";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
 function isAdminReq(req: Request): boolean {
@@ -1211,6 +1212,7 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const {
       homeCity,
+      homeState,
       isBusinessOwner,
       isContentCreator,
       isCommunityOrganizer,
@@ -1224,6 +1226,7 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
       preferredOwnershipTypes,
     } = req.body as {
       homeCity?: string;
+      homeState?: string;
       isBusinessOwner?: boolean;
       isContentCreator?: boolean;
       isCommunityOrganizer?: boolean;
@@ -1238,6 +1241,18 @@ router.patch("/auth/user/setup", async (req: Request, res: Response) => {
     // Update users table
     const updates: Partial<typeof usersTable.$inferInsert> = {};
     if (homeCity !== undefined) updates.homeCity = homeCity.trim() || null;
+    if (homeState !== undefined) {
+      const normalizedHomeState = normalizeHomeState(homeState);
+      if (homeState.trim() && !normalizedHomeState) {
+        res.status(400).json({ error: "homeState must be a US state name or two-letter code." });
+        return;
+      }
+      updates.homeState = normalizedHomeState;
+    } else if (homeCity !== undefined) {
+      // Preserve existing clients that submit "City, ST" while storing a
+      // separate normalized field for geographic feed matching.
+      updates.homeState = normalizeHomeState(homeCity.split(",").pop());
+    }
     if (isBusinessOwner !== undefined) updates.isBusinessOwner = isBusinessOwner;
     if (isContentCreator !== undefined) updates.isContentCreator = isContentCreator;
     if (isCommunityOrganizer !== undefined) updates.isCommunityOrganizer = isCommunityOrganizer;

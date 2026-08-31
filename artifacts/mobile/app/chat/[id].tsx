@@ -134,7 +134,7 @@ export default function ChatScreen() {
     }
   }, [id, isRealConv, numericId]);
 
-  useEffect(() => { void loadConv(); }, [loadConv]);
+  useEffect(() => { queueMicrotask(() => { void loadConv(); }); }, [loadConv]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -242,7 +242,7 @@ export default function ChatScreen() {
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Feather name="wifi-off" size={36} color={colors.muted} />
         <Text style={[{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 15, textAlign: "center" }]}>
-          Couldn't load this conversation.{"\n"}Check your connection and try again.
+          Couldn&apos;t load this conversation.{"\n"}Check your connection and try again.
         </Text>
         <TouchableOpacity activeOpacity={0.85} onPress={() => { setLoadError(false); void loadConv(); }}>
           <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium" }}>Retry</Text>

@@ -229,7 +229,7 @@ export default function SmartSearchScreen() {
             <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.infoTitle, { color: colors.foreground }]}>🧠 Intent-Aware Search</Text>
               <Text style={[styles.infoBody, { color: colors.mutedForeground }]}>
-                Ask in plain language — search "I need a realtor" and get realtors, mortgage lenders, home inspectors, and neighborhood guides all at once. One question, every resource.
+                Ask in plain language — search &quot;I need a realtor&quot; and get realtors, mortgage lenders, home inspectors, and neighborhood guides all at once. One question, every resource.
               </Text>
             </View>
           </>

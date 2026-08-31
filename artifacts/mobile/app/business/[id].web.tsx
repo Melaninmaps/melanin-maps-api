@@ -51,7 +51,7 @@ export default function BusinessDetailScreen() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   useEffect(() => {
     if (!id) return;
-    setReviewsLoading(true);
+    queueMicrotask(() => { setReviewsLoading(true); });
     fetch(`/api/reviews?businessId=${id}`)
       .then((r) => (r.ok ? r.json() : { reviews: [] }))
       .then((data: { reviews: ReviewRow[] }) => setReviews(data.reviews ?? []))

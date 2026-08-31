@@ -185,7 +185,7 @@ export default function InviteMembersScreen() {
         )}
 
         {!results.length && query.length >= 2 && !searching && (
-          <Text style={[styles.noResults, { color: colors.mutedForeground }]}>No users found for "{query}"</Text>
+          <Text style={[styles.noResults, { color: colors.mutedForeground }]}>No users found for &quot;{query}&quot;</Text>
         )}
 
         {selected && (

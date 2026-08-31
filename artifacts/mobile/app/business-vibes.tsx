@@ -92,7 +92,7 @@ export default function BusinessVibesScreen() {
   }, [businessId]);
 
   useEffect(() => {
-    fetchPosts();
+    queueMicrotask(() => { fetchPosts(); });
   }, [fetchPosts]);
 
   const onRefresh = () => {

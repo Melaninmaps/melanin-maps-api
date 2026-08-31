@@ -50,6 +50,19 @@ export type SafeSource = {
   fetchedAt?: string;
 };
 
+export const KINFOLK_SOURCE_LIMITATION_NOTE =
+  "Source note: General information only; specific local or factual details could not be independently verified.";
+
+const SOURCE_LIMITATION_INTENTS = new Set([
+  "business_discovery",
+  "education_discovery",
+  "medical_health",
+  "legal_regulated",
+  "financial_regulated",
+  "safety_emergency",
+  "current_information",
+]);
+
 function nonempty(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
@@ -124,16 +137,25 @@ export function enforceEducationalSources(
   if (unique.length > 0) return { reply, sources: unique, educationalStatus: "grounded" };
   if (libraryAction) {
     return {
-      reply: `${reply}\n\nI can point you to the Library topic, but I do not have a verified source attached to this answer yet. Please open the topic for the source-backed material.`,
+      reply,
       sources: [],
       educationalStatus: "limited",
     };
   }
   return {
-    reply: `${reply}\n\nI can give general context, but I could not verify a source for the specific factual details.`,
+    reply,
     sources: [],
     educationalStatus: "needs_review",
   };
+}
+
+function sourceLimitationNote(
+  educationalStatus: "grounded" | "limited" | "needs_review",
+  intentClass: string,
+): string | null {
+  return educationalStatus !== "grounded" && SOURCE_LIMITATION_INTENTS.has(intentClass)
+    ? KINFOLK_SOURCE_LIMITATION_NOTE
+    : null;
 }
 
 /** Consistent safety envelope for emergency, travel-safety, and community reports. */
@@ -183,12 +205,20 @@ export function enforceKinfolkResponse(input: {
   const promotion = validatePromotionCandidates(input.modelRecommendations, input.catalog);
   const education = enforceEducationalSources(input.reply, input.sources, input.libraryAction);
   const safety = safetyEnvelope(input.intentClass, input.sources);
+  // A recommendation resolved through the server catalog is already backed by a
+  // governed local listing. Do not attach a source-limitation footer to a clearly
+  // framed suggestion just because it has no external research citation.
+  const hasGovernedLocalSupport =
+    input.intentClass === "business_discovery" && promotion.businesses.length > 0;
   return {
     reply: safety ? `${education.reply}\n\n${safety}` : education.reply,
     recommendations: promotion.businesses.length > 0 ? { businesses: promotion.businesses } : null,
     rejectedRecommendations: promotion.rejected,
     sources: education.sources,
     educationalStatus: education.educationalStatus,
+    sourceNote: hasGovernedLocalSupport
+      ? null
+      : sourceLimitationNote(education.educationalStatus, input.intentClass),
     safetyNotice: safety,
     promotionDisclosure: promotion.businesses.map(promotionDisclosure).filter(Boolean),
   };

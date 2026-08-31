@@ -62,7 +62,7 @@ export function useAlerts(state?: string): UseAlertsResult {
   }, [state]);
 
   useEffect(() => {
-    fetchAlerts();
+    void Promise.resolve().then(fetchAlerts);
     const interval = setInterval(fetchAlerts, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchAlerts]);

@@ -442,7 +442,7 @@ function useAdminUsers() {
     }
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const setApproved = React.useCallback(async (userId: string, approved: boolean) => {
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, approved } : u));
@@ -643,11 +643,12 @@ function UsersTab() {
 
 function ReportsTab() {
   const colors = useColors();
+  const [renderedAt] = useState(() => Date.now());
   const { items, pendingCount, highCount, isLoading, moderate } = useReports("pending");
   const sevColor = (s: string) => s === "high" ? "#DC2626" : s === "medium" ? "#C9922B" : "#2D7A4F";
 
   function timeAgo(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
+    const diff = renderedAt - new Date(iso).getTime();
     const m = Math.floor(diff / 60000);
     if (m < 60) return `${m}m ago`;
     const h = Math.floor(m / 60);
@@ -692,7 +693,7 @@ function ReportsTab() {
           <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>Reported by: {r.reporterName}</Text>
           {r.description ? (
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 4, fontStyle: "italic" }]} numberOfLines={2}>
-              "{r.description}"
+              &quot;{r.description}&quot;
             </Text>
           ) : null}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
@@ -751,7 +752,7 @@ function useAdminReviews() {
     }
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const deleteReview = React.useCallback(async (id: string) => {
     setReviews((prev) => prev.filter((r) => r.id !== id));
@@ -804,7 +805,7 @@ function ReviewsTab() {
               </Text>
               {r.text ? (
                 <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, fontStyle: "italic", marginBottom: 6 }]} numberOfLines={2}>
-                  "{r.text}"
+                  &quot;{r.text}&quot;
                 </Text>
               ) : null}
               <View style={{ flexDirection: "row", gap: 8 }}>
@@ -860,7 +861,7 @@ function ReviewsTab() {
           </Text>
           {r.text ? (
             <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginBottom: 8, fontStyle: "italic" }]} numberOfLines={3}>
-              "{r.text}"
+              &quot;{r.text}&quot;
             </Text>
           ) : null}
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -1148,7 +1149,7 @@ function ClaimsTab() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { void loadClaims(); }, [loadClaims]);
+  useEffect(() => { queueMicrotask(() => { void loadClaims(); }); }, [loadClaims]);
 
   const updateStatus = useCallback(async (id: string, status: string) => {
     try {
@@ -1284,7 +1285,7 @@ function SubmissionsTab() {
     }
   }, []);
 
-  useEffect(() => { void fetchSubmissions(); }, [fetchSubmissions]);
+  useEffect(() => { queueMicrotask(() => { void fetchSubmissions(); }); }, [fetchSubmissions]);
 
   const handleAction = async (bizId: string, newStatus: "approved" | "rejected") => {
     setActionLoadingId(bizId);
@@ -1625,10 +1626,11 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
 
 function InviteCard({ invite, onUpdateStatus }: { invite: BusinessInvite; onUpdateStatus: (id: string, status: string) => void }) {
   const colors = useColors();
+  const [renderedAt] = useState(() => Date.now());
   const platform = PLATFORM_ICONS[invite.socialPlatform] ?? { name: "globe", color: "#6B7280" };
   const meta = STATUS_META[invite.status] ?? { label: invite.status, color: "#6B7280" };
 
-  const daysLeft = Math.max(0, Math.ceil((new Date(invite.trialEndDate).getTime() - Date.now()) / 86400000));
+  const daysLeft = Math.max(0, Math.ceil((new Date(invite.trialEndDate).getTime() - renderedAt) / 86400000));
   const trialEnd = new Date(invite.trialEndDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   const NEXT_STATUSES: Record<string, string[]> = {
@@ -1670,7 +1672,7 @@ function InviteCard({ invite, onUpdateStatus }: { invite: BusinessInvite; onUpda
 
       {invite.notes ? (
         <Text style={[adminStyles.bizCity, { color: colors.mutedForeground, marginTop: 4, fontStyle: "italic" }]}>
-          "{invite.notes}"
+          &quot;{invite.notes}&quot;
         </Text>
       ) : null}
 
@@ -1778,7 +1780,7 @@ function InvitesTab() {
           <Feather name="send" size={28} color={colors.mutedForeground} style={{ marginBottom: 8 }} />
           <Text style={[adminStyles.bizName, { color: colors.foreground }]}>No invites yet</Text>
           <Text style={[adminStyles.bizCity, { color: colors.mutedForeground }]}>
-            Invites appear when reviewers tag a business's social handle
+            Invites appear when reviewers tag a business&apos;s social handle
           </Text>
         </View>
       )}
@@ -1846,7 +1848,7 @@ function MarketplaceTab() {
     } catch {} finally { setLoading(false); }
   }, []);
 
-  React.useEffect(() => { void loadConfigs(); }, [loadConfigs]);
+  React.useEffect(() => { queueMicrotask(() => { void loadConfigs(); }); }, [loadConfigs]);
 
   const pct = (v: string) => `${Math.round(Number(v) * 100)}%`;
 
@@ -2124,7 +2126,7 @@ function MarketplaceTab() {
       <SectionLabel title="Per-Business Fee Audit" />
       <View style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[adminStyles.activityText, { color: colors.mutedForeground }]}>
-          To audit or override a specific business's fee (tier, lock, promotion eligibility), navigate to the Businesses tab, open the business record, and use the Marketplace Profile section.
+          To audit or override a specific business&apos;s fee (tier, lock, promotion eligibility), navigate to the Businesses tab, open the business record, and use the Marketplace Profile section.
         </Text>
       </View>
     </ScrollView>
@@ -2158,7 +2160,7 @@ function useAdminCaptions() {
     }
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const removeCaption = React.useCallback(async (businessId: string, caption: string) => {
     setCaptions((prev) => prev.filter((c) => !(c.businessId === businessId && c.caption === caption)));
@@ -2210,7 +2212,7 @@ function CaptionsTab() {
         <View key={i} style={[adminStyles.reportCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
             <View style={{ flex: 1 }}>
-              <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={2}>"{c.caption}"</Text>
+              <Text style={[adminStyles.bizName, { color: colors.foreground }]} numberOfLines={2}>&quot;{c.caption}&quot;</Text>
               <Text style={[adminStyles.bizCity, { color: colors.primary, marginTop: 2 }]} numberOfLines={1}>
                 {c.businessName ?? c.businessId}
               </Text>
@@ -2238,7 +2240,7 @@ function CaptionsTab() {
               This removes all community votes for:
             </Text>
             <Text style={[adminStyles.bizName, { color: colors.foreground, fontStyle: "italic", marginBottom: 16 }]}>
-              "{confirmRemove?.caption}"
+              &quot;{confirmRemove?.caption}&quot;
             </Text>
             <View style={{ flexDirection: "row", gap: 10 }}>
               <TouchableOpacity activeOpacity={0.85}
@@ -2292,7 +2294,7 @@ function useContentReports() {
     }
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const updateStatus = React.useCallback(async (id: string, status: string) => {
     setReports((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
@@ -2434,7 +2436,7 @@ function DisputedBusinessesTab() {
     }
   }, []);
 
-  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const handleAction = async (id: string, action: "clear-dispute" | "confirm-fake") => {
     setActioning(id + action);
@@ -2579,7 +2581,7 @@ function TopicsTab() {
     } catch { /* silent */ } finally { setLoading(false); }
   }
 
-  useEffect(() => { loadTopics(); }, []);
+  useEffect(() => { queueMicrotask(() => { loadTopics(); }); }, []);
 
   async function seedTopics() {
     setSeeding(true);
@@ -2816,7 +2818,7 @@ function TopicsTab() {
           ) : filteredIssues.length === 0 ? (
             <View style={{ padding: 32, alignItems: "center" }}>
               <Text style={{ fontSize: 24, marginBottom: 8 }}>📌</Text>
-              <Text style={{ fontSize: 14, color: colors.mutedForeground, textAlign: "center" }}>No issues yet. Tap "Seed All Issues" to populate the default list.</Text>
+              <Text style={{ fontSize: 14, color: colors.mutedForeground, textAlign: "center" }}>No issues yet. Tap &quot;Seed All Issues&quot; to populate the default list.</Text>
             </View>
           ) : (
             filteredIssues.map((issue) => (

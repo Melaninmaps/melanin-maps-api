@@ -199,6 +199,7 @@ router.post("/businesses/:id/partner-application", async (req: Request, res: Res
 
     // Notify admins
     await sendEmail({
+      from: "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>",
       to: "tlindsay428@yahoo.com",
       subject: `[MWM] New Allied Partner Application — ${biz.name}`,
       html: `
@@ -385,7 +386,7 @@ router.post("/admin/partner-applications/:id/advance", async (req: Request, res:
 
     const msg = stageMessages[nextStage];
     if (msg) {
-      await sendEmail({ to: app.contact_email, subject: msg.subject, html: msg.body })
+      await sendEmail({ from: "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>", to: app.contact_email, subject: msg.subject, html: msg.body })
         .catch(() => {/* non-blocking */});
     }
 
@@ -435,6 +436,7 @@ router.post("/admin/partner-applications/:id/reject", async (req: Request, res: 
 
     // Email applicant
     await sendEmail({
+      from: "Mapping With Melanin™ <hello@send.mappingwithmelanin.com>",
       to: app.contact_email,
       subject: "Update on Your MWM Partner Application",
       html: `<p>Hi ${app.contact_name},</p>

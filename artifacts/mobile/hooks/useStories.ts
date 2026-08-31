@@ -39,7 +39,7 @@ export function useStories(businessId: string) {
     finally { setIsLoading(false); }
   }, [businessId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   return { stories, isLoading, refresh: load };
 }

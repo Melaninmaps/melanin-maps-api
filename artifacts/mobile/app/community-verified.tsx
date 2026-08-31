@@ -81,7 +81,7 @@ export default function CommunityVerifiedScreen() {
     }
   }, [isAuthenticated, user]);
 
-  useEffect(() => { void loadStatus(); }, [loadStatus]);
+  useEffect(() => { queueMicrotask(() => { void loadStatus(); }); }, [loadStatus]);
 
   const handleSelectMethod = async (chosen: VerificationMethod) => {
     setMethod(chosen);
@@ -282,7 +282,7 @@ function ChooseMethodState({
         <View style={{ flex: 1 }}>
           <Text style={[styles.methodTitle, { color: colors.foreground }]}>Live Selfie Verification</Text>
           <Text style={[styles.methodSub, { color: colors.mutedForeground }]}>
-            Take a quick front-facing selfie to confirm you're a real person
+            Take a quick front-facing selfie to confirm you&apos;re a real person
           </Text>
         </View>
         <Feather name={method === "selfie" ? "check-circle" : "chevron-right"} size={20} color={method === "selfie" ? GOLD : colors.mutedForeground} />
@@ -303,7 +303,7 @@ function ChooseMethodState({
         <View style={{ flex: 1 }}>
           <Text style={[styles.methodTitle, { color: colors.foreground }]}>Government Photo ID</Text>
           <Text style={[styles.methodSub, { color: colors.mutedForeground }]}>
-            Upload a photo of a valid government-issued ID (driver's license, passport)
+            Upload a photo of a valid government-issued ID (driver&apos;s license, passport)
           </Text>
         </View>
         <Feather name={method === "gov_id" ? "check-circle" : "chevron-right"} size={20} color={method === "gov_id" ? GOLD : colors.mutedForeground} />
@@ -346,7 +346,7 @@ function ChooseMethodState({
       <View style={[styles.footerNote, { borderTopColor: colors.border }]}>
         <Feather name="shield" size={14} color={GOLD} />
         <Text style={[styles.footerNoteText, { color: colors.mutedForeground }]}>
-          Once approved, you'll receive a{" "}
+          Once approved, you&apos;ll receive a{" "}
           <Text style={{ color: colors.foreground, fontWeight: "600" }}>Verified Member</Text> or{" "}
           <Text style={{ color: colors.foreground, fontWeight: "600" }}>Verified Business</Text> badge.
         </Text>
@@ -375,7 +375,7 @@ function AlreadyVerifiedState({ colors }: { colors: any }) {
       <View style={[styles.iconCircle, { backgroundColor: "#CA922B18" }]}>
         <Feather name="shield" size={36} color={GOLD} />
       </View>
-      <Text style={[styles.stateTitle, { color: colors.foreground }]}>You're Verified</Text>
+      <Text style={[styles.stateTitle, { color: colors.foreground }]}>You&apos;re Verified</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
         Your identity has been confirmed. Your Verified Member badge is visible across the platform — on your profile, reviews, and community posts.
       </Text>
@@ -439,7 +439,7 @@ function PendingState({ colors, submittedAt }: { colors: any; submittedAt: strin
       <View style={[styles.infoBox, { backgroundColor: "#CA922B12", borderColor: GOLD + "40" }]}>
         <Feather name="bell" size={14} color={GOLD} />
         <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-          You'll receive a notification once your Verified Member badge is ready.
+          You&apos;ll receive a notification once your Verified Member badge is ready.
         </Text>
       </View>
     </View>
@@ -454,7 +454,7 @@ function RejectedState({ colors, notes, onRetry }: { colors: any; notes: string 
       </View>
       <Text style={[styles.stateTitle, { color: colors.foreground }]}>Verification Not Approved</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        We weren't able to verify your identity with the submitted photo. Please try again with a clear, well-lit image.
+        We weren&apos;t able to verify your identity with the submitted photo. Please try again with a clear, well-lit image.
       </Text>
       {notes && (
         <View style={[styles.infoBox, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
@@ -478,7 +478,7 @@ function SuccessState({ colors, onDone }: { colors: any; onDone: () => void }) {
       </View>
       <Text style={[styles.stateTitle, { color: colors.foreground }]}>Submitted for Review</Text>
       <Text style={[styles.stateSub, { color: colors.mutedForeground }]}>
-        Your verification is in our queue. Our team will review it within 1–3 business days. You'll be notified when it's approved.
+        Your verification is in our queue. Our team will review it within 1–3 business days. You&apos;ll be notified when it&apos;s approved.
       </Text>
       <View style={[styles.infoBox, { backgroundColor: "#CA922B12", borderColor: GOLD + "40" }]}>
         <Feather name="shield" size={14} color={GOLD} />

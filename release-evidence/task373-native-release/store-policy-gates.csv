@@ -1,0 +1,11 @@
+gate_id,gate,result,owner,evidence_path
+P01,Apple reusable reviewer access,BLOCKED,,
+P02,Google reusable reviewer access,BLOCKED,,
+P03,Privacy policy and support URL,BLOCKED,,
+P04,Public account-deletion request URL,BLOCKED,,
+P05,UGC terms/report/block/moderation,BLOCKED,,
+P06,Apple App Privacy answers match build,BLOCKED,,
+P07,Google Data safety answers match build,BLOCKED,,
+P08,Google pre-launch report,BLOCKED,,
+P09,iOS symbolicated crash diagnostics,BLOCKED,,
+P10,Android mapped crash/ANR diagnostics,BLOCKED,,

@@ -92,7 +92,7 @@ export default function NaAaMeetingsScreen() {
     }
   }, [selectedType]);
 
-  const useCurrentLocation = async () => {
+  const handleUseCurrentLocation = async () => {
     if (Platform.OS === "web") {
       Alert.alert("Not available", "Location access is only available on the mobile app.");
       return;
@@ -175,7 +175,7 @@ export default function NaAaMeetingsScreen() {
         {/* Location button */}
         <TouchableOpacity
           style={[styles.locationBtn, { borderColor: colors.border }]}
-          onPress={() => void useCurrentLocation()}
+          onPress={() => void handleUseCurrentLocation()}
           disabled={usingLocation}
           activeOpacity={0.8}
         >

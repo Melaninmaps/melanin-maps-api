@@ -2,14 +2,10 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import * as ImagePicker from "expo-image-picker";
-import { Image } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
+import { Image ,
   Alert,
   FlatList,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   RefreshControl,
@@ -22,12 +18,15 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BusinessMentionPicker, type SelectedBusiness } from "@/components/BusinessMentionPicker";
 import { UserMentionPicker } from "@/components/UserMentionPicker";
 import { LocationPicker, type LocationSelection } from "@/components/LocationPicker";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import { PostDetailModal } from "@/components/PostDetailModal";
+import { HappeningNowPanel, type HappeningNowStory } from "@/components/HappeningNowPanel";
 import { EventCard } from "@/components/EventCard";
 import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
@@ -35,10 +34,13 @@ import { useEvents } from "@/hooks/useEvents";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
+import { openExternalUrl } from "@/lib/safeLinking";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { RecommendationNudge } from "@/components/RecommendationNudge";
+import { parseMediaUrls } from "@/lib/mediaUrls";
 
-const TABS = ["Feed", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
+const TABS = ["Feed", "What's Happening", "Events", "Circles ⭐", "Groups", "Challenges 🏆", "Resources"];
 
 const CATEGORY_OPTIONS = [
   { value: "general", label: "Discussion" },
@@ -76,11 +78,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   general: "grid",
 };
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
-
 function formatTimeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
@@ -92,10 +89,7 @@ function formatTimeAgo(iso: string): string {
 }
 
 function toPostCard(raw: Record<string, unknown>): CommunityPost {
-  let mediaUrls: string[] | undefined;
-  if (raw.mediaUrls && typeof raw.mediaUrls === "string") {
-    try { mediaUrls = JSON.parse(raw.mediaUrls) as string[]; } catch { /* ignore */ }
-  }
+  const mediaUrls = parseMediaUrls(raw.mediaUrls);
   return {
     id: raw.id as string,
     author: (raw.authorName as string) ?? "Community Member",
@@ -105,6 +99,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     content: raw.content as string,
     likes: (raw.upvotes as number) ?? 0,
     comments: (raw.commentsCount as number) ?? 0,
+    commentPolicy: (["everyone", "followers", "off"].includes(String(raw.commentPolicy)) ? raw.commentPolicy : "everyone") as CommunityPost["commentPolicy"],
     timeAgo: formatTimeAgo(raw.createdAt as string),
     category: (raw.category === "recommendation" || raw.category === "alert" || raw.category === "question" ? raw.category : "discussion") as CommunityPost["category"],
     postType: ((raw.postType as string) === "business" || (raw.postType as string) === "question" || (raw.postType as string) === "saved_place" || (raw.postType as string) === "safety" || (raw.postType as string) === "travel"
@@ -230,6 +225,7 @@ export default function CommunityScreen() {
   const [newPostType, setNewPostType] = useState<"community" | "question" | "business" | "safety" | "travel">("community");
   const [newPostBusinessLink, setNewPostBusinessLink] = useState("");
   const [newPostVisibility, setNewPostVisibility] = useState<"public" | "followers_only">("public");
+  const [newPostCommentPolicy, setNewPostCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [feedMode, setFeedMode] = useState<"foryou" | "everyone" | "following">(isAuthenticated ? "foryou" : "everyone");
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -240,7 +236,7 @@ export default function CommunityScreen() {
   const [newPostLocationPlaceId, setNewPostLocationPlaceId] = useState<string | undefined>();
   const [newPostLocationType, setNewPostLocationType] = useState("city");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [trendingHashtags, setTrendingHashtags] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
+  const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; weeklyPostCount: number }[]>([]);
   const [followedHashtags, setFollowedHashtags] = useState<string[]>([]);
   const [activeHashtagFilter, setActiveHashtagFilter] = useState<string | null>(null);
   const [newPostTopicTag, setNewPostTopicTag] = useState("");
@@ -256,7 +252,7 @@ export default function CommunityScreen() {
   const [groupCategory, setGroupCategory] = useState("all");
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<string | undefined>(undefined);
-  const [kinfolkSuggestions, setKinfolkSuggestions] = useState<Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }>>([]);
+  const [kinfolkSuggestions, setKinfolkSuggestions] = useState<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }[]>([]);
   const [showKinfolkSuggest, setShowKinfolkSuggest] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [groupCreateName, setGroupCreateName] = useState("");
@@ -352,7 +348,7 @@ export default function CommunityScreen() {
     }
   }, [feedMode]);
 
-  useEffect(() => { void loadPosts(); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
 
   // Fetch trending hashtags on mount
   useEffect(() => {
@@ -362,7 +358,7 @@ export default function CommunityScreen() {
         const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await fetch(`${getApiBase()}/api/hashtags/trending?limit=12`, { headers });
         if (res.ok) {
-          const data = await res.json() as { hashtags: Array<{ tag: string; weeklyPostCount: number }> };
+          const data = await res.json() as { hashtags: { tag: string; weeklyPostCount: number }[] };
           setTrendingHashtags(data.hashtags ?? []);
         }
         if (token) {
@@ -379,8 +375,9 @@ export default function CommunityScreen() {
 
   useEffect(() => {
     if (params.compose === "true") {
-      if (params.caption) setNewPostText(decodeURIComponent(params.caption));
-      setShowCompose(true);
+      const caption = params.caption;
+      if (caption) queueMicrotask(() => { setNewPostText(decodeURIComponent(caption)); });
+      queueMicrotask(() => { setShowCompose(true); });
     }
   }, [params.compose, params.caption]);
 
@@ -432,12 +429,17 @@ export default function CommunityScreen() {
 
   const pickAndUploadMedia = async (kind: "image" | "video") => {
     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
+    const remainingSlots = Math.max(0, 5 - mediaAttachments.length);
+    if (remainingSlots <= 0) {
+      Alert.alert("Attachment limit reached", "Remove an attachment before adding another.");
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") { Alert.alert("Permission needed", "Allow access to your media library."); return; }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: kind === "video" ? ["videos"] : ["images"],
       allowsMultipleSelection: kind === "image",
-      selectionLimit: kind === "image" ? 5 : 1,
+      selectionLimit: kind === "image" ? remainingSlots : 1,
       allowsEditing: kind === "video" ? false : false,
       quality: 0.85,
       videoMaxDuration: 120,
@@ -446,23 +448,39 @@ export default function CommunityScreen() {
     setUploadingMedia(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const uploaded: { uri: string; type: "image" | "video"; uploaded: string; isGraphic?: boolean; warningType?: string }[] = [];
-      for (const asset of result.assets) {
+      for (const asset of result.assets.slice(0, remainingSlots)) {
         const formData = new FormData();
-        const fieldName = kind === "image" ? "image" : "video";
         const mime = asset.mimeType ?? (kind === "image" ? "image/jpeg" : "video/mp4");
         const ext = mime.split("/")[1] ?? (kind === "image" ? "jpg" : "mp4");
-        formData.append(fieldName, { uri: asset.uri, type: mime, name: `${fieldName}.${ext}` } as unknown as Blob);
-        const res = await fetch(`${getApiBase()}/api/community/media/upload/${kind}`, {
+        formData.append("file", {
+          uri: asset.uri,
+          type: mime,
+          name: asset.fileName ?? `${kind}.${ext}`,
+        } as unknown as Blob);
+        const res = await fetch(`${getApiBase()}/api/media/upload?purpose=community_post`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
         });
         if (res.ok) {
           const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
-          uploaded.push({ uri: asset.uri, type: kind, uploaded: data.url, isGraphic: data.isGraphic, warningType: data.warningType });
+          if (!data.url) {
+            Alert.alert("Upload failed", "The server did not return a media URL. Please try again.");
+            return;
+          }
+          const attachment = {
+            uri: asset.uri,
+            type: kind,
+            uploaded: data.url,
+            isGraphic: data.isGraphic,
+            warningType: data.warningType,
+          };
+          setMediaAttachments((current) => {
+            if (current.some((item) => item.uploaded === attachment.uploaded)) return current;
+            return [...current, attachment].slice(0, 5);
+          });
         } else {
-          const err = await res.json() as { error?: string; code?: string };
+          const err = await res.json().catch(() => ({})) as { error?: string; code?: string };
           if (err.code === "TIER_LIMIT_REACHED") {
             setUpgradeFeature(kind === "video" ? "Video Posts" : "Image Posts");
             setShowUpgrade(true);
@@ -472,9 +490,8 @@ export default function CommunityScreen() {
           return;
         }
       }
-      setMediaAttachments((prev) => [...prev, ...uploaded].slice(0, 5));
     } catch {
-      Alert.alert("Upload failed", "Please try again.");
+      Alert.alert("Upload failed", "Your completed attachments were kept. Check your connection and retry.");
     } finally {
       setUploadingMedia(false);
     }
@@ -482,6 +499,20 @@ export default function CommunityScreen() {
 
   const submitPost = async () => {
     if (!newPostText.trim()) return;
+    if (uploadingMedia) {
+      Alert.alert("Upload in progress", "Wait for your attachments to finish uploading before posting.");
+      return;
+    }
+
+    const completedMediaUrls = mediaAttachments
+      .map((attachment) => attachment.uploaded)
+      .filter((url): url is string => typeof url === "string" && url.trim().length > 0);
+
+    if (completedMediaUrls.length !== mediaAttachments.length) {
+      Alert.alert("Attachment not ready", "Remove the failed attachment or retry its upload before posting.");
+      return;
+    }
+
     setSubmittingPost(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -503,7 +534,8 @@ export default function CommunityScreen() {
               ? newPostBusinessLink.trim()
               : undefined,
           visibility: newPostVisibility,
-          mediaUrls: mediaAttachments.filter((m) => m.uploaded).map((m) => m.uploaded!),
+          commentPolicy: newPostCommentPolicy,
+          mediaUrls: completedMediaUrls,
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
@@ -522,13 +554,14 @@ export default function CommunityScreen() {
         }),
       });
       if (res.ok) {
-        const data = await res.json() as { post: Record<string, unknown>; kinfolkSuggestions?: Array<{ id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }> };
+        const data = await res.json() as { post: Record<string, unknown>; kinfolkSuggestions?: { id: string; name: string; category: string; city: string; rating: string; imageUrl: string | null; description: string }[] };
         setPosts((prev) => [toPostCard(data.post), ...prev]);
         setNewPostText("");
         setNewPostCategory("general");
         setNewPostType("community");
         setNewPostBusinessLink("");
         setNewPostVisibility("public");
+        setNewPostCommentPolicy("everyone");
         setNewPostLocationTag("");
         setNewPostLocationVenueName(undefined);
         setNewPostLocationCity(undefined);
@@ -675,7 +708,29 @@ export default function CommunityScreen() {
         ))}
       </ScrollView>
 
-      {activeTab === "Events" ? (
+      {activeTab === "What's Happening" ? (
+        <HappeningNowPanel
+          isAuthenticated={isAuthenticated}
+          bottomPadding={bottomPad}
+          onDiscuss={(story: HappeningNowStory) => {
+            if (!story.communityPostId) return;
+            setSelectedPost({
+              id: story.communityPostId,
+              author: story.submitterName ?? "MWM Community",
+              authorInitials: "MWM",
+              authorColor: "#CA922B",
+              content: `${story.title}\n\n${story.summary}`,
+              likes: 0,
+              comments: 0,
+              commentPolicy: "everyone",
+              timeAgo: "Community update",
+              category: "discussion",
+              postType: "community",
+              liked: false,
+            });
+          }}
+        />
+      ) : activeTab === "Events" ? (
         <View style={{ flex: 1 }}>
           <View style={[styles.categoryScroll, { borderBottomColor: colors.border }]}>
             <ScrollView
@@ -1115,11 +1170,11 @@ export default function CommunityScreen() {
             </View>
           </View>
           <View style={styles.resRow}>
-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => Linking.openURL("tel:988").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#DC2626" }]} onPress={() => { void openExternalUrl("tel:988", { kind: "device" }); }}>
               <Feather name="phone-call" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Call / Text 988</Text>
             </TouchableOpacity>
-            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => Linking.openURL("sms:741741").catch(() => {})}>
+            <TouchableOpacity activeOpacity={0.85} style={[styles.resCrisisBtn, { backgroundColor: "#B91C1C" }]} onPress={() => { void openExternalUrl("sms:741741", { kind: "device" }); }}>
               <Feather name="message-circle" size={16} color="#FFF" />
               <Text style={styles.resCrisisBtnText}>Text HOME to 741741</Text>
             </TouchableOpacity>
@@ -1137,7 +1192,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1158,7 +1213,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1176,7 +1231,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1198,7 +1253,7 @@ export default function CommunityScreen() {
             <TouchableOpacity
               key={r.name}
               style={[styles.resCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => Linking.openURL(r.url).catch(() => {})}
+              onPress={() => { void openExternalUrl(r.url, { kind: r.url.startsWith("tel:") ? "device" : "web" }); }}
               activeOpacity={0.75}
             >
               <View style={[styles.resCardDot, { backgroundColor: r.color }]} />
@@ -1404,6 +1459,11 @@ export default function CommunityScreen() {
         post={selectedPost}
         onClose={() => setSelectedPost(null)}
         onLike={() => void loadPosts()}
+        onCommentAdded={() => {
+          if (!selectedPost) return;
+          setPosts((items) => items.map((item) => item.id === selectedPost.id ? { ...item, comments: item.comments + 1 } : item));
+          setSelectedPost((item) => item ? { ...item, comments: item.comments + 1 } : item);
+        }}
       />
 
       <UpgradeModal
@@ -1650,9 +1710,14 @@ export default function CommunityScreen() {
                 <Text style={[styles.composeCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
               </TouchableOpacity>
               <Text style={[styles.composeTitle, { color: colors.foreground }]}>New Post</Text>
-              <TouchableOpacity activeOpacity={0.85} onPress={() => void submitPost()} disabled={!newPostText.trim() || submittingPost}>
-                <Text style={[styles.composePostText, { color: newPostText.trim() ? colors.primary : colors.muted }]}>
-                  {submittingPost ? "Posting…" : "Post"}
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => void submitPost()}
+                disabled={!newPostText.trim() || submittingPost || uploadingMedia}
+                accessibilityState={{ disabled: !newPostText.trim() || submittingPost || uploadingMedia, busy: submittingPost || uploadingMedia }}
+              >
+                <Text style={[styles.composePostText, { color: newPostText.trim() && !uploadingMedia ? colors.primary : colors.muted }]}>
+                  {uploadingMedia ? "Uploading…" : submittingPost ? "Posting…" : "Post"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1759,7 +1824,11 @@ export default function CommunityScreen() {
               {(["public", "followers_only"] as const).map((v) => (
                 <TouchableOpacity activeOpacity={0.85}
                   key={v}
-                  onPress={() => { setNewPostVisibility(v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                  onPress={() => {
+                    setNewPostVisibility(v);
+                    if (v === "followers_only" && newPostCommentPolicy === "everyone") setNewPostCommentPolicy("followers");
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
                   style={{
                     paddingHorizontal: 12, paddingVertical: 4, borderRadius: 14,
                     borderWidth: 1,
@@ -1772,6 +1841,18 @@ export default function CommunityScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Comment privacy */}
+            <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: colors.mutedForeground, marginBottom: 7 }}>Who can comment?</Text>
+              <View style={{ flexDirection: "row", gap: 8 }}>
+                {(["everyone", "followers", "off"] as const).map((policy) => (
+                  <TouchableOpacity key={policy} activeOpacity={0.85} onPress={() => setNewPostCommentPolicy(policy)} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: newPostCommentPolicy === policy ? colors.primary : colors.border, backgroundColor: newPostCommentPolicy === policy ? colors.primary + "18" : "transparent" }}>
+                    <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: newPostCommentPolicy === policy ? colors.primary : colors.mutedForeground }}>{policy === "everyone" ? "Everyone" : policy === "followers" ? "Followers" : "Off"}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
             {/* Location tag */}
@@ -1915,7 +1996,7 @@ export default function CommunityScreen() {
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                   <Feather name="repeat" size={11} color={colors.mutedForeground} />
                   <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground }}>
-                    Shows on your feed <Text style={{ fontWeight: "600" }}>+</Text> {taggedBusiness.name}'s vibe page
+                    Shows on your feed <Text style={{ fontWeight: "600" }}>+</Text> {taggedBusiness.name}&apos;s vibe page
                   </Text>
                 </View>
 
@@ -1972,7 +2053,7 @@ export default function CommunityScreen() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 7, borderTopWidth: 1, borderTopColor: colors.border }}>
                       <Feather name="check-circle" size={12} color="#2D7A4F" />
                       <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: colors.mutedForeground, flex: 1 }}>
-                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}'s vibe page
+                        Video will appear on your post <Text style={{ fontWeight: "600", color: colors.foreground }}>and</Text> {taggedBusiness.name}&apos;s vibe page
                       </Text>
                       {isPaidMember && (
                         <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: "#7B2D8B18", borderWidth: 1, borderColor: "#7B2D8B30" }}>
@@ -2141,7 +2222,7 @@ function CirclesTab({ colors, router, isAuthenticated, isPaidMember, bottomPad }
     finally { setLoading(false); }
   }, [isAuthenticated]);
 
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -2466,7 +2547,7 @@ function ChallengesTab({ colors, isAuthenticated, bottomPad }: {
     finally { setLoading(false); setRefreshing(false); }
   }, [isAuthenticated]);
 
-  React.useEffect(() => { void load(); }, [load]);
+  React.useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleLogProgress = async (challenge: CommunityChallenge) => {
     if (!isAuthenticated || logging) return;

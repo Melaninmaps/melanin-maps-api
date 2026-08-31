@@ -140,7 +140,7 @@ export function ShowLoveCard({ nomination, onPress, onReactionChange, compact = 
       {!compact && localNom.experience ? (
         <View style={[styles.experienceBlock, { backgroundColor: isDark ? "rgba(202,146,43,0.06)" : "rgba(202,146,43,0.05)", borderLeftColor: "#CA922B" }]}>
           <Text style={[styles.experienceText, { color: colors.mutedForeground }]}>
-            "{localNom.experience}"
+            &quot;{localNom.experience}&quot;
           </Text>
         </View>
       ) : null}

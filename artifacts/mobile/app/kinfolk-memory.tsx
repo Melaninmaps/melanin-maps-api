@@ -14,11 +14,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { getApiBase } from "@/lib/api";
 
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }
 }
@@ -28,6 +25,15 @@ interface MemoryItem {
   label: string;
   value: string;
   color: string;
+}
+
+interface PrivateMemory {
+  id: string;
+  content: string;
+  purpose: string;
+  isSensitive: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
 }
 
 interface MemorySummary {
@@ -68,26 +74,46 @@ export default function KinfolkMemoryScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<MemorySummary | null>(null);
+  const [privateMemories, setPrivateMemories] = useState<PrivateMemory[]>([]);
+  const [memoryError, setMemoryError] = useState("");
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
-
-  useEffect(() => { void load(); }, []);
 
   const load = async () => {
     try {
       const token = await getToken();
       const base = getApiBase();
       if (!token || !base) { setLoading(false); return; }
-      const res = await fetch(`${base}/api/kinfolk/memory-summary`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json() as { summary: MemorySummary };
+      const headers = { Authorization: `Bearer ${token}` };
+      const [summaryRes, privateRes] = await Promise.all([
+        fetch(`${base}/api/kinfolk/memory-summary`, { headers }),
+        fetch(`${base}/api/kinfolk/memories`, { headers }),
+      ]);
+      if (summaryRes.ok) {
+        const data = await summaryRes.json() as { summary: MemorySummary };
         setSummary(data.summary);
+      }
+      if (privateRes.ok) {
+        const data = await privateRes.json() as { memories: PrivateMemory[] };
+        setPrivateMemories(data.memories ?? []);
       }
     } catch {}
     finally { setLoading(false); }
+  };
+
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, []);
+
+  const forgetMemory = async (id: string) => {
+    setMemoryError("");
+    const token = await getToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`${getApiBase()}/api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error("Could not forget that memory.");
+      setPrivateMemories((items) => items.filter((item) => item.id !== id));
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not forget that memory."); }
   };
 
   const buildItems = (s: MemorySummary): MemoryItem[] => {
@@ -199,6 +225,16 @@ export default function KinfolkMemoryScreen() {
             </>
           )}
 
+          <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 4 }]}>MEMORIES YOU APPROVED</Text>
+          {privateMemories.length === 0 ? (
+            <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Use “Remember this privately” before sending a message when you want Kinfolk to keep it.</Text></View></View>
+          ) : (
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {privateMemories.map((memory, index) => <React.Fragment key={memory.id}><View style={styles.itemRow}><View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name="lock" size={15} color={colors.primary} /></View><View style={styles.itemContent}><Text style={[styles.itemValue, { color: colors.foreground }]}>{memory.content}</Text><Text style={[styles.itemLabel, { color: colors.mutedForeground }]}>{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}</Text></View><TouchableOpacity accessibilityLabel="Forget this memory" onPress={() => void forgetMemory(memory.id)}><Feather name="trash-2" size={17} color="#DC2626" /></TouchableOpacity></View>{index < privateMemories.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>)}
+            </View>
+          )}
+          {!!memoryError && <Text style={{ color: "#DC2626", fontFamily: "Inter_500Medium", fontSize: 12, marginBottom: 12 }}>{memoryError}</Text>}
+
           <View style={[styles.note, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
             <Feather name="lock" size={14} color={colors.mutedForeground} />
             <Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>
@@ -234,6 +270,7 @@ const styles = StyleSheet.create({
   emptyDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 20, textAlign: "center", marginBottom: 20 },
   emptyBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 },
   emptyBtnTxt: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  emptyMemory: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 24 },
   editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 14, marginBottom: 24 },
   editBtnTxt: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
   note: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 14, borderWidth: 1 },

@@ -386,7 +386,7 @@ export default function BusinessInsightScreen() {
           <View style={s.stepContent}>
             <Text style={[s.stepTitle, { color: colors.foreground }]}>🗂️ What type of insight?</Text>
             <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-              Choose the perspective you're sharing. Both surveys are 100% anonymous.
+              Choose the perspective you&apos;re sharing. Both surveys are 100% anonymous.
             </Text>
 
             <TouchableOpacity
@@ -410,7 +410,7 @@ export default function BusinessInsightScreen() {
               <Text style={{ fontSize: 32 }}>💼</Text>
               <View style={{ flex: 1 }}>
                 <Text style={[s.typeTitle, { color: colors.foreground }]}>Employee Experience</Text>
-                <Text style={[s.typeSub, { color: colors.mutedForeground }]}>Share what it's like to work or have worked there — culture, pay equity, management, and belonging</Text>
+                <Text style={[s.typeSub, { color: colors.mutedForeground }]}>Share what it&apos;s like to work or have worked there — culture, pay equity, management, and belonging</Text>
               </View>
               {surveyType === "employee" && <Feather name="check-circle" size={22} color={colors.primary} />}
             </TouchableOpacity>
@@ -492,7 +492,7 @@ export default function BusinessInsightScreen() {
           <View style={s.stepContent}>
             <Text style={[s.stepTitle, { color: colors.foreground }]}>💼 Your Employee Experience</Text>
             <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-              Help minority job seekers understand what it's really like to work here. 100% anonymous.
+              Help minority job seekers understand what it&apos;s really like to work here. 100% anonymous.
             </Text>
 
             <View style={s.qBlock}>

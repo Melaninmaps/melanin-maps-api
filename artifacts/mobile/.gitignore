@@ -13,12 +13,15 @@ expo-env.d.ts
 ios/
 android/
 *.orig.*
+credentials.json
+credentials*.local.json
 *.jks
-!new_upload_keystore.jks
+*.keystore
 *.p8
 *.p12
 *.key
 *.mobileprovision
+google-service-account.json
 
 # Metro
 .metro-health-check*

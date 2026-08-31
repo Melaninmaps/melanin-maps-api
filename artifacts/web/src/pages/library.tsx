@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearch, useParams, useLocation } from "wouter";
 import { GoldFeatherMark, GoldFeatherBadge } from "@/components/brand/GoldFeatherMark";
+import "./library-topic-page.css";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -47,6 +48,19 @@ type LibraryEntry = {
   refreshedAt: string;
   sources: KnowledgeSource[];
 };
+
+const RELATED_FOUNDATIONS = [
+  { slug: "housing-home", title: "Housing & Home" },
+  { slug: "education-learning", title: "Education & Learning" },
+  { slug: "health-wellness", title: "Health & Wellness" },
+  { slug: "money-economic-mobility", title: "Money & Economic Mobility" },
+  { slug: "careers-professional-life", title: "Careers & Professional Life" },
+  { slug: "community-resources-help", title: "Community Resources & Help" },
+];
+
+function topicSummary(topic: LibraryTopic): string {
+  return `${topic.title} is a Living Library topic book for source-cited research, practical resources, and community-relevant context that stays available for the next person.`;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -300,24 +314,29 @@ export function LibraryTopicPage() {
     return <main className="p-10 text-center text-[#3A1F0E]/50">Loading this living book…</main>;
   }
   if (!topic) return null;
+  const relatedTopics = RELATED_FOUNDATIONS
+    .filter((item) => item.slug !== topic.slug)
+    .slice(0, 3);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10">
-      <Link className="text-sm font-semibold text-[#8D5C17] underline" href="/library">
+    <main className="library-topic-page">
+      <div className="library-topic-page__shell">
+      <Link className="library-topic-page__back" href="/library">
         ← All topics
       </Link>
-      <header className="mt-5 flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="library-topic-page__hero">
+        <div className="library-topic-page__hero-copy">
           <GoldFeatherBadge label={`${topic.title} living book`} />
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#CA922B]">
-              Living book
+            <p className="library-topic-page__eyebrow">
+              Living Library · Topic book
             </p>
-            <h1 className="mt-1 font-serif text-4xl font-bold text-[#2B1507]">{topic.title}</h1>
+            <h1>{topic.title}</h1>
+            <p className="library-topic-page__summary">{topicSummary(topic)}</p>
           </div>
         </div>
         <button
-          className="rounded-full border border-[#CA922B] px-4 py-2 font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10"
+          className="library-topic-page__follow"
           onClick={() => void setFollow(!topic.isFollowed)}
           type="button"
         >
@@ -325,25 +344,47 @@ export function LibraryTopicPage() {
         </button>
       </header>
 
-      <p className="mt-4 max-w-2xl leading-7 text-[#3A1F0E]/75">
-        This book brings together source-cited Kinfolk research. New questions become new entries,
-        including location-specific entries such as "STEM in Charlotte." The whole STEM book stays
-        in one place — national guidance, Charlotte research, Atlanta research, and more.
-      </p>
-
       <section
-        aria-label={`${topic.title} research entries`}
-        className="mt-8 space-y-5"
+        aria-labelledby="library-topic-content"
+        className="library-topic-page__content"
       >
+        <div className="library-topic-page__content-heading">
+          <div>
+            <p className="library-topic-page__eyebrow">What lives here</p>
+            <h2 id="library-topic-content">Research, resources, and community context</h2>
+          </div>
+          <span className="library-topic-page__entry-count">
+            {entries.length} {entries.length === 1 ? "entry" : "entries"}
+          </span>
+        </div>
         {entries.length > 0 ? (
-          entries.map((entry) => <EntryCard key={entry.id} entry={entry} />)
+          <div className="library-topic-page__entries">
+            {entries.map((entry) => <EntryCard key={entry.id} entry={entry} />)}
+          </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-[#3A1F0E]/20 p-6 text-[#3A1F0E]/70">
-            This book is ready for its first source-cited Kinfolk research entry. Ask Kinfolk about{" "}
-            {topic.title.toLowerCase()} to add the first entry.
-          </p>
+          <section className="library-topic-page__empty">
+            <h3>This foundation is ready to grow.</h3>
+            <p>
+              It has a defined place in the Living Library. Research and community-relevant
+              resources will appear here as they are verified and added.
+            </p>
+            <Link href="/library">Explore another foundation</Link>
+          </section>
         )}
       </section>
+
+      <aside className="library-topic-page__related" aria-labelledby="library-related-topics">
+        <p className="library-topic-page__eyebrow">Keep exploring</p>
+        <h2 id="library-related-topics">Related foundations</h2>
+        <div className="library-topic-page__related-links">
+          {relatedTopics.map((item) => (
+            <Link href={`/library/topics/${item.slug}`} key={item.slug}>
+              {item.title} →
+            </Link>
+          ))}
+        </div>
+      </aside>
+      </div>
     </main>
   );
 }

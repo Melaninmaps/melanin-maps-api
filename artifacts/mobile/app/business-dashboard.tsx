@@ -256,6 +256,7 @@ const DEFAULT_GROWTH_CATALOGUE: GrowthTool[] = [
 
 export default function BusinessDashboardScreen() {
   const colors = useColors();
+  const [renderedAt] = useState(() => Date.now());
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"overview" | "reviews" | "insights" | "products" | "grow">("overview");
@@ -325,11 +326,12 @@ export default function BusinessDashboardScreen() {
   const [onboarding, setOnboarding] = useState(false);
 
   React.useEffect(() => {
-    if (business?.feedbackOptIn !== undefined) setFeedbackOptIn(business.feedbackOptIn);
+    const feedbackOptIn = business?.feedbackOptIn;
+    if (feedbackOptIn !== undefined) queueMicrotask(() => { setFeedbackOptIn(feedbackOptIn); });
   }, [business?.feedbackOptIn]);
 
   React.useEffect(() => {
-    if ((business as any)?.returnPolicy != null) setReturnPolicy((business as any).returnPolicy as string);
+    if ((business as any)?.returnPolicy != null) queueMicrotask(() => { setReturnPolicy((business as any).returnPolicy as string); });
   }, [(business as any)?.returnPolicy]);
 
   // Load Trust Profile identity data when business is available
@@ -354,7 +356,7 @@ export default function BusinessDashboardScreen() {
   }, [business?.id, trustProfileLoaded]);
 
   React.useEffect(() => {
-    if (business?.sellerAgreementAcceptedAt) setSellerAgreementAccepted(true);
+    if (business?.sellerAgreementAcceptedAt) queueMicrotask(() => { setSellerAgreementAccepted(true); });
   }, [business?.sellerAgreementAcceptedAt]);
 
   // Refresh growth tools when user returns from Stripe checkout
@@ -392,8 +394,8 @@ export default function BusinessDashboardScreen() {
 
   React.useEffect(() => {
     if (!business) return;
-    setFeeLoading(true);
-    setFeeError(false);
+    queueMicrotask(() => { setFeeLoading(true); });
+    queueMicrotask(() => { setFeeError(false); });
     void (async () => {
       try {
         const token = await SecureStore.getItemAsync("auth_session_token");
@@ -423,9 +425,9 @@ export default function BusinessDashboardScreen() {
 
   React.useEffect(() => {
     if (business && !addrExpanded) {
-      setAddrAddress((business as any).address ?? "");
-      setAddrCity(business.city ?? "");
-      setAddrState(business.state ?? "");
+      queueMicrotask(() => { setAddrAddress((business as any).address ?? ""); });
+      queueMicrotask(() => { setAddrCity(business.city ?? ""); });
+      queueMicrotask(() => { setAddrState(business.state ?? ""); });
     }
   }, [business?.id]);
 
@@ -524,8 +526,8 @@ export default function BusinessDashboardScreen() {
   }
 
   useEffect(() => {
-    if (activeTab === "insights") void loadAnalytics();
-    if (activeTab === "grow") void loadGrowthTools();
+    if (activeTab === "insights") queueMicrotask(() => { void loadAnalytics(); });
+    if (activeTab === "grow") queueMicrotask(() => { void loadGrowthTools(); });
   }, [activeTab]);
 
   async function loadAiCaptions() {
@@ -989,7 +991,7 @@ export default function BusinessDashboardScreen() {
             {policyExpanded && (
               <View style={[styles.addrForm, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.addrLabel, { color: colors.mutedForeground }]}>
-                  Describe your return/refund policy for buyers. E.g. "All sales final" or "Returns accepted within 14 days".
+                  Describe your return/refund policy for buyers. E.g. &quot;All sales final&quot; or &quot;Returns accepted within 14 days&quot;.
                 </Text>
                 <TextInput
                   style={[styles.addrInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, minHeight: 64, textAlignVertical: "top" }]}
@@ -1888,7 +1890,7 @@ export default function BusinessDashboardScreen() {
                             PREMIUM TRIAL ACTIVE · {trialDaysLeft} DAYS LEFT
                           </Text>
                           <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 16 }}>
-                            You're on a free 6-month Premium business trial. Upgrade before it ends to keep all features.
+                            You&apos;re on a free 6-month Premium business trial. Upgrade before it ends to keep all features.
                           </Text>
                         </View>
                         <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#2D7A4F20", alignItems: "center", justifyContent: "center" }}>
@@ -1982,7 +1984,7 @@ export default function BusinessDashboardScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontFamily: "Inter_700Bold", fontSize: 13, color: colors.foreground, marginBottom: 2 }}>Phase 1 — Verified Sellers Only</Text>
                       <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: colors.mutedForeground, lineHeight: 17 }}>
-                        Products, services, and event tickets from MWM-verified minority-owned businesses. You're here.
+                        Products, services, and event tickets from MWM-verified minority-owned businesses. You&apos;re here.
                       </Text>
                     </View>
                   </View>
@@ -2132,7 +2134,7 @@ export default function BusinessDashboardScreen() {
                   <View style={[styles.noReviews, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Feather name="shopping-bag" size={24} color={colors.muted} />
                     <Text style={[styles.noReviewsTxt, { color: colors.mutedForeground }]}>
-                      No listings yet. Tap "Add Listing" to create your first product or service.
+                      No listings yet. Tap &quot;Add Listing&quot; to create your first product or service.
                     </Text>
                   </View>
                 ) : listings.map((l: Listing) => (
@@ -2530,7 +2532,7 @@ export default function BusinessDashboardScreen() {
                               {actionPlan._dataPoints.reviewsAnalyzed} reviews analysed
                               {actionPlan._dataPoints.skipFeedbackIncluded ? " · skip feedback included" : ""}
                               {actionPlan._cached && actionPlan._cachedAt
-                                ? ` · last run ${Math.round((Date.now() - new Date(actionPlan._cachedAt).getTime()) / 86400000)}d ago`
+                                ? ` · last run ${Math.round((renderedAt - new Date(actionPlan._cachedAt).getTime()) / 86400000)}d ago`
                                 : ""}
                             </Text>
                           </View>
@@ -2656,7 +2658,7 @@ export default function BusinessDashboardScreen() {
                       </View>
                       {skipFeedback.length === 0 ? (
                         <Text style={[styles.skipInsightEmpty, { color: colors.mutedForeground }]}>
-                          No skip feedback yet. Enable "Direct Skip Feedback" in the overview tab to start collecting insights.
+                          No skip feedback yet. Enable &quot;Direct Skip Feedback&quot; in the overview tab to start collecting insights.
                         </Text>
                       ) : (
                         skipFeedback.slice(0, 5).map((item) => (
@@ -2890,7 +2892,7 @@ export default function BusinessDashboardScreen() {
                 ))}
               </View>
               <Text style={styles.growPolicyQuote}>
-                "Businesses may purchase visibility — they can never purchase trust."
+                &quot;Businesses may purchase visibility — they can never purchase trust.&quot;
               </Text>
             </View>
 

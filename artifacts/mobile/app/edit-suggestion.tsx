@@ -12,7 +12,7 @@ import {
 import { useLocalSearchParams, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -25,7 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 export default function EditSuggestionScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const colors = useColors();
   const { user } = useAuth();
   const params = useLocalSearchParams<{
     entityType: string;

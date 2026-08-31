@@ -106,8 +106,8 @@ export default function ConnectionsScreen() {
   }, []);
 
   useEffect(() => {
-    void loadConnections();
-    void loadSuggestions();
+    queueMicrotask(() => { void loadConnections(); });
+    queueMicrotask(() => { void loadSuggestions(); });
   }, [loadConnections, loadSuggestions]);
 
   const handleSearch = useCallback(async (q: string) => {

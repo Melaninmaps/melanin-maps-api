@@ -207,7 +207,7 @@ export default function ChallengesScreen() {
         {/* Info card */}
         <View style={[styles.infoCard, { backgroundColor: "#CA922B" }]}>
           <Text style={styles.infoEmoji}>💡</Text>
-          <Text style={styles.infoTxt}>Business registrations are reviewed by the Mapping with Melanin™ team before approval. You'll be notified by email within 2–3 business days.</Text>
+          <Text style={styles.infoTxt}>Business registrations are reviewed by the Mapping with Melanin™ team before approval. You&apos;ll be notified by email within 2–3 business days.</Text>
         </View>
       </ScrollView>
 

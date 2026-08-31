@@ -1,6 +1,8 @@
 - [MWM Permanent Release Control Policy](production-release-control.md) — MANDATORY GOVERNING RULE: 5-level verification, triple-check, no false positives, rollback policy, final report format. Supersedes all previous "done/pass/live" interpretations.
 - [Visual Production Self-Audit Standard](visual-audit-standard.md) — PERMANENT: must open + visually inspect running app before declaring any user-facing change complete. 8 steps. Code/200 response alone is never sufficient. State "PRODUCTION VISUAL VERIFICATION NOT COMPLETED" if browser unavailable.
+- [Artifact preview routing](artifact-preview-routing.md) — root web needs the sole port-80 mapping; legacy sandbox mapping caused preview 502s despite healthy services.
 - [KinfolkAI release gate lessons](kinfolk-release-gate-lessons.md) — what each Manus audit round caught; resolveResponseStyle pattern; LEGAL_SIGNALS/TRAVEL_POLICY_OVERRIDE sync rule; static checks are supporting evidence only.
+- [Kinfolk source limitation note](kinfolk-source-limitation-note.md) — source caveats are quiet, conditional footers; never append them to ordinary answers or show them for supported suggestions.
 - [Kinfolk Diaspora-First Research](kinfolk-diaspora-first-research.md) — PERMANENT spec: buildDiasporaFirstQuery enforces lens before Tavily; system prompt PRIMARY RESEARCH RULE block; 10 acceptance checks; TopicDomain v2.0.0.
 - [Mapping with Melanin — project overview](mapping-with-melanin.md) — Expo mobile app with Express API, auth, AI travel, safety reporting, and business discovery.
 - [HBCU Data Protection Rule](hbcu-data-protection.md) — PERMANENT FLOOR: 107 HBCUs in cultural_sites; guard needs columns: founded_year, status, source, is_featured (all added Aug 9 2026 via startup migrations).

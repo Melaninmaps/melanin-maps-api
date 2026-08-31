@@ -107,10 +107,10 @@ export default function VibeSearchScreen() {
 
   useEffect(() => {
     if (selectedVibes.length > 0) {
-      void search();
+      queueMicrotask(() => { void search(); });
     } else {
-      setResults([]);
-      setSearched(false);
+      queueMicrotask(() => { setResults([]); });
+      queueMicrotask(() => { setSearched(false); });
     }
   }, [selectedVibes, selectedPrices]);
 
@@ -215,7 +215,7 @@ export default function VibeSearchScreen() {
           <View>
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Pick your vibe</Text>
             <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-              Select one or more moods — we'll find spots that match
+              Select one or more moods — we&apos;ll find spots that match
             </Text>
             <View style={styles.vibeGrid}>
               {VIBES.map((v) => {

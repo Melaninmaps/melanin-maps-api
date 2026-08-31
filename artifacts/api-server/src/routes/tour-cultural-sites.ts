@@ -59,6 +59,8 @@ function requireAuth(req: Request, res: Response): boolean {
 }
 
 const router = Router();
+const routeParam = (value: string | string[]): string =>
+  Array.isArray(value) ? value[0] ?? "" : value;
 
 // GET /tour-cultural-sites?city=Atlanta&state=GA&site_type=mural&limit=50
 router.get("/tour-cultural-sites", async (req: Request, res: Response) => {
@@ -128,13 +130,13 @@ router.get("/tour-cultural-sites/:id", async (req: Request, res: Response) => {
 
     if (!siteRes.rows[0]) return res.status(404).json({ error: "Cultural site not found" });
 
-    res.json({
+    return res.json({
       ...siteRes.rows[0],
       contributionCount: parseInt(countRes.rows[0].count),
     });
   } catch (err) {
     req.log?.error({ err }, "GET /tour-cultural-sites/:id failed");
-    res.status(500).json({ error: "Failed to fetch cultural site" });
+    return res.status(500).json({ error: "Failed to fetch cultural site" });
   }
 });
 
@@ -164,13 +166,13 @@ router.get("/tour-cultural-sites/:id/contributions", async (req: Request, res: R
 
     if (!siteCheck.rows[0]) return res.status(404).json({ error: "Site not found" });
 
-    res.json({
+    return res.json({
       contributions: rows.rows,
       total: parseInt(countRes.rows[0].count),
     });
   } catch (err) {
     req.log?.error({ err }, "GET /tour-cultural-sites/:id/contributions failed");
-    res.status(500).json({ error: "Failed to fetch contributions" });
+    return res.status(500).json({ error: "Failed to fetch contributions" });
   }
 });
 
@@ -242,13 +244,13 @@ router.post("/tour-cultural-sites/:id/contributions", requireAuth, async (req: R
       [id, userId, authorName, comment_text.trim(), image_url ?? null, video_url ?? null]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       contribution: result.rows[0],
       message: "Thank you — your memory has been submitted for review and will appear shortly.",
     });
   } catch (err) {
     req.log?.error({ err }, "POST /tour-cultural-sites/:id/contributions failed");
-    res.status(500).json({ error: "Failed to submit contribution" });
+    return res.status(500).json({ error: "Failed to submit contribution" });
   }
 });
 
@@ -262,7 +264,7 @@ router.post(
   photoUpload.single("file"),
   async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = routeParam(req.params.id);
       const userId = req.user?.id;
       if (!userId) return res.status(401).json({ error: "Authentication required" });
 
@@ -277,14 +279,14 @@ router.post(
 
       const publicUrl = await uploadToGCS(req.file.buffer, req.file.mimetype, id);
 
-      res.json({ url: publicUrl, mimetype: req.file.mimetype });
+      return res.json({ url: publicUrl, mimetype: req.file.mimetype });
     } catch (err) {
       req.log?.error({ err }, "POST /tour-cultural-sites/:id/upload-photo failed");
       // Specific message for config issue vs. upload failure
       const msg = err instanceof Error && err.message.includes("PRIVATE_OBJECT_DIR")
         ? "Photo storage is not configured on this server"
         : "Failed to upload photo";
-      res.status(500).json({ error: msg });
+      return res.status(500).json({ error: msg });
     }
   }
 );

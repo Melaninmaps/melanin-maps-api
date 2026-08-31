@@ -7,7 +7,6 @@ import {
   Alert,
   Modal,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { BusinessMentionPicker, type BusinessResult } from "./BusinessMentionPicker";
 import { UserMentionPicker } from "./UserMentionPicker";
+import { getApiBase } from "@/lib/api";
 
 type Visibility = "public" | "followers_only" | "only_me";
 
@@ -32,11 +32,6 @@ const STANCE_TAGS: { key: string; label: string; featherIcon: string }[] = [
   { key: "supporting_local",   label: "Supporting Local",   featherIcon: "users" },
   { key: "visited_loved",      label: "Visited & Loved",    featherIcon: "heart" },
 ];
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 interface BusinessMention {
   id: string;

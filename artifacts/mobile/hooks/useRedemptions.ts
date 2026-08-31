@@ -60,8 +60,8 @@ export function useRedemptions() {
   }, []);
 
   useEffect(() => {
-    loadRewards();
-    loadHistory();
+    void Promise.resolve().then(loadRewards);
+    void Promise.resolve().then(loadHistory);
   }, [loadRewards, loadHistory]);
 
   const redeem = useCallback(async (rewardId: string): Promise<{ pointsSpent: number } | null> => {

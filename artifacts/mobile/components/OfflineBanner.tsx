@@ -1,12 +1,12 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Animated, StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 export function OfflineBanner() {
   const { isOnline, wasOffline } = useNetworkStatus();
-  const translateY = useRef(new Animated.Value(-80)).current;
+  const [translateY] = useState(() => new Animated.Value(-80));
   const insets = useSafeAreaInsets();
 
   useEffect(() => {

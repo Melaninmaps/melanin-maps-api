@@ -35,7 +35,7 @@ export function useItineraries() {
     finally { setIsLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const persist = useCallback(async (items: Itinerary[]) => {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));

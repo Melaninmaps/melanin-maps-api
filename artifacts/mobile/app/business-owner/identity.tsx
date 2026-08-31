@@ -244,7 +244,7 @@ export default function BusinessIdentityScreen() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const handleSave = async () => {
     setSaving(true);

@@ -1,0 +1,7 @@
+timestamp=20260826T235323Z
+mode=--precommit
+root=/home/runner/workspace
+branch=release/task-373-rc
+commit=892edbfeca012bdf46603f61d29bcc2c667a7b63
+node=v24.13.0
+pnpm=10.26.1

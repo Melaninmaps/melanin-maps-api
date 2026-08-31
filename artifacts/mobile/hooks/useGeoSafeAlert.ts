@@ -46,7 +46,7 @@ export function useGeoSafeAlert() {
       const geoRes = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=locality|sublocality&key=${GOOGLE_KEY}`
       );
-      const geoData = await geoRes.json() as { results: Array<{ address_components: Array<{ long_name: string; types: string[] }> }> };
+      const geoData = await geoRes.json() as { results: { address_components: { long_name: string; types: string[] }[] }[] };
       let city = "";
       let neighborhood = "";
       for (const result of geoData.results ?? []) {
@@ -69,7 +69,7 @@ export function useGeoSafeAlert() {
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
       if (!surveysRes.ok) return;
-      const surveysData = await surveysRes.json() as { surveys?: Array<{ safetyScore: number }> };
+      const surveysData = await surveysRes.json() as { surveys?: { safetyScore: number }[] };
       const surveys = surveysData.surveys ?? [];
       if (surveys.length < 3) return;
 
@@ -84,7 +84,7 @@ export function useGeoSafeAlert() {
   }, []);
 
   useEffect(() => {
-    void checkCurrentLocation();
+    void Promise.resolve().then(checkCurrentLocation);
   }, [checkCurrentLocation]);
 
   return { alert, checking, dismissAlert, recheck: checkCurrentLocation };

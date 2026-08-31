@@ -10,6 +10,7 @@
  */
 
 import type { SearchQuery } from "./lens-planner.js";
+import { enforceDiasporaFirstProviderQuery } from "./diasporaFirstResearchPolicy.js";
 
 export type WebResult = {
   title: string;
@@ -42,6 +43,7 @@ export class SearchProviderError extends Error {}
 async function searchWeb(query: SearchQuery, imageRequested: boolean): Promise<WebResult[]> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) return []; // degrade gracefully — feature activates once key is added
+  const providerQuery = enforceDiasporaFirstProviderQuery(query.text);
 
   try {
     const response = await fetch("https://api.tavily.com/search", {
@@ -51,7 +53,7 @@ async function searchWeb(query: SearchQuery, imageRequested: boolean): Promise<W
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: query.text,
+          query: providerQuery,
         search_depth: query.role === "evidence" ? "advanced" : "basic",
         max_results: 5,
         include_raw_content: false,
@@ -74,7 +76,7 @@ async function searchWeb(query: SearchQuery, imageRequested: boolean): Promise<W
         content: r.content ?? "",
         providerScore: r.score ?? 0,
         favicon: r.favicon,
-        sourceQuery: query,
+          sourceQuery: { ...query, text: providerQuery },
       }));
   } catch {
     return []; // network error — degrade gracefully

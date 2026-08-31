@@ -95,7 +95,7 @@ export default function MembershipScreen() {
         <View style={[styles.missionCard, { backgroundColor: colors.primary + "0A", borderColor: colors.primary + "25" }]}>
           <Feather name="heart" size={18} color={colors.primary} />
           <Text style={[styles.missionTxt, { color: colors.mutedForeground }]}>
-            Mapping With Melanin is a community platform first. Every feature is free because the community's safety, connection, and prosperity shouldn't be paywalled.
+            Mapping With Melanin is a community platform first. Every feature is free because the community&apos;s safety, connection, and prosperity shouldn&apos;t be paywalled.
           </Text>
         </View>
       </ScrollView>

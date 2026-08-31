@@ -101,8 +101,8 @@ export default function BusinessOwnerHome() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) void load();
-    else setLoading(false);
+    if (isAuthenticated) queueMicrotask(() => { void load(); });
+    else queueMicrotask(() => { setLoading(false); });
   }, [isAuthenticated, load]);
 
   const sections: AdminSection[] = [

@@ -283,7 +283,7 @@ function OpportunityCard({ item, colors, onReport }: { item: Opportunity; colors
           {item.personalNote && (
             <View style={[s.noteBox, { backgroundColor: colors.muted, borderColor: colors.border }]}>
               <Feather name="message-circle" size={12} color={colors.mutedForeground} />
-              <Text style={[s.noteText, { color: colors.mutedForeground }]}>"{item.personalNote}"</Text>
+              <Text style={[s.noteText, { color: colors.mutedForeground }]}>&quot;{item.personalNote}&quot;</Text>
             </View>
           )}
           {item.deadline && (
@@ -606,7 +606,7 @@ function AiSearchModal({ visible, onClose, colors }: { visible: boolean; onClose
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (visible) { setTimeout(() => inputRef.current?.focus(), 300); setResult(null); setQuery(""); }
+    if (visible) { setTimeout(() => inputRef.current?.focus(), 300); queueMicrotask(() => { setResult(null); }); queueMicrotask(() => { setQuery(""); }); }
   }, [visible]);
 
   const handleSearch = async (q?: string) => {
@@ -794,8 +794,8 @@ export default function ResourcesScreen() {
   }, [activeOppType, searchQuery]);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([fetchResources(), fetchOpportunities()]).finally(() => setLoading(false));
+    queueMicrotask(() => { setLoading(true); });
+    queueMicrotask(() => { Promise.all([fetchResources(), fetchOpportunities()]).finally(() => setLoading(false)); });
   }, [fetchResources, fetchOpportunities]);
 
   const handleRefresh = async () => {

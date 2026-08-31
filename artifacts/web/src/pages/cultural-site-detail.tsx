@@ -8,6 +8,21 @@ import { useToast } from "@/hooks/use-toast";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
+function normalizeExternalHttpUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const schemeMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
+  if (schemeMatch && !/^https?$/i.test(schemeMatch[1])) return null;
+  const candidate = schemeMatch ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 const HERITAGE_COLORS: Record<string, string> = {
   HBCU: "#7C3AED",
   hbcu: "#7C3AED",
@@ -178,6 +193,9 @@ interface CulturalSite {
   significance?: string | null;
   imageUrl?: string | null;
   externalUrl?: string | null;
+  learnMoreUrl?: string | null;
+  detailUrl?: string | null;
+  stateCode?: string | null;
   isVerified?: boolean;
   yearEstablished?: number | null;
   isAccessible?: boolean;
@@ -207,8 +225,14 @@ interface SupportLink {
 }
 
 export default function CulturalSiteDetail() {
-  const [, params] = useRoute("/sites/:id");
-  const id = params?.id;
+  const [, legacyParams] = useRoute("/sites/:id");
+  const [, canonicalParams] = useRoute("/cultural-sites/:id");
+  const [, canonicalSlugParams] = useRoute("/cultural-sites/:id/:slug");
+  const id =
+    canonicalSlugParams?.id ??
+    canonicalParams?.id ??
+    legacyParams?.id ??
+    "";
   const { data: auth } = useGetCurrentAuthUser();
   const { toast } = useToast();
 
@@ -233,8 +257,14 @@ export default function CulturalSiteDetail() {
       fetch(`${BASE}/api/cultural-sites/${id}/support-links`).then((r) => r.json()),
     ])
       .then(([siteData, storyData, linkData]) => {
-        if (siteData.error || !siteData.site) { setNotFound(true); return; }
-        setSite(siteData.site);
+        const rawSite = siteData?.site ?? (siteData?.id ? siteData : null);
+        if (siteData?.error || !rawSite) { setNotFound(true); return; }
+        setNotFound(false);
+        setSite({
+          ...rawSite,
+          state: rawSite.state ?? rawSite.stateCode ?? "",
+          externalUrl: rawSite.externalUrl ?? rawSite.learnMoreUrl ?? null,
+        });
         setStories(storyData.stories ?? []);
         setLinks(linkData.links ?? []);
       })
@@ -293,6 +323,7 @@ export default function CulturalSiteDetail() {
 
   const heritage = site.heritageCategory ?? "";
   const accentColor = HERITAGE_COLORS[heritage] ?? "#CA922B";
+  const externalSiteUrl = normalizeExternalHttpUrl(site.externalUrl ?? site.learnMoreUrl);
 
   const relLabel = (rt: string) =>
     RELATIONSHIP_TYPES.find((r) => r.value === rt)?.label ?? rt.replace(/_/g, " ");
@@ -355,9 +386,9 @@ export default function CulturalSiteDetail() {
               <p className="text-xs font-semibold text-[#CA922B] mt-1">{site.era}</p>
             )}
 
-            {site.externalUrl && (
+            {externalSiteUrl && (
               <a
-                href={site.externalUrl}
+                href={externalSiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold hover:underline"
@@ -435,23 +466,27 @@ export default function CulturalSiteDetail() {
           <div className="bg-white rounded-2xl p-6 border border-[#2B1507]/5">
             <h2 className="font-serif font-bold text-lg text-[#2B1507] mb-4">Resources & Support</h2>
             <div className="space-y-3">
-              {links.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 hover:border-[#CA922B]/30 hover:bg-[#CA922B]/5 transition-colors group"
-                >
-                  <ExternalLink className="w-4 h-4 shrink-0 mt-0.5 text-[#CA922B] group-hover:scale-110 transition-transform" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-[#2B1507] group-hover:text-[#CA922B] transition-colors">{link.title}</div>
-                    {link.description && (
-                      <div className="text-xs text-[#3A1F0E]/60 mt-0.5 leading-relaxed">{link.description}</div>
-                    )}
-                  </div>
-                </a>
-              ))}
+              {links.map((link) => {
+                const supportUrl = normalizeExternalHttpUrl(link.url);
+                if (!supportUrl) return null;
+                return (
+                  <a
+                    key={link.id}
+                    href={supportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF6EF] border border-[#2B1507]/8 hover:border-[#CA922B]/30 hover:bg-[#CA922B]/5 transition-colors group"
+                  >
+                    <ExternalLink className="w-4 h-4 shrink-0 mt-0.5 text-[#CA922B] group-hover:scale-110 transition-transform" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[#2B1507] group-hover:text-[#CA922B] transition-colors">{link.title}</div>
+                      {link.description && (
+                        <div className="text-xs text-[#3A1F0E]/60 mt-0.5 leading-relaxed">{link.description}</div>
+                      )}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}

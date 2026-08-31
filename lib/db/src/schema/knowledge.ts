@@ -152,7 +152,17 @@ export const happeningNowStoriesTable = pgTable("happening_now_stories", {
   title: varchar("title", { length: 300 }).notNull(),
   summary: text("summary").notNull(),
   category: varchar("category", { length: 50 }).notNull().default("other"),
+  topicTags: text("topic_tags").array(),
+  scope: varchar("scope", { length: 20 }).notNull().default("national"),
+  city: varchar("city", { length: 120 }),
+  state: varchar("state", { length: 80 }),
+  country: varchar("country", { length: 80 }).notNull().default("United States"),
   sourceUrl: varchar("source_url", { length: 500 }),
+  sourcePublisher: varchar("source_publisher", { length: 180 }),
+  sourceStatus: varchar("source_status", { length: 24 }).notNull().default("unverified"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  communityPostId: varchar("community_post_id", { length: 100 }),
   submittedBy: varchar("submitted_by", { length: 100 }).references(() => usersTable.id, { onDelete: "set null" }),
   submitterName: varchar("submitter_name", { length: 150 }),
   status: varchar("status", { length: 20 }).notNull().default("pending"),
@@ -187,6 +197,18 @@ export const userBadgesTable = pgTable("user_badges", {
   experienceNote: text("experience_note"),
   earnedAt: timestamp("earned_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at"),
+});
+
+// Immutable consented preference events. These contain identifiers only, never
+// search terms, chat text, member notes, or other free-form member content.
+export const happeningTopicInterestEventsTable = pgTable("happening_topic_interest_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 100 }).notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  category: varchar("category", { length: 50 }),
+  topicId: varchar("topic_id", { length: 100 }),
+  consentedAt: timestamp("consented_at", { withTimezone: true }).notNull().defaultNow(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const badgeHelpfulVotesTable = pgTable("badge_helpful_votes", {

@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Animated,
   FlatList,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { openExternalUrl } from "@/lib/safeLinking";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -75,6 +75,8 @@ type CulturalSite = {
   era: string | null;
   significance: string | null;
   externalUrl: string | null;
+  learnMoreUrl?: string | null;
+  stateCode?: string | null;
   yearEstablished: number | null;
   isAccessible: boolean;
   isFamilyFriendly: boolean;
@@ -137,6 +139,7 @@ export default function CulturalHeritagePage() {
 
   const [sites, setSites] = useState<CulturalSite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [selectedHeritage, setSelectedHeritage] = useState(params.initialCategory ?? "");
   const [selectedSite, setSelectedSite] = useState<CulturalSite | null>(null);
@@ -148,17 +151,49 @@ export default function CulturalHeritagePage() {
 
   const fetchSites = useCallback(async (heritage: string, search: string) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const params = new URLSearchParams();
       if (heritage) params.set("heritageCategory", heritage);
       if (search) params.set("search", search);
       const resp = await fetch(`${getApiBase()}/api/cultural-sites?${params.toString()}`);
-      if (!resp.ok) throw new Error("Failed");
+      if (!resp.ok) throw new Error(`Cultural-site request failed with ${resp.status}`);
       const data = (await resp.json()) as {
-        sites: CulturalSite[];
-        categories?: Array<{ label: string; count: number }>;
+        sites?: CulturalSite[];
+        items?: (Partial<CulturalSite> & {
+          id: string;
+          name: string;
+          stateCode?: string | null;
+          learnMoreUrl?: string | null;
+        })[];
+        categories?: { label: string; count: number }[];
       };
-      setSites(data.sites ?? []);
+      const rawSites = data.sites ?? data.items ?? [];
+      const normalizedSites: CulturalSite[] = rawSites.map((site) => ({
+        id: site.id,
+        name: site.name,
+        description: site.description ?? "",
+        category: site.category ?? "Cultural Heritage",
+        heritageCategory: site.heritageCategory ?? null,
+        subcategory: site.subcategory ?? null,
+        ethnicCommunity: site.ethnicCommunity ?? null,
+        city: site.city ?? "",
+        state: site.state ?? site.stateCode ?? "",
+        address: site.address ?? null,
+        latitude: String(site.latitude ?? ""),
+        longitude: String(site.longitude ?? ""),
+        era: site.era ?? null,
+        significance: site.significance ?? null,
+        externalUrl: site.externalUrl ?? site.learnMoreUrl ?? null,
+        yearEstablished: site.yearEstablished ?? null,
+        isAccessible: site.isAccessible ?? false,
+        isFamilyFriendly: site.isFamilyFriendly ?? false,
+        admissionFree: site.admissionFree ?? false,
+        audioGuide: site.audioGuide ?? false,
+        verifiedSource: site.verifiedSource ?? null,
+        isVerified: site.isVerified ?? false,
+      }));
+      setSites(normalizedSites);
       if (data.categories) {
         const map: Record<string, number> = {};
         for (const c of data.categories) map[c.label] = c.count;
@@ -166,13 +201,14 @@ export default function CulturalHeritagePage() {
       }
     } catch {
       setSites([]);
+      setLoadError("We could not load cultural sites. Check your connection and try again.");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void fetchSites(selectedHeritage, debouncedSearch);
+    queueMicrotask(() => { void fetchSites(selectedHeritage, debouncedSearch); });
   }, [selectedHeritage, debouncedSearch, fetchSites]);
 
   useEffect(() => {
@@ -180,8 +216,8 @@ export default function CulturalHeritagePage() {
       const target = sites.find((s) => s.id === params.siteId);
       if (target) {
         autoOpenedRef.current = true;
-        setSelectedSite(target);
-        setModalVisible(true);
+        queueMicrotask(() => { setSelectedSite(target); });
+        queueMicrotask(() => { setModalVisible(true); });
       }
     }
   }, [loading, params.siteId, sites]);
@@ -277,7 +313,7 @@ export default function CulturalHeritagePage() {
                   city: item.city,
                   state: item.state,
                 });
-                void Linking.openURL(item.externalUrl!);
+                void openExternalUrl(item.externalUrl);
               }}
             >
               <Feather name="external-link" size={12} color={colors.mutedForeground} />
@@ -359,6 +395,19 @@ export default function CulturalHeritagePage() {
           <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
             Loading heritage sites…
           </Text>
+        </View>
+      ) : loadError ? (
+        <View style={styles.emptyWrap}>
+          <Feather name="alert-circle" size={48} color={colors.destructive} />
+          <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Sites unavailable</Text>
+          <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>{loadError}</Text>
+          <TouchableOpacity
+            style={[styles.websiteBtn, { borderColor: colors.primary }]}
+            onPress={() => { void fetchSites(selectedHeritage, debouncedSearch); }}
+          >
+            <Feather name="refresh-cw" size={13} color={colors.primary} />
+            <Text style={[styles.websiteBtnText, { color: colors.primary }]}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       ) : sites.length === 0 ? (
         <View style={styles.emptyWrap}>
@@ -583,9 +632,9 @@ function DetailModal({
 
   useEffect(() => {
     if (!site) return;
-    setLoadingStories(true);
-    setLoadingLinks(true);
-    setSubmitSuccess(false);
+    queueMicrotask(() => { setLoadingStories(true); });
+    queueMicrotask(() => { setLoadingLinks(true); });
+    queueMicrotask(() => { setSubmitSuccess(false); });
 
     fetch(`${getApiBase()}/api/cultural-sites/${site.id}/stories`)
       .then((r) => r.json())
@@ -828,7 +877,7 @@ function DetailModal({
                           city: site.city,
                           state: site.state,
                         });
-                        void Linking.openURL(link.url);
+                        void openExternalUrl(link.url);
                       }}
                       activeOpacity={0.75}
                     >
@@ -902,7 +951,7 @@ function DetailModal({
                 city: site.city,
                 state: site.state,
               });
-              void Linking.openURL(site.externalUrl!);
+              void openExternalUrl(site.externalUrl);
             }}
             activeOpacity={0.85}
           >
@@ -1116,7 +1165,7 @@ function SubmitStoryModal({
             />
           </View>
           <Text style={[sStyles.charCount, { color: colors.mutedForeground }]}>
-            Leave blank to appear as "Community Member"
+            Leave blank to appear as &quot;Community Member&quot;
           </Text>
         </View>
 

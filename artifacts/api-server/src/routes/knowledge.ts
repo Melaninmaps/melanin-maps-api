@@ -508,7 +508,7 @@ router.post("/knowledge/topics/:topicId/follow", async (req: Request, res: Respo
     ).then((r) => {
       const topicName = r.rows[0]?.topic_name;
       if (topicName) {
-        return pool.query(
+        void pool.query(
           `INSERT INTO user_library_interests (user_id, topic_name, created_at)
            VALUES ($1, $2, NOW())
            ON CONFLICT (user_id, topic_name) DO NOTHING`,

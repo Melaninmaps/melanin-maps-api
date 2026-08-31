@@ -140,7 +140,7 @@ export default function GroupDetailScreen() {
     finally { setLoading(false); }
   }, [id]);
 
-  useEffect(() => { void loadGroup(); }, [loadGroup]);
+  useEffect(() => { queueMicrotask(() => { void loadGroup(); }); }, [loadGroup]);
 
   const handleJoinLeave = async () => {
     if (!isAuthenticated) { router.push("/login" as never); return; }

@@ -224,10 +224,12 @@ router.get("/knowledge/hubs/:topicId", async (req: Request, res: Response) => {
         ilike(businessesTable.city, `%${t}%`),
         ilike(businessesTable.state, `%${t}%`),
       ]);
-      businesses = await db.select(bizSelect).from(businessesTable).where(or(...locOrClauses)).limit(8);
+      businesses = (await db.select(bizSelect).from(businessesTable).where(or(...locOrClauses)).limit(8))
+        .map((business) => ({ ...business, state: business.state ?? "" }));
     } else {
       const catOrClauses = topicTerms.map((t) => ilike(businessesTable.category, `%${t}%`));
-      businesses = await db.select(bizSelect).from(businessesTable).where(or(...catOrClauses)).limit(8);
+      businesses = (await db.select(bizSelect).from(businessesTable).where(or(...catOrClauses)).limit(8))
+        .map((business) => ({ ...business, state: business.state ?? "" }));
     }
 
     // Community discussions (public only, tagged or mentioning this topic)

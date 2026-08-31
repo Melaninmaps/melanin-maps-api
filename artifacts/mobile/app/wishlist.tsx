@@ -5,13 +5,12 @@ import {
   KeyboardAvoidingView, ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons , Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useWishlist, type WishlistItem } from "@/hooks/useWishlist";
 import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
 import { useThumbsUpAlerts } from "@/hooks/useThumbsUpAlerts";
-import { Feather } from "@expo/vector-icons";
 
 const GOLD = "#C9922B";
 
@@ -33,7 +32,7 @@ function getCategoryColor(cat: string | null): string {
 
 type GroupIcon = "location" | "globe-outline" | "briefcase-outline";
 
-function groupItems(items: WishlistItem[]): Array<{ label: string; icon: GroupIcon; items: WishlistItem[] }> {
+function groupItems(items: WishlistItem[]): { label: string; icon: GroupIcon; items: WishlistItem[] }[] {
   const map = new Map<string, WishlistItem[]>();
   for (const item of items) {
     let key: string;
@@ -90,7 +89,7 @@ function AddDestinationModal({
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Add a Destination</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
-              Save a city, state, region, or country you'd love to visit
+              Save a city, state, region, or country you&apos;d love to visit
             </Text>
 
             <Text style={[modalStyles.label, { color: colors.foreground }]}>
@@ -191,7 +190,7 @@ function AddEmployerModal({
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Save an Employer</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
-              Track companies and organizations you'd love to work for
+              Track companies and organizations you&apos;d love to work for
             </Text>
 
             <Text style={[modalStyles.label, { color: colors.foreground }]}>
@@ -303,7 +302,7 @@ function AddBusinessModal({
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
             <Text style={[modalStyles.title, { color: colors.foreground }]}>Save a Business</Text>
             <Text style={[modalStyles.sub, { color: colors.mutedForeground }]}>
-              Track a business you've visited or want to remember
+              Track a business you&apos;ve visited or want to remember
             </Text>
 
             <Text style={[modalStyles.label, { color: colors.foreground }]}>
@@ -425,7 +424,7 @@ function TypePickerModal({
             <View style={{ flex: 1 }}>
               <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Destination</Text>
               <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
-                A city, region, or country you'd love to visit
+                A city, region, or country you&apos;d love to visit
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
@@ -457,7 +456,7 @@ function TypePickerModal({
             <View style={{ flex: 1 }}>
               <Text style={[typePickerStyles.optionTitle, { color: colors.foreground }]}>Business</Text>
               <Text style={[typePickerStyles.optionSub, { color: colors.mutedForeground }]}>
-                A spot you've visited or want to remember
+                A spot you&apos;ve visited or want to remember
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
@@ -735,7 +734,7 @@ export default function WishlistScreen() {
           <Ionicons name="arrow-back" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Trips I'd Love</Text>
+          <Text style={styles.headerTitle}>Trips I&apos;d Love</Text>
           <Text style={styles.headerSub}>{subtitle}</Text>
         </View>
         <TouchableOpacity activeOpacity={0.85}
@@ -765,7 +764,7 @@ export default function WishlistScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing saved yet</Text>
           <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>
-            Save businesses, destinations, and employers you'd love to explore or work for.
+            Save businesses, destinations, and employers you&apos;d love to explore or work for.
           </Text>
           <View style={styles.emptyBtns}>
             <TouchableOpacity activeOpacity={0.85}

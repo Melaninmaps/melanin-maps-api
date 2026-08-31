@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request, type Response } from "express";
 import communityOrgsRouter from "./community-orgs";
 import recurringEventsRouter from "./recurring-events-route";
 import editSuggestionsRouter from "./edit-suggestions";
@@ -380,9 +380,9 @@ router.use(tourCulturalSitesRouter);
 router.use(culturalPhrasesRouter);
 router.use(passportRouter);
 router.use(safetyHeatmapRouter);
-// Public canonical GET routes must come first — no requireAuth so map cards
-// and deep links work for any visitor. The auth-protected culturalSitesRouter
-// still handles stories, moderation, and contribution routes.
+// Canonical GET routes must come before the legacy culturalSitesRouter so map
+// cards and deep links receive the stable response contract. They remain below
+// the member wall, consistent with the platform-data access policy above.
 router.use(canonicalCulturalSitesRouter);
 router.use(culturalSitesRouter);
 router.use(sundownTownsRouter);

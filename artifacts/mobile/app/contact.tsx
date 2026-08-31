@@ -75,7 +75,7 @@ export default function ContactScreen() {
           </View>
           <Text style={[styles.successTitle, { color: colors.foreground }]}>Message Sent!</Text>
           <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-            We'll get back to you at {email} within 1–2 business days.
+            We&apos;ll get back to you at {email} within 1–2 business days.
           </Text>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.doneBtn, { backgroundColor: colors.primary }]}
@@ -115,7 +115,7 @@ export default function ContactScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={[styles.fieldLabel, { color: colors.foreground }]}>What's this about?</Text>
+          <Text style={[styles.fieldLabel, { color: colors.foreground }]}>What&apos;s this about?</Text>
           <View style={styles.typeGrid}>
             {FORM_TYPES.map((t) => (
               <TouchableOpacity

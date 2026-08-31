@@ -78,7 +78,7 @@ export default function ShowLoveScreen() {
   const displayNominations = localNominations.length > 0 ? localNominations : nominations;
 
   React.useEffect(() => {
-    setLocalNominations(nominations);
+    queueMicrotask(() => { setLocalNominations(nominations); });
   }, [nominations]);
 
   const [showForm, setShowForm] = useState(false);

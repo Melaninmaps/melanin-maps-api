@@ -108,7 +108,7 @@ function RecommendModal({
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={[s.modalTitle, { color: colors.foreground }]}>Help a Business Join 🤎</Text>
               <Text style={[s.modalSub, { color: colors.mutedForeground }]}>
-                Know a minority-owned business you'd love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
+                Know a minority-owned business you&apos;d love to see on Mapping with Melanin™? Help us grow our community by recommending a business you believe others should discover.
               </Text>
 
               <Text style={[s.fieldLabel, { color: colors.mutedForeground }]}>Business Name <Text style={{ color: colors.destructive }}>*</Text></Text>
@@ -187,7 +187,7 @@ function RecommendModal({
               {isAuthenticated && (
                 <View style={[s.pointsHint, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "25" }]}>
                   <Text style={{ fontSize: 18 }}>🤎</Text>
-                  <Text style={[s.pointsHintText, { color: colors.primary }]}>You'll earn <Text style={{ fontFamily: "Inter_700Bold" }}>20 Community Builder Points</Text> for this recommendation.</Text>
+                  <Text style={[s.pointsHintText, { color: colors.primary }]}>You&apos;ll earn <Text style={{ fontFamily: "Inter_700Bold" }}>20 Community Builder Points</Text> for this recommendation.</Text>
                 </View>
               )}
 
@@ -219,7 +219,7 @@ function RecommendModal({
                     community members have recommended this business
                   </Text>
                   <Text style={{ fontFamily: "Inter_400Regular", fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 4, textAlign: "center" }}>
-                    That's not just an invitation — that's demand. "Our community is already looking for you."
+                    That&apos;s not just an invitation — that&apos;s demand. &quot;Our community is already looking for you.&quot;
                   </Text>
                 </View>
               )}
@@ -238,7 +238,7 @@ function RecommendModal({
                 <View style={{ flex: 1 }}>
                   <Text style={[s.badgeHintTitle, { color: colors.foreground }]}>Community Recommended Badge</Text>
                   <Text style={[s.badgeHintSub, { color: colors.mutedForeground }]}>
-                    When this business joins, they'll display a badge showing the community recommended them — not Mapping with Melanin™. Because the community did.
+                    When this business joins, they&apos;ll display a badge showing the community recommended them — not Mapping with Melanin™. Because the community did.
                   </Text>
                 </View>
               </View>
@@ -277,7 +277,7 @@ export default function WaitlistScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [position, setPosition] = useState(Math.floor(Math.random() * 800) + 200);
+  const [position, setPosition] = useState(() => Math.floor(Math.random() * 800) + 200);
   const [showRecommend, setShowRecommend] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteCount, setInviteCount] = useState(0);
@@ -437,7 +437,7 @@ export default function WaitlistScreen() {
                 activeOpacity={0.8}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.toggleLabel, { color: colors.foreground }]}>I'm a business owner</Text>
+                  <Text style={[styles.toggleLabel, { color: colors.foreground }]}>I&apos;m a business owner</Text>
                   <Text style={[styles.toggleSub, { color: colors.mutedForeground }]}>Get listed as a minority-owned business</Text>
                 </View>
                 <View style={[styles.toggle, { backgroundColor: isBusinessOwner ? colors.primary : colors.muted }]}>
@@ -534,7 +534,7 @@ export default function WaitlistScreen() {
                   <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>Officially Put Your City on the Map</Text>
                 </View>
                 <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
-                  Every city on the Welcome Home Tour gets a permanent community archive — interviews, food recs, local knowledge, and stories from residents. Nominate your city and we'll reach out when the tour arrives.
+                  Every city on the Welcome Home Tour gets a permanent community archive — interviews, food recs, local knowledge, and stories from residents. Nominate your city and we&apos;ll reach out when the tour arrives.
                 </Text>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
@@ -561,7 +561,7 @@ export default function WaitlistScreen() {
                 )}
               </TouchableOpacity>
               <Text style={[styles.privacy, { color: colors.mutedForeground }]}>
-                No spam. Unsubscribe anytime. Your data is never sold.{"\n"}We don't sell your attention—we help our community discover great businesses.
+                No spam. Unsubscribe anytime. Your data is never sold.{"\n"}We don&apos;t sell your attention—we help our community discover great businesses.
               </Text>
             </View>
 
@@ -574,9 +574,9 @@ export default function WaitlistScreen() {
               <View style={[styles.successCircle, { backgroundColor: colors.success + "20" }]}>
                 <Feather name="check-circle" size={52} color={colors.success} />
               </View>
-              <Text style={[styles.successTitle, { color: colors.foreground }]}>You're on the list!</Text>
+              <Text style={[styles.successTitle, { color: colors.foreground }]}>You&apos;re on the list!</Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                We'll send your early access invite to {email} when we launch in your city.
+                We&apos;ll send your early access invite to {email} when we launch in your city.
               </Text>
 
               <View style={[styles.positionCard, { backgroundColor: colors.secondary }]}>
@@ -592,7 +592,7 @@ export default function WaitlistScreen() {
                     Family Circle Added!
                   </Text>
                   <Text style={{ fontFamily: "Inter_400Regular", fontSize: 13, color: colors.mutedForeground, textAlign: "center", lineHeight: 19 }}>
-                    {familyAdded} family member{familyAdded > 1 ? "s" : ""} registered. Each will receive their own confirmation email and you'll be reviewed together.
+                    {familyAdded} family member{familyAdded > 1 ? "s" : ""} registered. Each will receive their own confirmation email and you&apos;ll be reviewed together.
                   </Text>
                 </View>
               )}
@@ -645,7 +645,7 @@ export default function WaitlistScreen() {
                   )}
                 </View>
                 <Text style={[styles.inviteCardSub, { color: colors.mutedForeground }]}>
-                  Enter their email and they're added immediately — no link needed. A personal invite lands in their inbox from you.
+                  Enter their email and they&apos;re added immediately — no link needed. A personal invite lands in their inbox from you.
                 </Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.primary} />
@@ -656,7 +656,7 @@ export default function WaitlistScreen() {
               <View style={[styles.archivePitch, { backgroundColor: "#CA922B10", borderColor: "#CA922B30" }]}>
                 <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>🗺️ {cityNomination.trim()} is Nominated!</Text>
                 <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
-                  When the Welcome Home Tour comes to your city, you'll have the chance to officially contribute to its archive — your words, your places, your community's story. Permanently.
+                  When the Welcome Home Tour comes to your city, you&apos;ll have the chance to officially contribute to its archive — your words, your places, your community&apos;s story. Permanently.
                 </Text>
               </View>
             )}
@@ -668,7 +668,7 @@ export default function WaitlistScreen() {
                 <Text style={[styles.archivePitchTitle, { color: colors.foreground }]}>Nominate a Friend</Text>
               </View>
               <Text style={[styles.archivePitchText, { color: colors.mutedForeground }]}>
-                Know someone who should be part of this? Invite them to the waitlist — and nominate them to be a founding voice for their city's archive.
+                Know someone who should be part of this? Invite them to the waitlist — and nominate them to be a founding voice for their city&apos;s archive.
               </Text>
               <TouchableOpacity
                 style={[styles.joinBtn, { backgroundColor: colors.primary, marginTop: 4 }]}
@@ -908,7 +908,7 @@ function InviteFriendModal({
                   <View style={[inv.infoBox, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
                     <Text style={{ fontSize: 16 }}>✉️</Text>
                     <Text style={[inv.infoText, { color: colors.primary }]}>
-                      They'll get a personal invite from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not a generic email.
+                      They&apos;ll get a personal invite from <Text style={{ fontFamily: "Inter_700Bold" }}>you</Text> — not a generic email.
                     </Text>
                   </View>
                   <TouchableOpacity
@@ -934,7 +934,7 @@ function InviteFriendModal({
                     </TouchableOpacity>
                   </View>
                   <Text style={[inv.sub, { color: colors.mutedForeground }]}>
-                    Enter their social handle or profile URL. We'll generate a message you can send them directly.
+                    Enter their social handle or profile URL. We&apos;ll generate a message you can send them directly.
                   </Text>
                   {recipientType === "business" && (
                     <>
@@ -1037,7 +1037,7 @@ function InviteFriendModal({
                 <Text style={{ fontFamily: "Inter_700Bold", color: colors.foreground }}>
                   {friendName.trim() || friendEmail}
                 </Text>{" "}
-                has been added to the community waitlist and sent a personal invite. They'll hear from us soon.
+                has been added to the community waitlist and sent a personal invite. They&apos;ll hear from us soon.
               </Text>
 
               <View style={[inv.successBadge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>

@@ -70,16 +70,25 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
   const [loadingCount, setLoadingCount] = useState(false);
 
   useEffect(() => {
-    if (!visible || !business) { setPinnedCount(null); return; }
-    setLoadingCount(true);
-    fetch(`${getApiBase()}/api/saved-places/${business.id}/count`)
+    if (!visible || !business) return;
+    let cancelled = false;
+    Promise.resolve().then(() => {
+      if (!cancelled) {
+        setPinnedCount(null);
+        setLoadingCount(true);
+      }
+      return fetch(`${getApiBase()}/api/saved-places/${business.id}/count`);
+    })
       .then((r) => r.ok ? r.json() : null)
       .then((d: { count?: number } | null) => {
-        if (d?.count != null) setPinnedCount(d.count);
+        if (!cancelled && d?.count != null) setPinnedCount(d.count);
       })
       .catch(() => {})
-      .finally(() => setLoadingCount(false));
-  }, [visible, business?.id]);
+      .finally(() => { if (!cancelled) setLoadingCount(false); });
+    return () => { cancelled = true; };
+  }, [visible, business]);
+
+  const displayedPinnedCount = visible ? pinnedCount : null;
 
   if (!business) return null;
 
@@ -133,7 +142,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
                   <ActivityIndicator size="small" color={colors.primary} style={{ width: 30 }} />
                 ) : (
                   <Text style={[s.pinnedText, { color: colors.primary }]}>
-                    {pinnedCount != null ? `${pinnedCount} pinned` : "Pinned"}
+                    {displayedPinnedCount != null ? `${displayedPinnedCount} pinned` : "Pinned"}
                   </Text>
                 )}
               </View>
@@ -160,7 +169,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
                 <View style={s.chipsWrap}>
                   {captions.map((cap) => (
                     <View key={cap} style={[s.chip, { backgroundColor: "#C4622D0F", borderColor: "#C4622D40" }]}>
-                      <Text style={[s.chipText, { color: "#C4622D" }]}>"{cap}"</Text>
+                      <Text style={[s.chipText, { color: "#C4622D" }]}>&quot;{cap}&quot;</Text>
                     </View>
                   ))}
                 </View>

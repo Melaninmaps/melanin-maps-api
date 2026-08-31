@@ -18,11 +18,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CommunityPostCard } from "@/components/CommunityPostCard";
 import type { CommunityPost } from "@/constants/types";
-
-function getApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
+import { parseMediaUrls } from "@/lib/mediaUrls";
+import { getApiBase } from "@/lib/api";
 
 function timeAgo(date: Date | string): string {
   const d = new Date(date);
@@ -125,7 +122,7 @@ export default function VisitorProfileScreen() {
         businessId: p.businessId,
         businessName: p.businessName,
         businessLink: p.businessLink,
-        mediaUrls: p.mediaUrls ? JSON.parse(p.mediaUrls) : undefined,
+        mediaUrls: parseMediaUrls(p.mediaUrls),
         savedPlaceId: p.savedPlaceId,
         locationTag: p.locationTag,
         locationType: p.locationType,
@@ -150,8 +147,8 @@ export default function VisitorProfileScreen() {
     }
   }, [id]);
 
-  useEffect(() => { void loadProfile(); }, [loadProfile]);
-  useEffect(() => { void loadPosts(); }, [loadPosts]);
+  useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
+  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
   useEffect(() => {
     SecureStore.getItemAsync("auth_session_token").then((token) => {
       if (!token) return;

@@ -276,6 +276,7 @@ export default function LibraryScreen() {
   const [feed, setFeed] = useState<FeedArticle[]>([]);
   const [experts, setExperts] = useState<Expert[]>(SAMPLE_EXPERTS);
   const [stories, setStories] = useState<HappeningNowStory[]>([]);
+  const [renderedAt] = useState(() => Date.now());
   const [submitModalVisible, setSubmitModalVisible] = useState(false);
   const [submitTitle, setSubmitTitle] = useState("");
   const [submitSummary, setSubmitSummary] = useState("");
@@ -390,7 +391,7 @@ export default function LibraryScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { queueMicrotask(() => { loadData(); }); }, [loadData]);
 
   // ── Deep-link from LibraryActionPill ─────────────────────────────────────
   // When Kinfolk returns a libraryAction and the user taps the pill in travel.tsx,
@@ -699,7 +700,7 @@ export default function LibraryScreen() {
                 <Text style={{ fontSize: 32, marginBottom: 12 }}>📚</Text>
                 <Text style={[styles.promptTitle, { color: colors.foreground }]}>Sign in to build your library</Text>
                 <Text style={[styles.promptSub, { color: colors.mutedForeground }]}>
-                  Follow topics and get a personalized weekly reading list — no spam, just new articles waiting when you're ready.
+                  Follow topics and get a personalized weekly reading list — no spam, just new articles waiting when you&apos;re ready.
                 </Text>
                 <TouchableOpacity
                   style={[styles.signInBtn, { backgroundColor: colors.primary }]}
@@ -714,7 +715,7 @@ export default function LibraryScreen() {
                 <Text style={{ fontSize: 36, marginBottom: 12 }}>✦</Text>
                 <Text style={[styles.promptTitle, { color: colors.foreground }]}>Start building your library</Text>
                 <Text style={[styles.promptSub, { color: colors.mutedForeground }]}>
-                  Follow topics you care about. Every week, new articles appear — waiting whenever you're ready to read.
+                  Follow topics you care about. Every week, new articles appear — waiting whenever you&apos;re ready to read.
                 </Text>
                 <TouchableOpacity
                   style={[styles.signInBtn, { backgroundColor: colors.primary }]}
@@ -845,7 +846,7 @@ export default function LibraryScreen() {
                   <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved cities</Text>
-                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Include news from cities you've saved</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Include news from cities you&apos;ve saved</Text>
                     </View>
                     <TouchableOpacity activeOpacity={0.85}
                       style={[
@@ -861,7 +862,7 @@ export default function LibraryScreen() {
                   <View style={[styles.prefToggleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.prefToggleTitle, { color: colors.foreground }]}>Notify from saved businesses</Text>
-                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from community businesses you've saved</Text>
+                      <Text style={[styles.prefToggleDesc, { color: colors.mutedForeground }]}>Updates from community businesses you&apos;ve saved</Text>
                     </View>
                     <TouchableOpacity activeOpacity={0.85}
                       style={[
@@ -1153,7 +1154,7 @@ export default function LibraryScreen() {
                       other:       { emoji: "📰", color: "#6B7280", label: "Other" },
                     };
                     const cat = CAT_META[story.category] ?? CAT_META.other;
-                    const diffMs = Date.now() - new Date(story.createdAt).getTime();
+                    const diffMs = renderedAt - new Date(story.createdAt).getTime();
                     const diffH = Math.floor(diffMs / 3600000);
                     const timeLabel = diffH < 1 ? "Just now" : diffH < 24 ? `${diffH}h ago` : `${Math.floor(diffH / 24)}d ago`;
                     return (
@@ -1340,7 +1341,7 @@ export default function LibraryScreen() {
               <Text style={{ fontSize: 22, marginBottom: 4 }}>🔍</Text>
               <Text style={[styles.browseHeroTitle, { color: colors.foreground }]}>Save Any Interest</Text>
               <Text style={[styles.browseHeroSub, { color: colors.mutedForeground }]}>
-                Search a city, country, medical topic, hobby, cultural interest — anything. We'll find community posts, businesses, and resources that match.
+                Search a city, country, medical topic, hobby, cultural interest — anything. We&apos;ll find community posts, businesses, and resources that match.
               </Text>
             </View>
 
@@ -1384,7 +1385,7 @@ export default function LibraryScreen() {
                     ? <ActivityIndicator size="small" color="#fff" />
                     : <>
                         <Feather name="plus" size={15} color="#fff" />
-                        <Text style={styles.addTopicTxt}>Save "{topicSearch.trim()}"</Text>
+                        <Text style={styles.addTopicTxt}>Save &quot;{topicSearch.trim()}&quot;</Text>
                       </>
                   }
                 </TouchableOpacity>
@@ -1612,7 +1613,7 @@ export default function LibraryScreen() {
             >
               <Feather name="plus" size={14} color={colors.mutedForeground} />
               <Text style={[styles.similarForceTxt, { color: colors.mutedForeground }]}>
-                No — add "{pendingTopicName}" as a new topic
+                No — add &quot;{pendingTopicName}&quot; as a new topic
               </Text>
             </TouchableOpacity>
 

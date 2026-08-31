@@ -78,9 +78,11 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
 
   React.useEffect(() => {
     if (isEditMode && visible) {
-      if (initialRating) setRating(initialRating);
-      if (initialText) setText(initialText);
-      setWouldReturn("yes");
+      queueMicrotask(() => {
+        if (initialRating) setRating(initialRating);
+        if (initialText) setText(initialText);
+        setWouldReturn("yes");
+      });
     }
   }, [isEditMode, visible, initialRating, initialText]);
 
@@ -231,7 +233,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                 <View style={[styles.inviteBadge, { backgroundColor: "#7C3AED18", borderColor: "#7C3AED33" }]}>
                   <Ionicons name="school" size={14} color="#7C3AED" />
                   <Text style={[styles.inviteBadgeText, { color: "#7C3AED" }]}>
-                    You're now listed as a career mentor — thank you!
+                    You&apos;re now listed as a career mentor — thank you!
                   </Text>
                 </View>
               )}
@@ -438,7 +440,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   </View>
                 </View>
                 <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
-                  Share a link to your Instagram, TikTok, Facebook, or YouTube post about this business. It'll appear on your profile and link back to your page.
+                  Share a link to your Instagram, TikTok, Facebook, or YouTube post about this business. It&apos;ll appear on your profile and link back to your page.
                 </Text>
                 <TextInput
                   style={[styles.videoInput, { backgroundColor: colors.background, borderColor: videoLink && !isValidVideoUrl(videoLink) ? "#DC2626" : videoLink && isValidVideoUrl(videoLink) ? "#2D7A4F" : colors.border, color: colors.foreground }]}
@@ -469,7 +471,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   </View>
                 </View>
                 <Text style={[styles.inviteDesc, { color: colors.mutedForeground }]}>
-                  Tag their social handle and we'll send them a 60-day free trial invitation to join Mapping With Melanin.
+                  Tag their social handle and we&apos;ll send them a 60-day free trial invitation to join Mapping With Melanin.
                 </Text>
 
                 <Text style={[styles.platformLabel, { color: colors.foreground }]}>Platform</Text>
@@ -565,7 +567,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                   </View>
                   {isAnonymous && (
                     <Text style={[styles.anonHint, { color: colors.mutedForeground }]}>
-                      Your name will appear as "Anonymous Community Member"
+                      Your name will appear as &quot;Anonymous Community Member&quot;
                     </Text>
                   )}
 
@@ -635,7 +637,7 @@ export function WriteReviewModal({ visible, businessName, businessId, businessCa
                           Volunteer as a career mentor
                         </Text>
                         <Text style={[styles.mentorSub, { color: colors.mutedForeground }]}>
-                          Help job seekers in this industry — we'll list you in our mentorship directory
+                          Help job seekers in this industry — we&apos;ll list you in our mentorship directory
                         </Text>
                       </View>
                       <Ionicons name="school-outline" size={20} color={volunteerAsMentor ? "#7C3AED" : colors.mutedForeground} />

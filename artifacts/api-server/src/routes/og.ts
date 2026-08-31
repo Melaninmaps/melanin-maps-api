@@ -200,7 +200,7 @@ router.get("/og/business/:id", async (req: Request, res: Response) => {
       business.name,
       business.category,
       business.city,
-      business.state,
+      business.state ?? "",
     );
 
     const svg = await (satori as any)(element, {

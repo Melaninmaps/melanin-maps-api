@@ -1,0 +1,22 @@
+**Not yet—the screenshot alone cannot confirm that those tabs work.** Replit should perform a route-by-route functional audit in the **current merged workspace**, repair every dead tab, and prove each journey supports the product flywheel. Do not let it mark the task complete merely because pages render.
+
+Paste this into Replit Agent:
+
+> Audit and repair **every desktop navigation tab and corresponding mobile entry point** in the current Mapping With Melanin workspace. Preserve all merged work and the manually integrated Manus fixes. Do not force-apply old patches or replace complete files.
+>
+> The visible navigation inventory is: **Map, Businesses, Safety, For Business Owners, Explore, Community, Library, KinfolkAI, Events, Circles, Guides, Marketplace, Connections, theme control, notifications, and Profile**. Also inspect logo/home navigation and all dropdowns or mobile equivalents.
+>
+> For every item, verify that clicking it changes to the correct route, the route is registered, direct URL loading and browser refresh work, authenticated and unauthenticated behavior is correct, loading/error/empty states are usable, primary buttons perform real actions, API requests return successfully, and external links open safely. Repair dead `href="#"` values, empty click handlers, placeholder buttons, mismatched route paths, overlays blocking clicks, incorrect `pointer-events`/z-index behavior, missing pages, bad auth redirects, API response mismatches, and mobile/web route drift.
+>
+> Use an automated browser test to click every navigation item at desktop and mobile widths. Record the starting URL, ending URL, page heading, console errors, failed network calls, and whether the primary page action works. Test direct-load and refresh for every route. A tab is **not passing** if it only changes styling, opens a blank page, silently fails, shows permanent loading, returns an unhandled empty state, or has no working next action.
+>
+> Confirm the flywheel journeys end to end:
+> **Discover** through Map, Businesses, Explore, Guides, Events, Library, and Marketplace → **evaluate/trust** through cultural context, safety information, profiles, reviews, verification, and working links → **engage** through saves, follows, posts with pictures/videos, comments, circles, connections, and event actions → **convert/contribute** through business-owner onboarding, listing management, recommendations, marketplace actions, and community content → **retain/return** through notifications, personalized location content, KinfolkAI, saved places, and profile history.
+>
+> Specifically test image and video posting in Community: select → upload → preview → submit → visible in feed → refresh → still visible/playable. Test multiple attachments with one later failure and confirm successful earlier uploads remain selected.
+>
+> Add or update Playwright tests covering the entire navigation inventory and critical flywheel journeys. Give every test a stable `data-testid` rather than relying on visible text where possible. Run the complete typecheck, lint, unit tests, browser tests at desktop and mobile widths, Expo configuration validation, and iOS/Android pre-build gates. Fix new failures. Do not deploy or submit app builds.
+>
+> Deliver a final table with one row per tab containing: route, desktop pass/fail, mobile pass/fail, direct refresh pass/fail, API status, primary action tested, flywheel stage, files changed, and evidence screenshot/test name. List any remaining item as **BLOCKED**, never as complete.
+
+Use this acceptance rule: **all navigation rows must pass, zero uncaught console errors, zero unexpected 4xx/5xx requests, and every page must have at least one working next action tied to the flywheel.** Ask Replit to show you its completed evidence table and test output before you approve the work.

@@ -39,7 +39,7 @@ export function useDeals(businessId: string) {
     finally { setIsLoading(false); }
   }, [businessId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const postDeal = useCallback(async (title: string, discountText?: string, description?: string) => {
     const token = await getToken();

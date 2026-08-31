@@ -52,7 +52,7 @@ type PathwayData = {
   sections: {
     nextActions: string[];
     businessesNearby: Business[];
-    businessesByCategory: Array<{ category: string; businesses: Business[] }>;
+    businessesByCategory: { category: string; businesses: Business[] }[];
     safety: SafetySection;
     events: Event[];
     kinfolkPrompts: string[];
@@ -92,7 +92,7 @@ export default function SmartPathwayScreen() {
     } catch { /**/ }
   }, []);
 
-  useEffect(() => { loadPathway(); loadPins(); }, [loadPathway]);
+  useEffect(() => { queueMicrotask(() => { loadPathway(); }); queueMicrotask(() => { loadPins(); }); }, [loadPathway]);
 
   const handleDelete = () => {
     Alert.alert("Remove pin?", "This will delete this neighborhood pin.", [
@@ -361,7 +361,7 @@ export default function SmartPathwayScreen() {
                 style={[styles.promptCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => openKinfolk(prompt)}
               >
-                <Text style={styles.promptQuote}>"</Text>
+                <Text style={styles.promptQuote}>&quot;</Text>
                 <Text style={[styles.promptTxt, { color: colors.foreground }]} numberOfLines={2}>{prompt}</Text>
                 <Feather name="arrow-right" size={14} color={colors.primary} />
               </TouchableOpacity>

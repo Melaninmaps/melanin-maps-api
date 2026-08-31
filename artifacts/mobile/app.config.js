@@ -1,10 +1,27 @@
 const mapsKey = process.env.GOOGLE_MAPS_API_KEY ?? "";
+const commitSha =
+  process.env.EAS_BUILD_GIT_COMMIT_HASH ??
+  process.env.GITHUB_SHA ??
+  process.env.REPLIT_GIT_COMMIT_SHA ??
+  "unknown";
+const releaseChannel = process.env.APP_RELEASE_CHANNEL ?? "production";
+const environment = process.env.APP_ENV ?? "production";
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => ({
   ...config,
+  extra: {
+    ...(config.extra ?? {}),
+    commitSha,
+    releaseChannel,
+    environment,
+  },
   plugins: [
     ...(config.plugins ?? []),
+    "expo-asset",
+    "expo-secure-store",
+    "expo-sharing",
+    "expo-video",
     // NOTE: @sentry/react-native was removed from this plugin list.
     // The native Sentry SDK (KSCrash) auto-initialises before JS runs and
     // caused a native crash on launch for all testers on Build 100.

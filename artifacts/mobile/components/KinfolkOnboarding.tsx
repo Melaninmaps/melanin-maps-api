@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions,
+  Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,8 +9,6 @@ import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 const ONBOARDING_KEY = "@melanin_maps_kinfolk_onboarding";
 const GOLD = "#C9922B";
-const { width } = Dimensions.get("window");
-
 const CATEGORIES = [
   { id: "Food & Drink", emoji: "🍽" },
   { id: "Music & Live Events", emoji: "🎵" },
@@ -143,7 +141,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
               </View>
               <Text style={[styles.heading, { color: colors.text }]}>Hey, kinfolk 👋🏾</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                I'm KinfolkAI™ — your personal life companion. Let me learn your taste so every recommendation feels like it was made just for you.
+                I&apos;m KinfolkAI™ — your personal life companion. Let me learn your taste so every recommendation feels like it was made just for you.
               </Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground, marginTop: 8 }]}>
                 Takes less than a minute. You can always update this later.
@@ -155,7 +153,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>What do you love?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                Pick everything that speaks to you — I'll prioritize these in every city.
+                Pick everything that speaks to you — I&apos;ll prioritize these in every city.
               </Text>
               <View style={styles.catGrid}>
                 {CATEGORIES.map((c) => {
@@ -179,9 +177,9 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
           {step === 2 && (
             <View>
-              <Text style={[styles.heading, { color: colors.text }]}>What's your budget vibe?</Text>
+              <Text style={[styles.heading, { color: colors.text }]}>What&apos;s your budget vibe?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                I'll match recommendations to how you like to spend.
+                I&apos;ll match recommendations to how you like to spend.
               </Text>
               <View style={styles.optionsList}>
                 {BUDGET_OPTIONS.map((b) => (
@@ -207,7 +205,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>How do you travel?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                Pick all that describe you — I'll tailor spots for your travel style.
+                Pick all that describe you — I&apos;ll tailor spots for your travel style.
               </Text>
               <View style={styles.catGrid}>
                 {TRIP_STYLE_OPTIONS.map((s) => {
@@ -231,9 +229,9 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
 
           {step === 4 && (
             <View>
-              <Text style={[styles.heading, { color: colors.text }]}>Who's rolling with you?</Text>
+              <Text style={[styles.heading, { color: colors.text }]}>Who&apos;s rolling with you?</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                I'll tailor spots based on your travel crew.
+                I&apos;ll tailor spots based on your travel crew.
               </Text>
               <View style={styles.optionsList}>
                 {COMPANION_OPTIONS.map((c) => (
@@ -256,12 +254,12 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
             <View>
               <Text style={[styles.heading, { color: colors.text }]}>Your go-to services 💈</Text>
               <Text style={[styles.subheading, { color: colors.mutedForeground }]}>
-                Tell me what you regularly use — I'll find minority-owned providers in every new city without you having to ask.
+                Tell me what you regularly use — I&apos;ll find minority-owned providers in every new city without you having to ask.
               </Text>
               <View style={[styles.serviceHint, { backgroundColor: GOLD + "14", borderColor: GOLD + "30" }]}>
                 <Ionicons name="sparkles" size={14} color={GOLD} />
                 <Text style={[styles.serviceHintText, { color: colors.text }]}>
-                  Going out of town for a month? I'll have your barber, nail tech, loctician — everything — already lined up.
+                  Going out of town for a month? I&apos;ll have your barber, nail tech, loctician — everything — already lined up.
                 </Text>
               </View>
               <View style={styles.catGrid}>
@@ -284,7 +282,7 @@ export function KinfolkOnboarding({ visible, onComplete }: Props) {
               <View style={[styles.learnBadge, { backgroundColor: GOLD + "14", borderColor: GOLD + "30", marginTop: 20 }]}>
                 <Ionicons name="bulb-outline" size={16} color={GOLD} />
                 <Text style={[styles.learnText, { color: colors.text }]}>
-                  KinfolkAI™ gets smarter every time you use it. Thumbs up a spot? I remember. Thumbs down? I won't do it again.
+                  KinfolkAI™ gets smarter every time you use it. Thumbs up a spot? I remember. Thumbs down? I won&apos;t do it again.
                 </Text>
               </View>
             </View>

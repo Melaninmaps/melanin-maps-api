@@ -279,7 +279,7 @@ function ResolutionCard({
             <View style={[styles.reviewingNote, { backgroundColor: "#44291912", borderColor: "#44291930" }]}>
               <Feather name="shield" size={13} color="#442A19" />
               <Text style={[styles.reviewingTxt, { color: "#442A19" }]}>
-                Our moderation team is reviewing this video. You'll be notified when a decision is made.
+                Our moderation team is reviewing this video. You&apos;ll be notified when a decision is made.
               </Text>
             </View>
           )}

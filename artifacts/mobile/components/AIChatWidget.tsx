@@ -5,8 +5,7 @@ import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useAudioRecorder, useAudioPlayer, requestRecordingPermissionsAsync, RecordingPresets } from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import {
+import { NativeScrollEvent, NativeSyntheticEvent ,
   Alert,
   Animated,
   FlatList,
@@ -33,12 +32,13 @@ interface Message {
   taskCreated?: { listName?: string; taskCount?: number; taskTitle?: string };
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  sourceNote?: string | null;
 }
 
 interface TaskActionPayload {
   type: "create_list" | "create_task" | "add_tasks";
   list?: { name: string; icon?: string };
-  tasks?: Array<{ title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }>;
+  tasks?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string }[];
   task?: { title: string; notes?: string | null; dueTimeLabel?: string | null; category?: string };
 }
 
@@ -105,6 +105,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
   followUpSuggestions: string[];
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  sourceNote?: string | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -134,6 +135,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     followUpSuggestions?: string[];
     location?: { city: string; state: string | null; source: string } | null;
     locationSource?: string | null;
+    sourceNote?: string | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -142,6 +144,7 @@ async function sendToKinfolk(message: string, token: string | null): Promise<{
     followUpSuggestions: data.followUpSuggestions ?? [],
     location: data.location ?? null,
     locationSource: data.locationSource ?? null,
+    sourceNote: data.sourceNote ?? null,
   };
 }
 
@@ -195,7 +198,7 @@ export function AIChatWidget() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(() => [
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
   ]);
   const [input, setInput] = useState("");
@@ -224,24 +227,24 @@ export function AIChatWidget() {
   const onWidgetContentSizeChange = useCallback(() => {
     if (widgetAtBottom) listRef.current?.scrollToEnd({ animated: false });
   }, [widgetAtBottom]);
-  const pulse = useRef(new Animated.Value(1)).current;
-  const fabTranslateY = useRef(new Animated.Value(0)).current;
-  const fabOpacity = useRef(new Animated.Value(1)).current;
+  const [pulse] = useState(() => new Animated.Value(1));
+  const [fabTranslateY] = useState(() => new Animated.Value(0));
+  const [fabOpacity] = useState(() => new Animated.Value(1));
 
   const suppressed = ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const startPulse = () => {
+  const startPulse = useCallback(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, { toValue: 1.12, duration: 700, useNativeDriver: true }),
         Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
       ])
     ).start();
-  };
+  }, [pulse]);
 
-  React.useEffect(() => { if (!suppressed && !dismissed) startPulse(); }, [suppressed, dismissed]);
+  React.useEffect(() => { if (!suppressed && !dismissed) startPulse(); }, [suppressed, dismissed, startPulse]);
 
   const dismissPill = () => {
     pulse.stopAnimation();
@@ -267,7 +270,7 @@ export function AIChatWidget() {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const fabPanResponder = useRef(
+  const [fabPanResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
@@ -288,9 +291,9 @@ export function AIChatWidget() {
         }
       },
     })
-  ).current;
+  );
 
-  const restorePanResponder = useRef(
+  const [restorePanResponder] = useState(() =>
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
@@ -298,7 +301,7 @@ export function AIChatWidget() {
         if (g.dy > 20) restorePill();
       },
     })
-  ).current;
+  );
 
   const startVoice = async () => {
     if (Platform.OS === "web") return;
@@ -325,7 +328,7 @@ export function AIChatWidget() {
       const ext = uri.split(".").pop() ?? "m4a";
       let fileContent: string;
       try {
-        fileContent = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        fileContent = await new FileSystem.File(uri).base64();
       } catch {
         Alert.alert("Voice Input", "Couldn't read the recording — please try again.");
         return;
@@ -400,14 +403,15 @@ export function AIChatWidget() {
     if (listenUri && player.isLoaded) {
       player.play();
     }
-  }, [listenUri, player.isLoaded]);
+  }, [listenUri, player]);
 
   // ── Clear playingId when audio finishes ───────────────────────────────────
   useEffect(() => {
     if (playingId && !player.playing && player.isLoaded) {
-      setPlayingId(null);
+      const timer = setTimeout(() => setPlayingId(null), 0);
+      return () => clearTimeout(timer);
     }
-  }, [player.playing]);
+  }, [player, player.playing, player.isLoaded, playingId]);
 
   // ── Fetch voice usage + play daily signature when chat opens ─────────────
   useEffect(() => {
@@ -441,10 +445,10 @@ export function AIChatWidget() {
             });
             if (sigRes.ok) {
               const { audio, format } = await sigRes.json() as { audio: string; format: string };
-              const sigUri = `${FileSystem.cacheDirectory}kinfolk_sig.${format}`;
-              await FileSystem.writeAsStringAsync(sigUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+              const sigFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_sig.${format}`);
+              sigFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
               setPlayingId("__signature__");
-              setListenUri(sigUri);
+              setListenUri(sigFile.uri);
             }
           } catch { /* non-critical */ }
         }
@@ -465,7 +469,7 @@ export function AIChatWidget() {
         }
       } catch { /* non-critical */ }
     })();
-  }, [open]);
+  }, [open, voicePref]);
 
   const speakMessage = async (msgId: string, text: string) => {
     if (Platform.OS === "web") return;
@@ -503,11 +507,11 @@ export function AIChatWidget() {
         charsLimit: number; percentRemaining: number; tierName: string;
       };
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
-      const tempUri = `${FileSystem.cacheDirectory}kinfolk_${msgId}.${format}`;
-      await FileSystem.writeAsStringAsync(tempUri, audio, { encoding: FileSystem.EncodingType.Base64 });
+      const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
+      tempFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
       setPlayingId(msgId);
-      setListenUri(tempUri);
-      if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setListenUri(tempFile.uri);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch { /* non-critical */ }
   };
 
@@ -527,10 +531,10 @@ export function AIChatWidget() {
       });
       if (r.ok) {
         const { audio, format } = await r.json() as { audio: string; format: string };
-        const uri = `${FileSystem.cacheDirectory}kinfolk_preview_${voiceId}.${format}`;
-        await FileSystem.writeAsStringAsync(uri, audio, { encoding: FileSystem.EncodingType.Base64 });
+        const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${voiceId}.${format}`);
+        file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
         setPlayingId(`__preview_${voiceId}__`);
-        setListenUri(uri);
+        setListenUri(file.uri);
       }
     } catch { /* non-critical */ }
     finally { setPreviewingVoice(null); }
@@ -551,7 +555,7 @@ export function AIChatWidget() {
 
     try {
       const token = await getToken();
-      const { reply, taskAction, followUpSuggestions, location, locationSource } = await sendToKinfolk(text, token);
+      const { reply, taskAction, followUpSuggestions, location, locationSource, sourceNote } = await sendToKinfolk(text, token);
 
       let taskCreated: Message["taskCreated"] | undefined;
       if (taskAction && token) {
@@ -570,6 +574,7 @@ export function AIChatWidget() {
         taskCreated,
         location,
         locationSource,
+        sourceNote,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -771,6 +776,11 @@ export function AIChatWidget() {
                     </Text>
                   </TouchableOpacity>
                 )}
+                {!item.fromUser && item.sourceNote ? (
+                  <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>
+                    {item.sourceNote}
+                  </Text>
+                ) : null}
               </View>
             )}
             ListFooterComponent={typing ? (
@@ -825,7 +835,7 @@ export function AIChatWidget() {
           {messages.length === 1 && !typing && (
             <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
               <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>
-                Ask me anything. I'll always be honest about what I know—and what I don't.
+                Ask me anything. I&apos;ll always be honest about what I know—and what I don&apos;t.
               </Text>
             </View>
           )}
@@ -870,7 +880,7 @@ export function AIChatWidget() {
                 <View style={[styles.voiceSheetPanel, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.voiceSheetHeader}>
                     <View>
-                      <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk's Voice</Text>
+                      <Text style={[styles.voiceSheetTitle, { color: colors.foreground }]}>Kinfolk&apos;s Voice</Text>
                       <Text style={[styles.voiceSheetSub, { color: colors.mutedForeground }]}>Tap Preview to hear each option</Text>
                     </View>
                     <TouchableOpacity onPress={() => setVoiceSheet(false)}>
@@ -1050,6 +1060,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
+  sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
   chipsScroll: { borderTopWidth: 1, maxHeight: 56 },

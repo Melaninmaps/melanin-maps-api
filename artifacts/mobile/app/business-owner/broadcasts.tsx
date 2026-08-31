@@ -99,7 +99,7 @@ export default function BroadcastsScreen() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { queueMicrotask(() => { loadData(); }); }, [loadData]);
 
   const handleSend = async () => {
     if (!title.trim()) { Alert.alert("Add a title", "Give your broadcast a short, clear headline."); return; }
@@ -232,7 +232,7 @@ export default function BroadcastsScreen() {
                 </View>
                 {quota.remaining === 0 && (
                   <Text style={[styles.quotaHint, { color: "#D9534F" }]}>
-                    Monthly limit reached. Emergency updates are always allowed. Unused broadcasts don't roll over.
+                    Monthly limit reached. Emergency updates are always allowed. Unused broadcasts don&apos;t roll over.
                   </Text>
                 )}
                 <Text style={[styles.quotaHint, { color: colors.mutedForeground }]}>
@@ -285,7 +285,7 @@ export default function BroadcastsScreen() {
               <View style={[styles.emergencyNote, { borderColor: "#D9534F", backgroundColor: "#D9534F18" }]}>
                 <Feather name="alert-triangle" size={14} color="#D9534F" />
                 <Text style={[styles.emergencyTxt, { color: "#D9534F" }]}>
-                  Emergency updates go to all followers immediately and don't use your monthly quota.
+                  Emergency updates go to all followers immediately and don&apos;t use your monthly quota.
                 </Text>
               </View>
             )}

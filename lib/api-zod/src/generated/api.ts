@@ -31,6 +31,7 @@ export const GetCurrentAuthUserResponse = zod.object({
   "firstName": zod.string().nullable(),
   "lastName": zod.string().nullable(),
   "profileImageUrl": zod.string().nullable(),
+  "role": zod.enum(['user', 'tester', 'admin']),
   "approved": zod.boolean().optional()
 }),zod.null()])
 })

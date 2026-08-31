@@ -194,7 +194,7 @@ export function VideoDetailModal({ visible, video, onClose }: Props) {
                       </View>
                     )}
                     <Text style={styles.resolvedNote}>
-                      This badge means the creator returned, saw the business's response, and confirmed the issue was addressed.
+                      This badge means the creator returned, saw the business&apos;s response, and confirmed the issue was addressed.
                     </Text>
                   </View>
                 )}

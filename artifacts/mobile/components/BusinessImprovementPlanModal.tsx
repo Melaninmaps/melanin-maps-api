@@ -7,7 +7,6 @@ import {
   Alert,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -287,7 +286,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
             <View>
               <Text style={[s.stepTitle, { color: colors.foreground }]}>What would you like to improve?</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                Choose the challenge you're ready to tackle.
+                Choose the challenge you&apos;re ready to tackle.
               </Text>
               <View style={s.chipGrid}>
                 {ISSUE_TYPES.map((it) => {
@@ -324,7 +323,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
             <View>
               <Text style={[s.stepTitle, { color: colors.foreground }]}>Who would you like to partner with?</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                These are positive sourcing preferences, not exclusive requirements. If we can't find enough exact matches, we'll expand the search and let you know.
+                These are positive sourcing preferences, not exclusive requirements. If we can&apos;t find enough exact matches, we&apos;ll expand the search and let you know.
               </Text>
 
               {OWNERSHIP_OPTIONS.map((opt) => {
@@ -366,7 +365,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
             <View>
               <Text style={[s.stepTitle, { color: colors.foreground }]}>What type of help do you need?</Text>
               <Text style={[s.stepSub, { color: colors.mutedForeground }]}>
-                Select all that apply. We'll search our platform for matching providers.
+                Select all that apply. We&apos;ll search our platform for matching providers.
               </Text>
               {SERVICE_TYPES.map((svc) => {
                 const active = serviceTypes.includes(svc);
@@ -395,7 +394,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
                 This helps us find the right grant opportunities and providers for you.
               </Text>
 
-              <Text style={[s.fieldLabel, { color: colors.foreground }]}>💰 What's your budget?</Text>
+              <Text style={[s.fieldLabel, { color: colors.foreground }]}>💰 What&apos;s your budget?</Text>
               {BUDGETS.map((b) => {
                 const active = budget === b;
                 return (
@@ -413,7 +412,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
                 );
               })}
 
-              <Text style={[s.fieldLabel, { color: colors.foreground, marginTop: 20 }]}>🗓️ What's your timeline?</Text>
+              <Text style={[s.fieldLabel, { color: colors.foreground, marginTop: 20 }]}>🗓️ What&apos;s your timeline?</Text>
               {TIMELINES.map((t) => {
                 const active = timeline === t;
                 return (
@@ -489,7 +488,7 @@ export function BusinessImprovementPlanModal({ visible, onClose, businessId, bus
                   {plan.providers.length === 0 && plan.expandedProviders.length === 0 && (
                     <View style={[s.emptyBox, { backgroundColor: CARD_BG, borderColor: isDark ? "#3A2510" : "#DDD" }]}>
                       <Text style={[s.emptyText, { color: colors.mutedForeground }]}>
-                        We didn't find matching providers on our platform yet — but your roadmap and grant info below will still guide you forward.
+                        We didn&apos;t find matching providers on our platform yet — but your roadmap and grant info below will still guide you forward.
                       </Text>
                     </View>
                   )}

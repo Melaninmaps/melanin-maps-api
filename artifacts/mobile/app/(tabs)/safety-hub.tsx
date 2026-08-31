@@ -216,8 +216,8 @@ export default function SafetyHubTab() {
   }, []);
 
   useEffect(() => {
-    void fetchData();
-    void fetchIntel();
+    queueMicrotask(() => { void fetchData(); });
+    queueMicrotask(() => { void fetchIntel(); });
   }, [fetchData, fetchIntel]);
 
   const moveWidget = (index: number, direction: "up" | "down") => {
@@ -380,7 +380,7 @@ export default function SafetyHubTab() {
                     <Text style={[styles.alertSub, { color: "#7F1D1D" }]}>Contact: {c.trustedContactName}</Text>
                   </View>
                   <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleConfirmCheckin(c.id)} activeOpacity={0.85}>
-                    <Text style={styles.imSafeBtnText}>I'm Safe ✓</Text>
+                    <Text style={styles.imSafeBtnText}>I&apos;m Safe ✓</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -419,10 +419,10 @@ export default function SafetyHubTab() {
                   <Text style={{ fontSize: 18 }}>🏠</Text>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.alertTitle, { color: "#14532D" }]}>Home safe yet?</Text>
-                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you're home — or your safety friend will be alerted.</Text>
+                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you&apos;re home — or your safety friend will be alerted.</Text>
                   </View>
                   <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleHomeCheckin(m.id)} activeOpacity={0.85}>
-                    <Text style={styles.imSafeBtnText}>I'm Home ✓</Text>
+                    <Text style={styles.imSafeBtnText}>I&apos;m Home ✓</Text>
                   </TouchableOpacity>
                 </View>
               ))}

@@ -175,7 +175,7 @@ export function PrivacyPinModal({
                         </Text>
                       </View>
                       <Text style={[styles.bodyText, { color: colors.mutedForeground }]}>
-                        We recommend only pinning topics you're comfortable sharing publicly. You can always unpin it later.
+                        We recommend only pinning topics you&apos;re comfortable sharing publicly. You can always unpin it later.
                       </Text>
                     </>
                   ) : (
@@ -215,7 +215,7 @@ export function PrivacyPinModal({
               ) : (
                 <>
                   <Text style={[styles.bodyText, { color: colors.mutedForeground, textAlign: "center" }]}>
-                    Biometric verification isn't available. Type <Text style={{ fontWeight: "700", color: colors.foreground }}>CONFIRM</Text> below to acknowledge you are intentionally sharing this health topic on your profile.
+                    Biometric verification isn&apos;t available. Type <Text style={{ fontWeight: "700", color: colors.foreground }}>CONFIRM</Text> below to acknowledge you are intentionally sharing this health topic on your profile.
                   </Text>
                   <TextInput
                     style={[styles.confirmInput, { borderColor: colors.border, backgroundColor: colors.background, color: colors.foreground }]}

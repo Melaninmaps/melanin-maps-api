@@ -114,7 +114,6 @@ export interface AudienceDecision {
 }
 
 export interface AuthenticatedRequest extends Request {
-  user?: { id: string; role?: string };
   kinfolk?: {
     route?: RouterContentPlan;
     deliveryProfile?: AdaptiveDeliveryProfile;

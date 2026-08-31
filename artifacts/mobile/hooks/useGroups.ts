@@ -54,7 +54,7 @@ export function useGroups() {
     }
   }, []);
 
-  useEffect(() => { void fetchGroups(); }, [fetchGroups]);
+  useEffect(() => { void Promise.resolve().then(fetchGroups); }, [fetchGroups]);
 
   const join = useCallback(async (groupId: number) => {
     const apiBase = getApiBase();

@@ -162,7 +162,7 @@ export default function BusinessIntelligenceScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const sentiment = computeSentiment(reviews);
   const totalReviews = sentiment.positive + sentiment.neutral + sentiment.negative;

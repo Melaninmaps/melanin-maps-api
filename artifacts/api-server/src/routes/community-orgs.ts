@@ -61,10 +61,10 @@ router.get("/community-orgs/:id", async (req: Request, res: Response) => {
       [id]
     );
     if (!r.rows[0]) return res.status(404).json({ error: "Organization not found" });
-    res.json(r.rows[0]);
+    return res.json(r.rows[0]);
   } catch (err) {
     req.log?.error({ err }, "GET /community-orgs/:id failed");
-    res.status(500).json({ error: "Failed to fetch organization" });
+    return res.status(500).json({ error: "Failed to fetch organization" });
   }
 });
 

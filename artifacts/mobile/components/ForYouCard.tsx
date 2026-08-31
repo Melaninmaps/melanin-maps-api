@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -33,12 +33,12 @@ export function ForYouCard() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [fadeAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (!user) return;
-    setLoading(true);
     void SecureStore.getItemAsync("auth_session_token").then(async (tok) => {
+      setLoading(true);
       if (!tok) { setLoading(false); return; }
       try {
         const r = await fetch(`${getApiBase()}/api/ai/for-you`, {
@@ -55,7 +55,7 @@ export function ForYouCard() {
         setLoading(false);
       }
     });
-  }, [user]);
+  }, [user, fadeAnim]);
 
   if (!user || dismissed || loading || !suggestions.length) return null;
 

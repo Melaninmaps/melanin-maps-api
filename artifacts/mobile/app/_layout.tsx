@@ -14,23 +14,13 @@ import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter, usePathname, type Href } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, Animated, AppState, type AppStateStatus, Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import * as SecureStore from "expo-secure-store";
-
-// ── Sentry removed from native integration ────────────────────────────────────
-// @sentry/react-native native SDK caused a pre-JS native crash on Build 100.
-// JS crash logging (AsyncStorage + Railway POST) remains active via crashLogger.
-// Sentry will be re-added once a confirmed DSN and dev/preview build validates
-// the native integration without crashing testers.
-//
-// NOTE: The Sentry import and init block below are removed. The crash logger
-// and Railway reporting continue working without the native SDK.
-const _sentryDsn: string | undefined = undefined; // reserved — not active
+import * as SecureStore from "expo-secure-store"; // reserved — not active
 // Sentry.init() removed — native SDK not active in this build.
 
 // ── JS crash logger (Layer 1 — OTA-deployed, always active) ──────────────────
@@ -45,15 +35,6 @@ import {
   checkAndSendSavedCrash,
   reportErrorBoundary,
 } from "@/lib/crashLogger";
-
-installCrashLogger();
-// ── Sentry preview-build startup verification ─────────────────────────────────
-// This console.info line confirms: (a) the JS bundle reached this point without
-// crashing, (b) the crash logger initialized, and (c) Sentry native SDK is
-// intentionally absent (removed Build 100 — pre-JS native crash).
-// If this appears in Railway logs / Expo DevTools after a preview build, the
-// build launched cleanly. Task #206 — confirm before testers receive the build.
-console.info("[MWM] Crash logger active. Sentry native SDK: intentionally disabled. Build launched cleanly.");
 import { FRESH_LOGIN_KEY, getBiometricCapabilities, isBiometricsEnabled, enableBiometrics } from "@/hooks/useBiometrics";
 import { AIChatWidget } from "@/components/AIChatWidget";
 import { TesterReportButton } from "@/components/TesterReportButton";
@@ -63,6 +44,25 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { initializeRevenueCat, SubscriptionProvider } from "@/lib/revenuecat";
 
+// ── Sentry removed from native integration ────────────────────────────────────
+// @sentry/react-native native SDK caused a pre-JS native crash on Build 100.
+// JS crash logging (AsyncStorage + Railway POST) remains active via crashLogger.
+// Sentry will be re-added once a confirmed DSN and dev/preview build validates
+// the native integration without crashing testers.
+//
+// NOTE: The Sentry import and init block below are removed. The crash logger
+// and Railway reporting continue working without the native SDK.
+const _sentryDsn: string | undefined = undefined;
+
+installCrashLogger();
+// ── Sentry preview-build startup verification ─────────────────────────────────
+// This console.info line confirms: (a) the JS bundle reached this point without
+// crashing, (b) the crash logger initialized, and (c) Sentry native SDK is
+// intentionally absent (removed Build 100 — pre-JS native crash).
+// If this appears in Railway logs / Expo DevTools after a preview build, the
+// build launched cleanly. Task #206 — confirm before testers receive the build.
+console.info("[MWM] Crash logger active. Sentry native SDK: intentionally disabled. Build launched cleanly.");
+
 function PushNotificationRegistrar() {
   useEffect(() => {
     async function registerToken() {
@@ -71,7 +71,7 @@ function PushNotificationRegistrar() {
         if (!token) return;
         const Notifications = await import("expo-notifications").catch(() => null);
         if (!Notifications) return;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const perms: any = await Notifications.requestPermissionsAsync();
         if (!perms?.granted && perms?.status !== "granted") return;
         const pushToken = await Notifications.getExpoPushTokenAsync({ projectId: "0f873107-7787-46ab-9a04-685c2a6756b1" }).catch(() => null);
@@ -91,7 +91,7 @@ function PushNotificationRegistrar() {
 }
 
 function BrandedLoader() {
-  const pulse = useRef(new Animated.Value(1)).current;
+  const [pulse] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     Animated.loop(
@@ -121,7 +121,7 @@ function BrandedLoader() {
 }
 
 function Dot({ delay }: { delay: number }) {
-  const op = useRef(new Animated.Value(0.25)).current;
+  const [op] = useState(() => new Animated.Value(0.25));
 
   useEffect(() => {
     Animated.loop(
@@ -787,7 +787,7 @@ function RootLayoutNav() {
 // links JS errors captured by ErrorUtils to the same Sentry session as any
 // concurrent native crash signal. If EXPO_PUBLIC_SENTRY_DSN is absent,
 // Sentry.init() was skipped and Sentry.wrap is a no-op passthrough.
-function _RootLayout() {
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -839,4 +839,4 @@ function _RootLayout() {
 
 // Sentry.wrap removed — native SDK not active. JS crash logger via crashLogger.ts
 // (AsyncStorage + Railway POST) remains fully active.
-export default _RootLayout;
+export default RootLayout;

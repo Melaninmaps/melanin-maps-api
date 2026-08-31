@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Animated,
   Platform,
@@ -212,7 +212,7 @@ function PostTeaserCard({ post, locked, colors, onUnlock }: { post: PreviewPost;
 
 // ─── Join nudge modal (inline, no modal — just an animated CTA strip) ─────────
 function JoinNudge({ colors, onJoin, onLogin }: { colors: ReturnType<typeof useColors>; onJoin: () => void; onLogin: () => void }) {
-  const pop = useRef(new Animated.Value(0)).current;
+  const [pop] = useState(() => new Animated.Value(0));
   useEffect(() => {
     Animated.spring(pop, { toValue: 1, useNativeDriver: true, tension: 120, friction: 7 }).start();
   }, []);
@@ -252,7 +252,7 @@ export default function PreviewScreen() {
   const [showNudge, setShowNudge] = useState(false);
   const [activeTab, setActiveTab] = useState<"community" | "business">("community");
 
-  const fade = useRef(new Animated.Value(0)).current;
+  const [fade] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     void (async () => {
@@ -304,7 +304,7 @@ export default function PreviewScreen() {
             Ever been in a new city and wondered where our community eats, shops, or gets their hair done?
           </Text>
           <Text style={[s.heroSub, { color: colors.mutedForeground }]}>
-            Mapping With Melanin is the first travel and discovery platform built entirely for our community — by our community. Here's a taste of what Founding Members get.
+            Mapping With Melanin is the first travel and discovery platform built entirely for our community — by our community. Here&apos;s a taste of what Founding Members get.
           </Text>
 
           {/* Founding badge */}
@@ -362,7 +362,7 @@ export default function PreviewScreen() {
             </View>
             {VOICE_CARDS.map((card) => (
               <View key={card.id} style={[s.voiceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[s.voiceQuote, { color: colors.foreground }]}>"{card.quote}"</Text>
+                <Text style={[s.voiceQuote, { color: colors.foreground }]}>&quot;{card.quote}&quot;</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 }}>
                   <View style={[s.voiceAvatar, { backgroundColor: card.color }]}>
                     <Text style={s.avatarText}>{card.initials}</Text>

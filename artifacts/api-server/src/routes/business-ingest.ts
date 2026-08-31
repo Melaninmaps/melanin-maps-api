@@ -235,8 +235,8 @@ async function findByDedupeKey(key: string) {
 }
 
 async function findByTokenSimilarity(candidate: Candidate) {
-  const { rows } = await pool.query<{ id: string; name: string; city: string; state: string; address: string; latitude: number; longitude: number }>(
-    `SELECT id, name, city, state, address, latitude, longitude
+  const { rows } = await pool.query<{ id: string; name: string; city: string; state: string; address: string; website: string; phone: string; latitude: number; longitude: number }>(
+    `SELECT id, name, city, state, address, website, phone, latitude, longitude
      FROM businesses
      WHERE coalesce(is_duplicate, false) = false
        AND coalesce(status, 'active') NOT IN ('duplicate','permanently_hidden')
@@ -309,8 +309,8 @@ router.post("/businesses/ingest", async (req: Request, res: Response) => {
     const key = dedupeKey(candidate);
 
     // Check for existing record by exact key or token similarity
-    let existing = await findByDedupeKey(key);
-    if (!existing) existing = await findByTokenSimilarity(candidate);
+    const exactExisting = await findByDedupeKey(key);
+    const existing = exactExisting ?? await findByTokenSimilarity(candidate);
 
     if (existing) {
       // Fill in missing fields on existing canonical row
@@ -420,7 +420,7 @@ router.post("/businesses/ingest", async (req: Request, res: Response) => {
 import { ingestHotelStay, nominatimGeocodeHotel } from "../lib/hotel-stay-ingestion";
 
 router.post("/businesses/hotel-stay", async (req: Request, res: Response) => {
-  if (!isAdmin(req, res)) return;
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Admin only" });
   try {
     const { name, address, sourceInput } = req.body as {
       name?: string;
@@ -455,7 +455,7 @@ router.post("/businesses/hotel-stay", async (req: Request, res: Response) => {
 import { ingestSocialFirstCandidate } from "../lib/social-first-ingestion";
 
 router.post("/businesses/social-first", async (req: Request, res: Response) => {
-  if (!isAdmin(req, res)) return;
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Admin only" });
   try {
     const { candidate, requestedOwnership = null } = req.body as {
       candidate: unknown;

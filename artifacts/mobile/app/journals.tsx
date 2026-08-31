@@ -133,7 +133,7 @@ export default function JournalsScreen() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const handleSave = async (id: number) => {
     if (!isAuthenticated) { router.push("/login" as never); return; }

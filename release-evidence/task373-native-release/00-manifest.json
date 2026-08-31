@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-08-27T01:01:00Z",
+  "branch": "release/task-373-rc",
+  "commitSha": "cb937479db04dcb4f7a5db1772285d09b86b2e28",
+  "mobileTreeStatus": "clean",
+  "runtimeVersion": "1.1.5-native.2",
+  "ios": {
+    "bundleIdentifier": "com.melaninmaps.app",
+    "version": "1.1.5",
+    "buildNumber": "102",
+    "easBuildId": "615e8a7a-9163-4006-8484-08ed38f6c1c6",
+    "artifactType": "IPA",
+    "artifactSha256": "1a574492d007a5db28bf19695b7d53731eb449713840a3703939fecdfc7e6f16",
+    "buildDetails": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/615e8a7a-9163-4006-8484-08ed38f6c1c6"
+  },
+  "android": {
+    "package": "com.melaninmaps.app",
+    "version": "1.1.5",
+    "versionCode": 77,
+    "easBuildId": "e2a53b5e-9f04-438a-9e15-f1450aa4e55a",
+    "artifactType": "AAB",
+    "artifactSha256": "a9447e2418dd7045bc8acabfaa606ce2d47b2ba396b57c064a351d2cd5f8814c",
+    "buildDetails": "https://expo.dev/accounts/tlindsay428/projects/mobile/builds/e2a53b5e-9f04-438a-9e15-f1450aa4e55a"
+  },
+  "decision": "NO-GO",
+  "decisionReason": "Signed candidates are available, but native device evidence and store/policy evidence are still blocked."
+}

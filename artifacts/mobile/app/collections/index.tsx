@@ -69,7 +69,7 @@ export default function CollectionsIndexScreen() {
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { load(); }); }, [load]);
 
   const display = activeTab === "browse" ? collections : myCollections;
 
