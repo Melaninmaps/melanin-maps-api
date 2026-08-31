@@ -34,6 +34,11 @@ import {
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
 import { classifyKinfolkRequest, buildDiscoveryInstruction } from "../kinfolk/request-classifier";
+import {
+  destinationForEnabledSession,
+  getHeritageCity,
+  resolveTurnGeography,
+} from "../kinfolk/heritage-city-registry";
 import { validateVoiceRecording, normalizeTranscript, voiceErrorForStatus, VOICE_MAX_DURATION_SECONDS } from "../kinfolk/voice-validation";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
 import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
@@ -914,189 +919,9 @@ function isWeatherQuery(msg: string): boolean {
   return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|hot|cold|snow|snowing|storm|wind|windy|humid|sunny|cloudy|what to (wear|pack)|what should I (wear|bring|pack)|will it rain)\b/i.test(msg);
 }
 
-// ─── City extraction from user message ────────────────────────────────────────
-// Aliases and shorthand that the platform's community commonly uses
-const CITY_ALIASES: Record<string, string> = {
-  // ── Philadelphia ────────────────────────────────────────────────────────────
-  "philly": "Philadelphia", "the city of brotherly love": "Philadelphia",
-  "philadelphia pa": "Philadelphia", "philadelphia, pa": "Philadelphia",
-  "philadelphia pennsylvania": "Philadelphia",
-  // ── New York ────────────────────────────────────────────────────────────────
-  "nyc": "New York", "new york city": "New York", "the big apple": "New York",
-  "brooklyn": "New York", "manhattan": "New York", "the bronx": "New York",
-  // ── Atlanta ─────────────────────────────────────────────────────────────────
-  "atl": "Atlanta", "the a": "Atlanta", "hotlanta": "Atlanta",
-  "atlanta ga": "Atlanta", "atlanta, ga": "Atlanta",
-  "atlanta georgia": "Atlanta", "atlanta, georgia": "Atlanta",
-  // ── Washington DC ───────────────────────────────────────────────────────────
-  "dc": "Washington", "d.c.": "Washington", "washington dc": "Washington",
-  "dmv": "Washington", "chocolate city": "Washington",
-  "washington d.c.": "Washington", "washington, dc": "Washington",
-  "washington, d.c.": "Washington",
-  // ── Los Angeles ─────────────────────────────────────────────────────────────
-  "la": "Los Angeles", "l.a.": "Los Angeles", "lax": "Los Angeles",
-  "south central": "Los Angeles", "compton": "Los Angeles", "inglewood": "Los Angeles",
-  // ── San Francisco / Bay Area ─────────────────────────────────────────────────
-  "sf": "San Francisco", "san fran": "San Francisco", "the city by the bay": "San Francisco",
-  "the bay": "Oakland", "oak": "Oakland", "the town": "Oakland",
-  // ── Chicago ─────────────────────────────────────────────────────────────────
-  "chi": "Chicago", "the chi": "Chicago", "chitown": "Chicago", "chi-town": "Chicago",
-  "wind city": "Chicago", "the windy city": "Chicago",
-  "chicago il": "Chicago", "chicago, il": "Chicago",
-  "chicago illinois": "Chicago",
-  // ── Houston ─────────────────────────────────────────────────────────────────
-  "h-town": "Houston", "space city": "Houston", "bayou city": "Houston",
-  "clutch city": "Houston", "third coast": "Houston",
-  "houston tx": "Houston", "houston, tx": "Houston",
-  "houston texas": "Houston", "houston, texas": "Houston",
-  // ── New Orleans ─────────────────────────────────────────────────────────────
-  "nola": "New Orleans", "the crescent city": "New Orleans", "the big easy": "New Orleans",
-  "nawlins": "New Orleans", "n'awlins": "New Orleans",
-  "no": "New Orleans", // texting shorthand
-  "new orleans la": "New Orleans", "new orleans, la": "New Orleans",
-  "new orleans louisiana": "New Orleans",
-  // ── Baltimore ───────────────────────────────────────────────────────────────
-  "bmore": "Baltimore", "charm city": "Baltimore",
-  "baltimore md": "Baltimore", "baltimore, md": "Baltimore",
-  // ── Detroit ─────────────────────────────────────────────────────────────────
-  "detroit": "Detroit", "the d": "Detroit", "motor city": "Detroit",
-  // ── Nashville ───────────────────────────────────────────────────────────────
-  "nashville": "Nashville", "nash vegas": "Nashville", "music city": "Nashville",
-  "nashville tn": "Nashville", "nashville, tn": "Nashville",
-  // ── Memphis ─────────────────────────────────────────────────────────────────
-  "memphis": "Memphis", "bluff city": "Memphis",
-  // ── Jackson ─────────────────────────────────────────────────────────────────
-  "jackson": "Jackson",
-  // ── Richmond ────────────────────────────────────────────────────────────────
-  "richmond": "Richmond", "rva": "Richmond",
-  // ── Charlotte ───────────────────────────────────────────────────────────────
-  "charlotte": "Charlotte", "the queen city": "Charlotte", "clt": "Charlotte",
-  "charlotte nc": "Charlotte", "charlotte, nc": "Charlotte",
-  "charlotte north carolina": "Charlotte", "charlotte, north carolina": "Charlotte",
-  // ── Birmingham ──────────────────────────────────────────────────────────────
-  "birmingham": "Birmingham", "the magic city": "Birmingham", "b-ham": "Birmingham",
-  "the ham": "Birmingham", "bham": "Birmingham",
-  // ── Miami ───────────────────────────────────────────────────────────────────
-  "305": "Miami", "the 305": "Miami", "magic city": "Miami",
-  "miami fl": "Miami", "miami, fl": "Miami",
-  "miami florida": "Miami",
-  // ── Dallas ──────────────────────────────────────────────────────────────────
-  "big d": "Dallas", "dfw": "Dallas",
-  "dallas tx": "Dallas", "dallas, tx": "Dallas",
-  "dallas texas": "Dallas",
-  // ── Pittsburgh ──────────────────────────────────────────────────────────────
-  "steel city": "Pittsburgh", "the burgh": "Pittsburgh", "pgh": "Pittsburgh",
-  // ── Cincinnati ──────────────────────────────────────────────────────────────
-  "cincy": "Cincinnati", "the nati": "Cincinnati",
-  // ── Indianapolis ────────────────────────────────────────────────────────────
-  "indy": "Indianapolis", "naptown": "Indianapolis",
-  // ── Kansas City ─────────────────────────────────────────────────────────────
-  "kc": "Kansas City", "kck": "Kansas City",
-  // ── St. Louis ───────────────────────────────────────────────────────────────
-  "stl": "St. Louis", "the lou": "St. Louis",
-  // ── Louisville ──────────────────────────────────────────────────────────────
-  "derby city": "Louisville", "the ville": "Louisville", "lou": "Louisville",
-};
-
-/**
- * Extract a city name from free-form user text.
- * Checks common aliases first, then looks for "in/to/visiting [City]" patterns
- * against the platform's known city list.
- * Returns the canonical city name, or null if no city is detected.
- */
-function extractCityFromUserMessage(msg: string): string | null {
-  const lower = msg.toLowerCase().trim();
-
-  // 1. Alias lookup (exact substring match)
-  for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
-    if (lower.includes(alias.toLowerCase())) return canonical;
-  }
-
-  // 2. Pattern match: "in/to/at/around/visiting [City Name]"
-  //    Require at least 3 chars, stop at punctuation or common sentence endings
-  const patterns = [
-    /\b(?:in|to|at|around|visiting|headed to|going to|travelling to|traveling to|moving to|near)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\b/,
-    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)\s+(?:restaurants|food|spots|places|businesses|things to do|events|bars|brunch|coffee|barbershop|barbers|salons|vibes)\b/i,
-  ];
-  for (const p of patterns) {
-    const m = msg.match(p);
-    if (m?.[1]?.trim() && m[1].trim().length >= 3) return m[1].trim();
-  }
-
-  return null;
-}
-
-/**
- * Classify how a city was resolved from the user's message.
- * "alias"    — matched a CITY_ALIASES entry ("philly" → "Philadelphia")
- * "explicit" — matched a grammar pattern ("in Atlanta", "Atlanta restaurants")
- */
-function getLocationSource(msg: string): "alias" | "explicit" {
-  const lower = msg.toLowerCase().trim();
-  for (const alias of Object.keys(CITY_ALIASES)) {
-    if (lower.includes(alias.toLowerCase())) return "alias";
-  }
-  return "explicit";
-}
-
-/** Canonical city → US state abbreviation for the kinfolk_local_resolution log. */
-const CITY_TO_STATE: Record<string, string> = {
-  "Philadelphia": "PA",
-  "New York": "NY",
-  "Washington": "DC",
-  "Los Angeles": "CA",
-  "Chicago": "IL",
-  "Houston": "TX",
-  "New Orleans": "LA",
-  "Baltimore": "MD",
-  "Detroit": "MI",
-  "Oakland": "CA",
-  "Nashville": "TN",
-  "Memphis": "TN",
-  "Jackson": "MS",
-  "Richmond": "VA",
-  "Charlotte": "NC",
-  "Birmingham": "AL",
-  "Atlanta": "GA",
-  "Miami": "FL",
-  "Dallas": "TX",
-  "San Antonio": "TX",
-  "Denver": "CO",
-  "Seattle": "WA",
-  "Portland": "OR",
-  "Minneapolis": "MN",
-  "Cleveland": "OH",
-  "Cincinnati": "OH",
-  "Columbus": "OH",
-  "Pittsburgh": "PA",
-  "Indianapolis": "IN",
-  "Kansas City": "MO",
-  "St. Louis": "MO",
-  "Milwaukee": "WI",
-  "Louisville": "KY",
-  "Tampa": "FL",
-  "Orlando": "FL",
-  "Jacksonville": "FL",
-  "Raleigh": "NC",
-  "Durham": "NC",
-  "Greensboro": "NC",
-  "Columbia": "SC",
-  "Charleston": "SC",
-  "Savannah": "GA",
-  "Montgomery": "AL",
-  "Mobile": "AL",
-  "Baton Rouge": "LA",
-  "Shreveport": "LA",
-  "Little Rock": "AR",
-  "Oklahoma City": "OK",
-  "Tulsa": "OK",
-  "Las Vegas": "NV",
-  "Phoenix": "AZ",
-  "Tucson": "AZ",
-  "Albuquerque": "NM",
-  "El Paso": "TX",
-  "San Francisco": "CA",
-};
+// ─── Canonical city extraction ────────────────────────────────────────────────
+// Geography is resolved by the reusable heritage-city registry. The registry
+// contains geography only and must never be used to infer member demographics.
 
 // ─── Cultural Identity Detection ─────────────────────────────────────────────
 // Pattern-matches statements like "I'm Ethiopian", "My family is from Jamaica",
@@ -1668,7 +1493,7 @@ function buildSystemPrompt(opts: {
   tier?: string | null;
   twinRecs?: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }>;
   topUserVibes?: string[];
-  cityContext?: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
+  cityContext?: { city_name: string; brief_context: string; historical_context: string | null; key_neighborhoods: string[]; cultural_anchors: string[] } | null;
   culturalPhrases?: Array<{ group_name: string; phrase: string; english_gloss: string }> | null;
   knowledgeGraphContext?: KnowledgeGraphContext | null;
   libraryInterests?: string[];
@@ -1887,14 +1712,20 @@ SENSITIVITY RULES: Never cross cultures. When in doubt, use: "Community Loved," 
 ` : "";
 
   // ── City cultural intelligence ────────────────────────────────────────────
+  const destinationSection = destination ? `
+SERVER-RESOLVED GEOGRAPHY — AUTHORITATIVE:
+The current city context is ${destination}. Treat it as a place, never as a person, work, group, or demographic signal. Answer city overview, history, heritage, and local-discovery questions about ${destination}; do not ask which person or work the member means.
+` : "";
+
   const cityContextSection = opts.cityContext ? `
 CITY CULTURAL INTELLIGENCE — ${opts.cityContext.city_name}:
 ${opts.cityContext.brief_context}
+${opts.cityContext.historical_context ? `Historical context: ${opts.cityContext.historical_context}` : ""}
 
-Key neighborhoods: ${opts.cityContext.key_neighborhoods.slice(0, 8).join(", ")}
-Cultural anchors: ${opts.cityContext.cultural_anchors.slice(0, 8).join(", ")}
+Key neighborhoods: ${(opts.cityContext.key_neighborhoods ?? []).slice(0, 8).join(", ") || "Coverage not available in the current city profile."}
+Cultural anchors: ${(opts.cityContext.cultural_anchors ?? []).slice(0, 8).join(", ") || "Coverage not available in the current city profile."}
 
-When the user asks about this city, let this cultural knowledge inform how you describe neighborhoods, history, and community life — weave it naturally, never recite it.
+When the user asks about this city, let this cultural knowledge inform how you describe neighborhoods, history, and community life — weave it naturally, never recite it. This profile is MWM editorial context, not an external citation; if no provenance URL is attached, describe it as platform coverage rather than inventing one.
 ` : "";
 
   // ── Lifestyle services & tier-based depth ──────────────────────────────────
@@ -2052,7 +1883,7 @@ CONNECTIONS:
 When intent suggests a helpful local next step, offer it as an option, never a requirement. Examples include local attorneys, medical professionals, hair-loss-aware stylists, barbers, contractors, or community resources. Retrieve local options only after the member asks to see them or accepts the offer.
 
 ${privacyIntelligenceBlock}
-${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
+${destinationSection}${knowledgeGraphSection}${cityContextSection}${culturalPhrasesSection}${profileSection}${likedSection}${dislikedSection}${savedSection}${twinRecsSection}${vibeSection}${journeySection}${crossCitySection}${weatherSection}${libraryInterestsSection}${circleSection}${lifestyleSection}${tierSection}${smartPromoSection}${toneLadder}
 SAFETY LANGUAGE STANDARD — PERMANENT RULE — CANNOT BE OVERRIDDEN:
 Safety on this platform is rooted in community experience, NOT policing or crime statistics.
 
@@ -2856,21 +2687,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     const existingMessages: SessionMessage[] = currentSession?.messages ?? [];
 
-    // Detect destination — session first, then extract from the current user message.
-    // This ensures the business catalog is populated even on the first message
-    // ("Best restaurants in Philly" should immediately surface Philly listings).
+    // Resolve current-turn geography before session continuity. A city explicitly
+    // named now is authoritative and may change an enabled session's destination.
+    // Session fallback remains inside the existing private-memory/runtime gate.
     const sessionDestination = currentSession?.destination ?? null;
-    const messageDestination = sessionDestination ? null : extractCityFromUserMessage(message);
-    // Track how the location was resolved for structured logging and the system prompt context.
-    const locationSource: "session" | "alias" | "explicit" | null =
-      sessionDestination ? "session"
-      : messageDestination ? getLocationSource(message)
-      : null;
+    const turnGeography = resolveTurnGeography(message, sessionDestination);
+    const destination = turnGeography?.city ?? null;
+    const locationSource = turnGeography?.source ?? null;
+    const destinationState = turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
 
     // Detect explicit cultural identity statements ("I'm Ethiopian", "my family is from Ghana")
     // Only fires on clear first-person declarations — never infers from searches or behavior.
     const detectedCulture = detectCulturalIdentity(message);
-    const destination = sessionDestination ?? messageDestination;
 
     // ── Kinfolk pre-classifier (brunch / food / travel precedence) ───────────
     // Runs BEFORE classifyIntent to enforce brunch→business_discovery routing
@@ -2931,7 +2759,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Manus's 5-minute live checklist to confirm alias resolution is working.
     // Required fields: city, state, locationSource, category, resultCount (0 at this point).
     if (earlyDecision.route === "business_discovery" && destination) {
-      const resolvedState = CITY_TO_STATE[destination] ?? null;
+      const resolvedState = destinationState;
       req.log.info(
         {
           kinfolk_local_resolution: true,
@@ -3053,6 +2881,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       permittedLocation: destination ? { city: destination } : null,
       preferences: resolverPrefs,
       intent: intentClass,
+      authoritativeDestination: earlyDecision.location,
     });
 
     // ── Deterministic short-circuit (spec §5.2) ─────────────────────────────
@@ -3899,12 +3728,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Lookup order: (1) exact city_name match, (2) slug match, (3) city_name prefix match.
     // This supports both domestic cities ("Philadelphia") and international slugs ("phuket",
     // "cancun", "negril", "jamaica") where city_name is "Phuket, Thailand" etc.
-    let cityContext: { city_name: string; brief_context: string; key_neighborhoods: string[]; cultural_anchors: string[] } | null = null;
+    let cityContext: { city_name: string; brief_context: string; historical_context: string | null; key_neighborhoods: string[]; cultural_anchors: string[] } | null = null;
     const cityLookup = destination ?? (prefs?.favoriteCities as string[] | null)?.[0] ?? null;
     if (cityLookup) {
       try {
         const cpRes = await pool.query(
-          `SELECT cp.city_name, cp.brief_context, cp.key_neighborhoods, cp.cultural_anchors
+          `SELECT cp.city_name, cp.brief_context, cp.historical_context, cp.key_neighborhoods, cp.cultural_anchors
            FROM city_profiles cp
            WHERE LOWER(cp.city_name) = LOWER($1)
               OR LOWER(cp.city_slug) = LOWER($1)
@@ -3954,6 +3783,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // graph context. Non-blocking — returns null if nothing relevant exists or on any error.
     // Never blocks a Kinfolk response.
     const kgContext = await getKnowledgeGraphContext(message, destination).catch(() => null);
+    const knowledgeGraphSources = (kgContext?.topics ?? [])
+      .flatMap((topic) => topic.sources)
+      .filter((source): source is typeof source & { source_url: string } => Boolean(source.source_url))
+      .map((source) => ({
+        title: source.source_name,
+        url: source.source_url,
+        source: "library" as const,
+      }));
 
     // ── Privacy Intelligence — classify message before any context injection ──
     // Single-search suppression: if the message matches a sensitive topic pattern,
@@ -4264,6 +4101,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // If not JSON, just use raw content as reply
       reply = rawContent;
     }
+    // The server-resolved current-turn destination is authoritative. Model JSON
+    // may fill an otherwise blank destination, but can never override geography.
+    detectedDestination = destinationForEnabledSession({
+      turn: turnGeography,
+      existingDestination: currentSession?.destination ?? null,
+      modelDestination: detectedDestination,
+    });
 
     // ── Local discovery enrichment ─────────────────────────────────────────
     // When Kinfolk correctly classifies a culture/entertainment or business
@@ -4356,7 +4200,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             .update(kinfolkSessionsTable)
             .set({
               messages: updatedMessages,
-              destination: detectedDestination ?? currentSession.destination,
+              destination: detectedDestination,
               updatedAt: new Date(),
             })
             .where(eq(kinfolkSessionsTable.id, currentSession.id));
@@ -4441,12 +4285,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...healthRetrievalSources.map((s) => ({
         id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
       })),
+      ...knowledgeGraphSources.map((s) => ({
+        id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
+      })),
     ];
     const safeCatalog = businessCatalog.map((b) => ({
       id: b.id ?? `${b.name}|${b.city}`,
       name: b.name, category: b.category, city: b.city,
       description: b.description ?? undefined, verified: b.verified,
     }));
+    const localCoverageNote = assembledSources.length === 0 && destination
+      ? tourSiteBlock
+        ? "Coverage note: Heritage-site details come from MWM platform records; no external citation URLs are attached to this coverage."
+        : cityContext
+          ? "Coverage note: City context comes from MWM's built-in editorial city profile; no external citation URLs are attached to this profile."
+          : businessCatalog.length > 0
+            ? "Coverage note: Local suggestions come from MWM platform listings; no external citation URLs are attached to these records."
+            : "Coverage note: No source-backed local records were available for this city answer."
+      : null;
     const enforced = enforceKinfolkResponse({
       reply,
       modelRecommendations: (recommendations as { businesses?: unknown } | null)?.businesses ?? [],
@@ -4503,6 +4359,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       sources: ([
         ...contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url })),
         ...healthRetrievalSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
+        ...knowledgeGraphSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
       ]) as { id: string; label: string; title?: string; url?: string }[],
       resolution: contextResolution.responseMode !== "no_entity" ? {
         state: contextResolution.responseMode,
@@ -4538,7 +4395,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // promotionDisclosure: per-business paid/claimed disclosure strings.
       // rejectedRecommendations: count of model proposals not in the server catalog.
       educationalStatus: enforced.educationalStatus,
-      sourceNote: enforced.sourceNote ?? undefined,
+      sourceNote: localCoverageNote ?? enforced.sourceNote ?? undefined,
       safetyNotice: enforced.safetyNotice ?? undefined,
       promotionDisclosure: enforced.promotionDisclosure.length > 0 ? enforced.promotionDisclosure : undefined,
       rejectedRecommendations: enforced.rejectedRecommendations > 0 ? enforced.rejectedRecommendations : undefined,
@@ -4551,7 +4408,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...(destination && {
         location: {
           city: destination,
-          state: CITY_TO_STATE[destination] ?? null,
+          state: destinationState,
           source: locationSource,
         },
         locationSource,

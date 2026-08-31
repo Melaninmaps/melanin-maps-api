@@ -22,7 +22,11 @@ export type DiscoveryKind =
   | "general";
 
 export type KinfolkRequestDecision = {
-  route: "business_discovery" | "travel_planning" | "clarification" | "general_knowledge";
+  route:
+    | "business_discovery"
+    | "travel_planning"
+    | "clarification"
+    | "general_knowledge";
   discoveryKind: DiscoveryKind;
   location: string | null;
   ownershipPreference: string | null;
@@ -33,18 +37,26 @@ export type KinfolkRequestDecision = {
 
 // "to DC for the weekend" — add "to" with a negative lookahead that skips
 // articles and common verbs so "to the", "to do", "to see" don't parse as locations.
-const LOCATION_RE = /\b(?:in|near|around|at|for|to)\s+(?!(?:the|a|an|do|see|find|get|go|be|make|visit|use|take|have|my|your|our|their|his|her|me|us|you|them|it)\b)([A-Za-z][A-Za-z .'-]{1,50}?)(?=\s+(?:this weekend|tonight|tomorrow|for|with|that|and|the)\b|[?.!,]|$)/i;
-const OWNERSHIP_RE = /\b(black|african[- ]american|minority|women|woman|veteran|immigrant|lgbtq|indigenous|latino|disability|family)[- ]owned\b/i;
-const BRUNCH_RE = /\bbrunch\b|post[- ]church\s+(?:brunch|meal)|after\s+(?:church|service)\s+(?:brunch|meal)|sunday\s+(?:brunch|dining|food)/i;
-const FOOD_RE = /\b(food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?)\b/i;
-const NIGHTLIFE_RE = /\b(nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party)\b/i;
-const TRAVEL_RE = /\b(heading|going|traveling|travelling|visit|visiting|trip|weekend|getaway|staying|hotel|spots? in|things to do)\b/i;
+const LOCATION_RE =
+  /\b(?:in|near|around|at|for|to)\s+(?!(?:the|a|an|do|see|find|get|go|be|make|visit|use|take|have|my|your|our|their|his|her|me|us|you|them|it)\b)([A-Za-z][A-Za-z .'-]{1,50}?)(?=\s+(?:this weekend|tonight|tomorrow|for|with|that|and|the)\b|[?.!,]|$)/i;
+const OWNERSHIP_RE =
+  /\b(black|african[- ]american|minority|women|woman|veteran|immigrant|lgbtq|indigenous|latino|disability|family)[- ]owned\b/i;
+const BRUNCH_RE =
+  /\bbrunch\b|post[- ]church\s+(?:brunch|meal)|after\s+(?:church|service)\s+(?:brunch|meal)|sunday\s+(?:brunch|dining|food)/i;
+const FOOD_RE =
+  /\b(food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?)\b/i;
+const NIGHTLIFE_RE =
+  /\b(nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party)\b/i;
+const TRAVEL_RE =
+  /\b(heading|going|traveling|travelling|visit|visiting|trip|weekend|getaway|staying|hotel|spots? in|things to do)\b/i;
 // "brunch" is intentionally excluded — handled by the brunch-specific block above.
-const BUSINESS_RE = /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?)\b/i;
+const BUSINESS_RE =
+  /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?)\b/i;
 
 // Pure cultural/informational brunch phrases that should fall through to general_knowledge.
 // "Tell me about brunch as a cultural tradition" should NOT become a discovery request.
-const BRUNCH_CULTURAL_RE = /\b(brunch as a|history of brunch|origin of brunch|brunch tradition|cultural.*brunch|brunch.*culture|tell me about brunch|meaning of brunch|what is brunch)\b/i;
+const BRUNCH_CULTURAL_RE =
+  /\b(brunch as a|history of brunch|origin of brunch|brunch tradition|cultural.*brunch|brunch.*culture|tell me about brunch|meaning of brunch|what is brunch)\b/i;
 
 function cleanLocation(raw: string | undefined): string | null {
   if (!raw) return null;
@@ -68,7 +80,8 @@ export function classifyKinfolkRequest(
   const location = resolvedDestination
     ? resolvedDestination
     : cleanLocation(text.match(LOCATION_RE)?.[1]);
-  const ownershipPreference = text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
+  const ownershipPreference =
+    text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];
 
   // Pure cultural/informational brunch queries short-circuit to general_knowledge
@@ -151,12 +164,19 @@ export function classifyKinfolkRequest(
 
   // Never answer an under-specified discovery request as though it were clear.
   if (
-    (FOOD_RE.test(lower) || NIGHTLIFE_RE.test(lower) || BUSINESS_RE.test(lower) || TRAVEL_RE.test(lower)) &&
+    (FOOD_RE.test(lower) ||
+      NIGHTLIFE_RE.test(lower) ||
+      BUSINESS_RE.test(lower) ||
+      TRAVEL_RE.test(lower)) &&
     !location
   ) {
     return {
       route: "clarification",
-      discoveryKind: FOOD_RE.test(lower) ? "food" : NIGHTLIFE_RE.test(lower) ? "nightlife" : "business",
+      discoveryKind: FOOD_RE.test(lower)
+        ? "food"
+        : NIGHTLIFE_RE.test(lower)
+          ? "nightlife"
+          : "business",
       location: null,
       ownershipPreference,
       culturalContext,
@@ -169,17 +189,27 @@ export function classifyKinfolkRequest(
   return {
     route: "general_knowledge",
     discoveryKind: "general",
-    location: null,
+    // Preserve server-resolved geography for city overview, heritage, and history
+    // questions. Downstream context resolution treats this as authoritative and
+    // bypasses person/work heuristics without turning the request into discovery.
+    location,
     ownershipPreference,
     culturalContext,
     clarification: null,
-    reason: "no_discovery_signal",
+    reason: location ? "resolved_city_context" : "no_discovery_signal",
   };
 }
 
-export function buildDiscoveryInstruction(decision: KinfolkRequestDecision): string {
-  if (decision.route === "clarification") return decision.clarification ?? "Ask for the missing location.";
-  if (decision.route !== "business_discovery" && decision.route !== "travel_planning") return "";
+export function buildDiscoveryInstruction(
+  decision: KinfolkRequestDecision,
+): string {
+  if (decision.route === "clarification")
+    return decision.clarification ?? "Ask for the missing location.";
+  if (
+    decision.route !== "business_discovery" &&
+    decision.route !== "travel_planning"
+  )
+    return "";
   const context = decision.culturalContext.includes("diaspora_brunch")
     ? "Brunch may be a post-church Sunday social meal in the diaspora; treat it as a food/discovery request, not pop culture."
     : "";

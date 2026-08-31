@@ -28,16 +28,23 @@ import {
 } from "./entity-resolver";
 import { getQueryClass, type QueryClass } from "./intent-router";
 import type { KinfolkIntent } from "./intent-router";
-import { parseMessageSignals, fullTextCandidates, vectorCandidates } from "./cultural-retrieval";
-import { rerankCulturalCandidates, buildVectorContextBlock } from "./cultural-reranker";
+import {
+  parseMessageSignals,
+  fullTextCandidates,
+  vectorCandidates,
+} from "./cultural-retrieval";
+import {
+  rerankCulturalCandidates,
+  buildVectorContextBlock,
+} from "./cultural-reranker";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type ResolutionResponseMode =
-  | "resolved"           // One source-backed entity clearly wins — proceed to LLM
+  | "resolved" // One source-backed entity clearly wins — proceed to LLM
   | "needs_clarification" // Two+ candidates tie or short-name ambiguity — short-circuit
-  | "unconfirmed"        // No active candidate + named-entity query — short-circuit
-  | "no_entity";          // No entity resolution needed — normal LLM flow
+  | "unconfirmed" // No active candidate + named-entity query — short-circuit
+  | "no_entity"; // No entity resolution needed — normal LLM flow
 
 export type ResolvedQueryContext = {
   responseMode: ResolutionResponseMode;
@@ -64,7 +71,11 @@ export type ResolvedQueryContext = {
   isCultureOpinion: boolean;
 
   // permitted location resolved by this function
-  permittedLocation: { city?: string; latitude?: number; longitude?: number } | null;
+  permittedLocation: {
+    city?: string;
+    latitude?: number;
+    longitude?: number;
+  } | null;
 };
 
 const HIGH_CONSEQUENCE_INTENTS: KinfolkIntent[] = [
@@ -79,13 +90,26 @@ const HIGH_CONSEQUENCE_INTENTS: KinfolkIntent[] = [
 export async function resolveKinfolkContext(input: {
   message: string;
   userId: string | null;
-  permittedLocation: { city?: string; latitude?: number; longitude?: number } | null;
+  permittedLocation: {
+    city?: string;
+    latitude?: number;
+    longitude?: number;
+  } | null;
   preferences: ExplicitMemberPreferences | null;
   intent: KinfolkIntent;
+  /** Canonical destination resolved before entity classification. */
+  authoritativeDestination?: string | null;
 }): Promise<ResolvedQueryContext> {
   const { message, permittedLocation, intent } = input;
 
-  const queryClass = getQueryClass(message);
+  // A request-level destination resolved before entity classification is the
+  // authoritative signal for city/local discovery. This prevents broad phrases
+  // such as "tell me about" from sending a known city through person/work
+  // disambiguation. It does not affect a real person query with no destination.
+  const destinationIsAuthoritative = Boolean(input.authoritativeDestination);
+  const queryClass: QueryClass = destinationIsAuthoritative
+    ? "local_business"
+    : getQueryClass(message);
   const isCultureOpinion = queryClass === "culture_opinion";
 
   // ── High-consequence bypass ────────────────────────────────────────────────
@@ -147,8 +171,9 @@ export async function resolveKinfolkContext(input: {
 
   // ── Attempt entity resolution ──────────────────────────────────────────────
   // Preferences passed only when allowCulturalAffinityRanking is explicitly true.
-  const effectivePrefs =
-    input.preferences?.allowCulturalAffinityRanking ? input.preferences : null;
+  const effectivePrefs = input.preferences?.allowCulturalAffinityRanking
+    ? input.preferences
+    : null;
 
   let entityResult: EntityResolutionResult;
   try {
@@ -216,7 +241,8 @@ export async function resolveKinfolkContext(input: {
   // For general queries that just happen to find no entity, fall through to normal flow
   const unconfirmedReply =
     entityResult.state === "unconfirmed" &&
-    entityResult.unconfirmedReason !== "No active source-backed candidate found for this query."
+    entityResult.unconfirmedReason !==
+      "No active source-backed candidate found for this query."
       ? `I can't confirm that right now from a verified source. ${entityResult.qualifier}`
       : null;
 
