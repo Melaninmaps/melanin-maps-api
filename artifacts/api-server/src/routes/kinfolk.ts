@@ -623,15 +623,19 @@ async function callOpenAIWithCompatibilityFallback(
   policy: KinfolkModelPolicy,
   requestId: string,
   temperature?: number,
-): Promise<Awaited<ReturnType<typeof callOpenAIWithRetry>>> {
+): Promise<{
+  completion: Awaited<ReturnType<typeof callOpenAIWithRetry>>;
+  usedFallback: boolean;
+}> {
   try {
-    return await callOpenAIWithRetry(
+    const completion = await callOpenAIWithRetry(
       messages,
       signal,
       policy.primaryModel,
       policy.maxOutputTokens,
       temperature,
     );
+    return { completion, usedFallback: false };
   } catch (error) {
     const fallback = classifyCompatibilityFallback(error);
     if (
@@ -649,13 +653,14 @@ async function callOpenAIWithCompatibilityFallback(
       buildCompatibilityFallbackLog({ requestId, policy, classification: fallback }),
     ));
 
-    return callOpenAIWithRetry(
+    const completion = await callOpenAIWithRetry(
       messages,
       signal,
       policy.fallbackModel,
       policy.maxOutputTokens,
       temperature,
     );
+    return { completion, usedFallback: true };
   }
 }
 
@@ -2791,7 +2796,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         needsClarification: true,
         discoveryKind: earlyDecision.discoveryKind,
         originalQuery: message,
-        ...experienceMarker,
       });
       return;
     }
@@ -2818,7 +2822,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         needsClarification: false,
         hairLossCarePlan: carePlan,
         originalQuery: message,
-        ...experienceMarker,
       });
       return;
     }
@@ -2917,7 +2920,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           originalQuery: message,
           // Optional personalization offer — rendered after the general answer, never a gate.
           clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
-          ...experienceMarker,
         });
         return;
       } catch (libraryErr: unknown) {
@@ -2982,7 +2984,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
         // Return the original query so the client can preserve it for retry
         originalQuery: message,
-        ...experienceMarker,
       });
       return;
     }
@@ -4076,9 +4077,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // (MAX_ACTIVE_GENERATIONS=4) nor rolling 60-second TPM budget (TOKEN_BUCKET_TARGET=160k)
     // is exceeded. callOpenAIWithRetry retries transient 429/5xx up to KINFOLK_RETRY_MAX
     // times with exponential backoff. AbortSignal.timeout(25000) caps stalled providers.
-    let completion: Awaited<ReturnType<typeof callOpenAIWithRetry>>;
+    let completionResult: Awaited<ReturnType<typeof callOpenAIWithCompatibilityFallback>>;
     try {
-      completion = await kinfolkQueue.run(
+      completionResult = await kinfolkQueue.run(
         req.user?.id ?? "anon",
         estimatedTotal,
         () => {
@@ -4126,7 +4127,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           resolution: { state: "resolved", preferencesUsed: [] },
           degraded: true,
           degradedReason: "provider_transient_error_library_fallback",
-          ...experienceMarker,
         });
         return;
       }
@@ -4141,6 +4141,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
       throw providerError;
     }
+
+    const completion = completionResult.completion;
+    // The client quality badge is evidence about this answer, not merely account
+    // eligibility. Omit it for compatibility-model and server-only fallbacks.
+    const completionExperienceMarker = completionResult.usedFallback ? {} : experienceMarker;
 
     // Track AI pool usage for paid tiers after successful generation
     if (aiPoolCircleId) {
@@ -4512,7 +4517,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...(webResourceCards.length > 0 && { resourceCards: webResourceCards }),
       ...(webEntityCandidates?.length && { entityCandidates: webEntityCandidates }),
       ...(kinfolkUrgentMessage && { urgentSafetyMessage: kinfolkUrgentMessage }),
-      ...experienceMarker,
+      ...completionExperienceMarker,
     });
   } catch (err) {
     const errCode        = (err as any)?.code as string | undefined;

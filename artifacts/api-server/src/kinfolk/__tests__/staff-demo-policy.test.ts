@@ -194,6 +194,7 @@ describe("truthful prompt and response marker", () => {
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/at most one optional clarifying question/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/multiple plausible referents.*one concise clarifying question/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/overwhelmed.*no more than three manageable next steps/i);
+    expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/venue hours, tickets, schedules, or live availability.*confirm those current details/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/Never invent a citation or URL/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/Safety, privacy, source and citation requirements.*override/i);
     expect(staffDemoPromptBlock(resolveKinfolkModelPolicy(false, {}))).toBe("");
@@ -222,7 +223,9 @@ describe("truthful prompt and response marker", () => {
     expect(source).toContain("const experienceMarker = staffDemoResponseMarker(modelPolicy)");
     expect(source).toContain("return callOpenAIWithCompatibilityFallback(");
     expect(source).toContain("const fallbackReply = buildLibraryFallbackReply(libraryTopic)");
-    expect(source.match(/\.\.\.experienceMarker/g)?.length).toBeGreaterThanOrEqual(6);
+    expect(source).toContain("const completionExperienceMarker = completionResult.usedFallback ? {} : experienceMarker");
+    expect(source).toContain("...completionExperienceMarker");
+    expect(source).not.toContain("...experienceMarker");
     expect(source).not.toMatch(/req\.(?:headers?|query).*staff.?demo/i);
   });
 });
