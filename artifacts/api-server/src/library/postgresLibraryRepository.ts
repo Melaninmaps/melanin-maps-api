@@ -282,8 +282,8 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              AND topic.is_foundational = true
              AND (
                topic.slug = ANY($3::text[])
-               OR lower(topic.title) LIKE ANY($2::text[]) ESCAPE '\'
-               OR lower(COALESCE(topic.summary, '')) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(topic.title) LIKE ANY($2::text[])
+               OR lower(COALESCE(topic.summary, '')) LIKE ANY($2::text[])
              )
            GROUP BY topic.id
          ),
@@ -319,10 +319,10 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              ON facet.entry_id = entry.id
            WHERE entry.publication_status = 'published'
              AND (
-               lower(entry.title) LIKE ANY($2::text[]) ESCAPE '\'
-               OR lower(entry.summary) LIKE ANY($2::text[]) ESCAPE '\'
-               OR lower(entry.body) LIKE ANY($2::text[]) ESCAPE '\'
-               OR lower(entry.question) LIKE ANY($2::text[]) ESCAPE '\'
+               lower(entry.title) LIKE ANY($2::text[])
+               OR lower(entry.summary) LIKE ANY($2::text[])
+               OR lower(entry.body) LIKE ANY($2::text[])
+               OR lower(entry.question) LIKE ANY($2::text[])
                OR lower(facet.facet_key) = ANY($4::text[])
                OR COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[])
              )

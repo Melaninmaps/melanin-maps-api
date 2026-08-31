@@ -38,6 +38,7 @@ describe("Postgres Living Library publication boundaries", () => {
     expect(calls[0].sql).toContain("LEFT JOIN library_entry_facets");
     expect(calls[0].sql).toContain("facet.facet_key");
     expect(calls[0].sql).toContain("topic.is_foundational = true");
+    expect(calls[0].sql).not.toContain("LIKE ANY($2::text[]) ESCAPE");
     expect(calls[0].sql).toContain("ROW_NUMBER() OVER (ORDER BY rank DESC, title ASC, id ASC)");
     expect(calls[0].sql).toContain("ORDER BY result_order ASC NULLS LAST");
     expect(calls[0].sql).not.toContain("pending");
