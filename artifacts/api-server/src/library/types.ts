@@ -41,6 +41,35 @@ export type LibraryEntry = {
   refreshedAt: Date;
 };
 
+export type LibraryTopicSearchResult = {
+  kind: "topic";
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  iconKey: string | null;
+  entryCount: number;
+};
+
+export type LibraryEntrySearchResult = {
+  kind: "entry";
+  id: string;
+  title: string;
+  summary: string;
+  body: string;
+  topicSlug: string;
+  topicTitle: string;
+  sourceCount: number;
+  refreshedAt: Date;
+};
+
+export type LibrarySearchResult = LibraryTopicSearchResult | LibraryEntrySearchResult;
+
+export type LibrarySearchPage = {
+  results: LibrarySearchResult[];
+  total: number;
+};
+
 export type ResearchDocument = {
   url: string;
   title: string;
@@ -65,6 +94,14 @@ export interface LibraryRepository {
     domain: ResearchDomain | null;
     memberId: string | null;
   }): Promise<LibraryTopic[]>;
+  searchPublishedContent(input: {
+    normalizedQuery: string;
+    searchTerms: string[];
+    patterns: string[];
+    preferredTopicSlugs: string[];
+    limit: number;
+    offset: number;
+  }): Promise<LibrarySearchPage>;
   findTopicBySlug(slug: string): Promise<LibraryTopic | null>;
   listTopicEntries(input: { topicId: string; limit: number; cursor: string | null }): Promise<LibraryEntry[]>;
   setTopicFollow(input: { topicId: string; memberId: string; following: boolean }): Promise<void>;

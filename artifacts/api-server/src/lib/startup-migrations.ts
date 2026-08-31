@@ -4263,6 +4263,17 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
           ON library_entries (normalized_question, domain, community_lens)`,
   },
   {
+    name: "living_library_entries_publication_status_v1",
+    sql: `ALTER TABLE library_entries
+            ADD COLUMN IF NOT EXISTS publication_status TEXT DEFAULT 'pending';
+          UPDATE library_entries
+             SET publication_status = 'pending'
+           WHERE publication_status IS NULL;
+          ALTER TABLE library_entries
+            ALTER COLUMN publication_status SET DEFAULT 'pending',
+            ALTER COLUMN publication_status SET NOT NULL`,
+  },
+  {
     name: "living_library_entry_sources_table_v1",
     sql: `CREATE TABLE IF NOT EXISTS library_entry_sources (
       id           UUID  PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -3,6 +3,7 @@ import type {
   KnowledgeSource,
   LibraryEntry,
   LibraryRepository,
+  LibrarySearchResult,
   LibraryTopic,
 } from "./types";
 
@@ -118,8 +119,8 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
       const { rows } = await db.query<EntryRow>(
         `INSERT INTO library_entries (
           topic_id, question, normalized_question, title, summary, body, domain,
-          community_lens, location_label, disclaimer, source_count
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          community_lens, location_label, disclaimer, source_count, publication_status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
         RETURNING *`,
         [
           topicRows[0].id,
@@ -177,7 +178,9 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
                 COUNT(le.id)::bigint AS entry_count,
                 MAX(le.refreshed_at) AS newest_entry_at
          FROM library_topics lt
-         LEFT JOIN library_entries le ON le.topic_id = lt.id
+         LEFT JOIN library_entries le
+           ON le.topic_id = lt.id
+          AND le.publication_status = 'published'
          WHERE ($2::text IS NULL OR lt.domain = $2)
            AND ($3::text IS NULL OR lt.title ILIKE '%' || $3 || '%')
          GROUP BY lt.id
@@ -197,6 +200,202 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
       }));
     },
 
+    async searchPublishedContent({
+      normalizedQuery,
+      searchTerms,
+      patterns,
+      preferredTopicSlugs,
+      limit,
+      offset,
+    }) {
+      type TopicSearchRow = {
+        kind: "topic";
+        id: string;
+        slug: string;
+        title: string;
+        summary: string;
+        icon_key: string | null;
+        entry_count: number;
+        body: null;
+        topic_slug: null;
+        topic_title: null;
+        source_count: null;
+        refreshed_at: null;
+        total_count: number;
+      };
+      type EntrySearchRow = {
+        kind: "entry";
+        id: string;
+        slug: null;
+        title: string;
+        summary: string;
+        icon_key: null;
+        entry_count: null;
+        body: string;
+        topic_slug: string;
+        topic_title: string;
+        source_count: number;
+        refreshed_at: Date;
+        total_count: number;
+      };
+      type SearchSentinelRow = {
+        kind: null;
+        id: null;
+        slug: null;
+        title: null;
+        summary: null;
+        icon_key: null;
+        entry_count: null;
+        body: null;
+        topic_slug: null;
+        topic_title: null;
+        source_count: null;
+        refreshed_at: null;
+        total_count: number;
+      };
+      type SearchRow = TopicSearchRow | EntrySearchRow | SearchSentinelRow;
+      const { rows } = await db.query<SearchRow>(
+        `WITH topic_matches AS (
+           SELECT
+             'topic'::text AS kind,
+             topic.id,
+             topic.slug,
+             topic.title,
+             COALESCE(topic.summary, '') AS summary,
+             topic.icon_key,
+             COUNT(DISTINCT direct_entry.id)::int AS entry_count,
+             NULL::text AS body,
+             NULL::text AS topic_slug,
+             NULL::text AS topic_title,
+             NULL::int AS source_count,
+             NULL::timestamptz AS refreshed_at,
+             CASE
+               WHEN topic.slug = ANY($3::text[]) THEN 400
+               WHEN lower(topic.title) = $1 THEN 300
+               ELSE 200
+             END AS rank
+           FROM library_topics topic
+           LEFT JOIN library_entries direct_entry
+             ON direct_entry.topic_id = topic.id
+            AND direct_entry.publication_status = 'published'
+           WHERE topic.active = true
+             AND topic.is_foundational = true
+             AND (
+               topic.slug = ANY($3::text[])
+               OR lower(topic.title) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(COALESCE(topic.summary, '')) LIKE ANY($2::text[]) ESCAPE '\'
+             )
+           GROUP BY topic.id
+         ),
+         entry_matches AS (
+           SELECT DISTINCT ON (entry.id)
+             'entry'::text AS kind,
+             entry.id,
+             NULL::text AS slug,
+             entry.title,
+             entry.summary,
+             NULL::text AS icon_key,
+             NULL::int AS entry_count,
+             entry.body,
+             COALESCE(linked_topic.slug, owner_topic.slug) AS topic_slug,
+             COALESCE(linked_topic.title, owner_topic.title) AS topic_title,
+             entry.source_count,
+             entry.refreshed_at,
+             CASE
+               WHEN COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[]) THEN 150
+               WHEN lower(entry.title) = $1 THEN 140
+               ELSE 100
+             END AS rank
+           FROM library_entries entry
+           JOIN library_topics owner_topic
+             ON owner_topic.id = entry.topic_id
+            AND owner_topic.active = true
+           LEFT JOIN library_entry_topic_links topic_link
+             ON topic_link.entry_id = entry.id
+           LEFT JOIN library_topics linked_topic
+             ON linked_topic.id = topic_link.topic_id
+            AND linked_topic.active = true
+           LEFT JOIN library_entry_facets facet
+             ON facet.entry_id = entry.id
+           WHERE entry.publication_status = 'published'
+             AND (
+               lower(entry.title) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(entry.summary) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(entry.body) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(entry.question) LIKE ANY($2::text[]) ESCAPE '\'
+               OR lower(facet.facet_key) = ANY($4::text[])
+               OR COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[])
+             )
+           ORDER BY entry.id,
+                    (COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[])) DESC,
+                    topic_link.relevance DESC NULLS LAST
+         ),
+         ranked AS (
+           SELECT * FROM topic_matches
+           UNION ALL
+           SELECT * FROM entry_matches
+         ),
+         counted AS (
+           SELECT ranked.*, COUNT(*) OVER()::int AS total_count
+           FROM ranked
+         ),
+         page AS (
+           SELECT counted.*,
+                  ROW_NUMBER() OVER (ORDER BY rank DESC, title ASC, id ASC)::int AS result_order
+           FROM counted
+           ORDER BY rank DESC, title ASC, id ASC
+           LIMIT $5 OFFSET $6
+         )
+         SELECT kind, id, slug, title, summary, icon_key, entry_count, body,
+                topic_slug, topic_title, source_count, refreshed_at, total_count,
+                result_order
+         FROM page
+         UNION ALL
+         SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, COUNT(*)::int, NULL
+         FROM ranked
+         WHERE NOT EXISTS (SELECT 1 FROM page)
+         ORDER BY result_order ASC NULLS LAST`,
+        [
+          normalizedQuery,
+          patterns,
+          preferredTopicSlugs,
+          searchTerms,
+          limit,
+          offset,
+        ],
+      );
+
+      const results: LibrarySearchResult[] = [];
+      for (const row of rows) {
+        if (row.kind === null) continue;
+        if (row.kind === "topic") {
+          results.push({
+            kind: "topic",
+            id: row.id,
+            slug: row.slug,
+            title: row.title,
+            summary: row.summary,
+            iconKey: row.icon_key,
+            entryCount: Number(row.entry_count),
+          });
+          continue;
+        }
+        results.push({
+          kind: "entry",
+          id: row.id,
+          title: row.title,
+          summary: row.summary,
+          body: row.body,
+          topicSlug: row.topic_slug,
+          topicTitle: row.topic_title,
+          sourceCount: Number(row.source_count),
+          refreshedAt: row.refreshed_at,
+        });
+      }
+      return { results, total: rows[0]?.total_count ?? 0 };
+    },
+
     async findTopicBySlug(slug) {
       const { rows } = await db.query<{
         id: string;
@@ -211,7 +410,9 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
                 COUNT(le.id)::bigint AS entry_count,
                 MAX(le.refreshed_at) AS newest_entry_at
          FROM library_topics lt
-         LEFT JOIN library_entries le ON le.topic_id = lt.id
+         LEFT JOIN library_entries le
+           ON le.topic_id = lt.id
+          AND le.publication_status = 'published'
          WHERE lt.slug = $1
          GROUP BY lt.id`,
         [slug],
@@ -236,6 +437,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
       const { rows } = await db.query<EntryRow>(
         `SELECT * FROM library_entries
          WHERE topic_id = $1
+           AND publication_status = 'published'
            AND ($2::timestamptz IS NULL OR refreshed_at < $2)
          ORDER BY refreshed_at DESC
          LIMIT $3`,

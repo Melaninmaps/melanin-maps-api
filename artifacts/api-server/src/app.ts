@@ -21,8 +21,6 @@ import { registerLivingLibraryRoutes } from "./library/registerLivingLibraryRout
 import { registerFoundationTopicRoutes } from "./library/registerFoundationTopicRoutes";
 import { FoundationTopicRepository } from "./library/foundationTopicRepository";
 import { createPostgresLibraryRepository } from "./library/postgresLibraryRepository";
-import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
-import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
 import {
   createPostgresLocalContextRepository,
@@ -375,12 +373,6 @@ registerAdminPublishAndClaimRoutes(app);
 // Follow/research mutations still enforce authentication in their own handlers.
 registerLivingLibraryRoutes(app, {
   repository: createPostgresLibraryRepository(pool),
-  researchProvider: createTavilyResearchProvider(process.env.TAVILY_API_KEY ?? ""),
-  writer: createOpenAiLibraryWriter({
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-    baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
-    model: process.env.LIBRARY_RESEARCH_MODEL ?? "gpt-4o-mini",
-  }),
 });
 
 // 28 durable foundations shown on the public Library home.

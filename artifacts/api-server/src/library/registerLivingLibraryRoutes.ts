@@ -1,11 +1,10 @@
 import { type Express, type Request, type Response } from "express";
-import { answerAndArchiveResearchQuestion } from "./livingLibrary";
 import { classifyResearchDomain, type ResearchDomain } from "./researchPolicy";
-import type {
-  ExternalResearchProvider,
-  LibraryRepository,
-  LibrarySynthesisWriter,
-} from "./types";
+import {
+  parseLibrarySearchQuery,
+  searchLivingLibrary,
+} from "./librarySearch";
+import type { LibraryRepository } from "./types";
 
 type AuthenticatedRequest = Request & { user?: { id: string } };
 
@@ -23,36 +22,39 @@ export function registerLivingLibraryRoutes(
   app: Express,
   dependencies: {
     repository: LibraryRepository;
-    researchProvider: ExternalResearchProvider;
-    writer: LibrarySynthesisWriter;
   },
 ): void {
-  const { repository, researchProvider, writer } = dependencies;
+  const { repository } = dependencies;
 
-  app.post("/api/library/research", async (request: Request, response: Response) => {
+  app.post("/api/library/research", (request: AuthenticatedRequest, response: Response) => {
+    if (!request.user?.id) {
+      return response.status(401).json({ error: "Authentication required" });
+    }
+    const question = stringBody(request, "question");
+    if (!question || question.length < 3) {
+      return response.status(400).json({ error: "Ask a Library question using at least three characters." });
+    }
+    // Until a review and publication lifecycle exists, acknowledge the member request
+    // without invoking a provider or storing the raw question anywhere.
+    return response.status(202).json({
+      code: "LIBRARY_RESEARCH_REVIEW_REQUIRED",
+      message:
+        "New Library research is temporarily unavailable while a governed review lifecycle is completed. Nothing was published.",
+      persisted: false,
+      published: false,
+    });
+  });
+
+  app.get("/api/library/search", async (request: Request, response: Response) => {
+    const parsed = parseLibrarySearchQuery(request.query as Record<string, unknown>);
+    if (!parsed.ok) return response.status(400).json({ error: parsed.error });
     try {
-      const question = stringBody(request, "question");
-      if (!question || question.length < 3) {
-        return response.status(400).json({ error: "Ask a Library question using at least three characters." });
-      }
-
-      const { entry, reused } = await answerAndArchiveResearchQuestion({
-        question,
-        locationLabel: stringBody(request, "locationLabel"),
-        repository,
-        researchProvider,
-        writer,
-      });
-
-      return response.status(200).json({
-        entry,
-        reused,
-        libraryUrl: `/library/topics/${encodeURIComponent(entry.domain)}#entry-${entry.id}`,
-      });
+      response.setHeader("Cache-Control", "no-store");
+      return response.status(200).json(await searchLivingLibrary(repository, parsed.value));
     } catch (error) {
-      console.error("Living Library research failed", error);
-      return response.status(502).json({
-        error: "Kinfolk could not complete a source-verified research entry right now. Please try again.",
+      console.error("Living Library search failed", error);
+      return response.status(503).json({
+        error: "The governed Library index is temporarily unavailable. Please try again.",
       });
     }
   });
