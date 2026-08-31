@@ -1,4 +1,5 @@
 import { type Express, type Request, type Response } from "express";
+import { BUSINESS_SEARCH_NORMALIZATION_VERSION } from "@workspace/constants";
 import { executeLocationFirstDiscovery, type LocationFirstDiscoveryRepository } from "./locationFirstDiscovery";
 import type { LocationFirstQuery } from "../shared/discoveryContracts";
 
@@ -14,6 +15,8 @@ function isValidQuery(value: unknown): value is LocationFirstQuery {
       query.filters &&
       Array.isArray(query.filters.recordTypes) &&
       query.filters.recordTypes.every((rt) => RECORD_TYPES.has(rt)) &&
+      (query.filters.categoryNormalizationVersion === undefined
+        || query.filters.categoryNormalizationVersion === BUSINESS_SEARCH_NORMALIZATION_VERSION) &&
       typeof query.locationMode === "string" &&
       LOCATION_MODES.has(query.locationMode),
   );

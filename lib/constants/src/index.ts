@@ -20,6 +20,16 @@ export {
 } from "./business-categories";
 export type { BusinessCategory } from "./business-categories";
 
+// ── Business discovery normalization ───────────────────────────────────────
+export {
+  BUSINESS_SEARCH_NORMALIZATION_VERSION,
+  RESTAURANT_CAPABLE_FOOD_INTENT,
+  foldBusinessSearchLabel,
+  normalizeBusinessCategoryIntent,
+  getBusinessCategorySearchAliases,
+  matchesBusinessCategoryIntent,
+} from "./business-search-normalization";
+
 // ── Ownership designations ─────────────────────────────────────────────────
 export {
   OWNERSHIP_DESIGNATIONS,

@@ -179,6 +179,9 @@ importers:
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
+      '@workspace/constants':
+        specifier: workspace:*
+        version: link:../../lib/constants
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db

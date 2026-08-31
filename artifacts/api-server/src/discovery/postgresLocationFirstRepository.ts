@@ -3,6 +3,7 @@
  * All queries go through canonical_record_locations so Map, Businesses,
  * Explore, and Events always see the same location-scoped inventory.
  */
+import { getBusinessCategorySearchAliases } from "@workspace/constants";
 import type { DiscoveryRecord, LocationFirstQuery } from "../shared/discoveryContracts";
 
 type Pool = { query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> };
@@ -10,6 +11,14 @@ type SearchableLocationFirstQuery = LocationFirstQuery & {
   filters: LocationFirstQuery["filters"] & { searchText?: string };
   searchText?: string;
 };
+
+function foldedSql(column: string): string {
+  return `BTRIM(REGEXP_REPLACE(LOWER(COALESCE(${column}, '')), '[^a-z0-9]+', ' ', 'g'))`;
+}
+
+function aliasMatchSql(categoryColumn: string, subcategoryColumn: string, parameter: number): string {
+  return `(${foldedSql(categoryColumn)} = ANY($${parameter}::text[]) OR ${foldedSql(subcategoryColumn)} = ANY($${parameter}::text[]))`;
+}
 
 // ── Haversine distance (miles) helper injected as SQL expression ──────────────
 function haversineMiles(latCol: string, lngCol: string, lat: number, lng: number): string {
@@ -44,9 +53,24 @@ export async function findExactRecords(
     let specialtyClause = "";
     if (specialty) { params.push(specialty); specialtyClause = `AND bs.specialty_slug = $${params.length}`; }
     let categoryClause = "";
-    if (category) { params.push(`%${category}%`); categoryClause = `AND b.category ILIKE $${params.length}`; }
+    if (category) {
+      params.push(getBusinessCategorySearchAliases(category));
+      categoryClause = `AND ${aliasMatchSql("b.category", "b.subcategory", params.length)}`;
+    }
     let searchClause = "";
-    if (searchText) { params.push(`%${searchText}%`); searchClause = `AND (b.name ILIKE $${params.length} OR b.category ILIKE $${params.length})`; }
+    if (searchText) {
+      params.push(`%${searchText}%`);
+      const textParameter = params.length;
+      params.push(getBusinessCategorySearchAliases(searchText));
+      const aliasesParameter = params.length;
+      searchClause = `AND (
+        b.name ILIKE $${textParameter}
+        OR b.category ILIKE $${textParameter}
+        OR b.subcategory ILIKE $${textParameter}
+        OR b.description ILIKE $${textParameter}
+        OR ${aliasMatchSql("b.category", "b.subcategory", aliasesParameter)}
+      )`;
+    }
 
     const { rows } = await pool.query<{
       id: string; name: string; category: string | null; specialty: string | null;
@@ -58,13 +82,11 @@ export async function findExactRecords(
         l.city_name AS city, l.state_code, l.neighborhood_name AS neighborhood,
         l.latitude::text AS lat, l.longitude::text AS lng,
         COALESCE(b.verified, FALSE) AS is_verified
-      FROM businesses b
+      FROM public.public_businesses b
       JOIN canonical_record_locations l
         ON l.record_type = 'business' AND l.record_id = b.id::uuid
       LEFT JOIN business_specialties bs ON bs.business_id = b.id
-      WHERE b.is_active = TRUE
-        AND b.listing_status IN ('live_unclaimed', 'live_claimed')
-        AND LOWER(l.city_name) = $1
+      WHERE LOWER(l.city_name) = $1
         ${stateClause}
         ${specialtyClause}
         ${categoryClause}

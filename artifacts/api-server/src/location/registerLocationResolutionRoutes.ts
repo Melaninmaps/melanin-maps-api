@@ -1,14 +1,15 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import type { Pool } from "pg";
+import { resolveLocationText } from "./locationResolver";
 
 /**
  * Two public endpoints that back the LocationSearchBar resolver.
  *
  *   GET /api/locations/resolve?q=<text>
- *     Queries community_locations by city_name, state_code, and neighborhood_name.
- *     Handles "Charlotte, NC" format (city + state) and plain city or neighborhood names.
+ *     Resolves exact canonical/approved community locations and the controlled
+ *     Philadelphia fallback. Duplicate city names return HTTP 409 candidates until
+ *     the state disambiguates them; unsupported areas return HTTP 404.
  *     Returns { id, label, cityName, stateCode, neighborhoodName, latitude, longitude }.
- *     Returns HTTP 404 when no match is found so the client can show "area not found".
  *
  *   GET /api/locations/reverse?lat=<lat>&lng=<lng>
  *     Finds the nearest community_locations row within 80 km of the supplied coordinates.
@@ -27,56 +28,18 @@ export function registerLocationResolutionRoutes(app: Express, pool: Pool): void
         if (rawQ.length < 2) {
           return response.status(400).json({ code: "AREA_QUERY_REQUIRED" });
         }
-        const q = rawQ.toLowerCase();
-        const like = `%${q}%`;
-
-        const { rows } = await pool.query<{
-          id: string;
-          label: string;
-          cityName: string;
-          stateCode: string | null;
-          neighborhoodName: string | null;
-          latitude: number;
-          longitude: number;
-        }>(
-          `SELECT
-             id,
-             city_name AS "cityName",
-             state_code AS "stateCode",
-             neighborhood_name AS "neighborhoodName",
-             latitude::float AS latitude,
-             longitude::float AS longitude,
-             CASE
-               WHEN neighborhood_name IS NOT NULL
-               THEN neighborhood_name || ', ' || city_name
-                    || COALESCE(', ' || state_code, '')
-               ELSE city_name || COALESCE(', ' || state_code, '')
-             END AS label
-           FROM community_locations
-           WHERE lower(city_name || ', ' || COALESCE(state_code, '')) = $1
-              OR lower(city_name) = $1
-              OR (neighborhood_name IS NOT NULL AND lower(neighborhood_name) = $1)
-              OR lower(city_name) LIKE $2
-              OR (neighborhood_name IS NOT NULL AND lower(neighborhood_name) LIKE $2)
-           ORDER BY
-             CASE
-               WHEN lower(city_name || ', ' || COALESCE(state_code, '')) = $1 THEN 0
-               WHEN lower(city_name) = $1 THEN 1
-               WHEN neighborhood_name IS NOT NULL
-                    AND lower(neighborhood_name) = $1 THEN 2
-               ELSE 3
-             END,
-             city_name
-           LIMIT 1`,
-          [q, like],
-        );
-
-        if (!rows[0]) {
+        const result = await resolveLocationText(pool, rawQ);
+        response.setHeader("Cache-Control", "no-store");
+        if (result.kind === "not_found") {
           return response.status(404).json({ code: "AREA_NOT_FOUND" });
         }
-
-        response.setHeader("Cache-Control", "no-store");
-        return response.json(rows[0]);
+        if (result.kind === "ambiguous") {
+          return response.status(409).json({
+            code: "AREA_AMBIGUOUS",
+            candidates: result.candidates,
+          });
+        }
+        return response.json(result.area);
       } catch (error) {
         return next(error);
       }

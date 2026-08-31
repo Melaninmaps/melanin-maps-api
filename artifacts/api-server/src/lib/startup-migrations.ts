@@ -1824,6 +1824,34 @@ END $$`,
       WHERE moderation_status = 'approved'`,
   },
   {
+    name: "community_location_philadelphia_seed_v1",
+    sql: `WITH canonical AS (
+      INSERT INTO community_locations (
+        id, country_code, state_code, city_name, neighborhood_name,
+        latitude, longitude, updated_at
+      ) VALUES (
+        '89f14ab4-0f8d-4f52-97be-f12617191919'::uuid,
+        'US', 'PA', 'Philadelphia', NULL, 39.952600, -75.165200, NOW()
+      )
+      ON CONFLICT (
+        country_code, COALESCE(UPPER(state_code), ''), LOWER(city_name),
+        COALESCE(LOWER(neighborhood_slug), '')
+      ) DO UPDATE SET
+        state_code = EXCLUDED.state_code,
+        city_name = EXCLUDED.city_name,
+        latitude = COALESCE(community_locations.latitude, EXCLUDED.latitude),
+        longitude = COALESCE(community_locations.longitude, EXCLUDED.longitude),
+        updated_at = NOW()
+      RETURNING id
+    )
+    INSERT INTO community_location_aliases (location_id, alias, moderation_status, confidence)
+    SELECT canonical.id, aliases.alias, 'approved', 1.00
+    FROM canonical
+    CROSS JOIN (VALUES ('Philly'), ('Philadelphia PA'), ('Philadelphia, Pennsylvania')) AS aliases(alias)
+    ON CONFLICT (location_id, alias) DO UPDATE SET
+      moderation_status = 'approved', confidence = 1.00`,
+  },
+  {
     name: "community_tag_definitions_table_v1",
     sql: `CREATE TABLE IF NOT EXISTS community_tag_definitions (
       id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -11113,9 +11141,14 @@ async function ensureLocationFirstDiscovery(
       WHERE city IS NOT NULL AND TRIM(city) != ''
         AND listing_status IN ('live_unclaimed', 'live_claimed')
         AND id::text ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-      ON CONFLICT DO NOTHING
+      ON CONFLICT (record_type, record_id, city_name, COALESCE(state_code, ''), COALESCE(neighborhood_name, ''))
+      DO UPDATE SET
+        latitude = EXCLUDED.latitude,
+        longitude = EXCLUDED.longitude,
+        is_primary = EXCLUDED.is_primary,
+        updated_at = NOW()
     `);
-    log(`ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows inserted`);
+    log(`ensureLocationFirstDiscovery: businesses backfill — ${bizResult.rowCount ?? 0} rows upserted`);
 
     // ── Backfill from tour_cultural_sites ───────────────────────────────────
     const siteResult = await pool.query(`

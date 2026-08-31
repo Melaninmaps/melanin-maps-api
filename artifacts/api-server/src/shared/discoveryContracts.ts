@@ -16,6 +16,7 @@ export type LocationContext = {
 export type DiscoveryFilters = {
   recordTypes: CanonicalRecordType[];
   category: string | null;
+  categoryNormalizationVersion?: number;
   specialty: string | null;
   ownership: string[];
   tagSlugs: string[];

@@ -3,6 +3,7 @@ import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import type { CanonicalRecordType, DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { Link } from "wouter";
+import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -24,7 +25,6 @@ export function LocationFirstMap({
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [response, setResponse] = useState<LocationFirstResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [cityInput, setCityInput] = useState("");
 
   const query = useMemo(
     () => ({
@@ -67,12 +67,6 @@ export function LocationFirstMap({
   const locationLabel = [location.neighborhood, location.city, location.stateCode]
     .filter(Boolean).join(", ");
 
-  function handleSetCity(e: React.FormEvent) {
-    e.preventDefault();
-    const parts = cityInput.split(",").map((s) => s.trim());
-    setExplicitLocation({ city: parts[0] ?? null, stateCode: parts[1] ?? null, neighborhood: null });
-  }
-
   return (
     <section className="grid min-h-[680px] grid-cols-[340px_1fr] bg-[#FBF6EC]">
       <aside className="border-r border-[#3A1F0E]/10 bg-white overflow-hidden flex flex-col">
@@ -82,20 +76,20 @@ export function LocationFirstMap({
             {locationLabel || "Choose an area"}
           </h1>
           {!location.city && (
-            <form onSubmit={handleSetCity} className="mt-3 flex gap-2">
-              <input
-                className="flex-1 rounded-full border border-[#3A1F0E]/20 px-3 py-1.5 text-sm"
-                placeholder="City, State (e.g. Charlotte, NC)"
-                value={cityInput}
-                onChange={(e) => setCityInput(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="rounded-full bg-[#3A1F0E] px-3 py-1.5 text-sm font-semibold text-white"
-              >
-                Go
-              </button>
-            </form>
+            <LocationSearchBar
+              queryLabel="Map search"
+              queryPlaceholder=""
+              areaPlaceholder="City, State (e.g. Philadelphia, PA)"
+              showQuery={false}
+              submitLabel="Go"
+              onResolved={({ area }) => {
+                setExplicitLocation({
+                  city: area.cityName,
+                  stateCode: area.stateCode,
+                  neighborhood: area.neighborhoodName,
+                });
+              }}
+            />
           )}
         </header>
 
@@ -176,7 +170,6 @@ export function LocationFirstMap({
 }
 
 function CoverageGapPanel({ response }: { response: LocationFirstResponse }) {
-  const nearest = response.nearestAvailableLocation;
   return (
     <section className="m-4 rounded-xl border border-[#CA922B]/35 bg-[#CA922B]/[0.07] p-4">
       <p className="font-semibold text-sm text-[#2B1507]">Nothing matching this selection is listed nearby yet.</p>
@@ -184,14 +177,6 @@ function CoverageGapPanel({ response }: { response: LocationFirstResponse }) {
         This local need has been recorded so the community can grow coverage — we never show a distant listing as local.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        {nearest && (
-          <button className="rounded-full border border-[#CA922B] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]" type="button">
-            Show {nearest.city} options
-          </button>
-        )}
-        <button className="rounded-full border border-[#CA922B] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]" type="button">
-          Expand search
-        </button>
         <Link href="/businesses/submit" className="rounded-full border border-[#CA922B] px-3 py-1.5 text-xs font-semibold text-[#8D5C17]">
           Add a listing
         </Link>

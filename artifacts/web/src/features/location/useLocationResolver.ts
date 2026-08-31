@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { locationResolutionErrorMessage } from "./locationResolutionMessages";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -35,13 +36,9 @@ export function useLocationResolver() {
         `${BASE}/api/locations/resolve?q=${encodeURIComponent(q)}`,
         { credentials: "include", headers: { Accept: "application/json" } },
       );
-      if (response.status === 404) {
-        throw new Error(
-          "We could not find that area. Try a city and state, for example Charlotte, NC.",
-        );
-      }
-      if (!response.ok) {
-        throw new Error("We could not search that area right now. Please try again.");
+      const responseError = locationResolutionErrorMessage(response.status);
+      if (!response.ok && responseError) {
+        throw new Error(responseError);
       }
       const result = (await response.json()) as ResolvedArea;
       setState("ready");

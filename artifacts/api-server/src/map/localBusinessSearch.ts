@@ -1,4 +1,9 @@
+import { getBusinessCategorySearchAliases } from "@workspace/constants";
 import type { Pool } from "pg";
+
+function foldedSql(column: string): string {
+  return `BTRIM(REGEXP_REPLACE(LOWER(COALESCE(${column}, '')), '[^a-z0-9]+', ' ', 'g'))`;
+}
 
 export type LocalSearchRequest = {
   query: string;
@@ -46,6 +51,7 @@ export class LocalBusinessSearch {
     const radiusMi = input.expansionAccepted ? requestedRadius : DEFAULT_RADIUS_MI;
     const q = input.query.trim();
     if (!q) throw new Error("SEARCH_QUERY_REQUIRED");
+    const categoryAliases = getBusinessCategorySearchAliases(q);
 
     // Haversine distance is calculated inside PostgreSQL and constrained by HAVING.
     // No client-side post-filter or generic national fallback may add records outside
@@ -59,22 +65,26 @@ export class LocalBusinessSearch {
           b.name,
           b.category,
           b.city,
-          b.state_code AS "stateCode",
+          b.state AS "stateCode",
           b.latitude,
           b.longitude,
           (3958.7613 * acos(least(1, greatest(-1,
             cos(radians($2)) * cos(radians(b.latitude)) * cos(radians(b.longitude) - radians($3)) +
             sin(radians($2)) * sin(radians(b.latitude))
           )))) AS "distanceMi"
-        FROM businesses b
-        WHERE b.is_active = true
-          AND b.latitude IS NOT NULL
+        FROM public.public_businesses b
+        WHERE b.latitude IS NOT NULL
           AND b.longitude IS NOT NULL
-          AND to_tsvector('simple',
-            coalesce(b.name, '') || ' ' ||
-            coalesce(b.category, '') || ' ' ||
-            coalesce(b.description, ''))
-            @@ websearch_to_tsquery('simple', $1)
+          AND (
+            to_tsvector('simple',
+              coalesce(b.name, '') || ' ' ||
+              coalesce(b.category, '') || ' ' ||
+              coalesce(b.subcategory, '') || ' ' ||
+              coalesce(b.description, ''))
+              @@ websearch_to_tsquery('simple', $1)
+            OR ${foldedSql("b.category")} = ANY($6::text[])
+            OR ${foldedSql("b.subcategory")} = ANY($6::text[])
+          )
       )
       SELECT
         id,
@@ -90,7 +100,7 @@ export class LocalBusinessSearch {
       WHERE "distanceMi" <= $4
       ORDER BY "distanceMi" ASC, name ASC
       LIMIT $5`,
-      [q, input.latitude, input.longitude, radiusMi, limit],
+      [q, input.latitude, input.longitude, radiusMi, limit, categoryAliases],
     );
 
     const expansion = this.nextExpansion(radiusMi, rows.length);

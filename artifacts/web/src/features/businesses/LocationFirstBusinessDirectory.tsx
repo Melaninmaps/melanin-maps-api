@@ -4,6 +4,7 @@ import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import type { DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
+import { buildBusinessDirectoryQuery } from "./businessDirectoryQuery";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -27,20 +28,12 @@ export function LocationFirstBusinessDirectory() {
   const [loading, setLoading] = useState(false);
 
   const query = useMemo(
-    () => ({
-      surface: "businesses" as const,
+    () => buildBusinessDirectoryQuery({
       location,
-      locationMode: "exact" as const,
-      radiusMiles: null,
-      filters: {
-        recordTypes: ["business" as const],
-        category,
-        specialty,
-        ownership,
-        tagSlugs: [],
-        dateRange: null,
-      },
-      searchText: searchText.trim() || null,
+      category,
+      specialty,
+      ownership,
+      searchText,
     }),
     [location, category, specialty, ownership, searchText],
   );
@@ -217,14 +210,6 @@ function DirectoryGapState({ response }: { response: LocationFirstResponse }) {
         This local need has been recorded so we can improve coverage. You can expand your search, view the nearest available city, or help add a listing.
       </p>
       <div className="mt-4 flex flex-wrap gap-3">
-        {response.nearestAvailableLocation && (
-          <button type="button" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
-            Show {response.nearestAvailableLocation.city}
-          </button>
-        )}
-        <button type="button" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
-          Expand search
-        </button>
         <Link href="/businesses/submit" className="rounded-full border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#8D5C17]">
           Add a business
         </Link>
