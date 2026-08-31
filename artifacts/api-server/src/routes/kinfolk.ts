@@ -82,6 +82,21 @@ import {
   buildPrivateMemoryPromptBlock,
   isKinfolkPrivateMemoryEnabled,
 } from "../kinfolk/private-memory";
+import { isAdmin } from "../lib/adminAuth";
+import {
+  KINFOLK_CONTEXT_TRUTH_BLOCK,
+  buildCompatibilityFallbackLog,
+  buildKinfolkChatCompletionRequest,
+  buildKinfolkHistory,
+  buildKinfolkProbeRequest,
+  classifyCompatibilityFallback,
+  isStaffDemoEligible,
+  resolveKinfolkModelPolicy,
+  resolveKinfolkProbeModel,
+  staffDemoPromptBlock,
+  staffDemoResponseMarker,
+  type KinfolkModelPolicy,
+} from "../kinfolk/staff-demo-policy";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -285,7 +300,6 @@ const router: IRouter = Router();
 const PROVIDER_TPM_LIMIT            = 200_000;
 const TOKEN_BUCKET_TARGET           = 160_000;  // 80% safety ceiling
 const MAX_REQUEST_TOKEN_RESERVATION = 4_500;    // hard cap per request
-const NORMAL_MAX_OUTPUT_TOKENS      = 600;      // down from 1,000
 const MAX_ACTIVE_GENERATIONS        = 4;        // down from 10
 const MAX_QUEUED_REQUESTS           = 30;       // down from 50
 const MAX_QUEUE_WAIT_MS             = 25_000;   // max queue wait (ms)
@@ -530,6 +544,8 @@ function normalizeKinfolkImageUrls(value: unknown): string[] {
 async function callOpenAIWithRetry(
   messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
   signal: AbortSignal,
+  model: string,
+  maxOutputTokens: number,
   /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
   temperature?: number,
 ): Promise<Extract<Awaited<ReturnType<typeof openai.chat.completions.create>>, { choices: unknown }>> {
@@ -542,13 +558,12 @@ async function callOpenAIWithRetry(
   for (let attempt = 0; attempt <= KINFOLK_RETRY_MAX; attempt++) {
     try {
       const completion = await openai.chat.completions.create(
-        {
-          model: "gpt-4o-mini",
-          max_tokens: NORMAL_MAX_OUTPUT_TOKENS,
+        buildKinfolkChatCompletionRequest({
+          model,
+          maxOutputTokens,
           messages,
-          response_format: { type: "json_object" },
-          ...(temperature !== undefined ? { temperature } : {}),
-        },
+          temperature,
+        }) as Parameters<typeof openai.chat.completions.create>[0],
         { signal },
       );
       if (!("choices" in completion)) {
@@ -565,7 +580,7 @@ async function callOpenAIWithRetry(
       // Never retry: client disconnect, auth/policy errors, bad requests, timeouts
       const isNonRetryable =
         isAbort ||
-        status === 401 || status === 403 || status === 400 || status === 422;
+        status === 401 || status === 403 || status === 400 || status === 404 || status === 422;
 
       if (isNonRetryable || attempt >= KINFOLK_RETRY_MAX) {
         throw err;
@@ -600,6 +615,48 @@ async function callOpenAIWithRetry(
     }
   }
   throw lastErr;
+}
+
+async function callOpenAIWithCompatibilityFallback(
+  messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
+  signal: AbortSignal,
+  policy: KinfolkModelPolicy,
+  requestId: string,
+  temperature?: number,
+): Promise<Awaited<ReturnType<typeof callOpenAIWithRetry>>> {
+  try {
+    return await callOpenAIWithRetry(
+      messages,
+      signal,
+      policy.primaryModel,
+      policy.maxOutputTokens,
+      temperature,
+    );
+  } catch (error) {
+    const fallback = classifyCompatibilityFallback(error);
+    if (
+      policy.mode !== "staff_demo" ||
+      !policy.fallbackModel ||
+      policy.fallbackModel === policy.primaryModel ||
+      !fallback.eligible
+    ) {
+      throw error;
+    }
+
+    // Deliberately omit model names, error text, prompt/user content, endpoint,
+    // credentials, and headers. This is compatibility telemetry only.
+    console.warn("[kinfolk-model-compatibility-fallback]", JSON.stringify(
+      buildCompatibilityFallbackLog({ requestId, policy, classification: fallback }),
+    ));
+
+    return callOpenAIWithRetry(
+      messages,
+      signal,
+      policy.fallbackModel,
+      policy.maxOutputTokens,
+      temperature,
+    );
+  }
 }
 
 // ─── Library grounding — isolates library-topic DB lookup from the main flow ──
@@ -723,11 +780,12 @@ export async function probeKinfolkAI(): Promise<{ ok: boolean; reason?: string }
     return { ok: _kinfolkHealthCache.ok, reason: _kinfolkHealthCache.reason };
   }
   try {
-    await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const model = resolveKinfolkProbeModel(process.env);
+    await openai.chat.completions.create(buildKinfolkProbeRequest({
+      model,
       messages: [{ role: "user", content: "ping" }],
-      max_tokens: 3,
-    } as Parameters<typeof openai.chat.completions.create>[0]);
+      maxOutputTokens: 3,
+    }) as Parameters<typeof openai.chat.completions.create>[0]);
     _kinfolkHealthCache = { ok: true, checkedAt: now };
     return { ok: true };
   } catch (err) {
@@ -752,8 +810,9 @@ export async function runKinfolkCanary(): Promise<{
   }
   const start = Date.now();
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const model = resolveKinfolkProbeModel(process.env);
+    const completion = await openai.chat.completions.create(buildKinfolkProbeRequest({
+      model,
       messages: [
         {
           role: "system",
@@ -761,9 +820,9 @@ export async function runKinfolkCanary(): Promise<{
         },
         { role: "user", content: "What is 2+2? Reply with only the number." },
       ],
-      max_tokens: 8,
+      maxOutputTokens: 8,
       temperature: 0,
-    } as Parameters<typeof openai.chat.completions.create>[0]);
+    }) as Parameters<typeof openai.chat.completions.create>[0]);
     if (!("choices" in completion)) {
       return { ok: false, reason: "Unexpected streaming response from AI provider", latencyMs: Date.now() - start };
     }
@@ -1846,9 +1905,9 @@ Responses should feel warm, researched, and personalized — like a knowledgeabl
     : `\nEXPLORE TIER — FOCUSED & CURATED:
 For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relevant lifestyle service. Quality over quantity. At the end, warmly mention: "Upgrade to Navigator or Trailblazer to unlock your full personalized lifestyle bundle — restaurants, events, your barber or nail tech already found — all in one place."`;
 
-  return `You are KinfolkAI™ — the most intuitive, knowledgeable life companion built for the Black community. You are not a search engine and not a restricted bot. You are the user's most trusted, well-connected friend — someone who knows them, remembers everything, and genuinely helps with all of life's questions: travel, weather, community, moving, business, family, health, finances, and everything in between.
+  return `You are KinfolkAI™ — an intuitive, knowledgeable life companion built for the Black community. You are a warm, well-connected guide who helps with travel, weather, community, moving, business, family, health, finances, and everyday questions using the context and evidence available in this request.
 
-You have memory. You know this person. You learn from every interaction. You get more useful every time they talk to you.
+${KINFOLK_CONTEXT_TRUTH_BLOCK}
 
 PRIMARY RESEARCH RULE — DIASPORA FIRST — NON-NEGOTIABLE:
 Before any external search, retrieval, recommendation, or source selection, translate the member's question into a diaspora-first research query. Unless the member already specifies a more precise population or explicitly asks for general research, begin with the appropriate diaspora context.
@@ -2347,8 +2406,8 @@ router.get("/kinfolk/health", async (_req: Request, res: Response) => {
   if (!process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] || !process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"]) {
     return void res.status(503).json({ ok: false, reason: "AI env vars not configured" });
   }
-  const { ok, reason } = await probeKinfolkAI();
-  if (!ok) return void res.status(503).json({ ok: false, reason: reason ?? "AI connection failed" });
+  const { ok } = await probeKinfolkAI();
+  if (!ok) return void res.status(503).json({ ok: false, reason: "AI connection failed" });
   res.json({ ok: true });
 });
 
@@ -2528,18 +2587,28 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   const _kinfolkStartedAt = Date.now();
   let   _kinfolkQClass    = "unknown";
   try {
+    // Resolve staff-demo eligibility once from existing authenticated account state.
+    // No request header, query parameter, public flag, or email literal can enable it.
+    const user = await storage.getUser(req.user.id);
+    const activeTester = hasActiveTesterEntitlement(user);
+    const modelPolicy = resolveKinfolkModelPolicy(isStaffDemoEligible({
+      authenticated: true,
+      administrator: isAdmin(req),
+      activeTester,
+    }), process.env);
+    const experienceMarker = staffDemoResponseMarker(modelPolicy);
+
     // ── Enforce monthly query limits ──────────────────────────────────────────
     chatStage = "quota_check";
     let queriesUsedThisCall: number | null = null;
     let aiPoolCircleId: string | null = null;
     if (req.user?.id) {
-      const user = await storage.getUser(req.user.id);
 
-      // ── Tester entitlement bypass ────────────────────────────────────────
-      // Active testers receive unlimited Kinfolk access regardless of their
-      // memberType or subscription state. This is an access status, not a tier.
-      // All quota checks are skipped — proceed directly to the AI call.
-      if (!hasActiveTesterEntitlement(user)) {
+      // ── Controlled staff-demo quota bypass ───────────────────────────────
+      // The same authenticated administrator-or-active-tester policy that selects
+      // the demo model also permits the controlled demo call. Standard users keep
+      // their existing free and paid quota behavior unchanged.
+      if (modelPolicy.mode !== "staff_demo") {
 
       const resolvedTier = getTierFromMemberType(user?.memberType);
 
@@ -2601,7 +2670,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           console.error("[kinfolk-pool-check] checkAiPool failed, treating as unlimited:", poolErr instanceof Error ? poolErr.message : String(poolErr));
         }
       }
-      } // closes: if (!hasActiveTesterEntitlement(user))
+      } // closes: standard quota policy
     }
 
     // Fetch personalization context (optional auth — works for guests too)
@@ -2722,6 +2791,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         needsClarification: true,
         discoveryKind: earlyDecision.discoveryKind,
         originalQuery: message,
+        ...experienceMarker,
       });
       return;
     }
@@ -2748,6 +2818,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         needsClarification: false,
         hairLossCarePlan: carePlan,
         originalQuery: message,
+        ...experienceMarker,
       });
       return;
     }
@@ -2846,6 +2917,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           originalQuery: message,
           // Optional personalization offer — rendered after the general answer, never a gate.
           clarificationSteps: researchPlan.clarification.length > 0 ? researchPlan.clarification : undefined,
+          ...experienceMarker,
         });
         return;
       } catch (libraryErr: unknown) {
@@ -2910,6 +2982,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
         // Return the original query so the client can preserve it for retry
         originalQuery: message,
+        ...experienceMarker,
       });
       return;
     }
@@ -3659,9 +3732,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     // Build system prompt — include tier for depth-of-response rules
-    const userTier = req.user?.id
-      ? await storage.getUser(req.user.id).then((u) => u?.memberType ?? "free").catch(() => "free")
-      : "free";
+    const userTier = user?.memberType ?? "free";
 
     // Fetch algorithmic twin recommendations (fire-and-forget on error)
     // ── SINGLE CTE QUERY (replaces 3 sequential pool.query + 1 Drizzle call) ──
@@ -3951,6 +4022,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const combinedPolicyPrompt = [
       _discoveryInstruction || null,
       intentPolicyPrompt || null,
+      staffDemoPromptBlock(modelPolicy) || null,
     ].filter(Boolean).join("\n\n");
     const systemPrompt = (combinedPolicyPrompt
       ? `${combinedPolicyPrompt}\n\n${baseSystemPrompt}`
@@ -3964,16 +4036,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       + (webSearchBlock ? `\n\n${webSearchBlock}` : "")
       + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
-    // Build OpenAI messages (history + new message)
-    // 4 turns = 8 messages; hard-cap each message at 400 chars (~100 tokens) to bound history budget
-    const historyMessages = existingMessages
-      .slice(-8) // keep last 8 messages (4 turns) for context — down from 12
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: (m.role === "assistant"
-          ? m.content
-          : m.content).slice(0, 400), // ~100 token ceiling per history message
-      }));
+    // Build bounded history according to the selected experience policy.
+    // Standard remains exactly last 8 / 400 chars; staff demo uses last 12 / 1200.
+    const historyMessages = buildKinfolkHistory(existingMessages, modelPolicy);
 
     // ── Library topic grounding (non-blocking enrichment) ────────────────────
     // Load structured Library topic data when the user asks about a library topic.
@@ -4004,7 +4069,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const estimatedPromptTokens = estimateTokens(systemPromptWithLibrary) +
       historyMessages.reduce((s, m) => s + estimateTokens(m.content), 0) +
       estimateTokens(message);
-    const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + NORMAL_MAX_OUTPUT_TOKENS, MAX_REQUEST_TOKEN_RESERVATION);
+    const estimatedTotal = Math.min(estimatedPromptTokens + verifiedImageUrls.length * 1000 + modelPolicy.maxOutputTokens, MAX_REQUEST_TOKEN_RESERVATION);
     console.log(`[kinfolk-tokens] user=${req.user?.id ?? "anon"} estimatedPrompt=${estimatedPromptTokens} estimatedTotal=${estimatedTotal}`);
 
     // Call AI — routed through KinfolkTokenBucket so neither the concurrency cap
@@ -4016,7 +4081,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       completion = await kinfolkQueue.run(
         req.user?.id ?? "anon",
         estimatedTotal,
-        () => { chatStage = "provider_call"; return callOpenAIWithRetry(aiMessages, AbortSignal.timeout(25000), resolverTemperature); },
+        () => {
+          chatStage = "provider_call";
+          return callOpenAIWithCompatibilityFallback(
+            aiMessages,
+            AbortSignal.timeout(25000),
+            modelPolicy,
+            _kinfolkReqId,
+            resolverTemperature,
+          );
+        },
       );
     } catch (providerError) {
       // For library topic questions: if the provider fails with a retryable error,
@@ -4052,6 +4126,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           resolution: { state: "resolved", preferencesUsed: [] },
           degraded: true,
           degradedReason: "provider_transient_error_library_fallback",
+          ...experienceMarker,
         });
         return;
       }
@@ -4437,6 +4512,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...(webResourceCards.length > 0 && { resourceCards: webResourceCards }),
       ...(webEntityCandidates?.length && { entityCandidates: webEntityCandidates }),
       ...(kinfolkUrgentMessage && { urgentSafetyMessage: kinfolkUrgentMessage }),
+      ...experienceMarker,
     });
   } catch (err) {
     const errCode        = (err as any)?.code as string | undefined;
