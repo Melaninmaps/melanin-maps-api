@@ -193,6 +193,7 @@ describe("truthful prompt and response marker", () => {
     expect(staffDemoPromptBlock(resolveKinfolkModelPolicy(true, {}))).toBe(STAFF_DEMO_STYLE_BLOCK);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/at most one optional clarifying question/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/multiple plausible referents.*one concise clarifying question/i);
+    expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/Never tailor culturally specific examples from a member's name alone/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/overwhelmed.*no more than three manageable next steps/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/venue hours, tickets, schedules, or live availability.*confirm those current details/i);
     expect(STAFF_DEMO_STYLE_BLOCK).toMatch(/Never invent a citation or URL/i);
