@@ -17,6 +17,14 @@ import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
+import {
+  KinfolkAssistantText,
+  KinfolkSourceLinks,
+  KinfolkStaffDemoBadge,
+  KINFOLK_RESPONSE_STATUS_DELAYS_MS,
+  KINFOLK_RESPONSE_STATUS_STAGES,
+  type KinfolkStaffDemoExperience,
+} from "@/components/kinfolk/KinfolkChatPresentation";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -50,6 +58,9 @@ interface LibraryAction {
 }
 interface KinfolkSource { title: string; url: string }
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
+// Returned only to eligible staff-demo participants. This is display metadata,
+// not a client-side authorization check or security boundary.
+type KinfolkExperience = KinfolkStaffDemoExperience;
 interface HairLossCarePlan {
   educationalMessage: string;
   medicalDisclaimer: string;
@@ -90,6 +101,7 @@ interface Message {
   // Optional personalization offer — rendered after general answer, never a gate.
   clarificationSteps?: ClarificationStep[];
   imageUrls?: string[];
+  experience?: KinfolkExperience | null;
 }
 interface Session { id: string; title: string; destination?: string; createdAt: string }
 interface Prefs {
@@ -644,6 +656,9 @@ function TravelPage() {
   }, []);
 
   const [sending, setSending] = useState(false);
+  const [responseStatus, setResponseStatus] = useState<(typeof KINFOLK_RESPONSE_STATUS_STAGES)[number]>(
+    KINFOLK_RESPONSE_STATUS_STAGES[0],
+  );
   const [kinfolkMode, setKinfolkMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -669,6 +684,28 @@ function TravelPage() {
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const responseStatusTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const activeChatControllerRef = useRef<AbortController | null>(null);
+
+  const clearResponseStatusTimers = useCallback((resetStatus = true) => {
+    responseStatusTimersRef.current.forEach(clearTimeout);
+    responseStatusTimersRef.current = [];
+    if (resetStatus) setResponseStatus(KINFOLK_RESPONSE_STATUS_STAGES[0]);
+  }, []);
+
+  const startResponseStatusTimers = useCallback(() => {
+    clearResponseStatusTimers();
+    responseStatusTimersRef.current = [
+      setTimeout(
+        () => setResponseStatus(KINFOLK_RESPONSE_STATUS_STAGES[1]),
+        KINFOLK_RESPONSE_STATUS_DELAYS_MS.connectingConversation,
+      ),
+      setTimeout(
+        () => setResponseStatus(KINFOLK_RESPONSE_STATUS_STAGES[2]),
+        KINFOLK_RESPONSE_STATUS_DELAYS_MS.puttingAnswerTogether,
+      ),
+    ];
+  }, [clearResponseStatusTimers]);
 
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -903,6 +940,12 @@ function TravelPage() {
     if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
   }, [stopRecording]);
 
+  // Clear client-only status timers and abort any in-flight request on unmount.
+  useEffect(() => () => {
+    clearResponseStatusTimers(false);
+    activeChatControllerRef.current?.abort("unmount");
+  }, [clearResponseStatusTimers]);
+
   // TTS playback
   const playMessage = useCallback(async (msgId: string, content: string) => {
     if (playingId === msgId) {
@@ -982,7 +1025,12 @@ function TravelPage() {
     const shouldRemember = rememberThis;
     const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImages };
     setMessages(prev => [...prev, userMsg]);
+    // Status stages describe only local elapsed request time. Clear any prior
+    // stage before starting a new request so stale copy can never linger.
+    clearResponseStatusTimers();
+    activeChatControllerRef.current?.abort("superseded");
     setSending(true);
+    startResponseStatusTimers();
 
     // 30-second client-side timeout — Kinfolk must never spin forever.
     // The server has its own 25s AbortSignal on the OpenAI call, but if the
@@ -990,6 +1038,7 @@ function TravelPage() {
     // fetch has no built-in deadline. This abort controller guarantees the UI
     // always resolves and shows a recoverable error message.
     const controller = new AbortController();
+    activeChatControllerRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort("timeout"), 30000);
 
     try {
@@ -1048,6 +1097,7 @@ function TravelPage() {
         // Resolved location — present when a city was resolved from this message
         location?: { city: string; state: string | null; source: string } | null;
         locationSource?: string | null;
+        experience?: KinfolkExperience | null;
       };
 
       // Guard: if reply is somehow missing, show a recoverable message rather than blank
@@ -1083,22 +1133,30 @@ function TravelPage() {
         location: data.location ?? null,
         locationSource: data.locationSource ?? null,
         clarificationSteps: data.clarificationSteps ?? undefined,
+        experience: data.experience ?? null,
       }]);
       // Show the optional clarifier if steps were returned.
       if (data.clarificationSteps && data.clarificationSteps.length > 0) {
         setPendingClarificationMsgId(assistantMsgId);
       }
     } catch (err) {
-      const isTimeout = err instanceof Error && err.name === "AbortError";
-      const msg = isTimeout
-        ? "Kinfolk is taking longer than expected. Try again in a moment."
-        : "Something went sideways on my end — try again in a sec.";
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: msg, timestamp: new Date().toISOString() }]);
+      // New-chat and unmount aborts are intentional; avoid adding a stale error
+      // after the conversation has been cleared. A timeout remains recoverable.
+      const wasAborted = controller.signal.aborted || (err instanceof Error && err.name === "AbortError");
+      const isTimeout = controller.signal.reason === "timeout";
+      if (!wasAborted || isTimeout) {
+        const msg = isTimeout
+          ? "Kinfolk is taking longer than expected. Try again in a moment."
+          : "Something went sideways on my end — try again in a sec.";
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: msg, timestamp: new Date().toISOString() }]);
+      }
     } finally {
       clearTimeout(timeoutId);
+      if (activeChatControllerRef.current === controller) activeChatControllerRef.current = null;
+      clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -1142,7 +1200,11 @@ function TravelPage() {
     } catch { /* ignore */ }
   }, []);
 
-  const newChat = () => { setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null); };
+  const newChat = () => {
+    clearResponseStatusTimers();
+    activeChatControllerRef.current?.abort("new_chat");
+    setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null);
+  };
 
   // Culture & Roots — track which community prompts the member has already responded to
   const [respondedRoots, setRespondedRoots] = useState<Set<string>>(new Set());
@@ -1416,7 +1478,7 @@ function TravelPage() {
                         <GoldFeatherMark size={15} label="Kinfolk" />
                       </div>
                     )}
-                    <div className={msg.role === "user" ? "max-w-[70%]" : "max-w-[85%]"}>
+                    <div className={msg.role === "user" ? "max-w-[70%]" : "max-w-[min(48rem,90%)]"}>
                       <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                         msg.role === "user"
                           ? "bg-[#2B1507] text-[#F5EBD8] rounded-br-sm"
@@ -1427,7 +1489,14 @@ function TravelPage() {
                             {msg.imageUrls.map((url) => <img key={url} src={url} alt="Image shared with Kinfolk" className="max-h-44 w-full rounded-xl object-cover" />)}
                           </div>
                         )}
-                        {msg.content}
+                        {msg.role === "assistant" ? (
+                          <>
+                            <KinfolkStaffDemoBadge experience={msg.experience} />
+                            <KinfolkAssistantText content={msg.content} />
+                          </>
+                        ) : (
+                          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
+                        )}
                       </div>
                       {msg.role === "assistant" && isLoggedIn && (
                         <button
@@ -1497,26 +1566,13 @@ function TravelPage() {
                       )}
                       {/* Source citations — shown for Living Library research answers */}
                       {msg.role === "assistant" && msg.sources && msg.sources.length > 0 && (
-                        <div className="mt-3 space-y-1">
-                          {msg.sources.map((src) => (
-                            <a
-                              key={src.url}
-                              href={src.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-1.5 text-[10px] font-semibold text-[#8D5C17] hover:text-[#CA922B] transition-colors"
-                            >
-                              <GoldFeatherMark label="Source" size={11} />
-                              {src.title}
-                            </a>
-                          ))}
-                        </div>
+                        <KinfolkSourceLinks sources={msg.sources} />
                       )}
                       {/* Library entry link — "Read the full source-cited entry" */}
                       {msg.role === "assistant" && msg.libraryEntry && (
                         <Link
                           href={msg.libraryEntry.url}
-                          className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-[#8D5C17] underline hover:text-[#CA922B] transition-colors"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#8D5C17] underline hover:text-[#CA922B] transition-colors"
                         >
                           <GoldFeatherMark label="Library" size={10} />
                           {msg.libraryEntry.readMoreLabel}
@@ -1617,7 +1673,7 @@ function TravelPage() {
                       {msg.role === "assistant" && msg.sourceNote && (
                         <p
                           data-testid="kinfolk-source-note"
-                          className="mt-3 border-t border-[#3A1F0E]/8 pt-2 text-[10px] italic leading-relaxed text-[#3A1F0E]/50"
+                          className="mt-3 border-t border-[#3A1F0E]/8 pt-2 text-xs italic leading-relaxed text-[#3A1F0E]/50"
                         >
                           {msg.sourceNote}
                         </p>
@@ -1635,7 +1691,7 @@ function TravelPage() {
                       <div className="flex gap-1">
                         {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#CA922B] animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                       </div>
-                      <span className="text-xs text-[#3A1F0E]/40 italic ml-1">KinfolkAI is thinking…</span>
+                      <span data-testid="kinfolk-response-status" aria-live="polite" className="text-xs text-[#3A1F0E]/55 italic ml-1">{responseStatus}</span>
                     </div>
                   </div>
                 )}
