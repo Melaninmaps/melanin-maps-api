@@ -11,42 +11,145 @@ import {
 
 const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
 
+export type ObjectStorageCredentialMode = "adc" | "service_account_json" | "replit_sidecar";
+
+export class ObjectStorageConfigurationError extends Error {
+  readonly code = "OBJECT_STORAGE_CONFIGURATION_INVALID";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "ObjectStorageConfigurationError";
+  }
+}
+
 let _client: Storage | null = null;
 let _clientError: Error | null = null;
+
+export function getObjectStorageCredentialMode(): ObjectStorageCredentialMode {
+  const configured = process.env.OBJECT_STORAGE_CREDENTIAL_MODE?.trim().toLowerCase();
+  if (configured) {
+    if (configured === "adc" || configured === "service_account_json" || configured === "replit_sidecar") {
+      return configured;
+    }
+    throw new ObjectStorageConfigurationError("OBJECT_STORAGE_CREDENTIAL_MODE is not supported.");
+  }
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()) return "service_account_json";
+  if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS) return "replit_sidecar";
+  return "adc";
+}
+
+type ServiceAccountCredentials = {
+  clientEmail: string;
+  privateKey: string;
+  projectId?: string;
+};
+
+function readServiceAccountCredentials(): ServiceAccountCredentials {
+  const rawCredentials = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!rawCredentials) {
+    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is required for service-account mode.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawCredentials);
+  } catch {
+    // Do not include a parser error: it may echo a fragment of the secret value.
+    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON.");
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON must contain a credential object.");
+  }
+
+  const credential = parsed as Record<string, unknown>;
+  if (
+    credential.type !== "service_account" ||
+    typeof credential.client_email !== "string" ||
+    !credential.client_email ||
+    typeof credential.private_key !== "string" ||
+    !credential.private_key
+  ) {
+    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is missing required service-account fields.");
+  }
+  return {
+    clientEmail: credential.client_email,
+    privateKey: credential.private_key.replace(/\\n/g, "\n"),
+    projectId: typeof credential.project_id === "string" && credential.project_id
+      ? credential.project_id
+      : undefined,
+  };
+}
+
+function createStorageClient(): Storage {
+  const mode = getObjectStorageCredentialMode();
+  if (mode === "replit_sidecar") {
+    return new Storage({
+      credentials: {
+        audience: "replit",
+        subject_token_type: "access_token",
+        token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
+        type: "external_account",
+        credential_source: {
+          url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
+          format: {
+            type: "json",
+            subject_token_field_name: "access_token",
+          },
+        },
+        universe_domain: "googleapis.com",
+      },
+      projectId: "",
+    });
+  }
+
+  if (mode === "service_account_json") {
+    const credential = readServiceAccountCredentials();
+    return new Storage({
+      credentials: {
+        client_email: credential.clientEmail,
+        private_key: credential.privateKey,
+      },
+      projectId: credential.projectId ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.GCLOUD_PROJECT,
+    });
+  }
+
+  // Application Default Credentials supports Railway workload identity and the
+  // standard GOOGLE_APPLICATION_CREDENTIALS mounted-file contract.
+  return new Storage({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT ?? process.env.GCLOUD_PROJECT,
+  });
+}
 
 function getClient(): Storage {
   if (_clientError) throw _clientError;
   if (!_client) {
     try {
-      _client = new Storage({
-        credentials: {
-          audience: "replit",
-          subject_token_type: "access_token",
-          token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-          type: "external_account",
-          credential_source: {
-            url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-            format: {
-              type: "json",
-              subject_token_field_name: "access_token",
-            },
-          },
-          universe_domain: "googleapis.com",
-        },
-        projectId: "",
-      });
+      _client = createStorageClient();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      _clientError = new Error(`Object storage not available: ${msg}`);
+      _clientError = err instanceof Error
+        ? err
+        : new ObjectStorageConfigurationError("Object storage could not be initialized.");
       throw _clientError;
     }
   }
-  return _client!;
+  return _client;
+}
+
+export function getObjectStorageDiagnostics(): { credentialMode: ObjectStorageCredentialMode | "invalid"; configured: boolean } {
+  try {
+    const credentialMode = getObjectStorageCredentialMode();
+    if (credentialMode === "service_account_json") readServiceAccountCredentials();
+    return { credentialMode, configured: true };
+  } catch {
+    return { credentialMode: "invalid", configured: false };
+  }
 }
 
 export const objectStorageClient: Storage = new Proxy({} as Storage, {
   get(_target, prop) {
-    return (getClient() as never as Record<string | symbol, unknown>)[prop];
+    const client = getClient();
+    const value = (client as never as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? value.bind(client) : value;
   },
 });
 

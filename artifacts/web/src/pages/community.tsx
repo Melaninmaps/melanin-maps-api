@@ -9,6 +9,7 @@ import {
   TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
+import { CommunityMedia } from "@/components/community/CommunityMedia";
 import { HappeningPanel } from "@/components/community/HappeningPanel";
 
 const BASE = import.meta.env.BASE_URL;
@@ -220,11 +221,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
       {post.mediaUrls && post.mediaUrls.length > 0 && (
         <div className={`grid gap-1 mx-4 mb-3 rounded-xl overflow-hidden ${post.mediaUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
           {post.mediaUrls.slice(0, 4).map((url, i) => (
-            url.includes(".mp4") || url.includes("video") ? (
-              <video key={i} src={url} controls className="w-full max-h-72 object-cover bg-black rounded-xl" />
-            ) : (
-              <img key={i} src={url} alt="" className="w-full object-cover rounded-xl max-h-72" />
-            )
+            <CommunityMedia key={url} url={url} index={i} />
           ))}
         </div>
       )}
@@ -276,12 +273,15 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         credentials: "include",
         body: formData,
       });
-      const data = await resp.json() as { url?: string; error?: string };
+      const requestId = resp.headers.get("x-request-id");
+      const data = await resp.json().catch(() => ({})) as { url?: string; error?: string; code?: string; requestId?: string };
       if (!resp.ok || !data.url) {
-        setUploadError(data.error ?? "Upload failed. Please try again.");
+        const supportId = data.requestId ?? requestId;
+        const detail = data.error ?? "Upload failed. Please try again.";
+        setUploadError(supportId ? `${detail} (Request ID: ${supportId})` : detail);
         return;
       }
-      if (!mediaUrls.includes(data.url)) setMediaUrls(u => [...u, data.url!]);
+      setMediaUrls((urls) => urls.includes(data.url!) ? urls : [...urls, data.url!]);
     } catch {
       setUploadError("Upload failed. Check your connection and try again.");
     } finally {
@@ -292,26 +292,16 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
   const addMediaUrl = () => {
     const url = mediaUrlInput.trim();
     if (!url) return;
-    try { new URL(url); } catch {
-      toast({ title: "Invalid URL", description: "Paste a complete URL starting with https://", variant: "destructive" });
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("unsupported protocol");
+    } catch {
+      toast({ title: "Invalid URL", description: "Paste a complete HTTP or HTTPS URL.", variant: "destructive" });
       return;
     }
     if (!mediaUrls.includes(url)) setMediaUrls(u => [...u, url]);
     setMediaUrlInput("");
     setShowMediaInput(false);
-  };
-
-  /** Returns a YouTube embed URL from a watch or youtu.be link, or null. */
-  const getYouTubeEmbed = (url: string): string | null => {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes("youtu.be")) return `https://www.youtube.com/embed/${u.pathname.slice(1).split("?")[0]}`;
-      if (u.hostname.includes("youtube.com")) {
-        const v = u.searchParams.get("v");
-        return v ? `https://www.youtube.com/embed/${v}` : null;
-      }
-    } catch { /* ignore */ }
-    return null;
   };
 
   const addHashtag = () => {
@@ -411,49 +401,15 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
           {/* Media preview */}
           {mediaUrls.length > 0 && (
             <div data-testid="community-media-previews" className="flex gap-2 flex-wrap">
-              {mediaUrls.map((url, i) => {
-                const ytEmbed = getYouTubeEmbed(url);
-                const isSocial = url.includes("tiktok.com") || url.includes("instagram.com");
-                const isVid = !isSocial && !ytEmbed && (url.includes(".mp4") || url.toLowerCase().includes("video"));
-                const socialLabel = url.includes("tiktok.com") ? "TikTok" : url.includes("instagram.com") ? "Instagram" : "Link";
-                return (
-                  <div key={i} className="relative">
-                    {isSocial ? (
-                      <div className="flex items-center gap-2 px-3 py-2 bg-[#FAF6EF] border border-[#CA922B]/20 rounded-xl">
-                        <Link2 className="w-4 h-4 text-[#CA922B] shrink-0" />
-                        <span className="text-xs font-semibold text-[#3A1F0E]/70">{socialLabel}</span>
-                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))} className="text-[#3A1F0E]/30 hover:text-red-500">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : ytEmbed ? (
-                      <div className="relative w-44 h-24 rounded-xl overflow-hidden">
-                        <iframe src={ytEmbed} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
-                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    ) : isVid ? (
-                      <div className="relative w-20 h-20 rounded-xl overflow-hidden">
-                        <video src={url} className="w-full h-full object-cover" />
-                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="relative w-20 h-20 rounded-xl overflow-hidden">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
-                        <button onClick={() => setMediaUrls(u => u.filter((_, j) => j !== i))}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
-                          <X className="w-3 h-3 text-white" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {mediaUrls.map((url, i) => (
+                <CommunityMedia
+                  key={url}
+                  url={url}
+                  index={i}
+                  compact
+                  onRemove={() => setMediaUrls((urls) => urls.filter((_, index) => index !== i))}
+                />
+              ))}
             </div>
           )}
 
@@ -501,7 +457,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
 
           {/* Upload error */}
           {uploadError && (
-            <div data-testid="community-upload-error" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+            <div data-testid="community-upload-error" role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
               {uploadError}
             </div>
           )}
@@ -514,7 +470,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
                 ref={fileInputRef}
                 data-testid="community-photo-input"
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                accept=".jpg,.jpeg,.jpe,.png,.webp,.heic,.heif,image/jpeg,image/jpg,image/pjpeg,image/png,image/webp,image/heic,image/heif"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }}
               />
@@ -523,7 +479,7 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
                 ref={videoInputRef}
                 data-testid="community-video-input"
                 type="file"
-                accept="video/mp4,video/quicktime,video/webm"
+                accept=".mp4,.m4v,.mov,.webm,video/mp4,video/quicktime,video/webm"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }}
               />

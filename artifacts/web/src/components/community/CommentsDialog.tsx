@@ -106,13 +106,13 @@ export function CommentsDialog({
 
   return (
     <div data-testid="community-comments-dialog" className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <section className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <section role="dialog" aria-modal="true" aria-labelledby="community-comments-title" className="w-full max-w-lg max-h-[85vh] overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-[#3A1F0E]/10 px-5 py-4">
           <div>
-            <p className="font-serif text-lg font-bold text-[#2B1507]">Conversation</p>
+            <p id="community-comments-title" className="font-serif text-lg font-bold text-[#2B1507]">Conversation</p>
             <p className="line-clamp-1 text-xs text-[#3A1F0E]/50">{postLabel}</p>
           </div>
-          <button onClick={onClose} aria-label="Close comments" className="rounded-full bg-[#FAF6EF] p-2 text-[#3A1F0E]/60 hover:text-[#2B1507]"><X className="h-4 w-4" /></button>
+          <button type="button" onClick={onClose} aria-label="Close comments" className="rounded-full bg-[#FAF6EF] p-2 text-[#3A1F0E]/60 hover:text-[#2B1507] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2"><X className="h-4 w-4" aria-hidden="true" /></button>
         </header>
 
         <div className="max-h-[52vh] overflow-y-auto p-5">
@@ -154,8 +154,18 @@ export function CommentsDialog({
           {loadError && comments.length > 0 && <p className={`mb-2 text-xs ${loadError.startsWith("Thanks") ? "text-green-700" : "text-red-600"}`}>{loadError}</p>}
           {access?.canComment ? (
             <div className="flex items-end gap-2">
-              <textarea data-testid="community-comment-input" value={content} onChange={(event) => setContent(event.target.value)} maxLength={500} rows={2} placeholder="Add to the conversation…" className="min-h-11 flex-1 resize-none rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm outline-none focus:border-[#CA922B]" />
-              <button data-testid="community-comment-submit" onClick={() => void submit()} disabled={!content.trim() || submitting} className="rounded-full bg-[#CA922B] p-3 text-white disabled:opacity-40">{submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}</button>
+              <textarea
+                data-testid="community-comment-input"
+                aria-label="Comment"
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                maxLength={500}
+                rows={2}
+                placeholder="Add to the conversation…"
+                style={{ color: "#3A1F0E", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E" }}
+                className="min-h-11 flex-1 resize-none rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              />
+              <button type="button" aria-label="Post comment" data-testid="community-comment-submit" onClick={() => void submit()} disabled={!content.trim() || submitting} className="rounded-full bg-[#CA922B] p-3 text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2">{submitting ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}</button>
             </div>
           ) : (
             <div className="rounded-2xl bg-[#FAF6EF] px-4 py-3 text-center text-sm text-[#3A1F0E]/60">{access?.restrictionReason ?? "Comments are not available for this post."}</div>
