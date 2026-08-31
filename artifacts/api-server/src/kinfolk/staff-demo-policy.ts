@@ -118,6 +118,7 @@ export function buildKinfolkChatCompletionRequest<TMessages>(input: {
   max_tokens?: number;
   max_completion_tokens?: number;
   temperature?: number;
+  reasoning?: { effort: "minimal" };
 } {
   const common = {
     model: input.model,
@@ -129,6 +130,7 @@ export function buildKinfolkChatCompletionRequest<TMessages>(input: {
     return {
       ...common,
       max_completion_tokens: input.maxOutputTokens,
+      reasoning: { effort: "minimal" },
     };
   }
 

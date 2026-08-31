@@ -70,6 +70,7 @@ describe("family-compatible request parameters", () => {
       messages,
       response_format: { type: "json_object" },
       max_completion_tokens: 900,
+      reasoning: { effort: "minimal" },
     });
     expect(request).not.toHaveProperty("max_tokens");
     expect(request).not.toHaveProperty("temperature");
