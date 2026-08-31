@@ -21,7 +21,7 @@ function createApp(repository: LibraryRepository, userId?: string): Express {
   app.use(express.json());
   if (userId) {
     app.use((request: Request, _response, next) => {
-      (request as Request & { user?: { id: string } }).user = { id: userId };
+      request.user = { id: userId } as Request["user"];
       next();
     });
   }
