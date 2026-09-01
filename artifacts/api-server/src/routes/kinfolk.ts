@@ -45,6 +45,29 @@ import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
 import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
 import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
 import { createOpenAiLibraryWriter } from "../library/openAiLibraryWriter";
+import {
+  createGovernedKinfolkBusinessRepository,
+  type GovernedKinfolkBusiness,
+  type ValidatedKinfolkCityScope,
+} from "../kinfolk/governedBusinessRepository";
+import {
+  namedBusinessPromptBlock,
+  resolveNamedBusinessTurn,
+} from "../kinfolk/business-reference";
+import { routeEvidence as classifyEvidenceRoute } from "../kinfolk/evidence-route";
+import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
+import {
+  evidenceFailureReply,
+  evidenceRoutePromptBlock,
+} from "../kinfolk/evidence-runtime";
+import {
+  extractItineraryDayCount,
+  isTravelPlanningPrompt,
+  itineraryPromptInstruction,
+  normalizeKinfolkItinerary,
+  parseKinfolkModelPayload,
+  type KinfolkItinerary,
+} from "../kinfolk/itinerary-response";
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
 // Created once on first research request; degrade gracefully when Tavily key is absent.
@@ -264,6 +287,7 @@ const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
 };
 
 const router: IRouter = Router();
+const governedBusinessRepository = createGovernedKinfolkBusinessRepository(pool);
 
 // ─── KinfolkAI Generation Queue ──────────────────────────────────────────────
 // Bounded concurrency limiter wrapping every outbound OpenAI generation call.
@@ -1494,30 +1518,7 @@ function getCityLocalTerms(destination: string): CityLocalData | null {
 }
 
 // ─── Build personalized system prompt ─────────────────────────────────────────
-type BusinessCatalogEntry = {
-  id?: string;
-  name: string;
-  category: string;
-  city: string;
-  description: string;
-  verified: boolean;
-  tags: string[];
-  story?: string | null;
-  missionStatement?: string | null;
-  whyStarted?: string | null;
-  whatCustomersShouldKnow?: string | null;
-  ownershipBadges?: string[] | null;
-  communityValues?: string[] | null;
-  audiencesServed?: string[] | null;
-  vibes?: string[] | null;
-  accessibilityFeatures?: string[] | null;
-  communityInitiatives?: string[] | null;
-  growthGoals?: string[] | null;
-  audienceType?: string | null;
-  environmentTags?: string[] | null;
-  amenityTags?: string[] | null;
-  profileStatus?: string | null;
-};
+type BusinessCatalogEntry = GovernedKinfolkBusiness;
 
 type CrossCityMatch = {
   category: string;
@@ -1573,7 +1574,7 @@ function buildSystemPrompt(opts: {
   privacySuppressed?: boolean;
   /** Tracks how the catalog was populated — used to produce a server-authoritative
    *  grounding block so the model cannot emit contradictory "no listings" disclaimers. */
-  catalogSource?: "city" | "radius" | "home" | "none";
+  catalogSource?: "city" | "radius" | "home" | "named" | "none";
   /** Intent classification — gates which optional prompt modules are injected. */
   intentClass?: string | null;
 }): string {
@@ -1689,9 +1690,9 @@ KNOW BEFORE YOU GO — When recommending a specific business, include this in ea
 }` : "";
 
   // ── User profile & history ───────────────────────────────────────────────
-  const culturalLine = (prefs?.culturalInterests as string[] | null)?.length
-    ? `\n- Cultural interests: ${(prefs!.culturalInterests as string[]).join(", ")}`
-    : "";
+  // Persisted broad cultural fields are not transmitted to the model. Explicit
+  // current-turn identity is handled separately by resolvePermittedIdentityContext.
+  const culturalLine = "";
 
   const ownershipLine = (prefs?.preferredOwnershipTypes as string[] | null)?.length
     ? `\n- Preferred business types: ${(prefs!.preferredOwnershipTypes as string[]).join(", ")} — ALWAYS prioritize recommending businesses with these designations`
@@ -1914,25 +1915,8 @@ For city or trip questions: deliver 2–3 carefully chosen restaurants + 1 relev
 
 ${KINFOLK_CONTEXT_TRUTH_BLOCK}
 
-PRIMARY RESEARCH RULE — DIASPORA FIRST — NON-NEGOTIABLE:
-Before any external search, retrieval, recommendation, or source selection, translate the member's question into a diaspora-first research query. Unless the member already specifies a more precise population or explicitly asks for general research, begin with the appropriate diaspora context.
-
-Default research lens:
-- General health, wellness, disease, caregiving, maternal health, beauty, hair, or medical access: "Black women" plus the member's topic.
-- Education, STEM, careers, entrepreneurship, wealth, housing, legal access, travel, or family topics: "Black community" or "Black women" plus the topic, choosing the more relevant lens.
-- Local business, professional, culture, heritage, nightlife, events, or services: include the member's stated place and "Black-owned", "Black community", or the community context relevant to the request.
-- If the member explicitly identifies a different diaspora, culture, population, or community, use the member's stated language instead of replacing it with the default lens.
-- If the member explicitly asks for broad/general research, preserve that request and do not force a population qualifier.
-
-Examples (apply these exact translation patterns):
-- "heart disease" → search "Black women heart disease".
-- "STEM opportunities in Charlotte" → search "Black women STEM opportunities Charlotte".
-- "hair loss" → search "Black women hair loss dermatology" and, when relevant, "Black hair loss support stylist [location]".
-- "housing help" → search "Black community housing assistance [location]".
-- "nightlife in Charlotte" → search "Black-owned nightlife Charlotte" and culturally relevant local sources.
-
-IDENTITY AND MEMORY BOUNDARY — NON-NEGOTIABLE:
-A search term is not identity disclosure. Never infer, assert, or permanently store a member's race, ethnicity, gender, nationality, disability, health condition, sexuality, religion, immigration status, or other sensitive identity merely because they asked a question or selected a research lens. The diaspora-first rule changes the research query and source prioritization only. It does not create a member profile fact.
+IDENTITY AND RESEARCH BOUNDARY — NON-NEGOTIABLE:
+Never infer or transmit a member demographic from their name, location, preferences, history, saved businesses, or broad cultural profile fields. Search the subject neutrally. A population or identity qualifier may inform this answer only when the member explicitly states it in the current turn; treat it as group-level context, never diagnosis, and never persist it.
 
 INTENT CLARIFICATION STANDARD:
 Clarify only when the answer would materially improve. Ask one short, optional question at a time. For sensitive topics, first establish whether the question is for the member, someone else, or general research. Always offer a skip/general-research option. Do not delay useful general information — give an initial, clearly scoped answer and offer refinement.
@@ -2770,9 +2754,42 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const locationSource = turnGeography?.source ?? null;
     const destinationState = turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
 
-    // Detect explicit cultural identity statements ("I'm Ethiopian", "my family is from Ghana")
-    // Only fires on clear first-person declarations — never infers from searches or behavior.
-    const detectedCulture = detectCulturalIdentity(message);
+    // Identity is permitted only from this current turn and is never persisted.
+    const permittedIdentity = resolvePermittedIdentityContext(message);
+    const evidenceRoute = classifyEvidenceRoute(message);
+
+    const destinationScope: ValidatedKinfolkCityScope | null = destination && destinationState
+      ? { city: destination, stateCode: destinationState }
+      : null;
+    const namedBusinessResolution = await resolveNamedBusinessTurn({
+      message,
+      scope: destinationScope,
+      existingMessages,
+      repository: governedBusinessRepository,
+    });
+    const namedBusiness = namedBusinessResolution.state === "resolved"
+      ? namedBusinessResolution.business
+      : null;
+    let businessCatalog: BusinessCatalogEntry[] = namedBusiness ? [namedBusiness] : [];
+    let catalogSource: "city" | "radius" | "home" | "named" | "none" = namedBusiness ? "named" : "none";
+
+    if (namedBusinessResolution.state === "needs_location") {
+      res.json({
+        sessionId,
+        reply: namedBusinessResolution.reply,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "clarification",
+        sources: [],
+        needsClarification: true,
+        originalQuery: message,
+      });
+      return;
+    }
 
     // ── Kinfolk pre-classifier (brunch / food / travel precedence) ───────────
     // Runs BEFORE classifyIntent to enforce brunch→business_discovery routing
@@ -2854,13 +2871,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // gets injected. No extra API call — deterministic keyword classifier.
     // When the pre-classifier is definitive (brunch/travel), override the
     // raw result so the LLM never reclassifies back to pop culture.
-    const rawIntentClassFromLLM = classifyIntent(message, !!destination);
+    const evidenceIntentClass = evidenceRoute.domain;
     const rawIntentClass: KinfolkIntent =
-      earlyDecision.route === "business_discovery" && rawIntentClassFromLLM !== "legal_regulated"
+      earlyDecision.route === "business_discovery" && evidenceIntentClass !== "legal_regulated"
         ? "business_discovery"
-        : earlyDecision.route === "travel_planning" && rawIntentClassFromLLM !== "legal_regulated"
+        : earlyDecision.route === "travel_planning" && evidenceIntentClass !== "legal_regulated"
         ? "business_discovery"
-        : rawIntentClassFromLLM;
+        : evidenceIntentClass;
     // Server-side belt+suspenders guard: certain travel-policy/visa phrases must
     // always resolve to legal_regulated even when hasDestination caused the keyword
     // classifier to return business_discovery. Catches live mis-routes without
@@ -2936,26 +2953,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // directed Sinners) are injected and biography-mode queries suppress business recs.
     // v2: DB-backed resolver with 3 output states (resolved/needs_clarification/unconfirmed).
     // Non-sensitive preference fields only; allowCulturalAffinityRanking must be explicit.
-    const resolverPrefs = prefs ? {
-      allowCulturalAffinityRanking: Boolean((prefs as Record<string,unknown>).allow_cultural_affinity_ranking ?? false),
-      diasporaCountries: (
-        Array.isArray((prefs as Record<string,unknown>).diaspora_countries)
-          ? (prefs as Record<string,unknown>).diaspora_countries
-          : (Array.isArray((prefs as Record<string,unknown>).diasporaCountries)
-              ? (prefs as Record<string,unknown>).diasporaCountries
-              : [])
-      ) as string[],
-      multilingualExpansionMode: (
-        ((prefs as Record<string,unknown>).multilingual_expansion_mode as string | undefined) ?? "ask"
-      ) as "off" | "ask" | "dual",
-    } : null;
+    // Persisted diaspora/cultural-affinity fields are intentionally unavailable to
+    // live resolution until a purpose-consent ledger exists.
+    const resolverPrefs = null;
     const contextResolution = await resolveKinfolkContext({
       message,
       userId: req.user?.id ?? null,
       permittedLocation: destination ? { city: destination } : null,
       preferences: resolverPrefs,
       intent: intentClass,
-      authoritativeDestination: earlyDecision.location,
+      authoritativeDestination: namedBusiness ? destination : earlyDecision.location,
     });
 
     // ── Deterministic short-circuit (spec §5.2) ─────────────────────────────
@@ -3062,16 +3069,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let kinfolkUrgentMessage: string | undefined;
     const LENS_ELIGIBLE_INTENTS = new Set(["medical_health", "safety_emergency"]);
     const lensEligible = LENS_ELIGIBLE_INTENTS.has(intentClass) ||
+      evidenceRoute.retrievalRequirement !== "none" ||
       /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety)\b/i.test(message);
     const isEntityQuery = ENTITY_INDEX[normalizeLensQuery(message)] !== undefined;
 
     if (lensEligible || isEntityQuery) {
       try {
-        const diasporaCountries = resolverPrefs?.diasporaCountries ?? [];
         const memberProfile = buildMemberProfile({
           userId: req.user?.id ?? "anon",
-          diasporaCountries: diasporaCountries.length ? diasporaCountries : null,
-          culturalBackground: (prefs as Record<string, unknown> | null)?.cultural_background as string | null ?? null,
         });
 
         const searchPlan = buildSearchPlan(message, memberProfile, ENTITY_INDEX);
@@ -3142,6 +3147,32 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           webSearchBlock = webSearchBlock ? `${candidateBlock}\n\n${webSearchBlock}` : candidateBlock;
         }
       } catch { /* non-fatal — profile-first web layer degrades gracefully */ }
+    }
+
+    // Medical and live/current claims fail closed when retrieval did not produce
+    // claim-relevant authority. A model is never asked to fill these evidence gaps.
+    const hasLiveWebEvidence = healthRetrievalSources.some((source) => source.source === "kinfolk_web");
+    const failClosedReply = evidenceFailureReply({
+      route: evidenceRoute,
+      medicalContextBlock: healthEvidenceBlock,
+      hasLiveWebEvidence,
+    });
+    if (failClosedReply) {
+      res.json({
+        sessionId,
+        reply: failClosedReply,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass,
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+      });
+      return;
     }
 
     // ── Tour-site retrieval — murals, monuments, museums, heritage sites ────────
@@ -3219,161 +3250,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — Kinfolk answers from general knowledge */ }
     }
 
-    // ── Preference-aware nearby nudge ────────────────────────────────────────
-    // Generates ONE follow-up suggestion when: destination is known, the user has
-    // preference signals matching something in MWM, and the reply didn't already
-    // surface business recs. Never fires on business_discovery intent (redundant).
-    // Never dumps a list — only one category, one sentence, one tap.
+    // Nearby nudges are disabled here until they can be derived from the already
+    // governed catalog without a second, preference-expanding lookup.
     let nearbyNudge: { text: string; quickReply: string } | null = null;
-    const NUDGE_SKIP_INTENTS = new Set(["business_discovery"]);
-    const recsAlreadyHaveBusinesses =
-      Array.isArray((recommendations as Record<string, unknown> | null)?.businesses) &&
-      (((recommendations as { businesses?: unknown[] } | null)?.businesses)?.length ?? 0) > 0;
-
-    // Nudge only fires when the user is asking about a specific pin or location —
-    // not general cultural/historical conversation where a destination city happens
-    // to be known. Requires explicit geographic anchor in this message.
-    const LOCATION_ANCHOR_RE = /\b(near(by)?|around|close to|in the (area|neighborhood|district|quarter|ward)|what'?s (in|near|around|here)|walking distance|this (area|neighborhood|spot|place|block)|that (area|neighborhood|spot)|what (else|other).{0,30}(near|around|here)|where (else|near|around)|this pin|this spot|on (this|the) block|what.*block)\b/i;
-    const isLocationAnchoredQuery = LOCATION_ANCHOR_RE.test(message) || intentClass === "current_information";
-
-    if (destination && req.user?.id && isLocationAnchoredQuery && !NUDGE_SKIP_INTENTS.has(intentClass) && !recsAlreadyHaveBusinesses) {
-      try {
-        type NudgeCat = { label: string; regexPattern: string; nudgeText: string; quickReply: string; prefKeywords: string[]; sessionKeywords: string[] };
-
-        const NUDGE_CATEGORIES: NudgeCat[] = [
-          {
-            label: "coffee",
-            regexPattern: "coffee|café|cafe|brew",
-            nudgeText: `There are Black-owned coffee spots in ${destination} — want me to find one that fits your vibe?`,
-            quickReply: `Tell me about Black-owned coffee shops in ${destination}`,
-            prefKeywords: ["coffee", "café", "cafe"],
-            sessionKeywords: ["coffee", "café", "latte", "espresso", "brew"],
-          },
-          {
-            label: "bookstore",
-            regexPattern: "book",
-            nudgeText: `I found a Black-owned bookstore in ${destination} — want to check it out?`,
-            quickReply: `Tell me about bookstores in ${destination}`,
-            prefKeywords: ["book", "bookstore", "reading"],
-            sessionKeywords: ["bookstore", "book store", "books"],
-          },
-          {
-            label: "dining",
-            regexPattern: "restaurant|dining|food|bistro|eatery|kitchen",
-            nudgeText: `There are community restaurants in ${destination} worth knowing about — want a recommendation?`,
-            quickReply: `Recommend a restaurant in ${destination}`,
-            prefKeywords: ["food", "restaurant", "dining", "cuisine"],
-            sessionKeywords: ["restaurant", "food", "eat", "dining", "brunch", "lunch", "dinner", "meal"],
-          },
-          {
-            label: "outdoors",
-            regexPattern: "outdoor|trail|hiking|nature|fitness",
-            nudgeText: `There are outdoor and nature spots near ${destination} — want to explore them?`,
-            quickReply: `What outdoor and nature spots are near ${destination}?`,
-            prefKeywords: ["outdoor", "hiking", "trail", "nature", "outdoors"],
-            sessionKeywords: ["hike", "hiking", "trail", "trails", "outdoor", "nature", "park"],
-          },
-          {
-            label: "wellness",
-            regexPattern: "wellness|spa|yoga|meditation|massage",
-            nudgeText: `There are Black-owned wellness spots in ${destination} — want to see what's around?`,
-            quickReply: `What wellness and spa spots are in ${destination}?`,
-            prefKeywords: ["wellness", "yoga", "meditation", "spa", "health"],
-            sessionKeywords: ["wellness", "spa", "yoga", "meditation", "massage"],
-          },
-          {
-            label: "beauty",
-            regexPattern: "beauty|salon|barber|nail",
-            nudgeText: `There are Black-owned salons in ${destination} — want to explore them?`,
-            quickReply: `Tell me about Black-owned salons in ${destination}`,
-            prefKeywords: ["beauty", "salon", "barber", "hair"],
-            sessionKeywords: ["salon", "nails", "hair", "beauty", "barber"],
-          },
-          {
-            label: "shopping",
-            regexPattern: "boutique|retail|shop|clothing|apparel",
-            nudgeText: `There are community boutiques and shops in ${destination} — want to browse?`,
-            quickReply: `What community shops and boutiques are in ${destination}?`,
-            prefKeywords: ["shopping", "boutique", "shop"],
-            sessionKeywords: ["shop", "boutique", "store", "shopping"],
-          },
-          {
-            label: "art",
-            regexPattern: "art|gallery|creative|studio",
-            nudgeText: `There are art galleries and creative spaces in ${destination} — interested?`,
-            quickReply: `What art galleries and creative spaces are in ${destination}?`,
-            prefKeywords: ["art", "gallery", "creative"],
-            sessionKeywords: ["art", "gallery", "creative", "studio", "exhibit"],
-          },
-          {
-            label: "music",
-            regexPattern: "music|concert|jazz|venue|live",
-            nudgeText: `There are community music spots and venues in ${destination} — want to check them out?`,
-            quickReply: `Tell me about music venues in ${destination}`,
-            prefKeywords: ["music", "concert", "jazz", "live music"],
-            sessionKeywords: ["music", "concert", "jazz", "live music", "venue"],
-          },
-          {
-            label: "nightlife",
-            regexPattern: "lounge|bar|nightlife|cocktail",
-            nudgeText: `There are community lounges and bars in ${destination} — want recommendations?`,
-            quickReply: `What bars and lounges are in ${destination}?`,
-            prefKeywords: ["nightlife", "bar", "lounge"],
-            sessionKeywords: ["bar", "lounge", "nightlife", "cocktail"],
-          },
-        ];
-
-        // ── Score categories by preference + session signal strength ─────────
-        const scores: Record<string, number> = {};
-        const prefLabels = [
-          ...(Array.isArray(prefs?.culturalInterests) ? (prefs!.culturalInterests as string[]) : []),
-          ...(Array.isArray(prefs?.favoriteCategories) ? (prefs!.favoriteCategories as string[]) : []),
-        ].map((s: string) => s.toLowerCase());
-        const recentUserText = existingMessages
-          .filter((m) => m.role === "user")
-          .slice(-5)
-          .map((m) => (typeof m.content === "string" ? m.content : "").toLowerCase())
-          .join(" ");
-
-        for (const cat of NUDGE_CATEGORIES) {
-          // +3 from stored preferences
-          if (cat.prefKeywords.some((kw) => prefLabels.some((pl) => pl.includes(kw)))) {
-            scores[cat.label] = (scores[cat.label] ?? 0) + 3;
-          }
-          // +2 from session message keywords
-          if (cat.sessionKeywords.some((kw) => recentUserText.includes(kw))) {
-            scores[cat.label] = (scores[cat.label] ?? 0) + 2;
-          }
-          // +1 from liked-spot categories
-          if (likedSpots.slice(0, 10).some((s) => cat.prefKeywords.some((kw) => s.toLowerCase().includes(kw)))) {
-            scores[cat.label] = (scores[cat.label] ?? 0) + 1;
-          }
-        }
-
-        // ── Try top-scored categories until one has actual DB results ─────────
-        const ranked = Object.entries(scores)
-          .sort(([, a], [, b]) => b - a)
-          .map(([label]) => label)
-          .filter((_, i) => i < 4); // check at most 4 to keep latency low
-
-        for (const label of ranked) {
-          const cat = NUDGE_CATEGORIES.find((c) => c.label === label);
-          if (!cat) continue;
-          const bRes = await pool.query<{ id: string }>(
-            `SELECT id FROM businesses
-             WHERE LOWER(city) ILIKE $1
-               AND status = 'active'
-               AND LOWER(category) ~* $2
-             LIMIT 1`,
-            [`%${destination.toLowerCase()}%`, cat.regexPattern],
-          );
-          if (bRes.rows.length > 0) {
-            nearbyNudge = { text: cat.nudgeText, quickReply: cat.quickReply };
-            break;
-          }
-        }
-      } catch { /* non-fatal — never block the response */ }
-    }
 
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
@@ -3420,223 +3299,57 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    // Fetch platform business catalog — destination first, then fall back to user's home city.
-    // This ensures Kinfolk always has MWM's real listings as its primary recommendation source,
-    // not just when a travel destination has been set.
-    let businessCatalog: BusinessCatalogEntry[] = [];
-    // Tracks how the catalog was populated — injected into the prompt so the
-    // model has a server-authoritative signal and cannot emit contradictory disclaimers.
-    let catalogSource: "city" | "radius" | "home" | "none" = "none";
-
-    // Shared select shape reused for both destination and home-city queries
-    const bizSelectShape = {
-      name: businessesTable.name,
-      category: businessesTable.category,
-      city: businessesTable.city,
-      description: businessesTable.description,
-      verified: businessesTable.verified,
-      tags: businessesTable.tags,
-      story: businessIdentityTable.businessStory,
-      missionStatement: businessIdentityTable.missionStatement,
-      whyStarted: businessIdentityTable.whyStarted,
-      whatCustomersShouldKnow: businessIdentityTable.whatCustomersShouldKnow,
-      ownershipBadges: businessIdentityTable.ownershipBadges,
-      communityValues: businessIdentityTable.communityValues,
-      audiencesServed: businessIdentityTable.audiencesServed,
-      vibes: businessIdentityTable.vibes,
-      accessibilityFeatures: businessIdentityTable.accessibilityFeatures,
-      communityInitiatives: businessIdentityTable.communityInitiatives,
-      growthGoals: businessIdentityTable.growthGoals,
-      audienceType: businessIdentityTable.audienceType,
-      environmentTags: businessIdentityTable.environmentTags,
-      amenityTags: businessIdentityTable.amenityTags,
-      profileStatus: businessesTable.profileStatus,
-    } as const;
-
-    if (destination) {
+    // Fetch the governed platform catalog only after named-business resolution.
+    // Exact city APIs are state-scoped; unregistered geography may use a validated
+    // place geocode solely for radius lookup. Business names are never geocoded.
+    const broadCatalogAllowed = namedBusinessResolution.state === "not_named";
+    if (broadCatalogAllowed && destination && destinationScope) {
       try {
-        // Use pool.query (raw SQL) — Drizzle db.select() with leftJoin silently
-        // fails in the esbuild bundle on Railway; pool.query is proven to work.
-        const CATALOG_SQL = `
-          SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
-                 b.tags, b.profile_status,
-                 bi.business_story, bi.mission_statement, bi.why_started,
-                 bi.what_customers_should_know, bi.ownership_badges,
-                 bi.community_values, bi.audiences_served, bi.vibes,
-                 bi.accessibility_features, bi.community_initiatives,
-                 bi.growth_goals, bi.audience_type,
-                 bi.environment_tags, bi.amenity_tags
-          FROM businesses b
-          LEFT JOIN business_identity bi ON bi.business_id = b.id
-          WHERE b.status = 'active'
-            AND COALESCE(b.is_duplicate, false) = false
-            AND COALESCE(b.permanently_hidden, false) = false
-            AND b.city ILIKE $1
-          ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
-          LIMIT 25`;
-        const catalogRows = await pool.query(CATALOG_SQL, [`%${destination}%`]);
-        businessCatalog = catalogRows.rows.map((r: Record<string, unknown>) => ({
-          id: r.id,
-          name: r.name,
-          category: r.category,
-          city: r.city,
-          description: r.description,
-          verified: r.verified,
-          tags: r.tags,
-          profileStatus: r.profile_status,
-          story: r.business_story,
-          missionStatement: r.mission_statement,
-          whyStarted: r.why_started,
-          whatCustomersShouldKnow: r.what_customers_should_know,
-          ownershipBadges: r.ownership_badges,
-          communityValues: r.community_values,
-          audiencesServed: r.audiences_served,
-          vibes: r.vibes,
-          accessibilityFeatures: r.accessibility_features,
-          communityInitiatives: r.community_initiatives,
-          growthGoals: r.growth_goals,
-          audienceType: r.audience_type,
-          environmentTags: r.environment_tags,
-          amenityTags: r.amenity_tags,
-        })) as unknown as typeof businessCatalog;
+        businessCatalog = await governedBusinessRepository.findDestinationCatalog(destinationScope, 25);
         if (businessCatalog.length) catalogSource = "city";
-
-        // City-name ILIKE returned 0 — destination may be a province/region
-        // whose businesses are stored under sub-area city names (e.g. "Phuket"
-        // has businesses stored as city="Karon", "Patong", "Chalong").
-        // Geocode via Nominatim and fall back to a 50-mile geo-radius query.
-        if (!businessCatalog.length) {
-          try {
-            const geoResp = await fetch(
-              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=3&addressdetails=0`,
-              {
-                headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
-                signal: AbortSignal.timeout(4000),
-              },
-            );
-            const geoHits = (await geoResp.json()) as Array<{
-              lat: string; lon: string; class: string; type: string;
-            }>;
-            const VALID_GEO = new Set(["place","boundary","natural","landuse","administrative"]);
-            const INVALID_GEO = new Set(["restaurant","bar","hotel","cafe","hospital","church","shop"]);
-            const hit = geoHits.find((h) => VALID_GEO.has(h.class) && !INVALID_GEO.has(h.type));
-            if (hit) {
-              const destLat = parseFloat(hit.lat);
-              const destLng = parseFloat(hit.lon);
-              const geoRows = await pool.query(
-                `SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
-                        b.tags, b.profile_status,
-                        bi.business_story, bi.mission_statement, bi.why_started,
-                        bi.what_customers_should_know, bi.ownership_badges,
-                        bi.community_values, bi.audiences_served, bi.vibes,
-                        bi.accessibility_features, bi.community_initiatives,
-                        bi.growth_goals, bi.audience_type,
-                        bi.environment_tags, bi.amenity_tags
-                 FROM businesses b
-                 LEFT JOIN business_identity bi ON bi.business_id = b.id
-                 WHERE b.status = 'active'
-                   AND COALESCE(b.is_duplicate, false) = false
-                   AND COALESCE(b.permanently_hidden, false) = false
-                   AND (3959 * acos(GREATEST(-1, LEAST(1,
-                     cos(radians($1)) * cos(radians(b.latitude::float))
-                     * cos(radians(b.longitude::float) - radians($2))
-                     + sin(radians($1)) * sin(radians(b.latitude::float))
-                   )))) <= 50
-                 ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
-                 LIMIT 25`,
-                [destLat, destLng],
-              );
-              businessCatalog = geoRows.rows.map((r: Record<string, unknown>) => ({
-                id: r.id,
-                name: r.name,
-                category: r.category,
-                city: r.city,
-                description: r.description,
-                verified: r.verified,
-                tags: r.tags,
-                profileStatus: r.profile_status,
-                story: r.business_story,
-                missionStatement: r.mission_statement,
-                whyStarted: r.why_started,
-                whatCustomersShouldKnow: r.what_customers_should_know,
-                ownershipBadges: r.ownership_badges,
-                communityValues: r.community_values,
-                audiencesServed: r.audiences_served,
-                vibes: r.vibes,
-                accessibilityFeatures: r.accessibility_features,
-                communityInitiatives: r.community_initiatives,
-                growthGoals: r.growth_goals,
-                audienceType: r.audience_type,
-                environmentTags: r.environment_tags,
-                amenityTags: r.amenity_tags,
-              })) as unknown as typeof businessCatalog;
-              if (businessCatalog.length) catalogSource = "radius";
-            }
-          } catch { /* non-critical — geo-radius fallback failed */ }
-        }
       } catch { /* non-critical — proceed without catalog */ }
     }
 
-    // No destination set — load from user's home city so Kinfolk can recommend real MWM
-    // businesses for local queries ("find me somewhere near me", "where can we go tonight").
-    // IMPORTANT: only fire when destination is null. If a destination is set (e.g. Phuket)
-    // and geo-radius returned 0, do NOT inject home-city businesses — that causes Kinfolk to
-    // recommend Philadelphia restaurants for a Phuket birthday query.
-    if (!businessCatalog.length && req.user?.id && !destination) {
+    if (broadCatalogAllowed && destination && !destinationScope && !businessCatalog.length) {
+      try {
+        const geoResp = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=3&addressdetails=0`,
+          {
+            headers: { "User-Agent": "MappingWithMelanin/1.0 (contact@mappingwithmelanin.com)" },
+            signal: AbortSignal.timeout(4000),
+          },
+        );
+        const geoHits = (await geoResp.json()) as Array<{ lat: string; lon: string; class: string; type: string }>;
+        const validGeo = new Set(["place", "boundary", "natural", "landuse", "administrative"]);
+        const invalidGeo = new Set(["restaurant", "bar", "hotel", "cafe", "hospital", "church", "shop"]);
+        const hit = geoHits.find((candidate) => validGeo.has(candidate.class) && !invalidGeo.has(candidate.type));
+        if (hit) {
+          businessCatalog = await governedBusinessRepository.findWithinRadius({
+            latitude: Number(hit.lat),
+            longitude: Number(hit.lon),
+            radiusMiles: 50,
+          }, 25);
+          if (businessCatalog.length) catalogSource = "radius";
+        }
+      } catch { /* non-critical — geo-radius fallback failed */ }
+    }
+
+    // A home fallback requires an exact city plus two-letter state. Missing state
+    // does not widen the query; a registered city may supply its canonical state.
+    if (broadCatalogAllowed && !destination && req.user?.id && !businessCatalog.length) {
       try {
         const [userRow] = await db
           .select({ homeCity: usersTable.homeCity })
           .from(usersTable)
           .where(eq(usersTable.id, req.user.id))
           .limit(1);
-        const homeCity = userRow?.homeCity;
-        if (homeCity) {
-          // Use pool.query (not Drizzle) for consistency with the destination
-          // catalog path and to include the is_duplicate/permanently_hidden guards.
-          const homeRows = await pool.query(
-            `SELECT b.id, b.name, b.category, b.city, b.description, b.verified,
-                    b.tags, b.profile_status,
-                    bi.business_story, bi.mission_statement, bi.why_started,
-                    bi.what_customers_should_know, bi.ownership_badges,
-                    bi.community_values, bi.audiences_served, bi.vibes,
-                    bi.accessibility_features, bi.community_initiatives,
-                    bi.growth_goals, bi.audience_type,
-                    bi.environment_tags, bi.amenity_tags
-             FROM businesses b
-             LEFT JOIN business_identity bi ON bi.business_id = b.id
-             WHERE b.status = 'active'
-               AND COALESCE(b.is_duplicate, false) = false
-               AND COALESCE(b.permanently_hidden, false) = false
-               AND b.city ILIKE $1
-             ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST
-             LIMIT 20`,
-            [`%${homeCity}%`],
-          );
-          const homeBizRows = homeRows.rows.map((r: Record<string, unknown>) => ({
-            id: r.id,
-            name: r.name,
-            category: r.category,
-            city: r.city,
-            description: r.description,
-            verified: r.verified,
-            tags: r.tags,
-            profileStatus: r.profile_status,
-            story: r.business_story,
-            missionStatement: r.mission_statement,
-            whyStarted: r.why_started,
-            whatCustomersShouldKnow: r.what_customers_should_know,
-            ownershipBadges: r.ownership_badges,
-            communityValues: r.community_values,
-            audiencesServed: r.audiences_served,
-            vibes: r.vibes,
-            accessibilityFeatures: r.accessibility_features,
-            communityInitiatives: r.community_initiatives,
-            growthGoals: r.growth_goals,
-            audienceType: r.audience_type,
-            environmentTags: r.environment_tags,
-            amenityTags: r.amenity_tags,
-          })) as unknown as BusinessCatalogEntry[];
-          businessCatalog = homeBizRows;
+        const homeCity = userRow?.homeCity?.trim() ?? "";
+        const homeState = getHeritageCity(homeCity)?.state ?? "";
+        if (homeCity && /^[A-Z]{2}$/.test(homeState)) {
+          businessCatalog = await governedBusinessRepository.findHomeFallback({
+            city: homeCity,
+            stateCode: homeState,
+          }, 20);
           if (businessCatalog.length) catalogSource = "home";
         }
       } catch { /* non-critical — proceed without catalog */ }
@@ -3664,56 +3377,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-critical */ }
     }
 
-    // Build cross-city preference bridge (when user has an active journey with a destination)
+    // Cross-city behavioral expansion is disabled pending a governed, consent-aware API.
     let crossCityBridge: CrossCityMatch[] | null = null;
-    if (req.user?.id && activeJourney?.city) {
-      try {
-        const fbRows = await pool.query<{ category: string; city: string; cnt: string }>(
-          `SELECT category, city, COUNT(*) as cnt
-           FROM kinfolk_feedback
-           WHERE user_id = $1
-             AND reaction = 'like'
-             AND category IS NOT NULL
-             AND city IS NOT NULL
-             AND city NOT ILIKE $2
-           GROUP BY category, city
-           ORDER BY cnt DESC
-           LIMIT 20`,
-          [req.user.id, `%${activeJourney.city}%`],
-        );
-        if (fbRows.rows.length > 0) {
-          const catMap = new Map<string, { category: string; fromCity: string; savedCount: number }>();
-          for (const row of fbRows.rows) {
-            const key = row.category.toLowerCase();
-            if (!catMap.has(key)) catMap.set(key, { category: row.category, fromCity: row.city, savedCount: 0 });
-            catMap.get(key)!.savedCount += parseInt(row.cnt, 10);
-          }
-          const topCats = [...catMap.values()].slice(0, 5);
-          // ── SINGLE BATCHED QUERY (replaces Promise.all with N parallel pool.query calls) ──
-          // Promise.all fired up to 5 concurrent pool.query() calls. With 4 concurrent
-          // chat users that exhausts the entire 20-slot pool. Replaced with one query
-          // using ILIKE ANY(array) so only 1 connection is consumed per chat request.
-          const categoryFilters = topCats.map(({ category }) => `%${category}%`);
-          const bizBatch = await pool.query<{ name: string; category: string; city: string; verified: boolean }>(
-            `SELECT name, category, city, verified FROM businesses
-             WHERE status = 'active' AND city ILIKE $1
-               AND category ILIKE ANY($2::text[])
-             ORDER BY verified DESC, name ASC LIMIT 15`,
-            [`%${activeJourney.city}%`, categoryFilters],
-          );
-          const bridges = topCats.map(({ category, fromCity, savedCount }) => ({
-            category,
-            fromCity,
-            savedCount,
-            matches: bizBatch.rows
-              .filter((r) => r.category.toLowerCase().includes(category.toLowerCase()))
-              .slice(0, 3),
-          }));
-          crossCityBridge = bridges.filter((b) => b.matches.length > 0);
-          if (crossCityBridge.length === 0) crossCityBridge = null;
-        }
-      } catch { /* non-critical */ }
-    }
 
     // Fetch live weather if the user is asking about weather/packing/conditions
     let weatherContext: string | null = null;
@@ -3735,55 +3400,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Build system prompt — include tier for depth-of-response rules
     const userTier = user?.memberType ?? "free";
 
-    // Fetch algorithmic twin recommendations (fire-and-forget on error)
-    // ── SINGLE CTE QUERY (replaces 3 sequential pool.query + 1 Drizzle call) ──
-    // The prior pattern made 3 round-trips to Postgres, each holding a pool
-    // connection sequentially. Combined into one CTE so only 1 connection is
-    // consumed for the entire twin-recommendation block.
-    let twinRecs: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }> = [];
-    try {
-      const currentUserId = req.user?.id;
-      if (currentUserId) {
-        const myIds = (await db.select({ businessId: savedPlacesTable.businessId }).from(savedPlacesTable).where(eq(savedPlacesTable.userId, currentUserId))).map((s) => s.businessId);
-        if (myIds.length >= 2) {
-          const twinResult = await pool.query<{ id: string; name: string; city: string; state: string; twin_count: string; score: string }>(
-            `WITH overlap AS (
-               SELECT sp.user_id, COUNT(*) AS overlap_cnt
-               FROM saved_places sp
-               WHERE sp.business_id = ANY($1) AND sp.user_id <> $2
-               GROUP BY sp.user_id
-               HAVING COUNT(*) >= 2
-               ORDER BY COUNT(*) DESC
-               LIMIT 30
-             ),
-             candidate_saves AS (
-               SELECT sp.business_id, sp.user_id
-               FROM saved_places sp
-               WHERE sp.user_id IN (SELECT user_id FROM overlap)
-                 AND sp.business_id <> ALL($1)
-               LIMIT 200
-             )
-             SELECT b.id, b.name, b.city, b.state,
-                    COUNT(DISTINCT cs.user_id)::text AS twin_count,
-                    SUM(o.overlap_cnt)::text          AS score
-             FROM candidate_saves cs
-             JOIN overlap o ON o.user_id = cs.user_id
-             JOIN businesses b ON b.id = cs.business_id AND b.status = 'active'
-             GROUP BY b.id, b.name, b.city, b.state
-             ORDER BY SUM(o.overlap_cnt) DESC
-             LIMIT 8`,
-            [myIds, currentUserId],
-          );
-          twinRecs = twinResult.rows.map((b) => ({
-            businessName: b.name,
-            city: b.city,
-            state: b.state,
-            twinCount: Number(b.twin_count),
-            reason: `${b.twin_count} taste-matched users saved this`,
-          }));
-        }
-      }
-    } catch { /* non-fatal — proceed without twin recs */ }
+    // Taste-twin business expansion is disabled until candidates can be resolved
+    // through the governed public business repository.
+    const twinRecs: Array<{ businessName: string; city: string; state: string; twinCount: number; reason: string }> = [];
 
     let topUserVibes: string[] = [];
     try {
@@ -3824,22 +3443,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — city context is enrichment, not required */ }
     }
 
-    // Check if user owns a business and inject owner-mode context
+    // Preserve owner-advisor behavior without bypassing the governed public catalog.
+    // A submitted business that is hidden, duplicated, staged, or outside the scoped
+    // catalog cannot enter the prompt through this path.
     let ownerBusinessContext = "";
     if (req.user?.id) {
       try {
-        const [ownedBiz] = await db
-          .select({ id: businessesTable.id, name: businessesTable.name, category: businessesTable.category, city: businessesTable.city, state: businessesTable.state, rating: businessesTable.rating })
+        const [ownedBusinessId] = await db
+          .select({ id: businessesTable.id })
           .from(businessesTable)
           .where(eq(businessesTable.submittedById, req.user.id))
           .limit(1);
-        if (ownedBiz) {
-          const bizTierDepth = (userTier === "navigator" || userTier === "trailblazer")
+        const ownedBusiness = ownedBusinessId
+          ? businessCatalog.find((business) => business.id === ownedBusinessId.id)
+          : null;
+        if (ownedBusiness) {
+          const bizTierDepth = userTier === "navigator" || userTier === "trailblazer"
             ? "Provide full-depth business guidance: detailed strategy, multi-step action plans, proactive growth recommendations."
             : "Provide concise, actionable business guidance appropriate for the Explore tier. Cover the core need clearly — do not deliver premium-depth output such as full bundles, extensive multi-step strategy, or proactive enrichment reserved for paid tiers. Warmly mention that Navigator or Trailblazer unlocks deeper business tools if relevant.";
-          ownerBusinessContext = `\n\n--- BUSINESS OWNER CONTEXT ---\nThis user owns "${ownedBiz.name}" (${ownedBiz.category}) in ${ownedBiz.city}, ${ownedBiz.state} — rated ${ownedBiz.rating ?? "N/A"}/5.\n\nACTIVE CONTEXT RULE: Business context is available but should not dominate unless the user's question is clearly about their business. If the intent is ambiguous (e.g. "help me plan Saturday"), ask: "Are you thinking about this for yourself or for ${ownedBiz.name}?" before proceeding.\n\nWhen business context IS active: shift into business advisor mode. Give concrete, actionable guidance for minority business owners. Reference their business name when relevant. Personal and business finances must never be merged without the user's explicit direction.\n\nTIER DEPTH FOR BUSINESS GUIDANCE: ${bizTierDepth}`;
+          ownerBusinessContext = `\n\n--- BUSINESS OWNER CONTEXT ---\nThis user owns the governed public listing "${ownedBusiness.name}" (${ownedBusiness.category}) in ${ownedBusiness.city}, ${ownedBusiness.stateCode ?? ""}.\n\nACTIVE CONTEXT RULE: Business context is available but should not dominate unless the user's question is clearly about their business. If the intent is ambiguous (e.g. "help me plan Saturday"), ask: "Are you thinking about this for yourself or for ${ownedBusiness.name}?" before proceeding.\n\nWhen business context IS active: shift into business advisor mode. Give concrete, actionable guidance for minority business owners. Reference their business name when relevant. Personal and business finances must never be merged without the user's explicit direction.\n\nTIER DEPTH FOR BUSINESS GUIDANCE: ${bizTierDepth}`;
         }
-      } catch { /* non-fatal */ }
+      } catch { /* non-fatal — owner context is enrichment only */ }
     }
 
     // Cultural phrases — cached for 6 hours, loaded once per instance
@@ -3871,7 +3495,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const sensitiveTopicDetected = classifySensitiveTopic(message);
 
     // Fetch user's library interests for cross-pollination into KinfolkAI context
-    // (skipped when sensitiveTopicDetected — non-leakage rule)
+    // (skipped when sensitiveTopicDetected — non-leakage rule).
     let libraryInterests: string[] = [];
     if (req.user?.id && !sensitiveTopicDetected) {
       try {
@@ -3879,7 +3503,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           `SELECT topic_name FROM user_library_interests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
           [req.user.id],
         );
-        libraryInterests = liRes.rows.map((r) => r.topic_name);
+        libraryInterests = liRes.rows.map((row) => row.topic_name);
       } catch { /* non-critical — table may not exist yet */ }
     }
 
@@ -3922,19 +3546,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // authoritative evidence for regulated-domain queries.
     const effectivePrivacySuppressed = sensitiveTopicDetected || intentPolicy.blockCommunityAsProof;
 
-    // ── Member identity context (pronoun + reproductive context) ────────────
-    // Minimum-use policy enforced inside loadKinfolkMemberContext.
-    // Returns safe defaults ({ audienceBand:'unknown', pronounMode:'none' }) on any error.
+    // Minimum-use policy inside loadKinfolkMemberContext governs these existing,
+    // non-business member affordances. Explicit cultural/population context still
+    // comes only from the current turn through permittedIdentity above.
     const memberCtx = req.user?.id
       ? await loadKinfolkMemberContext(req.user.id, intentClass, message)
       : { audienceBand: "unknown" as const, pronounMode: "none" as const };
-
-    // Build member-first-name for pronoun instruction (from existing prefs or users row)
     const memberFirstName: string | null =
       (prefs as Record<string, unknown> | null)?.first_name as string | null
       ?? null;
-
-    const pronounBlock     = buildPronounInstruction(memberCtx, memberFirstName);
+    const pronounBlock = buildPronounInstruction(memberCtx, memberFirstName);
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
 
     const activePrivateMemories = privateMemoryEnabled && req.user?.id
@@ -4020,9 +3641,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Prepend intent policy block for any intent that requires special handling.
     // Also prepend any brunch/discovery instruction from the pre-classifier.
     // Empty string for low-consequence general knowledge queries (no overhead).
+    const travelPlanning = isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning";
+    const itineraryInstruction = travelPlanning && destination
+      ? itineraryPromptInstruction(extractItineraryDayCount(message), destination)
+      : "";
     const combinedPolicyPrompt = [
       _discoveryInstruction || null,
       intentPolicyPrompt || null,
+      evidenceRoutePromptBlock(evidenceRoute, permittedIdentity),
+      namedBusiness ? namedBusinessPromptBlock(namedBusiness) : null,
+      itineraryInstruction || null,
       staffDemoPromptBlock(modelPolicy) || null,
     ].filter(Boolean).join("\n\n");
     const systemPrompt = (combinedPolicyPrompt
@@ -4152,100 +3780,95 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       incrementAiUsage(aiPoolCircleId).catch(() => {});
     }
 
-    const rawContent = completion.choices[0]?.message?.content ?? "{}";
+    const rawContent = completion.choices[0]?.message?.content ?? "";
+    const modelPayload = parseKinfolkModelPayload(rawContent);
 
-    let reply = "Let me think on that for a second — something went sideways on my end.";
-    recommendations = null; // re-initialized after AI response parse
+    let reply = modelPayload.reply;
+    recommendations = null;
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
     let taskAction: Record<string, unknown> | null = null;
-    let detectedDestination: string | null = null;
+    let itinerary: KinfolkItinerary | null = null;
+    let proposedModelDestination: string | null = null;
 
-    try {
-      const parsed = JSON.parse(rawContent) as {
-        reply?: string;
-        recommendations?: Record<string, unknown> | null;
-        followUpSuggestions?: string[];
-        smartPromotion?: Record<string, unknown> | null;
-        taskAction?: Record<string, unknown> | null;
-      };
-      reply = parsed.reply ?? rawContent;
-      recommendations = parsed.recommendations ?? null;
-      followUpSuggestions = parsed.followUpSuggestions ?? [];
-      smartPromotion = parsed.smartPromotion ?? null;
-      taskAction = parsed.taskAction ?? null;
+    if (modelPayload.valid && modelPayload.value) {
+      const parsed = modelPayload.value;
+      recommendations = parsed.recommendations && typeof parsed.recommendations === "object" && !Array.isArray(parsed.recommendations)
+        ? parsed.recommendations as Record<string, unknown>
+        : null;
+      followUpSuggestions = Array.isArray(parsed.followUpSuggestions)
+        ? parsed.followUpSuggestions.filter((value): value is string => typeof value === "string").slice(0, 3)
+        : [];
+      smartPromotion = parsed.smartPromotion && typeof parsed.smartPromotion === "object" && !Array.isArray(parsed.smartPromotion)
+        ? parsed.smartPromotion as Record<string, unknown>
+        : null;
+      taskAction = parsed.taskAction && typeof parsed.taskAction === "object" && !Array.isArray(parsed.taskAction)
+        ? parsed.taskAction as Record<string, unknown>
+        : null;
       if (recommendations && typeof recommendations.destination === "string") {
-        detectedDestination = recommendations.destination;
+        proposedModelDestination = recommendations.destination;
       }
-    } catch {
-      // If not JSON, just use raw content as reply
-      reply = rawContent;
+      if (travelPlanning && destination) {
+        itinerary = normalizeKinfolkItinerary({
+          message,
+          modelValue: parsed,
+          catalog: businessCatalog,
+        });
+        recommendations = null;
+      }
     }
-    // The server-resolved current-turn destination is authoritative. Model JSON
-    // may fill an otherwise blank destination, but can never override geography.
-    detectedDestination = destinationForEnabledSession({
+
+    // A named business response stays scoped to exactly the canonical visible row.
+    // Persisting this recommendation object safely retains its ID inside the existing
+    // session messages JSON; no schema migration or new broad cultural field is used.
+    if (namedBusiness && modelPayload.valid && !travelPlanning) {
+      recommendations = {
+        businesses: [{
+          businessId: namedBusiness.id,
+          id: namedBusiness.id,
+          name: namedBusiness.name,
+          city: namedBusiness.city,
+          category: namedBusiness.category,
+        }],
+      };
+    }
+
+    // Model geography is accepted only when it resolves through the server registry.
+    // Invalid model destinations are neither returned nor persisted.
+    const validatedModelDestination = proposedModelDestination
+      ? getHeritageCity(proposedModelDestination)?.city ?? null
+      : null;
+    let detectedDestination = destinationForEnabledSession({
       turn: turnGeography,
       existingDestination: currentSession?.destination ?? null,
-      modelDestination: detectedDestination,
+      modelDestination: validatedModelDestination,
     });
 
     // ── Local discovery enrichment ─────────────────────────────────────────
-    // When Kinfolk correctly classifies a culture/entertainment or business
-    // discovery request but the LLM returned no recommendations (e.g. "Show me
-    // Philadelphia nightlife" → intentClass:culture_entertainment, recs:null),
-    // query MWM businesses directly and attach real listings.
-    // This only fires when: (a) recs are null, (b) a destination is known,
-    // (c) the intent is explicitly local discovery.
+    // Never query the business table here. Filter the already governed catalog and
+    // let final enforcement resolve every emitted record by canonical ID/name.
     if (
       recommendations === null &&
       destination &&
+      !travelPlanning &&
       !contextResolution.suppressBusinessRecommendations &&
       (intentClass === "culture_entertainment" || intentClass === "business_discovery")
     ) {
-      try {
-        const { rows: discBizRows } = await pool.query<{
-          id: string; name: string; category: string; city: string; state: string;
-          description: string | null; rating: string | null; verified: boolean;
-          website: string | null; phone: string | null;
-        }>(
-          `SELECT id, name, category, city, state, description, rating, verified, website, phone
-           FROM businesses
-           WHERE status = 'active'
-             AND lower(city) LIKE lower($1)
-             AND (
-               category ILIKE '%Entertainment%' OR
-               category ILIKE '%Bar%' OR
-               category ILIKE '%Nightlife%' OR
-               category ILIKE '%Music%' OR
-               category ILIKE '%Restaurant%' OR
-               category ILIKE '%Food%' OR
-               category ILIKE '%Recreation%'
-             )
-           ORDER BY verified DESC, rating DESC NULLS LAST
-           LIMIT 6`,
-          [`%${destination}%`],
-        );
-        if (discBizRows.length > 0) {
-          recommendations = {
-            destination,
-            summary: `Here are some MWM-listed spots in ${destination} worth checking out.`,
-            businesses: discBizRows.map((b) => ({
-              name: b.name,
-              category: b.category,
-              city: b.city,
-              description: b.description ?? undefined,
-              rating: b.rating ? parseFloat(b.rating) : undefined,
-              verified: b.verified,
-              website: b.website ?? undefined,
-              phone: b.phone ?? undefined,
-            })),
-            neighborhoods: [],
-            events: [],
-            safetyTips: [],
-            localInsights: [],
-          };
-        }
-      } catch { /* enrichment failed — recommendations stays null */ }
+      const discoveryPattern = /entertainment|bar|nightlife|music|restaurant|food|recreation/i;
+      const matches = businessCatalog.filter((business) =>
+        discoveryPattern.test(`${business.category} ${business.subcategory ?? ""} ${business.tags.join(" ")}`),
+      ).slice(0, 6);
+      if (matches.length > 0) {
+        recommendations = {
+          businesses: matches.map((business) => ({
+            businessId: business.id,
+            id: business.id,
+            name: business.name,
+            category: business.category,
+            city: business.city,
+          })),
+        };
+      }
     }
 
     // Save/update session — skip if user has opted out of memory
@@ -4369,10 +3992,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
       })),
     ];
-    const safeCatalog = businessCatalog.map((b) => ({
-      id: b.id ?? `${b.name}|${b.city}`,
-      name: b.name, category: b.category, city: b.city,
-      description: b.description ?? undefined, verified: b.verified,
+    const safeCatalog = businessCatalog.map((business) => ({
+      id: business.id,
+      name: business.name,
+      category: business.category,
+      city: business.city,
+      state: business.stateCode,
+      description: business.description || undefined,
+      website: business.website ?? undefined,
+      phone: business.phone ?? undefined,
+      verified: business.verified,
     }));
     const localCoverageNote = assembledSources.length === 0 && destination
       ? tourSiteBlock
@@ -4392,7 +4021,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
     });
     reply = enforced.reply;
-    if (enforced.recommendations !== null) recommendations = enforced.recommendations as Record<string, unknown>;
+    recommendations = enforced.recommendations as Record<string, unknown> | null;
+    if (travelPlanning) recommendations = null;
 
     // ── Telemetry: successful generation ──────────────────────────────────────
     recordKinfolkTelemetry({
@@ -4404,6 +4034,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       sessionId: finalSessionId,
       reply,
       recommendations,
+      itinerary,
       followUpSuggestions,
       smartPromotion,
       taskAction,
@@ -4452,11 +4083,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : undefined,
         preferencesUsed: contextResolution.preferencesUsed,
       } : undefined,
-      // Cultural identity detected in this message — offer member the chance to save
-      // to their roots (diasporaCountries) with explicit consent. Never auto-saved.
-      ...(detectedCulture && {
-        cultureAction: { type: "save_roots", detectedCommunity: detectedCulture },
-      }),
       ...(queriesUsedThisCall !== null && {
         queriesUsed: queriesUsedThisCall,
         queriesLimit: FREE_MONTHLY_LIMIT,
