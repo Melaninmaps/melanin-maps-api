@@ -173,22 +173,22 @@ describe("false positive guard (must NOT be high-consequence)", () => {
 describe("provenance labels", () => {
   it("medical disclaimer mentions medical advice", () => {
     const policy = getEvidencePolicy("medical_health");
-    expect(policy.provenanceLabel.toLowerCase()).toContain("medical advice");
+    expect(policy.provenanceLabel?.toLowerCase()).toContain("medical advice");
   });
 
   it("legal disclaimer mentions legal advice", () => {
     const policy = getEvidencePolicy("legal_regulated");
-    expect(policy.provenanceLabel.toLowerCase()).toContain("legal advice");
+    expect(policy.provenanceLabel?.toLowerCase()).toContain("legal advice");
   });
 
   it("financial disclaimer mentions financial advice", () => {
     const policy = getEvidencePolicy("financial_regulated");
-    expect(policy.provenanceLabel.toLowerCase()).toContain("financial advice");
+    expect(policy.provenanceLabel?.toLowerCase()).toContain("financial advice");
   });
 
   it("emergency label mentions emergency services", () => {
     const policy = getEvidencePolicy("safety_emergency");
-    expect(policy.provenanceLabel.toLowerCase()).toContain("emergency services");
+    expect(policy.provenanceLabel?.toLowerCase()).toContain("emergency services");
   });
 
   it("general knowledge has no disclaimer overhead", () => {

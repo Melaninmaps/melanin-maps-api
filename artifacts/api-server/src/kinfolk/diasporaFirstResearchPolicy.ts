@@ -1,23 +1,16 @@
 /**
- * Diaspora-first research policy — permanent retrieval lens for Kinfolk.
+ * Kinfolk retrieval-context policy.
  *
- * PRODUCT RULE: before any web search, Kinfolk prepends the appropriate
- * diaspora-community context to the member's question unless the member has
- * already supplied an equivalent context or explicitly requested general research.
- *
- * This is a retrieval policy. It is NOT a claim about the member's identity.
- * A question about Black maternal health, trans-friendly doctors, halal food,
- * or wheelchair-accessible hotels can shape retrieval without establishing any
- * identity attribute for the member. Never infer identity from a search term.
- *
- * SOURCE OF TRUTH:
- *   See "Kinfolk AI — Diaspora-First Research System Instructions" in the
- *   attached founder docs for the authoritative spec and acceptance checks.
+ * Historical export names are retained for compatibility, but there is no universal
+ * demographic default. The only population qualifier permitted by this immediate
+ * policy is wording explicitly present in the current user turn. Search terms never
+ * create member identity or persistent memory.
  */
+
+import { extractExplicitPopulationWording } from "./permitted-identity-context";
 
 export type SearchSubject = "me" | "someone_else" | "general_research" | "unknown";
 
-/** Expanded topic domain — covers all spec-defined routing cases */
 export type TopicDomain =
   | "health"
   | "travel"
@@ -32,31 +25,20 @@ export type TopicDomain =
   | "general";
 
 export type MemberContext = {
-  /** Only values explicitly volunteered by the member and expressly approved for memory. */
+  /** Reserved until a purpose-consent ledger exists; ignored by the immediate policy. */
   rememberedAttributes?: Record<string, string>;
 };
 
 export type SearchContext = {
   subject: SearchSubject;
-  /** Temporary search-only context. Never copy to member memory automatically. */
+  /** Reserved until a purpose-consent ledger exists; ignored by the immediate policy. */
   temporaryAttributes?: Record<string, string>;
   memberContext?: MemberContext;
 };
 
-// ── Spec-defined ResearchContext (deterministic query builder, Section 3) ──────
-
-/**
- * ResearchContext — input type for the deterministic query builder.
- *
- * `question`            The member's raw question (required).
- * `requestedPopulation` When the member explicitly names a diaspora/community,
- *                       use their exact language instead of the default lens.
- * `explicitlyGeneral`   When true, suppress the population prefix entirely.
- * `place`               City/region; appended after the population and topic.
- * `topic`               Routing hint — selects the default population prefix.
- */
 export type ResearchContext = {
   question: string;
+  /** Must reproduce population wording explicitly present in `question`. */
   requestedPopulation?: string;
   explicitlyGeneral?: boolean;
   place?: string;
@@ -72,172 +54,74 @@ export type ResearchContext = {
     | "other";
 };
 
-// ── Deterministic query builder (enforcement layer, not just a prompt) ─────────
+function clean(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function sameExplicitPopulation(question: string, requestedPopulation?: string): string | undefined {
+  if (!requestedPopulation) return undefined;
+  const explicitPopulation = extractExplicitPopulationWording(question);
+  if (!explicitPopulation) return undefined;
+  return explicitPopulation.toLowerCase() === clean(requestedPopulation).toLowerCase()
+    ? explicitPopulation
+    : undefined;
+}
 
 /**
- * buildDiasporaFirstQuery — authoritative implementation from the spec.
- *
- * Apply this BEFORE every call to the web-research provider (Tavily or any
- * replacement). The system prompt reinforces the intent; this function enforces it.
- *
- * Routing rules:
- *   health → "Black women {topic}"
- *   stem | education → "Black women {topic}"
- *   business | culture | local_services → "Black community {topic}"
- *   legal | housing | other → "Black community {topic}"
- *   member-supplied population → member's exact language
- *   explicitlyGeneral → no population prefix
+ * Build a provider query without demographic inference. Population context is used
+ * only when the same wording appears explicitly in this current question.
  */
 export function buildDiasporaFirstQuery(context: ResearchContext): string {
-  const topic = context.question.trim();
-  if (!topic) throw new Error("QUESTION_REQUIRED");
+  const question = clean(context.question);
+  if (!question) throw new Error("QUESTION_REQUIRED");
 
-  // Member overrides: explicit general research or explicit population
-  if (context.explicitlyGeneral) {
-    return [topic, context.place].filter(Boolean).join(" ");
-  }
+  const explicitPopulation = context.explicitlyGeneral
+    ? undefined
+    : sameExplicitPopulation(question, context.requestedPopulation) ??
+      extractExplicitPopulationWording(question) ??
+      undefined;
 
-  const population =
-    context.requestedPopulation ??
-    (context.topic === "health"
-      ? "Black women"
-      : context.topic === "stem" || context.topic === "education"
-        ? "Black women"
-        : context.topic === "business" ||
-            context.topic === "culture" ||
-            context.topic === "local_services"
-          ? "Black community"
-          : "Black community");
-
-  return [population, topic, context.place].filter(Boolean).join(" ");
+  // The member's explicit wording is already in the raw question. Never double-prefix it.
+  void explicitPopulation;
+  return [question, context.place].filter(Boolean).join(" ");
 }
 
-// ── Legacy query builder — kept for backward compat with prepareResearchPlan ──
-
+/** Compatibility constant: neutral by design; no universal demographic values. */
 export const KINFOLK_PERMANENT_RESEARCH_LENS = {
-  version: "2.0.0",
-  primaryQueryContext: "Black women",
-  broaderCommunityContext: "Black community",
-  rule: "Apply the cultural research lens to source discovery. Never convert the lens or a search term into a claim about the member's identity.",
+  version: "3.0.0",
+  primaryQueryContext: null,
+  broaderCommunityContext: "your community",
+  rule: "Use only population wording explicitly present in the current turn. Never infer or persist identity from a query, name, place, preference, or stored cultural profile.",
 } as const;
 
-function hasExplicitPopulationContext(query: string): boolean {
-  return /\b(black(?:\s+(?:women|woman|men|man|community|owned|people))?|african\s+american|diaspora|caribbean|latinx?|latina|latino|indigenous|native\s+american|asian(?:\s+american)?|south\s+asian|east\s+asian|middle\s+eastern|arab|muslim|jewish|lgbtq\+?|queer|trans(?:gender)?|immigrant|refugee|disabled|disability)\b/i.test(
-    query,
-  );
-}
-
-function explicitlyRequestsGeneralResearch(query: string): boolean {
-  return /\b(general\s+(?:research|information|overview)|broad\s+research|for\s+everyone|general\s+audience)\b/i.test(
-    query,
-  );
-}
-
-function inferProviderTopic(query: string): ResearchContext["topic"] {
-  const normalized = query.toLowerCase();
-  if (/\b(health|medical|disease|caregiv|maternal|pregnan|postpartum|hair|alopecia|wellness|dermat|eczema|blood pressure|hypertension|heart disease|fibroid|lupus|sickle cell|mental health)\b/.test(normalized)) {
-    return "health";
-  }
-  if (/\b(stem|science|technology|engineering|math|scholarship)\b/.test(normalized)) return "stem";
-  if (/\b(education|school|college|university|learning|teacher|student)\b/.test(normalized)) return "education";
-  if (/\b(housing|homeownership|tenant|rent|eviction)\b/.test(normalized)) return "housing";
-  if (/\b(legal|law|attorney|lawyer|court|rights|immigration)\b/.test(normalized)) return "legal";
-  if (/\b(business|restaurant|nightlife|service|professional|shop|store)\b/.test(normalized)) return "business";
-  if (/\b(culture|heritage|history|museum|festival|music|film)\b/.test(normalized)) return "culture";
-  return "other";
-}
-
-/**
- * enforceDiasporaFirstProviderQuery is the final guard before a query leaves
- * Kinfolk for an external research provider. It intentionally operates on the
- * final query string so entity, evidence, image, and future planner paths
- * cannot bypass the server-side policy.
- */
+/** Final provider-boundary guard: normalize only; never inject a demographic. */
 export function enforceDiasporaFirstProviderQuery(query: string): string {
-  const cleanQuery = query.trim().replace(/\s+/g, " ");
+  const cleanQuery = clean(query);
   if (!cleanQuery) throw new Error("QUESTION_REQUIRED");
-
-  if (explicitlyRequestsGeneralResearch(cleanQuery) || hasExplicitPopulationContext(cleanQuery)) {
-    return cleanQuery;
-  }
-
-  return buildDiasporaFirstQuery({
-    question: cleanQuery,
-    topic: inferProviderTopic(cleanQuery),
-  });
+  return cleanQuery;
 }
 
-/**
- * buildDiasporaFirstResearchQuery — original function, kept for backward compat.
- * New code should prefer buildDiasporaFirstQuery with ResearchContext.
- */
+/** Legacy signature retained for planning callers; saved attributes are not appended. */
 export function buildDiasporaFirstResearchQuery(
   memberQuestion: string,
-  topic: TopicDomain,
-  search: SearchContext,
+  _topic: TopicDomain,
+  _search: SearchContext,
 ): string {
-  const cleanQuestion = memberQuestion.trim().replace(/\s+/g, " ");
-  if (!cleanQuestion) throw new Error("QUESTION_REQUIRED");
-
-  // Delegate to the canonical deterministic builder
-  const ctx: ResearchContext = {
-    question: cleanQuestion,
-    explicitlyGeneral: search.subject === "general_research",
-    topic: topic === "career" || topic === "travel" || topic === "general" ? "other" : topic,
-  };
-
-  // If the member named a population or explicitly requested general research,
-  // preserve their wording rather than layering the default population over it.
-  if (hasExplicitPopulationContext(cleanQuestion) || explicitlyRequestsGeneralResearch(cleanQuestion)) {
-    ctx.explicitlyGeneral = true;
-  }
-
-  const base = buildDiasporaFirstQuery(ctx);
-
-  // Append any remembered or temporary subject context (legacy path)
-  const subjectContext =
-    search.subject === "me" && search.memberContext?.rememberedAttributes
-      ? relevantRememberedContext(topic, search.memberContext.rememberedAttributes)
-      : "";
-  const temporaryContext = search.temporaryAttributes
-    ? Object.values(search.temporaryAttributes).filter(Boolean).join(" ")
-    : "";
-
-  return [base, subjectContext, temporaryContext].filter(Boolean).join(" ");
+  return buildDiasporaFirstQuery({ question: memberQuestion });
 }
 
-function relevantRememberedContext(
-  topic: TopicDomain,
-  attributes: Record<string, string>,
-): string {
-  if (topic === "health") {
-    return [attributes["life_stage"], attributes["accessibility_needs"]]
-      .filter(Boolean)
-      .join(" ");
-  }
-  if (topic === "travel") {
-    return [attributes["travel_style"], attributes["accessibility_needs"]]
-      .filter(Boolean)
-      .join(" ");
-  }
-  return "";
-}
-
-/**
- * Returns true when a search term contains a cultural or accessibility modifier
- * that can improve retrieval but must never be stored as a member identity attribute.
- */
+/** Search context cannot establish identity, even when it contains a group term. */
 export function prohibitsIdentityInference(question: string): boolean {
-  return /\b(black-owned|black\s+maternal|trans-friendly|halal|wheelchair-accessible|black\s+women|black\s+community)\b/i.test(
-    question,
-  );
+  return extractExplicitPopulationWording(question) !== null ||
+    /\b(?:[a-z]+[-\s]+owned|diaspora|community|from\s+[A-Z][A-Za-z]+)\b/i.test(question);
 }
 
-export function contextStorageDecision(search: SearchContext) {
+export function contextStorageDecision(_search: SearchContext) {
   return {
     persistSearchSubject: false,
     persistTemporaryAttributes: false,
-    mayUseMemberMemory: search.subject === "me",
+    mayUseMemberMemory: false,
     requireExplicitRememberPermission: true,
-  };
+    purposeConsentLedgerRequired: true,
+  } as const;
 }

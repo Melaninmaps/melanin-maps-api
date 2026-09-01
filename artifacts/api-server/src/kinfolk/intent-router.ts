@@ -15,7 +15,8 @@
  * - Medical, legal, financial, emergency → citations required, community evidence blocked.
  * - Math, stable facts → answer directly, no forced search.
  * - Business discovery, travel → MWM catalog first, then labeled general context.
- * - Culture, entertainment, hobbies → conversational, subjective label required.
+ * - Culture and entertainment → factual claims stay factual; evaluative answers state
+ *   their criteria or acknowledge multiple defensible views without stock boilerplate.
  */
 
 // ─── Intent types ─────────────────────────────────────────────────────────────
@@ -34,6 +35,10 @@ export type KinfolkIntent =
 
 export type CitationMode = "none" | "recommended" | "required";
 export type Consequence = "low" | "medium" | "high";
+export type CulturalClaimMode = "factual" | "evaluative";
+
+export const EVALUATIVE_CULTURE_RULE =
+  "For an evaluative cultural request, state the criteria behind the judgment or present multiple defensible views. Ground factual premises in reliable evidence. Do not add a stock perspective or provenance sentence.";
 
 export interface EvidencePolicy {
   intent: KinfolkIntent;
@@ -47,8 +52,8 @@ export interface EvidencePolicy {
   flagCurrencyRisk: boolean;
   /** Tone instruction override for high-stakes intents */
   toneOverride: string | null;
-  /** Label that must appear in the model's answer to distinguish source type */
-  provenanceLabel: string;
+  /** Optional member-facing disclaimer. Null means no stock inline label is required. */
+  provenanceLabel: string | null;
 }
 
 // ─── Evidence policies ────────────────────────────────────────────────────────
@@ -71,8 +76,8 @@ const POLICIES: Record<KinfolkIntent, EvidencePolicy> = {
     blockCommunityAsProof: false,
     allowLibraryInterests: true,
     flagCurrencyRisk: false,
-    toneOverride: null,
-    provenanceLabel: "From cultural knowledge — this reflects perspective, not a single fact",
+    toneOverride: EVALUATIVE_CULTURE_RULE,
+    provenanceLabel: null,
   },
   business_discovery: {
     intent: "business_discovery",
@@ -210,6 +215,13 @@ const CULTURE_ENTERTAINMENT_SIGNALS = [
   /\b(rapper|rapper|hip.hop|r&b|soul|gospel|jazz|blues|reggae|afrobeats|dancehall|music|artist|album|song|concert|tour|movie|film|show|series|actor|actress|director|book|author|poet|poet|writer|athlete|player|team|league|sport|basketball|football|baseball|soccer|tennis|boxing|mma|fashion|designer|model|style|art|artist|gallery|museum|exhibit|culture|cultural|tradition|heritage|history|historical|ancestry|genealogy|diaspora|community|neighborhood|cuisine|food culture|restaurant culture|chef|cookbook|cocktail culture|nightlife|club|dj|radio)\b/i,
 ];
 
+const EVALUATIVE_CULTURE_SIGNALS = [
+  /\b(best|greatest|favorites?|favourites?|most influential|most important|top|better|worse)\b/i,
+  /\b(who|which|what)\s+(?:is|was|are|were)\s+(?:the\s+)?(?:best|greatest|better|most influential)\b/i,
+  /\b(compare|comparison|versus|vs\.?|rank|ranking|who(?:'s| is) better|your take|your opinion|what do you think|who won)\b/i,
+  /\bmore\s+(?:influential|important|successful|talented|impactful)\s+than\b/i,
+];
+
 const HOBBY_SIGNALS = [
   /\b(vintage|antique|classic car|collector|collecting|hobby|gardening|plant|cooking|recipe|bake|baking|craft|diy|sew|knit|crochet|paint|draw|sculpt|woodwork|photography|hike|hiking|camping|fishing|hunting|golf|tennis|yoga|pilates|meditation|reading|book club|gaming|video game|anime|sneaker|watch collection|coin collect|stamp collect|train collect|model building)\b/i,
 ];
@@ -274,6 +286,16 @@ export function getEvidencePolicy(intent: KinfolkIntent): EvidencePolicy {
   return POLICIES[intent];
 }
 
+/**
+ * Distinguish a cultural judgment from a factual cultural claim. The result changes
+ * reasoning guidance, not the member's identity and not the underlying public facts.
+ */
+export function classifyCulturalClaimMode(message: string): CulturalClaimMode {
+  return EVALUATIVE_CULTURE_SIGNALS.some((signal) => signal.test(message))
+    ? "evaluative"
+    : "factual";
+}
+
 // ─── Query class (spec §5.1) ───────────────────────────────────────────────────
 // A secondary classifier that determines the resolver path WITHIN a Kinfolk turn.
 // Runs AFTER intent classification — existing high-consequence priority is unchanged.
@@ -299,10 +321,11 @@ export function getQueryClass(message: string): QueryClass {
     return "education_nearby";
   }
 
-  // Cultural opinion — "what do you think", "your take", "who won", "beef" + music/film
+  // Cultural evaluation — explicit opinion wording, superlatives, ranking, or comparison.
   if (
-    /\b(what do you think|your take|your opinion|who won|who's better|who is better|beef|i think|opinion on)\b/.test(m) &&
-    /\b(kendrick|drake|music|film|movie|artist|rapper|album|song|beef|battle)\b/.test(m)
+    classifyCulturalClaimMode(message) === "evaluative" &&
+    (CULTURE_ENTERTAINMENT_SIGNALS.some((re) => re.test(m)) ||
+      /\b(what do you think|your take|your opinion|who won|who's better|who is better|opinion on)\b/.test(m))
   ) {
     return "culture_opinion";
   }
@@ -378,7 +401,9 @@ export function buildIntentPolicyPrompt(policy: EvidencePolicy): string {
     );
   }
 
-  lines.push(`PROVENANCE LABEL (include naturally in your response): "${policy.provenanceLabel}"`);
+  if (policy.provenanceLabel) {
+    lines.push(`PROVENANCE LABEL (include naturally in your response): "${policy.provenanceLabel}"`);
+  }
 
   if (policy.consequence === "high") {
     lines.push("═══════════════════════════════════════════════════════");

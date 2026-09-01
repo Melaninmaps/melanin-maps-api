@@ -16,14 +16,14 @@ const blackWomanProfile = buildMemberProfile({
 });
 
 describe("buildMemberProfile", () => {
-  it("maps diasporaCountries to an active lens", () => {
+  it("does not activate a stored diaspora lens before a purpose-consent ledger exists", () => {
     const profile = buildMemberProfile({
       userId: "u1",
       diasporaCountries: ["Black woman"],
     });
-    expect(profile.active).toBe(true);
-    expect(profile.lenses[0].label).toBe("Black woman");
-    expect(profile.activeLensIds).toContain(profile.lenses[0].id);
+    expect(profile.active).toBe(false);
+    expect(profile.lenses).toEqual([]);
+    expect(profile.activeLensIds).toEqual([]);
   });
 
   it("returns inactive profile when no diaspora or background set", () => {
@@ -34,12 +34,12 @@ describe("buildMemberProfile", () => {
 });
 
 describe("buildSearchPlan — blood pressure query", () => {
-  it("builds community-primary tracks before the evidence track", () => {
+  it("builds a condition-first authoritative track without stored demographic leakage", () => {
     const plan = buildSearchPlan("blood pressure", blackWomanProfile, ENTITY_INDEX);
     expect(plan.intent).toBe("health");
-    expect(plan.queries[0].role).toBe("community_primary");
-    expect(plan.queries[0].text).toMatch(/Black woman|Black women|African American women/i);
-    expect(plan.queries.at(-1)?.role).toBe("evidence");
+    expect(plan.queries[0].role).toBe("evidence");
+    expect(plan.queries[0].text).toBe("blood pressure official clinical guidance");
+    expect(plan.queries.map((query) => query.text).join(" ")).not.toMatch(/Black|African American/i);
   });
 
   it("sets urgentHealthFlag=false for a plain blood pressure query", () => {
@@ -49,12 +49,13 @@ describe("buildSearchPlan — blood pressure query", () => {
 });
 
 describe("buildSearchPlan — eczema image query", () => {
-  it("creates a profile-first image route for eczema pictures", () => {
+  it("keeps authoritative health evidence ahead of clinician-reviewed images", () => {
     const plan = buildSearchPlan("eczema show me pictures", blackWomanProfile, ENTITY_INDEX);
     expect(plan.intent).toBe("health");
     expect(plan.imageRequested).toBe(true);
-    expect(plan.queries[0].role).toBe("image");
-    expect(plan.queries[0].text).toMatch(/skin of color/i);
+    expect(plan.queries[0].role).toBe("evidence");
+    expect(plan.queries[1].role).toBe("image");
+    expect(plan.queries[1].text).toMatch(/clinician reviewed images/i);
   });
 });
 
@@ -89,10 +90,8 @@ describe("isUrgentHealthQuery", () => {
 });
 
 describe("activeLensDisclosure", () => {
-  it("returns a disclosure string when lenses are active", () => {
-    const disclosure = activeLensDisclosure(blackWomanProfile);
-    expect(disclosure).toMatch(/Kinfolk lens/i);
-    expect(disclosure.length).toBeGreaterThan(0);
+  it("does not disclose an inactive stored-profile lens", () => {
+    expect(activeLensDisclosure(blackWomanProfile)).toBe("");
   });
 
   it("returns empty string when no lenses active", () => {
@@ -102,7 +101,7 @@ describe("activeLensDisclosure", () => {
 });
 
 describe("rankResults", () => {
-  it("puts a community-primary CDC result above an equally-scored generic source", () => {
+  it("does not boost a stored demographic match without purpose consent", () => {
     const results: WebResult[] = [
       {
         title: "Generic high blood pressure guidance",
@@ -125,8 +124,8 @@ describe("rankResults", () => {
     ];
 
     const ranked = rankResults(results, blackWomanProfile, blackWomanProfile.lenses);
-    expect(ranked[0].title).toBe("High blood pressure resources for Black women");
-    expect(ranked[0].communityScore).toBeGreaterThan(ranked[1].communityScore);
+    expect(ranked[0].title).toBe("Generic high blood pressure guidance");
+    expect(ranked.every((result) => result.communityScore === 0)).toBe(true);
   });
 
   it("blocks results from blocked domains", () => {

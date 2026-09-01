@@ -1,11 +1,12 @@
 /**
- * Kinfolk profile-first query planner.
+ * Kinfolk evidence query planner.
  *
- * Adapted from the Manus profile-first web search starter.
- * Converts a member's voluntarily saved community lens + their query into a
- * ranked set of search queries: community-primary tracks first, then an
- * authoritative evidence track. The model is never called before this plan runs.
+ * Health retrieval is condition-first and authority-first. Demographic context may
+ * shape a supplemental evidence query only when it is explicit in the current turn.
+ * Stored cultural profiles remain disabled until a purpose-consent ledger exists.
  */
+
+import { permittedIdentityContext } from "./permitted-identity-context";
 
 export type LensIntent = "health" | "image" | "entity" | "news" | "local" | "general";
 
@@ -64,9 +65,9 @@ const URGENT_TERMS = [
 // ── Build MemberProfile from MWM user preferences ────────────────────────────
 
 /**
- * Maps MWM's diasporaCountries + preferences to the lens structure.
- * Only uses voluntarily saved profile fields — never infers race, ethnicity,
- * gender, nationality, religion, pregnancy status, or medical condition.
+ * Compatibility adapter for route callers. Saved diaspora, cultural-background,
+ * country-origin, and business-preference values are intentionally ignored by the
+ * immediate policy; none may establish a retrieval lens without purpose consent.
  */
 export function buildMemberProfile(opts: {
   userId: string;
@@ -74,37 +75,11 @@ export function buildMemberProfile(opts: {
   culturalBackground?: string | null;
   preferredOwnershipTypes?: string[] | null;
 }): MemberProfile {
-  const lenses: Lens[] = [];
-
-  if (opts.diasporaCountries?.length) {
-    // Each diaspora country/identity becomes search terms alongside the label
-    const labels = opts.diasporaCountries.slice(0, 3); // cap at 3 to avoid query bloat
-    lenses.push({
-      id: "diaspora-lens",
-      label: labels.join(" / "),
-      searchTerms: labels.flatMap((label) => [
-        label,
-        `${label} community`,
-        `${label} diaspora`,
-      ]),
-      priority: 0,
-    });
-  }
-
-  if (opts.culturalBackground && !opts.diasporaCountries?.length) {
-    lenses.push({
-      id: "cultural-background",
-      label: opts.culturalBackground,
-      searchTerms: [opts.culturalBackground, `${opts.culturalBackground} community`],
-      priority: 0,
-    });
-  }
-
   return {
     id: opts.userId,
-    active: lenses.length > 0,
-    activeLensIds: lenses.map((l) => l.id),
-    lenses,
+    active: false,
+    activeLensIds: [],
+    lenses: [],
     preferredDomains: [],
     blockedDomains: [],
     locale: "en-US",
@@ -142,56 +117,37 @@ function profileTerms(lenses: Lens[]): string[] {
   return lenses.flatMap((lens) => [lens.label, ...lens.searchTerms]).filter(Boolean);
 }
 
-// ── Condition-specific community-primary query expansion ──────────────────────
+// ── Explicit current-turn population evidence ─────────────────────────────────
 
-function conditionSpecificQueries(query: string, lenses: Lens[]): string[] {
-  const normalized = normalize(query);
-  const lensTerms = profileTerms(lenses);
-  const primaryLens = lensTerms[0] ?? "diaspora communities";
+function currentTurnLens(query: string): Lens | null {
+  const identity = permittedIdentityContext(query);
+  if (!identity.demographicQualifier) return null;
+  return {
+    id: "explicit-current-turn",
+    label: identity.demographicQualifier,
+    searchTerms: [identity.demographicQualifier],
+    priority: 0,
+  };
+}
 
-  if (/(eczema|dermatitis)/.test(normalized)) {
-    return [
-      "eczema in skin of color clinician reviewed images",
-      `eczema ${primaryLens} trusted health resources`,
-      `atopic dermatitis ${primaryLens} brown dark skin`,
-    ];
-  }
-  if (/(blood pressure|hypertension)/.test(normalized)) {
-    return [
-      `high blood pressure ${primaryLens} trusted health resources`,
-      `hypertension ${primaryLens} community health`,
-      `blood pressure ${primaryLens} population context CDC`,
-    ];
-  }
-  if (/preeclampsia|pregnan|postpartum/.test(normalized)) {
-    return [
-      `preeclampsia ${primaryLens} maternal health trusted resources`,
-      `pregnancy blood pressure ${primaryLens} community health`,
-      "preeclampsia urgent warning signs CDC",
-    ];
-  }
-  if (/(fibroids|uterine)/.test(normalized)) {
-    return [
-      `uterine fibroids ${primaryLens} trusted health resources`,
-      `fibroids ${primaryLens} treatment options`,
-    ];
-  }
-  if (/(lupus|sickle cell|sickle-cell)/.test(normalized)) {
-    return [
-      `${query} ${primaryLens} community health resources`,
-      `${query} ${primaryLens} clinical guidance`,
-    ];
-  }
-  if (/(depression|anxiety|mental health)/.test(normalized)) {
-    return [
-      `mental health ${primaryLens} culturally affirming resources`,
-      `${query} ${primaryLens} community support`,
-    ];
-  }
-  return [
-    `${query} ${primaryLens} trusted resources`,
-    `${query} ${primaryLens} community context`,
-  ];
+function healthSubject(query: string): string {
+  return normalize(query)
+    .replace(/\b(?:i am|i'm|i’m|i identify as|as)\s+(?:a|an)?\s*/i, "")
+    .replace(/\b(?:black|african american|latina|latino|latinx|hispanic|indigenous|native american|asian american|south asian|east asian|middle eastern|arab|white|biracial|multiracial)\s+(?:woman|women|man|men|people|community)?\b/gi, "")
+    .replace(/\b(?:female|male|intersex)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim() || normalize(query);
+}
+
+function explicitPopulationHealthQueries(query: string, lens: Lens): SearchQuery[] {
+  const subject = healthSubject(query);
+  return [{
+    text: `${subject} ${lens.label} population evidence`,
+    role: "community_primary",
+    lensId: lens.id,
+    reason:
+      "Supplemental population evidence requested by explicit current-turn wording; treat it as group-level and non-diagnostic.",
+  }];
 }
 
 function dedupeQueries(queries: SearchQuery[]): SearchQuery[] {
@@ -219,11 +175,8 @@ export function buildSearchPlan(
   const intent = detectLensIntent(query, entityIndex);
   const imageRequested = detectImageIntent(query);
   const urgentHealthFlag = isUrgentHealthQuery(query);
-  const activeLenses = profile.active
-    ? profile.lenses
-        .filter((l) => profile.activeLensIds.includes(l.id))
-        .sort((a, b) => a.priority - b.priority)
-    : [];
+  const explicitLens = currentTurnLens(query);
+  const activeLenses = explicitLens ? [explicitLens] : [];
 
   if (intent === "entity") {
     const candidates = entityIndex[normalize(query)] ?? [];
@@ -244,40 +197,43 @@ export function buildSearchPlan(
   }
 
   const queries: SearchQuery[] = [];
-  if (activeLenses.length > 0) {
-    for (const expansion of conditionSpecificQueries(query, activeLenses)) {
+
+  if (intent === "health") {
+    const subject = healthSubject(query);
+    queries.push({
+      text: `${subject} official clinical guidance`,
+      role: "evidence",
+      reason: "Condition-first authoritative evidence is required before any population context.",
+    });
+    if (explicitLens) queries.push(...explicitPopulationHealthQueries(query, explicitLens));
+    if (imageRequested && /(eczema|dermatitis|skin)/.test(normalize(query))) {
       queries.push({
-        text: expansion,
-        role: imageRequested && /(eczema|dermatitis|skin)/.test(normalize(query)) ? "image" : "community_primary",
-        lensId: activeLenses[0].id,
-        reason: `Community-primary expansion using active Kinfolk lens: ${activeLenses.map((l) => l.label).join(", ")}.`,
+        text: `${subject} clinician reviewed images`,
+        role: "image",
+        reason: "Clinician-reviewed images supplement, but do not replace, authoritative health guidance.",
       });
     }
-  }
-
-  queries.push({
-    text: intent === "health" ? `${query} official health guidance` : query,
-    role: intent === "health" ? "evidence" : "general",
-    reason: "Authoritative evidence track retained for accuracy and source verification.",
-  });
-
-  if (imageRequested && intent !== "health") {
+  } else {
     queries.push({
-      text: `${query} images ${profileTerms(activeLenses).join(" ")}`.trim(),
-      role: "image",
-      reason: "Image search with the active community lens applied.",
+      text: query,
+      role: "general",
+      reason: "General evidence query retained for accuracy and source verification.",
     });
+    if (imageRequested) {
+      queries.push({
+        text: `${query} images`,
+        role: "image",
+        reason: "Image search follows the explicit request without a stored demographic qualifier.",
+      });
+    }
   }
 
   return { intent, activeLenses, queries: dedupeQueries(queries), imageRequested, urgentHealthFlag };
 }
 
-/** Builds the "Searched with your Kinfolk lens" disclosure shown to the member. */
-export function activeLensDisclosure(profile: MemberProfile): string {
-  const lenses = profile.lenses.filter((l) => profile.activeLensIds.includes(l.id));
-  return lenses.length
-    ? `Searched with your Kinfolk lens first: ${lenses.map((l) => l.label).join(" + ")}.`
-    : "";
+/** Stored-profile lens disclosure is disabled until purpose-consent is implemented. */
+export function activeLensDisclosure(_profile: MemberProfile): string {
+  return "";
 }
 
 /** Returns an urgent-care message for pregnancy/postpartum danger language. */

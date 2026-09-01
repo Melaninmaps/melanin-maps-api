@@ -11,20 +11,20 @@ afterEach(() => {
 });
 
 describe("enforceDiasporaFirstProviderQuery", () => {
-  it("uses the health lens for a raw health query", () => {
-    expect(enforceDiasporaFirstProviderQuery("heart disease")).toBe("Black women heart disease");
+  it("keeps a raw health query condition-first without a demographic default", () => {
+    expect(enforceDiasporaFirstProviderQuery("heart disease")).toBe("heart disease");
   });
 
-  it("uses the STEM lens and preserves explicit general research", () => {
-    expect(enforceDiasporaFirstProviderQuery("STEM opportunities in Charlotte")).toBe(
-      "Black women STEM opportunities in Charlotte",
+  it("keeps a STEM query neutral and normalizes whitespace", () => {
+    expect(enforceDiasporaFirstProviderQuery("  STEM  opportunities in Charlotte  ")).toBe(
+      "STEM opportunities in Charlotte",
     );
     expect(enforceDiasporaFirstProviderQuery("general research on STEM opportunities")).toBe(
       "general research on STEM opportunities",
     );
   });
 
-  it("preserves a member's stated population", () => {
+  it("preserves a member's explicit current-turn population wording", () => {
     expect(enforceDiasporaFirstProviderQuery("Latina maternal health resources")).toBe(
       "Latina maternal health resources",
     );
@@ -45,7 +45,7 @@ describe("Tavily provider boundaries", () => {
     );
 
     const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
-    expect(body.query).toBe("Black community Michelle Williams Destiny's Child singer");
+    expect(body.query).toBe("Michelle Williams Destiny's Child singer");
   });
 
   it("normalizes Living Library provider request bodies without double-prefixing", async () => {
