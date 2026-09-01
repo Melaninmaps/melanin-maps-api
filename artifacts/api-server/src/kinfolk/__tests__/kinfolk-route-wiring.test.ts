@@ -34,6 +34,14 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("does not turn the platform mission or saved services into a member identity assumption", () => {
+    expect(routeSource).toContain('use "your community" when relational community language is helpful');
+    expect(routeSource).not.toContain("built for the Black community");
+    expect(routeSource).not.toContain("I already lined up a Black barber");
+    expect(routeSource).not.toContain("voluntary community profile (Black woman");
+    expect(routeSource).not.toContain("From cultural knowledge — this reflects perspective, not a single fact");
+  });
+
   it("ignores an invalid model destination before session persistence", () => {
     const proposedModelDestination = "Amina Restaurant";
     const validatedModelDestination = getHeritageCity(proposedModelDestination)?.city ?? null;
