@@ -16,6 +16,32 @@ export interface KinfolkPresentationSource {
   url: string;
 }
 
+/**
+ * Additive chat contract for structured itinerary responses. The API keeps its
+ * conversational `reply` field; this payload lets the web client present the
+ * day plan without ever exposing serialized JSON to a member.
+ */
+export interface KinfolkItineraryActivity {
+  time: string;
+  title: string;
+  description: string;
+  canonicalVenue?: string | null;
+}
+
+export interface KinfolkItineraryDay {
+  day: number;
+  theme: string;
+  activities: KinfolkItineraryActivity[];
+  safetyNote?: string | null;
+  packingTips?: string[] | null;
+}
+
+export interface KinfolkItinerary {
+  days: KinfolkItineraryDay[];
+  safetyNote?: string | null;
+  packingTips?: string[] | null;
+}
+
 /** Status copy is deliberately limited to client-side request elapsed time. */
 export const KINFOLK_RESPONSE_STATUS_STAGES = [
   "Understanding your question…",
@@ -57,6 +83,78 @@ export function KinfolkAssistantText({ content }: { content: string }) {
     >
       {content}
     </p>
+  );
+}
+
+export function hasItineraryDays(itinerary: KinfolkItinerary | null | undefined): boolean {
+  return Array.isArray(itinerary?.days) && itinerary.days.length > 0;
+}
+
+/** Prevent a server fallback that serializes an itinerary into `reply` from leaking as chat JSON. */
+export function isSerializedItineraryContent(content: string): boolean {
+  const trimmed = content.trim();
+  return /^```(?:json)?\s*[\s\S]*```$/i.test(trimmed)
+    || (/^\{[\s\S]*\}$/.test(trimmed) && trimmed.includes('"days"'));
+}
+
+/** A compact, scan-friendly presentation for the API's structured itinerary payload. */
+export function KinfolkItinerary({ itinerary }: { itinerary: KinfolkItinerary }) {
+  if (!hasItineraryDays(itinerary)) return null;
+
+  return (
+    <section data-testid="kinfolk-itinerary" aria-label="Day-by-day itinerary" className="mt-3 space-y-3">
+      {itinerary.days.map((day, dayIndex) => {
+        const isFinalDay = dayIndex === itinerary.days.length - 1;
+        const safetyNote = day.safetyNote ?? (isFinalDay ? itinerary.safetyNote : null);
+        const packingTips = (day.packingTips ?? (isFinalDay ? itinerary.packingTips : null))?.filter(Boolean) ?? [];
+        return (
+          <article
+            key={`${day.day}-${dayIndex}`}
+            data-testid="kinfolk-itinerary-day"
+            className="overflow-hidden rounded-2xl border border-[#3A1F0E]/10 bg-white shadow-sm"
+          >
+            <header className="border-b border-[#CA922B]/20 bg-[#FFF8EC] px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#8D5C17]">Day {day.day}</p>
+              <h3 className="mt-0.5 font-serif text-lg font-bold text-[#2B1507]">{day.theme}</h3>
+            </header>
+
+            <div className="divide-y divide-[#3A1F0E]/8 px-4">
+              {day.activities.map((activity, activityIndex) => (
+                <section key={`${activity.time}-${activity.title}-${activityIndex}`} className="py-3.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B]">{activity.time}</p>
+                  <h4 className="mt-1 text-sm font-bold text-[#2B1507]">{activity.title}</h4>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#3A1F0E]/70">{activity.description}</p>
+                  {activity.canonicalVenue ? (
+                    <p className="mt-2 text-xs leading-5 text-[#3A1F0E]/60">
+                      <span className="font-semibold text-[#8D5C17]">Venue: </span>{activity.canonicalVenue}
+                    </p>
+                  ) : null}
+                </section>
+              ))}
+            </div>
+
+            {(safetyNote || packingTips.length > 0) ? (
+              <footer className="grid gap-2 border-t border-[#3A1F0E]/8 bg-[#FAF6EF] px-4 py-3 sm:grid-cols-2">
+                {safetyNote ? (
+                  <aside className="text-xs leading-5 text-[#3A1F0E]/70">
+                    <span className="font-bold uppercase tracking-wider text-[#8D5C17]">Safety note</span>
+                    <p className="mt-1">{safetyNote}</p>
+                  </aside>
+                ) : null}
+                {packingTips.length > 0 ? (
+                  <aside className="text-xs leading-5 text-[#3A1F0E]/70">
+                    <span className="font-bold uppercase tracking-wider text-[#8D5C17]">Packing tips</span>
+                    <ul className="mt-1 space-y-0.5">
+                      {packingTips.map((tip, tipIndex) => <li key={`${tip}-${tipIndex}`}>• {tip}</li>)}
+                    </ul>
+                  </aside>
+                ) : null}
+              </footer>
+            ) : null}
+          </article>
+        );
+      })}
+    </section>
   );
 }
 

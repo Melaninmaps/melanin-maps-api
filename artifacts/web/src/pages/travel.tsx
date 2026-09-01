@@ -18,11 +18,15 @@ import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePa
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
 import {
+  hasItineraryDays,
+  isSerializedItineraryContent,
   KinfolkAssistantText,
+  KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
+  type KinfolkItinerary as KinfolkItineraryResponse,
   type KinfolkStaffDemoExperience,
 } from "@/components/kinfolk/KinfolkChatPresentation";
 
@@ -78,6 +82,8 @@ interface ClarificationStep {
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
+  /** Optional structured API payload; old free-text messages remain valid. */
+  itinerary?: KinfolkItineraryResponse | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -1075,8 +1081,11 @@ function TravelPage() {
       }
 
       const data = await r.json() as {
-        sessionId?: string; reply: string;
-        recommendations?: Recommendations | null; followUpSuggestions?: string[];
+        sessionId?: string; reply?: string;
+        recommendations?: Recommendations | null;
+        /** Structured itinerary payload is additive to legacy recommendations. */
+        itinerary?: KinfolkItineraryResponse | null;
+        followUpSuggestions?: string[];
         cultureAction?: CultureAction | null;
         libraryAction?: LibraryAction | null;
         intentClass?: string | null;
@@ -1100,8 +1109,13 @@ function TravelPage() {
         experience?: KinfolkExperience | null;
       };
 
-      // Guard: if reply is somehow missing, show a recoverable message rather than blank
-      const replyContent = data.reply?.trim() ? data.reply : "Kinfolk is having trouble answering that right now. Try again.";
+      // A structured itinerary may intentionally omit conversational copy. Legacy replies
+      // retain the recoverable fallback rather than ever rendering a blank message.
+      const replyContent = data.reply?.trim()
+        ? data.reply
+        : hasItineraryDays(data.itinerary)
+        ? ""
+        : "Kinfolk is having trouble answering that right now. Try again.";
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
       setImageUrls([]);
@@ -1117,6 +1131,7 @@ function TravelPage() {
       setMessages(prev => [...prev, {
         id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
+        itinerary: data.itinerary ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -1206,9 +1221,6 @@ function TravelPage() {
     setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null);
   };
 
-  // Culture & Roots — track which community prompts the member has already responded to
-  const [respondedRoots, setRespondedRoots] = useState<Set<string>>(new Set());
-
   // Library suggestions — track which message IDs have been responded to
   const [respondedLibrarySuggestions, setRespondedLibrarySuggestions] = useState<Set<string>>(new Set());
   const suggestToLibrary = useCallback(async (msgId: string, subject: string, category: string) => {
@@ -1220,20 +1232,6 @@ function TravelPage() {
         body: JSON.stringify({ subject, category }),
       });
     } catch { /* non-fatal */ }
-  }, []);
-
-  const saveRoots = useCallback(async (community: string, choice: "yes" | "notNow" | "no") => {
-    // Mark this prompt as responded regardless of choice so it disappears
-    setRespondedRoots(prev => new Set([...prev, community]));
-    // Only "yes" saves to the DB — not_now and no are private, nothing is written
-    if (choice !== "yes") return;
-    try {
-      await fetch(`${BASE}api/kinfolk/roots`, {
-        method: "POST", credentials: "include",
-        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ community, action: "add" }),
-      });
-    } catch { /* non-critical — the member can always update preferences later */ }
   }, []);
 
   const handleFeedback = async (name: string, cat: string, reaction: "like" | "dislike") => {
@@ -1492,7 +1490,9 @@ function TravelPage() {
                         {msg.role === "assistant" ? (
                           <>
                             <KinfolkStaffDemoBadge experience={msg.experience} />
-                            <KinfolkAssistantText content={msg.content} />
+                            {msg.content && (!hasItineraryDays(msg.itinerary) || !isSerializedItineraryContent(msg.content)) && (
+                              <KinfolkAssistantText content={msg.content} />
+                            )}
                           </>
                         ) : (
                           <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
@@ -1511,17 +1511,10 @@ function TravelPage() {
                           {playingId === msg.id ? "Stop" : "Listen"}
                         </button>
                       )}
-                      {/* Location resolution pill — shows which city Kinfolk resolved
-                          so the member never wonders if their alias was understood */}
-                      {msg.role === "assistant" && msg.location?.city && (
-                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#3A1F0E]/40 font-medium">
-                          <MapPin size={9} className="text-[#CA922B] shrink-0" />
-                          <span>
-                            Searching {msg.location.city}{msg.location.state ? `, ${msg.location.state}` : ""}
-                          </span>
-                        </div>
+                      {hasItineraryDays(msg.itinerary) && (
+                        <KinfolkItineraryRenderer itinerary={msg.itinerary!} />
                       )}
-                      {msg.recommendations && (
+                      {msg.recommendations && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
                       )}
                       {msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
@@ -1553,15 +1546,6 @@ function TravelPage() {
                               <ChevronRight size={9} className="-rotate-90" />Show more
                             </button>
                           )}
-                        </div>
-                      )}
-                      {/* Provenance disclaimer — rendered for medical, legal, financial, and emergency intents */}
-                      {msg.role === "assistant" && msg.provenanceNote && (
-                        <div data-testid="kinfolk-provenance-note" className="mt-2 flex items-start gap-1.5 px-3 py-2 rounded-xl bg-[#FFF8EC] border border-[#CA922B]/20">
-                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-[1px]" stroke="#CA922B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="#CA922B" stroke="none"/>
-                          </svg>
-                          <p className="text-[10px] leading-relaxed text-[#3A1F0E]/60">{msg.provenanceNote}</p>
                         </div>
                       )}
                       {/* Source citations — shown for Living Library research answers */}
@@ -1637,46 +1621,6 @@ function TravelPage() {
                             }}
                           />
                         </div>
-                      )}
-                      {/* Culture & Roots consent prompt — only for assistant messages with a detected community */}
-                      {msg.role === "assistant" && msg.cultureAction && !respondedRoots.has(msg.cultureAction.detectedCommunity) && (
-                        <div className="mt-3 bg-[#FAF6EF] border border-[#CA922B]/20 rounded-2xl px-4 py-3">
-                          <p className="text-xs text-[#3A1F0E]/70 leading-relaxed mb-2">
-                            Would you like Kinfolk to remember that{" "}
-                            <span className="font-semibold text-[#2B1507]">{msg.cultureAction.detectedCommunity}</span>{" "}
-                            matters to you?
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "yes")}
-                              className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-[#CA922B] text-white hover:bg-[#B38024] transition-colors"
-                            >
-                              Yes, when relevant
-                            </button>
-                            <button
-                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "notNow")}
-                              className="text-[10px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#3A1F0E]/12 text-[#3A1F0E]/60 hover:border-[#CA922B]/40 hover:text-[#CA922B] transition-colors"
-                            >
-                              Only when I mention it
-                            </button>
-                            <button
-                              onClick={() => saveRoots(msg.cultureAction!.detectedCommunity, "no")}
-                              className="text-[10px] font-semibold px-3 py-1.5 rounded-full text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 transition-colors"
-                            >
-                              No, keep this private
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      {/* Quiet source attribution — only returned when a material
-                          factual or local detail could not be independently verified. */}
-                      {msg.role === "assistant" && msg.sourceNote && (
-                        <p
-                          data-testid="kinfolk-source-note"
-                          className="mt-3 border-t border-[#3A1F0E]/8 pt-2 text-xs italic leading-relaxed text-[#3A1F0E]/50"
-                        >
-                          {msg.sourceNote}
-                        </p>
                       )}
                     </div>
                   </div>
