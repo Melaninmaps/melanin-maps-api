@@ -51,6 +51,7 @@ import {
   ensureLibraryEvidenceBatchC,
   ensureLibraryEvidenceBatchD,
 } from "./library-evidence-seed.js";
+import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
@@ -162,7 +163,8 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     // Add listing_status column if missing (referenced by search queries)
     name: "businesses_listing_status_col",
     sql: `ALTER TABLE businesses
-      ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'live_unclaimed'`,
+      ADD COLUMN IF NOT EXISTS listing_status VARCHAR(50) DEFAULT 'live_unclaimed',
+      ADD COLUMN IF NOT EXISTS data_source VARCHAR(100)`,
   },
   {
     name: "businesses_email_zip_cols",
@@ -2297,7 +2299,8 @@ END $$`,
       ADD COLUMN IF NOT EXISTS reference_category VARCHAR(30),
       ADD COLUMN IF NOT EXISTS is_parent_listing BOOLEAN NOT NULL DEFAULT FALSE,
       ADD COLUMN IF NOT EXISTS parent_business_id VARCHAR,
-      ADD COLUMN IF NOT EXISTS location_name VARCHAR`,
+      ADD COLUMN IF NOT EXISTS location_name VARCHAR,
+      ADD COLUMN IF NOT EXISTS permanently_hidden BOOLEAN NOT NULL DEFAULT FALSE`,
   },
 
   // ── business_captions table — stores AI-generated or community captions
@@ -4602,17 +4605,17 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     ["african geography",    () => ensureAfricanGeographyNodes_v1(log, warn)],
     ["bangkok businesses",   () => ensureBangkokBusinesses(log, warn)],
     ["LA businesses",        () => ensureLABusinesses(log, warn)],
-    ["test data cleanup",    () => ensureTestDataRemoved(log, warn)],
+    ["confirmed test data containment", () => ensureTestDataContained(log, warn)],
     ["coverage expansion",   () => ensureCoverageExpansion(log, warn)],
     ["founder churches",     () => ensureFounderChurches(log, warn)],
     ["phuket full layer",    () => ensurePhuketFullLayer(log, warn)],
     ["category normalize",   () => ensureCategoryNormalization(log, warn)],
     ["gap coverage v2",      () => ensureGapCoverageV2(log, warn)],
     ["final micro seed",     () => ensureFinalMicroSeed(log, warn)],
+    // ── Demo containment — hide proven fixtures before discoverability work ──
+    ["demo containment",     () => ensureDemoContainment(log, warn)],
     // ── Business discoverability — promotes listing_status, sets tags + badges ──
     ["business discoverability", () => ensureBusinessDiscoverability(log, warn)],
-    // ── Demo removal — wipes all [DEMO] businesses (safe, checks for member data) ──
-    ["demo removal",          () => ensureDemoRemoval(log, warn)],
     // ── Full diaspora expansion — every community, every city ──────────────────────
     ["la diaspora v1",        () => runSeedBatch("LA Diaspora V1", LA_DIASPORA_V1, log, warn)],
     ["east coast diaspora",   () => runSeedBatch("East Coast Diaspora", EAST_COAST_DIASPORA_V1, log, warn)],
@@ -4723,6 +4726,8 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // ── Universal non-business map entities ────────────────────────────────
     // One published source supplies the map pin, panel row, and canonical place URL.
     ["universal map entities v1", () => ensureUniversalMapEntities(pool, { log, warn })],
+    // Catch any proven fixture inserted by a later seed guard; safe as a no-op.
+    ["demo containment final", () => ensureDemoContainment(log, warn)],
   ] as [string, () => Promise<void>][]) {
     try {
       await fn();
@@ -7194,42 +7199,39 @@ async function ensureLABusinesses(
   }
 }
 
-// ── Remove confirmed test/demo/placeholder businesses ─────────────────────────
-async function ensureTestDataRemoved(
+// ── Hide confirmed test/demo/placeholder businesses ───────────────────────────
+async function ensureTestDataContained(
   log: (msg: string) => void,
   warn: (msg: string) => void
 ): Promise<void> {
   try {
-    // Only remove records we have POSITIVELY identified as test/demo fixtures.
-    // These were created on 2026-08-08 with names "Test Cafe" and "Audit Test Cafe"
-    // and have zero reviews, saves, vibes, or any member data attached.
+    // Only hide records we have POSITIVELY identified as test/demo fixtures.
+    // These were created on 2026-08-08 under these immutable IDs. Hide-only
+    // containment preserves the business rows and every member-linked record.
     const CONFIRMED_TEST_IDS = [
       "sub_1786210637699_i1f8",
       "sub_1786210856364_mjtt",
     ];
 
-    let removed = 0;
-    for (const id of CONFIRMED_TEST_IDS) {
-      // Final safety check: abort if any member data exists on this record
-      const relationships = await pool.query(
-        `SELECT
-          (SELECT COUNT(*) FROM reviews WHERE business_id = $1) +
-          (SELECT COUNT(*) FROM saved_places WHERE business_id = $1) +
-          (SELECT COUNT(*) FROM business_vibe_tags WHERE business_id = $1)
-          AS total_related`,
-        [id]
-      );
-      const related = parseInt(relationships.rows[0]?.total_related ?? "1");
-      if (related > 0) {
-        warn(`  test-data-cleanup: skipping ${id} — has ${related} related member records`);
-        continue;
-      }
-      await pool.query(`DELETE FROM businesses WHERE id = $1`, [id]);
-      removed++;
-    }
-    log(`Test data cleanup: ${removed} confirmed test records removed`);
+    const result = await pool.query(
+      `UPDATE businesses
+       SET permanently_hidden = true,
+           promotion_eligible = false,
+           featured = false,
+           promoted_until = NULL,
+           updated_at = NOW()
+       WHERE id = ANY($1::text[])
+         AND (
+           COALESCE(permanently_hidden, false) = false
+           OR COALESCE(promotion_eligible, true) = true
+           OR COALESCE(featured, false) = true
+           OR promoted_until IS NOT NULL
+         )`,
+      [CONFIRMED_TEST_IDS],
+    );
+    log(`Confirmed test data containment: ${result.rowCount ?? 0} records hidden; linked data retained`);
   } catch (err: unknown) {
-    warn(`Test data cleanup failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(`Confirmed test data containment failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -8165,12 +8167,10 @@ async function runSeedBatch(
   }
 }
 
-// ── Remove all [DEMO] businesses ────────────────────────────────────────────
-// Runs on every boot — idempotent (no-op once demos are gone).
-// Only removes records with no member data attached (reviews, saves, vibe tags).
 // ── Ensure all active businesses are discoverable via the public API ───────────
 // Promotes listing_status to live_unclaimed for any active businesses that are
-// still in demo/live/active status (which the API gate excludes).
+// still in legacy live/active status (which the API gate excludes). Proven demo
+// records are excluded from every discoverability mutation.
 // Creates business_identity rows where missing.
 // Sets ownership_badges and category-based tags where empty.
 // Safe on every boot — all operations are idempotent.
@@ -8184,7 +8184,8 @@ async function ensureBusinessDiscoverability(
       `UPDATE businesses
        SET listing_status = 'live_unclaimed'
        WHERE status = 'active'
-         AND listing_status IN ('demo', 'live', 'active')
+         AND listing_status IN ('live', 'active')
+         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
        RETURNING id`
     );
     if (promoted.rowCount && promoted.rowCount > 0) {
@@ -8196,7 +8197,9 @@ async function ensureBusinessDiscoverability(
       `INSERT INTO business_identity (business_id)
        SELECT b.id FROM businesses b
        LEFT JOIN business_identity bi ON bi.business_id = b.id
-       WHERE b.status = 'active' AND bi.business_id IS NULL
+       WHERE b.status = 'active'
+         AND bi.business_id IS NULL
+         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
        ON CONFLICT (business_id) DO NOTHING`
     );
     if (identityInsert.rowCount && identityInsert.rowCount > 0) {
@@ -8208,7 +8211,11 @@ async function ensureBusinessDiscoverability(
       `UPDATE business_identity
        SET ownership_badges = '["black-owned"]'::jsonb
        WHERE (ownership_badges IS NULL OR ownership_badges = '[]'::jsonb OR ownership_badges::text = 'null')
-         AND business_id IN (SELECT id FROM businesses WHERE status = 'active')`
+         AND business_id IN (
+           SELECT b.id FROM businesses b
+           WHERE b.status = 'active'
+             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+         )`
     );
 
     // 4. Set category-based tags where empty
@@ -8248,7 +8255,8 @@ async function ensureBusinessDiscoverability(
          ELSE '["community business","local","minority-owned","community"]'::jsonb
        END
        WHERE status = 'active'
-         AND (tags IS NULL OR tags::text = '[]' OR tags::text = 'null')`
+         AND (tags IS NULL OR tags::text = '[]' OR tags::text = 'null')
+         AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}`
     );
 
     log('Business discoverability: tags and ownership badges ensured for all active businesses');
@@ -8257,27 +8265,37 @@ async function ensureBusinessDiscoverability(
   }
 }
 
-async function ensureDemoRemoval(
+async function ensureDemoContainment(
   log: (msg: string) => void,
   warn: (msg: string) => void
 ): Promise<void> {
   try {
+    // Hide rather than delete: business rows and all member-linked records remain.
+    // The shared predicate is deliberately narrow; see businessDemoContainment.ts.
     const result = await pool.query<{ name: string; city: string }>(
-      `DELETE FROM businesses
-       WHERE description LIKE '[DEMO]%'
-         AND NOT EXISTS (SELECT 1 FROM reviews         WHERE business_id = businesses.id)
-         AND NOT EXISTS (SELECT 1 FROM saved_places    WHERE business_id = businesses.id)
-         AND NOT EXISTS (SELECT 1 FROM business_vibe_tags WHERE business_id = businesses.id)
-       RETURNING name, city`
+      `UPDATE businesses AS b
+       SET permanently_hidden = true,
+           promotion_eligible = false,
+           featured = false,
+           promoted_until = NULL,
+           updated_at = NOW()
+       WHERE ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+         AND (
+           COALESCE(b.permanently_hidden, false) = false
+           OR COALESCE(b.promotion_eligible, true) = true
+           OR COALESCE(b.featured, false) = true
+           OR b.promoted_until IS NOT NULL
+         )
+       RETURNING b.name, b.city`
     );
     if (result.rowCount && result.rowCount > 0) {
       const names = result.rows.map((r) => `${r.name} (${r.city})`).join(', ');
-      log(`Demo removal: removed ${result.rowCount} demo listings — ${names}`);
+      log(`Demo containment: hid ${result.rowCount} proven demo/test listings; linked data retained — ${names}`);
     } else {
-      log('Demo removal: platform is clean — no demo listings found');
+      log('Demo containment: all proven demo/test listings already hidden or absent');
     }
   } catch (err: unknown) {
-    warn(`Demo removal failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(`Demo containment failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -10219,6 +10237,8 @@ async function ensureVisibilityAndDedupeHardening(
       SELECT b.*
       FROM public.businesses b
       WHERE public.business_is_public(b.status, b.listing_status, b.is_duplicate)
+        AND COALESCE(b.permanently_hidden, false) = false
+        AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     `);
 
     await pool.query(`
@@ -10522,6 +10542,7 @@ async function ensureBetaSafetyColumns(
         AND COALESCE(b.is_duplicate, false) = false
         AND COALESCE(b.permanently_hidden, false) = false
         AND COALESCE(b.listing_status, 'live_unclaimed') IN ('live_unclaimed', 'live_claimed')
+        AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
     `);
     log("ensureBetaSafetyColumns: permanently_hidden column, indexes, and public_businesses view confirmed");
   } catch (err: unknown) {
