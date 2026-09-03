@@ -12,6 +12,7 @@ import { CommentsDialog } from "@/components/community/CommentsDialog";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
 import { HappeningPanel } from "@/components/community/HappeningPanel";
 import { communityFeedErrorState } from "@/features/community/feedErrorState";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -269,9 +270,8 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const resp = await fetch(`${BASE}api/media/upload?purpose=community_post`, {
+      const resp = await authenticatedFetch(`${BASE}api/media/upload?purpose=community_post`, {
         method: "POST",
-        credentials: "include",
         body: formData,
       });
       const requestId = resp.headers.get("x-request-id");
@@ -324,8 +324,8 @@ function ComposeModal({ onClose, onPost }: { onClose: () => void; onPost: (p: Po
         mediaUrls: mediaUrls.length ? mediaUrls : undefined,
         hashtags: hashtags.length ? hashtags : undefined,
       };
-      const res = await fetch(`${BASE}api/community/posts`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/community/posts`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
@@ -547,7 +547,7 @@ function EventsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BASE}api/events?limit=30`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/events?limit=30`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.events) setEvents(d.events); })
       .catch(() => {})
@@ -605,7 +605,7 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}api/groups`, { credentials: "include" });
+      const res = await authenticatedFetch(`${BASE}api/groups`);
       if (res.ok) {
         const d = await res.json() as { groups: Group[] };
         setGroups(d.groups ?? []);
@@ -620,8 +620,8 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
     setJoining(g.id);
     try {
       const method = g.isMember ? "DELETE" : "POST";
-      const res = await fetch(`${BASE}api/groups/${g.id}/${g.isMember ? "leave" : "join"}`, {
-        method, credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/groups/${g.id}/${g.isMember ? "leave" : "join"}`, {
+        method,
       });
       if (res.ok) {
         setGroups(gs => gs.map(x => x.id === g.id ? { ...x, isMember: !x.isMember, memberCount: x.memberCount + (g.isMember ? -1 : 1) } : x));
@@ -733,7 +733,7 @@ export default function Community() {
     setPeopleLoading(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`${BASE}api/users/search?q=${encodeURIComponent(q.trim())}`, { credentials: "include" });
+        const res = await authenticatedFetch(`${BASE}api/users/search?q=${encodeURIComponent(q.trim())}`);
         if (res.ok) {
           const d = await res.json() as { users: MemberResult[] };
           setPeopleResults(d.users ?? []);
@@ -766,7 +766,7 @@ export default function Community() {
     setLoadErrorRequestId(null);
     try {
       const url = `${BASE}api/community/posts?feed=${feedMode}${hashtagFilter ? `&hashtag=${hashtagFilter}` : ""}`;
-      const res = await fetch(url, { credentials: "include" });
+      const res = await authenticatedFetch(url);
       if (res.ok) {
         const d = await res.json() as { posts: Record<string, unknown>[] };
         setPosts((d.posts ?? []).map(p => ({
@@ -808,7 +808,7 @@ export default function Community() {
   useEffect(() => { loadPosts(); }, [loadPosts]);
 
   useEffect(() => {
-    fetch(`${BASE}api/community/hashtags/trending`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/community/hashtags/trending`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.trending) setTrending(d.trending); })
       .catch(() => {});
@@ -817,14 +817,14 @@ export default function Community() {
   const handleLike = async (postId: string) => {
     if (!isAuthenticated) { toast({ title: "Sign in to like posts" }); return; }
     try {
-      await fetch(`${BASE}api/community/posts/${postId}/upvote`, { method: "POST", credentials: "include" });
+      await authenticatedFetch(`${BASE}api/community/posts/${postId}/upvote`, { method: "POST" });
     } catch { /* ignore */ }
   };
 
   const handleDelete = async (postId: string) => {
     if (!window.confirm("Delete this post?")) return;
     try {
-      await fetch(`${BASE}api/community/posts/${postId}`, { method: "DELETE", credentials: "include" });
+      await authenticatedFetch(`${BASE}api/community/posts/${postId}`, { method: "DELETE" });
       setPosts(ps => ps.filter(p => p.id !== postId));
     } catch { toast({ title: "Could not delete post", variant: "destructive" }); }
   };

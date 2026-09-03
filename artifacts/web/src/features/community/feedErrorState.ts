@@ -8,8 +8,8 @@ export function communityFeedErrorState(status: number | null, requestId?: strin
   if (status === 401 || status === 403) {
     return {
       kind: "auth",
-      title: "Sign in required",
-      message: "Your session has ended. Sign in again to load the Community feed.",
+      title: "We couldn't verify your sign-in",
+      message: "Refresh the page to reconnect. If this continues, sign in again to load the Community feed.",
     };
   }
   return {

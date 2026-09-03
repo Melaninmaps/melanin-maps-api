@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Flag, Loader2, MessageSquare, Send, Trash2, X } from "lucide-react";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -46,7 +47,7 @@ export function CommentsDialog({
     setLoading(true);
     setLoadError(null);
     try {
-      const response = await fetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments`, { credentials: "include" });
+      const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments`);
       const body = await response.json().catch(() => ({})) as { comments?: CommunityComment[]; access?: CommentAccess; error?: string };
       if (!response.ok) throw new Error(body.error ?? "Could not load comments.");
       setComments(body.comments ?? []);
@@ -66,9 +67,8 @@ export function CommentsDialog({
     setSubmitting(true);
     setLoadError(null);
     try {
-      const response = await fetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments`, {
+      const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments`, {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: trimmed }),
       });
@@ -86,18 +86,16 @@ export function CommentsDialog({
 
   const deleteComment = async (commentId: string) => {
     if (!window.confirm("Delete this comment?")) return;
-    const response = await fetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, {
+    const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, {
       method: "DELETE",
-      credentials: "include",
     });
     if (response.ok) setComments((items) => items.filter((item) => item.id !== commentId));
     else setLoadError("Could not delete this comment.");
   };
 
   const reportComment = async (commentId: string) => {
-    const response = await fetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/report`, {
+    const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/report`, {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason: "inappropriate" }),
     });

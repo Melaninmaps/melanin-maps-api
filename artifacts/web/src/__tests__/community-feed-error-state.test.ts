@@ -9,13 +9,14 @@ const communityPageSource = readFileSync(
 );
 
 describe("Community feed client error state", () => {
-  it("identifies an expired or unauthorized session as sign-in required", () => {
+  it("identifies an unauthorized response without falsely declaring the session ended", () => {
     expect(communityFeedErrorState(401)).toEqual({
       kind: "auth",
-      title: "Sign in required",
-      message: "Your session has ended. Sign in again to load the Community feed.",
+      title: "We couldn't verify your sign-in",
+      message: "Refresh the page to reconnect. If this continues, sign in again to load the Community feed.",
     });
     expect(communityFeedErrorState(403).kind).toBe("auth");
+    expect(communityFeedErrorState(401).message).not.toContain("session has ended");
     expect(communityPageSource).toContain('data-testid="community-feed-auth-required"');
     expect(communityPageSource).toContain('<Link href="/login">');
   });

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, Check, ExternalLink, Flag, Loader2, MapPin, Plus, Radio, Send, X } from "lucide-react";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -50,7 +51,7 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
       const params = new URLSearchParams({ feed });
       if (scope !== "all") params.set("scope", scope);
       if (scope === "local" && localExpansion) params.set("localExpansion", localExpansion);
-      const response = await fetch(`${BASE}api/knowledge/happening-now?${params.toString()}`, { credentials: "include" });
+      const response = await authenticatedFetch(`${BASE}api/knowledge/happening-now?${params.toString()}`);
       const body = await response.json().catch(() => ({})) as {
         stories?: HappeningStory[];
         error?: string;
@@ -72,7 +73,7 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
     if (!isAuthenticated || confirming) return;
     setConfirming(story.id);
     try {
-      const response = await fetch(`${BASE}api/knowledge/happening-now/${encodeURIComponent(story.id)}/confirm`, { method: "POST", credentials: "include" });
+      const response = await authenticatedFetch(`${BASE}api/knowledge/happening-now/${encodeURIComponent(story.id)}/confirm`, { method: "POST" });
       const body = await response.json().catch(() => ({})) as { confirmed?: boolean; confirmCount?: number; error?: string };
       if (!response.ok) throw new Error(body.error ?? "Could not update confirmation.");
       setStories((items) => items.map((item) => item.id === story.id ? { ...item, hasConfirmed: !!body.confirmed, confirmCount: body.confirmCount ?? item.confirmCount } : item));
@@ -84,8 +85,8 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
   };
 
   const report = async (storyId: string) => {
-    const response = await fetch(`${BASE}api/knowledge/happening-now/${encodeURIComponent(storyId)}/report`, {
-      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+    const response = await authenticatedFetch(`${BASE}api/knowledge/happening-now/${encodeURIComponent(storyId)}/report`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason: "incorrect_info" }),
     });
     setError(response.ok ? "Thanks. The community desk will review that update." : "Could not send the report.");
@@ -182,8 +183,8 @@ function HappeningForm({ onClose, onSubmitted }: { onClose: () => void; onSubmit
     if (!canSubmit || submitting) return;
     setSubmitting(true); setError(null);
     try {
-      const response = await fetch(`${BASE}api/knowledge/happening-now`, {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+      const response = await authenticatedFetch(`${BASE}api/knowledge/happening-now`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, summary, sourceUrl: sourceUrl || undefined, category, scope, city: city || undefined, state: state || undefined, topicTags }),
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
