@@ -29,6 +29,15 @@ import {
   type KinfolkItinerary as KinfolkItineraryResponse,
   type KinfolkStaffDemoExperience,
 } from "@/components/kinfolk/KinfolkChatPresentation";
+import {
+  AAVE_LEVEL_OPTIONS,
+  composerValueFromTranscript,
+  KINFOLK_VOICE_OPTIONS,
+  normalizeWebRegionalFlavor,
+  normalizeWebVoice,
+  REGIONAL_LANGUAGE_OPTIONS,
+  shouldAutoSpeakNewReply,
+} from "@/lib/kinfolkVoicePreferences";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -119,7 +128,7 @@ interface Prefs {
   // How Kinfolk talks to me
   communicationStyle: string; personalityMode: string;
   emojiLevel: string; humorLevel: string; regionalFlavor: string;
-  kinfolkVoice: string;
+  kinfolkVoice: string; autoSpeak: boolean; aaveLevel: number;
 }
 
 const DEFAULT_PREFS: Prefs = {
@@ -127,8 +136,8 @@ const DEFAULT_PREFS: Prefs = {
   budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
   ownershipTypes: [], lifestyleServices: [],
   communicationStyle: "friendly", personalityMode: "neighborhood_guide",
-  emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
-  kinfolkVoice: "onyx",
+  emojiLevel: "some", humorLevel: "light", regionalFlavor: "off",
+  kinfolkVoice: "onyx", autoSpeak: false, aaveLevel: 0,
 };
 
 const ALL_CATEGORIES = ["Food & Drink","Nightlife","Culture & Art","Music & Live Events","Beauty & Wellness","History","Outdoors","Family-Friendly","Shopping","Coffee","Spiritual","Sports"];
@@ -177,7 +186,6 @@ function resolveActiveCommunicationStyle(
 const PERSONALITY_MODES = [{ id: "neighborhood_guide", label: "Neighborhood Guide" }, { id: "cultural_curator", label: "Cultural Curator" }, { id: "travel_companion", label: "Travel Companion" }, { id: "community", label: "Community Voice" }];
 const EMOJI_LEVELS = [{ id: "none", label: "None" }, { id: "some", label: "Balanced" }, { id: "lots", label: "Expressive" }];
 const HUMOR_LEVELS = [{ id: "none", label: "Straightforward" }, { id: "light", label: "Light" }, { id: "playful", label: "Playful" }];
-const KINFOLK_VOICES = [{ id: "onyx", label: "Onyx" }, { id: "alloy", label: "Alloy" }, { id: "echo", label: "Echo" }, { id: "fable", label: "Fable" }, { id: "nova", label: "Nova" }, { id: "shimmer", label: "Shimmer" }];
 
 // ─── Kinfolk Identity Defaults ─────────────────────────────────────────────────
 // PERMANENT — Do not remove or edit without explicit founder authorization.
@@ -283,6 +291,7 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
   const [cityInput, setCityInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   useEffect(() => { setLocal(prefs); }, [prefs]);
 
   const addCity = () => {
@@ -293,9 +302,16 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
 
   const save = async () => {
     setSaving(true);
-    await onSave(local);
-    setSaving(false); setSaved(true);
-    setTimeout(() => { setSaved(false); onClose(); }, 800);
+    setSaveError(null);
+    try {
+      await onSave(local);
+      setSaved(true);
+      setTimeout(() => { setSaved(false); onClose(); }, 800);
+    } catch {
+      setSaveError("Kinfolk could not save those preferences. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -461,25 +477,58 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                   ))}
                 </div>
               </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">AAVE register</div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {AAVE_LEVEL_OPTIONS.map(o => (
+                    <button key={o.id} type="button" onClick={() => setLocal(p => ({ ...p, aaveLevel: o.id }))}
+                      aria-pressed={local.aaveLevel === o.id}
+                      className={`rounded-xl px-3 py-2 text-left transition-colors ${local.aaveLevel === o.id ? "bg-[#2B1507] text-[#F5EBD8]" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                      <span className="block text-xs font-semibold">{o.label}</span>
+                      <span className="block text-[9px] opacity-70">{o.description}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">One member-selected register. Kinfolk never uses profanity, performs, stereotypes, or imitates an accent.</p>
+              </div>
+              <div>
+                <label htmlFor="kinfolk-regional-language" className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2 block">Regional Language</label>
+                <select id="kinfolk-regional-language" value={local.regionalFlavor}
+                  onChange={e => setLocal(p => ({ ...p, regionalFlavor: e.target.value }))}
+                  className="w-full h-10 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 text-xs text-[#3A1F0E]">
+                  {REGIONAL_LANGUAGE_OPTIONS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+                <p className="mt-2 text-[10px] leading-relaxed text-[#3A1F0E]/45">With your opt-in, Kinfolk may use one occasional local word such as Philadelphia “jawn” or Memphis “mane.” Voice timbre stays the same everywhere.</p>
+              </div>
             </div>
           </div>
 
           {/* ── Kinfolk's Voice ── */}
           <div className="pt-2 border-t border-[#3A1F0E]/8">
             <div className="text-[11px] font-bold text-[#3A1F0E] mb-0.5">Kinfolk's Voice</div>
-            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">Choose the voice you hear when you listen to Kinfolk's responses.</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {KINFOLK_VOICES.map(o => (
-                <button key={o.id} onClick={() => setLocal(p => ({ ...p, kinfolkVoice: o.id }))}
-                  className={`py-2 rounded-xl text-xs font-medium transition-colors ${local.kinfolkVoice === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
-                  {o.label}
+            <div className="text-[10px] text-[#3A1F0E]/40 mb-3">Choose a stable synthetic voice for every location. No human voice or identity is cloned.</div>
+            <div className="grid gap-1.5">
+              {KINFOLK_VOICE_OPTIONS.map(o => (
+                <button key={o.id} type="button" onClick={() => setLocal(p => ({ ...p, kinfolkVoice: o.id }))}
+                  aria-pressed={local.kinfolkVoice === o.id}
+                  className={`rounded-xl px-3 py-2 text-left transition-colors ${local.kinfolkVoice === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
+                  <span className="block text-xs font-semibold">{o.label}{o.feminine ? " · Feminine" : ""}</span>
+                  <span className="block text-[9px] opacity-75">{o.description}</span>
                 </button>
               ))}
             </div>
+            <label className="mt-3 flex items-start gap-2 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
+              <input type="checkbox" checked={local.autoSpeak} onChange={e => setLocal(p => ({ ...p, autoSpeak: e.target.checked }))} className="mt-0.5" />
+              <span>
+                <span className="block text-xs font-semibold text-[#3A1F0E]">Automatically speak new replies</span>
+                <span className="block text-[10px] leading-relaxed text-[#3A1F0E]/50">Off by default. Only newly returned answers play; history and error messages never autoplay.</span>
+              </span>
+            </label>
           </div>
         </div>
 
         <div className="px-5 py-4 border-t border-[#3A1F0E]/8 shrink-0">
+          {saveError && <p role="alert" className="mb-2 text-xs text-red-700">{saveError}</p>}
           <button onClick={save} disabled={saving}
             data-testid="kinfolk-save-taste-profile"
             className="w-full h-11 rounded-full bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-50 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors">
@@ -715,10 +764,25 @@ function TravelPage() {
 
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<Record<string, string>>({});
   // Tracks which assistant message ID has pending clarification steps to offer.
   // Null when no clarifier is active. Cleared on any answer or skip.
   const [pendingClarificationMsgId, setPendingClarificationMsgId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const autoSpokenMessageIdsRef = useRef(new Set<string>());
+
+  const releaseAudio = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+    }
+    audioRef.current = null;
+    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    audioUrlRef.current = null;
+  }, []);
 
   // ── Voice input state ──────────────────────────────────────────────────────
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "recording" | "processing";
@@ -763,8 +827,10 @@ function TravelPage() {
           personalityMode:    typeof raw.personalityMode === "string" ? raw.personalityMode : DEFAULT_PREFS.personalityMode,
           emojiLevel:         typeof raw.emojiLevel === "string" ? raw.emojiLevel : DEFAULT_PREFS.emojiLevel,
           humorLevel:         typeof raw.humorLevel === "string" ? raw.humorLevel : DEFAULT_PREFS.humorLevel,
-          regionalFlavor:     typeof raw.regionalFlavor === "string" ? raw.regionalFlavor : DEFAULT_PREFS.regionalFlavor,
-          kinfolkVoice:       typeof raw.kinfolkVoice === "string" ? raw.kinfolkVoice : DEFAULT_PREFS.kinfolkVoice,
+          regionalFlavor:     normalizeWebRegionalFlavor(raw.regionalFlavor),
+          kinfolkVoice:       normalizeWebVoice(raw.kinfolkVoice),
+          autoSpeak:          raw.autoSpeak === true,
+          aaveLevel:          Number.isInteger(raw.aaveLevel) && Number(raw.aaveLevel) >= 0 && Number(raw.aaveLevel) <= 3 ? Number(raw.aaveLevel) : 0,
         });
         setPreferencesHydrated(true);
       }
@@ -772,20 +838,16 @@ function TravelPage() {
   }, [isLoggedIn]);
 
   const savePrefs = useCallback(async (p: Prefs) => {
-    setPrefs(p);
     // Map ownershipTypes → preferredOwnershipTypes (API field name)
-    await fetch(`${BASE}api/kinfolk/preferences`, {
+    const response = await fetch(`${BASE}api/kinfolk/preferences`, {
       method: "PUT", credentials: "include",
       headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...p, preferredOwnershipTypes: p.ownershipTypes }),
     });
-    // Persist the active selection to kinfolk_delivery_profiles.
-    // Map internal id back to the API's ResponseStyle value (friendly → conversational).
-    await fetch(`${BASE}api/kinfolk/preferences/response-style`, {
-      method: "PUT", credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ responseStyle: ACTIVE_ID_TO_RESPONSE_STYLE[p.communicationStyle] ?? "conversational" }),
-    });
+    if (!response.ok) throw new Error("PREFERENCE_SAVE_FAILED");
+    // The primary preferences endpoint persists communicationStyle into the
+    // delivery profile transactionally, so a second partial save is unnecessary.
+    setPrefs(p);
   }, []);
 
   // ── Voice: stop recording and clean up ─────────────────────────────────────
@@ -863,8 +925,8 @@ function TravelPage() {
       const transcript = data.text?.trim() ?? "";
       if (!transcript) { setVoiceState("idle"); return; }
 
-      // Populate input with transcript for member review — NOT sent automatically
-      setInput(`Kinfolk heard: ${transcript}`);
+      // Populate the composer with only the transcript for member review — never send automatically.
+      setInput(composerValueFromTranscript(transcript));
       setVoiceState("idle");
 
       // Focus input so member can edit before sending
@@ -877,24 +939,10 @@ function TravelPage() {
     }
   }, []);
 
-  // ── Voice: primary tap handler ──────────────────────────────────────────────
-  const handleVoiceTap = useCallback(async () => {
-    // Stop recording if already recording
-    if (voiceState === "recording") {
-      stopRecording();
-      return;
-    }
-    // Dismiss notice without acting
-    if (voiceState === "notice") { setVoiceState("idle"); return; }
-    if (voiceState === "processing" || voiceState === "requesting") return;
-
-    // Show privacy notice once per session before requesting mic permission
-    if (!privacyNoticeSeen.current) {
-      setVoiceState("notice");
-      return;
-    }
-
-    // Request mic permission
+  // ── Voice: request permission and start recording ──────────────────────────
+  // This function intentionally does not contain the first-use notice gate so
+  // accepting the notice can proceed directly to the browser permission prompt.
+  const beginVoiceRecording = useCallback(async () => {
     setVoiceState("requesting");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -930,21 +978,40 @@ function TravelPage() {
       setVoiceState("denied");
       setTimeout(() => setVoiceState("idle"), 4000);
     }
-  }, [voiceState, stopRecording, finishRecording]);
+  }, [stopRecording, finishRecording]);
+
+  // ── Voice: primary tap handler ──────────────────────────────────────────────
+  const handleVoiceTap = useCallback(async () => {
+    // Stop recording if already recording
+    if (voiceState === "recording") {
+      stopRecording();
+      return;
+    }
+    // Dismiss notice without acting
+    if (voiceState === "notice") { setVoiceState("idle"); return; }
+    if (voiceState === "processing" || voiceState === "requesting") return;
+
+    // Show privacy notice once per session before requesting mic permission
+    if (!privacyNoticeSeen.current) {
+      setVoiceState("notice");
+      return;
+    }
+
+    await beginVoiceRecording();
+  }, [voiceState, stopRecording, beginVoiceRecording]);
 
   // ── Voice: proceed from privacy notice ─────────────────────────────────────
   const handleVoiceNoticeAccept = useCallback(async () => {
     privacyNoticeSeen.current = true;
-    setVoiceState("idle");
-    // Trigger the actual recording flow immediately
-    await handleVoiceTap();
-  }, [handleVoiceTap]);
+    await beginVoiceRecording();
+  }, [beginVoiceRecording]);
 
   // Cleanup on unmount
   useEffect(() => () => {
     stopRecording();
+    releaseAudio();
     if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
-  }, [stopRecording]);
+  }, [releaseAudio, stopRecording]);
 
   // Clear client-only status timers and abort any in-flight request on unmount.
   useEffect(() => () => {
@@ -952,33 +1019,51 @@ function TravelPage() {
     activeChatControllerRef.current?.abort("unmount");
   }, [clearResponseStatusTimers]);
 
-  // TTS playback
-  const playMessage = useCallback(async (msgId: string, content: string) => {
-    if (playingId === msgId) {
-      audioRef.current?.pause();
-      if (audioRef.current) audioRef.current.currentTime = 0;
+  // TTS playback. Manual Listen remains available even when auto-speak is off.
+  const playMessage = useCallback(async (msgId: string, content: string, source: "manual" | "auto" = "manual") => {
+    if (!content.trim()) return;
+    if (source === "manual" && playingId === msgId) {
+      releaseAudio();
       setPlayingId(null);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
       return;
     }
-    audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.currentTime = 0;
+    releaseAudio();
     setPlayingId(msgId);
+    setVoiceStatus(prev => ({ ...prev, [msgId]: source === "auto" ? "Preparing voice…" : "" }));
     try {
       const r = await fetch(`${BASE}api/kinfolk/speak`, {
         method: "POST", credentials: "include",
         headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ text: content.slice(0, 600), voice: prefs.kinfolkVoice || "onyx" }),
       });
-      if (!r.ok) { setPlayingId(null); return; }
+      if (!r.ok) throw new Error("TTS request failed");
       const d = await r.json() as { audio?: string };
-      if (!d.audio) { setPlayingId(null); return; }
-      const audio = new Audio(`data:audio/wav;base64,${d.audio}`);
+      if (!d.audio) throw new Error("No audio returned");
+      const bytes = Uint8Array.from(atob(d.audio), char => char.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+      const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => setPlayingId(null);
-      audio.onerror = () => setPlayingId(null);
+      audioUrlRef.current = url;
+      const finish = () => {
+        releaseAudio();
+        setPlayingId(null);
+        setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
+      };
+      audio.onended = finish;
+      audio.onerror = () => {
+        releaseAudio();
+        setPlayingId(null);
+        setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
+      };
       await audio.play();
-    } catch { setPlayingId(null); }
-  }, [playingId, prefs.kinfolkVoice]);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
+    } catch {
+      releaseAudio();
+      setPlayingId(null);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
+    }
+  }, [playingId, prefs.kinfolkVoice, releaseAudio]);
 
   // Load session list
   const loadSessions = useCallback(async () => {
@@ -1107,6 +1192,8 @@ function TravelPage() {
         location?: { city: string; state: string | null; source: string } | null;
         locationSource?: string | null;
         experience?: KinfolkExperience | null;
+        degraded?: boolean;
+        degradedReason?: string | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -1150,6 +1237,16 @@ function TravelPage() {
         clarificationSteps: data.clarificationSteps ?? undefined,
         experience: data.experience ?? null,
       }]);
+      if (shouldAutoSpeakNewReply({
+        autoSpeak: prefs.autoSpeak,
+        isNewAssistantReply: true,
+        content: replyContent,
+        degraded: data.degraded === true,
+        errorFallback: !data.reply?.trim(),
+      }) && !autoSpokenMessageIdsRef.current.has(assistantMsgId)) {
+        autoSpokenMessageIdsRef.current.add(assistantMsgId);
+        void playMessage(assistantMsgId, replyContent, "auto");
+      }
       // Show the optional clarifier if steps were returned.
       if (data.clarificationSteps && data.clarificationSteps.length > 0) {
         setPendingClarificationMsgId(assistantMsgId);
@@ -1171,7 +1268,7 @@ function TravelPage() {
       clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers]);
+  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -1218,6 +1315,8 @@ function TravelPage() {
   const newChat = () => {
     clearResponseStatusTimers();
     activeChatControllerRef.current?.abort("new_chat");
+    releaseAudio();
+    autoSpokenMessageIdsRef.current.clear();
     setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null);
   };
 
@@ -1498,18 +1597,21 @@ function TravelPage() {
                           <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
                         )}
                       </div>
-                      {msg.role === "assistant" && isLoggedIn && (
-                        <button
-                          onClick={() => playMessage(msg.id, msg.content)}
-                          className={`mt-1 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors ${
-                            playingId === msg.id
-                              ? "text-[#CA922B] bg-[#CA922B]/8 border border-[#CA922B]/20"
-                              : "text-[#3A1F0E]/30 hover:text-[#CA922B] hover:bg-[#CA922B]/5"
-                          }`}
-                        >
-                          <Volume2 size={10} />
-                          {playingId === msg.id ? "Stop" : "Listen"}
-                        </button>
+                      {msg.role === "assistant" && isLoggedIn && msg.content.trim() && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <button
+                            onClick={() => playMessage(msg.id, msg.content)}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors ${
+                              playingId === msg.id
+                                ? "text-[#CA922B] bg-[#CA922B]/8 border border-[#CA922B]/20"
+                                : "text-[#3A1F0E]/30 hover:text-[#CA922B] hover:bg-[#CA922B]/5"
+                            }`}
+                          >
+                            <Volume2 size={10} />
+                            {playingId === msg.id ? "Stop" : "Listen"}
+                          </button>
+                          {voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
+                        </div>
                       )}
                       {hasItineraryDays(msg.itinerary) && (
                         <KinfolkItineraryRenderer itinerary={msg.itinerary!} />
@@ -1752,24 +1854,8 @@ function TravelPage() {
                     onInput={e => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }}
                   />
 
-                  {/* Discard transcript button — shown when input has "Kinfolk heard:" prefix */}
-                  {input.startsWith("Kinfolk heard:") && (
-                    <button onClick={() => { setInput(""); inputRef.current?.focus(); }}
-                      aria-label="Discard transcript"
-                      title="Discard transcript"
-                      className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-red-50 border border-[#3A1F0E]/10 hover:border-red-200 text-[#3A1F0E]/40 hover:text-red-500 flex items-center justify-center transition-colors shrink-0">
-                      <X size={14} />
-                    </button>
-                  )}
-
                   <button
-                    onClick={() => {
-                      // Strip "Kinfolk heard: " prefix if present before sending
-                      const cleaned = input.startsWith("Kinfolk heard: ")
-                        ? input.slice("Kinfolk heard: ".length)
-                        : input;
-                      send(cleaned);
-                    }}
+                    onClick={() => send(input)}
                     disabled={!input.trim() || sending || uploadingImage}
                     data-testid="kinfolk-send"
                     className="w-11 h-11 rounded-2xl bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 flex items-center justify-center transition-colors shrink-0">

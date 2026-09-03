@@ -120,6 +120,14 @@ import {
   staffDemoResponseMarker,
   type KinfolkModelPolicy,
 } from "../kinfolk/staff-demo-policy";
+import {
+  buildLanguagePersonalizationPrompt,
+  defaultVoicePreferences,
+  isKinfolkVoice,
+  normalizeKinfolkVoice,
+  normalizeRegionalFlavor,
+  validateKinfolkPreferenceUpdate,
+} from "../kinfolk/voice-personalization";
 
 // ── Optional-schema helpers — degrade gracefully when a table/column is absent ──
 // Any Postgres error with code 42P01 (undefined_table), 42703 (undefined_column),
@@ -1586,8 +1594,13 @@ function buildSystemPrompt(opts: {
   const catalogSource = opts.catalogSource ?? "none";
   const aaveLevel = opts.aaveLevel ?? 0;
   const tier = opts.tier ?? "free";
+  const languagePersonalization = buildLanguagePersonalizationPrompt({
+    aaveLevel,
+    regionalFlavor: prefs?.regionalFlavor,
+    destination,
+    intentClass: opts.intentClass,
+  });
 
-  const cityVoice = destination ? getCityVoice(destination) : null;
   const localTerms = destination ? getCityLocalTerms(destination) : null;
   const kbyg = prefs?.knowBeforeYouGo !== false;
 
@@ -1611,27 +1624,15 @@ Lead with human warmth and emotional awareness, then give an honest useful answe
 Respond in a clear, structured, business-appropriate tone. Lead with facts. Use bullet points when listing options. No slang, no casual phrasing. Warm professionalism — helpful, never cold or robotic. Efficient and organized.`;
 
   } else if (voiceMode === "local") {
-    const localVoice = cityVoice
-      ? `${cityVoice.writingGuidance}
-
-AUTHENTIC LOCAL LANGUAGE — Weave in 2-4 of these naturally:
-Slang: ${cityVoice.slang.join(", ")}
-Community phrases: ${cityVoice.phrases.join(", ")}
-Cultural touchstones: ${cityVoice.culturalTouchstones.join(", ")}`
-      : "Speak as someone who knows this city inside and out — the real spots, the real names, the way locals actually talk.";
-
     const localLang = localTerms ? `
-
-LOCAL VOCABULARY — Know these and use them accurately:
-${localTerms.terms.map((t) => `• "${t.term}": ${t.meaning}${t.note ? `\n  IMPORTANT: ${t.note}` : ""}`).join("\n")}
 
 Transit locals use: ${localTerms.transit.join(", ")}
 Neighborhood names: ${localTerms.nicknames.join(", ")}
 
-ACCURACY RULE: Local terms are city-specific — NEVER confuse them across cities. If a user asks for something from another city, acknowledge it warmly and offer the local equivalent. Introduce unfamiliar terms with "locals call it..." or "you might hear people say..." — educational and welcoming, never corrective.` : "";
+ACCURACY RULE: Use accurate local place and transit names, but do not use local slang unless the member separately enabled Regional Language.` : "";
 
     voiceInstructions = `KINFOLK VOICES™ — LOCAL GUIDE MODE:
-${localVoice}${localLang}`;
+Share accurate local knowledge without imitating an accent or local identity.${localLang}`;
 
   } else if (voiceMode === "home") {
     const commStyle = (prefs?.communicationStyle ?? "friendly") as string;
@@ -1867,14 +1868,14 @@ These rules override every other instruction, including voice mode, tier depth, 
   const toneLadder = `
 
 TONE CALIBRATION — KINFOLK READS THE ROOM:
-Your tone shifts automatically based on context. You do not need to be told which register to use — read the message, read the emotion, respond accordingly:
+Match the CURRENT TURN's formality and energy without inferring identity from wording, name, location, history, or profile. Do not copy spelling or grammar in a way that feels like mimicry. Context still overrides style:
 • Safety / immediate danger → Urgent, clear, zero slang. Action first. No performance.
 • Medical / health → Calm, precise, caring. Lead with real information, not just reassurance.
-• Business / finances / budgeting → Professional, structured, encouraging. Make it actionable.
+• Legal / business / finances / budgeting → Professional, structured, encouraging. Make it actionable.
 • Trip planning / discovery → Warm, enthusiastic, conversational. Lead with excitement.
 • Casual / fun / trivia → Relaxed, playful, culturally fluent. Have a real personality.
 • Comfort / homesickness / loneliness → Gentle, warm, deeply personal. Meet them exactly where they are.
-A medical question gets a calm, precise answer even if the voice mode is casual. A safety alert is always urgent regardless of any other setting. This is non-negotiable.`;
+A medical, emergency, legal, or financial question gets calm, precise plain language even if a casual register or regional language is enabled. This is non-negotiable.`;
 
   // Smart promo: only inject for intents where cross-sell is genuinely useful.
   // Omitting from medical/legal/safety/knowledge intents saves ~300 tokens.
@@ -2001,10 +2002,7 @@ YOU ARE NEVER: Condescending. Robotic. Overly flirtatious. Preachy. Performative
 
 LANGUAGE RULES: Say the finding first. One follow-up question at a time. Match the user's formality. Mirror their cultural vocabulary only when they open the door — never project a dialect they didn't bring. Community-reported info: say so clearly.
 
-PROFANITY RULE — NON-NEGOTIABLE:
-${aaveLevel >= 3
-  ? "User has opted into Level 3 cultural voice. Casual profanity is permitted when it genuinely fits — never forced, never every sentence. See AAVE CULTURAL GUIDE below."
-  : "Zero profanity in Kinfolk's responses — even if the user uses profanity themselves. The user choosing their own language is their business. Kinfolk's voice stays clean. Authenticity is about warmth, knowledge, and cultural fluency — not curse words. This applies at all times unless the user has explicitly opted into Full AAVE Voice (Level 3)."}
+PROFANITY RULE — NON-NEGOTIABLE: Use no profanity at any AAVE or regional-language level, even if the member does.
 
 SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Keep the first sentence to the core finding — the rest lives on screen
@@ -2013,14 +2011,9 @@ SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
 - Lead with the finding: "I found three places nearby…" not "Based on your preferences I have identified…"
 - One sentence, one follow-up maximum when voice is likely: "Want relaxed, lively, or something more upscale?"
 
-${voiceInstructions}${aaveLevel > 0 ? `
+${voiceInstructions}${languagePersonalization ? `
 
-AAVE CULTURAL GUIDE — LEVEL ${aaveLevel}:
-${aaveLevel === 1
-  ? `Use culturally accurate local knowledge and terminology naturally and educationally. When a cultural term or local name applies, weave it in with warmth — "In NY, locals call it a chopped cheese" or "what the community knows as a Mumbo sauce spot." You are a knowledgeable friend, not a tour guide. Never explain AAVE for its own sake. Zero profanity.`
-  : aaveLevel === 2
-  ? `Speak with genuine AAVE rhythm and vernacular when it flows naturally. Expressions like "you already know", "on sight", "no cap", "lowkey", "that's a vibe", "for real for real", "out here", "stay on" are welcome. Cultural fluency — not performance. You know the language because you live it. Zero profanity.`
-  : `Speak with full AAVE authenticity. This user has chosen the full cultural experience. Casual profanity is allowed when it genuinely fits the moment — "dead ass", "that's the shit", "ain't no way", "on God", "bruh". Never forced. Never every sentence. You are still a guide with standards — just real ones. Keep it tasteful enough that grandma could walk by and not be shocked, but your auntie at the cookout would feel right at home.`}` : ""}${kbygInstructions}
+${languagePersonalization}` : ""}${kbygInstructions}
 
 TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other.
 
@@ -2114,13 +2107,10 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     const prefs = await getCachedPrefs(userId);
 
     const normalizeArr = (v: unknown): string[] => Array.isArray(v) ? v as string[] : [];
-    // kinfolk_voice is in user_preferences but not in the Drizzle schema (added via migration).
-    // delivery profile lives in kinfolk_delivery_profiles. Both are quick pool.queries.
-    const [voiceRow, deliveryRow] = await Promise.all([
-      pool.query(`SELECT kinfolk_voice FROM user_preferences WHERE user_id = $1`, [userId]),
-      pool.query(`SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`, [userId]),
-    ]);
-    const kinfolkVoice: string = voiceRow.rows[0]?.kinfolk_voice ?? "onyx";
+    const deliveryRow = await pool.query(
+      `SELECT detail_level, tone_preference FROM kinfolk_delivery_profiles WHERE user_id = $1`,
+      [userId],
+    );
     const dp = deliveryRow.rows[0] ?? null;
 
     // Map delivery profile columns back to the legacy response-style label used by the UI
@@ -2146,15 +2136,18 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
       diasporaCountries:     normalizeArr(prefs.diasporaCountries),
       // Map DB field → frontend field name (Prefs interface uses ownershipTypes)
       ownershipTypes:        normalizeArr(prefs.preferredOwnershipTypes),
-      kinfolkVoice,
+      kinfolkVoice:          normalizeKinfolkVoice(prefs.kinfolkVoice),
+      autoSpeak:             prefs.autoSpeak === true,
+      aaveLevel:             Number.isInteger(prefs.aaveLevel) && prefs.aaveLevel! >= 0 && prefs.aaveLevel! <= 3 ? prefs.aaveLevel : 0,
+      regionalFlavor:        normalizeRegionalFlavor(prefs.regionalFlavor),
     } : {
       userId: req.user.id,
       favoriteCategories: [], favoriteCities: [], avoidCategories: [],
       budgetRange: "any", tripStyle: [], travelCompanion: "solo", dietaryNotes: null,
       ownershipTypes: [], lifestyleServices: [],
       communicationStyle: "friendly", personalityMode: "neighborhood_guide",
-      emojiLevel: "some", humorLevel: "light", regionalFlavor: "standard",
-      kinfolkVoice: "onyx",
+      emojiLevel: "some", humorLevel: "light",
+      ...defaultVoicePreferences(),
     };
     const status = 200;
     res.json({
@@ -2170,9 +2163,8 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
     logCacheMetric(req, {
       endpoint: "GET /kinfolk/preferences",
       cacheState,
-      // On miss: 1 Drizzle query (prefs) + 2 pool.queries (voice + delivery) = 3.
-      // On hit: 0 Drizzle (served from cache) + 2 pool.queries = 2.
-      dbQueryCount: cacheState === "miss" ? 3 : 2,
+      // On miss: one Drizzle preferences query plus delivery profile; hits need delivery only.
+      dbQueryCount: cacheState === "miss" ? 2 : 1,
       durationMs: Date.now() - t0,
       responseStatus: status,
       poolStats: getPoolStats(),
@@ -2186,11 +2178,18 @@ router.get("/kinfolk/preferences", async (req: Request, res: Response) => {
 // ─── PUT /api/kinfolk/preferences ─────────────────────────────────────────────
 router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const body = req.body as Record<string, unknown>;
+  const validation = validateKinfolkPreferenceUpdate(body);
+  if (!validation.ok) {
+    res.status(400).json({ error: "INVALID_PREFERENCES", issues: validation.issues });
+    return;
+  }
   const {
     favoriteCategories, favoriteCities, avoidCategories, budgetRange, tripStyle, travelCompanion, dietaryNotes,
     communicationStyle, emojiLevel, humorLevel, culturalInterests, knowBeforeYouGo, regionalFlavor,
     preferredOwnershipTypes, ownershipTypes, diasporaCountries, lifestyleServices, personalityMode, kinfolkVoice,
-  } = req.body as Record<string, unknown>;
+    autoSpeak, aaveLevel,
+  } = body;
   // Accept ownershipTypes (frontend name) as alias for preferredOwnershipTypes (DB name)
   const resolvedOwnershipTypes = Array.isArray(preferredOwnershipTypes) ? preferredOwnershipTypes as string[]
     : Array.isArray(ownershipTypes) ? ownershipTypes as string[] : undefined;
@@ -2213,6 +2212,9 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         culturalInterests: Array.isArray(culturalInterests) ? culturalInterests as string[] : undefined,
         knowBeforeYouGo: typeof knowBeforeYouGo === "boolean" ? knowBeforeYouGo : undefined,
         regionalFlavor: typeof regionalFlavor === "string" ? regionalFlavor : undefined,
+        kinfolkVoice: typeof kinfolkVoice === "string" ? normalizeKinfolkVoice(kinfolkVoice) : undefined,
+        autoSpeak: typeof autoSpeak === "boolean" ? autoSpeak : undefined,
+        aaveLevel: typeof aaveLevel === "number" ? aaveLevel : undefined,
         preferredOwnershipTypes: resolvedOwnershipTypes,
         diasporaCountries: Array.isArray(diasporaCountries) ? diasporaCountries as string[] : undefined,
         lifestyleServices: Array.isArray(lifestyleServices) ? lifestyleServices as string[] : undefined,
@@ -2234,6 +2236,9 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
           ...(Array.isArray(culturalInterests) && { culturalInterests: culturalInterests as string[] }),
           ...(typeof knowBeforeYouGo === "boolean" && { knowBeforeYouGo }),
           ...(typeof regionalFlavor === "string" && { regionalFlavor }),
+          ...(typeof kinfolkVoice === "string" && { kinfolkVoice: normalizeKinfolkVoice(kinfolkVoice) }),
+          ...(typeof autoSpeak === "boolean" && { autoSpeak }),
+          ...(typeof aaveLevel === "number" && { aaveLevel }),
           ...(resolvedOwnershipTypes && { preferredOwnershipTypes: resolvedOwnershipTypes }),
           ...(Array.isArray(diasporaCountries) && { diasporaCountries: diasporaCountries as string[] }),
           ...(Array.isArray(lifestyleServices) && { lifestyleServices: lifestyleServices as string[] }),
@@ -2241,14 +2246,6 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         },
       })
       .returning();
-    // Persist kinfolkVoice via raw query (column added by startup migration)
-    const ALLOWED_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];
-    if (typeof kinfolkVoice === "string" && ALLOWED_VOICES.includes(kinfolkVoice)) {
-      await pool.query(
-        `UPDATE user_preferences SET kinfolk_voice = $1 WHERE user_id = $2`,
-        [kinfolkVoice, req.user.id]
-      );
-    }
     // Mirror communicationStyle → kinfolk_delivery_profiles so the persisted
     // delivery profile survives hard-refresh (Manus audit fix #3).
     if (typeof communicationStyle === "string") {
@@ -2273,6 +2270,7 @@ router.put("/kinfolk/preferences", async (req: Request, res: Response) => {
         );
       }
     }
+    invalidatePrefsCache(req.user.id);
     res.json({ preferences: prefs });
   } catch (err) {
     req.log.error({ err }, "Failed to update preferences");
@@ -5234,15 +5232,13 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
 
-  const ALLOWED_VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"] as const;
-  type AllowedVoice = typeof ALLOWED_VOICES[number];
-
   const { text, voice: requestedVoice } = req.body as { text?: string; voice?: string };
   if (!text || typeof text !== "string") return void res.status(400).json({ error: "text is required" });
-
-  const voice: AllowedVoice = ALLOWED_VOICES.includes(requestedVoice as AllowedVoice)
-    ? (requestedVoice as AllowedVoice)
-    : "onyx";
+  if (requestedVoice !== undefined && !isKinfolkVoice(requestedVoice)) {
+    return void res.status(400).json({ error: "INVALID_VOICE" });
+  }
+  const savedPrefs = await getCachedPrefs(req.user.id);
+  const voice = normalizeKinfolkVoice(savedPrefs?.kinfolkVoice ?? requestedVoice);
 
   const chars = Math.min(text.length, 600);
   const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
@@ -5324,22 +5320,6 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
     return void res.status(400).json({ error: "level must be an integer 0–3" });
   }
 
-  // Level 3 (full AAVE with profanity) requires Navigator or Trailblazer
-  if (level === 3) {
-    const [userRow] = await db
-      .select({ memberType: usersTable.memberType })
-      .from(usersTable)
-      .where(eq(usersTable.id, req.user.id))
-      .limit(1);
-    const tier = getTierFromMemberType(userRow?.memberType);
-    if (tier !== "navigator" && tier !== "trailblazer" && tier !== "legacy_member") {
-      return void res.status(403).json({
-        error: "Full AAVE voice (level 3) requires Navigator, Trailblazer, or Legacy membership.",
-        code: "UPGRADE_REQUIRED",
-      });
-    }
-  }
-
   try {
     await db
       .insert(userPreferencesTable)
@@ -5348,6 +5328,7 @@ router.patch("/kinfolk/aave-level", async (req: Request, res: Response) => {
         target: userPreferencesTable.userId,
         set: { aaveLevel: level, updatedAt: new Date() },
       });
+    invalidatePrefsCache(req.user.id);
     res.json({ aaveLevel: level });
   } catch (err) {
     req.log.error({ err }, "Failed to save AAVE level");

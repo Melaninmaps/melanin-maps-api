@@ -2245,6 +2245,17 @@ END $$`,
     sql: `ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS kinfolk_voice VARCHAR(20) NOT NULL DEFAULT 'onyx'`,
   },
 
+  // Spoken replies are explicit opt-in. Legacy `standard` regional rows represented
+  // the old implicit default, so normalize them to Off while preserving real choices.
+  {
+    name: "user_preferences_consented_spoken_voice_v1",
+    sql: `ALTER TABLE user_preferences
+      ADD COLUMN IF NOT EXISTS auto_speak BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE user_preferences ALTER COLUMN regional_flavor SET DEFAULT 'off';
+      UPDATE user_preferences SET regional_flavor = 'off'
+      WHERE regional_flavor IS NULL OR regional_flavor = 'standard'`,
+  },
+
   // ── Business schema sync — adds every column the Drizzle schema defines
   //    that may be missing from older Railway deployments.  All ADD COLUMN IF
   //    NOT EXISTS so this is fully idempotent.
