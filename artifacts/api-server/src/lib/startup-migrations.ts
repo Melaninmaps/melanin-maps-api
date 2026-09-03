@@ -4022,27 +4022,6 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON CONFLICT DO NOTHING`,
   },
 
-  // ── Delete community posts by test accounts ────────────────────────────────
-  // Apple Reviewer, Manus AI testers, and load-test accounts sometimes post
-  // during UAT. This runs every boot so test posts never accumulate in prod.
-  // The DELETE is scoped to known test emails + is_load_test flag — it is
-  // safe to run on every deploy because real member posts have real user IDs
-  // that do not match any of these conditions.
-  {
-    name: "delete_test_account_community_posts_v1",
-    sql: `DELETE FROM community_posts
-      WHERE author_id IN (
-        SELECT id FROM users
-        WHERE email IN (
-          'apple.reviewer@mappingwithmelanin.com',
-          'tester@mwm.com',
-          'manus@mappingwithmelanin.com',
-          'manus.geo@mappingwithmelanin.com'
-        )
-        OR is_load_test = true
-      )`,
-  },
-
   // ── P0-B: Community test-content quarantine — column + audit table ─────────
   // Adds internal_test_content boolean so posts can be excluded from all feed
   // branches without a hard DELETE. Preserves rollback capability.
@@ -4086,6 +4065,52 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
             ON happening_now_stories (status, scope, created_at DESC);
           CREATE INDEX IF NOT EXISTS happening_now_city_state_idx
             ON happening_now_stories (lower(city), lower(state));
+        END IF;
+      END
+    $$`,
+  },
+  {
+    // Complete the additive Community schema before writers use enrichment
+    // fields. Feed reads also tolerate these columns being absent during a
+    // rolling deploy; this restores full write capability without mutating,
+    // deleting, or reseeding any member content.
+    name: "community_posts_optional_enrichment_cols_v1",
+    sql: `DO $$
+      BEGIN
+        IF to_regclass('public.community_posts') IS NOT NULL THEN
+          ALTER TABLE community_posts
+            ADD COLUMN IF NOT EXISTS location_tag varchar(200),
+            ADD COLUMN IF NOT EXISTS location_venue_name varchar(200),
+            ADD COLUMN IF NOT EXISTS location_city varchar(100),
+            ADD COLUMN IF NOT EXISTS location_country varchar(100),
+            ADD COLUMN IF NOT EXISTS location_lat numeric(10,7),
+            ADD COLUMN IF NOT EXISTS location_lng numeric(10,7),
+            ADD COLUMN IF NOT EXISTS location_place_id varchar,
+            ADD COLUMN IF NOT EXISTS location_type varchar(30),
+            ADD COLUMN IF NOT EXISTS hashtags text[],
+            ADD COLUMN IF NOT EXISTS topic_tag varchar(100),
+            ADD COLUMN IF NOT EXISTS is_private_topic boolean NOT NULL DEFAULT false,
+            ADD COLUMN IF NOT EXISTS has_content_warning boolean NOT NULL DEFAULT false,
+            ADD COLUMN IF NOT EXISTS content_warning_type varchar(30),
+            ADD COLUMN IF NOT EXISTS audience_rating varchar(20) NOT NULL DEFAULT 'everyone',
+            ADD COLUMN IF NOT EXISTS rating_reason varchar(200),
+            ADD COLUMN IF NOT EXISTS link_url text,
+            ADD COLUMN IF NOT EXISTS link_title text,
+            ADD COLUMN IF NOT EXISTS link_description text,
+            ADD COLUMN IF NOT EXISTS link_domain varchar(200),
+            ADD COLUMN IF NOT EXISTS link_favicon varchar(10),
+            ADD COLUMN IF NOT EXISTS repost_id varchar,
+            ADD COLUMN IF NOT EXISTS repost_author_name varchar(100),
+            ADD COLUMN IF NOT EXISTS repost_author_initials varchar(4),
+            ADD COLUMN IF NOT EXISTS repost_content text,
+            ADD COLUMN IF NOT EXISTS mentioned_business_id varchar,
+            ADD COLUMN IF NOT EXISTS mentioned_business_name varchar(150),
+            ADD COLUMN IF NOT EXISTS mentioned_business_tag varchar(50),
+            ADD COLUMN IF NOT EXISTS mentioned_business_rating integer,
+            ADD COLUMN IF NOT EXISTS is_trusted_author boolean NOT NULL DEFAULT false,
+            ADD COLUMN IF NOT EXISTS thread_id varchar,
+            ADD COLUMN IF NOT EXISTS thread_position integer NOT NULL DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS thread_total integer NOT NULL DEFAULT 1;
         END IF;
       END
     $$`,
@@ -4145,8 +4170,8 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
   // Catches posts whose author_name is 'Apple Reviewer', 'App Reviewer', etc.
   // even when the user's email address doesn't match the known test-email list
   // (Apple uses private relay addresses for Review accounts).
-  // Idempotent: ON CONFLICT DO NOTHING + UPDATE only where internal_test_content=false.
-  // Rollback: restore from community_post_internal_quarantine, set internal_test_content=false.
+  // Idempotent and audit-only: the source post is never deleted or changed.
+  // Feed queries exclude these rows using the same fail-closed fingerprints.
   {
     name: "quarantine_test_reviewer_posts_v1",
     sql: `DO $$
@@ -4162,6 +4187,13 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE COALESCE(u.is_load_test, false) = true
+           OR lower(COALESCE(u.email, '')) LIKE 'mwm-loadtest-%@loadtest.mwm.internal'
+           OR lower(COALESCE(u.email, '')) IN (
+                'apple.reviewer@mappingwithmelanin.com',
+                'tester@mwm.com',
+                'manus@mappingwithmelanin.com',
+                'manus.geo@mappingwithmelanin.com'
+              )
            OR lower(COALESCE(cp.author_name, '')) IN (
                 'apple reviewer', 'app reviewer', 'smoke test', 'load test'
               )
@@ -4170,15 +4202,6 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
                 'smoke test post — ignore'
               )
         ON CONFLICT (post_id) DO NOTHING;
-
-        -- Mark quarantined posts so feed queries can exclude them without re-scanning users
-        UPDATE community_posts cp
-        SET internal_test_content = true,
-            visibility = 'followers_only',
-            requires_moderation = true
-        FROM community_post_internal_quarantine q
-        WHERE q.post_id = cp.id
-          AND cp.internal_test_content = false;
       EXCEPTION WHEN others THEN NULL;
       END
     $$`,

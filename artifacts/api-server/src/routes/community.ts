@@ -1,9 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { randomUUID } from "crypto";
 import multer from "multer";
-import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, userPreferencesTable, usersTable, threadReadsTable, communityPlacesTable, userBlocksTable, userFollowsTable, memberConnections, contentReportsTable } from "@workspace/db";
+import { db, communityPostsTable, communityPostCommentsTable, businessesTable, pool, usersTable, threadReadsTable, communityPlacesTable, userBlocksTable, userFollowsTable, memberConnections, contentReportsTable } from "@workspace/db";
 import { extractHashtags, upsertHashtags } from "./hashtags";
-import { eq, desc, sql, and, gte, or } from "drizzle-orm";
+import { eq, sql, and, gte, or } from "drizzle-orm";
 import { storage } from "../storage";
 import { getUserTier } from "../middleware/requireMembership";
 import { checkContent, redactForLog } from "../lib/contentFilter";
@@ -11,6 +11,12 @@ import { scanForFamily } from "../lib/familyFilter";
 import { objectStorageClient } from "../lib/objectStorage";
 import { screenImageUrl } from "../lib/contentScreen";
 import { sendPushToUser } from "../lib/pushNotifications";
+import {
+  fetchActiveCommunityComments,
+  fetchCommentAccessPost,
+  fetchCommunityFeedRows,
+  type CommunityFeedMode,
+} from "../community/communityFeed";
 
 const router: IRouter = Router();
 
@@ -132,27 +138,28 @@ function normalizeCommentPolicy(value: unknown, visibility: string): CommentPoli
 }
 
 async function resolveCommentAccess(postId: string, viewerId: string): Promise<CommentAccess> {
-  const [post] = await db
-    .select({
-      id: communityPostsTable.id,
-      authorId: communityPostsTable.authorId,
-      visibility: communityPostsTable.visibility,
-      commentPolicy: communityPostsTable.commentPolicy,
-    })
-    .from(communityPostsTable)
-    .where(eq(communityPostsTable.id, postId))
-    .limit(1);
+  const post = await fetchCommentAccessPost(pool, postId, viewerId);
 
   if (!post) return { post: null, canView: false, canComment: false, reason: null };
 
   const policy = normalizeCommentPolicy(post.commentPolicy, post.visibility);
   const normalizedPost = { ...post, commentPolicy: policy };
-  if (!post.authorId || post.authorId === viewerId) {
+  if (post.authorId === viewerId) {
     return {
       post: normalizedPost,
       canView: true,
       canComment: policy !== "off",
       reason: policy === "off" ? "Comments are turned off for this post." : null,
+    };
+  }
+
+  if (!post.authorId) {
+    const canView = post.visibility === "public";
+    return {
+      post: normalizedPost,
+      canView,
+      canComment: canView && policy !== "off",
+      reason: canView && policy === "off" ? "Comments are turned off for this post." : null,
     };
   }
 
@@ -199,7 +206,7 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
   const isRelated = acceptedFollow.length > 0 || acceptedConnection.length > 0;
   const canView = post.visibility === "public" && !author[0]?.isPrivate
     ? true
-    : isRelated;
+    : isRelated && (post.visibility === "public" || post.visibility === "followers_only");
 
   if (!canView) return { post: normalizedPost, canView: false, canComment: false, reason: null };
   if (policy === "off") return { post: normalizedPost, canView: true, canComment: false, reason: "Comments are turned off for this post." };
@@ -211,7 +218,7 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
 
 // GET /community/posts — paginated feed with business enrichment
 router.get("/community/posts", async (req: Request, res: Response) => {
-  if (!(req as any).user) {
+  if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required." });
     return;
   }
@@ -219,155 +226,20 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const postType = typeof req.query.postType === "string" ? req.query.postType : undefined;
     const authorId = typeof req.query.authorId === "string" ? req.query.authorId : undefined;
-    const feedMode = typeof req.query.feed === "string" ? req.query.feed : "everyone";
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const offset = Number(req.query.offset) || 0;
-    const viewerId: string | null = req.user?.id ?? null;
+    const requestedFeed = typeof req.query.feed === "string" ? req.query.feed : "everyone";
+    const feedMode: CommunityFeedMode = ["everyone", "following", "foryou"].includes(requestedFeed)
+      ? requestedFeed as CommunityFeedMode
+      : "everyone";
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
 
-    type PostRow = { id: string; author_id: string | null; author_name: string; author_initials: string; author_color: string; content: string; category: string; post_type: string; business_id: string | null; business_name: string | null; business_link: string | null; media_urls: string | null; saved_place_id: string | null; location_tag: string | null; location_type: string | null; topic_tag: string | null; is_private_topic: boolean; visibility: string; comment_policy: string; has_content_warning: boolean; content_warning_type: string | null; audience_rating: string; rating_reason: string | null; upvotes: number; downvotes: number; comments_count: number; created_at: Date };
-
-    let rows: PostRow[];
-
-    if (authorId) {
-      // Profile wall — pool.query with test-content exclusion
-      // Excludes quarantined reviewer/smoke/load-test posts so they never
-      // appear on any member's profile wall.
-      const result = await pool.query<PostRow>(`
-        SELECT cp.*
-        FROM community_posts cp
-        LEFT JOIN users u ON u.id = cp.author_id
-        WHERE cp.author_id = $1
-          AND COALESCE(cp.internal_test_content, false) = false
-          AND COALESCE(u.is_load_test, false) = false
-        ORDER BY cp.created_at DESC
-        LIMIT $2 OFFSET $3
-      `, [authorId, limit, offset]);
-      rows = result.rows;
-    } else if (feedMode === "following" && viewerId) {
-      // Following feed — posts from people you follow or are connected with
-      const result = await pool.query<PostRow>(`
-        SELECT cp.*
-        FROM community_posts cp
-        LEFT JOIN users u ON u.id = cp.author_id
-        WHERE cp.author_id IN (
-          SELECT uf.following_id FROM user_follows uf
-            WHERE uf.follower_id = $1 AND uf.status = 'accepted'
-          UNION
-          SELECT CASE WHEN mc.requester_id = $1 THEN mc.recipient_id ELSE mc.requester_id END
-            FROM member_connections mc
-            WHERE (mc.requester_id = $1 OR mc.recipient_id = $1) AND mc.status = 'accepted'
-          UNION SELECT $1
-        )
-        AND (cp.visibility = 'public' OR cp.visibility = 'followers_only')
-        AND (cp.requires_moderation = false OR cp.author_id = $1)
-        AND COALESCE(cp.internal_test_content, false) = false
-        AND COALESCE(u.is_load_test, false) = false
-        ORDER BY cp.created_at DESC
-        LIMIT $2 OFFSET $3
-      `, [viewerId, limit, offset]);
-      rows = result.rows;
-    } else if (feedMode === "foryou" && viewerId) {
-      // For You — personalized feed scored by interests + follows + recency + engagement
-      // 1. Fetch a wide window of public posts (3× the limit so we have enough to score)
-      const poolSize = Math.min(limit * 4, 300);
-      const [rawResult, prefsResult, followsResult] = await Promise.all([
-        pool.query<PostRow>(`
-          SELECT cp.* FROM community_posts cp
-          LEFT JOIN users u ON u.id = cp.author_id
-          WHERE cp.visibility = 'public'
-            AND (u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL)
-            AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
-            AND COALESCE(cp.internal_test_content, false) = false
-            AND cp.created_at > NOW() - INTERVAL '30 days'
-            AND cp.requires_moderation = false
-          ORDER BY cp.created_at DESC
-          LIMIT $1
-        `, [poolSize]),
-        db.select().from(userPreferencesTable).where(eq(userPreferencesTable.userId, viewerId)).limit(1),
-        pool.query<{ following_id: string }>(`
-          SELECT following_id FROM user_follows WHERE follower_id = $1 AND status = 'accepted'
-          UNION
-          SELECT CASE WHEN mc.requester_id = $1 THEN mc.recipient_id ELSE mc.requester_id END
-            FROM member_connections mc
-            WHERE (mc.requester_id = $1 OR mc.recipient_id = $1) AND mc.status = 'accepted'
-        `, [viewerId]),
-      ]);
-
-      const prefs = prefsResult[0];
-      const followedIds = new Set(followsResult.rows.map((r) => r.following_id));
-
-      // Interest keyword sets (lowercased for matching)
-      const favCats    = new Set((prefs?.favoriteCategories  ?? []).map((s: string) => s.toLowerCase()));
-      const cultInts   = new Set((prefs?.culturalInterests   ?? []).map((s: string) => s.toLowerCase()));
-      const lifestyles = new Set((prefs?.lifestyleServices   ?? []).map((s: string) => s.toLowerCase()));
-      const favCities  = new Set((prefs?.favoriteCities      ?? []).map((s: string) => s.toLowerCase()));
-
-      const now = Date.now();
-
-      const scored = rawResult.rows.map((row) => {
-        let score = 0;
-
-        // Follow boost — strongest signal
-        if (row.author_id && (followedIds.has(row.author_id) || row.author_id === viewerId)) score += 10;
-
-        // Interest matching — topic/category
-        const topic    = (row.topic_tag  ?? "").toLowerCase();
-        const category = (row.category   ?? "").toLowerCase();
-        const location = (row.location_tag ?? "").toLowerCase();
-
-        if (favCats.has(category) || favCats.has(topic))    score += 5;
-        if (cultInts.has(category) || cultInts.has(topic))  score += 4;
-        if (lifestyles.has(category) || lifestyles.has(topic)) score += 3;
-        if (location && favCities.has(location))             score += 3;
-
-        // Media signal — richer content
-        if (row.media_urls) score += 1;
-
-        // Recency decay
-        const ageMs = now - new Date(row.created_at).getTime();
-        const ageH  = ageMs / 3_600_000;
-        if      (ageH < 1)   score += 8;
-        else if (ageH < 6)   score += 6;
-        else if (ageH < 24)  score += 4;
-        else if (ageH < 72)  score += 2;
-        else if (ageH < 168) score += 1;
-
-        // Engagement signal
-        score += Math.log1p((row.upvotes ?? 0) + (row.comments_count ?? 0) * 2) * 2;
-
-        return { row, score };
-      });
-
-      scored.sort((a, b) => b.score - a.score);
-      rows = scored.slice(offset, offset + limit).map((s) => s.row);
-    } else {
-      // Everyone feed — public posts from public accounts (+ followed private accounts)
-      const followingClause = viewerId
-        ? `OR cp.author_id IN (
-            SELECT uf.following_id FROM user_follows uf WHERE uf.follower_id = '${viewerId}' AND uf.status = 'accepted'
-            UNION
-            SELECT CASE WHEN mc.requester_id = '${viewerId}' THEN mc.recipient_id ELSE mc.requester_id END
-              FROM member_connections mc
-              WHERE (mc.requester_id = '${viewerId}' OR mc.recipient_id = '${viewerId}') AND mc.status = 'accepted'
-          )
-          OR cp.author_id = '${viewerId}'`
-        : "";
-      const result = await pool.query<PostRow>(`
-        SELECT cp.* FROM community_posts cp
-        LEFT JOIN users u ON u.id = cp.author_id
-        WHERE cp.visibility = 'public'
-          AND cp.requires_moderation = false
-          AND (u.is_load_test = false OR u.is_load_test IS NULL OR cp.author_id IS NULL)
-          AND COALESCE(cp.internal_test_content, false) = false
-          AND (
-            u.is_private = false OR u.is_private IS NULL OR cp.author_id IS NULL
-            ${followingClause}
-          )
-        ORDER BY cp.created_at DESC
-        LIMIT $1 OFFSET $2
-      `, [limit, offset]);
-      rows = result.rows;
-    }
+    const rows = await fetchCommunityFeedRows(pool, {
+      viewerId: req.user.id,
+      feedMode,
+      authorId,
+      limit,
+      offset,
+    });
 
     // Map snake_case → camelCase to match existing shape
     const posts = rows.map((r: any) => ({
@@ -378,7 +250,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
-      hashtags: (r as any).hashtags ?? null,
+      hashtags: Array.isArray(r.hashtags) ? r.hashtags : null,
       topicTag: r.topic_tag, isPrivateTopic: r.is_private_topic,
       visibility: r.visibility,
       commentPolicy: ["everyone", "followers", "off"].includes(r.comment_policy) ? r.comment_policy : "everyone",
@@ -395,10 +267,10 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       repostAuthorName: r.repost_author_name ?? null,
       repostAuthorInitials: r.repost_author_initials ?? null,
       repostContent: r.repost_content ?? null,
-      mentionedBusinessId: r.mentioned_business_id ?? (r as any).mentionedBusinessId ?? null,
-      mentionedBusinessName: r.mentioned_business_name ?? (r as any).mentionedBusinessName ?? null,
-      mentionedBusinessTag: r.mentioned_business_tag ?? (r as any).mentionedBusinessTag ?? null,
-      mentionedBusinessRating: r.mentioned_business_rating ?? (r as any).mentionedBusinessRating ?? null,
+      mentionedBusinessId: r.mentioned_business_id ?? null,
+      mentionedBusinessName: r.mentioned_business_name ?? null,
+      mentionedBusinessTag: r.mentioned_business_tag ?? null,
+      mentionedBusinessRating: r.mentioned_business_rating ?? null,
       upvotes: r.upvotes, downvotes: r.downvotes, commentsCount: r.comments_count,
       threadId: r.thread_id ?? null, threadPosition: r.thread_position ?? 1, threadTotal: r.thread_total ?? 1,
       createdAt: r.created_at,
@@ -1002,15 +874,7 @@ router.get("/community/posts/:id/comments", async (req: Request, res: Response) 
     // Do not disclose whether a post hidden by privacy or blocking exists.
     if (!access.post || !access.canView) { res.status(404).json({ error: "Post not found" }); return; }
 
-    const comments = await db
-      .select()
-      .from(communityPostCommentsTable)
-      .where(and(
-        eq(communityPostCommentsTable.postId, postId),
-        eq(communityPostCommentsTable.status, "active"),
-      ))
-      .orderBy(desc(communityPostCommentsTable.createdAt))
-      .limit(100);
+    const comments = await fetchActiveCommunityComments(pool, postId);
 
     res.json({
       comments,
@@ -1077,7 +941,14 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
         .returning();
       const [updatedPost] = await tx
         .update(communityPostsTable)
-        .set({ commentsCount: sql`${communityPostsTable.commentsCount} + 1` })
+        .set({
+          commentsCount: sql`(
+            SELECT COUNT(*)::integer
+            FROM ${communityPostCommentsTable}
+            WHERE ${communityPostCommentsTable.postId} = ${postId}
+              AND ${communityPostCommentsTable.status} = 'active'
+          )`,
+        })
         .where(eq(communityPostsTable.id, postId))
         .returning({ authorId: communityPostsTable.authorId });
       return { comment, updatedPost };
@@ -1119,17 +990,32 @@ router.delete("/community/posts/:postId/comments/:commentId", async (req: Reques
     const mayDelete = comment.authorId === req.user.id || access.post.authorId === req.user.id || isAdmin;
     if (!mayDelete) { res.status(403).json({ error: "You cannot delete this comment." }); return; }
 
-    await db.transaction(async (tx) => {
-      await tx
+    const deleted = await db.transaction(async (tx) => {
+      const [softDeleted] = await tx
         .update(communityPostCommentsTable)
         .set({ status: "deleted", deletedAt: new Date() })
-        .where(eq(communityPostCommentsTable.id, commentId));
+        .where(and(
+          eq(communityPostCommentsTable.id, commentId),
+          eq(communityPostCommentsTable.postId, postId),
+          eq(communityPostCommentsTable.status, "active"),
+        ))
+        .returning({ id: communityPostCommentsTable.id });
+      if (!softDeleted) return false;
       await tx
         .update(communityPostsTable)
-        .set({ commentsCount: sql`GREATEST(${communityPostsTable.commentsCount} - 1, 0)` })
+        .set({
+          commentsCount: sql`(
+            SELECT COUNT(*)::integer
+            FROM ${communityPostCommentsTable}
+            WHERE ${communityPostCommentsTable.postId} = ${postId}
+              AND ${communityPostCommentsTable.status} = 'active'
+          )`,
+        })
         .where(eq(communityPostsTable.id, postId));
+      return true;
     });
 
+    if (!deleted) { res.status(404).json({ error: "Comment not found" }); return; }
     res.json({ ok: true, commentId });
   } catch (err) {
     req.log.error({ err }, "Failed to delete comment");

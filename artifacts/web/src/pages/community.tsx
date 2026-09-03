@@ -11,6 +11,7 @@ import {
 import { CommentsDialog } from "@/components/community/CommentsDialog";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
 import { HappeningPanel } from "@/components/community/HappeningPanel";
+import { communityFeedErrorState } from "@/features/community/feedErrorState";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -752,7 +753,8 @@ export default function Community() {
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
+  const [loadErrorStatus, setLoadErrorStatus] = useState<number | null>(null);
+  const [loadErrorRequestId, setLoadErrorRequestId] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [commentTarget, setCommentTarget] = useState<{ postId: string; label: string } | null>(null);
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
@@ -760,7 +762,8 @@ export default function Community() {
   const [refreshing, setRefreshing] = useState(false);
 
   const loadPosts = useCallback(async () => {
-    setLoadError(false);
+    setLoadErrorStatus(null);
+    setLoadErrorRequestId(null);
     try {
       const url = `${BASE}api/community/posts?feed=${feedMode}${hashtagFilter ? `&hashtag=${hashtagFilter}` : ""}`;
       const res = await fetch(url, { credentials: "include" });
@@ -791,10 +794,11 @@ export default function Community() {
           audienceRating: (p.audienceRating as string) ?? "everyone",
         })));
       } else {
-        setLoadError(true);
+        setLoadErrorStatus(res.status);
+        setLoadErrorRequestId(res.headers.get("x-request-id"));
       }
     } catch {
-      setLoadError(true);
+      setLoadErrorStatus(0);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -829,6 +833,8 @@ export default function Community() {
     setRefreshing(true);
     loadPosts();
   };
+
+  const feedError = communityFeedErrorState(loadErrorStatus, loadErrorRequestId);
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -981,10 +987,18 @@ export default function Community() {
             {/* Posts */}
             {loading ? (
               <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" /></div>
-            ) : loadError ? (
-              <div className="text-center py-16">
+            ) : feedError.kind === "auth" ? (
+              <div data-testid="community-feed-auth-required" className="text-center py-16">
+                <AlertCircle className="w-8 h-8 text-[#CA922B] mx-auto mb-3" />
+                <p className="text-sm font-bold text-[#2B1507]">{feedError.title}</p>
+                <p className="text-sm text-[#3A1F0E]/60 mt-1 mb-3">{feedError.message}</p>
+                <Link href="/login"><span className="inline-block text-sm font-bold text-[#CA922B] hover:underline cursor-pointer">Sign in</span></Link>
+              </div>
+            ) : posts.length === 0 && feedError.kind === "server" ? (
+              <div data-testid="community-feed-retry" className="text-center py-16">
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-                <p className="text-sm text-[#3A1F0E]/60 mb-3">Couldn't load the feed</p>
+                <p className="text-sm font-bold text-[#2B1507]">{feedError.title}</p>
+                <p className="text-sm text-[#3A1F0E]/60 mt-1 mb-3">{feedError.message} No posts or comments were removed.</p>
                 <button onClick={loadPosts} className="text-sm font-bold text-[#CA922B] hover:underline">Try again</button>
               </div>
             ) : posts.length === 0 ? (
@@ -999,6 +1013,15 @@ export default function Community() {
               </div>
             ) : (
               <div className="space-y-3">
+                {feedError.kind === "server" && (
+                  <div data-testid="community-feed-stale-warning" role="alert" className="flex items-start justify-between gap-3 rounded-2xl border border-[#CA922B]/25 bg-[#CA922B]/8 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-bold text-[#2B1507]">{feedError.title}</p>
+                      <p className="mt-0.5 text-xs text-[#3A1F0E]/60">{feedError.message}</p>
+                    </div>
+                    <button onClick={loadPosts} className="shrink-0 text-xs font-bold text-[#CA922B] hover:underline">Try again</button>
+                  </div>
+                )}
                 {posts.map(post => (
                   <PostCard key={post.id} post={post}
                     onLike={handleLike} onDelete={handleDelete}
