@@ -3,6 +3,7 @@ import { AlertCircle, ExternalLink, Link2, X } from "lucide-react";
 
 export type CommunityMediaKind =
   | { type: "youtube"; embedUrl: string }
+  | { type: "tiktok"; playerUrl: string }
   | { type: "provider-link"; provider: "TikTok" | "Instagram" | "External media" }
   | { type: "native-video" }
   | { type: "image" };
@@ -42,12 +43,26 @@ export function getYouTubeEmbedUrl(rawUrl: string): string | null {
   return `https://www.youtube.com/embed/${videoId}`;
 }
 
+export function getTikTokPlayerUrl(rawUrl: string): string | null {
+  const url = safeHttpUrl(rawUrl);
+  const hostname = url?.hostname.toLowerCase().replace(/\.$/, "");
+  if (!url || url.protocol !== "https:" || hostname !== "www.tiktok.com" || url.port) return null;
+
+  const match = url.pathname.match(/^\/@[^/]+\/video\/([0-9]+)\/?$/);
+  const videoId = match?.[1];
+  if (!videoId) return null;
+
+  return `https://www.tiktok.com/player/v1/${videoId}?controls=1&description=1&music_info=1&autoplay=0&rel=0`;
+}
+
 export function classifyCommunityMedia(rawUrl: string): CommunityMediaKind {
   const url = safeHttpUrl(rawUrl);
   if (!url) return { type: "provider-link", provider: "External media" };
 
   const youtubeEmbed = getYouTubeEmbedUrl(rawUrl);
   if (youtubeEmbed) return { type: "youtube", embedUrl: youtubeEmbed };
+  const tiktokPlayer = getTikTokPlayerUrl(rawUrl);
+  if (tiktokPlayer) return { type: "tiktok", playerUrl: tiktokPlayer };
   if (hostMatches(url.hostname, "tiktok.com")) return { type: "provider-link", provider: "TikTok" };
   if (hostMatches(url.hostname, "instagram.com")) return { type: "provider-link", provider: "Instagram" };
 
@@ -166,6 +181,36 @@ export function CommunityMedia({
           referrerPolicy="strict-origin-when-cross-origin"
           allowFullScreen
         />
+        {removeButton}
+      </div>
+    );
+  }
+
+  if (media.type === "tiktok") {
+    return (
+      <div className={`relative ${compact ? "w-28" : "mx-auto w-full max-w-sm"}`}>
+        <div className={`overflow-hidden rounded-xl bg-black ${compact ? "aspect-[9/16] w-28" : "aspect-[9/16] w-full"}`}>
+          <iframe
+            data-testid="community-tiktok-player"
+            src={media.playerUrl}
+            title={`TikTok attachment ${index + 1}`}
+            loading="lazy"
+            className="h-full w-full"
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        <a
+          data-testid={`community-tiktok-link-${index}`}
+          href={safeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-[#CA922B]/35 bg-[#FAF6EF] px-4 py-2 text-sm font-bold text-[#3A1F0E] hover:border-[#CA922B]/70"
+        >
+          Open on TikTok <ExternalLink className="h-4 w-4" aria-hidden="true" />
+        </a>
         {removeButton}
       </div>
     );

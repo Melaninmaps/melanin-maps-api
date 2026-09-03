@@ -106,10 +106,19 @@ export function HappeningPanel({ isAuthenticated, onDiscuss }: {
 
       <div className="flex flex-wrap items-center gap-2">
         {(["foryou", "latest"] as const).map((item) => <button key={item} onClick={() => setFeed(item)} className={`rounded-full px-4 py-2 text-xs font-bold ${feed === item ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/55"}`}>{item === "foryou" ? "For You" : "Latest"}</button>)}
-        <select aria-label="Community update scope" value={scope} onChange={(event) => { setScope(event.target.value); setLocalExpansion(null); }} className="ml-auto rounded-full border border-[#3A1F0E]/10 bg-white px-4 py-2 text-xs font-bold text-[#3A1F0E]/65">
-          <option value="all">All locations</option>
-          {SCOPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
-        </select>
+        <div className="ml-auto flex items-center gap-2">
+          <label htmlFor="happening-feed-scope" className="text-xs font-bold text-[#3A1F0E]">Location scope</label>
+          <select
+            id="happening-feed-scope"
+            value={scope}
+            onChange={(event) => { setScope(event.target.value); setLocalExpansion(null); }}
+            style={{ color: "#3A1F0E", backgroundColor: "#FFFFFF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }}
+            className="rounded-full border border-[#3A1F0E]/20 bg-white px-4 py-2 text-xs font-bold text-[#3A1F0E] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B] focus-visible:ring-offset-2"
+          >
+            <option value="all">All locations</option>
+            {SCOPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
+          </select>
+        </div>
         {scope === "local" && stateExpansionAvailable && (
           <button
             type="button"
@@ -185,17 +194,41 @@ function HappeningForm({ onClose, onSubmitted }: { onClose: () => void; onSubmit
   };
 
   return <div data-testid="happening-submit-dialog" className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-4" onClick={onClose}>
-    <section className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-      <header className="mb-4 flex items-center justify-between"><div><h3 className="font-serif text-xl font-bold text-[#2B1507]">Share what’s happening</h3><p className="text-xs text-[#3A1F0E]/50">Reliable articles and community-impact updates are reviewed before publishing.</p></div><button onClick={onClose} className="rounded-full bg-[#FAF6EF] p-2"><X className="h-4 w-4" /></button></header>
+    <section role="dialog" aria-modal="true" aria-labelledby="happening-form-title" className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+      <header className="mb-4 flex items-center justify-between"><div><h3 id="happening-form-title" className="font-serif text-xl font-bold text-[#2B1507]">Share what’s happening</h3><p className="text-xs text-[#3A1F0E]/50">Reliable articles and community-impact updates are reviewed before publishing.</p></div><button type="button" onClick={onClose} aria-label="Close share form" className="rounded-full bg-[#FAF6EF] p-2 text-[#3A1F0E]"><X className="h-4 w-4" /></button></header>
       <div className="space-y-3">
-        <input data-testid="happening-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} placeholder="Headline" className="w-full rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm outline-none focus:border-[#CA922B]" />
-        <textarea data-testid="happening-summary" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={3000} rows={5} placeholder="What should the community know, and why does it matter?" className="w-full resize-none rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm outline-none focus:border-[#CA922B]" />
-        <input value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder="Source URL (recommended for articles)" className="w-full rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm outline-none focus:border-[#CA922B]" />
-        <div className="grid grid-cols-2 gap-3"><select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm">{CATEGORIES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select><select value={scope} onChange={(e) => setScope(e.target.value as typeof scope)} className="rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm">{SCOPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select></div>
-        {(scope === "local" || scope === "state") && <div className="grid grid-cols-2 gap-3">{scope === "local" && <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm" />}<input value={state} onChange={(e) => setState(e.target.value)} placeholder="State" className="rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm" /></div>}
-        <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Topics, separated by commas" className="w-full rounded-2xl border border-[#3A1F0E]/12 bg-[#FAF6EF] px-4 py-3 text-sm" />
+        <div>
+          <label htmlFor="happening-title" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Headline</label>
+          <input id="happening-title" data-testid="happening-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} placeholder="Add a clear headline" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" />
+        </div>
+        <div>
+          <label htmlFor="happening-summary" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Community impact</label>
+          <textarea id="happening-summary" data-testid="happening-summary" value={summary} onChange={(e) => setSummary(e.target.value)} maxLength={3000} rows={5} placeholder="What should the community know, and why does it matter?" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full resize-none rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" />
+        </div>
+        <div>
+          <label htmlFor="happening-source-url" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Source URL <span className="font-normal">(recommended for articles)</span></label>
+          <input id="happening-source-url" type="url" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} placeholder="https://example.com/article" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="happening-category" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Category</label>
+            <select id="happening-category" value={category} onChange={(e) => setCategory(e.target.value as typeof category)} style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]">{CATEGORIES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select>
+          </div>
+          <div>
+            <label htmlFor="happening-scope" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Geographic scope</label>
+            <select id="happening-scope" value={scope} onChange={(e) => setScope(e.target.value as typeof scope)} style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]">{SCOPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select>
+          </div>
+        </div>
+        {(scope === "local" || scope === "state") && <div className="grid grid-cols-2 gap-3">
+          {scope === "local" && <div><label htmlFor="happening-city" className="mb-1 block text-sm font-bold text-[#3A1F0E]">City</label><input id="happening-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City name" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" /></div>}
+          <div><label htmlFor="happening-state" className="mb-1 block text-sm font-bold text-[#3A1F0E]">State</label><input id="happening-state" value={state} onChange={(e) => setState(e.target.value)} placeholder="State or territory" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" /></div>
+        </div>}
+        <div>
+          <label htmlFor="happening-topics" className="mb-1 block text-sm font-bold text-[#3A1F0E]">Topics</label>
+          <input id="happening-topics" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Separate topics with commas" style={{ color: "#3A1F0E", backgroundColor: "#FAF6EF", caretColor: "#3A1F0E", WebkitTextFillColor: "#3A1F0E", colorScheme: "light" }} className="w-full rounded-2xl border border-[#3A1F0E]/20 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#6F5A4A] outline-none focus:border-[#CA922B] focus-visible:ring-2 focus-visible:ring-[#CA922B]" />
+        </div>
         {error && <p className="flex items-center gap-2 text-sm text-red-600"><AlertCircle className="h-4 w-4" />{error}</p>}
-        <button data-testid="happening-submit" onClick={() => void submit()} disabled={!canSubmit || submitting} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#CA922B] px-5 py-3 font-bold text-white disabled:opacity-40">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Submit for review</button>
+        <button id="happening-submit" type="button" data-testid="happening-submit" onClick={() => void submit()} disabled={!canSubmit || submitting} style={{ color: "#2B1507", backgroundColor: "#CA922B", WebkitTextFillColor: "#2B1507", colorScheme: "light" }} className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-bold text-[#2B1507] disabled:bg-[#E6D9C2] disabled:text-[#574536] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2B1507] focus-visible:ring-offset-2">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}Submit for review</button>
       </div>
     </section>
   </div>;

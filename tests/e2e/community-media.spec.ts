@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const AUTH_BODY = {
   role: "user",
@@ -57,6 +57,48 @@ async function mockCommunity(page: Page, posts: TestPost[] = []) {
   });
 }
 
+function contrastRatio(foreground: string, background: string): number {
+  const channels = (color: string) => {
+    const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!match) throw new Error(`Unsupported computed color: ${color}`);
+    return match.slice(1, 4).map(Number).map((value) => {
+      const channel = value / 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+  };
+  const luminance = (color: string) => {
+    const [red, green, blue] = channels(color);
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const first = luminance(foreground);
+  const second = luminance(background);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+
+async function expectReadableControl(control: Locator, hasPlaceholder: boolean) {
+  const styles = await control.evaluate((element, inspectPlaceholder) => {
+    const computed = getComputedStyle(element);
+    const placeholder = inspectPlaceholder ? getComputedStyle(element, "::placeholder") : null;
+    return {
+      color: computed.color,
+      backgroundColor: computed.backgroundColor,
+      caretColor: computed.caretColor,
+      webkitTextFillColor: computed.getPropertyValue("-webkit-text-fill-color"),
+      placeholderColor: placeholder?.color ?? null,
+    };
+  }, hasPlaceholder);
+
+  expect(styles.color).not.toBe("rgba(0, 0, 0, 0)");
+  expect(styles.backgroundColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(styles.caretColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(styles.webkitTextFillColor).not.toBe("rgba(0, 0, 0, 0)");
+  expect(contrastRatio(styles.color, styles.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  if (styles.placeholderColor) {
+    expect(styles.placeholderColor).not.toBe("rgba(0, 0, 0, 0)");
+    expect(contrastRatio(styles.placeholderColor, styles.backgroundColor)).toBeGreaterThanOrEqual(4.5);
+  }
+}
+
 test("comment draft stays visible and accessible under a dark color scheme", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await mockCommunity(page, [{ id: "comments-post", content: "Open this conversation" }]);
@@ -88,20 +130,105 @@ test("comment draft stays visible and accessible under a dark color scheme", asy
   expect(styles.boxShadow).not.toBe("none");
 });
 
-test("TikTok and Instagram watch pages render safe provider links, never native video", async ({ page }) => {
+test("Happening form labels and controls stay readable under a dark color scheme", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await mockCommunity(page);
+  await page.route("**/api/knowledge/happening-now**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ stories: [], localExpansion: { active: null, available: [] } }),
+    });
+  });
+  await page.goto("community");
+  await page.getByRole("button", { name: "What's Happening", exact: true }).click();
+
+  const feedScope = page.getByLabel("Location scope");
+  await expect(feedScope).toBeVisible();
+  await expectReadableControl(feedScope, false);
+  await page.getByTestId("happening-share-open").click();
+
+  const dialog = page.getByRole("dialog", { name: "Share what’s happening" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText("Reliable articles and community-impact updates are reviewed before publishing.")).toBeVisible();
+
+  const labels = ["Headline", "Community impact", "Source URL", "Category", "Geographic scope", "City", "State", "Topics"];
+  for (const label of labels) {
+    await expect(dialog.locator("label", { hasText: label })).toBeVisible();
+  }
+
+  const controls = [
+    { control: dialog.getByLabel("Headline", { exact: true }), value: "Neighborhood clinic expands hours", placeholder: true },
+    { control: dialog.getByLabel("Community impact", { exact: true }), value: "The clinic will offer evening appointments for families.", placeholder: true },
+    { control: dialog.getByLabel("Source URL", { exact: false }), value: "https://example.com/clinic-update", placeholder: true },
+    { control: dialog.getByLabel("Category", { exact: true }), value: "health", placeholder: false },
+    { control: dialog.getByLabel("Geographic scope", { exact: true }), value: "local", placeholder: false },
+    { control: dialog.getByLabel("City", { exact: true }), value: "Atlanta", placeholder: true },
+    { control: dialog.getByLabel("State", { exact: true }), value: "Georgia", placeholder: true },
+    { control: dialog.getByLabel("Topics", { exact: true }), value: "health, families", placeholder: true },
+  ];
+
+  for (const { control, value, placeholder } of controls) {
+    await expect(control).toBeVisible();
+    await expect(control).toHaveAttribute("id", /.+/);
+    if (await control.evaluate((element) => element.tagName === "SELECT")) {
+      await control.selectOption(value);
+    } else {
+      await control.fill(value);
+    }
+    await expectReadableControl(control, placeholder);
+    if (placeholder) await expect(control).toHaveAttribute("placeholder", /.+/);
+  }
+
+  const ids = await dialog.locator("input, textarea, select").evaluateAll((elements) => elements.map((element) => element.id));
+  expect(new Set(ids).size).toBe(ids.length);
+
+  const submit = dialog.getByRole("button", { name: "Submit for review" });
+  await expect(submit).toBeVisible();
+  await expect(submit).toBeEnabled();
+  await expectReadableControl(submit, false);
+});
+
+test("official TikTok posts use the safe player while other watch pages remain provider links", async ({ page }) => {
+  const officialPost = "https://www.tiktok.com/@creator/video/123456789";
+  const expectedPlayer = "https://www.tiktok.com/player/v1/123456789?controls=1&description=1&music_info=1&autoplay=0&rel=0";
+  await page.route("https://www.tiktok.com/player/**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "text/html", body: "<!doctype html><title>TikTok player</title>" });
+  });
   await mockCommunity(page, [{
     id: "social-post",
     content: "Social links",
     mediaUrls: [
-      "https://www.tiktok.com/@creator/video/123456789",
+      officialPost,
       "https://www.instagram.com/reel/ABC123/",
+      "https://www.tiktok.com/watch/not-an-official-post",
+      "https://www.tiktok.com/@creator/video/not-numeric",
+      "https://www.tiktok.com.evil.test/@creator/video/987654321",
     ],
   }]);
   await page.goto("community");
 
-  await expect(page.getByTestId("community-media-provider-0")).toHaveAttribute("data-provider", "TikTok");
+  const player = page.getByTestId("community-tiktok-player");
+  await expect(player).toHaveCount(1);
+  await expect(player).toHaveAttribute("src", expectedPlayer);
+  await expect(player).toHaveAttribute("title", "TikTok attachment 1");
+  await expect(player).toHaveAttribute("loading", "lazy");
+  await expect(player).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+  await expect(player).not.toHaveAttribute("allow", /autoplay/);
+  expect(new URL(await player.getAttribute("src") ?? "").searchParams.get("autoplay")).toBe("0");
+
+  const externalTikTok = page.getByRole("link", { name: "Open on TikTok" });
+  await expect(externalTikTok).toBeVisible();
+  await expect(externalTikTok).toHaveAttribute("href", officialPost);
+  await expect(externalTikTok).toHaveAttribute("rel", "noopener noreferrer");
+
   await expect(page.getByTestId("community-media-provider-1")).toHaveAttribute("data-provider", "Instagram");
-  await expect(page.getByTestId("community-media-provider-0")).toHaveAttribute("rel", "noopener noreferrer");
+  await expect(page.getByTestId("community-media-provider-2")).toHaveAttribute("data-provider", "TikTok");
+  await expect(page.getByTestId("community-media-provider-3")).toHaveAttribute("data-provider", "TikTok");
+  // A lookalike hostname must be rejected rather than rendered as a trusted or
+  // generic provider link.
+  await expect(page.getByTestId("community-media-provider-4")).toHaveCount(0);
+  await expect(page.locator('a[href*="tiktok.com.evil.test"]')).toHaveCount(0);
   await expect(page.locator("video")).toHaveCount(0);
 });
 
