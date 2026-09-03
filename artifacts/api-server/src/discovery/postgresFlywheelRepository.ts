@@ -5,17 +5,10 @@ type Queryable = {
   query<T = Record<string, unknown>>(sql: string, parameters?: unknown[]): Promise<{ rows: T[] }>;
 };
 
-export function createPostgresFlywheelRepository(
+export function createPostgresDiscoverySignalRepository(
   db: Queryable,
-  dependencies: {
-    findExact(query: LocationFirstQuery): Promise<DiscoveryRecord[]>;
-    findNearestAvailableLocation(query: LocationFirstQuery): Promise<{ city: string; stateCode: string | null; distanceMiles: number | null } | null>;
-  },
-): LocationFirstDiscoveryRepository {
+): Pick<LocationFirstDiscoveryRepository, "recordCoverageGap" | "recordFlywheelSignal"> {
   return {
-    findExact: dependencies.findExact,
-    findNearestAvailableLocation: dependencies.findNearestAvailableLocation,
-
     async recordCoverageGap(gap: CoverageGap) {
       // Normalize values to match the simple UNIQUE index on the table.
       await db.query(
@@ -54,5 +47,19 @@ export function createPostgresFlywheelRepository(
         ],
       );
     },
+  };
+}
+
+export function createPostgresFlywheelRepository(
+  db: Queryable,
+  dependencies: {
+    findExact(query: LocationFirstQuery): Promise<DiscoveryRecord[]>;
+    findNearestAvailableLocation(query: LocationFirstQuery): Promise<{ city: string; stateCode: string | null; distanceMiles: number | null } | null>;
+  },
+): LocationFirstDiscoveryRepository {
+  return {
+    findExact: dependencies.findExact,
+    findNearestAvailableLocation: dependencies.findNearestAvailableLocation,
+    ...createPostgresDiscoverySignalRepository(db),
   };
 }

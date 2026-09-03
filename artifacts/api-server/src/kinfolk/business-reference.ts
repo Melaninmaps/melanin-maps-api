@@ -14,10 +14,11 @@ export type NamedBusinessResolution =
 const EXPLICIT_BUSINESS_GRAMMAR = /^\s*(?:tell me about|what (?:can you tell me|do you know) about)\s+(.+?)\s*[?.!]*\s*$/i;
 const IMMEDIATE_REFERENCE_GRAMMAR = /^\s*the\s+(?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop)\s+(?:in|at)\s+(.+?)\s*[?.!]*\s*$/i;
 const GENERIC_REFERENTS = /^(?:it|that|this|the (?:restaurant|business|place|spot|venue|shop|store|cafe|bar|salon|barbershop))$/i;
+const GENERIC_DISCOVERY_SUBJECT = /^(?:book[ -]?stores?|bookshops?|books|restaurants?|caf[eé]s?|coffee shops?|barbers?|barber[ -]?shops?|salons?|grocer(?:y|ies)|grocery stores?|laundromats?|laundr(?:y|ies)|hotels?|night[ -]?life|bars?|clubs?|lounges?)(?:\s+(?:in|near|around|at)\b|$)/i;
 
 function explicitBusinessName(message: string): string | null {
   const candidate = message.match(EXPLICIT_BUSINESS_GRAMMAR)?.[1]?.trim() ?? null;
-  if (!candidate || candidate.length > 120 || GENERIC_REFERENTS.test(candidate)) return null;
+  if (!candidate || candidate.length > 120 || GENERIC_REFERENTS.test(candidate) || GENERIC_DISCOVERY_SUBJECT.test(candidate)) return null;
   return candidate;
 }
 

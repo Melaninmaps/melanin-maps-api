@@ -8,6 +8,7 @@ export type SessionMessage = {
   content: string;
   recommendations?: Record<string, unknown> | null;
   followUpSuggestions?: string[];
+  sources?: Array<{ title: string; url: string }>;
   timestamp: string;
 };
 

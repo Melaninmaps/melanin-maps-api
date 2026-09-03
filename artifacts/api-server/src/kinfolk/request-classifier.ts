@@ -13,6 +13,8 @@
  *      through to general_knowledge so the existing LLM handles them.
  */
 
+import { hasBusinessSubject } from "./business-subject";
+
 export type DiscoveryKind =
   | "food"
   | "brunch"
@@ -76,6 +78,7 @@ export function classifyKinfolkRequest(
 ): KinfolkRequestDecision {
   const text = message.trim();
   const lower = text.toLowerCase();
+  const normalizedBusinessSubject = hasBusinessSubject(text);
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
@@ -126,10 +129,10 @@ export function classifyKinfolkRequest(
   }
 
   // Food/travel/business phrases outrank general knowledge and pop culture.
-  if ((FOOD_RE.test(lower) || BUSINESS_RE.test(lower)) && location) {
+  if ((FOOD_RE.test(lower) || BUSINESS_RE.test(lower) || normalizedBusinessSubject) && location) {
     return {
       route: "business_discovery",
-      discoveryKind: "food",
+      discoveryKind: FOOD_RE.test(lower) ? "food" : "business",
       location,
       ownershipPreference,
       culturalContext,
@@ -167,6 +170,7 @@ export function classifyKinfolkRequest(
     (FOOD_RE.test(lower) ||
       NIGHTLIFE_RE.test(lower) ||
       BUSINESS_RE.test(lower) ||
+      normalizedBusinessSubject ||
       TRAVEL_RE.test(lower)) &&
     !location
   ) {

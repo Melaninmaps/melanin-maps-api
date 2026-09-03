@@ -34,6 +34,28 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+
+
+  it("short-circuits category discovery before quota/model calls while preserving session context", () => {
+    const deterministicStart = chatRoute.indexOf("await tryAnswerDeterministicBusinessDiscovery({");
+    const quotaCheck = chatRoute.indexOf('chatStage = "quota_check"');
+    const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(deterministicStart).toBeGreaterThan(-1);
+    expect(deterministicStart).toBeLessThan(quotaCheck);
+    expect(deterministicStart).toBeLessThan(providerCall);
+    expect(helper).toContain("resolveTurnGeography(input.message, currentSession?.destination ?? null)");
+    expect(helper).toContain('decision.route !== "business_discovery"');
+    expect(helper).toContain('namedBusiness.state !== "not_named"');
+    expect(helper).toContain("await discoverLocalBusinesses({");
+    expect(helper).toContain("await persistDeterministicDiscoveryTurn({");
+    expect(helper).toContain("input.res.status(200).json({");
+    expect(helper).not.toContain("openai.chat.completions.create");
+  });
+
   it("does not turn the platform mission or saved services into a member identity assumption", () => {
     expect(routeSource).toContain('use "your community" when relational community language is helpful');
     expect(routeSource).not.toContain("built for the Black community");

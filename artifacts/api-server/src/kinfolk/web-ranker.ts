@@ -101,3 +101,26 @@ export function rankResults(
     })
     .sort((a, b) => b.finalScore - a.finalScore);
 }
+
+
+const REPUTABLE_LOCAL_DOMAINS = [
+  ".gov", ".edu", ".org", "discoveratlanta.com", "atlanta.net",
+  "ajc.com", "atlantamagazine.com", "roughdraftatlanta.com",
+];
+const DIRECTORY_DOMAINS = ["yelp.com", "tripadvisor.com", "facebook.com", "instagram.com"];
+
+/** Rank local-business findings without claiming that any external result is verified. */
+export function rankLocalBusinessResults(results: WebResult[]): WebResult[] {
+  return [...results].sort((left, right) => {
+    const score = (result: WebResult): number => {
+      const host = hostOf(result.url);
+      const reputable = REPUTABLE_LOCAL_DOMAINS.some((domain) =>
+        domain.startsWith(".") ? host.endsWith(domain) : host === domain || host.endsWith(`.${domain}`),
+      );
+      const directory = DIRECTORY_DOMAINS.some((domain) => host === domain || host.endsWith(`.${domain}`));
+      const officialSignal = /official|visit|tourism|chamber/i.test(`${result.title} ${result.content}`);
+      return Math.min(1, Math.max(0, result.providerScore) * 0.65 + (reputable ? 0.25 : 0) + (officialSignal ? 0.1 : 0) - (directory ? 0.15 : 0));
+    };
+    return score(right) - score(left);
+  });
+}

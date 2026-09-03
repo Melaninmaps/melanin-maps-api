@@ -99,6 +99,9 @@ import { enforceKinfolkResponse, buildFlywheelEvent, type SafeSource } from "../
 import { buildMemberProfile, buildSearchPlan, activeLensDisclosure, urgentHealthMessage, normalize as normalizeLensQuery } from "../kinfolk/lens-planner";
 import { searchAllQueries } from "../kinfolk/web-search";
 import { rankResults } from "../kinfolk/web-ranker";
+import { deriveBusinessSubject } from "../kinfolk/business-subject";
+import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
+import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFlywheelRepository";
 import { findReviewedResources, findEntityCandidates, ENTITY_INDEX, type ResourceCard, type EntityCandidate } from "../kinfolk/resource-library";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import {
@@ -296,6 +299,7 @@ const INTENT_TO_CATEGORY_MAP: Record<string, string[]> = {
 
 const router: IRouter = Router();
 const governedBusinessRepository = createGovernedKinfolkBusinessRepository(pool);
+const discoverySignalRepository = createPostgresDiscoverySignalRepository(pool);
 
 // ─── KinfolkAI Generation Queue ──────────────────────────────────────────────
 // Bounded concurrency limiter wrapping every outbound OpenAI generation call.
@@ -2508,6 +2512,166 @@ router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   }
 });
 
+async function persistDeterministicDiscoveryTurn(input: {
+  userId: string;
+  sessionId?: string;
+  message: string;
+  reply: string;
+  recommendations: Record<string, unknown> | null;
+  sources: Array<{ title: string; url: string }>;
+  destination: string;
+  vibes: string[];
+}): Promise<string | undefined> {
+  if (!isKinfolkPrivateMemoryEnabled()) return undefined;
+  try {
+    const [settings] = await db
+      .select({ kinfolkMemoryEnabled: userSettingsTable.kinfolkMemoryEnabled })
+      .from(userSettingsTable)
+      .where(eq(userSettingsTable.userId, input.userId))
+      .limit(1)
+      .catch(() => []);
+    if (settings?.kinfolkMemoryEnabled === false) return undefined;
+
+    const [currentSession] = input.sessionId
+      ? await db
+          .select()
+          .from(kinfolkSessionsTable)
+          .where(and(
+            eq(kinfolkSessionsTable.id, input.sessionId),
+            eq(kinfolkSessionsTable.userId, input.userId),
+          ))
+          .limit(1)
+      : [];
+    const timestamp = new Date().toISOString();
+    const messages: SessionMessage[] = [
+      ...(currentSession?.messages ?? []),
+      { role: "user", content: input.message, timestamp },
+      {
+        role: "assistant",
+        content: input.reply,
+        recommendations: input.recommendations,
+        followUpSuggestions: [],
+        sources: input.sources,
+        timestamp,
+      },
+    ];
+
+    if (currentSession) {
+      await db
+        .update(kinfolkSessionsTable)
+        .set({ messages, destination: input.destination, updatedAt: new Date() })
+        .where(eq(kinfolkSessionsTable.id, currentSession.id));
+      return currentSession.id;
+    }
+
+    const [created] = await db
+      .insert(kinfolkSessionsTable)
+      .values({
+        userId: input.userId,
+        title: input.message.length > 40 ? `${input.message.slice(0, 40)}…` : input.message,
+        destination: input.destination,
+        vibes: input.vibes,
+        messages,
+      })
+      .returning({ id: kinfolkSessionsTable.id });
+    return created?.id;
+  } catch (error) {
+    // Discovery results are still useful when optional conversation persistence
+    // is unavailable. Log only the coarse database code; never raw member text.
+    console.warn(`[kinfolk-deterministic-session] save_failed pgCode=${pgCode(error)}`);
+    return undefined;
+  }
+}
+
+async function tryAnswerDeterministicBusinessDiscovery(input: {
+  req: Request;
+  res: Response;
+  sessionId?: string;
+  message: string;
+  vibes: string[];
+}): Promise<boolean> {
+  let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
+  if (isKinfolkPrivateMemoryEnabled() && input.sessionId && input.req.user?.id) {
+    try {
+      const [session] = await db
+        .select()
+        .from(kinfolkSessionsTable)
+        .where(and(
+          eq(kinfolkSessionsTable.id, input.sessionId),
+          eq(kinfolkSessionsTable.userId, input.req.user.id),
+        ))
+        .limit(1);
+      currentSession = session ?? null;
+    } catch {
+      // An explicit city in this turn can still produce a useful discovery answer.
+      currentSession = null;
+    }
+  }
+
+  const location = resolveTurnGeography(input.message, currentSession?.destination ?? null);
+  const subject = deriveBusinessSubject(input.message);
+  const decision = classifyKinfolkRequest(input.message, location?.city ?? null);
+  if (decision.route !== "business_discovery" || !location?.state || !subject) return false;
+
+  const scope = { city: location.city, stateCode: location.state };
+  try {
+    const namedBusiness = await resolveNamedBusinessTurn({
+      message: input.message,
+      scope,
+      existingMessages: currentSession?.messages ?? [],
+      repository: governedBusinessRepository,
+    });
+    if (namedBusiness.state !== "not_named") return false;
+  } catch {
+    return false;
+  }
+
+  const discoveryResult = await discoverLocalBusinesses({
+    scope,
+    subject,
+    repository: governedBusinessRepository,
+    signalRepository: discoverySignalRepository,
+  });
+  const finalSessionId = await persistDeterministicDiscoveryTurn({
+    userId: input.req.user!.id,
+    sessionId: input.sessionId,
+    message: input.message,
+    reply: discoveryResult.reply,
+    recommendations: discoveryResult.recommendations as Record<string, unknown> | null,
+    sources: discoveryResult.sources.map(({ title, url }) => ({ title, url })),
+    destination: location.city,
+    vibes: input.vibes,
+  });
+
+  input.res.status(200).json({
+    sessionId: finalSessionId,
+    reply: discoveryResult.reply,
+    recommendations: discoveryResult.recommendations,
+    itinerary: null,
+    followUpSuggestions: [],
+    smartPromotion: null,
+    taskAction: null,
+    libraryAction: null,
+    intentClass: "business_discovery",
+    sources: discoveryResult.sources,
+    sourceNote: discoveryResult.sourceNote,
+    educationalStatus: discoveryResult.educationalStatus,
+    discovery: discoveryResult.discovery,
+    needsClarification: false,
+    originalQuery: input.message,
+    location: {
+      city: location.city,
+      state: location.state,
+      source: location.source,
+    },
+    locationSource: location.source,
+    degraded:
+      discoveryResult.discovery.platformStatus === "degraded" ||
+      discoveryResult.discovery.webSearch.state !== "completed",
+  });
+  return true;
+}
+
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Authentication is required — unauthenticated probes previously triggered
   // full OpenAI calls that were abandoned mid-flight when the HTTP client timed
@@ -2559,6 +2723,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
   }
+
+  if (verifiedImageUrls.length === 0 && await tryAnswerDeterministicBusinessDiscovery({
+    req,
+    res,
+    sessionId,
+    message,
+    vibes,
+  })) return;
 
   // chatStage tracks which boundary the handler was crossing when an error is
   // thrown, so the Railway [kinfolk-chat-error] log line pinpoints the exact phase

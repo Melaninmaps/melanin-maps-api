@@ -1,4 +1,8 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
+import {
+  businessSubjectSearchPatterns,
+  type NormalizedBusinessSubject,
+} from "./business-subject";
 
 export type QueryPool = {
   query<T = Record<string, unknown>>(
@@ -52,6 +56,19 @@ export type GovernedKinfolkBusiness = Readonly<{
   amenityTags: string[];
 }>;
 
+
+export type GovernedKinfolkMapPlace = Readonly<{
+  id: string;
+  entityKind: string;
+  title: string;
+  summary: string;
+  city: string;
+  stateCode: string | null;
+  detailUrl: string;
+  websiteUrl: string | null;
+  sourceUrl: string | null;
+}>;
+
 type BusinessRow = {
   id: unknown;
   name: unknown;
@@ -84,6 +101,18 @@ type BusinessRow = {
   audience_type: unknown;
   environment_tags: unknown;
   amenity_tags: unknown;
+};
+
+type MapPlaceRow = {
+  id: unknown;
+  entity_kind: unknown;
+  title: unknown;
+  summary: unknown;
+  city: unknown;
+  state_region: unknown;
+  detail_url: unknown;
+  website_url: unknown;
+  source_url: unknown;
 };
 
 const DEFAULT_CATALOG_LIMIT = 25;
@@ -187,6 +216,20 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   };
 }
 
+function mapPlace(row: MapPlaceRow): GovernedKinfolkMapPlace {
+  return {
+    id: text(row.id),
+    entityKind: text(row.entity_kind),
+    title: text(row.title),
+    summary: text(row.summary),
+    city: text(row.city),
+    stateCode: nullableText(row.state_region),
+    detailUrl: text(row.detail_url),
+    websiteUrl: nullableText(row.website_url),
+    sourceUrl: nullableText(row.source_url),
+  };
+}
+
 function boundedLimit(limit: number | undefined): number {
   if (limit === undefined) return DEFAULT_CATALOG_LIMIT;
   if (!Number.isInteger(limit) || limit < 1)
@@ -278,6 +321,90 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       limit = 20,
     ): Promise<GovernedKinfolkBusiness[]> {
       return queryCityCatalog(pool, scope, limit);
+    },
+
+    async findBySubject(
+      scope: ValidatedKinfolkCityScope,
+      subject: NormalizedBusinessSubject,
+      limit = 12,
+    ): Promise<GovernedKinfolkBusiness[]> {
+      const location = validateKinfolkCityScope(scope);
+      const resultLimit = boundedLimit(limit);
+      const patterns = businessSubjectSearchPatterns(subject);
+      if (!patterns.length) return [];
+      const { rows } = await pool.query<BusinessRow>(
+        `
+        SELECT ${CANONICAL_SELECT}, NULL::double precision AS distance_miles
+        FROM public.public_businesses AS b
+        LEFT JOIN public.business_identity AS bi ON bi.business_id = b.id
+        WHERE LOWER(BTRIM(b.city)) = LOWER($1)
+          AND UPPER(BTRIM(COALESCE(b.state, ''))) = $2
+          AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
+          AND (
+            LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(b.description, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(b.tags::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.business_story, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.mission_statement, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.why_started, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.what_customers_should_know, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.ownership_badges::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.community_values::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.audiences_served::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.vibes::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.current_highlights::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.accessibility_features::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.community_initiatives::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.growth_goals::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.age_restriction_reasons::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.environment_tags::text, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(bi.amenity_tags::text, '')) LIKE ANY($3::text[])
+          )
+        ORDER BY
+          CASE
+            WHEN LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[]) THEN 0
+            WHEN LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[]) THEN 1
+            WHEN LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[]) THEN 2
+            ELSE 3
+          END,
+          b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
+        LIMIT $4
+      `,
+        [location.city, location.stateCode, patterns, resultLimit],
+      );
+      return rows.map(mapBusiness);
+    },
+
+    async findPublishedMapEntities(
+      scope: ValidatedKinfolkCityScope,
+      subject: NormalizedBusinessSubject,
+      limit = 8,
+    ): Promise<GovernedKinfolkMapPlace[]> {
+      const location = validateKinfolkCityScope(scope);
+      const resultLimit = boundedLimit(limit);
+      const patterns = businessSubjectSearchPatterns(subject);
+      if (!patterns.length) return [];
+      const { rows } = await pool.query<MapPlaceRow>(
+        `
+        SELECT id::text, entity_kind, title, COALESCE(summary, '') AS summary,
+               city, state_region, detail_url, website_url, source_url
+        FROM public.published_map_entities
+        WHERE LOWER(BTRIM(city)) = LOWER($1)
+          AND UPPER(BTRIM(COALESCE(state_region, ''))) = $2
+          AND (
+            LOWER(COALESCE(title, '')) LIKE ANY($3::text[])
+            OR LOWER(COALESCE(summary, '')) LIKE ANY($3::text[])
+          )
+        ORDER BY
+          CASE WHEN LOWER(COALESCE(title, '')) LIKE ANY($3::text[]) THEN 0 ELSE 1 END,
+          title ASC
+        LIMIT $4
+      `,
+        [location.city, location.stateCode, patterns, resultLimit],
+      );
+      return rows.map(mapPlace);
     },
 
     async findWithinRadius(

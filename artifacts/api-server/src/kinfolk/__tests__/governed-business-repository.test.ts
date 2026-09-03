@@ -166,6 +166,86 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
+
+  it("searches exact Atlanta geography by bookstore relevance before limiting rows", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    await repository.findBySubject(
+      { city: " Atlanta ", stateCode: "ga" },
+      {
+        key: "bookstore",
+        label: "bookstores",
+        searchTerms: ["bookstore", "book store", "bookshop", "books"],
+      },
+      12,
+    );
+
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("FROM public.public_businesses AS b");
+    expect(sql).toContain("LEFT JOIN public.business_identity AS bi");
+    expect(sql).toContain("LOWER(BTRIM(b.city)) = LOWER($1)");
+    expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $2");
+    expect(sql).toContain("LOWER(COALESCE(b.name, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.category, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.description, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(b.tags::text, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("bi.business_story");
+    expect(sql).toContain("bi.ownership_badges");
+    expect(sql).toContain("CASE");
+    expect(sql).toContain("LIMIT $4");
+    expect(sql).toContain("COALESCE(b.name, '') ILIKE '%[DEMO]%'");
+    expect(params).toEqual([
+      "Atlanta",
+      "GA",
+      ["%bookstore%", "%book store%", "%bookshop%", "%books%"],
+      12,
+    ]);
+  });
+
+  it("searches matching published map records in the same exact city and state", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [{
+      id: "7a361f84-68e2-4f41-8928-863311d0cae2",
+      entity_kind: "cultural_site",
+      title: "For Keeps Books and Auburn Avenue Bookstores",
+      summary: "A cultural bookstore record.",
+      city: "Atlanta",
+      state_region: "GA",
+      detail_url: "/places/7a361f84-68e2-4f41-8928-863311d0cae2/for-keeps-books-and-auburn-avenue-bookstores-atlanta",
+      website_url: null,
+      source_url: null,
+    }] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    const results = await repository.findPublishedMapEntities(
+      { city: "Atlanta", stateCode: "GA" },
+      {
+        key: "bookstore",
+        label: "bookstores",
+        searchTerms: ["bookstore", "book store", "bookshop", "books"],
+      },
+    );
+
+    expect(results[0]).toMatchObject({
+      id: "7a361f84-68e2-4f41-8928-863311d0cae2",
+      title: "For Keeps Books and Auburn Avenue Bookstores",
+      detailUrl: "/places/7a361f84-68e2-4f41-8928-863311d0cae2/for-keeps-books-and-auburn-avenue-bookstores-atlanta",
+    });
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("FROM public.published_map_entities");
+    expect(sql).toContain("LOWER(BTRIM(city)) = LOWER($1)");
+    expect(sql).toContain("UPPER(BTRIM(COALESCE(state_region, ''))) = $2");
+    expect(sql).toContain("LOWER(COALESCE(title, '')) LIKE ANY($3::text[])");
+    expect(sql).toContain("LOWER(COALESCE(summary, '')) LIKE ANY($3::text[])");
+    expect(params).toEqual([
+      "Atlanta",
+      "GA",
+      ["%bookstore%", "%book store%", "%bookshop%", "%books%"],
+      8,
+    ]);
+  });
+
   it("rejects unvalidated city/state scopes before querying", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     const repository = createGovernedKinfolkBusinessRepository(pool);

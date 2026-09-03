@@ -128,7 +128,9 @@ describe("Kinfolk chat presentation", () => {
     const markup = renderToStaticMarkup(React.createElement(KinfolkSourceLinks, {
       sources: [
         { title: "Trusted source", url: "https://example.com/research" },
+        { title: "MWM place", url: "/places/for-keeps-books" },
         { title: "Unsafe source", url: "javascript:alert(1)" },
+        { title: "Protocol-relative source", url: "//evil.example/path" },
       ],
     }));
 
@@ -136,7 +138,11 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).toContain('target="_blank"');
     expect(markup).toContain('rel="noopener noreferrer"');
     expect(markup).toContain("Trusted source");
+    expect(markup).toContain('href="/places/for-keeps-books"');
+    expect(markup).toContain("MWM place");
     expect(markup).not.toContain("Unsafe source");
+    expect(markup).not.toContain("Protocol-relative source");
     expect(safeExternalSourceHref("javascript:alert(1)")).toBeNull();
+    expect(safeExternalSourceHref("//evil.example/path")).toBeNull();
   });
 });

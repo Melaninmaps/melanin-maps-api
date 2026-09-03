@@ -67,6 +67,7 @@ export function isStaffDemoExperience(
 }
 
 export function safeExternalSourceHref(url: string): string | null {
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
   try {
     const parsed = new URL(url);
     return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : null;
