@@ -74,6 +74,21 @@ const androidCode = parseInt(appJson.expo.android.versionCode, 10);
 const bundle = appJson.expo.ios.bundleIdentifier;
 const easProjectId =
   appJson.expo.extra?.eas?.projectId ?? "(not found in app.json)";
+const expoAudioPlugin = (appJson.expo.plugins ?? []).find(
+  (plugin) => Array.isArray(plugin) && plugin[0] === "expo-audio"
+);
+const expoAudioOptions = Array.isArray(expoAudioPlugin)
+  ? expoAudioPlugin[1] ?? {}
+  : {};
+const declaredBackgroundModes = Array.isArray(
+  appJson.expo.ios?.infoPlist?.UIBackgroundModes
+)
+  ? appJson.expo.ios.infoPlist.UIBackgroundModes
+  : [];
+const backgroundAudioDisabled =
+  expoAudioOptions.enableBackgroundPlayback === false &&
+  expoAudioOptions.enableBackgroundRecording === false &&
+  !declaredBackgroundModes.includes("audio");
 
 let gitCommit = "(unknown)";
 let gitDirty = false;
@@ -145,6 +160,19 @@ if (checkIos) {
     fail(
       "iOS build number",
       `${iosBuild} is NOT > ${record.lastIosSubmitted} — must increment`
+    );
+    blocked = true;
+  }
+
+  if (backgroundAudioDisabled) {
+    pass(
+      "iOS background audio",
+      "disabled; foreground microphone and playback remain available"
+    );
+  } else {
+    fail(
+      "iOS background audio",
+      "UIBackgroundModes audio may be generated — App Review Guideline 2.5.4"
     );
     blocked = true;
   }

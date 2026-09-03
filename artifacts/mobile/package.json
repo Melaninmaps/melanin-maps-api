@@ -12,7 +12,8 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prebuild:ios": "node scripts/pre-build-check.js ios",
+    "prebuild:ios": "node scripts/pre-build-check.js ios && node scripts/verify-ios-app-review-config.js",
+    "verify:ios-review-config": "node scripts/verify-ios-app-review-config.js",
     "build:ios": "eas build --platform ios --profile production",
     "prebuild:android": "node scripts/pre-build-check.js android",
     "build:android": "eas build --platform android --profile production",
@@ -20,7 +21,7 @@
     "build:record:android": "node scripts/pre-build-check.js --record android",
     "audit": "node scripts/audit.js",
     "lint": "expo lint",
-    "build:candidate:ios": "eas build --platform ios --profile production --non-interactive",
+    "build:candidate:ios": "pnpm run prebuild:ios && eas build --platform ios --profile production --non-interactive",
     "build:candidate:android": "eas build --platform android --profile production --non-interactive"
   },
   "devDependencies": {
