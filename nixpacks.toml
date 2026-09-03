@@ -15,7 +15,7 @@ cmds = [
   #   git add dist/ web-static/ && git commit && git push github main
   #
   # Cache-bust token — increment on every push so Railway re-runs this phase.
-  "echo \"kinfolk-library-community-v1-1788463733\"",
+  "echo \"community-auth-sync-v1-20260903\"",
   # 1. Copy committed web-static into dist/public (what express.static serves).
   "mkdir -p dist/public && cp -r web-static/. dist/public/",
   # 2. Re-align dist/BUILD_IDENTITY to match whatever dist/index.mjs is on disk.
