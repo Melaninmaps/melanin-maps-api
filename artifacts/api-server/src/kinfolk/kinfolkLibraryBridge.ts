@@ -32,12 +32,12 @@ export async function answerWithLivingLibrary(input: {
     sourceCount: entry.sourceCount,
     isReliable: entry.sourceCount > 0 && entry.sources.length > 0,
     reused,
-    libraryEntry: {
+    libraryEntry: entry.publicationStatus === "published" ? {
       id: entry.id,
       topicSlug: entry.domain,
       url: `/library/topics/${encodeURIComponent(entry.domain)}#entry-${entry.id}`,
       readMoreLabel: "Read the full source-cited entry",
-    },
+    } : null,
   };
 }
 

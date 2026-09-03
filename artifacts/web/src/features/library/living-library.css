@@ -399,3 +399,143 @@
     flex-direction: column;
   }
 }
+
+
+/* ── Live governed research ───────────────────────────────────────────────── */
+.library-research-offer {
+  margin-top: 1.5rem;
+  background: #fff8e8;
+}
+
+.library-research-offer > button,
+.library-provider-error button,
+.library-research-branches button {
+  border: 1px solid #9a6a18;
+  border-radius: 999px;
+  background: #4b230d;
+  color: #fff8e6;
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.library-research-offer > button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.library-research-governance {
+  margin-bottom: 0 !important;
+  font-size: 0.82rem;
+}
+
+.library-provider-status,
+.library-provider-error {
+  margin: 1.5rem 0 1rem;
+  border-radius: 0.8rem;
+  padding: 0.9rem 1rem;
+}
+
+.library-provider-status {
+  border: 1px solid #b7a16d;
+  background: #f7efd9;
+  color: #493716;
+}
+
+.library-provider-status--degraded {
+  border-color: #b27621;
+  background: #fff4d7;
+}
+
+.library-provider-error {
+  border: 1px solid #b95e5e;
+  background: #fff1ef;
+  color: #611d1d;
+}
+
+.library-provider-error h2 {
+  margin-top: 0;
+  color: #611d1d;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.library-research-answer {
+  margin-top: 1rem;
+}
+
+.library-research-overview {
+  color: #45362d !important;
+  font-size: 1.02rem;
+}
+
+.library-research-disclaimer {
+  margin-top: 1rem;
+  border-left: 4px solid #b27621;
+  background: #fff6e1;
+  padding: 0.8rem 1rem;
+  color: #4b3716;
+  font-weight: 700;
+}
+
+.library-research-sources {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.library-research-sources li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-left: 3px solid #c48a22;
+  background: #fbf5e9;
+  padding: 0.6rem 0.75rem;
+}
+
+.library-research-sources span {
+  color: #66574d;
+  font-size: 0.75rem;
+}
+
+.library-research-branches {
+  margin-top: 1.1rem;
+}
+
+.library-research-branches h3 {
+  margin: 0 0 0.7rem;
+  color: #2a0f05;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+}
+
+.library-research-branches > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.library-research-branches button {
+  background: #fffdf8;
+  color: #5a3708;
+  font-size: 0.82rem;
+}
+
+.library-research-offer > button:focus-visible,
+.library-provider-error button:focus-visible,
+.library-research-branches button:focus-visible,
+.library-research-sources a:focus-visible {
+  outline: 3px solid #c48a22;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .library-research-sources li {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

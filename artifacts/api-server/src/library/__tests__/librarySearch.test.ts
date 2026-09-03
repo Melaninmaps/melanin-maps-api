@@ -13,6 +13,7 @@ function repositoryStub(
   return {
     findReusableEntry: vi.fn(),
     saveEntry: vi.fn(),
+    recordCoverageSignal: vi.fn(),
     listTopics: vi.fn(),
     searchPublishedContent,
     findTopicBySlug: vi.fn(),
@@ -116,6 +117,25 @@ describe("Library internal-first vocabulary", () => {
     expect(response.nextCursor).toBe(encodeLibrarySearchCursor(1));
     expect(response.clarification?.choices).toHaveLength(5);
     expect(response.clarification?.prompt).toMatch(/HVAC information/i);
-    expect(response.webResearch.status).toBe("unavailable");
+    expect(response.webResearch.status).toBe("not_needed");
+  });
+
+  it("treats a matching foundation shell with zero approved entries as sparse", async () => {
+    const response = await searchLivingLibrary(
+      repositoryStub(vi.fn().mockResolvedValue({
+        results: [{
+          kind: "topic",
+          id: "topic-1",
+          slug: "trades-skills-certifications",
+          title: "Trades, Skills & Certifications",
+          summary: "Apprenticeships and career pathways.",
+          iconKey: "home-services",
+          entryCount: 0,
+        }],
+        total: 1,
+      })),
+      { query: "HVAC", normalizedQuery: "hvac", limit: 6, offset: 0 },
+    );
+    expect(response.webResearch).toMatchObject({ status: "available" });
   });
 });

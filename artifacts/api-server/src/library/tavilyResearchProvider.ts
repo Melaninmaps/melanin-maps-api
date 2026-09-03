@@ -17,7 +17,9 @@ type TavilyResponse = { results?: TavilyResult[] };
  */
 export function createTavilyResearchProvider(apiKey: string): ExternalResearchProvider {
   return {
-    async search({ query, allowedDomains, maxResults }): Promise<ResearchDocument[]> {
+    name: "tavily",
+    async search({ query, allowedDomains, maxResults }) {
+      if (!apiKey) throw new Error("TAVILY_LIBRARY_RESEARCH_NOT_CONFIGURED");
       const concreteDomains = allowedDomains.filter((domain) => !domain.startsWith("*."));
       const providerQuery = enforceDiasporaFirstProviderQuery(query);
       const response = await fetch("https://api.tavily.com/search", {
@@ -40,7 +42,7 @@ export function createTavilyResearchProvider(apiKey: string): ExternalResearchPr
       }
 
       const payload = (await response.json()) as TavilyResponse;
-      return (payload.results ?? [])
+      const documents: ResearchDocument[] = (payload.results ?? [])
         .filter((result) => result.url && result.title)
         .map((result) => ({
           url: result.url,
@@ -49,6 +51,7 @@ export function createTavilyResearchProvider(apiKey: string): ExternalResearchPr
           publisher: new URL(result.url).hostname.replace(/^www\./, ""),
           publishedAt: result.published_date ? new Date(result.published_date) : null,
         }));
+      return { documents, provider: "tavily", status: "available" };
     },
   };
 }

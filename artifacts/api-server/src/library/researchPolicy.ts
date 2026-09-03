@@ -18,7 +18,8 @@ export type ResearchDomain =
 
 export type SourceTier = "primary" | "public-service" | "community-expert";
 
-export const DEFAULT_COMMUNITY_LENS = "Black women and minority women";
+export const DEFAULT_COMMUNITY_LENS =
+  "African diaspora and historically marginalized communities (editorial perspective; no member identity inferred)";
 
 export type ResearchPolicy = {
   domain: ResearchDomain;
@@ -54,12 +55,12 @@ const DOMAIN_PATTERNS: Array<{ domain: ResearchDomain; pattern: RegExp }> = [
   {
     domain: "education",
     pattern:
-      /\b(school|college|university|scholarship|hbcu|student|degree|career|opportunity|program|tuition|grant|fellowship|gpa|application|admission|education|learning|mentorship|internship|apprenticeship)\b/i,
+      /\b(school|college|university|scholarship|hbcu|student|degree|career|opportunity|program|tuition|grant|fellowship|gpa|application|admission|education|training|learning|mentorship|internship|apprenticeship|hvac|hvacr|heating|ventilation|air conditioning|refrigeration|skilled trades?)\b/i,
   },
   {
     domain: "history",
     pattern:
-      /\b(history|heritage|historical|civil rights|slavery|freedom|movement|culture|ancestry|museum|monument|landmark|legacy|archive|heritage site|underground railroad|emancipation|reconstruction|great migration)\b/i,
+      /\b(history|heritage|historical|civil rights|slavery|freedom|movement|culture|ancestry|museum|monument|landmark|legacy|archive|oldest|bookstore|afterlife|after death|life after death|spiritual|religion|soul|heritage site|underground railroad|emancipation|reconstruction|great migration)\b/i,
   },
 ];
 
@@ -83,6 +84,7 @@ const DOMAIN_POLICIES: Record<
       "nimh.nih.gov",
       "health.gov",
       "womenshealth.gov",
+      "fda.gov",
     ],
     archiveTtlHours: 24 * 7, // 1 week
     disclaimer:
@@ -102,6 +104,7 @@ const DOMAIN_POLICIES: Record<
       "aclu.org",
       "eeoc.gov",
       "hud.gov",
+      "uscourts.gov",
     ],
     archiveTtlHours: 24 * 14, // 2 weeks
     disclaimer:
@@ -120,6 +123,7 @@ const DOMAIN_POLICIES: Record<
       "federalreserve.gov",
       "mymoney.gov",
       "studentaid.gov",
+      "finra.org",
     ],
     archiveTtlHours: 24 * 7,
     disclaimer:
@@ -148,6 +152,8 @@ const DOMAIN_POLICIES: Record<
       "collegeboard.org",
       "*.edu",
       "studentaid.gov",
+      "dol.gov",
+      "apprenticeship.gov",
       "fastweb.com",
       "scholarships.com",
       "thurgoodmarshallcollege.org",
@@ -169,12 +175,30 @@ const DOMAIN_POLICIES: Record<
       "pbs.org",
       "africanamericanhistorymonth.gov",
       "naacp.org",
+      "britannica.com",
+      "publishersweekly.com",
+      "moravianbookshop.com",
+      "pewresearch.org",
+      "pluralism.org",
+      "plato.stanford.edu",
     ],
     archiveTtlHours: 24 * 90,
     disclaimer: null,
   },
   general: {
-    allowDomains: ["*.gov", "*.edu", "*.org"],
+    allowDomains: [
+      "usa.gov",
+      "loc.gov",
+      "si.edu",
+      "britannica.com",
+      "pewresearch.org",
+      "pluralism.org",
+      "plato.stanford.edu",
+      "pbs.org",
+      "npr.org",
+      "publishersweekly.com",
+      "moravianbookshop.com",
+    ],
     archiveTtlHours: 24 * 7,
     disclaimer: null,
   },
@@ -187,7 +211,8 @@ export function getResearchPolicy(question: string): ResearchPolicy {
   const domain = match?.domain ?? "general";
   const policy = DOMAIN_POLICIES[domain];
 
-  // Apply the community lens unless the member already named a specific group.
+  // Explicit population wording may guide source relevance, but never establishes
+  // the member's identity. The editorial community lens is applied in synthesis.
   const hasExplicitLens =
     /\b(black(?:s| people| women| men)?|african american|minority|minorities|latina|latino|latinx|indigenous|asian american|immigrant)\b/i.test(
       question,
@@ -197,25 +222,43 @@ export function getResearchPolicy(question: string): ResearchPolicy {
 }
 
 export function buildCommunityResearchQuery(question: string, _domain: ResearchDomain): string {
-  const policy = getResearchPolicy(question);
-  if (!policy.searchPrefix) return question;
-  return `${DEFAULT_COMMUNITY_LENS} ${question}`;
+  return question.trim().replace(/\s+/g, " ");
 }
 
 /**
  * Validates that a URL's hostname is covered by the policy's allowDomains list.
- * Patterns starting with `*.` match any subdomain of the given TLD.
+ * Patterns starting with `*.` match the apex and its subdomains. Exact trusted
+ * domains also accept their conventional `www.` hostname and no other subdomain.
  */
 export function isTrustedResearchUrl(url: string, policy: { allowDomains: string[] }): boolean {
   try {
-    const hostname = new URL(url).hostname.toLocaleLowerCase("en-US");
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password) return false;
+    const hostname = parsed.hostname.toLocaleLowerCase("en-US");
+    if (
+      hostname === "localhost" ||
+      hostname.endsWith(".local") ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      /^172\.(?:1[6-9]|2\d|3[01])\./.test(hostname)
+    ) return false;
     return policy.allowDomains.some((pattern) => {
       if (pattern.startsWith("*.")) {
         const suffix = pattern.slice(2);
         return hostname === suffix || hostname.endsWith(`.${suffix}`);
       }
-      return hostname === pattern;
+      return hostname === pattern || hostname === `www.${pattern}`;
     });
+  } catch {
+    return false;
+  }
+}
+
+export function isSafeSourceUrl(url: string): boolean {
+  try {
+    return isTrustedResearchUrl(url, { allowDomains: [new URL(url).hostname] });
   } catch {
     return false;
   }

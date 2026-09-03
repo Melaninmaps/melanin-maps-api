@@ -18,7 +18,7 @@ export type LibrarySearchResponse = LibrarySearchPage & {
     choices: LibraryIntentChoice[];
   } | null;
   webResearch: {
-    status: "unavailable" | "degraded";
+    status: "not_needed" | "available" | "degraded" | "unavailable";
     message: string;
   };
 };
@@ -218,6 +218,11 @@ export async function searchLivingLibrary(
     offset: parsed.offset,
   });
   const nextOffset = parsed.offset + page.results.length;
+  const hasApprovedEntry = page.results.some((result) => result.kind === "entry");
+  const hasPopulatedTopic = page.results.some(
+    (result) => result.kind === "topic" && result.entryCount > 0,
+  );
+  const hasApprovedCoverage = hasApprovedEntry || hasPopulatedTopic;
 
   return {
     ...page,
@@ -234,9 +239,10 @@ export async function searchLivingLibrary(
           }
         : null,
     webResearch: {
-      status: "unavailable",
-      message:
-        "Live-web research is unavailable for this search. Results shown here come only from governed internal Library content.",
+      status: hasApprovedCoverage ? "not_needed" : "available",
+      message: hasApprovedCoverage
+        ? "Approved Library knowledge was reused first; no live provider was needed."
+        : "Internal coverage is sparse. Signed-in members can start current, source-cited research.",
     },
   };
 }

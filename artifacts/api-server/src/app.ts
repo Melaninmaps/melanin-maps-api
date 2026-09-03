@@ -13,7 +13,7 @@ import privacyRouter from "./routes/privacy";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 import { WebhookHandlers } from "./webhookHandlers";
-import { authLimiter, generalLimiter } from "./middleware/rateLimiter";
+import { authLimiter, generalLimiter, libraryResearchLimiter } from "./middleware/rateLimiter";
 import { cityRequestMiddleware } from "./lib/cityRequestTracker";
 import { pool, getPoolStats, POOL_MAX } from "@workspace/db";
 import { getHealthHistory } from "./lib/healthMonitor";
@@ -21,6 +21,11 @@ import { registerLivingLibraryRoutes } from "./library/registerLivingLibraryRout
 import { registerFoundationTopicRoutes } from "./library/registerFoundationTopicRoutes";
 import { FoundationTopicRepository } from "./library/foundationTopicRepository";
 import { createPostgresLibraryRepository } from "./library/postgresLibraryRepository";
+import { createOpenAiWebResearchProvider } from "./library/openAiWebResearchProvider";
+import { createTavilyResearchProvider } from "./library/tavilyResearchProvider";
+import { createResearchProviderChain } from "./library/researchProviderChain";
+import { createOpenAiLibraryWriter } from "./library/openAiLibraryWriter";
+import { createExtractiveLibraryWriter } from "./library/extractiveLibraryWriter";
 import { registerExploreRoutes } from "./explore/registerExploreRoutes";
 import {
   createPostgresLocalContextRepository,
@@ -371,8 +376,28 @@ registerAdminPublishAndClaimRoutes(app);
 // Register before the aggregate /api router: its global requireAuth middleware
 // would otherwise block the public Library home and topic-book GET requests.
 // Follow/research mutations still enforce authentication in their own handlers.
+const libraryOpenAiConfigured = Boolean(
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+);
+const libraryProviders = [
+  ...(libraryOpenAiConfigured ? [createOpenAiWebResearchProvider({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+    baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
+    model: process.env.LIBRARY_RESEARCH_MODEL,
+  })] : []),
+  ...(process.env.TAVILY_API_KEY ? [createTavilyResearchProvider(process.env.TAVILY_API_KEY)] : []),
+];
 registerLivingLibraryRoutes(app, {
   repository: createPostgresLibraryRepository(pool),
+  researchProvider: libraryProviders.length > 0 ? createResearchProviderChain(libraryProviders) : null,
+  writer: libraryOpenAiConfigured
+    ? createOpenAiLibraryWriter({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+        baseUrl: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "",
+        model: "gpt-4o-mini",
+      })
+    : createExtractiveLibraryWriter(),
+  researchLimiter: libraryResearchLimiter,
 });
 
 // 28 durable foundations shown on the public Library home.

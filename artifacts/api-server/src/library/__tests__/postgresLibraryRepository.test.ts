@@ -82,6 +82,22 @@ describe("Postgres Living Library publication boundaries", () => {
     expect(page).toEqual({ results: [], total: 9 });
   });
 
+  it("records only aggregate coverage fields without raw question or member identity", async () => {
+    const { database, calls } = databaseWithRows();
+    const repository = createPostgresLibraryRepository(database);
+    await repository.recordCoverageSignal({
+      queryFingerprint: "a".repeat(64),
+      domain: "history",
+      topicSlug: "culture-heritage",
+      internalResultCount: 0,
+      usedLiveResearch: true,
+      outcome: "researched",
+    });
+    expect(calls[0].sql).toContain("library_search_coverage_aggregates");
+    expect(calls[0].parameters).toEqual(["a".repeat(64), "history", "culture-heritage", 0, 1, "researched"]);
+    expect(calls[0].sql).not.toMatch(/member_id|raw_question|profile/i);
+  });
+
   it("writes all newly synthesized entries as pending", async () => {
     const calls: RecordedQuery[] = [];
     const database = {
@@ -126,6 +142,8 @@ describe("Postgres Living Library publication boundaries", () => {
       disclaimer: null,
       sourceCount: 0,
       sources: [],
+      relatedQuestions: [],
+      provider: "openai",
     });
 
     const insert = calls.find((call) => call.sql.includes("INSERT INTO library_entries"));

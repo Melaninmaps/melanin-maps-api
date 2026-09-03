@@ -24,6 +24,9 @@ type EntryRow = {
   location_label: string | null;
   disclaimer: string | null;
   source_count: number;
+  related_questions?: unknown;
+  publication_status?: "published" | "pending";
+  provider_name?: "internal" | "openai" | "tavily" | "none";
   created_at: Date;
   refreshed_at: Date;
 };
@@ -38,6 +41,10 @@ type SourceRow = {
   published_at: Date | null;
   retrieved_at: Date;
 };
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
 
 function mapSource(row: SourceRow): KnowledgeSource {
   return {
@@ -80,6 +87,9 @@ async function attachSources(db: Queryable, entries: EntryRow[]): Promise<Librar
     disclaimer: row.disclaimer,
     sourceCount: row.source_count,
     sources: sourceMap.get(row.id) ?? [],
+    relatedQuestions: stringArray(row.related_questions),
+    publicationStatus: row.publication_status ?? "published",
+    provider: row.provider_name ?? "internal",
     createdAt: row.created_at,
     refreshedAt: row.refreshed_at,
   }));
@@ -95,6 +105,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
            AND le.domain = $2
            AND le.community_lens = $3
            AND le.location_label IS NOT DISTINCT FROM $4
+           AND le.publication_status = 'published'
            AND le.refreshed_at >= $5
          ORDER BY le.refreshed_at DESC
          LIMIT 1`,
@@ -119,8 +130,9 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
       const { rows } = await db.query<EntryRow>(
         `INSERT INTO library_entries (
           topic_id, question, normalized_question, title, summary, body, domain,
-          community_lens, location_label, disclaimer, source_count, publication_status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+          community_lens, location_label, disclaimer, source_count, publication_status,
+          related_questions, provider_name
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12::jsonb, $13)
         RETURNING *`,
         [
           topicRows[0].id,
@@ -134,6 +146,8 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
           input.locationLabel,
           input.disclaimer,
           input.sourceCount,
+          JSON.stringify(input.relatedQuestions),
+          input.provider,
         ],
       );
       const entry = rows[0];
@@ -157,6 +171,29 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         );
       }
       return (await attachSources(db, [entry]))[0];
+    },
+
+    async recordCoverageSignal(input) {
+      await db.query(
+        `INSERT INTO library_search_coverage_aggregates (
+           query_fingerprint, domain, topic_slug, search_count, internal_result_total,
+           live_research_count, last_outcome, first_seen_at, last_seen_at
+         ) VALUES ($1, $2, $3, 1, $4, $5, $6, NOW(), NOW())
+         ON CONFLICT (query_fingerprint, domain, topic_slug) DO UPDATE SET
+           search_count = library_search_coverage_aggregates.search_count + 1,
+           internal_result_total = library_search_coverage_aggregates.internal_result_total + EXCLUDED.internal_result_total,
+           live_research_count = library_search_coverage_aggregates.live_research_count + EXCLUDED.live_research_count,
+           last_outcome = EXCLUDED.last_outcome,
+           last_seen_at = NOW()`,
+        [
+          input.queryFingerprint,
+          input.domain,
+          input.topicSlug,
+          input.internalResultCount,
+          input.usedLiveResearch ? 1 : 0,
+          input.outcome,
+        ],
+      );
     },
 
     async listTopics({ search, domain, memberId }) {
@@ -220,6 +257,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         topic_slug: null;
         topic_title: null;
         source_count: null;
+        sources: null;
         refreshed_at: null;
         total_count: number;
       };
@@ -235,6 +273,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         topic_slug: string;
         topic_title: string;
         source_count: number;
+        sources: Array<{ url: string; title: string; publisher: string | null }>;
         refreshed_at: Date;
         total_count: number;
       };
@@ -250,6 +289,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
         topic_slug: null;
         topic_title: null;
         source_count: null;
+        sources: null;
         refreshed_at: null;
         total_count: number;
       };
@@ -268,6 +308,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              NULL::text AS topic_slug,
              NULL::text AS topic_title,
              NULL::int AS source_count,
+             NULL::jsonb AS sources,
              NULL::timestamptz AS refreshed_at,
              CASE
                WHEN topic.slug = ANY($3::text[]) THEN 400
@@ -300,6 +341,14 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
              COALESCE(linked_topic.slug, owner_topic.slug) AS topic_slug,
              COALESCE(linked_topic.title, owner_topic.title) AS topic_title,
              entry.source_count,
+             COALESCE((
+               SELECT jsonb_agg(
+                 jsonb_build_object('url', source.url, 'title', source.title, 'publisher', source.publisher)
+                 ORDER BY source.retrieved_at DESC
+               )
+               FROM library_entry_sources source
+               WHERE source.entry_id = entry.id
+             ), '[]'::jsonb) AS sources,
              entry.refreshed_at,
              CASE
                WHEN COALESCE(linked_topic.slug, owner_topic.slug) = ANY($3::text[]) THEN 150
@@ -347,12 +396,12 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
            LIMIT $5 OFFSET $6
          )
          SELECT kind, id, slug, title, summary, icon_key, entry_count, body,
-                topic_slug, topic_title, source_count, refreshed_at, total_count,
+                topic_slug, topic_title, source_count, sources, refreshed_at, total_count,
                 result_order
          FROM page
          UNION ALL
          SELECT NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                NULL, NULL, COUNT(*)::int, NULL
+                NULL, NULL, NULL, COUNT(*)::int, NULL
          FROM ranked
          WHERE NOT EXISTS (SELECT 1 FROM page)
          ORDER BY result_order ASC NULLS LAST`,
@@ -390,6 +439,7 @@ export function createPostgresLibraryRepository(db: Queryable): LibraryRepositor
           topicSlug: row.topic_slug,
           topicTitle: row.topic_title,
           sourceCount: Number(row.source_count),
+          sources: row.sources,
           refreshedAt: row.refreshed_at,
         });
       }

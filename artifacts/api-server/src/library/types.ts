@@ -1,5 +1,9 @@
 import type { ResearchDomain, SourceTier } from "./researchPolicy";
 
+export type ResearchProviderName = "internal" | "openai" | "tavily" | "none";
+export type ResearchProviderStatus = "available" | "degraded";
+export type LibraryPublicationStatus = "published" | "pending";
+
 export type KnowledgeSource = {
   id: string;
   url: string;
@@ -37,6 +41,9 @@ export type LibraryEntry = {
   disclaimer: string | null;
   sourceCount: number;
   sources: KnowledgeSource[];
+  relatedQuestions: string[];
+  publicationStatus: LibraryPublicationStatus;
+  provider: ResearchProviderName;
   createdAt: Date;
   refreshedAt: Date;
 };
@@ -60,6 +67,7 @@ export type LibraryEntrySearchResult = {
   topicSlug: string;
   topicTitle: string;
   sourceCount: number;
+  sources: Array<Pick<KnowledgeSource, "url" | "title" | "publisher">>;
   refreshedAt: Date;
 };
 
@@ -78,6 +86,17 @@ export type ResearchDocument = {
   publishedAt: Date | null;
 };
 
+export type ResearchProviderResult = {
+  documents: ResearchDocument[];
+  provider: Exclude<ResearchProviderName, "internal" | "none">;
+  status: ResearchProviderStatus;
+};
+
+export type SaveLibraryEntryInput = Omit<
+  LibraryEntry,
+  "id" | "topicId" | "createdAt" | "refreshedAt" | "publicationStatus"
+> & { topicSlug: string };
+
 export interface LibraryRepository {
   findReusableEntry(input: {
     normalizedQuestion: string;
@@ -86,9 +105,15 @@ export interface LibraryRepository {
     locationLabel: string | null;
     currentAfter: Date;
   }): Promise<LibraryEntry | null>;
-  saveEntry(
-    input: Omit<LibraryEntry, "id" | "topicId" | "createdAt" | "refreshedAt"> & { topicSlug: string },
-  ): Promise<LibraryEntry>;
+  saveEntry(input: SaveLibraryEntryInput): Promise<LibraryEntry>;
+  recordCoverageSignal(input: {
+    queryFingerprint: string;
+    domain: ResearchDomain;
+    topicSlug: string;
+    internalResultCount: number;
+    usedLiveResearch: boolean;
+    outcome: "internal" | "researched" | "insufficient" | "provider_unavailable";
+  }): Promise<void>;
   listTopics(input: {
     search: string | null;
     domain: ResearchDomain | null;
@@ -108,11 +133,12 @@ export interface LibraryRepository {
 }
 
 export interface ExternalResearchProvider {
+  readonly name: ResearchProviderName;
   search(input: {
     query: string;
     allowedDomains: string[];
     maxResults: number;
-  }): Promise<ResearchDocument[]>;
+  }): Promise<ResearchProviderResult>;
 }
 
 export interface LibrarySynthesisWriter {
@@ -128,5 +154,6 @@ export interface LibrarySynthesisWriter {
     summary: string;
     body: string;
     citedSourceIndexes: number[];
+    relatedQuestions: string[];
   }>;
 }

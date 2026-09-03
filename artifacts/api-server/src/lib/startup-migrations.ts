@@ -4339,6 +4339,31 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       PRIMARY KEY (topic_id, member_id)
     )`,
   },
+  {
+    name: "living_library_research_candidates_v2",
+    sql: `ALTER TABLE library_entries
+            ADD COLUMN IF NOT EXISTS related_questions JSONB NOT NULL DEFAULT '[]'::jsonb,
+            ADD COLUMN IF NOT EXISTS provider_name TEXT NOT NULL DEFAULT 'internal';
+          DROP INDEX IF EXISTS library_entries_pending_reuse_idx`,
+  },
+  {
+    name: "living_library_coverage_aggregates_v1",
+    sql: `CREATE TABLE IF NOT EXISTS library_search_coverage_aggregates (
+      query_fingerprint TEXT NOT NULL,
+      domain TEXT NOT NULL,
+      topic_slug TEXT NOT NULL,
+      search_count INTEGER NOT NULL DEFAULT 0,
+      internal_result_total INTEGER NOT NULL DEFAULT 0,
+      live_research_count INTEGER NOT NULL DEFAULT 0,
+      last_outcome TEXT NOT NULL,
+      first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (query_fingerprint, domain, topic_slug)
+    );
+    CREATE INDEX IF NOT EXISTS library_search_coverage_priority_idx
+      ON library_search_coverage_aggregates
+      (live_research_count DESC, search_count DESC, last_seen_at DESC)`,
+  },
   // ── Kinfolk capability layer schema (Aug 2026) ────────────────────────────
   {
     name: "users_kinfolk_tone_column_v1",

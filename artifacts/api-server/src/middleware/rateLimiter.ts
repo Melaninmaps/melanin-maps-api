@@ -90,3 +90,19 @@ export const mapsLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many map requests. Please try again later." },
 });
+
+
+export const libraryResearchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  keyGenerator: generalApiKey,
+  handler: (_req, res) => {
+    res.status(429).json({
+      error: "Live Library research is temporarily rate limited. Please try again shortly.",
+      code: "LIBRARY_RESEARCH_RATE_LIMITED",
+      retryAfterSeconds: 15 * 60,
+    });
+  },
+});
