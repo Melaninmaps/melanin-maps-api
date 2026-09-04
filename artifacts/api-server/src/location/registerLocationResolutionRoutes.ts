@@ -6,8 +6,9 @@ import { resolveLocationText } from "./locationResolver";
  * Two public endpoints that back the LocationSearchBar resolver.
  *
  *   GET /api/locations/resolve?q=<text>
- *     Resolves exact canonical/approved community locations and the controlled
- *     Philadelphia fallback. Duplicate city names return HTTP 409 candidates until
+ *     Resolves exact canonical/approved community locations, the controlled
+ *     Philadelphia fallback, or a city already backed by published indexed inventory.
+ *     Duplicate city names return HTTP 409 candidates until
  *     the state disambiguates them; unsupported areas return HTTP 404.
  *     Returns { id, label, cityName, stateCode, neighborhoodName, latitude, longitude }.
  *
