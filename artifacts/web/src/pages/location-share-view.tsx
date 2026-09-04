@@ -109,7 +109,7 @@ export default function LocationShareView() {
             </p>
             <div className="mt-5 flex items-start gap-2 rounded-xl bg-[#3A1F0E]/5 p-3 text-left text-xs leading-5 text-[#3A1F0E]/60">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2563EB]" />
-              This temporary link expires {new Date(share.expiresAt).toLocaleString()}. Location data is not stored by this page.
+              This temporary link expires {new Date(share.expiresAt).toLocaleString()}. The page does not reveal the sharer&apos;s account details.
             </div>
           </>
         )}

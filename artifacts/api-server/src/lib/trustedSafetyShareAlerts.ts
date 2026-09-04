@@ -124,7 +124,8 @@ export async function notifyTrustedSafetyContacts(
       `SELECT * FROM trusted_safety_shares
        WHERE owner_id = $1
          AND status = 'active'
-         AND owner_enabled = true`,
+         AND owner_enabled = true
+         AND contact_accepted = true`,
       [ownerId]
     );
 

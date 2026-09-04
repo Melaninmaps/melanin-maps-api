@@ -323,17 +323,39 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
     if (existing.rows[0].owner_id !== ownerId) {
       res.status(403).json({ error: "Not your share" }); return;
     }
-    if (existing.rows[0].status === "revoked") {
-      res.status(400).json({ error: "Cannot pause a revoked share" }); return;
+    const current = existing.rows[0] as {
+      status: string;
+      contact_accepted: boolean;
+    };
+    if (pause && current.status === "paused_manual") {
+      res.json({ share: current });
+      return;
+    }
+    if (pause && current.status !== "active") {
+      res.status(409).json({ error: "Only an active accepted share can be paused" });
+      return;
+    }
+    if (!pause && (current.status !== "paused_manual" || current.contact_accepted !== true)) {
+      res.status(409).json({ error: "This contact must accept the share before it can be resumed" });
+      return;
     }
 
+    const currentStatus = pause ? "active" : "paused_manual";
     const newStatus = pause ? "paused_manual" : "active";
     const result = await pool.query(
       `UPDATE trusted_safety_shares
        SET status = $1, updated_at = NOW()
-       WHERE id = $2 RETURNING *`,
-      [newStatus, id]
+       WHERE id = $2
+         AND owner_id = $3
+         AND status = $4
+         AND ($1 != 'active' OR contact_accepted = true)
+       RETURNING *`,
+      [newStatus, id, ownerId, currentStatus]
     );
+    if (!result.rows[0]) {
+      res.status(409).json({ error: "The share changed before this request completed. Refresh and try again." });
+      return;
+    }
     res.json({ share: result.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "PATCH /safety/trusted-shares/:id/pause error");
@@ -354,18 +376,6 @@ router.patch("/safety/trusted-shares/:id/respond", async (req: Request, res: Res
       return;
     }
 
-    const existing = await pool.query(
-      `SELECT * FROM trusted_safety_shares WHERE id = $1`,
-      [id]
-    );
-    if (!existing.rows[0]) { res.status(404).json({ error: "Share not found" }); return; }
-    if (existing.rows[0].contact_user_id !== userId) {
-      res.status(403).json({ error: "Not your share request to respond to" }); return;
-    }
-    if (existing.rows[0].status !== "pending") {
-      res.status(409).json({ error: "This share has already been resolved" }); return;
-    }
-
     const newStatus = accept ? "active" : "declined";
     const result = await pool.query(
       `UPDATE trusted_safety_shares
@@ -373,9 +383,18 @@ router.patch("/safety/trusted-shares/:id/respond", async (req: Request, res: Res
            contact_accepted = $2,
            activated_at = CASE WHEN $2 THEN NOW() ELSE NULL END,
            updated_at = NOW()
-       WHERE id = $3 RETURNING *`,
-      [newStatus, accept, id]
+       WHERE id = $3
+         AND contact_user_id = $4
+         AND status = 'pending'
+         AND contact_accepted = false
+         AND invite_expires_at > NOW()
+       RETURNING *`,
+      [newStatus, accept, id, userId]
     );
+    if (!result.rows[0]) {
+      res.status(409).json({ error: "This share request is no longer pending or has expired" });
+      return;
+    }
     res.json({ share: result.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "PATCH /safety/trusted-shares/:id/respond error");
@@ -432,24 +451,6 @@ router.post("/safety/trusted-shares/accept-token", async (req: Request, res: Res
       return;
     }
 
-    const result = await pool.query(
-      `SELECT * FROM trusted_safety_shares WHERE invite_token = $1`,
-      [token]
-    );
-    if (!result.rows[0]) {
-      res.status(404).json({ error: "Invite not found" });
-      return;
-    }
-    const share = result.rows[0];
-    if (new Date(share.invite_expires_at) < new Date()) {
-      res.status(410).json({ error: "Invite has expired" });
-      return;
-    }
-    if (share.status !== "pending") {
-      res.status(409).json({ error: "This invite has already been responded to" });
-      return;
-    }
-
     const newStatus = accept ? "active" : "declined";
     const updated = await pool.query(
       `UPDATE trusted_safety_shares
@@ -457,9 +458,17 @@ router.post("/safety/trusted-shares/accept-token", async (req: Request, res: Res
            contact_accepted = $2,
            activated_at = CASE WHEN $2 THEN NOW() ELSE NULL END,
            updated_at = NOW()
-       WHERE invite_token = $3 RETURNING id, status, contact_name`,
+       WHERE invite_token = $3
+         AND status = 'pending'
+         AND contact_accepted = false
+         AND invite_expires_at > NOW()
+       RETURNING id, status, contact_name`,
       [newStatus, accept, token]
     );
+    if (!updated.rows[0]) {
+      res.status(409).json({ error: "This invite is no longer pending or has expired" });
+      return;
+    }
     res.json({ accepted: accept, share: updated.rows[0] });
   } catch (err) {
     req.log?.error({ err }, "POST /safety/trusted-shares/accept-token error");

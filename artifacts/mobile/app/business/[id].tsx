@@ -52,15 +52,18 @@ import { SafetyExperienceSurvey } from "@/components/SafetyExperienceSurvey";
 import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
+function businessHeroIcon(category: string): React.ComponentProps<typeof Feather>["name"] {
+  const value = category.toLowerCase();
+  if (/barber|hair|salon|beauty/.test(value)) return "scissors";
+  if (/food|restaurant|bakery|cafe|coffee/.test(value)) return "coffee";
+  if (/retail|shop|store/.test(value)) return "shopping-bag";
+  if (/health|wellness|medical/.test(value)) return "heart";
+  if (/tech|software/.test(value)) return "cpu";
+  if (/entertainment|music|arts|culture/.test(value)) return "music";
+  if (/nonprofit|community/.test(value)) return "users";
+  if (/legal|finance|professional/.test(value)) return "briefcase";
+  return "map-pin";
+}
 
 const AVATAR_COLORS = ["#CA922B", "#C9922B", "#2D7A4F", "#7B3F00", "#1D4ED8"];
 
@@ -355,7 +358,7 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
+          <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)} style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}>
             <Feather name="arrow-left" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -376,14 +379,16 @@ export default function BusinessDetailScreen() {
     return (
       <View style={[styles.notFound, { backgroundColor: colors.background }]}>
         <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <TouchableOpacity activeOpacity={0.85} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.85} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}>
           <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const ownerManaged = new Set(["claimed", "verified_claimed", "owner_verified"]).has(business.profileStatus ?? "")
+    || business.listingStatus === "live_claimed";
+  const claimedCover = ownerManaged && business.imageUrl ? business.imageUrl : null;
   const saved = isSaved(business.id);
   const alreadyCheckedIn = hasCheckedIn(business.id) || checkInDone;
 
@@ -633,7 +638,7 @@ export default function BusinessDetailScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.backBtn, { top: Platform.OS === "web" ? 77 : insets.top + 10 }]}>
         <TouchableOpacity activeOpacity={0.85}
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)}
           style={[styles.iconBtn, { backgroundColor: "rgba(0,0,0,0.45)" }]}
         >
           <Feather name="arrow-left" size={20} color="#FFFFFF" />
@@ -684,7 +689,16 @@ export default function BusinessDetailScreen() {
 
       <ScrollView
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
-        <Image source={img} style={styles.hero} contentFit="cover" />
+        {claimedCover ? (
+          <Image source={{ uri: claimedCover }} style={styles.hero} contentFit="cover" />
+        ) : (
+          <View style={styles.heroPlaceholder} accessibilityLabel={`${business.category} business placeholder`}>
+            <View style={styles.heroIconPlate}>
+              <Feather name={businessHeroIcon(business.category)} size={104} color="#D7A62A" />
+            </View>
+            <Text style={styles.heroPlaceholderLabel}>{business.category || "Local business"}</Text>
+          </View>
+        )}
 
         <View style={styles.body}>
           {/* Community Disputed banner */}
@@ -2336,6 +2350,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   hero: { width: "100%", height: 260 },
+  heroPlaceholder: {
+    width: "100%",
+    height: 260,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#241006",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(215,166,42,0.45)",
+  },
+  heroIconPlate: {
+    width: 174,
+    height: 174,
+    borderRadius: 87,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#D7A62A",
+    backgroundColor: "rgba(215,166,42,0.08)",
+  },
+  heroPlaceholderLabel: {
+    marginTop: 12,
+    color: "#E8C66E",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
   body: { padding: 20, gap: 16 },
   titleSection: {
     flexDirection: "row",

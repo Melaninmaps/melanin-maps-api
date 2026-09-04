@@ -41,6 +41,7 @@ export const safetyReportsTable = pgTable("safety_reports", {
   reporterId: varchar("reporter_id"),
   reporterName: varchar("reporter_name", { length: 255 }).notNull().default("Anonymous"),
   category: varchar("category", { length: 100 }).notNull(),
+  encounterType: varchar("encounter_type", { length: 50 }),
   targetType: varchar("target_type", { length: 50 }).notNull().default("business"),
   targetId: varchar("target_id"),
   targetName: varchar("target_name", { length: 255 }).notNull(),

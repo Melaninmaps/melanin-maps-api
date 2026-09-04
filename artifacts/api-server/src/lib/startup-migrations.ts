@@ -3679,6 +3679,34 @@ ON CONFLICT (city_slug) DO UPDATE SET
       ON age_delivery_audit_events(user_id, created_at DESC)`,
   },
 
+  // ── Safety report subtype preservation ──────────────────────────────────
+  {
+    name: "safety_reports_encounter_type_col",
+    sql: `ALTER TABLE safety_reports
+      ADD COLUMN IF NOT EXISTS encounter_type VARCHAR(50)`,
+  },
+  {
+    name: "verification_requests_delivery_state_cols",
+    sql: `ALTER TABLE verification_requests
+      ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(200),
+      ADD COLUMN IF NOT EXISTS notification_status VARCHAR(20) NOT NULL DEFAULT 'pending'`,
+  },
+  {
+    name: "verification_requests_idempotency_idx",
+    sql: `CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_requests_idempotency_key
+      ON verification_requests(idempotency_key)
+      WHERE idempotency_key IS NOT NULL`,
+  },
+  {
+    name: "verification_requests_idempotency_scope_v2",
+    sql: `DROP INDEX IF EXISTS idx_verification_requests_idempotency_key;
+      ALTER TABLE verification_requests
+        DROP CONSTRAINT IF EXISTS verification_requests_idempotency_key_unique;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_requests_submitter_idempotency
+        ON verification_requests(submitter_id, idempotency_key)
+        WHERE submitter_id IS NOT NULL AND idempotency_key IS NOT NULL`,
+  },
+
   // ── Kinfolk Depth Learning v1 ────────────────────────────────────────────
   {
     name: "kinfolk_delivery_profiles_adaptive_depth_cols",

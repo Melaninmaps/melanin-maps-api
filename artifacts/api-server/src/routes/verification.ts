@@ -2,7 +2,7 @@ import { Router, type IRouter, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, verificationRequestsTable, businessClaimsTable, businessesTable, docusignEnvelopesTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { objectStorageClient } from "../lib/objectStorage";
 import { createVerificationEnvelope } from "../lib/docusign";
 import { sendVerificationSubmissionAdminAlert } from "../lib/email";
@@ -71,6 +71,15 @@ router.post("/verification/upload-document", upload.single("file"), async (req: 
 });
 
 router.post("/verification/submit", async (req: any, res: Response): Promise<void> => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const rawIdempotencyKey = req.get("Idempotency-Key")?.trim() || null;
+  if (rawIdempotencyKey && !/^[A-Za-z0-9:_-]{8,200}$/.test(rawIdempotencyKey)) {
+    res.status(400).json({ error: "Invalid Idempotency-Key" });
+    return;
+  }
   const {
     businessName, businessType, ownerName, websiteUrl,
     instagramHandle, yearsInBusiness, city, state, message, email,
@@ -126,7 +135,8 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
   const uploadedDocs = Array.isArray(documentUrls) ? documentUrls : [];
 
   try {
-    const [request] = await db.insert(verificationRequestsTable).values({
+    const [insertedRequest] = await db.insert(verificationRequestsTable).values({
+      idempotencyKey: rawIdempotencyKey,
       submitterId: req.user?.id ?? null,
       businessId: resolvedBusinessId,
       businessName: businessName.trim(),
@@ -148,7 +158,61 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
       certificationOrg: certificationOrg || null,
       certificationUrl: certificationUrl?.trim() || null,
       certificationNumber: certificationNumber?.trim() || null,
-    }).returning();
+    }).onConflictDoNothing().returning();
+
+    if (!insertedRequest && rawIdempotencyKey) {
+      const [existingRequest] = await db
+        .select()
+        .from(verificationRequestsTable)
+        .where(and(
+          eq(verificationRequestsTable.idempotencyKey, rawIdempotencyKey),
+          eq(verificationRequestsTable.submitterId, req.user.id),
+        ))
+        .limit(1);
+      if (!existingRequest) {
+        res.status(409).json({ error: "Verification request retry could not be resolved" });
+        return;
+      }
+      let notificationStatus = existingRequest.notificationStatus;
+      if (notificationStatus !== "sent") {
+        try {
+          await sendVerificationSubmissionAdminAlert({
+            requestId: existingRequest.id,
+            businessName: existingRequest.businessName,
+            businessType: existingRequest.businessType,
+            ownerName: existingRequest.ownerName,
+            submitterEmail: existingRequest.submitterEmail,
+            verificationLevel: existingRequest.verificationLevel,
+            city: existingRequest.city,
+            state: existingRequest.state,
+          });
+          notificationStatus = "sent";
+          await db
+            .update(verificationRequestsTable)
+            .set({ notificationStatus })
+            .where(eq(verificationRequestsTable.id, existingRequest.id));
+        } catch (notificationError) {
+          notificationStatus = "failed";
+          req.log.error(
+            { err: notificationError, verificationRequestId: existingRequest.id },
+            "Verification request retry found the prior request but admin notification still failed",
+          );
+        }
+      }
+      res.status(200).json({
+        request: { ...existingRequest, notificationStatus },
+        verificationLevel: existingRequest.verificationLevel,
+        notificationStatus,
+        duplicate: true,
+      });
+      return;
+    }
+
+    if (!insertedRequest) {
+      res.status(409).json({ error: "Verification request could not be created" });
+      return;
+    }
+    const request = insertedRequest;
     try {
       await sendVerificationSubmissionAdminAlert({
         requestId: request.id,
@@ -160,20 +224,35 @@ router.post("/verification/submit", async (req: any, res: Response): Promise<voi
         city: request.city,
         state: request.state,
       });
+      await db
+        .update(verificationRequestsTable)
+        .set({ notificationStatus: "sent" })
+        .where(eq(verificationRequestsTable.id, request.id));
     } catch (notificationError) {
+      await db
+        .update(verificationRequestsTable)
+        .set({ notificationStatus: "failed" })
+        .where(eq(verificationRequestsTable.id, request.id))
+        .catch(() => undefined);
       req.log.error(
         { err: notificationError, verificationRequestId: request.id },
         "Verification request persisted but admin notification failed",
       );
-      res.status(503).json({
-        error: "Verification request was received, but the admin notification could not be sent",
+      res.status(201).json({
+        request: { ...request, notificationStatus: "failed" },
+        verificationLevel,
         requestId: request.id,
         notificationStatus: "failed",
+        message: "Verification request received and available for admin review.",
       });
       return;
     }
 
-    res.status(201).json({ request, verificationLevel, notificationStatus: "sent" });
+    res.status(201).json({
+      request: { ...request, notificationStatus: "sent" },
+      verificationLevel,
+      notificationStatus: "sent",
+    });
 
     // Async: send verification certification via DocuSign — non-fatal if it fails
     if (req.user?.id && submitterEmail) {

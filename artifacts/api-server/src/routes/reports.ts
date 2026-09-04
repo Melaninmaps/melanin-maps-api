@@ -17,6 +17,34 @@ const router: IRouter = Router();
 const VALID_CATEGORIES = ["safety", "sundown", "discrimination", "business", "resource", "positive", "police"] as const;
 const VALID_SEVERITIES = ["low", "medium", "high", "critical"] as const;
 
+const REPORT_CATEGORY_ALIASES: Record<string, typeof VALID_CATEGORIES[number]> = {
+  "safety concern": "safety",
+  "sundown town warning": "sundown",
+  discrimination: "discrimination",
+  "business update": "business",
+  "community resource": "resource",
+  "positive safety tip": "positive",
+  "police stop/questioning": "police",
+  "ice activity": "police",
+  "racial profiling": "police",
+  "excessive force/misconduct": "police",
+  "checkpoint/roadblock": "police",
+  "other encounter": "police",
+};
+
+export function normalizeReportCategory(category: unknown): typeof VALID_CATEGORIES[number] | null {
+  if (typeof category !== "string") return null;
+  const normalized = category.trim().toLowerCase();
+  if ((VALID_CATEGORIES as readonly string[]).includes(normalized)) {
+    return normalized as typeof VALID_CATEGORIES[number];
+  }
+  return REPORT_CATEGORY_ALIASES[normalized] ?? null;
+}
+
+export function normalizeReportEncounterType(encounterType: unknown) {
+  return normalizePoliceEncounterType(encounterType);
+}
+
 // Spoken severity labels from the UI → internal severity values
 const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
   // General / business
@@ -50,6 +78,7 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
   return {
     id: report.id,
     category: report.category,
+    encounterType: report.encounterType,
     targetType: sensitive ? "neighborhood" : report.targetType,
     targetId: sensitive ? null : report.targetId,
     targetName: safeLocation,
@@ -96,14 +125,14 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   // Build 105 sent the selected Police/ICE subtype in `category`. Accept it as
   // a compatibility adapter, but persist the canonical category and subtype.
   const legacyEncounterType = normalizePoliceEncounterType(category);
-  const resolvedCategory = legacyEncounterType ? "police" : category;
+  const resolvedCategory = normalizeReportCategory(legacyEncounterType ? "police" : category);
 
-  if (!resolvedCategory || !VALID_CATEGORIES.includes(resolvedCategory as typeof VALID_CATEGORIES[number])) {
+  if (!resolvedCategory) {
     res.status(400).json({ error: "Invalid category" });
     return;
   }
 
-  const sensitiveReport = reportMustBeAnonymous(resolvedCategory as string);
+  const sensitiveReport = reportMustBeAnonymous(resolvedCategory);
   const incidentLocation = normalizeIncidentLocation(body, { sensitive: sensitiveReport });
   if (!incidentLocation) {
     res.status(400).json({ error: "Incident city or area is required" });
@@ -111,7 +140,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 
   const resolvedEncounterType = resolvedCategory === "police"
-    ? (legacyEncounterType ?? normalizePoliceEncounterType(encounterType))
+    ? (legacyEncounterType ?? normalizeReportEncounterType(encounterType))
     : null;
   if (resolvedCategory === "police" && !resolvedEncounterType) {
     res.status(400).json({ error: "A valid Police/ICE encounter type is required" });
