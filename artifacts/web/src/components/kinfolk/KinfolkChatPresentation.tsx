@@ -16,6 +16,17 @@ export interface KinfolkPresentationSource {
   url: string;
 }
 
+export type KinfolkStructuredContent =
+  | { kind: "recipe_options"; options: Array<{ title: string; description: string; keyIngredients: string[]; timeLabel: string | null }> }
+  | { kind: "recipe_instructions"; title: string; ingredients: string[]; steps: string[]; foodSafety: string[] }
+  | { kind: "cultural_consensus"; subject: string; conclusion: string; criteria: string[]; evidenceFor: string[]; otherDefensibleViews: string[]; asOf: string | null }
+  | { kind: "ranked_perspectives"; criteria: string[]; entries: Array<{ name: string; reason: string; evidenceSummary: string }> }
+  | { kind: "entity_explorer"; canonicalName: string; overview: string; pathways: Array<{ label: string; description: string; libraryHref: string | null }> };
+
+export interface KinfolkMediaLink { title: string; creator: string | null; platform: string; url: string; reason: string }
+export interface KinfolkRelatedConnection { title: string; relationship: string; reason: string; href: string | null; evidenceUrl: string | null }
+export interface KinfolkResearchStatus { usedInternal: boolean; usedLiveWeb: boolean; degraded: boolean; asOf: string }
+
 /**
  * Additive chat contract for structured itinerary responses. The API keeps its
  * conversational `reply` field; this payload lets the web client present the
@@ -157,6 +168,30 @@ export function KinfolkItinerary({ itinerary }: { itinerary: KinfolkItinerary })
       })}
     </section>
   );
+}
+
+function CompactList({ items }: { items: string[] }) {
+  if (items.length === 0) return null;
+  return <ul className="mt-1 space-y-1 text-xs leading-5 text-[#3A1F0E]/70">{items.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>;
+}
+
+/** Additive structured details. The complete conversational reply always remains the primary answer. */
+export function KinfolkContextualContent({ structuredContent, mediaLinks = [], relatedConnections = [], researchStatus }: {
+  structuredContent?: KinfolkStructuredContent | null; mediaLinks?: KinfolkMediaLink[]; relatedConnections?: KinfolkRelatedConnection[]; researchStatus?: KinfolkResearchStatus | null;
+}) {
+  const safeMedia = mediaLinks.flatMap((media) => { const href = safeExternalSourceHref(media.url); return href ? [{ ...media, href }] : []; });
+  const safeConnections = relatedConnections.map((connection) => ({ ...connection, href: connection.href ? safeExternalSourceHref(connection.href) : null, evidenceHref: connection.evidenceUrl ? safeExternalSourceHref(connection.evidenceUrl) : null }));
+  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && !researchStatus) return null;
+  return <section data-testid="kinfolk-contextual-content" aria-label="Kinfolk details" className="mt-3 space-y-3">
+    {structuredContent?.kind === "recipe_options" && <div data-testid="kinfolk-recipe-options" className="grid gap-2 sm:grid-cols-2">{structuredContent.options.map((option, index) => <article key={`${option.title}-${index}`} className="rounded-xl border border-[#CA922B]/20 bg-[#FFF8EC] p-3"><div className="flex items-start justify-between gap-2"><h3 className="text-sm font-bold text-[#2B1507]">{option.title}</h3>{option.timeLabel && <span className="shrink-0 text-[10px] font-semibold text-[#8D5C17]">{option.timeLabel}</span>}</div><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/70">{option.description}</p><CompactList items={option.keyIngredients} /></article>)}</div>}
+    {structuredContent?.kind === "recipe_instructions" && <article data-testid="kinfolk-recipe-instructions" className="rounded-xl border border-[#CA922B]/20 bg-[#FFF8EC] p-3"><h3 className="text-sm font-bold text-[#2B1507]">{structuredContent.title}</h3><div className="mt-2 grid gap-3 sm:grid-cols-2"><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Ingredients</h4><CompactList items={structuredContent.ingredients} /></div><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Steps</h4><CompactList items={structuredContent.steps} /></div></div>{structuredContent.foodSafety.length > 0 && <div className="mt-3 border-t border-[#CA922B]/20 pt-2"><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Food safety</h4><CompactList items={structuredContent.foodSafety} /></div>}</article>}
+    {structuredContent?.kind === "cultural_consensus" && <article data-testid="kinfolk-cultural-consensus" className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3"><h3 className="text-sm font-bold text-[#2B1507]">{structuredContent.subject}</h3><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/70">{structuredContent.conclusion}</p><div className="mt-3 grid gap-3 sm:grid-cols-3"><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Criteria</h4><CompactList items={structuredContent.criteria} /></div><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Evidence</h4><CompactList items={structuredContent.evidenceFor} /></div><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Other views</h4><CompactList items={structuredContent.otherDefensibleViews} /></div></div>{structuredContent.asOf && <p className="mt-2 text-[10px] text-[#3A1F0E]/50">As of {structuredContent.asOf}</p>}</article>}
+    {structuredContent?.kind === "ranked_perspectives" && <article data-testid="kinfolk-ranked-perspectives" className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3"><h3 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Perspectives</h3><CompactList items={structuredContent.criteria} /><ol className="mt-3 space-y-2">{structuredContent.entries.map((entry, index) => <li key={`${entry.name}-${index}`} className="text-xs"><span className="font-bold text-[#2B1507]">{index + 1}. {entry.name}</span><p className="text-[#3A1F0E]/70">{entry.reason}</p><p className="text-[#3A1F0E]/50">{entry.evidenceSummary}</p></li>)}</ol></article>}
+    {structuredContent?.kind === "entity_explorer" && <article data-testid="kinfolk-entity-explorer" className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3"><h3 className="text-sm font-bold text-[#2B1507]">{structuredContent.canonicalName}</h3><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/70">{structuredContent.overview}</p><div className="mt-3 space-y-2">{structuredContent.pathways.map((pathway, index) => { const href = pathway.libraryHref ? safeExternalSourceHref(pathway.libraryHref) : null; return <div key={`${pathway.label}-${index}`} className="rounded-lg bg-white px-3 py-2 text-xs"><p className="font-bold text-[#2B1507]">{pathway.label}</p><p className="mt-0.5 text-[#3A1F0E]/70">{pathway.description}</p>{href && <a href={href} className="mt-1 inline-block font-semibold text-[#8D5C17] underline">Open in Library</a>}</div>; })}</div></article>}
+    {safeMedia.length > 0 && <section data-testid="kinfolk-media-links" aria-label="Verified media"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Verified media</h3><div className="mt-2 space-y-2">{safeMedia.map((media) => <a key={media.url} href={media.href} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#3A1F0E]/8 bg-white p-3 text-xs"><span className="font-bold text-[#8D5C17]">{media.title}</span><span className="text-[#3A1F0E]/60"> · {media.creator ?? media.platform}</span><p className="mt-1 text-[#3A1F0E]/70">{media.reason}</p></a>)}</div></section>}
+    {safeConnections.length > 0 && <section data-testid="kinfolk-related-connections" aria-label="Related connections"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Related connections</h3><div className="mt-2 space-y-2">{safeConnections.map((connection, index) => <article key={`${connection.title}-${index}`} className="rounded-xl border border-[#3A1F0E]/8 bg-white p-3 text-xs"><p className="font-bold text-[#2B1507]">{connection.title} <span className="font-normal text-[#3A1F0E]/60">· {connection.relationship}</span></p><p className="mt-1 text-[#3A1F0E]/70">{connection.reason}</p><div className="mt-1 flex gap-3">{connection.href && <a href={connection.href} className="font-semibold text-[#8D5C17] underline">Open in Library</a>}{connection.evidenceHref && <a href={connection.evidenceHref} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline">Supporting source</a>}</div></article>)}</div></section>}
+    {researchStatus && <p data-testid="kinfolk-research-status" className="text-[10px] text-[#3A1F0E]/50">Research: {[researchStatus.usedInternal && "Library", researchStatus.usedLiveWeb && "current sources"].filter(Boolean).join(" + ") || "answer context"}{researchStatus.degraded ? " · limited evidence" : ""}{researchStatus.asOf ? ` · as of ${researchStatus.asOf}` : ""}</p>}
+  </section>;
 }
 
 export function KinfolkStaffDemoBadge({
