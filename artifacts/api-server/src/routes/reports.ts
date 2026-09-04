@@ -132,7 +132,7 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     return;
   }
 
-  const sensitiveReport = reportMustBeAnonymous(resolvedCategory);
+  const sensitiveReport = reportMustBeAnonymous(resolvedCategory as string);
   const incidentLocation = normalizeIncidentLocation(body, { sensitive: sensitiveReport });
   if (!incidentLocation) {
     res.status(400).json({ error: "Incident city or area is required" });

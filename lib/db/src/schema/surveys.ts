@@ -45,7 +45,6 @@ export const safetyReportsTable = pgTable("safety_reports", {
   targetType: varchar("target_type", { length: 50 }).notNull().default("business"),
   targetId: varchar("target_id"),
   targetName: varchar("target_name", { length: 255 }).notNull(),
-  encounterType: varchar("encounter_type", { length: 50 }),
   incidentCity: varchar("incident_city", { length: 100 }),
   incidentRegion: varchar("incident_region", { length: 100 }),
   incidentArea: varchar("incident_area", { length: 255 }),
