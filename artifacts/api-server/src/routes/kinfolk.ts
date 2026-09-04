@@ -44,6 +44,7 @@ import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendatio
 import { answerWithLivingLibrary } from "../kinfolk/kinfolkLibraryBridge";
 import { createPostgresLibraryRepository } from "../library/postgresLibraryRepository";
 import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
+import { createOpenAiWebResearchProvider } from "../library/openAiWebResearchProvider";
 import { createOpenAiLibraryWriter } from "../library/openAiLibraryWriter";
 import {
   createGovernedKinfolkBusinessRepository,
@@ -123,6 +124,34 @@ import {
   staffDemoResponseMarker,
   type KinfolkModelPolicy,
 } from "../kinfolk/staff-demo-policy";
+import {
+  mayUseContextualIntelligence,
+  resolveContextualIntelligenceMode,
+} from "../kinfolk/contextual-intelligence-mode";
+import {
+  planSemanticTurn,
+  type KinfolkTaskMode,
+  type SemanticTurnPlan,
+} from "../kinfolk/semantic-turn-planner";
+import {
+  contextualEvidenceNeedsFailClosedResponse,
+  orchestrateContextualResearch,
+  type ContextualEvidenceBundle,
+} from "../kinfolk/contextual-research-orchestrator";
+import { retrieveApprovedInternalLibrary } from "../kinfolk/contextual-internal-retrieval";
+import {
+  bindContextualLinksToEvidence,
+  parseKinfolkMediaLinks,
+  parseKinfolkRelatedConnections,
+  parseKinfolkStructuredContent,
+  type KinfolkMediaLink,
+  type KinfolkRelatedConnection,
+  type KinfolkStructuredContent,
+} from "../kinfolk/contextual-answer-contract";
+import {
+  buildUntrustedEvidenceDataBlock,
+  protectContextualOutput,
+} from "../kinfolk/contextual-evidence-safety";
 import {
   buildLanguagePersonalizationPrompt,
   defaultVoicePreferences,
@@ -362,6 +391,9 @@ type KinfolkTelemetry = {
   requestId: string; questionClass: string; status: number;
   degraded: boolean; degradedReason: string | null;
   providerStatus: number | null; latencyMs: number;
+  taskMode?: KinfolkTaskMode | null;
+  retrievalState?: "not_used" | "internal" | "live" | "mixed" | "degraded";
+  sourceCount?: number;
 };
 const _kinfolkDegradedWindow: Array<{ at: number; degraded: boolean }> = [];
 const _KINFOLK_DEGRADED_WINDOW_MS = 15 * 60 * 1000;
@@ -382,6 +414,9 @@ function recordKinfolkTelemetry(event: KinfolkTelemetry): void {
     status: event.status, degraded: event.degraded,
     degradedReason: event.degradedReason, providerStatus: event.providerStatus,
     latencyMs: event.latencyMs,
+    taskMode: event.taskMode ?? null,
+    retrievalState: event.retrievalState ?? "not_used",
+    sourceCount: event.sourceCount ?? 0,
     degradedWindowRequests: total,
     degradedWindowPercent: Number(degradedPct.toFixed(2)),
   }));
@@ -453,6 +488,8 @@ class KinfolkTokenBucket {
     resolve:         () => void;
     reject:          (e: Error) => void;
     timer:           ReturnType<typeof setTimeout>;
+    signal?:         AbortSignal;
+    onAbort?:        () => void;
   }> = [];
 
   private _totalActive(): number {
@@ -495,6 +532,7 @@ class KinfolkTokenBucket {
       if (this._canDispatch(next.estimatedTokens)) {
         this.waiters.shift();
         clearTimeout(next.timer);
+        if (next.signal && next.onAbort) next.signal.removeEventListener("abort", next.onAbort);
         kinfolkQueuedGenerations = this.waiters.length;
         this._reserve(next.userId, next.estimatedTokens);
         next.resolve();
@@ -502,7 +540,8 @@ class KinfolkTokenBucket {
     }
   }
 
-  private async _acquire(userId: string, estimatedTokens: number): Promise<void> {
+  private async _acquire(userId: string, estimatedTokens: number, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted();
     // Per-user in-flight limit
     if ((this.activeByUser.get(userId) ?? 0) >= MAX_IN_FLIGHT_PER_USER) {
       throw Object.assign(new Error("User already has a request in flight"), { code: "KINFOLK_BUSY" });
@@ -515,26 +554,37 @@ class KinfolkTokenBucket {
       throw Object.assign(new Error("Generation queue is full"), { code: "KINFOLK_QUEUE_FULL" });
     }
     return new Promise<void>((resolve, reject) => {
+      const onAbort = () => {
+        const idx = this.waiters.findIndex((waiter) => waiter.resolve === resolve);
+        if (idx !== -1) this.waiters.splice(idx, 1);
+        clearTimeout(timer);
+        kinfolkQueuedGenerations = this.waiters.length;
+        reject(signal?.reason instanceof Error ? signal.reason : new DOMException("Request aborted", "AbortError"));
+      };
       const timer = setTimeout(() => {
         const idx = this.waiters.findIndex((w) => w.resolve === resolve);
         if (idx !== -1) this.waiters.splice(idx, 1);
+        signal?.removeEventListener("abort", onAbort);
         kinfolkQueuedGenerations = this.waiters.length;
         reject(Object.assign(new Error("Queue wait exceeded deadline"), { code: "KINFOLK_BUSY" }));
       }, MAX_QUEUE_WAIT_MS);
-      this.waiters.push({ userId, estimatedTokens, resolve, reject, timer });
+      this.waiters.push({ userId, estimatedTokens, resolve, reject, timer, signal, onAbort });
+      signal?.addEventListener("abort", onAbort, { once: true });
       kinfolkQueuedGenerations = this.waiters.length;
+      if (signal?.aborted) onAbort();
     });
   }
 
-  async run<T>(userId: string, estimatedTokens: number, fn: () => Promise<T>): Promise<T> {
+  async run<T>(userId: string, estimatedTokens: number, fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
     const entered = Date.now();
-    await this._acquire(userId, estimatedTokens);
+    await this._acquire(userId, estimatedTokens, signal);
     const waitMs = Date.now() - entered;
     const rolling = this._rollingTpm();
     if (waitMs > 200 || rolling > TOKEN_BUCKET_TARGET * 0.7) {
       console.log(`[kinfolk-queue] wait=${waitMs}ms active=${kinfolkActiveGenerations} queued=${kinfolkQueuedGenerations} rollingTpm=${rolling}`);
     }
     try {
+      signal?.throwIfAborted();
       return await fn();
     } finally {
       this._release(userId);
@@ -576,6 +626,22 @@ function normalizeKinfolkImageUrls(value: unknown): string[] {
   return [...unique].slice(0, 2);
 }
 
+function waitForKinfolkRetry(delayMs: number, signal: AbortSignal): Promise<void> {
+  signal.throwIfAborted();
+  return new Promise<void>((resolve, reject) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal.reason instanceof Error ? signal.reason : new DOMException("Request aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+  });
+}
+
 /** Retryable OpenAI generation call. Retries only documented transient errors. */
 async function callOpenAIWithRetry(
   messages: Parameters<typeof openai.chat.completions.create>[0]["messages"],
@@ -592,6 +658,7 @@ async function callOpenAIWithRetry(
 
   let lastErr: unknown;
   for (let attempt = 0; attempt <= KINFOLK_RETRY_MAX; attempt++) {
+    signal.throwIfAborted();
     try {
       const completion = await openai.chat.completions.create(
         buildKinfolkChatCompletionRequest({
@@ -647,7 +714,7 @@ async function callOpenAIWithRetry(
         `backoffMs=${backoffMs}`,
         `err=${errMsg.slice(0, 120)}`,
       );
-      await new Promise<void>((r) => setTimeout(r, backoffMs));
+      await waitForKinfolkRetry(backoffMs, signal);
     }
   }
   throw lastErr;
@@ -2680,6 +2747,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
+  const contextualRequestAbort = new AbortController();
+  const abortDisconnectedRequest = () => contextualRequestAbort.abort();
+  req.once("aborted", abortDisconnectedRequest);
+  res.once("close", () => {
+    if (!res.writableEnded) abortDisconnectedRequest();
+  });
 
   const { sessionId, message, vibes = [], voiceMode = "community", imageUrls = [] } = req.body as {
     sessionId?: string;
@@ -2717,6 +2790,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       [req.user.id, requestedImageUrls],
     ).catch(() => ({ rows: [] as { public_url: string }[] }));
     const owned = new Set(imageAssets.rows.map((row) => row.public_url));
+    if (contextualRequestAbort.signal.aborted) return;
     verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
     if (verifiedImageUrls.length !== requestedImageUrls.length) {
       res.status(400).json({ error: "One or more images are invalid, expired, or do not belong to this account." });
@@ -2731,6 +2805,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     message,
     vibes,
   })) return;
+  if (contextualRequestAbort.signal.aborted) return;
 
   // chatStage tracks which boundary the handler was crossing when an error is
   // thrown, so the Railway [kinfolk-chat-error] log line pinpoints the exact phase
@@ -2749,7 +2824,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Resolve staff-demo eligibility once from existing authenticated account state.
     // No request header, query parameter, public flag, or email literal can enable it.
     const user = await storage.getUser(req.user.id);
+    if (contextualRequestAbort.signal.aborted) return;
     const activeTester = hasActiveTesterEntitlement(user);
+    // This is server configuration plus server-derived authorization only. Request
+    // data can neither enable the feature nor elevate staff eligibility.
+    const contextualIntelligenceEnabled = mayUseContextualIntelligence({
+      mode: resolveContextualIntelligenceMode(process.env.KINFOLK_CONTEXTUAL_INTELLIGENCE_V1),
+      authenticated: true,
+      administrator: isAdmin(req),
+      activeTester,
+    });
     const modelPolicy = resolveKinfolkModelPolicy(isStaffDemoEligible({
       authenticated: true,
       administrator: isAdmin(req),
@@ -3060,6 +3144,74 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const intentPolicy = getEvidencePolicy(intentClass);
     const intentPolicyPrompt = buildIntentPolicyPrompt(intentPolicy);
     _kinfolkQClass = intentClass; // telemetry — set once per request after classification
+    // The contextual planner is intentionally downstream of deterministic safety
+    // routing and governed business handling. It receives the locked route and no
+    // member profile, so it cannot weaken consequence policy or infer identity.
+    let contextualPlan: SemanticTurnPlan | null = null;
+    if (contextualIntelligenceEnabled) {
+      contextualPlan = await planSemanticTurn({
+        message,
+        evidenceRoute,
+        history: buildKinfolkHistory(existingMessages, modelPolicy).map((entry) => ({
+          role: entry.role === "assistant" ? "assistant" : "user",
+          content: entry.content,
+        })),
+        // The planner is only called by planSemanticTurn for materially ambiguous
+        // turns. It receives bounded turn text/history only, never preferences,
+        // identity context, memories, location history, or business data.
+        classify: async ({ message: plannerMessage, history }) => {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            max_tokens: 220,
+            temperature: 0,
+            messages: [
+              {
+                role: "system",
+                content: "Classify only ambiguity. Return JSON with confidence (0..1), up to four candidateMeanings ({label,domain,confidence,evidenceQuery}), resolvedMeaning, clarificationQuestion, and up to three retrievalQueries. Do not answer the member. Do not infer identity or use demographics. If interpretations materially differ and confidence is below .75, ask one short clarification.",
+              },
+              ...history,
+              { role: "user", content: plannerMessage },
+            ],
+          }, { signal: AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)]) });
+          const content = completion.choices[0]?.message?.content ?? "{}";
+          try {
+            const parsedClassifierPayload = JSON.parse(content) as unknown;
+            const protectedClassifierPayload = protectContextualOutput({
+              reply: "",
+              renderableValues: [parsedClassifierPayload],
+              protectedValues: history.map((entry) => entry.content),
+            });
+            return protectedClassifierPayload.blocked ? {} : parsedClassifierPayload;
+          } catch { return {}; }
+        },
+      });
+      if (contextualPlan.needsClarification && contextualPlan.clarificationQuestion) {
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId,
+          questionClass: "clarification",
+          status: 200,
+          degraded: false,
+          degradedReason: null,
+          providerStatus: null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+          taskMode: "clarification",
+          retrievalState: "not_used",
+          sourceCount: 0,
+        });
+        res.json({
+          sessionId, reply: "I can help with that. Are you asking about food and cooking, a person or cultural topic, a place, or something else?", recommendations: null,
+          itinerary: null, followUpSuggestions: [], smartPromotion: null, taskAction: null,
+          libraryAction: null, intentClass: "clarification", sources: [],
+          needsClarification: true, originalQuery: message,
+          answerMode: "clarification", structuredContent: null, mediaLinks: [],
+          relatedConnections: [], researchStatus: {
+            usedInternal: false, usedLiveWeb: false, degraded: false, asOf: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+    }
 
     // ── Diaspora-first research plan ──────────────────────────────────────────
     // Permanently enriches every retrieval query with community-first context so
@@ -3077,7 +3229,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const shouldResearchInLibrary = intentClass === "medical_health"
       || intentClass === "legal_regulated"
       || (intentClass === "general_knowledge" && CURRENT_RESEARCH_RE.test(message));
-    if (shouldResearchInLibrary && !destination && message.trim().length > 15) {
+    if (shouldResearchInLibrary && !contextualIntelligenceEnabled && !destination && message.trim().length > 15) {
       try {
         const deps = getLivingLibraryDeps();
         const result = await answerWithLivingLibrary({
@@ -3134,6 +3286,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intent: intentClass,
       authoritativeDestination: namedBusiness ? destination : earlyDecision.location,
     });
+    // Approved entity/Library sources are the first retrieval tier. The existing
+    // OpenAI native-web provider is primary and the existing Tavily provider is
+    // fallback; the orchestrator bounds both latency and document/query counts.
+    let contextualEvidence: ContextualEvidenceBundle | null = null;
+    if (contextualPlan) {
+      const nativeProvider = createOpenAiWebResearchProvider({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
+        baseUrl: (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, ""),
+      });
+      contextualEvidence = await orchestrateContextualResearch(contextualPlan, {
+          searchInternal: async (queries, signal) => [
+            // Context resolver sources are release-gated entity aliases/source links.
+            // Internal records without a public source URL remain synthesis-only and
+            // are never converted into invented member-facing evidence links.
+            ...contextResolution.sources.map((source) => ({
+                title: source.title, url: source.url, publisher: null,
+                kind: "reference" as const,
+                excerpt: "", publishedAt: null, retrievedAt: new Date().toISOString(), supports: [],
+            })),
+            ...await retrieveApprovedInternalLibrary({
+              repository: getLivingLibraryDeps().repository,
+              queries,
+              signal,
+            }),
+          ],
+          primaryProvider: nativeProvider,
+          fallbackProvider: getLivingLibraryDeps().researchProvider,
+          timeoutMs: 8_000,
+          signal: contextualRequestAbort.signal,
+        });
+      if (contextualRequestAbort.signal.aborted) return;
+    }
 
     // ── Deterministic short-circuit (spec §5.2) ─────────────────────────────
     // needs_clarification + unconfirmed: return directly — the LLM must not choose the state.
@@ -3161,6 +3345,47 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
         // Return the original query so the client can preserve it for retry
         originalQuery: message,
+      });
+      return;
+    }
+
+    if (contextualPlan && contextualEvidence && contextualEvidenceNeedsFailClosedResponse(contextualPlan, contextualEvidence)) {
+      const acceptedEvidence = [...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media];
+      recordKinfolkTelemetry({
+        requestId: _kinfolkReqId,
+        questionClass: intentClass,
+        status: 200,
+        degraded: true,
+        degradedReason: "evidence_not_corroborated",
+        providerStatus: null,
+        latencyMs: Date.now() - _kinfolkStartedAt,
+        taskMode: contextualPlan.taskMode,
+        retrievalState: acceptedEvidence.length > 0 ? "degraded" : "not_used",
+        sourceCount: acceptedEvidence.length,
+      });
+      res.status(200).json({
+        sessionId,
+        reply: "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: ["Show me the stable background", "Try the current search again"],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass,
+        sources: acceptedEvidence.map((source) => ({ id: source.url, label: source.kind, title: source.title, url: source.url })),
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: contextualPlan.taskMode,
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+        researchStatus: {
+          usedInternal: contextualEvidence.internal.length > 0,
+          usedLiveWeb: contextualEvidence.external.length + contextualEvidence.media.length > 0,
+          degraded: true,
+          asOf: new Date().toISOString(),
+        },
       });
       return;
     }
@@ -3226,10 +3451,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       } catch { /* non-fatal — Kinfolk falls back to model knowledge */ }
     }
 
-    // ── Profile-first web search (Kinfolk lens layer) ─────────────────────────
-    // For health, image, and entity queries: build a community-primary query plan
-    // using the member's voluntarily saved diasporaCountries as the active lens,
-    // then fetch live Tavily results ranked by credibility + community relevance.
+    // ── Consent-gated web search (Kinfolk lens layer) ─────────────────────────
+    // For health, image, and entity queries, any optional ranking context is
+    // consent-gated and may only reorder plausible sources. It never establishes
+    // identity, changes the deterministic evidence route, or supplies a fact.
     // Degrades gracefully to empty results when TAVILY_API_KEY is not configured.
     // The member lens is applied BEFORE any call to the LLM — never as a post-filter.
     let webSearchBlock = "";
@@ -3279,7 +3504,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             webSearchBlock = [
               kinfolkUrgentMessage ? `URGENT SAFETY: ${kinfolkUrgentMessage}\n` : "",
               kinfolkLensDisclosure ? `KINFOLK LENS ACTIVE: ${kinfolkLensDisclosure}` : "",
-              `WEB SOURCES (profile-first ranked, highest community relevance first):`,
+              `WEB SOURCES (ranked by evidence quality and permitted relevance):`,
               top.map((r, i) =>
                 `[${i + 1}] ${r.title}\n    URL: ${r.url}\n    Score: ${r.finalScore} (credibility ${r.credibilityScore}, community ${r.communityScore})\n    ${r.content.slice(0, 300)}`
               ).join("\n\n"),
@@ -3744,10 +3969,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       !memory.isSensitive || isSensitiveMemoryRelevant(memory.content, message),
     );
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
-      privateMemoryEnabled,
-      relevantPrivateMemories,
+      privateMemoryEnabled && !contextualEvidence,
+      contextualEvidence ? [] : relevantPrivateMemories,
     );
 
+    const contextualEvidenceDataBlock = contextualEvidence
+      ? buildUntrustedEvidenceDataBlock([...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media])
+      : "";
     const baseSystemPrompt = buildSystemPrompt({
       prefs, likedSpots, dislikedSpots, savedPlaces, destination, voiceMode,
       aaveLevel: prefs?.aaveLevel ?? 0, businessCatalog, activeJourney, crossCityBridge,
@@ -3758,7 +3986,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       privacySuppressed: effectivePrivacySuppressed,
       catalogSource,
       intentClass,
-    }) + ownerBusinessContext + privateMemoryBlock;
+    }) + ownerBusinessContext + privateMemoryBlock + (contextualPlan ? [
+      "\nCONTEXTUAL ANSWER CONTRACT — SERVER CONTROLLED:",
+      `Task mode: ${contextualPlan.taskMode}; answer perspective: ${contextualPlan.answerPerspective}.`,
+      "Return reply as complete plain conversational text. Optional structuredContent, mediaLinks, and relatedConnections are additive proposals only.",
+      "Use only supplied evidence for material claims. Do not generate a media link, entity relationship, Library path, metric, or citation unless its exact URL is supplied by the server.",
+      "Never include personal profile, inferred identity, private memory, or raw history in structured fields.",
+    ].join("\n") : "");
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -3823,21 +4057,22 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       itineraryInstruction || null,
       staffDemoPromptBlock(modelPolicy) || null,
     ].filter(Boolean).join("\n\n");
+    const contextualHighConsequence = contextualPlan?.taskMode === "high_consequence";
     const systemPrompt = (combinedPolicyPrompt
       ? `${combinedPolicyPrompt}\n\n${baseSystemPrompt}`
       : baseSystemPrompt)
       + (pronounBlock       ? `\n\n${pronounBlock}`       : "")
       + (reproductiveBlock  ? `\n\n${reproductiveBlock}`  : "")
-      + (healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
-      + (entityBlock ? `\n\n${entityBlock}` : "")
+      + (!contextualHighConsequence && healthEvidenceBlock ? `\n\n${healthEvidenceBlock}` : "")
+      + (!contextualHighConsequence && entityBlock ? `\n\n${entityBlock}` : "")
       + (educationBlock ? `\n\n${educationBlock}` : "")
       + (tourSiteBlock  ? `\n\n${tourSiteBlock}`  : "")
-      + (webSearchBlock ? `\n\n${webSearchBlock}` : "")
+      + (!contextualHighConsequence && webSearchBlock ? `\n\n${webSearchBlock}` : "")
       + (resolvedContextConstraint ? `\n\n${resolvedContextConstraint}` : "");
 
     // Build bounded history according to the selected experience policy.
     // Standard remains exactly last 8 / 400 chars; staff demo uses last 12 / 1200.
-    const historyMessages = buildKinfolkHistory(existingMessages, modelPolicy);
+    const historyMessages = contextualEvidence ? [] : buildKinfolkHistory(existingMessages, modelPolicy);
 
     // ── Library topic grounding (non-blocking enrichment) ────────────────────
     // Load structured Library topic data when the user asks about a library topic.
@@ -3847,9 +4082,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const visionSafetyBlock = verifiedImageUrls.length > 0
       ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
       : "";
-    const systemPromptWithLibrary = (libraryGroundingBlock
+    const systemPromptWithLibrary = (!contextualHighConsequence && libraryGroundingBlock
       ? `${systemPrompt}\n\n${libraryGroundingBlock}`
-      : systemPrompt) + (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "");
+      : systemPrompt)
+      + (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "")
+      + (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
 
     const currentUserText = `${message}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
     const currentUserContent: Parameters<typeof openai.chat.completions.create>[0]["messages"][number]["content"] = verifiedImageUrls.length > 0
@@ -3884,14 +4121,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           chatStage = "provider_call";
           return callOpenAIWithCompatibilityFallback(
             aiMessages,
-            AbortSignal.timeout(25000),
+            AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(25000)]),
             modelPolicy,
             _kinfolkReqId,
             resolverTemperature,
           );
         },
+        contextualRequestAbort.signal,
       );
     } catch (providerError) {
+      if (contextualRequestAbort.signal.aborted) return;
       // For library topic questions: if the provider fails with a retryable error,
       // return a useful 200 with library grounding instead of the generic 500.
       const pStatus = (providerError as any)?.status ?? (providerError as any)?.statusCode;
@@ -3960,6 +4199,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let taskAction: Record<string, unknown> | null = null;
     let itinerary: KinfolkItinerary | null = null;
     let proposedModelDestination: string | null = null;
+    let contextualStructuredContent: KinfolkStructuredContent | null = null;
+    let contextualMediaLinks: KinfolkMediaLink[] = [];
+    let contextualRelatedConnections: KinfolkRelatedConnection[] = [];
 
     if (modelPayload.valid && modelPayload.value) {
       const parsed = modelPayload.value;
@@ -3975,6 +4217,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       taskAction = parsed.taskAction && typeof parsed.taskAction === "object" && !Array.isArray(parsed.taskAction)
         ? parsed.taskAction as Record<string, unknown>
         : null;
+      if (contextualPlan) {
+        try {
+          contextualStructuredContent = parseKinfolkStructuredContent(parsed.structuredContent);
+          contextualMediaLinks = parseKinfolkMediaLinks(parsed.mediaLinks);
+          contextualRelatedConnections = parseKinfolkRelatedConnections(parsed.relatedConnections);
+        } catch {
+          // Optional presentation data must never turn a complete answer into a 500.
+          contextualStructuredContent = null;
+          contextualMediaLinks = [];
+          contextualRelatedConnections = [];
+        }
+      }
       if (recommendations && typeof recommendations.destination === "string") {
         proposedModelDestination = recommendations.destination;
       }
@@ -3986,6 +4240,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         });
         recommendations = null;
       }
+    }
+
+    const protectedReply = protectContextualOutput({
+      reply,
+      renderableValues: [modelPayload.valid ? modelPayload.value : rawContent],
+      protectedValues: [
+        ...activePrivateMemories.map((memory) => memory.content),
+        ...systemPromptWithLibrary.split("\n").map((line) => line.trim()).filter((line) => line.length >= 24),
+      ],
+    });
+    if (protectedReply.blocked) {
+      reply = protectedReply.reply;
+      contextualStructuredContent = null;
+      contextualMediaLinks = [];
+      contextualRelatedConnections = [];
+      recommendations = null;
+      followUpSuggestions = [];
+      smartPromotion = null;
+      taskAction = null;
+      itinerary = null;
+      proposedModelDestination = null;
     }
 
     // A named business response stays scoped to exactly the canonical visible row.
@@ -4148,6 +4423,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    const trustedLibraryPaths = contextualEvidence?.internal.flatMap((source) => source.libraryPath ? [source.libraryPath] : []) ?? [];
+    const contextualBoundLinks = bindContextualLinksToEvidence({
+      structuredContent: contextualStructuredContent,
+      mediaLinks: contextualMediaLinks,
+      relatedConnections: contextualRelatedConnections,
+      evidenceUrls: [
+        ...contextResolution.sources.map((source) => source.url),
+        ...healthRetrievalSources.map((source) => source.url),
+        ...knowledgeGraphSources.map((source) => source.url),
+        ...(contextualEvidence ? [...contextualEvidence.internal, ...contextualEvidence.external, ...contextualEvidence.media].map((source) => source.url) : []),
+      ],
+      mediaEvidence: contextualEvidence?.media ?? [],
+      libraryPaths: trustedLibraryPaths,
+    });
+    contextualStructuredContent = contextualBoundLinks.structuredContent;
+    contextualMediaLinks = contextualBoundLinks.mediaLinks;
+    contextualRelatedConnections = contextualBoundLinks.relatedConnections;
+
     // ── Four-purpose enforcement ───────────────────────────────────────────────
     // Assemble the sources array before enforcement so the educator/safety checks
     // have access to the same source list that will be returned to the client.
@@ -4161,6 +4454,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...knowledgeGraphSources.map((s) => ({
         id: s.url, label: s.source as SafeSource["label"], title: s.title, url: s.url,
       })),
+      ...(contextualEvidence ? [
+        ...contextualEvidence.internal,
+        ...contextualEvidence.external,
+        ...contextualEvidence.media,
+      ].map((source) => ({
+        id: source.url,
+        label: (source.kind === "library_published" ? "library" : "web_search") as SafeSource["label"],
+        title: source.title,
+        url: source.url,
+        fetchedAt: source.retrievedAt,
+      })) : []),
     ];
     const safeCatalog = businessCatalog.map((business) => ({
       id: business.id,
@@ -4197,8 +4501,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Telemetry: successful generation ──────────────────────────────────────
     recordKinfolkTelemetry({
       requestId: _kinfolkReqId, questionClass: _kinfolkQClass,
-      status: 200, degraded: false, degradedReason: null, providerStatus: null,
+      status: 200, degraded: contextualEvidence?.degraded ?? false,
+      degradedReason: contextualEvidence?.degradedReason ?? null, providerStatus: null,
       latencyMs: Date.now() - _kinfolkStartedAt,
+      taskMode: contextualPlan?.taskMode ?? null,
+      retrievalState: contextualEvidence?.degraded
+        ? "degraded"
+        : contextualEvidence?.internal.length && contextualEvidence?.external.length
+          ? "mixed"
+          : contextualEvidence?.external.length
+            ? "live"
+            : contextualEvidence?.internal.length ? "internal" : "not_used",
+      sourceCount: contextualEvidence
+        ? contextualEvidence.internal.length + contextualEvidence.external.length + contextualEvidence.media.length
+        : 0,
     });
     res.json({
       sessionId: finalSessionId,
@@ -4241,7 +4557,40 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ...contextResolution.sources.map((s) => ({ id: s.url, label: s.tier, title: s.title, url: s.url })),
         ...healthRetrievalSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
         ...knowledgeGraphSources.map((s) => ({ id: s.url, label: s.source, title: s.title, url: s.url })),
+        ...(contextualEvidence ? [
+          ...contextualEvidence.internal,
+          ...contextualEvidence.external,
+          ...contextualEvidence.media,
+        ].map((source) => ({
+          id: source.url,
+          label: source.kind === "library_published" ? "library" : "web_search",
+          title: source.title,
+          url: source.url,
+        })) : []),
       ]) as { id: string; label: string; title?: string; url?: string }[],
+      // Additive V1 fields are emitted only under the server-controlled gate.
+      // `reply` remains the complete compatibility surface for Build 105.
+      ...(contextualPlan ? {
+        answerMode: contextualPlan.taskMode,
+        // Presentation proposals are accepted only if this response has supporting
+        // server evidence. Links must exactly match a normalized source URL.
+        structuredContent: contextualStructuredContent && (
+          contextResolution.sources.length
+          + healthRetrievalSources.length
+          + knowledgeGraphSources.length
+          + (contextualEvidence?.internal.length ?? 0)
+          + (contextualEvidence?.external.length ?? 0)
+          + (contextualEvidence?.media.length ?? 0) > 0
+        ) ? contextualStructuredContent : null,
+        mediaLinks: contextualMediaLinks,
+        relatedConnections: contextualRelatedConnections,
+        researchStatus: {
+          usedInternal: contextResolution.sources.length > 0 || knowledgeGraphSources.length > 0 || (contextualEvidence?.internal.length ?? 0) > 0,
+          usedLiveWeb: healthRetrievalSources.some((source) => source.source === "kinfolk_web") || (contextualEvidence?.external.length ?? 0) > 0,
+          degraded: contextualEvidence?.degraded ?? false,
+          asOf: new Date().toISOString(),
+        },
+      } : {}),
       resolution: contextResolution.responseMode !== "no_entity" ? {
         state: contextResolution.responseMode,
         entity: contextResolution.entityResolution?.state === "resolved"
@@ -4316,6 +4665,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...completionExperienceMarker,
     });
   } catch (err) {
+    if (contextualRequestAbort.signal.aborted && (req.aborted || res.destroyed)) return;
     const errCode        = (err as any)?.code as string | undefined;
     const providerStatus = (err as any)?.status ?? (err as any)?.statusCode as number | undefined;
     const isTimeout      = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");

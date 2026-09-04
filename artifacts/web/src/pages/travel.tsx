@@ -21,13 +21,18 @@ import {
   hasItineraryDays,
   isSerializedItineraryContent,
   KinfolkAssistantText,
+  KinfolkContextualContent,
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
   type KinfolkItinerary as KinfolkItineraryResponse,
+  type KinfolkMediaLink,
+  type KinfolkRelatedConnection,
+  type KinfolkResearchStatus,
   type KinfolkStaffDemoExperience,
+  type KinfolkStructuredContent,
 } from "@/components/kinfolk/KinfolkChatPresentation";
 import {
   AAVE_LEVEL_OPTIONS,
@@ -93,6 +98,10 @@ interface Message {
   content: string; recommendations?: Recommendations | null;
   /** Optional structured API payload; old free-text messages remain valid. */
   itinerary?: KinfolkItineraryResponse | null;
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -1170,6 +1179,10 @@ function TravelPage() {
         recommendations?: Recommendations | null;
         /** Structured itinerary payload is additive to legacy recommendations. */
         itinerary?: KinfolkItineraryResponse | null;
+        structuredContent?: KinfolkStructuredContent | null;
+        mediaLinks?: KinfolkMediaLink[];
+        relatedConnections?: KinfolkRelatedConnection[];
+        researchStatus?: KinfolkResearchStatus | null;
         followUpSuggestions?: string[];
         cultureAction?: CultureAction | null;
         libraryAction?: LibraryAction | null;
@@ -1219,6 +1232,10 @@ function TravelPage() {
         id: assistantMsgId, role: "assistant",
         content: replyContent, recommendations: data.recommendations ?? null,
         itinerary: data.itinerary ?? null,
+        structuredContent: data.structuredContent ?? null,
+        mediaLinks: data.mediaLinks ?? [],
+        relatedConnections: data.relatedConnections ?? [],
+        researchStatus: data.researchStatus ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -1615,6 +1632,14 @@ function TravelPage() {
                       )}
                       {hasItineraryDays(msg.itinerary) && (
                         <KinfolkItineraryRenderer itinerary={msg.itinerary!} />
+                      )}
+                      {msg.role === "assistant" && (
+                        <KinfolkContextualContent
+                          structuredContent={msg.structuredContent}
+                          mediaLinks={msg.mediaLinks}
+                          relatedConnections={msg.relatedConnections}
+                          researchStatus={msg.researchStatus}
+                        />
                       )}
                       {msg.recommendations && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />
