@@ -1,16 +1,17 @@
 /**
  * B3 — Nominate Business (one-tap nomination)
  *
- * Screen 1: PlacesAutocompleteInput → [Nominate] → "Want to tell us why?"
- * Expansion 1: VoiceTextField (why this place) + OWNERSHIP_CHIPS + photo
- * Expansion 2: Optional owner contact fields
+ * Screen 1: PlacesAutocompleteInput → nominate for review
+ * Optional expansion: rationale + ownership designations are sent in the same
+ * request so no member-entered context can be silently dropped.
  *
  * Contact name, email, and identity fields are DELETED from the required flow.
  */
 import { Feather } from "@expo/vector-icons";
+import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -20,13 +21,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
 import { PlacesAutocompleteInput, type PlaceResult } from "@/components/PlacesAutocompleteInput";
 import { ChipGrid } from "@/components/ChipGrid";
 import { VoiceTextField } from "@/components/VoiceTextField";
@@ -44,29 +43,24 @@ async function getToken(): Promise<string | null> {
 }
 
 type ResultState =
-  | { isDuplicate: false; nominationId: string; businessId: string }
+  | { isDuplicate: false; submissionId: string; status: "pending_review" }
   | { isDuplicate: true; type: "already_listed"; businessId: string; message: string }
-  | { isDuplicate: true; type: "already_nominated"; message: string };
+  | { isDuplicate: true; type: "already_nominated"; submissionId?: string; message: string };
 
-type Stage = "main" | "expanding1" | "expanding2" | "done";
+type Stage = "main" | "expanding1" | "done";
 
 export default function NominateBusinessScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated } = useAuth();
 
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const [why, setWhy] = useState("");
   const [ownershipDesignations, setOwnershipDesignations] = useState<string[]>([]);
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerContact, setOwnerContact] = useState("");
-  const [website, setWebsite] = useState("");
   const [stage, setStage] = useState<Stage>("main");
-  const [nominationId, setNominationId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [patchSubmitting, setPatchSubmitting] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
+  const [clientRequestId, setClientRequestId] = useState(() => Crypto.randomUUID());
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -78,41 +72,49 @@ export default function NominateBusinessScreen() {
     try {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Cookie"] = `connect.sid=${token}`;
+      if (!token) {
+        Alert.alert("Sign In Required", "Sign in with your approved community account to nominate a business.");
+        return;
+      }
+      headers["Authorization"] = `Bearer ${token}`;
+      headers["Idempotency-Key"] = clientRequestId;
 
-      const res = await fetch(`${API_BASE}/api/business-nominations`, {
+      const res = await fetch(`${API_BASE}/api/community/business-submissions`, {
         method: "POST",
         headers,
         body: JSON.stringify({
-          businessName: selectedPlace.name,
+          name: selectedPlace.name,
           city: selectedPlace.city ?? undefined,
           state: selectedPlace.state ?? undefined,
+          address: selectedPlace.address ?? undefined,
           phone: selectedPlace.phone ?? undefined,
-          lat: selectedPlace.lat ?? undefined,
-          lng: selectedPlace.lng ?? undefined,
-          category: selectedPlace.category ?? undefined,
+          latitude: selectedPlace.lat ?? undefined,
+          longitude: selectedPlace.lng ?? undefined,
+          category: selectedPlace.category ?? "General",
           ownershipDesignations: ownershipDesignations.length ? ownershipDesignations : undefined,
-          blackOwned: ownershipDesignations.some(d => d === "black-owned"),
+          submitterNote: why.trim() || undefined,
+          providerPlaceId: selectedPlace.id,
+          locationSource: "mwm_directory",
+          sourceChannel: "expo_nominate_business",
+          clientRequestId,
         }),
       });
 
       const data = await res.json() as ResultState & {
         error?: string;
         code?: string;
-        nomination?: { id: string };
+        submissionId?: string;
         businessId?: string;
       };
 
       if (!res.ok) {
-        if (data.code === "TIER_LIMIT_REACHED") {
-          Alert.alert(
-            "Membership Required",
-            data.error ?? "Upgrade to Explorer+ to nominate businesses.",
-            [
-              { text: "Maybe Later", style: "cancel" },
-              { text: "View Plans", onPress: () => router.push("/membership") },
-            ]
-          );
+        if (data.code === "BUSINESS_ALREADY_LISTED" && data.businessId) {
+          setResult({
+            isDuplicate: true,
+            type: "already_listed",
+            businessId: data.businessId,
+            message: data.error ?? "This business is already in the directory.",
+          });
           return;
         }
         Alert.alert("Error", data.error ?? "Could not submit. Please try again.");
@@ -122,48 +124,17 @@ export default function NominateBusinessScreen() {
       if (data.isDuplicate) {
         setResult(data as ResultState);
       } else {
-        const nomId = (data as any).nomination?.id ?? "";
-        setNominationId(nomId);
         setResult({
           isDuplicate: false,
-          nominationId: nomId,
-          businessId: (data as any).businessId ?? "",
+          submissionId: data.submissionId ?? "",
+          status: "pending_review",
         });
-        // Offer expansion
-        if (!why.trim() && ownershipDesignations.length === 0) {
-          setStage("expanding1");
-        } else {
-          setStage("done");
-        }
+        setStage("done");
       }
     } catch {
       Alert.alert("Error", "Could not submit. Please check your connection.");
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  async function handleExpansion1() {
-    if (patchSubmitting) return;
-    if (!why.trim() && ownershipDesignations.length === 0) { setStage("done"); return; }
-    setPatchSubmitting(true);
-    try {
-      if (nominationId) {
-        const token = await getToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers["Cookie"] = `connect.sid=${token}`;
-        await fetch(`${API_BASE}/api/business-nominations/${nominationId}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({
-            notes: why.trim() || undefined,
-            ownershipDesignations: ownershipDesignations.length ? ownershipDesignations : undefined,
-          }),
-        });
-      }
-    } catch { /* non-critical */ } finally {
-      setPatchSubmitting(false);
-      setStage("done");
     }
   }
 
@@ -182,23 +153,25 @@ export default function NominateBusinessScreen() {
             <Feather name="check-circle" size={56} color={colors.success} />
             <Text style={[styles.successTitle, { color: colors.foreground }]}>Thank you for the nomination!</Text>
             <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-              We&apos;ll reach out to {selectedPlace?.name ?? "this business"} about joining our community.
+              {selectedPlace?.name ?? "This business"} is pending review and is not public yet. Publication creates a community-listed, unclaimed profile; it does not verify ownership.
             </Text>
+            {!result?.isDuplicate && result?.submissionId ? (
+              <Text selectable style={[styles.successBody, { color: colors.mutedForeground }]}>Submission ID: {result.submissionId}</Text>
+            ) : null}
             <TouchableOpacity
-              onPress={() => { setSelectedPlace(null); setWhy(""); setOwnershipDesignations([]); setResult(null); setStage("main"); }}
+              onPress={() => router.replace("/my-business-submissions" as never)}
               style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
             >
-              <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Nominate Another</Text>
+              <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>View My Submissions</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.replace("/(tabs)" as never)} style={styles.ghostBtn}>
-              <Text style={[styles.ghostBtnLabel, { color: colors.foreground }]}>Back to Discover</Text>
+            <TouchableOpacity onPress={() => { setSelectedPlace(null); setWhy(""); setOwnershipDesignations([]); setResult(null); setClientRequestId(Crypto.randomUUID()); setStage("main"); }} style={styles.ghostBtn}>
+              <Text style={[styles.ghostBtnLabel, { color: colors.foreground }]}>Nominate Another</Text>
             </TouchableOpacity>
           </View>
         </View>
       );
     }
 
-    const isDup = result.isDuplicate;
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
@@ -237,7 +210,7 @@ export default function NominateBusinessScreen() {
     return (
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
-          <TouchableOpacity onPress={() => setStage("done")}>
+          <TouchableOpacity onPress={() => setStage("main")}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tell Us More</Text>
@@ -250,9 +223,9 @@ export default function NominateBusinessScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.confirmBanner}>
-              <Feather name="check-circle" size={18} color={colors.success} />
-              <Text style={[styles.confirmBannerText, { color: colors.success }]}>
-                {selectedPlace?.name} has been nominated!
+              <Feather name="info" size={18} color={colors.primary} />
+              <Text style={[styles.confirmBannerText, { color: colors.primary }]}>
+                Add optional context before submitting {selectedPlace?.name} for review.
               </Text>
             </View>
 
@@ -282,18 +255,18 @@ export default function NominateBusinessScreen() {
 
             <View style={styles.equalRow}>
               <TouchableOpacity
-                onPress={() => { void handleExpansion1(); }}
+                onPress={() => { void handleNominate(); }}
                 style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.primary }]}
               >
-                {patchSubmitting
+                {submitting
                   ? <ActivityIndicator color={colors.primaryForeground} size="small" />
-                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Add this</Text>}
+                  : <Text style={[styles.primaryBtnLabel, { color: colors.primaryForeground }]}>Submit for Review</Text>}
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => setStage("done")}
+                onPress={() => setStage("main")}
                 style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.secondary, borderWidth: 1.5, borderColor: colors.border }]}
               >
-                <Text style={[styles.primaryBtnLabel, { color: colors.foreground }]}>Skip</Text>
+                <Text style={[styles.primaryBtnLabel, { color: colors.foreground }]}>Back</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>

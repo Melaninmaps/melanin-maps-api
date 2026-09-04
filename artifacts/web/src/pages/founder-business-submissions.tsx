@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, Redirect } from "wouter";
 import { Layout } from "@/components/layout";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   CheckCircle2, XCircle, MessageSquare, Clock, Store,
   MapPin, Globe, Phone, ArrowLeft, RefreshCw, ChevronDown,
@@ -13,13 +14,17 @@ interface Submission {
   id: string;
   name: string;
   category: string;
+  subcategory: string | null;
   city: string;
   state: string | null;
+  postal_code: string | null;
   country: string | null;
   address: string | null;
   website: string | null;
   phone: string | null;
   description: string | null;
+  social_profiles: Record<string, string>;
+  media_urls: string[];
   ownership_designations: string[];
   submitter_note: string | null;
   source_channel: string | null;
@@ -30,18 +35,18 @@ interface Submission {
   created_at: string;
 }
 
-type Filter = "pending_review" | "approved" | "declined" | "needs_info" | "all";
+type Filter = "pending_review" | "published" | "declined" | "needs_info" | "all";
 
 const STATUS_COLORS: Record<string, string> = {
   pending_review: "bg-amber-100 text-amber-800",
-  approved: "bg-green-100 text-green-800",
+  published: "bg-green-100 text-green-800",
   declined: "bg-red-100 text-red-800",
   needs_info: "bg-blue-100 text-blue-800",
 };
 
 const STATUS_LABELS: Record<string, string> = {
   pending_review: "Pending review",
-  approved: "Approved",
+  published: "Published",
   declined: "Declined",
   needs_info: "Needs info",
 };
@@ -65,9 +70,8 @@ export default function FounderBusinessSubmissions() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch(
+      const resp = await authenticatedFetch(
         `${BASE}api/founder/business-submissions?status=${filter}`,
-        { credentials: "include" },
       );
       if (!resp.ok) throw new Error("Failed to load");
       const data = await resp.json() as { submissions: Submission[] };
@@ -83,11 +87,11 @@ export default function FounderBusinessSubmissions() {
 
   const decide = async (
     id: string,
-    status: "approved" | "declined" | "needs_info",
+    status: "published" | "declined" | "needs_info",
   ) => {
     setProcessing(id);
     try {
-      const resp = await fetch(
+      const resp = await authenticatedFetch(
         `${BASE}api/founder/business-submissions/${id}/decision`,
         {
           method: "POST",
@@ -144,7 +148,7 @@ export default function FounderBusinessSubmissions() {
 
         {/* Filter tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {(["pending_review", "needs_info", "approved", "declined", "all"] as Filter[]).map((f) => (
+          {(["pending_review", "needs_info", "published", "declined", "all"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -200,7 +204,7 @@ export default function FounderBusinessSubmissions() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[#3A1F0E]/50 mt-1 flex-wrap">
-                      <span>{s.category}</span>
+                      <span>{s.subcategory || s.category}</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
                         {[s.city, s.state].filter(Boolean).join(", ")}
@@ -228,7 +232,7 @@ export default function FounderBusinessSubmissions() {
                       {s.address && (
                         <div className="flex items-start gap-2 text-[#3A1F0E]/70">
                           <MapPin className="w-4 h-4 text-[#CA922B] mt-0.5 shrink-0" />
-                          <span>{s.address}, {s.city}{s.state ? `, ${s.state}` : ""}</span>
+                          <span>{s.address}, {s.city}{s.state ? `, ${s.state}` : ""}{s.postal_code ? ` ${s.postal_code}` : ""}</span>
                         </div>
                       )}
                       {s.website && (
@@ -255,7 +259,25 @@ export default function FounderBusinessSubmissions() {
                           ))}
                         </div>
                       )}
+                      {Object.entries(s.social_profiles ?? {}).map(([platform, url]) => (
+                        <div key={platform} className="flex items-center gap-2 text-[#3A1F0E]/70">
+                          <Globe className="w-4 h-4 text-[#CA922B] shrink-0" />
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-[#CA922B] hover:underline truncate">
+                            {platform}: {url}
+                          </a>
+                        </div>
+                      ))}
                     </div>
+
+                    {(s.media_urls ?? []).length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {s.media_urls.map((url) => (
+                          <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block">
+                            <img src={url} alt={`Submitted review media for ${s.name}`} className="w-full aspect-video object-cover rounded-xl border border-[#3A1F0E]/10" />
+                          </a>
+                        ))}
+                      </div>
+                    )}
 
                     {s.description && (
                       <div className="bg-[#FAF6EF] rounded-xl p-3 text-sm text-[#3A1F0E]/70">
@@ -291,13 +313,13 @@ export default function FounderBusinessSubmissions() {
                         <textarea
                           value={reviewNote}
                           onChange={(e) => setReviewNote(e.target.value)}
-                          placeholder="Add a review note (optional)"
+                          placeholder="Message to the submitter (visible in My Submissions)"
                           rows={2}
                           className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white resize-none"
                         />
                         <div className="flex gap-2 flex-wrap">
                           <button
-                            onClick={() => decide(s.id, "approved")}
+                            onClick={() => decide(s.id, "published")}
                             disabled={processing === s.id}
                             className="flex items-center gap-1.5 px-5 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50"
                           >

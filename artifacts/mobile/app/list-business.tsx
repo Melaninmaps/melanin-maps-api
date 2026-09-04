@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -53,7 +53,6 @@ interface FormData {
   customHours: string;
   tags: string;
   isBlackOwned: boolean;
-  isVerified: boolean;
 }
 
 const INITIAL_FORM: FormData = {
@@ -74,8 +73,7 @@ const INITIAL_FORM: FormData = {
   hours: "",
   customHours: "",
   tags: "",
-  isBlackOwned: true,
-  isVerified: false,
+  isBlackOwned: false,
 };
 
 function ProgressBar({ step, total, colors }: { step: number; total: number; colors: any }) {
@@ -266,6 +264,8 @@ export default function ListBusinessScreen() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionId, setSubmissionId] = useState("");
+  const clientRequestId = useRef(Crypto.randomUUID()).current;
   const [waitlistCat, setWaitlistCat] = useState<CategoryGroup | null>(null);
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlistCity, setWaitlistCity] = useState("");
@@ -361,11 +361,13 @@ export default function ListBusinessScreen() {
     try {
       const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${apiBase}/api/businesses`, {
+      if (!token) throw new Error("Sign in with your approved community account to submit a business.");
+      const res = await fetch(`${apiBase}/api/community/business-submissions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
+          "Idempotency-Key": clientRequestId,
         },
         body: JSON.stringify({
           name: form.name,
@@ -375,30 +377,29 @@ export default function ListBusinessScreen() {
           address: form.address,
           city: form.city,
           state: form.state,
-          zip: form.zip,
+          postalCode: form.zip,
           phone: form.phone,
           website: form.website || null,
-          instagram: form.instagram || null,
-          facebook: form.facebook || null,
-          tiktok: form.tiktok || null,
+          socialProfiles: {
+            ...(form.instagram ? { instagram: form.instagram } : {}),
+            ...(form.facebook ? { facebook: form.facebook } : {}),
+            ...(form.tiktok ? { tiktok: form.tiktok } : {}),
+          },
           priceRange: form.priceRange,
-          hours: form.hours,
-          customHours: form.customHours,
+          hours: form.hours === "Custom" ? form.customHours : form.hours,
           tags: form.tags,
-          isBlackOwned: form.isBlackOwned,
+          ownershipDesignations: form.isBlackOwned ? ["minority-owned"] : [],
+          locationSource: "member_entered",
+          sourceChannel: "expo_list_business",
+          clientRequestId,
         }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(err.error ?? "Submission failed");
       }
-      if (token) {
-        await fetch(`${apiBase}/api/auth/user/setup`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ isBusinessOwner: true }),
-        }).catch(() => {});
-      }
+      const data = await res.json() as { submissionId?: string };
+      setSubmissionId(data.submissionId ?? "");
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       animateToStep(TOTAL_STEPS);
     } catch (err) {
@@ -425,7 +426,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? "Submitted!" : "List Your Business"}
+          {isSuccess ? "Submitted for Review" : "List Your Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -444,28 +445,28 @@ export default function ListBusinessScreen() {
         {isSuccess ? (
           <View style={styles.successContainer}>
             <View style={[styles.successIconWrap, { backgroundColor: colors.primary + "15" }]}>
-              <Image
-                source={require("@/assets/images/bento-businesses.jpg")}
-                style={styles.successImage}
-                contentFit="cover"
-              />
+              <Feather name="briefcase" size={56} color={colors.primary} />
               <View style={[styles.successBadge, { backgroundColor: "#22C55E" }]}>
                 <Feather name="check" size={22} color="#FFFFFF" />
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              You&apos;re on the Map!
+              Your submission is in review
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
-              {" "}has been submitted for review. Our team will verify your listing within 1–3 business days. You&apos;ll receive a confirmation once it goes live.
+              {" "}is not public yet. Our team will review the business details before deciding whether to publish a community-listed, unclaimed profile.
             </Text>
+
+            {submissionId ? (
+              <Text selectable style={[styles.successLink, { color: colors.mutedForeground }]}>Submission ID: {submissionId}</Text>
+            ) : null}
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
-                { icon: "check-circle", label: "Submitted", value: "Under review", color: "#22C55E" },
-                { icon: "clock", label: "Review time", value: "1–3 business days", color: colors.primary },
-                { icon: "shield", label: "Verification", value: "Pending", color: colors.accent },
+                { icon: "check-circle", label: "Status", value: "Pending review", color: "#22C55E" },
+                { icon: "eye-off", label: "Directory", value: "Not public", color: colors.primary },
+                { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -477,14 +478,13 @@ export default function ListBusinessScreen() {
 
             <TouchableOpacity
               style={[styles.successBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.replace("/business-owner" as any)}
+              onPress={() => router.replace("/my-business-submissions" as any)}
               activeOpacity={0.85}
             >
-              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>Manage Your Business</Text>
+              <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>View My Submissions</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => router.replace("/(tabs)")} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)" as any)} activeOpacity={0.7}>
               <Text style={[styles.successLink, { color: colors.primary }]}>Back to Discover</Text>
             </TouchableOpacity>
           </View>
@@ -698,7 +698,7 @@ export default function ListBusinessScreen() {
                   </View>
 
                   <Toggle
-                    label="This is a minority-owned business"
+                    label="I am identifying this as a minority-owned business"
                     value={form.isBlackOwned}
                     onToggle={() => update("isBlackOwned")(!form.isBlackOwned)}
                     colors={colors}
@@ -838,9 +838,9 @@ export default function ListBusinessScreen() {
                   <View style={[styles.reviewNotice, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                     <Feather name="shield" size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Verification Process</Text>
+                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Listing Review</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Our team reviews every listing to ensure quality and authenticity. minority-owned businesses are eligible for our Verified badge after review.
+                        Our team reviews every submission before publication. A published profile is community-listed and unclaimed; this review does not verify ownership or award a Verified badge.
                       </Text>
                     </View>
                   </View>
@@ -878,7 +878,7 @@ export default function ListBusinessScreen() {
               disabled={!canProceed()}
             >
               <Text style={[styles.nextBtnText, { color: canProceed() ? colors.primaryForeground : colors.mutedForeground }]}>
-                {isLastForm ? "Submit Listing" : "Continue"}
+                {isLastForm ? "Submit for Review" : "Continue"}
               </Text>
               <Feather
                 name={isLastForm ? "send" : "arrow-right"}
