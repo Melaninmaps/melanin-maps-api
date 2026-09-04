@@ -11346,6 +11346,52 @@ async function ensureCommunityBusinessSubmissionsSchema(
     `);
     log("ensureCommunityBusinessSubmissionsSchema: community_business_submissions OK");
 
+    // Additive v2 fields preserve what current web/mobile forms promise. Media
+    // stays on the private review record and is not copied to an unclaimed
+    // public profile. Existing rows remain intact.
+    await pool.query(`
+      ALTER TABLE community_business_submissions
+        ADD COLUMN IF NOT EXISTS postal_code TEXT,
+        ADD COLUMN IF NOT EXISTS social_profiles JSONB NOT NULL DEFAULT '{}',
+        ADD COLUMN IF NOT EXISTS media_urls JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS price_range TEXT,
+        ADD COLUMN IF NOT EXISTS hours TEXT,
+        ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '[]',
+        ADD COLUMN IF NOT EXISTS latitude NUMERIC(10,7),
+        ADD COLUMN IF NOT EXISTS longitude NUMERIC(10,7),
+        ADD COLUMN IF NOT EXISTS provider_place_id TEXT,
+        ADD COLUMN IF NOT EXISTS location_source TEXT,
+        ADD COLUMN IF NOT EXISTS client_request_id TEXT,
+        ADD COLUMN IF NOT EXISTS identity_key TEXT
+    `);
+    await pool.query(`
+      ALTER TABLE community_business_submissions
+        DROP CONSTRAINT IF EXISTS community_business_submissions_status_check;
+      UPDATE community_business_submissions
+        SET status = 'published'
+        WHERE status = 'approved';
+      ALTER TABLE community_business_submissions
+        ADD CONSTRAINT community_business_submissions_status_check
+        CHECK (status IN ('pending_review','published','declined','needs_info'));
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_community_business_submissions_owner_request
+        ON community_business_submissions(submitted_by_id, client_request_id)
+        WHERE submitted_by_id IS NOT NULL AND client_request_id IS NOT NULL
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_community_business_submissions_owner_created
+        ON community_business_submissions(submitted_by_id, created_at DESC)
+    `);
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_community_business_submissions_pending_identity
+        ON community_business_submissions(submitted_by_id, identity_key)
+        WHERE submitted_by_id IS NOT NULL
+          AND identity_key IS NOT NULL
+          AND status IN ('pending_review','needs_info')
+    `);
+    log("ensureCommunityBusinessSubmissionsSchema: field-complete v2 columns and lifecycle OK");
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS business_submission_audit_events (
         id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),

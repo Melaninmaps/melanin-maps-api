@@ -80,6 +80,7 @@ import Wellness from "@/pages/wellness";
 import Connections from "@/pages/connections";
 import Guides from "@/pages/guides";
 import SubmitBusiness from "@/pages/submit-business";
+import MyBusinessSubmissions from "@/pages/my-business-submissions";
 import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
@@ -417,7 +418,10 @@ function Router() {
 
       {/* ── Community business submission — Task #360 ─────────────────── */}
       <Route path="/submit-business">
-        <SubmitBusiness />
+        <ProtectedRoute><SubmitBusiness /></ProtectedRoute>
+      </Route>
+      <Route path="/my-business-submissions">
+        <ProtectedRoute><MyBusinessSubmissions /></ProtectedRoute>
       </Route>
 
       {/* ── Founder review queue — Task #360 ─────────────────────────── */}

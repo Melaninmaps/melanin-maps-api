@@ -16,6 +16,8 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as Crypto from "expo-crypto";
+import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 
@@ -67,6 +69,7 @@ export default function SmartSearchScreen() {
   const [nominateLoading, setNominateLoading] = useState(false);
   const [nominateDone, setNominateDone] = useState(false);
   const [nominateError, setNominateError] = useState<string | null>(null);
+  const [nominationRequestId, setNominationRequestId] = useState(() => Crypto.randomUUID());
 
   const openNominate = () => {
     setNominateName("");
@@ -74,6 +77,7 @@ export default function SmartSearchScreen() {
     setNominateStateField("");
     setNominateDone(false);
     setNominateError(null);
+    setNominationRequestId(Crypto.randomUUID());
     setShowNominate(true);
   };
 
@@ -85,20 +89,33 @@ export default function SmartSearchScreen() {
     setNominateLoading(true);
     setNominateError(null);
     try {
-      const res = await fetch(`${getApiBase()}/api/business-nominations`, {
+      const token = Platform.OS === "web"
+        ? null
+        : await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        setNominateError("Sign in with your approved community account to submit a business.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/community/business-submissions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "Idempotency-Key": nominationRequestId,
+        },
         body: JSON.stringify({
-          businessName: nominateName.trim(),
+          name: nominateName.trim(),
+          category: "General",
           city: nominateCity.trim(),
           state: nominateStateField.trim(),
-          blackOwned: true,
+          locationSource: "member_entered",
+          sourceChannel: "expo_smart_search_nomination",
+          clientRequestId: nominationRequestId,
         }),
       });
-      if (res.status === 403) {
+      if (res.status === 401 || res.status === 403) {
         const data = await res.json() as { error?: string };
-        setNominateError(data.error ?? "Membership required to nominate.");
+        setNominateError(data.error ?? "An approved community account is required.");
       } else if (!res.ok) {
         setNominateError("Something went wrong. Please try again.");
       } else {

@@ -9,8 +9,12 @@ import { createFoundingAgreementEnvelope } from "../lib/docusign";
 import { sendFoundingWelcomeEmail, sendSearchInquiryAlert } from "../lib/email";
 import { objectStorageClient } from "../lib/objectStorage";
 import { reportLimiter } from "../middleware/rateLimiter";
-import { requireAuth } from "../middlewares/requireAuth";
+import { requireApprovedMember, requireAuth } from "../middlewares/requireAuth";
 import { sendDynamicJson } from "../lib/dynamicResponseCache";
+import { validateSubmission } from "../businessIntake/types";
+import { SubmissionRepository } from "../businessIntake/submissionRepository";
+
+const communitySubmissionRepository = new SubmissionRepository();
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -1531,124 +1535,48 @@ router.get("/businesses/duplicate-check", async (req: Request, res: Response) =>
   }
 });
 
-router.post("/businesses", async (req: Request, res: Response) => {
+// Backward-compatible adapter for older mobile builds. Member-created businesses
+// must enter the canonical moderation queue; trusted admin publication uses the
+// separate POST /api/admin/businesses route below.
+router.post("/businesses", requireApprovedMember, async (req: Request, res: Response) => {
   try {
-    const {
-      name, category, description, address, city, state,
-      phone, website, priceRange, hours, customHours, tags, isBlackOwned,
-    } = req.body as Record<string, unknown>;
+    const body = req.body as Record<string, unknown>;
+    const input = validateSubmission({
+      ...body,
+      hours: body.hours === "Custom" ? body.customHours : body.hours,
+      // Build 105 sent isBlackOwned=true by default, so that legacy boolean
+      // cannot safely represent an intentional demographic assertion.
+      ownershipDesignations: body.ownershipDesignations ?? [],
+      clientRequestId: body.clientRequestId ?? req.header("idempotency-key"),
+      sourceChannel: body.sourceChannel ?? "legacy_mobile_list_business",
+    });
 
-    if (!name || !category || !address || !city || !state) {
-      res.status(400).json({ error: "name, category, address, city, and state are required" });
-      return;
-    }
-
-    // ── 4-step duplicate detection ────────────────────────────────────────────
-    // Step 1: hard reject on exact (name + address + city + state) match
-    const exactDup = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(name)=LOWER($1) AND LOWER(address)=LOWER($2)
-         AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4) LIMIT 1`,
-      [String(name).trim(), String(address).trim(), String(city).trim(), String(state).trim()]
-    );
-    if (exactDup.rows.length > 0) {
+    const existing = await communitySubmissionRepository.findPublishedDuplicate(input);
+    if (existing) {
       res.status(409).json({
-        error: "This listing already exists.",
-        duplicate: exactDup.rows[0],
-        step: 1,
+        error: "This business is already listed in the directory.",
+        code: "BUSINESS_ALREADY_LISTED",
+        businessId: existing.id,
       });
       return;
     }
 
-    // Step 2: same address, different name → flag for admin review (allow but mark)
-    const addrDup = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 3`,
-      [String(address).trim(), String(city).trim(), String(state).trim()]
-    );
-    const needsAddressReview = addrDup.rows.length > 0;
-
-    // Step 3: same name, same city, different address → ALLOW (separate location)
-    // Step 4: fuzzy name at same address → flag (best-effort, non-blocking)
-    const fuzzyFlag = await pool.query(
-      `SELECT id, name FROM businesses
-       WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3)
-         AND LOWER(name) != LOWER($4)
-         AND (similarity(LOWER(name), LOWER($4)) > 0.85)
-       LIMIT 3`,
-      [String(address).trim(), String(city).trim(), String(state).trim(), String(name).trim()]
-    ).catch(() => ({ rows: [] }));
-    const needsFuzzyReview = fuzzyFlag.rows.length > 0;
-
-    const finalHours =
-      hours === "Custom"
-        ? (customHours as string | undefined) ?? null
-        : (hours as string | undefined) ?? null;
-    const tagArray =
-      Array.isArray(tags)
-        ? (tags as string[])
-        : typeof tags === "string"
-          ? tags.split(",").map((t) => t.trim()).filter(Boolean)
-          : [];
-    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-
-    let referredByCode: string | null = null;
-    if (req.user?.id) {
-      const [submitter] = await db.select({ referredByCode: usersTable.referredByCode }).from(usersTable).where(eq(usersTable.id, req.user.id)).limit(1);
-      referredByCode = submitter?.referredByCode ?? null;
-    }
-
-    // Determine listing_status: live_unclaimed if the city is already launched, else staged
-    const cityLaunchRow = await pool.query(
-      `SELECT status FROM city_launches WHERE LOWER(city)=LOWER($1) AND LOWER(state)=LOWER($2) LIMIT 1`,
-      [String(city).trim(), String(state).trim()]
-    );
-    const cityIsLive = ["live", "soft_launch"].includes(cityLaunchRow.rows[0]?.status ?? "");
-    const listingStatus = cityIsLive ? "live_unclaimed" : "staged";
-
-    const [business] = await db
-      .insert(businessesTable)
-      .values({
-        id,
-        name: name as string,
-        category: category as string,
-        subcategory: category as string,
-        description: (description as string | undefined) ?? "",
-        address: address as string,
-        city: city as string,
-        state: state as string,
-        latitude: "0",
-        longitude: "0",
-        tags: tagArray,
-        phone: (phone as string | undefined) ?? null,
-        website: (website as string | undefined) ?? null,
-        hours: finalHours,
-        priceRange: (priceRange as string | undefined) ?? null,
-        blackOwned: isBlackOwned === true || isBlackOwned === "true",
-        status: "pending",
-        submittedById: req.user?.id ?? null,
-        referredByCode,
-      })
-      .returning();
-
-    // Set listing_status and data_source (columns added via migration, not in Drizzle schema)
-    await pool.query(
-      `UPDATE businesses SET listing_status=$1, data_source='community_submission' WHERE id=$2`,
-      [listingStatus, business.id]
-    );
-
-    res.status(201).json({
-      business: { ...business, listingStatus },
-      warnings: {
-        needsAddressReview,
-        needsFuzzyReview,
-        sameAddressBusinesses: addrDup.rows,
-        fuzzyMatches: fuzzyFlag.rows,
-      },
+    const result = await communitySubmissionRepository.create(input, req.user!.id);
+    res.status(result.created ? 202 : 200).json({
+      ok: true,
+      submissionId: result.submission.id,
+      status: result.submission.status,
+      duplicateRetry: !result.created,
+      message: "Your business was submitted for review. It is not public yet.",
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to submit business listing");
-    res.status(500).json({ error: "Failed to submit listing" });
+    const message = err instanceof Error ? err.message : "Invalid submission";
+    if (/required|must be|invalid|unsupported|accepts at most|too long/i.test(message)) {
+      res.status(400).json({ error: message, code: "INVALID_SUBMISSION" });
+      return;
+    }
+    req.log.error({ err }, "Failed to queue legacy business submission");
+    res.status(500).json({ error: "Failed to submit business for review" });
   }
 });
 

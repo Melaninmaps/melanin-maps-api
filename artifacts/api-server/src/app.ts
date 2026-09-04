@@ -355,11 +355,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ── Intake, media, and claim routes (registered BEFORE aggregate router) ──────
 // IMPORTANT: These must come before app.use("/api", router) because the aggregate
-// router has router.use(requireAuth) at line ~220 of routes/index.ts which returns
-// HTTP 401 for any unauthenticated request — including the PUBLIC community
-// submission endpoint. Registering here ensures Express matches these routes first.
+// router has router.use(requireAuth) at line ~220 of routes/index.ts. Registering
+// here preserves these dedicated contracts while authMiddleware has already
+// attached cookie or bearer sessions above.
 //
-// POST /api/community/business-submissions — public (no auth required)
+// POST|GET /api/community/business-submissions[/mine|/:id] — approved members/testers
 // GET|POST /api/founder/business-submissions[/:id/decision] — admin only (auth checked in handler)
 // POST /api/media/upload — authenticated (auth checked in handler)
 // POST /api/admin/businesses — admin only (auth checked in handler)
