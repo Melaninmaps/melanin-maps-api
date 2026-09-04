@@ -12,6 +12,8 @@ export type AgeBand = "unknown" | "under_13" | "13_15" | "16_17" | "18_plus";
 export type AudienceDecision = "allowed" | "adapted" | "context_screen" | "blocked";
 export type GraphicLevel = "none" | "limited" | "graphic";
 
+type StoredAgeBand = AgeBand | null | undefined;
+
 const rank: Record<AgeBand, number> = {
   unknown: 0,
   under_13: -1,
@@ -20,13 +22,46 @@ const rank: Record<AgeBand, number> = {
   "18_plus": 3,
 };
 
+/**
+ * Preserve an explicitly assured band.  A legacy null band may be upgraded
+ * from DOB only when DOB proves the member is already 18; anything missing,
+ * malformed, or younger remains protective.
+ *
+ * DOB is deliberately consumed here and is never returned to Kinfolk callers.
+ */
+export function resolveMemberAgeBand(
+  storedBand: StoredAgeBand,
+  dateOfBirth: Date | string | null | undefined,
+  now = new Date(),
+): AgeBand {
+  if (storedBand === "under_13" || storedBand === "13_15" || storedBand === "16_17" || storedBand === "18_plus") {
+    return storedBand;
+  }
+
+  if (!dateOfBirth) return "unknown";
+  const dob = dateOfBirth instanceof Date ? dateOfBirth : new Date(dateOfBirth);
+  if (Number.isNaN(dob.getTime())) return "unknown";
+
+  let age = now.getUTCFullYear() - dob.getUTCFullYear();
+  const birthdayHasOccurred = (
+    now.getUTCMonth() > dob.getUTCMonth()
+    || (now.getUTCMonth() === dob.getUTCMonth() && now.getUTCDate() >= dob.getUTCDate())
+  );
+  if (!birthdayHasOccurred) age -= 1;
+  return age >= 18 ? "18_plus" : "unknown";
+}
+
 export async function getMemberAgeBand(userId: string): Promise<AgeBand> {
   try {
-    const r = await pool.query<{ age_band: AgeBand }>(
-      `SELECT age_band FROM user_age_assurance WHERE user_id = $1 LIMIT 1`,
+    const r = await pool.query<{ age_band: StoredAgeBand; date_of_birth: Date | string | null }>(
+      `SELECT uaa.age_band, u.date_of_birth
+         FROM users u
+         LEFT JOIN user_age_assurance uaa ON uaa.user_id = u.id
+        WHERE u.id = $1
+        LIMIT 1`,
       [userId],
     );
-    return r.rows[0]?.age_band ?? "unknown";
+    return resolveMemberAgeBand(r.rows[0]?.age_band, r.rows[0]?.date_of_birth);
   } catch {
     return "unknown";
   }

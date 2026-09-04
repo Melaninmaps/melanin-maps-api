@@ -123,7 +123,10 @@ export default function LocationShareScreen() {
         setShowNew(false);
         setLabel(""); setRecipientEmail("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const shareUrl = `https://mappingwithmelanin.com/safety/location/${d.share!.shareToken}`;
+        // This resolves directly to the existing public, no-store API view.
+        // The response deliberately excludes the member's identity and other
+        // private account data; the bearer token only permits this share.
+        const shareUrl = `${getApiBase()}/api/safety/location-shares/${d.share!.shareToken}/view`;
         Alert.alert(
           "Location Sharing Active",
           `Your location is now being shared. Copy the link to send to ${recipientEmail || "your contact"}.`,
@@ -153,7 +156,7 @@ export default function LocationShareScreen() {
   };
 
   const handleCopyLink = async (token: string) => {
-    const url = `https://mappingwithmelanin.com/safety/location/${token}`;
+    const url = `${getApiBase()}/api/safety/location-shares/${token}/view`;
     await Clipboard.setStringAsync(url);
     if (Platform.OS !== "web") Haptics.selectionAsync();
     Alert.alert("Copied!", "Location link copied to clipboard.");

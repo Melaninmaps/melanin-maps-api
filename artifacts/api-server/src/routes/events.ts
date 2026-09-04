@@ -3,6 +3,7 @@ import { db, eventsTable, savedCommunityLocationsTable, notificationsTable, user
 import { eq, desc, and, ilike, or, gte, sql, isNotNull } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
 import { requireAuth } from "../middlewares/requireAuth";
+import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 
 const router: IRouter = Router();
 
@@ -113,19 +114,9 @@ router.get("/events", async (req: Request, res: Response) => {
       }
     }
 
-    // Filter out events whose date has already passed.
-    // Dates are stored as human-readable strings ("August 15, 2026").
-    // Parse them at request time; exclude anything before today (midnight ET).
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const upcoming = events.filter(e => {
-      try {
-        const d = new Date(e.date);
-        return !isNaN(d.getTime()) && d >= now;
-      } catch {
-        return true; // if unparseable, keep the event
-      }
-    });
+    // `events.date` is a varchar calendar date (often "August 15, 2026"), not
+    // a timestamp. Do not publish expired or malformed one-off event rows.
+    const upcoming = events.filter((event) => isUpcomingOneOffEventDate(event.date));
 
     // Truthful total — count after the active/upcoming filter, not before (§4.3)
     res.json({ events: upcoming, total: upcoming.length });
